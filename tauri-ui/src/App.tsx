@@ -1,51 +1,54 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { Button } from "@/components/ui/button";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+interface WallpaperInfo {
+  path: string;
+  category: number;
+  monitor: string;
+  thumbnail: string;
+}
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+export default function App() {
+  const [stats, setStats] = useState("not connected");
+  const [wallpapers, setWallpapers] = useState<WallpaperInfo[]>([]);
+
+  async function refresh() {
+    try {
+      setStats(await invoke("core_stats"));
+      setWallpapers(await invoke<WallpaperInfo[]>("get_wallpapers"));
+    } catch (e) {
+      setStats(`error: ${e}`);
+    }
   }
 
+  useEffect(() => {
+    refresh();
+  }, []);
+
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <main className="min-h-screen bg-background p-6 text-foreground">
+      <h1 className="mb-4 text-xl font-semibold">Lively Tauri UI</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <Button onClick={refresh}>Refresh</Button>
+        <span className="text-sm text-muted-foreground">{stats}</span>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      <ul className="space-y-2">
+        {wallpapers.map((w) => (
+          <li
+            key={w.path}
+            className="rounded-md border border-border p-3 text-sm"
+          >
+            <div className="font-medium">{w.path.split(/[\\/]/).slice(-2).join("/")}</div>
+            <div className="text-xs text-muted-foreground">
+              category={w.category} monitor={w.monitor || "-"}
+            </div>
+          </li>
+        ))}
+        {wallpapers.length === 0 && (
+          <li className="text-sm text-muted-foreground">no wallpapers returned</li>
+        )}
+      </ul>
     </main>
   );
 }
-
-export default App;
