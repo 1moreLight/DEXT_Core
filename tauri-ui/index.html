@@ -1,14 +1,31 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
-  </head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dext Room Demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<div id="desk">
+  <div id="desk-background"></div>
+
+  <div id="icon-layer"></div>
+
+  <div id="dock">
+    <button id="prev-desk" class="dock-btn" title="ä¸Šä¸€ä¸?Desk">â€?/button>
+    <span id="desk-indicator"></span>
+    <button id="next-desk" class="dock-btn" title="ä¸‹ä¸€ä¸?Desk">â€?/button>
+  </div>
+</div>
+
+<div id="transition">
+  <div id="transition-text"></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="/main.js"></script>
+</body>
 </html>

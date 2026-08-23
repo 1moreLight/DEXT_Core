@@ -1,0 +1,175 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #000;
+}
+
+#desk {
+  position: absolute;
+  inset: 0;
+}
+
+#desk-background {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 0s;
+}
+
+#icon-layer {
+  position: absolute;
+  inset: 40px 40px 100px 40px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 28px;
+}
+
+.icon {
+  width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 4px;
+  border-radius: 12px;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.icon:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+}
+
+.icon:active {
+  transform: scale(0.94);
+}
+
+.icon-glyph {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.icon-label {
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  word-break: break-all;
+}
+
+#dock {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background-color: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dock-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.dock-btn:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.dock-btn:active {
+  transform: scale(0.9);
+}
+
+#desk-indicator {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  letter-spacing: 1px;
+  min-width: 90px;
+  text-align: center;
+}
+
+#transition {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+#transition.active {
+  pointer-events: all;
+}
+
+#transition.fade-in {
+  opacity: 1;
+  transition: opacity 0.3s ease-in;
+}
+
+#transition.fade-out {
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+#transition-text {
+  color: #fff;
+  font-size: 28px;
+  letter-spacing: 6px;
+  text-align: center;
+}
+
+#toast {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-16px);
+  padding: 10px 22px;
+  border-radius: 999px;
+  background-color: rgba(20, 20, 20, 0.75);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 200;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
