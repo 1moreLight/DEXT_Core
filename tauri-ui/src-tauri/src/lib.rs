@@ -4,6 +4,14 @@ pub mod proto {
     pub mod desktop {
         include!(concat!(env!("OUT_DIR"), "/lively.grpc.common.proto.desktop.rs"));
     }
+    pub mod grpc_dotnet_named_pipes {
+        pub mod generated {
+            include!(concat!(
+                env!("OUT_DIR"),
+                "/grpc_dot_net_named_pipes.generated.rs"
+            ));
+        }
+    }
 }
 
 #[tauri::command]
