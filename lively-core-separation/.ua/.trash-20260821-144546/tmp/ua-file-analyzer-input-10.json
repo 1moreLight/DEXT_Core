@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "language": "csharp",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "language": "csharp",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "language": "csharp",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "language": "csharp",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "language": "csharp",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "language": "csharp",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "language": "csharp",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "language": "csharp",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/ConsoleMessageType.cs",
+      "language": "csharp",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "language": "csharp",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyButton.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyCheckbox.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyCloseCmd.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyColorPicker.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyDropdown.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyDropdownScaler.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyFolderDropdown.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyMessageConsole.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyMessageHwnd.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyMessageScreenshot.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyMessageWallpaperLoaded.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Models/Message/LivelyReloadCmd.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/LabelModel.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/SliderModel.cs": [],
+    "src/Lively/Lively.Models/LivelyControls/TextboxModel.cs": [],
+    "src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs": [],
+    "src/Lively/Lively.Models/LivelyInfoModel.cs": [],
+    "src/Lively/Lively.Models/Message/ConsoleMessageType.cs": [],
+    "src/Lively/Lively.Models/Message/IpcMessage.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyButton.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyCheckbox.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyCloseCmd.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyColorPicker.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyDropdown.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyDropdownScaler.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyFolderDropdown.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyMessageConsole.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyMessageHwnd.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyMessageScreenshot.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyMessageWallpaperLoaded.cs": [],
+    "src/Lively/Lively.Models/Message/LivelyReloadCmd.cs": []
+  }
+}

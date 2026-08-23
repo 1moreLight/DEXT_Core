@@ -1,0 +1,1346 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Models/Enums/WallpaperType.cs",
+      "type": "file",
+      "name": "WallpaperType.cs",
+      "filePath": "src/Lively/Lively.Models/Enums/WallpaperType.cs",
+      "summary": "定义 Lively 支持的壁纸类别，涵盖应用、网页、音频网页、URL、模拟器、Unity、Godot、视频、GIF、视频流和静态图片。",
+      "tags": [
+        "enum",
+        "type-definition",
+        "wallpaper-type"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Enums/WebContentType.cs",
+      "type": "file",
+      "name": "WebContentType.cs",
+      "filePath": "src/Lively/Lively.Models/Enums/WebContentType.cs",
+      "summary": "定义在线 Web 内容识别结果，区分无匹配、Shadertoy、YouTube 和通用网页。",
+      "tags": [
+        "enum",
+        "type-definition",
+        "web-content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Enums/WebPageType.cs",
+      "type": "file",
+      "name": "WebPageType.cs",
+      "filePath": "src/Lively/Lively.Models/Enums/WebPageType.cs",
+      "summary": "定义网页壁纸来源类型，区分在线 URL 与本地网页项目。",
+      "tags": [
+        "enum",
+        "type-definition",
+        "web-page"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "type": "file",
+      "name": "FileTypeModel.cs",
+      "filePath": "src/Lively/Lively.Models/FileTypeModel.cs",
+      "summary": "定义文件类型映射模型，将 WallpaperType 与一组受支持文件扩展名关联。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "file-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "class",
+      "name": "FileTypeModel",
+      "filePath": "src/Lively/Lively.Models/FileTypeModel.cs",
+      "lineRange": [
+        5,
+        15
+      ],
+      "summary": "作为本文件的核心类型，定义文件类型映射模型，将 WallpaperType 与一组受支持文件扩展名关联。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "file-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "function",
+      "name": "FileTypeModel",
+      "filePath": "src/Lively/Lively.Models/FileTypeModel.cs",
+      "lineRange": [
+        10,
+        14
+      ],
+      "summary": "初始化文件扩展名集合与对应 WallpaperType。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "file-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "type": "file",
+      "name": "ApiErrors.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "summary": "集中定义 Gallery API 错误代码常量，覆盖认证、分页、排序、归档、订阅和 token 过期等失败场景。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs:ApiErrors",
+      "type": "class",
+      "name": "ApiErrors",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "lineRange": [
+        3,
+        16
+      ],
+      "summary": "作为本文件的核心类型，集中定义 Gallery API 错误代码常量，覆盖认证、分页、排序、归档、订阅和 token 过期等失败场景。",
+      "tags": [
+        "static-class",
+        "api-error",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "type": "file",
+      "name": "HealthInfo.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "summary": "定义 Gallery 后端单项健康检查信息，包含键、说明、耗时、状态和错误详情。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "health-check"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs:HealthInfo",
+      "type": "class",
+      "name": "HealthInfo",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "lineRange": [
+        4,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 后端单项健康检查信息，包含键、说明、耗时、状态和错误详情。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "health-check"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "type": "file",
+      "name": "HealthResult.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "summary": "定义 Gallery 后端总体健康检查结果，汇总服务名称、状态、耗时和各子检查项。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "health-check"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/HealthResult.cs:HealthResult",
+      "type": "class",
+      "name": "HealthResult",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "lineRange": [
+        6,
+        12
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 后端总体健康检查结果，汇总服务名称、状态、耗时和各子检查项。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "health-check"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "type": "file",
+      "name": "Page.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "summary": "定义通用 Gallery 分页响应模型，包含页码、是否存在下一页以及当前页数据列表。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "pagination"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/Page.cs:Page",
+      "type": "class",
+      "name": "Page",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "lineRange": [
+        5,
+        10
+      ],
+      "summary": "作为本文件的核心类型，定义通用 Gallery 分页响应模型，包含页码、是否存在下一页以及当前页数据列表。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "pagination"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "type": "file",
+      "name": "ProfileDto.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "summary": "定义 Gallery 用户资料 DTO，封装用户 ID、显示名称和头像 URL。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "user-profile"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs:ProfileDto",
+      "type": "class",
+      "name": "ProfileDto",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "lineRange": [
+        3,
+        8
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 用户资料 DTO，封装用户 ID、显示名称和头像 URL。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "user-profile"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "type": "file",
+      "name": "ReportModel.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "summary": "定义 Gallery 内容举报请求，包含举报类别和补充消息，并枚举错误分类、成人暴力、版权与垃圾内容等原因。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "content-report"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/ReportModel.cs:ReportModel",
+      "type": "class",
+      "name": "ReportModel",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "lineRange": [
+        3,
+        16
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 内容举报请求，包含举报类别和补充消息，并枚举错误分类、成人暴力、版权与垃圾内容等原因。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "content-report"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/SortingType.cs",
+      "type": "file",
+      "name": "SortingType.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/SortingType.cs",
+      "summary": "定义 Gallery 壁纸排序方式，可按历史最高、新发布或趋势热度排列。",
+      "tags": [
+        "enum",
+        "type-definition",
+        "sorting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "type": "file",
+      "name": "TokensModel.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "summary": "定义 Gallery 认证 token 模型，保存 access token、refresh token、身份提供方和过期时间。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/TokensModel.cs:TokensModel",
+      "type": "class",
+      "name": "TokensModel",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 认证 token 模型，保存 access token、refresh token、身份提供方和过期时间。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/VoteType.cs",
+      "type": "file",
+      "name": "VoteType.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/VoteType.cs",
+      "summary": "定义 Gallery 投票方向，区分 downvote 与 upvote。",
+      "tags": [
+        "enum",
+        "type-definition",
+        "voting"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "type": "file",
+      "name": "WallpaperDto.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "summary": "定义 Gallery 壁纸 DTO，包含标识、版本、标题、作者、许可、预览资源、壁纸类型、票数、描述和标签。",
+      "tags": [
+        "data-model",
+        "api-schema",
+        "gallery-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs:WallpaperDto",
+      "type": "class",
+      "name": "WallpaperDto",
+      "filePath": "src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "lineRange": [
+        6,
+        22
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 壁纸 DTO，包含标识、版本、标题、作者、许可、预览资源、壁纸类型、票数、描述和标签。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "gallery-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "type": "file",
+      "name": "ApiResponse.cs",
+      "filePath": "src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "summary": "定义通用 Gallery API 响应包装，统一承载成功状态、数据、错误列表和 HTTP status code。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "api-response"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Gallery/ApiResponse.cs:ApiResponse",
+      "type": "class",
+      "name": "ApiResponse",
+      "filePath": "src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义通用 Gallery API 响应包装，统一承载成功状态、数据、错误列表和 HTTP status code。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "api-response"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "type": "file",
+      "name": "GalleryModel.cs",
+      "filePath": "src/Lively/Lively.Models/GalleryModel.cs",
+      "summary": "定义 Gallery UI 可观察模型，把 WallpaperDto 或 LivelyInfoModel 转换为展示信息，并跟踪下载、安装和选择状态。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "gallery"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 CommunityToolkit.Mvvm 的 ObservableProperty source generator 生成属性与变更通知。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "class",
+      "name": "GalleryModel",
+      "filePath": "src/Lively/Lively.Models/GalleryModel.cs",
+      "lineRange": [
+        6,
+        51
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery UI 可观察模型，把 WallpaperDto 或 LivelyInfoModel 转换为展示信息，并跟踪下载、安装和选择状态。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "function",
+      "name": "GalleryModel",
+      "filePath": "src/Lively/Lively.Models/GalleryModel.cs",
+      "lineRange": [
+        8,
+        22
+      ],
+      "summary": "从 Gallery DTO 或本地 LivelyInfoModel 初始化可观察展示状态。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "type": "file",
+      "name": "InAppNotificationModel.cs",
+      "filePath": "src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "summary": "定义应用内通知的可观察状态，包含开关、标题、消息、进度和不确定进度模式。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "notification"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 CommunityToolkit.Mvvm 的 ObservableProperty source generator 生成属性与变更通知。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/InAppNotificationModel.cs:InAppNotificationModel",
+      "type": "class",
+      "name": "InAppNotificationModel",
+      "filePath": "src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "lineRange": [
+        5,
+        21
+      ],
+      "summary": "作为本文件的核心类型，定义应用内通知的可观察状态，包含开关、标题、消息、进度和不确定进度模式。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "notification"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "type": "file",
+      "name": "LanguageModel.cs",
+      "filePath": "src/Lively/Lively.Models/LanguageModel.cs",
+      "summary": "定义语言选项模型，将本地化显示名称与文化代码关联。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "class",
+      "name": "LanguageModel",
+      "filePath": "src/Lively/Lively.Models/LanguageModel.cs",
+      "lineRange": [
+        3,
+        13
+      ],
+      "summary": "作为本文件的核心类型，定义语言选项模型，将本地化显示名称与文化代码关联。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "function",
+      "name": "LanguageModel",
+      "filePath": "src/Lively/Lively.Models/LanguageModel.cs",
+      "lineRange": [
+        8,
+        12
+      ],
+      "summary": "初始化语言显示名称与文化代码。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LibraryModel.cs",
+      "type": "file",
+      "name": "LibraryModel.cs",
+      "filePath": "src/Lively/Lively.Models/LibraryModel.cs",
+      "summary": "定义本地壁纸媒体库的可观察模型，跟踪订阅、下载、就绪状态、元数据路径、预览资源及规范化标题、作者和描述。",
+      "tags": [
+        "data-model",
+        "mvvm",
+        "wallpaper-library"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "使用 CommunityToolkit.Mvvm 的 ObservableProperty source generator 生成属性与变更通知。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LibraryModel.cs:LibraryModel",
+      "type": "class",
+      "name": "LibraryModel",
+      "filePath": "src/Lively/Lively.Models/LibraryModel.cs",
+      "lineRange": [
+        5,
+        81
+      ],
+      "summary": "作为本文件的核心类型，定义本地壁纸媒体库的可观察模型，跟踪订阅、下载、就绪状态、元数据路径、预览资源及规范化标题、作者和描述。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "wallpaper-library"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "type": "config",
+      "name": "Lively.Models.csproj",
+      "filePath": "src/Lively/Lively.Models/Lively.Models.csproj",
+      "summary": "定义 Lively.Models netstandard2.0 类库，引用 Newtonsoft.Json、CommunityToolkit.Mvvm 和 System.Drawing.Primitives。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "models-library"
+      ],
+      "complexity": "simple",
+      "languageNotes": "SDK-style netstandard2.0 项目，为多个 Lively 应用层提供可共享的数据契约。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "type": "file",
+      "name": "ButtonModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "summary": "定义 LivelyProperties button 控件模型，以字符串 value 表示按钮触发值。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "button"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json attribute 将控件模型映射到 LivelyProperties.json 字段。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "class",
+      "name": "ButtonModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义 LivelyProperties button 控件模型，以字符串 value 表示按钮触发值。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "button"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "function",
+      "name": "ButtonModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "lineRange": [
+        10,
+        10
+      ],
+      "summary": "初始化 type 为 button 的壁纸按钮控件。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "button"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "type": "file",
+      "name": "CheckboxModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "summary": "定义 LivelyProperties checkbox 控件模型，以布尔 value 表示勾选状态。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "checkbox"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json attribute 将控件模型映射到 LivelyProperties.json 字段。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "class",
+      "name": "CheckboxModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义 LivelyProperties checkbox 控件模型，以布尔 value 表示勾选状态。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "checkbox"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "function",
+      "name": "CheckboxModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "lineRange": [
+        10,
+        10
+      ],
+      "summary": "初始化 type 为 checkbox 的壁纸勾选控件。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "checkbox"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "type": "file",
+      "name": "ColorPickerModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "summary": "定义 LivelyProperties color 控件模型，以字符串 value 保存颜色值。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "color-picker"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json attribute 将控件模型映射到 LivelyProperties.json 字段。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "class",
+      "name": "ColorPickerModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "作为本文件的核心类型，定义 LivelyProperties color 控件模型，以字符串 value 保存颜色值。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "color-picker"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "function",
+      "name": "ColorPickerModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "lineRange": [
+        10,
+        10
+      ],
+      "summary": "初始化 type 为 color 的壁纸颜色控件。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "color-picker"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "type": "file",
+      "name": "ControlModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "summary": "定义 LivelyProperties 控件基类，统一名称、文本、type 和帮助信息的 JSON 映射。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json attribute 将控件模型映射到 LivelyProperties.json 字段。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "class",
+      "name": "ControlModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "lineRange": [
+        5,
+        24
+      ],
+      "summary": "作为本文件的核心类型，定义 LivelyProperties 控件基类，统一名称、文本、type 和帮助信息的 JSON 映射。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "function",
+      "name": "ControlModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "lineRange": [
+        20,
+        23
+      ],
+      "summary": "初始化通用控件 type，并为派生控件提供共享 JSON 属性。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "type": "file",
+      "name": "DropdownModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "summary": "定义 LivelyProperties dropdown 控件模型，保存当前选项索引和可选文本数组。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "dropdown"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json attribute 将控件模型映射到 LivelyProperties.json 字段。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "class",
+      "name": "DropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "lineRange": [
+        5,
+        14
+      ],
+      "summary": "作为本文件的核心类型，定义 LivelyProperties dropdown 控件模型，保存当前选项索引和可选文本数组。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "dropdown"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "function",
+      "name": "DropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "lineRange": [
+        13,
+        13
+      ],
+      "summary": "初始化 type 为 dropdown 的壁纸下拉控件。",
+      "tags": [
+        "constructor",
+        "data-model",
+        "dropdown"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "target": "class:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "target": "class:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "target": "function:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "target": "function:src/Lively/Lively.Models/FileTypeModel.cs:FileTypeModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs:ApiErrors",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs:ApiErrors",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs:HealthInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs:HealthInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/HealthResult.cs:HealthResult",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/HealthResult.cs:HealthResult",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/Page.cs:Page",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/Page.cs:Page",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs:ProfileDto",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs:ProfileDto",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ReportModel.cs:ReportModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/ReportModel.cs:ReportModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/TokensModel.cs:TokensModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/TokensModel.cs:TokensModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs:WallpaperDto",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs:WallpaperDto",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/ApiResponse.cs:ApiResponse",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "target": "class:src/Lively/Lively.Models/Gallery/ApiResponse.cs:ApiResponse",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "target": "class:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "target": "class:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "target": "function:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "target": "function:src/Lively/Lively.Models/GalleryModel.cs:GalleryModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "target": "class:src/Lively/Lively.Models/InAppNotificationModel.cs:InAppNotificationModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "target": "class:src/Lively/Lively.Models/InAppNotificationModel.cs:InAppNotificationModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "target": "class:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "target": "class:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "target": "function:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "target": "function:src/Lively/Lively.Models/LanguageModel.cs:LanguageModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LibraryModel.cs",
+      "target": "class:src/Lively/Lively.Models/LibraryModel.cs:LibraryModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LibraryModel.cs",
+      "target": "class:src/Lively/Lively.Models/LibraryModel.cs:LibraryModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs:ButtonModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs:CheckboxModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs:ColorPickerModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ControlModel.cs:ControlModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs:DropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Enums/WallpaperType.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Enums/WebContentType.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Enums/WebPageType.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/FileTypeModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/ApiErrors.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/HealthInfo.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/HealthResult.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/Page.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/ProfileDto.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/ReportModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/SortingType.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/TokensModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/VoteType.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/API/WallpaperDto.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/Gallery/ApiResponse.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/GalleryModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/InAppNotificationModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LanguageModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LibraryModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/ButtonModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/CheckboxModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/ColorPickerModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/ControlModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Models/Lively.Models.csproj",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/DropdownModel.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

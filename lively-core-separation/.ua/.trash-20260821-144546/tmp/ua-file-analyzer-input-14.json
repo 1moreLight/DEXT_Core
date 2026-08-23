@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Player.Wmf/MainWindow.xaml",
+      "language": "xaml",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 191,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/Properties/Resources.resx",
+      "language": "resx",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/Properties/Settings.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/Properties/Settings.settings",
+      "language": "settings",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "language": "csharp",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Wmf/app.manifest",
+      "language": "manifest",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "language": "csharp",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "language": "csharp",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "language": "csharp",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "language": "csharp",
+      "sizeLines": 48,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Lively.UI.Shared.projitems",
+      "language": "projitems",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/Lively.UI.Shared.shproj",
+      "language": "shproj",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 111,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 90,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 260,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 108,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 393,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "language": "csharp",
+      "sizeLines": 291,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Player.Wmf/MainWindow.xaml": [],
+    "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs": [],
+    "src/Lively/Lively.Player.Wmf/Properties/AssemblyInfo.cs": [],
+    "src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs": [],
+    "src/Lively/Lively.Player.Wmf/Properties/Resources.resx": [],
+    "src/Lively/Lively.Player.Wmf/Properties/Settings.Designer.cs": [],
+    "src/Lively/Lively.Player.Wmf/Properties/Settings.settings": [],
+    "src/Lively/Lively.Player.Wmf/StartArgs.cs": [],
+    "src/Lively/Lively.Player.Wmf/app.manifest": [],
+    "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs": [],
+    "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs": [],
+    "src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs": [],
+    "src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs": [],
+    "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs": [],
+    "src/Lively/Lively.UI.Shared/Lively.UI.Shared.projitems": [],
+    "src/Lively/Lively.UI.Shared/Lively.UI.Shared.shproj": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs": [],
+    "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs": []
+  }
+}

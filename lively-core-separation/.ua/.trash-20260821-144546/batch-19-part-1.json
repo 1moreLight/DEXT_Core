@@ -1,0 +1,736 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/sv-SE/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/sv-SE/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供瑞典语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "sv-se"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/tr-TR/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/tr-TR/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供土耳其语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "tr-tr"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/uk-UA/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/uk-UA/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供乌克兰语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "uk-ua"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/vi-VN/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/vi-VN/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供越南语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "vi-vn"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/zh-CN/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/zh-CN/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供简体中文本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "zh-cn"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/zh-Hant/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/zh-Hant/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供繁体中文本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "zh-hant"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用统一资源键和区域专属值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml",
+      "type": "file",
+      "name": "ColorPickerButton.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml",
+      "summary": "定义带 Flyout 的颜色选择按钮，把当前颜色、取色器和 ColorPicker 组合为可复用控件。",
+      "tags": [
+        "xaml",
+        "用户控件",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "type": "file",
+      "name": "ColorPickerButton.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "summary": "实现颜色选择按钮的依赖属性与屏幕取色器启动逻辑，并把取色结果同步回控件。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "class",
+      "name": "ColorPickerButton",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "lineRange": [
+        16,
+        89
+      ],
+      "summary": "管理颜色选择依赖属性、Flyout 与屏幕取色交互。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "function",
+      "name": "ColorPickerButton",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "lineRange": [
+        56,
+        60
+      ],
+      "summary": "初始化颜色选择控件并连接 Flyout、ColorPicker 与取色器。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:OpenEyeDropper",
+      "type": "function",
+      "name": "OpenEyeDropper",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "lineRange": [
+        62,
+        78
+      ],
+      "summary": "打开屏幕取色器并把用户选定颜色写回控件。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml",
+      "type": "file",
+      "name": "DisplaySelector.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml",
+      "summary": "定义多显示器选择控件的画布、屏幕矩形、选中效果与显示器信息文本。",
+      "tags": [
+        "xaml",
+        "用户控件",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "type": "file",
+      "name": "DisplaySelector.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "summary": "根据显示器拓扑计算归一化画布布局，维护选择状态并响应依赖属性变化。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "class",
+      "name": "DisplaySelector",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "lineRange": [
+        14,
+        266
+      ],
+      "summary": "把显示器拓扑转换为可交互的归一化屏幕布局。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:OnDependencyPropertyChanged",
+      "type": "function",
+      "name": "OnDependencyPropertyChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "lineRange": [
+        77,
+        88
+      ],
+      "summary": "在显示器数据或选择依赖属性变化时刷新布局。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "function",
+      "name": "DisplaySelector",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "lineRange": [
+        90,
+        94
+      ],
+      "summary": "初始化显示器选择控件并准备画布绘制。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:UpdateCanvas",
+      "type": "function",
+      "name": "UpdateCanvas",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "lineRange": [
+        96,
+        200
+      ],
+      "summary": "根据显示器坐标与缩放比例重建屏幕矩形和标签。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml",
+      "type": "file",
+      "name": "FolderDropdown.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml",
+      "summary": "定义文件夹下拉控件的文件列表、缩略图、删除按钮和文件选择入口。",
+      "tags": [
+        "xaml",
+        "用户控件",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "type": "file",
+      "name": "FolderDropdown.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "summary": "管理文件夹下拉控件的依赖属性、文件模型、缩略图缓存、单项删除和多文件选择。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "class",
+      "name": "FolderDropdown",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        25,
+        330
+      ],
+      "summary": "管理文件列表、选择、删除和缩略图缓存的复合控件。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OnRequiredDependencyPropertyChanged",
+      "type": "function",
+      "name": "OnRequiredDependencyPropertyChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        101,
+        118
+      ],
+      "summary": "在文件夹、过滤器或必需属性变化时重新初始化控件。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OnSelectedFilePropertyChanged",
+      "type": "function",
+      "name": "OnSelectedFilePropertyChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        120,
+        129
+      ],
+      "summary": "在选中文件变化时同步列表选择和预览。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "function",
+      "name": "FolderDropdown",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        138,
+        145
+      ],
+      "summary": "初始化文件夹下拉控件、依赖属性与事件。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:InitializeControl",
+      "type": "function",
+      "name": "InitializeControl",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        147,
+        176
+      ],
+      "summary": "读取目标目录并构建可选文件模型与缩略图。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:Delete_Button_Click",
+      "type": "function",
+      "name": "Delete_Button_Click",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        178,
+        209
+      ],
+      "summary": "删除选中文件条目并清理对应缩略图缓存。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OpenFile",
+      "type": "function",
+      "name": "OpenFile",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        211,
+        249
+      ],
+      "summary": "使用系统服务打开或定位当前文件。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:Flyout_Opened",
+      "type": "function",
+      "name": "Flyout_Opened",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        253,
+        267
+      ],
+      "summary": "在下拉面板打开时刷新文件和选择状态。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OpenMultipleFilePicker",
+      "type": "function",
+      "name": "OpenMultipleFilePicker",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        269,
+        280
+      ],
+      "summary": "打开多文件选择器并把选定文件加入目标目录。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:CreateModel",
+      "type": "function",
+      "name": "CreateModel",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        282,
+        293
+      ],
+      "summary": "根据文件路径创建带名称、路径和缩略图的控件模型。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:GetThumbnailTempCache",
+      "type": "function",
+      "name": "GetThumbnailTempCache",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        295,
+        308
+      ],
+      "summary": "为文件生成或读取临时缩略图缓存。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:DeleteThumbnailTempCache",
+      "type": "function",
+      "name": "DeleteThumbnailTempCache",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "lineRange": [
+        310,
+        319
+      ],
+      "summary": "删除控件生成的临时缩略图文件。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml",
+      "type": "file",
+      "name": "FolderView.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml",
+      "summary": "定义递归文件夹树视图，并通过模板选择器区分文件夹与文件条目。",
+      "tags": [
+        "xaml",
+        "用户控件",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:ColorPickerButton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs:OpenEyeDropper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:OnDependencyPropertyChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:DisplaySelector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs:UpdateCanvas",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OnRequiredDependencyPropertyChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OnSelectedFilePropertyChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:FolderDropdown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:InitializeControl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:Delete_Button_Click",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OpenFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:Flyout_Opened",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:OpenMultipleFilePicker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:CreateModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:GetThumbnailTempCache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs:DeleteThumbnailTempCache",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/UserControls/ColorPickerButton.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/UserControls/DisplaySelector.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderDropdown.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

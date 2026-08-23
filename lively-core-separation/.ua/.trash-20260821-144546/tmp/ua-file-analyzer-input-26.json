@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:/midDOW/lively-core-separation/lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively/Properties/Resources.my-MM.resx",
+      "language": "resx",
+      "sizeLines": 1299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.nb-NO.resx",
+      "language": "resx",
+      "sizeLines": 1300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.nl-NL.resx",
+      "language": "resx",
+      "sizeLines": 1294,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.pl-PL.resx",
+      "language": "resx",
+      "sizeLines": 1304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.pt-BR.resx",
+      "language": "resx",
+      "sizeLines": 1304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.pt-PT.resx",
+      "language": "resx",
+      "sizeLines": 1303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.resx",
+      "language": "resx",
+      "sizeLines": 1300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.ro-RO.resx",
+      "language": "resx",
+      "sizeLines": 1301,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.ru-RU.resx",
+      "language": "resx",
+      "sizeLines": 1303,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.sk-SK.resx",
+      "language": "resx",
+      "sizeLines": 1301,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.sr-Cyrl.resx",
+      "language": "resx",
+      "sizeLines": 1288,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.sr-Latn.resx",
+      "language": "resx",
+      "sizeLines": 1294,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.sv-SE.resx",
+      "language": "resx",
+      "sizeLines": 1274,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.tr-TR.resx",
+      "language": "resx",
+      "sizeLines": 1300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.uk-UA.resx",
+      "language": "resx",
+      "sizeLines": 1306,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.vi-VN.resx",
+      "language": "resx",
+      "sizeLines": 1301,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.zh-CN.resx",
+      "language": "resx",
+      "sizeLines": 1304,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Properties/Resources.zh-Hant.resx",
+      "language": "resx",
+      "sizeLines": 1300,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/RPC/AppUpdateServer.cs",
+      "language": "csharp",
+      "sizeLines": 164,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/RPC/CommandsServer.cs",
+      "language": "csharp",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/RPC/DisplayManagerServer.cs",
+      "language": "csharp",
+      "sizeLines": 102,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/RPC/UserSettingsServer.cs",
+      "language": "csharp",
+      "sizeLines": 351,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/RPC/WinDesktopCoreServer.cs",
+      "language": "csharp",
+      "sizeLines": 448,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Services/ResourceService.cs",
+      "language": "csharp",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Services/RunnerService.cs",
+      "language": "csharp",
+      "sizeLines": 319,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively/Properties/Resources.my-MM.resx": [],
+    "src/Lively/Lively/Properties/Resources.nb-NO.resx": [],
+    "src/Lively/Lively/Properties/Resources.nl-NL.resx": [],
+    "src/Lively/Lively/Properties/Resources.pl-PL.resx": [],
+    "src/Lively/Lively/Properties/Resources.pt-BR.resx": [],
+    "src/Lively/Lively/Properties/Resources.pt-PT.resx": [],
+    "src/Lively/Lively/Properties/Resources.resx": [],
+    "src/Lively/Lively/Properties/Resources.ro-RO.resx": [],
+    "src/Lively/Lively/Properties/Resources.ru-RU.resx": [],
+    "src/Lively/Lively/Properties/Resources.sk-SK.resx": [],
+    "src/Lively/Lively/Properties/Resources.sr-Cyrl.resx": [],
+    "src/Lively/Lively/Properties/Resources.sr-Latn.resx": [],
+    "src/Lively/Lively/Properties/Resources.sv-SE.resx": [],
+    "src/Lively/Lively/Properties/Resources.tr-TR.resx": [],
+    "src/Lively/Lively/Properties/Resources.uk-UA.resx": [],
+    "src/Lively/Lively/Properties/Resources.vi-VN.resx": [],
+    "src/Lively/Lively/Properties/Resources.zh-CN.resx": [],
+    "src/Lively/Lively/Properties/Resources.zh-Hant.resx": [],
+    "src/Lively/Lively/RPC/AppUpdateServer.cs": [],
+    "src/Lively/Lively/RPC/CommandsServer.cs": [],
+    "src/Lively/Lively/RPC/DisplayManagerServer.cs": [],
+    "src/Lively/Lively/RPC/UserSettingsServer.cs": [],
+    "src/Lively/Lively/RPC/WinDesktopCoreServer.cs": [],
+    "src/Lively/Lively/Services/ResourceService.cs": [],
+    "src/Lively/Lively/Services/RunnerService.cs": []
+  }
+}

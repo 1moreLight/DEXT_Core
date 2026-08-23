@@ -1,0 +1,1220 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "type": "file",
+      "name": "CustomiseWallpaperViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "summary": "加载动态壁纸属性定义，维护滑块、颜色、文本、复选框和下拉框状态，并把修改持久化后发送给运行中的壁纸。",
+      "tags": [
+        "mvvm",
+        "壁纸属性",
+        "状态同步",
+        "序列化"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "class",
+      "name": "CustomiseWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        20,
+        322
+      ],
+      "summary": "为 CustomiseWallpaper 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "function",
+      "name": "CustomiseWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        32,
+        41
+      ],
+      "summary": "注入 CustomiseWallpaper 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:Load",
+      "type": "function",
+      "name": "Load",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        43,
+        71
+      ],
+      "summary": "读取壁纸属性定义与当前值，构建可编辑控件集合并准备事件同步。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:SliderValueChanged",
+      "type": "function",
+      "name": "SliderValueChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        98,
+        111
+      ],
+      "summary": "处理滑块值变化，更新属性文件并把数值发送给运行中的壁纸。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:ColorPickerValueChanged",
+      "type": "function",
+      "name": "ColorPickerValueChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        113,
+        126
+      ],
+      "summary": "处理颜色选择变化，持久化颜色并通知运行中的壁纸。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:TextboxValueChanged",
+      "type": "function",
+      "name": "TextboxValueChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        128,
+        141
+      ],
+      "summary": "处理文本属性变化，更新持久化值并发送消息。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CheckboxValueChanged",
+      "type": "function",
+      "name": "CheckboxValueChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        143,
+        156
+      ],
+      "summary": "处理布尔属性变化，更新持久化值并发送消息。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:DropdownValueChanged",
+      "type": "function",
+      "name": "DropdownValueChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        158,
+        199
+      ],
+      "summary": "处理下拉选项变化，保存选择并通知壁纸。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:RestoreDefault",
+      "type": "function",
+      "name": "RestoreDefault",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        201,
+        214
+      ],
+      "summary": "从原始属性定义恢复默认值并重新应用到壁纸。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:OnClose",
+      "type": "function",
+      "name": "OnClose",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        216,
+        222
+      ],
+      "summary": "在页面关闭时保存必要状态、取消任务并释放事件订阅。",
+      "tags": [
+        "事件处理",
+        "状态同步",
+        "mvvm",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:UpdatePropertyFile",
+      "type": "function",
+      "name": "UpdatePropertyFile",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        224,
+        235
+      ],
+      "summary": "把当前属性值写回壁纸属性 JSON 文件。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:WallpaperSendMsg",
+      "type": "function",
+      "name": "WallpaperSendMsg",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        237,
+        252
+      ],
+      "summary": "构造属性 IPC 消息并发送给正在运行的壁纸实例。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CreatePropertyCopy",
+      "type": "function",
+      "name": "CreatePropertyCopy",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "lineRange": [
+        259,
+        321
+      ],
+      "summary": "为当前显示器创建独立的壁纸属性副本。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "type": "file",
+      "name": "DepthEstimateWallpaperViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "summary": "协调深度估计模型下载与推理流程，把普通图像转换为带深度效果的动态壁纸项目。",
+      "tags": [
+        "mvvm",
+        "深度估计",
+        "模型下载",
+        "壁纸生成"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "class",
+      "name": "DepthEstimateWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "lineRange": [
+        21,
+        253
+      ],
+      "summary": "为 DepthEstimateWallpaper 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "function",
+      "name": "DepthEstimateWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "lineRange": [
+        38,
+        56
+      ],
+      "summary": "注入 DepthEstimateWallpaper 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:Run",
+      "type": "function",
+      "name": "Run",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "lineRange": [
+        101,
+        187
+      ],
+      "summary": "执行深度估计工作流，准备模型与输入图像并生成深度壁纸资源。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DownloadModel",
+      "type": "function",
+      "name": "DownloadModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "lineRange": [
+        189,
+        234
+      ],
+      "summary": "下载深度估计模型文件并报告进度与失败状态。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "type": "file",
+      "name": "GalleryLoginViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "summary": "管理在线 Gallery 登录认证、会话状态与已订阅壁纸恢复。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "class",
+      "name": "GalleryLoginViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "lineRange": [
+        11,
+        129
+      ],
+      "summary": "为 GalleryLogin 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "function",
+      "name": "GalleryLoginViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "lineRange": [
+        18,
+        32
+      ],
+      "summary": "注入 GalleryLogin 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:Authenticate",
+      "type": "function",
+      "name": "Authenticate",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "lineRange": [
+        54,
+        117
+      ],
+      "summary": "发起 Gallery 身份认证并保存登录会话。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:RestoreSubscribedWallpapers",
+      "type": "function",
+      "name": "RestoreSubscribedWallpapers",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "lineRange": [
+        119,
+        128
+      ],
+      "summary": "同步账户订阅并恢复本地缺失的 Gallery 壁纸。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "type": "file",
+      "name": "GallerySubscriptionViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "summary": "加载并展示用户订阅的 Gallery 壁纸，维护订阅列表及异步刷新状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "class",
+      "name": "GallerySubscriptionViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "lineRange": [
+        14,
+        186
+      ],
+      "summary": "为 GallerySubscription 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "function",
+      "name": "GallerySubscriptionViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "lineRange": [
+        27,
+        129
+      ],
+      "summary": "注入 GallerySubscription 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:PopulateSubbedWallpapers",
+      "type": "function",
+      "name": "PopulateSubbedWallpapers",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "lineRange": [
+        131,
+        141
+      ],
+      "summary": "分页加载用户已订阅壁纸并更新展示集合。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "type": "file",
+      "name": "GalleryViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "summary": "为在线 Gallery 提供分页壁纸数据源，并协调筛选、加载与导航状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "class",
+      "name": "GalleryViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "lineRange": [
+        17,
+        132
+      ],
+      "summary": "为 Gallery 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "function",
+      "name": "GalleryViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "lineRange": [
+        29,
+        97
+      ],
+      "summary": "注入 Gallery 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GetPagedItemsAsync",
+      "type": "function",
+      "name": "GetPagedItemsAsync",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "lineRange": [
+        99,
+        114
+      ],
+      "summary": "从 Gallery API 异步获取指定页壁纸并转换为增量数据项。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "type": "file",
+      "name": "ManageAccountViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "summary": "管理 Gallery 账户信息与删除账户操作，并向界面公开处理状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "class",
+      "name": "ManageAccountViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "lineRange": [
+        11,
+        85
+      ],
+      "summary": "为 ManageAccount 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "function",
+      "name": "ManageAccountViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "lineRange": [
+        17,
+        35
+      ],
+      "summary": "注入 ManageAccount 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:DeleteAccount",
+      "type": "function",
+      "name": "DeleteAccount",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "lineRange": [
+        58,
+        84
+      ],
+      "summary": "请求删除 Gallery 账户并处理确认、退出和错误状态。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "type": "file",
+      "name": "ReportWallpaperViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "summary": "承载举报 Gallery 壁纸所需的原因、说明与提交状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "simple",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "class",
+      "name": "ReportWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "lineRange": [
+        11,
+        20
+      ],
+      "summary": "为 ReportWallpaper 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "function",
+      "name": "ReportWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "lineRange": [
+        13,
+        16
+      ],
+      "summary": "注入 ReportWallpaper 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "type": "file",
+      "name": "RestoreWallpaperViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "summary": "加载可恢复的在线壁纸列表并协调重新订阅或下载流程。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "class",
+      "name": "RestoreWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "lineRange": [
+        16,
+        70
+      ],
+      "summary": "为 RestoreWallpaper 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "gallery",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "function",
+      "name": "RestoreWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "lineRange": [
+        23,
+        33
+      ],
+      "summary": "注入 RestoreWallpaper 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:PopulateWallpapers",
+      "type": "function",
+      "name": "PopulateWallpapers",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "lineRange": [
+        41,
+        51
+      ],
+      "summary": "加载可恢复壁纸并更新选择与操作状态。",
+      "tags": [
+        "gallery",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "type": "file",
+      "name": "LibraryAboutViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "summary": "向壁纸详情页面提供当前库项目的元数据、操作命令与 Gallery 关联状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple",
+      "languageNotes": "C# MVVM 将异步服务调用、命令状态和事件订阅集中到可跨 UI 宿主复用的 ViewModel。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "class",
+      "name": "LibraryAboutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "lineRange": [
+        9,
+        39
+      ],
+      "summary": "为 LibraryAbout 界面集中管理状态、命令、异步操作与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "function",
+      "name": "LibraryAboutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "lineRange": [
+        11,
+        29
+      ],
+      "summary": "注入 LibraryAbout 界面所需服务并初始化属性、命令和事件订阅。",
+      "tags": [
+        "命令处理",
+        "异步操作",
+        "mvvm",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CustomiseWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:Load",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:Load",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:SliderValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:ColorPickerValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:TextboxValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CheckboxValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:DropdownValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:RestoreDefault",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:OnClose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:OnClose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:UpdatePropertyFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:WallpaperSendMsg",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/CustomiseWallpaperViewModel.cs:CreatePropertyCopy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DepthEstimateWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:Run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs:DownloadModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:GalleryLoginViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:Authenticate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryLoginViewModel.cs:RestoreSubscribedWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:GallerySubscriptionViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:PopulateSubbedWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GallerySubscriptionViewModel.cs:PopulateSubbedWallpapers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GalleryViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GetPagedItemsAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs:GetPagedItemsAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:ManageAccountViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ManageAccountViewModel.cs:DeleteAccount",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/ReportWallpaperViewModel.cs:ReportWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:RestoreWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/Gallery/RestoreWallpaperViewModel.cs:PopulateWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/LibraryAboutViewModel.cs:LibraryAboutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

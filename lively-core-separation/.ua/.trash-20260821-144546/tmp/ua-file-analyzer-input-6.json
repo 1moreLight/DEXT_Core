@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "language": "csharp",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IDialogService.cs",
+      "language": "csharp",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "language": "csharp",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IFileService.cs",
+      "language": "csharp",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "language": "csharp",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "language": "csharp",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/INavigator.cs",
+      "language": "csharp",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IResourceService.cs",
+      "language": "csharp",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "language": "csharp",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "language": "csharp",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/ISystray.cs",
+      "language": "csharp",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "language": "csharp",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "language": "csharp",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Services/IWindowService.cs",
+      "language": "csharp",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "language": "csharp",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "language": "csharp",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "language": "csharp",
+      "sizeLines": 406,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 40,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "language": "csharp",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "language": "csharp",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "language": "csproj",
+      "sizeLines": 20,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "language": "csharp",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Common/Services/IDialogNavigator.cs": [],
+    "src/Lively/Lively.Common/Services/IDialogService.cs": [],
+    "src/Lively/Lively.Common/Services/IDispatcherService.cs": [],
+    "src/Lively/Lively.Common/Services/IDownloadService.cs": [],
+    "src/Lively/Lively.Common/Services/IFileService.cs": [],
+    "src/Lively/Lively.Common/Services/IHardwareUsageService.cs": [],
+    "src/Lively/Lively.Common/Services/IMainNavigator.cs": [],
+    "src/Lively/Lively.Common/Services/IMediaFormatConverter.cs": [],
+    "src/Lively/Lively.Common/Services/INavigator.cs": [],
+    "src/Lively/Lively.Common/Services/INowPlayingService.cs": [],
+    "src/Lively/Lively.Common/Services/IResourceService.cs": [],
+    "src/Lively/Lively.Common/Services/IRunnerService.cs": [],
+    "src/Lively/Lively.Common/Services/IScreensaverService.cs": [],
+    "src/Lively/Lively.Common/Services/ISystray.cs": [],
+    "src/Lively/Lively.Common/Services/ITransparentTbService.cs": [],
+    "src/Lively/Lively.Common/Services/IUserSettingsService.cs": [],
+    "src/Lively/Lively.Common/Services/IWindowService.cs": [],
+    "src/Lively/Lively.Common/WindowClassExclusions.cs": [],
+    "src/Lively/Lively.Gallery.Client/ApiException.cs": [],
+    "src/Lively/Lively.Gallery.Client/GalleryClient.cs": [],
+    "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs": [],
+    "src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs": [],
+    "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs": [],
+    "src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj": [],
+    "src/Lively/Lively.Gallery.Client/SearchQuery.cs": []
+  }
+}

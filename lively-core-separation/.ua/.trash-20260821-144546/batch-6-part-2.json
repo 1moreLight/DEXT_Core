@@ -1,0 +1,1365 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Common/Services/ISystray.cs",
+      "type": "file",
+      "name": "ISystray.cs",
+      "filePath": "src/Lively/Lively.Common/Services/ISystray.cs",
+      "summary": "声明系统托盘服务契约，用于显示、更新和释放 Lively notification icon。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "system-tray"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/ISystray.cs:ISystray",
+      "type": "class",
+      "name": "ISystray",
+      "filePath": "src/Lively/Lively.Common/Services/ISystray.cs",
+      "lineRange": [
+        6,
+        11
+      ],
+      "summary": "声明 `ISystray` 接口，约束声明系统托盘服务契约，用于显示、更新和释放 Lively notification icon所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "system-tray"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "type": "file",
+      "name": "ITransparentTbService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "summary": "声明透明任务栏服务契约，按主题启动或停止任务栏样式集成并公开运行状态。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "taskbar"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/ITransparentTbService.cs:ITransparentTbService",
+      "type": "class",
+      "name": "ITransparentTbService",
+      "filePath": "src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "lineRange": [
+        7,
+        16
+      ],
+      "summary": "声明 `ITransparentTbService` 接口，约束声明透明任务栏服务契约，按主题启动或停止任务栏样式集成并公开运行状态所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "taskbar"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "type": "file",
+      "name": "IUserSettingsService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "summary": "声明用户设置服务契约，加载、保存并重置应用设置与应用规则数据。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IUserSettingsService.cs:IUserSettingsService",
+      "type": "class",
+      "name": "IUserSettingsService",
+      "filePath": "src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "lineRange": [
+        8,
+        16
+      ],
+      "summary": "声明 `IUserSettingsService` 接口，约束声明用户设置服务契约，加载、保存并重置应用设置与应用规则数据所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IWindowService.cs",
+      "type": "file",
+      "name": "IWindowService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IWindowService.cs",
+      "summary": "声明窗口服务契约，用于显示、激活和关闭应用窗口。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IWindowService.cs:IWindowService",
+      "type": "class",
+      "name": "IWindowService",
+      "filePath": "src/Lively/Lively.Common/Services/IWindowService.cs",
+      "lineRange": [
+        5,
+        12
+      ],
+      "summary": "声明 `IWindowService` 接口，约束声明窗口服务契约，用于显示、激活和关闭应用窗口所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "type": "file",
+      "name": "WindowClassExclusions.cs",
+      "filePath": "src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "summary": "集中维护应从壁纸遮挡与前台窗口检测中排除的 Windows class name 集合。",
+      "tags": [
+        "data-model",
+        "gallery",
+        "window-filtering"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/WindowClassExclusions.cs:WindowClassExclusions",
+      "type": "class",
+      "name": "WindowClassExclusions",
+      "filePath": "src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "lineRange": [
+        6,
+        31
+      ],
+      "summary": "作为本文件的核心类型，集中维护应从壁纸遮挡与前台窗口检测中排除的 Windows class name 集合。",
+      "tags": [
+        "class",
+        "data-model",
+        "window-filtering"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "type": "file",
+      "name": "ApiException.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "summary": "定义 Gallery API 调用异常，保留 HTTP status、响应正文、headers 与内部异常，并提供可读诊断文本。",
+      "tags": [
+        "exception",
+        "api-client",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "class",
+      "name": "ApiException",
+      "filePath": "src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "lineRange": [
+        10,
+        38
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery API 调用异常，保留 HTTP status、响应正文、headers 与内部异常，并提供可读诊断文本。",
+      "tags": [
+        "class",
+        "data-model",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "function",
+      "name": "ApiException",
+      "filePath": "src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "lineRange": [
+        12,
+        14
+      ],
+      "summary": "构造 ApiException，并保留 HTTP 状态、响应正文、headers 与异常链。 此节点代表结构结果中的 5 个同名 overload。",
+      "tags": [
+        "method",
+        "method",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ToString",
+      "type": "function",
+      "name": "ToString",
+      "filePath": "src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "lineRange": [
+        34,
+        37
+      ],
+      "summary": "生成包含 HTTP status、response 和 headers 的 Gallery API 诊断文本。",
+      "tags": [
+        "method",
+        "method",
+        "api-error"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "type": "file",
+      "name": "GalleryClient.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "summary": "实现 Lively Gallery HTTP 客户端，覆盖 OAuth 登录、token 管理、账户、壁纸搜索订阅、上传下载、详情查询和后端健康检查。",
+      "tags": [
+        "api-client",
+        "http",
+        "gallery",
+        "authentication"
+      ],
+      "complexity": "complex",
+      "languageNotes": "以 HttpClient 和 async/await 实现 REST 调用，并将认证 token、OperationResult 与流式文件传输封装在统一客户端中。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "class",
+      "name": "GalleryClient",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        11,
+        405
+      ],
+      "summary": "作为本文件的核心类型，实现 Lively Gallery HTTP 客户端，覆盖 OAuth 登录、token 管理、账户、壁纸搜索订阅、上传下载、详情查询和后端健康检查。",
+      "tags": [
+        "class",
+        "api-client",
+        "gallery"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGithubAsync",
+      "type": "function",
+      "name": "AuthenticateGithubAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        138,
+        151
+      ],
+      "summary": "使用 GitHub 授权结果向 Gallery 后端换取认证 token。",
+      "tags": [
+        "method",
+        "authentication",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGoogleAsync",
+      "type": "function",
+      "name": "AuthenticateGoogleAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        124,
+        137
+      ],
+      "summary": "使用 Google 授权结果向 Gallery 后端换取认证 token。",
+      "tags": [
+        "method",
+        "authentication",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DeleteAccountAsync",
+      "type": "function",
+      "name": "DeleteAccountAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        60,
+        71
+      ],
+      "summary": "向 Gallery 后端请求删除当前用户账户。",
+      "tags": [
+        "method",
+        "method",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DownloadFile",
+      "type": "function",
+      "name": "DownloadFile",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        317,
+        365
+      ],
+      "summary": "将 HTTP 响应流写入目标文件并报告下载进度。",
+      "tags": [
+        "method",
+        "file-transfer",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DownloadWallpaperAsync",
+      "type": "function",
+      "name": "DownloadWallpaperAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        174,
+        178
+      ],
+      "summary": "下载 Gallery 壁纸包并通过进度与取消令牌报告传输状态。",
+      "tags": [
+        "method",
+        "file-transfer",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "function",
+      "name": "GalleryClient",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        23,
+        32
+      ],
+      "summary": "初始化 GalleryClient 的 HttpClient、token store 与基础 endpoint 配置。",
+      "tags": [
+        "method",
+        "method",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetBackendHealthAsync",
+      "type": "function",
+      "name": "GetBackendHealthAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        264,
+        273
+      ],
+      "summary": "查询 Gallery 后端健康状态与版本信息。",
+      "tags": [
+        "method",
+        "query",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetMeAsync",
+      "type": "function",
+      "name": "GetMeAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        53,
+        58
+      ],
+      "summary": "获取当前已认证用户的 Gallery profile。",
+      "tags": [
+        "method",
+        "query",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperInfoAsync",
+      "type": "function",
+      "name": "GetWallpaperInfoAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        192,
+        199
+      ],
+      "summary": "查询指定 Gallery 壁纸的详情与统计信息。",
+      "tags": [
+        "method",
+        "query",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperSubscriptions",
+      "type": "function",
+      "name": "GetWallpaperSubscriptions",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        223,
+        233
+      ],
+      "summary": "获取当前用户订阅的壁纸列表。",
+      "tags": [
+        "method",
+        "query",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:InitializeAsync",
+      "type": "function",
+      "name": "InitializeAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        43,
+        51
+      ],
+      "summary": "从 token store 恢复认证状态并初始化 Gallery 客户端。",
+      "tags": [
+        "method",
+        "method",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:InternalSendAsync",
+      "type": "function",
+      "name": "InternalSendAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        293,
+        315
+      ],
+      "summary": "执行底层 HTTP 请求、错误映射、JSON 反序列化和认证失效处理。",
+      "tags": [
+        "method",
+        "http",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:LogoutAsync",
+      "type": "function",
+      "name": "LogoutAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        163,
+        171
+      ],
+      "summary": "撤销本地认证状态并清除已保存 token。",
+      "tags": [
+        "method",
+        "authentication",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:RequestCodeAsync",
+      "type": "function",
+      "name": "RequestCodeAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        74,
+        114
+      ],
+      "summary": "请求 OAuth 设备登录或授权所需的一次性 code。",
+      "tags": [
+        "method",
+        "authentication",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SearchWallpapers",
+      "type": "function",
+      "name": "SearchWallpapers",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        201,
+        219
+      ],
+      "summary": "按 SearchQuery 条件检索分页壁纸列表。",
+      "tags": [
+        "method",
+        "query",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SendAsync",
+      "type": "function",
+      "name": "SendAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        276,
+        291
+      ],
+      "summary": "为 HTTP 请求附加认证与公共 headers，并统一发送和解析响应。",
+      "tags": [
+        "method",
+        "http",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SubscribeToWallpaperAsync",
+      "type": "function",
+      "name": "SubscribeToWallpaperAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        236,
+        253
+      ],
+      "summary": "订阅指定 Gallery 壁纸并同步服务端状态。",
+      "tags": [
+        "method",
+        "subscription",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UnsubscribeFromWallpaperAsync",
+      "type": "function",
+      "name": "UnsubscribeFromWallpaperAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        255,
+        261
+      ],
+      "summary": "取消指定 Gallery 壁纸订阅。",
+      "tags": [
+        "method",
+        "subscription",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UploadWallpaperAsync",
+      "type": "function",
+      "name": "UploadWallpaperAsync",
+      "filePath": "src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "lineRange": [
+        180,
+        190
+      ],
+      "summary": "以 multipart 请求上传壁纸包及其元数据。",
+      "tags": [
+        "method",
+        "file-transfer",
+        "gallery"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "type": "file",
+      "name": "HttpRequestMessageExtensions.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "summary": "提供 HttpRequestMessage 扩展，用于附加 JSON body 并克隆可重复发送的请求消息。",
+      "tags": [
+        "extension-method",
+        "http",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:HttpRequestMessageExtensions",
+      "type": "class",
+      "name": "HttpRequestMessageExtensions",
+      "filePath": "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "lineRange": [
+        10,
+        37
+      ],
+      "summary": "作为本文件的核心类型，提供 HttpRequestMessage 扩展，用于附加 JSON body 并克隆可重复发送的请求消息。",
+      "tags": [
+        "class",
+        "data-model",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:Clone",
+      "type": "function",
+      "name": "Clone",
+      "filePath": "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "lineRange": [
+        18,
+        36
+      ],
+      "summary": "深度克隆 HttpRequestMessage 的 method、URI、headers、options 与 content。",
+      "tags": [
+        "method",
+        "method",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:WithJsonContent",
+      "type": "function",
+      "name": "WithJsonContent",
+      "filePath": "src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "lineRange": [
+        12,
+        16
+      ],
+      "summary": "将对象序列化为 JSON 并设置为 HTTP request body。",
+      "tags": [
+        "method",
+        "method",
+        "http"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "type": "file",
+      "name": "ITokenStore.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "summary": "声明 Gallery access token 存储契约，提供读取、写入和清除操作。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs:ITokenStore",
+      "type": "class",
+      "name": "ITokenStore",
+      "filePath": "src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "lineRange": [
+        10,
+        15
+      ],
+      "summary": "声明 `ITokenStore` 接口，约束声明 Gallery access token 存储契约，提供读取、写入和清除操作所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "type": "file",
+      "name": "JsonTokenStore.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "summary": "使用本地 JSON 文件实现 Gallery token 存储，支持读取、更新和清空认证凭据。",
+      "tags": [
+        "data-model",
+        "gallery",
+        "authentication"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:JsonTokenStore",
+      "type": "class",
+      "name": "JsonTokenStore",
+      "filePath": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "lineRange": [
+        16,
+        60
+      ],
+      "summary": "作为本文件的核心类型，使用本地 JSON 文件实现 Gallery token 存储，支持读取、更新和清空认证凭据。",
+      "tags": [
+        "class",
+        "data-model",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Clear",
+      "type": "function",
+      "name": "Clear",
+      "filePath": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "lineRange": [
+        20,
+        28
+      ],
+      "summary": "清除本地保存的 Gallery token 数据。",
+      "tags": [
+        "method",
+        "storage",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Get",
+      "type": "function",
+      "name": "Get",
+      "filePath": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "lineRange": [
+        30,
+        42
+      ],
+      "summary": "从 JSON token 文件读取当前认证凭据。",
+      "tags": [
+        "method",
+        "query",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Set",
+      "type": "function",
+      "name": "Set",
+      "filePath": "src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "lineRange": [
+        44,
+        59
+      ],
+      "summary": "将 Gallery token 序列化并保存到本地 JSON 文件。",
+      "tags": [
+        "method",
+        "storage",
+        "authentication"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "type": "config",
+      "name": "Lively.Gallery.Client.csproj",
+      "filePath": "src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "summary": "定义 Gallery 客户端 net8.0 类库，启用 implicit usings 与 nullable，并引用 OperationResult、Watson、Lively.Common 和 Lively.Models。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "gallery-client"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 SDK-style net8.0 项目并启用 nullable reference type。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "type": "file",
+      "name": "SearchQuery.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "summary": "定义 Gallery 搜索查询模型，封装关键词、标签、排序、页码和分页大小。",
+      "tags": [
+        "data-model",
+        "gallery",
+        "search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "class",
+      "name": "SearchQuery",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "lineRange": [
+        5,
+        21
+      ],
+      "summary": "作为本文件的核心类型，定义 Gallery 搜索查询模型，封装关键词、标签、排序、页码和分页大小。",
+      "tags": [
+        "class",
+        "data-model",
+        "search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "function",
+      "name": "SearchQuery",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "lineRange": [
+        7,
+        14
+      ],
+      "summary": "初始化 Gallery 搜索查询及其默认分页和排序条件。",
+      "tags": [
+        "method",
+        "query",
+        "search"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ISystray.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ISystray.cs:ISystray",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ISystray.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ISystray.cs:ISystray",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ITransparentTbService.cs:ITransparentTbService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ITransparentTbService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ITransparentTbService.cs:ITransparentTbService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IUserSettingsService.cs:IUserSettingsService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IUserSettingsService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IUserSettingsService.cs:IUserSettingsService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IWindowService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IWindowService.cs:IWindowService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IWindowService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IWindowService.cs:IWindowService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "target": "class:src/Lively/Lively.Common/WindowClassExclusions.cs:WindowClassExclusions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/WindowClassExclusions.cs",
+      "target": "class:src/Lively/Lively.Common/WindowClassExclusions.cs:WindowClassExclusions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ApiException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ToString",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/ApiException.cs:ToString",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGithubAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGithubAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGoogleAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:AuthenticateGoogleAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DeleteAccountAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DeleteAccountAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DownloadFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DownloadWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:DownloadWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GalleryClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetBackendHealthAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetBackendHealthAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetMeAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetMeAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperInfoAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperInfoAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperSubscriptions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:GetWallpaperSubscriptions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:InitializeAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:InitializeAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:InternalSendAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:LogoutAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:LogoutAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:RequestCodeAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:RequestCodeAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SearchWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SearchWallpapers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SendAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SubscribeToWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:SubscribeToWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UnsubscribeFromWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UnsubscribeFromWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UploadWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/GalleryClient.cs:UploadWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:HttpRequestMessageExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:HttpRequestMessageExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:Clone",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:Clone",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:WithJsonContent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs:WithJsonContent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs:ITokenStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs:ITokenStore",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:JsonTokenStore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:JsonTokenStore",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Clear",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Clear",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Get",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Get",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Set",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs:Set",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQuery.cs:SearchQuery",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/ApiException.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/HttpRequestMessageExtensions.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/Interfaces/ITokenStore.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/JsonTokenStore.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj",
+      "target": "file:src/Lively/Lively.Gallery.Client/SearchQuery.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

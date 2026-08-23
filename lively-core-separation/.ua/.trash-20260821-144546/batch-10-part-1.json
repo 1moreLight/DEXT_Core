@@ -1,0 +1,812 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "type": "file",
+      "name": "FolderDropdownModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "summary": "定义文件夹下拉属性控件的 JSON 模型，保存当前值、起始文件夹和文件筛选器。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "type": "file",
+      "name": "IDropdownItem.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "summary": "定义带字符串选项集合的下拉控件模型契约。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "type": "file",
+      "name": "LabelModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "summary": "定义只读标签属性控件的 JSON 模型和显示值。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "type": "file",
+      "name": "LocalizationFile.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "summary": "定义壁纸属性本地化文件的根模型，把语言代码映射到每种语言的控件字符串字典。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "type": "file",
+      "name": "LocalizationLanguage.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "summary": "表示单一语言的壁纸属性本地化字典，把控件键映射为本地化文本集合。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "type": "file",
+      "name": "LocalizedStrings.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "summary": "保存控件的本地化文本、值、帮助说明和下拉选项。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "type": "file",
+      "name": "ScalerDropdownModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "summary": "定义壁纸缩放模式下拉控件的 JSON 模型，保存选中值和可选缩放项。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "type": "file",
+      "name": "SliderModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "summary": "定义滑块属性控件的 JSON 模型，保存刻度、最小值、最大值、当前值和步长。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "type": "file",
+      "name": "TextboxModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "summary": "定义文本输入属性控件的 JSON 模型和当前字符串值。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Newtonsoft.Json 属性名映射到 livelyproperties.json 控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "type": "file",
+      "name": "LivelyInfoLocalizationFile.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "summary": "定义壁纸元数据本地化文件，把语言代码映射到对应的 LivelyInfoModel。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple",
+      "languageNotes": "纯 C# POCO 模型用于 JSON 序列化和跨层数据传递。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "type": "file",
+      "name": "LivelyInfoModel.cs",
+      "filePath": "src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "summary": "描述 livelyinfo.json 壁纸元数据，包括标题、作者、预览、类型、入口文件、启动参数、图库标识、标签和版本。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "壁纸元数据"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "纯 C# POCO 模型用于 JSON 序列化和跨层数据传递。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/ConsoleMessageType.cs",
+      "type": "file",
+      "name": "ConsoleMessageType.cs",
+      "filePath": "src/Lively/Lively.Models/Message/ConsoleMessageType.cs",
+      "summary": "定义壁纸 IPC 控制台消息的日志、错误和普通控制台输出类别。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "ipc-message"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Serializable 和 Newtonsoft.Json 构成带 MessageType 判别值的轻量 IPC 数据传输对象。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "type": "file",
+      "name": "IpcMessage.cs",
+      "filePath": "src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "summary": "提供可序列化 IPC 消息的抽象基类，以 MessageType 作为 JSON 多态消息判别值。",
+      "tags": [
+        "csharp",
+        "data-model",
+        "ipc-message"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 Serializable 和 Newtonsoft.Json 构成带 MessageType 判别值的轻量 IPC 数据传输对象。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "class",
+      "name": "FolderDropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "lineRange": [
+        5,
+        17
+      ],
+      "summary": "保存文件夹下拉控件的值、浏览起点和过滤规则，并声明 folderDropdown 控件类型。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "function",
+      "name": "FolderDropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "lineRange": [
+        16,
+        16
+      ],
+      "summary": "初始化文件夹下拉模型，并把控件类型设为 folderDropdown。",
+      "tags": [
+        "function",
+        "初始化",
+        "属性控件",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs:IDropdownItem",
+      "type": "class",
+      "name": "IDropdownItem",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "lineRange": [
+        3,
+        6
+      ],
+      "summary": "约束下拉类属性模型必须公开可选字符串项。",
+      "tags": [
+        "interface",
+        "属性控件",
+        "核心契约"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "class",
+      "name": "LabelModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "保存标签控件的显示值并声明 label 控件类型。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "function",
+      "name": "LabelModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "lineRange": [
+        10,
+        10
+      ],
+      "summary": "初始化标签模型，并把控件类型设为 label。",
+      "tags": [
+        "function",
+        "初始化",
+        "属性控件",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs:LocalizationFile",
+      "type": "class",
+      "name": "LocalizationFile",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "lineRange": [
+        5,
+        8
+      ],
+      "summary": "作为控件本地化文件根对象，按语言代码组织 LocalizationLanguage。",
+      "tags": [
+        "class",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs:LocalizationLanguage",
+      "type": "class",
+      "name": "LocalizationLanguage",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "lineRange": [
+        5,
+        5
+      ],
+      "summary": "以 Dictionary 派生类承载一个语言下的控件键和 LocalizedStrings。",
+      "tags": [
+        "class",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs:LocalizedStrings",
+      "type": "class",
+      "name": "LocalizedStrings",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "lineRange": [
+        5,
+        18
+      ],
+      "summary": "聚合单个控件可本地化的文本、值、帮助和选项字段。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "class",
+      "name": "ScalerDropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "lineRange": [
+        5,
+        14
+      ],
+      "summary": "保存缩放下拉的选中值和选项，并实现 IDropdownItem。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "function",
+      "name": "ScalerDropdownModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "lineRange": [
+        13,
+        13
+      ],
+      "summary": "初始化缩放下拉模型，并把控件类型设为 scalerDropdown。",
+      "tags": [
+        "function",
+        "初始化",
+        "属性控件",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "class",
+      "name": "SliderModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "lineRange": [
+        5,
+        25
+      ],
+      "summary": "保存滑块控件的数值范围、步长、刻度和当前值。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "function",
+      "name": "SliderModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "lineRange": [
+        24,
+        24
+      ],
+      "summary": "初始化滑块模型，并把控件类型设为 slider。",
+      "tags": [
+        "function",
+        "初始化",
+        "属性控件",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "class",
+      "name": "TextboxModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "保存文本框控件值并声明 textbox 控件类型。",
+      "tags": [
+        "class",
+        "data-model",
+        "属性控件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "function",
+      "name": "TextboxModel",
+      "filePath": "src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "lineRange": [
+        10,
+        10
+      ],
+      "summary": "初始化文本框模型，并把控件类型设为 textbox。",
+      "tags": [
+        "function",
+        "初始化",
+        "属性控件",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs:LivelyInfoLocalizationFile",
+      "type": "class",
+      "name": "LivelyInfoLocalizationFile",
+      "filePath": "src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "lineRange": [
+        5,
+        8
+      ],
+      "summary": "作为壁纸元数据本地化根对象，按语言代码组织 LivelyInfoModel。",
+      "tags": [
+        "class",
+        "data-model",
+        "本地化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "class",
+      "name": "LivelyInfoModel",
+      "filePath": "src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "lineRange": [
+        9,
+        63
+      ],
+      "summary": "承载壁纸包的展示、作者、许可、启动和版本元数据，并支持默认初始化。",
+      "tags": [
+        "class",
+        "data-model",
+        "壁纸元数据"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "function",
+      "name": "LivelyInfoModel",
+      "filePath": "src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "lineRange": [
+        26,
+        43
+      ],
+      "summary": "初始化壁纸元数据的应用版本、默认网页类型及其他空值和初始版本字段。",
+      "tags": [
+        "function",
+        "初始化",
+        "壁纸元数据",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "class",
+      "name": "IpcMessage",
+      "filePath": "src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "lineRange": [
+        7,
+        16
+      ],
+      "summary": "为所有壁纸 IPC 消息保存不可变的 MessageType 判别值。",
+      "tags": [
+        "class",
+        "data-model",
+        "ipc-message"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "function",
+      "name": "IpcMessage",
+      "filePath": "src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "lineRange": [
+        12,
+        15
+      ],
+      "summary": "保存具体 IPC 消息的 MessageType 判别值。",
+      "tags": [
+        "function",
+        "初始化",
+        "ipc-message",
+        "public-api"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/FolderDropdownModel.cs:FolderDropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs:IDropdownItem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs:IDropdownItem",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LabelModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/LabelModel.cs:LabelModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs:LocalizationFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs:LocalizationFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs:LocalizationLanguage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs:LocalizationLanguage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs:LocalizedStrings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs:LocalizedStrings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/SliderModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/SliderModel.cs:SliderModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyControls/TextboxModel.cs:TextboxModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs:LivelyInfoLocalizationFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs:LivelyInfoLocalizationFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "target": "class:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "target": "function:src/Lively/Lively.Models/LivelyInfoModel.cs:LivelyInfoModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "target": "class:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "target": "class:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "target": "function:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/IpcMessage.cs",
+      "target": "function:src/Lively/Lively.Models/Message/IpcMessage.cs:IpcMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/Lively/Lively.Models/LivelyControls/ScalerDropdownModel.cs:ScalerDropdownModel",
+      "target": "class:src/Lively/Lively.Models/LivelyControls/IDropdownItem.cs:IDropdownItem",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationFile.cs",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyControls/LocalizationLanguage.cs",
+      "target": "file:src/Lively/Lively.Models/LivelyControls/LocalizedStrings.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/LivelyInfoLocalizationFile.cs",
+      "target": "file:src/Lively/Lively.Models/LivelyInfoModel.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

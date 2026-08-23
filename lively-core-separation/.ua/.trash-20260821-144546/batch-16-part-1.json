@@ -1,0 +1,1690 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "type": "file",
+      "name": "SliderValueChangedBehavior.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "summary": "为 WinUI Slider 提供可绑定的 Command 与 CommandParameter，把数值变化桥接到 MVVM 命令。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "mvvm",
+        "winui"
+      ],
+      "complexity": "simple",
+      "languageNotes": "AttachedProperty 将控件事件适配为 ICommand，保持 View 与 ViewModel 解耦。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SliderValueChangedBehavior",
+      "type": "class",
+      "name": "SliderValueChangedBehavior",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        7,
+        58
+      ],
+      "summary": "把 SliderValueChanged 控件事件适配为可绑定命令。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "mvvm",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommand",
+      "type": "function",
+      "name": "GetCommand",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        15,
+        18
+      ],
+      "summary": "读取控件关联的附加命令属性。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommand",
+      "type": "function",
+      "name": "SetCommand",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        20,
+        23
+      ],
+      "summary": "设置控件关联的附加命令属性。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommandParameter",
+      "type": "function",
+      "name": "GetCommandParameter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "读取控件附加的命令参数。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommandParameter",
+      "type": "function",
+      "name": "SetCommandParameter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "设置控件附加的命令参数。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:OnCommandChanged",
+      "type": "function",
+      "name": "OnCommandChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        35,
+        44
+      ],
+      "summary": "在附加 Command 变化时维护控件事件订阅。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:Slider_ValueChanged",
+      "type": "function",
+      "name": "Slider_ValueChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "lineRange": [
+        46,
+        57
+      ],
+      "summary": "把 Slider 当前数值和命令参数转发给绑定命令。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "type": "file",
+      "name": "TextBoxTextChangedBehavior.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "summary": "为 WinUI TextBox 提供可绑定命令，把文本变化和参数转发给 ViewModel。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "mvvm",
+        "winui"
+      ],
+      "complexity": "simple",
+      "languageNotes": "AttachedProperty 将控件事件适配为 ICommand，保持 View 与 ViewModel 解耦。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:TextBoxTextChangedBehavior",
+      "type": "class",
+      "name": "TextBoxTextChangedBehavior",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        7,
+        58
+      ],
+      "summary": "把 TextBoxTextChanged 控件事件适配为可绑定命令。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "mvvm",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommand",
+      "type": "function",
+      "name": "GetCommand",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        15,
+        18
+      ],
+      "summary": "读取控件关联的附加命令属性。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommand",
+      "type": "function",
+      "name": "SetCommand",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        20,
+        23
+      ],
+      "summary": "设置控件关联的附加命令属性。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommandParameter",
+      "type": "function",
+      "name": "GetCommandParameter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "读取控件附加的命令参数。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommandParameter",
+      "type": "function",
+      "name": "SetCommandParameter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "设置控件附加的命令参数。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:OnCommandChanged",
+      "type": "function",
+      "name": "OnCommandChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        35,
+        44
+      ],
+      "summary": "在附加 Command 变化时维护控件事件订阅。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:TextBox_TextChanged",
+      "type": "function",
+      "name": "TextBox_TextChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "lineRange": [
+        46,
+        57
+      ],
+      "summary": "把 TextBox 当前文本和命令参数转发给绑定命令。",
+      "tags": [
+        "附加行为",
+        "事件桥接",
+        "icommand",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Directory.Build.props",
+      "type": "file",
+      "name": "Directory.Build.props",
+      "filePath": "src/Lively/Lively.UI.WinUI/Directory.Build.props",
+      "summary": "定义 WinUI 项目的目录级 MSBuild 默认属性，并把 IsMsixRelease 默认设为 false。",
+      "tags": [
+        "configuration",
+        "msbuild",
+        "build-system",
+        "msix"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "type": "file",
+      "name": "ColorExtensions.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "summary": "在十六进制颜色字符串与 WinUI Color 之间进行双向转换。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ColorExtensions",
+      "type": "class",
+      "name": "ColorExtensions",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "lineRange": [
+        10,
+        32
+      ],
+      "summary": "汇集 Color 相关的 WinUI 扩展方法。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToColor",
+      "type": "function",
+      "name": "ToColor",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "lineRange": [
+        12,
+        24
+      ],
+      "summary": "解析十六进制字符串并构造对应的 WinUI Color。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToHex",
+      "type": "function",
+      "name": "ToHex",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "lineRange": [
+        26,
+        31
+      ],
+      "summary": "把 WinUI Color 序列化为带透明度的十六进制字符串。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "type": "file",
+      "name": "ContentDialogExtensions.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "summary": "扩展 WinUI ContentDialog，提供排队显示、可拖动显示以及两者组合的异步对话框流程。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ContentDialogExtensions",
+      "type": "class",
+      "name": "ContentDialogExtensions",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "lineRange": [
+        12,
+        68
+      ],
+      "summary": "汇集 ContentDialog 相关的 WinUI 扩展方法。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueue",
+      "type": "function",
+      "name": "ShowAsyncQueue",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "lineRange": [
+        16,
+        29
+      ],
+      "summary": "把 ContentDialog 加入串行队列，避免多个对话框同时显示。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncDraggable",
+      "type": "function",
+      "name": "ShowAsyncDraggable",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "lineRange": [
+        31,
+        44
+      ],
+      "summary": "显示允许通过标题区域拖动宿主窗口的 ContentDialog。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueueDraggable",
+      "type": "function",
+      "name": "ShowAsyncQueueDraggable",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "lineRange": [
+        46,
+        67
+      ],
+      "summary": "组合对话框排队与窗口拖动能力并异步返回结果。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "type": "file",
+      "name": "WindowExtensions.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "summary": "封装 WinUI 窗口句柄、图标、尺寸、深色模式、自定义标题栏拖动区域与 DPI 缩放操作。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:WindowExtensions",
+      "type": "class",
+      "name": "WindowExtensions",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        17,
+        182
+      ],
+      "summary": "汇集 Window 相关的 WinUI 扩展方法。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetIconEx",
+      "type": "function",
+      "name": "SetIconEx",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        19,
+        23
+      ],
+      "summary": "通过窗口句柄为 WinUI 窗口设置应用图标。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetWindowSizeEx",
+      "type": "function",
+      "name": "SetWindowSizeEx",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        25,
+        41
+      ],
+      "summary": "结合 DPI 缩放把 WinUI 窗口调整到指定逻辑尺寸。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:GetWindowHandleEx",
+      "type": "function",
+      "name": "GetWindowHandleEx",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        43,
+        47
+      ],
+      "summary": "返回 WinUI 窗口对应的原生 HWND。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:UseImmersiveDarkModeEx",
+      "type": "function",
+      "name": "UseImmersiveDarkModeEx",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        52,
+        75
+      ],
+      "summary": "调用 DWM 属性切换窗口沉浸式深色模式。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetDragRegionForCustomTitleBar",
+      "type": "function",
+      "name": "SetDragRegionForCustomTitleBar",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        77,
+        126
+      ],
+      "summary": "计算并设置自定义标题栏可拖动区域。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:GetScaleAdjustment",
+      "type": "function",
+      "name": "GetScaleAdjustment",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        128,
+        144
+      ],
+      "summary": "根据窗口 DPI 返回像素与逻辑尺寸之间的缩放系数。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "type": "file",
+      "name": "WindowsStoragePickersExtensions.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "summary": "为 Windows 文件与文件夹选择器设置宿主窗口句柄，使其能在桌面 WinUI 应用中正确显示。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:WindowsStoragePickersExtensions",
+      "type": "class",
+      "name": "WindowsStoragePickersExtensions",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "lineRange": [
+        10,
+        56
+      ],
+      "summary": "汇集 WindowsStoragePickers 相关的 WinUI 扩展方法。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:SetOwnerWindow",
+      "type": "function",
+      "name": "SetOwnerWindow",
+      "filePath": "src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "lineRange": [
+        51,
+        55
+      ],
+      "summary": "用宿主 HWND 初始化 Windows Storage Picker 的所有者窗口。",
+      "tags": [
+        "extension-method",
+        "winui",
+        "平台集成",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "type": "file",
+      "name": "AudioVolumeGlyphConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "summary": "把音量数值转换为对应的静音、低、中或高音量图标字形。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:AudioVolumeGlyphConverter",
+      "type": "class",
+      "name": "AudioVolumeGlyphConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "lineRange": [
+        11,
+        38
+      ],
+      "summary": "实现 AudioVolumeGlyph 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "lineRange": [
+        13,
+        23
+      ],
+      "summary": "把音量数值转换为音量图标字形。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "尝试把目标表示反向转换为音量数值。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "type": "file",
+      "name": "BoolToBackButtonVisibilityConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "summary": "把布尔状态转换为导航返回按钮的 Visibility，并支持反向转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:BoolToBackButtonVisibilityConverter",
+      "type": "class",
+      "name": "BoolToBackButtonVisibilityConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "lineRange": [
+        7,
+        26
+      ],
+      "summary": "实现 BoolToBackButtonVisibility 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "lineRange": [
+        9,
+        16
+      ],
+      "summary": "把布尔状态转换为返回按钮可见性。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "lineRange": [
+        18,
+        25
+      ],
+      "summary": "尝试把目标表示反向转换为布尔状态。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "type": "file",
+      "name": "BoolToVisibilityConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "summary": "把布尔值转换为 WinUI Visibility，支持通过参数控制反转逻辑。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:BooleanToVisibilityConverter",
+      "type": "class",
+      "name": "BooleanToVisibilityConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "lineRange": [
+        11,
+        30
+      ],
+      "summary": "实现 BooleanToVisibility 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "lineRange": [
+        13,
+        26
+      ],
+      "summary": "把布尔状态转换为控件可见性。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "lineRange": [
+        29,
+        29
+      ],
+      "summary": "尝试把目标表示反向转换为布尔状态。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "type": "file",
+      "name": "FloatToBoolConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "summary": "在浮点值与布尔选择状态之间转换，用于绑定数值选项。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:FloatToBoolConverter",
+      "type": "class",
+      "name": "FloatToBoolConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "lineRange": [
+        10,
+        21
+      ],
+      "summary": "实现 FloatToBool 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "lineRange": [
+        12,
+        15
+      ],
+      "summary": "把浮点选项转换为布尔选择状态。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "lineRange": [
+        17,
+        20
+      ],
+      "summary": "尝试把目标表示反向转换为浮点选项。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "type": "file",
+      "name": "HexStringToColorConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "summary": "把十六进制颜色字符串转换为 WinUI Color，并支持反向序列化。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:HexStringToColorConverter",
+      "type": "class",
+      "name": "HexStringToColorConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "lineRange": [
+        9,
+        34
+      ],
+      "summary": "实现 HexStringToColor 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "lineRange": [
+        11,
+        21
+      ],
+      "summary": "把十六进制字符串转换为 WinUI Color。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "lineRange": [
+        23,
+        33
+      ],
+      "summary": "尝试把目标表示反向转换为十六进制字符串。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "type": "file",
+      "name": "ListViewSelectionModeStringToEnumConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "summary": "在字符串配置与 ListViewSelectionMode 枚举之间转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ListViewSelectionModeStringToEnumConverter",
+      "type": "class",
+      "name": "ListViewSelectionModeStringToEnumConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "lineRange": [
+        12,
+        30
+      ],
+      "summary": "实现 ListViewSelectionModeStringToEnum 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "lineRange": [
+        14,
+        24
+      ],
+      "summary": "把字符串转换为 ListViewSelectionMode 枚举。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "lineRange": [
+        26,
+        29
+      ],
+      "summary": "尝试把目标表示反向转换为字符串。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SliderValueChangedBehavior",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SliderValueChangedBehavior",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommandParameter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:GetCommandParameter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommandParameter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:SetCommandParameter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:OnCommandChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs:Slider_ValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:TextBoxTextChangedBehavior",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:TextBoxTextChangedBehavior",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommandParameter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:GetCommandParameter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommandParameter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:SetCommandParameter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:OnCommandChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs:TextBox_TextChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ColorExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ColorExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToColor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToColor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToHex",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs:ToHex",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ContentDialogExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ContentDialogExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncDraggable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncDraggable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueueDraggable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs:ShowAsyncQueueDraggable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:WindowExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:WindowExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetIconEx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetIconEx",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetWindowSizeEx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetWindowSizeEx",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:GetWindowHandleEx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:GetWindowHandleEx",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:UseImmersiveDarkModeEx",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:UseImmersiveDarkModeEx",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetDragRegionForCustomTitleBar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:SetDragRegionForCustomTitleBar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs:GetScaleAdjustment",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:WindowsStoragePickersExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:WindowsStoragePickersExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:SetOwnerWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs:SetOwnerWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:AudioVolumeGlyphConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:BoolToBackButtonVisibilityConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:BoolToBackButtonVisibilityConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:BooleanToVisibilityConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:BooleanToVisibilityConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:FloatToBoolConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:FloatToBoolConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:HexStringToColorConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:HexStringToColorConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ListViewSelectionModeStringToEnumConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ListViewSelectionModeStringToEnumConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

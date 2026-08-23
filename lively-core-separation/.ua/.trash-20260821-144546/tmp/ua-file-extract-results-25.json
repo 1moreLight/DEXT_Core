@@ -1,0 +1,43 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 0,
+  "filesSkipped": [
+    "src/Lively/Lively/Properties/Resources.be-BY.resx",
+    "src/Lively/Lively/Properties/Resources.bg-BG.resx",
+    "src/Lively/Lively/Properties/Resources.ca-ES.resx",
+    "src/Lively/Lively/Properties/Resources.cs-CZ.resx",
+    "src/Lively/Lively/Properties/Resources.da-DK.resx",
+    "src/Lively/Lively/Properties/Resources.de-DE.resx",
+    "src/Lively/Lively/Properties/Resources.el-GR.resx",
+    "src/Lively/Lively/Properties/Resources.es-ES.resx",
+    "src/Lively/Lively/Properties/Resources.es-MX.resx",
+    "src/Lively/Lively/Properties/Resources.fa-IR.resx",
+    "src/Lively/Lively/Properties/Resources.fi-FI.resx",
+    "src/Lively/Lively/Properties/Resources.fil-PH.resx",
+    "src/Lively/Lively/Properties/Resources.fr-FR.resx",
+    "src/Lively/Lively/Properties/Resources.ga-IE.resx",
+    "src/Lively/Lively/Properties/Resources.gl-ES.resx",
+    "src/Lively/Lively/Properties/Resources.he-IL.resx",
+    "src/Lively/Lively/Properties/Resources.hi-IN.resx",
+    "src/Lively/Lively/Properties/Resources.hu-HU.resx",
+    "src/Lively/Lively/Properties/Resources.id-ID.resx",
+    "src/Lively/Lively/Properties/Resources.it-IT.resx",
+    "src/Lively/Lively/Properties/Resources.ja-JP.resx",
+    "src/Lively/Lively/Properties/Resources.kk-KZ.resx",
+    "src/Lively/Lively/Properties/Resources.ko-KR.resx",
+    "src/Lively/Lively/Properties/Resources.lt-LT.resx",
+    "src/Lively/Lively/Properties/Resources.ms-MY.resx"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 0,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": []
+}

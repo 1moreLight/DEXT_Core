@@ -1,0 +1,2977 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 17,
+  "filesSkipped": [
+    "src/Lively/Lively.Player.CefSharp/Form1.resx",
+    "src/Lively/Lively.Player.CefSharp/Lively.Player.CefSharp.csproj",
+    "src/Lively/Lively.Player.CefSharp/Properties/Resources.resx",
+    "src/Lively/Lively.Player.CefSharp/Properties/Settings.settings",
+    "src/Lively/Lively.Player.CefSharp/app.manifest",
+    "src/Lively/Lively.Player.Vlc/App.config",
+    "src/Lively/Lively.Player.Vlc/Form1.resx",
+    "src/Lively/Lively.Player.Vlc/Lively.Player.Vlc.csproj"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 17,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 17,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/DevToolsExtensions.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 143,
+      "nonEmptyLines": 124,
+      "functions": [
+        {
+          "name": "CaptureScreenshot",
+          "startLine": 26,
+          "endLine": 114,
+          "params": [
+            "chromiumWebBrowser",
+            "format"
+          ]
+        },
+        {
+          "name": "CaptureScreenshot",
+          "startLine": 116,
+          "endLine": 141,
+          "params": [
+            "chromeBrowser",
+            "format",
+            "filePath"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "DevToolsExtensions",
+          "startLine": 15,
+          "endLine": 142,
+          "methods": [
+            "CaptureScreenshot",
+            "CaptureScreenshot"
+          ],
+          "properties": [
+            "LastMessageId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CaptureScreenshot",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "CaptureScreenshot",
+          "line": 116,
+          "isDefault": false
+        },
+        {
+          "name": "DevToolsExtensions",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "chromiumWebBrowser.GetBrowserHost",
+          "lineNumber": 36
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new Exception",
+          "lineNumber": 40
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Interlocked.Increment",
+          "lineNumber": 48
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new TaskMethodDevToolsMessageObserver",
+          "lineNumber": 50
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "host.AddDevToolsMessageObserver",
+          "lineNumber": 55
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new Dictionary<string, object>",
+          "lineNumber": 65
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new Dictionary<string, object>",
+          "lineNumber": 71
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Cef.CurrentlyOnThread",
+          "lineNumber": 80
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "host.ExecuteDevToolsMethod",
+          "lineNumber": 82
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Cef.UIThreadTaskFactory.StartNew",
+          "lineNumber": 86
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "host.ExecuteDevToolsMethod",
+          "lineNumber": 88
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new Exception",
+          "lineNumber": 94
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "JsonConvert.DeserializeObject<dynamic>",
+          "lineNumber": 101
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Encoding.UTF8.GetString",
+          "lineNumber": 101
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Convert.FromBase64String",
+          "lineNumber": 106
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new Exception",
+          "lineNumber": 112
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "CaptureScreenshot",
+          "lineNumber": 118
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "File.WriteAllBytes",
+          "lineNumber": 129
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "new MemoryStream",
+          "lineNumber": 135
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "Image.FromStream",
+          "lineNumber": 136
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "image.Save",
+          "lineNumber": 137
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/TaskMethodDevToolsMessageObserver.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 68,
+      "nonEmptyLines": 52,
+      "functions": [
+        {
+          "name": "TaskMethodDevToolsMessageObserver",
+          "startLine": 18,
+          "endLine": 21,
+          "params": [
+            "messageId"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 23,
+          "endLine": 26,
+          "params": []
+        },
+        {
+          "name": "OnDevToolsAgentAttached",
+          "startLine": 28,
+          "endLine": 31,
+          "params": [
+            "browser"
+          ]
+        },
+        {
+          "name": "OnDevToolsAgentDetached",
+          "startLine": 33,
+          "endLine": 36,
+          "params": [
+            "browser"
+          ]
+        },
+        {
+          "name": "OnDevToolsEvent",
+          "startLine": 38,
+          "endLine": 41,
+          "params": [
+            "browser",
+            "method",
+            "parameters"
+          ]
+        },
+        {
+          "name": "OnDevToolsMessage",
+          "startLine": 43,
+          "endLine": 46,
+          "params": [
+            "browser",
+            "message"
+          ]
+        },
+        {
+          "name": "OnDevToolsMethodResult",
+          "startLine": 48,
+          "endLine": 61,
+          "params": [
+            "browser",
+            "messageId",
+            "success",
+            "result"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "TaskMethodDevToolsMessageObserver",
+          "startLine": 13,
+          "endLine": 67,
+          "methods": [
+            "TaskMethodDevToolsMessageObserver",
+            "Dispose",
+            "OnDevToolsAgentAttached",
+            "OnDevToolsAgentDetached",
+            "OnDevToolsEvent",
+            "OnDevToolsMessage",
+            "OnDevToolsMethodResult"
+          ],
+          "properties": [
+            "taskCompletionSource",
+            "matchMessageId",
+            "Task"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "TaskMethodDevToolsMessageObserver",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "Task",
+          "line": 63,
+          "isDefault": false
+        },
+        {
+          "name": "TaskMethodDevToolsMessageObserver",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "OnDevToolsMethodResult",
+          "callee": "new MemoryStream",
+          "lineNumber": 53
+        },
+        {
+          "caller": "OnDevToolsMethodResult",
+          "callee": "result.CopyTo",
+          "lineNumber": 55
+        },
+        {
+          "caller": "OnDevToolsMethodResult",
+          "callee": "Tuple.Create",
+          "lineNumber": 57
+        },
+        {
+          "caller": "OnDevToolsMethodResult",
+          "callee": "memoryStream.ToArray",
+          "lineNumber": 57
+        },
+        {
+          "caller": "OnDevToolsMethodResult",
+          "callee": "taskCompletionSource.TrySetResult",
+          "lineNumber": 59
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/MenuHandler.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 26,
+      "functions": [
+        {
+          "name": "OnBeforeContextMenu",
+          "startLine": 10,
+          "endLine": 14,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "parameters",
+            "model"
+          ]
+        },
+        {
+          "name": "OnContextMenuCommand",
+          "startLine": 16,
+          "endLine": 19,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "parameters",
+            "commandId",
+            "eventFlags"
+          ]
+        },
+        {
+          "name": "OnContextMenuDismissed",
+          "startLine": 21,
+          "endLine": 24,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame"
+          ]
+        },
+        {
+          "name": "RunContextMenu",
+          "startLine": 26,
+          "endLine": 29,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "parameters",
+            "model",
+            "callback"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "MenuHandler",
+          "startLine": 8,
+          "endLine": 30,
+          "methods": [
+            "OnBeforeContextMenu",
+            "OnContextMenuCommand",
+            "OnContextMenuDismissed",
+            "RunContextMenu"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "OnBeforeContextMenu",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "OnContextMenuCommand",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "OnContextMenuDismissed",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "RunContextMenu",
+          "line": 26,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "OnBeforeContextMenu",
+          "callee": "model.Clear",
+          "lineNumber": 13
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/PopUpHandle.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 24,
+      "functions": [
+        {
+          "name": "DoClose",
+          "startLine": 7,
+          "endLine": 10,
+          "params": [
+            "chromiumWebBrowser",
+            "browser"
+          ]
+        },
+        {
+          "name": "OnAfterCreated",
+          "startLine": 12,
+          "endLine": 15,
+          "params": [
+            "chromiumWebBrowser",
+            "browser"
+          ]
+        },
+        {
+          "name": "OnBeforeClose",
+          "startLine": 17,
+          "endLine": 20,
+          "params": [
+            "chromiumWebBrowser",
+            "browser"
+          ]
+        },
+        {
+          "name": "OnBeforePopup",
+          "startLine": 22,
+          "endLine": 28,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "targetUrl",
+            "targetFrameName",
+            "targetDisposition",
+            "userGesture",
+            "popupFeatures",
+            "windowInfo",
+            "browserSettings",
+            "noJavascriptAccess",
+            "newBrowser"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "PopUpHandle",
+          "startLine": 5,
+          "endLine": 29,
+          "methods": [
+            "DoClose",
+            "OnAfterCreated",
+            "OnBeforeClose",
+            "OnBeforePopup"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "DoClose",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "OnAfterCreated",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "OnBeforeClose",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "OnBeforePopup",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "OnBeforePopup",
+          "callee": "browser.MainFrame.LoadUrl",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeRequestHandler.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 12,
+      "functions": [
+        {
+          "name": "GetResourceRequestHandler",
+          "startLine": 8,
+          "endLine": 11,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "request",
+            "isNavigation",
+            "isDownload",
+            "requestInitiator",
+            "disableDefaultHandling"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "YoutubeRequestHandler",
+          "startLine": 6,
+          "endLine": 12,
+          "methods": [
+            "GetResourceRequestHandler"
+          ],
+          "properties": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "GetResourceRequestHandler",
+          "callee": "new YoutubeResourceRequestHandler",
+          "lineNumber": 10
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeResourceRequestHandler.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 15,
+      "functions": [
+        {
+          "name": "OnBeforeResourceLoad",
+          "startLine": 10,
+          "endLine": 14,
+          "params": [
+            "chromiumWebBrowser",
+            "browser",
+            "frame",
+            "request",
+            "callback"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "YoutubeResourceRequestHandler",
+          "startLine": 8,
+          "endLine": 15,
+          "methods": [
+            "OnBeforeResourceLoad"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "YoutubeResourceRequestHandler",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "OnBeforeResourceLoad",
+          "callee": "request.SetReferrer",
+          "lineNumber": 12
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Form1.Designer.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 57,
+      "nonEmptyLines": 51,
+      "functions": [
+        {
+          "name": "Dispose",
+          "startLine": 14,
+          "endLine": 21,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "InitializeComponent",
+          "startLine": 29,
+          "endLine": 52,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Form1",
+          "startLine": 3,
+          "endLine": 55,
+          "methods": [
+            "Dispose",
+            "InitializeComponent"
+          ],
+          "properties": [
+            "components"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Dispose",
+          "callee": "components.Dispose",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Dispose",
+          "callee": "base.Dispose",
+          "lineNumber": 20
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.SuspendLayout",
+          "lineNumber": 31
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "System.Drawing.Color.FromArgb",
+          "lineNumber": 37
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.ResumeLayout",
+          "lineNumber": 50
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Form1.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 648,
+      "nonEmptyLines": 594,
+      "functions": [
+        {
+          "name": "Form1",
+          "startLine": 41,
+          "endLine": 108,
+          "params": []
+        },
+        {
+          "name": "HandleParseError",
+          "startLine": 123,
+          "endLine": 131,
+          "params": [
+            "errs"
+          ]
+        },
+        {
+          "name": "ListenToParent",
+          "startLine": 136,
+          "endLine": 196,
+          "params": []
+        },
+        {
+          "name": "ProcessMessage",
+          "startLine": 198,
+          "endLine": 288,
+          "params": [
+            "obj"
+          ]
+        },
+        {
+          "name": "HandleSuspend",
+          "startLine": 290,
+          "endLine": 300,
+          "params": []
+        },
+        {
+          "name": "HandleResume",
+          "startLine": 302,
+          "endLine": 321,
+          "params": []
+        },
+        {
+          "name": "Form1_FormClosing",
+          "startLine": 323,
+          "endLine": 330,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "SendToParent",
+          "startLine": 332,
+          "endLine": 338,
+          "params": [
+            "obj"
+          ]
+        },
+        {
+          "name": "InitializeCefSharp",
+          "startLine": 343,
+          "endLine": 445,
+          "params": []
+        },
+        {
+          "name": "ChromeBrowser_ConsoleMessage",
+          "startLine": 447,
+          "endLine": 450,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ChromeBrowser_TitleChanged",
+          "startLine": 452,
+          "endLine": 455,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ChromeBrowser_LoadingStateChanged",
+          "startLine": 457,
+          "endLine": 556,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "RestoreLivelyProperties",
+          "startLine": 558,
+          "endLine": 574,
+          "params": [
+            "propertyPath"
+          ]
+        },
+        {
+          "name": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "startLine": 576,
+          "endLine": 599,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ChromeBrowser_LoadError",
+          "startLine": 601,
+          "endLine": 614,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ResumeRenderingSubProcess",
+          "startLine": 620,
+          "endLine": 626,
+          "params": []
+        },
+        {
+          "name": "SuspendRenderingSubProcess",
+          "startLine": 632,
+          "endLine": 641,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Form1",
+          "startLine": 26,
+          "endLine": 647,
+          "methods": [
+            "Form1",
+            "HandleParseError",
+            "ListenToParent",
+            "ProcessMessage",
+            "HandleSuspend",
+            "HandleResume",
+            "Form1_FormClosing",
+            "SendToParent",
+            "InitializeCefSharp",
+            "ChromeBrowser_ConsoleMessage",
+            "ChromeBrowser_TitleChanged",
+            "ChromeBrowser_LoadingStateChanged",
+            "RestoreLivelyProperties",
+            "ChromeBrowser_IsBrowserInitializedChanged1",
+            "ChromeBrowser_LoadError",
+            "ResumeRenderingSubProcess",
+            "SuspendRenderingSubProcess"
+          ],
+          "properties": [
+            "isPaused",
+            "chromeBrowser",
+            "startArgs",
+            "initializedServices",
+            "hardwareUsageService",
+            "audioVisualizerService",
+            "nowPlayingService",
+            "cefD3DRenderingSubProcessId",
+            "SystemTheme",
+            "IsDebugging",
+            "CreateParams"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Form1",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "ListenToParent",
+          "line": 136,
+          "isDefault": false
+        },
+        {
+          "name": "InitializeCefSharp",
+          "line": 343,
+          "isDefault": false
+        },
+        {
+          "name": "Form1",
+          "line": 26,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Form1",
+          "callee": "InitializeComponent",
+          "lineNumber": 43
+        },
+        {
+          "caller": "Form1",
+          "callee": "new StartArgs",
+          "lineNumber": 46
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Size",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>(Environment.GetCommandLineArgs())\n                    .WithParsed((x) => startArgs = x)\n                    .WithNotParsed",
+          "lineNumber": 70
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>(Environment.GetCommandLineArgs())\n                    .WithParsed",
+          "lineNumber": 70
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>",
+          "lineNumber": 70
+        },
+        {
+          "caller": "Form1",
+          "callee": "Environment.GetCommandLineArgs",
+          "lineNumber": 70
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Point",
+          "lineNumber": 76
+        },
+        {
+          "caller": "Form1",
+          "callee": "startArgs.Geometry.Split",
+          "lineNumber": 80
+        },
+        {
+          "caller": "Form1",
+          "callee": "int.TryParse",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Form1",
+          "callee": "int.TryParse",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Size",
+          "lineNumber": 83
+        },
+        {
+          "caller": "Form1",
+          "callee": "Color.FromArgb",
+          "lineNumber": 87
+        },
+        {
+          "caller": "Form1",
+          "callee": "Color.FromArgb",
+          "lineNumber": 88
+        },
+        {
+          "caller": "Form1",
+          "callee": "InitializeCefSharp",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Form1",
+          "callee": "ex.SendError",
+          "lineNumber": 103
+        },
+        {
+          "caller": "Form1",
+          "callee": "ListenToParent",
+          "lineNumber": 106
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "string.Join(Environment.NewLine, errs).SendError",
+          "lineNumber": 126
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "string.Join",
+          "lineNumber": 126
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "Environment.Exit",
+          "lineNumber": 130
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new StreamReader",
+          "lineNumber": 141
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Console.OpenStandardInput",
+          "lineNumber": 141
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Task.Run",
+          "lineNumber": 144
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "reader.ReadLineAsync",
+          "lineNumber": 149
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Console.WriteLine",
+          "lineNumber": 151
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 153
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "JsonConvert.DeserializeObject<IpcMessage>",
+          "lineNumber": 162
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new JsonSerializerSettings",
+          "lineNumber": 162
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new IpcMessageConverter",
+          "lineNumber": 162
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "this.Invoke",
+          "lineNumber": 167
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "ProcessMessage",
+          "lineNumber": 171
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "ie1.SendError",
+          "lineNumber": 175
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "ie2.SendError",
+          "lineNumber": 181
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "ex.SendError",
+          "lineNumber": 189
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "reader?.Dispose",
+          "lineNumber": 193
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Application.Exit",
+          "lineNumber": 194
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser?.Reload",
+          "lineNumber": 203
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "HandleSuspend",
+          "lineNumber": 206
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "HandleResume",
+          "lineNumber": 209
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.GetBrowserHost()?.SetAudioMuted",
+          "lineNumber": 213
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.GetBrowserHost",
+          "lineNumber": 213
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.CaptureScreenshot",
+          "lineNumber": 220
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "ie.SendError",
+          "lineNumber": 225
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "SendToParent",
+          "lineNumber": 229
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "new LivelyMessageScreenshot",
+          "lineNumber": 229
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "Path.GetFileName",
+          "lineNumber": 231
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 238
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 242
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 246
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 250
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 254
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "Path.Combine",
+          "lineNumber": 258
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "Path.GetDirectoryName",
+          "lineNumber": 258
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 259
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "File.Exists",
+          "lineNumber": 259
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "RestoreLivelyProperties",
+          "lineNumber": 265
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 269
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 275
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 275
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 281
+        },
+        {
+          "caller": "ProcessMessage",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 281
+        },
+        {
+          "caller": "HandleSuspend",
+          "callee": "SuspendRenderingSubProcess",
+          "lineNumber": 292
+        },
+        {
+          "caller": "HandleSuspend",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 295
+        },
+        {
+          "caller": "HandleSuspend",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 296
+        },
+        {
+          "caller": "HandleSuspend",
+          "callee": "new WallpaperPlaybackState",
+          "lineNumber": 296
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "ResumeRenderingSubProcess",
+          "lineNumber": 304
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 309
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 310
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "new WallpaperPlaybackState",
+          "lineNumber": 310
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 317
+        },
+        {
+          "caller": "HandleResume",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 317
+        },
+        {
+          "caller": "Form1_FormClosing",
+          "callee": "audioVisualizerService?.Dispose",
+          "lineNumber": 325
+        },
+        {
+          "caller": "Form1_FormClosing",
+          "callee": "hardwareUsageService?.Stop",
+          "lineNumber": 326
+        },
+        {
+          "caller": "Form1_FormClosing",
+          "callee": "nowPlayingService?.Stop",
+          "lineNumber": 327
+        },
+        {
+          "caller": "Form1_FormClosing",
+          "callee": "chromeBrowser?.Dispose",
+          "lineNumber": 328
+        },
+        {
+          "caller": "Form1_FormClosing",
+          "callee": "Cef.Shutdown",
+          "lineNumber": 329
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "Console.WriteLine",
+          "lineNumber": 335
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 335
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "Debug.WriteLine",
+          "lineNumber": 337
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 337
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new CefSettings",
+          "lineNumber": 345
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.Combine",
+          "lineNumber": 352
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetTempPath",
+          "lineNumber": 352
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetRandomFileName",
+          "lineNumber": 352
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "settings.CefCommandLineArgs.Add",
+          "lineNumber": 357
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "settings.CefCommandLineArgs.Add",
+          "lineNumber": 359
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "settings.CefCommandLineArgs.Add",
+          "lineNumber": 361
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.Combine",
+          "lineNumber": 362
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Environment.GetFolderPath",
+          "lineNumber": 362
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "string.IsNullOrWhiteSpace",
+          "lineNumber": 365
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "int.TryParse",
+          "lineNumber": 365
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "string.IsNullOrWhiteSpace",
+          "lineNumber": 368
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "settings.CefCommandLineArgs.Add",
+          "lineNumber": 372
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Cef.Initialize",
+          "lineNumber": 377
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "WebContentUtil.GetContentType",
+          "lineNumber": 378
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new ChromiumWebBrowser",
+          "lineNumber": 383
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "chromeBrowser.Load",
+          "lineNumber": 384
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new ChromiumWebBrowser",
+          "lineNumber": 389
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new YoutubeRequestHandler",
+          "lineNumber": 391
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "chromeBrowser.Load",
+          "lineNumber": 393
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new ChromiumWebBrowser",
+          "lineNumber": 398
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "\"Failed to parse url\".SendError",
+          "lineNumber": 403
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new ArgumentException",
+          "lineNumber": 404
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new NotImplementedException",
+          "lineNumber": 407
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "settings.RegisterScheme",
+          "lineNumber": 412
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new CefCustomScheme",
+          "lineNumber": 412
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new FolderSchemeHandlerFactory",
+          "lineNumber": 416
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetDirectoryName",
+          "lineNumber": 418
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetFileName",
+          "lineNumber": 419
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetFileName",
+          "lineNumber": 420
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Cef.Initialize",
+          "lineNumber": 424
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new ChromiumWebBrowser",
+          "lineNumber": 425
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "Path.GetFileName",
+          "lineNumber": 425
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new NotImplementedException",
+          "lineNumber": 429
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new MenuHandler",
+          "lineNumber": 433
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "new PopUpHandle",
+          "lineNumber": 435
+        },
+        {
+          "caller": "InitializeCefSharp",
+          "callee": "this.Controls.Add",
+          "lineNumber": 437
+        },
+        {
+          "caller": "ChromeBrowser_ConsoleMessage",
+          "callee": "$\"{e.Message}, source: {e.Source} ({e.Line})\".SendConsole",
+          "lineNumber": 449
+        },
+        {
+          "caller": "ChromeBrowser_TitleChanged",
+          "callee": "this.Invoke",
+          "lineNumber": 454
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "chromeBrowser.TryGetCefD3DRenderingSubProcessId",
+          "lineNumber": 463
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "\"Failed to retrieve GetCefD3DRenderingSubProcessId\".SendError",
+          "lineNumber": 464
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "WebContentUtil.GetContentType",
+          "lineNumber": 470
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "chromeBrowser.TryHideShaderToyGui",
+          "lineNumber": 473
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "RestoreLivelyProperties",
+          "lineNumber": 479
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "SendToParent",
+          "lineNumber": 482
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "new LivelyMessageWallpaperLoaded",
+          "lineNumber": 482
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "new NAudioVisualizerService",
+          "lineNumber": 489
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "chromeBrowser.ExecuteScriptAsyncEx",
+          "lineNumber": 499
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "audioVisualizerService.Start",
+          "lineNumber": 507
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "new NpsmNowPlayingService",
+          "lineNumber": 512
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 521
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 521
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "nowPlayingService.Start",
+          "lineNumber": 530
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "new HardwareUsageService",
+          "lineNumber": 535
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 545
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 545
+        },
+        {
+          "caller": "ChromeBrowser_LoadingStateChanged",
+          "callee": "hardwareUsageService.Start",
+          "lineNumber": 553
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "LivelyPropertyUtil.LoadProperty",
+          "lineNumber": 562
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "Path.GetDirectoryName",
+          "lineNumber": 562
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "chromeBrowser.ExecuteScriptAsync",
+          "lineNumber": 565
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "Task.FromResult",
+          "lineNumber": 567
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "ex.SendError",
+          "lineNumber": 572
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "SendToParent",
+          "lineNumber": 579
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "new LivelyMessageHwnd",
+          "lineNumber": 579
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "chromeBrowser.GetBrowser().GetHost().GetWindowHandle().ToInt32",
+          "lineNumber": 581
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "chromeBrowser.GetBrowser().GetHost().GetWindowHandle",
+          "lineNumber": 581
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "chromeBrowser.GetBrowser().GetHost",
+          "lineNumber": 581
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "chromeBrowser.GetBrowser",
+          "lineNumber": 581
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "chromeBrowser.GetDevToolsClient",
+          "lineNumber": 591
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "devToolsClient.Emulation.SetAutoDarkModeOverrideAsync",
+          "lineNumber": 592
+        },
+        {
+          "caller": "ChromeBrowser_IsBrowserInitializedChanged1",
+          "callee": "ex.SendError",
+          "lineNumber": 597
+        },
+        {
+          "caller": "ChromeBrowser_LoadError",
+          "callee": "Debug.WriteLine",
+          "lineNumber": 603
+        },
+        {
+          "caller": "ChromeBrowser_LoadError",
+          "callee": "chromeBrowser.LoadHtml",
+          "lineNumber": 609
+        },
+        {
+          "caller": "ResumeRenderingSubProcess",
+          "callee": "NativeMethods.DebugActiveProcessStop",
+          "lineNumber": 625
+        },
+        {
+          "caller": "SuspendRenderingSubProcess",
+          "callee": "NativeMethods.DebugActiveProcess",
+          "lineNumber": 640
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 17,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Program.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 26,
+      "functions": [
+        {
+          "name": "Main",
+          "startLine": 12,
+          "endLine": 26,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Program",
+          "startLine": 7,
+          "endLine": 27,
+          "methods": [
+            "Main"
+          ],
+          "properties": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Main",
+          "callee": "File.Delete",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Main",
+          "callee": "Path.Combine",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Main",
+          "callee": "Environment.GetFolderPath",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Main",
+          "callee": "Application.EnableVisualStyles",
+          "lineNumber": 23
+        },
+        {
+          "caller": "Main",
+          "callee": "Application.SetCompatibleTextRenderingDefault",
+          "lineNumber": 24
+        },
+        {
+          "caller": "Main",
+          "callee": "Application.Run",
+          "lineNumber": 25
+        },
+        {
+          "caller": "Main",
+          "callee": "new Form1",
+          "lineNumber": 25
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 33,
+      "nonEmptyLines": 29,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Resources.Designer.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 63,
+      "functions": [
+        {
+          "name": "Resources",
+          "startLine": 32,
+          "endLine": 35,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Resources",
+          "startLine": 22,
+          "endLine": 70,
+          "methods": [
+            "Resources"
+          ],
+          "properties": [
+            "resourceMan",
+            "resourceCulture",
+            "ResourceManager",
+            "Culture"
+          ]
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Settings.Designer.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 25,
+      "classes": [
+        {
+          "name": "Settings",
+          "startLine": 15,
+          "endLine": 29,
+          "methods": [],
+          "properties": [
+            "defaultInstance",
+            "Default"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Default",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/StartArgs.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 86,
+      "nonEmptyLines": 71,
+      "classes": [
+        {
+          "name": "StartArgs",
+          "startLine": 6,
+          "endLine": 85,
+          "methods": [],
+          "properties": [
+            "Url",
+            "Properties",
+            "Type",
+            "DisplayDevice",
+            "Geometry",
+            "AudioVisualizer",
+            "AudioVisualizerDeviceId",
+            "DebugPort",
+            "CachePath",
+            "Volume",
+            "SysInfo",
+            "NowPlaying",
+            "PauseEvent",
+            "VerboseLog",
+            "Theme"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Url",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "Properties",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "Type",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayDevice",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "Geometry",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "AudioVisualizer",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "AudioVisualizerDeviceId",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "DebugPort",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "CachePath",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "Volume",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "SysInfo",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "NowPlaying",
+          "line": 66,
+          "isDefault": false
+        },
+        {
+          "name": "PauseEvent",
+          "line": 71,
+          "isDefault": false
+        },
+        {
+          "name": "VerboseLog",
+          "line": 76,
+          "isDefault": false
+        },
+        {
+          "name": "Theme",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "StartArgs",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 16,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Form1.Designer.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 94,
+      "nonEmptyLines": 87,
+      "functions": [
+        {
+          "name": "Dispose",
+          "startLine": 14,
+          "endLine": 21,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "InitializeComponent",
+          "startLine": 29,
+          "endLine": 86,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Form1",
+          "startLine": 3,
+          "endLine": 92,
+          "methods": [
+            "Dispose",
+            "InitializeComponent"
+          ],
+          "properties": [
+            "components",
+            "videoView1",
+            "pictureBox1"
+          ]
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Dispose",
+          "callee": "components.Dispose",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Dispose",
+          "callee": "base.Dispose",
+          "lineNumber": 20
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "((System.ComponentModel.ISupportInitialize)(this.videoView1)).BeginInit",
+          "lineNumber": 33
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit",
+          "lineNumber": 34
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.SuspendLayout",
+          "lineNumber": 35
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "System.Drawing.Color.FromArgb",
+          "lineNumber": 64
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.Controls.Add",
+          "lineNumber": 66
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.Controls.Add",
+          "lineNumber": 67
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "((System.ComponentModel.ISupportInitialize)(this.videoView1)).EndInit",
+          "lineNumber": 82
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit",
+          "lineNumber": 83
+        },
+        {
+          "caller": "InitializeComponent",
+          "callee": "this.ResumeLayout",
+          "lineNumber": 84
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Form1.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 535,
+      "nonEmptyLines": 488,
+      "functions": [
+        {
+          "name": "Form1",
+          "startLine": 31,
+          "endLine": 81,
+          "params": []
+        },
+        {
+          "name": "HandleParseError",
+          "startLine": 96,
+          "endLine": 104,
+          "params": [
+            "errs"
+          ]
+        },
+        {
+          "name": "Form1_Load",
+          "startLine": 106,
+          "endLine": 109,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Form1_Shown",
+          "startLine": 111,
+          "endLine": 137,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "InitializeVlc",
+          "startLine": 139,
+          "endLine": 168,
+          "params": []
+        },
+        {
+          "name": "MediaPlayer_EndReached",
+          "startLine": 170,
+          "endLine": 175,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "MediaPlayer_EncounteredError",
+          "startLine": 177,
+          "endLine": 180,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Play",
+          "startLine": 182,
+          "endLine": 182,
+          "params": []
+        },
+        {
+          "name": "Pause",
+          "startLine": 184,
+          "endLine": 184,
+          "params": []
+        },
+        {
+          "name": "IsPlaying",
+          "startLine": 186,
+          "endLine": 186,
+          "params": []
+        },
+        {
+          "name": "SetVolume",
+          "startLine": 188,
+          "endLine": 188,
+          "params": [
+            "volume"
+          ]
+        },
+        {
+          "name": "SetPlaybackSpeed",
+          "startLine": 190,
+          "endLine": 193,
+          "params": [
+            "speed"
+          ]
+        },
+        {
+          "name": "SetMute",
+          "startLine": 195,
+          "endLine": 198,
+          "params": [
+            "mute"
+          ]
+        },
+        {
+          "name": "EnableImageOptions",
+          "startLine": 200,
+          "endLine": 208,
+          "params": [
+            "isEnable"
+          ]
+        },
+        {
+          "name": "SetImageOption",
+          "startLine": 210,
+          "endLine": 217,
+          "params": [
+            "option",
+            "value"
+          ]
+        },
+        {
+          "name": "CaptureScreenshot",
+          "startLine": 219,
+          "endLine": 234,
+          "params": [
+            "filePath"
+          ]
+        },
+        {
+          "name": "GetAspectRatio",
+          "startLine": 236,
+          "endLine": 239,
+          "params": []
+        },
+        {
+          "name": "SetScale",
+          "startLine": 241,
+          "endLine": 275,
+          "params": [
+            "scaler"
+          ]
+        },
+        {
+          "name": "Form1_SizeChanged",
+          "startLine": 277,
+          "endLine": 280,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ListenToParent",
+          "startLine": 282,
+          "endLine": 378,
+          "params": []
+        },
+        {
+          "name": "RestoreLivelyProperties",
+          "startLine": 380,
+          "endLine": 400,
+          "params": [
+            "propertyPath"
+          ]
+        },
+        {
+          "name": "SetLivelyProperty",
+          "startLine": 402,
+          "endLine": 488,
+          "params": [
+            "key",
+            "value"
+          ]
+        },
+        {
+          "name": "Form1_FormClosed",
+          "startLine": 490,
+          "endLine": 496,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "SendToParent",
+          "startLine": 498,
+          "endLine": 504,
+          "params": [
+            "obj"
+          ]
+        },
+        {
+          "name": "MapWithPivot",
+          "startLine": 506,
+          "endLine": 533,
+          "params": [
+            "value",
+            "sourceMin",
+            "sourceMax",
+            "sourcePivot",
+            "targetMin",
+            "targetMax",
+            "targetPivot"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "Form1",
+          "startLine": 21,
+          "endLine": 534,
+          "methods": [
+            "Form1",
+            "HandleParseError",
+            "Form1_Load",
+            "Form1_Shown",
+            "InitializeVlc",
+            "MediaPlayer_EndReached",
+            "MediaPlayer_EncounteredError",
+            "Play",
+            "Pause",
+            "IsPlaying",
+            "SetVolume",
+            "SetPlaybackSpeed",
+            "SetMute",
+            "EnableImageOptions",
+            "SetImageOption",
+            "CaptureScreenshot",
+            "GetAspectRatio",
+            "SetScale",
+            "Form1_SizeChanged",
+            "ListenToParent",
+            "RestoreLivelyProperties",
+            "SetLivelyProperty",
+            "Form1_FormClosed",
+            "SendToParent",
+            "MapWithPivot"
+          ],
+          "properties": [
+            "libVLC",
+            "startArgs",
+            "mediaPlayer",
+            "media",
+            "CurrentScaler",
+            "IsDebugging",
+            "CreateParams"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Form1",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "Play",
+          "line": 182,
+          "isDefault": false
+        },
+        {
+          "name": "Pause",
+          "line": 184,
+          "isDefault": false
+        },
+        {
+          "name": "IsPlaying",
+          "line": 186,
+          "isDefault": false
+        },
+        {
+          "name": "SetVolume",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "CaptureScreenshot",
+          "line": 219,
+          "isDefault": false
+        },
+        {
+          "name": "ListenToParent",
+          "line": 282,
+          "isDefault": false
+        },
+        {
+          "name": "Form1",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Form1",
+          "callee": "InitializeComponent",
+          "lineNumber": 33
+        },
+        {
+          "caller": "Form1",
+          "callee": "new StartArgs",
+          "lineNumber": 36
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Size",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>(Environment.GetCommandLineArgs())\n                  .WithParsed((x) => startArgs = x)\n                  .WithNotParsed",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>(Environment.GetCommandLineArgs())\n                  .WithParsed",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Form1",
+          "callee": "Parser.Default.ParseArguments<StartArgs>",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Form1",
+          "callee": "Environment.GetCommandLineArgs",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Point",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Form1",
+          "callee": "startArgs.Geometry.Split",
+          "lineNumber": 64
+        },
+        {
+          "caller": "Form1",
+          "callee": "int.TryParse",
+          "lineNumber": 65
+        },
+        {
+          "caller": "Form1",
+          "callee": "int.TryParse",
+          "lineNumber": 65
+        },
+        {
+          "caller": "Form1",
+          "callee": "new Size",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Form1",
+          "callee": "Color.FromArgb",
+          "lineNumber": 71
+        },
+        {
+          "caller": "Form1",
+          "callee": "Color.FromArgb",
+          "lineNumber": 72
+        },
+        {
+          "caller": "Form1",
+          "callee": "ThemeUtil.GetWindowsTheme",
+          "lineNumber": 75
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "string.Join(Environment.NewLine, errs).SendError",
+          "lineNumber": 99
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "string.Join",
+          "lineNumber": 99
+        },
+        {
+          "caller": "HandleParseError",
+          "callee": "Environment.Exit",
+          "lineNumber": 103
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "SendToParent",
+          "lineNumber": 113
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "new LivelyMessageHwnd",
+          "lineNumber": 113
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "this.Handle.ToInt32",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "InitializeVlc",
+          "lineNumber": 119
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "new Media",
+          "lineNumber": 121
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "mediaPlayer.Play",
+          "lineNumber": 122
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "RestoreLivelyProperties",
+          "lineNumber": 124
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "SendToParent",
+          "lineNumber": 125
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "new LivelyMessageWallpaperLoaded",
+          "lineNumber": 125
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "ex.SendError",
+          "lineNumber": 129
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "Environment.Exit",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Form1_Shown",
+          "callee": "ListenToParent",
+          "lineNumber": 135
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "Task.Delay",
+          "lineNumber": 142
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "Core.Initialize",
+          "lineNumber": 143
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "new LibVLC",
+          "lineNumber": 148
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "new MediaPlayer",
+          "lineNumber": 154
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "EnableImageOptions",
+          "lineNumber": 166
+        },
+        {
+          "caller": "InitializeVlc",
+          "callee": "SetScale",
+          "lineNumber": 167
+        },
+        {
+          "caller": "MediaPlayer_EndReached",
+          "callee": "ThreadPool.QueueUserWorkItem",
+          "lineNumber": 174
+        },
+        {
+          "caller": "MediaPlayer_EndReached",
+          "callee": "mediaPlayer.Play",
+          "lineNumber": 174
+        },
+        {
+          "caller": "MediaPlayer_EncounteredError",
+          "callee": "\"MediaPlayer_EncounteredError\".SendError",
+          "lineNumber": 179
+        },
+        {
+          "caller": "Play",
+          "callee": "mediaPlayer.Play",
+          "lineNumber": 182
+        },
+        {
+          "caller": "Pause",
+          "callee": "mediaPlayer.SetPause",
+          "lineNumber": 184
+        },
+        {
+          "caller": "SetPlaybackSpeed",
+          "callee": "mediaPlayer.SetRate",
+          "lineNumber": 192
+        },
+        {
+          "caller": "EnableImageOptions",
+          "callee": "\"Hardware decoding is disabled, filters turned off for stability.\".SendLog",
+          "lineNumber": 203
+        },
+        {
+          "caller": "EnableImageOptions",
+          "callee": "mediaPlayer.SetAdjustInt",
+          "lineNumber": 207
+        },
+        {
+          "caller": "SetImageOption",
+          "callee": "mediaPlayer.SetAdjustFloat",
+          "lineNumber": 216
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "EnableImageOptions",
+          "lineNumber": 227
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "mediaPlayer.TakeSnapshot",
+          "lineNumber": 228
+        },
+        {
+          "caller": "CaptureScreenshot",
+          "callee": "EnableImageOptions",
+          "lineNumber": 232
+        },
+        {
+          "caller": "SetScale",
+          "callee": "GetAspectRatio",
+          "lineNumber": 257
+        },
+        {
+          "caller": "SetScale",
+          "callee": "GetAspectRatio",
+          "lineNumber": 264
+        },
+        {
+          "caller": "Form1_SizeChanged",
+          "callee": "SetScale",
+          "lineNumber": 279
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new StreamReader",
+          "lineNumber": 287
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Console.OpenStandardInput",
+          "lineNumber": 287
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Task.Run",
+          "lineNumber": 291
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "reader.ReadLineAsync",
+          "lineNumber": 296
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Console.WriteLine",
+          "lineNumber": 298
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 300
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "JsonConvert.DeserializeObject<IpcMessage>",
+          "lineNumber": 310
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new JsonSerializerSettings",
+          "lineNumber": 310
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new IpcMessageConverter",
+          "lineNumber": 310
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "this.Invoke",
+          "lineNumber": 311
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "CaptureScreenshot",
+          "lineNumber": 320
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "SendToParent",
+          "lineNumber": 321
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "new LivelyMessageScreenshot",
+          "lineNumber": 321
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Path.GetFileName",
+          "lineNumber": 322
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "SetLivelyProperty",
+          "lineNumber": 328
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "SetLivelyProperty",
+          "lineNumber": 332
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "SetLivelyProperty",
+          "lineNumber": 336
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Pause",
+          "lineNumber": 339
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "Play",
+          "lineNumber": 342
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "SetVolume",
+          "lineNumber": 349
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "RestoreLivelyProperties",
+          "lineNumber": 354
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "ie.SendError",
+          "lineNumber": 364
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "e.SendError",
+          "lineNumber": 372
+        },
+        {
+          "caller": "ListenToParent",
+          "callee": "this.Invoke",
+          "lineNumber": 376
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "EnableImageOptions",
+          "lineNumber": 385
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "LivelyPropertyUtil.LoadProperty",
+          "lineNumber": 386
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "Path.GetDirectoryName",
+          "lineNumber": 386
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "SetLivelyProperty",
+          "lineNumber": 388
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "ex.SendError",
+          "lineNumber": 393
+        },
+        {
+          "caller": "RestoreLivelyProperties",
+          "callee": "EnableImageOptions",
+          "lineNumber": 398
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "key.ToLower",
+          "lineNumber": 422
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "Convert.ToSingle",
+          "lineNumber": 426
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "MapWithPivot",
+          "lineNumber": 428
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetImageOption",
+          "lineNumber": 429
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "Convert.ToSingle",
+          "lineNumber": 434
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "MapWithPivot",
+          "lineNumber": 436
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetImageOption",
+          "lineNumber": 437
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "Convert.ToSingle",
+          "lineNumber": 442
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "MapWithPivot",
+          "lineNumber": 444
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetImageOption",
+          "lineNumber": 445
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "Convert.ToSingle",
+          "lineNumber": 450
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "MapWithPivot",
+          "lineNumber": 452
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetImageOption",
+          "lineNumber": 453
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "Convert.ToSingle",
+          "lineNumber": 467
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetPlaybackSpeed",
+          "lineNumber": 470
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetScale",
+          "lineNumber": 476
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "SetMute",
+          "lineNumber": 481
+        },
+        {
+          "caller": "SetLivelyProperty",
+          "callee": "$\"Unknown livelyproperty: {key}\".SendLog",
+          "lineNumber": 485
+        },
+        {
+          "caller": "Form1_FormClosed",
+          "callee": "mediaPlayer?.Stop",
+          "lineNumber": 492
+        },
+        {
+          "caller": "Form1_FormClosed",
+          "callee": "mediaPlayer?.Dispose",
+          "lineNumber": 493
+        },
+        {
+          "caller": "Form1_FormClosed",
+          "callee": "libVLC?.Dispose",
+          "lineNumber": 494
+        },
+        {
+          "caller": "Form1_FormClosed",
+          "callee": "media?.Dispose",
+          "lineNumber": 495
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "Console.WriteLine",
+          "lineNumber": 501
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 501
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "Debug.WriteLine",
+          "lineNumber": 503
+        },
+        {
+          "caller": "SendToParent",
+          "callee": "JsonConvert.SerializeObject",
+          "lineNumber": 503
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 25,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Program.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 21,
+      "functions": [
+        {
+          "name": "Main",
+          "startLine": 14,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "Program",
+          "startLine": 9,
+          "endLine": 21,
+          "methods": [
+            "Main"
+          ],
+          "properties": []
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "Main",
+          "callee": "Application.EnableVisualStyles",
+          "lineNumber": 17
+        },
+        {
+          "caller": "Main",
+          "callee": "Application.SetCompatibleTextRenderingDefault",
+          "lineNumber": 18
+        },
+        {
+          "caller": "Main",
+          "callee": "Application.Run",
+          "lineNumber": 19
+        },
+        {
+          "caller": "Main",
+          "callee": "new Form1",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 33,
+      "nonEmptyLines": 29,
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 0,
+        "functionCount": 0,
+        "classCount": 0
+      }
+    }
+  ]
+}

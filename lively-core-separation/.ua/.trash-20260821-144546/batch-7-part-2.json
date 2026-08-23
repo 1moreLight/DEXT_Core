@@ -1,0 +1,1336 @@
+{
+  "nodes": [
+    {
+      "id": "config:src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj",
+      "type": "config",
+      "name": "Lively.Grpc.Client.csproj",
+      "filePath": "src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj",
+      "summary": "定义 netstandard2.0 gRPC 客户端类库，使用 GrpcDotNetNamedPipes 并引用 Common、Grpc.Common 与 Models 项目。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "grpc-client"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 SDK-style 项目配置目标框架、包依赖和项目引用。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "type": "file",
+      "name": "UserSettingsClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "summary": "实现用户设置 gRPC 客户端，在本地设置模型与 Protobuf SettingsDataModel 之间转换，并提供同步和异步加载、保存及应用规则操作。",
+      "tags": [
+        "grpc-client",
+        "ipc",
+        "user-settings"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "class",
+      "name": "UserSettingsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        13,
+        410
+      ],
+      "summary": "作为本文件的核心类型，实现用户设置 gRPC 客户端，在本地设置模型与 Protobuf SettingsDataModel 之间转换，并提供同步和异步加载、保存及应用规则操作。",
+      "tags": [
+        "class",
+        "service",
+        "user-settings"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:CreateGrpcSettings",
+      "type": "function",
+      "name": "CreateGrpcSettings",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        169,
+        291
+      ],
+      "summary": "把本地设置模型转换为 Protobuf SettingsDataModel。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:CreateSettingsFromGrpc",
+      "type": "function",
+      "name": "CreateSettingsFromGrpc",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        293,
+        407
+      ],
+      "summary": "把 Protobuf SettingsDataModel 转换为本地设置模型。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:GetAppRulesSettings",
+      "type": "function",
+      "name": "GetAppRulesSettings",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        53,
+        62
+      ],
+      "summary": "同步读取应用规则设置。",
+      "tags": [
+        "method",
+        "query",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:GetAppRulesSettingsAsync",
+      "type": "function",
+      "name": "GetAppRulesSettingsAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        64,
+        73
+      ],
+      "summary": "异步读取应用规则设置。",
+      "tags": [
+        "method",
+        "query",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Load",
+      "type": "function",
+      "name": "Load",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        135,
+        149
+      ],
+      "summary": "同步加载完整用户设置。",
+      "tags": [
+        "method",
+        "query",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:LoadAsync",
+      "type": "function",
+      "name": "LoadAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        151,
+        165
+      ],
+      "summary": "异步加载完整用户设置。",
+      "tags": [
+        "method",
+        "query",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Save",
+      "type": "function",
+      "name": "Save",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        103,
+        117
+      ],
+      "summary": "同步保存完整用户设置。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SaveAsync",
+      "type": "function",
+      "name": "SaveAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        119,
+        133
+      ],
+      "summary": "异步保存完整用户设置。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SetAppRulesSettings",
+      "type": "function",
+      "name": "SetAppRulesSettings",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        75,
+        87
+      ],
+      "summary": "同步写入应用规则设置。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SetAppRulesSettingsAsync",
+      "type": "function",
+      "name": "SetAppRulesSettingsAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        89,
+        101
+      ],
+      "summary": "异步写入应用规则设置。",
+      "tags": [
+        "method",
+        "command",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "function",
+      "name": "UserSettingsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "lineRange": [
+        20,
+        29
+      ],
+      "summary": "初始化设置服务 gRPC stub。",
+      "tags": [
+        "method",
+        "method",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "type": "file",
+      "name": "WinDesktopCoreClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "summary": "实现桌面核心 gRPC 客户端，控制壁纸创建、设置、预览、关闭、消息与截图，并把服务端事件流转换为本地事件和领域异常。",
+      "tags": [
+        "grpc-client",
+        "ipc",
+        "desktop-wallpaper"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "class",
+      "name": "WinDesktopCoreClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        20,
+        313
+      ],
+      "summary": "作为本文件的核心类型，实现桌面核心 gRPC 客户端，控制壁纸创建、设置、预览、关闭、消息与截图，并把服务端事件流转换为本地事件和领域异常。",
+      "tags": [
+        "class",
+        "service",
+        "desktop-wallpaper"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseAllWallpapers",
+      "type": "function",
+      "name": "CloseAllWallpapers",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        156,
+        159
+      ],
+      "summary": "关闭全部运行壁纸。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseWallpaper",
+      "type": "function",
+      "name": "CloseWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        161,
+        167
+      ],
+      "summary": "按显示器、媒体库条目或类别关闭壁纸。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CreateWallpaper",
+      "type": "function",
+      "name": "CreateWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        91,
+        104
+      ],
+      "summary": "请求核心从文件和类别创建壁纸。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        280,
+        296
+      ],
+      "summary": "取消服务端流并释放 gRPC 客户端或推理资源。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:EditWallpaper",
+      "type": "function",
+      "name": "EditWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        79,
+        89
+      ],
+      "summary": "请求核心编辑指定壁纸条目。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:GetException",
+      "type": "function",
+      "name": "GetException",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        261,
+        276
+      ],
+      "summary": "把 gRPC 壁纸错误类别转换为具体 Lively exception。",
+      "tags": [
+        "method",
+        "query",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:GetWallpapers",
+      "type": "function",
+      "name": "GetWallpapers",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        106,
+        149
+      ],
+      "summary": "读取当前运行壁纸并转换为本地模型。",
+      "tags": [
+        "method",
+        "query",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:PreviewWallpaper",
+      "type": "function",
+      "name": "PreviewWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        151,
+        154
+      ],
+      "summary": "请求预览指定壁纸。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SendMessageWallpaper",
+      "type": "function",
+      "name": "SendMessageWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        185,
+        193
+      ],
+      "summary": "向指定壁纸实例发送 IPC 控制消息。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SetWallpaper",
+      "type": "function",
+      "name": "SetWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        58,
+        67
+      ],
+      "summary": "将指定媒体库壁纸设置到目标显示器。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SubscribeWallpaperChangedStream",
+      "type": "function",
+      "name": "SubscribeWallpaperChangedStream",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        214,
+        240
+      ],
+      "summary": "持续读取壁纸变更服务端流并触发本地事件。",
+      "tags": [
+        "method",
+        "event-stream",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SubscribeWallpaperErrorStream",
+      "type": "function",
+      "name": "SubscribeWallpaperErrorStream",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        242,
+        259
+      ],
+      "summary": "持续读取壁纸错误流并映射领域异常。",
+      "tags": [
+        "method",
+        "event-stream",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:TakeScreenshot",
+      "type": "function",
+      "name": "TakeScreenshot",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        205,
+        212
+      ],
+      "summary": "请求截取指定显示器上的壁纸画面。",
+      "tags": [
+        "method",
+        "command",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "function",
+      "name": "WinDesktopCoreClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "lineRange": [
+        37,
+        54
+      ],
+      "summary": "初始化桌面核心 gRPC stub、事件流和取消资源。",
+      "tags": [
+        "method",
+        "method",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj",
+      "type": "config",
+      "name": "Lively.Grpc.Common.csproj",
+      "filePath": "src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj",
+      "summary": "定义共享 Protobuf/gRPC 契约类库，配置五个 proto 文件生成 C# 类型，并引用 Google.Protobuf、Grpc.Core 与 Grpc.Tools。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "protobuf"
+      ],
+      "complexity": "simple",
+      "languageNotes": "通过 Grpc.Tools 在构建期从 proto3 文件生成 C# message 与 service stub。"
+    },
+    {
+      "id": "file:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "type": "file",
+      "name": "IDepthEstimate.cs",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "summary": "声明单目深度估计契约，定义模型加载、推理运行和资源释放操作。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs:IDepthEstimate",
+      "type": "class",
+      "name": "IDepthEstimate",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "lineRange": [
+        3,
+        8
+      ],
+      "summary": "声明 `IDepthEstimate` 接口，约束声明单目深度估计契约，定义模型加载、推理运行和资源释放操作所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "type": "file",
+      "name": "MiDaS.cs",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "summary": "实现基于 ONNX Runtime 的 MiDaS 深度估计器，加载模型、构造 tensor 输入、运行推理并归一化深度输出。",
+      "tags": [
+        "machine-learning",
+        "onnx",
+        "depth-estimation"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "使用 Microsoft.ML.OnnxRuntime 运行 MiDaS，并以 tensor 作为模型输入输出边界。"
+    },
+    {
+      "id": "class:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "class",
+      "name": "MiDaS",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        14,
+        112
+      ],
+      "summary": "作为本文件的核心类型，实现基于 ONNX Runtime 的 MiDaS 深度估计器，加载模型、构造 tensor 输入、运行推理并归一化深度输出。",
+      "tags": [
+        "class",
+        "service",
+        "depth-estimation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        84,
+        97
+      ],
+      "summary": "取消服务端流并释放 gRPC 客户端或推理资源。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:LoadModel",
+      "type": "function",
+      "name": "LoadModel",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        24,
+        35
+      ],
+      "summary": "创建 ONNX inference session 并加载 MiDaS 模型。",
+      "tags": [
+        "method",
+        "query",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "function",
+      "name": "MiDaS",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        22,
+        22
+      ],
+      "summary": "初始化 MiDaS 会话配置与模型路径。",
+      "tags": [
+        "method",
+        "method",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:NormaliseOutput",
+      "type": "function",
+      "name": "NormaliseOutput",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        73,
+        82
+      ],
+      "summary": "把原始深度 tensor 归一化为稳定的 float array。",
+      "tags": [
+        "method",
+        "image-processing",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Run",
+      "type": "function",
+      "name": "Run",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "lineRange": [
+        37,
+        71
+      ],
+      "summary": "预处理输入图像、运行 ONNX 推理并返回深度数组。",
+      "tags": [
+        "method",
+        "query",
+        "depth-estimation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "type": "file",
+      "name": "ModelInput.cs",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "summary": "定义 MiDaS ONNX 推理输入模型，将像素 tensor 绑定到模型输入名称。",
+      "tags": [
+        "machine-learning",
+        "onnx",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "class",
+      "name": "ModelInput",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "lineRange": [
+        3,
+        15
+      ],
+      "summary": "作为本文件的核心类型，定义 MiDaS ONNX 推理输入模型，将像素 tensor 绑定到模型输入名称。",
+      "tags": [
+        "class",
+        "service",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "function",
+      "name": "ModelInput",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "lineRange": [
+        5,
+        10
+      ],
+      "summary": "从图像 tensor 构造 MiDaS 模型输入。",
+      "tags": [
+        "method",
+        "method",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "type": "file",
+      "name": "ModelOutput.cs",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "summary": "定义 MiDaS ONNX 推理输出模型，接收模型生成的深度 tensor。",
+      "tags": [
+        "machine-learning",
+        "onnx",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "class",
+      "name": "ModelOutput",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "lineRange": [
+        3,
+        19
+      ],
+      "summary": "作为本文件的核心类型，定义 MiDaS ONNX 推理输出模型，接收模型生成的深度 tensor。",
+      "tags": [
+        "class",
+        "service",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "function",
+      "name": "ModelOutput",
+      "filePath": "src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "lineRange": [
+        5,
+        12
+      ],
+      "summary": "封装 MiDaS 推理产生的深度 tensor。",
+      "tags": [
+        "method",
+        "method",
+        "onnx-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "type": "file",
+      "name": "ImageUtil.cs",
+      "filePath": "src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "summary": "将深度估计 float array 转换为 MagickImage，并支持按目标尺寸重排和缩放输出。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "image-processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.ML/Helpers/ImageUtil.cs:ImageUtil",
+      "type": "class",
+      "name": "ImageUtil",
+      "filePath": "src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "lineRange": [
+        10,
+        35
+      ],
+      "summary": "声明 `ImageUtil` 接口，约束将深度估计 float array 转换为 MagickImage，并支持按目标尺寸重排和缩放输出所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "image-processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImage",
+      "type": "function",
+      "name": "FloatArrayToMagickImage",
+      "filePath": "src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "lineRange": [
+        15,
+        24
+      ],
+      "summary": "把归一化深度 float array 转换为灰度 MagickImage。",
+      "tags": [
+        "method",
+        "image-processing",
+        "image-processing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImageResize",
+      "type": "function",
+      "name": "FloatArrayToMagickImageResize",
+      "filePath": "src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "lineRange": [
+        29,
+        34
+      ],
+      "summary": "把深度 float array 重排并缩放为目标尺寸的 MagickImage。",
+      "tags": [
+        "method",
+        "image-processing",
+        "image-processing"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:CreateGrpcSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:CreateSettingsFromGrpc",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:GetAppRulesSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:GetAppRulesSettingsAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Load",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Load",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:LoadAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:LoadAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Save",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:Save",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SaveAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SaveAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SetAppRulesSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:SetAppRulesSettingsAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs:UserSettingsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseAllWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseAllWallpapers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CloseWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CreateWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:CreateWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:EditWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:EditWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:GetException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:GetWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:PreviewWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:PreviewWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SendMessageWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SendMessageWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SetWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SetWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SubscribeWallpaperChangedStream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:SubscribeWallpaperErrorStream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:TakeScreenshot",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:TakeScreenshot",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs:WinDesktopCoreClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs:IDepthEstimate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs:IDepthEstimate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:LoadModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:LoadModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:MiDaS",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:NormaliseOutput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs:Run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/ModelInput.cs:ModelInput",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "target": "class:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "target": "function:src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs:ModelOutput",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "class:src/Lively/Lively.ML/Helpers/ImageUtil.cs:ImageUtil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "class:src/Lively/Lively.ML/Helpers/ImageUtil.cs:ImageUtil",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImageResize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "target": "function:src/Lively/Lively.ML/Helpers/ImageUtil.cs:FloatArrayToMagickImageResize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj",
+      "target": "file:src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj",
+      "target": "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

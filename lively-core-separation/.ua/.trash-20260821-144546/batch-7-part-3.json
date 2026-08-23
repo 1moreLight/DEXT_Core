@@ -1,0 +1,440 @@
+{
+  "nodes": [
+    {
+      "id": "config:src/Lively/Lively.ML/Lively.ML.csproj",
+      "type": "config",
+      "name": "Lively.ML.csproj",
+      "filePath": "src/Lively/Lively.ML/Lively.ML.csproj",
+      "summary": "定义 Lively.ML net8.0 类库，启用 nullable 与 implicit usings，并引用 ONNX Runtime 和 Magick.NET。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "machine-learning"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 SDK-style 项目配置目标框架、包依赖和项目引用。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "type": "file",
+      "name": "AddWallpaperCreateModel.cs",
+      "filePath": "src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "summary": "定义添加壁纸流程的创建模型，封装来源路径、壁纸类别、参数和导入选项。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "wallpaper-library"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/AddWallpaperCreateModel.cs:AddWallpaperCreateModel",
+      "type": "class",
+      "name": "AddWallpaperCreateModel",
+      "filePath": "src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "lineRange": [
+        6,
+        22
+      ],
+      "summary": "作为本文件的核心类型，定义添加壁纸流程的创建模型，封装来源路径、壁纸类别、参数和导入选项。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "wallpaper-library"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "type": "file",
+      "name": "AppMusicExclusionRuleModel.cs",
+      "filePath": "src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "summary": "定义应用音乐排除规则模型，关联应用名称与是否排除其媒体会话。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "class",
+      "name": "AppMusicExclusionRuleModel",
+      "filePath": "src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "lineRange": [
+        5,
+        18
+      ],
+      "summary": "作为本文件的核心类型，定义应用音乐排除规则模型，关联应用名称与是否排除其媒体会话。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "function",
+      "name": "AppMusicExclusionRuleModel",
+      "filePath": "src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "lineRange": [
+        7,
+        11
+      ],
+      "summary": "初始化应用音乐排除规则的名称与排除状态。",
+      "tags": [
+        "method",
+        "method",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/ApplicationModel.cs",
+      "type": "file",
+      "name": "ApplicationModel.cs",
+      "filePath": "src/Lively/Lively.Models/ApplicationModel.cs",
+      "summary": "定义运行应用模型，封装进程标识、名称、显示信息和图标等属性。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "application-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/ApplicationModel.cs:ApplicationModel",
+      "type": "class",
+      "name": "ApplicationModel",
+      "filePath": "src/Lively/Lively.Models/ApplicationModel.cs",
+      "lineRange": [
+        5,
+        15
+      ],
+      "summary": "作为本文件的核心类型，定义运行应用模型，封装进程标识、名称、显示信息和图标等属性。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "application-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "type": "file",
+      "name": "ApplicationRulesModel.cs",
+      "filePath": "src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "summary": "定义应用运行规则模型，关联应用标识与暂停、忽略或终止策略。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "class",
+      "name": "ApplicationRulesModel",
+      "filePath": "src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "lineRange": [
+        6,
+        19
+      ],
+      "summary": "作为本文件的核心类型，定义应用运行规则模型，关联应用标识与暂停、忽略或终止策略。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "function",
+      "name": "ApplicationRulesModel",
+      "filePath": "src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "lineRange": [
+        8,
+        12
+      ],
+      "summary": "初始化应用标识和对应运行规则。",
+      "tags": [
+        "method",
+        "method",
+        "app-rules"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/AudioDevice.cs",
+      "type": "file",
+      "name": "AudioDevice.cs",
+      "filePath": "src/Lively/Lively.Models/AudioDevice.cs",
+      "summary": "定义音频输出设备模型，封装设备 ID、友好名称与默认设备状态。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "audio-device"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "class",
+      "name": "AudioDevice",
+      "filePath": "src/Lively/Lively.Models/AudioDevice.cs",
+      "lineRange": [
+        3,
+        15
+      ],
+      "summary": "作为本文件的核心类型，定义音频输出设备模型，封装设备 ID、友好名称与默认设备状态。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "audio-device"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "function",
+      "name": "AudioDevice",
+      "filePath": "src/Lively/Lively.Models/AudioDevice.cs",
+      "lineRange": [
+        5,
+        10
+      ],
+      "summary": "初始化音频设备 ID、名称和默认状态。",
+      "tags": [
+        "method",
+        "method",
+        "audio-device"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "type": "file",
+      "name": "DisplayMonitor.cs",
+      "filePath": "src/Lively/Lively.Models/DisplayMonitor.cs",
+      "summary": "定义显示器模型，封装设备标识、名称、原生 handle、索引、主屏状态、边界和工作区，并实现值相等比较。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "display-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "class",
+      "name": "DisplayMonitor",
+      "filePath": "src/Lively/Lively.Models/DisplayMonitor.cs",
+      "lineRange": [
+        12,
+        94
+      ],
+      "summary": "作为本文件的核心类型，定义显示器模型，封装设备标识、名称、原生 handle、索引、主屏状态、边界和工作区，并实现值相等比较。",
+      "tags": [
+        "data-model",
+        "serialization",
+        "display-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "function",
+      "name": "DisplayMonitor",
+      "filePath": "src/Lively/Lively.Models/DisplayMonitor.cs",
+      "lineRange": [
+        83,
+        86
+      ],
+      "summary": "从原生或现有显示信息初始化 DisplayMonitor。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "method",
+        "display-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/DisplayMonitor.cs:Equals",
+      "type": "function",
+      "name": "Equals",
+      "filePath": "src/Lively/Lively.Models/DisplayMonitor.cs",
+      "lineRange": [
+        90,
+        93
+      ],
+      "summary": "比较两个 DisplayMonitor 的设备标识与显示属性是否相等。",
+      "tags": [
+        "method",
+        "query",
+        "display-model"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "target": "class:src/Lively/Lively.Models/AddWallpaperCreateModel.cs:AddWallpaperCreateModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "target": "class:src/Lively/Lively.Models/AddWallpaperCreateModel.cs:AddWallpaperCreateModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "target": "class:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "target": "class:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "target": "function:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "target": "function:src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs:AppMusicExclusionRuleModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationModel.cs",
+      "target": "class:src/Lively/Lively.Models/ApplicationModel.cs:ApplicationModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationModel.cs",
+      "target": "class:src/Lively/Lively.Models/ApplicationModel.cs:ApplicationModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "target": "class:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "target": "class:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "target": "function:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "target": "function:src/Lively/Lively.Models/ApplicationRulesModel.cs:ApplicationRulesModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AudioDevice.cs",
+      "target": "class:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AudioDevice.cs",
+      "target": "class:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AudioDevice.cs",
+      "target": "function:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/AudioDevice.cs",
+      "target": "function:src/Lively/Lively.Models/AudioDevice.cs:AudioDevice",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "class:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "class:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "function:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "function:src/Lively/Lively.Models/DisplayMonitor.cs:DisplayMonitor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "function:src/Lively/Lively.Models/DisplayMonitor.cs:Equals",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/DisplayMonitor.cs",
+      "target": "function:src/Lively/Lively.Models/DisplayMonitor.cs:Equals",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

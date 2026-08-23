@@ -1,0 +1,42 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Grpc.Common/Proto/commands.proto",
+      "language": "protobuf",
+      "sizeLines": 36,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Common/Proto/display.proto",
+      "language": "protobuf",
+      "sizeLines": 35,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Common/Proto/settings.proto",
+      "language": "protobuf",
+      "sizeLines": 259,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "language": "protobuf",
+      "sizeLines": 48,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "language": "protobuf",
+      "sizeLines": 177,
+      "fileCategory": "data"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Grpc.Common/Proto/commands.proto": [],
+    "src/Lively/Lively.Grpc.Common/Proto/display.proto": [],
+    "src/Lively/Lively.Grpc.Common/Proto/settings.proto": [],
+    "src/Lively/Lively.Grpc.Common/Proto/update.proto": [],
+    "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto": []
+  }
+}

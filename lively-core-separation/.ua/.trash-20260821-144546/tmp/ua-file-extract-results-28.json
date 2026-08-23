@@ -1,0 +1,1037 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 5,
+  "filesSkipped": [
+    "src/Lively/Lively/Views/TransparentWindow.xaml",
+    "src/Lively/Lively/Views/WallpaperPreview.xaml",
+    "src/Lively/Lively/Views/WindowCoverageDebugOverlay.xaml",
+    "src/Lively/Lively/Views/WindowMsg/RawInputMsgWindow.xaml",
+    "src/Lively/Lively/Views/WindowMsg/WndProcMsgWindow.xaml",
+    "src/Lively/Lively/app.manifest",
+    "src/installer/Languages/Arabic.isl",
+    "src/installer/Languages/ChineseSimplified.isl",
+    "src/installer/Languages/ChineseTraditional.isl",
+    "src/installer/Languages/Greek.isl",
+    "src/installer/Languages/Indonesian.isl",
+    "src/installer/Languages/Korean.isl",
+    "src/installer/Languages/Lithuanian.isl",
+    "src/installer/Languages/SerbianCyrillic.isl",
+    "src/installer/Languages/SerbianLatin.isl",
+    "src/installer/Languages/Swedish.isl",
+    "src/installer/Languages/Vietnamese.isl",
+    "src/installer/Script.iss",
+    "src/installer/Script_x64.iss",
+    "src/installer/Theme/wizard_large.bmp"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 5,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 5,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "src/Lively/Lively/Views/TransparentWindow.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 27,
+      "nonEmptyLines": 26,
+      "functions": [
+        {
+          "name": "TransparentWindow",
+          "startLine": 22,
+          "endLine": 25,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "TransparentWindow",
+          "startLine": 20,
+          "endLine": 26,
+          "methods": [
+            "TransparentWindow"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "TransparentWindow",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "TransparentWindow",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "TransparentWindow",
+          "callee": "InitializeComponent",
+          "lineNumber": 24
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively/Views/WallpaperPreview.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 120,
+      "nonEmptyLines": 105,
+      "functions": [
+        {
+          "name": "WallpaperPreview",
+          "startLine": 30,
+          "endLine": 46,
+          "params": [
+            "model",
+            "display",
+            "arrangement",
+            "isAutoLoad"
+          ]
+        },
+        {
+          "name": "LoadWallpaperAsync",
+          "startLine": 48,
+          "endLine": 77,
+          "params": []
+        },
+        {
+          "name": "SetWallpaperVolume",
+          "startLine": 79,
+          "endLine": 82,
+          "params": [
+            "volume"
+          ]
+        },
+        {
+          "name": "Window_Loaded",
+          "startLine": 84,
+          "endLine": 87,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Window_SizeChanged",
+          "startLine": 89,
+          "endLine": 101,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Window_Closing",
+          "startLine": 103,
+          "endLine": 118,
+          "params": [
+            "sender",
+            "e"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WallpaperPreview",
+          "startLine": 17,
+          "endLine": 119,
+          "methods": [
+            "WallpaperPreview",
+            "LoadWallpaperAsync",
+            "SetWallpaperVolume",
+            "Window_Loaded",
+            "Window_SizeChanged",
+            "Window_Closing"
+          ],
+          "properties": [
+            "Logger",
+            "model",
+            "display",
+            "arrangement",
+            "loadingTaskCompletionSource",
+            "wallpaper",
+            "_isInitialized",
+            "wallpaperFactory",
+            "userSettings"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WallpaperPreview",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "LoadWallpaperAsync",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "SetWallpaperVolume",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "WallpaperPreview",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "WallpaperPreview",
+          "callee": "App.Services.GetRequiredService<IUserSettingsService>",
+          "lineNumber": 35
+        },
+        {
+          "caller": "WallpaperPreview",
+          "callee": "App.Services.GetRequiredService<IWallpaperPluginFactory>",
+          "lineNumber": 36
+        },
+        {
+          "caller": "WallpaperPreview",
+          "callee": "InitializeComponent",
+          "lineNumber": 41
+        },
+        {
+          "caller": "WallpaperPreview",
+          "callee": "LoadWallpaperAsync",
+          "lineNumber": 45
+        },
+        {
+          "caller": "LoadWallpaperAsync",
+          "callee": "wallpaperFactory.CreateWallpaper",
+          "lineNumber": 56
+        },
+        {
+          "caller": "LoadWallpaperAsync",
+          "callee": "wallpaper.ShowAsync",
+          "lineNumber": 60
+        },
+        {
+          "caller": "LoadWallpaperAsync",
+          "callee": "this.SetProgramToFramework",
+          "lineNumber": 63
+        },
+        {
+          "caller": "LoadWallpaperAsync",
+          "callee": "Logger.Error",
+          "lineNumber": 69
+        },
+        {
+          "caller": "LoadWallpaperAsync",
+          "callee": "e.ToString",
+          "lineNumber": 69
+        },
+        {
+          "caller": "SetWallpaperVolume",
+          "callee": "wallpaper?.SetVolume",
+          "lineNumber": 81
+        },
+        {
+          "caller": "Window_Loaded",
+          "callee": "loadingTaskCompletionSource.TrySetResult",
+          "lineNumber": 86
+        },
+        {
+          "caller": "Window_SizeChanged",
+          "callee": "PreviewBorder.GetAbsolutePlacement",
+          "lineNumber": 94
+        },
+        {
+          "caller": "Window_SizeChanged",
+          "callee": "NativeMethods.ScreenToClient",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Window_SizeChanged",
+          "callee": "new WindowInteropHelper",
+          "lineNumber": 96
+        },
+        {
+          "caller": "Window_SizeChanged",
+          "callee": "NativeMethods.SetWindowPos",
+          "lineNumber": 98
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "WindowUtil.TrySetParent",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "wallpaper.Close",
+          "lineNumber": 116
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "wallpaper.Dispose",
+          "lineNumber": 117
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 4,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively/Views/WindowCoverageDebugOverlay.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 123,
+      "nonEmptyLines": 109,
+      "functions": [
+        {
+          "name": "WindowCoverageDebugOverlay",
+          "startLine": 27,
+          "endLine": 39,
+          "params": [
+            "targetDisplay"
+          ]
+        },
+        {
+          "name": "Window_Loaded",
+          "startLine": 41,
+          "endLine": 57,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Window_Closing",
+          "startLine": 59,
+          "endLine": 62,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "UpdateGrid",
+          "startLine": 64,
+          "endLine": 121,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "WindowCoverageDebugOverlay",
+          "startLine": 19,
+          "endLine": 122,
+          "methods": [
+            "WindowCoverageDebugOverlay",
+            "Window_Loaded",
+            "Window_Closing",
+            "UpdateGrid"
+          ],
+          "properties": [
+            "displayManager",
+            "targetDisplay",
+            "dispatcherTimer",
+            "tileSize",
+            "scaleFactor"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WindowCoverageDebugOverlay",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "WindowCoverageDebugOverlay",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "WindowCoverageDebugOverlay",
+          "callee": "InitializeComponent",
+          "lineNumber": 29
+        },
+        {
+          "caller": "WindowCoverageDebugOverlay",
+          "callee": "App.Services.GetRequiredService<IUserSettingsService>",
+          "lineNumber": 30
+        },
+        {
+          "caller": "WindowCoverageDebugOverlay",
+          "callee": "App.Services.GetRequiredService<IDisplayManager>",
+          "lineNumber": 31
+        },
+        {
+          "caller": "WindowCoverageDebugOverlay",
+          "callee": "UpdateGrid",
+          "lineNumber": 34
+        },
+        {
+          "caller": "WindowCoverageDebugOverlay",
+          "callee": "new TimeSpan",
+          "lineNumber": 35
+        },
+        {
+          "caller": "Window_Loaded",
+          "callee": "new WindowInteropHelper",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Window_Loaded",
+          "callee": "NativeMethods.GetDpiForWindow",
+          "lineNumber": 48
+        },
+        {
+          "caller": "Window_Loaded",
+          "callee": "WindowUtil.SetWindowExStyle",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Window_Loaded",
+          "callee": "dispatcherTimer.Start",
+          "lineNumber": 56
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "dispatcherTimer.Stop",
+          "lineNumber": 61
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "TileCanvas.Children.Clear",
+          "lineNumber": 66
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "WindowUtil.GetVisibleTopLevelWindows()\n                .FindAll",
+          "lineNumber": 68
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "WindowUtil.GetVisibleTopLevelWindows",
+          "lineNumber": 68
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "displayManager.GetDisplayMonitorFromHWnd(hwnd).Equals",
+          "lineNumber": 69
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "displayManager.GetDisplayMonitorFromHWnd",
+          "lineNumber": 69
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "new Rectangle",
+          "lineNumber": 70
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Ceiling",
+          "lineNumber": 74
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Ceiling",
+          "lineNumber": 75
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "NativeMethods.GetWindowRect",
+          "lineNumber": 80
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Max",
+          "lineNumber": 92
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Min",
+          "lineNumber": 93
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Max",
+          "lineNumber": 94
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Math.Min",
+          "lineNumber": 95
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "new SolidColorBrush",
+          "lineNumber": 110
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Media.Color.FromArgb",
+          "lineNumber": 110
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "new SolidColorBrush",
+          "lineNumber": 113
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Media.Color.FromArgb",
+          "lineNumber": 113
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Canvas.SetLeft",
+          "lineNumber": 116
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "Canvas.SetTop",
+          "lineNumber": 117
+        },
+        {
+          "caller": "UpdateGrid",
+          "callee": "TileCanvas.Children.Add",
+          "lineNumber": 118
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively/Views/WindowMsg/RawInputMsgWindow.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 225,
+      "nonEmptyLines": 202,
+      "functions": [
+        {
+          "name": "RawInputMsgWindow",
+          "startLine": 23,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "Window_SourceInitialized",
+          "startLine": 30,
+          "endLine": 55,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Window_Closing",
+          "startLine": 57,
+          "endLine": 71,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Hook",
+          "startLine": 73,
+          "endLine": 166,
+          "params": [
+            "hwnd",
+            "msg",
+            "wparam",
+            "lparam",
+            "handled"
+          ]
+        },
+        {
+          "name": "MouseRawArgs",
+          "startLine": 179,
+          "endLine": 183,
+          "params": [
+            "x",
+            "y"
+          ]
+        },
+        {
+          "name": "MouseClickRawArgs",
+          "startLine": 189,
+          "endLine": 192,
+          "params": [
+            "x",
+            "y",
+            "btn"
+          ]
+        },
+        {
+          "name": "KeyboardClickRawArgs",
+          "startLine": 217,
+          "endLine": 223,
+          "params": [
+            "windowMessage",
+            "virtualKey",
+            "scanCode",
+            "isKeyDown"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RawInputMsgWindow",
+          "startLine": 14,
+          "endLine": 167,
+          "methods": [
+            "RawInputMsgWindow",
+            "Window_SourceInitialized",
+            "Window_Closing",
+            "Hook"
+          ],
+          "properties": [
+            "InputMode"
+          ]
+        },
+        {
+          "name": "MouseRawArgs",
+          "startLine": 175,
+          "endLine": 184,
+          "methods": [
+            "MouseRawArgs"
+          ],
+          "properties": [
+            "X",
+            "Y"
+          ]
+        },
+        {
+          "name": "MouseClickRawArgs",
+          "startLine": 186,
+          "endLine": 193,
+          "methods": [
+            "MouseClickRawArgs"
+          ],
+          "properties": [
+            "Button"
+          ]
+        },
+        {
+          "name": "KeyboardClickRawArgs",
+          "startLine": 195,
+          "endLine": 224,
+          "methods": [
+            "KeyboardClickRawArgs"
+          ],
+          "properties": [
+            "WindowMessage",
+            "VirtualKey",
+            "ScanCode",
+            "IsKeyDown"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "InputMode",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "RawInputMsgWindow",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "RawInputMsgWindow",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "X",
+          "line": 177,
+          "isDefault": false
+        },
+        {
+          "name": "Y",
+          "line": 178,
+          "isDefault": false
+        },
+        {
+          "name": "MouseRawArgs",
+          "line": 179,
+          "isDefault": false
+        },
+        {
+          "name": "MouseRawArgs",
+          "line": 175,
+          "isDefault": false
+        },
+        {
+          "name": "Button",
+          "line": 188,
+          "isDefault": false
+        },
+        {
+          "name": "MouseClickRawArgs",
+          "line": 189,
+          "isDefault": false
+        },
+        {
+          "name": "MouseClickRawArgs",
+          "line": 186,
+          "isDefault": false
+        },
+        {
+          "name": "WindowMessage",
+          "line": 200,
+          "isDefault": false
+        },
+        {
+          "name": "VirtualKey",
+          "line": 205,
+          "isDefault": false
+        },
+        {
+          "name": "ScanCode",
+          "line": 210,
+          "isDefault": false
+        },
+        {
+          "name": "IsKeyDown",
+          "line": 215,
+          "isDefault": false
+        },
+        {
+          "name": "KeyboardClickRawArgs",
+          "line": 217,
+          "isDefault": false
+        },
+        {
+          "name": "KeyboardClickRawArgs",
+          "line": 195,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "RawInputMsgWindow",
+          "callee": "InitializeComponent",
+          "lineNumber": 25
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "new WindowInteropHelper",
+          "lineNumber": 32
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "this.Close",
+          "lineNumber": 38
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "RawInputDevice.RegisterDevice",
+          "lineNumber": 42
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "RawInputDevice.RegisterDevice",
+          "lineNumber": 46
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "RawInputDevice.RegisterDevice",
+          "lineNumber": 48
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "HwndSource.FromHwnd",
+          "lineNumber": 53
+        },
+        {
+          "caller": "Window_SourceInitialized",
+          "callee": "source.AddHook",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "RawInputDevice.UnregisterDevice",
+          "lineNumber": 64
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "RawInputDevice.UnregisterDevice",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Window_Closing",
+          "callee": "RawInputDevice.UnregisterDevice",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Hook",
+          "callee": "RawInputData.FromHandle",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Hook",
+          "callee": "NativeMethods.GetCursorPos",
+          "lineNumber": 91
+        },
+        {
+          "caller": "Hook",
+          "callee": "MouseDownRaw?.Invoke",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Hook",
+          "callee": "new MouseClickRawArgs",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Hook",
+          "callee": "MouseUpRaw?.Invoke",
+          "lineNumber": 105
+        },
+        {
+          "caller": "Hook",
+          "callee": "new MouseClickRawArgs",
+          "lineNumber": 105
+        },
+        {
+          "caller": "Hook",
+          "callee": "MouseDownRaw?.Invoke",
+          "lineNumber": 110
+        },
+        {
+          "caller": "Hook",
+          "callee": "new MouseClickRawArgs",
+          "lineNumber": 110
+        },
+        {
+          "caller": "Hook",
+          "callee": "MouseUpRaw?.Invoke",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Hook",
+          "callee": "new MouseClickRawArgs",
+          "lineNumber": 115
+        },
+        {
+          "caller": "Hook",
+          "callee": "MouseMoveRaw?.Invoke",
+          "lineNumber": 120
+        },
+        {
+          "caller": "Hook",
+          "callee": "new MouseRawArgs",
+          "lineNumber": 120
+        },
+        {
+          "caller": "Hook",
+          "callee": "KeyboardClickRaw?.Invoke",
+          "lineNumber": 156
+        },
+        {
+          "caller": "Hook",
+          "callee": "new KeyboardClickRawArgs",
+          "lineNumber": 157
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 16,
+        "functionCount": 7,
+        "classCount": 4
+      }
+    },
+    {
+      "path": "src/Lively/Lively/Views/WindowMsg/WndProcMsgWindow.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 61,
+      "nonEmptyLines": 52,
+      "functions": [
+        {
+          "name": "WndProcMsgWindow",
+          "startLine": 15,
+          "endLine": 18,
+          "params": []
+        },
+        {
+          "name": "OnSourceInitialized",
+          "startLine": 20,
+          "endLine": 25,
+          "params": [
+            "e"
+          ]
+        },
+        {
+          "name": "WndProc",
+          "startLine": 27,
+          "endLine": 42,
+          "params": [
+            "hwnd",
+            "msg",
+            "wParam",
+            "lParam",
+            "handled"
+          ]
+        },
+        {
+          "name": "WindowMessageEventArgs",
+          "startLine": 53,
+          "endLine": 59,
+          "params": [
+            "hwnd",
+            "message",
+            "wParam",
+            "lParam"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WndProcMsgWindow",
+          "startLine": 8,
+          "endLine": 43,
+          "methods": [
+            "WndProcMsgWindow",
+            "OnSourceInitialized",
+            "WndProc"
+          ],
+          "properties": [
+            "WM_TASKBARCREATED"
+          ]
+        },
+        {
+          "name": "WindowMessageEventArgs",
+          "startLine": 45,
+          "endLine": 60,
+          "methods": [
+            "WindowMessageEventArgs"
+          ],
+          "properties": [
+            "Hwnd",
+            "Message",
+            "WParam",
+            "LParam",
+            "Result"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WndProcMsgWindow",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "WndProcMsgWindow",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "Hwnd",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "Message",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "WParam",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "LParam",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "Result",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "WindowMessageEventArgs",
+          "line": 53,
+          "isDefault": false
+        },
+        {
+          "name": "WindowMessageEventArgs",
+          "line": 45,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "WndProcMsgWindow",
+          "callee": "InitializeComponent",
+          "lineNumber": 17
+        },
+        {
+          "caller": "OnSourceInitialized",
+          "callee": "base.OnSourceInitialized",
+          "lineNumber": 22
+        },
+        {
+          "caller": "OnSourceInitialized",
+          "callee": "PresentationSource.FromVisual",
+          "lineNumber": 23
+        },
+        {
+          "caller": "OnSourceInitialized",
+          "callee": "source.AddHook",
+          "lineNumber": 24
+        },
+        {
+          "caller": "WndProc",
+          "callee": "TaskbarCreated?.Invoke",
+          "lineNumber": 31
+        },
+        {
+          "caller": "WndProc",
+          "callee": "new WindowMessageEventArgs",
+          "lineNumber": 37
+        },
+        {
+          "caller": "WndProc",
+          "callee": "WindowMessageReceived?.Invoke",
+          "lineNumber": 38
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 9,
+        "functionCount": 4,
+        "classCount": 2
+      }
+    }
+  ]
+}

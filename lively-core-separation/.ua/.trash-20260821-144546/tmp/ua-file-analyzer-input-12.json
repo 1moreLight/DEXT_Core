@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/DevToolsExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 143,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/TaskMethodDevToolsMessageObserver.cs",
+      "language": "csharp",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/MenuHandler.cs",
+      "language": "csharp",
+      "sizeLines": 31,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/PopUpHandle.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeRequestHandler.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeResourceRequestHandler.cs",
+      "language": "csharp",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Form1.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Form1.cs",
+      "language": "csharp",
+      "sizeLines": 648,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Form1.resx",
+      "language": "resx",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Lively.Player.CefSharp.csproj",
+      "language": "csproj",
+      "sizeLines": 168,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Program.cs",
+      "language": "csharp",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Resources.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Resources.resx",
+      "language": "resx",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Settings.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/Properties/Settings.settings",
+      "language": "settings",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/StartArgs.cs",
+      "language": "csharp",
+      "sizeLines": 86,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.CefSharp/app.manifest",
+      "language": "manifest",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/App.config",
+      "language": "config",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Form1.Designer.cs",
+      "language": "csharp",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Form1.cs",
+      "language": "csharp",
+      "sizeLines": 535,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Form1.resx",
+      "language": "resx",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Lively.Player.Vlc.csproj",
+      "language": "csproj",
+      "sizeLines": 115,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Program.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Player.Vlc/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/DevToolsExtensions.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/DevTools/TaskMethodDevToolsMessageObserver.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/MenuHandler.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/PopUpHandle.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeRequestHandler.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Extensions/CefSharp/YoutubeResourceRequestHandler.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Form1.Designer.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Form1.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Form1.resx": [],
+    "src/Lively/Lively.Player.CefSharp/Lively.Player.CefSharp.csproj": [],
+    "src/Lively/Lively.Player.CefSharp/Program.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Properties/AssemblyInfo.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Properties/Resources.Designer.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Properties/Resources.resx": [],
+    "src/Lively/Lively.Player.CefSharp/Properties/Settings.Designer.cs": [],
+    "src/Lively/Lively.Player.CefSharp/Properties/Settings.settings": [],
+    "src/Lively/Lively.Player.CefSharp/StartArgs.cs": [],
+    "src/Lively/Lively.Player.CefSharp/app.manifest": [],
+    "src/Lively/Lively.Player.Vlc/App.config": [],
+    "src/Lively/Lively.Player.Vlc/Form1.Designer.cs": [],
+    "src/Lively/Lively.Player.Vlc/Form1.cs": [],
+    "src/Lively/Lively.Player.Vlc/Form1.resx": [],
+    "src/Lively/Lively.Player.Vlc/Lively.Player.Vlc.csproj": [],
+    "src/Lively/Lively.Player.Vlc/Program.cs": [],
+    "src/Lively/Lively.Player.Vlc/Properties/AssemblyInfo.cs": []
+  }
+}

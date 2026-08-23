@@ -1,0 +1,578 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "type": "file",
+      "name": "IDialogNavigator.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "summary": "声明对话框页面导航契约，用于在对话内容之间切换并返回导航结果。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IDialogNavigator.cs:IDialogNavigator",
+      "type": "class",
+      "name": "IDialogNavigator",
+      "filePath": "src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "lineRange": [
+        5,
+        5
+      ],
+      "summary": "声明 `IDialogNavigator` 接口，约束声明对话框页面导航契约，用于在对话内容之间切换并返回导航结果所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IDialogService.cs",
+      "type": "file",
+      "name": "IDialogService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IDialogService.cs",
+      "summary": "声明 UI 对话服务契约，统一展示确认、错误、壁纸导入、设置和内容选择等异步对话框。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "dialog"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IDialogService.cs:IDialogService",
+      "type": "class",
+      "name": "IDialogService",
+      "filePath": "src/Lively/Lively.Common/Services/IDialogService.cs",
+      "lineRange": [
+        10,
+        43
+      ],
+      "summary": "声明 `IDialogService` 接口，约束声明 UI 对话服务契约，统一展示确认、错误、壁纸导入、设置和内容选择等异步对话框所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "dialog"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "type": "file",
+      "name": "IDispatcherService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "summary": "声明 UI dispatcher 契约，用于检查线程访问权限并把同步或异步工作调度到界面线程。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "dispatcher"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IDispatcherService.cs:IDispatcherService",
+      "type": "class",
+      "name": "IDispatcherService",
+      "filePath": "src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "lineRange": [
+        5,
+        8
+      ],
+      "summary": "声明 `IDispatcherService` 接口，约束声明 UI dispatcher 契约，用于检查线程访问权限并把同步或异步工作调度到界面线程所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "dispatcher"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "type": "file",
+      "name": "IDownloadService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "summary": "声明文件下载契约，支持 URL、目标路径、进度报告和取消令牌。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "download"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IDownloadService.cs:IDownloadService",
+      "type": "class",
+      "name": "IDownloadService",
+      "filePath": "src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "lineRange": [
+        7,
+        26
+      ],
+      "summary": "声明 `IDownloadService` 接口，约束声明文件下载契约，支持 URL、目标路径、进度报告和取消令牌所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "download"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IFileService.cs",
+      "type": "file",
+      "name": "IFileService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IFileService.cs",
+      "summary": "声明文件选择、保存、打开位置和路径操作契约，为 UI 隔离 Windows 文件系统交互。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "file-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IFileService.cs:IFileService",
+      "type": "class",
+      "name": "IFileService",
+      "filePath": "src/Lively/Lively.Common/Services/IFileService.cs",
+      "lineRange": [
+        7,
+        31
+      ],
+      "summary": "声明 `IFileService` 接口，约束声明文件选择、保存、打开位置和路径操作契约，为 UI 隔离 Windows 文件系统交互所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "file-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "type": "file",
+      "name": "IHardwareUsageService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "summary": "声明硬件使用率服务契约，通过事件发布 CPU、GPU、内存与网络采样并控制监控生命周期。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IHardwareUsageService.cs:IHardwareUsageService",
+      "type": "class",
+      "name": "IHardwareUsageService",
+      "filePath": "src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "lineRange": [
+        6,
+        12
+      ],
+      "summary": "声明 `IHardwareUsageService` 接口，约束声明硬件使用率服务契约，通过事件发布 CPU、GPU、内存与网络采样并控制监控生命周期所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "type": "file",
+      "name": "IMainNavigator.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "summary": "声明主界面导航契约，用于在 Lively 的顶级内容页面之间切换。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IMainNavigator.cs:IMainNavigator",
+      "type": "class",
+      "name": "IMainNavigator",
+      "filePath": "src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "lineRange": [
+        5,
+        5
+      ],
+      "summary": "声明 `IMainNavigator` 接口，约束声明主界面导航契约，用于在 Lively 的顶级内容页面之间切换所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "type": "file",
+      "name": "IMediaFormatConverter.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "summary": "声明媒体格式转换契约，支持视频、GIF 和图片转换的进度、取消与输出路径。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "media-conversion"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs:IMediaFormatConverter",
+      "type": "class",
+      "name": "IMediaFormatConverter",
+      "filePath": "src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "lineRange": [
+        8,
+        25
+      ],
+      "summary": "声明 `IMediaFormatConverter` 接口，约束声明媒体格式转换契约，支持视频、GIF 和图片转换的进度、取消与输出路径所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "media-conversion"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/INavigator.cs",
+      "type": "file",
+      "name": "INavigator.cs",
+      "filePath": "src/Lively/Lively.Common/Services/INavigator.cs",
+      "summary": "声明通用页面导航契约，维护当前内容、导航历史和导航完成事件。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/INavigator.cs:INavigator",
+      "type": "class",
+      "name": "INavigator",
+      "filePath": "src/Lively/Lively.Common/Services/INavigator.cs",
+      "lineRange": [
+        6,
+        40
+      ],
+      "summary": "声明 `INavigator` 接口，约束声明通用页面导航契约，维护当前内容、导航历史和导航完成事件所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "type": "file",
+      "name": "INowPlayingService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "summary": "声明当前媒体播放服务契约，通过事件与状态模型暴露曲目、艺术家和封面变化。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/INowPlayingService.cs:INowPlayingService",
+      "type": "class",
+      "name": "INowPlayingService",
+      "filePath": "src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "lineRange": [
+        6,
+        12
+      ],
+      "summary": "声明 `INowPlayingService` 接口，约束声明当前媒体播放服务契约，通过事件与状态模型暴露曲目、艺术家和封面变化所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IResourceService.cs",
+      "type": "file",
+      "name": "IResourceService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IResourceService.cs",
+      "summary": "声明本地化资源读取契约，按资源键获取字符串并提供当前文化信息。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IResourceService.cs:IResourceService",
+      "type": "class",
+      "name": "IResourceService",
+      "filePath": "src/Lively/Lively.Common/Services/IResourceService.cs",
+      "lineRange": [
+        6,
+        14
+      ],
+      "summary": "声明 `IResourceService` 接口，约束声明本地化资源读取契约，按资源键获取字符串并提供当前文化信息所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "type": "file",
+      "name": "IRunnerService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "summary": "声明外部进程启动契约，支持普通、管理员权限及参数化运行方式。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "process-runner"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IRunnerService.cs:IRunnerService",
+      "type": "class",
+      "name": "IRunnerService",
+      "filePath": "src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "lineRange": [
+        5,
+        16
+      ],
+      "summary": "声明 `IRunnerService` 接口，约束声明外部进程启动契约，支持普通、管理员权限及参数化运行方式所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "process-runner"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "type": "file",
+      "name": "IScreensaverService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "summary": "声明屏幕保护程序服务契约，覆盖启动、停止、预览、配置、状态和 Windows screensaver 注册。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "screensaver"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IScreensaverService.cs:IScreensaverService",
+      "type": "class",
+      "name": "IScreensaverService",
+      "filePath": "src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "lineRange": [
+        6,
+        18
+      ],
+      "summary": "声明 `IScreensaverService` 接口，约束声明屏幕保护程序服务契约，覆盖启动、停止、预览、配置、状态和 Windows screensaver 注册所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "screensaver"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDialogNavigator.cs:IDialogNavigator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDialogNavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDialogNavigator.cs:IDialogNavigator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDialogService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDialogService.cs:IDialogService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDialogService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDialogService.cs:IDialogService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDispatcherService.cs:IDispatcherService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDispatcherService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDispatcherService.cs:IDispatcherService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDownloadService.cs:IDownloadService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IDownloadService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IDownloadService.cs:IDownloadService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IFileService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IFileService.cs:IFileService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IFileService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IFileService.cs:IFileService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IHardwareUsageService.cs:IHardwareUsageService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IHardwareUsageService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IHardwareUsageService.cs:IHardwareUsageService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IMainNavigator.cs:IMainNavigator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IMainNavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IMainNavigator.cs:IMainNavigator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs:IMediaFormatConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IMediaFormatConverter.cs:IMediaFormatConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/INavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/INavigator.cs:INavigator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/INavigator.cs",
+      "target": "class:src/Lively/Lively.Common/Services/INavigator.cs:INavigator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/INowPlayingService.cs:INowPlayingService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/INowPlayingService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/INowPlayingService.cs:INowPlayingService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IResourceService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IResourceService.cs:IResourceService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IResourceService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IResourceService.cs:IResourceService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IRunnerService.cs:IRunnerService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IRunnerService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IRunnerService.cs:IRunnerService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IScreensaverService.cs:IScreensaverService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IScreensaverService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IScreensaverService.cs:IScreensaverService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 0,
+  "filesSkipped": [
+    "src/Lively/Lively.UI.WinUI/Strings/fil-PH/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/fr-FR/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ga-IE/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/gl-ES/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/he-IL/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/hi-IN/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/hu-HU/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/id-ID/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/it-IT/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ja-JP/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/kk-KZ/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ko-KR/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/lt-LT/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ms-MY/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/my-MM/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/nb-NO/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/nl-NL/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/pl-PL/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/pt-BR/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/pt-PT/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ro-RO/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/ru-RU/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/sk-SK/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/sr-Cyrl/Resources.resw",
+    "src/Lively/Lively.UI.WinUI/Strings/sr-Latn/Resources.resw"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 0,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": []
+}

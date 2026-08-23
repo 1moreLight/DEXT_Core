@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": ".github/FUNDING.yml",
+      "language": "yaml",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "language": "yaml",
+      "sizeLines": 87,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "language": "yaml",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "sizeLines": 241,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/config.json",
+      "language": "json",
+      "sizeLines": 3,
+      "fileCategory": "config"
+    },
+    {
+      "path": "schemas/livelyPropertiesSchema.json",
+      "language": "json",
+      "sizeLines": 229,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "language": "csharp",
+      "sizeLines": 144,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "language": "csharp",
+      "sizeLines": 243,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "language": "csharp",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "language": "csproj",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "language": "csharp",
+      "sizeLines": 179,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "language": "csharp",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "language": "csharp",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "language": "csharp",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "language": "csharp",
+      "sizeLines": 107,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/CommandlineArgs.cs",
+      "language": "csharp",
+      "sizeLines": 158,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Constants.cs",
+      "language": "csharp",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "language": "csharp",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    ".github/FUNDING.yml": [],
+    ".github/ISSUE_TEMPLATE/bug_report.yml": [],
+    ".github/ISSUE_TEMPLATE/feature_request.yml": [],
+    ".ua/.understandignore": [],
+    ".ua/config.json": [],
+    "schemas/livelyPropertiesSchema.json": [],
+    "src/Lively/Lively.Common.Services/GithubUpdaterService.cs": [],
+    "src/Lively/Lively.Common.Services/HardwareUsageService.cs": [],
+    "src/Lively/Lively.Common.Services/HttpDownloadService.cs": [],
+    "src/Lively/Lively.Common.Services/Lively.Common.Services.csproj": [],
+    "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs": [],
+    "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs": [],
+    "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs": [],
+    "src/Lively/Lively.Common/Com/IApplicationActivationManager.cs": [],
+    "src/Lively/Lively.Common/Com/IDesktopWallpaper.cs": [],
+    "src/Lively/Lively.Common/CommandlineArgs.cs": [],
+    "src/Lively/Lively.Common/Constants.cs": [],
+    "src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs": [],
+    "src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs": []
+  }
+}

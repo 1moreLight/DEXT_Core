@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:/midDOW/lively-core-separation/lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.Utility.Watchdog/Properties/AssemblyInfo.cs",
+      "language": "csharp",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.sln",
+      "language": "sln",
+      "sizeLines": 343,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively/App.xaml",
+      "language": "xaml",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/App.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 385,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/AppInitializer.cs",
+      "language": "csharp",
+      "sizeLines": 209,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/AssemblyInfo.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.json",
+      "language": "json",
+      "sizeLines": 67,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.loc.json",
+      "language": "json",
+      "sizeLines": 242,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively/Commandline/CommandHandler.cs",
+      "language": "csharp",
+      "sizeLines": 658,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Commandline/ICommandHandler.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Converters/BoolToVisibilityConverter.cs",
+      "language": "csharp",
+      "sizeLines": 31,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Converters/TaskbarProgressConverter.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Display/DisplayManager.cs",
+      "language": "csharp",
+      "sizeLines": 299,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Display/IDisplayManager.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/IDesktopCore.cs",
+      "language": "csharp",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/IWallpaper.cs",
+      "language": "csharp",
+      "sizeLines": 115,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Suspend/IPlayback.cs",
+      "language": "csharp",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Suspend/Playback.cs",
+      "language": "csharp",
+      "sizeLines": 506,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Suspend/PlaybackDeferrer.cs",
+      "language": "csharp",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/DwmThumbnailPlayer.cs",
+      "language": "csharp",
+      "sizeLines": 175,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/ExtPrograms.cs",
+      "language": "csharp",
+      "sizeLines": 230,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/PictureWinAPI.cs",
+      "language": "csharp",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/VideoLibVlcPlayer.cs",
+      "language": "csharp",
+      "sizeLines": 361,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/VideoMpvPlayer.cs",
+      "language": "csharp",
+      "sizeLines": 591,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively/Core/Wallpapers/VideoVlcPlayer.cs",
+      "language": "csharp",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.Utility.Watchdog/Properties/AssemblyInfo.cs": [],
+    "src/Lively/Lively.sln": [],
+    "src/Lively/Lively/App.xaml": [],
+    "src/Lively/Lively/App.xaml.cs": [],
+    "src/Lively/Lively/AppInitializer.cs": [],
+    "src/Lively/Lively/AssemblyInfo.cs": [],
+    "src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.json": [],
+    "src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.loc.json": [],
+    "src/Lively/Lively/Commandline/CommandHandler.cs": [],
+    "src/Lively/Lively/Commandline/ICommandHandler.cs": [],
+    "src/Lively/Lively/Converters/BoolToVisibilityConverter.cs": [],
+    "src/Lively/Lively/Converters/TaskbarProgressConverter.cs": [],
+    "src/Lively/Lively/Core/Display/DisplayManager.cs": [],
+    "src/Lively/Lively/Core/Display/IDisplayManager.cs": [],
+    "src/Lively/Lively/Core/IDesktopCore.cs": [],
+    "src/Lively/Lively/Core/IWallpaper.cs": [],
+    "src/Lively/Lively/Core/Suspend/IPlayback.cs": [],
+    "src/Lively/Lively/Core/Suspend/Playback.cs": [],
+    "src/Lively/Lively/Core/Suspend/PlaybackDeferrer.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/DwmThumbnailPlayer.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/ExtPrograms.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/PictureWinAPI.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/VideoLibVlcPlayer.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/VideoMpvPlayer.cs": [],
+    "src/Lively/Lively/Core/Wallpapers/VideoVlcPlayer.cs": []
+  }
+}

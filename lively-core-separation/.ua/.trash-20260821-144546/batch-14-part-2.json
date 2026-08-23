@@ -1,0 +1,1595 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "type": "file",
+      "name": "WebViewUtil.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "summary": "检测 Microsoft WebView2 Runtime 是否可用，并在缺失时下载和启动 Evergreen 安装程序。",
+      "tags": [
+        "utility",
+        "webview2",
+        "运行时检测",
+        "安装器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:WebViewUtil",
+      "type": "class",
+      "name": "WebViewUtil",
+      "filePath": "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "lineRange": [
+        14,
+        47
+      ],
+      "summary": "封装 WebView2 Runtime 检测、下载和安装操作。",
+      "tags": [
+        "utility",
+        "webview2",
+        "运行时检测",
+        "安装器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:IsWebView2Available",
+      "type": "function",
+      "name": "IsWebView2Available",
+      "filePath": "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "lineRange": [
+        18,
+        28
+      ],
+      "summary": "查询 WebView2 Runtime 版本以判断运行环境是否可用。",
+      "tags": [
+        "utility",
+        "webview2",
+        "运行时检测",
+        "安装器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:InstallWebView2",
+      "type": "function",
+      "name": "InstallWebView2",
+      "filePath": "src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "lineRange": [
+        30,
+        46
+      ],
+      "summary": "下载 WebView2 Evergreen 安装器并启动静默安装流程。",
+      "tags": [
+        "utility",
+        "webview2",
+        "运行时检测",
+        "安装器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Lively.UI.Shared.projitems",
+      "type": "file",
+      "name": "Lively.UI.Shared.projitems",
+      "filePath": "src/Lively/Lively.UI.Shared/Lively.UI.Shared.projitems",
+      "summary": "列出共享 UI 项目的 C# 源文件，使多个桌面前端能够编译同一组工厂、帮助器和 ViewModel。",
+      "tags": [
+        "共享项目",
+        "msbuild",
+        "源码清单",
+        "build-system"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Visual Studio Shared Project 通过 MSBuild Import 把同一组 C# 文件编译进多个宿主项目。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Lively.UI.Shared.shproj",
+      "type": "file",
+      "name": "Lively.UI.Shared.shproj",
+      "filePath": "src/Lively/Lively.UI.Shared/Lively.UI.Shared.shproj",
+      "summary": "定义 Visual Studio 共享项目并导入 Lively.UI.Shared.projitems，为不同 UI 宿主提供公共源码。",
+      "tags": [
+        "共享项目",
+        "msbuild",
+        "build-system",
+        "源码复用"
+      ],
+      "complexity": "simple",
+      "languageNotes": "Visual Studio Shared Project 通过 MSBuild Import 把同一组 C# 文件编译进多个宿主项目。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "type": "file",
+      "name": "AboutViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "summary": "向关于页面提供版本、许可证、项目链接和第三方信息等只读展示数据。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs:AboutViewModel",
+      "type": "class",
+      "name": "AboutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "lineRange": [
+        7,
+        44
+      ],
+      "summary": "为 About 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "type": "file",
+      "name": "AddWallpaperCreateViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "summary": "管理创建新动态壁纸项目的名称、类型和导航状态，并协调创建流程。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "class",
+      "name": "AddWallpaperCreateViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "lineRange": [
+        10,
+        54
+      ],
+      "summary": "为 AddWallpaperCreate 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "function",
+      "name": "AddWallpaperCreateViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "lineRange": [
+        21,
+        53
+      ],
+      "summary": "注入 AddWallpaperCreate 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "type": "file",
+      "name": "AddWallpaperDataViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "summary": "管理壁纸元数据编辑状态，包括标题、作者、描述、缩略图和保存命令。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "class",
+      "name": "AddWallpaperDataViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "lineRange": [
+        12,
+        110
+      ],
+      "summary": "为 AddWallpaperData 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "function",
+      "name": "AddWallpaperDataViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "lineRange": [
+        16,
+        19
+      ],
+      "summary": "注入 AddWallpaperData 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "type": "file",
+      "name": "AddWallpaperViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "summary": "协调从网页链接、单个文件或批量文件添加壁纸，并维护浏览、导入和相关设置状态。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "class",
+      "name": "AddWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        16,
+        90
+      ],
+      "summary": "为 AddWallpaper 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "function",
+      "name": "AddWallpaperViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        26,
+        34
+      ],
+      "summary": "注入 AddWallpaper 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:UpdateSettingsConfigFile",
+      "type": "function",
+      "name": "UpdateSettingsConfigFile",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        36,
+        39
+      ],
+      "summary": "更新设置配置文件，使新增壁纸入口与用户选择保持一致。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:WebBrowseAction",
+      "type": "function",
+      "name": "WebBrowseAction",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        56,
+        66
+      ],
+      "summary": "打开网页入口并校验用户输入的壁纸链接。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperLink",
+      "type": "function",
+      "name": "AddWallpaperLink",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        68,
+        68
+      ],
+      "summary": "校验网络地址并请求壁纸库从链接创建动态壁纸。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:FileBrowseAction",
+      "type": "function",
+      "name": "FileBrowseAction",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        73,
+        85
+      ],
+      "summary": "打开文件选择流程并把结果交给壁纸导入逻辑。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFile",
+      "type": "function",
+      "name": "AddWallpaperFile",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        87,
+        87
+      ],
+      "summary": "导入单个媒体或壁纸包，并更新界面状态。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFiles",
+      "type": "function",
+      "name": "AddWallpaperFiles",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "lineRange": [
+        89,
+        89
+      ],
+      "summary": "批量导入用户选择的媒体文件并报告进度。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "type": "file",
+      "name": "AppUpdateViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "summary": "管理应用更新检查、下载、状态展示、安装文件检测以及 WebView2 Runtime 安装流程。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "class",
+      "name": "AppUpdateViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        17,
+        259
+      ],
+      "summary": "为 AppUpdate 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "function",
+      "name": "AppUpdateViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        31,
+        55
+      ],
+      "summary": "注入 AppUpdate 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:CheckUpdate",
+      "type": "function",
+      "name": "CheckUpdate",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        109,
+        121
+      ],
+      "summary": "请求更新服务检查新版本并把结果转换为界面状态。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:DownloadUpdate",
+      "type": "function",
+      "name": "DownloadUpdate",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        129,
+        160
+      ],
+      "summary": "下载更新包、跟踪进度并处理取消或失败状态。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:InstallWebView2",
+      "type": "function",
+      "name": "InstallWebView2",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        168,
+        184
+      ],
+      "summary": "下载 WebView2 Evergreen 安装器并启动静默安装流程。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:UpdateState",
+      "type": "function",
+      "name": "UpdateState",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        205,
+        242
+      ],
+      "summary": "根据更新服务状态刷新可见文案、命令可用性与进度。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:IsUpdateFileExists",
+      "type": "function",
+      "name": "IsUpdateFileExists",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "lineRange": [
+        244,
+        258
+      ],
+      "summary": "检查更新安装文件是否已完整下载到本地。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "type": "file",
+      "name": "ChooseDisplayViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "summary": "为显示器选择对话框维护屏幕布局、选中项和关闭结果。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "class",
+      "name": "ChooseDisplayViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "lineRange": [
+        12,
+        71
+      ],
+      "summary": "为 ChooseDisplay 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "function",
+      "name": "ChooseDisplayViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "lineRange": [
+        21,
+        34
+      ],
+      "summary": "注入 ChooseDisplay 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:OnWindowClosing",
+      "type": "function",
+      "name": "OnWindowClosing",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "lineRange": [
+        50,
+        51
+      ],
+      "summary": "在窗口关闭时提交选择结果、释放订阅并保存必要状态。",
+      "tags": [
+        "事件处理",
+        "mvvm",
+        "状态同步",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:UpdateLayout",
+      "type": "function",
+      "name": "UpdateLayout",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "lineRange": [
+        53,
+        65
+      ],
+      "summary": "根据当前显示器集合和选择状态重新计算可视化布局。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "type": "file",
+      "name": "ControlPanelViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "summary": "协调控制面板中的页面导航、内容切换和窗口关闭生命周期。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "class",
+      "name": "ControlPanelViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "lineRange": [
+        11,
+        107
+      ],
+      "summary": "为 ControlPanel 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "function",
+      "name": "ControlPanelViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "lineRange": [
+        17,
+        36
+      ],
+      "summary": "注入 ControlPanel 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:DialogNavigator_ContentPageChanged",
+      "type": "function",
+      "name": "DialogNavigator_ContentPageChanged",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "lineRange": [
+        84,
+        98
+      ],
+      "summary": "响应控制面板页面切换并同步当前内容状态。",
+      "tags": [
+        "事件处理",
+        "mvvm",
+        "状态同步",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:OnWindowClosing",
+      "type": "function",
+      "name": "OnWindowClosing",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "lineRange": [
+        100,
+        106
+      ],
+      "summary": "在窗口关闭时提交选择结果、释放订阅并保存必要状态。",
+      "tags": [
+        "事件处理",
+        "mvvm",
+        "状态同步",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "type": "file",
+      "name": "ScreensaverLayoutViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "summary": "管理多显示器屏保布局，支持添加、移除、校验、刷新和生成屏保配置。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "class",
+      "name": "ScreensaverLayoutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        20,
+        392
+      ],
+      "summary": "为 ScreensaverLayout 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "function",
+      "name": "ScreensaverLayoutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        32,
+        59
+      ],
+      "summary": "注入 ScreensaverLayout 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:AddScreensaver",
+      "type": "function",
+      "name": "AddScreensaver",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        144,
+        215
+      ],
+      "summary": "为目标显示器选择并添加屏保壁纸映射。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:RemoveScreensaver",
+      "type": "function",
+      "name": "RemoveScreensaver",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        217,
+        249
+      ],
+      "summary": "从当前多屏布局中移除选定屏保映射。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:CanRemoveScreensaver",
+      "type": "function",
+      "name": "CanRemoveScreensaver",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        251,
+        263
+      ],
+      "summary": "判断当前布局是否允许移除指定屏保条目。",
+      "tags": [
+        "命令校验",
+        "mvvm",
+        "状态判断",
+        "控制面板"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:OnWindowClosing",
+      "type": "function",
+      "name": "OnWindowClosing",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        280,
+        283
+      ],
+      "summary": "在窗口关闭时提交选择结果、释放订阅并保存必要状态。",
+      "tags": [
+        "事件处理",
+        "mvvm",
+        "状态同步",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:UpdateLayout",
+      "type": "function",
+      "name": "UpdateLayout",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        290,
+        367
+      ],
+      "summary": "根据当前显示器集合和选择状态重新计算可视化布局。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:GetScreensaverConfigFile",
+      "type": "function",
+      "name": "GetScreensaverConfigFile",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "lineRange": [
+        374,
+        386
+      ],
+      "summary": "根据当前屏保布局生成供运行时使用的配置文件。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "type": "file",
+      "name": "WallpaperLayoutViewModel.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "summary": "管理多显示器壁纸布局，支持关闭、定制、刷新显示器映射并保存布局变化。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "complex",
+      "languageNotes": "C# MVVM 将界面状态、命令和服务协作集中在 ViewModel 中，供不同 UI 宿主复用。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "class",
+      "name": "WallpaperLayoutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        15,
+        290
+      ],
+      "summary": "为 WallpaperLayout 界面集中管理状态、命令与服务协作。",
+      "tags": [
+        "mvvm",
+        "视图模型",
+        "状态管理",
+        "命令处理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "function",
+      "name": "WallpaperLayoutViewModel",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        27,
+        49
+      ],
+      "summary": "注入 WallpaperLayout 界面所需服务并初始化状态、命令与事件订阅。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CloseWallpaper",
+      "type": "function",
+      "name": "CloseWallpaper",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        133,
+        144
+      ],
+      "summary": "关闭选定显示器上的动态壁纸并刷新布局。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CanCloseWallpaper",
+      "type": "function",
+      "name": "CanCloseWallpaper",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        146,
+        166
+      ],
+      "summary": "判断当前显示器映射是否允许关闭壁纸。",
+      "tags": [
+        "命令校验",
+        "mvvm",
+        "状态判断",
+        "控制面板"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CustomiseWallpaper",
+      "type": "function",
+      "name": "CustomiseWallpaper",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        174,
+        205
+      ],
+      "summary": "打开选定壁纸的属性定制页面。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CustomiseWallpaperPageOnClosed",
+      "type": "function",
+      "name": "CustomiseWallpaperPageOnClosed",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        210,
+        217
+      ],
+      "summary": "在定制页面关闭后恢复控制面板状态并刷新布局。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:OnWindowClosing",
+      "type": "function",
+      "name": "OnWindowClosing",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        219,
+        223
+      ],
+      "summary": "在窗口关闭时提交选择结果、释放订阅并保存必要状态。",
+      "tags": [
+        "事件处理",
+        "mvvm",
+        "状态同步",
+        "生命周期"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:UpdateDisplayLayout",
+      "type": "function",
+      "name": "UpdateDisplayLayout",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        225,
+        243
+      ],
+      "summary": "依据显示器拓扑更新屏幕布局项和选择状态。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:UpdateWallpaperLayout",
+      "type": "function",
+      "name": "UpdateWallpaperLayout",
+      "filePath": "src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "lineRange": [
+        255,
+        289
+      ],
+      "summary": "根据正在运行的壁纸同步多显示器布局模型。",
+      "tags": [
+        "命令处理",
+        "mvvm",
+        "状态管理",
+        "多显示器"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:WebViewUtil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:WebViewUtil",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:IsWebView2Available",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:IsWebView2Available",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:InstallWebView2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Helpers/WebViewUtil.cs:InstallWebView2",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs:AboutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AboutViewModel.cs:AboutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperCreateViewModel.cs:AddWallpaperCreateViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperDataViewModel.cs:AddWallpaperDataViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:UpdateSettingsConfigFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:UpdateSettingsConfigFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:WebBrowseAction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperLink",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperLink",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:FileBrowseAction",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFiles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AddWallpaperViewModel.cs:AddWallpaperFiles",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:AppUpdateViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:CheckUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:DownloadUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:InstallWebView2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:UpdateState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/AppUpdateViewModel.cs:IsUpdateFileExists",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:ChooseDisplayViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:OnWindowClosing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:OnWindowClosing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ChooseDisplayViewModel.cs:UpdateLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:ControlPanelViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:DialogNavigator_ContentPageChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:OnWindowClosing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ControlPanelViewModel.cs:OnWindowClosing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:ScreensaverLayoutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:AddScreensaver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:RemoveScreensaver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:CanRemoveScreensaver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:OnWindowClosing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:OnWindowClosing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:UpdateLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/ScreensaverLayoutViewModel.cs:GetScreensaverConfigFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:WallpaperLayoutViewModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CloseWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CanCloseWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CustomiseWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CustomiseWallpaperPageOnClosed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:CustomiseWallpaperPageOnClosed",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:OnWindowClosing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:OnWindowClosing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:UpdateDisplayLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/ViewModels/ControlPanel/WallpaperLayoutViewModel.cs:UpdateWallpaperLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Lively.UI.Shared.shproj",
+      "target": "file:src/Lively/Lively.UI.Shared/Lively.UI.Shared.projitems",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

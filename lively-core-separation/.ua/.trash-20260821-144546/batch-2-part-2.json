@@ -1,0 +1,1065 @@
+{
+  "nodes": [
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "type": "schema",
+      "name": "update.proto",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 UpdateService 的 gRPC 契约，覆盖更新检查、状态查询、下载安装、发布通道切换以及更新结果订阅。",
+      "tags": [
+        "protobuf",
+        "grpc",
+        "schema-definition",
+        "app-update"
+      ],
+      "complexity": "simple",
+      "languageNotes": "采用 proto3，将 6 个 RPC 与 6 个 message/enum 定义汇聚为可生成 C# 强类型客户端和服务端 stub 的通信契约。"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:UpdateResponse",
+      "type": "schema",
+      "name": "UpdateResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf message `UpdateResponse`，以 status、version、url、changelog 5 个字段承载应用更新与发布通道管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:GetLatestReleaseRequest",
+      "type": "schema",
+      "name": "GetLatestReleaseRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf message `GetLatestReleaseRequest`，以 channel 1 个字段承载应用更新与发布通道管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:GetLatestReleaseResponse",
+      "type": "schema",
+      "name": "GetLatestReleaseResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf message `GetLatestReleaseResponse`，以 version、file_name、url 3 个字段承载应用更新与发布通道管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:SwitchReleaseChannelRequest",
+      "type": "schema",
+      "name": "SwitchReleaseChannelRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf message `SwitchReleaseChannelRequest`，以 channel 1 个字段承载应用更新与发布通道管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:UpdateStatus",
+      "type": "schema",
+      "name": "UpdateStatus",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf enum `UpdateStatus`，列出 uptodate、available、invalid、notchecked 5 个取值，用于约束应用更新与发布通道管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:ReleaseChannel",
+      "type": "schema",
+      "name": "ReleaseChannel",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "定义 Protobuf enum `ReleaseChannel`，列出 stable、beta 2 个取值，用于约束应用更新与发布通道管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.CheckUpdate",
+      "type": "endpoint",
+      "name": "RPC UpdateService.CheckUpdate",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.CheckUpdate` gRPC RPC，用于触发新版本检查。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.GetUpdateStatus",
+      "type": "endpoint",
+      "name": "RPC UpdateService.GetUpdateStatus",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.GetUpdateStatus` gRPC RPC，用于返回当前更新状态。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.StartUpdate",
+      "type": "endpoint",
+      "name": "RPC UpdateService.StartUpdate",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.StartUpdate` gRPC RPC，用于启动更新下载或安装流程。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.SubscribeUpdateChecked",
+      "type": "endpoint",
+      "name": "RPC UpdateService.SubscribeUpdateChecked",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.SubscribeUpdateChecked` gRPC RPC，用于以服务端流推送更新检查结果。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.GetLatestRelease",
+      "type": "endpoint",
+      "name": "RPC UpdateService.GetLatestRelease",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.GetLatestRelease` gRPC RPC，用于查询指定发布通道的最新版本。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.SwitchReleaseChannel",
+      "type": "endpoint",
+      "name": "RPC UpdateService.SwitchReleaseChannel",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "summary": "声明 `UpdateService.SwitchReleaseChannel` gRPC RPC，用于切换稳定版或 Beta 发布通道。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "type": "schema",
+      "name": "wallpaper.proto",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 DesktopService 的 gRPC 契约，覆盖壁纸创建、设置、预览、关闭、消息传递、截图、状态查询及变更与错误事件订阅。",
+      "tags": [
+        "protobuf",
+        "grpc",
+        "schema-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "采用 proto3，将 15 个 RPC 与 22 个 message/enum 定义汇聚为可生成 C# 强类型客户端和服务端 stub 的通信契约。"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:EditWallpaperRequest",
+      "type": "schema",
+      "name": "EditWallpaperRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `EditWallpaperRequest`，以 lively_info_path 1 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:EditWallpaperResponse",
+      "type": "schema",
+      "name": "EditWallpaperResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `EditWallpaperResponse`，以 is_success、error 2 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CreateWallpaperRequest",
+      "type": "schema",
+      "name": "CreateWallpaperRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CreateWallpaperRequest`，以 file_path、Category、arguments 3 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CreateWallpaperResponse",
+      "type": "schema",
+      "name": "CreateWallpaperResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CreateWallpaperResponse`，以 is_success、lively_info_path、error 3 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:SetWallpaperRequest",
+      "type": "schema",
+      "name": "SetWallpaperRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `SetWallpaperRequest`，以 lively_info_path、monitor_id、type 3 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:GetWallpapersResponse",
+      "type": "schema",
+      "name": "GetWallpapersResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `GetWallpapersResponse`，以 lively_info_path、screen、property_copy_path、thumbnail_path 6 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:UpdateWallpaperResponse",
+      "type": "schema",
+      "name": "UpdateWallpaperResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `UpdateWallpaperResponse`，以 type_、lively_info_path_、title、description 9 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:GetCoreStatsResponse",
+      "type": "schema",
+      "name": "GetCoreStatsResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `GetCoreStatsResponse`，以 base_directory、assembly_version、is_core_initialized 3 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:PreviewWallpaperRequest",
+      "type": "schema",
+      "name": "PreviewWallpaperRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `PreviewWallpaperRequest`，以 lively_info_path 1 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:ScreenData",
+      "type": "schema",
+      "name": "ScreenData",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `ScreenData`，以 device_id、device_name、display_name、h_monitor 8 个字段承载桌面壁纸生命周期管理的交换数据模型。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:Rectangle",
+      "type": "schema",
+      "name": "Rectangle",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `Rectangle`，以 x、y、width、height 4 个字段承载桌面壁纸生命周期管理的交换数据模型。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseAllWallpapersRequest",
+      "type": "schema",
+      "name": "CloseAllWallpapersRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CloseAllWallpapersRequest`，以 terminate 1 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperMonitorRequest",
+      "type": "schema",
+      "name": "CloseWallpaperMonitorRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CloseWallpaperMonitorRequest`，以 terminate、monitor_id 2 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperLibraryRequest",
+      "type": "schema",
+      "name": "CloseWallpaperLibraryRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CloseWallpaperLibraryRequest`，以 terminate、lively_info_path 2 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperCategoryRequest",
+      "type": "schema",
+      "name": "CloseWallpaperCategoryRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `CloseWallpaperCategoryRequest`，以 terminate、Category 2 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperMessageRequest",
+      "type": "schema",
+      "name": "WallpaperMessageRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `WallpaperMessageRequest`，以 monitor_id、lively_info_path、msg 3 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperScreenshotRequest",
+      "type": "schema",
+      "name": "WallpaperScreenshotRequest",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `WallpaperScreenshotRequest`，以 monitor_id、save_path 2 个字段承载桌面壁纸生命周期管理的请求载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperErrorResponse",
+      "type": "schema",
+      "name": "WallpaperErrorResponse",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf message `WallpaperErrorResponse`，以 error、error_msg 2 个字段承载桌面壁纸生命周期管理的响应载荷。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "message-model",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:ErrorCategory",
+      "type": "schema",
+      "name": "ErrorCategory",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf enum `ErrorCategory`，列出 workerw、wallpaper_not_found、wallpaper_plugin_fail、wallpaper_plugin_not_found 10 个取值，用于约束桌面壁纸生命周期管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperCategory",
+      "type": "schema",
+      "name": "WallpaperCategory",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf enum `WallpaperCategory`，列出 app、web、webaudio、url 12 个取值，用于约束桌面壁纸生命周期管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:LibraryItemCategory",
+      "type": "schema",
+      "name": "LibraryItemCategory",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf enum `LibraryItemCategory`，列出 processing、ready、cmdImport、multiImport 5 个取值，用于约束桌面壁纸生命周期管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:UpdateWallpaperCategory",
+      "type": "schema",
+      "name": "UpdateWallpaperCategory",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "定义 Protobuf enum `UpdateWallpaperCategory`，列出 changed、remove、done 3 个取值，用于约束桌面壁纸生命周期管理 RPC 中的状态、类别或策略字段。",
+      "tags": [
+        "protobuf",
+        "schema-definition",
+        "enum-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SetWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.SetWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.SetWallpaper` gRPC RPC，用于将指定壁纸应用到目标显示器。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.GetWallpapers",
+      "type": "endpoint",
+      "name": "RPC DesktopService.GetWallpapers",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.GetWallpapers` gRPC RPC，用于返回当前运行的壁纸集合。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.PreviewWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.PreviewWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.PreviewWallpaper` gRPC RPC，用于预览指定壁纸。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseAllWallpapers",
+      "type": "endpoint",
+      "name": "RPC DesktopService.CloseAllWallpapers",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.CloseAllWallpapers` gRPC RPC，用于关闭全部运行中的壁纸。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperMonitor",
+      "type": "endpoint",
+      "name": "RPC DesktopService.CloseWallpaperMonitor",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.CloseWallpaperMonitor` gRPC RPC，用于关闭指定显示器上的壁纸。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperLibrary",
+      "type": "endpoint",
+      "name": "RPC DesktopService.CloseWallpaperLibrary",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.CloseWallpaperLibrary` gRPC RPC，用于按媒体库条目关闭壁纸。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperCategory",
+      "type": "endpoint",
+      "name": "RPC DesktopService.CloseWallpaperCategory",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.CloseWallpaperCategory` gRPC RPC，用于按壁纸类别关闭壁纸。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeWallpaperChanged",
+      "type": "endpoint",
+      "name": "RPC DesktopService.SubscribeWallpaperChanged",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.SubscribeWallpaperChanged` gRPC RPC，用于以服务端流推送壁纸变更事件。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeWallpaperError",
+      "type": "endpoint",
+      "name": "RPC DesktopService.SubscribeWallpaperError",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.SubscribeWallpaperError` gRPC RPC，用于以服务端流推送壁纸错误事件。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeUpdateWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.SubscribeUpdateWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.SubscribeUpdateWallpaper` gRPC RPC，用于以服务端流推送壁纸元数据更新。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SendMessageWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.SendMessageWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.SendMessageWallpaper` gRPC RPC，用于向指定壁纸实例发送控制消息。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.GetCoreStats",
+      "type": "endpoint",
+      "name": "RPC DesktopService.GetCoreStats",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.GetCoreStats` gRPC RPC，用于返回核心目录、版本和初始化状态。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.TakeScreenshot",
+      "type": "endpoint",
+      "name": "RPC DesktopService.TakeScreenshot",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.TakeScreenshot` gRPC RPC，用于截取指定显示器上的壁纸画面。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.EditWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.EditWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.EditWallpaper` gRPC RPC，用于打开或执行壁纸编辑流程。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CreateWallpaper",
+      "type": "endpoint",
+      "name": "RPC DesktopService.CreateWallpaper",
+      "filePath": "src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "summary": "声明 `DesktopService.CreateWallpaper` gRPC RPC，用于从文件、类别和启动参数创建壁纸条目。",
+      "tags": [
+        "grpc",
+        "rpc-endpoint",
+        "api-schema",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:UpdateResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:GetLatestReleaseRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:GetLatestReleaseResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:SwitchReleaseChannelRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:UpdateStatus",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto:ReleaseChannel",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.CheckUpdate",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.GetUpdateStatus",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.StartUpdate",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.SubscribeUpdateChecked",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.GetLatestRelease",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/update.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/update.proto:rpc-UpdateService.SwitchReleaseChannel",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:EditWallpaperRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:EditWallpaperResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CreateWallpaperRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CreateWallpaperResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:SetWallpaperRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:GetWallpapersResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:UpdateWallpaperResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:GetCoreStatsResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:PreviewWallpaperRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:ScreenData",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:Rectangle",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseAllWallpapersRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperMonitorRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperLibraryRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:CloseWallpaperCategoryRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperMessageRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperScreenshotRequest",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperErrorResponse",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:ErrorCategory",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:WallpaperCategory",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:LibraryItemCategory",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:UpdateWallpaperCategory",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SetWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.GetWallpapers",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.PreviewWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseAllWallpapers",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperMonitor",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperLibrary",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CloseWallpaperCategory",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeWallpaperChanged",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeWallpaperError",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SubscribeUpdateWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.SendMessageWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.GetCoreStats",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.TakeScreenshot",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.EditWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "target": "endpoint:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto:rpc-DesktopService.CreateWallpaper",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

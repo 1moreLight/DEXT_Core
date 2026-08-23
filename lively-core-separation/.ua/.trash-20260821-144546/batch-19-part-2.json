@@ -1,0 +1,889 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "type": "file",
+      "name": "FolderView.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "summary": "遍历目标目录构建 ExplorerItem 树，为 FolderView 提供递归文件数据。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "class",
+      "name": "FolderView",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "lineRange": [
+        10,
+        91
+      ],
+      "summary": "遍历目录并向树控件提供递归 ExplorerItem 数据。",
+      "tags": [
+        "用户控件",
+        "依赖属性",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "function",
+      "name": "FolderView",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "lineRange": [
+        40,
+        43
+      ],
+      "summary": "初始化目录树控件并加载根节点数据。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:GetDataFromFolder",
+      "type": "function",
+      "name": "GetDataFromFolder",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "lineRange": [
+        45,
+        54
+      ],
+      "summary": "读取指定目录并构建第一层文件和文件夹节点。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:TraverseFolder",
+      "type": "function",
+      "name": "TraverseFolder",
+      "filePath": "src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "lineRange": [
+        56,
+        90
+      ],
+      "summary": "递归遍历子目录并填充 ExplorerItem 树。",
+      "tags": [
+        "用户控件",
+        "事件处理",
+        "依赖属性",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml",
+      "type": "file",
+      "name": "EyeDropper.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml",
+      "summary": "定义屏幕取色器浮动窗口，以边框和文本预览当前像素颜色。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "type": "file",
+      "name": "EyeDropper.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "summary": "跟踪鼠标位置、读取屏幕像素颜色、调整预览窗口位置和前景色，并返回最终选择。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "class",
+      "name": "EyeDropper",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "lineRange": [
+        23,
+        139
+      ],
+      "summary": "读取屏幕像素并提供跟随鼠标的颜色预览与选择窗口。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "function",
+      "name": "EyeDropper",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "lineRange": [
+        29,
+        101
+      ],
+      "summary": "初始化屏幕取色窗口、鼠标跟踪和完成结果。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:SetPreviewColor",
+      "type": "function",
+      "name": "SetPreviewColor",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "lineRange": [
+        103,
+        112
+      ],
+      "summary": "更新取色预览背景、文本和当前颜色值。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:SetPosAndForeground",
+      "type": "function",
+      "name": "SetPosAndForeground",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "lineRange": [
+        114,
+        117
+      ],
+      "summary": "根据鼠标位置移动窗口，并按背景亮度选择可读前景色。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:GetColorAt",
+      "type": "function",
+      "name": "GetColorAt",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "lineRange": [
+        121,
+        134
+      ],
+      "summary": "从屏幕设备上下文读取指定坐标的像素颜色。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml",
+      "type": "file",
+      "name": "LivelyPropertiesTray.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml",
+      "summary": "定义动态壁纸属性托盘窗口，并以 Frame 承载具体属性页面。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "type": "file",
+      "name": "LivelyPropertiesTray.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "summary": "初始化属性托盘窗口、设置宿主内容并协调窗口生命周期。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "class",
+      "name": "LivelyPropertiesTray",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "lineRange": [
+        17,
+        41
+      ],
+      "summary": "承载动态壁纸属性页面的独立托盘窗口。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "function",
+      "name": "LivelyPropertiesTray",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "lineRange": [
+        19,
+        40
+      ],
+      "summary": "初始化属性托盘窗口并导航到属性编辑页面。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml",
+      "type": "file",
+      "name": "LivelyPropertiesView.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml",
+      "summary": "定义动态壁纸属性编辑页面，为滑块、文本、颜色、复选框、下拉框和按钮提供数据模板。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "type": "file",
+      "name": "LivelyPropertiesView.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "summary": "初始化动态壁纸属性页面并连接共享 CustomiseWallpaperViewModel。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "class",
+      "name": "LivelyPropertiesView",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "lineRange": [
+        7,
+        35
+      ],
+      "summary": "承载动态壁纸属性模板和编辑 ViewModel 的页面。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "function",
+      "name": "LivelyPropertiesView",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "lineRange": [
+        18,
+        22
+      ],
+      "summary": "初始化属性编辑页面并连接当前 ViewModel。",
+      "tags": [
+        "壁纸属性",
+        "窗口交互",
+        "事件处理",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml",
+      "type": "file",
+      "name": "MainWindow.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml",
+      "summary": "定义 Lively WinUI 主窗口的自定义标题栏、导航视图、搜索框、背景图和主要页面内容。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "complex",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "type": "file",
+      "name": "MainWindow.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "summary": "实现应用主窗口，负责标题栏与窗口状态、导航、搜索、父进程消息监听和关闭清理。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "winui"
+      ],
+      "complexity": "complex",
+      "languageNotes": "WinUIEx 窗口与自定义标题栏、NavigationView 及标准输入 IPC 共同构成主窗口外壳。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "class",
+      "name": "MainWindow",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        21,
+        286
+      ],
+      "summary": "协调主窗口标题栏、导航、搜索、IPC 和关闭生命周期。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "winui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "function",
+      "name": "MainWindow",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        34,
+        80
+      ],
+      "summary": "初始化主窗口、服务、导航、标题栏、搜索与消息监听。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:Window_Closed",
+      "type": "function",
+      "name": "Window_Closed",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        94,
+        149
+      ],
+      "summary": "在主窗口关闭时释放订阅并触发应用安全退出。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:StdInListener",
+      "type": "function",
+      "name": "StdInListener",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        154,
+        206
+      ],
+      "summary": "持续读取父进程消息并处理窗口或应用控制命令。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AppTitleBar_Loaded",
+      "type": "function",
+      "name": "AppTitleBar_Loaded",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        208,
+        219
+      ],
+      "summary": "在标题栏加载后设置拖动区域和窗口标题栏属性。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AppTitleBar_SizeChanged",
+      "type": "function",
+      "name": "AppTitleBar_SizeChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        221,
+        233
+      ],
+      "summary": "在标题栏尺寸变化时重新计算可拖动区域。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AutoSuggestBox_TextChanged",
+      "type": "function",
+      "name": "AutoSuggestBox_TextChanged",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        242,
+        254
+      ],
+      "summary": "根据用户输入更新壁纸搜索建议和筛选状态。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:Search",
+      "type": "function",
+      "name": "Search",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "lineRange": [
+        263,
+        283
+      ],
+      "summary": "应用搜索文本过滤壁纸库并同步导航页面。",
+      "tags": [
+        "主窗口",
+        "导航",
+        "搜索",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml",
+      "type": "file",
+      "name": "AboutView.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml",
+      "summary": "定义关于页面，展示应用信息、贡献者、项目链接、许可证及相关操作。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "type": "file",
+      "name": "AboutView.xaml.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "summary": "初始化关于页面并连接 AboutViewModel 与页面资源。",
+      "tags": [
+        "页面组件",
+        "mvvm",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "class",
+      "name": "AboutView",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "lineRange": [
+        10,
+        17
+      ],
+      "summary": "承载关于页面布局和 AboutViewModel。",
+      "tags": [
+        "页面组件",
+        "mvvm",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "function",
+      "name": "AboutView",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "lineRange": [
+        12,
+        16
+      ],
+      "summary": "初始化关于页面并绑定 AboutViewModel。",
+      "tags": [
+        "页面组件",
+        "mvvm",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperCreateView.xaml",
+      "type": "file",
+      "name": "AddWallpaperCreateView.xaml",
+      "filePath": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperCreateView.xaml",
+      "summary": "定义创建壁纸页面的项目类型列表、说明、预览图与继续操作布局。",
+      "tags": [
+        "xaml",
+        "界面布局",
+        "数据绑定",
+        "winui"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "XAML 通过 x:Class 与同名 code-behind 配对，并使用 Binding 或 x:Bind 连接状态与命令。"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:FolderView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:GetDataFromFolder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/UserControls/FolderView.xaml.cs:TraverseFolder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:EyeDropper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:SetPreviewColor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:SetPosAndForeground",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:SetPosAndForeground",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:GetColorAt",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs:GetColorAt",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs:LivelyPropertiesTray",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs:LivelyPropertiesView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:MainWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:Window_Closed",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:StdInListener",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AppTitleBar_Loaded",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AppTitleBar_SizeChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:AutoSuggestBox_TextChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs:Search",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs:AboutView",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/EyeDropper.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesTray.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/Views/LivelyProperty/LivelyPropertiesView.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml",
+      "target": "file:src/Lively/Lively.UI.WinUI/Views/Pages/AboutView.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

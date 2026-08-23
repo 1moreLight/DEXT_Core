@@ -1,0 +1,680 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Utility.Watchdog/Properties/AssemblyInfo.cs",
+      "type": "file",
+      "name": "AssemblyInfo.cs",
+      "filePath": "src/Lively/Lively.Utility.Watchdog/Properties/AssemblyInfo.cs",
+      "summary": "保存 Lively 看门狗程序的程序集标题、版本、COM 可见性和产品元数据。",
+      "tags": [
+        "csharp",
+        "程序集元数据",
+        "配置"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/Lively/Lively.sln",
+      "type": "config",
+      "name": "Lively.sln",
+      "filePath": "src/Lively/Lively.sln",
+      "summary": "聚合 Lively 桌面核心、WinUI 前端、共享库、gRPC、屏幕保护和辅助工具等 .NET 项目的 Visual Studio 解决方案。",
+      "tags": [
+        "visual-studio",
+        "解决方案",
+        "构建系统"
+      ],
+      "complexity": "complex",
+      "languageNotes": "Visual Studio solution 文件统一组织多个 .NET 项目与构建配置。"
+    },
+    {
+      "id": "file:src/Lively/Lively/App.xaml",
+      "type": "file",
+      "name": "App.xaml",
+      "filePath": "src/Lively/Lively/App.xaml",
+      "summary": "声明 Lively WPF 核心进程的应用入口与全局资源，是 App 代码隐藏层的 XAML 配套文件。",
+      "tags": [
+        "xaml",
+        "wpf",
+        "应用入口"
+      ],
+      "complexity": "simple",
+      "languageNotes": "WPF Application XAML 与 C# 代码隐藏类共同构成进程入口。"
+    },
+    {
+      "id": "file:src/Lively/Lively/App.xaml.cs",
+      "type": "file",
+      "name": "App.xaml.cs",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "summary": "引导 Lively 核心进程，建立依赖注入和 gRPC 服务、执行首次运行初始化、管理主题与单实例，并集中记录未处理异常。",
+      "tags": [
+        "csharp",
+        "应用启动",
+        "依赖注入"
+      ],
+      "complexity": "complex",
+      "languageNotes": "使用 Microsoft.Extensions.DependencyInjection 和 ASP.NET Core gRPC 组装桌面核心服务。"
+    },
+    {
+      "id": "file:src/Lively/Lively/AppInitializer.cs",
+      "type": "file",
+      "name": "AppInitializer.cs",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "summary": "准备 Lively 的运行目录和默认壁纸资源，清理临时数据，并在首次运行或版本升级时执行安装与迁移。",
+      "tags": [
+        "csharp",
+        "应用启动",
+        "依赖注入"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively/AssemblyInfo.cs",
+      "type": "file",
+      "name": "AssemblyInfo.cs",
+      "filePath": "src/Lively/Lively/AssemblyInfo.cs",
+      "summary": "声明 Lively 核心程序集的主题资源查找和其他程序集级元数据。",
+      "tags": [
+        "csharp",
+        "程序集元数据",
+        "配置"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.json",
+      "type": "config",
+      "name": "LivelyProperties.json",
+      "filePath": "src/Lively/Lively/Assets/Plugins/Mpv/LivelyProperties.json",
+      "summary": "定义 MPV 壁纸插件可配置属性的默认值、控件类型和可选项，供属性面板生成交互设置。",
+      "tags": [
+        "json",
+        "mpv",
+        "插件配置"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "JSON 属性描述由运行时读取，用于动态生成 MPV 壁纸的设置控件。"
+    },
+    {
+      "id": "class:src/Lively/Lively/App.xaml.cs:App",
+      "type": "class",
+      "name": "App",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        40,
+        384
+      ],
+      "summary": "Lively 核心应用对象，集中负责进程引导、依赖注入、gRPC 主机、主题、更新通知、单实例和异常处理。",
+      "tags": [
+        "class",
+        "应用入口",
+        "依赖注入",
+        "grpc"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:App",
+      "type": "function",
+      "name": "App",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        61,
+        218
+      ],
+      "summary": "初始化 App，建立应用启动所需的依赖、进程状态和事件订阅。",
+      "tags": [
+        "function",
+        "应用启动",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:ConfigureServices",
+      "type": "function",
+      "name": "ConfigureServices",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        220,
+        271
+      ],
+      "summary": "注册桌面核心、显示器、壁纸工厂、播放监控、设置和其他运行服务，构建依赖注入容器。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:ConfigureGrpcServer",
+      "type": "function",
+      "name": "ConfigureGrpcServer",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        273,
+        284
+      ],
+      "summary": "创建并启动本地 gRPC 主机，向 WinUI 和辅助工具暴露核心服务。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:ChangeTheme",
+      "type": "function",
+      "name": "ChangeTheme",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        290,
+        318
+      ],
+      "summary": "切换应用主题资源并同步当前主题状态。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:AppUpdateChecked",
+      "type": "function",
+      "name": "AppUpdateChecked",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        320,
+        337
+      ],
+      "summary": "响应更新检查结果，并更新托盘通知或升级提示状态。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:SetupUnhandledExceptionLogging",
+      "type": "function",
+      "name": "SetupUnhandledExceptionLogging",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        339,
+        351
+      ],
+      "summary": "订阅进程、任务和 UI 线程的未处理异常事件。",
+      "tags": [
+        "function",
+        "应用启动",
+        "状态控制"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:AcquireMutex",
+      "type": "function",
+      "name": "AcquireMutex",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        355,
+        364
+      ],
+      "summary": "取得单实例互斥体，阻止重复核心进程并识别独占屏保模式。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:ReleaseMutex",
+      "type": "function",
+      "name": "ReleaseMutex",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        366,
+        371
+      ],
+      "summary": "释放并清理单实例互斥体。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/App.xaml.cs:QuitApp",
+      "type": "function",
+      "name": "QuitApp",
+      "filePath": "src/Lively/Lively/App.xaml.cs",
+      "lineRange": [
+        373,
+        383
+      ],
+      "summary": "有序停止 gRPC、释放互斥体并退出核心应用。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "class",
+      "name": "AppInitializer",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        17,
+        208
+      ],
+      "summary": "执行应用目录、默认资源和版本迁移的幂等初始化流程。",
+      "tags": [
+        "class",
+        "应用启动",
+        "核心组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "function",
+      "name": "AppInitializer",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        23,
+        27
+      ],
+      "summary": "初始化 AppInitializer，建立应用启动所需的依赖、进程状态和事件订阅。",
+      "tags": [
+        "function",
+        "应用启动",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:Run",
+      "type": "function",
+      "name": "Run",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        29,
+        35
+      ],
+      "summary": "依次执行临时文件清理、目录创建、首次运行处理和旧版本迁移。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:CleanTempFiles",
+      "type": "function",
+      "name": "CleanTempFiles",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        37,
+        48
+      ],
+      "summary": "删除上次运行遗留的临时文件和可安全清理的数据。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:CreateRequiredDirectories",
+      "type": "function",
+      "name": "CreateRequiredDirectories",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        50,
+        63
+      ],
+      "summary": "创建应用启动所需的配置、缓存和壁纸目录。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:SetupWallpaperDirectories",
+      "type": "function",
+      "name": "SetupWallpaperDirectories",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        65,
+        78
+      ],
+      "summary": "根据用户设置建立并校验壁纸库目录结构。",
+      "tags": [
+        "function",
+        "应用启动",
+        "状态控制"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:HandleFirstRunOrUpdate",
+      "type": "function",
+      "name": "HandleFirstRunOrUpdate",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        80,
+        98
+      ],
+      "summary": "识别首次运行或版本升级，并触发默认资源安装和迁移。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:InstallWallpaperBundles",
+      "type": "function",
+      "name": "InstallWallpaperBundles",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        100,
+        115
+      ],
+      "summary": "把随应用提供的壁纸包安装到用户壁纸库。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:SetupWallpaperDefaults",
+      "type": "function",
+      "name": "SetupWallpaperDefaults",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        117,
+        132
+      ],
+      "summary": "初始化默认壁纸和首次启动所需的用户设置。",
+      "tags": [
+        "function",
+        "应用启动",
+        "状态控制"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/AppInitializer.cs:MigrateFromOlderVersions",
+      "type": "function",
+      "name": "MigrateFromOlderVersions",
+      "filePath": "src/Lively/Lively/AppInitializer.cs",
+      "lineRange": [
+        134,
+        200
+      ],
+      "summary": "迁移旧版本目录、配置和壁纸数据到当前结构。",
+      "tags": [
+        "function",
+        "应用启动",
+        "业务逻辑"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "class:src/Lively/Lively/App.xaml.cs:App",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "class:src/Lively/Lively/App.xaml.cs:App",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:App",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:App",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ConfigureServices",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ConfigureGrpcServer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ChangeTheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ChangeTheme",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:AppUpdateChecked",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:SetupUnhandledExceptionLogging",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:AcquireMutex",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:AcquireMutex",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ReleaseMutex",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:ReleaseMutex",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:QuitApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "function:src/Lively/Lively/App.xaml.cs:QuitApp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "class:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "class:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:AppInitializer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:Run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:Run",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:CleanTempFiles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:CreateRequiredDirectories",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:SetupWallpaperDirectories",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:HandleFirstRunOrUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:InstallWallpaperBundles",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:SetupWallpaperDefaults",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/AppInitializer.cs",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:MigrateFromOlderVersions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "config:src/Lively/Lively.sln",
+      "target": "file:src/Lively/Lively/App.xaml.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "file:src/Lively/Lively/App.xaml",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively/App.xaml.cs",
+      "target": "file:src/Lively/Lively/AppInitializer.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "function:src/Lively/Lively/App.xaml.cs:App",
+      "target": "function:src/Lively/Lively/AppInitializer.cs:Run",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

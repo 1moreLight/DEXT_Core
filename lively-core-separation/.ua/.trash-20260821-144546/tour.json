@@ -1,0 +1,136 @@
+[
+  {
+    "order": 1,
+    "title": "项目全景",
+    "description": "先从 README 建立 Lively Wallpaper 的整体心智模型，理解它如何把视频、网页和应用变成动态桌面与屏幕保护程序。这里也概括自动化 API、机器学习和节能策略，说明后续各子系统为什么存在。带着这张地图，再进入核心进程会更容易判断每个模块在完整产品中的位置。",
+    "nodeIds": [
+      "document:README.md"
+    ]
+  },
+  {
+    "order": 2,
+    "title": "核心启动",
+    "description": "承接项目全景，核心 App 负责建立依赖注入、启动 gRPC 服务、保证单实例并汇总异常处理。AppInitializer 随后准备运行目录、默认资源和首次运行状态，Run 方法给出了初始化任务的顺序。把这里视为核心进程的 composition root，可以先掌握系统如何被组装，再追踪具体功能。",
+    "nodeIds": [
+      "file:src/Lively/Lively/App.xaml.cs",
+      "file:src/Lively/Lively/AppInitializer.cs",
+      "function:src/Lively/Lively/AppInitializer.cs:Run"
+    ],
+    "languageLesson": "C# 应用常把依赖注册集中在 composition root（组合根）中，使对象创建与业务行为分离；接口由容器绑定实现，便于测试和替换平台服务。"
+  },
+  {
+    "order": 3,
+    "title": "桌面编排核心",
+    "description": "初始化完成后，WinDesktopCore 在 Windows 的 WorkerW 桌面层中创建、布局并恢复动态壁纸，同时响应显示器和 Explorer 变化。IWallpaper 把不同后端统一成同一套播放控制契约，而 RunnerService 管理独立 WinUI 进程及其窗口状态。三者共同展示 Lively 的关键分工：桌面状态由核心持有，具体播放与用户界面可以独立演进。",
+    "nodeIds": [
+      "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "class:src/Lively/Lively/Core/IWallpaper.cs:IWallpaper",
+      "file:src/Lively/Lively/Services/RunnerService.cs"
+    ],
+    "languageLesson": "C# interface 用稳定契约隔离多种实现；这里的 IWallpaper 让核心按统一生命周期控制网页、视频和图片播放器，而不依赖某个具体技术栈。"
+  },
+  {
+    "order": 4,
+    "title": "壁纸后端选择",
+    "description": "在桌面核心决定需要创建壁纸后，WallpaperPluginFactory 根据壁纸类别和用户设置选择具体后端。WebWebView2 代表网页进程托管，VideoMpvPlayer 代表视频进程与 IPC 控制，两者都落实上一站的 IWallpaper 契约。学习这一站可以看清工厂模式如何把产品策略与播放器实现解耦。",
+    "nodeIds": [
+      "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "file:src/Lively/Lively/Core/Wallpapers/VideoMpvPlayer.cs"
+    ],
+    "languageLesson": "Factory（工厂）把对象选择与构造集中起来；调用方只请求一种壁纸能力，工厂再根据类型和设置返回适合的 IWallpaper 实现。"
+  },
+  {
+    "order": 5,
+    "title": "WinUI 应用壳",
+    "description": "核心通过 RunnerService 拉起前端后，WinUI App 成为界面侧的组合根，负责服务注册、主题、主窗口和安全关闭。MainWindow.xaml 用 XAML 声明标题栏、导航、搜索和内容容器，项目文件则揭示 Windows App SDK、CommunityToolkit 与多架构目标。这里把进程级启动与可视界面衔接起来，为下一站的 MVVM 行为层提供宿主。",
+    "nodeIds": [
+      "file:src/Lively/Lively.UI.WinUI/App.xaml.cs",
+      "file:src/Lively/Lively.UI.WinUI/Views/MainWindow.xaml",
+      "config:src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj"
+    ],
+    "languageLesson": "XAML 负责声明视觉树，C# 负责状态与行为；将布局和逻辑分开后，主题、资源与数据绑定可以在不重写业务流程的情况下演进。"
+  },
+  {
+    "order": 6,
+    "title": "MVVM 工作流",
+    "description": "在应用壳之上，MainViewModel 协调导航、壁纸导入、主题、更新与桌面事件，形成前端的全局状态入口。LibraryViewModel 管理本地和 Gallery 壁纸的选择、安装、删除与导出，DialogService 则把复杂交互收束成可调用的界面服务。沿着“用户动作—ViewModel 命令—服务调用”阅读，可以理解 UI 如何驱动前面建立的桌面核心。",
+    "nodeIds": [
+      "file:src/Lively/Lively.UI.Shared/ViewModels/MainViewModel.cs",
+      "file:src/Lively/Lively.UI.Shared/ViewModels/LibraryViewModel.cs",
+      "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs"
+    ],
+    "languageLesson": "MVVM 通过数据绑定和命令把 View 与业务状态分离；ViewModel 不直接绘制控件，而是公开可观察状态并调用服务完成导航、对话框和异步任务。"
+  },
+  {
+    "order": 7,
+    "title": "播放器进程",
+    "description": "当前端选定壁纸且核心完成后端分派后，真正的内容渲染发生在独立播放器进程中。WebView2、CefSharp 与 VLC 的 Program.cs 展示不同运行时的真实入口，而 WebWebView2 和 VideoMpvPlayer 展示核心侧如何启动、监控并通过 IPC 控制这些进程。把宿主端和子进程端成对阅读，能理解崩溃隔离、多后端兼容及统一生命周期之间的关系。",
+    "nodeIds": [
+      "file:src/Lively/Lively.Player.WebView2/Program.cs",
+      "file:src/Lively/Lively.Player.CefSharp/Program.cs",
+      "file:src/Lively/Lively.Player.Vlc/Program.cs",
+      "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "file:src/Lively/Lively/Core/Wallpapers/VideoMpvPlayer.cs"
+    ]
+  },
+  {
+    "order": 8,
+    "title": "远程调用契约",
+    "description": "播放器和 UI 被拆成进程后，wallpaper.proto 与 settings.proto 为壁纸生命周期和设置同步定义稳定的 gRPC/Protobuf 边界。WinDesktopCoreServer 把核心能力暴露为服务，WinDesktopCoreClient 将远程调用与事件流还原成界面可使用的本地 API，共享项目负责生成契约类型。由此可以把前几站串成完整链路：UI 发出意图，契约跨进程传输，核心执行桌面操作。",
+    "nodeIds": [
+      "schema:src/Lively/Lively.Grpc.Common/Proto/wallpaper.proto",
+      "schema:src/Lively/Lively.Grpc.Common/Proto/settings.proto",
+      "file:src/Lively/Lively/RPC/WinDesktopCoreServer.cs",
+      "file:src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "config:src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj"
+    ],
+    "languageLesson": "Protobuf 字段编号一旦发布就应视为永久标识，删除字段后也不要复用编号；兼容演进通常通过新增可选字段完成，service 则集中声明 RPC 契约。"
+  },
+  {
+    "order": 9,
+    "title": "在线与智能扩展",
+    "description": "掌握本地壁纸闭环后，再看 Lively 如何向外扩展：GalleryClient 处理认证、检索、订阅和壁纸传输，GalleryViewModel 把分页结果带入 MVVM 界面。另一条扩展路径由 DepthEstimateWallpaperViewModel 编排模型下载和生成流程，MiDaS 借助 ONNX Runtime 执行单目深度推理。它们说明集成服务和机器学习被放在核心桌面能力之外，通过清晰边界为产品增加新体验。",
+    "nodeIds": [
+      "file:src/Lively/Lively.Gallery.Client/GalleryClient.cs",
+      "file:src/Lively/Lively.UI.Shared/ViewModels/Gallery/GalleryViewModel.cs",
+      "file:src/Lively/Lively.UI.Shared/ViewModels/DepthEstimateWallpaperViewModel.cs",
+      "file:src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "config:src/Lively/Lively.ML/Lively.ML.csproj"
+    ]
+  },
+  {
+    "order": 10,
+    "title": "Windows 系统边界",
+    "description": "前述 WorkerW、显示器和窗口控制最终都建立在 Windows 原生能力之上。NativeMethods 集中声明 P/Invoke API、结构体和枚举，WindowUtil 再把窗口枚举、遮挡、样式与父子关系封装为较高层操作，核心清单声明所需兼容性和系统能力。先理解这层边界，便能区分 Lively 自身策略与操作系统约束，并更安全地定位平台相关问题。",
+    "nodeIds": [
+      "file:src/Lively/Lively.Common/Helpers/Pinvoke/NativeMethods.cs",
+      "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "file:src/Lively/Lively/app.manifest"
+    ],
+    "languageLesson": "P/Invoke 让托管 C# 调用 Windows native API，但结构体布局、句柄生命周期和调用约定必须与原生定义严格一致，否则错误可能跨越托管边界。"
+  },
+  {
+    "order": 11,
+    "title": "辅助宿主运维",
+    "description": "在主核心和播放器之外，Lively 还用小型宿主处理操作系统集成与故障恢复。Screensaver 的 Program.cs 解析 Windows 屏保参数并激活对应模式，Watchdog 的 Program.cs 在父进程异常退出后清理外部壁纸进程，CommandsClient 则为屏保和自动化工具提供远程控制入口。这些节点把运行时可靠性补完整，也展示为什么部分职责适合独立可执行程序。",
+    "nodeIds": [
+      "file:src/Lively/Lively.Utility.Screensaver/Program.cs",
+      "file:src/Lively/Lively.Utility.Watchdog/Program.cs",
+      "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs"
+    ]
+  },
+  {
+    "order": 12,
+    "title": "构建安装交付",
+    "description": "最后从交付视角回看整个系统：Lively.sln 聚合核心、UI、播放器、gRPC 与工具项目，Directory.Build.props 和 Package.appxmanifest 定义 WinUI 的构建默认值与包身份。Inno Setup 的 x64 脚本负责文件复制、运行库检查、升级卸载和本地化安装，贡献指南则给出继续参与项目的入口。完成这一站后，便能从源码结构一路追踪到可安装产品，并选择合适子系统开始实践。",
+    "nodeIds": [
+      "config:src/Lively/Lively.sln",
+      "file:src/Lively/Lively.UI.WinUI/Directory.Build.props",
+      "file:src/Lively/Lively.UI.WinUI/Package.appxmanifest",
+      "file:src/installer/Script_x64.iss",
+      "document:CONTRIBUTING.md"
+    ],
+    "languageLesson": "MSBuild 项目与目录级 props 共同形成可继承的构建配置，Windows manifest 描述包身份和能力，Inno Setup 脚本则把已构建产物编排为传统安装流程。"
+  }
+]

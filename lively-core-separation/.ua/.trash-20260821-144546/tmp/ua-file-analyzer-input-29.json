@@ -1,0 +1,14 @@
+{
+  "projectRoot": "D:/midDOW/lively-core-separation/lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/installer/Theme/wizard_small.bmp",
+      "language": "bmp",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/installer/Theme/wizard_small.bmp": []
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Common/Languages.cs",
+      "type": "file",
+      "name": "Languages.cs",
+      "filePath": "src/Lively/Lively.Common/Languages.cs",
+      "summary": "集中维护 Lively 支持的语言代码、显示名称和区域映射，供设置界面与资源选择使用。",
+      "tags": [
+        "utility",
+        "windows",
+        "localization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Languages.cs:Languages",
+      "type": "class",
+      "name": "Languages",
+      "filePath": "src/Lively/Lively.Common/Languages.cs",
+      "lineRange": [
+        8,
+        60
+      ],
+      "summary": "作为本文件的核心类型，集中维护 Lively 支持的语言代码、显示名称和区域映射，供设置界面与资源选择使用。",
+      "tags": [
+        "class",
+        "utility",
+        "localization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/Lively/Lively.Common/Lively.Common.csproj",
+      "type": "config",
+      "name": "Lively.Common.csproj",
+      "filePath": "src/Lively/Lively.Common/Lively.Common.csproj",
+      "summary": "定义 Lively.Common 的 netstandard2.0 类库构建，引用命令行解析、HTTP、JSON、GitHub、压缩、系统管理、DPAPI 与 UAC 相关依赖，并依赖 Lively.Models。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "common-library"
+      ],
+      "complexity": "simple",
+      "languageNotes": "SDK-style netstandard2.0 项目，为桌面核心、UI 与客户端共享 Windows 和序列化基础能力。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "type": "file",
+      "name": "IAppUpdaterService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "summary": "声明应用更新服务契约，暴露检查状态、最新版本元数据、启动与停止更新检查及完成事件。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IAppUpdaterService.cs:IAppUpdaterService",
+      "type": "class",
+      "name": "IAppUpdaterService",
+      "filePath": "src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "lineRange": [
+        7,
+        21
+      ],
+      "summary": "声明 `IAppUpdaterService` 服务接口，约束声明应用更新服务契约，暴露检查状态、最新版本元数据、启动与停止更新检查及完成事件所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "type": "file",
+      "name": "IAudioVisualizerService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "summary": "声明音频可视化服务契约，提供采样事件以及指定设备的启动和停止操作。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs:IAudioVisualizerService",
+      "type": "class",
+      "name": "IAudioVisualizerService",
+      "filePath": "src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "lineRange": [
+        5,
+        10
+      ],
+      "summary": "声明 `IAudioVisualizerService` 服务接口，约束声明音频可视化服务契约，提供采样事件以及指定设备的启动和停止操作所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Services/ICacheService.cs",
+      "type": "file",
+      "name": "ICacheService.cs",
+      "filePath": "src/Lively/Lively.Common/Services/ICacheService.cs",
+      "summary": "声明缓存服务契约，用于获取、添加和移除按键索引的数据项。",
+      "tags": [
+        "service-contract",
+        "type-definition",
+        "cache"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Services/ICacheService.cs:ICacheService",
+      "type": "class",
+      "name": "ICacheService",
+      "filePath": "src/Lively/Lively.Common/Services/ICacheService.cs",
+      "lineRange": [
+        6,
+        10
+      ],
+      "summary": "声明 `ICacheService` 服务接口，约束声明缓存服务契约，用于获取、添加和移除按键索引的数据项所需的公开成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "cache"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common/Languages.cs",
+      "target": "class:src/Lively/Lively.Common/Languages.cs:Languages",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Languages.cs",
+      "target": "class:src/Lively/Lively.Common/Languages.cs:Languages",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IAppUpdaterService.cs:IAppUpdaterService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IAppUpdaterService.cs:IAppUpdaterService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs:IAudioVisualizerService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs:IAudioVisualizerService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ICacheService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ICacheService.cs:ICacheService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Services/ICacheService.cs",
+      "target": "class:src/Lively/Lively.Common/Services/ICacheService.cs:ICacheService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.Common/Lively.Common.csproj",
+      "target": "file:src/Lively/Lively.Common/Languages.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common/Lively.Common.csproj",
+      "target": "file:src/Lively/Lively.Common/Services/IAppUpdaterService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common/Lively.Common.csproj",
+      "target": "file:src/Lively/Lively.Common/Services/IAudioVisualizerService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common/Lively.Common.csproj",
+      "target": "file:src/Lively/Lively.Common/Services/ICacheService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

@@ -1,0 +1,848 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml",
+      "type": "file",
+      "name": "MainWindow.xaml",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml",
+      "summary": "定义无边框、非激活的 WPF 媒体播放器窗口，并以 MediaElement 作为 WMF 动态壁纸的播放表面。",
+      "tags": [
+        "xaml",
+        "媒体播放",
+        "wpf",
+        "界面布局"
+      ],
+      "complexity": "simple",
+      "languageNotes": "XAML 通过 x:Class 与 MainWindow.xaml.cs 配对，MediaElement 由 WPF 媒体管线负责播放。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "type": "file",
+      "name": "MainWindow.xaml.cs",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "summary": "实现 WPF/WMF 动态壁纸播放器主窗口，负责启动参数、MediaElement 播放控制、音量设置与标准输入 IPC。",
+      "tags": [
+        "播放器",
+        "wpf",
+        "进程通信",
+        "媒体控制"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "WPF 事件模型与标准输入输出 JSON IPC 共同驱动 WMF 播放器。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "class",
+      "name": "MainWindow",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        20,
+        190
+      ],
+      "summary": "协调 WPF MediaElement 播放、窗口初始化、父进程命令与音量控制。",
+      "tags": [
+        "桌面窗口",
+        "媒体播放",
+        "进程通信",
+        "wpf"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "function",
+      "name": "MainWindow",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        22,
+        28
+      ],
+      "summary": "解析启动参数、初始化 MediaElement 窗口并启动父进程消息监听。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:RunOptions",
+      "type": "function",
+      "name": "RunOptions",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        30,
+        57
+      ],
+      "summary": "把命令行选项应用到媒体路径、窗口几何范围、属性和音量。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MediaPlayer_Loaded",
+      "type": "function",
+      "name": "MediaPlayer_Loaded",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        69,
+        83
+      ],
+      "summary": "在媒体控件加载后设置播放源并启动媒体壁纸。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Pause",
+      "type": "function",
+      "name": "Pause",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        100,
+        103
+      ],
+      "summary": "暂停 WPF MediaElement 的当前媒体播放。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Play",
+      "type": "function",
+      "name": "Play",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        105,
+        108
+      ],
+      "summary": "开始或恢复 WPF MediaElement 的媒体播放。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        110,
+        113
+      ],
+      "summary": "停止当前媒体播放并重置播放器状态。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:SetVolume",
+      "type": "function",
+      "name": "SetVolume",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        115,
+        118
+      ],
+      "summary": "把宿主音量值转换并应用到 MediaElement。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:StdInListener",
+      "type": "function",
+      "name": "StdInListener",
+      "filePath": "src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "lineRange": [
+        120,
+        189
+      ],
+      "summary": "持续读取父进程 JSON 消息并执行播放、暂停、音量和属性控制。",
+      "tags": [
+        "媒体控制",
+        "进程通信",
+        "wpf",
+        "事件处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/Properties/AssemblyInfo.cs",
+      "type": "file",
+      "name": "AssemblyInfo.cs",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/AssemblyInfo.cs",
+      "summary": "声明 WPF/WMF 播放器程序集的主题资源、DPI 感知、版本与产品元数据。",
+      "tags": [
+        "程序集元数据",
+        "版本信息",
+        "wpf",
+        "构建配置"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs",
+      "type": "file",
+      "name": "Resources.Designer.cs",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs",
+      "summary": "由资源工具生成 WPF/WMF 播放器的强类型 ResourceManager 与 Culture 访问入口。",
+      "tags": [
+        "自动生成",
+        "资源访问",
+        "resource-manager",
+        "本地化"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs:Resources",
+      "type": "class",
+      "name": "Resources",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs",
+      "lineRange": [
+        22,
+        62
+      ],
+      "summary": "提供 WPF/WMF 播放器资源管理器和区域文化的强类型访问。",
+      "tags": [
+        "自动生成",
+        "资源访问",
+        "resource-manager",
+        "本地化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/Properties/Resources.resx",
+      "type": "file",
+      "name": "Resources.resx",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/Resources.resx",
+      "summary": "定义 WPF/WMF 播放器的 RESX 资源清单；当前仅保留标准资源头和读写器信息。",
+      "tags": [
+        "自动生成",
+        "资源访问",
+        "resource-manager",
+        "本地化"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/Properties/Settings.Designer.cs",
+      "type": "file",
+      "name": "Settings.Designer.cs",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/Settings.Designer.cs",
+      "summary": "由设置工具生成 WPF/WMF 播放器的强类型默认设置访问器。",
+      "tags": [
+        "自动生成",
+        "应用设置",
+        "configuration",
+        "强类型访问"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/Properties/Settings.settings",
+      "type": "file",
+      "name": "Settings.settings",
+      "filePath": "src/Lively/Lively.Player.Wmf/Properties/Settings.settings",
+      "summary": "定义 WPF/WMF 播放器的 Visual Studio 设置架构；当前不包含持久化设置项。",
+      "tags": [
+        "自动生成",
+        "应用设置",
+        "configuration",
+        "强类型访问"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "type": "file",
+      "name": "StartArgs.cs",
+      "filePath": "src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "summary": "声明 WMF 播放器的媒体路径、音量、属性文件、几何范围与日志等命令行启动参数。",
+      "tags": [
+        "命令行参数",
+        "启动配置",
+        "数据模型",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Player.Wmf/StartArgs.cs:StartArgs",
+      "type": "class",
+      "name": "StartArgs",
+      "filePath": "src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "lineRange": [
+        5,
+        34
+      ],
+      "summary": "聚合 WPF/WMF 播放器的命令行启动选项。",
+      "tags": [
+        "命令行参数",
+        "启动配置",
+        "数据模型",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Player.Wmf/app.manifest",
+      "type": "file",
+      "name": "app.manifest",
+      "filePath": "src/Lively/Lively.Player.Wmf/app.manifest",
+      "summary": "声明 WPF/WMF 播放器以 asInvoker 权限运行，并配置 Windows 兼容性与 DPI 行为。",
+      "tags": [
+        "应用清单",
+        "windows",
+        "权限配置",
+        "兼容性"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "type": "file",
+      "name": "AppThemeFactory.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "summary": "从主题文件或目录读取元数据并构建 ThemeModel，为共享 UI 提供统一的主题发现入口。",
+      "tags": [
+        "factory",
+        "依赖注入",
+        "主题管理",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:AppThemeFactory",
+      "type": "class",
+      "name": "AppThemeFactory",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "lineRange": [
+        8,
+        39
+      ],
+      "summary": "从主题清单或目录资源构建 ThemeModel。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "依赖注入",
+        "主题管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromFile",
+      "type": "function",
+      "name": "CreateFromFile",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "lineRange": [
+        10,
+        28
+      ],
+      "summary": "读取主题文件及相邻资源并构造 ThemeModel。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromDirectory",
+      "type": "function",
+      "name": "CreateFromDirectory",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "lineRange": [
+        30,
+        38
+      ],
+      "summary": "扫描主题目录、加载清单和预览资源并构造 ThemeModel。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "type": "file",
+      "name": "AudioDeviceFactory.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "summary": "枚举 Windows 音频渲染设备、解析默认设备与设备图标，并缓存可供设置界面使用的音频设备模型。",
+      "tags": [
+        "factory",
+        "依赖注入",
+        "音频设备",
+        "共享服务"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:AudioDeviceFactory",
+      "type": "class",
+      "name": "AudioDeviceFactory",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "lineRange": [
+        18,
+        117
+      ],
+      "summary": "发现 Windows 音频渲染设备并构造带图标的设备模型。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "依赖注入",
+        "音频设备"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDefaultRenderDevice",
+      "type": "function",
+      "name": "GetDefaultRenderDevice",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "lineRange": [
+        22,
+        27
+      ],
+      "summary": "查询 Windows 当前默认音频渲染设备并转换为界面模型。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetRenderDevices",
+      "type": "function",
+      "name": "GetRenderDevices",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "lineRange": [
+        29,
+        34
+      ],
+      "summary": "枚举可用音频渲染设备并附加名称和图标。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDeviceById",
+      "type": "function",
+      "name": "GetDeviceById",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "lineRange": [
+        36,
+        48
+      ],
+      "summary": "按设备标识查找音频渲染设备并构造模型。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetAndCacheDeviceIcon",
+      "type": "function",
+      "name": "GetAndCacheDeviceIcon",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "lineRange": [
+        55,
+        116
+      ],
+      "summary": "解析音频设备图标资源并缓存可复用的图像文件。",
+      "tags": [
+        "factory",
+        "对象创建",
+        "资源解析",
+        "共享服务"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "type": "file",
+      "name": "IAppThemeFactory.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "summary": "声明从主题文件和目录创建 ThemeModel 的工厂契约。",
+      "tags": [
+        "接口契约",
+        "依赖注入",
+        "主题管理",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs:IAppThemeFactory",
+      "type": "class",
+      "name": "IAppThemeFactory",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "lineRange": [
+        5,
+        9
+      ],
+      "summary": "定义主题模型创建能力的抽象契约。",
+      "tags": [
+        "接口契约",
+        "抽象",
+        "依赖注入",
+        "factory"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "type": "file",
+      "name": "IAudioDeviceFactory.cs",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "summary": "声明查询默认音频设备、设备列表及按标识查找设备的工厂契约。",
+      "tags": [
+        "接口契约",
+        "依赖注入",
+        "音频设备",
+        "共享服务"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs:IAudioDeviceFactory",
+      "type": "class",
+      "name": "IAudioDeviceFactory",
+      "filePath": "src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "lineRange": [
+        6,
+        11
+      ],
+      "summary": "定义音频渲染设备发现与查找能力的抽象契约。",
+      "tags": [
+        "接口契约",
+        "抽象",
+        "依赖注入",
+        "factory"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "class:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "class:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MainWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:RunOptions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:MediaPlayer_Loaded",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Pause",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Pause",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Play",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Play",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:Stop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:SetVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:SetVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:StdInListener",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "target": "function:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs:StdInListener",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs",
+      "target": "class:src/Lively/Lively.Player.Wmf/Properties/Resources.Designer.cs:Resources",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "target": "class:src/Lively/Lively.Player.Wmf/StartArgs.cs:StartArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/StartArgs.cs",
+      "target": "class:src/Lively/Lively.Player.Wmf/StartArgs.cs:StartArgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:AppThemeFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:AppThemeFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromDirectory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AppThemeFactory.cs:CreateFromDirectory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:AudioDeviceFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:AudioDeviceFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDefaultRenderDevice",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDefaultRenderDevice",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetRenderDevices",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetRenderDevices",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDeviceById",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetDeviceById",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetAndCacheDeviceIcon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs",
+      "target": "function:src/Lively/Lively.UI.Shared/Factories/AudioDeviceFactory.cs:GetAndCacheDeviceIcon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs:IAppThemeFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/IAppThemeFactory.cs:IAppThemeFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs:IAudioDeviceFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs",
+      "target": "class:src/Lively/Lively.UI.Shared/Factories/IAudioDeviceFactory.cs:IAudioDeviceFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml",
+      "target": "file:src/Lively/Lively.Player.Wmf/MainWindow.xaml.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

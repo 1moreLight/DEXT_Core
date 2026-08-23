@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs",
+      "language": "csharp",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs",
+      "language": "csharp",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Directory.Build.props",
+      "language": "props",
+      "sizeLines": 4,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 183,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs",
+      "language": "csharp",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs",
+      "language": "csharp",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs",
+      "language": "csharp",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs",
+      "language": "csharp",
+      "sizeLines": 31,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "language": "csharp",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "language": "csharp",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "language": "csharp",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "language": "csharp",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "language": "csharp",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "language": "csharp",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "language": "csharp",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj",
+      "language": "csproj",
+      "sizeLines": 393,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Nlog.config",
+      "language": "config",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.UI.WinUI/Behaviors/SliderValueChangedBehavior.cs": [],
+    "src/Lively/Lively.UI.WinUI/Behaviors/TextBoxTextChangedBehavior.cs": [],
+    "src/Lively/Lively.UI.WinUI/Directory.Build.props": [],
+    "src/Lively/Lively.UI.WinUI/Extensions/ColorExtensions.cs": [],
+    "src/Lively/Lively.UI.WinUI/Extensions/ContentDialogExtensions.cs": [],
+    "src/Lively/Lively.UI.WinUI/Extensions/WindowExtensions.cs": [],
+    "src/Lively/Lively.UI.WinUI/Extensions/WindowsStoragePickersExtensions.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/AudioVolumeGlyphConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToBackButtonVisibilityConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/BoolToVisibilityConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/FloatToBoolConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/HexStringToColorConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/ListViewSelectionModeStringToEnumConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs": [],
+    "src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs": [],
+    "src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj": [],
+    "src/Lively/Lively.UI.WinUI/Nlog.config": []
+  }
+}

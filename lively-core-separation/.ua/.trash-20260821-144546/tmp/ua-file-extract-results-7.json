@@ -1,0 +1,3748 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 22,
+  "filesSkipped": [
+    "src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj",
+    "src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj",
+    "src/Lively/Lively.ML/Lively.ML.csproj"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 22,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 22,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 71,
+      "nonEmptyLines": 66,
+      "functions": [
+        {
+          "name": "SearchQueryBuilder",
+          "startLine": 22,
+          "endLine": 29,
+          "params": []
+        },
+        {
+          "name": "SortBy",
+          "startLine": 31,
+          "endLine": 35,
+          "params": [
+            "sortBy"
+          ]
+        },
+        {
+          "name": "WithTags",
+          "startLine": 36,
+          "endLine": 40,
+          "params": []
+        },
+        {
+          "name": "SetPage",
+          "startLine": 41,
+          "endLine": 47,
+          "params": [
+            "page"
+          ]
+        },
+        {
+          "name": "SetLimit",
+          "startLine": 48,
+          "endLine": 54,
+          "params": [
+            "limit"
+          ]
+        },
+        {
+          "name": "WithSearchQuery",
+          "startLine": 58,
+          "endLine": 63,
+          "params": [
+            "name"
+          ]
+        },
+        {
+          "name": "Build",
+          "startLine": 64,
+          "endLine": 68,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "SearchQueryBuilder",
+          "startLine": 5,
+          "endLine": 70,
+          "methods": [
+            "SearchQueryBuilder",
+            "SortBy",
+            "WithTags",
+            "SetPage",
+            "SetLimit",
+            "WithSearchQuery",
+            "Build"
+          ],
+          "properties": [
+            "_name",
+            "_tags",
+            "_sortingType",
+            "_page",
+            "_limit"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SearchQueryBuilder",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "SortBy",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "WithTags",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "SetPage",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "SetLimit",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "WithSearchQuery",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "Build",
+          "line": 64,
+          "isDefault": false
+        },
+        {
+          "name": "SearchQueryBuilder",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "WithTags",
+          "callee": "_tags.AddRange",
+          "lineNumber": 38
+        },
+        {
+          "caller": "SetPage",
+          "callee": "new ArgumentOutOfRangeException",
+          "lineNumber": 44
+        },
+        {
+          "caller": "SetLimit",
+          "callee": "new ArgumentOutOfRangeException",
+          "lineNumber": 51
+        },
+        {
+          "caller": "WithSearchQuery",
+          "callee": "ArgumentNullException.ThrowIfNull",
+          "lineNumber": 60
+        },
+        {
+          "caller": "Build",
+          "callee": "new SearchQuery",
+          "lineNumber": 66
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 148,
+      "nonEmptyLines": 131,
+      "functions": [
+        {
+          "name": "AppUpdaterClient",
+          "startLine": 31,
+          "endLine": 42,
+          "params": []
+        },
+        {
+          "name": "CheckUpdate",
+          "startLine": 44,
+          "endLine": 47,
+          "params": []
+        },
+        {
+          "name": "GetLatestRelease",
+          "startLine": 49,
+          "endLine": 58,
+          "params": [
+            "isBeta"
+          ]
+        },
+        {
+          "name": "StartUpdate",
+          "startLine": 60,
+          "endLine": 63,
+          "params": []
+        },
+        {
+          "name": "SwitchReleaseChannel",
+          "startLine": 65,
+          "endLine": 70,
+          "params": [
+            "isBeta",
+            "ct"
+          ]
+        },
+        {
+          "name": "UpdateStatusRefresh",
+          "startLine": 72,
+          "endLine": 85,
+          "params": []
+        },
+        {
+          "name": "SubscribeUpdateCheckedStream",
+          "startLine": 87,
+          "endLine": 116,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 118,
+          "endLine": 132,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 141,
+          "endLine": 146,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "AppUpdaterClient",
+          "startLine": 14,
+          "endLine": 147,
+          "methods": [
+            "AppUpdaterClient",
+            "CheckUpdate",
+            "GetLatestRelease",
+            "StartUpdate",
+            "SwitchReleaseChannel",
+            "UpdateStatusRefresh",
+            "SubscribeUpdateCheckedStream",
+            "Dispose",
+            "Dispose"
+          ],
+          "properties": [
+            "Status",
+            "LastCheckTime",
+            "LastCheckVersion",
+            "LastCheckChangelog",
+            "LastCheckUri",
+            "LastCheckFileName",
+            "client",
+            "updateCheckedLock",
+            "cancellationTokenUpdateChecked",
+            "updateCheckedChangedTask",
+            "disposedValue"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Status",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "LastCheckTime",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "LastCheckVersion",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "LastCheckChangelog",
+          "line": 19,
+          "isDefault": false
+        },
+        {
+          "name": "LastCheckUri",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "LastCheckFileName",
+          "line": 21,
+          "isDefault": false
+        },
+        {
+          "name": "AppUpdaterClient",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "CheckUpdate",
+          "line": 44,
+          "isDefault": false
+        },
+        {
+          "name": "GetLatestRelease",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "StartUpdate",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "SwitchReleaseChannel",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "Dispose",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "AppUpdaterClient",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "new NamedPipeChannel",
+          "lineNumber": 33
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "Task.Run(async () =>\n            {\n                await UpdateStatusRefresh().ConfigureAwait(false);\n            }).Wait",
+          "lineNumber": 35
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "Task.Run",
+          "lineNumber": 35
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "UpdateStatusRefresh().ConfigureAwait",
+          "lineNumber": 37
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "UpdateStatusRefresh",
+          "lineNumber": 37
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "new CancellationTokenSource",
+          "lineNumber": 40
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "Task.Run",
+          "lineNumber": 41
+        },
+        {
+          "caller": "AppUpdaterClient",
+          "callee": "SubscribeUpdateCheckedStream",
+          "lineNumber": 41
+        },
+        {
+          "caller": "CheckUpdate",
+          "callee": "client.CheckUpdateAsync",
+          "lineNumber": 46
+        },
+        {
+          "caller": "CheckUpdate",
+          "callee": "new Empty",
+          "lineNumber": 46
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "client.GetLatestReleaseAsync",
+          "lineNumber": 51
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "new GetLatestReleaseRequest",
+          "lineNumber": 51
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 54
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "new Uri",
+          "lineNumber": 54
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 55
+        },
+        {
+          "caller": "GetLatestRelease",
+          "callee": "new Version",
+          "lineNumber": 55
+        },
+        {
+          "caller": "StartUpdate",
+          "callee": "client.StartUpdateAsync",
+          "lineNumber": 62
+        },
+        {
+          "caller": "StartUpdate",
+          "callee": "new Empty",
+          "lineNumber": 62
+        },
+        {
+          "caller": "SwitchReleaseChannel",
+          "callee": "client.SwitchReleaseChannelAsync",
+          "lineNumber": 67
+        },
+        {
+          "caller": "SwitchReleaseChannel",
+          "callee": "new SwitchReleaseChannelRequest",
+          "lineNumber": 67
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "client.GetUpdateStatusAsync",
+          "lineNumber": 74
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "new Empty",
+          "lineNumber": 74
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "resp.Time.ToDateTime().ToLocalTime",
+          "lineNumber": 76
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "resp.Time.ToDateTime",
+          "lineNumber": 76
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 80
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "new Version",
+          "lineNumber": 80
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 81
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "new Uri",
+          "lineNumber": 81
+        },
+        {
+          "caller": "UpdateStatusRefresh",
+          "callee": "string.IsNullOrEmpty",
+          "lineNumber": 82
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "client.SubscribeUpdateChecked",
+          "lineNumber": 91
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "new Empty",
+          "lineNumber": 91
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "call.ResponseStream.MoveNext",
+          "lineNumber": 92
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "updateCheckedLock.WaitAsync",
+          "lineNumber": 94
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "UpdateStatusRefresh",
+          "lineNumber": 98
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "UpdateChecked?.Invoke",
+          "lineNumber": 99
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "new AppUpdaterEventArgs",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "updateCheckedLock.Release",
+          "lineNumber": 108
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "Console.WriteLine",
+          "lineNumber": 114
+        },
+        {
+          "caller": "SubscribeUpdateCheckedStream",
+          "callee": "e.ToString",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Dispose",
+          "callee": "cancellationTokenUpdateChecked?.Cancel",
+          "lineNumber": 124
+        },
+        {
+          "caller": "Dispose",
+          "callee": "updateCheckedChangedTask?.Wait",
+          "lineNumber": 125
+        },
+        {
+          "caller": "Dispose",
+          "callee": "Dispose",
+          "lineNumber": 144
+        },
+        {
+          "caller": "Dispose",
+          "callee": "GC.SuppressFinalize",
+          "lineNumber": 145
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 13,
+        "functionCount": 9,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 113,
+      "nonEmptyLines": 96,
+      "functions": [
+        {
+          "name": "CommandsClient",
+          "startLine": 17,
+          "endLine": 23,
+          "params": []
+        },
+        {
+          "name": "ShowUI",
+          "startLine": 25,
+          "endLine": 28,
+          "params": []
+        },
+        {
+          "name": "CloseUI",
+          "startLine": 30,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "RestartUI",
+          "startLine": 35,
+          "endLine": 38,
+          "params": []
+        },
+        {
+          "name": "RestartUI",
+          "startLine": 40,
+          "endLine": 43,
+          "params": [
+            "startArgs"
+          ]
+        },
+        {
+          "name": "ShowDebugger",
+          "startLine": 45,
+          "endLine": 48,
+          "params": []
+        },
+        {
+          "name": "ShowScreensaver",
+          "startLine": 50,
+          "endLine": 57,
+          "params": [
+            "isFadeIn"
+          ]
+        },
+        {
+          "name": "StopScreensaver",
+          "startLine": 59,
+          "endLine": 65,
+          "params": []
+        },
+        {
+          "name": "ScreensaverConfigure",
+          "startLine": 67,
+          "endLine": 73,
+          "params": []
+        },
+        {
+          "name": "ScreensaverPreview",
+          "startLine": 75,
+          "endLine": 82,
+          "params": [
+            "previewHandle"
+          ]
+        },
+        {
+          "name": "ShutDown",
+          "startLine": 84,
+          "endLine": 87,
+          "params": []
+        },
+        {
+          "name": "AutomationCommandAsync",
+          "startLine": 89,
+          "endLine": 94,
+          "params": [
+            "args"
+          ]
+        },
+        {
+          "name": "AutomationCommand",
+          "startLine": 96,
+          "endLine": 101,
+          "params": [
+            "args"
+          ]
+        },
+        {
+          "name": "SaveRectUI",
+          "startLine": 103,
+          "endLine": 106,
+          "params": []
+        },
+        {
+          "name": "SaveRectUIAsync",
+          "startLine": 108,
+          "endLine": 111,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "CommandsClient",
+          "startLine": 13,
+          "endLine": 112,
+          "methods": [
+            "CommandsClient",
+            "ShowUI",
+            "CloseUI",
+            "RestartUI",
+            "RestartUI",
+            "ShowDebugger",
+            "ShowScreensaver",
+            "StopScreensaver",
+            "ScreensaverConfigure",
+            "ScreensaverPreview",
+            "ShutDown",
+            "AutomationCommandAsync",
+            "AutomationCommand",
+            "SaveRectUI",
+            "SaveRectUIAsync"
+          ],
+          "properties": [
+            "client"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "CommandsClient",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "ShowUI",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "CloseUI",
+          "line": 30,
+          "isDefault": false
+        },
+        {
+          "name": "RestartUI",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "RestartUI",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "ShowDebugger",
+          "line": 45,
+          "isDefault": false
+        },
+        {
+          "name": "ShowScreensaver",
+          "line": 50,
+          "isDefault": false
+        },
+        {
+          "name": "StopScreensaver",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "ScreensaverConfigure",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "ScreensaverPreview",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "ShutDown",
+          "line": 84,
+          "isDefault": false
+        },
+        {
+          "name": "AutomationCommandAsync",
+          "line": 89,
+          "isDefault": false
+        },
+        {
+          "name": "AutomationCommand",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "SaveRectUI",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "SaveRectUIAsync",
+          "line": 108,
+          "isDefault": false
+        },
+        {
+          "name": "CommandsClient",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "CommandsClient",
+          "callee": "new NamedPipeChannel",
+          "lineNumber": 19
+        },
+        {
+          "caller": "ShowUI",
+          "callee": "client.ShowUIAsync",
+          "lineNumber": 27
+        },
+        {
+          "caller": "ShowUI",
+          "callee": "new Empty",
+          "lineNumber": 27
+        },
+        {
+          "caller": "CloseUI",
+          "callee": "client.CloseUIAsync",
+          "lineNumber": 32
+        },
+        {
+          "caller": "CloseUI",
+          "callee": "new Empty",
+          "lineNumber": 32
+        },
+        {
+          "caller": "RestartUI",
+          "callee": "client.RestartUIAsync",
+          "lineNumber": 37
+        },
+        {
+          "caller": "RestartUI",
+          "callee": "new Empty",
+          "lineNumber": 37
+        },
+        {
+          "caller": "RestartUI",
+          "callee": "client.RestartUIWithArgsAsync",
+          "lineNumber": 42
+        },
+        {
+          "caller": "RestartUI",
+          "callee": "new RestartRequest",
+          "lineNumber": 42
+        },
+        {
+          "caller": "ShowDebugger",
+          "callee": "client.ShowDebuggerAsync",
+          "lineNumber": 47
+        },
+        {
+          "caller": "ShowDebugger",
+          "callee": "new Empty",
+          "lineNumber": 47
+        },
+        {
+          "caller": "ShowScreensaver",
+          "callee": "client.ScreensaverAsync",
+          "lineNumber": 52
+        },
+        {
+          "caller": "ShowScreensaver",
+          "callee": "new ScreensaverRequest",
+          "lineNumber": 52
+        },
+        {
+          "caller": "StopScreensaver",
+          "callee": "client.ScreensaverAsync",
+          "lineNumber": 61
+        },
+        {
+          "caller": "StopScreensaver",
+          "callee": "new ScreensaverRequest",
+          "lineNumber": 61
+        },
+        {
+          "caller": "ScreensaverConfigure",
+          "callee": "client.ScreensaverAsync",
+          "lineNumber": 69
+        },
+        {
+          "caller": "ScreensaverConfigure",
+          "callee": "new ScreensaverRequest",
+          "lineNumber": 69
+        },
+        {
+          "caller": "ScreensaverPreview",
+          "callee": "client.ScreensaverAsync",
+          "lineNumber": 77
+        },
+        {
+          "caller": "ScreensaverPreview",
+          "callee": "new ScreensaverRequest",
+          "lineNumber": 77
+        },
+        {
+          "caller": "ShutDown",
+          "callee": "client.ShutDownAsync",
+          "lineNumber": 86
+        },
+        {
+          "caller": "ShutDown",
+          "callee": "new Empty",
+          "lineNumber": 86
+        },
+        {
+          "caller": "AutomationCommandAsync",
+          "callee": "new AutomationCommandRequest",
+          "lineNumber": 91
+        },
+        {
+          "caller": "AutomationCommandAsync",
+          "callee": "request.Args.AddRange",
+          "lineNumber": 92
+        },
+        {
+          "caller": "AutomationCommandAsync",
+          "callee": "client.AutomationCommandAsync",
+          "lineNumber": 93
+        },
+        {
+          "caller": "AutomationCommand",
+          "callee": "new AutomationCommandRequest",
+          "lineNumber": 98
+        },
+        {
+          "caller": "AutomationCommand",
+          "callee": "request.Args.AddRange",
+          "lineNumber": 99
+        },
+        {
+          "caller": "AutomationCommand",
+          "callee": "client.AutomationCommand",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SaveRectUI",
+          "callee": "client.SaveRectUI",
+          "lineNumber": 105
+        },
+        {
+          "caller": "SaveRectUI",
+          "callee": "new Empty",
+          "lineNumber": 105
+        },
+        {
+          "caller": "SaveRectUIAsync",
+          "callee": "client.SaveRectUIAsync",
+          "lineNumber": 110
+        },
+        {
+          "caller": "SaveRectUIAsync",
+          "callee": "new Empty",
+          "lineNumber": 110
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 16,
+        "functionCount": 15,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 152,
+      "nonEmptyLines": 135,
+      "functions": [
+        {
+          "name": "DisplayManagerClient",
+          "startLine": 32,
+          "endLine": 45,
+          "params": []
+        },
+        {
+          "name": "GetScreens",
+          "startLine": 47,
+          "endLine": 75,
+          "params": []
+        },
+        {
+          "name": "GetVirtualScreenBounds",
+          "startLine": 77,
+          "endLine": 86,
+          "params": []
+        },
+        {
+          "name": "SubscribeDisplayChangedStream",
+          "startLine": 88,
+          "endLine": 116,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 120,
+          "endLine": 134,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 143,
+          "endLine": 148,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "DisplayManagerClient",
+          "startLine": 17,
+          "endLine": 151,
+          "methods": [
+            "DisplayManagerClient",
+            "GetScreens",
+            "GetVirtualScreenBounds",
+            "SubscribeDisplayChangedStream",
+            "Dispose",
+            "Dispose"
+          ],
+          "properties": [
+            "displayMonitors",
+            "DisplayMonitors",
+            "PrimaryMonitor",
+            "VirtulScreenBounds",
+            "client",
+            "displayChangedLock",
+            "cancellationTokeneDisplayChanged",
+            "displayChangedTask",
+            "disposedValue"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "DisplayMonitors",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "PrimaryMonitor",
+          "line": 23,
+          "isDefault": false
+        },
+        {
+          "name": "VirtulScreenBounds",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayManagerClient",
+          "line": 32,
+          "isDefault": false
+        },
+        {
+          "name": "Dispose",
+          "line": 143,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayManagerClient",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "new NamedPipeChannel",
+          "lineNumber": 34
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "Task.Run(async () =>\n            {\n                displayMonitors.AddRange(await GetScreens().ConfigureAwait(false));\n                VirtulScreenBounds = await GetVirtualScreenBounds().ConfigureAwait(false);\n                PrimaryMonitor = displayMonitors.FirstOrDefault(x => x.IsPrimary);\n            }).Wait",
+          "lineNumber": 36
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "Task.Run",
+          "lineNumber": 36
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "displayMonitors.AddRange",
+          "lineNumber": 38
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "GetScreens().ConfigureAwait",
+          "lineNumber": 38
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "GetScreens",
+          "lineNumber": 38
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "GetVirtualScreenBounds().ConfigureAwait",
+          "lineNumber": 39
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "GetVirtualScreenBounds",
+          "lineNumber": 39
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "displayMonitors.FirstOrDefault",
+          "lineNumber": 40
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "new CancellationTokenSource",
+          "lineNumber": 43
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "Task.Run",
+          "lineNumber": 44
+        },
+        {
+          "caller": "DisplayManagerClient",
+          "callee": "SubscribeDisplayChangedStream",
+          "lineNumber": 44
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "client.GetScreensAsync",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "new Empty",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "new List<DisplayMonitor>",
+          "lineNumber": 50
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "monitors.Add",
+          "lineNumber": 53
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "new DisplayMonitor",
+          "lineNumber": 53
+        },
+        {
+          "caller": "GetScreens",
+          "callee": "new IntPtr",
+          "lineNumber": 58
+        },
+        {
+          "caller": "GetVirtualScreenBounds",
+          "callee": "client.GetVirtualScreenBoundsAsync",
+          "lineNumber": 79
+        },
+        {
+          "caller": "GetVirtualScreenBounds",
+          "callee": "new Empty",
+          "lineNumber": 79
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "client.SubscribeDisplayChanged",
+          "lineNumber": 92
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "new Empty",
+          "lineNumber": 92
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "call.ResponseStream.MoveNext",
+          "lineNumber": 93
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "displayChangedLock.WaitAsync",
+          "lineNumber": 95
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "displayMonitors.Clear",
+          "lineNumber": 100
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "displayMonitors.AddRange",
+          "lineNumber": 101
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "GetScreens().ConfigureAwait",
+          "lineNumber": 101
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "GetScreens",
+          "lineNumber": 101
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "GetVirtualScreenBounds().ConfigureAwait",
+          "lineNumber": 102
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "GetVirtualScreenBounds",
+          "lineNumber": 102
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "displayMonitors.FirstOrDefault",
+          "lineNumber": 103
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "DisplayChanged?.Invoke",
+          "lineNumber": 104
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "displayChangedLock.Release",
+          "lineNumber": 108
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "Console.WriteLine",
+          "lineNumber": 114
+        },
+        {
+          "caller": "SubscribeDisplayChangedStream",
+          "callee": "e.ToString",
+          "lineNumber": 114
+        },
+        {
+          "caller": "Dispose",
+          "callee": "cancellationTokeneDisplayChanged?.Cancel",
+          "lineNumber": 126
+        },
+        {
+          "caller": "Dispose",
+          "callee": "displayChangedTask?.Wait",
+          "lineNumber": 127
+        },
+        {
+          "caller": "Dispose",
+          "callee": "Dispose",
+          "lineNumber": 146
+        },
+        {
+          "caller": "Dispose",
+          "callee": "GC.SuppressFinalize",
+          "lineNumber": 147
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 24,
+      "nonEmptyLines": 21,
+      "classes": [
+        {
+          "name": "IAppUpdaterClient",
+          "startLine": 8,
+          "endLine": 23,
+          "methods": [
+            "CheckUpdate",
+            "GetLatestRelease",
+            "StartUpdate",
+            "SwitchReleaseChannel"
+          ],
+          "properties": [
+            "LastCheckChangelog",
+            "LastCheckTime",
+            "LastCheckUri",
+            "LastCheckFileName",
+            "LastCheckVersion",
+            "Status"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IAppUpdaterClient",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 21,
+      "classes": [
+        {
+          "name": "ICommandsClient",
+          "startLine": 5,
+          "endLine": 21,
+          "methods": [
+            "ScreensaverConfigure",
+            "ScreensaverPreview",
+            "ShowScreensaver",
+            "StopScreensaver",
+            "ShowUI",
+            "CloseUI",
+            "RestartUI",
+            "RestartUI",
+            "ShowDebugger",
+            "ShutDown",
+            "AutomationCommandAsync",
+            "AutomationCommand",
+            "SaveRectUI",
+            "SaveRectUIAsync"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ICommandsClient",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 50,
+      "nonEmptyLines": 45,
+      "classes": [
+        {
+          "name": "IDesktopCoreClient",
+          "startLine": 10,
+          "endLine": 32,
+          "methods": [
+            "CloseAllWallpapers",
+            "CloseWallpaper",
+            "CloseWallpaper",
+            "CloseWallpaper",
+            "SetWallpaper",
+            "SetWallpaper",
+            "EditWallpaper",
+            "CreateWallpaper",
+            "SendMessageWallpaper",
+            "SendMessageWallpaper",
+            "PreviewWallpaper",
+            "TakeScreenshot"
+          ],
+          "properties": [
+            "Wallpapers",
+            "BaseDirectory",
+            "AssemblyVersion",
+            "IsCoreInitialized"
+          ]
+        },
+        {
+          "name": "WallpaperData",
+          "startLine": 34,
+          "endLine": 42,
+          "methods": [],
+          "properties": [
+            "LivelyInfoFolderPath",
+            "LivelyPropertyCopyPath",
+            "ThumbnailPath",
+            "PreviewPath",
+            "Display",
+            "Category"
+          ]
+        },
+        {
+          "name": "WallpaperUpdatedData",
+          "startLine": 44,
+          "endLine": 49,
+          "methods": [],
+          "properties": [
+            "Info",
+            "Category",
+            "InfoPath"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IDesktopCoreClient",
+          "line": 10,
+          "isDefault": false
+        },
+        {
+          "name": "LivelyInfoFolderPath",
+          "line": 36,
+          "isDefault": false
+        },
+        {
+          "name": "LivelyPropertyCopyPath",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "ThumbnailPath",
+          "line": 38,
+          "isDefault": false
+        },
+        {
+          "name": "PreviewPath",
+          "line": 39,
+          "isDefault": false
+        },
+        {
+          "name": "Display",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "Category",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "WallpaperData",
+          "line": 34,
+          "isDefault": false
+        },
+        {
+          "name": "Info",
+          "line": 46,
+          "isDefault": false
+        },
+        {
+          "name": "Category",
+          "line": 47,
+          "isDefault": false
+        },
+        {
+          "name": "InfoPath",
+          "line": 48,
+          "isDefault": false
+        },
+        {
+          "name": "WallpaperUpdatedData",
+          "line": 44,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 12,
+        "functionCount": 0,
+        "classCount": 3
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 14,
+      "classes": [
+        {
+          "name": "IDisplayManagerClient",
+          "startLine": 8,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "DisplayMonitors",
+            "PrimaryMonitor",
+            "VirtulScreenBounds"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IDisplayManagerClient",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 15,
+      "classes": [
+        {
+          "name": "IUserSettingsClient",
+          "startLine": 7,
+          "endLine": 15,
+          "methods": [
+            "SaveAsync",
+            "Save",
+            "LoadAsync",
+            "Load"
+          ],
+          "properties": [
+            "Settings",
+            "AppRules"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IUserSettingsClient",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/UserSettingsClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 411,
+      "nonEmptyLines": 391,
+      "functions": [
+        {
+          "name": "UserSettingsClient",
+          "startLine": 20,
+          "endLine": 29,
+          "params": []
+        },
+        {
+          "name": "SetSettings",
+          "startLine": 31,
+          "endLine": 34,
+          "params": []
+        },
+        {
+          "name": "SetSettingsAsync",
+          "startLine": 36,
+          "endLine": 39,
+          "params": []
+        },
+        {
+          "name": "GetSettings",
+          "startLine": 41,
+          "endLine": 45,
+          "params": []
+        },
+        {
+          "name": "GetSettingsAsync",
+          "startLine": 47,
+          "endLine": 51,
+          "params": []
+        },
+        {
+          "name": "GetAppRulesSettings",
+          "startLine": 53,
+          "endLine": 62,
+          "params": []
+        },
+        {
+          "name": "GetAppRulesSettingsAsync",
+          "startLine": 64,
+          "endLine": 73,
+          "params": []
+        },
+        {
+          "name": "SetAppRulesSettings",
+          "startLine": 75,
+          "endLine": 87,
+          "params": []
+        },
+        {
+          "name": "SetAppRulesSettingsAsync",
+          "startLine": 89,
+          "endLine": 101,
+          "params": []
+        },
+        {
+          "name": "Save",
+          "startLine": 103,
+          "endLine": 117,
+          "params": []
+        },
+        {
+          "name": "SaveAsync",
+          "startLine": 119,
+          "endLine": 133,
+          "params": []
+        },
+        {
+          "name": "Load",
+          "startLine": 135,
+          "endLine": 149,
+          "params": []
+        },
+        {
+          "name": "LoadAsync",
+          "startLine": 151,
+          "endLine": 165,
+          "params": []
+        },
+        {
+          "name": "CreateGrpcSettings",
+          "startLine": 169,
+          "endLine": 291,
+          "params": [
+            "settings"
+          ]
+        },
+        {
+          "name": "CreateSettingsFromGrpc",
+          "startLine": 293,
+          "endLine": 407,
+          "params": [
+            "settings"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "UserSettingsClient",
+          "startLine": 13,
+          "endLine": 410,
+          "methods": [
+            "UserSettingsClient",
+            "SetSettings",
+            "SetSettingsAsync",
+            "GetSettings",
+            "GetSettingsAsync",
+            "GetAppRulesSettings",
+            "GetAppRulesSettingsAsync",
+            "SetAppRulesSettings",
+            "SetAppRulesSettingsAsync",
+            "Save",
+            "SaveAsync",
+            "Load",
+            "LoadAsync",
+            "CreateGrpcSettings",
+            "CreateSettingsFromGrpc"
+          ],
+          "properties": [
+            "Settings",
+            "AppRules",
+            "client"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Settings",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "AppRules",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "UserSettingsClient",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "Save",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "SaveAsync",
+          "line": 119,
+          "isDefault": false
+        },
+        {
+          "name": "Load",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "LoadAsync",
+          "line": 151,
+          "isDefault": false
+        },
+        {
+          "name": "UserSettingsClient",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "UserSettingsClient",
+          "callee": "new NamedPipeChannel",
+          "lineNumber": 22
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "Task.Run(async () =>\n            {\n                await LoadAsync<SettingsModel>().ConfigureAwait(false);\n                await LoadAsync<List<ApplicationRulesModel>>().ConfigureAwait(false);\n            }).Wait",
+          "lineNumber": 24
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "Task.Run",
+          "lineNumber": 24
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "LoadAsync<SettingsModel>().ConfigureAwait",
+          "lineNumber": 26
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "LoadAsync<SettingsModel>",
+          "lineNumber": 26
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "LoadAsync<List<ApplicationRulesModel>>().ConfigureAwait",
+          "lineNumber": 27
+        },
+        {
+          "caller": "UserSettingsClient",
+          "callee": "LoadAsync<List<ApplicationRulesModel>>",
+          "lineNumber": 27
+        },
+        {
+          "caller": "SetSettings",
+          "callee": "client.SetSettings",
+          "lineNumber": 33
+        },
+        {
+          "caller": "SetSettings",
+          "callee": "CreateGrpcSettings",
+          "lineNumber": 33
+        },
+        {
+          "caller": "SetSettingsAsync",
+          "callee": "client.SetSettingsAsync",
+          "lineNumber": 38
+        },
+        {
+          "caller": "SetSettingsAsync",
+          "callee": "CreateGrpcSettings",
+          "lineNumber": 38
+        },
+        {
+          "caller": "GetSettings",
+          "callee": "client.GetSettings",
+          "lineNumber": 43
+        },
+        {
+          "caller": "GetSettings",
+          "callee": "new Empty",
+          "lineNumber": 43
+        },
+        {
+          "caller": "GetSettings",
+          "callee": "CreateSettingsFromGrpc",
+          "lineNumber": 44
+        },
+        {
+          "caller": "GetSettingsAsync",
+          "callee": "client.GetSettingsAsync",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetSettingsAsync",
+          "callee": "new Empty",
+          "lineNumber": 49
+        },
+        {
+          "caller": "GetSettingsAsync",
+          "callee": "CreateSettingsFromGrpc",
+          "lineNumber": 50
+        },
+        {
+          "caller": "GetAppRulesSettings",
+          "callee": "new List<ApplicationRulesModel>",
+          "lineNumber": 55
+        },
+        {
+          "caller": "GetAppRulesSettings",
+          "callee": "client.GetAppRulesSettings",
+          "lineNumber": 56
+        },
+        {
+          "caller": "GetAppRulesSettings",
+          "callee": "new Empty",
+          "lineNumber": 56
+        },
+        {
+          "caller": "GetAppRulesSettings",
+          "callee": "appRules.Add",
+          "lineNumber": 59
+        },
+        {
+          "caller": "GetAppRulesSettings",
+          "callee": "new ApplicationRulesModel",
+          "lineNumber": 59
+        },
+        {
+          "caller": "GetAppRulesSettingsAsync",
+          "callee": "new List<ApplicationRulesModel>",
+          "lineNumber": 66
+        },
+        {
+          "caller": "GetAppRulesSettingsAsync",
+          "callee": "client.GetAppRulesSettingsAsync",
+          "lineNumber": 67
+        },
+        {
+          "caller": "GetAppRulesSettingsAsync",
+          "callee": "new Empty",
+          "lineNumber": 67
+        },
+        {
+          "caller": "GetAppRulesSettingsAsync",
+          "callee": "appRules.Add",
+          "lineNumber": 70
+        },
+        {
+          "caller": "GetAppRulesSettingsAsync",
+          "callee": "new ApplicationRulesModel",
+          "lineNumber": 70
+        },
+        {
+          "caller": "SetAppRulesSettings",
+          "callee": "new AppRulesSettings",
+          "lineNumber": 77
+        },
+        {
+          "caller": "SetAppRulesSettings",
+          "callee": "tmp.AppRules.Add",
+          "lineNumber": 80
+        },
+        {
+          "caller": "SetAppRulesSettings",
+          "callee": "new AppRulesDataModel",
+          "lineNumber": 80
+        },
+        {
+          "caller": "SetAppRulesSettings",
+          "callee": "client.SetAppRulesSettings",
+          "lineNumber": 86
+        },
+        {
+          "caller": "SetAppRulesSettingsAsync",
+          "callee": "new AppRulesSettings",
+          "lineNumber": 91
+        },
+        {
+          "caller": "SetAppRulesSettingsAsync",
+          "callee": "tmp.AppRules.Add",
+          "lineNumber": 94
+        },
+        {
+          "caller": "SetAppRulesSettingsAsync",
+          "callee": "new AppRulesDataModel",
+          "lineNumber": 94
+        },
+        {
+          "caller": "SetAppRulesSettingsAsync",
+          "callee": "client.SetAppRulesSettingsAsync",
+          "lineNumber": 100
+        },
+        {
+          "caller": "Save",
+          "callee": "SetSettings",
+          "lineNumber": 107
+        },
+        {
+          "caller": "Save",
+          "callee": "SetAppRulesSettings",
+          "lineNumber": 111
+        },
+        {
+          "caller": "Save",
+          "callee": "new InvalidCastException",
+          "lineNumber": 115
+        },
+        {
+          "caller": "SaveAsync",
+          "callee": "SetSettingsAsync().ConfigureAwait",
+          "lineNumber": 123
+        },
+        {
+          "caller": "SaveAsync",
+          "callee": "SetSettingsAsync",
+          "lineNumber": 123
+        },
+        {
+          "caller": "SaveAsync",
+          "callee": "SetAppRulesSettingsAsync().ConfigureAwait",
+          "lineNumber": 127
+        },
+        {
+          "caller": "SaveAsync",
+          "callee": "SetAppRulesSettingsAsync",
+          "lineNumber": 127
+        },
+        {
+          "caller": "SaveAsync",
+          "callee": "new InvalidCastException",
+          "lineNumber": 131
+        },
+        {
+          "caller": "Load",
+          "callee": "GetSettings",
+          "lineNumber": 139
+        },
+        {
+          "caller": "Load",
+          "callee": "GetAppRulesSettings",
+          "lineNumber": 143
+        },
+        {
+          "caller": "Load",
+          "callee": "new InvalidCastException",
+          "lineNumber": 147
+        },
+        {
+          "caller": "LoadAsync",
+          "callee": "GetSettingsAsync().ConfigureAwait",
+          "lineNumber": 155
+        },
+        {
+          "caller": "LoadAsync",
+          "callee": "GetSettingsAsync",
+          "lineNumber": 155
+        },
+        {
+          "caller": "LoadAsync",
+          "callee": "GetAppRulesSettingsAsync().ConfigureAwait",
+          "lineNumber": 159
+        },
+        {
+          "caller": "LoadAsync",
+          "callee": "GetAppRulesSettingsAsync",
+          "lineNumber": 159
+        },
+        {
+          "caller": "LoadAsync",
+          "callee": "new InvalidCastException",
+          "lineNumber": 163
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new SettingsDataModel",
+          "lineNumber": 171
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new GetScreensResponse",
+          "lineNumber": 178
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "settings.SelectedDisplay.HMonitor.ToInt32",
+          "lineNumber": 183
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new Rectangle",
+          "lineNumber": 186
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new Rectangle",
+          "lineNumber": 193
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new GetScreensResponse",
+          "lineNumber": 266
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "settings.SelectedAudioOutputDisplay.HMonitor.ToInt32",
+          "lineNumber": 271
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new Rectangle",
+          "lineNumber": 274
+        },
+        {
+          "caller": "CreateGrpcSettings",
+          "callee": "new Rectangle",
+          "lineNumber": 281
+        },
+        {
+          "caller": "CreateSettingsFromGrpc",
+          "callee": "new SettingsModel",
+          "lineNumber": 295
+        },
+        {
+          "caller": "CreateSettingsFromGrpc",
+          "callee": "new DisplayMonitor",
+          "lineNumber": 301
+        },
+        {
+          "caller": "CreateSettingsFromGrpc",
+          "callee": "new IntPtr",
+          "lineNumber": 306
+        },
+        {
+          "caller": "CreateSettingsFromGrpc",
+          "callee": "new DisplayMonitor",
+          "lineNumber": 386
+        },
+        {
+          "caller": "CreateSettingsFromGrpc",
+          "callee": "new IntPtr",
+          "lineNumber": 391
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 8,
+        "functionCount": 15,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Grpc.Client/WinDesktopCoreClient.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 314,
+      "nonEmptyLines": 277,
+      "functions": [
+        {
+          "name": "WinDesktopCoreClient",
+          "startLine": 37,
+          "endLine": 54,
+          "params": []
+        },
+        {
+          "name": "GetCoreStats",
+          "startLine": 56,
+          "endLine": 56,
+          "params": []
+        },
+        {
+          "name": "SetWallpaper",
+          "startLine": 58,
+          "endLine": 67,
+          "params": [
+            "livelyInfoPath",
+            "monitorId"
+          ]
+        },
+        {
+          "name": "SetWallpaper",
+          "startLine": 69,
+          "endLine": 77,
+          "params": [
+            "item",
+            "display"
+          ]
+        },
+        {
+          "name": "EditWallpaper",
+          "startLine": 79,
+          "endLine": 89,
+          "params": [
+            "livelyInfoPath"
+          ]
+        },
+        {
+          "name": "CreateWallpaper",
+          "startLine": 91,
+          "endLine": 104,
+          "params": [
+            "filePath",
+            "type",
+            "arguments"
+          ]
+        },
+        {
+          "name": "GetWallpapers",
+          "startLine": 106,
+          "endLine": 149,
+          "params": []
+        },
+        {
+          "name": "PreviewWallpaper",
+          "startLine": 151,
+          "endLine": 154,
+          "params": [
+            "livelyInfoPath"
+          ]
+        },
+        {
+          "name": "CloseAllWallpapers",
+          "startLine": 156,
+          "endLine": 159,
+          "params": []
+        },
+        {
+          "name": "CloseWallpaper",
+          "startLine": 161,
+          "endLine": 167,
+          "params": [
+            "type"
+          ]
+        },
+        {
+          "name": "CloseWallpaper",
+          "startLine": 169,
+          "endLine": 175,
+          "params": [
+            "item"
+          ]
+        },
+        {
+          "name": "CloseWallpaper",
+          "startLine": 177,
+          "endLine": 183,
+          "params": [
+            "monitor"
+          ]
+        },
+        {
+          "name": "SendMessageWallpaper",
+          "startLine": 185,
+          "endLine": 193,
+          "params": [
+            "obj",
+            "msg"
+          ]
+        },
+        {
+          "name": "SendMessageWallpaper",
+          "startLine": 195,
+          "endLine": 203,
+          "params": [
+            "display",
+            "obj",
+            "msg"
+          ]
+        },
+        {
+          "name": "TakeScreenshot",
+          "startLine": 205,
+          "endLine": 212,
+          "params": [
+            "monitorId",
+            "savePath"
+          ]
+        },
+        {
+          "name": "SubscribeWallpaperChangedStream",
+          "startLine": 214,
+          "endLine": 240,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "SubscribeWallpaperErrorStream",
+          "startLine": 242,
+          "endLine": 259,
+          "params": [
+            "token"
+          ]
+        },
+        {
+          "name": "GetException",
+          "startLine": 261,
+          "endLine": 276,
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 280,
+          "endLine": 296,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 305,
+          "endLine": 310,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "WinDesktopCoreClient",
+          "startLine": 20,
+          "endLine": 313,
+          "methods": [
+            "WinDesktopCoreClient",
+            "GetCoreStats",
+            "SetWallpaper",
+            "SetWallpaper",
+            "EditWallpaper",
+            "CreateWallpaper",
+            "GetWallpapers",
+            "PreviewWallpaper",
+            "CloseAllWallpapers",
+            "CloseWallpaper",
+            "CloseWallpaper",
+            "CloseWallpaper",
+            "SendMessageWallpaper",
+            "SendMessageWallpaper",
+            "TakeScreenshot",
+            "SubscribeWallpaperChangedStream",
+            "SubscribeWallpaperErrorStream",
+            "GetException",
+            "Dispose",
+            "Dispose"
+          ],
+          "properties": [
+            "wallpapers",
+            "Wallpapers",
+            "BaseDirectory",
+            "AssemblyVersion",
+            "IsCoreInitialized",
+            "client",
+            "wallpaperChangedLock",
+            "cancellationTokenWallpaperChanged",
+            "cancellationTokenWallpaperError",
+            "wallpaperChangedTask",
+            "wallpaperErrorTask",
+            "disposedValue"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "Wallpapers",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "BaseDirectory",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "AssemblyVersion",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "IsCoreInitialized",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "WinDesktopCoreClient",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "SetWallpaper",
+          "line": 58,
+          "isDefault": false
+        },
+        {
+          "name": "SetWallpaper",
+          "line": 69,
+          "isDefault": false
+        },
+        {
+          "name": "EditWallpaper",
+          "line": 79,
+          "isDefault": false
+        },
+        {
+          "name": "CreateWallpaper",
+          "line": 91,
+          "isDefault": false
+        },
+        {
+          "name": "PreviewWallpaper",
+          "line": 151,
+          "isDefault": false
+        },
+        {
+          "name": "CloseAllWallpapers",
+          "line": 156,
+          "isDefault": false
+        },
+        {
+          "name": "CloseWallpaper",
+          "line": 161,
+          "isDefault": false
+        },
+        {
+          "name": "CloseWallpaper",
+          "line": 169,
+          "isDefault": false
+        },
+        {
+          "name": "CloseWallpaper",
+          "line": 177,
+          "isDefault": false
+        },
+        {
+          "name": "SendMessageWallpaper",
+          "line": 185,
+          "isDefault": false
+        },
+        {
+          "name": "SendMessageWallpaper",
+          "line": 195,
+          "isDefault": false
+        },
+        {
+          "name": "TakeScreenshot",
+          "line": 205,
+          "isDefault": false
+        },
+        {
+          "name": "Dispose",
+          "line": 305,
+          "isDefault": false
+        },
+        {
+          "name": "WinDesktopCoreClient",
+          "line": 20,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "new NamedPipeChannel",
+          "lineNumber": 39
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "Task.Run(async () =>\n            {\n                wallpapers.AddRange(await GetWallpapers().ConfigureAwait(false));\n                var status = (await GetCoreStats().ConfigureAwait(false));\n                BaseDirectory = status.BaseDirectory;\n                AssemblyVersion = new Version(status.AssemblyVersion);\n                IsCoreInitialized = status.IsCoreInitialized;\n            }).Wait",
+          "lineNumber": 41
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "Task.Run",
+          "lineNumber": 41
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "wallpapers.AddRange",
+          "lineNumber": 43
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "GetWallpapers().ConfigureAwait",
+          "lineNumber": 43
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "GetWallpapers",
+          "lineNumber": 43
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "GetCoreStats().ConfigureAwait",
+          "lineNumber": 44
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "GetCoreStats",
+          "lineNumber": 44
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "new Version",
+          "lineNumber": 46
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "new CancellationTokenSource",
+          "lineNumber": 50
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "Task.Run",
+          "lineNumber": 51
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "SubscribeWallpaperChangedStream",
+          "lineNumber": 51
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "new CancellationTokenSource",
+          "lineNumber": 52
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "Task.Run",
+          "lineNumber": 53
+        },
+        {
+          "caller": "WinDesktopCoreClient",
+          "callee": "SubscribeWallpaperErrorStream",
+          "lineNumber": 53
+        },
+        {
+          "caller": "GetCoreStats",
+          "callee": "client.GetCoreStatsAsync",
+          "lineNumber": 56
+        },
+        {
+          "caller": "GetCoreStats",
+          "callee": "new Empty",
+          "lineNumber": 56
+        },
+        {
+          "caller": "SetWallpaper",
+          "callee": "new SetWallpaperRequest",
+          "lineNumber": 60
+        },
+        {
+          "caller": "SetWallpaper",
+          "callee": "client.SetWallpaperAsync",
+          "lineNumber": 66
+        },
+        {
+          "caller": "SetWallpaper",
+          "callee": "new SetWallpaperRequest",
+          "lineNumber": 71
+        },
+        {
+          "caller": "SetWallpaper",
+          "callee": "client.SetWallpaperAsync",
+          "lineNumber": 76
+        },
+        {
+          "caller": "EditWallpaper",
+          "callee": "client.EditWallpaperAsync",
+          "lineNumber": 81
+        },
+        {
+          "caller": "EditWallpaper",
+          "callee": "new EditWallpaperRequest",
+          "lineNumber": 81
+        },
+        {
+          "caller": "EditWallpaper",
+          "callee": "WallpaperError?.Invoke",
+          "lineNumber": 86
+        },
+        {
+          "caller": "EditWallpaper",
+          "callee": "GetException",
+          "lineNumber": 86
+        },
+        {
+          "caller": "CreateWallpaper",
+          "callee": "client.CreateWallpaperAsync",
+          "lineNumber": 93
+        },
+        {
+          "caller": "CreateWallpaper",
+          "callee": "new CreateWallpaperRequest",
+          "lineNumber": 93
+        },
+        {
+          "caller": "CreateWallpaper",
+          "callee": "string.IsNullOrWhiteSpace",
+          "lineNumber": 97
+        },
+        {
+          "caller": "CreateWallpaper",
+          "callee": "WallpaperError?.Invoke",
+          "lineNumber": 101
+        },
+        {
+          "caller": "CreateWallpaper",
+          "callee": "GetException",
+          "lineNumber": 101
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new List<GetWallpapersResponse>",
+          "lineNumber": 108
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "client.GetWallpapers",
+          "lineNumber": 109
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new Empty",
+          "lineNumber": 109
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "call.ResponseStream.MoveNext",
+          "lineNumber": 110
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "resp.Add",
+          "lineNumber": 113
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new List<WallpaperData>",
+          "lineNumber": 116
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "wallpapers.Add",
+          "lineNumber": 119
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new WallpaperData",
+          "lineNumber": 119
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new DisplayMonitor",
+          "lineNumber": 126
+        },
+        {
+          "caller": "GetWallpapers",
+          "callee": "new IntPtr",
+          "lineNumber": 131
+        },
+        {
+          "caller": "PreviewWallpaper",
+          "callee": "client.PreviewWallpaperAsync",
+          "lineNumber": 153
+        },
+        {
+          "caller": "PreviewWallpaper",
+          "callee": "new PreviewWallpaperRequest",
+          "lineNumber": 153
+        },
+        {
+          "caller": "CloseAllWallpapers",
+          "callee": "client.CloseAllWallpapersAsync",
+          "lineNumber": 158
+        },
+        {
+          "caller": "CloseAllWallpapers",
+          "callee": "new CloseAllWallpapersRequest",
+          "lineNumber": 158
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "client.CloseWallpaperCategoryAsync",
+          "lineNumber": 163
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "new CloseWallpaperCategoryRequest",
+          "lineNumber": 163
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "client.CloseWallpaperLibraryAsync",
+          "lineNumber": 171
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "new CloseWallpaperLibraryRequest",
+          "lineNumber": 171
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "client.CloseWallpaperMonitorAsync",
+          "lineNumber": 179
+        },
+        {
+          "caller": "CloseWallpaper",
+          "callee": "new CloseWallpaperMonitorRequest",
+          "lineNumber": 179
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "client.SendMessageWallpaper",
+          "lineNumber": 187
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "new WallpaperMessageRequest",
+          "lineNumber": 187
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "JsonUtil.Serialize",
+          "lineNumber": 191
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "client.SendMessageWallpaper",
+          "lineNumber": 197
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "new WallpaperMessageRequest",
+          "lineNumber": 197
+        },
+        {
+          "caller": "SendMessageWallpaper",
+          "callee": "JsonUtil.Serialize",
+          "lineNumber": 201
+        },
+        {
+          "caller": "TakeScreenshot",
+          "callee": "client.TakeScreenshotAsync",
+          "lineNumber": 207
+        },
+        {
+          "caller": "TakeScreenshot",
+          "callee": "new WallpaperScreenshotRequest",
+          "lineNumber": 207
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "client.SubscribeWallpaperChanged",
+          "lineNumber": 218
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "new Empty",
+          "lineNumber": 218
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "call.ResponseStream.MoveNext",
+          "lineNumber": 219
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "wallpaperChangedLock.WaitAsync",
+          "lineNumber": 221
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "wallpapers.Clear",
+          "lineNumber": 226
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "wallpapers.AddRange",
+          "lineNumber": 227
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "GetWallpapers",
+          "lineNumber": 227
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "WallpaperChanged?.Invoke",
+          "lineNumber": 228
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "wallpaperChangedLock.Release",
+          "lineNumber": 232
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "Console.WriteLine",
+          "lineNumber": 238
+        },
+        {
+          "caller": "SubscribeWallpaperChangedStream",
+          "callee": "e.ToString",
+          "lineNumber": 238
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "client.SubscribeWallpaperError",
+          "lineNumber": 246
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "new Empty",
+          "lineNumber": 246
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "call.ResponseStream.MoveNext",
+          "lineNumber": 247
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "GetException",
+          "lineNumber": 251
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "WallpaperError?.Invoke",
+          "lineNumber": 252
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "Console.WriteLine",
+          "lineNumber": 257
+        },
+        {
+          "caller": "SubscribeWallpaperErrorStream",
+          "callee": "e.ToString",
+          "lineNumber": 257
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WorkerWException",
+          "lineNumber": 265
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperNotFoundException",
+          "lineNumber": 266
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperNotAllowedException",
+          "lineNumber": 267
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperPluginNotFoundException",
+          "lineNumber": 268
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperPluginException",
+          "lineNumber": 269
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperPluginMediaCodecException",
+          "lineNumber": 270
+        },
+        {
+          "caller": "GetException",
+          "callee": "new ScreenNotFoundException",
+          "lineNumber": 271
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperWebView2NotFoundException",
+          "lineNumber": 272
+        },
+        {
+          "caller": "GetException",
+          "callee": "new WallpaperFileException",
+          "lineNumber": 273
+        },
+        {
+          "caller": "GetException",
+          "callee": "new Exception",
+          "lineNumber": 274
+        },
+        {
+          "caller": "Dispose",
+          "callee": "cancellationTokenWallpaperChanged?.Cancel",
+          "lineNumber": 287
+        },
+        {
+          "caller": "Dispose",
+          "callee": "cancellationTokenWallpaperError?.Cancel",
+          "lineNumber": 288
+        },
+        {
+          "caller": "Dispose",
+          "callee": "Task.WaitAll",
+          "lineNumber": 289
+        },
+        {
+          "caller": "Dispose",
+          "callee": "Dispose",
+          "lineNumber": 308
+        },
+        {
+          "caller": "Dispose",
+          "callee": "GC.SuppressFinalize",
+          "lineNumber": 309
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 19,
+        "functionCount": 20,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.ML/DepthEstimate/IDepthEstimate.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 9,
+      "nonEmptyLines": 9,
+      "classes": [
+        {
+          "name": "IDepthEstimate",
+          "startLine": 3,
+          "endLine": 8,
+          "methods": [
+            "LoadModel",
+            "Run"
+          ],
+          "properties": [
+            "ModelPath"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "IDepthEstimate",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.ML/DepthEstimate/MiDaS.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 113,
+      "nonEmptyLines": 95,
+      "functions": [
+        {
+          "name": "MiDaS",
+          "startLine": 22,
+          "endLine": 22,
+          "params": []
+        },
+        {
+          "name": "LoadModel",
+          "startLine": 24,
+          "endLine": 35,
+          "params": [
+            "path"
+          ]
+        },
+        {
+          "name": "Run",
+          "startLine": 37,
+          "endLine": 71,
+          "params": [
+            "imagePath"
+          ]
+        },
+        {
+          "name": "NormaliseOutput",
+          "startLine": 73,
+          "endLine": 82,
+          "params": [
+            "data"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 84,
+          "endLine": 97,
+          "params": [
+            "disposing"
+          ]
+        },
+        {
+          "name": "Dispose",
+          "startLine": 106,
+          "endLine": 111,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "MiDaS",
+          "startLine": 14,
+          "endLine": 112,
+          "methods": [
+            "MiDaS",
+            "LoadModel",
+            "Run",
+            "NormaliseOutput",
+            "Dispose",
+            "Dispose"
+          ],
+          "properties": [
+            "ModelPath",
+            "session",
+            "inputName",
+            "width",
+            "height",
+            "disposedValue"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ModelPath",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "MiDaS",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "LoadModel",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "Run",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "Dispose",
+          "line": 106,
+          "isDefault": false
+        },
+        {
+          "name": "MiDaS",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "LoadModel",
+          "callee": "session?.Dispose",
+          "lineNumber": 28
+        },
+        {
+          "caller": "LoadModel",
+          "callee": "new InferenceSession",
+          "lineNumber": 29
+        },
+        {
+          "caller": "LoadModel",
+          "callee": "Debug.WriteLine",
+          "lineNumber": 30
+        },
+        {
+          "caller": "LoadModel",
+          "callee": "session.InputMetadata.Keys.First",
+          "lineNumber": 32
+        },
+        {
+          "caller": "Run",
+          "callee": "new FileNotFoundException",
+          "lineNumber": 40
+        },
+        {
+          "caller": "Run",
+          "callee": "File.Exists",
+          "lineNumber": 42
+        },
+        {
+          "caller": "Run",
+          "callee": "new FileNotFoundException",
+          "lineNumber": 43
+        },
+        {
+          "caller": "Run",
+          "callee": "new MagickImage",
+          "lineNumber": 45
+        },
+        {
+          "caller": "Run",
+          "callee": "new ModelInput",
+          "lineNumber": 46
+        },
+        {
+          "caller": "Run",
+          "callee": "inputImage.Resize",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Run",
+          "callee": "new MagickGeometry",
+          "lineNumber": 47
+        },
+        {
+          "caller": "Run",
+          "callee": "new DenseTensor<float>",
+          "lineNumber": 49
+        },
+        {
+          "caller": "Run",
+          "callee": "inputImage.GetPixels",
+          "lineNumber": 54
+        },
+        {
+          "caller": "Run",
+          "callee": "pixels.GetPixel(x, y).ToColor",
+          "lineNumber": 55
+        },
+        {
+          "caller": "Run",
+          "callee": "pixels.GetPixel",
+          "lineNumber": 55
+        },
+        {
+          "caller": "Run",
+          "callee": "new List<NamedOnnxValue>",
+          "lineNumber": 62
+        },
+        {
+          "caller": "Run",
+          "callee": "NamedOnnxValue.CreateFromTensor<float>",
+          "lineNumber": 63
+        },
+        {
+          "caller": "Run",
+          "callee": "session.Run",
+          "lineNumber": 66
+        },
+        {
+          "caller": "Run",
+          "callee": "results.First().AsEnumerable<float>().ToArray",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Run",
+          "callee": "results.First().AsEnumerable<float>",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Run",
+          "callee": "results.First",
+          "lineNumber": 67
+        },
+        {
+          "caller": "Run",
+          "callee": "NormaliseOutput",
+          "lineNumber": 68
+        },
+        {
+          "caller": "Run",
+          "callee": "new ModelOutput",
+          "lineNumber": 70
+        },
+        {
+          "caller": "NormaliseOutput",
+          "callee": "data.Max",
+          "lineNumber": 75
+        },
+        {
+          "caller": "NormaliseOutput",
+          "callee": "data.Min",
+          "lineNumber": 76
+        },
+        {
+          "caller": "NormaliseOutput",
+          "callee": "data.Select(d => (d - depthMin) / depthRange)\n                .Select(n => ((1f - n) * 0f + n * 1f)).ToArray",
+          "lineNumber": 79
+        },
+        {
+          "caller": "NormaliseOutput",
+          "callee": "data.Select(d => (d - depthMin) / depthRange)\n                .Select",
+          "lineNumber": 79
+        },
+        {
+          "caller": "NormaliseOutput",
+          "callee": "data.Select",
+          "lineNumber": 79
+        },
+        {
+          "caller": "Dispose",
+          "callee": "session?.Dispose",
+          "lineNumber": 90
+        },
+        {
+          "caller": "Dispose",
+          "callee": "Dispose",
+          "lineNumber": 109
+        },
+        {
+          "caller": "Dispose",
+          "callee": "GC.SuppressFinalize",
+          "lineNumber": 110
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 6,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.ML/DepthEstimate/ModelInput.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 15,
+      "functions": [
+        {
+          "name": "ModelInput",
+          "startLine": 5,
+          "endLine": 10,
+          "params": [
+            "imagePath",
+            "width",
+            "height"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ModelInput",
+          "startLine": 3,
+          "endLine": 15,
+          "methods": [
+            "ModelInput"
+          ],
+          "properties": [
+            "ImagePath",
+            "Width",
+            "Height"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ModelInput",
+          "line": 5,
+          "isDefault": false
+        },
+        {
+          "name": "ImagePath",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "Width",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "Height",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "ModelInput",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.ML/DepthEstimate/ModelOutput.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 19,
+      "functions": [
+        {
+          "name": "ModelOutput",
+          "startLine": 5,
+          "endLine": 12,
+          "params": [
+            "depth",
+            "width",
+            "height",
+            "originalWidth",
+            "originalHeight"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ModelOutput",
+          "startLine": 3,
+          "endLine": 19,
+          "methods": [
+            "ModelOutput"
+          ],
+          "properties": [
+            "Depth",
+            "Width",
+            "Height",
+            "OriginalWidth",
+            "OriginalHeight"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ModelOutput",
+          "line": 5,
+          "isDefault": false
+        },
+        {
+          "name": "Depth",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "Width",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "Height",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "OriginalWidth",
+          "line": 17,
+          "isDefault": false
+        },
+        {
+          "name": "OriginalHeight",
+          "line": 18,
+          "isDefault": false
+        },
+        {
+          "name": "ModelOutput",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 7,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.ML/Helpers/ImageUtil.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 34,
+      "functions": [
+        {
+          "name": "FloatArrayToMagickImage",
+          "startLine": 15,
+          "endLine": 24,
+          "params": [
+            "floatArray",
+            "width",
+            "height"
+          ]
+        },
+        {
+          "name": "FloatArrayToMagickImageResize",
+          "startLine": 29,
+          "endLine": 34,
+          "params": [
+            "floatArray",
+            "width",
+            "height",
+            "widthResize",
+            "heightResize"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ImageUtil",
+          "startLine": 10,
+          "endLine": 35,
+          "methods": [
+            "FloatArrayToMagickImage",
+            "FloatArrayToMagickImageResize"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FloatArrayToMagickImage",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "FloatArrayToMagickImageResize",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "ImageUtil",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "FloatArrayToMagickImage",
+          "callee": "new MagickImage",
+          "lineNumber": 17
+        },
+        {
+          "caller": "FloatArrayToMagickImage",
+          "callee": "MagickColor.FromRgb",
+          "lineNumber": 17
+        },
+        {
+          "caller": "FloatArrayToMagickImage",
+          "callee": "image.GetPixels",
+          "lineNumber": 18
+        },
+        {
+          "caller": "FloatArrayToMagickImage",
+          "callee": "pixels.SetPixel",
+          "lineNumber": 21
+        },
+        {
+          "caller": "FloatArrayToMagickImageResize",
+          "callee": "FloatArrayToMagickImage",
+          "lineNumber": 31
+        },
+        {
+          "caller": "FloatArrayToMagickImageResize",
+          "callee": "image.Resize",
+          "lineNumber": 32
+        },
+        {
+          "caller": "FloatArrayToMagickImageResize",
+          "callee": "new MagickGeometry",
+          "lineNumber": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/AddWallpaperCreateModel.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 30,
+      "nonEmptyLines": 24,
+      "classes": [
+        {
+          "name": "AddWallpaperCreateModel",
+          "startLine": 6,
+          "endLine": 22,
+          "methods": [],
+          "properties": [
+            "title",
+            "description",
+            "icon",
+            "typeSupported",
+            "createType"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AddWallpaperCreateModel",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/AppMusicExclusionRuleModel.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 16,
+      "functions": [
+        {
+          "name": "AppMusicExclusionRuleModel",
+          "startLine": 7,
+          "endLine": 11,
+          "params": [
+            "appName",
+            "appPath"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AppMusicExclusionRuleModel",
+          "startLine": 5,
+          "endLine": 18,
+          "methods": [
+            "AppMusicExclusionRuleModel"
+          ],
+          "properties": [
+            "appName",
+            "appPath"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AppMusicExclusionRuleModel",
+          "line": 7,
+          "isDefault": false
+        },
+        {
+          "name": "AppMusicExclusionRuleModel",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/ApplicationModel.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "ApplicationModel",
+          "startLine": 5,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "appName",
+            "appPath",
+            "appIcon"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ApplicationModel",
+          "line": 5,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/ApplicationRulesModel.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 17,
+      "functions": [
+        {
+          "name": "ApplicationRulesModel",
+          "startLine": 8,
+          "endLine": 12,
+          "params": [
+            "appName",
+            "rule"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "ApplicationRulesModel",
+          "startLine": 6,
+          "endLine": 19,
+          "methods": [
+            "ApplicationRulesModel"
+          ],
+          "properties": [
+            "appName",
+            "rule"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "ApplicationRulesModel",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "ApplicationRulesModel",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/AudioDevice.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 15,
+      "functions": [
+        {
+          "name": "AudioDevice",
+          "startLine": 5,
+          "endLine": 10,
+          "params": [
+            "id",
+            "name",
+            "deviceIcon"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "AudioDevice",
+          "startLine": 3,
+          "endLine": 15,
+          "methods": [
+            "AudioDevice"
+          ],
+          "properties": [
+            "Id",
+            "Name",
+            "DeviceIcon"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AudioDevice",
+          "line": 5,
+          "isDefault": false
+        },
+        {
+          "name": "Id",
+          "line": 12,
+          "isDefault": false
+        },
+        {
+          "name": "Name",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "DeviceIcon",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "AudioDevice",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 5,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.Models/DisplayMonitor.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 95,
+      "nonEmptyLines": 73,
+      "functions": [
+        {
+          "name": "DisplayMonitor",
+          "startLine": 83,
+          "endLine": 86,
+          "params": [
+            "deviceName"
+          ]
+        },
+        {
+          "name": "DisplayMonitor",
+          "startLine": 88,
+          "endLine": 88,
+          "params": []
+        },
+        {
+          "name": "Equals",
+          "startLine": 90,
+          "endLine": 93,
+          "params": [
+            "other"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "DisplayMonitor",
+          "startLine": 12,
+          "endLine": 94,
+          "methods": [
+            "DisplayMonitor",
+            "DisplayMonitor",
+            "Equals"
+          ],
+          "properties": [
+            "isStale",
+            "bounds",
+            "Bounds",
+            "deviceId",
+            "DeviceId",
+            "deviceName",
+            "DeviceName",
+            "displayName",
+            "DisplayName",
+            "hMonitor",
+            "HMonitor",
+            "index",
+            "Index",
+            "isPrimary",
+            "IsPrimary",
+            "workingArea",
+            "WorkingArea"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "isStale",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "Bounds",
+          "line": 20,
+          "isDefault": false
+        },
+        {
+          "name": "DeviceId",
+          "line": 28,
+          "isDefault": false
+        },
+        {
+          "name": "DeviceName",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayName",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "HMonitor",
+          "line": 51,
+          "isDefault": false
+        },
+        {
+          "name": "Index",
+          "line": 59,
+          "isDefault": false
+        },
+        {
+          "name": "IsPrimary",
+          "line": 67,
+          "isDefault": false
+        },
+        {
+          "name": "WorkingArea",
+          "line": 75,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayMonitor",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayMonitor",
+          "line": 88,
+          "isDefault": false
+        },
+        {
+          "name": "Equals",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "DisplayMonitor",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 13,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    }
+  ]
+}

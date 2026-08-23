@@ -1,0 +1,1483 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "type": "file",
+      "name": "SearchQueryBuilder.cs",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "summary": "实现 Gallery 搜索查询的 fluent builder，组合排序、标签、关键词、页码和分页大小后生成不可变查询模型。",
+      "tags": [
+        "builder",
+        "fluent-api",
+        "gallery-search"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "class",
+      "name": "SearchQueryBuilder",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        5,
+        70
+      ],
+      "summary": "作为本文件的核心类型，实现 Gallery 搜索查询的 fluent builder，组合排序、标签、关键词、页码和分页大小后生成不可变查询模型。",
+      "tags": [
+        "class",
+        "service",
+        "gallery-search"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:Build",
+      "type": "function",
+      "name": "Build",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        64,
+        68
+      ],
+      "summary": "根据累计条件构建最终 SearchQuery。",
+      "tags": [
+        "method",
+        "method",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "function",
+      "name": "SearchQueryBuilder",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        22,
+        29
+      ],
+      "summary": "初始化 SearchQueryBuilder 与默认 Gallery 查询状态。",
+      "tags": [
+        "method",
+        "method",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetLimit",
+      "type": "function",
+      "name": "SetLimit",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        48,
+        54
+      ],
+      "summary": "设置每页返回的壁纸数量。",
+      "tags": [
+        "method",
+        "command",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetPage",
+      "type": "function",
+      "name": "SetPage",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        41,
+        47
+      ],
+      "summary": "设置搜索结果页码。",
+      "tags": [
+        "method",
+        "command",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SortBy",
+      "type": "function",
+      "name": "SortBy",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        31,
+        35
+      ],
+      "summary": "设置 Gallery 查询的排序字段和方向。",
+      "tags": [
+        "method",
+        "method",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithSearchQuery",
+      "type": "function",
+      "name": "WithSearchQuery",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        58,
+        63
+      ],
+      "summary": "设置全文搜索关键词。",
+      "tags": [
+        "method",
+        "method",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithTags",
+      "type": "function",
+      "name": "WithTags",
+      "filePath": "src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "lineRange": [
+        36,
+        40
+      ],
+      "summary": "为查询添加一个或多个壁纸标签过滤条件。",
+      "tags": [
+        "method",
+        "method",
+        "gallery-search"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "type": "file",
+      "name": "AppUpdaterClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "summary": "实现应用更新 gRPC 客户端，检查最新版本、启动更新、切换发布通道并订阅更新状态流。",
+      "tags": [
+        "grpc-client",
+        "ipc",
+        "app-update"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "class",
+      "name": "AppUpdaterClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        14,
+        147
+      ],
+      "summary": "作为本文件的核心类型，实现应用更新 gRPC 客户端，检查最新版本、启动更新、切换发布通道并订阅更新状态流。",
+      "tags": [
+        "class",
+        "service",
+        "app-update"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "function",
+      "name": "AppUpdaterClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        31,
+        42
+      ],
+      "summary": "初始化更新 gRPC stub、事件状态和 cancellation 资源。",
+      "tags": [
+        "method",
+        "method",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:CheckUpdate",
+      "type": "function",
+      "name": "CheckUpdate",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        44,
+        47
+      ],
+      "summary": "调用更新服务检查新版本。",
+      "tags": [
+        "method",
+        "query",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        118,
+        132
+      ],
+      "summary": "取消服务端流并释放 gRPC 客户端或推理资源。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:GetLatestRelease",
+      "type": "function",
+      "name": "GetLatestRelease",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        49,
+        58
+      ],
+      "summary": "查询指定发布通道的最新 Release。",
+      "tags": [
+        "method",
+        "query",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:StartUpdate",
+      "type": "function",
+      "name": "StartUpdate",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        60,
+        63
+      ],
+      "summary": "请求核心启动更新流程。",
+      "tags": [
+        "method",
+        "method",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:SubscribeUpdateCheckedStream",
+      "type": "function",
+      "name": "SubscribeUpdateCheckedStream",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        87,
+        116
+      ],
+      "summary": "持续读取更新检查服务端流并触发本地事件。",
+      "tags": [
+        "method",
+        "event-stream",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:SwitchReleaseChannel",
+      "type": "function",
+      "name": "SwitchReleaseChannel",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        65,
+        70
+      ],
+      "summary": "切换稳定版或 Beta 发布通道。",
+      "tags": [
+        "method",
+        "command",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:UpdateStatusRefresh",
+      "type": "function",
+      "name": "UpdateStatusRefresh",
+      "filePath": "src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "lineRange": [
+        72,
+        85
+      ],
+      "summary": "刷新并发布当前更新状态。",
+      "tags": [
+        "method",
+        "method",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "type": "file",
+      "name": "CommandsClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "summary": "实现命令控制 gRPC 客户端，远程显示或重启 UI、控制屏幕保护程序、执行自动化命令、关闭核心并保存窗口矩形。",
+      "tags": [
+        "grpc-client",
+        "ipc",
+        "command-control"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "class",
+      "name": "CommandsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        13,
+        112
+      ],
+      "summary": "作为本文件的核心类型，实现命令控制 gRPC 客户端，远程显示或重启 UI、控制屏幕保护程序、执行自动化命令、关闭核心并保存窗口矩形。",
+      "tags": [
+        "class",
+        "service",
+        "command-control"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommand",
+      "type": "function",
+      "name": "AutomationCommand",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        96,
+        101
+      ],
+      "summary": "同步发送自动化命令参数。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommandAsync",
+      "type": "function",
+      "name": "AutomationCommandAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        89,
+        94
+      ],
+      "summary": "异步发送自动化命令参数。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CloseUI",
+      "type": "function",
+      "name": "CloseUI",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "请求核心关闭用户界面。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "function",
+      "name": "CommandsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        17,
+        23
+      ],
+      "summary": "初始化命令 gRPC stub。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:RestartUI",
+      "type": "function",
+      "name": "RestartUI",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        35,
+        38
+      ],
+      "summary": "请求核心重启用户界面。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUI",
+      "type": "function",
+      "name": "SaveRectUI",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        103,
+        106
+      ],
+      "summary": "保存 UI 窗口矩形。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUIAsync",
+      "type": "function",
+      "name": "SaveRectUIAsync",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        108,
+        111
+      ],
+      "summary": "异步保存 UI 窗口矩形。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverConfigure",
+      "type": "function",
+      "name": "ScreensaverConfigure",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        67,
+        73
+      ],
+      "summary": "打开 Windows 屏幕保护程序配置。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverPreview",
+      "type": "function",
+      "name": "ScreensaverPreview",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        75,
+        82
+      ],
+      "summary": "在指定父窗口中预览屏幕保护程序。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowDebugger",
+      "type": "function",
+      "name": "ShowDebugger",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        45,
+        48
+      ],
+      "summary": "请求核心打开调试器界面。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowScreensaver",
+      "type": "function",
+      "name": "ShowScreensaver",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        50,
+        57
+      ],
+      "summary": "请求启动全屏屏幕保护程序。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowUI",
+      "type": "function",
+      "name": "ShowUI",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "请求核心显示 Lively 用户界面。",
+      "tags": [
+        "method",
+        "command",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShutDown",
+      "type": "function",
+      "name": "ShutDown",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        84,
+        87
+      ],
+      "summary": "请求关闭 Lively 核心。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:StopScreensaver",
+      "type": "function",
+      "name": "StopScreensaver",
+      "filePath": "src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "lineRange": [
+        59,
+        65
+      ],
+      "summary": "请求停止当前屏幕保护程序。",
+      "tags": [
+        "method",
+        "method",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "type": "file",
+      "name": "DisplayManagerClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "summary": "实现显示器管理 gRPC 客户端，读取显示器与虚拟屏幕边界，并订阅显示配置变化流。",
+      "tags": [
+        "grpc-client",
+        "ipc",
+        "display-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "class",
+      "name": "DisplayManagerClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        17,
+        151
+      ],
+      "summary": "作为本文件的核心类型，实现显示器管理 gRPC 客户端，读取显示器与虚拟屏幕边界，并订阅显示配置变化流。",
+      "tags": [
+        "class",
+        "service",
+        "display-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "function",
+      "name": "DisplayManagerClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        32,
+        45
+      ],
+      "summary": "初始化显示器管理 gRPC stub 和事件订阅。",
+      "tags": [
+        "method",
+        "method",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        120,
+        134
+      ],
+      "summary": "取消服务端流并释放 gRPC 客户端或推理资源。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:GetScreens",
+      "type": "function",
+      "name": "GetScreens",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        47,
+        75
+      ],
+      "summary": "读取并转换当前显示器集合。",
+      "tags": [
+        "method",
+        "query",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:GetVirtualScreenBounds",
+      "type": "function",
+      "name": "GetVirtualScreenBounds",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        77,
+        86
+      ],
+      "summary": "读取虚拟桌面边界矩形。",
+      "tags": [
+        "method",
+        "query",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:SubscribeDisplayChangedStream",
+      "type": "function",
+      "name": "SubscribeDisplayChangedStream",
+      "filePath": "src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "lineRange": [
+        88,
+        116
+      ],
+      "summary": "持续读取显示变化服务端流并刷新本地状态。",
+      "tags": [
+        "method",
+        "event-stream",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "type": "file",
+      "name": "IAppUpdaterClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "summary": "声明应用更新 gRPC 客户端契约，暴露更新检查、状态、发布通道、启动更新和结果事件。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs:IAppUpdaterClient",
+      "type": "class",
+      "name": "IAppUpdaterClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "lineRange": [
+        8,
+        23
+      ],
+      "summary": "声明 `IAppUpdaterClient` 接口，约束声明应用更新 gRPC 客户端契约，暴露更新检查、状态、发布通道、启动更新和结果事件所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "type": "file",
+      "name": "ICommandsClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "summary": "声明 Lively 命令控制客户端契约，覆盖 UI、屏幕保护程序、自动化命令和核心生命周期操作。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/ICommandsClient.cs:ICommandsClient",
+      "type": "class",
+      "name": "ICommandsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "lineRange": [
+        5,
+        21
+      ],
+      "summary": "声明 `ICommandsClient` 接口，约束声明 Lively 命令控制客户端契约，覆盖 UI、屏幕保护程序、自动化命令和核心生命周期操作所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "command-control"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "type": "file",
+      "name": "IDesktopCoreClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "summary": "声明桌面核心 gRPC 客户端契约及壁纸运行数据载荷，覆盖设置、创建、编辑、关闭、消息、截图和事件订阅。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:IDesktopCoreClient",
+      "type": "class",
+      "name": "IDesktopCoreClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "lineRange": [
+        10,
+        32
+      ],
+      "summary": "声明 `IDesktopCoreClient` 接口，约束声明桌面核心 gRPC 客户端契约及壁纸运行数据载荷，覆盖设置、创建、编辑、关闭、消息、截图和事件订阅所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperData",
+      "type": "class",
+      "name": "WallpaperData",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "lineRange": [
+        34,
+        42
+      ],
+      "summary": "定义当前运行壁纸的数据载荷，关联屏幕、媒体库路径、属性副本和预览资源。",
+      "tags": [
+        "class",
+        "service",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperUpdatedData",
+      "type": "class",
+      "name": "WallpaperUpdatedData",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "lineRange": [
+        44,
+        49
+      ],
+      "summary": "定义壁纸元数据更新事件载荷，携带更新类型、标题、描述、作者和资源路径。",
+      "tags": [
+        "class",
+        "service",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "type": "file",
+      "name": "IDisplayManagerClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "summary": "声明显示器管理客户端契约，提供屏幕集合、虚拟边界和显示变化事件。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs:IDisplayManagerClient",
+      "type": "class",
+      "name": "IDisplayManagerClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "lineRange": [
+        8,
+        15
+      ],
+      "summary": "声明 `IDisplayManagerClient` 接口，约束声明显示器管理客户端契约，提供屏幕集合、虚拟边界和显示变化事件所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "display-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "type": "file",
+      "name": "IUserSettingsClient.cs",
+      "filePath": "src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "summary": "声明用户设置客户端契约，用于加载、保存以及读取和写入应用规则设置。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs:IUserSettingsClient",
+      "type": "class",
+      "name": "IUserSettingsClient",
+      "filePath": "src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "lineRange": [
+        7,
+        15
+      ],
+      "summary": "声明 `IUserSettingsClient` 接口，约束声明用户设置客户端契约，用于加载、保存以及读取和写入应用规则设置所需成员。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "user-settings"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "class:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:Build",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:Build",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SearchQueryBuilder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetLimit",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetLimit",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetPage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SetPage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SortBy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:SortBy",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithSearchQuery",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithSearchQuery",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithTags",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs",
+      "target": "function:src/Lively/Lively.Gallery.Client/SearchQueryBuilder.cs:WithTags",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:AppUpdaterClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:CheckUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:CheckUpdate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:GetLatestRelease",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:GetLatestRelease",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:StartUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:StartUpdate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:SubscribeUpdateCheckedStream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:SwitchReleaseChannel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:SwitchReleaseChannel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/AppUpdaterClient.cs:UpdateStatusRefresh",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommand",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommand",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommandAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:AutomationCommandAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CloseUI",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CloseUI",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:CommandsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:RestartUI",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:RestartUI",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUI",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUI",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUIAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:SaveRectUIAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverConfigure",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverConfigure",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverPreview",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ScreensaverPreview",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowDebugger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowDebugger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowScreensaver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowScreensaver",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowUI",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShowUI",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShutDown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:ShutDown",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:StopScreensaver",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/CommandsClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/CommandsClient.cs:StopScreensaver",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:DisplayManagerClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:GetScreens",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:GetVirtualScreenBounds",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs",
+      "target": "function:src/Lively/Lively.Grpc.Client/DisplayManagerClient.cs:SubscribeDisplayChangedStream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs:IAppUpdaterClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IAppUpdaterClient.cs:IAppUpdaterClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/ICommandsClient.cs:ICommandsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/ICommandsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/ICommandsClient.cs:ICommandsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:IDesktopCoreClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:IDesktopCoreClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperData",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperUpdatedData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDesktopCoreClient.cs:WallpaperUpdatedData",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs:IDisplayManagerClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IDisplayManagerClient.cs:IDisplayManagerClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs:IUserSettingsClient",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs",
+      "target": "class:src/Lively/Lively.Grpc.Client/IUserSettingsClient.cs:IUserSettingsClient",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

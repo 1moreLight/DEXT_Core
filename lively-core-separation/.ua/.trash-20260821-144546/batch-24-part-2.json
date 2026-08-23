@@ -1,0 +1,839 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "type": "file",
+      "name": "ILivelyPropertyFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "summary": "定义为壁纸和显示器创建 Lively 属性副本目录的工厂契约。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs",
+      "type": "file",
+      "name": "IWallpaperPluginFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/IWallpaperPluginFactory.cs",
+      "summary": "定义根据壁纸模型、显示器和布局创建具体壁纸后端或 DWM 缩略图后端的工厂契约。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "type": "file",
+      "name": "IWebView2UserDataFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "summary": "定义按壁纸布局和显示器分配 WebView2 持久或临时用户数据目录的工厂契约。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "type": "file",
+      "name": "LivelyPropertyFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "summary": "为壁纸实例复制和准备可编辑属性文件，并按显示器及布局选择隔离目录。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "type": "file",
+      "name": "WallpaperPluginFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "summary": "依据壁纸类型和用户播放器设置实例化图片、视频、网页、外部程序或 DWM 缩略图后端。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "type": "file",
+      "name": "WebView2UserDataFactory.cs",
+      "filePath": "src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "summary": "生成 WebView2 用户数据目录，隔离不同显示器与布局的浏览器状态并清理临时目录。",
+      "tags": [
+        "csharp",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "type": "file",
+      "name": "CaptureScreen.cs",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "summary": "封装屏幕区域、窗口和动画 GIF 捕获，并提供位图到 MagickImage 的转换与 GIF 缩放。",
+      "tags": [
+        "csharp",
+        "屏幕捕获",
+        "图像处理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "type": "file",
+      "name": "WindowsStartup.cs",
+      "filePath": "src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "summary": "根据打包状态在注册表启动项或 Windows StartupTask 之间选择，启用或禁用 Lively 随系统启动。",
+      "tags": [
+        "csharp",
+        "开机启动",
+        "windows"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/Lively/Lively/Lively.csproj",
+      "type": "config",
+      "name": "Lively.csproj",
+      "filePath": "src/Lively/Lively/Lively.csproj",
+      "summary": "定义 Lively WPF 核心项目的目标框架、依赖、资源、发布属性和项目引用。",
+      "tags": [
+        "msbuild",
+        "项目配置",
+        "构建系统"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "SDK 风格 MSBuild 项目描述 WPF、Win32 互操作、gRPC 与资源生成依赖。"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs:ILivelyPropertyFactory",
+      "type": "class",
+      "name": "ILivelyPropertyFactory",
+      "filePath": "src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "lineRange": [
+        7,
+        10
+      ],
+      "summary": "定义壁纸属性工作目录的创建接口。",
+      "tags": [
+        "interface",
+        "壁纸工厂",
+        "核心契约"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs:IWallpaperPluginFactory",
+      "type": "class",
+      "name": "IWallpaperPluginFactory",
+      "filePath": "src/Lively/Lively/Factories/IWallpaperPluginFactory.cs",
+      "lineRange": [
+        10,
+        21
+      ],
+      "summary": "定义具体 IWallpaper 后端的创建接口。",
+      "tags": [
+        "interface",
+        "壁纸工厂",
+        "核心契约"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs:IWebView2UserDataFactory",
+      "type": "class",
+      "name": "IWebView2UserDataFactory",
+      "filePath": "src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "lineRange": [
+        11,
+        47
+      ],
+      "summary": "定义 WebView2 用户数据目录分配接口。",
+      "tags": [
+        "interface",
+        "壁纸工厂",
+        "核心契约"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:LivelyPropertyFactory",
+      "type": "class",
+      "name": "LivelyPropertyFactory",
+      "filePath": "src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "lineRange": [
+        9,
+        46
+      ],
+      "summary": "实现壁纸属性文件复制和实例目录隔离。",
+      "tags": [
+        "class",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:CreateLivelyPropertyFolder",
+      "type": "function",
+      "name": "CreateLivelyPropertyFolder",
+      "filePath": "src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "lineRange": [
+        11,
+        45
+      ],
+      "summary": "复制壁纸属性文件并创建与显示器和布局隔离的可编辑工作目录。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "class",
+      "name": "WallpaperPluginFactory",
+      "filePath": "src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "lineRange": [
+        14,
+        278
+      ],
+      "summary": "根据壁纸类别、显示器、布局和用户偏好选择并构造具体播放器。",
+      "tags": [
+        "class",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "function",
+      "name": "WallpaperPluginFactory",
+      "filePath": "src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "lineRange": [
+        21,
+        30
+      ],
+      "summary": "初始化 WallpaperPluginFactory，建立壁纸工厂所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateDwmThumbnailWallpaper",
+      "type": "function",
+      "name": "CreateDwmThumbnailWallpaper",
+      "filePath": "src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "lineRange": [
+        32,
+        38
+      ],
+      "summary": "创建用于预览现有窗口的 DWM 缩略图壁纸后端。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateWallpaper",
+      "type": "function",
+      "name": "CreateWallpaper",
+      "filePath": "src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "lineRange": [
+        40,
+        207
+      ],
+      "summary": "依据壁纸类别、布局和用户播放器偏好构造合适的 IWallpaper 实现。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:WebView2UserDataFactory",
+      "type": "class",
+      "name": "WebView2UserDataFactory",
+      "filePath": "src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "lineRange": [
+        10,
+        67
+      ],
+      "summary": "实现持久及临时 WebView2 用户数据目录的选择与准备。",
+      "tags": [
+        "class",
+        "factory",
+        "壁纸后端"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetUserDataFolder",
+      "type": "function",
+      "name": "GetUserDataFolder",
+      "filePath": "src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "lineRange": [
+        15,
+        46
+      ],
+      "summary": "返回适用于当前布局和显示器的持久 WebView2 用户数据目录。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "查询",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetTempUserDataFolder",
+      "type": "function",
+      "name": "GetTempUserDataFolder",
+      "filePath": "src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "lineRange": [
+        49,
+        66
+      ],
+      "summary": "创建并返回一次性 WebView2 用户数据目录。",
+      "tags": [
+        "function",
+        "壁纸工厂",
+        "查询",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureScreen",
+      "type": "class",
+      "name": "CaptureScreen",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        15,
+        190
+      ],
+      "summary": "提供基于 Win32、System.Drawing 和 ImageMagick 的静态及动画屏幕捕获能力。",
+      "tags": [
+        "class",
+        "屏幕捕获",
+        "核心组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CopyScreen",
+      "type": "function",
+      "name": "CopyScreen",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        25,
+        35
+      ],
+      "summary": "执行 CopyScreen 对应的屏幕捕获逻辑。",
+      "tags": [
+        "function",
+        "屏幕捕获",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureWindow",
+      "type": "function",
+      "name": "CaptureWindow",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        52,
+        89
+      ],
+      "summary": "通过 Win32 窗口设备上下文捕获指定窗口图像。",
+      "tags": [
+        "function",
+        "屏幕捕获",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureGif",
+      "type": "function",
+      "name": "CaptureGif",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        104,
+        151
+      ],
+      "summary": "按时间间隔连续捕获屏幕区域，并编码为带进度回报的动画 GIF。",
+      "tags": [
+        "function",
+        "屏幕捕获",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ToMagickImage",
+      "type": "function",
+      "name": "ToMagickImage",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        156,
+        166
+      ],
+      "summary": "把 System.Drawing 位图转换为 ImageMagick 图像对象。",
+      "tags": [
+        "function",
+        "屏幕捕获",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ResizeAnimatedGif",
+      "type": "function",
+      "name": "ResizeAnimatedGif",
+      "filePath": "src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "lineRange": [
+        168,
+        187
+      ],
+      "summary": "调整动画 GIF 的帧尺寸并保留动画时序。",
+      "tags": [
+        "function",
+        "屏幕捕获",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Helpers/WindowsStartup.cs:WindowsStartup",
+      "type": "class",
+      "name": "WindowsStartup",
+      "filePath": "src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "lineRange": [
+        10,
+        95
+      ],
+      "summary": "封装传统注册表与打包应用 StartupTask 两种开机启动方案。",
+      "tags": [
+        "class",
+        "开机启动",
+        "核心组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:TrySetStartup",
+      "type": "function",
+      "name": "TrySetStartup",
+      "filePath": "src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "lineRange": [
+        12,
+        27
+      ],
+      "summary": "根据应用是否打包选择注册表或 StartupTask 方案来更新开机启动状态。",
+      "tags": [
+        "function",
+        "开机启动",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:SetStartupRegistry",
+      "type": "function",
+      "name": "SetStartupRegistry",
+      "filePath": "src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "lineRange": [
+        33,
+        52
+      ],
+      "summary": "创建或删除当前用户注册表中的 Lively 启动项。",
+      "tags": [
+        "function",
+        "开机启动",
+        "状态控制"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:SetStartupTask",
+      "type": "function",
+      "name": "SetStartupTask",
+      "filePath": "src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "lineRange": [
+        55,
+        94
+      ],
+      "summary": "启用或禁用打包应用声明的 Windows StartupTask。",
+      "tags": [
+        "function",
+        "开机启动",
+        "状态控制"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs:ILivelyPropertyFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs:ILivelyPropertyFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs:IWallpaperPluginFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs:IWallpaperPluginFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs:IWebView2UserDataFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs:IWebView2UserDataFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:LivelyPropertyFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:LivelyPropertyFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:CreateLivelyPropertyFolder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/LivelyPropertyFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:CreateLivelyPropertyFolder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateDwmThumbnailWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateDwmThumbnailWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:CreateWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:WebView2UserDataFactory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "class:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:WebView2UserDataFactory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetUserDataFolder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetUserDataFolder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetTempUserDataFolder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WebView2UserDataFactory.cs",
+      "target": "function:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:GetTempUserDataFolder",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "class:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "class:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CopyScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CopyScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureGif",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:CaptureGif",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ToMagickImage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ToMagickImage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ResizeAnimatedGif",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/CaptureScreen.cs",
+      "target": "function:src/Lively/Lively/Helpers/CaptureScreen.cs:ResizeAnimatedGif",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "class:src/Lively/Lively/Helpers/WindowsStartup.cs:WindowsStartup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "class:src/Lively/Lively/Helpers/WindowsStartup.cs:WindowsStartup",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:TrySetStartup",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:TrySetStartup",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:SetStartupRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Helpers/WindowsStartup.cs",
+      "target": "function:src/Lively/Lively/Helpers/WindowsStartup.cs:SetStartupTask",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "class:src/Lively/Lively/Factories/LivelyPropertyFactory.cs:LivelyPropertyFactory",
+      "target": "class:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs:ILivelyPropertyFactory",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:src/Lively/Lively/Factories/WallpaperPluginFactory.cs:WallpaperPluginFactory",
+      "target": "class:src/Lively/Lively/Factories/IWallpaperPluginFactory.cs:IWallpaperPluginFactory",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "class:src/Lively/Lively/Factories/WebView2UserDataFactory.cs:WebView2UserDataFactory",
+      "target": "class:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs:IWebView2UserDataFactory",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "file:src/Lively/Lively/Factories/ILivelyPropertyFactory.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/Lively/Lively/Factories/WallpaperPluginFactory.cs",
+      "target": "file:src/Lively/Lively/Factories/IWebView2UserDataFactory.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

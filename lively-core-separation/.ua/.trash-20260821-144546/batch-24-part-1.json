@@ -1,0 +1,3057 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "type": "file",
+      "name": "VideoWmfProcess.cs",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "summary": "启动并控制 Windows Media Foundation 辅助进程播放视频壁纸，通过标准输出和命令通道协调就绪、播放、音量与截图。",
+      "tags": [
+        "csharp",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex",
+      "languageNotes": "后端通过 C# 包装辅助进程和 IPC，并遵循统一 IWallpaper 生命周期。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "type": "file",
+      "name": "WebCefSharpProcess.cs",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "summary": "托管 CefSharp 网页壁纸辅助进程，处理浏览器参数、内容就绪信号、消息转发、音频控制和截图。",
+      "tags": [
+        "csharp",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex",
+      "languageNotes": "后端通过 C# 包装辅助进程和 IPC，并遵循统一 IWallpaper 生命周期。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "type": "file",
+      "name": "WebWebView2.cs",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "summary": "托管 WebView2 网页壁纸辅助进程，管理用户数据目录、缩放、主题、调试端口、IPC 消息和内容就绪状态。",
+      "tags": [
+        "csharp",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex",
+      "languageNotes": "后端通过 C# 包装辅助进程和 IPC，并遵循统一 IWallpaper 生命周期。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "type": "file",
+      "name": "IWatchdogService.cs",
+      "filePath": "src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "summary": "定义看门狗服务的启动状态以及添加、移除和清空受监控进程的契约。",
+      "tags": [
+        "csharp",
+        "看门狗",
+        "进程管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "type": "file",
+      "name": "WatchdogProcess.cs",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "summary": "启动 Lively 看门狗辅助进程，并通过标准输入发送进程登记、移除和清空命令。",
+      "tags": [
+        "csharp",
+        "看门狗",
+        "进程管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "type": "file",
+      "name": "WinDesktopCore.cs",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "summary": "实现动态壁纸桌面核心：建立 WorkerW 桌面层，创建与布局壁纸，处理显示器和 Explorer 变化，并向壁纸转发输入和播放控制。",
+      "tags": [
+        "csharp",
+        "桌面核心",
+        "win32"
+      ],
+      "complexity": "complex",
+      "languageNotes": "大量使用 Win32 WorkerW、窗口消息、原始输入和多屏坐标互操作。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "type": "file",
+      "name": "LocalizedStringExtension.cs",
+      "filePath": "src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "summary": "提供 WPF MarkupExtension，从本地化资源服务按键解析界面字符串。",
+      "tags": [
+        "csharp",
+        "extension-method",
+        "wpf"
+      ],
+      "complexity": "simple",
+      "languageNotes": "以 C# extension method 或 WPF MarkupExtension 扩展现有类型。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "type": "file",
+      "name": "ScreensaverIdleTimeExtensions.cs",
+      "filePath": "src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "summary": "把屏幕保护空闲时间枚举转换为毫秒，供计时器和设置逻辑使用。",
+      "tags": [
+        "csharp",
+        "extension-method",
+        "wpf"
+      ],
+      "complexity": "simple",
+      "languageNotes": "以 C# extension method 或 WPF MarkupExtension 扩展现有类型。"
+    },
+    {
+      "id": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "type": "file",
+      "name": "WindowExtensions.cs",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "summary": "提供 WPF 窗口居中、原生移动缩放、框架挂接和像素尺寸计算等扩展方法。",
+      "tags": [
+        "csharp",
+        "extension-method",
+        "wpf"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "以 C# extension method 或 WPF MarkupExtension 扩展现有类型。"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "class",
+      "name": "VideoWmfProcess",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        17,
+        256
+      ],
+      "summary": "以 Windows Media Foundation 辅助进程实现统一壁纸控制，并维护进程等待、就绪和退出状态。",
+      "tags": [
+        "class",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "function",
+      "name": "VideoWmfProcess",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        47,
+        77
+      ],
+      "summary": "初始化 VideoWmfProcess，建立壁纸后端所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Pause",
+      "type": "function",
+      "name": "Pause",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        79,
+        82
+      ],
+      "summary": "暂停当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Play",
+      "type": "function",
+      "name": "Play",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        84,
+        87
+      ],
+      "summary": "恢复当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ShowAsync",
+      "type": "function",
+      "name": "ShowAsync",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        89,
+        112
+      ],
+      "summary": "异步启动并呈现壁纸内容，等待辅助进程报告窗口和内容就绪。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Proc_Exited",
+      "type": "function",
+      "name": "Proc_Exited",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        114,
+        125
+      ],
+      "summary": "响应 Proc_Exited 进程退出事件并清理壁纸状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Proc_OutputDataReceived",
+      "type": "function",
+      "name": "Proc_OutputDataReceived",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        127,
+        170
+      ],
+      "summary": "解析 Proc_OutputDataReceived 收到的辅助进程输出和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SendMessage",
+      "type": "function",
+      "name": "SendMessage",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        172,
+        185
+      ],
+      "summary": "向壁纸辅助进程或后端转发属性和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Terminate",
+      "type": "function",
+      "name": "Terminate",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        192,
+        202
+      ],
+      "summary": "强制终止壁纸辅助进程并更新退出状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Close",
+      "type": "function",
+      "name": "Close",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        204,
+        227
+      ],
+      "summary": "请求壁纸后端正常退出并完成清理。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetVolume",
+      "type": "function",
+      "name": "SetVolume",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        229,
+        232
+      ],
+      "summary": "设置壁纸后端的音频音量。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetMute",
+      "type": "function",
+      "name": "SetMute",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        234,
+        237
+      ],
+      "summary": "切换壁纸后端的静音状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetPlaybackPos",
+      "type": "function",
+      "name": "SetPlaybackPos",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        239,
+        242
+      ],
+      "summary": "按指定模式调整壁纸播放位置。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ScreenCapture",
+      "type": "function",
+      "name": "ScreenCapture",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        244,
+        249
+      ],
+      "summary": "截取当前壁纸画面并保存到指定路径。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "lineRange": [
+        251,
+        255
+      ],
+      "summary": "释放事件、原生句柄、图像对象或子进程等运行资源。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "资源释放",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "class",
+      "name": "WebCefSharpProcess",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        19,
+        420
+      ],
+      "summary": "以 CefSharp 辅助进程实现网页壁纸后端，并协调浏览器启动参数和 IPC 生命周期。",
+      "tags": [
+        "class",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "function",
+      "name": "WebCefSharpProcess",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        51,
+        102
+      ],
+      "summary": "初始化 WebCefSharpProcess，建立壁纸后端所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Pause",
+      "type": "function",
+      "name": "Pause",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        104,
+        110
+      ],
+      "summary": "暂停当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Play",
+      "type": "function",
+      "name": "Play",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        112,
+        118
+      ],
+      "summary": "恢复当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ShowAsync",
+      "type": "function",
+      "name": "ShowAsync",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        120,
+        143
+      ],
+      "summary": "异步启动并呈现壁纸内容，等待辅助进程报告窗口和内容就绪。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Proc_Exited",
+      "type": "function",
+      "name": "Proc_Exited",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        145,
+        161
+      ],
+      "summary": "响应 Proc_Exited 进程退出事件并清理壁纸状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Proc_OutputDataReceived",
+      "type": "function",
+      "name": "Proc_OutputDataReceived",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        163,
+        254
+      ],
+      "summary": "解析 Proc_OutputDataReceived 收到的辅助进程输出和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SendMessage",
+      "type": "function",
+      "name": "SendMessage",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        256,
+        273
+      ],
+      "summary": "向壁纸辅助进程或后端转发属性和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Terminate",
+      "type": "function",
+      "name": "Terminate",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        280,
+        290
+      ],
+      "summary": "强制终止壁纸辅助进程并更新退出状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Close",
+      "type": "function",
+      "name": "Close",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        292,
+        315
+      ],
+      "summary": "请求壁纸后端正常退出并完成清理。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetVolume",
+      "type": "function",
+      "name": "SetVolume",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        317,
+        320
+      ],
+      "summary": "设置壁纸后端的音频音量。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetMute",
+      "type": "function",
+      "name": "SetMute",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        322,
+        325
+      ],
+      "summary": "切换壁纸后端的静音状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetPlaybackPos",
+      "type": "function",
+      "name": "SetPlaybackPos",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        327,
+        333
+      ],
+      "summary": "按指定模式调整壁纸播放位置。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ScreenCapture",
+      "type": "function",
+      "name": "ScreenCapture",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        335,
+        384
+      ],
+      "summary": "截取当前壁纸画面并保存到指定路径。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        386,
+        390
+      ],
+      "summary": "释放事件、原生句柄、图像对象或子进程等运行资源。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "资源释放",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:TryParseUserCommandArgs",
+      "type": "function",
+      "name": "TryParseUserCommandArgs",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "lineRange": [
+        401,
+        419
+      ],
+      "summary": "解析用户提供的附加浏览器参数，只接受可安全传递给辅助进程的选项。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "class",
+      "name": "WebWebView2",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        21,
+        442
+      ],
+      "summary": "以 WebView2 辅助进程实现网页壁纸后端，支持独立用户数据、缩放和音频可视化配置。",
+      "tags": [
+        "class",
+        "i-wallpaper",
+        "壁纸后端"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "function",
+      "name": "WebWebView2",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        55,
+        108
+      ],
+      "summary": "初始化 WebWebView2，建立壁纸后端所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Close",
+      "type": "function",
+      "name": "Close",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        110,
+        116
+      ],
+      "summary": "请求壁纸后端正常退出并完成清理。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Pause",
+      "type": "function",
+      "name": "Pause",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        118,
+        124
+      ],
+      "summary": "暂停当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Play",
+      "type": "function",
+      "name": "Play",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        126,
+        132
+      ],
+      "summary": "恢复当前壁纸后端的播放。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SendMessage",
+      "type": "function",
+      "name": "SendMessage",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        134,
+        151
+      ],
+      "summary": "向壁纸辅助进程或后端转发属性和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetVolume",
+      "type": "function",
+      "name": "SetVolume",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        158,
+        164
+      ],
+      "summary": "设置壁纸后端的音频音量。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetMute",
+      "type": "function",
+      "name": "SetMute",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        166,
+        175
+      ],
+      "summary": "切换壁纸后端的静音状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ShowAsync",
+      "type": "function",
+      "name": "ShowAsync",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        177,
+        200
+      ],
+      "summary": "异步启动并呈现壁纸内容，等待辅助进程报告窗口和内容就绪。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Proc_Exited",
+      "type": "function",
+      "name": "Proc_Exited",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        202,
+        221
+      ],
+      "summary": "响应 Proc_Exited 进程退出事件并清理壁纸状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Proc_OutputDataReceived",
+      "type": "function",
+      "name": "Proc_OutputDataReceived",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        223,
+        316
+      ],
+      "summary": "解析 Proc_OutputDataReceived 收到的辅助进程输出和控制消息。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "event-handler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Terminate",
+      "type": "function",
+      "name": "Terminate",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        318,
+        328
+      ],
+      "summary": "强制终止壁纸辅助进程并更新退出状态。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetPlaybackPos",
+      "type": "function",
+      "name": "SetPlaybackPos",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        330,
+        336
+      ],
+      "summary": "按指定模式调整壁纸播放位置。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ScreenCapture",
+      "type": "function",
+      "name": "ScreenCapture",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        338,
+        387
+      ],
+      "summary": "截取当前壁纸画面并保存到指定路径。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        389,
+        393
+      ],
+      "summary": "释放事件、原生句柄、图像对象或子进程等运行资源。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "资源释放",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ResolveFilePath",
+      "type": "function",
+      "name": "ResolveFilePath",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        401,
+        418
+      ],
+      "summary": "根据壁纸模型和输入路径解析 WebView2 实际加载的本地文件或网址。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:TryParseUserCommandArgs",
+      "type": "function",
+      "name": "TryParseUserCommandArgs",
+      "filePath": "src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "lineRange": [
+        423,
+        441
+      ],
+      "summary": "解析用户提供的附加浏览器参数，只接受可安全传递给辅助进程的选项。",
+      "tags": [
+        "function",
+        "壁纸后端",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs:IWatchdogService",
+      "type": "class",
+      "name": "IWatchdogService",
+      "filePath": "src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "lineRange": [
+        6,
+        27
+      ],
+      "summary": "约束核心进程启动看门狗和维护受监控 PID 集合的能力。",
+      "tags": [
+        "interface",
+        "看门狗",
+        "核心契约"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "class",
+      "name": "WatchdogProcess",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        9,
+        80
+      ],
+      "summary": "封装看门狗子进程及其标准输入协议，为外部壁纸进程提供异常退出清理保障。",
+      "tags": [
+        "class",
+        "看门狗",
+        "核心组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "function",
+      "name": "WatchdogProcess",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        16,
+        19
+      ],
+      "summary": "初始化 WatchdogProcess，建立看门狗所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "看门狗",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        21,
+        49
+      ],
+      "summary": "启动看门狗辅助进程并建立可写的标准输入通道。",
+      "tags": [
+        "function",
+        "看门狗",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Add",
+      "type": "function",
+      "name": "Add",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        51,
+        55
+      ],
+      "summary": "把进程 ID 加入看门狗监控集合。",
+      "tags": [
+        "function",
+        "看门狗",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Remove",
+      "type": "function",
+      "name": "Remove",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        57,
+        61
+      ],
+      "summary": "从看门狗监控集合移除进程 ID。",
+      "tags": [
+        "function",
+        "看门狗",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Clear",
+      "type": "function",
+      "name": "Clear",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        63,
+        67
+      ],
+      "summary": "清空看门狗当前维护的受监控进程集合。",
+      "tags": [
+        "function",
+        "看门狗",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:SendMessage",
+      "type": "function",
+      "name": "SendMessage",
+      "filePath": "src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "lineRange": [
+        69,
+        79
+      ],
+      "summary": "向壁纸辅助进程或后端转发属性和控制消息。",
+      "tags": [
+        "function",
+        "看门狗",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "class",
+      "name": "WinDesktopCore",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        32,
+        1326
+      ],
+      "summary": "协调 Windows WorkerW 桌面层、壁纸实例集合、多屏布局、输入转发、资源恢复和 Explorer 重启。",
+      "tags": [
+        "class",
+        "桌面核心",
+        "win32",
+        "event-handler"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "function",
+      "name": "WinDesktopCore",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        62,
+        120
+      ],
+      "summary": "初始化 WinDesktopCore，建立桌面核心所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetupDesktopLayer",
+      "type": "function",
+      "name": "SetupDesktopLayer",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        122,
+        222
+      ],
+      "summary": "查找或创建 WorkerW 桌面层，并建立动态壁纸窗口所需的层级与消息钩子。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "状态控制"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WorkerWHook_EventReceived",
+      "type": "function",
+      "name": "WorkerWHook_EventReceived",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        224,
+        255
+      ],
+      "summary": "响应 WorkerWHook_EventReceived 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetWallpaperAsync",
+      "type": "function",
+      "name": "SetWallpaperAsync",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        260,
+        403
+      ],
+      "summary": "异步创建并加载壁纸后端，将其挂接到目标显示器和 WorkerW 桌面层。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetDesktopPictureOrLockscreen",
+      "type": "function",
+      "name": "SetDesktopPictureOrLockscreen",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        415,
+        485
+      ],
+      "summary": "把图片型壁纸同步到 Windows 桌面背景或锁屏设置。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "状态控制"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TrySetWallpaperPerScreen",
+      "type": "function",
+      "name": "TrySetWallpaperPerScreen",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        492,
+        526
+      ],
+      "summary": "按单屏布局调整壁纸窗口到目标显示器边界。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TrySetWallpaperSpanScreen",
+      "type": "function",
+      "name": "TrySetWallpaperSpanScreen",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        531,
+        551
+      ],
+      "summary": "按跨屏布局把壁纸窗口调整到整个虚拟桌面。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:ResetWallpaperAsync",
+      "type": "function",
+      "name": "ResetWallpaperAsync",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        556,
+        585
+      ],
+      "summary": "关闭当前壁纸并依据保存的布局异步重建桌面状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestartWallpaper",
+      "type": "function",
+      "name": "RestartWallpaper",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        587,
+        599
+      ],
+      "summary": "重新启动 Wallpaper 对应的桌面核心对象。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SaveWallpaperLayout",
+      "type": "function",
+      "name": "SaveWallpaperLayout",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        621,
+        649
+      ],
+      "summary": "把当前壁纸、显示器和布局信息持久化到用户设置。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:DisplaySettingsChanged_Hwnd",
+      "type": "function",
+      "name": "DisplaySettingsChanged_Hwnd",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        651,
+        672
+      ],
+      "summary": "响应 DisplaySettingsChanged_Hwnd 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RefreshWallpaper",
+      "type": "function",
+      "name": "RefreshWallpaper",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        674,
+        738
+      ],
+      "summary": "重新评估显示器拓扑并刷新活动壁纸的布局和连接状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:UpdateWallpaperRect",
+      "type": "function",
+      "name": "UpdateWallpaperRect",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        740,
+        790
+      ],
+      "summary": "依据当前布局和显示器边界更新每个壁纸窗口的位置与尺寸。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestoreDisconnectedWallpapers",
+      "type": "function",
+      "name": "RestoreDisconnectedWallpapers",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        792,
+        827
+      ],
+      "summary": "在显示器重新连接后恢复此前暂存的壁纸实例。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestoreWallpaper",
+      "type": "function",
+      "name": "RestoreWallpaper",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        829,
+        861
+      ],
+      "summary": "恢复 Wallpaper 对应的桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseAllWallpapers",
+      "type": "function",
+      "name": "CloseAllWallpapers",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        896,
+        911
+      ],
+      "summary": "关闭所有活动壁纸，并按参数决定是否发布变更事件。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseWallpaper",
+      "type": "function",
+      "name": "CloseWallpaper",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        961,
+        980
+      ],
+      "summary": "关闭匹配显示器、类别或壁纸实例的活动壁纸。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SendMessageWallpaper",
+      "type": "function",
+      "name": "SendMessageWallpaper",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        982,
+        989
+      ],
+      "summary": "向指定显示器或属性文件对应的壁纸实例转发控制消息。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RefreshDesktop",
+      "type": "function",
+      "name": "RefreshDesktop",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1003,
+        1010
+      ],
+      "summary": "请求 Windows 刷新桌面层和壁纸显示状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TryAttachToDesktop",
+      "type": "function",
+      "name": "TryAttachToDesktop",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1012,
+        1051
+      ],
+      "summary": "尝试把指定窗口句柄设置为 WorkerW 桌面层的子窗口。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:EnsureWorkerWZOrder",
+      "type": "function",
+      "name": "EnsureWorkerWZOrder",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1053,
+        1073
+      ],
+      "summary": "校正 WorkerW 与图标层的 Z 顺序，确保壁纸位于桌面图标之后。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WndProc_TaskbarCreated",
+      "type": "function",
+      "name": "WndProc_TaskbarCreated",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1075,
+        1100
+      ],
+      "summary": "响应 WndProc_TaskbarCreated 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SystemEvents_SessionSwitch",
+      "type": "function",
+      "name": "SystemEvents_SessionSwitch",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1102,
+        1130
+      ],
+      "summary": "响应 SystemEvents_SessionSwitch 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseMoveRaw",
+      "type": "function",
+      "name": "RawInput_MouseMoveRaw",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1132,
+        1146
+      ],
+      "summary": "响应 RawInput_MouseMoveRaw 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseDownRaw",
+      "type": "function",
+      "name": "RawInput_MouseDownRaw",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1148,
+        1171
+      ],
+      "summary": "响应 RawInput_MouseDownRaw 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseUpRaw",
+      "type": "function",
+      "name": "RawInput_MouseUpRaw",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1173,
+        1196
+      ],
+      "summary": "响应 RawInput_MouseUpRaw 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_KeyboardClickRaw",
+      "type": "function",
+      "name": "RawInput_KeyboardClickRaw",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1198,
+        1224
+      ],
+      "summary": "响应 RawInput_KeyboardClickRaw 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:ForwardMouseToWallpapers",
+      "type": "function",
+      "name": "ForwardMouseToWallpapers",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1226,
+        1245
+      ],
+      "summary": "把归一化的鼠标坐标和动作转发给允许交互的壁纸。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "业务逻辑"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:Playback_WallpaperControlChanged",
+      "type": "function",
+      "name": "Playback_WallpaperControlChanged",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1247,
+        1275
+      ],
+      "summary": "响应 Playback_WallpaperControlChanged 事件，并同步桌面核心状态。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "event-handler"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Core/WinDesktopCore.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively/Core/WinDesktopCore.cs",
+      "lineRange": [
+        1292,
+        1311
+      ],
+      "summary": "释放事件、原生句柄、图像对象或子进程等运行资源。",
+      "tags": [
+        "function",
+        "桌面核心",
+        "资源释放",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "class",
+      "name": "LocalizedStringExtension",
+      "filePath": "src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "lineRange": [
+        8,
+        36
+      ],
+      "summary": "在 XAML 中以资源键解析本地化文本的 WPF 标记扩展。",
+      "tags": [
+        "class",
+        "窗口扩展",
+        "核心组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "function",
+      "name": "LocalizedStringExtension",
+      "filePath": "src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "lineRange": [
+        12,
+        15
+      ],
+      "summary": "初始化 LocalizedStringExtension，建立窗口扩展所需的依赖、状态和事件订阅。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "初始化",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:ProvideValue",
+      "type": "function",
+      "name": "ProvideValue",
+      "filePath": "src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "lineRange": [
+        17,
+        35
+      ],
+      "summary": "从服务容器取得本地化资源服务，并按 ResourceKey 返回 XAML 所需字符串。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ScreensaverIdleTimeExtensions",
+      "type": "class",
+      "name": "ScreensaverIdleTimeExtensions",
+      "filePath": "src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "提供屏幕保护空闲时间枚举的单位转换扩展。",
+      "tags": [
+        "class",
+        "窗口扩展",
+        "核心组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ToMilliseconds",
+      "type": "function",
+      "name": "ToMilliseconds",
+      "filePath": "src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "lineRange": [
+        7,
+        10
+      ],
+      "summary": "把屏幕保护空闲时间枚举转换为毫秒数。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively/Extensions/WindowExtensions.cs:WindowExtensions",
+      "type": "class",
+      "name": "WindowExtensions",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        14,
+        134
+      ],
+      "summary": "汇集 WPF 窗口和 FrameworkElement 的 Win32 定位及像素几何扩展。",
+      "tags": [
+        "class",
+        "窗口扩展",
+        "核心组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:CenterToWindow",
+      "type": "function",
+      "name": "CenterToWindow",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        16,
+        29
+      ],
+      "summary": "执行 CenterToWindow 对应的窗口扩展逻辑。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeResize",
+      "type": "function",
+      "name": "NativeResize",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        36,
+        39
+      ],
+      "summary": "执行 NativeResize 对应的窗口扩展逻辑。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeMove",
+      "type": "function",
+      "name": "NativeMove",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        41,
+        44
+      ],
+      "summary": "执行 NativeMove 对应的窗口扩展逻辑。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "业务逻辑",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:SetProgramToFramework",
+      "type": "function",
+      "name": "SetProgramToFramework",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        52,
+        72
+      ],
+      "summary": "把外部程序窗口挂接到 WPF FrameworkElement 并同步尺寸与位置。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "状态控制",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetAbsolutePlacement",
+      "type": "function",
+      "name": "GetAbsolutePlacement",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        81,
+        93
+      ],
+      "summary": "计算 FrameworkElement 相对屏幕或宿主窗口的绝对矩形。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "查询",
+        "public-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetElementPixelSize",
+      "type": "function",
+      "name": "GetElementPixelSize",
+      "filePath": "src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "lineRange": [
+        101,
+        115
+      ],
+      "summary": "结合 DPI 缩放计算 FrameworkElement 的实际像素尺寸。",
+      "tags": [
+        "function",
+        "窗口扩展",
+        "查询",
+        "public-api"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:VideoWmfProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Pause",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Pause",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Play",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Play",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ShowAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ShowAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Proc_Exited",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Proc_OutputDataReceived",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SendMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SendMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Terminate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Terminate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Close",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Close",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetMute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetMute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetPlaybackPos",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:SetPlaybackPos",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ScreenCapture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:ScreenCapture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/VideoWmfProcess.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:WebCefSharpProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Pause",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Pause",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Play",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Play",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ShowAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ShowAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Proc_Exited",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Proc_OutputDataReceived",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SendMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SendMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Terminate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Terminate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Close",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Close",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetMute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetMute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetPlaybackPos",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:SetPlaybackPos",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ScreenCapture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:ScreenCapture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebCefSharpProcess.cs:TryParseUserCommandArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "class:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:WebWebView2",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Close",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Close",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Pause",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Pause",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Play",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Play",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SendMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SendMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetMute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetMute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ShowAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ShowAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Proc_Exited",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Proc_OutputDataReceived",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Terminate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Terminate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetPlaybackPos",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:SetPlaybackPos",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ScreenCapture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ScreenCapture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:ResolveFilePath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs",
+      "target": "function:src/Lively/Lively/Core/Wallpapers/WebWebView2.cs:TryParseUserCommandArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "target": "class:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs:IWatchdogService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "target": "class:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs:IWatchdogService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "class:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Add",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Add",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Remove",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Remove",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Clear",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:Clear",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs",
+      "target": "function:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:SendMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "class:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "class:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WinDesktopCore",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetupDesktopLayer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WorkerWHook_EventReceived",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SetDesktopPictureOrLockscreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TrySetWallpaperPerScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TrySetWallpaperSpanScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:ResetWallpaperAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:ResetWallpaperAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestartWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestartWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SaveWallpaperLayout",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:DisplaySettingsChanged_Hwnd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RefreshWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:UpdateWallpaperRect",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestoreDisconnectedWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestoreWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RestoreWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseAllWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseAllWallpapers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:CloseWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SendMessageWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SendMessageWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RefreshDesktop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RefreshDesktop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:TryAttachToDesktop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:EnsureWorkerWZOrder",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:WndProc_TaskbarCreated",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:SystemEvents_SessionSwitch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseMoveRaw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseDownRaw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_MouseUpRaw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:RawInput_KeyboardClickRaw",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:ForwardMouseToWallpapers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:Playback_WallpaperControlChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "function:src/Lively/Lively/Core/WinDesktopCore.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "class:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "class:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:LocalizedStringExtension",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:ProvideValue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/LocalizedStringExtension.cs",
+      "target": "function:src/Lively/Lively/Extensions/LocalizedStringExtension.cs:ProvideValue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "target": "class:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ScreensaverIdleTimeExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "target": "class:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ScreensaverIdleTimeExtensions",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ToMilliseconds",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/ScreensaverIdleTimeExtensions.cs:ToMilliseconds",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "class:src/Lively/Lively/Extensions/WindowExtensions.cs:WindowExtensions",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:CenterToWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:CenterToWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeResize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeResize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeMove",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:NativeMove",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:SetProgramToFramework",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:SetProgramToFramework",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetAbsolutePlacement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetAbsolutePlacement",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetElementPixelSize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively/Extensions/WindowExtensions.cs",
+      "target": "function:src/Lively/Lively/Extensions/WindowExtensions.cs:GetElementPixelSize",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/Lively/Lively/Core/Watchdog/WatchdogProcess.cs:WatchdogProcess",
+      "target": "class:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs:IWatchdogService",
+      "type": "implements",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/Lively/Lively/Core/WinDesktopCore.cs",
+      "target": "file:src/Lively/Lively/Core/Watchdog/IWatchdogService.cs",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

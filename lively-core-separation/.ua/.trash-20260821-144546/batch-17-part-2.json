@@ -1,0 +1,185 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/be-BY/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/be-BY/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供白俄罗斯语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "be-by"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/bg-BG/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/bg-BG/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供保加利亚语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "bg-bg"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/ca-ES/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/ca-ES/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供加泰罗尼亚语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "ca-es"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/cs-CZ/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/cs-CZ/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供捷克语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "cs-cz"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/da-DK/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/da-DK/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供丹麦语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "da-dk"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/de-DE/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/de-DE/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供德语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "de-de"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/el-GR/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/el-GR/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供希腊语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "el-gr"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/en-US/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/en-US/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供英语（美国）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "en-us"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/es-ES/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/es-ES/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供西班牙语（西班牙）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "es-es"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/es-MX/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/es-MX/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供西班牙语（墨西哥）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "es-mx"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/fa-IR/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/fa-IR/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供波斯语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "fa-ir"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/fi-FI/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/fi-FI/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供芬兰语本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "fi-fi"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    }
+  ],
+  "edges": []
+}

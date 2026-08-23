@@ -1,0 +1,961 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "type": "file",
+      "name": "NullVisibilityConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "summary": "依据绑定值是否为空返回 Visibility，并支持反向判断。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:NullVisibilityConverter",
+      "type": "class",
+      "name": "NullVisibilityConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "lineRange": [
+        11,
+        23
+      ],
+      "summary": "实现 NullVisibility 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "lineRange": [
+        13,
+        17
+      ],
+      "summary": "把空值状态转换为控件可见性。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "lineRange": [
+        19,
+        22
+      ],
+      "summary": "尝试把目标表示反向转换为空值状态。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "type": "file",
+      "name": "StringToInfoBarSeverityConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "summary": "把状态字符串映射为 WinUI InfoBarSeverity 枚举。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:StringToInfoBarSeverityConverter",
+      "type": "class",
+      "name": "StringToInfoBarSeverityConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "lineRange": [
+        11,
+        29
+      ],
+      "summary": "实现 StringToInfoBarSeverity 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "lineRange": [
+        13,
+        23
+      ],
+      "summary": "把状态字符串转换为 InfoBarSeverity。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "尝试把目标表示反向转换为状态字符串。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "type": "file",
+      "name": "StringToInfoBarSeverityIconConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "summary": "把状态字符串映射为 InfoBar 对应的语义图标。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:StringToInfoBarSeverityIconConverter",
+      "type": "class",
+      "name": "StringToInfoBarSeverityIconConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "lineRange": [
+        11,
+        29
+      ],
+      "summary": "实现 StringToInfoBarSeverityIcon 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "lineRange": [
+        13,
+        23
+      ],
+      "summary": "把状态字符串转换为 InfoBar 语义图标。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "lineRange": [
+        25,
+        28
+      ],
+      "summary": "尝试把目标表示反向转换为状态字符串。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "type": "file",
+      "name": "StringTruncateConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "summary": "按绑定参数截断过长字符串并添加省略标记。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:StringTruncateConverter",
+      "type": "class",
+      "name": "StringTruncateConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "lineRange": [
+        10,
+        25
+      ],
+      "summary": "实现 StringTruncate 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "lineRange": [
+        12,
+        19
+      ],
+      "summary": "把原始字符串转换为截断后的展示文本。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "lineRange": [
+        21,
+        24
+      ],
+      "summary": "尝试把目标表示反向转换为原始字符串。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "type": "file",
+      "name": "UriToBitmapImageConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "summary": "把 URI 转换为可供 WinUI 图像控件使用的 BitmapImage。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:UriToBitmapImageConverter",
+      "type": "class",
+      "name": "UriToBitmapImageConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "lineRange": [
+        7,
+        18
+      ],
+      "summary": "实现 UriToBitmapImage 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "lineRange": [
+        9,
+        12
+      ],
+      "summary": "把URI 转换为 BitmapImage。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "lineRange": [
+        14,
+        17
+      ],
+      "summary": "尝试把目标表示反向转换为URI 。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "type": "file",
+      "name": "WallpaperTypeEnumToStringConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "summary": "把壁纸类型枚举转换为本地化展示字符串，并支持必要的反向转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple",
+      "languageNotes": "IValueConverter 把 ViewModel 数据转换为 XAML 控件可直接绑定的表示。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:WallpaperTypeEnumToStringConverter",
+      "type": "class",
+      "name": "WallpaperTypeEnumToStringConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "lineRange": [
+        9,
+        27
+      ],
+      "summary": "实现 WallpaperTypeEnumToString 的 XAML 双向值转换。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:Convert",
+      "type": "function",
+      "name": "Convert",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "lineRange": [
+        11,
+        21
+      ],
+      "summary": "把壁纸类型枚举转换为本地化名称。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "格式转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:ConvertBack",
+      "type": "function",
+      "name": "ConvertBack",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "lineRange": [
+        23,
+        26
+      ],
+      "summary": "尝试把目标表示反向转换为壁纸类型枚举。",
+      "tags": [
+        "数据绑定",
+        "值转换器",
+        "winui",
+        "反向转换"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "type": "file",
+      "name": "ExplorerItemTemplateSelector.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "summary": "根据资源浏览项类型选择文件夹或文件数据模板。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs:ExplorerItemTemplateSelector",
+      "type": "class",
+      "name": "ExplorerItemTemplateSelector",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "lineRange": [
+        7,
+        17
+      ],
+      "summary": "依据绑定项类型为 ExplorerItem 选择 DataTemplate。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "type": "file",
+      "name": "LivelyControlTemplateSelector.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "summary": "根据动态壁纸属性控件模型选择滑块、文本、颜色、复选框或下拉框模板。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs:LivelyControlTemplateSelector",
+      "type": "class",
+      "name": "LivelyControlTemplateSelector",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "lineRange": [
+        12,
+        43
+      ],
+      "summary": "依据绑定项类型为 LivelyControl 选择 DataTemplate。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs:SelectTemplateCore",
+      "type": "function",
+      "name": "SelectTemplateCore",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "lineRange": [
+        23,
+        42
+      ],
+      "summary": "依据动态壁纸属性模型类型选择对应的 XAML DataTemplate。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "type": "file",
+      "name": "MicaCustomBackdrop.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "summary": "封装 WinUI MicaController 的创建、目标连接、主题同步与释放，提供自定义窗口背景。",
+      "tags": [
+        "窗口背景",
+        "mica",
+        "winui",
+        "主题"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "class",
+      "name": "MicaCustomBackdrop",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "lineRange": [
+        16,
+        53
+      ],
+      "summary": "管理 Mica 系统背景控制器、窗口目标和主题状态。",
+      "tags": [
+        "窗口背景",
+        "mica",
+        "winui",
+        "主题"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "function",
+      "name": "MicaCustomBackdrop",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "lineRange": [
+        20,
+        23
+      ],
+      "summary": "初始化 Mica 背景配置并准备窗口目标连接。",
+      "tags": [
+        "窗口背景",
+        "mica",
+        "winui",
+        "主题同步"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:OnTargetConnected",
+      "type": "function",
+      "name": "OnTargetConnected",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "lineRange": [
+        25,
+        38
+      ],
+      "summary": "在背景连接到窗口时创建 MicaController、同步主题并注册状态变化。",
+      "tags": [
+        "窗口背景",
+        "mica",
+        "winui",
+        "主题同步"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "type": "file",
+      "name": "NavigationMenuItemTemplateSelector.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "summary": "根据主导航项或分隔项类型选择对应的菜单数据模板。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs:NavigationMenuItemTemplateSelector",
+      "type": "class",
+      "name": "NavigationMenuItemTemplateSelector",
+      "filePath": "src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "lineRange": [
+        7,
+        17
+      ],
+      "summary": "依据绑定项类型为 NavigationMenuItem 选择 DataTemplate。",
+      "tags": [
+        "模板选择器",
+        "数据模板",
+        "winui",
+        "mvvm"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj",
+      "type": "config",
+      "name": "Lively.UI.WinUI.csproj",
+      "filePath": "src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj",
+      "summary": "配置面向 net9.0-windows10.0.22621.0 的 WinUI WinExe，支持 x86、x64、ARM64，并引用 Windows App SDK、CommunityToolkit、WinUIEx、NLog 等组件。",
+      "tags": [
+        "configuration",
+        "build-system",
+        "winui",
+        ".net"
+      ],
+      "complexity": "complex",
+      "languageNotes": ".NET 9 WinUI 项目使用 Windows App SDK 1.7，并针对 x86、x64 与 ARM64 构建。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Nlog.config",
+      "type": "file",
+      "name": "Nlog.config",
+      "filePath": "src/Lively/Lively.UI.WinUI/Nlog.config",
+      "summary": "配置 NLog 控制台、滚动文件和调试器目标，分别记录 Info、Debug 与 Trace 级别日志。",
+      "tags": [
+        "configuration",
+        "logging",
+        "nlog",
+        "diagnostics"
+      ],
+      "complexity": "simple",
+      "languageNotes": "NLog 通过不同最低级别把日志同时路由到控制台、按大小归档的文件和调试器。"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:NullVisibilityConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/NullVisibilityConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:StringToInfoBarSeverityConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:StringToInfoBarSeverityConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:StringToInfoBarSeverityIconConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringToInfoBarSeverityIconConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:StringTruncateConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:StringTruncateConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/StringTruncateConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:UriToBitmapImageConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:UriToBitmapImageConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/UriToBitmapImageConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:WallpaperTypeEnumToStringConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:WallpaperTypeEnumToStringConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:Convert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:Convert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:ConvertBack",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/Converters/WallpaperTypeEnumToStringConverter.cs:ConvertBack",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs:ExplorerItemTemplateSelector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/ExplorerItemTemplateSelector.cs:ExplorerItemTemplateSelector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs:LivelyControlTemplateSelector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs:LivelyControlTemplateSelector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/LivelyControlTemplateSelector.cs:SelectTemplateCore",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:MicaCustomBackdrop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Helpers/MicaCustomBackdrop.cs:OnTargetConnected",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs:NavigationMenuItemTemplateSelector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Helpers/NavigationMenuItemTemplateSelector.cs:NavigationMenuItemTemplateSelector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.UI.WinUI/Lively.UI.WinUI.csproj",
+      "target": "file:src/Lively/Lively.UI.WinUI/Nlog.config",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

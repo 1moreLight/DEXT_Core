@@ -1,0 +1,182 @@
+{
+  "projectRoot": "D:\\midDOW\\lively-core-separation\\lively-core-separation",
+  "batchFiles": [
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperCreateView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperDataView.xaml",
+      "language": "xaml",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperDataView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperView.xaml",
+      "language": "xaml",
+      "sizeLines": 138,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 81,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AppThemeView.xaml",
+      "language": "xaml",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AppThemeView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AppUpdateView.xaml",
+      "language": "xaml",
+      "sizeLines": 210,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/AppUpdateView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 121,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ChooseDisplayView.xaml",
+      "language": "xaml",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ChooseDisplayView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ControlPanelView.xaml",
+      "language": "xaml",
+      "sizeLines": 38,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ControlPanelView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ScreensaverLayoutView.xaml",
+      "language": "xaml",
+      "sizeLines": 161,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ScreensaverLayoutView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutCustomiseView.xaml",
+      "language": "xaml",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutCustomiseView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutView.xaml",
+      "language": "xaml",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/DepthEstimateWallpaperView.xaml",
+      "language": "xaml",
+      "sizeLines": 195,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/DepthEstimateWallpaperView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryFeaturedView.xaml",
+      "language": "xaml",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryFeaturedView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 31,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLibraryView.xaml",
+      "language": "xaml",
+      "sizeLines": 253,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLibraryView.xaml.cs",
+      "language": "csharp",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperCreateView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperDataView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperDataView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AddWallpaperView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AppThemeView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AppThemeView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AppUpdateView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/AppUpdateView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ChooseDisplayView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ChooseDisplayView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ControlPanelView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ControlPanelView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ScreensaverLayoutView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/ScreensaverLayoutView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutCustomiseView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutCustomiseView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/ControlPanel/WallpaperLayoutView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/DepthEstimateWallpaperView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/DepthEstimateWallpaperView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryFeaturedView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryFeaturedView.xaml.cs": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLibraryView.xaml": [],
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLibraryView.xaml.cs": []
+  }
+}

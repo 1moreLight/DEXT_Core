@@ -1,0 +1,1572 @@
+{
+  "nodes": [
+    {
+      "id": "config:.github/FUNDING.yml",
+      "type": "config",
+      "name": "FUNDING.yml",
+      "filePath": ".github/FUNDING.yml",
+      "summary": "配置 GitHub 仓库的赞助入口，目前启用 rocksdanister 的 Patreon，并保留 GitHub Sponsors、Open Collective、Ko-fi 等平台字段。",
+      "tags": [
+        "configuration",
+        "community",
+        "funding"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:.github/ISSUE_TEMPLATE/bug_report.yml",
+      "type": "config",
+      "name": "bug_report.yml",
+      "filePath": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "summary": "定义 GitHub Bug report 表单，强制收集问题描述、复现步骤、预期行为、操作系统与日志，并引导提交者先检索重复问题和常见问题。",
+      "tags": [
+        "configuration",
+        "issue-template",
+        "bug-reporting"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.github/ISSUE_TEMPLATE/feature_request.yml",
+      "type": "config",
+      "name": "feature_request.yml",
+      "filePath": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "summary": "定义 GitHub Feature request 表单，收集问题背景、期望方案、备选方案以及补充截图或上下文，并自动添加 enhancement 标签。",
+      "tags": [
+        "configuration",
+        "issue-template",
+        "feature-request"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.ua/.understandignore",
+      "type": "file",
+      "name": ".understandignore",
+      "filePath": ".ua/.understandignore",
+      "summary": "控制代码知识图谱分析时的排除范围，当前明确忽略所有 bin 与 obj 目录，并保留一组可按需启用的 .NET、测试及构建产物规则。",
+      "tags": [
+        "configuration",
+        "analysis-tooling",
+        "ignore-rules"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:.ua/config.json",
+      "type": "config",
+      "name": "config.json",
+      "filePath": ".ua/config.json",
+      "summary": "配置 Understand Anything 分析输出语言为中文，确保后续知识图谱文本使用 zh 本地化结果。",
+      "tags": [
+        "configuration",
+        "analysis-tooling",
+        "localization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:schemas/livelyPropertiesSchema.json",
+      "type": "config",
+      "name": "livelyPropertiesSchema.json",
+      "filePath": "schemas/livelyPropertiesSchema.json",
+      "summary": "使用 JSON Schema Draft 7 校验 LivelyProperties.json，将 slider、textbox、dropdown、folderDropdown、button、label、color 和 checkbox 等壁纸交互控件建模为互斥结构。",
+      "tags": [
+        "configuration",
+        "json-schema",
+        "wallpaper-controls",
+        "validation"
+      ],
+      "complexity": "complex",
+      "languageNotes": "采用 JSON Schema Draft 7，通过 additionalProperties 与 oneOf 为每个动态控件键选择严格的控件结构。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "type": "file",
+      "name": "GithubUpdaterService.cs",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "summary": "实现基于 GitHub Release 的应用更新检查服务，维护重试计时器、检查状态、版本与更新资源，并按处理器架构选择安装包。",
+      "tags": [
+        "service",
+        "app-update",
+        "github",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "type": "file",
+      "name": "HardwareUsageService.cs",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "summary": "实现硬件使用率采样服务，通过 PerformanceCounter 和系统查询持续汇总 CPU、内存、GPU 及网络吞吐数据。",
+      "tags": [
+        "service",
+        "hardware-monitoring",
+        "performance-counter"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "type": "file",
+      "name": "HttpDownloadService.cs",
+      "filePath": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "summary": "实现支持取消和进度回调的 HTTP 流式下载服务，并提供同步风格与异步重载以将响应内容写入文件或目标流。",
+      "tags": [
+        "service",
+        "http",
+        "download",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "type": "config",
+      "name": "Lively.Common.Services.csproj",
+      "filePath": "src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "summary": "定义通用服务类库的 .NET 构建配置，同时面向 net9.0 与 net472，并引用 MathNet.Numerics、NAudio、NPSMLib 及 Lively.Common 项目。",
+      "tags": [
+        "configuration",
+        "dotnet",
+        "build-system",
+        "service-library"
+      ],
+      "complexity": "simple",
+      "languageNotes": "使用 SDK-style 多目标项目，同时兼容现代 .NET 9 与 .NET Framework 4.7.2。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "type": "file",
+      "name": "NAudioVisualizerService.cs",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "summary": "实现基于 NAudio WASAPI loopback 的音频可视化服务，捕获系统音频、处理采样和平滑结果，并响应默认音频设备变化。",
+      "tags": [
+        "service",
+        "audio-visualization",
+        "wasapi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "type": "file",
+      "name": "NpsmNowPlayingService.cs",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "summary": "实现 Windows Now Playing 会话服务，监听媒体会话变化，更新曲目信息并生成经过裁剪的封面缩略图。",
+      "tags": [
+        "service",
+        "now-playing",
+        "media-session"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "type": "file",
+      "name": "ApplicationActivationManager.cs",
+      "filePath": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "summary": "声明 Windows ApplicationActivationManager COM coclass 的激活入口，用于按应用、文件或协议启动打包应用并返回进程 ID。",
+      "tags": [
+        "interop",
+        "com",
+        "windows-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "class",
+      "name": "GithubUpdaterService",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        11,
+        143
+      ],
+      "summary": "封装 GitHub 更新检查的计时、状态和发布资源选择逻辑，并通过事件向调用方报告检查结果。",
+      "tags": [
+        "service",
+        "class",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:CheckUpdate",
+      "type": "function",
+      "name": "CheckUpdate",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        65,
+        109
+      ],
+      "summary": "按配置的延迟检查 GitHub Release，更新版本状态并触发检查完成事件。",
+      "tags": [
+        "method",
+        "query",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GetArchSetupString",
+      "type": "function",
+      "name": "GetArchSetupString",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        133,
+        142
+      ],
+      "summary": "将处理器架构转换为安装包文件名使用的架构标识。",
+      "tags": [
+        "method",
+        "query",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GetLatestRelease",
+      "type": "function",
+      "name": "GetLatestRelease",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        111,
+        131
+      ],
+      "summary": "读取指定发布通道的最新版本和与当前架构匹配的安装资源。",
+      "tags": [
+        "method",
+        "query",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "function",
+      "name": "GithubUpdaterService",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        29,
+        36
+      ],
+      "summary": "初始化 `GithubUpdaterService`，建立、状态与事件连接。",
+      "tags": [
+        "method",
+        "method",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        41,
+        44
+      ],
+      "summary": "启动服务及其事件订阅或后台处理。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "lineRange": [
+        49,
+        55
+      ],
+      "summary": "停止服务并解除正在运行的捕获、计时或事件订阅。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "app-update"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "class",
+      "name": "HardwareUsageService",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        11,
+        242
+      ],
+      "summary": "封装后台硬件监控循环和性能计数器生命周期，向上层提供聚合后的 CPU、内存、GPU 与网络指标。",
+      "tags": [
+        "service",
+        "class",
+        "performance-counter"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetCPUUsage",
+      "type": "function",
+      "name": "GetCPUUsage",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        124,
+        140
+      ],
+      "summary": "读取并归一化 CPU 使用率。",
+      "tags": [
+        "method",
+        "query",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetGPUUsage",
+      "type": "function",
+      "name": "GetGPUUsage",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        159,
+        204
+      ],
+      "summary": "汇总 GPU 引擎性能计数器以计算显卡负载。",
+      "tags": [
+        "method",
+        "query",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetMemoryUsage",
+      "type": "function",
+      "name": "GetMemoryUsage",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        142,
+        156
+      ],
+      "summary": "根据可用内存与总内存计算内存使用率。",
+      "tags": [
+        "method",
+        "query",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkCards",
+      "type": "function",
+      "name": "GetNetworkCards",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        229,
+        239
+      ],
+      "summary": "枚举可用于性能计数的网络适配器。",
+      "tags": [
+        "method",
+        "query",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkUsage",
+      "type": "function",
+      "name": "GetNetworkUsage",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        206,
+        227
+      ],
+      "summary": "读取指定网络适配器的上下行吞吐量。",
+      "tags": [
+        "method",
+        "query",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "function",
+      "name": "HardwareUsageService",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        23,
+        26
+      ],
+      "summary": "初始化 `HardwareUsageService`，建立、状态与事件连接。",
+      "tags": [
+        "method",
+        "method",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HWMonitorLoop",
+      "type": "function",
+      "name": "HWMonitorLoop",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        79,
+        120
+      ],
+      "summary": "运行可取消的后台采样循环并持续更新硬件指标。",
+      "tags": [
+        "method",
+        "method",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:InitializePerfCounters",
+      "type": "function",
+      "name": "InitializePerfCounters",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        46,
+        77
+      ],
+      "summary": "初始化 CPU、内存、GPU 与网络性能计数器。",
+      "tags": [
+        "method",
+        "method",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        28,
+        39
+      ],
+      "summary": "启动服务及其事件订阅或后台处理。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "lineRange": [
+        41,
+        44
+      ],
+      "summary": "停止服务并解除正在运行的捕获、计时或事件订阅。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "hardware-monitoring"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "class",
+      "name": "HttpDownloadService",
+      "filePath": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "lineRange": [
+        10,
+        102
+      ],
+      "summary": "封装 HttpClient 流式下载流程，在复制响应内容时支持取消令牌和进度报告。",
+      "tags": [
+        "service",
+        "class",
+        "async"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:DownloadFile",
+      "type": "function",
+      "name": "DownloadFile",
+      "filePath": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "lineRange": [
+        19,
+        54
+      ],
+      "summary": "下载远程内容到目标文件，并按字节进度通知调用方。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "processing",
+        "download"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:DownloadFileAsync",
+      "type": "function",
+      "name": "DownloadFileAsync",
+      "filePath": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "lineRange": [
+        67,
+        96
+      ],
+      "summary": "将 HTTP 响应流异步复制到目标流，同时处理取消和进度回调。",
+      "tags": [
+        "method",
+        "processing",
+        "download"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "function",
+      "name": "HttpDownloadService",
+      "filePath": "src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "lineRange": [
+        14,
+        17
+      ],
+      "summary": "初始化 `HttpDownloadService`，建立、状态与事件连接。",
+      "tags": [
+        "method",
+        "method",
+        "download"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "class",
+      "name": "NAudioVisualizerService",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        15,
+        178
+      ],
+      "summary": "管理 WASAPI loopback 捕获、音频采样平滑和设备通知，是音频可视化数据的生产者。",
+      "tags": [
+        "service",
+        "class",
+        "wasapi"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:CreateWasapiLoopbackCapture",
+      "type": "function",
+      "name": "CreateWasapiLoopbackCapture",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        54,
+        64
+      ],
+      "summary": "为指定或默认输出设备创建 WASAPI loopback 捕获器。",
+      "tags": [
+        "method",
+        "processing",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Dispose",
+      "type": "function",
+      "name": "Dispose",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        157,
+        163
+      ],
+      "summary": "释放捕获器、设备枚举器或媒体会话等非托管资源。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:GetDeviceById",
+      "type": "function",
+      "name": "GetDeviceById",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        165,
+        177
+      ],
+      "summary": "按设备标识查找音频输出设备。",
+      "tags": [
+        "method",
+        "query",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "function",
+      "name": "NAudioVisualizerService",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        27,
+        34
+      ],
+      "summary": "初始化 `NAudioVisualizerService`，建立、状态与事件连接。",
+      "tags": [
+        "method",
+        "method",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDefaultDeviceChanged",
+      "type": "function",
+      "name": "OnDefaultDeviceChanged",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        118,
+        135
+      ],
+      "summary": "处理默认音频输出设备变化并重建捕获会话。",
+      "tags": [
+        "method",
+        "event-handler",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceAdded",
+      "type": "function",
+      "name": "OnDeviceAdded",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        142,
+        145
+      ],
+      "summary": "处理新增音频设备通知。",
+      "tags": [
+        "method",
+        "event-handler",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceRemoved",
+      "type": "function",
+      "name": "OnDeviceRemoved",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        147,
+        150
+      ],
+      "summary": "处理音频设备移除通知。",
+      "tags": [
+        "method",
+        "event-handler",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceStateChanged",
+      "type": "function",
+      "name": "OnDeviceStateChanged",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        137,
+        140
+      ],
+      "summary": "处理音频设备状态变化通知。",
+      "tags": [
+        "method",
+        "event-handler",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnPropertyValueChanged",
+      "type": "function",
+      "name": "OnPropertyValueChanged",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        152,
+        155
+      ],
+      "summary": "处理音频设备属性变化通知。",
+      "tags": [
+        "method",
+        "event-handler",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:ProcessAudioData",
+      "type": "function",
+      "name": "ProcessAudioData",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        66,
+        96
+      ],
+      "summary": "处理捕获到的音频缓冲区并生成经过平滑的可视化采样。",
+      "tags": [
+        "method",
+        "processing",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        36,
+        47
+      ],
+      "summary": "启动服务及其事件订阅或后台处理。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "lineRange": [
+        49,
+        52
+      ],
+      "summary": "停止服务并解除正在运行的捕获、计时或事件订阅。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "audio-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "class",
+      "name": "NpsmNowPlayingService",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        12,
+        160
+      ],
+      "summary": "管理 Windows 媒体会话订阅、当前曲目状态和封面缩略图生成。",
+      "tags": [
+        "service",
+        "class",
+        "media-session"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:CreateThumbnail",
+      "type": "function",
+      "name": "CreateThumbnail",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        128,
+        142
+      ],
+      "summary": "从媒体流创建适合展示的封面缩略图。",
+      "tags": [
+        "method",
+        "processing",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:CropImage",
+      "type": "function",
+      "name": "CropImage",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        144,
+        157
+      ],
+      "summary": "按给定矩形裁剪位图以去除透明或多余区域。",
+      "tags": [
+        "method",
+        "processing",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "function",
+      "name": "NpsmNowPlayingService",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        23,
+        23
+      ],
+      "summary": "初始化 `NpsmNowPlayingService`，建立、状态与事件连接。",
+      "tags": [
+        "method",
+        "method",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Start",
+      "type": "function",
+      "name": "Start",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        27,
+        31
+      ],
+      "summary": "启动服务及其事件订阅或后台处理。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Stop",
+      "type": "function",
+      "name": "Stop",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        33,
+        36
+      ],
+      "summary": "停止服务并解除正在运行的捕获、计时或事件订阅。",
+      "tags": [
+        "method",
+        "lifecycle",
+        "now-playing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:UpdateMedia",
+      "type": "function",
+      "name": "UpdateMedia",
+      "filePath": "src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "lineRange": [
+        56,
+        126
+      ],
+      "summary": "读取当前媒体会话元数据并更新曲目及封面状态。",
+      "tags": [
+        "method",
+        "processing",
+        "now-playing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ApplicationActivationManager",
+      "type": "class",
+      "name": "ApplicationActivationManager",
+      "filePath": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "lineRange": [
+        11,
+        23
+      ],
+      "summary": "作为 COM coclass 映射，公开 Windows 应用、文件与协议激活方法。",
+      "tags": [
+        "interop",
+        "com",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateApplication",
+      "type": "function",
+      "name": "ActivateApplication",
+      "filePath": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "lineRange": [
+        15,
+        16
+      ],
+      "summary": "通过 COM 激活指定 AppUserModelId 的应用并返回进程 ID。",
+      "tags": [
+        "method",
+        "interop",
+        "windows-activation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForFile",
+      "type": "function",
+      "name": "ActivateForFile",
+      "filePath": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "lineRange": [
+        18,
+        19
+      ],
+      "summary": "通过 COM 使用指定文件项和 verb 激活应用。",
+      "tags": [
+        "method",
+        "interop",
+        "windows-activation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForProtocol",
+      "type": "function",
+      "name": "ActivateForProtocol",
+      "filePath": "src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "lineRange": [
+        21,
+        22
+      ],
+      "summary": "通过 COM 使用协议项激活应用。",
+      "tags": [
+        "method",
+        "interop",
+        "windows-activation"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:CheckUpdate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:CheckUpdate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GetArchSetupString",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GetLatestRelease",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GetLatestRelease",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:GithubUpdaterService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/GithubUpdaterService.cs:Stop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetCPUUsage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetCPUUsage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetGPUUsage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetGPUUsage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetMemoryUsage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetMemoryUsage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkCards",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkCards",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkUsage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:GetNetworkUsage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HardwareUsageService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:HWMonitorLoop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:InitializePerfCounters",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HardwareUsageService.cs:Stop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:DownloadFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:DownloadFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:DownloadFileAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/HttpDownloadService.cs:HttpDownloadService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:CreateWasapiLoopbackCapture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Dispose",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Dispose",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:GetDeviceById",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:NAudioVisualizerService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDefaultDeviceChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDefaultDeviceChanged",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceAdded",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceAdded",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceRemoved",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceRemoved",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceStateChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnDeviceStateChanged",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnPropertyValueChanged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:OnPropertyValueChanged",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:ProcessAudioData",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs:Stop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "class:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:CreateThumbnail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:CropImage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:NpsmNowPlayingService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Start",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Start",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Stop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:Stop",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "target": "function:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs:UpdateMedia",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "class:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ApplicationActivationManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "class:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ApplicationActivationManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateApplication",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateApplication",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForProtocol",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs",
+      "target": "function:src/Lively/Lively.Common/Com/ApplicationActivationManager.cs:ActivateForProtocol",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "target": "file:src/Lively/Lively.Common.Services/GithubUpdaterService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "target": "file:src/Lively/Lively.Common.Services/HardwareUsageService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "target": "file:src/Lively/Lively.Common.Services/HttpDownloadService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "target": "file:src/Lively/Lively.Common.Services/NAudioVisualizerService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src/Lively/Lively.Common.Services/Lively.Common.Services.csproj",
+      "target": "file:src/Lively/Lively.Common.Services/NpsmNowPlayingService.cs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

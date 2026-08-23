@@ -1,0 +1,1520 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "type": "file",
+      "name": "VolumeMixerUtil.cs",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "summary": "通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态。",
+      "tags": [
+        "utility",
+        "windows",
+        "audio-session"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "直接声明 Core Audio COM interface，并显式释放 COM 对象以避免音频会话引用泄漏。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:VolumeMixerUtil",
+      "type": "class",
+      "name": "VolumeMixerUtil",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        11,
+        101
+      ],
+      "summary": "作为本文件的核心类型，通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态。",
+      "tags": [
+        "class",
+        "utility",
+        "audio-session"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IMMDeviceEnumerator",
+      "type": "class",
+      "name": "IMMDeviceEnumerator",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        125,
+        134
+      ],
+      "summary": "声明 `IMMDeviceEnumerator` COM interface，映射通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionManager2",
+      "type": "class",
+      "name": "IAudioSessionManager2",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        145,
+        155
+      ],
+      "summary": "声明 `IAudioSessionManager2` COM interface，映射通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionEnumerator",
+      "type": "class",
+      "name": "IAudioSessionEnumerator",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        157,
+        165
+      ],
+      "summary": "声明 `IAudioSessionEnumerator` COM interface，映射通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:ISimpleAudioVolume",
+      "type": "class",
+      "name": "ISimpleAudioVolume",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        167,
+        181
+      ],
+      "summary": "声明 `ISimpleAudioVolume` COM interface，映射通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionControl2",
+      "type": "class",
+      "name": "IAudioSessionControl2",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        183,
+        229
+      ],
+      "summary": "声明 `IAudioSessionControl2` COM interface，映射通过 Windows Core Audio COM 接口读取或设置指定进程音频会话的音量与静音状态使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationMute",
+      "type": "function",
+      "name": "GetApplicationMute",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        25,
+        35
+      ],
+      "summary": "获取或计算 `GetApplicationMute` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationVolume",
+      "type": "function",
+      "name": "GetApplicationVolume",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        13,
+        23
+      ],
+      "summary": "获取或计算 `GetApplicationVolume` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetVolumeObject",
+      "type": "function",
+      "name": "GetVolumeObject",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        59,
+        100
+      ],
+      "summary": "获取或计算 `GetVolumeObject` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationMute",
+      "type": "function",
+      "name": "SetApplicationMute",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        48,
+        57
+      ],
+      "summary": "设置 `SetApplicationMute` 对应的状态，完成。",
+      "tags": [
+        "method",
+        "window-operation",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationVolume",
+      "type": "function",
+      "name": "SetApplicationVolume",
+      "filePath": "src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "lineRange": [
+        37,
+        46
+      ],
+      "summary": "设置 `SetApplicationVolume` 对应的状态，完成。",
+      "tags": [
+        "method",
+        "window-operation",
+        "audio-session"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "type": "file",
+      "name": "WebContentUtil.cs",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "summary": "识别在线视频流与网页内容，解析 YouTube 和 Shadertoy 标识，并推断 URL 对应的 WebContentType。",
+      "tags": [
+        "utility",
+        "windows",
+        "web-content"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:WebContentUtil",
+      "type": "class",
+      "name": "WebContentUtil",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "lineRange": [
+        9,
+        149
+      ],
+      "summary": "作为本文件的核心类型，识别在线视频流与网页内容，解析 YouTube 和 Shadertoy 标识，并推断 URL 对应的 WebContentType。",
+      "tags": [
+        "class",
+        "utility",
+        "web-content"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:GetContentType",
+      "type": "function",
+      "name": "GetContentType",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "lineRange": [
+        134,
+        148
+      ],
+      "summary": "获取或计算 `GetContentType` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "web-content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:IsSupportedVideoStream",
+      "type": "function",
+      "name": "IsSupportedVideoStream",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "lineRange": [
+        11,
+        40
+      ],
+      "summary": "判断 `IsSupportedVideoStream` 所描述的条件是否成立，用于。 此节点代表结构结果中的 2 个同名 overload。",
+      "tags": [
+        "method",
+        "validation",
+        "web-content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseShadertoyIdFromUrl",
+      "type": "function",
+      "name": "TryParseShadertoyIdFromUrl",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "lineRange": [
+        109,
+        132
+      ],
+      "summary": "尝试执行 `TryParseShadertoyIdFromUrl` 对应操作，并以返回值报告。",
+      "tags": [
+        "method",
+        "validation",
+        "web-content"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseYouTubeVideoIdFromUrl",
+      "type": "function",
+      "name": "TryParseYouTubeVideoIdFromUrl",
+      "filePath": "src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "lineRange": [
+        55,
+        107
+      ],
+      "summary": "尝试执行 `TryParseYouTubeVideoIdFromUrl` 对应操作，并以返回值报告。",
+      "tags": [
+        "method",
+        "validation",
+        "web-content"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "type": "file",
+      "name": "WindowUtil.cs",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "summary": "集中实现 Windows 窗口枚举、遮挡判定、类型过滤、父子关系、任务栏隐藏、无边框样式、透明度及窗口 style 操作。",
+      "tags": [
+        "utility",
+        "windows",
+        "window-management"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Helpers/WindowUtil.cs:WindowUtil",
+      "type": "class",
+      "name": "WindowUtil",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        11,
+        370
+      ],
+      "summary": "作为本文件的核心类型，集中实现 Windows 窗口枚举、遮挡判定、类型过滤、父子关系、任务栏隐藏、无边框样式、透明度及窗口 style 操作。",
+      "tags": [
+        "class",
+        "utility",
+        "window-management"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:BorderlessWinStyle",
+      "type": "function",
+      "name": "BorderlessWinStyle",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        241,
+        295
+      ],
+      "summary": "移除窗口边框与标题栏 style，生成适合壁纸承载的无边框窗口。",
+      "tags": [
+        "method",
+        "window-operation",
+        "window-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetLastChildWindow",
+      "type": "function",
+      "name": "GetLastChildWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        199,
+        210
+      ],
+      "summary": "获取或计算 `GetLastChildWindow` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetVisibleTopLevelWindows",
+      "type": "function",
+      "name": "GetVisibleTopLevelWindows",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        76,
+        89
+      ],
+      "summary": "获取或计算 `GetVisibleTopLevelWindows` 对应的结果，为。",
+      "tags": [
+        "method",
+        "query",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasClass",
+      "type": "function",
+      "name": "HasClass",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        327,
+        336
+      ],
+      "summary": "检查窗口是否具有 `HasClass` 对应的 Win32 style。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasExtendedStyle",
+      "type": "function",
+      "name": "HasExtendedStyle",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        343,
+        353
+      ],
+      "summary": "检查窗口是否具有 `HasExtendedStyle` 对应的 Win32 style。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsAppWindow",
+      "type": "function",
+      "name": "IsAppWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        176,
+        180
+      ],
+      "summary": "判断 `IsAppWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsCloakedWindow",
+      "type": "function",
+      "name": "IsCloakedWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        188,
+        192
+      ],
+      "summary": "判断 `IsCloakedWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByAnyWindow",
+      "type": "function",
+      "name": "IsDisplayCoveredByAnyWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        66,
+        69
+      ],
+      "summary": "判断 `IsDisplayCoveredByAnyWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindow",
+      "type": "function",
+      "name": "IsDisplayCoveredByWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        71,
+        74
+      ],
+      "summary": "判断 `IsDisplayCoveredByWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindowGrid",
+      "type": "function",
+      "name": "IsDisplayCoveredByWindowGrid",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        13,
+        64
+      ],
+      "summary": "判断 `IsDisplayCoveredByWindowGrid` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsExcludedDesktopWindowClass",
+      "type": "function",
+      "name": "IsExcludedDesktopWindowClass",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        107,
+        113
+      ],
+      "summary": "判断 `IsExcludedDesktopWindowClass` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsNoActivateWindow",
+      "type": "function",
+      "name": "IsNoActivateWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        182,
+        186
+      ],
+      "summary": "判断 `IsNoActivateWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsToolWindow",
+      "type": "function",
+      "name": "IsToolWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        170,
+        174
+      ],
+      "summary": "判断 `IsToolWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTopLevelWindow",
+      "type": "function",
+      "name": "IsTopLevelWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        152,
+        155
+      ],
+      "summary": "判断 `IsTopLevelWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTransparentWindow",
+      "type": "function",
+      "name": "IsTransparentWindow",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        162,
+        168
+      ],
+      "summary": "判断 `IsTransparentWindow` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsUWPApp",
+      "type": "function",
+      "name": "IsUWPApp",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        157,
+        160
+      ],
+      "summary": "判断 `IsUWPApp` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsVisibleTopLevelWindows",
+      "type": "function",
+      "name": "IsVisibleTopLevelWindows",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        91,
+        105
+      ],
+      "summary": "判断 `IsVisibleTopLevelWindows` 所描述的条件是否成立，用于。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsWindowCoveringTarget",
+      "type": "function",
+      "name": "IsWindowCoveringTarget",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        115,
+        135
+      ],
+      "summary": "判断 `IsWindowCoveringTarget` 所描述的条件是否成立，用于。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:RemoveWindowFromTaskbar",
+      "type": "function",
+      "name": "RemoveWindowFromTaskbar",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        216,
+        233
+      ],
+      "summary": "移除 `RemoveWindowFromTaskbar` 对应的窗口状态或关联。",
+      "tags": [
+        "method",
+        "window-operation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowExStyle",
+      "type": "function",
+      "name": "SetWindowExStyle",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        319,
+        325
+      ],
+      "summary": "设置 `SetWindowExStyle` 对应的状态，完成。",
+      "tags": [
+        "method",
+        "window-operation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowStyle",
+      "type": "function",
+      "name": "SetWindowStyle",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        311,
+        317
+      ],
+      "summary": "设置 `SetWindowStyle` 对应的状态，完成。",
+      "tags": [
+        "method",
+        "window-operation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowTransparency",
+      "type": "function",
+      "name": "SetWindowTransparency",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        300,
+        309
+      ],
+      "summary": "设置 `SetWindowTransparency` 对应的状态，完成。",
+      "tags": [
+        "method",
+        "window-operation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:TrySetParent",
+      "type": "function",
+      "name": "TrySetParent",
+      "filePath": "src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "lineRange": [
+        194,
+        197
+      ],
+      "summary": "尝试执行 `TrySetParent` 对应操作，并以返回值报告。",
+      "tags": [
+        "method",
+        "validation",
+        "window-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "type": "file",
+      "name": "IpcMessageConverter.cs",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "summary": "实现 Newtonsoft.Json converter，根据消息类型判别并反序列化 Lively IPC 消息，同时控制写入行为。",
+      "tags": [
+        "serialization",
+        "json-converter",
+        "ipc"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "继承 Newtonsoft.Json.JsonConverter，并根据 discriminator 选择具体消息或控件模型。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:IpcMessageConverter",
+      "type": "class",
+      "name": "IpcMessageConverter",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "lineRange": [
+        8,
+        53
+      ],
+      "summary": "声明 `IpcMessageConverter` COM interface，映射实现 Newtonsoft.Json converter，根据消息类型判别并反序列化 Lively IPC 消息，同时控制写入行为使用的 native 音频方法。",
+      "tags": [
+        "interface",
+        "type-definition",
+        "ipc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:CanConvert",
+      "type": "function",
+      "name": "CanConvert",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "lineRange": [
+        10,
+        13
+      ],
+      "summary": "判断当前 JSON token 是否可由。",
+      "tags": [
+        "method",
+        "validation",
+        "ipc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:ReadJson",
+      "type": "function",
+      "name": "ReadJson",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "lineRange": [
+        15,
+        42
+      ],
+      "summary": "从 JSON reader 读取数据并构造。",
+      "tags": [
+        "method",
+        "query",
+        "ipc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:WriteJson",
+      "type": "function",
+      "name": "WriteJson",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "lineRange": [
+        49,
+        52
+      ],
+      "summary": "按 JSON 数据。",
+      "tags": [
+        "method",
+        "serialization",
+        "ipc"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "type": "file",
+      "name": "LivelyControlModelConverter.cs",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "summary": "实现 Newtonsoft.Json converter，根据控件 type 字段将 LivelyProperties 条目反序列化为具体 ControlModel 子类型。",
+      "tags": [
+        "serialization",
+        "json-converter",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple",
+      "languageNotes": "继承 Newtonsoft.Json.JsonConverter，并根据 discriminator 选择具体消息或控件模型。"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:LivelyControlModelConverter",
+      "type": "class",
+      "name": "LivelyControlModelConverter",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "lineRange": [
+        11,
+        47
+      ],
+      "summary": "作为本文件的核心类型，实现 Newtonsoft.Json converter，根据控件 type 字段将 LivelyProperties 条目反序列化为具体 ControlModel 子类型。",
+      "tags": [
+        "class",
+        "utility",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:CanConvert",
+      "type": "function",
+      "name": "CanConvert",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "lineRange": [
+        13,
+        16
+      ],
+      "summary": "判断当前 JSON token 是否可由。",
+      "tags": [
+        "method",
+        "validation",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:ReadJson",
+      "type": "function",
+      "name": "ReadJson",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "lineRange": [
+        18,
+        41
+      ],
+      "summary": "从 JSON reader 读取数据并构造。",
+      "tags": [
+        "method",
+        "query",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:WriteJson",
+      "type": "function",
+      "name": "WriteJson",
+      "filePath": "src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "lineRange": [
+        43,
+        46
+      ],
+      "summary": "按 JSON 数据。",
+      "tags": [
+        "method",
+        "serialization",
+        "wallpaper-controls"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:VolumeMixerUtil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:VolumeMixerUtil",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IMMDeviceEnumerator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionManager2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionEnumerator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:ISimpleAudioVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:IAudioSessionControl2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationMute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationMute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetApplicationVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:GetVolumeObject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationMute",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationMute",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationVolume",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/VolumeMixerUtil.cs:SetApplicationVolume",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:WebContentUtil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:WebContentUtil",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:GetContentType",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:GetContentType",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:IsSupportedVideoStream",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:IsSupportedVideoStream",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseShadertoyIdFromUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseShadertoyIdFromUrl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseYouTubeVideoIdFromUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WebContentUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WebContentUtil.cs:TryParseYouTubeVideoIdFromUrl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/WindowUtil.cs:WindowUtil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "class:src/Lively/Lively.Common/Helpers/WindowUtil.cs:WindowUtil",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:BorderlessWinStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:BorderlessWinStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetLastChildWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetLastChildWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetVisibleTopLevelWindows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:GetVisibleTopLevelWindows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasClass",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasClass",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasExtendedStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:HasExtendedStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsAppWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsAppWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsCloakedWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsCloakedWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByAnyWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByAnyWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindowGrid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsDisplayCoveredByWindowGrid",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsExcludedDesktopWindowClass",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsExcludedDesktopWindowClass",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsNoActivateWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsNoActivateWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsToolWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsToolWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTopLevelWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTopLevelWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTransparentWindow",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsTransparentWindow",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsUWPApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsUWPApp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsVisibleTopLevelWindows",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsVisibleTopLevelWindows",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsWindowCoveringTarget",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:IsWindowCoveringTarget",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:RemoveWindowFromTaskbar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:RemoveWindowFromTaskbar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowExStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowExStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowStyle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowStyle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowTransparency",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:SetWindowTransparency",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:TrySetParent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Helpers/WindowUtil.cs",
+      "target": "function:src/Lively/Lively.Common/Helpers/WindowUtil.cs:TrySetParent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "class:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:IpcMessageConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "class:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:IpcMessageConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:CanConvert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:CanConvert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:ReadJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:ReadJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:WriteJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/IpcMessageConverter.cs:WriteJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "class:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:LivelyControlModelConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "class:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:LivelyControlModelConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:CanConvert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:CanConvert",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:ReadJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:ReadJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:WriteJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs",
+      "target": "function:src/Lively/Lively.Common/JsonConverters/LivelyControlModelConverter.cs:WriteJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

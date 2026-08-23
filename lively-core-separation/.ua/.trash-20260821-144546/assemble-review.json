@@ -1,0 +1,15 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 0,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "合并报告未列出机械修复或无法修复项；58 个片段归属于 29 个逻辑批次，输入与输出均为 2456 个节点、3293 条边，计数与集合完全一致。",
+    "组装图不存在重复节点、重复边、悬空边、自引用边、未知类型或复杂度、错误权重、无效方向及缺失必填字段。",
+    "scan-result.json 的权威 importMap 包含 660 个文件入口，但所有目标数组均为空，因此可核验的内部 import 关系为 0，缺失 import 边为 0，新增跨批 import 边为 0。",
+    "全部 660 个扫描文件都能在图节点的 filePath 中找到，且不存在扫描范围外的文件路径。",
+    "无需修改 assembled-graph.json。剩余关注点是权威 importMap 未解析出任何内部导入关系，因此本阶段无法补充基于 import 的跨文件连接。"
+  ]
+}

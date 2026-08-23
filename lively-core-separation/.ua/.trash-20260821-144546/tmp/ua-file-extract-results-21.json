@@ -1,0 +1,1349 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 12,
+  "filesSkipped": [
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLoginView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GallerySubscriptionView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ManageAccountView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ReportWallpaperView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/RestoreWallpaperView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ShareWallpaperView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/HelpView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/LibraryAboutView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/LibraryView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/PatreonSupportersView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Settings/FindMoreAppsView.xaml",
+    "src/Lively/Lively.UI.WinUI/Views/Pages/Settings/SettingsGeneralView.xaml"
+  ],
+  "analysisOutcomes": {
+    "structure": {
+      "succeeded": 12,
+      "failed": 0
+    },
+    "callGraph": {
+      "succeeded": 12,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "results": [
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryLoginView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "GalleryLoginView",
+          "startLine": 16,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "GalleryLoginView",
+          "startLine": 14,
+          "endLine": 21,
+          "methods": [
+            "GalleryLoginView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "GalleryLoginView",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "GalleryLoginView",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "GalleryLoginView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 18
+        },
+        {
+          "caller": "GalleryLoginView",
+          "callee": "App.Services.GetRequiredService<GalleryLoginViewModel>",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GallerySubscriptionView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "GallerySubscriptionView",
+          "startLine": 16,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "GallerySubscriptionView",
+          "startLine": 14,
+          "endLine": 21,
+          "methods": [
+            "GallerySubscriptionView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "GallerySubscriptionView",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "GallerySubscriptionView",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "GallerySubscriptionView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 18
+        },
+        {
+          "caller": "GallerySubscriptionView",
+          "callee": "App.Services.GetRequiredService<GallerySubscriptionViewModel>",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/GalleryView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 95,
+      "nonEmptyLines": 89,
+      "functions": [
+        {
+          "name": "GalleryView",
+          "startLine": 40,
+          "endLine": 67,
+          "params": []
+        },
+        {
+          "name": "navView_ItemInvoked",
+          "startLine": 69,
+          "endLine": 76,
+          "params": [
+            "sender",
+            "args"
+          ]
+        },
+        {
+          "name": "NavigatePage",
+          "startLine": 78,
+          "endLine": 93,
+          "params": [
+            "tag",
+            "arg"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "GalleryView",
+          "startLine": 28,
+          "endLine": 94,
+          "methods": [
+            "GalleryView",
+            "navView_ItemInvoked",
+            "NavigatePage"
+          ],
+          "properties": [
+            "isAuthenticated",
+            "pages"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "GalleryView",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "GalleryView",
+          "line": 28,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "GalleryView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 42
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "App.Services.GetRequiredService<GalleryClient>",
+          "lineNumber": 43
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "NavigatePage",
+          "lineNumber": 46
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "NavigatePage",
+          "lineNumber": 51
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "new Thickness",
+          "lineNumber": 53
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "this.DispatcherQueue.TryEnqueue",
+          "lineNumber": 57
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "Task.Delay",
+          "lineNumber": 59
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "NavigatePage",
+          "lineNumber": 60
+        },
+        {
+          "caller": "GalleryView",
+          "callee": "new Thickness",
+          "lineNumber": 61
+        },
+        {
+          "caller": "navView_ItemInvoked",
+          "callee": "args.InvokedItemContainer.Tag.ToString",
+          "lineNumber": 73
+        },
+        {
+          "caller": "navView_ItemInvoked",
+          "callee": "NavigatePage",
+          "lineNumber": 74
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "pages.FirstOrDefault",
+          "lineNumber": 80
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "p.tag.Equals",
+          "lineNumber": 80
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "Type.Equals",
+          "lineNumber": 84
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "contentFrame.Navigate",
+          "lineNumber": 86
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "new DrillInNavigationTransitionInfo",
+          "lineNumber": 86
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "navView.MenuItems.FirstOrDefault",
+          "lineNumber": 88
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "((NavigationViewItem)x).Tag.ToString",
+          "lineNumber": 88
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "navView.FooterMenuItems.FirstOrDefault",
+          "lineNumber": 89
+        },
+        {
+          "caller": "NavigatePage",
+          "callee": "((NavigationViewItem)x).Tag.ToString",
+          "lineNumber": 89
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ManageAccountView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 22,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "ManageAccountView",
+          "startLine": 16,
+          "endLine": 20,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "ManageAccountView",
+          "startLine": 14,
+          "endLine": 21,
+          "methods": [
+            "ManageAccountView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ManageAccountView",
+          "line": 16,
+          "isDefault": false
+        },
+        {
+          "name": "ManageAccountView",
+          "line": 14,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ManageAccountView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 18
+        },
+        {
+          "caller": "ManageAccountView",
+          "callee": "App.Services.GetRequiredService<ManageAccountViewModel>",
+          "lineNumber": 19
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ReportWallpaperView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "ReportWallpaperView",
+          "startLine": 26,
+          "endLine": 29,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "ReportWallpaperView",
+          "startLine": 24,
+          "endLine": 30,
+          "methods": [
+            "ReportWallpaperView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ReportWallpaperView",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "ReportWallpaperView",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ReportWallpaperView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/RestoreWallpaperView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 18,
+      "functions": [
+        {
+          "name": "RestoreWallpaperView",
+          "startLine": 14,
+          "endLine": 18,
+          "params": [
+            "vm"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "RestoreWallpaperView",
+          "startLine": 12,
+          "endLine": 19,
+          "methods": [
+            "RestoreWallpaperView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "RestoreWallpaperView",
+          "line": 14,
+          "isDefault": false
+        },
+        {
+          "name": "RestoreWallpaperView",
+          "line": 12,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "RestoreWallpaperView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Gallery/ShareWallpaperView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "ShareWallpaperView",
+          "startLine": 26,
+          "endLine": 29,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "ShareWallpaperView",
+          "startLine": 24,
+          "endLine": 30,
+          "methods": [
+            "ShareWallpaperView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "ShareWallpaperView",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "ShareWallpaperView",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "ShareWallpaperView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/HelpView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 42,
+      "nonEmptyLines": 35,
+      "functions": [
+        {
+          "name": "HelpView",
+          "startLine": 27,
+          "endLine": 30,
+          "params": []
+        },
+        {
+          "name": "WebsiteCard_Click",
+          "startLine": 32,
+          "endLine": 32,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "DocumentationCard_Click",
+          "startLine": 34,
+          "endLine": 34,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "CommunityCard_Click",
+          "startLine": 36,
+          "endLine": 36,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "SoureCodeCard_Click",
+          "startLine": 38,
+          "endLine": 38,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "ReportBugCard_Click",
+          "startLine": 40,
+          "endLine": 40,
+          "params": [
+            "sender",
+            "e"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "HelpView",
+          "startLine": 25,
+          "endLine": 41,
+          "methods": [
+            "HelpView",
+            "WebsiteCard_Click",
+            "DocumentationCard_Click",
+            "CommunityCard_Click",
+            "SoureCodeCard_Click",
+            "ReportBugCard_Click"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "HelpView",
+          "line": 27,
+          "isDefault": false
+        },
+        {
+          "name": "HelpView",
+          "line": 25,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "HelpView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 29
+        },
+        {
+          "caller": "WebsiteCard_Click",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 32
+        },
+        {
+          "caller": "DocumentationCard_Click",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 34
+        },
+        {
+          "caller": "CommunityCard_Click",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 36
+        },
+        {
+          "caller": "SoureCodeCard_Click",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 38
+        },
+        {
+          "caller": "ReportBugCard_Click",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 40
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 6,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/LibraryAboutView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "LibraryAboutView",
+          "startLine": 26,
+          "endLine": 29,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "LibraryAboutView",
+          "startLine": 24,
+          "endLine": 30,
+          "methods": [
+            "LibraryAboutView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "LibraryAboutView",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "LibraryAboutView",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "LibraryAboutView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/LibraryView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 240,
+      "nonEmptyLines": 220,
+      "functions": [
+        {
+          "name": "LibraryView",
+          "startLine": 31,
+          "endLine": 42,
+          "params": []
+        },
+        {
+          "name": "contextMenu_Click",
+          "startLine": 46,
+          "endLine": 104,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "GridView_RightTapped",
+          "startLine": 106,
+          "endLine": 124,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "MoreButton_Click",
+          "startLine": 126,
+          "endLine": 143,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Page_Drop",
+          "startLine": 149,
+          "endLine": 220,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Page_DragOver",
+          "startLine": 222,
+          "endLine": 231,
+          "params": [
+            "sender",
+            "e"
+          ]
+        },
+        {
+          "name": "Page_DragLeave",
+          "startLine": 233,
+          "endLine": 236,
+          "params": [
+            "sender",
+            "e"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "LibraryView",
+          "startLine": 19,
+          "endLine": 239,
+          "methods": [
+            "LibraryView",
+            "contextMenu_Click",
+            "GridView_RightTapped",
+            "MoreButton_Click",
+            "Page_Drop",
+            "Page_DragOver",
+            "Page_DragLeave"
+          ],
+          "properties": [
+            "Logger",
+            "selectedTile",
+            "i18n",
+            "userSettings",
+            "desktopCore",
+            "libraryVm",
+            "dialogService",
+            "displayManager"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "LibraryView",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "LibraryView",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<IDesktopCoreClient>",
+          "lineNumber": 33
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<LibraryViewModel>",
+          "lineNumber": 34
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<IUserSettingsClient>",
+          "lineNumber": 35
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<IDialogService>",
+          "lineNumber": 36
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<IDisplayManagerClient>",
+          "lineNumber": 37
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "App.Services.GetRequiredService<IResourceService>",
+          "lineNumber": 38
+        },
+        {
+          "caller": "LibraryView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 40
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "desktopCore.PreviewWallpaper",
+          "lineNumber": 56
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "libraryVm.WallpaperShowOnDisk",
+          "lineNumber": 59
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "displayManager.DisplayMonitors.FirstOrDefault",
+          "lineNumber": 67
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowDisplayChooseDialogAsync",
+          "lineNumber": 67
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "desktopCore.SetWallpaper",
+          "lineNumber": 71
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowShareWallpaperDialogAsync",
+          "lineNumber": 74
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowDeleteWallpaperDialogAsync",
+          "lineNumber": 77
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "libraryVm.WallpaperDelete",
+          "lineNumber": 78
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowCustomiseWallpaperDialogAsync",
+          "lineNumber": 81
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "obj.LivelyInfo.Type.IsDirectoryProject",
+          "lineNumber": 86
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowWallpaperProjectDirectoryDialogAsync",
+          "lineNumber": 87
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "Path.GetDirectoryName",
+          "lineNumber": 87
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "desktopCore.EditWallpaper",
+          "lineNumber": 90
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "libraryVm.RemoveWallpaper",
+          "lineNumber": 93
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "libraryVm.AddWallpaperFolder",
+          "lineNumber": 94
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowAboutWallpaperDialogAsync",
+          "lineNumber": 98
+        },
+        {
+          "caller": "contextMenu_Click",
+          "callee": "dialogService.ShowReportWallpaperDialogAsync",
+          "lineNumber": 101
+        },
+        {
+          "caller": "GridView_RightTapped",
+          "callee": "contextMenu.ShowAt",
+          "lineNumber": 115
+        },
+        {
+          "caller": "GridView_RightTapped",
+          "callee": "e.GetPosition",
+          "lineNumber": 115
+        },
+        {
+          "caller": "MoreButton_Click",
+          "callee": "contextMenu.ShowAt",
+          "lineNumber": 135
+        },
+        {
+          "caller": "MoreButton_Click",
+          "callee": "new Point",
+          "lineNumber": 135
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "e.DataView.Contains",
+          "lineNumber": 153
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "e.DataView.GetWebLinkAsync",
+          "lineNumber": 155
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "Logger.Info",
+          "lineNumber": 156
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "libraryVm.AddWallpaperLink",
+          "lineNumber": 159
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "dialogService.ShowDialogAsync",
+          "lineNumber": 163
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "i18n.GetString",
+          "lineNumber": 164
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "i18n.GetString",
+          "lineNumber": 165
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "e.DataView.Contains",
+          "lineNumber": 168
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "e.DataView.GetStorageItemsAsync",
+          "lineNumber": 170
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "Logger.Info",
+          "lineNumber": 174
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "string.IsNullOrWhiteSpace",
+          "lineNumber": 177
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "Path.GetExtension",
+          "lineNumber": 177
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "Logger.Info",
+          "lineNumber": 182
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "dialogService.ShowWallpaperCreateDialogAsync",
+          "lineNumber": 188
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "libraryVm.AddWallpaperFile",
+          "lineNumber": 196
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "dialogService.ShowDepthWallpaperDialogAsync",
+          "lineNumber": 201
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "desktopCore.SetWallpaper",
+          "lineNumber": 203
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "dialogService.ShowDialogAsync",
+          "lineNumber": 210
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "i18n.GetString",
+          "lineNumber": 211
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "i18n.GetString",
+          "lineNumber": 212
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "App.Services.GetRequiredService<MainViewModel>().AddWallpapers",
+          "lineNumber": 217
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "App.Services.GetRequiredService<MainViewModel>",
+          "lineNumber": 217
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "items.Select(x => x.Path).ToList",
+          "lineNumber": 217
+        },
+        {
+          "caller": "Page_Drop",
+          "callee": "items.Select",
+          "lineNumber": 217
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 7,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/PatreonSupportersView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 119,
+      "nonEmptyLines": 105,
+      "functions": [
+        {
+          "name": "PatreonSupportersView",
+          "startLine": 25,
+          "endLine": 33,
+          "params": []
+        },
+        {
+          "name": "InitializeWebView2Async",
+          "startLine": 35,
+          "endLine": 47,
+          "params": []
+        },
+        {
+          "name": "WebView_CoreWebView2Initialized",
+          "startLine": 49,
+          "endLine": 81,
+          "params": [
+            "sender",
+            "args"
+          ]
+        },
+        {
+          "name": "CoreWebView2_NewWindowRequested",
+          "startLine": 83,
+          "endLine": 91,
+          "params": [
+            "sender",
+            "args"
+          ]
+        },
+        {
+          "name": "WebView_NavigationStarting",
+          "startLine": 93,
+          "endLine": 100,
+          "params": [
+            "sender",
+            "args"
+          ]
+        },
+        {
+          "name": "WebView_NavigationCompleted",
+          "startLine": 102,
+          "endLine": 107,
+          "params": [
+            "sender",
+            "args"
+          ]
+        },
+        {
+          "name": "OnClose",
+          "startLine": 109,
+          "endLine": 112,
+          "params": []
+        },
+        {
+          "name": "Page_Unloaded",
+          "startLine": 114,
+          "endLine": 117,
+          "params": [
+            "sender",
+            "e"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "PatreonSupportersView",
+          "startLine": 21,
+          "endLine": 118,
+          "methods": [
+            "PatreonSupportersView",
+            "InitializeWebView2Async",
+            "WebView_CoreWebView2Initialized",
+            "CoreWebView2_NewWindowRequested",
+            "WebView_NavigationStarting",
+            "WebView_NavigationCompleted",
+            "OnClose",
+            "Page_Unloaded"
+          ],
+          "properties": [
+            "viewModel"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PatreonSupportersView",
+          "line": 25,
+          "isDefault": false
+        },
+        {
+          "name": "OnClose",
+          "line": 109,
+          "isDefault": false
+        },
+        {
+          "name": "PatreonSupportersView",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "PatreonSupportersView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 27
+        },
+        {
+          "caller": "PatreonSupportersView",
+          "callee": "App.Services.GetRequiredService<PatreonSupportersViewModel>",
+          "lineNumber": 28
+        },
+        {
+          "caller": "PatreonSupportersView",
+          "callee": "InitializeWebView2Async().Await",
+          "lineNumber": 31
+        },
+        {
+          "caller": "PatreonSupportersView",
+          "callee": "InitializeWebView2Async",
+          "lineNumber": 31
+        },
+        {
+          "caller": "PatreonSupportersView",
+          "callee": "ex.GetType",
+          "lineNumber": 32
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "new CoreWebView2EnvironmentOptions",
+          "lineNumber": 40
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "PackageUtil.ValidateAndResolvePath",
+          "lineNumber": 43
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "Path.Combine",
+          "lineNumber": 44
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "Assembly.GetExecutingAssembly().GetName",
+          "lineNumber": 44
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "Assembly.GetExecutingAssembly",
+          "lineNumber": 44
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "CoreWebView2Environment.CreateWithOptionsAsync",
+          "lineNumber": 45
+        },
+        {
+          "caller": "InitializeWebView2Async",
+          "callee": "WebView.EnsureCoreWebView2Async",
+          "lineNumber": 46
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "args.Exception.GetType",
+          "lineNumber": 53
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "App.Services.GetRequiredService<IUserSettingsClient>",
+          "lineNumber": 58
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "((Color)App.Current.Resources[\"SystemAccentColorDark1\"]).ToHex().Substring",
+          "lineNumber": 65
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "((Color)App.Current.Resources[\"SystemAccentColorDark1\"]).ToHex",
+          "lineNumber": 65
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "((Color)App.Current.Resources[\"SystemAccentColorLight1\"]).ToHex().Substring",
+          "lineNumber": 66
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "((Color)App.Current.Resources[\"SystemAccentColorLight1\"]).ToHex",
+          "lineNumber": 66
+        },
+        {
+          "caller": "WebView_CoreWebView2Initialized",
+          "callee": "LinkUtil.SanitizeUrl",
+          "lineNumber": 72
+        },
+        {
+          "caller": "CoreWebView2_NewWindowRequested",
+          "callee": "LinkUtil.OpenBrowser",
+          "lineNumber": 90
+        },
+        {
+          "caller": "OnClose",
+          "callee": "WebView.Close",
+          "lineNumber": 111
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 3,
+        "functionCount": 8,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "src/Lively/Lively.UI.WinUI/Views/Pages/Settings/FindMoreAppsView.xaml.cs",
+      "language": "csharp",
+      "fileCategory": "code",
+      "totalLines": 31,
+      "nonEmptyLines": 29,
+      "functions": [
+        {
+          "name": "FindMoreAppsView",
+          "startLine": 26,
+          "endLine": 29,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "FindMoreAppsView",
+          "startLine": 24,
+          "endLine": 30,
+          "methods": [
+            "FindMoreAppsView"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FindMoreAppsView",
+          "line": 26,
+          "isDefault": false
+        },
+        {
+          "name": "FindMoreAppsView",
+          "line": 24,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "FindMoreAppsView",
+          "callee": "this.InitializeComponent",
+          "lineNumber": 28
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,860 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "type": "file",
+      "name": "LivelyResumeCmd.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "summary": "定义恢复动态壁纸运行的 IPC 命令载荷，供宿主通知播放器继续渲染与播放。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "class",
+      "name": "LivelyResumeCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "表示恢复播放器运行的 IPC 命令对象。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "function",
+      "name": "LivelyResumeCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "lineRange": [
+        8,
+        10
+      ],
+      "summary": "初始化恢复命令并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "type": "file",
+      "name": "LivelyScreenshotCmd.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "summary": "定义截图请求的消息载荷，携带输出格式、文件路径与延迟参数。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "class",
+      "name": "LivelyScreenshotCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "lineRange": [
+        5,
+        14
+      ],
+      "summary": "表示带格式、目标路径和延迟参数的截图命令对象。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "function",
+      "name": "LivelyScreenshotCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "lineRange": [
+        11,
+        13
+      ],
+      "summary": "初始化截图命令并设置截图消息类型，属性随后承载格式、路径和延迟。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "type": "file",
+      "name": "LivelySlider.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "summary": "定义可序列化的滑块属性消息，以名称、当前值和步长描述可调参数。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "class",
+      "name": "LivelySlider",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "lineRange": [
+        5,
+        14
+      ],
+      "summary": "表示动态壁纸属性中的滑块名称、数值与步长。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "function",
+      "name": "LivelySlider",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "lineRange": [
+        11,
+        13
+      ],
+      "summary": "初始化滑块属性消息并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "type": "file",
+      "name": "LivelySuspendCmd.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "summary": "定义暂停动态壁纸运行的 IPC 命令载荷，供宿主控制播放器挂起。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "class",
+      "name": "LivelySuspendCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "lineRange": [
+        5,
+        11
+      ],
+      "summary": "表示暂停播放器运行的 IPC 命令对象。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "function",
+      "name": "LivelySuspendCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "lineRange": [
+        8,
+        10
+      ],
+      "summary": "初始化暂停命令并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "type": "file",
+      "name": "LivelySystemInformation.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "summary": "封装系统信息文本消息，用于把主机状态传递给动态壁纸内容。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "class",
+      "name": "LivelySystemInformation",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "lineRange": [
+        6,
+        13
+      ],
+      "summary": "封装发送给动态壁纸的系统信息文本。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "function",
+      "name": "LivelySystemInformation",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "lineRange": [
+        10,
+        12
+      ],
+      "summary": "初始化系统信息消息并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "type": "file",
+      "name": "LivelySystemNowPlaying.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "summary": "封装系统当前播放媒体的信息文本，供动态壁纸响应 Now Playing 状态。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "class",
+      "name": "LivelySystemNowPlaying",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "lineRange": [
+        6,
+        13
+      ],
+      "summary": "封装发送给动态壁纸的系统当前播放信息。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "function",
+      "name": "LivelySystemNowPlaying",
+      "filePath": "src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "lineRange": [
+        10,
+        12
+      ],
+      "summary": "初始化当前播放信息消息并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "type": "file",
+      "name": "LivelyTextBox.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "summary": "定义可序列化的文本输入属性消息，以名称和值承载壁纸自定义参数。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "class",
+      "name": "LivelyTextBox",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "lineRange": [
+        5,
+        13
+      ],
+      "summary": "表示动态壁纸属性中的文本框名称和值。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "function",
+      "name": "LivelyTextBox",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "lineRange": [
+        10,
+        12
+      ],
+      "summary": "初始化文本框属性消息并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "type": "file",
+      "name": "LivelyVolumeCmd.cs",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "summary": "定义音量控制消息载荷，用于向播放器传递目标音量。",
+      "tags": [
+        "进程通信",
+        "消息协议",
+        "命令模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "class",
+      "name": "LivelyVolumeCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "lineRange": [
+        5,
+        12
+      ],
+      "summary": "表示向播放器发送的音量控制命令。",
+      "tags": [
+        "消息模型",
+        "进程通信",
+        "序列化",
+        "命令载荷"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "function",
+      "name": "LivelyVolumeCmd",
+      "filePath": "src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "lineRange": [
+        9,
+        11
+      ],
+      "summary": "初始化音量命令并设置对应的消息类型。",
+      "tags": [
+        "构造函数",
+        "消息模型",
+        "初始化",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/MessageType.cs",
+      "type": "file",
+      "name": "MessageType.cs",
+      "filePath": "src/Lively/Lively.Models/Message/MessageType.cs",
+      "summary": "声明 Lively 播放器消息协议的类型枚举，区分命令、属性更新、系统状态与回执等消息。",
+      "tags": [
+        "枚举",
+        "消息协议",
+        "类型标识",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Message/ScreenshotFormat.cs",
+      "type": "file",
+      "name": "ScreenshotFormat.cs",
+      "filePath": "src/Lively/Lively.Models/Message/ScreenshotFormat.cs",
+      "summary": "声明截图命令支持的图像格式枚举，为 IPC 截图请求提供稳定的格式标识。",
+      "tags": [
+        "枚举",
+        "消息协议",
+        "类型标识",
+        "进程通信"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "type": "file",
+      "name": "ScreenLayoutModel.cs",
+      "filePath": "src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "summary": "描述控制面板中的屏幕布局项，组合显示器信息、归一化边界、选择状态与壁纸元数据路径。",
+      "tags": [
+        "布局模型",
+        "多显示器",
+        "持久化",
+        "数据模型"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "class",
+      "name": "ScreenLayoutModel",
+      "filePath": "src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "lineRange": [
+        6,
+        33
+      ],
+      "summary": "聚合单个显示器的布局边界、选择状态、截图及壁纸描述信息。",
+      "tags": [
+        "布局模型",
+        "多显示器",
+        "数据模型",
+        "持久化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "function",
+      "name": "ScreenLayoutModel",
+      "filePath": "src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "lineRange": [
+        8,
+        14
+      ],
+      "summary": "根据显示器、截图、属性文件和标题构建屏幕布局项，并计算归一化边界。",
+      "tags": [
+        "构造函数",
+        "布局模型",
+        "多显示器",
+        "初始化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs",
+      "type": "file",
+      "name": "ScreenSaverLayoutModel.cs",
+      "filePath": "src/Lively/Lively.Models/ScreenSaverLayoutModel.cs",
+      "summary": "保存屏幕保护程序的布局模式及各显示器壁纸映射，作为设置持久化的数据模型。",
+      "tags": [
+        "布局模型",
+        "多显示器",
+        "持久化",
+        "数据模型"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs:ScreenSaverLayoutModel",
+      "type": "class",
+      "name": "ScreenSaverLayoutModel",
+      "filePath": "src/Lively/Lively.Models/ScreenSaverLayoutModel.cs",
+      "lineRange": [
+        6,
+        10
+      ],
+      "summary": "聚合屏保布局模式及显示器到壁纸的映射集合。",
+      "tags": [
+        "布局模型",
+        "多显示器",
+        "数据模型",
+        "持久化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "type": "file",
+      "name": "AppUpdaterEventArgs.cs",
+      "filePath": "src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "summary": "承载应用更新状态、版本、发布日期、下载地址与文件名，供更新服务通过事件通知界面。",
+      "tags": [
+        "事件数据",
+        "数据模型",
+        "状态通知",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "class",
+      "name": "AppUpdaterEventArgs",
+      "filePath": "src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "lineRange": [
+        6,
+        22
+      ],
+      "summary": "为应用更新事件提供状态、版本、日期、地址和文件名。",
+      "tags": [
+        "事件数据",
+        "状态通知",
+        "数据模型",
+        "序列化"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "function",
+      "name": "AppUpdaterEventArgs",
+      "filePath": "src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "lineRange": [
+        8,
+        15
+      ],
+      "summary": "把更新状态、版本、日期、下载地址和文件名封装为事件参数。",
+      "tags": [
+        "构造函数",
+        "事件数据",
+        "状态通知",
+        "初始化"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyResumeCmd.cs:LivelyResumeCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyScreenshotCmd.cs:LivelyScreenshotCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySlider.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySlider.cs:LivelySlider",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySuspendCmd.cs:LivelySuspendCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemInformation.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySystemInformation.cs:LivelySystemInformation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelySystemNowPlaying.cs:LivelySystemNowPlaying",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyTextBox.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyTextBox.cs:LivelyTextBox",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "target": "class:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs",
+      "target": "function:src/Lively/Lively.Models/Message/LivelyVolumeCmd.cs:LivelyVolumeCmd",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "target": "class:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "target": "class:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "target": "function:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenLayoutModel.cs",
+      "target": "function:src/Lively/Lively.Models/ScreenLayoutModel.cs:ScreenLayoutModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs",
+      "target": "class:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs:ScreenSaverLayoutModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs",
+      "target": "class:src/Lively/Lively.Models/ScreenSaverLayoutModel.cs:ScreenSaverLayoutModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "target": "class:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "target": "class:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "target": "function:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs",
+      "target": "function:src/Lively/Lively.Models/Services/AppUpdaterEventArgs.cs:AppUpdaterEventArgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

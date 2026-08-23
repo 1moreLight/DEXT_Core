@@ -1,0 +1,2146 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Package.appxmanifest",
+      "type": "file",
+      "name": "Package.appxmanifest",
+      "filePath": "src/Lively/Lively.UI.WinUI/Package.appxmanifest",
+      "summary": "声明 Lively WinUI 包标识、版本、桌面应用入口、Windows 目标版本、视觉资产与应用描述。",
+      "tags": [
+        "应用清单",
+        "msix",
+        "windows",
+        "deployment"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "MSIX 清单同时声明 Windows.Universal 与 Windows.Desktop 目标设备族，并启动打包后的 Lively.exe。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "type": "file",
+      "name": "DialogNavigator.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "summary": "维护内容对话框内部的 Frame、当前页面和导航历史，为多步骤对话框提供页面切换与重新加载。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:DialogNavigator",
+      "type": "class",
+      "name": "DialogNavigator",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "lineRange": [
+        10,
+        56
+      ],
+      "summary": "管理内容对话框中的 Frame 导航、当前页面与重新加载。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:NavigateTo",
+      "type": "function",
+      "name": "NavigateTo",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "lineRange": [
+        22,
+        28
+      ],
+      "summary": "把导航请求转发到当前 Frame，并更新页面状态。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:Reload",
+      "type": "function",
+      "name": "Reload",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "lineRange": [
+        30,
+        36
+      ],
+      "summary": "重新加载当前页面并保留导航上下文。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:InternalNavigateTo",
+      "type": "function",
+      "name": "InternalNavigateTo",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "lineRange": [
+        38,
+        55
+      ],
+      "summary": "执行实际 Frame 导航并维护当前页面引用。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "type": "file",
+      "name": "DialogService.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "summary": "集中创建并显示显示器、应用选择、主题、壁纸创建、定制、分享、Gallery、确认和进度等 WinUI 对话框。",
+      "tags": [
+        "service",
+        "对话框",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "class",
+      "name": "DialogService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        24,
+        538
+      ],
+      "summary": "构造并排队显示应用各类 WinUI 内容对话框。",
+      "tags": [
+        "service",
+        "winui",
+        "异步操作",
+        "依赖注入"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "function",
+      "name": "DialogService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        32,
+        37
+      ],
+      "summary": "注入本地化、导航和作用域工厂，准备统一对话框服务。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDisplayChooseDialogAsync",
+      "type": "function",
+      "name": "ShowDisplayChooseDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        39,
+        54
+      ],
+      "summary": "构造并异步显示显示器选择对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowApplicationPickerDialogAsync",
+      "type": "function",
+      "name": "ShowApplicationPickerDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        56,
+        64
+      ],
+      "summary": "构造并异步显示应用选择对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDialogAsync",
+      "type": "function",
+      "name": "ShowDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        85,
+        108
+      ],
+      "summary": "构造并异步显示通用内容对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowTextInputDialogAsync",
+      "type": "function",
+      "name": "ShowTextInputDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        110,
+        128
+      ],
+      "summary": "构造并异步显示文本输入对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowThemeDialogAsync",
+      "type": "function",
+      "name": "ShowThemeDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        130,
+        140
+      ],
+      "summary": "构造并异步显示主题选择对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCustomiseWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowCustomiseWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        142,
+        168
+      ],
+      "summary": "构造并异步显示壁纸定制对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDepthWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowDepthWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        170,
+        203
+      ],
+      "summary": "构造并异步显示深度壁纸对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAddWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowAddWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        205,
+        235
+      ],
+      "summary": "构造并异步显示添加壁纸对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperCreateDialogAsync",
+      "type": "function",
+      "name": "ShowWallpaperCreateDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        237,
+        248
+      ],
+      "summary": "构造并异步显示壁纸创建对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:InnerShowWallpaperCreateDialog",
+      "type": "function",
+      "name": "InnerShowWallpaperCreateDialog",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        255,
+        276
+      ],
+      "summary": "构造并异步显示内部壁纸创建对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutDialogAsync",
+      "type": "function",
+      "name": "ShowAboutDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        278,
+        288
+      ],
+      "summary": "构造并异步显示关于应用对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowPatreonSupportersDialogAsync",
+      "type": "function",
+      "name": "ShowPatreonSupportersDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        290,
+        308
+      ],
+      "summary": "构造并异步显示Patreon 支持者对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowControlPanelDialogAsync",
+      "type": "function",
+      "name": "ShowControlPanelDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        310,
+        364
+      ],
+      "summary": "构造并异步显示控制面板对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowHelpDialogAsync",
+      "type": "function",
+      "name": "ShowHelpDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        366,
+        376
+      ],
+      "summary": "构造并异步显示帮助对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowShareWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowShareWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        378,
+        393
+      ],
+      "summary": "构造并异步显示壁纸分享对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowAboutWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        395,
+        408
+      ],
+      "summary": "构造并异步显示壁纸详情对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDeleteWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowDeleteWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        410,
+        422
+      ],
+      "summary": "构造并异步显示删除壁纸对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowReportWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowReportWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        424,
+        438
+      ],
+      "summary": "构造并异步显示举报壁纸对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryRestoreWallpaperDialogAsync",
+      "type": "function",
+      "name": "ShowGalleryRestoreWallpaperDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        440,
+        456
+      ],
+      "summary": "构造并异步显示Gallery 壁纸恢复对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryEditProfileDialogAsync",
+      "type": "function",
+      "name": "ShowGalleryEditProfileDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        458,
+        468
+      ],
+      "summary": "构造并异步显示Gallery 资料编辑对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWaitDialogAsync",
+      "type": "function",
+      "name": "ShowWaitDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        470,
+        492
+      ],
+      "summary": "构造并异步显示等待对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperProjectDirectoryDialogAsync",
+      "type": "function",
+      "name": "ShowWallpaperProjectDirectoryDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        494,
+        507
+      ],
+      "summary": "构造并异步显示壁纸项目目录对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowConfirmationDialogAsync",
+      "type": "function",
+      "name": "ShowConfirmationDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        509,
+        520
+      ],
+      "summary": "构造并异步显示确认对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCancellableProgressDialogAsync",
+      "type": "function",
+      "name": "ShowCancellableProgressDialogAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "lineRange": [
+        522,
+        537
+      ],
+      "summary": "构造并异步显示可取消进度对话框，管理作用域、导航和返回结果。",
+      "tags": [
+        "对话框",
+        "异步操作",
+        "winui",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "type": "file",
+      "name": "DiskCacheService.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "summary": "以 URL 哈希为键把远程文件缓存到本地目录，并按有效期读取或清理过期缓存。",
+      "tags": [
+        "service",
+        "磁盘缓存",
+        "http",
+        "过期清理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "class",
+      "name": "DiskCacheService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        9,
+        100
+      ],
+      "summary": "管理基于 URL 哈希的本地文件缓存和过期清理。",
+      "tags": [
+        "service",
+        "磁盘缓存",
+        "http",
+        "过期清理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "function",
+      "name": "DiskCacheService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        15,
+        20
+      ],
+      "summary": "初始化 HTTP 客户端、缓存目录和缓存有效期。",
+      "tags": [
+        "磁盘缓存",
+        "http",
+        "异步操作",
+        "过期清理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:GetFileFromCacheAsync",
+      "type": "function",
+      "name": "GetFileFromCacheAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        28,
+        48
+      ],
+      "summary": "按 URL 哈希读取有效缓存，缺失时下载文件并写入磁盘。",
+      "tags": [
+        "磁盘缓存",
+        "http",
+        "异步操作",
+        "过期清理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:RemoveExpired",
+      "type": "function",
+      "name": "RemoveExpired",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        50,
+        53
+      ],
+      "summary": "异步启动缓存过期清理。",
+      "tags": [
+        "磁盘缓存",
+        "http",
+        "异步操作",
+        "过期清理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:InternalRemoveExpired",
+      "type": "function",
+      "name": "InternalRemoveExpired",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        55,
+        69
+      ],
+      "summary": "扫描缓存目录并删除超过有效期的文件。",
+      "tags": [
+        "磁盘缓存",
+        "http",
+        "异步操作",
+        "过期清理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:CreateHash64",
+      "type": "function",
+      "name": "CreateHash64",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "lineRange": [
+        88,
+        99
+      ],
+      "summary": "为 URL 计算稳定的 64 位哈希缓存键。",
+      "tags": [
+        "磁盘缓存",
+        "http",
+        "异步操作",
+        "过期清理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "type": "file",
+      "name": "DispatcherService.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "summary": "封装 WinUI DispatcherQueue，把操作安全地排入 UI 线程执行。",
+      "tags": [
+        "service",
+        "ui-thread",
+        "dispatcher",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "class",
+      "name": "DispatcherService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "lineRange": [
+        7,
+        21
+      ],
+      "summary": "把回调封装为可安全投递到 WinUI UI 线程的操作。",
+      "tags": [
+        "service",
+        "winui",
+        "异步操作",
+        "依赖注入"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "function",
+      "name": "DispatcherService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "lineRange": [
+        11,
+        15
+      ],
+      "summary": "捕获当前线程的 DispatcherQueue 作为 UI 调度目标。",
+      "tags": [
+        "ui-thread",
+        "dispatcher",
+        "winui",
+        "事件调度"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:TryEnqueue",
+      "type": "function",
+      "name": "TryEnqueue",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "lineRange": [
+        17,
+        20
+      ],
+      "summary": "尝试把回调排入 WinUI UI 线程队列。",
+      "tags": [
+        "ui-thread",
+        "dispatcher",
+        "winui",
+        "事件调度"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "type": "file",
+      "name": "FileService.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "summary": "统一封装 WinUI 文件、文件夹与保存选择器，提供壁纸过滤器、UWP 兼容选择和打开目录能力。",
+      "tags": [
+        "service",
+        "文件选择器",
+        "winui",
+        "平台集成"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "class",
+      "name": "FileService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        24,
+        182
+      ],
+      "summary": "统一管理文件、文件夹和保存选择器及系统目录打开操作。",
+      "tags": [
+        "service",
+        "文件选择器",
+        "winui",
+        "平台集成"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "function",
+      "name": "FileService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        28,
+        31
+      ],
+      "summary": "注入本地化服务以构建文件选择器显示名称与过滤器。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFileAsync",
+      "type": "function",
+      "name": "PickFileAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        33,
+        51
+      ],
+      "summary": "显示文件选择器并返回符合扩展名条件的单个文件。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickWallpaperFile",
+      "type": "function",
+      "name": "PickWallpaperFile",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        59,
+        65
+      ],
+      "summary": "使用壁纸类型过滤器选择可导入的媒体或壁纸包。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickSaveFileAsync",
+      "type": "function",
+      "name": "PickSaveFileAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        67,
+        87
+      ],
+      "summary": "显示保存选择器并返回用户确认的目标文件。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFolderAsync",
+      "type": "function",
+      "name": "PickFolderAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        89,
+        98
+      ],
+      "summary": "显示文件夹选择器并返回所选目录路径。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:OpenFolderAsync",
+      "type": "function",
+      "name": "OpenFolderAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        100,
+        116
+      ],
+      "summary": "通过系统文件管理器打开目标目录或选中文件。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickSingleFileUwp",
+      "type": "function",
+      "name": "PickSingleFileUwp",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        118,
+        127
+      ],
+      "summary": "使用兼容 UWP/WinUI 的选择器选择单个文件。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickMultipleFileUwp",
+      "type": "function",
+      "name": "PickMultipleFileUwp",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        129,
+        139
+      ],
+      "summary": "使用兼容 UWP/WinUI 的选择器选择多个文件。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:GetWallpaperFilters",
+      "type": "function",
+      "name": "GetWallpaperFilters",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        141,
+        151
+      ],
+      "summary": "根据支持的壁纸类型构建文件扩展名过滤器。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:GetFilterNative",
+      "type": "function",
+      "name": "GetFilterNative",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "lineRange": [
+        164,
+        181
+      ],
+      "summary": "把托管扩展名集合转换为原生文件对话框过滤器。",
+      "tags": [
+        "文件选择器",
+        "平台集成",
+        "winui",
+        "异步操作"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "type": "file",
+      "name": "MainNavigator.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "summary": "维护应用主 Frame、当前页面与导航历史，提供页面跳转和重新加载。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:MainNavigator",
+      "type": "class",
+      "name": "MainNavigator",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "lineRange": [
+        12,
+        63
+      ],
+      "summary": "管理应用主 Frame 的导航、当前页面和重新加载。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:NavigateTo",
+      "type": "function",
+      "name": "NavigateTo",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "lineRange": [
+        24,
+        30
+      ],
+      "summary": "把导航请求转发到当前 Frame，并更新页面状态。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:Reload",
+      "type": "function",
+      "name": "Reload",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "lineRange": [
+        32,
+        38
+      ],
+      "summary": "重新加载当前页面并保留导航上下文。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:InternalNavigateTo",
+      "type": "function",
+      "name": "InternalNavigateTo",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "lineRange": [
+        40,
+        62
+      ],
+      "summary": "执行实际 Frame 导航并维护当前页面引用。",
+      "tags": [
+        "导航服务",
+        "页面路由",
+        "winui",
+        "状态管理"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "type": "file",
+      "name": "MediaFormatConverter.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "summary": "判断媒体文件是否需要转换，并通过格式转换服务生成 Lively 支持的输出。",
+      "tags": [
+        "service",
+        "媒体转换",
+        "格式检测",
+        "异步操作"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:MediaFormatConverter",
+      "type": "class",
+      "name": "MediaFormatConverter",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "lineRange": [
+        10,
+        71
+      ],
+      "summary": "判断媒体兼容性并执行必要的格式转换。",
+      "tags": [
+        "service",
+        "winui",
+        "异步操作",
+        "依赖注入"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:RequiresConversion",
+      "type": "function",
+      "name": "RequiresConversion",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "lineRange": [
+        18,
+        46
+      ],
+      "summary": "根据输入扩展名与目标播放器判断媒体是否需要转码。",
+      "tags": [
+        "媒体转换",
+        "格式检测",
+        "异步操作",
+        "service"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:TryConvertAsync",
+      "type": "function",
+      "name": "TryConvertAsync",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "lineRange": [
+        48,
+        70
+      ],
+      "summary": "调用媒体转换流程生成兼容格式，并返回成功状态与输出路径。",
+      "tags": [
+        "媒体转换",
+        "格式检测",
+        "异步操作",
+        "service"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "type": "file",
+      "name": "ResourceService.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "summary": "通过 WinUI ResourceLoader 获取本地化字符串，并切换指定文化或系统默认文化。",
+      "tags": [
+        "service",
+        "本地化",
+        "resource-loader",
+        "文化切换"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "ResourceLoader 根据当前 PrimaryLanguageOverride 从对应 RESW 资源映射中解析字符串。"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "class",
+      "name": "ResourceService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "lineRange": [
+        12,
+        86
+      ],
+      "summary": "从 WinUI 资源映射读取字符串并切换应用文化。",
+      "tags": [
+        "service",
+        "本地化",
+        "resource-loader",
+        "文化切换"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "function",
+      "name": "ResourceService",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "lineRange": [
+        17,
+        22
+      ],
+      "summary": "初始化 WinUI ResourceLoader 以读取当前文化资源。",
+      "tags": [
+        "本地化",
+        "resource-loader",
+        "文化切换",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:GetString",
+      "type": "function",
+      "name": "GetString",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "lineRange": [
+        29,
+        48
+      ],
+      "summary": "按资源键读取当前文化的本地化字符串。",
+      "tags": [
+        "本地化",
+        "resource-loader",
+        "文化切换",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetCulture",
+      "type": "function",
+      "name": "SetCulture",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "lineRange": [
+        50,
+        80
+      ],
+      "summary": "设置应用语言覆盖并重建资源加载器。",
+      "tags": [
+        "本地化",
+        "resource-loader",
+        "文化切换",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetSystemDefaultCulture",
+      "type": "function",
+      "name": "SetSystemDefaultCulture",
+      "filePath": "src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "lineRange": [
+        82,
+        85
+      ],
+      "summary": "清除语言覆盖，恢复系统默认文化资源。",
+      "tags": [
+        "本地化",
+        "resource-loader",
+        "文化切换",
+        "winui"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/StartArgs.cs",
+      "type": "file",
+      "name": "StartArgs.cs",
+      "filePath": "src/Lively/Lively.UI.WinUI/StartArgs.cs",
+      "summary": "声明 WinUI 应用的命令行开关，用于仅启动托盘组件或直接打开更新页面。",
+      "tags": [
+        "命令行参数",
+        "启动模式",
+        "winui",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.UI.WinUI/StartArgs.cs:StartArgs",
+      "type": "class",
+      "name": "StartArgs",
+      "filePath": "src/Lively/Lively.UI.WinUI/StartArgs.cs",
+      "lineRange": [
+        5,
+        16
+      ],
+      "summary": "聚合托盘模式与更新页面启动开关。",
+      "tags": [
+        "命令行参数",
+        "启动模式",
+        "数据模型",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/af-ZA/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/af-ZA/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供南非荷兰语（南非）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "af-za"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/ar-AE/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/ar-AE/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供阿拉伯语（阿联酋）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "ar-ae"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    },
+    {
+      "id": "file:src/Lively/Lively.UI.WinUI/Strings/az-Latn/Resources.resw",
+      "type": "file",
+      "name": "Resources.resw",
+      "filePath": "src/Lively/Lively.UI.WinUI/Strings/az-Latn/Resources.resw",
+      "summary": "为 Lively WinUI 界面提供阿塞拜疆语（拉丁字母）本地化字符串，包含 384 个资源键，覆盖设置、壁纸库、Gallery、对话框和状态提示。",
+      "tags": [
+        "本地化",
+        "资源字典",
+        "界面文案",
+        "az-latn"
+      ],
+      "complexity": "complex",
+      "languageNotes": "RESW 使用相同资源键和不同区域值接入 WinUI PRI 本地化管线。"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:DialogNavigator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:DialogNavigator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:NavigateTo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:NavigateTo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:Reload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:Reload",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogNavigator.cs:InternalNavigateTo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:DialogService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDisplayChooseDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDisplayChooseDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowApplicationPickerDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowApplicationPickerDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowTextInputDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowTextInputDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowThemeDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowThemeDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCustomiseWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCustomiseWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDepthWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDepthWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAddWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAddWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperCreateDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperCreateDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:InnerShowWallpaperCreateDialog",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowPatreonSupportersDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowPatreonSupportersDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowControlPanelDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowControlPanelDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowHelpDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowHelpDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowShareWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowShareWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowAboutWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDeleteWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowDeleteWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowReportWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowReportWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryRestoreWallpaperDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryRestoreWallpaperDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryEditProfileDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowGalleryEditProfileDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWaitDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWaitDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperProjectDirectoryDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowWallpaperProjectDirectoryDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowConfirmationDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowConfirmationDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCancellableProgressDialogAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DialogService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DialogService.cs:ShowCancellableProgressDialogAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:DiskCacheService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:GetFileFromCacheAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:GetFileFromCacheAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:RemoveExpired",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:RemoveExpired",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:InternalRemoveExpired",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DiskCacheService.cs:CreateHash64",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:DispatcherService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:TryEnqueue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/DispatcherService.cs:TryEnqueue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:FileService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFileAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFileAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickWallpaperFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickWallpaperFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickSaveFileAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickSaveFileAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFolderAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickFolderAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:OpenFolderAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:OpenFolderAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickSingleFileUwp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:PickMultipleFileUwp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:GetWallpaperFilters",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/FileService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/FileService.cs:GetFilterNative",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:MainNavigator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:MainNavigator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:NavigateTo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:NavigateTo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:Reload",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:Reload",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MainNavigator.cs:InternalNavigateTo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:MediaFormatConverter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:MediaFormatConverter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:RequiresConversion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:RequiresConversion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:TryConvertAsync",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/MediaFormatConverter.cs:TryConvertAsync",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:ResourceService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:GetString",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:GetString",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetCulture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetCulture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetSystemDefaultCulture",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs",
+      "target": "function:src/Lively/Lively.UI.WinUI/Services/ResourceService.cs:SetSystemDefaultCulture",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/StartArgs.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/StartArgs.cs:StartArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/Lively/Lively.UI.WinUI/StartArgs.cs",
+      "target": "class:src/Lively/Lively.UI.WinUI/StartArgs.cs:StartArgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}

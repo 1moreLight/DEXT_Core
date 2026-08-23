@@ -1,0 +1,814 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "type": "file",
+      "name": "IApplicationActivationManager.cs",
+      "filePath": "src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "summary": "声明 ApplicationActivationManager 的 COM 接口契约，映射按应用、文件和协议激活 Windows 应用的原生方法。",
+      "tags": [
+        "interop",
+        "com",
+        "windows-api"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "type": "file",
+      "name": "IDesktopWallpaper.cs",
+      "filePath": "src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "summary": "映射 Windows IDesktopWallpaper COM 接口及其 coclass，提供壁纸路径、显示器矩形、背景色、布局、幻灯片和启用状态控制。",
+      "tags": [
+        "interop",
+        "com",
+        "windows-api"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/CommandlineArgs.cs",
+      "type": "file",
+      "name": "CommandlineArgs.cs",
+      "filePath": "src/Lively/Lively.Common/CommandlineArgs.cs",
+      "summary": "集中定义 Lively 命令行 verb 与 option 模型，覆盖应用控制、设置或关闭壁纸、播放定位、自定义属性、屏幕保护程序和截图操作。",
+      "tags": [
+        "command-line",
+        "automation",
+        "type-definition"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "使用 CommandLineParser 的 Verb/Option attribute 声明 CLI，并用 nullable bool 区分未提供参数与显式布尔值。"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Constants.cs",
+      "type": "file",
+      "name": "Constants.cs",
+      "filePath": "src/Lively/Lively.Common/Constants.cs",
+      "summary": "集中维护应用数据、日志、缓存、壁纸与主题目录，播放器可执行文件、机器学习模型、单实例命名及默认播放器等共享常量。",
+      "tags": [
+        "configuration",
+        "paths",
+        "shared-constants"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "type": "file",
+      "name": "ScreenNotFoundException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "summary": "定义 `ScreenNotFoundException` 异常，用于表示找不到目标显示器，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "type": "file",
+      "name": "WallpaperFileException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "summary": "定义 `WallpaperFileException` 异常，用于表示壁纸文件读取或处理失败，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "type": "file",
+      "name": "WallpaperNotAllowedException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "summary": "定义 `WallpaperNotAllowedException` 异常，用于表示当前策略不允许运行目标壁纸，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "type": "file",
+      "name": "WallpaperNotFoundException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "summary": "定义 `WallpaperNotFoundException` 异常，用于表示找不到目标壁纸，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "type": "file",
+      "name": "WallpaperPluginException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "summary": "定义 `WallpaperPluginException` 异常，用于表示壁纸插件执行失败，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "type": "file",
+      "name": "WallpaperPluginMediaCodecException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "summary": "定义 `WallpaperPluginMediaCodecException` 异常，用于表示壁纸插件缺少所需媒体编解码器，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "type": "file",
+      "name": "WallpaperPluginNotFoundException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "summary": "定义 `WallpaperPluginNotFoundException` 异常，用于表示找不到壁纸插件，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "type": "file",
+      "name": "WallpaperWebView2NotFoundException.cs",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "summary": "定义 `WallpaperWebView2NotFoundException` 异常，用于表示系统缺少壁纸运行所需的 WebView2 Runtime，并保留标准的消息与内部异常构造方式。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "desktop-wallpaper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs:IApplicationActivationManager",
+      "type": "class",
+      "name": "IApplicationActivationManager",
+      "filePath": "src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "lineRange": [
+        10,
+        18
+      ],
+      "summary": "声明 Windows Application Activation Manager 的 COM 方法签名与 GUID 契约。",
+      "tags": [
+        "type-definition",
+        "interface",
+        "interop"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:IDesktopWallpaper",
+      "type": "class",
+      "name": "IDesktopWallpaper",
+      "filePath": "src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "lineRange": [
+        11,
+        55
+      ],
+      "summary": "声明 Windows Desktop Wallpaper COM API 的强类型方法集合。",
+      "tags": [
+        "type-definition",
+        "interface",
+        "interop"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:DesktopWallpaperClass",
+      "type": "class",
+      "name": "DesktopWallpaperClass",
+      "filePath": "src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "lineRange": [
+        103,
+        106
+      ],
+      "summary": "提供 IDesktopWallpaper 对应 COM coclass 的激活类型定义。",
+      "tags": [
+        "interop",
+        "com",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/CommandlineArgs.cs:CommandlineArgs",
+      "type": "class",
+      "name": "CommandlineArgs",
+      "filePath": "src/Lively/Lively.Common/CommandlineArgs.cs",
+      "lineRange": [
+        10,
+        157
+      ],
+      "summary": "作为静态容器组织 Lively 的命令行 verb 与 option 数据类型。",
+      "tags": [
+        "type-definition",
+        "static-class",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Constants.cs:Constants",
+      "type": "class",
+      "name": "Constants",
+      "filePath": "src/Lively/Lively.Common/Constants.cs",
+      "lineRange": [
+        8,
+        97
+      ],
+      "summary": "作为静态容器组织路径、播放器、单实例、机器学习和应用默认值。",
+      "tags": [
+        "type-definition",
+        "static-class",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "class",
+      "name": "ScreenNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示找不到目标显示器的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "function",
+      "name": "ScreenNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `ScreenNotFoundException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "class",
+      "name": "WallpaperFileException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "lineRange": [
+        7,
+        22
+      ],
+      "summary": "表示壁纸文件读取或处理失败的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "function",
+      "name": "WallpaperFileException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "lineRange": [
+        9,
+        11
+      ],
+      "summary": "构造 `WallpaperFileException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "class",
+      "name": "WallpaperNotAllowedException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示当前策略不允许运行目标壁纸的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "function",
+      "name": "WallpaperNotAllowedException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `WallpaperNotAllowedException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "class",
+      "name": "WallpaperNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示找不到目标壁纸的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "function",
+      "name": "WallpaperNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `WallpaperNotFoundException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "class",
+      "name": "WallpaperPluginException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示壁纸插件执行失败的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "function",
+      "name": "WallpaperPluginException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `WallpaperPluginException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "class",
+      "name": "WallpaperPluginMediaCodecException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "lineRange": [
+        8,
+        23
+      ],
+      "summary": "表示壁纸插件缺少所需媒体编解码器的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "function",
+      "name": "WallpaperPluginMediaCodecException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "lineRange": [
+        10,
+        12
+      ],
+      "summary": "构造 `WallpaperPluginMediaCodecException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "class",
+      "name": "WallpaperPluginNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示找不到壁纸插件的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "function",
+      "name": "WallpaperPluginNotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `WallpaperPluginNotFoundException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "class",
+      "name": "WallpaperWebView2NotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "lineRange": [
+        5,
+        20
+      ],
+      "summary": "表示系统缺少壁纸运行所需的 WebView2 Runtime的领域异常，并提供标准 .NET 异常构造语义。",
+      "tags": [
+        "exception",
+        "error-handling",
+        "class"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "function",
+      "name": "WallpaperWebView2NotFoundException",
+      "filePath": "src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "lineRange": [
+        7,
+        9
+      ],
+      "summary": "构造 `WallpaperWebView2NotFoundException`，支持默认消息、自定义消息及 inner exception 等标准异常初始化方式。 此节点代表结构结果中的 3 个同名 overload。",
+      "tags": [
+        "method",
+        "constructor",
+        "error-handling"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs:IApplicationActivationManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IApplicationActivationManager.cs:IApplicationActivationManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:IDesktopWallpaper",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:IDesktopWallpaper",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:DesktopWallpaperClass",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs",
+      "target": "class:src/Lively/Lively.Common/Com/IDesktopWallpaper.cs:DesktopWallpaperClass",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/CommandlineArgs.cs",
+      "target": "class:src/Lively/Lively.Common/CommandlineArgs.cs:CommandlineArgs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/CommandlineArgs.cs",
+      "target": "class:src/Lively/Lively.Common/CommandlineArgs.cs:CommandlineArgs",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Constants.cs",
+      "target": "class:src/Lively/Lively.Common/Constants.cs:Constants",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Constants.cs",
+      "target": "class:src/Lively/Lively.Common/Constants.cs:Constants",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/ScreenNotFoundException.cs:ScreenNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperFileException.cs:WallpaperFileException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotAllowedException.cs:WallpaperNotAllowedException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperNotFoundException.cs:WallpaperNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginException.cs:WallpaperPluginException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginMediaCodecException.cs:WallpaperPluginMediaCodecException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperPluginNotFoundException.cs:WallpaperPluginNotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "target": "class:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs",
+      "target": "function:src/Lively/Lively.Common/Exceptions/WallpaperWebView2NotFoundException.cs:WallpaperWebView2NotFoundException",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ]
+}
