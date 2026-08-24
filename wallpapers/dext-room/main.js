@@ -132,10 +132,9 @@ function switchDesk(delta) {
   switching = true;
 
   const next = (currentDesk + delta + ROOM.desks.length) % ROOM.desks.length;
-  transitionTextEl.textContent = ROOM.transitionText(
-    ROOM.desks[currentDesk].name,
-    ROOM.desks[next].name
-  );
+  transitionTextEl.textContent = ROOM.transitionText
+    ? ROOM.transitionText(ROOM.desks[currentDesk].name, ROOM.desks[next].name)
+    : `正在进入 ${ROOM.desks[next].name} ...`;
 
   transitionEl.classList.add("active", "fade-in");
 
