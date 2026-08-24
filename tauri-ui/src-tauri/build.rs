@@ -1,4 +1,5 @@
 fn main() {
+    println!("cargo:rerun-if-changed=proto");
     tauri_build::build();
 
     let fds = protox::compile(

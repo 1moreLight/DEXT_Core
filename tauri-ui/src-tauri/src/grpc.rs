@@ -86,6 +86,7 @@ enum ParseNext {
 }
 
 fn parse_next(buf: &mut Vec<u8>) -> Result<ParseNext, String> {
+    // peek: don't consume anything unless the full message (+ payload) is available
     let msg_len = {
         let mut cursor = std::io::Cursor::new(&*buf);
         match prost::decode_length_delimiter(&mut cursor) {
@@ -93,27 +94,32 @@ fn parse_next(buf: &mut Vec<u8>) -> Result<ParseNext, String> {
             Err(_) => return Ok(ParseNext::Incomplete),
         }
     };
-    if buf.len() < msg_len + prost::length_delimiter_len(msg_len) {
+    let header_len = prost::length_delimiter_len(msg_len);
+    let total = header_len + msg_len;
+    if buf.len() < total {
         return Ok(ParseNext::Incomplete);
     }
-    let header_len = prost::length_delimiter_len(msg_len);
-    let msg_bytes: Vec<u8> = buf.drain(0..header_len + msg_len).collect();
-    let msg = TransportMessage::decode(&msg_bytes[header_len..])
+    let msg = TransportMessage::decode(&buf[header_len..total])
         .map_err(|e| format!("bad transport message: {e}"))?;
 
     match msg.data {
         Some(Data::Headers(_)) | Some(Data::RequestInit(_)) | Some(Data::RequestControl(_)) => {
+            buf.drain(0..total);
             Ok(ParseNext::Skip)
         }
         Some(Data::PayloadInfo(info)) => {
             let size = info.size as usize;
-            if buf.len() < size {
+            if buf.len() < total + size {
                 return Ok(ParseNext::Incomplete);
             }
+            buf.drain(0..total);
             let payload: Vec<u8> = buf.drain(0..size).collect();
             Ok(ParseNext::Payload(payload))
         }
-        Some(Data::Trailers(t)) => Ok(ParseNext::Done(t.status_code)),
+        Some(Data::Trailers(t)) => {
+            buf.drain(0..total);
+            Ok(ParseNext::Done(t.status_code))
+        }
         None => Err("empty transport message".into()),
     }
 }
@@ -179,12 +185,68 @@ pub async fn set_wallpaper(folder: &str) -> Result<(), String> {
     .map(|_| ())
 }
 
+#[derive(serde::Serialize)]
+pub struct AppInfoDto {
+    pub name: String,
+    pub target: String,
+    pub arguments: String,
+    pub working_dir: String,
+    pub icon_png: String, // base64
+    pub source: String,
+}
+
+pub async fn get_installed_apps() -> Result<Vec<AppInfoDto>, String> {
+    use base64::Engine;
+    let payloads = call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetInstalledApps",
+        &[],
+    )
+    .await?;
+    let mut out = Vec::new();
+    for p in payloads {
+        if p.is_empty() {
+            continue;
+        }
+        let item = crate::proto::desktop::AppInfo::decode(&p[..]).map_err(|e| e.to_string())?;
+        out.push(AppInfoDto {
+            name: item.name,
+            target: item.target,
+            arguments: item.arguments,
+            working_dir: item.working_dir,
+            icon_png: base64::engine::general_purpose::STANDARD.encode(item.icon_png),
+            source: item.source,
+        });
+    }
+    Ok(out)
+}
+
+pub async fn launch_app(target: String, arguments: String, working_dir: String) -> Result<(), String> {
+    let req = crate::proto::desktop::LaunchAppRequest {
+        target,
+        arguments,
+        working_dir,
+    };
+    call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/LaunchApp",
+        &req.encode_to_vec(),
+    )
+    .await
+    .map(|_| ())
+}
+
 #[cfg(test)]
 mod tests {
     #[tokio::test]
-    async fn applies_room_wallpaper() {
-        super::set_wallpaper(r"D:\midDOW\dext-room-wallpaper")
+    async fn apps_and_launch() {
+        let apps = super::get_installed_apps().await.expect("get_installed_apps failed");
+        println!("installed apps: {}", apps.len());
+        assert!(!apps.is_empty(), "no apps enumerated");
+        let obsidian = apps.iter().find(|a| a.target.contains("Obsidian"));
+        if let Some(o) = obsidian {
+            println!("obsidian: {} icon_bytes~{}", o.target, o.icon_png.len());
+        }
+        super::launch_app("notepad.exe".into(), String::new(), String::new())
             .await
-            .expect("set_wallpaper failed");
+            .expect("launch_app failed");
     }
 }

@@ -20,6 +20,16 @@ async fn get_wallpapers() -> Result<Vec<grpc::WallpaperInfo>, String> {
 }
 
 #[tauri::command]
+async fn get_installed_apps() -> Result<Vec<grpc::AppInfoDto>, String> {
+    grpc::get_installed_apps().await
+}
+
+#[tauri::command]
+async fn launch_app(target: String, arguments: String, working_dir: String) -> Result<(), String> {
+    grpc::launch_app(target, arguments, working_dir).await
+}
+
+#[tauri::command]
 async fn core_stats() -> Result<String, String> {
     grpc::core_stats().await
 }
@@ -28,7 +38,12 @@ async fn core_stats() -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_wallpapers, core_stats])
+        .invoke_handler(tauri::generate_handler![
+            get_wallpapers,
+            get_installed_apps,
+            launch_app,
+            core_stats
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

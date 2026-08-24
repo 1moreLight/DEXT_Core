@@ -3780,6 +3780,7 @@ dependencies = [
 name = "tauri-ui"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "prost",
  "prost-build",
  "prost-types",
