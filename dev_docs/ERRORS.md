@@ -56,3 +56,10 @@
 - 症状：用 PS -replace + Set-Content 改 TODO.md 后文件带 BOM；含中文/反引号的行正则漏匹配
 - 解决：结构化改写一律用 node -e（JSON/UTF-8 无 BOM）；打标用编辑工具逐条改
 - 防再犯：dev_docs 的批量改写别走 PS 管道
+
+## 10. node -e 里的 $1 被 PowerShell 双引号吞掉
+
+- 症状：
+ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，替换结果丢字
+- 根因：PowerShell 双引号字符串先做自己的变量插值，$1 是 PS 的空变量
+- 解决：跨 PS 传正则替换时用单引号包 node 脚本，或干脆用编辑工具逐条改

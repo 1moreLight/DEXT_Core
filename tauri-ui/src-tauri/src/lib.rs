@@ -36,6 +36,8 @@ const WALLPAPER_DIR: &str = r"D:\midDOW\lively-core-separation\wallpapers\dext-r
 struct RoomInfo {
     name: String,
     path: String,
+    desks: usize,
+    icons: usize,
 }
 
 #[tauri::command]
@@ -45,9 +47,22 @@ async fn list_rooms(dir: String) -> Result<Vec<RoomInfo>, String> {
         let entry = entry.map_err(|e| e.to_string())?;
         let p = entry.path();
         if p.is_dir() && p.join("room.json").is_file() {
+            let (mut desks, mut icons) = (0usize, 0usize);
+            if let Ok(txt) = std::fs::read_to_string(p.join("room.json")) {
+                if let Ok(j) = serde_json::from_str::<serde_json::Value>(&txt) {
+                    if let Some(arr) = j["desks"].as_array() {
+                        desks = arr.len();
+                        for d in arr {
+                            icons += d["icons"].as_array().map(|a| a.len()).unwrap_or(0);
+                        }
+                    }
+                }
+            }
             out.push(RoomInfo {
                 name: entry.file_name().to_string_lossy().into_owned(),
                 path: p.to_string_lossy().into_owned(),
+                desks,
+                icons,
             });
         }
     }
@@ -113,6 +128,40 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
     grpc::set_wallpaper(WALLPAPER_DIR).await
 }
 
+// dext:// protocol maps the wallpaper package dir into the configurator webview,
+// so the editor can embed the real renderer in an iframe (preview).
+fn serve_package_file(url_path: &str) -> tauri::http::Response<Vec<u8>> {
+    use percent_encoding::percent_decode_str;
+    let decoded = percent_decode_str(url_path.trim_start_matches('/'))
+        .decode_utf8_lossy()
+        .into_owned();
+    if decoded.split(['/', '\\']).any(|s| s == "..") {
+        return tauri::http::Response::builder().status(403).body(Vec::new()).unwrap();
+    }
+    let full = std::path::Path::new(WALLPAPER_DIR).join(&decoded);
+    match std::fs::read(&full) {
+        Ok(bytes) => {
+            let mime = match full.extension().and_then(|e| e.to_str()).unwrap_or("") {
+                "html" => "text/html; charset=utf-8",
+                "css" => "text/css; charset=utf-8",
+                "js" => "text/javascript; charset=utf-8",
+                "json" => "application/json",
+                "png" => "image/png",
+                "jpg" | "jpeg" => "image/jpeg",
+                "svg" => "image/svg+xml",
+                "mp4" => "video/mp4",
+                "webm" => "video/webm",
+                _ => "application/octet-stream",
+            };
+            tauri::http::Response::builder()
+                .header("Content-Type", mime)
+                .body(bytes)
+                .unwrap()
+        }
+        Err(_) => tauri::http::Response::builder().status(404).body(Vec::new()).unwrap(),
+    }
+}
+
 #[tauri::command]
 async fn set_wallpaper(folder: String) -> Result<(), String> {
     grpc::set_wallpaper(&folder).await
@@ -127,6 +176,9 @@ async fn core_stats() -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .register_uri_scheme_protocol("dext", |_ctx, request| {
+            serve_package_file(request.uri().path())
+        })
         .invoke_handler(tauri::generate_handler![
             get_wallpapers,
             get_installed_apps,

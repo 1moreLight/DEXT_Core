@@ -168,4 +168,13 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") switchDesk(-1);
 });
 
+window.addEventListener("message", (e) => {
+  const d = e.data;
+  if (d?.type === "dext:room" && d.room?.desks?.length) {
+    ROOM = d.room;
+    currentDesk = Math.min(d.deskIndex ?? 0, ROOM.desks.length - 1);
+    renderDesk(currentDesk);
+  }
+});
+
 loadRoom();
