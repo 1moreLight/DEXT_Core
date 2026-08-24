@@ -66,6 +66,9 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-25 | **Room = 文件夹** { room.json + background/ 素材 }，导出分享 = zip。指令与素材分离；素材跨房间重复占用问题先不解决(YAGNI)，痛了再做哈希去重库。图标例外：仍内嵌 base64（程序生成的小图，不算素材） |
 | 2026-08-25 | schema 固版 v1 后做 AI skill（提示词模板生成合法房间） |
 | 2026-08-25 | 终局方向：Steam 创意工坊模式（创作者上传/用户下载） |
+| 2026-08-25 | 房间库默认在仓库 `rooms/` 目录，库路径可指定（前端 localStorage 记住）；**路径一律用英文/ASCII**（中文目录名在 PS 控制台/工具链易乱码） |
+| 2026-08-25 | 无背景 desk = 纯黑兜底：body 已 #000 + 渲染器空值守卫，不造黑色图片文件 |
+| 2026-08-25 | 应用机制：apply_room 把房间数据（room.json + background/）拷进壁纸包目录再 SetWallpaper——因 WebView2 虚拟主机只能读包内文件 |
 
 ## 当前 room.json 隐式 schema (v0)
 

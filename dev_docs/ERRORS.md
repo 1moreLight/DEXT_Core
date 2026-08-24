@@ -50,3 +50,9 @@
 - 症状：ConvertFrom-Json 对含中文的 room.json 报"无效对象"
 - 根因：PS5.1 默认按 ANSI 读文件，多字节字符被拆坏
 - 说明：仅 PS 工具链问题，浏览器 fetch 正常；PS 里需 -Encoding UTF8
+
+## 9. PowerShell 改写 UTF-8 文件会加 BOM / 正则匹配中文易漏
+
+- 症状：用 PS -replace + Set-Content 改 TODO.md 后文件带 BOM；含中文/反引号的行正则漏匹配
+- 解决：结构化改写一律用 node -e（JSON/UTF-8 无 BOM）；打标用编辑工具逐条改
+- 防再犯：dev_docs 的批量改写别走 PS 管道

@@ -101,7 +101,7 @@ function launchApp(launch) {
 
 function renderDesk(index) {
   const desk = ROOM.desks[index];
-  bgEl.style.backgroundImage = `url("${desk.background}")`;
+  bgEl.style.backgroundImage = desk.background ? `url("${desk.background}")` : "none";
   indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
 
   iconLayer.innerHTML = "";

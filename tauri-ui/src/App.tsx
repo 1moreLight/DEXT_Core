@@ -24,10 +24,15 @@ interface Desk {
   icons: RoomIcon[];
 }
 
-const BACKGROUND = "assets/desk1-bg.png";
+interface RoomInfo {
+  name: string;
+  path: string;
+}
+
+const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
 
 function newDesk(index: number): Desk {
-  return { name: `Desk ${index + 1}`, background: BACKGROUND, icons: [] };
+  return { name: `Desk ${index + 1}`, background: "", icons: [] };
 }
 
 function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
@@ -45,6 +50,12 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [renaming, setRenaming] = useState<number | null>(null);
   const [status, setStatus] = useState("loading...");
+  const [libDir, setLibDir] = useState(
+    () => localStorage.getItem("dext.libDir") ?? DEFAULT_LIB
+  );
+  const [rooms, setRooms] = useState<RoomInfo[]>([]);
+  const [roomPath, setRoomPath] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     invoke<AppInfo[]>("get_installed_apps")
@@ -55,7 +66,118 @@ export default function App() {
       .catch((e) => setStatus(`error: ${e}`));
   }, []);
 
+  useEffect(() => {
+    refreshRooms(libDir).then(async (list) => {
+      const last = localStorage.getItem("dext.roomPath");
+      const target = list.find((r) => r.path === last)?.path ?? list[0]?.path;
+      if (target) await openRoom(target, false);
+    });
+  }, []);
+
+  async function refreshRooms(dir: string): Promise<RoomInfo[]> {
+    try {
+      const list = await invoke<RoomInfo[]>("list_rooms", { dir });
+      setRooms(list);
+      return list;
+    } catch (e) {
+      setStatus(`error: ${e}`);
+      return [];
+    }
+  }
+
+  async function openRoom(path: string, checkDirty = true) {
+    if (
+      checkDirty &&
+      dirty &&
+      !confirm("当前房间有未保存的修改，丢弃并切换？")
+    )
+      return;
+    try {
+      const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
+      const room = JSON.parse(json);
+      setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
+      setActiveDesk(0);
+      setRoomPath(path);
+      setDirty(false);
+      localStorage.setItem("dext.roomPath", path);
+      setStatus(`已打开 ${path.split("\\").pop()}`);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  function touch() {
+    setDirty(true);
+  }
+
+  async function saveRoom(): Promise<boolean> {
+    if (!roomPath) return false;
+    try {
+      await invoke("write_room", {
+        path: `${roomPath}\\room.json`,
+        roomJson: JSON.stringify({ desks }, null, 2),
+      });
+      setDirty(false);
+      return true;
+    } catch (e) {
+      setStatus(`error: ${e}`);
+      return false;
+    }
+  }
+
+  async function saveAndApply() {
+    if (!roomPath) {
+      setStatus("先新建或选择一个房间");
+      return;
+    }
+    setStatus("saving...");
+    if (!(await saveRoom())) return;
+    try {
+      await invoke("apply_room", { roomDir: roomPath });
+      const total = desks.reduce((n, d) => n + d.icons.length, 0);
+      setStatus(`已应用 ${desks.length} Desk / ${total} 图标`);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  async function newRoom() {
+    const name = prompt("房间名（建议英文）");
+    if (!name) return;
+    try {
+      const path = await invoke<string>("create_room", { dir: libDir, name });
+      await refreshRooms(libDir);
+      await openRoom(path, false);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  async function saveAs() {
+    const name = prompt("另存为（建议英文）");
+    if (!name) return;
+    try {
+      const path = await invoke<string>("create_room", { dir: libDir, name });
+      await invoke("write_room", {
+        path: `${path}\\room.json`,
+        roomJson: JSON.stringify({ desks }, null, 2),
+      });
+      await refreshRooms(libDir);
+      await openRoom(path, false);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  async function changeLib(dir: string) {
+    const d = dir.trim();
+    setLibDir(d);
+    localStorage.setItem("dext.libDir", d);
+    refreshRooms(d);
+  }
+
   function toggle(app: AppInfo) {
+    touch();
     setDesks((prev) =>
       prev.map((d, i) => {
         if (i !== activeDesk) return d;
@@ -71,6 +193,7 @@ export default function App() {
   }
 
   function removeIcon(target: string) {
+    touch();
     setDesks((prev) =>
       prev.map((d, i) =>
         i === activeDesk ? { ...d, icons: d.icons.filter((x) => x.launch.target !== target) } : d
@@ -79,32 +202,16 @@ export default function App() {
   }
 
   function addDesk() {
+    touch();
     setDesks((prev) => [...prev, newDesk(prev.length)]);
     setActiveDesk(desks.length);
   }
 
   function removeDesk(i: number) {
     if (desks.length === 1) return;
+    touch();
     setDesks((prev) => prev.filter((_, x) => x !== i));
     setActiveDesk(0);
-  }
-
-  async function saveAndApply() {
-    const total = desks.reduce((n, d) => n + d.icons.length, 0);
-    if (total === 0) {
-      setStatus("先选择至少一个应用");
-      return;
-    }
-    try {
-      setStatus("saving...");
-      await invoke("save_room", { roomJson: JSON.stringify({ desks }, null, 2) });
-      await invoke("set_wallpaper", {
-        folder: "D:\\midDOW\\lively-core-separation\\wallpapers\\dext-room",
-      });
-      setStatus(`已应用 ${desks.length} Desk / ${total} 图标`);
-    } catch (e) {
-      setStatus(`error: ${e}`);
-    }
   }
 
   const desk = desks[activeDesk];
@@ -115,8 +222,44 @@ export default function App() {
   return (
     <main className="flex h-screen flex-col bg-background text-foreground">
       {/* top bar */}
-      <header className="flex items-center justify-between border-b border-border px-5 py-3">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
         <h1 className="text-lg font-semibold">Dext · Room 编辑器</h1>
+        <div className="flex items-center gap-2">
+          <select
+            value={roomPath ?? ""}
+            onChange={(e) => openRoom(e.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            title="当前房间"
+          >
+            {rooms.length === 0 && <option value="">（无房间）</option>}
+            {rooms.map((r) => (
+              <option key={r.path} value={r.path}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+          {dirty && (
+            <span className="text-xs font-medium text-amber-500" title="有未保存修改">
+              ●
+            </span>
+          )}
+          <Button variant="outline" size="sm" onClick={newRoom}>
+            新建
+          </Button>
+          <Button variant="outline" size="sm" onClick={saveAs}>
+            另存为
+          </Button>
+          <Input
+            value={libDir}
+            onChange={(e) => setLibDir(e.target.value)}
+            onBlur={(e) => {
+              if (e.target.value !== localStorage.getItem("dext.libDir"))
+                changeLib(e.target.value);
+            }}
+            className="h-8 w-64 text-xs"
+            title="房间库路径"
+          />
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">{status}</span>
           <Button onClick={saveAndApply}>保存并应用</Button>
@@ -145,6 +288,7 @@ export default function App() {
                     className="h-7 text-sm"
                     onClick={(e) => e.stopPropagation()}
                     onBlur={(e) => {
+                      touch();
                       setDesks((prev) =>
                         prev.map((x, xi) =>
                           xi === i ? { ...x, name: e.target.value || x.name } : x

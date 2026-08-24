@@ -20,6 +20,18 @@
 
 ## 当前阶段：共享渲染器 + Schema v1
 
+### Phase 1：房间库最小闭环（2026-08-25 追加，优先执行）
+
+- [x] 2026-08-25 迁移现有房间 → `rooms/my-room/`（background/ 素材分离，路径改写）
+- [x] 2026-08-25 新建 `rooms/black-room/` 示例（空背景 → 纯黑兜底）
+- [x] 2026-08-25 Rust 命令：list_rooms / read_room / write_room / create_room / apply_room（拷数据进壁纸包+SetWallpaper）
+- [x] 2026-08-25 配置器：房间下拉 / 新建 / 另存为 / 库路径可指定(localStorage) / 脏状态切换确认
+- [x] 2026-08-25 渲染器空背景守卫（body 已 #000，不造黑色图片文件）
+- [x] 2026-08-25 自测：npm run build + cargo check 全绿
+- [ ] 2026-08-25 用户人工验收：清单 A1-E2（重点 C3 纯黑不白屏、C4 反复切换）
+
+### Phase 2+：渲染器与 Schema（排队中）
+
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：
       renderRoom(room, mount) 纯函数化，壁纸运行时与配置器预览共用同一份
 - [ ] room.json schema v1 定稿 + JSON Schema 校验文件：
