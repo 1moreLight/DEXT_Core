@@ -29,8 +29,8 @@ async fn launch_app(target: String, arguments: String, working_dir: String) -> R
     grpc::launch_app(target, arguments, working_dir).await
 }
 
-// ponytail: fixed wallpaper folder for now, make configurable when room management exists
-const WALLPAPER_DIR: &str = r"D:\midDOW\dext-room-wallpaper";
+// wallpaper package lives inside the repo; applied via SetWallpaper RPC
+const WALLPAPER_DIR: &str = r"D:\midDOW\lively-core-separation\wallpapers\dext-room";
 
 #[tauri::command]
 async fn save_room(room_json: String) -> Result<(), String> {
