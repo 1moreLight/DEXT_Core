@@ -237,6 +237,13 @@ pub async fn launch_app(target: String, arguments: String, working_dir: String) 
 #[cfg(test)]
 mod tests {
     #[tokio::test]
+    async fn applies_room_wallpaper() {
+        super::set_wallpaper(r"D:\midDOW\dext-room-wallpaper")
+            .await
+            .expect("set_wallpaper failed");
+    }
+
+    #[tokio::test]
     async fn apps_and_launch() {
         let apps = super::get_installed_apps().await.expect("get_installed_apps failed");
         println!("installed apps: {}", apps.len());

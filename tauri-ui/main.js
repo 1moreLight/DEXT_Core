@@ -4,22 +4,56 @@ const ROOM = {
       name: "主页",
       background: "assets/desk1-bg.png",
       icons: [
-        { glyph: "🌐", label: "浏览器", color: "#3b82f6", action: "启动 浏览器" },
+        {
+          glyph: "🌐",
+          label: "浏览器",
+          color: "#3b82f6",
+          action: "启动 浏览器",
+          launch: {
+            target: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+          },
+        },
         { glyph: "🎮", label: "游戏", color: "#10b981", action: "启动 游戏" },
         { glyph: "🎵", label: "音乐", color: "#f59e0b", action: "启动 音乐" },
-        { glyph: "📁", label: "文件", color: "#8b5cf6", action: "打开 文件夹" },
-        { glyph: "⚙️", label: "设置", color: "#6b7280", action: "打开 设置" }
-      ]
+        {
+          glyph: "📁",
+          label: "文件",
+          color: "#8b5cf6",
+          action: "打开 文件夹",
+          launch: { target: "explorer.exe", args: "shell:MyComputerFolder" },
+        },
+        {
+          glyph: "⚙️",
+          label: "设置",
+          color: "#6b7280",
+          action: "打开 设置",
+          launch: { target: "ms-settings:" },
+        },
+      ],
     },
     {
       name: "工作台",
       background: "assets/desk2-bg.png",
       icons: [
-        { glyph: "💻", label: "终端", color: "#111827", action: "启动 终端" },
-        { glyph: "📝", label: "笔记", color: "#ef4444", action: "启动 笔记" },
-        { glyph: "📊", label: "监控", color: "#06b6d4", action: "打开 监控面板" }
-      ]
-    }
+        {
+          glyph: "💻",
+          label: "终端",
+          color: "#111827",
+          action: "启动 终端",
+          launch: { target: "wt.exe" },
+        },
+        {
+          glyph: "📝",
+          label: "笔记",
+          color: "#ef4444",
+          action: "启动 笔记",
+          launch: {
+            target: "C:\\Users\\JAN\\Desktop\\Obsidian.lnk",
+          },
+        },
+        { glyph: "📊", label: "监控", color: "#06b6d4", action: "打开 监控面板" },
+      ],
+    },
   ],
   transitionText: (from, to) => `正在进入 ${to} ...`
 };
@@ -34,6 +68,21 @@ const toastEl = document.getElementById("toast");
 let currentDesk = 0;
 let switching = false;
 
+function launchApp(launch) {
+  // Phase B: wallpaper -> WebView2 host -> core IPC; falls back to toast outside Lively.
+  if (window.chrome?.webview?.postMessage) {
+    window.chrome.webview.postMessage(
+      JSON.stringify({
+        target: launch.target,
+        args: launch.args ?? "",
+        workdir: launch.workdir ?? "",
+      })
+    );
+  } else {
+    showToast("不在 Lively 环境内，无法启动");
+  }
+}
+
 function renderDesk(index) {
   const desk = ROOM.desks[index];
   bgEl.style.backgroundImage = `url("${desk.background}")`;
@@ -47,7 +96,14 @@ function renderDesk(index) {
       <div class="icon-glyph" style="background:${item.color}">${item.glyph}</div>
       <div class="icon-label">${item.label}</div>
     `;
-    el.addEventListener("click", () => showToast(item.action));
+    el.addEventListener("dblclick", () => {
+      if (item.launch) {
+        showToast(`正在启动 ${item.label} ...`);
+        launchApp(item.launch);
+      } else {
+        showToast(item.action);
+      }
+    });
     iconLayer.appendChild(el);
   }
 }
