@@ -164,16 +164,27 @@ pub async fn core_stats() -> Result<String, String> {
     ))
 }
 
+pub async fn set_wallpaper(folder: &str) -> Result<(), String> {
+    // empty monitor_id -> core falls back to primary display
+    let req = crate::proto::desktop::SetWallpaperRequest {
+        lively_info_path: folder.to_string(),
+        monitor_id: String::new(),
+        ..Default::default()
+    };
+    call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/SetWallpaper",
+        &req.encode_to_vec(),
+    )
+    .await
+    .map(|_| ())
+}
+
 #[cfg(test)]
 mod tests {
     #[tokio::test]
-    async fn connects_to_core() {
-        let stats = super::core_stats().await.expect("stats rpc failed");
-        println!("{stats}");
-        let wallpapers = super::get_wallpapers().await.expect("wallpapers rpc failed");
-        println!("wallpapers: {}", wallpapers.len());
-        for w in &wallpapers {
-            println!("  {} [{}] {}", w.monitor, w.category, w.path);
-        }
+    async fn applies_room_wallpaper() {
+        super::set_wallpaper(r"D:\midDOW\dext-room-wallpaper")
+            .await
+            .expect("set_wallpaper failed");
     }
 }
