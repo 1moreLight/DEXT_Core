@@ -29,6 +29,20 @@ async fn launch_app(target: String, arguments: String, working_dir: String) -> R
     grpc::launch_app(target, arguments, working_dir).await
 }
 
+// ponytail: fixed wallpaper folder for now, make configurable when room management exists
+const WALLPAPER_DIR: &str = r"D:\midDOW\dext-room-wallpaper";
+
+#[tauri::command]
+async fn save_room(room_json: String) -> Result<(), String> {
+    let path = std::path::Path::new(WALLPAPER_DIR).join("room.json");
+    std::fs::write(&path, room_json).map_err(|e| format!("save room.json failed: {e}"))
+}
+
+#[tauri::command]
+async fn set_wallpaper(folder: String) -> Result<(), String> {
+    grpc::set_wallpaper(&folder).await
+}
+
 #[tauri::command]
 async fn core_stats() -> Result<String, String> {
     grpc::core_stats().await
@@ -42,6 +56,8 @@ pub fn run() {
             get_wallpapers,
             get_installed_apps,
             launch_app,
+            save_room,
+            set_wallpaper,
             core_stats
         ])
         .run(tauri::generate_context!())

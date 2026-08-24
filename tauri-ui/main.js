@@ -1,4 +1,4 @@
-const ROOM = {
+const DEFAULT_ROOM = {
   desks: [
     {
       name: "主页",
@@ -58,6 +58,22 @@ const ROOM = {
   transitionText: (from, to) => `正在进入 ${to} ...`
 };
 
+// room.json overrides the default when present (written by the Dext configurator).
+let ROOM = DEFAULT_ROOM;
+
+async function loadRoom() {
+  try {
+    const res = await fetch("room.json");
+    if (res.ok) {
+      const room = await res.json();
+      if (room?.desks?.length) ROOM = room;
+    }
+  } catch (e) {
+    // keep default (e.g. opened outside Lively via file://)
+  }
+  renderDesk(currentDesk);
+}
+
 const bgEl = document.getElementById("desk-background");
 const iconLayer = document.getElementById("icon-layer");
 const indicatorEl = document.getElementById("desk-indicator");
@@ -92,8 +108,11 @@ function renderDesk(index) {
   for (const item of desk.icons) {
     const el = document.createElement("div");
     el.className = "icon";
+    const glyph = item.icon_png
+      ? `<img class="icon-img" src="data:image/png;base64,${item.icon_png}">`
+      : `<div class="icon-glyph" style="background:${item.color}">${item.glyph}</div>`;
     el.innerHTML = `
-      <div class="icon-glyph" style="background:${item.color}">${item.glyph}</div>
+      ${glyph}
       <div class="icon-label">${item.label}</div>
     `;
     el.addEventListener("dblclick", () => {
@@ -150,4 +169,4 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") switchDesk(-1);
 });
 
-renderDesk(currentDesk);
+loadRoom();
