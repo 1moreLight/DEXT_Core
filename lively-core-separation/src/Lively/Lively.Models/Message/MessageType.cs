@@ -6,6 +6,7 @@
         msg_console,
         msg_wploaded,
         msg_screenshot,
+        msg_launch,
         cmd_reload,
         cmd_close,
         cmd_screenshot,

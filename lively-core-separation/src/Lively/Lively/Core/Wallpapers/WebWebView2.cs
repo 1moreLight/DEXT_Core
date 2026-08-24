@@ -311,6 +311,24 @@ namespace Lively.Core.Wallpapers
                                 contentReadyTcs.TrySetException(new InvalidOperationException("Process exited."));
                         }
                         break;
+                    case MessageType.msg_launch:
+                        var launchMsg = (LivelyMessageLaunchCmd)obj;
+                        var launchTarget = launchMsg.Target;
+                        var launchArgs = launchMsg.Arguments;
+                        var launchWorkdir = launchMsg.WorkingDirectory;
+                        _ = Task.Run(() =>
+                        {
+                            try
+                            {
+                                new Lively.Services.AppCatalogService().Launch(launchTarget, launchArgs, launchWorkdir);
+                                Logger.Info($"Wv2{uniqueId}: LaunchApp: {launchTarget}");
+                            }
+                            catch (Exception le)
+                            {
+                                Logger.Error($"Wv2{uniqueId}: LaunchApp failed: {le.Message}");
+                            }
+                        });
+                        break;
                 }
             }
         }

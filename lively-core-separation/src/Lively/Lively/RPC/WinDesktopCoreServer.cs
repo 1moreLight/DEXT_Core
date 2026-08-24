@@ -86,6 +86,49 @@ namespace Lively.RPC
             return await Task.FromResult(new Empty());
         }
 
+        public override async Task GetInstalledApps(Empty _, IServerStreamWriter<AppInfo> responseStream, ServerCallContext context)
+        {
+            try
+            {
+                var catalog = new Lively.Services.AppCatalogService();
+                foreach (var app in catalog.GetInstalledApps())
+                {
+                    if (context.CancellationToken.IsCancellationRequested)
+                        break;
+
+                    await responseStream.WriteAsync(new AppInfo()
+                    {
+                        Name = app.Name,
+                        Target = app.Target,
+                        Arguments = app.Arguments,
+                        WorkingDir = app.WorkingDirectory,
+                        IconPng = Google.Protobuf.ByteString.CopyFrom(app.IconPng),
+                        Source = app.Source,
+                    });
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"GetInstalledApps failed: {e}");
+                throw;
+            }
+        }
+
+        public override Task<Empty> LaunchApp(LaunchAppRequest request, ServerCallContext context)
+        {
+            try
+            {
+                var catalog = new Lively.Services.AppCatalogService();
+                catalog.Launch(request.Target, request.Arguments, request.WorkingDir);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e.ToString());
+            }
+
+            return Task.FromResult(new Empty());
+        }
+
         public override async Task<CreateWallpaperResponse> CreateWallpaper(CreateWallpaperRequest request, ServerCallContext context)
         {
             bool isSuccess = false;
