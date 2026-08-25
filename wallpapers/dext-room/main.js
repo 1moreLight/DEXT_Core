@@ -86,6 +86,7 @@ function sizeOf(desk) {
 }
 
 const bgEl = document.getElementById("desk-background");
+const bgVideo = document.getElementById("desk-video");
 const iconLayer = document.getElementById("icon-layer");
 const indicatorEl = document.getElementById("desk-indicator");
 const transitionEl = document.getElementById("transition");
@@ -124,9 +125,27 @@ function launchApp(launch) {
   }
 }
 
+// background is a string (image path, "" = black) or {type:"video",src}
+// only the active desk's video stays mounted; desk switches swap the src behind the transition mask
+function applyBackground(desk) {
+  const bg = desk.background;
+  const isVideo = bg && typeof bg === "object" && bg.type === "video";
+  if (isVideo) {
+    bgEl.style.backgroundImage = "none";
+    if (bgVideo.getAttribute("src") !== bg.src) bgVideo.src = bg.src;
+    bgVideo.style.display = "block";
+    bgVideo.play().catch(() => {});
+  } else {
+    bgVideo.pause();
+    bgVideo.removeAttribute("src");
+    bgVideo.style.display = "none";
+    bgEl.style.backgroundImage = bg ? `url("${bg}")` : "none";
+  }
+}
+
 function renderDesk(index) {
   const desk = ROOM.desks[index];
-  bgEl.style.backgroundImage = desk.background ? `url("${desk.background}")` : "none";
+  applyBackground(desk);
   indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
 
   const s = sizeOf(desk);

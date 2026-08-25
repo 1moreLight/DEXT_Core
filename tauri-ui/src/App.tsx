@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -18,11 +19,19 @@ interface RoomIcon {
   launch: { target: string; args: string; workdir: string };
 }
 
+type Background = string | { type: "video"; src: string } | null;
+
 interface Desk {
   name: string;
-  background: string;
+  background: Background;
   icons: RoomIcon[];
   iconSize?: string;
+}
+
+function bgLabel(bg: Background): string {
+  if (!bg) return "黑底（未设置）";
+  if (typeof bg === "string") return bg;
+  return `🎬 视频 ${bg.src}`;
 }
 
 interface RoomInfo {
@@ -202,6 +211,39 @@ export default function App() {
   useEffect(() => {
     if (showPreview) postRoom();
   }, [desks, activeDesk, showPreview]);
+
+  async function pickBackground(kind: "image" | "video") {
+    if (!roomPath) return;
+    const filters = [
+      kind === "video"
+        ? { name: "视频", extensions: ["mp4", "webm", "mkv", "mov"] }
+        : { name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"] },
+    ];
+    const picked = await open({ filters, multiple: false });
+    if (typeof picked !== "string") return;
+    try {
+      setStatus("copying...");
+      const bg = await invoke<Background>("import_background", {
+        roomDir: roomPath,
+        srcPath: picked,
+        kind,
+      });
+      touch();
+      setDesks((prev) =>
+        prev.map((d, i) => (i === activeDesk ? { ...d, background: bg } : d))
+      );
+      setStatus("背景已选择，记得保存并应用");
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  function clearBackground() {
+    touch();
+    setDesks((prev) =>
+      prev.map((d, i) => (i === activeDesk ? { ...d, background: "" } : d))
+    );
+  }
 
   function toggle(app: AppInfo) {
     touch();
@@ -425,7 +467,28 @@ export default function App() {
               </Button>
             </div>
 
-            {/* current desk icons */}
+            {/* desk background */}
+          <div className="border-t border-border p-3">
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              背景
+            </div>
+            <div className="mb-2 truncate text-xs text-muted-foreground" title={bgLabel(desk.background)}>
+              {bgLabel(desk.background)}
+            </div>
+            <div className="flex gap-1.5">
+              <Button variant="outline" size="sm" className="h-7 flex-1" onClick={() => pickBackground("image")}>
+                图片
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 flex-1" onClick={() => pickBackground("video")}>
+                视频
+              </Button>
+              <Button variant="outline" size="sm" className="h-7" onClick={clearBackground} title="清除背景（回黑底）">
+                ×
+              </Button>
+            </div>
+          </div>
+
+          {/* current desk icons */}
             <div className="border-t border-border p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

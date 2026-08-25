@@ -140,6 +140,47 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
 
 // dext:// protocol maps the wallpaper package dir into the configurator webview,
 // so the editor can embed the real renderer in an iframe (preview).
+// copy a picked image/video into the room's background/ folder; returns the background value
+#[tauri::command]
+async fn import_background(
+    room_dir: String,
+    src_path: String,
+    kind: String,
+) -> Result<serde_json::Value, String> {
+    let src = std::path::Path::new(&src_path);
+    if !src.is_file() {
+        return Err(format!("file not found: {src_path}"));
+    }
+    let ext = src
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    let ok = match kind.as_str() {
+        "video" => matches!(ext.as_str(), "mp4" | "webm" | "mkv" | "mov" | "avi"),
+        _ => matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif"),
+    };
+    if !ok {
+        return Err(format!(".{ext} 不是有效的{kind}格式"));
+    }
+    let dst_dir = std::path::Path::new(&room_dir).join("background");
+    std::fs::create_dir_all(&dst_dir).map_err(|e| format!("mkdir failed: {e}"))?;
+    let name = format!(
+        "{kind}-{}.{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis(),
+        ext
+    );
+    std::fs::copy(src, dst_dir.join(&name)).map_err(|e| format!("copy failed: {e}"))?;
+    let rel = format!("background/{name}");
+    Ok(match kind.as_str() {
+        "video" => serde_json::json!({ "type": "video", "src": rel }),
+        _ => serde_json::Value::String(rel),
+    })
+}
+
 fn serve_package_file(url_path: &str) -> tauri::http::Response<Vec<u8>> {
     use percent_encoding::percent_decode_str;
     let decoded = percent_decode_str(url_path.trim_start_matches('/'))
@@ -185,6 +226,7 @@ async fn core_stats() -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {
             serve_package_file(request.uri().path())
@@ -198,6 +240,7 @@ pub fn run() {
             write_room,
             create_room,
             apply_room,
+            import_background,
             set_wallpaper,
             core_stats
         ])

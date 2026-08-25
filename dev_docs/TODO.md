@@ -73,6 +73,17 @@
 - [x] 2026-08-25 渲染：坐标渲染时按当前档钳制到可视范围（不改动存储值，切回小档不丢位）
 - [x] 2026-08-25 自测 + 用户验收全绿（2026-08-25）；追加配置器侧栏尺寸选择器(78d6c5a)
 
+### Phase 4：单 Desk 循环视频背景（2026-08-25 追加）
+
+- [x] 2026-08-25 schema：background 多态——字符串=图片路径（兼容）；`{type:"video",src}`=视频
+- [x] 2026-08-25 渲染器：单一 `<video>` 元素（muted/loop/playsinline/cover），
+      仅当前 desk 挂载，切桌换 src（过渡遮罩盖住），非视频 desk 释放
+- [x] 2026-08-25 配置器：desk 侧栏背景区（当前背景摘要 + 图片/视频/清除三按钮）；
+      dialog 插件选文件 → Rust 拷贝进 roomDir/background/（时间戳命名防冲突）→ 写回 background 字段
+- [x] 2026-08-25 Rust：tauri-plugin-dialog + import_background 命令 + capabilities 权限
+- [x] 2026-08-25 自测：cargo check + npm build 双绿
+- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 4」V1-V10）
+
 ### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：

@@ -18,6 +18,16 @@ html, body {
   inset: 0;
 }
 
+#desk-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  background: #000;
+}
+
 #desk-background {
   position: absolute;
   inset: 0;
