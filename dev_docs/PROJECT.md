@@ -69,6 +69,8 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-25 | 房间库默认在仓库 `rooms/` 目录，库路径可指定（前端 localStorage 记住）；**路径一律用英文/ASCII**（中文目录名在 PS 控制台/工具链易乱码） |
 | 2026-08-25 | 无背景 desk = 纯黑兜底：body 已 #000 + 渲染器空值守卫，不造黑色图片文件 |
 | 2026-08-25 | 应用机制：apply_room 把房间数据（room.json + background/）拷进壁纸包目录再 SetWallpaper——因 WebView2 虚拟主机只能读包内文件 |
+| 2026-08-25 | **转场按有向边建模**：`transitions["from>to"]` 逐边覆盖 `transition` 房间默认，来回可不同；未覆盖回退默认（详见 dev_docs/MODEL.md） |
+| 2026-08-25 | transitionText 字段废弃（text 转场类型保留，文案改固定模板）；外观主题(theme)暂不做，痛了再加 |
 
 ## 当前 room.json 隐式 schema (v0)
 

@@ -18,6 +18,15 @@
 - [x] 2026-08-25 构建/启动脚本 scripts/{build,start}.ps1
 - [x] 2026-08-25 CodeGraph 索引建立（9167 节点）
 
+### Phase 7：Room↔Desk 概念模型梳理（2026-08-25 追加，schema v1 前置）
+
+> 目标：实体关系 / 字段归属规则 / 不变量成文，作为 schema v1 定稿输入。
+
+- [x] 2026-08-25 盘点三端现状（渲染器 main.js / 配置器 App.tsx / Rust lib.rs）
+- [x] 2026-08-25 用户拍板争议点：转场=有向边模型(transitions["from>to"] 覆盖 room 默认)；transitionText 废弃但 text 类型保留；theme 不做(YAGNI)
+- [x] 2026-08-25 模型结论写入 dev_docs/MODEL.md + 决策记录同步
+- [ ] 2026-08-25 用户验收：阅读 MODEL.md 确认模型（ACCEPTANCE.md「Phase 7」）
+
 ## 当前阶段：共享渲染器 + Schema v1
 
 ### Phase 1：房间库最小闭环（2026-08-25 追加，优先执行）
@@ -124,6 +133,20 @@
 - [x] 2026-08-25 前端：库来源徽标/添加/扫描合并/多选模式（添加到Desk、从库删除）
 - [x] 2026-08-25 自测：build.ps1 + cargo check + npm build 全绿
 - [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 6.5」L1-L7）
+
+### Phase 7：配置器主页改版（2026-08-25 追加）
+
+> 用户定调：Hero 焦点式布局；封面 = 多背景拼贴网格（1 张满幅 / 2 张对分 / 3+ 田字）；
+> 深浅主题可切换。设计模式（npm run dev:ui）先行迭代。
+
+- [ ] Rust：list_rooms 的 RoomInfo 增 covers 字段（逐 desk 解析 background：图片=相对路径、视频=标记），宽容解析坏 json
+- [ ] Rust：新 `lib://` 自定义协议映射房间库目录（list_rooms 时同步库目录到托管状态；防路径穿越；mime 表复用）
+- [ ] 前端：CoverCollage 封面拼贴组件（image=img 直载 / video=暗底胶片角标 / 空=渐变兜底；分格逻辑按张数）
+- [ ] 前端：使用模式改 Hero 焦点式——左侧大封面卡（房间名+统计+应用中徽标+应用钮），右侧紧凑列表（小拼贴缩略图，点击换 hero，行内快捷应用）；空态保留
+- [ ] 前端：顶栏深浅主题切换按钮（documentElement .dark 类 + localStorage 记忆，两模式均可见）
+- [ ] mock 设计模式同步：MOCK_ROOMS 给渐变假封面数据，与真后端同构
+- [ ] 自测：cargo check + npm run build 全绿
+- [ ] 用户验收（ACCEPTANCE.md「Phase 7」）
 
 ### Phase 6.5-旧：应用库多选批量操作（2026-08-25 已取消）
 
