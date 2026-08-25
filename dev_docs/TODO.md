@@ -58,11 +58,12 @@
 
 > 目标：摸清上游 Lively 生态全部对外接口形态 + 本 fork 现状对照，评估 Dext 可用性。产出 `dev_docs/LIVELY_API.md`。
 
-- [ ] 壁纸侧 JS API：fork Player 注入点盘点（livelyPropertyListener / livelyAudioListener / ...）+ 上游完整清单
-- [ ] 外部控制面：上游 Local API(HTTP) / 远程控制页 / 命令行参数
-- [ ] C# NuGet 库 LivelyWallpaper 形态速览（嵌入式用法）
-- [ ] 本仓库现状对照：哪些保留/被剥离；Dext 渲染器现在就能用什么
-- [ ] 成文 dev_docs/LIVELY_API.md + 自查 + commit
+- [x] 2026-08-25 壁纸侧 JS API：fork Player 注入点盘点 + 上游完整清单（6 函数 + Arguments→--wallpaper-* 透传机制）
+- [x] 2026-08-25 外部控制面：结论——无 HTTP API（维护者 discussion 明确）；命令行全套 fork 完整保留（AutomationCommand gRPC 转发）
+- [x] 2026-08-25 C# 嵌入库速览（结论：官方无 NuGet 库，GitHub/NuGet 双 404 验证）
+- [x] 2026-08-25 本仓库现状对照：房间零改造可用音频频谱/歌曲信息/硬件监控（room.js 定义全局函数 + LivelyInfo.json 加 Arguments）；4 条待验证风险已记录
+- [x] 2026-08-25 成文 dev_docs/LIVELY_API.md + 登记文档索引（README.md）
+- [ ] 用户验收：对话确认 LIVELY_API.md 结论无异议
 
 ## 当前阶段：共享渲染器 + Schema v1
 
