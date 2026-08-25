@@ -111,8 +111,18 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
 async fn apply_room(room_dir: String) -> Result<(), String> {
     let src = std::path::Path::new(&room_dir);
     let pkg = std::path::Path::new(WALLPAPER_DIR);
-    std::fs::copy(src.join("room.json"), pkg.join("room.json"))
-        .map_err(|e| format!("copy room.json failed: {e}"))?;
+    // stamp the library source so desktop-side edits (msg_save_room) sync back
+    let mut room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(src.join("room.json"))
+            .map_err(|e| format!("read room.json failed: {e}"))?,
+    )
+    .map_err(|e| format!("parse room.json failed: {e}"))?;
+    room["__source"] = serde_json::Value::String(room_dir.clone());
+    std::fs::write(
+        pkg.join("room.json"),
+        serde_json::to_string_pretty(&room).unwrap(),
+    )
+    .map_err(|e| format!("copy room.json failed: {e}"))?;
     let bg_src = src.join("background");
     if bg_src.is_dir() {
         let bg_dst = pkg.join("background");

@@ -7,6 +7,7 @@
         msg_wploaded,
         msg_screenshot,
         msg_launch,
+        msg_save_room,
         cmd_reload,
         cmd_close,
         cmd_screenshot,

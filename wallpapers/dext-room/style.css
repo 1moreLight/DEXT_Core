@@ -29,10 +29,72 @@ html, body {
 #icon-layer {
   position: absolute;
   inset: 40px 40px 100px 40px;
+}
+
+#icon-layer .icon {
+  position: absolute;
+  transition: left 0.25s ease, top 0.25s ease, background-color 0.15s, transform 0.15s;
+}
+
+.icon.dragging {
+  transition: none;
+  z-index: 50;
+  opacity: 0.85;
+}
+
+.icon.dragging .icon-img,
+.icon.dragging .icon-glyph {
+  transform: scale(1.12);
+}
+
+@keyframes jiggle {
+  0% { rotate: -1.4deg; }
+  50% { rotate: 1.4deg; }
+  100% { rotate: -1.4deg; }
+}
+
+body.editing .icon {
+  animation: jiggle 0.35s ease-in-out infinite;
+  cursor: grab;
+}
+
+.icon-del {
+  display: none;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background-color: #ef4444;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  align-items: center;
+  justify-content: center;
+}
+
+body.editing .icon-del {
   display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 28px;
+}
+
+body.editing #prev-desk,
+body.editing #next-desk,
+body.editing #desk-indicator {
+  display: none;
+}
+
+#edit-done {
+  display: none;
+  background-color: #10b981;
+  font-size: 18px;
+}
+
+body.editing #edit-done {
+  display: block;
 }
 
 .icon {

@@ -199,18 +199,28 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
             webView.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
             webView.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;
-            // Wallpaper -> core requests (e.g. launch app), forwarded over the stdin/stdout IPC.
+            // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
             webView.CoreWebView2.WebMessageReceived += (s, e) =>
             {
                 try
                 {
                     var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
-                    SendToParent(new LivelyMessageLaunchCmd()
+                    if ((string)o.type == "saveRoom")
                     {
-                        Target = (string)o.target,
-                        Arguments = (string)o.args ?? string.Empty,
-                        WorkingDirectory = (string)o.workdir ?? string.Empty,
-                    });
+                        SendToParent(new LivelyMessageSaveRoomCmd()
+                        {
+                            RoomJson = (string)o.room.ToString(Newtonsoft.Json.Formatting.None),
+                        });
+                    }
+                    else
+                    {
+                        SendToParent(new LivelyMessageLaunchCmd()
+                        {
+                            Target = (string)o.target,
+                            Arguments = (string)o.args ?? string.Empty,
+                            WorkingDirectory = (string)o.workdir ?? string.Empty,
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {

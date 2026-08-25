@@ -41,7 +41,22 @@
 - [x] 2026-08-25 自测：npm run build + cargo check 全绿
 - [ ] 2026-08-25 用户验收：清单见 ACCEPTANCE.md「Phase 2」
 
-### Phase 2+：渲染器与 Schema（排队中）
+### Phase 3：桌面长按编辑（2026-08-25 追加）
+
+决策：拖拽占用格 = **让位**（行优先序列插入重排，非交换）；图标归一化 → 移入「远期」。
+
+- [x] 2026-08-25 schema：icons[] 加 x,y（行优先 packed 网格 8×N）；无坐标旧数据按序自动补
+- [x] 2026-08-25 渲染器：绝对定位网格布局（按 iconLayer 尺寸算格子）
+- [x] 2026-08-25 渲染器：长按 500ms 进编辑模式（抖动动画 + × 删除徽章 + Dock 变「完成」）
+- [x] 2026-08-25 渲染器：编辑态拖拽（pointer 事件，松手按让位重排，CSS transition 补位动画）
+- [x] 2026-08-25 渲染器：删除图标 + 退出编辑自动保存
+- [x] 2026-08-25 IPC：Player Form1 转发 saveRoom（postMessage→stdout msg_save_room）
+- [x] 2026-08-25 Core：MessageType/LivelyMessageSaveRoomCmd/IpcMessageConverter/WebWebView2 落盘
+- [x] 2026-08-25 双写：apply_room 盖 `__source` 戳；Core 保存时包内 + 源房间各写一份
+- [x] 2026-08-25 自测 + build.ps1（C# 变更）+ cargo check + npm build
+- [ ] 2026-08-25 用户验收：清单见 ACCEPTANCE.md「Phase 3」
+
+### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：
       renderRoom(room, mount) 纯函数化，壁纸运行时与配置器预览共用同一份
@@ -61,6 +76,9 @@
 
 ## 远期
 
+- [ ] 图标归一化：AppCatalogService 提取后按 alpha 包围盒裁剪、内容统一占比 ~80% 居中
+      （实测 173 个图标占比 81%~100% 分布，85 个非方形内容；提取可升 96px 再缩回提清晰度）
+      上线后需刷新既有房间的内嵌 base64 图标
 - [ ] AI skill：schema 文档 + 示例房间 ×3 + 提示词模板
 - [ ] 多显示器支持
 - [ ] 创意工坊分发形态调研（上传格式、预览图、订阅机制）

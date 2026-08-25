@@ -27,6 +27,7 @@ namespace Lively.Core.Wallpapers
         private readonly Process process;
         private static int globalCount;
         private readonly int uniqueId;
+        private readonly string wallpaperPath;
         private int currentVolume = 0;
         private bool isInitialized;
         private bool isMuted;
@@ -65,6 +66,7 @@ namespace Lively.Core.Wallpapers
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
+            wallpaperPath = path;
 
             var cmdArgs = new StringBuilder();
             cmdArgs.Append(" --wallpaper-pause-media ");
@@ -326,6 +328,37 @@ namespace Lively.Core.Wallpapers
                             catch (Exception le)
                             {
                                 Logger.Error($"Wv2{uniqueId}: LaunchApp failed: {le.Message}");
+                            }
+                        });
+                        break;
+                    case MessageType.msg_save_room:
+                        var saveMsg = (LivelyMessageSaveRoomCmd)obj;
+                        _ = Task.Run(() =>
+                        {
+                            try
+                            {
+                                var roomPath = System.IO.Path.Combine(wallpaperPath, "room.json");
+                                System.IO.File.WriteAllText(roomPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
+                                Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
+                                try
+                                {
+                                    // dual-write to the source room in the library (stamped by the configurator on apply)
+                                    var jo = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(saveMsg.RoomJson);
+                                    var src = (string)jo?["__source"];
+                                    if (!string.IsNullOrWhiteSpace(src) && System.IO.File.Exists(src))
+                                    {
+                                        System.IO.File.WriteAllText(src, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
+                                        Logger.Info($"Wv2{uniqueId}: SaveRoom source: {src}");
+                                    }
+                                }
+                                catch
+                                {
+                                    // source sync is best-effort
+                                }
+                            }
+                            catch (Exception se)
+                            {
+                                Logger.Error($"Wv2{uniqueId}: SaveRoom failed: {se.Message}");
                             }
                         });
                         break;
