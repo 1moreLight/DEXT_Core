@@ -24,3 +24,4 @@
 - Player 必须 Release 构建，Debug 会挂起（详见 ERRORS.md #1）
 - 日志位置：`%LOCALAPPDATA%\Lively Wallpaper\logs\`
 - 仓库已建 CodeGraph 索引：查代码优先 `codegraph explore/node`，其次 grep/read
+- 前端外观迭代：`scripts/room-preview.ps1` 实时预览（无需 Lively），指南见 `dev_docs/FRONTEND.md`

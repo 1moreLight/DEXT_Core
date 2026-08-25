@@ -1,3 +1,15 @@
+:root {
+  /* Dext theme tokens - tweak these for global look changes */
+  --dext-accent: #3b82f6;
+  --dext-success: #10b981;
+  --dext-danger: #ef4444;
+  --dext-text: #ffffff;
+  --dext-dock-bg: rgba(20, 20, 20, 0.55);
+  --dext-dock-hover: rgba(255, 255, 255, 0.28);
+  --dext-btn-bg: rgba(255, 255, 255, 0.12);
+  --dext-radius: 12px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -90,16 +102,7 @@ body.editing .icon {
   cursor: grab;
 }
 
-.icon-del {
-  display: none;
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 22px;
-  height: 22px;
-  border: none;
-  border-radius: 50%;
-  background-color: #ef4444;
+-color: var(--dext-danger);
   color: #fff;
   font-size: 14px;
   line-height: 1;
@@ -119,9 +122,7 @@ body.editing #desk-indicator {
   display: none;
 }
 
-#edit-done {
-  display: none;
-  background-color: #10b981;
+#edit-done {-color: var(--dext-success);
   font-size: 18px;
 }
 
@@ -138,24 +139,17 @@ body.editing #size-group {
   display: flex;
 }
 
-.size-btn {
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.12);
+.size-btn {-color: var(--dext-btn-bg);
   color: #fff;
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
-.size-btn:hover {
-  background-color: rgba(255, 255, 255, 0.28);
+.size-btn:hover {-color: var(--dext-dock-hover);
 }
 
-.size-btn.active {
-  background-color: #10b981;
+.size-btn.active {-color: var(--dext-success);
 }
 
 .icon {
@@ -206,35 +200,19 @@ body.editing #size-group {
   word-break: break-all;
 }
 
-#dock {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 20px;
-  border-radius: 999px;
-  background-color: rgba(20, 20, 20, 0.55);
+#dock {-color: var(--dext-dock-bg);
   backdrop-filter: blur(12px);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
-.dock-btn {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.12);
+.dock-btn {-color: var(--dext-btn-bg);
   color: #fff;
   font-size: 22px;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.15s;
 }
 
-.dock-btn:hover {
-  background-color: rgba(255, 255, 255, 0.28);
+.dock-btn:hover {-color: var(--dext-dock-hover);
 }
 
 .dock-btn:active {

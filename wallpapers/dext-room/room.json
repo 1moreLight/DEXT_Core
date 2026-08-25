@@ -17,5 +17,9 @@
       "icons": [],
       "name": "Desk 2"
     }
-  ]
+  ],
+  "transition": {
+    "src": "transition/transition-1787640738694.mp4",
+    "type": "video"
+  }
 }

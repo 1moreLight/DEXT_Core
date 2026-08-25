@@ -103,6 +103,28 @@
 - [x] 2026-08-25 自测 cargo check + npm build 双绿 + renderer node --check
 - [x] 2026-08-25 用户验收通过（2026-08-25）
 
+### Phase 6：前端外观迭代基建（2026-08-25 追加）
+
+- [x] 2026-08-25 实时预览：vite 监听壁纸目录（npm run dev:room / scripts/room-preview.ps1，端口 5174，无需 Lively）
+- [x] 2026-08-25 主题变量地基：style.css :root 收敛 --dext-* 令牌（8 处引用替换）
+- [x] 2026-08-25 开发文档：dev_docs/FRONTEND.md（独立会话可用的外观迭代手册，含任务池）
+- [ ] 2026-08-25 用户验收：预览窗口可用（ACCEPTANCE.md「Phase 6」）
+
+### 外观任务池（在独立会话按 dev_docs/FRONTEND.md 第六节逐项领取）
+
+（任务清单见 FRONTEND.md 第六节，完成后在此追加记录）
+
+### Phase 6：前端外观迭代基建（2026-08-25 追加）
+
+- [x] 2026-08-25 实时预览：vite 监听壁纸目录（npm run dev:room / scripts/room-preview.ps1，端口 5174，无需 Lively）
+- [x] 2026-08-25 主题变量地基：style.css :root 收敛 --dext-* 令牌（8 处引用替换）
+- [x] 2026-08-25 开发文档：dev_docs/FRONTEND.md（独立会话可用的外观迭代手册，含任务池）
+- [ ] 2026-08-25 用户验收：预览窗口可用（ACCEPTANCE.md「Phase 6」）
+
+### 外观任务池
+
+（任务清单见 FRONTEND.md 第六节；独立会话逐项领取，完成在此追加记录）
+
 ### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：
