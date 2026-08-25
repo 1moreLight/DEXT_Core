@@ -125,6 +125,22 @@
 
 （任务清单见 FRONTEND.md 第六节；独立会话逐项领取，完成在此追加记录）
 
+### Phase 6.5：应用库可管理化（2026-08-25 追加，替代原"多选批量操作"）
+
+> 用户定调（MyDockFinder 模式）：手动添加 .lnk 为主，一键扫描合并为省事选项；库可删除卸载残留。
+
+- [x] 2026-08-25 库持久化：rooms/library.json（load_library/save_library）；无库文件时回退在线枚举（兼容）
+- [x] 2026-08-25 新 RPC ResolveApp(path)：C# AppCatalogService.ResolveOne（.lnk 复用 ResolveShortcut；.exe 直取）→ proto → Rust grpc
+- [x] 2026-08-25 前端：库来源徽标/添加/扫描合并/多选模式（添加到Desk、从库删除）
+- [x] 2026-08-25 自测：build.ps1 + cargo check + npm build 全绿
+- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 6.5」L1-L7）
+
+### Phase 6.5：应用库多选批量操作（2026-08-25 追加）
+
+- [ ] 2026-08-25 应用库加「多选」模式：点选累积选择集（不立即增删），操作条批量 添加到当前 Desk / 从当前 Desk 移除 / 清除 / 退出
+- [ ] 2026-08-25 批量添加跳过已存在；批量移除按 target 过滤；切 Desk 清空选择
+- [ ] 2026-08-25 自测 npm build + 用户验收（ACCEPTANCE.md「Phase 6.5」）
+
 ### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：

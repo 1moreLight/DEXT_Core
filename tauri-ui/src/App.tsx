@@ -85,15 +85,33 @@ export default function App() {
   );
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
+  const [multiMode, setMultiMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const previewRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    invoke<AppInfo[]>("get_installed_apps")
-      .then((list) => {
-        setApps(list);
-        setStatus(`${list.length} apps`);
-      })
-      .catch((e) => setStatus(`error: ${e}`));
+    (async () => {
+      // curated library wins; fall back to live start-menu scan
+      try {
+        const lib = await invoke<string | null>("load_library", { dir: libDir });
+        if (lib) {
+          const list = JSON.parse(lib) as AppInfo[];
+          setApps(list);
+          setLibSource("custom");
+          setStatus(`${list.length} apps（手动库）`);
+          return;
+        }
+      } catch {
+        // fall through
+      }
+      invoke<AppInfo[]>("get_installed_apps")
+        .then((list) => {
+          setApps(list);
+          setStatus(`${list.length} apps`);
+        })
+        .catch((e) => setStatus(`error: ${e}`));
+    })();
   }, []);
 
   useEffect(() => {
@@ -222,6 +240,114 @@ export default function App() {
   useEffect(() => {
     if (showPreview) postRoom();
   }, [desks, activeDesk, showPreview]);
+
+  useEffect(() => {
+    setSelected(new Set());
+  }, [activeDesk]);
+
+  function toggleSelect(app: AppInfo) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(app.target)) next.delete(app.target);
+      else next.add(app.target);
+      return next;
+    });
+  }
+
+  function exitMulti() {
+    setMultiMode(false);
+    setSelected(new Set());
+  }
+
+  function bulkAdd() {
+    touch();
+    setDesks((prev) =>
+      prev.map((d, i) => {
+        if (i !== activeDesk) return d;
+        const existing = new Set(d.icons.map((x) => x.launch.target));
+        const additions = apps
+          .filter((a) => selected.has(a.target) && !existing.has(a.target))
+          .map((a) => ({
+            label: a.name,
+            icon_png: a.icon_png,
+            launch: { target: a.target, args: a.arguments, workdir: a.working_dir },
+          }));
+        return { ...d, icons: [...d.icons, ...additions] };
+      })
+    );
+    setSelected(new Set());
+  }
+
+  async function persistLibrary(next: AppInfo[]) {
+    try {
+      await invoke("save_library", {
+        dir: libDir,
+        libraryJson: JSON.stringify(next, null, 2),
+      });
+      setLibSource("custom");
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  function deleteFromLibrary() {
+    const next = apps.filter((a) => !selected.has(a.target));
+    setApps(next);
+    setSelected(new Set());
+    persistLibrary(next);
+    setStatus(`已从库中删除 ${apps.length - next.length} 项`);
+  }
+
+  async function scanMerge() {
+    try {
+      setStatus("scanning...");
+      const list = await invoke<AppInfo[]>("get_installed_apps");
+      const byTarget = new Map(apps.map((a) => [a.target, a]));
+      for (const a of list) if (!byTarget.has(a.target)) byTarget.set(a.target, a);
+      const merged = [...byTarget.values()];
+      setApps(merged);
+      setSelected(new Set());
+      persistLibrary(merged);
+      setStatus(`扫描合并完成：${merged.length} 项`);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
+
+  async function manualAdd() {
+    const picked = await open({
+      filters: [{ name: "快捷方式/程序", extensions: ["lnk", "exe"] }],
+      multiple: true,
+    });
+    const paths = Array.isArray(picked) ? picked : picked ? [picked] : [];
+    if (!paths.length) return;
+    try {
+      setStatus("resolving...");
+      const additions: AppInfo[] = [];
+      const existing = new Set(apps.map((a) => a.target));
+      for (const p of paths) {
+        try {
+          const info = await invoke<AppInfo>("resolve_app", { path: p });
+          if (info.target && !existing.has(info.target)) {
+            additions.push(info);
+            existing.add(info.target);
+          }
+        } catch {
+          // skip unresolvable entries
+        }
+      }
+      if (!additions.length) {
+        setStatus("没有新增（重复或无法解析）");
+        return;
+      }
+      const next = [...apps, ...additions];
+      setApps(next);
+      persistLibrary(next);
+      setStatus(`已添加 ${additions.length} 项`);
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
+  }
 
   async function pickBackground(kind: "image" | "video") {
     if (!roomPath) return;
@@ -607,6 +733,60 @@ export default function App() {
               </div>
             ) : (
               <>
+                <div className="mb-2 flex items-center gap-2">
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-xs ${
+                      libSource === "custom"
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                    title={libSource === "custom" ? "library.json（可增删）" : "在线枚举（未持久化）"}
+                  >
+                    {libSource === "custom" ? "手动库" : "自动扫描"}
+                  </span>
+                  <Button variant="outline" size="sm" className="h-7" onClick={manualAdd}>
+                    + 添加
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-7" onClick={scanMerge}>
+                    扫描合并
+                  </Button>
+                  <Button
+                    variant={multiMode ? "secondary" : "outline"}
+                    size="sm"
+                    className="ml-auto h-7"
+                    onClick={() => (multiMode ? exitMulti() : setMultiMode(true))}
+                  >
+                    多选
+                  </Button>
+                </div>
+                {multiMode && (
+                  <div className="mb-3 flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">已选 {selected.size}</span>
+                    <Button size="sm" variant="outline" disabled={!selected.size} onClick={bulkAdd}>
+                      添加到当前 Desk
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive"
+                      disabled={!selected.size}
+                      onClick={deleteFromLibrary}
+                    >
+                      从库中删除
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={!selected.size}
+                      onClick={() => setSelected(new Set())}
+                    >
+                      清除
+                    </Button>
+                    <Button size="sm" variant="ghost" className="ml-auto" onClick={exitMulti}>
+                      退出
+                    </Button>
+                  </div>
+                )}
                 <Input
                   placeholder="搜索应用..."
                   value={query}
@@ -614,16 +794,24 @@ export default function App() {
                   className="mb-3"
                 />
                 <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-6 gap-2 overflow-y-auto pr-1">
+                  {apps.length === 0 && (
+                    <div className="col-span-6 py-16 text-center text-sm text-muted-foreground">
+                      库为空——点「扫描合并」一键读取开始菜单，或「+ 添加」手动加入 lnk/exe
+                    </div>
+                  )}
                   {filtered.map((app) => {
                     const on = desk.icons.some((x) => x.launch.target === app.target);
+                    const picked = selected.has(app.target);
                     return (
                       <button
-                        key={app.source}
-                        onClick={() => toggle(app)}
+                        key={app.source + app.target}
+                        onClick={() => (multiMode ? toggleSelect(app) : toggle(app))}
                         className={`relative flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-colors ${
-                          on
-                            ? "border-primary bg-primary/10"
-                            : "border-transparent hover:bg-accent"
+                          multiMode && picked
+                            ? "border-amber-400 bg-amber-400/10 ring-2 ring-amber-400"
+                            : on
+                              ? "border-primary bg-primary/10"
+                              : "border-transparent hover:bg-accent"
                         }`}
                         title={app.target}
                       >

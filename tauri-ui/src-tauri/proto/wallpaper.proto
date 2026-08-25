@@ -18,9 +18,10 @@ service DesktopService {
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
   rpc EditWallpaper(EditWallpaperRequest) returns (EditWallpaperResponse);
   rpc CreateWallpaper(CreateWallpaperRequest) returns (CreateWallpaperResponse);
-  rpc GetInstalledApps (google.protobuf.Empty) returns (stream AppInfo);
-  rpc LaunchApp (LaunchAppRequest) returns (google.protobuf.Empty);
-}
+   rpc GetInstalledApps (google.protobuf.Empty) returns (stream AppInfo);
+   rpc LaunchApp (LaunchAppRequest) returns (google.protobuf.Empty);
+   rpc ResolveApp (ResolveAppRequest) returns (AppInfo);
+ }
 
 message AppInfo {
   string name = 1;
@@ -35,6 +36,10 @@ message LaunchAppRequest {
   string target = 1;
   string arguments = 2;
   string working_dir = 3;
+}
+
+message ResolveAppRequest {
+  string path = 1;
 }
 
 message EditWallpaperRequest {

@@ -234,6 +234,32 @@ pub async fn launch_app(target: String, arguments: String, working_dir: String) 
     .map(|_| ())
 }
 
+pub async fn resolve_app(path: String) -> Result<AppInfoDto, String> {
+    use base64::Engine;
+    let req = crate::proto::desktop::ResolveAppRequest { path };
+    let payloads = call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/ResolveApp",
+        &req.encode_to_vec(),
+    )
+    .await?;
+    let item = payloads
+        .first()
+        .map(|p| crate::proto::desktop::AppInfo::decode(&p[..]))
+        .ok_or("empty response")?
+        .map_err(|e| e.to_string())?;
+    if item.source == "unresolved" {
+        return Err("无法解析该快捷方式".into());
+    }
+    Ok(AppInfoDto {
+        name: item.name,
+        target: item.target,
+        arguments: item.arguments,
+        working_dir: item.working_dir,
+        icon_png: base64::engine::general_purpose::STANDARD.encode(item.icon_png),
+        source: item.source,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     #[tokio::test]

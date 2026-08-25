@@ -99,6 +99,25 @@ namespace Lively.Services
             System.Diagnostics.Process.Start(startInfo);
         }
 
+        // resolve a single .lnk (or plain .exe) into a library entry; null if unresolvable
+        public AppEntry ResolveOne(string path)
+        {
+            if (string.Equals(Path.GetExtension(path), ".lnk", StringComparison.OrdinalIgnoreCase))
+                return ResolveShortcut(path);
+
+            if (!File.Exists(path))
+                return null;
+
+            var icon = TryExtractIcon(path, 0);
+            return new AppEntry(
+                Path.GetFileNameWithoutExtension(path),
+                path,
+                string.Empty,
+                Path.GetDirectoryName(path) ?? string.Empty,
+                icon,
+                "manual");
+        }
+
         private AppEntry ResolveShortcut(string lnkPath)
         {
             var info = ShortcutResolver.Resolve(lnkPath);

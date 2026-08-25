@@ -29,6 +29,30 @@ async fn launch_app(target: String, arguments: String, working_dir: String) -> R
     grpc::launch_app(target, arguments, working_dir).await
 }
 
+#[tauri::command]
+async fn resolve_app(path: String) -> Result<grpc::AppInfoDto, String> {
+    grpc::resolve_app(path).await
+}
+
+// persistent curated app library (rooms/library.json); None = no library yet (fall back to scan)
+#[tauri::command]
+async fn load_library(dir: String) -> Result<Option<String>, String> {
+    let p = std::path::Path::new(&dir).join("library.json");
+    if !p.is_file() {
+        return Ok(None);
+    }
+    std::fs::read_to_string(&p)
+        .map(Some)
+        .map_err(|e| format!("read library failed: {e}"))
+}
+
+#[tauri::command]
+async fn save_library(dir: String, library_json: String) -> Result<(), String> {
+    std::fs::create_dir_all(&dir).map_err(|e| format!("mkdir failed: {e}"))?;
+    std::fs::write(std::path::Path::new(&dir).join("library.json"), library_json)
+        .map_err(|e| format!("write library failed: {e}"))
+}
+
 // wallpaper package lives inside the repo; applied via SetWallpaper RPC
 const WALLPAPER_DIR: &str = r"D:\midDOW\lively-core-separation\wallpapers\dext-room";
 
@@ -251,6 +275,9 @@ pub fn run() {
             get_wallpapers,
             get_installed_apps,
             launch_app,
+            resolve_app,
+            load_library,
+            save_library,
             list_rooms,
             read_room,
             write_room,

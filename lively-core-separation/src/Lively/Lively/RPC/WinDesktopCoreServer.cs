@@ -114,6 +114,31 @@ namespace Lively.RPC
             }
         }
 
+        public override Task<AppInfo> ResolveApp(ResolveAppRequest request, ServerCallContext context)
+        {
+            try
+            {
+                var entry = new Lively.Services.AppCatalogService().ResolveOne(request.Path);
+                if (entry == null)
+                    return Task.FromResult(new AppInfo() { Source = "unresolved" });
+
+                return Task.FromResult(new AppInfo()
+                {
+                    Name = entry.Name,
+                    Target = entry.Target,
+                    Arguments = entry.Arguments,
+                    WorkingDir = entry.WorkingDirectory,
+                    IconPng = Google.Protobuf.ByteString.CopyFrom(entry.IconPng),
+                    Source = "manual",
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"ResolveApp failed: {e}");
+                return Task.FromResult(new AppInfo() { Source = "unresolved" });
+            }
+        }
+
         public override Task<Empty> LaunchApp(LaunchAppRequest request, ServerCallContext context)
         {
             try
