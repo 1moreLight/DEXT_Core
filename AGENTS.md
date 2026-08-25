@@ -6,6 +6,8 @@
 2. 读 `dev_docs/TODO.md` —— 总任务台账，看当前进行到哪一步
 3. 读 `dev_docs/ERRORS.md` —— 踩坑记录，不要重复踩
 
+> 查接口（room.json 字段 / TRANSITIONS / Tauri commands / gRPC / IPC 消息）看 `dev_docs/README.md` 总纲。
+
 ## 工作纪律
 
 - **动代码之前**先更新 `dev_docs/TODO.md`：把本轮要做的计划追加进去（只加不删）
