@@ -349,16 +349,19 @@ namespace Lively.Core.Wallpapers
                                     // dual-write to the source room in the library (stamped by the configurator on apply)
                                     var jo = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(saveMsg.RoomJson);
                                     var src = (string)jo?["__source"];
-                                    if (!string.IsNullOrWhiteSpace(src) &&
-                                        (System.IO.File.Exists(src) || System.IO.Directory.Exists(src)))
+                                    if (!string.IsNullOrWhiteSpace(src))
                                     {
-                                        System.IO.File.WriteAllText(src, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
-                                        Logger.Info($"Wv2{uniqueId}: SaveRoom source: {src}");
+                                        // __source is the room folder; write the file inside it
+                                        var srcPath = System.IO.Directory.Exists(src)
+                                            ? System.IO.Path.Combine(src, "room.json")
+                                            : src;
+                                        System.IO.File.WriteAllText(srcPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
+                                        Logger.Info($"Wv2{uniqueId}: SaveRoom source: {srcPath}");
                                     }
                                 }
-                                catch
+                                catch (Exception de)
                                 {
-                                    // source sync is best-effort
+                                    Logger.Error($"Wv2{uniqueId}: SaveRoom source sync failed: {de.Message}");
                                 }
                             }
                             catch (Exception se)

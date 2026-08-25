@@ -64,6 +64,13 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 根因：PowerShell 双引号字符串先做自己的变量插值，$1 是 PS 的空变量
 - 解决：跨 PS 传正则替换时用单引号包 node 脚本，或干脆用编辑工具逐条改
 
+## 13. 双写往目录路径 WriteAllText 必抛异常被裸 catch 吞掉
+
+- 症状：修完 #12 后源库仍不同步，且零日志
+- 根因：__source 是文件夹，WriteAllText(文件夹) 抛 IOException；内层 catch{} 静默吞掉，两轮排查全被它蒙蔽
+- 解决：Directory.Exists(src) 时拼 src+room.json 再写；内层 catch 一律记日志
+- 防再犯：**禁止裸 catch**——吞掉的异常就是排障时的黑洞
+
 ## 12. 双写用 File.Exists 判断文件夹路径永远 false
 
 - 症状：SaveRoom 写包内成功但源房间从不同步，无任何报错日志
