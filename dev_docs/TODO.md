@@ -82,7 +82,17 @@
       dialog 插件选文件 → Rust 拷贝进 roomDir/background/（时间戳命名防冲突）→ 写回 background 字段
 - [x] 2026-08-25 Rust：tauri-plugin-dialog + import_background 命令 + capabilities 权限
 - [x] 2026-08-25 自测：cargo check + npm build 双绿
-- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 4」V1-V10）
+- [x] 2026-08-25 用户验收全绿（2026-08-25）
+
+### Phase 5：方向感知切桌过渡（2026-08-25 追加）
+
+- [x] 2026-08-25 接口：TRANSITIONS 注册表 { dur, run(stage, dir, done), cleanup }；room.transition 字符串字段（缺省 slide）
+- [x] 2026-08-25 内置动画：slide（左右镜像）/ fade / zoom / none / text（旧黑屏文案，兼容）
+- [x] 2026-08-25 结构：#desk-viewport > #desk-main + #desk-staging（双页渲染，Dock 不随动画动）；
+      renderDesk 拆分 mountBackground/renderIcons 供主层与 staging 复用
+- [x] 2026-08-25 方向：switchDesk(delta) 的 delta 即 dir，来回动画镜像
+- [x] 2026-08-25 自测 node --check 通过
+- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 5」T1-T6）（ACCEPTANCE.md「Phase 5」）
 
 ### Phase 3+：渲染器与 Schema（排队中）
 

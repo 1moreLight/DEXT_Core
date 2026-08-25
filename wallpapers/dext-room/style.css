@@ -18,7 +18,28 @@ html, body {
   inset: 0;
 }
 
-#desk-video {
+#desk-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#desk-main {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+#desk-staging {
+  position: absolute;
+  inset: 0;
+  display: none;
+  z-index: 5;
+  background: #000;
+  will-change: transform, opacity;
+}
+
+.desk-video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -28,7 +49,7 @@ html, body {
   background: #000;
 }
 
-#desk-background {
+.desk-bg {
   position: absolute;
   inset: 0;
   background-size: cover;
@@ -36,12 +57,12 @@ html, body {
   transition: background-image 0s;
 }
 
-#icon-layer {
+.icon-layer {
   position: absolute;
   inset: 40px 40px 100px 40px;
 }
 
-#icon-layer .icon {
+.icon-layer .icon {
   position: absolute;
   transition: left 0.25s ease, top 0.25s ease, background-color 0.15s, transform 0.15s;
 }

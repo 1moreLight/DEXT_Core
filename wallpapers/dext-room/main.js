@@ -85,9 +85,11 @@ function sizeOf(desk) {
   return ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
 }
 
-const bgEl = document.getElementById("desk-background");
-const bgVideo = document.getElementById("desk-video");
-const iconLayer = document.getElementById("icon-layer");
+const deskMain = document.getElementById("desk-main");
+const stageEl = document.getElementById("desk-staging");
+const bgEl = deskMain.querySelector(".desk-bg");
+const bgVideo = deskMain.querySelector(".desk-video");
+const iconLayer = deskMain.querySelector(".icon-layer");
 const indicatorEl = document.getElementById("desk-indicator");
 const transitionEl = document.getElementById("transition");
 const transitionTextEl = document.getElementById("transition-text");
@@ -127,38 +129,33 @@ function launchApp(launch) {
 
 // background is a string (image path, "" = black) or {type:"video",src}
 // only the active desk's video stays mounted; desk switches swap the src behind the transition mask
-function applyBackground(desk) {
+function mountBackground(bgTarget, videoTarget, desk) {
   const bg = desk.background;
   const isVideo = bg && typeof bg === "object" && bg.type === "video";
   if (isVideo) {
-    bgEl.style.backgroundImage = "none";
-    if (bgVideo.getAttribute("src") !== bg.src) bgVideo.src = bg.src;
-    bgVideo.style.display = "block";
-    bgVideo.play().catch(() => {});
+    bgTarget.style.backgroundImage = "none";
+    if (videoTarget.getAttribute("src") !== bg.src) videoTarget.src = bg.src;
+    videoTarget.style.display = "block";
+    videoTarget.play().catch(() => {});
   } else {
-    bgVideo.pause();
-    bgVideo.removeAttribute("src");
-    bgVideo.style.display = "none";
-    bgEl.style.backgroundImage = bg ? `url("${bg}")` : "none";
+    videoTarget.pause();
+    videoTarget.removeAttribute("src");
+    videoTarget.style.display = "none";
+    bgTarget.style.backgroundImage = bg ? `url("${bg}")` : "none";
   }
 }
 
-function renderDesk(index) {
-  const desk = ROOM.desks[index];
-  applyBackground(desk);
-  indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
-
-  const s = sizeOf(desk);
-  const W = iconLayer.clientWidth || window.innerWidth - 80;
-  const H = iconLayer.clientHeight || window.innerHeight - 140;
+function renderIcons(layer, desk, s) {
+  const W = layer.clientWidth || window.innerWidth - 80;
+  const H = layer.clientHeight || window.innerHeight - 140;
   const cols = Math.max(4, Math.floor(W / s.cellW));
   const rows = Math.max(1, Math.floor(H / s.cellH));
-  iconLayer.style.setProperty("--icon-size", `${s.icon}px`);
-  iconLayer.style.setProperty("--label-size", `${s.label}px`);
+  layer.style.setProperty("--icon-size", `${s.icon}px`);
+  layer.style.setProperty("--label-size", `${s.label}px`);
 
   if (!desk.icons.length || typeof desk.icons[0].x !== "number") normalizeCoords(desk, cols);
 
-  iconLayer.innerHTML = "";
+  layer.innerHTML = "";
   desk.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "icon";
@@ -191,8 +188,15 @@ function renderDesk(index) {
       persistRoom();
     });
     attachPress(el, i);
-    iconLayer.appendChild(el);
+    layer.appendChild(el);
   });
+}
+
+function renderDesk(index) {
+  const desk = ROOM.desks[index];
+  mountBackground(bgEl, bgVideo, desk);
+  indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
+  renderIcons(iconLayer, desk, sizeOf(desk));
 
   document.querySelectorAll("#size-group .size-btn").forEach((b) =>
     b.classList.toggle("active", b.dataset.size === (desk.iconSize ?? "medium"))
@@ -295,29 +299,132 @@ function exitEdit() {
   persistRoom();
 }
 
+// ---- transition registry (the extension point) ----
+// add a new desk-switch effect = add one entry here:
+//   { dur, run(stage, dir, done), cleanup() }
+// dir = +1 (next desk) / -1 (previous desk); stage is the incoming desk layer
+const TRANSITIONS = {
+  slide: {
+    dur: 450,
+    run(stage, dir, done) {
+      stage.style.display = "block";
+      stage.style.transition = "none";
+      stage.style.transform = `translateX(${dir * 100}%)`;
+      deskMain.style.transition = "none";
+      deskMain.style.transform = "translateX(0)";
+      requestAnimationFrame(() => {
+        const ease = `transform ${this.dur}ms cubic-bezier(.22,.61,.36,1)`;
+        stage.style.transition = ease;
+        deskMain.style.transition = ease;
+        stage.style.transform = "translateX(0)";
+        deskMain.style.transform = `translateX(${-dir * 25}%)`;
+        setTimeout(done, this.dur + 40);
+      });
+    },
+    cleanup() {
+      stageEl.style.display = "none";
+      stageEl.style.transition = "none";
+      stageEl.style.transform = "";
+      stageEl.innerHTML = "";
+      deskMain.style.transition = "none";
+      deskMain.style.transform = "";
+    },
+  },
+  fade: {
+    dur: 320,
+    run(stage, dir, done) {
+      stage.style.display = "block";
+      stage.style.transition = "none";
+      stage.style.opacity = "0";
+      requestAnimationFrame(() => {
+        stage.style.transition = `opacity ${this.dur}ms ease`;
+        stage.style.opacity = "1";
+        setTimeout(done, this.dur + 40);
+      });
+    },
+    cleanup() {
+      stageEl.style.display = "none";
+      stageEl.style.transition = "none";
+      stageEl.style.opacity = "";
+      stageEl.innerHTML = "";
+    },
+  },
+  zoom: {
+    dur: 420,
+    run(stage, dir, done) {
+      stage.style.display = "block";
+      stage.style.transition = "none";
+      stage.style.opacity = "0";
+      stage.style.transform = "scale(1.12)";
+      requestAnimationFrame(() => {
+        stage.style.transition = `opacity ${this.dur}ms ease, transform ${this.dur}ms cubic-bezier(.22,.61,.36,1)`;
+        stage.style.opacity = "1";
+        stage.style.transform = "scale(1)";
+        setTimeout(done, this.dur + 40);
+      });
+    },
+    cleanup() {
+      stageEl.style.display = "none";
+      stageEl.style.transition = "none";
+      stageEl.style.opacity = "";
+      stageEl.style.transform = "";
+      stageEl.innerHTML = "";
+    },
+  },
+  none: {
+    dur: 0,
+    run(stage, dir, done) {
+      done();
+    },
+    cleanup() {
+      stageEl.innerHTML = "";
+    },
+  },
+};
+
+function mountStaging(index) {
+  const desk = ROOM.desks[index];
+  stageEl.innerHTML = `
+    <video class="desk-video" autoplay muted loop playsinline></video>
+    <div class="desk-bg"></div>
+    <div class="icon-layer"></div>`;
+  mountBackground(stageEl.querySelector(".desk-bg"), stageEl.querySelector(".desk-video"), desk);
+  renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
+}
+
 function switchDesk(delta) {
-  if (switching || editMode) return;
+  if (switching || editMode || ROOM.desks.length < 2) return;
   switching = true;
 
   const next = (currentDesk + delta + ROOM.desks.length) % ROOM.desks.length;
-  transitionTextEl.textContent = ROOM.transitionText
-    ? ROOM.transitionText(ROOM.desks[currentDesk].name, ROOM.desks[next].name)
-    : `正在进入 ${ROOM.desks[next].name} ...`;
+  const name = typeof ROOM.transition === "string" ? ROOM.transition : "slide";
 
-  transitionEl.classList.add("active", "fade-in");
+  if (name === "text") {
+    transitionTextEl.textContent = ROOM.transitionText
+      ? ROOM.transitionText(ROOM.desks[currentDesk].name, ROOM.desks[next].name)
+      : `正在进入 ${ROOM.desks[next].name} ...`;
+    transitionEl.classList.add("active", "fade-in");
+    setTimeout(() => {
+      currentDesk = next;
+      renderDesk(currentDesk);
+      transitionEl.classList.remove("fade-in");
+      transitionEl.classList.add("fade-out");
+      setTimeout(() => {
+        transitionEl.classList.remove("active", "fade-out");
+        switching = false;
+      }, 450);
+    }, 350);
+    return;
+  }
 
-  setTimeout(() => {
+  const t = TRANSITIONS[name] ?? TRANSITIONS.slide;
+  mountStaging(next);
+  t.run(stageEl, delta, () => {
     currentDesk = next;
     renderDesk(currentDesk);
-
-    transitionEl.classList.remove("fade-in");
-    transitionEl.classList.add("fade-out");
-
-    setTimeout(() => {
-      transitionEl.classList.remove("active", "fade-out");
-      switching = false;
-    }, 450);
-  }, 350);
+    t.cleanup();
+    switching = false;
+  });
 }
 
 let toastTimer = null;

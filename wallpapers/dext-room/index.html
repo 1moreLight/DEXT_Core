@@ -9,10 +9,14 @@
 <body>
 
 <div id="desk">
-  <video id="desk-video" autoplay muted loop playsinline></video>
-  <div id="desk-background"></div>
-
-  <div id="icon-layer"></div>
+  <div id="desk-viewport">
+    <div id="desk-main">
+      <video class="desk-video" autoplay muted loop playsinline></video>
+      <div class="desk-bg"></div>
+      <div class="icon-layer"></div>
+    </div>
+    <div id="desk-staging"></div>
+  </div>
 
   <div id="dock">
     <button id="prev-desk" class="dock-btn" title="上一个 Desk">‹</button>

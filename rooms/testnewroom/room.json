@@ -1,9 +1,20 @@
 {
   "desks": [
     {
-      "background": "",
+      "background": {
+        "src": "background/video-1787638613830.mp4",
+        "type": "video"
+      },
       "icons": [],
       "name": "Desk 1"
+    },
+    {
+      "name": "Desk 2",
+      "background": {
+        "src": "background/video-1787638638606.mp4",
+        "type": "video"
+      },
+      "icons": []
     }
   ]
 }
