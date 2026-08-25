@@ -54,7 +54,7 @@
 - [x] 2026-08-25 Core：MessageType/LivelyMessageSaveRoomCmd/IpcMessageConverter/WebWebView2 落盘
 - [x] 2026-08-25 双写：apply_room 盖 `__source` 戳；Core 保存时包内 + 源房间各写一份
 - [x] 2026-08-25 自测 + build.ps1（C# 变更）+ cargo check + npm build
-- [ ] 2026-08-25 用户验收：清单见 ACCEPTANCE.md「Phase 3」
+- [x] 2026-08-25 用户验收通过（2026-08-25）
 
 ### Phase 3 修复轮（2026-08-25 追加）
 
@@ -63,7 +63,7 @@
 - [x] 2026-08-25 F2 根因确认：旧配置器进程 apply 无 __source 戳 → 回退；需重启+重应用一次（操作项，非代码）
 - [x] 2026-08-25 F2b SaveRoom 落盘路径修复：path 参数实为 index.html 文件，取目录后拼接（ERRORS #11）
 - [x] 2026-08-25 F2c 双写目标补全：__source 是目录，写 src/room.json（ERRORS #13）；内层 catch 改为记日志
-- [ ] 2026-08-25 F4 复验 L1-L10（用户）
+- [x] 2026-08-25 F4 复验通过（用户 ok）：拖拽/持久化/双写/重应用/切房全通
 
 ### Phase 3+：渲染器与 Schema（排队中）
 
