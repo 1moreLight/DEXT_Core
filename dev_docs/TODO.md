@@ -94,6 +94,15 @@
 - [x] 2026-08-25 自测 node --check 通过
 - [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 5」T1-T6）（ACCEPTANCE.md「Phase 5」）
 
+### Phase 5.5：视频转场（2026-08-25 追加）
+
+- [x] 2026-08-25 schema：transition 字段多态——字符串=预设名；`{type:"video",src:"transition/x.mp4"}`=视频转场
+- [x] 2026-08-25 渲染器：stinger 流程——全屏视频盖住 → 播到一半换桌 → 播完揭晓；加载/播放失败回退 slide
+- [x] 2026-08-25 Rust：import_background 支持 kind=transition（拷进 roomDir/transition/）；apply_room 增拷 transition/ 文件夹
+- [x] 2026-08-25 配置器：编辑模式顶栏转场下拉（滑动/淡入/缩放/无/视频），选视频弹文件框写回字段
+- [x] 2026-08-25 自测 cargo check + npm build 双绿 + renderer node --check
+- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 5.5」S1-S8）
+
 ### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：

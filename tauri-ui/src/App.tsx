@@ -57,6 +57,15 @@ function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
   );
 }
 
+type Transition = string | { type: "video"; src: string };
+
+function transitionLabel(t: Transition): string {
+  if (typeof t === "string") {
+    return { slide: "滑动", fade: "淡入", zoom: "缩放", none: "无" }[t] ?? t;
+  }
+  return "🎬 视频转场";
+}
+
 export default function App() {
   const [mode, setMode] = useState<Mode>("use");
   const [apps, setApps] = useState<AppInfo[]>([]);
@@ -75,6 +84,7 @@ export default function App() {
     localStorage.getItem("dext.appliedRoom")
   );
   const [showPreview, setShowPreview] = useState(false);
+  const [transition, setTransition] = useState<Transition>("slide");
   const previewRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -116,6 +126,7 @@ export default function App() {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
       setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
+      setTransition(room.transition ?? "slide");
       setActiveDesk(0);
       setRoomPath(path);
       setDirty(false);
@@ -135,7 +146,7 @@ export default function App() {
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify({ desks }, null, 2),
+        roomJson: JSON.stringify({ desks, transition }, null, 2),
       });
       setDirty(false);
       return true;
@@ -185,7 +196,7 @@ export default function App() {
       const path = await invoke<string>("create_room", { dir: libDir, name });
       await invoke("write_room", {
         path: `${path}\\room.json`,
-        roomJson: JSON.stringify({ desks }, null, 2),
+        roomJson: JSON.stringify({ desks, transition }, null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -243,6 +254,32 @@ export default function App() {
     setDesks((prev) =>
       prev.map((d, i) => (i === activeDesk ? { ...d, background: "" } : d))
     );
+  }
+
+  async function changeTransition(value: string) {
+    touch();
+    if (value !== "video") {
+      setTransition(value);
+      return;
+    }
+    if (!roomPath) return;
+    const picked = await open({
+      filters: [{ name: "视频", extensions: ["mp4", "webm", "mkv", "mov"] }],
+      multiple: false,
+    });
+    if (typeof picked !== "string") return;
+    try {
+      setStatus("copying...");
+      const t = await invoke<{ type: "video"; src: string }>("import_background", {
+        roomDir: roomPath,
+        srcPath: picked,
+        kind: "transition",
+      });
+      setTransition(t);
+      setStatus("视频转场已选择，记得保存并应用");
+    } catch (e) {
+      setStatus(`error: ${e}`);
+    }
   }
 
   function toggle(app: AppInfo) {
@@ -342,6 +379,18 @@ export default function App() {
               className="h-8 w-56 text-xs"
               title="房间库路径"
             />
+            <select
+              value={typeof transition === "string" ? transition : "video"}
+              onChange={(e) => changeTransition(e.target.value)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+              title="切桌过渡效果"
+            >
+              <option value="slide">滑动</option>
+              <option value="fade">淡入</option>
+              <option value="zoom">缩放</option>
+              <option value="none">无</option>
+              <option value="video">{typeof transition === "string" ? "视频…" : transitionLabel(transition)}</option>
+            </select>
           </div>
         )}
 

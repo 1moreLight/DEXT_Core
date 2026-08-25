@@ -135,6 +135,18 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
             }
         }
     }
+    let tr_src = src.join("transition");
+    if tr_src.is_dir() {
+        let tr_dst = pkg.join("transition");
+        std::fs::create_dir_all(&tr_dst).map_err(|e| format!("mkdir transition failed: {e}"))?;
+        for entry in std::fs::read_dir(&tr_src).map_err(|e| format!("read transition failed: {e}"))? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            if entry.file_type().map_err(|e| e.to_string())?.is_file() {
+                std::fs::copy(entry.path(), tr_dst.join(entry.file_name()))
+                    .map_err(|e| format!("copy transition failed: {e}"))?;
+            }
+        }
+    }
     grpc::set_wallpaper(WALLPAPER_DIR).await
 }
 
@@ -156,14 +168,18 @@ async fn import_background(
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_lowercase();
-    let ok = match kind.as_str() {
-        "video" => matches!(ext.as_str(), "mp4" | "webm" | "mkv" | "mov" | "avi"),
-        _ => matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif"),
+    let video = matches!(ext.as_str(), "mp4" | "webm" | "mkv" | "mov" | "avi");
+    let image = matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif");
+    // kind: "video"/"image" → background/, "transition" → transition/
+    let (ok, subdir, value) = match kind.as_str() {
+        "video" => (video, "background", true),
+        "transition" => (video, "transition", true),
+        _ => (image, "background", false),
     };
     if !ok {
         return Err(format!(".{ext} 不是有效的{kind}格式"));
     }
-    let dst_dir = std::path::Path::new(&room_dir).join("background");
+    let dst_dir = std::path::Path::new(&room_dir).join(subdir);
     std::fs::create_dir_all(&dst_dir).map_err(|e| format!("mkdir failed: {e}"))?;
     let name = format!(
         "{kind}-{}.{}",
@@ -174,10 +190,10 @@ async fn import_background(
         ext
     );
     std::fs::copy(src, dst_dir.join(&name)).map_err(|e| format!("copy failed: {e}"))?;
-    let rel = format!("background/{name}");
-    Ok(match kind.as_str() {
-        "video" => serde_json::json!({ "type": "video", "src": rel }),
-        _ => serde_json::Value::String(rel),
+    let rel = format!("{subdir}/{name}");
+    Ok(match value {
+        true => serde_json::json!({ "type": "video", "src": rel }),
+        false => serde_json::Value::String(rel),
     })
 }
 

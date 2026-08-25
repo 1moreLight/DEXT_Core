@@ -392,14 +392,95 @@ function mountStaging(index) {
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
 }
 
+// transition field: string = preset name; {type:"video",src} = stinger video
+function transitionSpec() {
+  const t = ROOM.transition;
+  if (typeof t === "string") return { name: t, src: null };
+  if (t && typeof t === "object" && t.type === "video" && t.src) {
+    return { name: "video", src: t.src };
+  }
+  return { name: "slide", src: null };
+}
+
+// stinger: fullscreen video covers the screen, desks swap at midpoint, reveal on end
+function playVideoTransition(next, src) {
+  const tv = document.getElementById("transition-video");
+  const wrap = document.getElementById("transition-video-wrap");
+  let swapped = false;
+  let done = false;
+
+  const swap = () => {
+    if (swapped) return;
+    swapped = true;
+    currentDesk = next;
+    renderDesk(currentDesk);
+    stageEl.style.display = "none";
+    stageEl.innerHTML = "";
+  };
+  const end = () => {
+    if (done) return;
+    done = true;
+    swap();
+    wrap.style.display = "none";
+    tv.onended = null;
+    tv.onerror = null;
+    tv.removeAttribute("src");
+    switching = false;
+  };
+  const fallback = () => {
+    if (done) return;
+    done = true;
+    tv.onended = null;
+    tv.onerror = null;
+    wrap.style.display = "none";
+    tv.removeAttribute("src");
+    if (swapped) {
+      switching = false;
+      return;
+    }
+    mountStaging(next);
+    TRANSITIONS.slide.run(stageEl, 1, () => {
+      currentDesk = next;
+      renderDesk(currentDesk);
+      TRANSITIONS.slide.cleanup();
+      switching = false;
+    });
+  };
+
+  tv.onended = end;
+  tv.onerror = fallback;
+  tv.src = src;
+  wrap.style.display = "block";
+  const p = tv.play();
+  if (p && p.catch) p.catch(fallback);
+  tv.addEventListener("timeupdate", function onTime() {
+    if (done) {
+      tv.removeEventListener("timeupdate", onTime);
+      return;
+    }
+    if (tv.duration > 0 && tv.currentTime >= tv.duration / 2) {
+      swap();
+      tv.removeEventListener("timeupdate", onTime);
+    }
+  });
+  setTimeout(() => {
+    if (!done && tv.readyState === 0) fallback();
+  }, 3000);
+}
+
 function switchDesk(delta) {
   if (switching || editMode || ROOM.desks.length < 2) return;
   switching = true;
 
   const next = (currentDesk + delta + ROOM.desks.length) % ROOM.desks.length;
-  const name = typeof ROOM.transition === "string" ? ROOM.transition : "slide";
+  const spec = transitionSpec();
 
-  if (name === "text") {
+  if (spec.name === "video") {
+    playVideoTransition(next, spec.src);
+    return;
+  }
+
+  if (spec.name === "text") {
     transitionTextEl.textContent = ROOM.transitionText
       ? ROOM.transitionText(ROOM.desks[currentDesk].name, ROOM.desks[next].name)
       : `正在进入 ${ROOM.desks[next].name} ...`;
@@ -417,7 +498,7 @@ function switchDesk(delta) {
     return;
   }
 
-  const t = TRANSITIONS[name] ?? TRANSITIONS.slide;
+  const t = TRANSITIONS[spec.name] ?? TRANSITIONS.slide;
   mountStaging(next);
   t.run(stageEl, delta, () => {
     currentDesk = next;
