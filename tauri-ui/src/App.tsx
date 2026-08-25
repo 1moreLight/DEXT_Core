@@ -17,6 +17,8 @@ interface RoomIcon {
   label: string;
   icon_png: string;
   launch: { target: string; args: string; workdir: string };
+  x?: number;
+  y?: number;
 }
 
 type Background = string | { type: "video"; src: string } | null;
@@ -44,6 +46,65 @@ interface RoomInfo {
 type Mode = "use" | "edit";
 
 const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
+
+// browser (non-Tauri) = UI design mode: mock data, no backend calls
+const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+function mockIcon(name: string, color: string): string {
+  const cv = document.createElement("canvas");
+  cv.width = 48;
+  cv.height = 48;
+  const ctx = cv.getContext("2d")!;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(4, 4, 40, 40, 10);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 22px 'Segoe UI'";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(name[0], 24, 26);
+  return cv.toDataURL("image/png").slice("data:image/png;base64,".length);
+}
+
+const MOCK_APPS: AppInfo[] = (
+  [
+    ["Edge", "#3b82f6"], ["Steam", "#1e293b"], ["VSCode", "#2563eb"], ["Obsidian", "#7c3aed"],
+    ["Spotify", "#10b981"], ["Telegram", "#0ea5e9"], ["Figma", "#f43f5e"], ["Notion", "#111827"],
+    ["QQ", "#ef4444"], ["微信", "#22c55e"], ["B站", "#fb7185"], ["网易云", "#dc2626"],
+    ["PotPlayer", "#f59e0b"], ["7-Zip", "#64748b"], ["OBS", "#0f172a"], ["Discord", "#6366f1"],
+    ["Chrome", "#f97316"], ["Termius", "#14b8a6"],
+  ] as [string, string][]
+).map(([name, color]) => ({
+  name,
+  target: `C:\\mock\\${name}.exe`,
+  arguments: "",
+  working_dir: "",
+  icon_png: mockIcon(name, color),
+  source: "mock",
+}));
+
+const MOCK_ROOMS: RoomInfo[] = [
+  { name: "my-room", path: "C:\\mock\\my-room", desks: 2, icons: 8 },
+  { name: "black-room", path: "C:\\mock\\black-room", desks: 1, icons: 0 },
+  { name: "game-room", path: "C:\\mock\\game-room", desks: 3, icons: 15 },
+];
+
+const MOCK_DESKS: Desk[] = [
+  {
+    name: "主页",
+    background: "",
+    iconSize: "medium",
+    icons: MOCK_APPS.slice(0, 6).map((a, i) => ({
+      label: a.name,
+      icon_png: a.icon_png,
+      launch: { target: a.target, args: "", workdir: "" },
+      x: i % 4,
+      y: Math.floor(i / 4),
+    })),
+  },
+  { name: "游戏", background: "", iconSize: "large", icons: [] },
+];
 
 function newDesk(index: number): Desk {
   return { name: `Desk ${index + 1}`, background: "", icons: [] };
@@ -91,6 +152,15 @@ export default function App() {
   const previewRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
+    if (!IS_TAURI) {
+      setApps(MOCK_APPS);
+      setRooms(MOCK_ROOMS);
+      setDesks(MOCK_DESKS);
+      setRoomPath(MOCK_ROOMS[0].path);
+      setLibSource("custom");
+      setStatus("UI 设计模式（浏览器 · mock 数据）");
+      return;
+    }
     (async () => {
       // curated library wins; fall back to live start-menu scan
       try {
@@ -524,13 +594,15 @@ export default function App() {
           <span className="text-sm text-muted-foreground">{status}</span>
           {mode === "edit" && (
             <>
-              <Button
-                variant={showPreview ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setShowPreview((v) => !v)}
-              >
-                预览
-              </Button>
+              {IS_TAURI && (
+                <Button
+                  variant={showPreview ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setShowPreview((v) => !v)}
+                >
+                  预览
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={saveRoom}>
                 保存
               </Button>

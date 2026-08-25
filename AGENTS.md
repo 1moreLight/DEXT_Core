@@ -27,3 +27,4 @@
 - 日志位置：`%LOCALAPPDATA%\Lively Wallpaper\logs\`
 - 仓库已建 CodeGraph 索引：查代码优先 `codegraph explore/node`，其次 grep/read
 - 前端外观迭代：`scripts/room-preview.ps1` 实时预览（无需 Lively），指南见 `dev_docs/FRONTEND.md`
+- 配置器 UI 设计：`cd tauri-ui && npm run dev:ui`（浏览器 1421，mock 数据，HMR），同见 FRONTEND.md 第零节

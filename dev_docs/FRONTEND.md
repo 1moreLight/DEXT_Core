@@ -1,18 +1,41 @@
-# Dext 前端外观开发指南（渲染器迭代手册）
+# Dext 前端开发指南
 
-> 用途：在**独立会话/窗口**里做桌面渲染器（wallpapers/dext-room/）的外观迭代，不依赖本会话。
-> 更新于 2026-08-25。开工前先按 AGENTS.md 读 TODO/ERRORS，再读本文件。
+> 本项目有**两个前端**，工作流不同，别混：
+> ① **配置器**（tauri-ui/，React+TS+Tailwind）→ 设计模式见「第零节」
+> ② **桌面渲染器**（wallpapers/dext-room/，纯 HTML/JS/CSS）→ 见「第一节」及以后
 
-## 一、实时预览（核心工具）
+## 零、配置器 UI 设计模式（React，mock 数据）
+
+配置器依赖 Tauri IPC（invoke），纯浏览器里会全挂——所以内置了 **mock 设计模式**：
+检测到非 Tauri 环境（浏览器）时自动填充假应用/假房间/假 Desk，界面完整可交互，专供 UI 设计。
 
 ```powershell
-# 方式一：一键脚本（自动开浏览器）
-scripts\room-preview.ps1
-
-# 方式二：手动
 cd tauri-ui
-npm run dev:room          # vite 服务 wallpapers/dext-room，端口 5174
-# 浏览器打开 http://localhost:5174
+npm run dev:ui        # vite 端口 1421，自动开浏览器
+```
+
+- **VS Code 分屏**：Ctrl+Shift+P → "Simple Browser: Show" → `http://localhost:1421` → 拖到右侧
+- 改 `src/App.tsx` / `src/*.css` → HMR 秒刷（无需重启）
+- mock 数据在 `App.tsx` 顶部（MOCK_APPS/MOCK_ROOMS/MOCK_DESKS，canvas 生成彩色首字母图标）；
+  要什么假数据直接改那里
+- 预览按钮（dext:// iframe）在设计模式自动隐藏；保存/应用等 invoke 操作会报错——设计模式不管它们
+- **注意**：`npm run tauri dev` 也占 1420 端口，设计模式用 1421，两者可并存
+
+## 一、桌面渲染器实时预览
+
+### VS Code 内分屏（推荐：左边代码右边 UI，不离开编辑器）
+
+```
+1. 起服务：  cd tauri-ui && npm run dev:room   （桌面渲染器，5174）
+2. Ctrl+Shift+P → "Simple Browser: Show" → 填 http://localhost:5174
+3. 预览标签页拖到右侧分屏 → 左改代码右实时变（Vite HMR 生效）
+```
+
+也可装微软 Live Preview 扩展：对 index.html 右键 Show Preview（仅渲染器适用）。
+
+```powershell
+# 独立浏览器方式（效果相同）
+scripts\room-preview.ps1
 ```
 
 - 改 `index.html` / `style.css` / `main.js` 任意文件 → 浏览器**即时刷新**，无构建步骤

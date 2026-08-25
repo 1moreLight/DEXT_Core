@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ui": "vite --port 1421 --open",
     "dev:room": "vite ../wallpapers/dext-room --open --port 5174",
     "build": "tsc && vite build",
     "preview": "vite preview",
