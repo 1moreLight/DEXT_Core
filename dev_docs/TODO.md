@@ -101,7 +101,7 @@
 - [x] 2026-08-25 Rust：import_background 支持 kind=transition（拷进 roomDir/transition/）；apply_room 增拷 transition/ 文件夹
 - [x] 2026-08-25 配置器：编辑模式顶栏转场下拉（滑动/淡入/缩放/无/视频），选视频弹文件框写回字段
 - [x] 2026-08-25 自测 cargo check + npm build 双绿 + renderer node --check
-- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 5.5」S1-S8）
+- [x] 2026-08-25 用户验收通过（2026-08-25）
 
 ### Phase 3+：渲染器与 Schema（排队中）
 
