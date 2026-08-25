@@ -74,9 +74,16 @@ async function loadRoom() {
   renderDesk(currentDesk);
 }
 
-const GRID_COLS = 8;
-const CELL_H = 120;
-const ICON_W = 96;
+// Windows-style icon size presets; desk.iconSize picks one (default medium)
+const ICON_SIZES = {
+  large: { icon: 72, cellW: 124, cellH: 152, label: 14 },
+  medium: { icon: 56, cellW: 96, cellH: 120, label: 13 },
+  small: { icon: 32, cellW: 64, cellH: 84, label: 11 },
+};
+
+function sizeOf(desk) {
+  return ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
+}
 
 const bgEl = document.getElementById("desk-background");
 const iconLayer = document.getElementById("icon-layer");
@@ -95,18 +102,11 @@ function persistRoom() {
   window.chrome.webview.postMessage(JSON.stringify({ type: "saveRoom", room: ROOM }));
 }
 
-function normalizeCoords(desk) {
-  desk.icons.forEach((ic, i) => {
-    ic.x = i % GRID_COLS;
-    ic.y = Math.floor(i / GRID_COLS);
-  });
-}
-
 // legacy rooms without coords get packed positions once; after that icons are sparse
-function normalizeCoords(desk) {
+function normalizeCoords(desk, cols) {
   desk.icons.forEach((ic, i) => {
-    ic.x = i % GRID_COLS;
-    ic.y = Math.floor(i / GRID_COLS);
+    ic.x = i % cols;
+    ic.y = Math.floor(i / cols);
   });
 }
 
@@ -129,17 +129,24 @@ function renderDesk(index) {
   bgEl.style.backgroundImage = desk.background ? `url("${desk.background}")` : "none";
   indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
 
-  if (!desk.icons.length || typeof desk.icons[0].x !== "number") normalizeCoords(desk);
-
+  const s = sizeOf(desk);
   const W = iconLayer.clientWidth || window.innerWidth - 80;
-  const cellW = W / GRID_COLS;
+  const H = iconLayer.clientHeight || window.innerHeight - 140;
+  const cols = Math.max(4, Math.floor(W / s.cellW));
+  const rows = Math.max(1, Math.floor(H / s.cellH));
+  iconLayer.style.setProperty("--icon-size", `${s.icon}px`);
+  iconLayer.style.setProperty("--label-size", `${s.label}px`);
+
+  if (!desk.icons.length || typeof desk.icons[0].x !== "number") normalizeCoords(desk, cols);
 
   iconLayer.innerHTML = "";
   desk.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "icon";
-    el.style.left = `${item.x * cellW + (cellW - ICON_W) / 2}px`;
-    el.style.top = `${item.y * CELL_H + 8}px`;
+    el.style.width = `${s.cellW}px`;
+    // clamp into view for the current size without rewriting stored coords
+    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW}px`;
+    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH}px`;
     const glyph = item.icon_png
       ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`
       : `<div class="icon-glyph" style="background:${item.color}">${item.glyph}</div>`;
@@ -167,6 +174,10 @@ function renderDesk(index) {
     attachPress(el, i);
     iconLayer.appendChild(el);
   });
+
+  document.querySelectorAll("#size-group .size-btn").forEach((b) =>
+    b.classList.toggle("active", b.dataset.size === (desk.iconSize ?? "medium"))
+  );
 }
 
 // long-press enters edit mode; in edit mode pointerdown starts a drag
@@ -224,10 +235,11 @@ function startDrag(e, el, index) {
     el.style.transition = "";
     // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
-    const cellW = rect.width / GRID_COLS;
-    const rows = Math.max(1, Math.floor(rect.height / CELL_H));
-    const col = Math.max(0, Math.min(GRID_COLS - 1, Math.floor((ev.clientX - rect.left) / cellW)));
-    const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / CELL_H)));
+    const s = sizeOf(ROOM.desks[currentDesk]);
+    const cols = Math.max(4, Math.floor(rect.width / s.cellW));
+    const rows = Math.max(1, Math.floor(rect.height / s.cellH));
+    const col = Math.max(0, Math.min(cols - 1, Math.floor((ev.clientX - rect.left) / s.cellW)));
+    const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / s.cellH)));
     const desk = ROOM.desks[currentDesk];
     const dragged = desk.icons[index];
     if (dragged.x === col && dragged.y === row) {
@@ -300,6 +312,17 @@ function showToast(msg) {
 document.getElementById("next-desk").addEventListener("click", () => switchDesk(1));
 document.getElementById("prev-desk").addEventListener("click", () => switchDesk(-1));
 doneBtn.addEventListener("click", exitEdit);
+
+document.querySelectorAll("#size-group .size-btn").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    if (!editMode) return;
+    const desk = ROOM.desks[currentDesk];
+    if (desk.iconSize === btn.dataset.size) return;
+    desk.iconSize = btn.dataset.size;
+    renderDesk(currentDesk);
+    persistRoom();
+  })
+);
 
 iconLayer.addEventListener("pointerdown", (e) => {
   if (editMode && e.target === iconLayer) exitEdit();

@@ -98,6 +98,35 @@ body.editing #edit-done {
   display: block;
 }
 
+#size-group {
+  display: none;
+  gap: 6px;
+}
+
+body.editing #size-group {
+  display: flex;
+}
+
+.size-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.size-btn:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+.size-btn.active {
+  background-color: #10b981;
+}
+
 .icon {
   width: 96px;
   display: flex;
@@ -120,26 +149,26 @@ body.editing #edit-done {
 }
 
 .icon-glyph {
-  width: 56px;
-  height: 56px;
+  width: var(--icon-size, 56px);
+  height: var(--icon-size, 56px);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: calc(var(--icon-size, 56px) * 0.54);
   color: #fff;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .icon-img {
-  width: 56px;
-  height: 56px;
+  width: var(--icon-size, 56px);
+  height: var(--icon-size, 56px);
   object-fit: contain;
   filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35));
 }
 
 .icon-label {
-  font-size: 13px;
+  font-size: var(--label-size, 13px);
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   text-align: center;
