@@ -205,6 +205,8 @@ namespace Lively.Player.WebView2
                 try
                 {
                     var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
+                    if ((string)o.type == "dext:shutdownDone")
+                        return; // consumed by HandleShutdownNotice
                     if ((string)o.type == "saveRoom")
                     {
                         SendToParent(new LivelyMessageSaveRoomCmd()
@@ -477,7 +479,11 @@ namespace Lively.Player.WebView2
                             {
                                 var obj = JsonConvert.DeserializeObject<IpcMessage>(text, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
                                 if (obj.Type == MessageType.cmd_close)
+                                {
+                                    // give the page a chance to play its shutdown slot (dext), then exit
+                                    await HandleShutdownNotice();
                                     break;
+                                }
 
                                 // Ensure all processing is on the same thread.
                                 // Some WebView2 calls require UI thread.
@@ -512,9 +518,42 @@ namespace Lively.Player.WebView2
             }
         }
 
-        private async Task ProcessMessage(IpcMessage obj)
+        // dext shutdown slot: notify the page, wait for its ack (or 5s cap), then let the
+        // caller break the message loop. Pages without a slot ack immediately.
+        private async Task HandleShutdownNotice()
         {
-            switch (obj.Type)
+            var wv = webView?.CoreWebView2;
+            if (wv == null)
+                return;
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            void Handler(object s, CoreWebView2WebMessageReceivedEventArgs e)
+            {
+                try
+                {
+                    var text = e.TryGetWebMessageAsString();
+                    if (text != null && text.Contains("dext:shutdownDone"))
+                        tcs.TrySetResult(true);
+                }
+                catch { /* non-ack web message, nothing to consume */ }
+            }
+
+            // WebView2 calls must run on the UI thread (same pattern as the message loop)
+            Invoke((Action)(() =>
+            {
+                wv.WebMessageReceived += Handler;
+                wv.PostWebMessageAsJson("\"dext:shutdown\"");
+            }));
+            _ = Task.Delay(5000).ContinueWith(_ => tcs.TrySetResult(false));
+            _ = tcs.Task.ContinueWith(_ =>
+            {
+                // teardown during close: UI/webview may already be gone, nothing to log into
+                try { Invoke((Action)(() => wv.WebMessageReceived -= Handler)); } catch { }
+            });
+            await tcs.Task;
+        }
+
+        private async Task ProcessMessage(IpcMessage obj)
+        {            switch (obj.Type)
             {
                 case MessageType.cmd_reload:
                     // ConnectionAborted issue.

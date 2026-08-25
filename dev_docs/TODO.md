@@ -39,6 +39,30 @@
 - [ ] 配置器：对含 room.js 的房间不破坏（编辑 room.json 主体照常）
 - [x] 2026-08-25 自测三绿（node --check ×2 + cargo check + npm build）
 - [~] 2026-08-25 用户验收：浏览器预览启动+切桌已确认（2026-08-25）；剩余项改对话验收（规则变更：验收清单不再写入 md）
+- [x] 2026-08-25 用户验收全绿（2026-08-25，含真机回切）；仅剩配置器兼容项随下轮顺带覆盖
+
+### Phase 9：统一演出槽 + 启动/关闭页（2026-08-25 追加）
+
+> 用户定调：视频与 HTML 统一为一种「演出槽」格式——视频=渲染器代管 <video> 的糖（本地包内路径），
+> HTML=房间自带页面自管结束。boot/shutdown/transition/background 同形。
+
+- [x] 2026-08-25 渲染器：playSlot 统一播放器（video/html/action 三态，超时兜底）+ boot 覆盖层流程 + dext:shutdown 监听与 ack
+- [x] 2026-08-25 C# Player：Form1 cmd_close 分支改「postMessage dext:shutdown → 等 ack 或 5s 超时 → 退出」（无槽零延迟）
+- [x] 2026-08-25 Rust：apply_room 泛化拷贝子目录（background/transition/boot/shutdown）
+- [x] 2026-08-25 cockpit-room：boot/index.html HUD 启动自检动画（html 槽示范，自 ack）+ room.json 接线
+- [x] 2026-08-25 文档：MODEL.md slot 章节 + README 接口表 + PROJECT 决策记录
+- [x] 2026-08-25 自测：node --check + cargo check + build.ps1 全绿（构建前需停 Lively，DLL 锁）
+- [ ] 2026-08-25 用户验收（对话清单：boot 动画 / shutdown 动画 / 无槽房间不受影响）
+
+### 研究专项：Lively API 全景调研（2026-08-25 追加）
+
+> 目标：摸清上游 Lively 生态全部对外接口形态 + 本 fork 现状对照，评估 Dext 可用性。产出 `dev_docs/LIVELY_API.md`。
+
+- [ ] 壁纸侧 JS API：fork Player 注入点盘点（livelyPropertyListener / livelyAudioListener / ...）+ 上游完整清单
+- [ ] 外部控制面：上游 Local API(HTTP) / 远程控制页 / 命令行参数
+- [ ] C# NuGet 库 LivelyWallpaper 形态速览（嵌入式用法）
+- [ ] 本仓库现状对照：哪些保留/被剥离；Dext 渲染器现在就能用什么
+- [ ] 成文 dev_docs/LIVELY_API.md + 自查 + commit
 
 ## 当前阶段：共享渲染器 + Schema v1
 
@@ -160,6 +184,8 @@
 - [x] 2026-08-25 mock 设计模式同步：MOCK_ROOMS 给渐变假封面数据，与真后端同构
 - [x] 2026-08-25 顺手修：设计模式下 refreshRooms useEffect 未跳过浏览器环境，invoke 报错刷状态栏（ERRORS #15）
 - [x] 2026-08-25 自测：cargo check + npm run build 全绿；设计模式截图确认布局生效
+- [x] 2026-08-25 迭代轮（多轮协作工作流，见 FRONTEND_WORK.md）：使用页改卡片网格+右半 hero、
+      搜索栏过滤、顶栏加创意工坊/设置占位 tab（未 commit，待用户拍板）
 - [ ] 用户验收（ACCEPTANCE.md「Phase 8」）
 
 ### Phase 6.5-旧：应用库多选批量操作（2026-08-25 已取消）

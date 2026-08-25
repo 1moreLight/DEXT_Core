@@ -187,27 +187,20 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
         serde_json::to_string_pretty(&room).unwrap(),
     )
     .map_err(|e| format!("copy room.json failed: {e}"))?;
-    let bg_src = src.join("background");
-    if bg_src.is_dir() {
-        let bg_dst = pkg.join("background");
-        std::fs::create_dir_all(&bg_dst).map_err(|e| format!("mkdir background failed: {e}"))?;
-        for entry in std::fs::read_dir(&bg_src).map_err(|e| format!("read background failed: {e}"))? {
-            let entry = entry.map_err(|e| e.to_string())?;
-            if entry.file_type().map_err(|e| e.to_string())?.is_file() {
-                std::fs::copy(entry.path(), bg_dst.join(entry.file_name()))
-                    .map_err(|e| format!("copy background failed: {e}"))?;
-            }
+    // room asset subdirs copied verbatim into the package
+    for sub in ["background", "transition", "boot", "shutdown"] {
+        let sub_src = src.join(sub);
+        if !sub_src.is_dir() {
+            continue;
         }
-    }
-    let tr_src = src.join("transition");
-    if tr_src.is_dir() {
-        let tr_dst = pkg.join("transition");
-        std::fs::create_dir_all(&tr_dst).map_err(|e| format!("mkdir transition failed: {e}"))?;
-        for entry in std::fs::read_dir(&tr_src).map_err(|e| format!("read transition failed: {e}"))? {
+        let sub_dst = pkg.join(sub);
+        std::fs::create_dir_all(&sub_dst)
+            .map_err(|e| format!("mkdir {sub} failed: {e}"))?;
+        for entry in std::fs::read_dir(&sub_src).map_err(|e| format!("read {sub} failed: {e}"))? {
             let entry = entry.map_err(|e| e.to_string())?;
             if entry.file_type().map_err(|e| e.to_string())?.is_file() {
-                std::fs::copy(entry.path(), tr_dst.join(entry.file_name()))
-                    .map_err(|e| format!("copy transition failed: {e}"))?;
+                std::fs::copy(entry.path(), sub_dst.join(entry.file_name()))
+                    .map_err(|e| format!("copy {sub} failed: {e}"))?;
             }
         }
     }

@@ -95,6 +95,89 @@ function loadRoomAsset(path, tag) {
   });
 }
 
+// ---- unified playable slot (MODEL.md §6.5) ----
+// {type:"video",src,loop?}  renderer-managed fullscreen <video> (local package path)
+// {type:"html",src,timeout?} room-owned page; ends on postMessage "dext:slotDone"
+// {type:"action",name}      event broadcast only
+function playSlot(slot, opts = {}) {
+  const onDone = opts.onDone ?? (() => {});
+  if (!slot || typeof slot !== "object") {
+    onDone();
+    return { cancel() {} };
+  }
+
+  if (slot.type === "action" && slot.name) {
+    window.dispatchEvent(
+      new CustomEvent("dext:slot", { detail: { name: slot.name, kind: opts.kind ?? "" } })
+    );
+    onDone();
+    return { cancel() {} };
+  }
+
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "position:fixed;inset:0;z-index:300;background:#000;";
+  let finished = false;
+  let timer = null;
+  let onMsg = null;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    if (onMsg) window.removeEventListener("message", onMsg);
+    wrap.remove();
+    onDone();
+  };
+  const cancel = () => {
+    finished = true;
+    clearTimeout(timer);
+    if (onMsg) window.removeEventListener("message", onMsg);
+    wrap.remove();
+  };
+  const limit = slot.timeout ?? opts.timeout ?? (slot.type === "html" ? 20 : 60);
+  if (limit > 0) timer = setTimeout(finish, limit * 1000);
+
+  if (slot.type === "video" && slot.src) {
+    const v = document.createElement("video");
+    v.src = `${RP}${slot.src}`;
+    v.muted = true;
+    v.autoplay = true;
+    v.playsInline = true;
+    v.loop = slot.loop ?? opts.loop ?? false;
+    v.style.cssText = "width:100%;height:100%;object-fit:cover;";
+    v.addEventListener("ended", finish);
+    v.addEventListener("error", finish);
+    wrap.appendChild(v);
+    document.body.appendChild(wrap);
+    v.play().catch(finish);
+    return { cancel };
+  }
+
+  if (slot.type === "html" && slot.src) {
+    const f = document.createElement("iframe");
+    f.src = `${RP}${slot.src}`;
+    f.allow = "autoplay";
+    f.style.cssText = "width:100%;height:100%;border:0;";
+    wrap.appendChild(f);
+    document.body.appendChild(wrap);
+    onMsg = (e) => {
+      if (e.data === "dext:slotDone") finish();
+    };
+    window.addEventListener("message", onMsg);
+    return { cancel };
+  }
+
+  // unknown slot: don't hang the room on it
+  finish();
+  return { cancel };
+}
+
+// boot: fullscreen cover on room load; reveal on slot end (video ended / html ack / timeout)
+function playBoot() {
+  const slot = ROOM.boot;
+  if (!slot) return;
+  playSlot(slot, { kind: "boot" });
+}
+
 async function loadRoom() {
   try {
     const res = await fetch(`${RP}room.json`);
@@ -108,7 +191,27 @@ async function loadRoom() {
   await loadRoomAsset(`${RP}room.css`, "link");
   await loadRoomAsset(`${RP}room.js`, "script");
   renderDesk(currentDesk);
+  playBoot();
   dextEmit("ready", { deskCount: ROOM.desks.length });
+}
+
+// Core wraps up the wallpaper: Player forwards cmd_close as dext:shutdown;
+// play the shutdown slot then ack, or ack immediately when none is configured.
+if (window.chrome?.webview) {
+  window.chrome.webview.addEventListener("message", (e) => {
+    if (e.data !== "dext:shutdown") return;
+    const slot = ROOM.shutdown;
+    if (!slot) {
+      window.chrome.webview.postMessage(JSON.stringify({ type: "dext:shutdownDone" }));
+      return;
+    }
+    playSlot(slot, {
+      kind: "shutdown",
+      timeout: 4, // stay under the Player-side 5s close cap
+      onDone: () =>
+        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:shutdownDone" })),
+    });
+  });
 }
 
 // Windows-style icon size presets; desk.iconSize picks one (default medium)

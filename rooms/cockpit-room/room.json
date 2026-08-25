@@ -1,4 +1,5 @@
 {
+  "boot": { "type": "html", "src": "boot/index.html", "timeout": 15 },
   "desks": [
     {
       "name": "STANDBY",

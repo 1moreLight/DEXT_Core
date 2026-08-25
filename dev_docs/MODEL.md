@@ -116,6 +116,26 @@ dext.getCurrentDesk()     // 下标
 - 开放问题：房间脚本自身状态持久化（如驾驶舱仪表配置）暂 YAGNI；
   localStorage 在虚拟主机域下的行为需实测后定。
 
+### 6.5 统一演出槽 slot（2026-08-25，Phase 9）
+
+> 用户定调：视频与 HTML 统一——**视频 = 渲染器代管 `<video>` 的糖**（读包内本地路径），
+> HTML = 房间自带页面自管生命周期。boot / shutdown / transition 通用，background 同形预留。
+
+```jsonc
+// slot 三态（统一值类型）：
+{ "type": "video", "src": "boot/intro.mp4", "loop": false }   // 渲染器代管，ended/error 结束
+{ "type": "html",  "src": "boot/index.html", "timeout": 20 }  // iframe 加载；页面 postMessage
+                                                              // "dext:slotDone" 结束；timeout 兜底
+{ "type": "action", "name": "cockpit.boot" }                  // 广播 dext:slot 事件，立即结束
+```
+
+- **boot**：渲染器加载 → renderDesk → boot 槽全屏覆盖（z-index 300）→ 结束揭晓。缺省无覆盖。
+- **shutdown**：Core 发 cmd_close → Player `HandleShutdownNotice`：postMessage
+  `"dext:shutdown"` 给页面 → 渲染器播 `room.shutdown` 槽 → ack `{type:"dext:shutdownDone"}`
+  → Player 退出；Player 侧 5s 强制上限（渲染器侧自限 4s）。**无槽房间零延迟**（立即 ack）。
+- 转场 video 分支保留 stinger 专用逻辑（播到 50% 换桌），schema 与 slot 同形。
+- Room 文件夹新增可选子目录：`boot/`、`shutdown/`（apply_room 泛化拷贝）。
+
 ## 七、room.json v1 字段总表（草案）
 
 ```jsonc

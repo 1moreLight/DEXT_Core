@@ -30,6 +30,7 @@
 | `ERRORS.md` | 踩坑记录（追加式，勿删） | 排障时先查；新坑解决后追加 |
 | `ACCEPTANCE.md` | 人工验收清单（每轮追加，用户亲自打勾） | 每轮代码完成后追加 |
 | `FRONTEND.md` | 渲染器外观迭代手册（实时预览、函数表、任务池、纪律） | 前端外观工作 |
+| `FRONTEND_WORK.md` | 配置器 UI 协作手册（小步迭代工作流、主页改版进度、结构快照） | 配置器 UI 工作 |
 
 **铁律**：动代码前先写 TODO 计划 → 每完成一步打标 → 踩坑记 ERRORS → 决策记 PROJECT → 每轮出验收清单 → 自测通过即 commit。断线/换会话靠台账无损续接。
 
@@ -77,6 +78,10 @@
 | `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按/删除），主层与 staging 共用 |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 配置器预览注入 `{type:"dext:room", room, deskIndex}` → 整房重渲 |
+| `window.dext` | 房间脚本 API | onReady / onDeskChange / onEditChange / getRoom / getCurrentDesk（MODEL.md §6） |
+| `room.js` / `room.css` | 房间自带 | 渲染器加载（错误隔离）；apply_room 随包拷贝 |
+| 演出槽 playSlot | 统一播放器 | `{video|html|action}` 三态；boot 覆盖层 / shutdown / 转场共用（MODEL.md §6.5） |
+| `dext:shutdown` | Player→页面 | cmd_close 转发；页面播 shutdown 槽后 ack `dext:shutdownDone`（5s 上限） |
 
 ### L2 渲染器 → Player → Core（上行 IPC，stdout 管道）
 
