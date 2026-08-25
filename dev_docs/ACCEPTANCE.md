@@ -229,3 +229,8 @@
 
 - [ ] **K1** 编辑模式功能不受影响：desk 侧栏/应用库/多选/背景选择/预览开关
 - [ ] **K2** 设计模式状态栏不再报 invoke TypeError，显示「UI 设计模式（浏览器 · mock 数据）」
+
+### Phase 8 设计（2026-08-25）
+
+- [ ] **M4** MODEL.md 第六节通读：两层路线（action 语法糖 + room.js/room.css + window.dext）符合「高达驾驶舱」设想
+- [ ] **M5** dext 最小事件集（onReady/onDeskChange/onEditChange/getRoom）够你构思的第一个驾驶舱用；缺什么直接在此批注

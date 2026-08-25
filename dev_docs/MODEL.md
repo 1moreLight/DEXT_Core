@@ -58,7 +58,8 @@ Library（rooms/library.json）
 - key 格式 `"from>to"`，值为下标；方向天然区分来回。
 - 渲染时查找顺序：`transitions["cur>next"] ?? transition ?? "slide"`。
 - 未覆盖的边全部走默认 → 现有房间零迁移。
-- 值的多态与现有一致：字符串=预设名（slide/fade/zoom/none/text），对象 `{type:"video",src}`=stinger。
+- **值的多态三态**（2026-08-25 扩）：字符串=预设名（slide/fade/zoom/none/text）、
+  `{type:"video",src}`=stinger、`{type:"action",name}`=广播页面事件给房间脚本（见第六节）。
 - 环形导航下 from/to 取实际下标（如末桌→首桌为 `"2>0"`）。
 
 ## 四、清理项
@@ -77,7 +78,45 @@ Library（rooms/library.json）
 5. 宽容读取：缺字段一律默认值（ERRORS #4 教训）；未知字段忽略不报错
 6. 图标无 `launch` 时双击走 `action` toast 文案
 
-## 六、room.json v1 字段总表（草案）
+## 六、房间可编程性（2026-08-25 拍板：两层路线）
+
+> 动机场景：高达驾驶舱——整个页面即作品，切桌 = 触发自定义 HTML 动作，
+> 而非仅播视频。对标 Wallpaper Engine「壁纸即网页程序」的创作者自由度。
+
+### 6.1 Room 文件夹扩展成员（均可选）
+
+```
+rooms/gundam-room/
+  room.json / background/ / transition/
+  room.js     ← 房间脚本：注册事件回调，自由驱动页面
+  room.css    ← 房间样式：覆盖/追加外观
+```
+
+### 6.2 声明式动作（第一层，语法糖）
+
+转场值 `{type:"action", name:"cockpit.combat"}` → 渲染器向 `window` 广播
+`dext:transition` CustomEvent（detail 含 from/to/name/dir），房间脚本监听之。
+与 video 类型平级，可共存于边级覆盖表。
+
+### 6.3 房间脚本契约 window.dext（第二层，最小集草案）
+
+```js
+dext.onReady(fn)          // 渲染器就绪（room.js 加载早于首次渲染完成）
+dext.onDeskChange(fn)     // fn({from, to, dir, phase}) phase: "before"|"after"
+dext.onEditChange(fn)     // fn({editing})
+dext.getRoom()            // 只读视图
+dext.getCurrentDesk()     // 下标
+```
+
+- 加载顺序：渲染器初始化 → 注入 room.css → 执行 room.js（try/catch 错误隔离，
+  单房间脚本炸了不影响渲染器兜底渲染）。
+- 风险模型与 WE 一致：脚本在壁纸 WebView 沙箱内，能碰 DOM/发 postMessage
+  （= 可启动应用，同图标行为），不能出沙箱碰文件系统；
+  「装不可信房间 ≈ 跑不可信网页」，创意工坊阶段再考虑提示/审核。
+- 开放问题：房间脚本自身状态持久化（如驾驶舱仪表配置）暂 YAGNI；
+  localStorage 在虚拟主机域下的行为需实测后定。
+
+## 七、room.json v1 字段总表（草案）
 
 ```jsonc
 {
@@ -104,8 +143,11 @@ Library（rooms/library.json）
 }
 ```
 
-## 七、待实现（另立 phase）
+## 八、待实现（另立 phase）
 
 - [ ] 渲染器 switchDesk 接入边级查找
+- [ ] 渲染器：room.js/room.css 加载（错误隔离）+ window.dext 最小事件集
+- [ ] 渲染器：action 类型转场 → dext:transition 事件广播
 - [ ] 配置器转场 UI 从单选升级为「默认 + 边级列表」（或矩阵视图，做法后议）
 - [ ] transitionText 清理 + text 预设固定模板
+- [ ] dext 契约定稿文档（AI skill 的输入之一）；配置器对 room.js 房间只读不破坏
