@@ -22,6 +22,7 @@ interface Desk {
   name: string;
   background: string;
   icons: RoomIcon[];
+  iconSize?: string;
 }
 
 interface RoomInfo {
@@ -426,9 +427,32 @@ export default function App() {
 
             {/* current desk icons */}
             <div className="border-t border-border p-3">
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 「{desk.name}」的图标
+              </span>
+              <div className="flex gap-1">
+                {(["large", "medium", "small"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      touch();
+                      setDesks((prev) =>
+                        prev.map((d, i) => (i === activeDesk ? { ...d, iconSize: s } : d))
+                      );
+                    }}
+                    className={`rounded px-1.5 py-0.5 text-xs ${
+                      (desk.iconSize ?? "medium") === s
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border text-muted-foreground hover:bg-accent"
+                    }`}
+                    title="桌面图标尺寸"
+                  >
+                    {{ large: "大", medium: "中", small: "小" }[s]}
+                  </button>
+                ))}
               </div>
+            </div>
               <div className="flex flex-wrap gap-1.5">
                 {desk.icons.map((icon) => (
                   <button
