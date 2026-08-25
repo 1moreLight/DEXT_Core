@@ -1,5 +1,7 @@
 mod grpc;
 
+use tauri::Manager;
+
 pub mod proto {
     pub mod desktop {
         include!(concat!(env!("OUT_DIR"), "/lively.grpc.common.proto.desktop.rs"));
@@ -57,27 +59,64 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 const WALLPAPER_DIR: &str = r"D:\midDOW\lively-core-separation\wallpapers\dext-room";
 
 #[derive(serde::Serialize)]
+struct CoverRef {
+    kind: String, // "image" | "video"
+    src: String,  // path relative to the room dir (forward slashes)
+}
+
+#[derive(serde::Serialize)]
 struct RoomInfo {
     name: String,
     path: String,
     desks: usize,
     icons: usize,
+    covers: Vec<CoverRef>,
 }
 
+fn push_cover(covers: &mut Vec<CoverRef>, bg: &serde_json::Value) {
+    match bg {
+        serde_json::Value::String(s) if !s.is_empty() => covers.push(CoverRef {
+            kind: "image".into(),
+            src: s.replace('\\', "/"),
+        }),
+        serde_json::Value::Object(_) => {
+            if let Some(src) = bg.get("src").and_then(|s| s.as_str()) {
+                if !src.is_empty() {
+                    covers.push(CoverRef {
+                        kind: "video".into(),
+                        src: src.replace('\\', "/"),
+                    });
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+// room library dir for the lib:// protocol; kept in sync by list_rooms
+struct LibDir(std::sync::Mutex<String>);
+
 #[tauri::command]
-async fn list_rooms(dir: String) -> Result<Vec<RoomInfo>, String> {
+async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>, String> {
+    if app.try_state::<LibDir>().is_none() {
+        app.manage(LibDir(std::sync::Mutex::new(dir.clone())));
+    } else {
+        *app.state::<LibDir>().0.lock().unwrap() = dir.clone();
+    }
     let mut out = Vec::new();
     for entry in std::fs::read_dir(&dir).map_err(|e| format!("read dir failed: {e}"))? {
         let entry = entry.map_err(|e| e.to_string())?;
         let p = entry.path();
         if p.is_dir() && p.join("room.json").is_file() {
             let (mut desks, mut icons) = (0usize, 0usize);
+            let mut covers = Vec::new();
             if let Ok(txt) = std::fs::read_to_string(p.join("room.json")) {
                 if let Ok(j) = serde_json::from_str::<serde_json::Value>(&txt) {
                     if let Some(arr) = j["desks"].as_array() {
                         desks = arr.len();
                         for d in arr {
                             icons += d["icons"].as_array().map(|a| a.len()).unwrap_or(0);
+                            push_cover(&mut covers, &d["background"]);
                         }
                     }
                 }
@@ -87,6 +126,7 @@ async fn list_rooms(dir: String) -> Result<Vec<RoomInfo>, String> {
                 path: p.to_string_lossy().into_owned(),
                 desks,
                 icons,
+                covers,
             });
         }
     }
@@ -221,35 +261,85 @@ async fn import_background(
     })
 }
 
-fn serve_package_file(url_path: &str) -> tauri::http::Response<Vec<u8>> {
+fn mime_of(path: &std::path::Path) -> &'static str {
+    match path.extension().and_then(|e| e.to_str()).unwrap_or("") {
+        "html" => "text/html; charset=utf-8",
+        "css" => "text/css; charset=utf-8",
+        "js" => "text/javascript; charset=utf-8",
+        "json" => "application/json",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        "bmp" => "image/bmp",
+        "gif" => "image/gif",
+        "svg" => "image/svg+xml",
+        "mp4" => "video/mp4",
+        "webm" => "video/webm",
+        _ => "application/octet-stream",
+    }
+}
+
+fn respond_file(full: &std::path::Path) -> tauri::http::Response<Vec<u8>> {
+    match std::fs::read(full) {
+        Ok(bytes) => tauri::http::Response::builder()
+            .header("Content-Type", mime_of(full))
+            .body(bytes)
+            .unwrap(),
+        Err(_) => tauri::http::Response::builder()
+            .status(404)
+            .body(Vec::new())
+            .unwrap(),
+    }
+}
+
+fn decode_url_path(url_path: &str) -> Option<Vec<String>> {
     use percent_encoding::percent_decode_str;
     let decoded = percent_decode_str(url_path.trim_start_matches('/'))
         .decode_utf8_lossy()
         .into_owned();
-    if decoded.split(['/', '\\']).any(|s| s == "..") {
-        return tauri::http::Response::builder().status(403).body(Vec::new()).unwrap();
+    let segments: Vec<String> = decoded
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect();
+    if segments.iter().any(|s| s == "..") || segments.is_empty() {
+        return None;
     }
-    let full = std::path::Path::new(WALLPAPER_DIR).join(&decoded);
-    match std::fs::read(&full) {
-        Ok(bytes) => {
-            let mime = match full.extension().and_then(|e| e.to_str()).unwrap_or("") {
-                "html" => "text/html; charset=utf-8",
-                "css" => "text/css; charset=utf-8",
-                "js" => "text/javascript; charset=utf-8",
-                "json" => "application/json",
-                "png" => "image/png",
-                "jpg" | "jpeg" => "image/jpeg",
-                "svg" => "image/svg+xml",
-                "mp4" => "video/mp4",
-                "webm" => "video/webm",
-                _ => "application/octet-stream",
-            };
-            tauri::http::Response::builder()
-                .header("Content-Type", mime)
-                .body(bytes)
-                .unwrap()
+    Some(segments)
+}
+
+fn serve_package_file(url_path: &str) -> tauri::http::Response<Vec<u8>> {
+    match decode_url_path(url_path) {
+        Some(segments) => {
+            let mut full = std::path::PathBuf::from(WALLPAPER_DIR);
+            for s in &segments {
+                full.push(s);
+            }
+            respond_file(&full)
         }
-        Err(_) => tauri::http::Response::builder().status(404).body(Vec::new()).unwrap(),
+        None => tauri::http::Response::builder()
+            .status(403)
+            .body(Vec::new())
+            .unwrap(),
+    }
+}
+
+// lib:// protocol maps the room library dir (rooms/<name>/...) into the webview,
+// so the home page can show cover thumbnails straight from the source rooms.
+fn serve_lib_file(url_path: &str, lib_dir: &str) -> tauri::http::Response<Vec<u8>> {
+    match decode_url_path(url_path) {
+        // require at least <room-name>/<file>
+        Some(segments) if segments.len() >= 2 => {
+            let mut full = std::path::PathBuf::from(lib_dir);
+            for s in &segments {
+                full.push(s);
+            }
+            respond_file(&full)
+        }
+        _ => tauri::http::Response::builder()
+            .status(403)
+            .body(Vec::new())
+            .unwrap(),
     }
 }
 
@@ -270,6 +360,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {
             serve_package_file(request.uri().path())
+        })
+        .register_uri_scheme_protocol("lib", |ctx, request| {
+            let dir = match ctx.app_handle().try_state::<LibDir>() {
+                Some(s) => s.0.lock().unwrap().clone(),
+                None => String::new(),
+            };
+            serve_lib_file(request.uri().path(), &dir)
         })
         .invoke_handler(tauri::generate_handler![
             get_wallpapers,

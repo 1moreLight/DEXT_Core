@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { Film, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -36,11 +37,17 @@ function bgLabel(bg: Background): string {
   return `🎬 视频 ${bg.src}`;
 }
 
+interface CoverRef {
+  kind: "image" | "video";
+  src: string;
+}
+
 interface RoomInfo {
   name: string;
   path: string;
   desks: number;
   icons: number;
+  covers?: CoverRef[];
 }
 
 type Mode = "use" | "edit";
@@ -85,9 +92,28 @@ const MOCK_APPS: AppInfo[] = (
 }));
 
 const MOCK_ROOMS: RoomInfo[] = [
-  { name: "my-room", path: "C:\\mock\\my-room", desks: 2, icons: 8 },
-  { name: "black-room", path: "C:\\mock\\black-room", desks: 1, icons: 0 },
-  { name: "game-room", path: "C:\\mock\\game-room", desks: 3, icons: 15 },
+  {
+    name: "my-room",
+    path: "C:\\mock\\my-room",
+    desks: 2,
+    icons: 8,
+    covers: [
+      { kind: "video", src: "background/bg.mp4" },
+      { kind: "image", src: "background/bg.png" },
+    ],
+  },
+  { name: "black-room", path: "C:\\mock\\black-room", desks: 1, icons: 0, covers: [] },
+  {
+    name: "game-room",
+    path: "C:\\mock\\game-room",
+    desks: 3,
+    icons: 15,
+    covers: [
+      { kind: "image", src: "background/1.png" },
+      { kind: "image", src: "background/2.png" },
+      { kind: "image", src: "background/3.png" },
+    ],
+  },
 ];
 
 const MOCK_DESKS: Desk[] = [
@@ -127,6 +153,83 @@ function transitionLabel(t: Transition): string {
   return "🎬 视频转场";
 }
 
+/* ===== room cover collage ===== */
+
+type CoverTile =
+  | { kind: "image"; url: string }
+  | { kind: "video" }
+  | { kind: "gradient"; from: string; to: string };
+
+const GRADIENTS: [string, string][] = [
+  ["#0f172a", "#334155"],
+  ["#1e1b4b", "#6d28d9"],
+  ["#064e3b", "#0f766e"],
+  ["#7c2d12", "#c2410c"],
+  ["#831843", "#be185d"],
+  ["#082f49", "#0369a1"],
+];
+
+function nameGradient(name: string): CoverTile {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  const [from, to] = GRADIENTS[h % GRADIENTS.length];
+  return { kind: "gradient", from, to };
+}
+
+function coverTileOf(c: CoverRef, room: RoomInfo): CoverTile {
+  if (c.kind === "video") return { kind: "video" };
+  // real backend serves room files via the lib:// protocol; browser mock falls back to gradient
+  if (!IS_TAURI || !c.src) return nameGradient(room.name);
+  const rel = c.src.split(/[\\/]/).map(encodeURIComponent).join("/");
+  return {
+    kind: "image",
+    url: `http://lib.localhost/${encodeURIComponent(room.name)}/${rel}`,
+  };
+}
+
+function roomCovers(r: RoomInfo): CoverTile[] {
+  const tiles = (r.covers ?? []).map((c) => coverTileOf(c, r));
+  return tiles.length ? tiles : [nameGradient(r.name)];
+}
+
+function CoverTileBox({ tile }: { tile: CoverTile }) {
+  if (tile.kind === "gradient")
+    return (
+      <div
+        className="h-full w-full"
+        style={{ background: `linear-gradient(135deg, ${tile.from}, ${tile.to})` }}
+      />
+    );
+  if (tile.kind === "video")
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-black">
+        <Film className="h-5 w-5 text-white/40" />
+      </div>
+    );
+  return <img src={tile.url} alt="" draggable={false} className="h-full w-full object-cover" />;
+}
+
+// collage layout: 1 tile full / 2 split / 3 row of three / 4 quad
+function CoverCollage({ tiles }: { tiles: CoverTile[] }) {
+  const shown = tiles.slice(0, 4);
+  const n = shown.length;
+  const cols = n === 3 ? 3 : n >= 2 ? 2 : 1;
+  const rows = n >= 4 ? 2 : 1;
+  return (
+    <div
+      className={`grid h-full w-full overflow-hidden bg-black ${n > 1 ? "gap-px" : ""}`}
+      style={{
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gridTemplateRows: `repeat(${rows}, 1fr)`,
+      }}
+    >
+      {shown.map((t, i) => (
+        <CoverTileBox key={i} tile={t} />
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState<Mode>("use");
   const [apps, setApps] = useState<AppInfo[]>([]);
@@ -149,7 +252,16 @@ export default function App() {
   const [multiMode, setMultiMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
+  const [heroPath, setHeroPath] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">(
+    () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
+  );
   const previewRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("dext.theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -185,6 +297,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!IS_TAURI) return;
     refreshRooms(libDir).then(async (list) => {
       const last = localStorage.getItem("dext.roomPath");
       const target = list.find((r) => r.path === last)?.path ?? list[0]?.path;
@@ -517,6 +630,11 @@ export default function App() {
   }
 
   const desk = desks[activeDesk];
+  const heroRoom =
+    rooms.find((r) => r.path === heroPath) ??
+    rooms.find((r) => r.path === appliedRoom) ??
+    rooms[0] ??
+    null;
   const filtered = apps.filter((a) =>
     a.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -591,6 +709,14 @@ export default function App() {
         )}
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            title={theme === "dark" ? "切到浅色" : "切到深色"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <span className="text-sm text-muted-foreground">{status}</span>
           {mode === "edit" && (
             <>
@@ -615,42 +741,91 @@ export default function App() {
       </header>
 
       {mode === "use" ? (
-        /* ===== use mode: room cards ===== */
-        <section className="flex min-h-0 flex-1 flex-col p-4">
-          <div className="grid flex-1 auto-rows-min grid-cols-3 gap-3 overflow-y-auto pr-1">
-            {rooms.map((r) => {
-              const on = r.path === appliedRoom;
-              return (
-                <div
-                  key={r.path}
-                  className={`rounded-lg border p-4 ${
-                    on ? "border-primary ring-1 ring-primary" : "border-border"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium">{r.name}</span>
-                    {on && <span className="text-xs font-medium text-primary">应用中</span>}
+        /* ===== use mode: hero focus + room list ===== */
+        <section className="flex min-h-0 flex-1 gap-4 p-4">
+          {heroRoom ? (
+            <>
+              <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-border shadow-sm">
+                <CoverCollage tiles={roomCovers(heroRoom)} />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-24 text-white">
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-2xl font-semibold tracking-tight">{heroRoom.name}</h2>
+                    {heroRoom.path === appliedRoom && (
+                      <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium">
+                        应用中
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {r.desks} Desk · {r.icons} 图标
-                  </div>
+                  <p className="mt-1 text-sm text-white/70">
+                    {heroRoom.desks} Desk · {heroRoom.icons} 图标
+                  </p>
                   <Button
                     size="sm"
-                    variant={on ? "secondary" : "default"}
-                    className="mt-3 w-full"
-                    onClick={() => applyRoomDir(r.path)}
+                    className="mt-4 px-4"
+                    variant={heroRoom.path === appliedRoom ? "secondary" : "default"}
+                    onClick={() => applyRoomDir(heroRoom.path)}
                   >
-                    {on ? "重新应用" : "应用"}
+                    {heroRoom.path === appliedRoom ? "重新应用" : "应用此房间"}
                   </Button>
                 </div>
-              );
-            })}
-            {rooms.length === 0 && (
-              <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
-                房间库为空——去编辑模式新建一个房间吧
               </div>
-            )}
-          </div>
+
+              <aside className="flex w-72 shrink-0 flex-col gap-1.5 overflow-y-auto pr-1">
+                <div className="px-1 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  房间库 · {rooms.length}
+                </div>
+                {rooms.map((r) => {
+                  const isHero = r.path === heroRoom.path;
+                  const on = r.path === appliedRoom;
+                  return (
+                    <button
+                      key={r.path}
+                      onClick={() => setHeroPath(r.path)}
+                      className={`flex items-center gap-3 rounded-xl border p-2 text-left transition-colors ${
+                        isHero
+                          ? "border-primary bg-primary/5 dark:bg-primary/10"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-border">
+                        <CoverCollage tiles={roomCovers(r)} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 text-sm font-medium">
+                          <span className="truncate">{r.name}</span>
+                          {on && (
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"
+                              title="应用中"
+                            />
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {r.desks} Desk · {r.icons} 图标
+                        </div>
+                      </div>
+                      <Button
+                        variant={on ? "secondary" : "outline"}
+                        size="xs"
+                        className="shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          applyRoomDir(r.path);
+                        }}
+                      >
+                        {on ? "重应" : "应用"}
+                      </Button>
+                    </button>
+                  );
+                })}
+              </aside>
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+              <p>房间库为空</p>
+              <p className="text-xs">去「编辑」模式新建一个房间吧</p>
+            </div>
+          )}
         </section>
       ) : (
         /* ===== edit mode ===== */

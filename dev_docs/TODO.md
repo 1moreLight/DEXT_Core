@@ -134,19 +134,20 @@
 - [x] 2026-08-25 自测：build.ps1 + cargo check + npm build 全绿
 - [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 6.5」L1-L7）
 
-### Phase 7：配置器主页改版（2026-08-25 追加）
+### Phase 8：配置器主页改版（2026-08-25 追加；原编号 Phase 7，让位给概念模型块）
 
 > 用户定调：Hero 焦点式布局；封面 = 多背景拼贴网格（1 张满幅 / 2 张对分 / 3+ 田字）；
 > 深浅主题可切换。设计模式（npm run dev:ui）先行迭代。
 
-- [ ] Rust：list_rooms 的 RoomInfo 增 covers 字段（逐 desk 解析 background：图片=相对路径、视频=标记），宽容解析坏 json
-- [ ] Rust：新 `lib://` 自定义协议映射房间库目录（list_rooms 时同步库目录到托管状态；防路径穿越；mime 表复用）
-- [ ] 前端：CoverCollage 封面拼贴组件（image=img 直载 / video=暗底胶片角标 / 空=渐变兜底；分格逻辑按张数）
-- [ ] 前端：使用模式改 Hero 焦点式——左侧大封面卡（房间名+统计+应用中徽标+应用钮），右侧紧凑列表（小拼贴缩略图，点击换 hero，行内快捷应用）；空态保留
-- [ ] 前端：顶栏深浅主题切换按钮（documentElement .dark 类 + localStorage 记忆，两模式均可见）
-- [ ] mock 设计模式同步：MOCK_ROOMS 给渐变假封面数据，与真后端同构
-- [ ] 自测：cargo check + npm run build 全绿
-- [ ] 用户验收（ACCEPTANCE.md「Phase 7」）
+- [x] 2026-08-25 Rust：list_rooms 的 RoomInfo 增 covers 字段（逐 desk 解析 background：图片=相对路径、视频=标记），宽容解析坏 json
+- [x] 2026-08-25 Rust：新 `lib://` 自定义协议映射房间库目录（list_rooms 时同步库目录到托管状态；防路径穿越；mime 表复用）
+- [x] 2026-08-25 前端：CoverCollage 封面拼贴组件（image=img 直载 / video=暗底胶片角标 / 空=渐变兜底；分格逻辑按张数）
+- [x] 2026-08-25 前端：使用模式改 Hero 焦点式——左侧大封面卡（房间名+统计+应用中徽标+应用钮），右侧紧凑列表（小拼贴缩略图，点击换 hero，行内快捷应用）；空态保留
+- [x] 2026-08-25 前端：顶栏深浅主题切换按钮（documentElement .dark 类 + localStorage 记忆，两模式均可见）
+- [x] 2026-08-25 mock 设计模式同步：MOCK_ROOMS 给渐变假封面数据，与真后端同构
+- [x] 2026-08-25 顺手修：设计模式下 refreshRooms useEffect 未跳过浏览器环境，invoke 报错刷状态栏（ERRORS #15）
+- [x] 2026-08-25 自测：cargo check + npm run build 全绿；设计模式截图确认布局生效
+- [ ] 用户验收（ACCEPTANCE.md「Phase 8」）
 
 ### Phase 6.5-旧：应用库多选批量操作（2026-08-25 已取消）
 

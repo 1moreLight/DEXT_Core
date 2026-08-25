@@ -90,3 +90,17 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 症状：ACCEPTANCE.md 批量打勾后 V1-V10 编号全丢变成 **V**
 - 根因：双引号字符串里 PowerShell 先行插值 ；单引号包脚本或用编辑工具可避免
 - 解决：涉及捕获组替换一律用编辑工具逐条改；此坑已犯三次，不再用 PS 传正则替换
+
+## 15. 设计模式下 invoke 报 TypeError 刷满状态栏
+
+- 症状：浏览器设计模式（dev:ui）状态栏显示 `error: TypeError: Cannot read properties of undefined (reading 'invoke')`，盖掉「UI 设计模式」提示
+- 根因：App.tsx 有两个初始化 useEffect，只有第一个做了 IS_TAURI 守卫；第二个（refreshRooms→openRoom）在浏览器里照样调 invoke（@tauri-apps/api 在非 Tauri 环境是 undefined）
+- 解决：第二个 useEffect 也加 `if (!IS_TAURI) return;`
+- 防再犯：设计模式下新增任何初始化逻辑，先想 IS_TAURI 守卫；新增 useEffect 时对照检查
+
+## 16. PS 控制台显示中文乱码 ≠ 文件乱码（虚惊）
+
+- 症状：Add-Content 追加中文后 Select-String/Get-Content 输出全是乱码，以为文件坏了
+- 根因：PS 5.1 控制台按代码页显示，文件本身是正确的 UTF-8；Read 工具读出来完全正常
+- 解决：判断文件是否乱码一律用编辑/读文件工具看，别信 PS 控制台显示
+- 防再犯：与 #8 区分——#8 是 PS 管道**读取解析**坏（ConvertFrom-Json 报错），本条只是**显示**层假象
