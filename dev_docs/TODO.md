@@ -56,6 +56,13 @@
 - [x] 2026-08-25 自测 + build.ps1（C# 变更）+ cargo check + npm build
 - [ ] 2026-08-25 用户验收：清单见 ACCEPTANCE.md「Phase 3」
 
+### Phase 3 修复轮（2026-08-25 追加）
+
+- [x] 2026-08-25 F1 拖动不跟手：CSS 优先级 bug（.dragging transition:none 被 ID 选择器压制）→ 内联开关+加权
+- [x] 2026-08-25 F3 交互改版：packed 让位 → 稀疏格子（空位可放/删除留洞）+ 占用格交换（用户拍板）
+- [x] 2026-08-25 F2 根因确认：旧配置器进程 apply 无 __source 戳 → 回退；需重启+重应用一次（操作项，非代码）
+- [ ] 2026-08-25 F4 复验 L1-L10（用户）
+
 ### Phase 3+：渲染器与 Schema（排队中）
 
 - [ ] 从 `wallpapers/dext-room/main.js` 抽出渲染器模块：

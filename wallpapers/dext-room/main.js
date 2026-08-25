@@ -102,13 +102,12 @@ function normalizeCoords(desk) {
   });
 }
 
-// insertion reflow ("make room"): move icons[from] to sequence position `to`
-function reflow(desk, from, to) {
-  const arr = desk.icons.slice();
-  const moved = arr.splice(from, 1)[0];
-  arr.splice(Math.max(0, Math.min(arr.length, to)), 0, moved);
-  desk.icons = arr;
-  normalizeCoords(desk);
+// legacy rooms without coords get packed positions once; after that icons are sparse
+function normalizeCoords(desk) {
+  desk.icons.forEach((ic, i) => {
+    ic.x = i % GRID_COLS;
+    ic.y = Math.floor(i / GRID_COLS);
+  });
 }
 
 function launchApp(launch) {
@@ -162,7 +161,6 @@ function renderDesk(index) {
       ev.stopPropagation();
       if (!editMode) return;
       desk.icons.splice(i, 1);
-      normalizeCoords(desk);
       renderDesk(currentDesk);
       persistRoom();
     });
@@ -209,6 +207,7 @@ function startDrag(e, el, index) {
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
   el.classList.add("dragging");
+  el.style.transition = "none";
   const sx = e.clientX;
   const sy = e.clientY;
   const origLeft = parseFloat(el.style.left);
@@ -222,16 +221,27 @@ function startDrag(e, el, index) {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
     el.classList.remove("dragging");
+    el.style.transition = "";
+    // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
     const cellW = rect.width / GRID_COLS;
-    const col = Math.floor((ev.clientX - rect.left) / cellW);
-    const row = Math.floor((ev.clientY - rect.top) / CELL_H);
+    const rows = Math.max(1, Math.floor(rect.height / CELL_H));
+    const col = Math.max(0, Math.min(GRID_COLS - 1, Math.floor((ev.clientX - rect.left) / cellW)));
+    const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / CELL_H)));
     const desk = ROOM.desks[currentDesk];
-    const target = Math.max(0, Math.min(desk.icons.length - 1, row * GRID_COLS + col));
-    if (target !== index) {
-      reflow(desk, index, target);
-      persistRoom();
+    const dragged = desk.icons[index];
+    if (dragged.x === col && dragged.y === row) {
+      renderDesk(currentDesk);
+      return;
     }
+    const occupant = desk.icons.find((ic) => ic !== dragged && ic.x === col && ic.y === row);
+    if (occupant) {
+      [occupant.x, occupant.y, dragged.x, dragged.y] = [dragged.x, dragged.y, occupant.x, occupant.y];
+    } else {
+      dragged.x = col;
+      dragged.y = row;
+    }
+    persistRoom();
     renderDesk(currentDesk);
   };
   el.addEventListener("pointermove", onMove);

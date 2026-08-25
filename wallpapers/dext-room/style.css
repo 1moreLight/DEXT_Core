@@ -36,7 +36,8 @@ html, body {
   transition: left 0.25s ease, top 0.25s ease, background-color 0.15s, transform 0.15s;
 }
 
-.icon.dragging {
+.icon.dragging,
+#icon-layer .icon.dragging {
   transition: none;
   z-index: 50;
   opacity: 0.85;
