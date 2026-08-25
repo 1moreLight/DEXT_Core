@@ -55,15 +55,49 @@ const DEFAULT_ROOM = {
       ],
     },
   ],
-  transitionText: (from, to) => `正在进入 ${to} ...`
 };
 
 // room.json overrides the default when present (written by the Dext configurator).
 let ROOM = DEFAULT_ROOM;
 
+// dev preview: ?room=<prefix>/ points at any room dir (e.g. ../../rooms/cockpit-room/);
+// production (Lively virtual host) has no param and uses package-relative paths.
+const RP = new URLSearchParams(location.search).get("room") ?? "";
+
+// ---- room-script hooks (window.dext contract, dev_docs/MODEL.md §6) ----
+const dextListeners = { ready: [], deskchange: [], editchange: [] };
+function dextEmit(kind, detail) {
+  dextListeners[kind].forEach((fn) => {
+    try { fn(detail); } catch (e) { console.error("[dext] listener error", e); }
+  });
+}
+window.dext = {
+  onReady: (fn) => dextListeners.ready.push(fn),
+  onDeskChange: (fn) => dextListeners.deskchange.push(fn),
+  onEditChange: (fn) => dextListeners.editchange.push(fn),
+  getRoom: () => ROOM,
+  getCurrentDesk: () => currentDesk,
+};
+
+// optional room-owned assets; missing files resolve without blocking
+function loadRoomAsset(path, tag) {
+  return new Promise((resolve) => {
+    const el = document.createElement(tag);
+    if (tag === "link") {
+      el.rel = "stylesheet";
+      el.href = path;
+    } else {
+      el.src = path;
+    }
+    el.onload = () => resolve(true);
+    el.onerror = () => resolve(false);
+    document.head.appendChild(el);
+  });
+}
+
 async function loadRoom() {
   try {
-    const res = await fetch("room.json");
+    const res = await fetch(`${RP}room.json`);
     if (res.ok) {
       const room = await res.json();
       if (room?.desks?.length) ROOM = room;
@@ -71,7 +105,10 @@ async function loadRoom() {
   } catch (e) {
     // keep default (e.g. opened outside Lively via file://)
   }
+  await loadRoomAsset(`${RP}room.css`, "link");
+  await loadRoomAsset(`${RP}room.js`, "script");
   renderDesk(currentDesk);
+  dextEmit("ready", { deskCount: ROOM.desks.length });
 }
 
 // Windows-style icon size presets; desk.iconSize picks one (default medium)
@@ -134,14 +171,15 @@ function mountBackground(bgTarget, videoTarget, desk) {
   const isVideo = bg && typeof bg === "object" && bg.type === "video";
   if (isVideo) {
     bgTarget.style.backgroundImage = "none";
-    if (videoTarget.getAttribute("src") !== bg.src) videoTarget.src = bg.src;
+    const vsrc = `${RP}${bg.src}`;
+    if (videoTarget.getAttribute("src") !== vsrc) videoTarget.src = vsrc;
     videoTarget.style.display = "block";
     videoTarget.play().catch(() => {});
   } else {
     videoTarget.pause();
     videoTarget.removeAttribute("src");
     videoTarget.style.display = "none";
-    bgTarget.style.backgroundImage = bg ? `url("${bg}")` : "none";
+    bgTarget.style.backgroundImage = bg ? `url("${RP}${bg}")` : "none";
   }
 }
 
@@ -288,6 +326,7 @@ function enterEdit() {
   editMode = true;
   document.body.classList.add("editing");
   renderDesk(currentDesk);
+  dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动排列，× 删除");
 }
 
@@ -296,6 +335,7 @@ function exitEdit() {
   editMode = false;
   document.body.classList.remove("editing");
   renderDesk(currentDesk);
+  dextEmit("editchange", { editing: false });
   persistRoom();
 }
 
@@ -392,18 +432,20 @@ function mountStaging(index) {
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
 }
 
-// transition field: string = preset name; {type:"video",src} = stinger video
-function transitionSpec() {
-  const t = ROOM.transition;
-  if (typeof t === "string") return { name: t, src: null };
-  if (t && typeof t === "object" && t.type === "video" && t.src) {
-    return { name: "video", src: t.src };
+// transition resolution: edge override "from>to" first, then room default.
+// value: preset string | {type:"video",src} stinger | {type:"action",name} script event
+function resolveTransition(from, to) {
+  const t = ROOM.transitions?.[`${from}>${to}`] ?? ROOM.transition;
+  if (typeof t === "string") return { name: t, src: null, action: null };
+  if (t && typeof t === "object") {
+    if (t.type === "video" && t.src) return { name: "video", src: t.src, action: null };
+    if (t.type === "action" && t.name) return { name: "action", src: null, action: t.name };
   }
-  return { name: "slide", src: null };
+  return { name: "slide", src: null, action: null };
 }
 
 // stinger: fullscreen video covers the screen, desks swap at midpoint, reveal on end
-function playVideoTransition(next, src) {
+function playVideoTransition(next, src, from, delta) {
   const tv = document.getElementById("transition-video");
   const wrap = document.getElementById("transition-video-wrap");
   let swapped = false;
@@ -414,6 +456,7 @@ function playVideoTransition(next, src) {
     swapped = true;
     currentDesk = next;
     renderDesk(currentDesk);
+    dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
     stageEl.style.display = "none";
     stageEl.innerHTML = "";
   };
@@ -439,9 +482,10 @@ function playVideoTransition(next, src) {
       return;
     }
     mountStaging(next);
-    TRANSITIONS.slide.run(stageEl, 1, () => {
+    TRANSITIONS.slide.run(stageEl, delta, () => {
       currentDesk = next;
       renderDesk(currentDesk);
+      dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
       TRANSITIONS.slide.cleanup();
       switching = false;
     });
@@ -472,22 +516,39 @@ function switchDesk(delta) {
   if (switching || editMode || ROOM.desks.length < 2) return;
   switching = true;
 
+  const from = currentDesk;
   const next = (currentDesk + delta + ROOM.desks.length) % ROOM.desks.length;
-  const spec = transitionSpec();
+  const spec = resolveTransition(from, next);
+  const after = () => dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
+
+  dextEmit("deskchange", { from, to: next, dir: delta, phase: "before" });
+
+  if (spec.name === "action") {
+    // no built-in visuals: broadcast to the room script, swap immediately
+    window.dispatchEvent(
+      new CustomEvent("dext:transition", {
+        detail: { name: spec.action, from, to: next, dir: delta },
+      })
+    );
+    currentDesk = next;
+    renderDesk(currentDesk);
+    after();
+    switching = false;
+    return;
+  }
 
   if (spec.name === "video") {
-    playVideoTransition(next, spec.src);
+    playVideoTransition(next, spec.src, from, delta);
     return;
   }
 
   if (spec.name === "text") {
-    transitionTextEl.textContent = ROOM.transitionText
-      ? ROOM.transitionText(ROOM.desks[currentDesk].name, ROOM.desks[next].name)
-      : `正在进入 ${ROOM.desks[next].name} ...`;
+    transitionTextEl.textContent = `正在进入 ${ROOM.desks[next].name} ...`;
     transitionEl.classList.add("active", "fade-in");
     setTimeout(() => {
       currentDesk = next;
       renderDesk(currentDesk);
+      after();
       transitionEl.classList.remove("fade-in");
       transitionEl.classList.add("fade-out");
       setTimeout(() => {
@@ -503,6 +564,7 @@ function switchDesk(delta) {
   t.run(stageEl, delta, () => {
     currentDesk = next;
     renderDesk(currentDesk);
+    after();
     t.cleanup();
     switching = false;
   });
@@ -549,6 +611,7 @@ window.addEventListener("message", (e) => {
     ROOM = d.room;
     currentDesk = Math.min(d.deskIndex ?? 0, ROOM.desks.length - 1);
     renderDesk(currentDesk);
+    dextEmit("ready", { deskCount: ROOM.desks.length, injected: true });
   }
 });
 

@@ -211,6 +211,13 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
             }
         }
     }
+    // optional room-owned script/style (programmable rooms, MODEL.md §6)
+    for f in ["room.js", "room.css"] {
+        let s = src.join(f);
+        if s.is_file() {
+            std::fs::copy(&s, pkg.join(f)).map_err(|e| format!("copy {f} failed: {e}"))?;
+        }
+    }
     grpc::set_wallpaper(WALLPAPER_DIR).await
 }
 

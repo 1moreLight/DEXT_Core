@@ -234,3 +234,28 @@
 
 - [ ] **M4** MODEL.md 第六节通读：两层路线（action 语法糖 + room.js/room.css + window.dext）符合「高达驾驶舱」设想
 - [ ] **M5** dext 最小事件集（onReady/onDeskChange/onEditChange/getRoom）够你构思的第一个驾驶舱用；缺什么直接在此批注
+
+---
+
+## 2026-08-25 Phase 8 实现：可编程房间 + cockpit-room 实验品
+
+### 浏览器预览（无需 Lively）
+
+- [ ] **H1** cd tauri-ui && npm run dev:room → 浏览器开 http://localhost:5174/?room=../../rooms/cockpit-room/
+      → 黑底 HUD：中心准星 / 左右弧刻度带 / 底部大弧 / 中央六边形簇 / 顶部标记 / 散布刻度
+- [ ] **H2** 方向键或 Dock ‹ › 切桌 → 黄色扫描线扫过 + HUD 模式切换：
+      STANDBY(暗) → PATROL(亮白+旋转扫描环) → COMBAT(金黄+红色边缘脉冲+角落警示)
+      来回动画可不同（边级 action 生效：0>1 与 1>0 都触发但目标模式不同）
+- [ ] **H3** 图标层照常：长按编辑 / 拖拽 / 双击 toast；HUD 线条不挡点击（pointer-events:none）
+- [ ] **H4** room.css 生效：图标标签变等宽字体+宽字距
+
+### 真机（Lively）
+
+- [ ] **H5** 重跑 start.ps1（Rust 变了）→ 配置器选 cockpit-room 应用 → 桌面同 H1-H4；
+      再应用回 my-room → cockpit HUD 消失、原房间正常（room.js 不残留干扰）
+
+### 备注
+
+- 若 H1 白屏报 fs 限制：vite 默认 fs.allow 覆盖仓库根应可放行；不行则临时
+  
+px vite ../wallpapers/dext-room --port 5174 后改用 H5 真机路径验收。

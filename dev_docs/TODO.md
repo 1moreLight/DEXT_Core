@@ -33,11 +33,12 @@
 > 拍板：两层路线（声明式 action 语法糖 + room.js/room.css 房间脚本）。
 
 - [x] 2026-08-25 设计定稿写入 MODEL.md 第六节（dext 事件契约草案 / 加载与隔离 / 风险模型）
-- [ ] 渲染器：switchDesk 边级查找 + action 类型转场广播 dext:transition
-- [ ] 渲染器：加载 room.js/room.css（try/catch 隔离）+ window.dext 最小事件集
+- [x] 2026-08-25 渲染器：window.dext 事件集 + room.js/room.css 加载（隔离）+ 边级转场查找 + action 类型广播 + ?room= 预览参数 + transitionText 清理
+- [x] 2026-08-25 Rust：apply_room 增拷 room.js/room.css
+- [x] 2026-08-25 实验房 rooms/cockpit-room/：canvas 驾驶舱 HUD（待机/巡航/战斗三模式，边级 action 转场）
 - [ ] 配置器：对含 room.js 的房间不破坏（编辑 room.json 主体照常）
-- [ ] transitionText 清理 + text 转场固定模板
-- [ ] 自测（npm build + node --check + cargo check）+ 用户验收
+- [x] 2026-08-25 自测三绿（node --check ×2 + cargo check + npm build）
+- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 8」H1-H5）
 
 ## 当前阶段：共享渲染器 + Schema v1
 
