@@ -335,11 +335,15 @@ namespace Lively.Core.Wallpapers
                         var saveMsg = (LivelyMessageSaveRoomCmd)obj;
                         _ = Task.Run(() =>
                         {
-                            try
-                            {
-                                var roomPath = System.IO.Path.Combine(wallpaperPath, "room.json");
-                                System.IO.File.WriteAllText(roomPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
-                                Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
+                        try
+                        {
+                            // path param is the wallpaper entry file (index.html); room.json lives beside it
+                            var roomDir = System.IO.File.Exists(wallpaperPath)
+                                ? System.IO.Path.GetDirectoryName(wallpaperPath)
+                                : wallpaperPath;
+                            var roomPath = System.IO.Path.Combine(roomDir, "room.json");
+                            System.IO.File.WriteAllText(roomPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
+                            Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
                                 try
                                 {
                                     // dual-write to the source room in the library (stamped by the configurator on apply)

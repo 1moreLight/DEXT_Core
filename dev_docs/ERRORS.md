@@ -63,3 +63,10 @@
 ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，替换结果丢字
 - 根因：PowerShell 双引号字符串先做自己的变量插值，$1 是 PS 的空变量
 - 解决：跨 PS 传正则替换时用单引号包 node 脚本，或干脆用编辑工具逐条改
+
+## 11. WebWebView2 构造参数 path 是入口文件不是文件夹
+
+- 症状：SaveRoom 报 Could not find a part of the path ...\\index.html\\room.json，桌面编辑无法持久化
+- 根因：想当然把构造参数 path 当壁纸文件夹，实际是入口 html 文件路径
+- 解决：File.Exists(path) 时取 Path.GetDirectoryName 再拼 room.json
+- 防再犯：拼壁纸内文件路径前先确认 path 语义（日志里看实际值）
