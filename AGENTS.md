@@ -25,6 +25,7 @@
 - 强制重铺壁纸：`cargo test --lib applies_room_wallpaper`（在 tauri-ui/src-tauri 下）
 - Player 必须 Release 构建，Debug 会挂起（详见 ERRORS.md #1）
 - 日志位置：`%LOCALAPPDATA%\Lively Wallpaper\logs\`
-- 仓库已建 CodeGraph 索引：查代码优先 `codegraph explore/node`，其次 grep/read
+- 仓库已建 CodeGraph 索引（CLI v1.5.0）：**查代码一律先用 codegraph**（`explore` / `node` / `callers` / `impact`），grep/read 只做兜底
+- CodeGraph 索引是快照，**不会自动跟随代码变化**：本轮动过代码后再查代码，先跑 `codegraph sync`（增量，秒级）；结果可疑时用 `codegraph status` 看 Pending Changes；大重构后用 `codegraph index` 全量重建
 - 前端外观迭代：`scripts/room-preview.ps1` 实时预览（无需 Lively），指南见 `dev_docs/FRONTEND.md`
 - 配置器 UI 设计：`cd tauri-ui && npm run dev:ui`（浏览器 1421，mock 数据，HMR），同见 FRONTEND.md 第零节
