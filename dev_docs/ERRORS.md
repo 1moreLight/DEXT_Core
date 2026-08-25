@@ -84,3 +84,9 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 根因：想当然把构造参数 path 当壁纸文件夹，实际是入口 html 文件路径
 - 解决：File.Exists(path) 时取 Path.GetDirectoryName 再拼 room.json
 - 防再犯：拼壁纸内文件路径前先确认 path 语义（日志里看实际值）
+
+## 14. node -e 批量正则替换里的  反复被 PowerShell 吞（第三次）
+
+- 症状：ACCEPTANCE.md 批量打勾后 V1-V10 编号全丢变成 **V**
+- 根因：双引号字符串里 PowerShell 先行插值 ；单引号包脚本或用编辑工具可避免
+- 解决：涉及捕获组替换一律用编辑工具逐条改；此坑已犯三次，不再用 PS 传正则替换
