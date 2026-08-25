@@ -64,6 +64,13 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 根因：PowerShell 双引号字符串先做自己的变量插值，$1 是 PS 的空变量
 - 解决：跨 PS 传正则替换时用单引号包 node 脚本，或干脆用编辑工具逐条改
 
+## 12. 双写用 File.Exists 判断文件夹路径永远 false
+
+- 症状：SaveRoom 写包内成功但源房间从不同步，无任何报错日志
+- 根因：__source 戳存的是房间文件夹，代码却用 File.Exists（对目录恒 false）静默跳过
+- 解决：File.Exists || Directory.Exists
+- 防再犯：存在性判断前先想清楚路径是文件还是目录
+
 ## 11. WebWebView2 构造参数 path 是入口文件不是文件夹
 
 - 症状：SaveRoom 报 Could not find a part of the path ...\\index.html\\room.json，桌面编辑无法持久化
