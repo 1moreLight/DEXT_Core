@@ -38,7 +38,7 @@
 - [x] 2026-08-25 实验房 rooms/cockpit-room/：canvas 驾驶舱 HUD（待机/巡航/战斗三模式，边级 action 转场）
 - [ ] 配置器：对含 room.js 的房间不破坏（编辑 room.json 主体照常）
 - [x] 2026-08-25 自测三绿（node --check ×2 + cargo check + npm build）
-- [ ] 2026-08-25 用户验收（ACCEPTANCE.md「Phase 8」H1-H5）
+- [~] 2026-08-25 用户验收：浏览器预览启动+切桌已确认（2026-08-25）；剩余项改对话验收（规则变更：验收清单不再写入 md）
 
 ## 当前阶段：共享渲染器 + Schema v1
 
