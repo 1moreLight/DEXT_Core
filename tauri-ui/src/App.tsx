@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { Film, Moon, Sun } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, Film, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -113,6 +113,35 @@ const MOCK_ROOMS: RoomInfo[] = [
       { kind: "image", src: "background/2.png" },
       { kind: "image", src: "background/3.png" },
     ],
+  },
+  {
+    name: "neon-city",
+    path: "C:\\mock\\neon-city",
+    desks: 2,
+    icons: 6,
+    covers: [
+      { kind: "image", src: "background/a.png" },
+      { kind: "image", src: "background/b.png" },
+    ],
+  },
+  {
+    name: "sunset",
+    path: "C:\\mock\\sunset",
+    desks: 3,
+    icons: 12,
+    covers: [
+      { kind: "video", src: "background/sun.mp4" },
+      { kind: "image", src: "background/1.png" },
+      { kind: "image", src: "background/2.png" },
+    ],
+  },
+  { name: "minimal", path: "C:\\mock\\minimal", desks: 1, icons: 3, covers: [] },
+  {
+    name: "retro",
+    path: "C:\\mock\\retro",
+    desks: 2,
+    icons: 9,
+    covers: [{ kind: "image", src: "background/crt.png" }],
   },
 ];
 
@@ -312,6 +341,7 @@ export default function App() {
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
+  const [roomPage, setRoomPage] = useState(1);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -697,6 +727,13 @@ export default function App() {
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
+  const ROOMS_PER_PAGE = 6;
+  const roomPageCount = Math.max(1, Math.ceil(filteredRooms.length / ROOMS_PER_PAGE));
+  const roomPageCur = Math.min(roomPage, roomPageCount);
+  const pagedRooms = filteredRooms.slice(
+    (roomPageCur - 1) * ROOMS_PER_PAGE,
+    roomPageCur * ROOMS_PER_PAGE
+  );
   const filtered = apps.filter((a) =>
     a.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -815,10 +852,13 @@ export default function App() {
             <Input
               placeholder="搜索房间..."
               value={roomQuery}
-              onChange={(e) => setRoomQuery(e.target.value)}
+              onChange={(e) => {
+                setRoomQuery(e.target.value);
+                setRoomPage(1);
+              }}
             />
             <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-3 overflow-y-auto pr-1">
-              {filteredRooms.map((r) => {
+              {pagedRooms.map((r) => {
                 const isHero = r.path === heroRoom?.path;
                 const on = r.path === appliedRoom;
                 return (
@@ -873,6 +913,53 @@ export default function App() {
                 </div>
               )}
             </div>
+            {roomPageCount > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={roomPageCur === 1}
+                  title="第一页"
+                  onClick={() => setRoomPage(1)}
+                >
+                  <ChevronsLeft />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={roomPageCur === 1}
+                  title="上一页"
+                  onClick={() => setRoomPage(roomPageCur - 1)}
+                >
+                  <ChevronLeft />
+                </Button>
+                {Array.from({ length: roomPageCount }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setRoomPage(p)}
+                    className={`h-7 min-w-7 rounded-md px-2 text-xs ${
+                      p === roomPageCur
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={roomPageCur === roomPageCount}
+                  title="下一页"
+                  onClick={() => setRoomPage(roomPageCur + 1)}
+                >
+                  <ChevronRight />
+                </Button>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  共 {filteredRooms.length} 个房间
+                </span>
+              </div>
+            )}
           </div>
 
           {heroRoom && (

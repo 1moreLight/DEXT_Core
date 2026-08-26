@@ -105,6 +105,13 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 解决：判断文件是否乱码一律用编辑/读文件工具看，别信 PS 控制台显示
 - 防再犯：与 #8 区分——#8 是 PS 管道**读取解析**坏（ConvertFrom-Json 报错），本条只是**显示**层假象
 
+## 18. 并行会话在本工作区跑 git，未提交改动被冲（重灾版）
+
+- 症状：编辑 App.tsx 报"文件不存在"；src 目录短暂消失后回来，但内容退回旧版本；git status 干净（磁盘=HEAD）
+- 根因：另一会话（DEXT0.1 worktree）的 git reset/checkout 类操作跑到了**本工作区**（#17 的重灾版——那次只是 add 互扫，这次直接把未提交工作抹了）；此前对方的 Phase 9 提交还把本会话当时未提交的 App.tsx 中间态一并扫进了他们的 commit（双向互污）
+- 解决：git 里还在的部分（CoverStack/自动播放/Rust 协议）直接用；纯前端丢失轮次凭记忆重做；**迭代期间暂停另一会话**；UI 迭代改为逐轮小提交防再冲
+- 防再犯：①多会话并行时，各自只在自己 worktree 里跑 git；②任何会话跑 reset/checkout/clean 前先确认 cwd 是自己的 worktree；③UI 迭代轮次完成即 commit，不留大片未提交状态
+
 ## 17. 并行会话共用一个工作区：git add 互相扫走对方的文件
 
 - 症状：本轮新建 dev_docs/LIVELY_API.md 后 `git add <三个文件>` + commit，结果 commit 只含 2 个文件；
