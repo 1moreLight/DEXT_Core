@@ -738,15 +738,15 @@ export default function App() {
     a.name.toLowerCase().includes(query.toLowerCase())
   );
   const tabCls = (on: boolean) =>
-    `rounded px-3 py-1 text-sm ${on ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`;
+    `rounded px-3 py-1 text-sm whitespace-nowrap ${on ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`;
 
   return (
     <main className="flex h-screen flex-col bg-background text-foreground">
       {/* top bar */}
-      <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border px-5 py-3">
+        <div className="flex shrink-0 items-center gap-3">
           <h1 className="text-lg font-semibold">Dext</h1>
-          <div className="flex rounded-md border border-border p-0.5">
+          <div className="flex shrink-0 rounded-md border border-border p-0.5">
             <button className={tabCls(mode === "use")} onClick={() => setMode("use")}>
               使用
             </button>
@@ -813,7 +813,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
             size="icon-sm"
