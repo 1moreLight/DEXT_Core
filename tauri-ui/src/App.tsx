@@ -2,17 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
+  ArrowRightLeft,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
+  Code,
   Dock,
   Film,
   FolderOpen,
+  Image,
   LayoutGrid,
+  MonitorPlay,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Plus,
   Sun,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +71,44 @@ interface RoomInfo {
 type Mode = "use" | "edit" | "workshop" | "settings";
 
 type EditNav = "library" | "room" | "dock";
+
+/* ---- room 思维导图（mock，下一轮接真实 room.json）---- */
+type GNode = { id: string; name: string };
+type GEdge = { id: string; from: string; to: string; trans: string };
+type RoomGraph = { start: GNode; desks: GNode[]; edges: GEdge[] };
+
+const TRANSITION_OPTIONS: [string, string][] = [
+  ["slide", "滑动"],
+  ["fade", "淡入淡出"],
+  ["zoom", "缩放"],
+  ["flip", "翻转"],
+  ["none", "无"],
+];
+
+function seedGraph(deskCount: number): RoomGraph {
+  const n = Math.max(1, deskCount);
+  const desks = Array.from({ length: n }, (_, i) => ({
+    id: `d${i}`,
+    name: i === 0 ? "主 Desk" : `Desk ${i + 1}`,
+  }));
+  const edges: GEdge[] = [];
+  desks.forEach((d, i) => {
+    // start ↔ desk 一来一回
+    edges.push({ id: `${d.id}~start-f`, from: "start", to: d.id, trans: "slide" });
+    edges.push({ id: `${d.id}~start-b`, from: d.id, to: "start", trans: "fade" });
+    // 相邻 desk 之间一来一回
+    if (i > 0)
+      edges.push(
+        { id: `${desks[i - 1].id}~${d.id}-f`, from: desks[i - 1].id, to: d.id, trans: "zoom" },
+        { id: `${desks[i - 1].id}~${d.id}-b`, from: d.id, to: desks[i - 1].id, trans: "flip" },
+      );
+  });
+  return { start: { id: "start", name: "启动画面" }, desks, edges };
+}
+
+function pairKey(e: GEdge): string {
+  return [e.from, e.to].sort().join("|");
+}
 
 const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
 
@@ -361,6 +405,8 @@ export default function App() {
   const [navOpen, setNavOpen] = useState(true);
   const [roomEntered, setRoomEntered] = useState(false);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
+  const [graph, setGraph] = useState<RoomGraph | null>(null);
+  const [graphSel, setGraphSel] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -751,6 +797,29 @@ export default function App() {
     rooms.find((r) => r.path === appliedRoom) ??
     rooms[0] ??
     null;
+  function addMockRoom() {
+    let n = rooms.length + 1;
+    while (rooms.some((r) => r.name === `new-room-${n}`)) n++;
+    const name = `new-room-${n}`;
+    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, desks: 1, icons: 0, covers: [] };
+    setRooms([...rooms, room]);
+    setRoomPickPath(room.path);
+  }
+  function renameGraphNode(id: string, name: string) {
+    if (!graph) return;
+    setGraph({
+      ...graph,
+      start: graph.start.id === id ? { ...graph.start, name } : graph.start,
+      desks: graph.desks.map((d) => (d.id === id ? { ...d, name } : d)),
+    });
+  }
+  function setEdgeTrans(edgeId: string, trans: string) {
+    if (!graph) return;
+    setGraph({
+      ...graph,
+      edges: graph.edges.map((e) => (e.id === edgeId ? { ...e, trans } : e)),
+    });
+  }
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
@@ -1277,7 +1346,7 @@ export default function App() {
                     ))}
                     {rooms.length === 0 && (
                       <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
-                        房间库为空——用「新建房间」创建一个吧（入口下一轮加回来）
+                        房间库为空——点下方「新增 Room」创建一个吧
                       </div>
                     )}
                   </div>
@@ -1306,6 +1375,8 @@ export default function App() {
                         className="flex-1"
                         onClick={() => {
                           openRoom(pickedRoom.path);
+                          setGraph(seedGraph(pickedRoom.desks));
+                          setGraphSel(null);
                           setRoomEntered(true);
                         }}
                       >
@@ -1317,6 +1388,11 @@ export default function App() {
                         onClick={() => applyRoomDir(pickedRoom.path)}
                       >
                         {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
+                      </Button>
+                    </div>
+                    <div className="mt-auto border-t border-border pt-3">
+                      <Button variant="outline" className="w-full" onClick={addMockRoom}>
+                        <Plus className="h-4 w-4" /> 新增 Room
                       </Button>
                     </div>
                   </aside>
@@ -1334,19 +1410,208 @@ export default function App() {
                   </span>
                   {dirty && <span className="text-xs font-medium text-amber-500">● 未保存</span>}
                 </div>
-                {showPreview ? (
-                  <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
-                    <iframe
-                      ref={previewRef}
-                      src="http://dext.localhost/index.html"
-                      onLoad={postRoom}
-                      title="Room 预览"
-                      className="aspect-video w-full max-w-4xl rounded-lg border border-border"
-                    />
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      实时预览 · 未保存的修改也会显示 · 双击图标不会真启动
-                    </p>
-                  </div>
+                {graph ? (
+                  <>
+                    {/* 上：Room 结构思维导图 */}
+                    <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/20">
+                      <svg className="absolute inset-0 h-full w-full">
+                        <defs>
+                          <marker
+                            id="garrow"
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="6"
+                            markerHeight="6"
+                            orient="auto-start-reverse"
+                          >
+                            <path d="M0,0L10,5L0,10z" fill="currentColor" />
+                          </marker>
+                        </defs>
+                        {(() => {
+                          const yOf = (id: string) => {
+                            const i = graph.desks.findIndex((d) => d.id === id);
+                            return ((i + 1) / (graph.desks.length + 1)) * 100;
+                          };
+                          return graph.edges.map((e) => {
+                            let pts: string;
+                            if (e.from === "start")
+                              pts = `15,48.6 25,48.6 25,${yOf(e.to) - 1.4} 40,${yOf(e.to) - 1.4}`;
+                            else if (e.to === "start")
+                              pts = `40,${yOf(e.from) + 1.4} 32,${yOf(e.from) + 1.4} 32,51.4 15,51.4`;
+                            else {
+                              const down = yOf(e.to) > yOf(e.from);
+                              const lane = down ? 59 : 62;
+                              const [ya, yb] = down
+                                ? [yOf(e.from), yOf(e.to)]
+                                : [yOf(e.to), yOf(e.from)];
+                              pts = `57,${ya + 1.8} ${lane},${ya + 1.8} ${lane},${yb - 1.8} 57,${yb - 1.8}`;
+                            }
+                            return (
+                              <polyline
+                                key={e.id}
+                                points={pts}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.3"
+                                markerEnd="url(#garrow)"
+                                className="text-muted-foreground/70"
+                              />
+                            );
+                          });
+                        })()}
+                      </svg>
+                      {/* switch 标记（一对一来一回共用一个）*/}
+                      {Object.values(
+                        graph.edges.reduce<Record<string, GEdge>>((acc, e) => {
+                          const k = pairKey(e);
+                          if (!acc[k]) acc[k] = e;
+                          return acc;
+                        }, {})
+                      ).map((e) => {
+                        const yA = (() => {
+                          if (e.from === "start") return 50;
+                          const i = graph.desks.findIndex((d) => d.id === e.from);
+                          return ((i + 1) / (graph.desks.length + 1)) * 100;
+                        })();
+                        const yB = (() => {
+                          if (e.to === "start") return 50;
+                          const i = graph.desks.findIndex((d) => d.id === e.to);
+                          return ((i + 1) / (graph.desks.length + 1)) * 100;
+                        })();
+                        const mx = e.from === "start" || e.to === "start" ? 28.5 : 60.5;
+                        const my = (yA + yB) / 2;
+                        const k = pairKey(e);
+                        return (
+                          <button
+                            key={k}
+                            onClick={() => setGraphSel(k)}
+                            style={{ left: `${mx}%`, top: `${my}%` }}
+                            className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] transition-colors ${
+                              graphSel === k
+                                ? "border-primary bg-primary/10 font-medium text-primary"
+                                : "border-border text-muted-foreground hover:border-primary/50"
+                            }`}
+                          >
+                            <ArrowRightLeft className="h-3 w-3" /> switch
+                          </button>
+                        );
+                      })}
+                      {/* 启动画面主节点 */}
+                      <button
+                        onClick={() => setGraphSel("start")}
+                        className={`absolute left-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
+                          graphSel === "start"
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-background hover:border-primary/50"
+                        }`}
+                      >
+                        <MonitorPlay className="h-5 w-5 text-primary" />
+                        <span className="truncate px-1 text-xs font-medium">
+                          {graph.start.name}
+                        </span>
+                      </button>
+                      {/* Desk 矩形节点 */}
+                      {graph.desks.map((d, i) => {
+                        const y = ((i + 1) / (graph.desks.length + 1)) * 100;
+                        const active = graphSel === d.id;
+                        return (
+                          <button
+                            key={d.id}
+                            onClick={() => setGraphSel(d.id)}
+                            style={{ left: "40%", top: `${y}%` }}
+                            className={`absolute z-10 -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
+                              active
+                                ? "border-primary bg-primary/10"
+                                : "border-border bg-background hover:border-primary/50"
+                            }`}
+                          >
+                            <div className="whitespace-nowrap text-sm font-medium">{d.name}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Desk {i + 1} · 矩形
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* 下：属性栏 */}
+                    <div className="flex h-36 shrink-0 items-center gap-8 overflow-x-auto rounded-lg border border-border px-4 py-2.5">
+                      {!graphSel ? (
+                        <div className="w-full text-center text-sm text-muted-foreground">
+                          点击上方节点或 switch 连线，在这里编辑属性
+                        </div>
+                      ) : graphSel === "start" || graph.desks.some((d) => d.id === graphSel) ? (
+                        (() => {
+                          const isStart = graphSel === "start";
+                          const name = isStart
+                            ? graph.start.name
+                            : (graph.desks.find((d) => d.id === graphSel)?.name ?? "");
+                          return (
+                            <>
+                              <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium">
+                                {isStart ? (
+                                  <MonitorPlay className="h-3.5 w-3.5 text-primary" />
+                                ) : (
+                                  <LayoutGrid className="h-3.5 w-3.5 text-primary" />
+                                )}
+                                {isStart ? "启动画面" : "Desk"}
+                              </span>
+                              <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                                改名
+                                <Input
+                                  value={name}
+                                  onChange={(ev) => renameGraphNode(graphSel!, ev.target.value)}
+                                  className="h-8 w-44"
+                                />
+                              </label>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {isStart ? "画面素材：" : "壁纸素材："}
+                                </span>
+                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                  <Image className="h-3.5 w-3.5" /> 图片
+                                </Button>
+                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                  <Code className="h-3.5 w-3.5" /> 网页代码
+                                </Button>
+                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                  <Video className="h-3.5 w-3.5" /> 视频
+                                </Button>
+                              </div>
+                            </>
+                          );
+                        })()
+                      ) : (
+                        graph.edges
+                          .filter((e) => pairKey(e) === graphSel)
+                          .map((e) => {
+                            const nameOf = (id: string) =>
+                              id === "start"
+                                ? graph.start.name
+                                : (graph.desks.find((d) => d.id === id)?.name ?? id);
+                            return (
+                              <label
+                                key={e.id}
+                                className="flex shrink-0 flex-col gap-1 text-xs text-muted-foreground"
+                              >
+                                {nameOf(e.from)} → {nameOf(e.to)}
+                                <select
+                                  value={e.trans}
+                                  onChange={(ev) => setEdgeTrans(e.id, ev.target.value)}
+                                  className="h-8 rounded-md border border-border bg-background px-2 text-sm"
+                                >
+                                  {TRANSITION_OPTIONS.map(([v, l]) => (
+                                    <option key={v} value={v}>
+                                      {l}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            );
+                          })
+                      )}
+                    </div>
+                  </>
                 ) : (
                   <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <p>Desk 编辑区（改造中）</p>
