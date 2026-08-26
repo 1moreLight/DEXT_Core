@@ -734,6 +734,9 @@ export default function App() {
   }
 
   const desk = desks[activeDesk];
+  /* header controls (room select / 新建 / 另存为 / 库路径 / 转场 / 保存 / 应用) removed from UI;
+     functions kept here until the Room view re-homes them */
+  void [newRoom, saveAs, changeLib, changeTransition, transitionLabel, applyCurrent];
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
     rooms.find((r) => r.path === appliedRoom) ??
@@ -777,57 +780,6 @@ export default function App() {
           </div>
         </div>
 
-        {mode === "edit" && (
-          <div className="flex items-center gap-2">
-            <select
-              value={roomPath ?? ""}
-              onChange={(e) => openRoom(e.target.value)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              title="当前房间"
-            >
-              {rooms.length === 0 && <option value="">（无房间）</option>}
-              {rooms.map((r) => (
-                <option key={r.path} value={r.path}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-            {dirty && (
-              <span className="text-xs font-medium text-amber-500" title="有未保存修改">
-                ●
-              </span>
-            )}
-            <Button variant="outline" size="sm" onClick={newRoom}>
-              新建
-            </Button>
-            <Button variant="outline" size="sm" onClick={saveAs}>
-              另存为
-            </Button>
-            <Input
-              value={libDir}
-              onChange={(e) => setLibDir(e.target.value)}
-              onBlur={(e) => {
-                if (e.target.value !== localStorage.getItem("dext.libDir"))
-                  changeLib(e.target.value);
-              }}
-              className="h-8 w-56 text-xs"
-              title="房间库路径"
-            />
-            <select
-              value={typeof transition === "string" ? transition : "video"}
-              onChange={(e) => changeTransition(e.target.value)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              title="切桌过渡效果"
-            >
-              <option value="slide">滑动</option>
-              <option value="fade">淡入</option>
-              <option value="zoom">缩放</option>
-              <option value="none">无</option>
-              <option value="video">{typeof transition === "string" ? "视频…" : transitionLabel(transition)}</option>
-            </select>
-          </div>
-        )}
-
         <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
@@ -838,24 +790,17 @@ export default function App() {
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           <span className="text-sm text-muted-foreground">{status}</span>
-          {mode === "edit" && (
-            <>
-              {IS_TAURI && (
-                <Button
-                  variant={showPreview ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setShowPreview((v) => !v)}
-                >
-                  预览
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={saveRoom}>
-                保存
-              </Button>
-              <Button size="sm" onClick={applyCurrent}>
-                应用
-              </Button>
-            </>
+          {mode === "edit" && IS_TAURI && (
+            <Button
+              variant={showPreview ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => {
+                setShowPreview((v) => !v);
+                if (!showPreview) setEditNav("room");
+              }}
+            >
+              预览
+            </Button>
           )}
         </div>
       </header>
