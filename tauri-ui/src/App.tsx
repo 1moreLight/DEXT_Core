@@ -357,6 +357,7 @@ export default function App() {
   const [roomPage, setRoomPage] = useState(1);
   const [editNav, setEditNav] = useState<EditNav>("library");
   const [navOpen, setNavOpen] = useState(true);
+  const [roomEntered, setRoomEntered] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -978,7 +979,10 @@ export default function App() {
               ).map(([key, label, Icon]) => (
                 <button
                   key={key}
-                  onClick={() => setEditNav(key)}
+                  onClick={() => {
+                    setEditNav(key);
+                    if (key === "room") setRoomEntered(false);
+                  }}
                   title={label}
                   className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm ${
                     editNav === key
@@ -993,8 +997,8 @@ export default function App() {
             </nav>
           </aside>
 
-          {/* desk sidebar (room view) */}
-          {editNav === "room" && (
+          {/* desk sidebar (room view, after entering a room) */}
+          {editNav === "room" && roomEntered && (
             <aside className="flex w-64 flex-col border-r border-border">
             <div className="px-4 pt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Desks
@@ -1228,23 +1232,75 @@ export default function App() {
                   })}
                 </div>
               </>
-            ) : showPreview ? (
-              <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
-                <iframe
-                  ref={previewRef}
-                  src="http://dext.localhost/index.html"
-                  onLoad={postRoom}
-                  title="Room 预览"
-                  className="aspect-video w-full max-w-4xl rounded-lg border border-border"
-                />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · 未保存的修改也会显示 · 双击图标不会真启动
-                </p>
+            ) : editNav === "room" && !roomEntered ? (
+              /* room list: pick a room first, then edit its desks */
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
+                <div className="text-sm text-muted-foreground">选择一个房间进入 Desk 编辑</div>
+                <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-3 content-start gap-3 overflow-y-auto pr-1">
+                  {rooms.map((r) => (
+                    <button
+                      key={r.path}
+                      onClick={() => {
+                        openRoom(r.path);
+                        setRoomEntered(true);
+                      }}
+                      className={`overflow-hidden rounded-xl border text-left transition-colors ${
+                        r.path === roomPath
+                          ? "border-primary"
+                          : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <div className="aspect-video w-full">
+                        <CoverStack tiles={roomCovers(r)} />
+                      </div>
+                      <div className="p-3">
+                        <div className="truncate text-sm font-medium">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {r.desks} Desk · {r.icons} 图标
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  {rooms.length === 0 && (
+                    <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
+                      房间库为空——用「新建房间」创建一个吧（入口下一轮加回来）
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                <p>Room 视图（改造中）</p>
-                <p className="text-xs">Desk 管理 / 背景 / 图标尺寸先沿用左侧栏，下一轮重排</p>
+              /* entered a room: desk editing */
+              <div className="flex min-h-0 flex-1 flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <Button variant="outline" size="sm" onClick={() => setRoomEntered(false)}>
+                    ← 房间列表
+                  </Button>
+                  <span className="text-sm font-medium">
+                    {roomPath?.split("\\").pop() ?? "（未选房间）"}
+                  </span>
+                  {dirty && <span className="text-xs font-medium text-amber-500">● 未保存</span>}
+                </div>
+                {showPreview ? (
+                  <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
+                    <iframe
+                      ref={previewRef}
+                      src="http://dext.localhost/index.html"
+                      onLoad={postRoom}
+                      title="Room 预览"
+                      className="aspect-video w-full max-w-4xl rounded-lg border border-border"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      实时预览 · 未保存的修改也会显示 · 双击图标不会真启动
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+                    <p>Desk 编辑区（改造中）</p>
+                    <p className="text-xs">
+                      Desk 管理 / 背景 / 图标尺寸先沿用左侧栏，下一轮重排
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </section>
