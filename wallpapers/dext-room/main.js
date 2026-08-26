@@ -171,11 +171,11 @@ function playSlot(slot, opts = {}) {
   return { cancel };
 }
 
-// boot: fullscreen cover on room load; reveal on slot end (video ended / html ack / timeout)
-function playBoot() {
-  const slot = ROOM.boot;
+// start: fullscreen cover on room load; reveal on slot end (video ended / html ack / timeout)
+function playStart() {
+  const slot = ROOM.start;
   if (!slot) return;
-  playSlot(slot, { kind: "boot" });
+  playSlot(slot, { kind: "start" });
 }
 
 async function loadRoom() {
@@ -191,25 +191,25 @@ async function loadRoom() {
   await loadRoomAsset(`${RP}room.css`, "link");
   await loadRoomAsset(`${RP}room.js`, "script");
   renderDesk(currentDesk);
-  playBoot();
+  playStart();
   dextEmit("ready", { deskCount: ROOM.desks.length });
 }
 
-// Core wraps up the wallpaper: Player forwards cmd_close as dext:shutdown;
-// play the shutdown slot then ack, or ack immediately when none is configured.
+// Core wraps up the wallpaper: Player forwards cmd_close as dext:end;
+// play the end slot then ack, or ack immediately when none is configured.
 if (window.chrome?.webview) {
   window.chrome.webview.addEventListener("message", (e) => {
-    if (e.data !== "dext:shutdown") return;
-    const slot = ROOM.shutdown;
+    if (e.data !== "dext:end") return;
+    const slot = ROOM.end;
     if (!slot) {
-      window.chrome.webview.postMessage(JSON.stringify({ type: "dext:shutdownDone" }));
+      window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" }));
       return;
     }
     playSlot(slot, {
-      kind: "shutdown",
+      kind: "end",
       timeout: 4, // stay under the Player-side 5s close cap
       onDone: () =>
-        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:shutdownDone" })),
+        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" })),
     });
   });
 }
@@ -535,10 +535,12 @@ function mountStaging(index) {
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
 }
 
-// transition resolution: edge override "from>to" first, then room default.
+// switch resolution: edge override "from>to" first, then room default.
 // value: preset string | {type:"video",src} stinger | {type:"action",name} script event
+// (legacy key "transition(s)" still read for old rooms)
 function resolveTransition(from, to) {
-  const t = ROOM.transitions?.[`${from}>${to}`] ?? ROOM.transition;
+  const t = ROOM.switches?.[`${from}>${to}`] ?? ROOM.switch ??
+    ROOM.transitions?.[`${from}>${to}`] ?? ROOM.transition;
   if (typeof t === "string") return { name: t, src: null, action: null };
   if (t && typeof t === "object") {
     if (t.type === "video" && t.src) return { name: "video", src: t.src, action: null };
@@ -629,7 +631,7 @@ function switchDesk(delta) {
   if (spec.name === "action") {
     // no built-in visuals: broadcast to the room script, swap immediately
     window.dispatchEvent(
-      new CustomEvent("dext:transition", {
+      new CustomEvent("dext:switch", {
         detail: { name: spec.action, from, to: next, dir: delta },
       })
     );

@@ -50,7 +50,7 @@ interface RoomInfo {
   covers?: CoverRef[];
 }
 
-type Mode = "use" | "edit";
+type Mode = "use" | "edit" | "workshop" | "settings";
 
 const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
 
@@ -157,7 +157,7 @@ function transitionLabel(t: Transition): string {
 
 type CoverTile =
   | { kind: "image"; url: string }
-  | { kind: "video" }
+  | { kind: "video"; url: string }
   | { kind: "gradient"; from: string; to: string };
 
 const GRADIENTS: [string, string][] = [
@@ -177,14 +177,17 @@ function nameGradient(name: string): CoverTile {
 }
 
 function coverTileOf(c: CoverRef, room: RoomInfo): CoverTile {
-  if (c.kind === "video") return { kind: "video" };
-  // real backend serves room files via the lib:// protocol; browser mock falls back to gradient
-  if (!IS_TAURI || !c.src) return nameGradient(room.name);
-  const rel = c.src.split(/[\\/]/).map(encodeURIComponent).join("/");
-  return {
-    kind: "image",
-    url: `http://lib.localhost/${encodeURIComponent(room.name)}/${rel}`,
-  };
+  // real backend serves room files via the lib:// protocol; browser mock has no files
+  const url =
+    IS_TAURI && c.src
+      ? `http://lib.localhost/${encodeURIComponent(room.name)}/${c.src
+          .split(/[\\/]/)
+          .map(encodeURIComponent)
+          .join("/")}`
+      : "";
+  if (c.kind === "video") return { kind: "video", url };
+  if (!url) return nameGradient(room.name);
+  return { kind: "image", url };
 }
 
 function roomCovers(r: RoomInfo): CoverTile[] {
@@ -192,7 +195,42 @@ function roomCovers(r: RoomInfo): CoverTile[] {
   return tiles.length ? tiles : [nameGradient(r.name)];
 }
 
-function CoverTileBox({ tile }: { tile: CoverTile }) {
+// video cover: show first frame (preload=metadata only fetches headers, no decoding);
+// autoPlay=true (hero main slot) plays immediately, otherwise play while hovered, rewind on leave
+function VideoTile({ url, autoPlay = false }: { url: string; autoPlay?: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  if (!url)
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-black">
+        <Film className="h-5 w-5 text-white/40" />
+      </div>
+    );
+  return (
+    <video
+      ref={ref}
+      src={url}
+      muted
+      loop
+      playsInline
+      autoPlay={autoPlay}
+      preload={autoPlay ? "auto" : "metadata"}
+      className="h-full w-full object-cover"
+      onMouseEnter={autoPlay ? undefined : () => {
+        // play() rejects when interrupted (e.g. quick leave) — that is fine to ignore
+        ref.current?.play().catch(() => {});
+      }}
+      onMouseLeave={autoPlay ? undefined : () => {
+        const v = ref.current;
+        if (v) {
+          v.pause();
+          v.currentTime = 0;
+        }
+      }}
+    />
+  );
+}
+
+function CoverTileBox({ tile, autoPlay = false }: { tile: CoverTile; autoPlay?: boolean }) {
   if (tile.kind === "gradient")
     return (
       <div
@@ -200,32 +238,52 @@ function CoverTileBox({ tile }: { tile: CoverTile }) {
         style={{ background: `linear-gradient(135deg, ${tile.from}, ${tile.to})` }}
       />
     );
-  if (tile.kind === "video")
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-black">
-        <Film className="h-5 w-5 text-white/40" />
-      </div>
-    );
+  if (tile.kind === "video") return <VideoTile url={tile.url} autoPlay={autoPlay} />;
   return <img src={tile.url} alt="" draggable={false} className="h-full w-full object-cover" />;
 }
 
-// collage layout: 1 tile full / 2 split / 3 row of three / 4 quad
-function CoverCollage({ tiles }: { tiles: CoverTile[] }) {
-  const shown = tiles.slice(0, 4);
-  const n = shown.length;
-  const cols = n === 3 ? 3 : n >= 2 ? 2 : 1;
-  const rows = n >= 4 ? 2 : 1;
+// photo-stack cover: first background fills the card, the rest pile up
+// as small tilted photos in the bottom-right corner (max 2 + "+N" badge);
+// clicking a piled photo swaps it into the main slot
+function CoverStack({ tiles, autoPlayMain = false }: { tiles: CoverTile[]; autoPlayMain?: boolean }) {
+  const [idx, setIdx] = useState(0);
+  const safeIdx = Math.min(idx, tiles.length - 1);
+  const base = tiles[safeIdx];
+  const piled = tiles.filter((_, i) => i !== safeIdx).slice(0, 2);
   return (
-    <div
-      className={`grid h-full w-full overflow-hidden bg-black ${n > 1 ? "gap-px" : ""}`}
-      style={{
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, 1fr)`,
-      }}
-    >
-      {shown.map((t, i) => (
-        <CoverTileBox key={i} tile={t} />
-      ))}
+    <div className="relative h-full w-full overflow-hidden bg-black">
+      <CoverTileBox tile={base} autoPlay={autoPlayMain} />
+      {piled.length > 0 && (
+        <div className="absolute bottom-2.5 right-2.5 flex items-end">
+          {piled.map((t, pi) => {
+            const realIdx = tiles.indexOf(t);
+            return (
+              <div
+                key={realIdx}
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIdx(realIdx);
+                }}
+                title="点击换到主展示位"
+                className="h-12 w-20 cursor-pointer overflow-hidden rounded-md border-2 border-white/90 bg-black shadow-lg transition-transform hover:scale-105"
+                style={{
+                  transform: `rotate(${(pi - (piled.length - 1) / 2) * 5}deg)`,
+                  marginLeft: pi > 0 ? "-10px" : undefined,
+                  zIndex: piled.length - pi,
+                }}
+              >
+                <CoverTileBox tile={t} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {tiles.length > 1 + piled.length && (
+        <span className="absolute bottom-2.5 left-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
+          +{tiles.length - 1 - piled.length}
+        </span>
+      )}
     </div>
   );
 }
@@ -253,6 +311,7 @@ export default function App() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
+  const [roomQuery, setRoomQuery] = useState("");
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -327,7 +386,7 @@ export default function App() {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
       setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
-      setTransition(room.transition ?? "slide");
+      setTransition(room.switch ?? room.transition ?? "slide");
       setActiveDesk(0);
       setRoomPath(path);
       setDirty(false);
@@ -347,7 +406,7 @@ export default function App() {
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify({ desks, transition }, null, 2),
+        roomJson: JSON.stringify({ desks, switch: transition }, null, 2),
       });
       setDirty(false);
       return true;
@@ -397,7 +456,7 @@ export default function App() {
       const path = await invoke<string>("create_room", { dir: libDir, name });
       await invoke("write_room", {
         path: `${path}\\room.json`,
-        roomJson: JSON.stringify({ desks, transition }, null, 2),
+        roomJson: JSON.stringify({ desks, switch: transition }, null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -635,6 +694,9 @@ export default function App() {
     rooms.find((r) => r.path === appliedRoom) ??
     rooms[0] ??
     null;
+  const filteredRooms = rooms.filter((r) =>
+    r.name.toLowerCase().includes(roomQuery.toLowerCase())
+  );
   const filtered = apps.filter((a) =>
     a.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -653,6 +715,12 @@ export default function App() {
             </button>
             <button className={tabCls(mode === "edit")} onClick={() => setMode("edit")}>
               编辑
+            </button>
+            <button className={tabCls(mode === "workshop")} onClick={() => setMode("workshop")}>
+              创意工坊
+            </button>
+            <button className={tabCls(mode === "settings")} onClick={() => setMode("settings")}>
+              设置
             </button>
           </div>
         </div>
@@ -741,56 +809,31 @@ export default function App() {
       </header>
 
       {mode === "use" ? (
-        /* ===== use mode: hero focus + room list ===== */
+        /* ===== use mode: card grid (left) + hero (right half) ===== */
         <section className="flex min-h-0 flex-1 gap-4 p-4">
-          {heroRoom ? (
-            <>
-              <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-border shadow-sm">
-                <CoverCollage tiles={roomCovers(heroRoom)} />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-24 text-white">
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-2xl font-semibold tracking-tight">{heroRoom.name}</h2>
-                    {heroRoom.path === appliedRoom && (
-                      <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium">
-                        应用中
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-sm text-white/70">
-                    {heroRoom.desks} Desk · {heroRoom.icons} 图标
-                  </p>
-                  <Button
-                    size="sm"
-                    className="mt-4 px-4"
-                    variant={heroRoom.path === appliedRoom ? "secondary" : "default"}
-                    onClick={() => applyRoomDir(heroRoom.path)}
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <Input
+              placeholder="搜索房间..."
+              value={roomQuery}
+              onChange={(e) => setRoomQuery(e.target.value)}
+            />
+            <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-3 overflow-y-auto pr-1">
+              {filteredRooms.map((r) => {
+                const isHero = r.path === heroRoom?.path;
+                const on = r.path === appliedRoom;
+                return (
+                  <button
+                    key={r.path}
+                    onClick={() => setHeroPath(r.path)}
+                    className={`overflow-hidden rounded-xl border text-left transition-colors ${
+                      isHero ? "border-primary" : "border-border hover:border-primary/40"
+                    }`}
                   >
-                    {heroRoom.path === appliedRoom ? "重新应用" : "应用此房间"}
-                  </Button>
-                </div>
-              </div>
-
-              <aside className="flex w-72 shrink-0 flex-col gap-1.5 overflow-y-auto pr-1">
-                <div className="px-1 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  房间库 · {rooms.length}
-                </div>
-                {rooms.map((r) => {
-                  const isHero = r.path === heroRoom.path;
-                  const on = r.path === appliedRoom;
-                  return (
-                    <button
-                      key={r.path}
-                      onClick={() => setHeroPath(r.path)}
-                      className={`flex items-center gap-3 rounded-xl border p-2 text-left transition-colors ${
-                        isHero
-                          ? "border-primary bg-primary/5 dark:bg-primary/10"
-                          : "border-border hover:bg-accent"
-                      }`}
-                    >
-                      <div className="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-border">
-                        <CoverCollage tiles={roomCovers(r)} />
-                      </div>
-                      <div className="min-w-0 flex-1">
+                    <div className="aspect-video w-full">
+                      <CoverStack tiles={roomCovers(r)} />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 p-3">
+                      <div className="min-w-0">
                         <div className="flex items-center gap-1.5 text-sm font-medium">
                           <span className="truncate">{r.name}</span>
                           {on && (
@@ -815,19 +858,51 @@ export default function App() {
                       >
                         {on ? "重应" : "应用"}
                       </Button>
-                    </button>
-                  );
-                })}
-              </aside>
-            </>
-          ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
-              <p>房间库为空</p>
-              <p className="text-xs">去「编辑」模式新建一个房间吧</p>
+                    </div>
+                  </button>
+                );
+              })}
+              {rooms.length === 0 && (
+                <div className="col-span-2 py-16 text-center text-sm text-muted-foreground">
+                  房间库为空——去「编辑」模式新建一个房间吧
+                </div>
+              )}
+              {rooms.length > 0 && filteredRooms.length === 0 && (
+                <div className="col-span-2 py-16 text-center text-sm text-muted-foreground">
+                  没有匹配「{roomQuery}」的房间
+                </div>
+              )}
+            </div>
+          </div>
+
+          {heroRoom && (
+            <div className="relative w-1/2 shrink-0 overflow-hidden rounded-2xl border border-border shadow-sm">
+              <CoverStack tiles={roomCovers(heroRoom)} autoPlayMain />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-24 text-white">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-2xl font-semibold tracking-tight">{heroRoom.name}</h2>
+                  {heroRoom.path === appliedRoom && (
+                    <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium">
+                      应用中
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-sm text-white/70">
+                  {heroRoom.desks} Desk · {heroRoom.icons} 图标
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-4 px-4"
+                  variant={heroRoom.path === appliedRoom ? "secondary" : "default"}
+                  onClick={() => applyRoomDir(heroRoom.path)}
+                >
+                  {heroRoom.path === appliedRoom ? "重新应用" : "应用此房间"}
+                </Button>
+              </div>
             </div>
           )}
         </section>
-      ) : (
+      ) : mode === "edit" ? (
         /* ===== edit mode ===== */
         <div className="flex min-h-0 flex-1">
           {/* desk sidebar */}
@@ -1079,6 +1154,16 @@ export default function App() {
             )}
           </section>
         </div>
+      ) : mode === "workshop" ? (
+        <section className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+          <p>创意工坊（规划中）</p>
+          <p className="text-xs">未来在这里浏览、订阅创作者分享的房间</p>
+        </section>
+      ) : (
+        <section className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+          <p>设置（规划中）</p>
+          <p className="text-xs">房间库路径、主题等偏好将集中在这里</p>
+        </section>
       )}
     </main>
   );

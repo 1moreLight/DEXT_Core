@@ -81,8 +81,8 @@
 | `dext:room` 消息 | window message | 配置器预览注入 `{type:"dext:room", room, deskIndex}` → 整房重渲 |
 | `window.dext` | 房间脚本 API | onReady / onDeskChange / onEditChange / getRoom / getCurrentDesk（MODEL.md §6） |
 | `room.js` / `room.css` | 房间自带 | 渲染器加载（错误隔离）；apply_room 随包拷贝 |
-| 演出槽 playSlot | 统一播放器 | `{video|html|action}` 三态；boot 覆盖层 / shutdown / 转场共用（MODEL.md §6.5） |
-| `dext:shutdown` | Player→页面 | cmd_close 转发；页面播 shutdown 槽后 ack `dext:shutdownDone`（5s 上限） |
+| 演出槽 playSlot | 统一播放器 | `{video|html|action}` 三态；start 覆盖层 / end / switch 共用（MODEL.md §6.5） |
+| `dext:end` | Player→页面 | cmd_close 转发；页面播 end 槽后 ack `dext:endDone`（5s 上限） |
 
 ### L2 渲染器 → Player → Core（上行 IPC，stdout 管道）
 

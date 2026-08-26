@@ -36,7 +36,7 @@ Library（rooms/library.json）
 | `background` | desk | ✓ 每页换景（string=图片 / {video} / 空=纯黑兜底） |
 | `icons` + `x,y` | desk | ✓ 页面内容，稀疏网格 |
 | `iconSize` | desk | ✓ 每页密度独立 |
-| `transition` / `transitions` | room | ✓ 切换行为，全房间一致（见下节） |
+| `switch` / `switches` | room | ✓ 切换行为，全房间一致（见下节；旧名 transition 兼容读取） |
 | 外观主题（颜色/字体/Dock 样式） | — | **暂不做**（2026-08-25 拍板 YAGNI），将来若做进 `room.theme` |
 
 ## 三、转场：有向边模型（本轮核心决策）
@@ -46,17 +46,17 @@ Library（rooms/library.json）
 
 ```jsonc
 {
-  "transition": "slide",            // 房间默认（现有字段，兼容不动）
-  "transitions": {                  // 可选：边级覆盖表（新字段，预留接口）
+  "switch": "slide",                // 房间默认（旧字段 transition 兼容读取）
+  "switches": {                     // 可选：边级覆盖表（新字段，预留接口）
     "0>1": "fade",
-    "1>0": { "type": "video", "src": "transition/back.mp4" },
+    "1>0": { "type": "video", "src": "switch/back.mp4" },
     "2>1": "zoom"
   }
 }
 ```
 
 - key 格式 `"from>to"`，值为下标；方向天然区分来回。
-- 渲染时查找顺序：`transitions["cur>next"] ?? transition ?? "slide"`。
+- 渲染时查找顺序：`switches["cur>next"] ?? switch ?? (旧字段 transition) ?? "slide"`。
 - 未覆盖的边全部走默认 → 现有房间零迁移。
 - **值的多态三态**（2026-08-25 扩）：字符串=预设名（slide/fade/zoom/none/text）、
   `{type:"video",src}`=stinger、`{type:"action",name}`=广播页面事件给房间脚本（见第六节）。
@@ -95,7 +95,7 @@ rooms/gundam-room/
 ### 6.2 声明式动作（第一层，语法糖）
 
 转场值 `{type:"action", name:"cockpit.combat"}` → 渲染器向 `window` 广播
-`dext:transition` CustomEvent（detail 含 from/to/name/dir），房间脚本监听之。
+`dext:switch` CustomEvent（detail 含 from/to/name/dir），房间脚本监听之。
 与 video 类型平级，可共存于边级覆盖表。
 
 ### 6.3 房间脚本契约 window.dext（第二层，最小集草案）
@@ -119,22 +119,23 @@ dext.getCurrentDesk()     // 下标
 ### 6.5 统一演出槽 slot（2026-08-25，Phase 9）
 
 > 用户定调：视频与 HTML 统一——**视频 = 渲染器代管 `<video>` 的糖**（读包内本地路径），
-> HTML = 房间自带页面自管生命周期。boot / shutdown / transition 通用，background 同形预留。
+> HTML = 房间自带页面自管生命周期。start / end / switch 通用，background 同形预留。
+> 命名（2026-08-25 用户拍板）：三幕 = **start / switch / end**（旧名 boot/transition/shutdown 废弃）。
 
 ```jsonc
 // slot 三态（统一值类型）：
-{ "type": "video", "src": "boot/intro.mp4", "loop": false }   // 渲染器代管，ended/error 结束
-{ "type": "html",  "src": "boot/index.html", "timeout": 20 }  // iframe 加载；页面 postMessage
-                                                              // "dext:slotDone" 结束；timeout 兜底
-{ "type": "action", "name": "cockpit.boot" }                  // 广播 dext:slot 事件，立即结束
+{ "type": "video", "src": "start/intro.mp4", "loop": false }   // 渲染器代管，ended/error 结束
+{ "type": "html",  "src": "start/index.html", "timeout": 20 }  // iframe 加载；页面 postMessage
+                                                               // "dext:slotDone" 结束；timeout 兜底
+{ "type": "action", "name": "cockpit.start" }                  // 广播 dext:slot 事件，立即结束
 ```
 
-- **boot**：渲染器加载 → renderDesk → boot 槽全屏覆盖（z-index 300）→ 结束揭晓。缺省无覆盖。
-- **shutdown**：Core 发 cmd_close → Player `HandleShutdownNotice`：postMessage
-  `"dext:shutdown"` 给页面 → 渲染器播 `room.shutdown` 槽 → ack `{type:"dext:shutdownDone"}`
+- **start**：渲染器加载 → renderDesk → start 槽全屏覆盖（z-index 300）→ 结束揭晓。缺省无覆盖。
+- **end**：Core 发 cmd_close → Player `HandleShutdownNotice`：postMessage
+  `"dext:end"` 给页面 → 渲染器播 `room.end` 槽 → ack `{type:"dext:endDone"}`
   → Player 退出；Player 侧 5s 强制上限（渲染器侧自限 4s）。**无槽房间零延迟**（立即 ack）。
-- 转场 video 分支保留 stinger 专用逻辑（播到 50% 换桌），schema 与 slot 同形。
-- Room 文件夹新增可选子目录：`boot/`、`shutdown/`（apply_room 泛化拷贝）。
+- 切换 video 分支保留 stinger 专用逻辑（播到 50% 换桌），schema 与 slot 同形。
+- Room 文件夹可选子目录：`start/`、`end/`（apply_room 泛化拷贝；旧 `transition/` 兼容保留）。
 
 ## 七、room.json v1 字段总表（草案）
 
@@ -157,8 +158,10 @@ dext.getCurrentDesk()     // 下标
       ]
     }
   ],
-  "transition": "slide"|{"type":"video","src":"..."},   // 房间默认，缺省 slide
-  "transitions": {"from>to": <同 transition 值>}         // 可选边级覆盖
+  "switch": "slide"|{"type":"video","src":"..."},       // 房间默认，缺省 slide
+  "switches": {"from>to": <同 switch 值>},               // 可选边级覆盖
+  "start": <slot>,                                  // 可选启动动画
+  "end": <slot>                                     // 可选退出动画
   // "__source": 运行时保留字段，勿写
 }
 ```
@@ -167,7 +170,7 @@ dext.getCurrentDesk()     // 下标
 
 - [ ] 渲染器 switchDesk 接入边级查找
 - [ ] 渲染器：room.js/room.css 加载（错误隔离）+ window.dext 最小事件集
-- [ ] 渲染器：action 类型转场 → dext:transition 事件广播
+- [ ] 渲染器：action 类型切换 → dext:switch 事件广播
 - [ ] 配置器转场 UI 从单选升级为「默认 + 边级列表」（或矩阵视图，做法后议）
 - [ ] transitionText 清理 + text 预设固定模板
 - [ ] dext 契约定稿文档（AI skill 的输入之一）；配置器对 room.js 房间只读不破坏

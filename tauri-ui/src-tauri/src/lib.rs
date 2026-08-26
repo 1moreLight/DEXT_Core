@@ -188,7 +188,8 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
     )
     .map_err(|e| format!("copy room.json failed: {e}"))?;
     // room asset subdirs copied verbatim into the package
-    for sub in ["background", "transition", "boot", "shutdown"] {
+    // ("transition" kept for pre-rename rooms; new name is "switch")
+    for sub in ["background", "transition", "switch", "start", "end"] {
         let sub_src = src.join(sub);
         if !sub_src.is_dir() {
             continue;
@@ -279,12 +280,17 @@ fn mime_of(path: &std::path::Path) -> &'static str {
     }
 }
 
-fn respond_file(full: &std::path::Path) -> tauri::http::Response<Vec<u8>> {
+fn respond_file(full: &std::path::Path, cache: bool) -> tauri::http::Response<Vec<u8>> {
     match std::fs::read(full) {
-        Ok(bytes) => tauri::http::Response::builder()
-            .header("Content-Type", mime_of(full))
-            .body(bytes)
-            .unwrap(),
+        Ok(bytes) => {
+            // cache only for the room library (imported assets are immutable, timestamped names);
+            // never cache dext:// — room.json there is rewritten by apply_room
+            let mut b = tauri::http::Response::builder().header("Content-Type", mime_of(full));
+            if cache {
+                b = b.header("Cache-Control", "max-age=604800");
+            }
+            b.body(bytes).unwrap()
+        }
         Err(_) => tauri::http::Response::builder()
             .status(404)
             .body(Vec::new())
@@ -315,7 +321,7 @@ fn serve_package_file(url_path: &str) -> tauri::http::Response<Vec<u8>> {
             for s in &segments {
                 full.push(s);
             }
-            respond_file(&full)
+            respond_file(&full, false)
         }
         None => tauri::http::Response::builder()
             .status(403)
@@ -334,7 +340,7 @@ fn serve_lib_file(url_path: &str, lib_dir: &str) -> tauri::http::Response<Vec<u8
             for s in &segments {
                 full.push(s);
             }
-            respond_file(&full)
+            respond_file(&full, true)
         }
         _ => tauri::http::Response::builder()
             .status(403)

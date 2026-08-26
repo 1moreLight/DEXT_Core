@@ -205,7 +205,7 @@ namespace Lively.Player.WebView2
                 try
                 {
                     var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
-                    if ((string)o.type == "dext:shutdownDone")
+                    if ((string)o.type == "dext:endDone")
                         return; // consumed by HandleShutdownNotice
                     if ((string)o.type == "saveRoom")
                     {
@@ -518,7 +518,7 @@ namespace Lively.Player.WebView2
             }
         }
 
-        // dext shutdown slot: notify the page, wait for its ack (or 5s cap), then let the
+        // dext end slot: notify the page, wait for its ack (or 5s cap), then let the
         // caller break the message loop. Pages without a slot ack immediately.
         private async Task HandleShutdownNotice()
         {
@@ -531,7 +531,7 @@ namespace Lively.Player.WebView2
                 try
                 {
                     var text = e.TryGetWebMessageAsString();
-                    if (text != null && text.Contains("dext:shutdownDone"))
+                    if (text != null && text.Contains("dext:endDone"))
                         tcs.TrySetResult(true);
                 }
                 catch { /* non-ack web message, nothing to consume */ }
@@ -541,7 +541,7 @@ namespace Lively.Player.WebView2
             Invoke((Action)(() =>
             {
                 wv.WebMessageReceived += Handler;
-                wv.PostWebMessageAsJson("\"dext:shutdown\"");
+                wv.PostWebMessageAsJson("\"dext:end\"");
             }));
             _ = Task.Delay(5000).ContinueWith(_ => tcs.TrySetResult(false));
             _ = tcs.Task.ContinueWith(_ =>

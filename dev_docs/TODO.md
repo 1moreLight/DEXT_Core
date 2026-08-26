@@ -54,6 +54,15 @@
 - [x] 2026-08-25 自测：node --check + cargo check + build.ps1 全绿（构建前需停 Lively，DLL 锁）
 - [ ] 2026-08-25 用户验收（对话清单：boot 动画 / shutdown 动画 / 无槽房间不受影响）
 
+### Phase 9.1：三幕命名定稿（2026-08-25 追加）
+
+> 用户拍板：start（启动）/ switch（切换）/ end（结束），废弃 boot/transition/shutdown。
+
+- [x] 2026-08-25 全链改名：room.json 字段（start/end/switch/switches）、事件（dext:switch/dext:end/dext:endDone）、素材目录（start//end/，transition/ 兼容保留）、配置器写 switch 双读兼容
+- [x] 2026-08-25 cockpit-room boot/ → start/；MODEL/README/PROJECT 文档同步
+- [x] 2026-08-25 自测全绿（node --check + npm build + cargo check + build.ps1）
+- [ ] 2026-08-25 用户验收（同 Phase 9 清单，名字换 start/switch/end）
+
 ### 研究专项：Lively API 全景调研（2026-08-25 追加）
 
 > 目标：摸清上游 Lively 生态全部对外接口形态 + 本 fork 现状对照，评估 Dext 可用性。产出 `dev_docs/LIVELY_API.md`。
