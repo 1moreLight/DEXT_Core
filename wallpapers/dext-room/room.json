@@ -1,25 +1,42 @@
 {
-  "__source": "D:\\midDOW\\lively-core-separation\\rooms\\testnewroom",
+  "__source": "D:\\midDOW\\lively-core-separation\\rooms\\cockpit-room",
+  "start": { "type": "html", "src": "start/index.html", "timeout": 15 },
+  "end": { "type": "html", "src": "end/index.html", "timeout": 4 },
   "desks": [
     {
-      "background": {
-        "src": "background/video-1787638613830.mp4",
-        "type": "video"
-      },
-      "icons": [],
-      "name": "Desk 1"
+      "name": "STANDBY",
+      "background": "",
+      "iconSize": "medium",
+      "icons": [
+        { "label": "SYSTEM", "glyph": "⚙", "color": "#111827", "action": "系统自检中..." },
+        { "label": "ARCHIVE", "glyph": "▤", "color": "#111827", "action": "作战档案" }
+      ]
     },
     {
-      "background": {
-        "src": "background/video-1787638638606.mp4",
-        "type": "video"
-      },
-      "icons": [],
-      "name": "Desk 2"
+      "name": "PATROL",
+      "background": "",
+      "iconSize": "medium",
+      "icons": [
+        { "label": "SCAN", "glyph": "◎", "color": "#0f172a", "action": "扫描周边空域..." },
+        { "label": "COMMS", "glyph": "≋", "color": "#0f172a", "action": "通讯链路建立" }
+      ]
+    },
+    {
+      "name": "COMBAT",
+      "background": "",
+      "iconSize": "large",
+      "icons": [
+        { "label": "LAUNCH", "glyph": "▲", "color": "#450a0a", "action": "出击授权确认" },
+        { "label": "ARM", "glyph": "✜", "color": "#450a0a", "action": "武装挂载完成" }
+      ]
     }
   ],
-  "transition": {
-    "src": "transition/transition-1787640738694.mp4",
-    "type": "video"
+  "transitions": {
+    "0>1": { "type": "action", "name": "cockpit.patrol" },
+    "1>0": { "type": "action", "name": "cockpit.standby" },
+    "1>2": { "type": "action", "name": "cockpit.combat" },
+    "2>1": { "type": "action", "name": "cockpit.patrol" },
+    "0>2": { "type": "action", "name": "cockpit.combat" },
+    "2>0": { "type": "action", "name": "cockpit.standby" }
   }
 }

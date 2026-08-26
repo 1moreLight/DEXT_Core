@@ -1,5 +1,6 @@
 {
   "start": { "type": "html", "src": "start/index.html", "timeout": 15 },
+  "end": { "type": "html", "src": "end/index.html", "timeout": 4 },
   "desks": [
     {
       "name": "STANDBY",
