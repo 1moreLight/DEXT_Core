@@ -122,3 +122,13 @@ ode -e "...replace(/re/,'- [x] $1')" 经 bash 工具执行后，$1 变空串，�
 - 排查手法：`git log --all -- <文件>` 看它真正进的是哪个 commit；`git diff HEAD -- <文件>` 确认盘上内容
 - 防再犯：多会话同仓库时 ①提交前 `git status --short` 核对清单 ②只 add 本轮明确改动的具名文件，
   慎用 `git add -A`/`git add .` ③发现文件"消失"先怀疑被并行提交收编，别急着重写
+
+## 19. SVG polyline points 不支持百分比坐标（R9 导图线条挤成左上角一坨）
+
+- 现象：思维导图连线全部缩在画布左上角成一个"不明物体"小箭头，节点间反而看不到线
+- 原因：<polyline points="15,48.6 ..."> 的 points 是用户单位（px），**不支持 %**；
+  <line x1/y1/x2/y2> 才支持百分比。想当然把 % 塞进 points 就全挤到左上角了
+- 解决：每条路由拆成 3 段 <line>（% 坐标），箭头 markerEnd 只放最后一段；
+  strokeWidth 用固定值不受 % 影响
+- 教训：SVG 里 polyline/polygon/path 的坐标一律是用户单位；要 % 就用 line/circle 等支持
+  百分比的元素属性，或上 viewBox+preserveAspectRatio（注意描边会跟着缩放）
