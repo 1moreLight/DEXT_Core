@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
+  Dock,
   Film,
   FolderOpen,
   LayoutGrid,
@@ -63,7 +64,7 @@ interface RoomInfo {
 
 type Mode = "use" | "edit" | "workshop" | "settings";
 
-type EditNav = "library" | "room";
+type EditNav = "library" | "room" | "dock";
 
 const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
 
@@ -296,7 +297,8 @@ function CoverStack({ tiles, autoPlayMain = false }: { tiles: CoverTile[]; autoP
     <div className="relative h-full w-full overflow-hidden bg-black">
       <CoverTileBox tile={base} autoPlay={autoPlayMain} />
       {piled.length > 0 && (
-        <div className="absolute bottom-2.5 right-2.5 flex items-end">
+        // proportional sizing (w-% + aspect-video) so small cards look identical to big panels
+        <div className="absolute inset-0 flex items-end justify-end p-[4%]">
           {piled.map((t, pi) => {
             const realIdx = tiles.indexOf(t);
             return (
@@ -308,10 +310,10 @@ function CoverStack({ tiles, autoPlayMain = false }: { tiles: CoverTile[]; autoP
                   setIdx(realIdx);
                 }}
                 title="点击换到主展示位"
-                className="h-12 w-20 cursor-pointer overflow-hidden rounded-md border-2 border-white/90 bg-black shadow-lg transition-transform hover:scale-105"
+                className="w-[30%] aspect-video cursor-pointer overflow-hidden rounded-md border border-white/90 bg-black shadow-lg transition-transform hover:scale-105"
                 style={{
                   transform: `rotate(${(pi - (piled.length - 1) / 2) * 5}deg)`,
-                  marginLeft: pi > 0 ? "-10px" : undefined,
+                  marginLeft: pi > 0 ? "-8%" : undefined,
                   zIndex: piled.length - pi,
                 }}
               >
@@ -322,7 +324,7 @@ function CoverStack({ tiles, autoPlayMain = false }: { tiles: CoverTile[]; autoP
         </div>
       )}
       {tiles.length > 1 + piled.length && (
-        <span className="absolute bottom-2.5 left-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
+        <span className="absolute bottom-[5%] left-[3.5%] rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
           +{tiles.length - 1 - piled.length}
         </span>
       )}
@@ -981,6 +983,7 @@ export default function App() {
                 [
                   ["library", "应用库", LayoutGrid],
                   ["room", "Room", FolderOpen],
+                  ["dock", "Dock", Dock],
                 ] as const
               ).map(([key, label, Icon]) => (
                 <button
@@ -1238,6 +1241,11 @@ export default function App() {
                   })}
                 </div>
               </>
+            ) : editNav === "dock" ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+                <p>Dock 编辑（下一轮搭建）</p>
+                <p className="text-xs">桌面底栏样式 / 指示器 / 尺寸切换入口将集中在这里</p>
+              </div>
             ) : editNav === "room" && !roomEntered ? (
               /* room list + WE-style detail panel */
               <div className="flex min-h-0 flex-1 gap-4">
