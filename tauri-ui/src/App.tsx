@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { ChevronLeft, ChevronRight, ChevronsLeft, Film, Moon, Sun } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  Film,
+  FolderOpen,
+  LayoutGrid,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sun,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -51,6 +62,8 @@ interface RoomInfo {
 }
 
 type Mode = "use" | "edit" | "workshop" | "settings";
+
+type EditNav = "library" | "room";
 
 const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
 
@@ -342,6 +355,8 @@ export default function App() {
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
   const [roomPage, setRoomPage] = useState(1);
+  const [editNav, setEditNav] = useState<EditNav>("library");
+  const [navOpen, setNavOpen] = useState(true);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -992,8 +1007,50 @@ export default function App() {
       ) : mode === "edit" ? (
         /* ===== edit mode ===== */
         <div className="flex min-h-0 flex-1">
-          {/* desk sidebar */}
-          <aside className="flex w-64 flex-col border-r border-border">
+          {/* edit nav sidebar (collapsible) */}
+          <aside
+            className={`flex shrink-0 flex-col border-r border-border py-2 transition-all ${
+              navOpen ? "w-44 px-2" : "w-12 items-center px-1"
+            }`}
+          >
+            <button
+              onClick={() => setNavOpen((v) => !v)}
+              className="mb-2 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
+              title={navOpen ? "折叠侧栏" : "展开侧栏"}
+            >
+              {navOpen ? (
+                <PanelLeftClose className="h-4 w-4" />
+              ) : (
+                <PanelLeftOpen className="h-4 w-4" />
+              )}
+            </button>
+            <nav className="flex flex-col gap-1">
+              {(
+                [
+                  ["library", "应用库", LayoutGrid],
+                  ["room", "Room", FolderOpen],
+                ] as const
+              ).map(([key, label, Icon]) => (
+                <button
+                  key={key}
+                  onClick={() => setEditNav(key)}
+                  title={label}
+                  className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm ${
+                    editNav === key
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  } ${navOpen ? "" : "justify-center"}`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {navOpen && <span className="whitespace-nowrap">{label}</span>}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          {/* desk sidebar (room view) */}
+          {editNav === "room" && (
+            <aside className="flex w-64 flex-col border-r border-border">
             <div className="px-4 pt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Desks
             </div>
@@ -1124,23 +1181,11 @@ export default function App() {
               </div>
             </div>
           </aside>
+          )}
 
-          {/* app library OR preview */}
+          {/* content: library / room(preview) */}
           <section className="flex min-h-0 flex-1 flex-col p-4">
-            {showPreview ? (
-              <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
-                <iframe
-                  ref={previewRef}
-                  src="http://dext.localhost/index.html"
-                  onLoad={postRoom}
-                  title="Room 预览"
-                  className="aspect-video w-full max-w-4xl rounded-lg border border-border"
-                />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · 未保存的修改也会显示 · 双击图标不会真启动
-                </p>
-              </div>
-            ) : (
+            {editNav === "library" ? (
               <>
                 <div className="mb-2 flex items-center gap-2">
                   <span
@@ -1238,6 +1283,24 @@ export default function App() {
                   })}
                 </div>
               </>
+            ) : showPreview ? (
+              <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
+                <iframe
+                  ref={previewRef}
+                  src="http://dext.localhost/index.html"
+                  onLoad={postRoom}
+                  title="Room 预览"
+                  className="aspect-video w-full max-w-4xl rounded-lg border border-border"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  实时预览 · 未保存的修改也会显示 · 双击图标不会真启动
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
+                <p>Room 视图（改造中）</p>
+                <p className="text-xs">Desk 管理 / 背景 / 图标尺寸先沿用左侧栏，下一轮重排</p>
+              </div>
             )}
           </section>
         </div>
