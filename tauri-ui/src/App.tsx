@@ -358,6 +358,7 @@ export default function App() {
   const [editNav, setEditNav] = useState<EditNav>("library");
   const [navOpen, setNavOpen] = useState(true);
   const [roomEntered, setRoomEntered] = useState(false);
+  const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -740,6 +741,11 @@ export default function App() {
   void [newRoom, saveAs, changeLib, changeTransition, transitionLabel, applyCurrent];
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
+    rooms.find((r) => r.path === appliedRoom) ??
+    rooms[0] ??
+    null;
+  const pickedRoom =
+    rooms.find((r) => r.path === roomPickPath) ??
     rooms.find((r) => r.path === appliedRoom) ??
     rooms[0] ??
     null;
@@ -1233,40 +1239,80 @@ export default function App() {
                 </div>
               </>
             ) : editNav === "room" && !roomEntered ? (
-              /* room list: pick a room first, then edit its desks */
-              <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <div className="text-sm text-muted-foreground">选择一个房间进入 Desk 编辑</div>
-                <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-3 content-start gap-3 overflow-y-auto pr-1">
-                  {rooms.map((r) => (
-                    <button
-                      key={r.path}
-                      onClick={() => {
-                        openRoom(r.path);
-                        setRoomEntered(true);
-                      }}
-                      className={`overflow-hidden rounded-xl border text-left transition-colors ${
-                        r.path === roomPath
-                          ? "border-primary"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <div className="aspect-video w-full">
-                        <CoverStack tiles={roomCovers(r)} />
-                      </div>
-                      <div className="p-3">
-                        <div className="truncate text-sm font-medium">{r.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {r.desks} Desk · {r.icons} 图标
+              /* room list + WE-style detail panel */
+              <div className="flex min-h-0 flex-1 gap-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                  <div className="text-sm text-muted-foreground">
+                    选择房间查看详情；「编辑」进入 Desk 编辑
+                  </div>
+                  <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-3 content-start gap-3 overflow-y-auto pr-1">
+                    {rooms.map((r) => (
+                      <button
+                        key={r.path}
+                        onClick={() => setRoomPickPath(r.path)}
+                        className={`overflow-hidden rounded-xl border text-left transition-colors ${
+                          pickedRoom && r.path === pickedRoom.path
+                            ? "border-primary"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <div className="aspect-video w-full">
+                          <CoverStack tiles={roomCovers(r)} />
                         </div>
+                        <div className="p-3">
+                          <div className="truncate text-sm font-medium">{r.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.desks} Desk · {r.icons} 图标
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                    {rooms.length === 0 && (
+                      <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
+                        房间库为空——用「新建房间」创建一个吧（入口下一轮加回来）
                       </div>
-                    </button>
-                  ))}
-                  {rooms.length === 0 && (
-                    <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
-                      房间库为空——用「新建房间」创建一个吧（入口下一轮加回来）
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
+
+                {pickedRoom && (
+                  <aside className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-border pl-4">
+                    <div className="aspect-video w-full overflow-hidden rounded-xl border border-border">
+                      <CoverStack tiles={roomCovers(pickedRoom)} autoPlayMain />
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg font-medium">{pickedRoom.name}</span>
+                        {pickedRoom.path === appliedRoom && (
+                          <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium text-white">
+                            应用中
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {pickedRoom.desks} Desk · {pickedRoom.icons} 图标
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1"
+                        onClick={() => {
+                          openRoom(pickedRoom.path);
+                          setRoomEntered(true);
+                        }}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        variant={pickedRoom.path === appliedRoom ? "secondary" : "outline"}
+                        onClick={() => applyRoomDir(pickedRoom.path)}
+                      >
+                        {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
+                      </Button>
+                    </div>
+                  </aside>
+                )}
               </div>
             ) : (
               /* entered a room: desk editing */
