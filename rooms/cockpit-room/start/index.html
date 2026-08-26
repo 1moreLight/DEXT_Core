@@ -54,12 +54,15 @@
       el.textContent += LINES[i] + "\n";
       fill.style.width = `${((i + 1) / LINES.length) * 100}%`;
       i++;
-      setTimeout(step, 420);
+      setTimeout(step, 700);
     } else {
-      setTimeout(() => parent.postMessage("dext:slotDone", "*"), 500);
+      el.textContent += "ALL SYSTEMS GO\n";
+      fill.style.width = "100%";
+      fill.style.background = "rgba(120, 255, 160, 0.9)";
+      setTimeout(() => parent.postMessage("dext:slotDone", "*"), 1200);
     }
   };
-  setTimeout(step, 600);
+  setTimeout(step, 900);
 </script>
 </body>
 </html>
