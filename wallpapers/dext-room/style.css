@@ -271,6 +271,9 @@ body.editing #size-group {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
+  /* above desk-staging (z-index 5) so desk-switch transitions never cover the dock;
+     below video stinger (90) / text overlay (100) / toast (200) */
+  z-index: 20;
 }
 
 /* visual shell lives on the inner wrapper so #dock can stay a pure placement layer */
