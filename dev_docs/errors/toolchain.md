@@ -38,3 +38,15 @@
 - 根因：PS 5.1 控制台按代码页显示，文件本身是正确的 UTF-8；Read 工具读出来完全正常
 - 解决：判断文件是否乱码一律用编辑/读文件工具看，别信 PS 控制台显示
 - 防再犯：与 #8 区分——#8 是 PS 管道**读取解析**坏（ConvertFrom-Json 报错），本条只是**显示**层假象
+
+## 23. vite root 限定导致 /rooms 路径 SPA fallback 返回 HTML
+
+- 现象：预览地址 http://localhost:5174/?room=../rooms/test-dock-hud/ 时，dock 图标一直不显示；
+  排查发现 fetch room.json 返回 200 但 content-type 是 text/html、长度=index.html（1549B），
+  JSON.parse 失败 → loadRoom 静默回退 DEFAULT_ROOM
+- 原因：vite root 指向 wallpapers/dext-room，/rooms/... 在 root 之外，vite dev 对未命中路径
+  走 SPA fallback 返回 index.html（顺带导致之前所有房间预览都是默认房间）
+- 解决：vite root 改为仓库根（scripts/room-preview.ps1 与 package.json dev:room），
+  页面路径 /wallpapers/dext-room/?room=../../rooms/<名>/（相对解析两级上跳）
+- 防再犯：改 vite root / 预览 URL 后先 Invoke-WebRequest 验证 room.json 的 Content-Type
+  是 application/json 再交给用户验收

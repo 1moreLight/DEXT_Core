@@ -26,10 +26,15 @@ npm run dev:ui        # vite 端口 1421，自动开浏览器
 ### VS Code 内分屏（推荐：左边代码右边 UI，不离开编辑器）
 
 ```
-1. 起服务：  cd tauri-ui && npm run dev:room   （桌面渲染器，5174）
-2. Ctrl+Shift+P → "Simple Browser: Show" → 填 http://localhost:5174
+1. 起服务：  cd tauri-ui && npm run dev:room   （桌面渲染器，5174；root=仓库根，rooms/ 可直接 fetch）
+2. Ctrl+Shift+P → "Simple Browser: Show" → 填 http://localhost:5174/wallpapers/dext-room/
+   想看指定房间：http://localhost:5174/wallpapers/dext-room/?room=../../rooms/<房间名>/
 3. 预览标签页拖到右侧分屏 → 左改代码右实时变（Vite HMR 生效）
 ```
+
+> ⚠️ room 参数路径是相对渲染器页面解析的，**必须写成 `../../rooms/<名>/`**；
+> vite root 必须为仓库根（见 scripts/room-preview.ps1），否则 `/rooms/...` 会走 SPA
+> fallback 返回 HTML，room.json 解析失败 → 静默用 DEFAULT_ROOM（ERRORS #23）。
 
 也可装微软 Live Preview 扩展：对 index.html 右键 Show Preview（仅渲染器适用）。
 
