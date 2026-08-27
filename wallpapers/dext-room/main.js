@@ -308,6 +308,17 @@ function initMagnify() {
   dockEl.addEventListener("pointermove", (e) => {
     if (!magnifyMax || editMode || switching) return;
     const rect = dockAppsEl.getBoundingClientRect();
+    // 只允许指针处于图标区（±20px 余量）内时触发，避免悬停到 ‹ › 等按钮上误放大
+    const slack = 20;
+    const inAppsArea = vertical()
+      ? e.clientX >= rect.left - slack && e.clientX <= rect.right + slack &&
+        e.clientY >= rect.top - slack && e.clientY <= rect.bottom + slack
+      : e.clientY >= rect.top - slack && e.clientY <= rect.bottom + slack &&
+        e.clientX >= rect.left - slack && e.clientX <= rect.right + slack;
+    if (!inAppsArea) {
+      dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => (el.style.transform = ""));
+      return;
+    }
     const p = vertical() ? e.clientY - rect.top : e.clientX - rect.left;
     dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => {
       const c = vertical()
