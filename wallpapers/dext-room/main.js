@@ -280,16 +280,23 @@ function renderDock() {
   dockEl.style.display = cfg.enabled ? "" : "none";
   const pos = DOCK_POSITIONS.has(cfg.position) ? cfg.position : "bottom";
   for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === pos);
-  dockEl.classList.toggle("dock-autohide", !!cfg.autoHide && pos !== "");
+  dockEl.classList.toggle("dock-autohide", !!cfg.autoHide);
 
-  // style overrides -> CSS vars; empty string falls back to the var() default
+  // style overrides -> CSS vars; unset ones are cleared so per-desk switching
+  // doesn't leak the previous desk's values (removeProperty resets to var() default)
   const st = cfg.style;
-  if (st.bg) dockEl.style.setProperty("--dock-bg", st.bg);
-  if (st.blur != null) dockEl.style.setProperty("--dock-blur", `${st.blur}px`);
-  if (st.radius) dockEl.style.setProperty("--dock-radius", st.radius);
-  if (st.gap != null) dockEl.style.setProperty("--dock-gap", `${st.gap}px`);
-  if (st.pad) dockEl.style.setProperty("--dock-pad", st.pad);
-  if (st.icon) dockEl.style.setProperty("--dock-icon", `${st.icon}px`);
+  const vars = [
+    ["--dock-bg", st.bg],
+    ["--dock-blur", st.blur != null ? `${st.blur}px` : undefined],
+    ["--dock-radius", st.radius],
+    ["--dock-gap", st.gap != null ? `${st.gap}px` : undefined],
+    ["--dock-pad", st.pad],
+    ["--dock-icon", st.icon != null ? `${st.icon}px` : undefined],
+  ];
+  for (const [name, val] of vars) {
+    if (val === undefined || val === "") dockEl.style.removeProperty(name);
+    else dockEl.style.setProperty(name, String(val));
+  }
 
   renderDockApps(cfg);
 }
