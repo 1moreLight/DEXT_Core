@@ -24,6 +24,7 @@
 | #17 | 并行会话 git add 互扫 | [git](errors/git.md) |
 | #18 | 并行会话冲掉未提交改动 | [git](errors/git.md) |
 | #19 | SVG polyline 不支持 % 坐标 | [renderer](errors/renderer.md) |
+| #21 | 令牌重构吃掉 CSS 属性名 | [renderer](errors/renderer.md) |
 | #20 | 双仓库 + 幽灵 worktree 注册 | [git](errors/git.md) |
 
 ## 分册

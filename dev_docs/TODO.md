@@ -4,6 +4,16 @@
 > 新计划一律**追加**；做完立即打标；废弃标 `[x] 已取消(日期)`，不删除。
 > 已完成历史见 `TODO-archive.md`；会话被中断时：从这里最后一条未完成项继续。
 
+## R11 Dock 高度自定义探索（2026-08-27 开工，UI 接入等用户指令）
+
+- [x] [!]→[x] 修复 style.css 主题令牌重构吃掉属性名的事故（ERRORS #21，对照 b4a0827~1 还原）
+- [x] 渲染器 dock 自定义：room.json 新增 `dock` 配置节（宽容读取）
+      enabled / position(bottom|top|left|right) / magnify(鱼眼) / indicator(text|dots)
+      style{bg,blur,radius,gap,pad} / icons[] 常驻启动项（结构同桌面图标）
+- [x] 编辑模式支持删除 dock 图标；persistRoom 自动覆盖持久化
+- [x] 自测：node --check main.js 通过（CSS 括号平衡校验通过）
+- [ ] 配置器 Dock 编辑页接入 —— 等用户指令
+
 ## 当前阶段：R10 思维导图收尾（2026-08-27 进行中）
 
 > WIP 已提交（b9cd53d）：Snapshot 增 desks/hasStart、seedEdges 支持无启动画面、openRoom mock 模式、几何测量 state。

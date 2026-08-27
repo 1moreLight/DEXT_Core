@@ -235,10 +235,115 @@ const transitionEl = document.getElementById("transition");
 const transitionTextEl = document.getElementById("transition-text");
 const toastEl = document.getElementById("toast");
 const doneBtn = document.getElementById("edit-done");
+const dockEl = document.getElementById("dock");
+const dockAppsEl = document.getElementById("dock-apps");
 
 let currentDesk = 0;
 let switching = false;
 let editMode = false;
+
+// ---- dock customization (room.json "dock" key; 宽容读取，全字段可选) ----
+// enabled   关掉整条 dock
+// position  bottom | top | left | right（缺省 bottom）
+// magnify   false 或数字：mac 式鱼眼放大的最大倍率（缺省 1.55）
+// indicator "text"(默认) | "dots"
+// style     {bg, blur, radius, gap, pad, icon} 直接映射 CSS 变量
+// icons     常驻启动项数组，结构同桌面图标（label/glyph/color/icon_png/launch/action）
+const DEFAULT_DOCK = {
+  enabled: true,
+  position: "bottom",
+  magnify: true,
+  indicator: "text",
+  style: {},
+  icons: [],
+};
+const DOCK_POSITIONS = new Set(["bottom", "top", "left", "right"]);
+
+function dockCfg() {
+  const d = ROOM.dock && typeof ROOM.dock === "object" ? ROOM.dock : {};
+  return {
+    ...DEFAULT_DOCK,
+    ...d,
+    style: d.style && typeof d.style === "object" ? d.style : {},
+    icons: Array.isArray(d.icons) ? d.icons : [],
+  };
+}
+
+function renderDock() {
+  const cfg = dockCfg();
+  dockEl.style.display = cfg.enabled ? "" : "none";
+  const pos = DOCK_POSITIONS.has(cfg.position) ? cfg.position : "bottom";
+  for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === pos);
+
+  // style overrides -> CSS vars; empty string falls back to the var() default
+  const st = cfg.style;
+  if (st.bg) dockEl.style.setProperty("--dock-bg", st.bg);
+  if (st.blur != null) dockEl.style.setProperty("--dock-blur", `${st.blur}px`);
+  if (st.radius) dockEl.style.setProperty("--dock-radius", st.radius);
+  if (st.gap != null) dockEl.style.setProperty("--dock-gap", `${st.gap}px`);
+  if (st.pad) dockEl.style.setProperty("--dock-pad", st.pad);
+  if (st.icon) dockEl.style.setProperty("--dock-icon", `${st.icon}px`);
+
+  renderDockApps(cfg);
+}
+
+// macOS fisheye: icons scale by proximity to the cursor along the bar axis
+let magnifyMax = 0;
+function initMagnify() {
+  const vertical = () => dockEl.classList.contains("dock-left") || dockEl.classList.contains("dock-right");
+  dockEl.addEventListener("pointermove", (e) => {
+    if (!magnifyMax || editMode || switching) return;
+    const rect = dockAppsEl.getBoundingClientRect();
+    const p = vertical() ? e.clientY - rect.top : e.clientX - rect.left;
+    dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => {
+      const c = vertical()
+        ? el.offsetTop + el.offsetHeight / 2
+        : el.offsetLeft + el.offsetWidth / 2;
+      const d = Math.abs(p - c);
+      const s = 1 + Math.max(0, (magnifyMax - 1) * Math.exp(-((d / 70) ** 2)));
+      el.style.transform = `scale(${s.toFixed(3)})`;
+    });
+  });
+  dockEl.addEventListener("pointerleave", () =>
+    dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => (el.style.transform = ""))
+  );
+}
+
+function renderDockApps(cfg) {
+  magnifyMax =
+    typeof cfg.magnify === "number" ? cfg.magnify : cfg.magnify === false ? 0 : 1.55;
+  dockEl.classList.toggle("has-apps", cfg.icons.length > 0);
+  dockAppsEl.innerHTML = "";
+  cfg.icons.forEach((item, i) => {
+    const el = document.createElement("div");
+    el.className = "dock-icon";
+    el.title = item.label ?? "";
+    el.innerHTML = `
+      ${item.icon_png
+        ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`
+        : `<div class="icon-glyph" style="background:${item.color ?? "#3b82f6"}">${item.glyph ?? "?"}</div>`}
+      <button class="icon-del dock-icon-del" title="删除">×</button>
+    `;
+    el.addEventListener("dblclick", () => {
+      if (editMode) return;
+      if (item.launch) {
+        showToast(`正在启动 ${item.label} ...`);
+        launchApp(item.launch);
+      } else {
+        showToast(item.action ?? item.label ?? "");
+      }
+    });
+    el.querySelector(".dock-icon-del").addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (!editMode) return;
+      ROOM.dock = { ...DEFAULT_DOCK, ...ROOM.dock, icons: cfg.icons };
+      ROOM.dock.icons.splice(i, 1);
+      persistRoom();
+      renderDock();
+    });
+    dockAppsEl.appendChild(el);
+  });
+}
 
 function persistRoom() {
   if (!window.chrome?.webview?.postMessage) return;
@@ -336,7 +441,17 @@ function renderIcons(layer, desk, s) {
 function renderDesk(index) {
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk);
-  indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
+  renderDock();
+  const n = ROOM.desks.length;
+  if (dockCfg().indicator === "dots") {
+    dockEl.classList.add("dots");
+    indicatorEl.innerHTML = ROOM.desks
+      .map((d, i) => `<i${i === index ? ' class="on"' : ""} title="${d.name ?? ""}"></i>`)
+      .join("");
+  } else {
+    dockEl.classList.remove("dots");
+    indicatorEl.textContent = `${index + 1} / ${n} · ${desk.name}`;
+  }
   renderIcons(iconLayer, desk, sizeOf(desk));
 
   document.querySelectorAll("#size-group .size-btn").forEach((b) =>
@@ -709,6 +824,8 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => renderDesk(currentDesk));
+
+initMagnify();
 
 window.addEventListener("message", (e) => {
   const d = e.data;

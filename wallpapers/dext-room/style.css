@@ -102,7 +102,16 @@ body.editing .icon {
   cursor: grab;
 }
 
--color: var(--dext-danger);
+.icon-del {
+  display: none;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--dext-danger);
   color: #fff;
   font-size: 14px;
   line-height: 1;
@@ -122,7 +131,57 @@ body.editing #desk-indicator {
   display: none;
 }
 
-#edit-done {-color: var(--dext-success);
+#dock.dots #desk-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: auto;
+}
+
+#desk-indicator i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+#desk-indicator i.on {
+  background-color: var(--dext-accent);
+  transform: scale(1.25);
+}
+
+body.editing .dock-sep {
+  display: none;
+}
+
+.dock-icon-del {
+  display: none;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--dext-danger);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  align-items: center;
+  justify-content: center;
+}
+
+body.editing .dock-icon-del {
+  display: flex;
+}
+
+#edit-done {
+  display: none;
+  background-color: var(--dext-success);
   font-size: 18px;
 }
 
@@ -139,17 +198,24 @@ body.editing #size-group {
   display: flex;
 }
 
-.size-btn {-color: var(--dext-btn-bg);
+.size-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--dext-btn-bg);
   color: #fff;
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
-.size-btn:hover {-color: var(--dext-dock-hover);
+.size-btn:hover {
+  background-color: var(--dext-dock-hover);
 }
 
-.size-btn.active {-color: var(--dext-success);
+.size-btn.active {
+  background-color: var(--dext-success);
 }
 
 .icon {
@@ -200,19 +266,85 @@ body.editing #size-group {
   word-break: break-all;
 }
 
-#dock {-color: var(--dext-dock-bg);
-  backdrop-filter: blur(12px);
+#dock {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--dock-gap, 16px);
+  padding: var(--dock-pad, 10px 20px);
+  border-radius: var(--dock-radius, 999px);
+  background-color: var(--dock-bg, var(--dext-dock-bg));
+  backdrop-filter: blur(var(--dock-blur, 12px));
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
-.dock-btn {-color: var(--dext-btn-bg);
+/* position variants: top/left/right override the default bottom placement */
+#dock.dock-top {
+  bottom: auto;
+  top: 24px;
+}
+#dock.dock-left,
+#dock.dock-right {
+  flex-direction: column;
+  left: auto;
+  right: auto;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  padding: 14px 10px;
+}
+#dock.dock-left { left: 24px; }
+#dock.dock-right { right: 24px; }
+
+/* resident app icons */
+#dock-apps {
+  display: flex;
+  align-items: center;
+  gap: var(--dock-gap, 16px);
+}
+#dock:not(.has-apps) #dock-apps { display: none; }
+#dock.has-apps .dock-sep {
+  width: 1px;
+  height: 30px;
+  background-color: rgba(255, 255, 255, 0.22);
+}
+#dock.dock-left.has-apps .dock-sep,
+#dock.dock-right.has-apps .dock-sep {
+  width: 30px;
+  height: 1px;
+}
+
+.dock-icon {
+  position: relative;
+  cursor: pointer;
+  padding: 2px;
+  transition: transform 0.12s ease-out;
+  transform-origin: center center;
+}
+.dock-icon .icon-glyph,
+.dock-icon .icon-img {
+  --icon-size: var(--dock-icon, 40px);
+}
+.dock-icon .icon-img { border-radius: 8px; }
+body.editing .dock-icon { animation: jiggle 0.35s ease-in-out infinite; }
+
+.dock-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--dext-btn-bg);
   color: #fff;
   font-size: 22px;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.15s;
 }
 
-.dock-btn:hover {-color: var(--dext-dock-hover);
+.dock-btn:hover {
+  background-color: var(--dext-dock-hover);
 }
 
 .dock-btn:active {
