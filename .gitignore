@@ -2,3 +2,4 @@ dext-room-demo/
 
 # vite dev cache
 .vite/
+.claude/
