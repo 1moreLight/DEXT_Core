@@ -22,6 +22,7 @@
 - [x] ERRORS #21 记录：style.css 主题令牌重构误删 background/布局属性已修复
 - [x] R11 代码审查（2026-08-27）：DockEditor 重写（原生控件/每桌写回/编译全绿），渲染器 style 变量残留修复，ERRORS #22
 - [ ] 配置器 Dock 编辑页接入 —— 等用户指令
+- [ ] Dock UI 接线（锚点见 dev_docs/DOCK.md 三节）：save_room_css 后端命令（皮肤写 room.css）/ DockEditor 接应用库选择器 / 渲染器拖拽进 Dock（新上行消息）/ 皮肤随导出 zip
 
 ## 当前阶段：R10 思维导图收尾（2026-08-27 进行中）
 
