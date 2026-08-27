@@ -18,3 +18,11 @@
   strokeWidth 用固定值不受 % 影响
 - 教训：SVG 里 polyline/polygon/path 的坐标一律是用户单位；要 % 就用 line/circle 等支持
   百分比的元素属性，或上 viewBox+preserveAspectRatio（注意描边会跟着缩放）
+
+## 21. 主题令牌重构吃掉 CSS 属性名（dock 无底色/布局丢失）
+
+- 现象：style.css 多处出现「-color: var(--dext-...)」这类残行，#dock 整块只剩
+  backdrop-filter/box-shadow，position/flex/padding 全丢；.icon-del/.size-btn 同伤。
+  始于 b4a0827（rgba→var(--dext-*) 的批量替换把「background-color:」前缀连值一起误删）
+- 解决：对照 git show b4a0827~1 还原全部损坏规则，并用 node --check 式脚本全文件扫残留
+- 防再犯：批量正则替换样式属性后，用正则扫 /[{};]\s*-color|^\s*-color/ 自检 + 浏览器视检一遍再提交

@@ -235,10 +235,104 @@ const transitionEl = document.getElementById("transition");
 const transitionTextEl = document.getElementById("transition-text");
 const toastEl = document.getElementById("toast");
 const doneBtn = document.getElementById("edit-done");
+const dockEl = document.getElementById("dock");
+const dockAppsEl = document.getElementById("dock-apps");
 
 let currentDesk = 0;
 let switching = false;
 let editMode = false;
+
+// ---- dock customization (room.json "dock" key; 宽容读取，全字段可选) ----
+// enabled   关掉整条 dock
+// position  bottom | top | left | right（缺省 bottom）
+// magnify   false 或数字：mac 式鱼眼放大的最大倍率（缺省 1.55）
+// indicator "text"(默认) | "dots"
+// style     {bg, blur, radius, gap, pad, icon} 直接映射 CSS 变量
+// icons     常驻启动项数组，结构同桌面图标（label/glyph/color/icon_png/launch/action）
+const DEFAULT_DOCK = {
+  enabled: true,
+  position: "bottom",
+  indicator: "text",
+  autoHide: false,
+  style: {},
+  icons: [],
+};
+const DOCK_POSITIONS = new Set(["bottom", "top", "left", "right"]);
+
+// global ROOM.dock is the baseline; desks[i].dock overrides any subset per desk
+// (desk-level icons REPLACE the global list rather than appending)
+function dockCfg() {
+  const g = ROOM.dock && typeof ROOM.dock === "object" ? ROOM.dock : {};
+  const desk = ROOM.desks[currentDesk] ?? {};
+  const d = desk.dock && typeof desk.dock === "object" ? desk.dock : {};
+  return {
+    ...DEFAULT_DOCK,
+    ...g,
+    ...d,
+    style: { ...DEFAULT_DOCK.style, ...(g.style ?? {}), ...(d.style ?? {}) },
+    icons: Array.isArray(d.icons) ? d.icons : Array.isArray(g.icons) ? g.icons : [],
+  };
+}
+
+function renderDock() {
+  const cfg = dockCfg();
+  dockEl.style.display = cfg.enabled ? "" : "none";
+  const pos = DOCK_POSITIONS.has(cfg.position) ? cfg.position : "bottom";
+  for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === pos);
+  dockEl.classList.toggle("dock-autohide", !!cfg.autoHide);
+
+  // style overrides -> CSS vars; unset ones are cleared so per-desk switching
+  // doesn't leak the previous desk's values (removeProperty resets to var() default)
+  const st = cfg.style;
+  const vars = [
+    ["--dock-bg", st.bg],
+    ["--dock-blur", st.blur != null ? `${st.blur}px` : undefined],
+    ["--dock-radius", st.radius],
+    ["--dock-gap", st.gap != null ? `${st.gap}px` : undefined],
+    ["--dock-pad", st.pad],
+    ["--dock-icon", st.icon != null ? `${st.icon}px` : undefined],
+  ];
+  for (const [name, val] of vars) {
+    if (val === undefined || val === "") dockEl.style.removeProperty(name);
+    else dockEl.style.setProperty(name, String(val));
+  }
+
+  renderDockApps(cfg);
+}
+
+// 鱼眼放大已移除（2026-08-27 用户拍板暂不做；git 历史可恢复）
+function renderDockApps(cfg) {
+  dockEl.classList.toggle("has-apps", cfg.icons.length > 0);
+  dockAppsEl.innerHTML = "";
+  cfg.icons.forEach((item, i) => {
+    const el = document.createElement("div");
+    el.className = "dock-icon";
+    el.title = item.label ?? "";
+    el.innerHTML = `
+      ${item.icon_png
+        ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`
+        : `<div class="icon-glyph" style="background:${item.color ?? "#3b82f6"}">${item.glyph ?? "?"}</div>`}
+      <button class="icon-del dock-icon-del" title="删除">×</button>
+    `;
+    el.addEventListener("dblclick", () => {
+      if (editMode) return;
+      if (item.launch) {
+        showToast(`正在启动 ${item.label} ...`);
+        launchApp(item.launch);
+      } else {
+        showToast(item.action ?? item.label ?? "");
+      }
+    });
+    el.querySelector(".dock-icon-del").addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (!editMode) return;
+      cfg.icons.splice(i, 1);
+      persistRoom();
+      renderDock();
+    });
+    dockAppsEl.appendChild(el);
+  });
+}
 
 function persistRoom() {
   if (!window.chrome?.webview?.postMessage) return;
@@ -336,7 +430,17 @@ function renderIcons(layer, desk, s) {
 function renderDesk(index) {
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk);
-  indicatorEl.textContent = `${index + 1} / ${ROOM.desks.length} · ${desk.name}`;
+  renderDock();
+  const n = ROOM.desks.length;
+  if (dockCfg().indicator === "dots") {
+    dockEl.classList.add("dots");
+    indicatorEl.innerHTML = ROOM.desks
+      .map((d, i) => `<i${i === index ? ' class="on"' : ""} title="${d.name ?? ""}"></i>`)
+      .join("");
+  } else {
+    dockEl.classList.remove("dots");
+    indicatorEl.textContent = `${index + 1} / ${n} · ${desk.name}`;
+  }
   renderIcons(iconLayer, desk, sizeOf(desk));
 
   document.querySelectorAll("#size-group .size-btn").forEach((b) =>

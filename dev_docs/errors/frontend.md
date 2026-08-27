@@ -15,3 +15,14 @@
 - 根因：App.tsx 有两个初始化 useEffect，只有第一个做了 IS_TAURI 守卫；第二个（refreshRooms→openRoom）在浏览器里照样调 invoke（@tauri-apps/api 在非 Tauri 环境是 undefined）
 - 解决：第二个 useEffect 也加 `if (!IS_TAURI) return;`
 - 防再犯：设计模式下新增任何初始化逻辑，先想 IS_TAURI 守卫；新增 useEffect 时对照检查
+
+## 22. DockEditor 先写后编译：TS 语法误入 .js + 组件编译错误堆
+
+- 现象：审查 R11 UI 时 npm run build 一次性爆出 ~30 个错误：
+  @/components/ui 无 Select/Switch（只有 button/input 原件）；named export 被 default import；
+  setStatus/setDesks 未接线；icons[].label 路径键不匹配 keyof；DEFAULT_STYLE 判空；
+  空 JSX 表达式；另外 main.js 里误写了 TS 类型标注 const vars: [...]
+- 解决：抽 lib/dock.ts 共享类型与预设；DockEditor 改用原生 select/checkbox + 现有 Button/Input；
+  per-desk 覆盖通过 setDesks 真正写回 room.json；渲染器 style 变量改 removeProperty 防残留
+- 防再犯：新组件先 npm run build 再谈功能；.js 文件绝不写 TS 类型标注；
+  UI 原件清单只有 button.tsx/input.tsx，选型前先 glob 确认

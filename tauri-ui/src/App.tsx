@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DockEditor } from "@/components/DockEditor";
+import { type DockConfig, DEFAULT_DOCK } from "@/lib/dock";
 
 interface AppInfo {
   name: string;
@@ -52,6 +54,7 @@ interface Desk {
   background: Background;
   icons: RoomIcon[];
   iconSize?: string;
+  dock?: DockConfig;
 }
 
 function bgLabel(bg: Background): string {
@@ -403,6 +406,7 @@ export default function App() {
   );
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
+  const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [multiMode, setMultiMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
@@ -511,6 +515,7 @@ export default function App() {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
       setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
+      setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
       setTransition(room.switch ?? room.transition ?? "slide");
       setActiveDesk(0);
       setRoomPath(path);
@@ -531,7 +536,7 @@ export default function App() {
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify({ desks, switch: transition }, null, 2),
+        roomJson: JSON.stringify({ desks, dock, switch: transition }, null, 2),
       });
       setDirty(false);
       return true;
@@ -581,7 +586,7 @@ export default function App() {
       const path = await invoke<string>("create_room", { dir: libDir, name });
       await invoke("write_room", {
         path: `${path}\\room.json`,
-        roomJson: JSON.stringify({ desks, switch: transition }, null, 2),
+        roomJson: JSON.stringify({ desks, dock, switch: transition }, null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -599,14 +604,14 @@ export default function App() {
 
   function postRoom() {
     previewRef.current?.contentWindow?.postMessage(
-      { type: "dext:room", room: { desks }, deskIndex: activeDesk },
+      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk },
       "*"
     );
   }
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, activeDesk, showPreview]);
+  }, [desks, dock, activeDesk, showPreview]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -1266,10 +1271,15 @@ export default function App() {
                 </div>
               </>
             ) : editNav === "dock" ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                <p>Dock 编辑（下一轮搭建）</p>
-                <p className="text-xs">桌面底栏样式 / 指示器 / 尺寸切换入口将集中在这里</p>
-              </div>
+              <DockEditor
+                dock={dock}
+                setDock={setDock}
+                desks={desks}
+                setDesks={setDesks}
+                activeDesk={activeDesk}
+                touch={touch}
+                setStatus={setStatus}
+              />
             ) : editNav === "room" && !roomEntered ? (
               /* room list + WE-style detail panel */
               <div className="flex min-h-0 flex-1 gap-4">

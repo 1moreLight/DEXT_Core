@@ -38,6 +38,8 @@
 | `ACCEPTANCE.md` | 人工验收清单（每轮追加，用户亲自打勾） | 每轮代码完成后追加 |
 | `FRONTEND.md` | 渲染器外观迭代手册（实时预览、函数表、任务池、纪律） | 前端外观工作 |
 | `FRONTEND_WORK.md` | 配置器 UI 协作手册（小步迭代工作流、主页改版进度、结构快照） | 配置器 UI 工作 |
+| `DOCK.md` | **Dock 模块契约**（room.json dock 节点 schema、合并规则、渲染器行为、配置器对接点） | 任何 dock 相关改动/UI 接线 |
+| `DOCK_STYLE.md` | **Dock 外观定制指南**（DOM 钩子/CSS 变量/状态类/配方示例/room.js 接口/AI 工作流） | AI 或作者生成 dock 皮肤代码时 |
 
 **铁律**：动代码前先写 TODO 计划 → 每完成一步打标 → 踩坑记 ERRORS → 决策记 PROJECT → 每轮出验收清单 → 自测通过即 commit。断线/换会话靠台账无损续接。
 
@@ -64,6 +66,7 @@
     }
   ],
   "transition": "slide",                        // 或 {"type":"video","src":"transition/x.mp4"}
+  "dock": { ... },                              // Dock 自定义（可选）：位置/样式/常驻图标，见 DOCK.md
   "__source": "D:\\...\\rooms\\my-room"         // 配置器 apply 时盖的戳；桌面编辑据此双写回源库
 }
 ```
@@ -87,6 +90,7 @@
 | `dext:room` 消息 | window message | 配置器预览注入 `{type:"dext:room", room, deskIndex}` → 整房重渲 |
 | `window.dext` | 房间脚本 API | onReady / onDeskChange / onEditChange / getRoom / getCurrentDesk（MODEL.md §6） |
 | `room.js` / `room.css` | 房间自带 | 渲染器加载（错误隔离）；apply_room 随包拷贝 |
+| `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
 | 演出槽 playSlot | 统一播放器 | `{video|html|action}` 三态；start 覆盖层 / end / switch 共用（MODEL.md §6.5） |
 | `dext:end` | Player→页面 | cmd_close 转发；页面播 end 槽后 ack `dext:endDone`（5s 上限） |
 
