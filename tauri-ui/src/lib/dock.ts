@@ -22,7 +22,6 @@ export interface DockConfig {
   enabled?: boolean;
   position?: "bottom" | "top" | "left" | "right";
   autoHide?: boolean;
-  magnify?: boolean | number;
   indicator?: "text" | "dots";
   style?: DockStyle;
   icons?: DockIconItem[];
@@ -34,7 +33,6 @@ export const DEFAULT_DOCK: DockConfig = {
   enabled: true,
   position: "bottom",
   autoHide: false,
-  magnify: true,
   indicator: "text",
   style: {},
   icons: [],

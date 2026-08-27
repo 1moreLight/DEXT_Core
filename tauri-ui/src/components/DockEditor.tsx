@@ -120,18 +120,6 @@ export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, 
               <option value="dots">圆点</option>
             </select>
           </Field>
-          <Field label="鱼眼倍率（0 关闭）">
-            <Input
-              type="number"
-              min={0}
-              step={0.1}
-              value={typeof globalDock.magnify === "number" ? String(globalDock.magnify) : "1.55"}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setGlobalDock({ ...globalDock, magnify: Number.isFinite(n) && n > 0 ? n : 0 });
-              }}
-            />
-          </Field>
           <Field label="自动隐藏（Apple 式）">
             <label className="flex h-8 items-center gap-2 text-sm text-foreground">
               <input

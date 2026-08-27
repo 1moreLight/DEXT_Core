@@ -3,7 +3,6 @@
     "enabled": true,
     "position": "bottom",
     "autoHide": false,
-    "magnify": 1.6,
     "indicator": "dots",
     "icons": [
       {

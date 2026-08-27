@@ -252,7 +252,6 @@ let editMode = false;
 const DEFAULT_DOCK = {
   enabled: true,
   position: "bottom",
-  magnify: true,
   indicator: "text",
   autoHide: false,
   style: {},
@@ -301,42 +300,8 @@ function renderDock() {
   renderDockApps(cfg);
 }
 
-// macOS fisheye: icons scale by proximity to the cursor along the bar axis
-let magnifyMax = 0;
-function initMagnify() {
-  const vertical = () => dockEl.classList.contains("dock-left") || dockEl.classList.contains("dock-right");
-  dockEl.addEventListener("pointermove", (e) => {
-    if (!magnifyMax || editMode || switching) return;
-    const rect = dockAppsEl.getBoundingClientRect();
-    // 只允许指针处于图标区（±20px 余量）内时触发，避免悬停到 ‹ › 等按钮上误放大
-    const slack = 20;
-    const inAppsArea = vertical()
-      ? e.clientX >= rect.left - slack && e.clientX <= rect.right + slack &&
-        e.clientY >= rect.top - slack && e.clientY <= rect.bottom + slack
-      : e.clientY >= rect.top - slack && e.clientY <= rect.bottom + slack &&
-        e.clientX >= rect.left - slack && e.clientX <= rect.right + slack;
-    if (!inAppsArea) {
-      dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => (el.style.transform = ""));
-      return;
-    }
-    const p = vertical() ? e.clientY - rect.top : e.clientX - rect.left;
-    dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => {
-      const c = vertical()
-        ? el.offsetTop + el.offsetHeight / 2
-        : el.offsetLeft + el.offsetWidth / 2;
-      const d = Math.abs(p - c);
-      const s = 1 + Math.max(0, (magnifyMax - 1) * Math.exp(-((d / 70) ** 2)));
-      el.style.transform = `scale(${s.toFixed(3)})`;
-    });
-  });
-  dockEl.addEventListener("pointerleave", () =>
-    dockAppsEl.querySelectorAll(".dock-icon").forEach((el) => (el.style.transform = ""))
-  );
-}
-
+// 鱼眼放大已移除（2026-08-27 用户拍板暂不做；git 历史可恢复）
 function renderDockApps(cfg) {
-  magnifyMax =
-    typeof cfg.magnify === "number" ? cfg.magnify : cfg.magnify === false ? 0 : 1.55;
   dockEl.classList.toggle("has-apps", cfg.icons.length > 0);
   dockAppsEl.innerHTML = "";
   cfg.icons.forEach((item, i) => {
@@ -848,8 +813,6 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => renderDesk(currentDesk));
-
-initMagnify();
 
 window.addEventListener("message", (e) => {
   const d = e.data;
