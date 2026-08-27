@@ -3,10 +3,17 @@
 ## 每次会话开始必做（顺序执行）
 
 1. 读 `dev_docs/PROJECT.md` —— 产品是什么、结构、已定决策、工作流命令
-2. 读 `dev_docs/TODO.md` —— 总任务台账，看当前进行到哪一步
-3. 读 `dev_docs/ERRORS.md` —— 踩坑记录，不要重复踩
+2. 读 `dev_docs/TODO.md` —— 总任务台账（当前），看进行到哪一步
+3. 读 `dev_docs/ERRORS.md` —— 踩坑总索引，按主题翻分册（errors/git、backend、frontend、renderer、toolchain），不要重复踩
 
 > 查接口（room.json 字段 / TRANSITIONS / Tauri commands / gRPC / IPC 消息）看 `dev_docs/README.md` 总纲。
+
+## Git 协作纪律（2026-08-27 定，ERRORS #17/#18/#20 血泪）
+
+- **全项目只有一个仓库**（Orca/DEXT），master 是唯一主线；新工作一律开分支 `feat/xxx`，做完合回即删
+- **一个并行会话 = 一个独立 worktree + 独立分支**，git 命令只在自己 worktree 里跑
+- 提交前 `git status --short` 核对清单；只 add 本轮改动的具名文件，**慎用 `git add -A`**
+- UI/后端并行开发时：谁都不能在别人正在跑 git 的工作区里执行 reset/checkout/clean
 
 ## 工作纪律
 
