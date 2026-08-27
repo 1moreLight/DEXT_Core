@@ -56,7 +56,12 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 }
 
 // wallpaper package lives inside the repo; applied via SetWallpaper RPC
-const WALLPAPER_DIR: &str = r"D:\midDOW\lively-core-separation\wallpapers\dext-room";
+// 2026-08-27: derive from CARGO_MANIFEST_DIR (tauri-ui/src-tauri) so the path
+// survives repo relocation; recompile after moving the repo.
+const WALLPAPER_DIR: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../wallpapers/dext-room"
+);
 
 #[derive(serde::Serialize)]
 struct CoverRef {

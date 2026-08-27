@@ -3,3 +3,8 @@ dext-room-demo/
 # vite dev cache
 .vite/
 .claude/
+
+# media assets: videos are runtime/test data, keep out of git
+*.mp4
+*.webm
+*.mov

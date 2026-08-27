@@ -110,7 +110,15 @@ function pairKey(e: GEdge): string {
   return [e.from, e.to].sort().join("|");
 }
 
-const DEFAULT_LIB = "D:\\midDOW\\lively-core-separation\\rooms";
+const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
+
+// stale lib paths (repo moved) should not stick via localStorage
+function initialLibDir(): string {
+  const saved = localStorage.getItem("dext.libDir");
+  if (saved && !saved.includes("midDOW")) return saved;
+  if (saved) localStorage.removeItem("dext.libDir");
+  return DEFAULT_LIB;
+}
 
 // browser (non-Tauri) = UI design mode: mock data, no backend calls
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -385,7 +393,7 @@ export default function App() {
   const [renaming, setRenaming] = useState<number | null>(null);
   const [status, setStatus] = useState("loading...");
   const [libDir, setLibDir] = useState(
-    () => localStorage.getItem("dext.libDir") ?? DEFAULT_LIB
+    () => initialLibDir()
   );
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
@@ -413,9 +421,14 @@ export default function App() {
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+  // R10 WIP: geometry measurement for mindmap layout (next round)
   const canvasRef = useRef<HTMLDivElement>(null);
   const seedKeyRef = useRef("");
   const [geom, setGeom] = useState({ w: 0, h: 0, startR: 0, deskL: 0, deskR: 0 });
+  void canvasRef;
+  void seedKeyRef;
+  void geom;
+  void setGeom;
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -890,7 +903,7 @@ export default function App() {
   }
   useEffect(() => {
     if (roomEntered) {
-      setEdges(seedEdges(desks));
+      setEdges(seedEdges(desks, hasStart));
       setPast([]);
       setFuture([]);
       setGraphSel(null);

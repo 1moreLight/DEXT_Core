@@ -264,9 +264,12 @@ pub async fn resolve_app(path: String) -> Result<AppInfoDto, String> {
 mod tests {
     #[tokio::test]
     async fn applies_room_wallpaper() {
-        super::set_wallpaper(r"D:\midDOW\lively-core-separation\wallpapers\dext-room")
-            .await
-            .expect("set_wallpaper failed");
+        super::set_wallpaper(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../wallpapers/dext-room"
+        ))
+        .await
+        .expect("set_wallpaper failed");
     }
 
     #[tokio::test]
