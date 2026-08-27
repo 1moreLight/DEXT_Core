@@ -74,6 +74,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-25 | **房间可编程性两层路线**：转场值支持 `{type:"action"}` 广播 + Room 可选自带 room.js/room.css，渲染器暴露 window.dext 事件总线（风险模型同 WE：装房间≈跑网页）；详见 MODEL.md 第六节 |
 | 2026-08-25 | **统一演出槽 slot**：视频=渲染器代管 video 的糖、HTML=房间页面自管结束、action=事件广播；start/end/switch 通用。退出页借道 cmd_close→dext:end ack（Player 5s 上限，无槽零延迟） |
 | 2026-08-25 | **三幕命名定稿**（用户拍板）：start（启动）/ switch（切换）/ end（结束），废弃 boot/transition/shutdown 旧名；旧字段/旧 transition/ 目录兼容读取 |
+| 2026-08-27 | **开发仓库唯一化**：所有开发只在本仓库（Orca/DEXT_Core，多 worktree 共享）进行；`D:\midDOW\` 彻底废弃、仅作历史参考。**任何进程/服务都不得再从 midDOW 启动**（曾发生老 vite 残留占端口 1421 导致本项目起不来）。配置器设计模式默认端口如被占用则顺延+1（1422…） |
 | 2026-08-26 | **Room 拓扑定稿**（用户拍板）：启动画面 → **主 Desk** 直连（无 switch）；switch 只存在于相邻 desk 之间（一来一回有向边）。**主 Desk = 启动后默认看到的第一个 desk（desks[0]）**。配置器 Room 编辑 = 思维导图（上层导图+下层属性栏），desk 增删导图自动同步 |
 
 ## 当前 room.json 隐式 schema (v0)
