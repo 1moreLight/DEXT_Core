@@ -39,6 +39,7 @@
 | `FRONTEND.md` | 渲染器外观迭代手册（实时预览、函数表、任务池、纪律） | 前端外观工作 |
 | `FRONTEND_WORK.md` | 配置器 UI 协作手册（小步迭代工作流、主页改版进度、结构快照） | 配置器 UI 工作 |
 | `DOCK.md` | **Dock 模块契约**（room.json dock 节点 schema、合并规则、渲染器行为、配置器对接点） | 任何 dock 相关改动/UI 接线 |
+| `DOCK_STYLE.md` | **Dock 外观定制指南**（DOM 钩子/CSS 变量/状态类/配方示例/room.js 接口/AI 工作流） | AI 或作者生成 dock 皮肤代码时 |
 
 **铁律**：动代码前先写 TODO 计划 → 每完成一步打标 → 踩坑记 ERRORS → 决策记 PROJECT → 每轮出验收清单 → 自测通过即 commit。断线/换会话靠台账无损续接。
 
