@@ -1,0 +1,10 @@
+{
+  "name": "dext",
+  "private": true,
+  "description": "Root passthrough scripts - real package.json lives in tauri-ui/",
+  "scripts": {
+    "dev:ui": "npm run dev:ui --prefix tauri-ui",
+    "dev:room": "npm run dev:room --prefix tauri-ui",
+    "build": "npm run build --prefix tauri-ui"
+  }
+}

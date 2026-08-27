@@ -81,7 +81,7 @@ type EditNav = "library" | "room" | "dock";
    拓扑：启动画面 → 主 Desk 直连（无 switch）；switch 只存在于相邻 desk 之间（一来一回）。
    主 Desk = 启动后默认看到的第一个 desk，即 desks[0]。 */
 type GEdge = { id: string; from: string; to: string; trans: string };
-type Snapshot = { edges: GEdge[]; names: string[]; startName: string };
+type Snapshot = { edges: GEdge[]; desks: Desk[]; startName: string; hasStart: boolean };
 
 const TRANSITION_OPTIONS: [string, string][] = [
   ["slide", "滑动"],
@@ -93,9 +93,10 @@ const TRANSITION_OPTIONS: [string, string][] = [
   ["video", "视频"],
 ];
 
-function seedEdges(ds: Desk[]): GEdge[] {
-  if (ds.length === 0) return [];
-  const edges: GEdge[] = [{ id: "start-in", from: "start", to: "d0", trans: "slide" }];
+function seedEdges(ds: Desk[], hasStart: boolean): GEdge[] {
+  const edges: GEdge[] = [];
+  if (hasStart && ds.length > 0)
+    edges.push({ id: "start-in", from: "start", to: "d0", trans: "slide" });
   for (let i = 1; i < ds.length; i++) {
     edges.push(
       { id: `s${i}f`, from: `d${i - 1}`, to: `d${i}`, trans: "slide" },
@@ -407,10 +408,14 @@ export default function App() {
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
   const [startName, setStartName] = useState("启动画面");
+  const [hasStart, setHasStart] = useState(true);
   const [propsH, setPropsH] = useState(150);
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const seedKeyRef = useRef("");
+  const [geom, setGeom] = useState({ w: 0, h: 0, startR: 0, deskL: 0, deskR: 0 });
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -475,6 +480,14 @@ export default function App() {
   }
 
   async function openRoom(path: string, checkDirty = true) {
+    if (!IS_TAURI) {
+      setDesks(MOCK_DESKS);
+      setActiveDesk(0);
+      setRoomPath(path);
+      setDirty(false);
+      setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
+      return;
+    }
     if (
       checkDirty &&
       dirty &&
@@ -837,12 +850,13 @@ export default function App() {
     setEdges((prev) => prev.map((e) => (e.id === edgeId ? { ...e, trans } : e)));
   }
   function snapshot(): Snapshot {
-    return { edges, names: desks.map((d) => d.name), startName };
+    return { edges, desks: desks.map((d) => ({ ...d })), startName, hasStart };
   }
   function applySnapshot(s: Snapshot) {
     setEdges(s.edges);
+    setDesks(s.desks);
     setStartName(s.startName);
-    setDesks((prev) => prev.map((d, i) => (s.names[i] ? { ...d, name: s.names[i] } : d)));
+    setHasStart(s.hasStart);
   }
   function pushHistory() {
     setPast((p) => [...p.slice(-49), snapshot()]);
