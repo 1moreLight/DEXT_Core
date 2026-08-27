@@ -2,7 +2,7 @@
   "dock": {
     "enabled": true,
     "position": "bottom",
-    "autoHide": true,
+    "autoHide": false,
     "magnify": 1.6,
     "indicator": "dots",
     "icons": [
@@ -52,9 +52,6 @@
         }
       ],
       "dock": {
-        "autoHide": true,
-        "magnify": 1.6,
-        "indicator": "dots",
         "icons": [
           {
             "label": "OpenCode",
@@ -94,11 +91,6 @@
         }
       ],
       "dock": {
-        "position": "left",
-        "magnify": 2.2,
-        "style": {
-          "bg": "rgba(15,23,42,.85)"
-        },
         "icons": [
           {
             "label": "Steam",
