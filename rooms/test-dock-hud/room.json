@@ -1,4 +1,16 @@
 {
+  "dock": {
+    "enabled": true,
+    "position": "bottom",
+    "autoHide": true,
+    "magnify": 1.6,
+    "indicator": "dots",
+    "icons": [
+      { "label": "浏览器", "glyph": "🌐", "color": "#3b82f6", "action": "启动 浏览器" },
+      { "label": "音乐", "glyph": "🎵", "color": "#10b981", "action": "启动 音乐" },
+      { "label": "设置", "glyph": "⚙️", "color": "#6b7280", "action": "打开 设置" }
+    ]
+  },
   "desks": [
     {
       "name": "主页",
@@ -12,7 +24,12 @@
       "dock": {
         "autoHide": true,
         "magnify": 1.6,
-        "indicator": "dots"
+        "indicator": "dots",
+        "icons": [
+          { "label": "浏览器", "glyph": "🌐", "color": "#3b82f6", "action": "启动 浏览器" },
+          { "label": "文件", "glyph": "📁", "color": "#8b5cf6", "action": "打开 文件夹" },
+          { "label": "游戏", "glyph": "🎮", "color": "#10b981", "action": "启动 游戏" }
+        ]
       }
     },
     {
@@ -26,7 +43,12 @@
       "dock": {
         "position": "left",
         "magnify": 2.2,
-        "style": { "bg": "rgba(15,23,42,.85)" }
+        "style": { "bg": "rgba(15,23,42,.85)" },
+        "icons": [
+          { "label": "终端", "glyph": "💻", "color": "#111827", "action": "启动 终端" },
+          { "label": "笔记", "glyph": "📝", "color": "#ef4444", "action": "启动 笔记" },
+          { "label": "监控", "glyph": "📊", "color": "#06b6d4", "action": "打开 监控面板" }
+        ]
       }
     }
   ],
