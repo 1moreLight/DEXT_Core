@@ -12,6 +12,12 @@
       style{bg,blur,radius,gap,pad} / icons[] 常驻启动项（结构同桌面图标）
 - [x] 编辑模式支持删除 dock 图标；persistRoom 自动覆盖持久化
 - [x] 自测：node --check main.js 通过（CSS 括号平衡校验通过）
+## R11.1 Dock 追加能力：per-desk 覆盖 + Apple 式 auto-hide（2026-08-27）
+
+- [x] desks[i].dock 可覆盖全局 dock（icons/style/position 均可按桌定制）
+- [x] dock 新增 autoHide 开关：空闲时缩进屏幕边缘，指针靠近弹出
+- [x] DOM 微调：dock 内容包一层 .dock-inner（视觉与定位分离，为后续外观定制铺路）
+- [x] 自测 node --check；UI 接入继续等指令
 - [ ] 配置器 Dock 编辑页接入 —— 等用户指令
 
 ## 当前阶段：R10 思维导图收尾（2026-08-27 进行中）

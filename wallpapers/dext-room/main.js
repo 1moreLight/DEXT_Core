@@ -254,18 +254,24 @@ const DEFAULT_DOCK = {
   position: "bottom",
   magnify: true,
   indicator: "text",
+  autoHide: false,
   style: {},
   icons: [],
 };
 const DOCK_POSITIONS = new Set(["bottom", "top", "left", "right"]);
 
+// global ROOM.dock is the baseline; desks[i].dock overrides any subset per desk
+// (desk-level icons REPLACE the global list rather than appending)
 function dockCfg() {
-  const d = ROOM.dock && typeof ROOM.dock === "object" ? ROOM.dock : {};
+  const g = ROOM.dock && typeof ROOM.dock === "object" ? ROOM.dock : {};
+  const desk = ROOM.desks[currentDesk] ?? {};
+  const d = desk.dock && typeof desk.dock === "object" ? desk.dock : {};
   return {
     ...DEFAULT_DOCK,
+    ...g,
     ...d,
-    style: d.style && typeof d.style === "object" ? d.style : {},
-    icons: Array.isArray(d.icons) ? d.icons : [],
+    style: { ...DEFAULT_DOCK.style, ...(g.style ?? {}), ...(d.style ?? {}) },
+    icons: Array.isArray(d.icons) ? d.icons : Array.isArray(g.icons) ? g.icons : [],
   };
 }
 
@@ -274,6 +280,7 @@ function renderDock() {
   dockEl.style.display = cfg.enabled ? "" : "none";
   const pos = DOCK_POSITIONS.has(cfg.position) ? cfg.position : "bottom";
   for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === pos);
+  dockEl.classList.toggle("dock-autohide", !!cfg.autoHide && pos !== "");
 
   // style overrides -> CSS vars; empty string falls back to the var() default
   const st = cfg.style;
@@ -336,8 +343,7 @@ function renderDockApps(cfg) {
     el.querySelector(".dock-icon-del").addEventListener("click", (ev) => {
       ev.stopPropagation();
       if (!editMode) return;
-      ROOM.dock = { ...DEFAULT_DOCK, ...ROOM.dock, icons: cfg.icons };
-      ROOM.dock.icons.splice(i, 1);
+      cfg.icons.splice(i, 1);
       persistRoom();
       renderDock();
     });

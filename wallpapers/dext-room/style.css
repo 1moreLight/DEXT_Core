@@ -271,6 +271,10 @@ body.editing #size-group {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
+}
+
+/* visual shell lives on the inner wrapper so #dock can stay a pure placement layer */
+.dock-inner {
   display: flex;
   align-items: center;
   gap: var(--dock-gap, 16px);
@@ -288,16 +292,51 @@ body.editing #size-group {
 }
 #dock.dock-left,
 #dock.dock-right {
-  flex-direction: column;
   left: auto;
   right: auto;
   top: 50%;
   bottom: auto;
   transform: translateY(-50%);
+}
+#dock.dock-left .dock-inner,
+#dock.dock-right .dock-inner {
+  flex-direction: column;
   padding: 14px 10px;
 }
 #dock.dock-left { left: 24px; }
 #dock.dock-right { right: 24px; }
+
+/* Apple-style auto-hide: bar sinks toward its screen edge until the pointer
+   enters an invisible strip kept outside the (invisible) bar box */
+#dock.dock-autohide .dock-inner {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#dock.dock-autohide:not(:hover) .dock-inner { opacity: 0; }
+#dock.dock-autohide:not(:hover).dock-bottom .dock-inner { transform: translateY(30px); }
+#dock.dock-autohide:not(:hover).dock-top .dock-inner { transform: translateY(-30px); }
+#dock.dock-autohide:not(:hover).dock-left .dock-inner { transform: translateX(-30px); }
+#dock.dock-autohide:not(:hover).dock-right .dock-inner { transform: translateX(30px); }
+
+#dock.dock-autohide::before {
+  content: "";
+  position: absolute;
+}
+#dock.dock-autohide.dock-bottom::before {
+  left: 0; right: 0; top: calc(100% + 4px);
+  height: 12px;
+}
+#dock.dock-autohide.dock-top::before {
+  left: 0; right: 0; bottom: calc(100% + 4px);
+  height: 12px;
+}
+#dock.dock-autohide.dock-left::before {
+  top: 0; bottom: 0; right: calc(100% + 4px);
+  width: 12px;
+}
+#dock.dock-autohide.dock-right::before {
+  top: 0; bottom: 0; left: calc(100% + 4px);
+  width: 12px;
+}
 
 /* resident app icons */
 #dock-apps {
