@@ -1,0 +1,39 @@
+/* HUD-flavoured dock skin ported from cockpit-room */
+.icon-label {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(220, 228, 236, 0.92);
+  text-shadow: 0 0 6px rgba(140, 190, 255, 0.35);
+  font-family: Consolas, monospace;
+}
+
+.icon-glyph {
+  border: 1px solid rgba(200, 215, 230, 0.35);
+  box-shadow: 0 0 12px rgba(120, 170, 255, 0.12) inset;
+}
+
+/* dock indicator: thin HUD readout */
+#desk-indicator {
+  font-family: Consolas, monospace;
+  letter-spacing: 0.2em;
+  color: rgba(215, 222, 230, 0.75);
+}
+
+#size-group .size-btn {
+  font-family: Consolas, monospace;
+}
+
+/* dots indicator inherits the monospace look */
+#dock.dots #desk-indicator i {
+  background-color: rgba(215, 222, 230, 0.35);
+}
+#dock.dots #desk-indicator i.on {
+  background-color: #8ccfff;
+  box-shadow: 0 0 8px rgba(140, 207, 255, 0.6);
+}
+
+/* dock icons inherit the stencil glyph style */
+.dock-icon .icon-glyph {
+  border: 1px solid rgba(200, 215, 230, 0.35);
+  box-shadow: 0 0 12px rgba(120, 170, 255, 0.12) inset;
+}

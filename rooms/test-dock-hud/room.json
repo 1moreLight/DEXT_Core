@@ -1,0 +1,34 @@
+{
+  "desks": [
+    {
+      "name": "主页",
+      "background": "assets/desk1-bg.png",
+      "iconSize": "medium",
+      "icons": [
+        { "label": "浏览器", "glyph": "🌐", "color": "#3b82f6", "action": "启动 浏览器" },
+        { "label": "游戏", "glyph": "🎮", "color": "#10b981", "action": "启动 游戏" },
+        { "label": "音乐", "glyph": "🎵", "color": "#f59e0b", "action": "启动 音乐" }
+      ],
+      "dock": {
+        "autoHide": true,
+        "magnify": 1.6,
+        "indicator": "dots"
+      }
+    },
+    {
+      "name": "工作台",
+      "background": "assets/desk2-bg.png",
+      "iconSize": "medium",
+      "icons": [
+        { "label": "终端", "glyph": "💻", "color": "#111827", "action": "启动 终端" },
+        { "label": "笔记", "glyph": "📝", "color": "#ef4444", "action": "启动 笔记" }
+      ],
+      "dock": {
+        "position": "left",
+        "magnify": 2.2,
+        "style": { "bg": "rgba(15,23,42,.85)" }
+      }
+    }
+  ],
+  "transition": "slide"
+}
