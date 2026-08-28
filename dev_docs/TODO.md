@@ -1,8 +1,9 @@
 # 总任务台账 · 当前（只加不删）
 
-> 标记规则：`[ ]` 计划中 · `[~]` 进行中 · `[x]` 完成(日期) · `[!]` 受阻(原因)
+> 标记规则：`[ ]` 计划中 · `[~]` 进行中 · `[?]` 待用户验收 · `[x]` 完成/已迁移(日期) · `[!]` 受阻(原因)
 > 新计划一律**追加**；做完立即打标；废弃标 `[x] 已取消(日期)`，不删除。
 > 已完成历史见 `TODO-archive.md`；会话被中断时：从这里最后一条未完成项继续。
+> 2026-08-28 起，产品 backlog 只放 `ROADMAP.md`；本文件只记录已开分支的执行过程。此前未完成项保留原位，并标明迁移后的工作包。
 
 ## R11 Dock 高度自定义探索（2026-08-27 开工，UI 接入等用户指令）
 
@@ -21,52 +22,64 @@
 - [x] 配置器 Dock 编辑页（App.tsx + DockEditor.tsx）——可视化编辑全局+dock per-desk，保存即写入 room.json 的 dock / desks[i].dock 字段；皮肤预设（HUD/Minimal/Glass）一键写入 localStorage，实际使用时把对应 CSS 片段贴进 room.css
 - [x] ERRORS #21 记录：style.css 主题令牌重构误删 background/布局属性已修复
 - [x] R11 代码审查（2026-08-27）：DockEditor 重写（原生控件/每桌写回/编译全绿），渲染器 style 变量残留修复，ERRORS #22
-- [ ] 配置器 Dock 编辑页接入 —— 等用户指令
-- [ ] Dock UI 接线（锚点见 dev_docs/DOCK.md 三节）：save_room_css 后端命令（皮肤写 room.css）/ DockEditor 接应用库选择器 / 渲染器拖拽进 Dock（新上行消息）/ 皮肤随导出 zip
+- [x] 已拆分迁移至 ROADMAP：DOCK-001 / DOCK-002 / DOCK-003（2026-08-28）
+- [x] Dock UI 接线已拆分迁移至 ROADMAP：DOCK-001 / DOCK-002 / DOCK-003 / ROOM-001（2026-08-28）
 
 ## R11.2 全景开发列表文档化（2026-08-28）
 
 - [x] 梳理「有 UI 无后端」清单（codegraph 交叉验证：save_room_css/export_room/import_room/validate_room/dockAdd 均不存在；DockEditor 零 invoke）
 - [x] codegraph 查漏补缺：4 个备而不用命令（launch_app/get_wallpapers/set_wallpaper/core_stats 前端从未调用）；tauri-ui/main.js 死文件；MODEL.md §八 实际已做项对照
 - [x] 新建 `dev_docs/ROADMAP.md`：全景开发列表，按前端/后端/跨端/契约分层，带优先级与依赖关系
-- [ ] 后续每轮工作按 ROADMAP.md 编号引用（A1/A2/...），TODO 台账与之对应
+- [x] 已由新工作包 ID 和 WORKFLOW.md 取代（2026-08-28）
 
 ## 当前阶段：R10 思维导图收尾（2026-08-27 进行中）
 
 > WIP 已提交（b9cd53d）：Snapshot 增 desks/hasStart、seedEdges 支持无启动画面、openRoom mock 模式、几何测量 state。
 
-- [~] R10 收尾：hasStart 开关 UI、几何测量接入导图布局、mock/真机双端自测
-- [ ] 自测：node --check + npm run build + cargo check 全绿
-- [ ] 用户验收（对话清单）
+- [x] 已拆分迁移至 ROADMAP：UI-001 / UI-002 / UI-003（2026-08-28）
+- [x] 旧阶段总自测入口关闭；由每个新工作包独立定义自测（2026-08-28）
+- [x] 旧阶段总验收入口关闭；由每个新工作包独立验收（2026-08-28）
 
 ## 待验收（历史阶段的遗留确认项）
 
-- [ ] Phase 2 用户验收：清单见 ACCEPTANCE.md「Phase 2」
-- [ ] Phase 5 用户验收（ACCEPTANCE.md「Phase 5」T1-T6）
-- [ ] Phase 6 用户验收：两个设计模式可用（ACCEPTANCE.md「Phase 6」P1-P4 + Q1-Q3）
-- [ ] Phase 6.5 用户验收（ACCEPTANCE.md「Phase 6.5」L1-L7）
-- [ ] Phase 7 用户验收：阅读 MODEL.md 确认模型（ACCEPTANCE.md「Phase 7」）
-- [ ] Phase 8 用户验收（ACCEPTANCE.md「Phase 8」）
-- [ ] Phase 9 用户验收（对话清单：start 动画 / end 动画 / 无槽房间不受影响）
-- [ ] Phase 9.1 用户验收（同 Phase 9 清单，名字换 start/switch/end）
-- [ ] 研究专项用户验收：对话确认 LIVELY_API.md 结论无异议
-- [ ] 配置器：对含 room.js 的房间不破坏（编辑 room.json 主体照常）
+- [x] Phase 2 未勾项保留在 ACCEPTANCE.md，转为历史回归素材，不阻塞当前工作（2026-08-28）
+- [x] Phase 5 未勾项保留在 ACCEPTANCE.md，转为历史回归素材，不阻塞当前工作（2026-08-28）
+- [x] Phase 6 未勾项保留在 ACCEPTANCE.md，转为历史回归素材，不阻塞当前工作（2026-08-28）
+- [x] Phase 6.5 未勾项保留在 ACCEPTANCE.md，转为历史回归素材，不阻塞当前工作（2026-08-28）
+- [x] Phase 7 未勾项保留在 ACCEPTANCE.md，转为历史决策参考（2026-08-28）
+- [x] Phase 8 未勾项保留在 ACCEPTANCE.md，转为历史回归素材，不阻塞当前工作（2026-08-28）
+- [x] Phase 9 未勾项转为历史回归素材；相关功能被改动时纳入当轮验收（2026-08-28）
+- [x] Phase 9.1 未勾项转为历史回归素材；相关功能被改动时纳入当轮验收（2026-08-28）
+- [x] LIVELY_API.md 结论转为研究参考；实际采用时另开工作包验证（2026-08-28）
+- [x] room.js 兼容回归迁移至 UI-001 / UI-002 等触及配置器保存的工作包（2026-08-28）
 
 ## 排队中：渲染器与 Schema
 
-- [ ] room.json schema v1 定稿 + JSON Schema 校验文件：
+- [x] 已迁移至 ROADMAP DXT-001（2026-08-28）：
       固化 x/y、iconSize、background/transition 多态、__source 等现有字段；
       宽容读取原则（缺字段一律给默认值，见 ERRORS #4 教训）
-- [ ] Room 文件夹化收尾：房间导出 zip / 导入（素材导入压缩 ≤1920w JPEG）
-- [ ] 配置器导入 json 校验入口（报错说人话，AI 生成内容友好）
-- [ ] 右键菜单（图标操作等）
-- [ ] 枚举过滤失效快捷方式（AppCatalogService 跳过目标不存在的 .lnk）
+- [x] 已拆分迁移至 ROADMAP ROOM-001 / ROOM-002（2026-08-28）
+- [x] 已迁移至 ROADMAP ROOM-003（2026-08-28）
+- [x] 已迁移至 ROADMAP UX-002（2026-08-28）
+- [x] 已迁移至 ROADMAP CORE-001（2026-08-28）
 
 ## 远期
 
-- [ ] 图标归一化：AppCatalogService 提取后按 alpha 包围盒裁剪、内容统一占比 ~80% 居中
+- [x] 已迁移至 ROADMAP CORE-004（2026-08-28）：AppCatalogService 提取后按 alpha 包围盒裁剪、内容统一占比 ~80% 居中
       （实测 173 个图标占比 81%~100% 分布，85 个非方形内容；提取可升 96px 再缩回提清晰度）
       上线后需刷新既有房间的内嵌 base64 图标
-- [ ] AI skill：schema 文档 + 示例房间 ×3 + 提示词模板
-- [ ] 多显示器支持
-- [ ] 创意工坊分发形态调研（上传格式、预览图、订阅机制）
+- [x] 已迁移至 ROADMAP AI-001（2026-08-28）
+- [x] 已迁移至 ROADMAP CORE-003（2026-08-28）
+- [x] 已迁移至 ROADMAP MARKET-001（2026-08-28）
+
+## R12 开发体系收敛（2026-08-28）
+
+> 目标：把后续开发固定成「一个任务 = 一个独立 worktree/分支 = 一份独立验收 = 验收后合并」，让用户始终能看清当前在做什么、做到哪一步、下一步是什么。
+
+- [x] 建立本轮独立 worktree + `feat/ops-001-devdocs-workflow` 分支，主线不直接改（2026-08-28）
+- [x] 统一 dev_docs 文档职责、阅读顺序、状态口径和冲突优先级（2026-08-28）
+- [x] 建立单任务开发流程与标准验收模板，明确验收前禁止合并（2026-08-28）
+- [x] 重整 ROADMAP 为可独立开发/验收的工作包，并标出唯一推荐下一项（2026-08-28）
+- [x] 清理或标注过期状态，消除 TODO / ROADMAP / MODEL / FRONTEND_WORK 的口径冲突（2026-08-28）
+- [x] 文档一致性检查、git status 核对并提交本轮具名文件（2026-08-28）
+- [?] 用户按 `acceptance/OPS-001-devdocs-workflow.md` 验收；明确通过后才合并 master
