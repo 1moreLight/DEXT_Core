@@ -30,6 +30,7 @@
 | #20 | 双仓库 + 幽灵 worktree 注册 | [git](errors/git.md) |
 | #24 | 配置器预览状态还在但 iframe 已被 UI 改版移除 | [frontend](errors/frontend.md) |
 | #25 | 前端编译目标不支持 `Array.prototype.at` | [frontend](errors/frontend.md) |
+| #26 | Windows 无 Bash 时 Playwright 包装脚本不可用 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

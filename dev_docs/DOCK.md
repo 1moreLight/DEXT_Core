@@ -85,14 +85,18 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 
 | 文件 | 内容 |
 |---|---|
-| `src/lib/dock.ts` | 唯一类型源：`DockConfig` / `DockStyle` / `DockIconItem` / `DEFAULT_DOCK` / `DEFAULT_DOCK_STYLE` / `DOCK_SKIN_PRESETS`（hud/minimal/glass 三套 room.css 片段） |
-| `src/components/DockEditor.tsx` | 编辑面板；per-desk 改动通过 `setDesks` 写回 `desks[i].dock`；皮肤按钮走 `onApplySkin` 真实保存 |
-| `App.tsx` | `openRoom` 读 room.json + room.css；`saveRoom` 写 `{desks, dock, switch}`；`postRoom` 注入 room + roomCss；编辑页 nav 「Dock」已挂 DockEditor |
+| `src/lib/dock.ts` | 唯一类型源：Dock 配置、三套 CSS 片段和 `DOCK_PRESET_CATALOG` 模板目录 |
+| `src/components/DockLibrary.tsx` | 独立 Dock 模板库卡片 + Room 内 Dock 选择器；库内浏览不修改 Room |
+| `src/components/DockEditor.tsx` | 仅用于具体 Room 的高级参数；per-desk 改动写回 `desks[i].dock` |
+| `App.tsx` | Dock 导航页挂模板库；Room 编辑器内才挂选择器和参数设置；打开/保存/预览继续走 room.json + room.css |
 | `src-tauri/src/lib.rs` | `save_room_css(room_dir, css)` 校验目录含 room.json 后覆盖写 room.css |
 
 ### DOCK-001 已完成（待用户验收）
 
 - HUD / Minimal / Glass 以受管标记块写入，不会删除作者在 room.css 中的其他样式。
+- Dock 导航页只展示可复用模板卡片和详情，不绑定当前 Room，也不会因浏览模板而落盘。
+- 进入具体 Room 编辑器后才显示“当前 Room Dock”；选择模板后写入该 Room 并同步预览。
+- 全局/每桌 Dock 参数归入具体 Room 的折叠设置，不再混在模板库中。
 - 重开 Room 会读取既有 room.css，并从受管标记恢复当前预设高亮。
 - 配置器预览通过 `dext:room` 消息附带 roomCss；预览专用 `<style>` 隔离覆盖包内旧样式，不影响真桌面加载流程。
 - 浏览器 UI 设计模式只更新内存预览状态，不调用 Tauri invoke。
@@ -103,6 +107,7 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 2. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
 3. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
 4. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
+5. **模板文件与创意工坊（DOCK-LIB-001）**：把内置目录扩展为本地模板文件；下载项进入同一卡片库，模板编辑/版本更新独立验收。
 
 ## 四、当前演示与验收状态
 

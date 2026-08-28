@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
 import { type DockConfig, DEFAULT_DOCK, dockSkinName, withDockSkin } from "@/lib/dock";
 
@@ -1312,16 +1313,12 @@ export default function App() {
                 </div>
               </>
             ) : editNav === "dock" ? (
-              <DockEditor
-                dock={dock}
-                setDock={setDock}
-                desks={desks}
-                setDesks={setDesks}
-                activeDesk={activeDesk}
-                activeSkin={dockSkinName(roomCss)}
-                onApplySkin={applyDockSkin}
-                touch={touch}
-                setStatus={setStatus}
+              <DockLibrary
+                onChooseForRoom={() => {
+                  setEditNav("room");
+                  setRoomEntered(false);
+                  setStatus("请选择一个 Room，进入编辑后再选择 Dock");
+                }}
               />
             ) : editNav === "room" && !roomEntered ? (
               /* room list + WE-style detail panel */
@@ -1447,6 +1444,26 @@ export default function App() {
                     </Button>
                   </div>
                 </div>
+                <RoomDockPicker
+                  activePreset={dockSkinName(roomCss)}
+                  onApplyPreset={applyDockSkin}
+                />
+                <details className="shrink-0 rounded-lg border border-border bg-background">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    调整当前 Room 的 Dock 参数
+                  </summary>
+                  <div className="max-h-[46vh] overflow-y-auto border-t border-border p-3">
+                    <DockEditor
+                      dock={dock}
+                      setDock={setDock}
+                      desks={desks}
+                      setDesks={setDesks}
+                      activeDesk={activeDesk}
+                      touch={touch}
+                      setStatus={setStatus}
+                    />
+                  </div>
+                </details>
                 {edges.length > 0 ? (
                   <>
                     {/* 上：Room 结构思维导图（启动画面 → 主 Desk 直连；switch 只在相邻 desk 之间） */}

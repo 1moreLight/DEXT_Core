@@ -99,4 +99,17 @@
 - [x] 同步 README / DOCK.md 接口状态（2026-08-28）
 - [x] 自测：Rust 相关测试 + cargo check + npm run build + node --check（2026-08-28）
 - [x] git status 核对具名文件并提交到 `feat/dock-001-save-room-css`（2026-08-28）
-- [?] 用户按 `acceptance/DOCK-001-save-room-css.md` 独立验收；通过前不合并 master
+- [x] 已取消原验收入口：用户反馈 Dock 页不应直接修改当前 Room（2026-08-28）
+
+### DOCK-001 验收反馈修订（2026-08-28）
+
+> 用户确认：Dock 在编辑侧栏中应作为独立模板库，以卡片形式浏览/选择，并承接未来创意工坊下载项；只有进入具体 Room 编辑器后，才选择该 Room 使用哪个 Dock。
+
+- [x] 将 Dock 导航页从 Room 配置表单改成独立模板卡片库（2026-08-28）
+- [x] 在 Room 编辑器内增加“当前 Room Dock”选择入口，选择后才写 room.css（2026-08-28）
+- [x] 把全局/每桌 Dock 参数设置移入具体 Room 编辑上下文（2026-08-28）
+- [x] Dock 模板库选择不得修改当前 Room；Room 选择继续实时预览并持久化（2026-08-28）
+- [x] 登记 Dock 模板文件/本地库/创意工坊接入为后续独立工作包 DOCK-LIB-001（2026-08-28）
+- [x] 更新 DOCK.md、验收卡并重跑自动检查；浏览器浅色/深色视觉检查通过（2026-08-28）
+- [x] 提交修订到原 DOCK-001 分支（2026-08-28）
+- [?] 用户按修订后的 `acceptance/DOCK-001-save-room-css.md` 独立验收；通过前不合并 master

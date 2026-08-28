@@ -66,6 +66,51 @@ export const DOCK_SKIN_PRESETS: Record<string, string> = {
 .dock-btn:hover { background-color: rgba(255,255,255,0.3); }`,
 };
 
+export interface DockPresetInfo {
+  id: string;
+  name: string;
+  description: string;
+  source: "builtin" | "local";
+  surface: string;
+  backdrop: string;
+  accent: string;
+  traits: string[];
+}
+
+// Dock 模板库的统一数据入口。DOCK-LIB-001 接入本地/创意工坊模板时扩展同一结构。
+export const DOCK_PRESET_CATALOG: DockPresetInfo[] = [
+  {
+    id: "hud",
+    name: "HUD",
+    description: "驾驶舱式高对比 Dock，适合深色、科技感 Room。",
+    source: "builtin",
+    surface: "rgba(10, 22, 34, 0.86)",
+    backdrop: "#071019",
+    accent: "#8ccfff",
+    traits: ["Consolas 标识", "青色状态点", "高对比边框"],
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "扁平、克制的暗色 Dock，把注意力留给 Room 内容。",
+    source: "builtin",
+    surface: "rgba(10, 10, 12, 0.82)",
+    backdrop: "#19191c",
+    accent: "#f4f4f5",
+    traits: ["低装饰", "暗色平面", "紧凑信息"],
+  },
+  {
+    id: "glass",
+    name: "Glass",
+    description: "轻透毛玻璃 Dock，适合明亮壁纸和柔和视觉风格。",
+    source: "builtin",
+    surface: "rgba(255, 255, 255, 0.2)",
+    backdrop: "#7c8da4",
+    accent: "#ffffff",
+    traits: ["浅色玻璃", "柔和阴影", "轻量按钮"],
+  },
+];
+
 const DOCK_SKIN_START_PREFIX = "/* dext-dock-skin:start name=";
 const DOCK_SKIN_END = "/* dext-dock-skin:end */";
 

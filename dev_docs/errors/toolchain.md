@@ -50,3 +50,10 @@
   页面路径 /wallpapers/dext-room/?room=../../rooms/<名>/（相对解析两级上跳）
 - 防再犯：改 vite root / 预览 URL 后先 Invoke-WebRequest 验证 room.json 的 Content-Type
   是 application/json 再交给用户验收
+
+## 26. Windows 无 Bash 时 Playwright 包装脚本不可用
+
+- 现象：调用技能附带的 `playwright_cli.sh` 时，WSL 报 `/bin/bash` 不存在。
+- 根因：当前 Windows 环境有 Node/npx，但没有可执行的 Bash/WSL Linux 用户空间。
+- 解决：先确认 npx 存在，再用 `npx --package @playwright/cli playwright-cli ...` 执行同一 CLI。
+- 防再犯：Windows 本地 UI 验收先检查 Bash；没有时直接使用 npx 入口，不反复尝试 WSL 包装脚本。
