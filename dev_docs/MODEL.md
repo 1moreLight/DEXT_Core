@@ -1,7 +1,7 @@
 # Room↔Desk 概念模型（schema v1 蓝图）
 
 > 定稿于 2026-08-25，用户拍板三项争议点后成文。
-> 本文是 schema v1 的前置输入；实现（渲染器/配置器改造）另行排期。
+> 本文是 schema v1 的前置输入；概念决策仍有效，当前实现状态和排期只看 ROADMAP.md。
 
 ## 一、实体与关系
 
@@ -167,11 +167,20 @@ dext.getCurrentDesk()     // 下标
 }
 ```
 
-## 八、待实现（另立 phase）
+## 八、实现状态说明（2026-08-28 核对）
 
-- [ ] 渲染器 switchDesk 接入边级查找
-- [ ] 渲染器：room.js/room.css 加载（错误隔离）+ window.dext 最小事件集
-- [ ] 渲染器：action 类型切换 → dext:switch 事件广播
-- [ ] 配置器转场 UI 从单选升级为「默认 + 边级列表」（或矩阵视图，做法后议）
-- [ ] transitionText 清理 + text 预设固定模板
-- [ ] dext 契约定稿文档（AI skill 的输入之一）；配置器对 room.js 房间只读不破坏
+已经实现：
+
+- 渲染器按 `switches["from>to"] → switch → 旧字段` 查找边级转场。
+- `room.js` / `room.css` 隔离加载和 `window.dext` 最小事件集。
+- action 类型的 `dext:switch` 广播。
+- start/switch/end 统一演出槽。
+
+仍未闭环：
+
+- 配置器打开 Room 时还原 `switches`，并在保存时落盘（ROADMAP UI-002）。
+- schema v1 与 JSON Schema 正式文件（ROADMAP DXT-001）。
+- `transitionText` 代码残留清理（ROADMAP CLEAN-003）。
+- AI 创作契约与示例（ROADMAP AI-001）。
+
+本节只解释模型与现状的差距，不再作为任务清单。
