@@ -6,7 +6,6 @@ import {
   type DockConfig,
   type DockIconItem,
   DEFAULT_DOCK_STYLE,
-  DOCK_SKIN_PRESETS,
 } from "@/lib/dock";
 
 interface DockEditorProps {
@@ -37,11 +36,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, setStatus }: DockEditorProps) {
+export function DockEditor({
+  dock,
+  setDock,
+  desks,
+  setDesks,
+  activeDesk,
+  touch,
+  setStatus,
+}: DockEditorProps) {
   // 本地草稿状态；父组件的 dock/desks 变化（开房间/切桌/预览回写）时同步进来
   const [globalDock, setGlobalDock] = useState<DockConfig>(dock);
   const [deskDocks, setDeskDocks] = useState<DockConfig[]>(desks.map((d) => d.dock ?? {}));
-  const [skin, setSkin] = useState<string>(() => localStorage.getItem("dext.dockSkin") ?? "hud");
 
   useEffect(() => setGlobalDock(dock), [dock]);
   useEffect(() => setDeskDocks(desks.map((d) => d.dock ?? {})), [desks]);
@@ -83,18 +89,17 @@ export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, 
     updateDesk({ icons });
   }
 
-  function applySkin(name: string) {
-    setSkin(name);
-    localStorage.setItem("dext.dockSkin", name);
-    setStatus(`皮肤「${name}」已选中；把 DOCK_SKIN_PRESETS.${name} 的片段贴进房间 room.css 生效（导出房间会自动带上）`);
-    touch();
-  }
-
   const selCls =
     "h-8 w-full rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring dark:bg-input/30";
 
   return (
     <div className="max-w-2xl space-y-5 overflow-y-auto p-1">
+      <div>
+        <h3 className="font-medium">当前 Room Dock 参数</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          这些设置只属于正在编辑的 Room；Dock 模板库本身不会在这里被修改。
+        </p>
+      </div>
       {/* ── 全局 Dock ── */}
       <section className="space-y-2">
         <h3 className="font-medium">全局 Dock 设置（所有桌默认）</h3>
@@ -281,25 +286,6 @@ export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, 
         </div>
       </section>
 
-      {/* ── 皮肤预设 ── */}
-      <section className="space-y-2">
-        <h3 className="font-medium">Dock 皮肤预设（写入房间 room.css）</h3>
-        <div className="grid grid-cols-3 gap-2">
-          {Object.keys(DOCK_SKIN_PRESETS).map((name) => (
-            <Button
-              key={name}
-              variant={skin === name ? "default" : "outline"}
-              size="sm"
-              onClick={() => applySkin(name)}
-            >
-              {name}
-            </Button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          HUD = cockpit-room 风格（Consolas/青色）· Minimal = 扁平暗底 · Glass = 浅色毛玻璃。选中后请把片段贴进房间 room.css（房间导出 zip 时会自动带上）。
-        </p>
-      </section>
     </div>
   );
 }

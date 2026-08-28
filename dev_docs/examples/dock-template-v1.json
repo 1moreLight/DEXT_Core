@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "Neon Line",
+  "description": "用于验证本地 Dock 文件导入的霓虹线条模板。",
+  "css": "#dock .dock-inner { background: rgba(5, 12, 24, 0.82); border: 1px solid rgba(72, 220, 255, 0.72); box-shadow: 0 0 24px rgba(72, 220, 255, 0.24); }\n#desk-indicator { color: #7cecff; }",
+  "preview": {
+    "backdrop": "#07101d",
+    "surface": "rgba(5, 12, 24, 0.82)",
+    "accent": "#7cecff"
+  },
+  "traits": ["本地示例", "霓虹描边", "深色"]
+}

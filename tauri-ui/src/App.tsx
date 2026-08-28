@@ -27,8 +27,18 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
-import { type DockConfig, DEFAULT_DOCK } from "@/lib/dock";
+import {
+  type DockConfig,
+  type DockPresetInfo,
+  DEFAULT_DOCK,
+  DOCK_PRESET_CATALOG,
+  dockSkinName,
+  newLocalDockPresetId,
+  parseDockPresetFile,
+  withDockPreset,
+} from "@/lib/dock";
 
 interface AppInfo {
   name: string;
@@ -114,6 +124,25 @@ function pairKey(e: GEdge): string {
 }
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
+const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
+
+function loadLocalDockPresets(): DockPresetInfo[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(LOCAL_DOCK_PRESETS_KEY) ?? "[]");
+    return Array.isArray(value)
+      ? value.filter(
+          (preset): preset is DockPresetInfo =>
+            preset &&
+            typeof preset.id === "string" &&
+            preset.id.startsWith("local-") &&
+            typeof preset.name === "string" &&
+            typeof preset.css === "string"
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 // stale lib paths (repo moved) should not stick via localStorage
 function initialLibDir(): string {
@@ -407,6 +436,8 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
+  const [roomCss, setRoomCss] = useState("");
+  const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [multiMode, setMultiMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
@@ -437,11 +468,16 @@ export default function App() {
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
   const previewRef = useRef<HTMLIFrameElement>(null);
+  const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("dext.theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
+  }, [localDockPresets]);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -501,6 +537,7 @@ export default function App() {
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
       setRoomPath(path);
+      setRoomCss("");
       setDirty(false);
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
       return;
@@ -513,10 +550,12 @@ export default function App() {
       return;
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
+      const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
       const room = JSON.parse(json);
       setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
       setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
       setTransition(room.switch ?? room.transition ?? "slide");
+      setRoomCss(css);
       setActiveDesk(0);
       setRoomPath(path);
       setDirty(false);
@@ -567,6 +606,70 @@ export default function App() {
     applyRoomDir(roomPath);
   }
 
+  async function applyDockPreset(preset: DockPresetInfo): Promise<boolean> {
+    if (!roomPath) {
+      setStatus("先新建或选择一个房间");
+      return false;
+    }
+    try {
+      const css = withDockPreset(roomCss, preset);
+      if (IS_TAURI) {
+        await invoke("save_room_css", { roomDir: roomPath, css });
+      }
+      setRoomCss(css);
+      const roomName = roomPath.split("\\").pop() ?? roomPath;
+      setStatus(
+        IS_TAURI
+          ? `Dock「${preset.name}」已保存到 ${roomName} / room.css`
+          : `Dock「${preset.name}」已应用（UI 设计模式）`
+      );
+      return true;
+    } catch (e) {
+      setStatus(`error: ${e}`);
+      return false;
+    }
+  }
+
+  async function importDockPreset(): Promise<string | null> {
+    if (!IS_TAURI) {
+      setStatus("Dock 文件导入请在桌面配置器中使用");
+      return null;
+    }
+    try {
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        filters: [{ name: "Dext Dock 模板", extensions: ["json", "dock"] }],
+      });
+      if (typeof selected !== "string") return null;
+      const text = await invoke<string>("read_room", { path: selected });
+      const preset = parseDockPresetFile(JSON.parse(text));
+      setLocalDockPresets((current) => [...current, preset]);
+      setStatus(`已导入 Dock「${preset.name}」`);
+      return preset.id;
+    } catch (error) {
+      setStatus(`Dock 导入失败：${error}`);
+      return null;
+    }
+  }
+
+  function saveDockPreset(preset: DockPresetInfo): DockPresetInfo {
+    const saved =
+      preset.source === "builtin"
+        ? { ...preset, id: newLocalDockPresetId(preset.name), source: "local" as const }
+        : preset;
+    setLocalDockPresets((current) => {
+      const exists = current.some((item) => item.id === saved.id);
+      return exists ? current.map((item) => (item.id === saved.id ? saved : item)) : [...current, saved];
+    });
+    setStatus(
+      preset.source === "builtin"
+        ? `已从「${preset.name}」创建本地 Dock 副本`
+        : `已保存 Dock「${preset.name}」`
+    );
+    return saved;
+  }
+
   async function newRoom() {
     const name = prompt("房间名（建议英文）");
     if (!name) return;
@@ -604,14 +707,14 @@ export default function App() {
 
   function postRoom() {
     previewRef.current?.contentWindow?.postMessage(
-      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk },
+      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk, roomCss },
       "*"
     );
   }
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, dock, activeDesk, showPreview]);
+  }, [desks, dock, activeDesk, roomCss, showPreview]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -1172,7 +1275,20 @@ export default function App() {
 
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 flex-1 flex-col p-4">
-            {editNav === "library" ? (
+            {showPreview ? (
+              <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
+                <iframe
+                  ref={previewRef}
+                  src="http://dext.localhost/index.html"
+                  onLoad={postRoom}
+                  title="Room 预览"
+                  className="aspect-video w-full max-w-4xl rounded-lg border border-border"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  实时预览 · Room 数据与 room.css 均使用当前编辑内容 · 双击图标不会真启动
+                </p>
+              </div>
+            ) : editNav === "library" ? (
               <>
                 <div className="mb-2 flex items-center gap-2">
                   <span
@@ -1271,14 +1387,10 @@ export default function App() {
                 </div>
               </>
             ) : editNav === "dock" ? (
-              <DockEditor
-                dock={dock}
-                setDock={setDock}
-                desks={desks}
-                setDesks={setDesks}
-                activeDesk={activeDesk}
-                touch={touch}
-                setStatus={setStatus}
+              <DockLibrary
+                presets={dockPresets}
+                onImport={importDockPreset}
+                onSave={saveDockPreset}
               />
             ) : editNav === "room" && !roomEntered ? (
               /* room list + WE-style detail panel */
@@ -1404,6 +1516,27 @@ export default function App() {
                     </Button>
                   </div>
                 </div>
+                <RoomDockPicker
+                  presets={dockPresets}
+                  activePreset={dockSkinName(roomCss)}
+                  onApplyPreset={applyDockPreset}
+                />
+                <details className="shrink-0 rounded-lg border border-border bg-background">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    调整当前 Room 的 Dock 参数
+                  </summary>
+                  <div className="max-h-[46vh] overflow-y-auto border-t border-border p-3">
+                    <DockEditor
+                      dock={dock}
+                      setDock={setDock}
+                      desks={desks}
+                      setDesks={setDesks}
+                      activeDesk={activeDesk}
+                      touch={touch}
+                      setStatus={setStatus}
+                    />
+                  </div>
+                </details>
                 {edges.length > 0 ? (
                   <>
                     {/* 上：Room 结构思维导图（启动画面 → 主 Desk 直连；switch 只在相邻 desk 之间） */}

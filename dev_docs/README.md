@@ -132,6 +132,7 @@
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
 | `list_rooms` | `(dir) → {name,path,desks,icons}[]` | 扫房间库（含 room.json 的子文件夹） |
 | `read_room` / `write_room` | `(path[, room_json])` | 参数化读写房间文件 |
+| `save_room_css` | `(room_dir, css)` | 校验 Room 后写入 `room.css`；Dock 皮肤使用 |
 | `create_room` | `(dir, name) → path` | 骨架房（校验非法字符） |
 | `apply_room` | `(room_dir)` | 盖 `__source` 戳 → 拷 room.json+background/+transition/ 进包 → SetWallpaper 重载 |
 | `import_background` | `(room_dir, src_path, kind) → background值` | kind=image/video/transition；拷进对应子目录，时间戳命名 |

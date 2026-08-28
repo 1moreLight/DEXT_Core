@@ -80,9 +80,13 @@ window.dext = {
 };
 
 // optional room-owned assets; missing files resolve without blocking
-function loadRoomAsset(path, tag) {
+function loadRoomAsset(path, tag, id) {
   return new Promise((resolve) => {
     const el = document.createElement(tag);
+    if (id) el.id = id;
+    if (id === "dext-room-css-link" && document.getElementById("dext-preview-room-css")) {
+      el.disabled = true;
+    }
     if (tag === "link") {
       el.rel = "stylesheet";
       el.href = path;
@@ -93,6 +97,21 @@ function loadRoomAsset(path, tag) {
     el.onerror = () => resolve(false);
     document.head.appendChild(el);
   });
+}
+
+// The configurator preview injects the source Room's current CSS over postMessage.
+// Disable the package's room.css link so a previously applied Room cannot leak styles
+// into a different Room that intentionally has no room.css.
+function applyPreviewRoomCss(css) {
+  const packaged = document.getElementById("dext-room-css-link");
+  if (packaged) packaged.disabled = true;
+  let injected = document.getElementById("dext-preview-room-css");
+  if (!injected) {
+    injected = document.createElement("style");
+    injected.id = "dext-preview-room-css";
+    document.head.appendChild(injected);
+  }
+  injected.textContent = typeof css === "string" ? css : "";
 }
 
 // ---- unified playable slot (MODEL.md §6.5) ----
@@ -188,7 +207,7 @@ async function loadRoom() {
   } catch (e) {
     // keep default (e.g. opened outside Lively via file://)
   }
-  await loadRoomAsset(`${RP}room.css`, "link");
+  await loadRoomAsset(`${RP}room.css`, "link", "dext-room-css-link");
   await loadRoomAsset(`${RP}room.js`, "script");
   renderDesk(currentDesk);
   playStart();
@@ -819,6 +838,7 @@ window.addEventListener("message", (e) => {
   if (d?.type === "dext:room" && d.room?.desks?.length) {
     ROOM = d.room;
     currentDesk = Math.min(d.deskIndex ?? 0, ROOM.desks.length - 1);
+    if (Object.prototype.hasOwnProperty.call(d, "roomCss")) applyPreviewRoomCss(d.roomCss);
     renderDesk(currentDesk);
     dextEmit("ready", { deskCount: ROOM.desks.length, injected: true });
   }

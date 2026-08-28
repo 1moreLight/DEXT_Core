@@ -85,17 +85,53 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 
 | 文件 | 内容 |
 |---|---|
-| `src/lib/dock.ts` | 唯一类型源：`DockConfig` / `DockStyle` / `DockIconItem` / `DEFAULT_DOCK` / `DEFAULT_DOCK_STYLE` / `DOCK_SKIN_PRESETS`（hud/minimal/glass 三套 room.css 片段） |
-| `src/components/DockEditor.tsx` | 编辑面板，props 契约：`{dock, setDock, desks, setDesks, activeDesk, touch, setStatus}`；per-desk 改动通过 `setDesks` 写回 `desks[i].dock` |
-| `App.tsx` | `openRoom` 读 `room.dock`+`desks[].dock`；`saveRoom` 写 `{desks, dock, switch}`；`postRoom` 预览注入带 dock；编辑页 nav 「Dock」已挂 DockEditor |
+| `src/lib/dock.ts` | 唯一类型源：Dock 配置、三套 CSS 片段和 `DOCK_PRESET_CATALOG` 模板目录 |
+| `src/components/DockLibrary.tsx` | 独立 Dock 模板库卡片 + Room 内 Dock 选择器；库内浏览不修改 Room |
+| `src/components/DockEditor.tsx` | 仅用于具体 Room 的高级参数；per-desk 改动写回 `desks[i].dock` |
+| `App.tsx` | Dock 导航页挂模板库；Room 编辑器内才挂选择器和参数设置；打开/保存/预览继续走 room.json + room.css |
+| `src-tauri/src/lib.rs` | `save_room_css(room_dir, css)` 校验目录含 room.json 后覆盖写 room.css |
+
+### DOCK-001 已完成（待用户验收）
+
+- HUD / Minimal / Glass 以受管标记块写入，不会删除作者在 room.css 中的其他样式。
+- Dock 导航页只展示可复用模板卡片和详情，不绑定当前 Room，也不会因浏览模板而落盘。
+- 进入具体 Room 编辑器后才显示“当前 Room Dock”；选择模板后写入该 Room 并同步预览。
+- 全局/每桌 Dock 参数归入具体 Room 的折叠设置，不再混在模板库中。
+- 重开 Room 会读取既有 room.css，并从受管标记恢复当前预设高亮。
+- 配置器预览通过 `dext:room` 消息附带 roomCss；预览专用 `<style>` 隔离覆盖包内旧样式，不影响真桌面加载流程。
+- 浏览器 UI 设计模式只更新内存预览状态，不调用 Tauri invoke。
+
+### Dock 模板文件 v1
+
+Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文件。最小格式：
+
+```jsonc
+{
+  "version": 1,
+  "name": "Neon Line",
+  "description": "可选说明",
+  "css": "#dock .dock-inner { ... }",
+  "preview": {
+    "backdrop": "#07101d",
+    "surface": "rgba(5,12,24,.82)",
+    "accent": "#7cecff"
+  },
+  "traits": ["霓虹", "深色"]
+}
+```
+
+- `version/name/css` 必填；导入项保存在配置器本地模板库，重开仍存在。
+- 模板只定义视觉 CSS 和卡片元数据；位置、图标、autoHide、每桌覆盖仍属于具体 Room。
+- 详情“编辑”不会进入 Room：内置模板保存为本地副本，本地模板覆盖保存。
+- 示例：`dev_docs/examples/dock-template-v1.json`。
 
 ### 待补（UI 接线时按此清单做）
 
-1. **皮肤写入房间**：`DOCK_SKIN_PRESETS[name]` 目前只存 `localStorage` 标记；需要新增后端命令 `save_room_css(room_dir, css)` 写房间的 `room.css`（渲染器 `loadRoomAsset` 已自动加载 room.css，无需改渲染器）
-2. **应用库选择器**：DockEditor 加 `apps: AppInfo[]` prop + 搜索勾选（复用 App.tsx 的 library 数据与 `mockIcon`/`resolve_app` 流程），选中 → `patchDeskIcon`/追加 icons（结构见 `DockIconItem`）
-3. **拖拽进 Dock**：渲染器编辑模式拖桌面图标到 dock 区 → postMessage 新消息（如 `{type:"dockAdd", icon}`），Core 落盘；当前只能通过配置器/room.json 加
-4. **分享/下载 Dock 皮肤**：随房间导出 zip 一起（room.css 在导出清单内）
-5. **运行态小圆点**（Apple 运行指示）：需要 Core 进程遥测，未做
+1. **应用库选择器（DOCK-002）**：DockEditor 加应用搜索勾选，选中后写入全局或每桌 icons。
+2. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
+3. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
+4. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
+5. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ## 四、当前演示与验收状态
 
