@@ -146,6 +146,6 @@
 - [x] 在 DockEditor 增加应用搜索、全局/当前 Desk 作用域和真实应用增删（2026-08-28）
 - [x] 核对新增项写入 `label/icon_png/action` 与 `launch.target/args/workdir`，继续由现有 `saveRoom` 序列化全局和桌级 Dock（2026-08-28）
 - [x] `npm run build` 通过；UI 设计模式浅色/深色、搜索、去重、两个作用域、切 Desk 和恢复全局检查通过（2026-08-28）
-- [~] 更新 DOCK 契约、验收卡与 ROADMAP/TODO 待验收状态
-- [ ] 核对 Git 状态，只暂存本轮具名文件并提交
+- [x] 更新 DOCK 契约、验收卡与 ROADMAP/TODO 待验收状态（2026-08-28）
+- [x] 核对 Git 状态，只暂存本轮 6 个具名文件并提交实现 `b1cf63a`（2026-08-28）
 - [?] 用户按 `acceptance/DOCK-002-app-library-icons.md` 验收
