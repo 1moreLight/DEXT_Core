@@ -101,13 +101,37 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 - 配置器预览通过 `dext:room` 消息附带 roomCss；预览专用 `<style>` 隔离覆盖包内旧样式，不影响真桌面加载流程。
 - 浏览器 UI 设计模式只更新内存预览状态，不调用 Tauri invoke。
 
+### Dock 模板文件 v1
+
+Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文件。最小格式：
+
+```jsonc
+{
+  "version": 1,
+  "name": "Neon Line",
+  "description": "可选说明",
+  "css": "#dock .dock-inner { ... }",
+  "preview": {
+    "backdrop": "#07101d",
+    "surface": "rgba(5,12,24,.82)",
+    "accent": "#7cecff"
+  },
+  "traits": ["霓虹", "深色"]
+}
+```
+
+- `version/name/css` 必填；导入项保存在配置器本地模板库，重开仍存在。
+- 模板只定义视觉 CSS 和卡片元数据；位置、图标、autoHide、每桌覆盖仍属于具体 Room。
+- 详情“编辑”不会进入 Room：内置模板保存为本地副本，本地模板覆盖保存。
+- 示例：`dev_docs/examples/dock-template-v1.json`。
+
 ### 待补（UI 接线时按此清单做）
 
 1. **应用库选择器（DOCK-002）**：DockEditor 加应用搜索勾选，选中后写入全局或每桌 icons。
 2. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
 3. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
 4. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
-5. **模板文件与创意工坊（DOCK-LIB-001）**：把内置目录扩展为本地模板文件；下载项进入同一卡片库，模板编辑/版本更新独立验收。
+5. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ## 四、当前演示与验收状态
 

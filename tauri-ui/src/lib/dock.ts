@@ -71,10 +71,24 @@ export interface DockPresetInfo {
   name: string;
   description: string;
   source: "builtin" | "local";
+  css: string;
   surface: string;
   backdrop: string;
   accent: string;
   traits: string[];
+}
+
+export interface DockPresetFileV1 {
+  version: 1;
+  name: string;
+  description?: string;
+  css: string;
+  preview?: {
+    surface?: string;
+    backdrop?: string;
+    accent?: string;
+  };
+  traits?: string[];
 }
 
 // Dock 模板库的统一数据入口。DOCK-LIB-001 接入本地/创意工坊模板时扩展同一结构。
@@ -84,6 +98,7 @@ export const DOCK_PRESET_CATALOG: DockPresetInfo[] = [
     name: "HUD",
     description: "驾驶舱式高对比 Dock，适合深色、科技感 Room。",
     source: "builtin",
+    css: DOCK_SKIN_PRESETS.hud,
     surface: "rgba(10, 22, 34, 0.86)",
     backdrop: "#071019",
     accent: "#8ccfff",
@@ -94,6 +109,7 @@ export const DOCK_PRESET_CATALOG: DockPresetInfo[] = [
     name: "Minimal",
     description: "扁平、克制的暗色 Dock，把注意力留给 Room 内容。",
     source: "builtin",
+    css: DOCK_SKIN_PRESETS.minimal,
     surface: "rgba(10, 10, 12, 0.82)",
     backdrop: "#19191c",
     accent: "#f4f4f5",
@@ -104,6 +120,7 @@ export const DOCK_PRESET_CATALOG: DockPresetInfo[] = [
     name: "Glass",
     description: "轻透毛玻璃 Dock，适合明亮壁纸和柔和视觉风格。",
     source: "builtin",
+    css: DOCK_SKIN_PRESETS.glass,
     surface: "rgba(255, 255, 255, 0.2)",
     backdrop: "#7c8da4",
     accent: "#ffffff",
@@ -111,20 +128,60 @@ export const DOCK_PRESET_CATALOG: DockPresetInfo[] = [
   },
 ];
 
+function dockPresetSlug(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
+  return slug || "dock";
+}
+
+export function newLocalDockPresetId(name: string): string {
+  return `local-${dockPresetSlug(name)}-${Date.now().toString(36)}`;
+}
+
+export function parseDockPresetFile(value: unknown): DockPresetInfo {
+  if (!value || typeof value !== "object") throw new Error("Dock 文件必须是 JSON 对象");
+  const file = value as Partial<DockPresetFileV1>;
+  if (file.version !== 1) throw new Error("仅支持 Dock 文件 version: 1");
+  const name = typeof file.name === "string" ? file.name.trim() : "";
+  if (!name) throw new Error("Dock 文件缺少 name");
+  if (typeof file.css !== "string" || !file.css.trim()) throw new Error("Dock 文件缺少 css");
+  const preview = file.preview && typeof file.preview === "object" ? file.preview : {};
+  const traits = Array.isArray(file.traits)
+    ? file.traits.filter((item): item is string => typeof item === "string").slice(0, 6)
+    : [];
+
+  return {
+    id: newLocalDockPresetId(name),
+    name,
+    description:
+      typeof file.description === "string" && file.description.trim()
+        ? file.description.trim()
+        : "从本地文件导入的 Dock 模板。",
+    source: "local",
+    css: file.css,
+    surface: typeof preview.surface === "string" ? preview.surface : "rgba(20,20,20,0.72)",
+    backdrop: typeof preview.backdrop === "string" ? preview.backdrop : "#17181b",
+    accent: typeof preview.accent === "string" ? preview.accent : "#ffffff",
+    traits: traits.length ? traits : ["本地模板"],
+  };
+}
+
 const DOCK_SKIN_START_PREFIX = "/* dext-dock-skin:start name=";
 const DOCK_SKIN_END = "/* dext-dock-skin:end */";
 
 export function dockSkinName(css: string): string | null {
   const matches = [...css.matchAll(/\/\* dext-dock-skin:start name=([a-z0-9_-]+) \*\//gi)];
   const name = matches.length ? matches[matches.length - 1][1] : undefined;
-  return name && DOCK_SKIN_PRESETS[name] ? name : null;
+  return name ?? null;
 }
 
-export function withDockSkin(css: string, name: string): string {
-  const preset = DOCK_SKIN_PRESETS[name];
-  if (!preset) throw new Error(`unknown Dock skin: ${name}`);
-
-  const block = `${DOCK_SKIN_START_PREFIX}${name} */\n${preset.trim()}\n${DOCK_SKIN_END}`;
+function withDockCss(css: string, name: string, presetCss: string): string {
+  if (!/^[a-z0-9_-]+$/i.test(name)) throw new Error(`invalid Dock id: ${name}`);
+  if (!presetCss.trim()) throw new Error(`Dock ${name} has no CSS`);
+  const block = `${DOCK_SKIN_START_PREFIX}${name} */\n${presetCss.trim()}\n${DOCK_SKIN_END}`;
   const start = css.lastIndexOf(DOCK_SKIN_START_PREFIX);
   const end = start >= 0 ? css.indexOf(DOCK_SKIN_END, start) : -1;
   if (start >= 0 && end >= start) {
@@ -133,4 +190,14 @@ export function withDockSkin(css: string, name: string): string {
 
   const existing = css.trimEnd();
   return existing ? `${existing}\n\n${block}\n` : `${block}\n`;
+}
+
+export function withDockPreset(css: string, preset: DockPresetInfo): string {
+  return withDockCss(css, preset.id, preset.css);
+}
+
+export function withDockSkin(css: string, name: string): string {
+  const preset = DOCK_SKIN_PRESETS[name];
+  if (!preset) throw new Error(`unknown Dock skin: ${name}`);
+  return withDockCss(css, name, preset);
 }

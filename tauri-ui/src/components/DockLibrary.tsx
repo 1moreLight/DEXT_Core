@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowLeft, FileUp, Pencil, Plus, Search, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DOCK_PRESET_CATALOG, type DockPresetInfo } from "@/lib/dock";
+import { type DockPresetInfo } from "@/lib/dock";
 
 function DockVisual({ preset, compact = false }: { preset: DockPresetInfo; compact?: boolean }) {
   return (
@@ -34,26 +34,174 @@ function DockVisual({ preset, compact = false }: { preset: DockPresetInfo; compa
   );
 }
 
-export function DockLibrary({ onChooseForRoom }: { onChooseForRoom: () => void }) {
+function DockPresetEditor({
+  preset,
+  onCancel,
+  onSave,
+}: {
+  preset: DockPresetInfo;
+  onCancel: () => void;
+  onSave: (preset: DockPresetInfo) => DockPresetInfo;
+}) {
+  const [draft, setDraft] = useState<DockPresetInfo>({
+    ...preset,
+    name: preset.source === "builtin" ? `${preset.name} 副本` : preset.name,
+    traits: [...preset.traits],
+  });
+
+  function save() {
+    const name = draft.name.trim();
+    const css = draft.css.trim();
+    if (!name || !css) return;
+    onSave({
+      ...draft,
+      name,
+      description: draft.description.trim() || "本地 Dock 模板。",
+      css,
+      traits: draft.traits.filter(Boolean),
+    });
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm" onClick={onCancel}>
+          <ArrowLeft className="h-4 w-4" /> 返回模板库
+        </Button>
+        <div>
+          <h2 className="text-base font-semibold">编辑 Dock · {preset.name}</h2>
+          <p className="text-xs text-muted-foreground">
+            {preset.source === "builtin" ? "内置模板保存时会创建本地副本。" : "修改会保存到本地模板库。"}
+          </p>
+        </div>
+        <Button className="ml-auto" size="sm" disabled={!draft.name.trim() || !draft.css.trim()} onClick={save}>
+          <Save className="h-4 w-4" /> {preset.source === "builtin" ? "保存为副本" : "保存修改"}
+        </Button>
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(18rem,0.8fr)_minmax(24rem,1.2fr)] gap-4">
+        <section className="flex min-h-0 flex-col gap-3 overflow-y-auto rounded-xl border border-border p-4">
+          <DockVisual preset={draft} />
+          <label className="space-y-1 text-xs text-muted-foreground">
+            <span>名称</span>
+            <Input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+          </label>
+          <label className="space-y-1 text-xs text-muted-foreground">
+            <span>说明</span>
+            <textarea
+              className="min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none focus-visible:border-ring"
+              value={draft.description}
+              onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+            />
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ["背景", "backdrop"],
+                ["Dock 表面", "surface"],
+                ["强调色", "accent"],
+              ] as const
+            ).map(([label, key]) => (
+              <label key={key} className="space-y-1 text-xs text-muted-foreground">
+                <span>{label}</span>
+                <Input value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
+              </label>
+            ))}
+          </div>
+          <label className="space-y-1 text-xs text-muted-foreground">
+            <span>标签（逗号分隔）</span>
+            <Input
+              value={draft.traits.join(", ")}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  traits: event.target.value.split(",").map((item) => item.trim()),
+                })
+              }
+            />
+          </label>
+        </section>
+
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border">
+          <div className="border-b border-border px-4 py-3">
+            <h3 className="text-sm font-medium">Dock CSS</h3>
+            <p className="text-xs text-muted-foreground">保存模板不会修改任何 Room；到 Room 编辑器选择后才会写入。</p>
+          </div>
+          <textarea
+            className="min-h-0 flex-1 resize-none bg-muted/20 p-4 font-mono text-xs leading-relaxed text-foreground outline-none"
+            spellCheck={false}
+            value={draft.css}
+            onChange={(event) => setDraft({ ...draft, css: event.target.value })}
+          />
+        </section>
+      </div>
+    </div>
+  );
+}
+
+export function DockLibrary({
+  presets,
+  onImport,
+  onSave,
+}: {
+  presets: DockPresetInfo[];
+  onImport: () => Promise<string | null>;
+  onSave: (preset: DockPresetInfo) => DockPresetInfo;
+}) {
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(DOCK_PRESET_CATALOG[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState(presets[0]?.id ?? "");
+  const [editing, setEditing] = useState<DockPresetInfo | null>(null);
+  const [importing, setImporting] = useState(false);
   const filtered = useMemo(
     () =>
-      DOCK_PRESET_CATALOG.filter((preset) =>
+      presets.filter((preset) =>
         `${preset.name} ${preset.description}`.toLowerCase().includes(query.toLowerCase())
       ),
-    [query]
+    [presets, query]
   );
   const selected = filtered.find((preset) => preset.id === selectedId) ?? filtered[0] ?? null;
+
+  async function importPreset() {
+    if (importing) return;
+    setImporting(true);
+    try {
+      const id = await onImport();
+      if (id) setSelectedId(id);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <DockPresetEditor
+        key={editing.id}
+        preset={editing}
+        onCancel={() => setEditing(null)}
+        onSave={(draft) => {
+          const saved = onSave(draft);
+          setSelectedId(saved.id);
+          setEditing(null);
+          return saved;
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 gap-4">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div>
-          <h2 className="text-base font-semibold">Dock 模板库</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            在这里浏览 Dock 资产；只有进入具体 Room 后选择，才会修改该 Room。
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">Dock 模板库</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              在这里导入和编辑 Dock；只有进入具体 Room 后选择，才会修改该 Room。
+            </p>
+          </div>
+          <Button size="sm" onClick={() => void importPreset()} disabled={importing}>
+            {importing ? <FileUp className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            新建
+          </Button>
         </div>
         <div className="relative max-w-sm">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -80,7 +228,9 @@ export function DockLibrary({ onChooseForRoom }: { onChooseForRoom: () => void }
                 <div className="flex items-start justify-between gap-2 p-3">
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium">{preset.name}</div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">内置模板</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {preset.source === "builtin" ? "内置模板" : "本地模板"}
+                    </div>
                   </div>
                   {active && (
                     <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary" title="已选中查看" />
@@ -108,7 +258,9 @@ export function DockLibrary({ onChooseForRoom }: { onChooseForRoom: () => void }
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">{selected.name}</h3>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">内置</span>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                {selected.source === "builtin" ? "内置" : "本地"}
+              </span>
             </div>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{selected.description}</p>
           </div>
@@ -120,8 +272,8 @@ export function DockLibrary({ onChooseForRoom }: { onChooseForRoom: () => void }
               </div>
             ))}
           </div>
-          <Button className="mt-auto" onClick={onChooseForRoom}>
-            到 Room 中选择 <ArrowRight className="h-4 w-4" />
+          <Button className="mt-auto" onClick={() => setEditing(selected)}>
+            编辑 <Pencil className="h-4 w-4" />
           </Button>
         </aside>
       )}
@@ -130,19 +282,21 @@ export function DockLibrary({ onChooseForRoom }: { onChooseForRoom: () => void }
 }
 
 export function RoomDockPicker({
+  presets,
   activePreset,
   onApplyPreset,
 }: {
+  presets: DockPresetInfo[];
   activePreset: string | null;
-  onApplyPreset: (name: string) => Promise<boolean>;
+  onApplyPreset: (preset: DockPresetInfo) => Promise<boolean>;
 }) {
   const [saving, setSaving] = useState(false);
 
-  async function choose(id: string) {
-    if (saving || id === activePreset) return;
+  async function choose(preset: DockPresetInfo) {
+    if (saving || preset.id === activePreset) return;
     setSaving(true);
     try {
-      await onApplyPreset(id);
+      await onApplyPreset(preset);
     } finally {
       setSaving(false);
     }
@@ -157,20 +311,20 @@ export function RoomDockPicker({
         </div>
         <span className="text-xs text-muted-foreground">
           {activePreset
-            ? `当前：${DOCK_PRESET_CATALOG.find((preset) => preset.id === activePreset)?.name ?? activePreset}`
+            ? `当前：${presets.find((preset) => preset.id === activePreset)?.name ?? activePreset}`
             : "当前：默认样式"}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        {DOCK_PRESET_CATALOG.map((preset) => {
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {presets.map((preset) => {
           const active = preset.id === activePreset;
           return (
             <button
               key={preset.id}
               type="button"
               disabled={saving}
-              onClick={() => void choose(preset.id)}
-              className={`grid grid-cols-[5rem_1fr] items-center gap-2 overflow-hidden rounded-lg border p-1.5 text-left transition-colors disabled:opacity-60 ${
+              onClick={() => void choose(preset)}
+              className={`grid min-w-52 flex-1 grid-cols-[5rem_1fr] items-center gap-2 overflow-hidden rounded-lg border p-1.5 text-left transition-colors disabled:opacity-60 ${
                 active ? "border-primary bg-primary/10" : "border-border hover:border-primary/40 hover:bg-accent/40"
               }`}
             >
