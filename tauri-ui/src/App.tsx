@@ -28,7 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DockEditor } from "@/components/DockEditor";
-import { type DockConfig, DEFAULT_DOCK } from "@/lib/dock";
+import { type DockConfig, DEFAULT_DOCK, dockSkinName, withDockSkin } from "@/lib/dock";
 
 interface AppInfo {
   name: string;
@@ -407,6 +407,7 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
+  const [roomCss, setRoomCss] = useState("");
   const [multiMode, setMultiMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
@@ -501,6 +502,7 @@ export default function App() {
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
       setRoomPath(path);
+      setRoomCss("");
       setDirty(false);
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
       return;
@@ -513,10 +515,12 @@ export default function App() {
       return;
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
+      const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
       const room = JSON.parse(json);
       setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
       setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
       setTransition(room.switch ?? room.transition ?? "slide");
+      setRoomCss(css);
       setActiveDesk(0);
       setRoomPath(path);
       setDirty(false);
@@ -567,6 +571,30 @@ export default function App() {
     applyRoomDir(roomPath);
   }
 
+  async function applyDockSkin(name: string): Promise<boolean> {
+    if (!roomPath) {
+      setStatus("先新建或选择一个房间");
+      return false;
+    }
+    try {
+      const css = withDockSkin(roomCss, name);
+      if (IS_TAURI) {
+        await invoke("save_room_css", { roomDir: roomPath, css });
+      }
+      setRoomCss(css);
+      const roomName = roomPath.split("\\").pop() ?? roomPath;
+      setStatus(
+        IS_TAURI
+          ? `Dock 皮肤「${name}」已保存到 ${roomName} / room.css`
+          : `Dock 皮肤「${name}」已应用（UI 设计模式）`
+      );
+      return true;
+    } catch (e) {
+      setStatus(`error: ${e}`);
+      return false;
+    }
+  }
+
   async function newRoom() {
     const name = prompt("房间名（建议英文）");
     if (!name) return;
@@ -604,14 +632,14 @@ export default function App() {
 
   function postRoom() {
     previewRef.current?.contentWindow?.postMessage(
-      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk },
+      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk, roomCss },
       "*"
     );
   }
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, dock, activeDesk, showPreview]);
+  }, [desks, dock, activeDesk, roomCss, showPreview]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -1172,7 +1200,20 @@ export default function App() {
 
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 flex-1 flex-col p-4">
-            {editNav === "library" ? (
+            {showPreview ? (
+              <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
+                <iframe
+                  ref={previewRef}
+                  src="http://dext.localhost/index.html"
+                  onLoad={postRoom}
+                  title="Room 预览"
+                  className="aspect-video w-full max-w-4xl rounded-lg border border-border"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  实时预览 · Room 数据与 room.css 均使用当前编辑内容 · 双击图标不会真启动
+                </p>
+              </div>
+            ) : editNav === "library" ? (
               <>
                 <div className="mb-2 flex items-center gap-2">
                   <span
@@ -1277,6 +1318,8 @@ export default function App() {
                 desks={desks}
                 setDesks={setDesks}
                 activeDesk={activeDesk}
+                activeSkin={dockSkinName(roomCss)}
+                onApplySkin={applyDockSkin}
                 touch={touch}
                 setStatus={setStatus}
               />

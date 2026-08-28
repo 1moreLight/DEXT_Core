@@ -16,6 +16,8 @@ interface DockEditorProps {
   desks: any[];
   setDesks: React.Dispatch<React.SetStateAction<any[]>>;
   activeDesk: number;
+  activeSkin: string | null;
+  onApplySkin: (name: string) => Promise<boolean>;
   touch: () => void;
   setStatus: (s: string) => void;
 }
@@ -37,11 +39,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, setStatus }: DockEditorProps) {
+export function DockEditor({
+  dock,
+  setDock,
+  desks,
+  setDesks,
+  activeDesk,
+  activeSkin,
+  onApplySkin,
+  touch,
+  setStatus,
+}: DockEditorProps) {
   // 本地草稿状态；父组件的 dock/desks 变化（开房间/切桌/预览回写）时同步进来
   const [globalDock, setGlobalDock] = useState<DockConfig>(dock);
   const [deskDocks, setDeskDocks] = useState<DockConfig[]>(desks.map((d) => d.dock ?? {}));
-  const [skin, setSkin] = useState<string>(() => localStorage.getItem("dext.dockSkin") ?? "hud");
+  const [savingSkin, setSavingSkin] = useState(false);
 
   useEffect(() => setGlobalDock(dock), [dock]);
   useEffect(() => setDeskDocks(desks.map((d) => d.dock ?? {})), [desks]);
@@ -83,11 +95,14 @@ export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, 
     updateDesk({ icons });
   }
 
-  function applySkin(name: string) {
-    setSkin(name);
-    localStorage.setItem("dext.dockSkin", name);
-    setStatus(`皮肤「${name}」已选中；把 DOCK_SKIN_PRESETS.${name} 的片段贴进房间 room.css 生效（导出房间会自动带上）`);
-    touch();
+  async function applySkin(name: string) {
+    if (savingSkin) return;
+    setSavingSkin(true);
+    try {
+      await onApplySkin(name);
+    } finally {
+      setSavingSkin(false);
+    }
   }
 
   const selCls =
@@ -288,16 +303,17 @@ export function DockEditor({ dock, setDock, desks, setDesks, activeDesk, touch, 
           {Object.keys(DOCK_SKIN_PRESETS).map((name) => (
             <Button
               key={name}
-              variant={skin === name ? "default" : "outline"}
+              variant={activeSkin === name ? "default" : "outline"}
               size="sm"
-              onClick={() => applySkin(name)}
+              disabled={savingSkin}
+              onClick={() => void applySkin(name)}
             >
               {name}
             </Button>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          HUD = cockpit-room 风格（Consolas/青色）· Minimal = 扁平暗底 · Glass = 浅色毛玻璃。选中后请把片段贴进房间 room.css（房间导出 zip 时会自动带上）。
+          HUD = cockpit-room 风格（Consolas/青色）· Minimal = 扁平暗底 · Glass = 浅色毛玻璃。选择后立即保存到当前 Room，并同步到预览。
         </p>
       </section>
     </div>

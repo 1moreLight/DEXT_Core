@@ -47,7 +47,7 @@ export const DEFAULT_DOCK_STYLE: DockStyle = {
   icon: 40,
 };
 
-// 皮肤预设片段（实际写入房间的 room.css；UI 侧先存 localStorage 标记所选皮肤）
+// 皮肤预设片段。写入时放进受管标记块，只替换 Dock 皮肤区域，保留作者的其他 room.css。
 export const DOCK_SKIN_PRESETS: Record<string, string> = {
   hud: `/* HUD-flavoured dock skin (from cockpit-room) */
 .icon-label { letter-spacing: 0.14em; text-transform: uppercase; color: rgba(220,228,236,0.92); text-shadow: 0 0 6px rgba(140,190,255,0.35); font-family: Consolas, monospace; }
@@ -65,3 +65,27 @@ export const DOCK_SKIN_PRESETS: Record<string, string> = {
 .dock-btn { background-color: rgba(255,255,255,0.18); }
 .dock-btn:hover { background-color: rgba(255,255,255,0.3); }`,
 };
+
+const DOCK_SKIN_START_PREFIX = "/* dext-dock-skin:start name=";
+const DOCK_SKIN_END = "/* dext-dock-skin:end */";
+
+export function dockSkinName(css: string): string | null {
+  const matches = [...css.matchAll(/\/\* dext-dock-skin:start name=([a-z0-9_-]+) \*\//gi)];
+  const name = matches.length ? matches[matches.length - 1][1] : undefined;
+  return name && DOCK_SKIN_PRESETS[name] ? name : null;
+}
+
+export function withDockSkin(css: string, name: string): string {
+  const preset = DOCK_SKIN_PRESETS[name];
+  if (!preset) throw new Error(`unknown Dock skin: ${name}`);
+
+  const block = `${DOCK_SKIN_START_PREFIX}${name} */\n${preset.trim()}\n${DOCK_SKIN_END}`;
+  const start = css.lastIndexOf(DOCK_SKIN_START_PREFIX);
+  const end = start >= 0 ? css.indexOf(DOCK_SKIN_END, start) : -1;
+  if (start >= 0 && end >= start) {
+    return `${css.slice(0, start)}${block}${css.slice(end + DOCK_SKIN_END.length)}`;
+  }
+
+  const existing = css.trimEnd();
+  return existing ? `${existing}\n\n${block}\n` : `${block}\n`;
+}

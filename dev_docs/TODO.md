@@ -85,3 +85,18 @@
 - [x] 根据用户反馈补齐 Dock 缺口并调整开发顺序：DOCK-001/002/003/004 + ROOM-001（2026-08-28）
 - [x] 用户按 `acceptance/OPS-001-devdocs-workflow.md` 验收通过（2026-08-28，“开始”）
 - [x] OPS-001 已合并 master（2026-08-28，merge `26ee399`），工作分支/worktree 进入清理
+
+## DOCK-001 皮肤自动写入 room.css（2026-08-28）
+
+> 目标：配置器选择 HUD / Minimal / Glass 后，预设 CSS 立即写入当前 Room、实时进入预览，并在重新打开房间后继续生效。
+> 范围外：应用库选择器、桌面拖入 Dock、运行态圆点、Room zip 导出。
+
+- [x] [!] 当前 worktree 无 `.codegraph/`，按纪律未自行建索引；改用普通搜索核对 Tauri command 注册、DockEditor 入口、房间打开与预览消息链（2026-08-28）
+- [x] Rust 新增受约束的 `save_room_css` 命令和覆盖测试（2026-08-28）
+- [x] DockEditor 接入真实保存回调；浏览器设计模式保持可用且不调用 Tauri（2026-08-28）
+- [x] 配置器打开 Room 时读取既有 room.css，皮肤切换后实时更新预览（2026-08-28）
+- [x] 渲染器预览消息支持隔离注入 room.css，不影响真桌面正常加载（2026-08-28）
+- [x] 同步 README / DOCK.md 接口状态（2026-08-28）
+- [x] 自测：Rust 相关测试 + cargo check + npm run build + node --check（2026-08-28）
+- [x] git status 核对具名文件并提交到 `feat/dock-001-save-room-css`（2026-08-28）
+- [?] 用户按 `acceptance/DOCK-001-save-room-css.md` 独立验收；通过前不合并 master

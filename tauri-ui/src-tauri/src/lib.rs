@@ -149,6 +149,25 @@ async fn write_room(path: String, room_json: String) -> Result<(), String> {
     std::fs::write(&path, room_json).map_err(|e| format!("write room failed: {e}"))
 }
 
+fn save_room_css_file(room_dir: &std::path::Path, css: &str) -> Result<(), String> {
+    if !room_dir.is_dir() {
+        return Err(format!("room directory not found: {}", room_dir.display()));
+    }
+    if !room_dir.join("room.json").is_file() {
+        return Err(format!(
+            "not a Room directory (room.json missing): {}",
+            room_dir.display()
+        ));
+    }
+    std::fs::write(room_dir.join("room.css"), css)
+        .map_err(|e| format!("write room.css failed: {e}"))
+}
+
+#[tauri::command]
+async fn save_room_css(room_dir: String, css: String) -> Result<(), String> {
+    save_room_css_file(std::path::Path::new(&room_dir), &css)
+}
+
 #[tauri::command]
 async fn create_room(dir: String, name: String) -> Result<String, String> {
     if name.is_empty()
@@ -389,6 +408,7 @@ pub fn run() {
             list_rooms,
             read_room,
             write_room,
+            save_room_css,
             create_room,
             apply_room,
             import_background,
@@ -397,4 +417,44 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::save_room_css_file;
+
+    fn test_dir(label: &str) -> std::path::PathBuf {
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        std::env::temp_dir().join(format!("dext-{label}-{}-{stamp}", std::process::id()))
+    }
+
+    #[test]
+    fn saves_and_overwrites_room_css() {
+        let dir = test_dir("room-css");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("room.json"), r#"{"desks":[{"icons":[]}]}"#).unwrap();
+
+        save_room_css_file(&dir, "/* first */").unwrap();
+        assert_eq!(std::fs::read_to_string(dir.join("room.css")).unwrap(), "/* first */");
+
+        save_room_css_file(&dir, "/* second */").unwrap();
+        assert_eq!(std::fs::read_to_string(dir.join("room.css")).unwrap(), "/* second */");
+
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn rejects_non_room_for_room_css() {
+        let dir = test_dir("not-room");
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let error = save_room_css_file(&dir, "/* nope */").unwrap_err();
+        assert!(error.contains("room.json missing"));
+        assert!(!dir.join("room.css").exists());
+
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }

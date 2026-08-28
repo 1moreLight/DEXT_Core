@@ -13,6 +13,9 @@ scripts/room-preview.ps1 -Room <房名>     # 浏览器打开，热刷新
 在 `<房名>/room.css` 写任意覆写 → 保存 → 浏览器即时生效 → 满意后配置器「应用」上线。
 （`apply_room` 已随包拷贝 room.css，**后端零改动**。）
 
+配置器内置 HUD / Minimal / Glass 预设会自动维护
+`/* dext-dock-skin:start ... */` 到 `/* dext-dock-skin:end */` 区块；切换预设只替换该区块，不删除作者的其他 CSS。
+
 ## 一、DOM 骨架（可覆写钩子全集）
 
 ```html
@@ -104,4 +107,4 @@ window.dext.getCurrentDesk()                             // 当前桌下标
 - **别改** `#dock` 的 `position/left/bottom/transform`（定位由 JS 的 position 配置管）；要改布局改 `.dock-inner`
 - **别改** `wallpapers/dext-room/style.css`——那是所有房间共享的渲染器本体，皮肤一律走房间 room.css
 - room.js 抛错会被隔离（不影响渲染器），但别依赖窗口级 `chrome.webview` IPC（那是渲染器专属）
-- 配置器「皮肤预设」（DOCK.md 三节）将来会把预设片段写进 room.css，与手工写不冲突
+- 配置器「皮肤预设」只维护带标记的 Dock 皮肤区块，与区块外手工样式并存
