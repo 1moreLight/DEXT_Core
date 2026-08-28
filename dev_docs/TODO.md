@@ -24,6 +24,13 @@
 - [ ] 配置器 Dock 编辑页接入 —— 等用户指令
 - [ ] Dock UI 接线（锚点见 dev_docs/DOCK.md 三节）：save_room_css 后端命令（皮肤写 room.css）/ DockEditor 接应用库选择器 / 渲染器拖拽进 Dock（新上行消息）/ 皮肤随导出 zip
 
+## R11.2 全景开发列表文档化（2026-08-28）
+
+- [x] 梳理「有 UI 无后端」清单（codegraph 交叉验证：save_room_css/export_room/import_room/validate_room/dockAdd 均不存在；DockEditor 零 invoke）
+- [x] codegraph 查漏补缺：4 个备而不用命令（launch_app/get_wallpapers/set_wallpaper/core_stats 前端从未调用）；tauri-ui/main.js 死文件；MODEL.md §八 实际已做项对照
+- [x] 新建 `dev_docs/ROADMAP.md`：全景开发列表，按前端/后端/跨端/契约分层，带优先级与依赖关系
+- [ ] 后续每轮工作按 ROADMAP.md 编号引用（A1/A2/...），TODO 台账与之对应
+
 ## 当前阶段：R10 思维导图收尾（2026-08-27 进行中）
 
 > WIP 已提交（b9cd53d）：Snapshot 增 desks/hasStart、seedEdges 支持无启动画面、openRoom mock 模式、几何测量 state。
