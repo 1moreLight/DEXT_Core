@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -370,7 +371,87 @@ namespace Lively.Core.Wallpapers
                             }
                         });
                         break;
+                    case MessageType.msg_add_dock_icon:
+                        var addDockMsg = (LivelyMessageAddDockIconCmd)obj;
+                        _ = Task.Run(() => AddDockIconToRoom(addDockMsg));
+                        break;
                 }
+            }
+        }
+
+        private void AddDockIconToRoom(LivelyMessageAddDockIconCmd msg)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(msg.LaunchTarget))
+                {
+                    Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: missing launch target");
+                    return;
+                }
+                var roomDir = System.IO.File.Exists(wallpaperPath)
+                    ? System.IO.Path.GetDirectoryName(wallpaperPath)
+                    : wallpaperPath;
+                var roomPath = System.IO.Path.Combine(roomDir, "room.json");
+                var jo = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(roomPath));
+                var scope = string.Equals(msg.Scope, "global", StringComparison.OrdinalIgnoreCase) ? "global" : "desk";
+                Newtonsoft.Json.Linq.JObject target;
+                if (scope == "global")
+                {
+                    target = jo["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
+                    jo["dock"] = target;
+                }
+                else
+                {
+                    var desks = jo["desks"] as Newtonsoft.Json.Linq.JArray;
+                    if (desks == null || msg.DeskIndex < 0 || msg.DeskIndex >= desks.Count || desks[msg.DeskIndex] is not Newtonsoft.Json.Linq.JObject desk)
+                    {
+                        Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: invalid desk index {msg.DeskIndex}");
+                        return;
+                    }
+                    target = desk["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
+                    desk["dock"] = target;
+                }
+                var inheritedIcons = jo["dock"]?["icons"] as Newtonsoft.Json.Linq.JArray;
+                var icons = target["icons"] as Newtonsoft.Json.Linq.JArray
+                    ?? (scope == "desk" && inheritedIcons != null
+                        ? (Newtonsoft.Json.Linq.JArray)inheritedIcons.DeepClone()
+                        : new Newtonsoft.Json.Linq.JArray());
+                target["icons"] = icons;
+                if (icons.OfType<Newtonsoft.Json.Linq.JObject>().Any(icon => (string)icon["launch"]?["target"] == msg.LaunchTarget))
+                {
+                    Logger.Info($"Wv2{uniqueId}: AddDockIcon skipped duplicate: {msg.LaunchTarget}");
+                    return;
+                }
+                icons.Add(new Newtonsoft.Json.Linq.JObject
+                {
+                    ["label"] = msg.Label ?? msg.LaunchTarget,
+                    ["icon_png"] = msg.IconPng ?? string.Empty,
+                    ["glyph"] = msg.Glyph ?? "?",
+                    ["color"] = msg.Color ?? "#3b82f6",
+                    ["action"] = msg.Action ?? $"启动 {msg.Label ?? msg.LaunchTarget}",
+                    ["launch"] = new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["target"] = msg.LaunchTarget,
+                        ["args"] = msg.LaunchArgs ?? string.Empty,
+                        ["workdir"] = msg.LaunchWorkdir ?? string.Empty,
+                    },
+                });
+                var json = jo.ToString(Newtonsoft.Json.Formatting.Indented);
+                System.IO.File.WriteAllText(roomPath, json, new System.Text.UTF8Encoding(false));
+                Logger.Info($"Wv2{uniqueId}: AddDockIcon: {roomPath}");
+                var src = (string)jo["__source"];
+                if (!string.IsNullOrWhiteSpace(src))
+                {
+                    var srcPath = System.IO.Directory.Exists(src)
+                        ? System.IO.Path.Combine(src, "room.json")
+                        : src;
+                    System.IO.File.WriteAllText(srcPath, json, new System.Text.UTF8Encoding(false));
+                    Logger.Info($"Wv2{uniqueId}: AddDockIcon source: {srcPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Wv2{uniqueId}: AddDockIcon failed: {ex.Message}");
             }
         }
 
