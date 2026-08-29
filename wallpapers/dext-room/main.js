@@ -218,19 +218,43 @@ async function loadRoom() {
 // play the end slot then ack, or ack immediately when none is configured.
 if (window.chrome?.webview) {
   window.chrome.webview.addEventListener("message", (e) => {
-    if (e.data !== "dext:end") return;
-    const slot = ROOM.end;
-    if (!slot) {
-      window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" }));
+    if (e.data === "dext:end") {
+      const slot = ROOM.end;
+      if (!slot) {
+        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" }));
+        return;
+      }
+      playSlot(slot, {
+        kind: "end",
+        timeout: 4, // stay under the Player-side 5s close cap
+        onDone: () =>
+          window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" })),
+      });
       return;
     }
-    playSlot(slot, {
-      kind: "end",
-      timeout: 4, // stay under the Player-side 5s close cap
-      onDone: () =>
-        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" })),
-    });
+
+    let data = e.data;
+    if (typeof data === "string") {
+      try { data = JSON.parse(data); } catch { return; }
+    }
+    if (data?.type === "dext:app-status") {
+      updateAppRuntimeStatus(data.target, data.running);
+    }
   });
+}
+
+// Runtime telemetry is deliberately kept outside ROOM so it can never be saved.
+const runningAppTargets = new Set();
+function launchTargetKey(target) {
+  return typeof target === "string" && target.trim() ? target.trim().toLocaleLowerCase() : "";
+}
+
+function updateAppRuntimeStatus(target, running) {
+  const key = launchTargetKey(target);
+  if (!key) return;
+  if (running) runningAppTargets.add(key);
+  else runningAppTargets.delete(key);
+  renderDockApps(dockCfg());
 }
 
 // Windows-style icon size presets; desk.iconSize picks one (default medium)
@@ -327,6 +351,7 @@ function renderDockApps(cfg) {
     const el = document.createElement("div");
     el.className = "dock-icon";
     el.title = item.label ?? "";
+    el.classList.toggle("is-running", runningAppTargets.has(launchTargetKey(item.launch?.target)));
     el.innerHTML = `
       ${item.icon_png
         ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`

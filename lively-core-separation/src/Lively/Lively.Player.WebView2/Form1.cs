@@ -660,6 +660,16 @@ namespace Lively.Player.WebView2
                 case MessageType.cmd_close:
                     // Handle on caller
                     break;
+                case MessageType.msg_app_status:
+                    var appStatus = (LivelyMessageAppStatus)obj;
+                    var statusPayload = new
+                    {
+                        type = "dext:app-status",
+                        target = appStatus.Target ?? string.Empty,
+                        running = appStatus.Running,
+                    };
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(statusPayload));
+                    break;
             }
         }
 

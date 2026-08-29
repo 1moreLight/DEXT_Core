@@ -79,6 +79,20 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 | `persistRoom()` | `postMessage({type:"saveRoom", room:ROOM})` | 桌面编辑（含 dock 删图标）双写持久化；预览环境自动跳过 |
 | `window.dext` | getRoom()/onDeskChange 等（MODEL.md §6） | 房间脚本读取 dock 配置 |
 
+### DOCK-004 运行态遥测（不落盘）
+
+Dock 图标的运行态不属于 `room.json`。图标点击仍发送既有 `msg_launch`；Core 成功代启后按
+`launch.target` 进行宽容进程轮询，并经 Player 转发页面消息：
+
+```jsonc
+{ "type": "dext:app-status", "target": "C:\\Apps\\Demo.exe", "running": true }
+```
+
+渲染器只在内存集合中按启动目标（大小写不敏感）维护状态，并在对应 `.dock-icon` 上切换
+`is-running` 类和绿色圆点。状态随当前渲染器实例/切 Desk 重绘，不参与 `persistRoom()`；Room
+重新应用或重启后配置仍由 `room.json` 提供，运行态需重新由 Core 遥测确认。缺失/非法目标和进程
+查询异常按宽容原则忽略，不影响现有 Dock 点击启动。
+
 ## 三、配置器对接点（tauri-ui，后续 UI 接线的锚点）
 
 ### 已就位
@@ -138,7 +152,7 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 1. **拖拽进 Dock（DOCK-003，已实现待验收）**：渲染器编辑模式拖桌面图标到 dock 区 → `addDockIcon` 上行消息 → Core 落盘。
 2. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
-3. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
+3. **运行态小圆点（DOCK-004，开发中）**：Core 进程遥测已接入，待人工验收及时清除与多 Desk 刷新。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ### DOCK-003 拖入消息与持久化
