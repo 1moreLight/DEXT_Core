@@ -162,6 +162,17 @@ function pairKey(e: GEdge): string {
   return [e.from, e.to].sort().join("|");
 }
 
+function visualGraphEdges(edges: GEdge[]): GEdge[] {
+  const pairs = new Set<string>();
+  return edges.filter((edge) => {
+    if (edge.from === "start" || edge.to === "start") return true;
+    const key = pairKey(edge);
+    if (pairs.has(key)) return false;
+    pairs.add(key);
+    return true;
+  });
+}
+
 function reconcileGraphEdges(
   current: GEdge[],
   desks: Desk[],
@@ -232,9 +243,8 @@ function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): Grap
 
   if (!wraps) {
     const down = toIndex > fromIndex;
-    const laneOffset = down ? -8 : 8;
-    const fromX = from.cx + laneOffset;
-    const toX = to.cx + laneOffset;
+    const fromX = from.cx;
+    const toX = to.cx;
     const fromY = down ? from.bottom : from.top;
     const toY = down ? to.top : to.bottom;
     const middleY = (fromY + toY) / 2;
@@ -245,12 +255,10 @@ function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): Grap
     ];
   }
 
-  const down = fromIndex < toIndex;
-  const offset = 8;
   const maxRight = Math.max(from.right, to.right);
-  const laneX = maxRight + (down ? 30 : 66);
-  const fromY = from.cy + (down ? offset : -offset);
-  const toY = to.cy + (down ? -offset : offset);
+  const laneX = maxRight + 48;
+  const fromY = from.cy;
+  const toY = to.cy;
   return [
     { x1: from.right, y1: fromY, x2: laneX, y2: fromY },
     { x1: laneX, y1: fromY, x2: laneX, y2: toY },
@@ -1775,7 +1783,7 @@ export default function App() {
                 </details>
                 {edges.length > 0 ? (
                   <>
-                    {/* 上：Room 结构思维导图（启动画面 → 主 Desk 直连；switch 只在相邻 desk 之间） */}
+                    {/* 上：Room 结构思维导图（Desk 对视觉上合并为一条双向线） */}
 	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
 	                      <div
 	                        ref={canvasRef}
@@ -1792,13 +1800,14 @@ export default function App() {
                               refY="5"
                               markerWidth="6"
                               markerHeight="6"
-                              orient="auto"
+                              orient="auto-start-reverse"
                             >
                               <path d="M0,0L10,5L0,10z" fill="currentColor" />
 	                            </marker>
 	                          </defs>
-	                          {edges.map((edge) => {
+	                          {visualGraphEdges(edges).map((edge) => {
 	                            const segments = routeGraphEdge(edge, geom.nodes);
+	                            const bidirectional = edge.from !== "start" && edge.to !== "start";
 	                            return (
 	                              <g key={edge.id} data-graph-edge={edge.id} className="text-foreground/60">
 	                                {segments.map((segment, index) => (
@@ -1810,6 +1819,9 @@ export default function App() {
 	                                    strokeWidth={2.2}
 	                                    strokeLinecap="round"
 	                                    vectorEffect="non-scaling-stroke"
+	                                    markerStart={
+	                                      bidirectional && index === 0 ? "url(#garrow)" : undefined
+	                                    }
 	                                    markerEnd={index === segments.length - 1 ? "url(#garrow)" : undefined}
 	                                  />
 	                                ))}
@@ -1817,15 +1829,10 @@ export default function App() {
 	                            );
 	                          })}
 	                        </svg>
-                        {/* switch 标记（仅 desk 之间，一对一来一回共用一个） */}
-                        {Object.values(
-                          edges.reduce<Record<string, GEdge>>((acc, e) => {
-                            if (e.from === "start" || e.to === "start") return acc;
-                            const k = pairKey(e);
-                            if (!acc[k]) acc[k] = e;
-                            return acc;
-	                          }, {})
-	                        ).map((e) => {
+	                        {/* switch 标记（每条双向视觉线一个） */}
+	                        {visualGraphEdges(edges)
+	                          .filter((edge) => edge.from !== "start" && edge.to !== "start")
+	                          .map((e) => {
 	                          const k = pairKey(e);
 	                          const position = graphSwitchPosition(e, geom.nodes);
 	                          if (!position) return null;
@@ -1844,7 +1851,7 @@ export default function App() {
                               <ArrowRightLeft className="h-3 w-3" /> switch
                             </button>
                           );
-                        })}
+	                          })}
 	                        {/* 启动画面主节点 */}
 	                        <button
 	                          ref={startNodeRef}
@@ -1898,46 +1905,22 @@ export default function App() {
 	                                className="pointer-events-none absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
 	                              />
 	                              {i > 0 && (
-	                                <>
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ left: "calc(50% - 8px)" }}
-	                                    className="pointer-events-none absolute -top-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ left: "calc(50% + 8px)" }}
-	                                    className="pointer-events-none absolute -top-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                </>
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
 	                              )}
 	                              {i < desks.length - 1 && (
-	                                <>
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ left: "calc(50% - 8px)" }}
-	                                    className="pointer-events-none absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ left: "calc(50% + 8px)" }}
-	                                    className="pointer-events-none absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                </>
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
 	                              )}
 	                              {desks.length > 2 && (i === 0 || i === desks.length - 1) && (
-	                                <>
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ top: "calc(50% - 8px)" }}
-	                                    className="pointer-events-none absolute -right-1.5 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                  <span
-	                                    aria-hidden="true"
-	                                    style={{ top: "calc(50% + 8px)" }}
-	                                    className="pointer-events-none absolute -right-1.5 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                                  />
-	                                </>
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
 	                              )}
 	                            </button>
                           );
