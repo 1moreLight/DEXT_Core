@@ -654,6 +654,7 @@ function attachPress(el, index) {
     timer = setTimeout(() => {
       timer = null;
       enterEdit();
+      startDrag(e, el, index);
     }, 500);
   });
   el.addEventListener("pointermove", (e) => {
@@ -730,7 +731,6 @@ function enterEdit() {
   if (editMode || switching) return;
   editMode = true;
   document.body.classList.add("editing");
-  renderDesk(currentDesk);
   dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动排列，× 删除");
 }

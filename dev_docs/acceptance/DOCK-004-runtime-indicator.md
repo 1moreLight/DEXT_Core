@@ -14,6 +14,7 @@
 - [x] `cd tauri-ui && npm run build`
 - [x] `git diff --check`
 - [x] 如修改 C#/.proto：`scripts/build.ps1`（Player Release）已通过；`scripts/start.ps1` 已启动 Core（配置器首次因 worktree 未安装依赖退出，安装依赖后前端构建通过）
+- [x] Room 预览连续手势：长按图标 650ms 后不松手直接拖到 Dock，drop 命中且 Dock 内存列表新增图标；预览不写盘
 
 ## 人工验收
 
@@ -32,4 +33,5 @@
 
 ## 验收记录
 
-- 待用户确认
+- 2026-08-29 首轮反馈：长按桌面图标后直接拖入 Dock 无法加入；已确认不是分支未合并导致。
+- 2026-08-29 同分支修复：长按进入编辑态后沿用当前指针继续拖动，预览连续手势复验通过，等待用户复验真桌面。
