@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-08-28。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-08-29。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -15,6 +15,10 @@
 ## 一、项目全景
 
 **Dext**：把 Windows 桌面变成手机式主屏。多个 Desk 放真图标应用、长按编辑、切桌动画；整套主题打包成 Room 分享。终局对标 Wallpaper Engine（创作者上架创意工坊，普通用户下载即用）。
+
+目标创作模型是“官方宿主 + 用户 Scene”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC 和保存；用户只定制 background/start/switch/end 内容。四类内容统一支持 image/video/html，会前端的作者可写受控 HTML Scene，不会写的用户通过配置器或官方骨架生成。
+
+这是 DXT-001/SCENE-001 的目标，不是当前实现声明。当前 v0.x 已有 cockpit-room HTML 能力、start/end 槽和顶层 room.js/room.css，但 background/switch 尚未统一，脚本隔离与消息校验也未达到目标边界。
 
 ```
 ① 运行时渲染器  wallpapers/dext-room/{index.html,style.css,main.js}
@@ -91,8 +95,8 @@
 }
 ```
 
-房间形态：`rooms/<房名>/` = `room.json + background/(图/视频素材) + transition/(转场视频)`。
-应用 = 配置器把这三样拷进壁纸包 `wallpapers/dext-room/`（WebView2 虚拟主机只能读包内文件）。
+房间目标形态：`rooms/<房名>/` = `room.json + background/ + switch/ + start/ + end/`；各目录可装图片、视频或 HTML Scene 的自包含资源。旧 `transition/` 仅兼容读取。
+应用 = 配置器把 Room 内容拷进壁纸包 `wallpapers/dext-room/`（WebView2 虚拟主机只能读包内文件）。
 
 ## 四、接口总表
 
