@@ -1,8 +1,8 @@
 # DOCK-002 从应用库选择常驻图标验收
 
 - 状态：已通过（2026-08-29）
-- 分支：`feat/dock-002-app-library-icons`
-- 提交：实现 `b1cf63a`；待验收状态记录见本分支 HEAD
+- 分支：`feat/dock-002-app-library-icons`（已合并并清理）
+- 提交：实现 `b1cf63a`；验收记录 `25c22dd`；合并 `e070e79`
 - 目标：在具体 Room 的 DockEditor 中搜索现有应用库，把真实应用加入全局或当前 Desk Dock，并通过现有 Room 保存链保留图标和启动信息。
 - 范围外：桌面图标拖入 Dock、Player/Core 桌面编辑 IPC、运行态圆点、应用库扫描/清理规则、Dock 模板与创意工坊。
 

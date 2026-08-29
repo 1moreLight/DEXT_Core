@@ -195,3 +195,15 @@
 - [x] 2026-08-26 R7 命名定稿（左=sidebar 侧边栏 / 右=预览栏）+ CoverStack 堆叠小图改按比例缩放 + sidebar 新增 Dock 项（占位视图）
 - [x] 2026-08-26 R8 预览栏底部加横线+「新增 Room」（mock 追加并默认选中）；进入 Room 编辑改上下分区：上层思维导图（启动画面主节点→desk 矩形、switch 一来一回连线带箭头）、下层属性栏（改名 / 导入图片·网页代码·视频占位钮 / switch 去程回程转场下拉）
 - [x] 2026-08-26 R9 导图修正轮：删旧 desk 侧栏（函数 void 保留）；修「不明物体」（polyline 不支持 % 坐标→改 line % 三段折线+箭头，线条加深）；拓扑纠正：启动画面→主 Desk 直连无 switch，switch 只在相邻 desk 间一来一回，主 Desk=desks[0]；导图节点改由 desks 状态派生；上下分区可拖动调高；导图上方右侧工具栏：撤回/重做（快照历史）/保存（mock 提示）/应用/分享；switch 转场类别加 代码/视频（选中出占位选择钮）
+## DOCK-002 从应用库选择常驻图标（2026-08-29）
+
+> 目标：在具体 Room 的 DockEditor 中搜索现有应用库，把真实应用加入全局或当前 Desk Dock，并通过现有 Room 保存链保留图标和启动信息。
+> 专属验收文档：`dev_docs/acceptance/DOCK-002-app-library-icons.md`（完整清单永久保留）。
+
+- [x] 建立独立 worktree 和分支 `feat/dock-002-app-library-icons`
+- [x] DockEditor 增加应用搜索、全局/当前 Desk 作用域和真实应用增删
+- [x] 保留 `label/icon_png/action` 与 `launch.target/args/workdir`，复用现有 Room 保存链
+- [x] `npm run build`、UI 设计模式浅色/深色和作用域交互检查通过
+- [x] 用户于 2026-08-29 明确回复“验收通过”
+- [x] 合并到 master：`e070e79`
+- [x] 专属验收文档及人工验收清单保留，未删除
