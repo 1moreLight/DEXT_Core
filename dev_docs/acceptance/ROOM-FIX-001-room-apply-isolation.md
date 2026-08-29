@@ -1,6 +1,6 @@
 # ROOM-FIX-001 Room 应用隔离清理验收
 
-- 状态：待验收
+- 状态：已通过
 - 分支：`fix/room-fix-001-apply-isolation`
 - 提交：`54e165e`
 - 目标：应用新 Room 时完整替换运行包内属于 Room 的可选脚本、样式和素材，上一 Room 的 cockpit HUD 不再残留。
@@ -35,4 +35,4 @@
 ## 验收记录
 
 - 2026-08-29 开发侧预验收：实际依次应用 `cockpit-room` 和 `my-room`；运行包中的 `room.js`、`room.css`、`transition`、`switch`、`start`、`end` 均按源 Room 清理，桌面截图无 cockpit HUD 和底部淡字。
-- 待用户确认。
+- 2026-08-29 用户确认通过并要求合并。
