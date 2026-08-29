@@ -1529,6 +1529,7 @@ export default function App() {
                     <DockEditor
                       dock={dock}
                       setDock={setDock}
+                      apps={apps}
                       desks={desks}
                       setDesks={setDesks}
                       activeDesk={activeDesk}
@@ -1646,7 +1647,10 @@ export default function App() {
                           return (
                             <button
                               key={i}
-                              onClick={() => setGraphSel(`d${i}`)}
+                              onClick={() => {
+                                setGraphSel(`d${i}`);
+                                setActiveDesk(i);
+                              }}
                               style={{ left: "40%", top: `${y}%` }}
                               className={`absolute z-10 -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
                                 active

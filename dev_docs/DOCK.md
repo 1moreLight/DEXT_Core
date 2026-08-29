@@ -87,11 +87,11 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 |---|---|
 | `src/lib/dock.ts` | 唯一类型源：Dock 配置、三套 CSS 片段和 `DOCK_PRESET_CATALOG` 模板目录 |
 | `src/components/DockLibrary.tsx` | 独立 Dock 模板库卡片 + Room 内 Dock 选择器；库内浏览不修改 Room |
-| `src/components/DockEditor.tsx` | 仅用于具体 Room 的高级参数；per-desk 改动写回 `desks[i].dock` |
+| `src/components/DockEditor.tsx` | 仅用于具体 Room：应用库搜索与全局/每桌常驻应用、Dock 高级参数；per-desk 改动写回 `desks[i].dock` |
 | `App.tsx` | Dock 导航页挂模板库；Room 编辑器内才挂选择器和参数设置；打开/保存/预览继续走 room.json + room.css |
 | `src-tauri/src/lib.rs` | `save_room_css(room_dir, css)` 校验目录含 room.json 后覆盖写 room.css |
 
-### DOCK-001 已完成（待用户验收）
+### DOCK-001 已完成
 
 - HUD / Minimal / Glass 以受管标记块写入，不会删除作者在 room.css 中的其他样式。
 - Dock 导航页只展示可复用模板卡片和详情，不绑定当前 Room，也不会因浏览模板而落盘。
@@ -100,6 +100,15 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 - 重开 Room 会读取既有 room.css，并从受管标记恢复当前预设高亮。
 - 配置器预览通过 `dext:room` 消息附带 roomCss；预览专用 `<style>` 隔离覆盖包内旧样式，不影响真桌面加载流程。
 - 浏览器 UI 设计模式只更新内存预览状态，不调用 Tauri invoke。
+
+### DOCK-002 已实现（待用户验收）
+
+- DockEditor 直接复用配置器现有应用库，可按应用名称或启动路径搜索。
+- “全局 Dock”写入 `room.dock.icons`；“当前 Desk”写入 `desks[i].dock.icons`，切换思维导图 Desk 时同步当前索引。
+- 应用项按 `launch.target` 去重；写入 `label`、base64 `icon_png`、`action` 和完整的 `launch.target/args/workdir`。
+- 当前 Desk 没有独立 `icons` 时展示继承的全局列表；第一次增删会复制当前有效列表并建立桌级覆盖，避免意外丢掉全局应用。
+- 桌级列表可以“恢复跟随全局”，即删除该 Desk 的 `dock.icons` 覆盖；其他 Dock 参数不受影响。
+- 添加、移除和恢复操作都会标记 Room 未保存，继续复用现有 Room 顶栏保存、重开和预览链。
 
 ### Dock 模板文件 v1
 
@@ -125,13 +134,12 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 - 详情“编辑”不会进入 Room：内置模板保存为本地副本，本地模板覆盖保存。
 - 示例：`dev_docs/examples/dock-template-v1.json`。
 
-### 待补（UI 接线时按此清单做）
+### 待补（按独立工作包接线）
 
-1. **应用库选择器（DOCK-002）**：DockEditor 加应用搜索勾选，选中后写入全局或每桌 icons。
-2. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
-3. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
-4. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
-5. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
+1. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
+2. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
+3. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
+4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ## 四、当前演示与验收状态
 
