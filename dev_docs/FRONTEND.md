@@ -4,6 +4,16 @@
 > ① **配置器**（tauri-ui/，React+TS+Tailwind）→ 设计模式见「第零节」
 > ② **桌面渲染器**（wallpapers/dext-room/，纯 HTML/JS/CSS）→ 见「第一节」及以后
 
+## 目标架构：官方宿主 + 用户 Scene（尚未实现）
+
+- 本文后面的函数表描述当前 v0.x 渲染器；目标架构由 ROADMAP 的 DXT-001 / SCENE-001 分两包落地。
+- 官方宿主继续拥有 Desk、Dock、图标、导航、编辑、IPC、保存和关闭流程。
+- 用户内容只挂载在 background/start/switch/end 的受控 Scene 容器中，不能替换官方宿主。
+- 四类 Scene 都支持 image/video/html；类型保留在 room.json，运行时由官方 HTML 宿主统一承载。
+- 图片可由官方宿主加轻微动态效果；视频由宿主管理播放；HTML 通过受控 ready/swap/done 生命周期通信。
+- 当前 `cockpit-room`、start/end HTML 槽可复用作验证基础；background、switch、隔离与消息校验仍需 SCENE-001 实现。
+- 顶层 `room.js` / `room.css` 是当前 v0.x 能力，与目标安全边界存在冲突；在 SCENE-001 定稿兼容策略前，不把它作为新 Room 的推荐扩展方式。
+
 ## 零、配置器 UI 设计模式（React，mock 数据）
 
 配置器依赖 Tauri IPC（invoke），纯浏览器里会全挂——所以内置了 **mock 设计模式**：

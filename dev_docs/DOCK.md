@@ -3,6 +3,12 @@
 > 本文档是 Dock 功能（常驻图标区 + 样式自定义）的唯一接口说明。
 > 数据层只有 room.json；渲染器全在 `wallpapers/dext-room/main.js`；配置器在 `tauri-ui/src/`。
 
+## 零、与 Scene 的边界
+
+Dock 属于 Dext 官方宿主层，不属于用户的 background/start/switch/end Scene。Scene 可以在自己的内容区域播放图片、视频或 HTML，但不能直接改 Dock DOM、调用 Dock 保存或伪造运行态；需要联动时只能走未来 SceneHost 明确允许并校验的消息。
+
+当前 `room.css` 能覆盖官方 DOM，是 v0.x 已有能力，也与上述目标安全边界存在冲突。保留现有 Room 兼容，最终隔离和 Dock 皮肤能力如何迁移由 SCENE-001 单独定稿，不在 DXT-001 或本轮文档修改中假装已经解决。
+
 ## 一、数据契约：room.json 的 `dock` 节点
 
 ```jsonc
@@ -101,7 +107,7 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 - 配置器预览通过 `dext:room` 消息附带 roomCss；预览专用 `<style>` 隔离覆盖包内旧样式，不影响真桌面加载流程。
 - 浏览器 UI 设计模式只更新内存预览状态，不调用 Tauri invoke。
 
-### DOCK-002 已实现（待用户验收）
+### DOCK-002 已完成
 
 - DockEditor 直接复用配置器现有应用库，可按应用名称或启动路径搜索。
 - “全局 Dock”写入 `room.dock.icons`；“当前 Desk”写入 `desks[i].dock.icons`，切换思维导图 Desk 时同步当前索引。
@@ -136,9 +142,9 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 ### 待补（按独立工作包接线）
 
-1. **拖拽进 Dock（DOCK-003，已实现待验收）**：渲染器编辑模式拖桌面图标到 dock 区 → `addDockIcon` 上行消息 → Core 落盘。
+1. **拖拽进 Dock（DOCK-003，已完成）**：渲染器编辑模式拖桌面图标到 dock 区 → `addDockIcon` 上行消息 → Core 落盘；真实 Player 的边界命中体验后续由 DOCK-UX-001 重做。
 2. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
-3. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
+3. **运行态小圆点（DOCK-004，独立分支待验收）**：Core 进程遥测和 Dock 指示已实现，验收前不算完成。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ### DOCK-003 拖入消息与持久化

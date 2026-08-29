@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -91,10 +91,40 @@ type Mode = "use" | "edit" | "workshop" | "settings";
 type EditNav = "library" | "room" | "dock";
 
 /* ---- room 思维导图 ----
-   拓扑：启动画面 → 主 Desk 直连（无 switch）；switch 只存在于相邻 desk 之间（一来一回）。
-   主 Desk = 启动后默认看到的第一个 desk，即 desks[0]。 */
+   拓扑：启动画面只直连一个可选 Desk（无 switch，旧 Room 默认 d0）；
+   Desk 相邻上下双向连接，3 个以上时首尾从侧边双向环回。 */
 type GEdge = { id: string; from: string; to: string; trans: string };
-type Snapshot = { edges: GEdge[]; desks: Desk[]; startName: string; hasStart: boolean };
+type Snapshot = {
+  edges: GEdge[];
+  desks: Desk[];
+  startName: string;
+  hasStart: boolean;
+  startDesk: number;
+};
+type GraphNodeRect = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+  cx: number;
+  cy: number;
+};
+type GraphGeometry = {
+  width: number;
+  height: number;
+  nodes: Record<string, GraphNodeRect>;
+};
+type GraphSegment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+const EMPTY_GRAPH_GEOMETRY: GraphGeometry = { width: 0, height: 0, nodes: {} };
+const GRAPH_ROW_GAP = 32;
 
 const TRANSITION_OPTIONS: [string, string][] = [
   ["slide", "滑动"],
@@ -106,14 +136,23 @@ const TRANSITION_OPTIONS: [string, string][] = [
   ["video", "视频"],
 ];
 
-function seedEdges(ds: Desk[], hasStart: boolean): GEdge[] {
+function seedEdges(ds: Desk[], hasStart: boolean, startDesk = 0): GEdge[] {
   const edges: GEdge[] = [];
-  if (hasStart && ds.length > 0)
-    edges.push({ id: "start-in", from: "start", to: "d0", trans: "slide" });
+  if (hasStart && ds.length > 0) {
+    const target = Math.min(Math.max(startDesk, 0), ds.length - 1);
+    edges.push({ id: "start-in", from: "start", to: `d${target}`, trans: "slide" });
+  }
   for (let i = 1; i < ds.length; i++) {
     edges.push(
       { id: `s${i}f`, from: `d${i - 1}`, to: `d${i}`, trans: "slide" },
       { id: `s${i}b`, from: `d${i}`, to: `d${i - 1}`, trans: "fade" }
+    );
+  }
+  if (ds.length > 2) {
+    const last = ds.length - 1;
+    edges.push(
+      { id: "s-wrap-f", from: `d${last}`, to: "d0", trans: "slide" },
+      { id: "s-wrap-b", from: "d0", to: `d${last}`, trans: "fade" }
     );
   }
   return edges;
@@ -121,6 +160,135 @@ function seedEdges(ds: Desk[], hasStart: boolean): GEdge[] {
 
 function pairKey(e: GEdge): string {
   return [e.from, e.to].sort().join("|");
+}
+
+function visualGraphEdges(edges: GEdge[]): GEdge[] {
+  const pairs = new Set<string>();
+  return edges.filter((edge) => {
+    if (edge.from === "start" || edge.to === "start") return true;
+    const key = pairKey(edge);
+    if (pairs.has(key)) return false;
+    pairs.add(key);
+    return true;
+  });
+}
+
+function reconcileGraphEdges(
+  current: GEdge[],
+  desks: Desk[],
+  hasStart: boolean,
+  startDesk: number
+): GEdge[] {
+  const byRoute = new Map(current.map((edge) => [`${edge.from}>${edge.to}`, edge.trans]));
+  const byId = new Map(current.map((edge) => [edge.id, edge.trans]));
+  return seedEdges(desks, hasStart, startDesk).map((edge) => ({
+    ...edge,
+    trans: byRoute.get(`${edge.from}>${edge.to}`) ?? byId.get(edge.id) ?? edge.trans,
+  }));
+}
+
+function relativeGraphRect(node: HTMLElement, canvas: DOMRect): GraphNodeRect {
+  const rect = node.getBoundingClientRect();
+  const left = rect.left - canvas.left;
+  const top = rect.top - canvas.top;
+  return {
+    left,
+    right: left + rect.width,
+    top,
+    bottom: top + rect.height,
+    width: rect.width,
+    height: rect.height,
+    cx: left + rect.width / 2,
+    cy: top + rect.height / 2,
+  };
+}
+
+function sameGraphGeometry(a: GraphGeometry, b: GraphGeometry): boolean {
+  const close = (x: number, y: number) => Math.abs(x - y) < 0.5;
+  const aKeys = Object.keys(a.nodes);
+  const bKeys = Object.keys(b.nodes);
+  if (!close(a.width, b.width) || !close(a.height, b.height) || aKeys.length !== bKeys.length)
+    return false;
+  return aKeys.every((key) => {
+    const x = a.nodes[key];
+    const y = b.nodes[key];
+    return (
+      !!y &&
+      close(x.left, y.left) &&
+      close(x.right, y.right) &&
+      close(x.top, y.top) &&
+      close(x.bottom, y.bottom)
+    );
+  });
+}
+
+function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): GraphSegment[] {
+  const from = nodes[edge.from];
+  const to = nodes[edge.to];
+  if (!from || !to) return [];
+
+  if (edge.from === "start") {
+    const elbowX = from.right + Math.max(18, (to.left - from.right) / 2);
+    return [
+      { x1: from.right, y1: from.cy, x2: elbowX, y2: from.cy },
+      { x1: elbowX, y1: from.cy, x2: elbowX, y2: to.cy },
+      { x1: elbowX, y1: to.cy, x2: to.left, y2: to.cy },
+    ];
+  }
+
+  const fromIndex = parseInt(edge.from.slice(1), 10);
+  const toIndex = parseInt(edge.to.slice(1), 10);
+  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
+  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
+
+  if (!wraps) {
+    const down = toIndex > fromIndex;
+    const fromX = from.cx;
+    const toX = to.cx;
+    const fromY = down ? from.bottom : from.top;
+    const toY = down ? to.top : to.bottom;
+    const middleY = (fromY + toY) / 2;
+    return [
+      { x1: fromX, y1: fromY, x2: fromX, y2: middleY },
+      { x1: fromX, y1: middleY, x2: toX, y2: middleY },
+      { x1: toX, y1: middleY, x2: toX, y2: toY },
+    ];
+  }
+
+  const maxRight = Math.max(from.right, to.right);
+  const laneX = maxRight + 48;
+  const fromY = from.cy;
+  const toY = to.cy;
+  return [
+    { x1: from.right, y1: fromY, x2: laneX, y2: fromY },
+    { x1: laneX, y1: fromY, x2: laneX, y2: toY },
+    { x1: laneX, y1: toY, x2: to.right, y2: toY },
+  ];
+}
+
+function graphSwitchPosition(
+  edge: GEdge,
+  nodes: Record<string, GraphNodeRect>
+): { left: number; top: number } | null {
+  const from = nodes[edge.from];
+  const to = nodes[edge.to];
+  if (!from || !to) return null;
+  const fromIndex = parseInt(edge.from.slice(1), 10);
+  const toIndex = parseInt(edge.to.slice(1), 10);
+  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
+  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
+  if (!wraps) {
+    const upper = fromIndex < toIndex ? from : to;
+    const lower = fromIndex < toIndex ? to : from;
+    return {
+      left: (from.cx + to.cx) / 2,
+      top: (upper.bottom + lower.top) / 2,
+    };
+  }
+  return {
+    left: Math.max(from.right, to.right) + 48,
+    top: (from.cy + to.cy) / 2,
+  };
 }
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
@@ -452,18 +620,15 @@ export default function App() {
   const [graphSel, setGraphSel] = useState<string | null>(null);
   const [startName, setStartName] = useState("启动画面");
   const [hasStart, setHasStart] = useState(true);
+  const [startDesk, setStartDesk] = useState(0);
   const [propsH, setPropsH] = useState(150);
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
-  // R10 WIP: geometry measurement for mindmap layout (next round)
   const canvasRef = useRef<HTMLDivElement>(null);
-  const seedKeyRef = useRef("");
-  const [geom, setGeom] = useState({ w: 0, h: 0, startR: 0, deskL: 0, deskR: 0 });
-  void canvasRef;
-  void seedKeyRef;
-  void geom;
-  void setGeom;
+  const startNodeRef = useRef<HTMLButtonElement>(null);
+  const deskNodeRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [geom, setGeom] = useState<GraphGeometry>(EMPTY_GRAPH_GEOMETRY);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -909,9 +1074,14 @@ export default function App() {
   }
 
   function addDesk() {
+    const newIndex = desks.length;
+    const nextDesks = [...desks, newDesk(newIndex)];
+    pushHistory();
     touch();
-    setDesks((prev) => [...prev, newDesk(prev.length)]);
-    setActiveDesk(desks.length);
+    setDesks(nextDesks);
+    setEdges((current) => reconcileGraphEdges(current, nextDesks, hasStart, startDesk));
+    setActiveDesk(newIndex);
+    setGraphSel(`d${newIndex}`);
   }
 
   function removeDesk(i: number) {
@@ -922,6 +1092,11 @@ export default function App() {
   }
 
   const desk = desks[activeDesk];
+  const measuredDeskHeights = Object.entries(geom.nodes)
+    .filter(([id]) => id.startsWith("d"))
+    .map(([, rect]) => rect.height);
+  const graphRowHeight = Math.max(56, ...measuredDeskHeights) + GRAPH_ROW_GAP;
+  const graphMinHeight = Math.max(240, (desks.length + 1) * graphRowHeight);
   /* header controls (room select / 新建 / 另存为 / 库路径 / 转场 / 保存 / 应用) removed from UI;
      functions kept here until the Room view re-homes them */
   void [
@@ -931,7 +1106,6 @@ export default function App() {
     changeTransition,
     transitionLabel,
     applyCurrent,
-    addDesk,
     removeDesk,
     pickBackground,
     clearBackground,
@@ -970,14 +1144,38 @@ export default function App() {
   function setEdgeTrans(edgeId: string, trans: string) {
     setEdges((prev) => prev.map((e) => (e.id === edgeId ? { ...e, trans } : e)));
   }
+  function changeStartDesk(nextDesk: number) {
+    if (nextDesk === startDesk || nextDesk < 0 || nextDesk >= desks.length) return;
+    pushHistory();
+    setStartDesk(nextDesk);
+    setEdges((prev) => {
+      const startEdge = prev.find((edge) => edge.id === "start-in");
+      if (!hasStart) return prev.filter((edge) => edge.id !== "start-in");
+      if (startEdge)
+        return prev.map((edge) =>
+          edge.id === "start-in" ? { ...edge, to: `d${nextDesk}` } : edge
+        );
+      return [
+        { id: "start-in", from: "start", to: `d${nextDesk}`, trans: "slide" },
+        ...prev,
+      ];
+    });
+    setStatus("启动目标已切换（当前编辑会话；持久化待 UI-001）");
+  }
   function snapshot(): Snapshot {
-    return { edges, desks: desks.map((d) => ({ ...d })), startName, hasStart };
+    return { edges, desks: desks.map((d) => ({ ...d })), startName, hasStart, startDesk };
   }
   function applySnapshot(s: Snapshot) {
     setEdges(s.edges);
     setDesks(s.desks);
     setStartName(s.startName);
     setHasStart(s.hasStart);
+    setStartDesk(s.startDesk);
+    setActiveDesk((current) => Math.min(current, Math.max(0, s.desks.length - 1)));
+    setGraphSel((current) => {
+      if (!current || !/^d\d+$/.test(current)) return current;
+      return parseInt(current.slice(1), 10) < s.desks.length ? current : null;
+    });
   }
   function pushHistory() {
     setPast((p) => [...p.slice(-49), snapshot()]);
@@ -1011,13 +1209,55 @@ export default function App() {
   }
   useEffect(() => {
     if (roomEntered) {
-      setEdges(seedEdges(desks, hasStart));
+      setStartDesk(0);
+      setEdges(seedEdges(desks, hasStart, 0));
       setPast([]);
       setFuture([]);
       setGraphSel(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomEntered, roomPath, desks.length]);
+  }, [roomEntered, roomPath]);
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!roomEntered || !canvas || edges.length === 0) return;
+
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const currentCanvas = canvasRef.current;
+        if (!currentCanvas) return;
+        const canvasRect = currentCanvas.getBoundingClientRect();
+        const nodes: Record<string, GraphNodeRect> = {};
+        if (startNodeRef.current)
+          nodes.start = relativeGraphRect(startNodeRef.current, canvasRect);
+        desks.forEach((_, index) => {
+          const id = `d${index}`;
+          const node = deskNodeRefs.current.get(id);
+          if (node) nodes[id] = relativeGraphRect(node, canvasRect);
+        });
+        const next = { width: canvasRect.width, height: canvasRect.height, nodes };
+        setGeom((current) => (sameGraphGeometry(current, next) ? current : next));
+      });
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    if (startNodeRef.current) observer.observe(startNodeRef.current);
+    desks.forEach((_, index) => {
+      const node = deskNodeRefs.current.get(`d${index}`);
+      if (node) observer.observe(node);
+    });
+    window.addEventListener("resize", measure);
+    measure();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      cancelAnimationFrame(frame);
+    };
+  }, [roomEntered, edges.length, desks.length]);
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
@@ -1483,9 +1723,12 @@ export default function App() {
                   <span className="text-sm font-medium">
                     {roomPath?.split("\\").pop() ?? "（未选房间）"}
                   </span>
-                  {dirty && <span className="text-xs font-medium text-amber-500">● 未保存</span>}
-                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                    <Button variant="outline" size="sm" disabled={past.length === 0} onClick={undo}>
+	                  {dirty && <span className="text-xs font-medium text-amber-500">● 未保存</span>}
+	                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
+	                    <Button size="sm" className="font-semibold shadow-sm" onClick={addDesk}>
+	                      <Plus className="h-3.5 w-3.5" /> 新增 Desk
+	                    </Button>
+	                    <Button variant="outline" size="sm" disabled={past.length === 0} onClick={undo}>
                       <Undo2 className="h-3.5 w-3.5" /> 撤回
                     </Button>
                     <Button variant="outline" size="sm" disabled={future.length === 0} onClick={redo}>
@@ -1540,14 +1783,16 @@ export default function App() {
                 </details>
                 {edges.length > 0 ? (
                   <>
-                    {/* 上：Room 结构思维导图（启动画面 → 主 Desk 直连；switch 只在相邻 desk 之间） */}
-                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
-                      <div
-                        className="relative h-full w-full"
-                        style={{ minHeight: desks.length * 96 + 60 }}
-                      >
-                        <svg className="absolute inset-0 h-full w-full">
-                          <defs>
+                    {/* 上：Room 结构思维导图（Desk 对视觉上合并为一条双向线） */}
+	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
+	                      <div
+	                        ref={canvasRef}
+	                        data-testid="graph-canvas"
+	                        className="relative h-full w-full"
+	                        style={{ minHeight: graphMinHeight, minWidth: 720 }}
+	                      >
+	                        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+	                          <defs>
                             <marker
                               id="garrow"
                               viewBox="0 0 10 10"
@@ -1555,69 +1800,48 @@ export default function App() {
                               refY="5"
                               markerWidth="6"
                               markerHeight="6"
-                              orient="auto"
+                              orient="auto-start-reverse"
                             >
                               <path d="M0,0L10,5L0,10z" fill="currentColor" />
-                            </marker>
-                          </defs>
-                          {(() => {
-                            const yOf = (id: string) => {
-                              if (id === "start") return 50;
-                              const i = parseInt(id.slice(1), 10);
-                              return ((i + 1) / (desks.length + 1)) * 100;
-                            };
-                            const common = {
-                              fill: "none",
-                              stroke: "currentColor",
-                              strokeWidth: 1.6,
-                            } as const;
-                            const cls = "text-muted-foreground";
-                            const segs: ReactElement[] = [];
-                            edges.forEach((e) => {
-                              if (e.from === "start") {
-                                const y = yOf(e.to);
-                                segs.push(
-                                  <line key={e.id + "a"} x1="15%" y1="50%" x2="27%" y2="50%" {...common} className={cls} />,
-                                  <line key={e.id + "b"} x1="27%" y1="50%" x2="27%" y2={`${y}%`} {...common} className={cls} />,
-                                  <line key={e.id + "c"} x1="27%" y1={`${y}%`} x2="39%" y2={`${y}%`} {...common} className={cls} markerEnd="url(#garrow)" />
-                                );
-                              } else {
-                                const down = parseInt(e.to.slice(1), 10) > parseInt(e.from.slice(1), 10);
-                                const ya = yOf(e.from);
-                                const yb = yOf(e.to);
-                                const lane = down ? 59 : 62;
-                                const y1 = down ? ya + 2.2 : ya - 2.2;
-                                const y2 = down ? yb - 2.2 : yb + 2.2;
-                                segs.push(
-                                  <line key={e.id + "a"} x1="57%" y1={`${y1}%`} x2={`${lane}%`} y2={`${y1}%`} {...common} className={cls} />,
-                                  <line key={e.id + "b"} x1={`${lane}%`} y1={`${y1}%`} x2={`${lane}%`} y2={`${y2}%`} {...common} className={cls} />,
-                                  <line key={e.id + "c"} x1={`${lane}%`} y1={`${y2}%`} x2="57%" y2={`${y2}%`} {...common} className={cls} markerEnd="url(#garrow)" />
-                                );
-                              }
-                            });
-                            return segs;
-                          })()}
-                        </svg>
-                        {/* switch 标记（仅 desk 之间，一对一来一回共用一个） */}
-                        {Object.values(
-                          edges.reduce<Record<string, GEdge>>((acc, e) => {
-                            if (e.from === "start" || e.to === "start") return acc;
-                            const k = pairKey(e);
-                            if (!acc[k]) acc[k] = e;
-                            return acc;
-                          }, {})
-                        ).map((e) => {
-                          const yOf = (id: string) => {
-                            const i = parseInt(id.slice(1), 10);
-                            return ((i + 1) / (desks.length + 1)) * 100;
-                          };
-                          const my = (yOf(e.from) + yOf(e.to)) / 2;
-                          const k = pairKey(e);
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => setGraphSel(k)}
-                              style={{ left: "60.5%", top: `${my}%` }}
+	                            </marker>
+	                          </defs>
+	                          {visualGraphEdges(edges).map((edge) => {
+	                            const segments = routeGraphEdge(edge, geom.nodes);
+	                            const bidirectional = edge.from !== "start" && edge.to !== "start";
+	                            return (
+	                              <g key={edge.id} data-graph-edge={edge.id} className="text-foreground/60">
+	                                {segments.map((segment, index) => (
+	                                  <line
+	                                    key={index}
+	                                    {...segment}
+	                                    fill="none"
+	                                    stroke="currentColor"
+	                                    strokeWidth={2.2}
+	                                    strokeLinecap="round"
+	                                    vectorEffect="non-scaling-stroke"
+	                                    markerStart={
+	                                      bidirectional && index === 0 ? "url(#garrow)" : undefined
+	                                    }
+	                                    markerEnd={index === segments.length - 1 ? "url(#garrow)" : undefined}
+	                                  />
+	                                ))}
+	                              </g>
+	                            );
+	                          })}
+	                        </svg>
+	                        {/* switch 标记（每条双向视觉线一个） */}
+	                        {visualGraphEdges(edges)
+	                          .filter((edge) => edge.from !== "start" && edge.to !== "start")
+	                          .map((e) => {
+	                          const k = pairKey(e);
+	                          const position = graphSwitchPosition(e, geom.nodes);
+	                          if (!position) return null;
+	                          return (
+	                            <button
+	                              key={k}
+	                              data-graph-switch={k}
+	                              onClick={() => setGraphSel(k)}
+	                              style={{ left: position.left, top: position.top }}
                               className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] transition-colors ${
                                 graphSel === k
                                   ? "border-primary bg-primary/10 font-medium text-primary"
@@ -1627,42 +1851,78 @@ export default function App() {
                               <ArrowRightLeft className="h-3 w-3" /> switch
                             </button>
                           );
-                        })}
-                        {/* 启动画面主节点 */}
-                        <button
-                          onClick={() => setGraphSel("start")}
+	                          })}
+	                        {/* 启动画面主节点 */}
+	                        <button
+	                          ref={startNodeRef}
+	                          data-graph-node="start"
+	                          title={startName}
+	                          onClick={() => setGraphSel("start")}
                           className={`absolute left-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
                             graphSel === "start"
                               ? "border-primary bg-primary/10"
                               : "border-border bg-background hover:border-primary/50"
                           }`}
-                        >
-                          <MonitorPlay className="h-5 w-5 text-primary" />
-                          <span className="truncate px-1 text-xs font-medium">{startName}</span>
-                        </button>
+	                        >
+	                          <MonitorPlay className="h-5 w-5 text-primary" />
+	                          <span className="w-full truncate px-1 text-xs font-medium">{startName}</span>
+	                          <span
+	                            aria-hidden="true"
+	                            className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                          />
+	                        </button>
                         {/* Desk 矩形节点（desks[0] = 主 Desk，启动后第一个看到） */}
                         {desks.map((d, i) => {
                           const y = ((i + 1) / (desks.length + 1)) * 100;
                           const active = graphSel === `d${i}`;
                           return (
-                            <button
-                              key={i}
-                              onClick={() => {
+	                            <button
+	                              key={i}
+	                              ref={(node) => {
+	                                const id = `d${i}`;
+	                                if (node) deskNodeRefs.current.set(id, node);
+	                                else deskNodeRefs.current.delete(id);
+	                              }}
+	                              data-graph-node={`d${i}`}
+	                              title={d.name}
+	                              onClick={() => {
                                 setGraphSel(`d${i}`);
                                 setActiveDesk(i);
                               }}
                               style={{ left: "40%", top: `${y}%` }}
-                              className={`absolute z-10 -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
+	                              className={`absolute z-10 max-w-[42%] -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
                                 active
                                   ? "border-primary bg-primary/10"
                                   : "border-border bg-background hover:border-primary/50"
                               }`}
                             >
-                              <div className="whitespace-nowrap text-sm font-medium">{d.name}</div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {i === 0 ? "主 Desk" : `Desk ${i + 1}`} · {d.icons.length} 图标
-                              </div>
-                            </button>
+	                              <div className="truncate whitespace-nowrap text-sm font-medium">{d.name}</div>
+	                              <div className="text-[10px] text-muted-foreground">
+	                                {i === 0 ? "主 Desk" : `Desk ${i + 1}`} · {d.icons.length} 图标
+	                              </div>
+	                              <span
+	                                aria-hidden="true"
+	                                className="pointer-events-none absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                              />
+	                              {i > 0 && (
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
+	                              )}
+	                              {i < desks.length - 1 && (
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
+	                              )}
+	                              {desks.length > 2 && (i === 0 || i === desks.length - 1) && (
+	                                <span
+	                                  aria-hidden="true"
+	                                  className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                                />
+	                              )}
+	                            </button>
                           );
                         })}
                       </div>
@@ -1707,8 +1967,25 @@ export default function App() {
                                   onChange={(ev) => renameGraphNode(graphSel, ev.target.value)}
                                   className="h-8 w-44"
                                 />
-                              </label>
-                              <div className="flex shrink-0 items-center gap-2">
+	                              </label>
+	                              {isStart && (
+	                                <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+	                                  连接到
+	                                  <select
+	                                    aria-label="启动画面连接到"
+	                                    value={startDesk}
+	                                    onChange={(event) => changeStartDesk(Number(event.target.value))}
+	                                    className="h-8 min-w-36 rounded-md border border-border bg-background px-2 text-sm text-foreground"
+	                                  >
+	                                    {desks.map((item, index) => (
+	                                      <option key={index} value={index}>
+	                                        {item.name || `Desk ${index + 1}`}
+	                                      </option>
+	                                    ))}
+	                                  </select>
+	                                </label>
+	                              )}
+	                              <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
                                   {isStart ? "画面素材：" : "壁纸素材："}
                                 </span>
