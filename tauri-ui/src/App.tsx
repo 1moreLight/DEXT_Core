@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
@@ -95,6 +95,30 @@ type EditNav = "library" | "room" | "dock";
    主 Desk = 启动后默认看到的第一个 desk，即 desks[0]。 */
 type GEdge = { id: string; from: string; to: string; trans: string };
 type Snapshot = { edges: GEdge[]; desks: Desk[]; startName: string; hasStart: boolean };
+type GraphNodeRect = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+  cx: number;
+  cy: number;
+};
+type GraphGeometry = {
+  width: number;
+  height: number;
+  nodes: Record<string, GraphNodeRect>;
+};
+type GraphSegment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
+
+const EMPTY_GRAPH_GEOMETRY: GraphGeometry = { width: 0, height: 0, nodes: {} };
+const GRAPH_ROW_GAP = 32;
 
 const TRANSITION_OPTIONS: [string, string][] = [
   ["slide", "滑动"],
@@ -121,6 +145,83 @@ function seedEdges(ds: Desk[], hasStart: boolean): GEdge[] {
 
 function pairKey(e: GEdge): string {
   return [e.from, e.to].sort().join("|");
+}
+
+function relativeGraphRect(node: HTMLElement, canvas: DOMRect): GraphNodeRect {
+  const rect = node.getBoundingClientRect();
+  const left = rect.left - canvas.left;
+  const top = rect.top - canvas.top;
+  return {
+    left,
+    right: left + rect.width,
+    top,
+    bottom: top + rect.height,
+    width: rect.width,
+    height: rect.height,
+    cx: left + rect.width / 2,
+    cy: top + rect.height / 2,
+  };
+}
+
+function sameGraphGeometry(a: GraphGeometry, b: GraphGeometry): boolean {
+  const close = (x: number, y: number) => Math.abs(x - y) < 0.5;
+  const aKeys = Object.keys(a.nodes);
+  const bKeys = Object.keys(b.nodes);
+  if (!close(a.width, b.width) || !close(a.height, b.height) || aKeys.length !== bKeys.length)
+    return false;
+  return aKeys.every((key) => {
+    const x = a.nodes[key];
+    const y = b.nodes[key];
+    return (
+      !!y &&
+      close(x.left, y.left) &&
+      close(x.right, y.right) &&
+      close(x.top, y.top) &&
+      close(x.bottom, y.bottom)
+    );
+  });
+}
+
+function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): GraphSegment[] {
+  const from = nodes[edge.from];
+  const to = nodes[edge.to];
+  if (!from || !to) return [];
+
+  if (edge.from === "start") {
+    const elbowX = from.right + Math.max(18, (to.left - from.right) / 2);
+    return [
+      { x1: from.right, y1: from.cy, x2: elbowX, y2: from.cy },
+      { x1: elbowX, y1: from.cy, x2: elbowX, y2: to.cy },
+      { x1: elbowX, y1: to.cy, x2: to.left, y2: to.cy },
+    ];
+  }
+
+  const fromIndex = parseInt(edge.from.slice(1), 10);
+  const toIndex = parseInt(edge.to.slice(1), 10);
+  const down = toIndex > fromIndex;
+  const offset = Math.min(10, Math.max(5, Math.min(from.height, to.height) * 0.16));
+  const maxRight = Math.max(from.right, to.right);
+  const laneX = maxRight + (down ? 30 : 66);
+  const fromY = from.cy + (down ? offset : -offset);
+  const toY = to.cy + (down ? -offset : offset);
+  return [
+    { x1: from.right, y1: fromY, x2: laneX, y2: fromY },
+    { x1: laneX, y1: fromY, x2: laneX, y2: toY },
+    { x1: laneX, y1: toY, x2: to.right, y2: toY },
+  ];
+}
+
+function graphSwitchPosition(
+  edge: GEdge,
+  nodes: Record<string, GraphNodeRect>
+): { left: number; top: number } | null {
+  const from = nodes[edge.from];
+  const to = nodes[edge.to];
+  if (!from || !to) return null;
+  return {
+    left: Math.max(from.right, to.right) + 48,
+    top: (from.cy + to.cy) / 2,
+  };
 }
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
@@ -456,14 +557,10 @@ export default function App() {
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
-  // R10 WIP: geometry measurement for mindmap layout (next round)
   const canvasRef = useRef<HTMLDivElement>(null);
-  const seedKeyRef = useRef("");
-  const [geom, setGeom] = useState({ w: 0, h: 0, startR: 0, deskL: 0, deskR: 0 });
-  void canvasRef;
-  void seedKeyRef;
-  void geom;
-  void setGeom;
+  const startNodeRef = useRef<HTMLButtonElement>(null);
+  const deskNodeRefs = useRef(new Map<string, HTMLButtonElement>());
+  const [geom, setGeom] = useState<GraphGeometry>(EMPTY_GRAPH_GEOMETRY);
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("dext.theme") as "light" | "dark") ?? "light"
   );
@@ -922,6 +1019,11 @@ export default function App() {
   }
 
   const desk = desks[activeDesk];
+  const measuredDeskHeights = Object.entries(geom.nodes)
+    .filter(([id]) => id.startsWith("d"))
+    .map(([, rect]) => rect.height);
+  const graphRowHeight = Math.max(56, ...measuredDeskHeights) + GRAPH_ROW_GAP;
+  const graphMinHeight = Math.max(240, (desks.length + 1) * graphRowHeight);
   /* header controls (room select / 新建 / 另存为 / 库路径 / 转场 / 保存 / 应用) removed from UI;
      functions kept here until the Room view re-homes them */
   void [
@@ -1018,6 +1120,47 @@ export default function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomEntered, roomPath, desks.length]);
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!roomEntered || !canvas || edges.length === 0) return;
+
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const currentCanvas = canvasRef.current;
+        if (!currentCanvas) return;
+        const canvasRect = currentCanvas.getBoundingClientRect();
+        const nodes: Record<string, GraphNodeRect> = {};
+        if (startNodeRef.current)
+          nodes.start = relativeGraphRect(startNodeRef.current, canvasRect);
+        desks.forEach((_, index) => {
+          const id = `d${index}`;
+          const node = deskNodeRefs.current.get(id);
+          if (node) nodes[id] = relativeGraphRect(node, canvasRect);
+        });
+        const next = { width: canvasRect.width, height: canvasRect.height, nodes };
+        setGeom((current) => (sameGraphGeometry(current, next) ? current : next));
+      });
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    if (startNodeRef.current) observer.observe(startNodeRef.current);
+    desks.forEach((_, index) => {
+      const node = deskNodeRefs.current.get(`d${index}`);
+      if (node) observer.observe(node);
+    });
+    window.addEventListener("resize", measure);
+    measure();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+      cancelAnimationFrame(frame);
+    };
+  }, [roomEntered, edges.length, desks.length]);
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
@@ -1541,13 +1684,15 @@ export default function App() {
                 {edges.length > 0 ? (
                   <>
                     {/* 上：Room 结构思维导图（启动画面 → 主 Desk 直连；switch 只在相邻 desk 之间） */}
-                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
-                      <div
-                        className="relative h-full w-full"
-                        style={{ minHeight: desks.length * 96 + 60 }}
-                      >
-                        <svg className="absolute inset-0 h-full w-full">
-                          <defs>
+	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
+	                      <div
+	                        ref={canvasRef}
+	                        data-testid="graph-canvas"
+	                        className="relative h-full w-full"
+	                        style={{ minHeight: graphMinHeight, minWidth: 720 }}
+	                      >
+	                        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+	                          <defs>
                             <marker
                               id="garrow"
                               viewBox="0 0 10 10"
@@ -1558,46 +1703,27 @@ export default function App() {
                               orient="auto"
                             >
                               <path d="M0,0L10,5L0,10z" fill="currentColor" />
-                            </marker>
-                          </defs>
-                          {(() => {
-                            const yOf = (id: string) => {
-                              if (id === "start") return 50;
-                              const i = parseInt(id.slice(1), 10);
-                              return ((i + 1) / (desks.length + 1)) * 100;
-                            };
-                            const common = {
-                              fill: "none",
-                              stroke: "currentColor",
-                              strokeWidth: 1.6,
-                            } as const;
-                            const cls = "text-muted-foreground";
-                            const segs: ReactElement[] = [];
-                            edges.forEach((e) => {
-                              if (e.from === "start") {
-                                const y = yOf(e.to);
-                                segs.push(
-                                  <line key={e.id + "a"} x1="15%" y1="50%" x2="27%" y2="50%" {...common} className={cls} />,
-                                  <line key={e.id + "b"} x1="27%" y1="50%" x2="27%" y2={`${y}%`} {...common} className={cls} />,
-                                  <line key={e.id + "c"} x1="27%" y1={`${y}%`} x2="39%" y2={`${y}%`} {...common} className={cls} markerEnd="url(#garrow)" />
-                                );
-                              } else {
-                                const down = parseInt(e.to.slice(1), 10) > parseInt(e.from.slice(1), 10);
-                                const ya = yOf(e.from);
-                                const yb = yOf(e.to);
-                                const lane = down ? 59 : 62;
-                                const y1 = down ? ya + 2.2 : ya - 2.2;
-                                const y2 = down ? yb - 2.2 : yb + 2.2;
-                                segs.push(
-                                  <line key={e.id + "a"} x1="57%" y1={`${y1}%`} x2={`${lane}%`} y2={`${y1}%`} {...common} className={cls} />,
-                                  <line key={e.id + "b"} x1={`${lane}%`} y1={`${y1}%`} x2={`${lane}%`} y2={`${y2}%`} {...common} className={cls} />,
-                                  <line key={e.id + "c"} x1={`${lane}%`} y1={`${y2}%`} x2="57%" y2={`${y2}%`} {...common} className={cls} markerEnd="url(#garrow)" />
-                                );
-                              }
-                            });
-                            return segs;
-                          })()}
-                        </svg>
+	                            </marker>
+	                          </defs>
+	                          {edges.map((edge) => {
+	                            const segments = routeGraphEdge(edge, geom.nodes);
+	                            return (
+	                              <g key={edge.id} data-graph-edge={edge.id} className="text-muted-foreground">
+	                                {segments.map((segment, index) => (
+	                                  <line
+	                                    key={index}
+	                                    {...segment}
+	                                    fill="none"
+	                                    stroke="currentColor"
+	                                    strokeWidth={1.6}
+	                                    vectorEffect="non-scaling-stroke"
+	                                    markerEnd={index === segments.length - 1 ? "url(#garrow)" : undefined}
+	                                  />
+	                                ))}
+	                              </g>
+	                            );
+	                          })}
+	                        </svg>
                         {/* switch 标记（仅 desk 之间，一对一来一回共用一个） */}
                         {Object.values(
                           edges.reduce<Record<string, GEdge>>((acc, e) => {
@@ -1605,19 +1731,17 @@ export default function App() {
                             const k = pairKey(e);
                             if (!acc[k]) acc[k] = e;
                             return acc;
-                          }, {})
-                        ).map((e) => {
-                          const yOf = (id: string) => {
-                            const i = parseInt(id.slice(1), 10);
-                            return ((i + 1) / (desks.length + 1)) * 100;
-                          };
-                          const my = (yOf(e.from) + yOf(e.to)) / 2;
-                          const k = pairKey(e);
-                          return (
-                            <button
-                              key={k}
-                              onClick={() => setGraphSel(k)}
-                              style={{ left: "60.5%", top: `${my}%` }}
+	                          }, {})
+	                        ).map((e) => {
+	                          const k = pairKey(e);
+	                          const position = graphSwitchPosition(e, geom.nodes);
+	                          if (!position) return null;
+	                          return (
+	                            <button
+	                              key={k}
+	                              data-graph-switch={k}
+	                              onClick={() => setGraphSel(k)}
+	                              style={{ left: position.left, top: position.top }}
                               className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] transition-colors ${
                                 graphSel === k
                                   ? "border-primary bg-primary/10 font-medium text-primary"
@@ -1628,9 +1752,12 @@ export default function App() {
                             </button>
                           );
                         })}
-                        {/* 启动画面主节点 */}
-                        <button
-                          onClick={() => setGraphSel("start")}
+	                        {/* 启动画面主节点 */}
+	                        <button
+	                          ref={startNodeRef}
+	                          data-graph-node="start"
+	                          title={startName}
+	                          onClick={() => setGraphSel("start")}
                           className={`absolute left-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
                             graphSel === "start"
                               ? "border-primary bg-primary/10"
@@ -1638,27 +1765,34 @@ export default function App() {
                           }`}
                         >
                           <MonitorPlay className="h-5 w-5 text-primary" />
-                          <span className="truncate px-1 text-xs font-medium">{startName}</span>
-                        </button>
+	                          <span className="w-full truncate px-1 text-xs font-medium">{startName}</span>
+	                        </button>
                         {/* Desk 矩形节点（desks[0] = 主 Desk，启动后第一个看到） */}
                         {desks.map((d, i) => {
                           const y = ((i + 1) / (desks.length + 1)) * 100;
                           const active = graphSel === `d${i}`;
                           return (
-                            <button
-                              key={i}
-                              onClick={() => {
+	                            <button
+	                              key={i}
+	                              ref={(node) => {
+	                                const id = `d${i}`;
+	                                if (node) deskNodeRefs.current.set(id, node);
+	                                else deskNodeRefs.current.delete(id);
+	                              }}
+	                              data-graph-node={`d${i}`}
+	                              title={d.name}
+	                              onClick={() => {
                                 setGraphSel(`d${i}`);
                                 setActiveDesk(i);
                               }}
                               style={{ left: "40%", top: `${y}%` }}
-                              className={`absolute z-10 -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
+	                              className={`absolute z-10 max-w-[42%] -translate-y-1/2 overflow-hidden rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
                                 active
                                   ? "border-primary bg-primary/10"
                                   : "border-border bg-background hover:border-primary/50"
                               }`}
                             >
-                              <div className="whitespace-nowrap text-sm font-medium">{d.name}</div>
+	                              <div className="truncate whitespace-nowrap text-sm font-medium">{d.name}</div>
                               <div className="text-[10px] text-muted-foreground">
                                 {i === 0 ? "主 Desk" : `Desk ${i + 1}`} · {d.icons.length} 图标
                               </div>
