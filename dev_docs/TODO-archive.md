@@ -207,3 +207,12 @@
 - [x] 用户于 2026-08-29 明确回复“验收通过”
 - [x] 合并到 master：`e070e79`
 - [x] 专属验收文档及人工验收清单保留，未删除
+
+## DOCK-003 桌面图标拖入 Dock（2026-08-29）
+
+- [x] 渲染器编辑模式支持桌面图标拖入 Dock：drop 反馈、启动目标去重、完整图标/启动字段保留
+- [x] 新增 `addDockIcon` 消息并接通 MessageType、Lively.Models.Message、IpcMessageConverter、Player、Core
+- [x] Core 写入包内 room.json，并在存在 `__source` 时同步源房间；预览模式不写盘
+- [x] 编辑模式支持 Dock 图标拖回桌面；继承全局 Dock 时仅建立当前 Desk 覆盖
+- [x] 自动检查通过：node --check、cargo test（Core 运行中）、cargo check、npm run build、build.ps1、git diff --check
+- [x] 用户验收通过（2026-08-29），已合并 master
