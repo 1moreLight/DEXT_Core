@@ -136,10 +136,31 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 ### 待补（按独立工作包接线）
 
-1. **拖拽进 Dock（DOCK-003）**：渲染器编辑模式拖桌面图标到 dock 区 → 新上行消息 → Core 落盘。
+1. **拖拽进 Dock（DOCK-003，已实现待验收）**：渲染器编辑模式拖桌面图标到 dock 区 → `addDockIcon` 上行消息 → Core 落盘。
 2. **分享/下载 Dock 皮肤（ROOM-001）**：随房间导出 zip 一起，room.css 必须在导出清单内。
 3. **运行态小圆点（DOCK-004）**：需要 Core 进程遥测。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
+
+### DOCK-003 拖入消息与持久化
+
+编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
+
+```jsonc
+{
+  "type": "addDockIcon",
+  "scope": "desk",             // 当前实现固定写入当前 Desk 的 Dock 覆盖
+  "deskIndex": 0,
+  "icon": {
+    "label": "Edge",
+    "icon_png": "<base64>",
+    "glyph": "🌐", "color": "#3b82f6",
+    "action": "启动 Edge",
+    "launch": { "target": "...", "args": "", "workdir": "" }
+  }
+}
+```
+
+Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIconCmd`，Core 在包内 `room.json` 的 `desks[deskIndex].dock.icons` 追加完整图标与启动信息；若目标已存在或启动目标为空则跳过。写包内成功后，读取 `__source` 并按目录/文件两种形态同步源房间。预览环境没有 `window.chrome.webview`，只更新内存预览，不触发写盘。
 
 ## 四、当前演示与验收状态
 

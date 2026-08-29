@@ -347,6 +347,21 @@ body.editing #size-group {
   align-items: center;
   gap: var(--dock-gap, 16px);
 }
+#dock-drop-hint {
+  display: none;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+}
+body.editing #dock-drop-hint { display: inline-flex; }
+#dock.drop-target .dock-inner {
+  outline: 2px solid var(--dext-success);
+  outline-offset: 3px;
+  background-color: rgba(16, 185, 129, 0.28);
+}
 #dock:not(.has-apps) #dock-apps { display: none; }
 #dock.has-apps .dock-sep {
   width: 1px;

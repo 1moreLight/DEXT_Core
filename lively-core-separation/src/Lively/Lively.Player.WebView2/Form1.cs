@@ -214,6 +214,23 @@ namespace Lively.Player.WebView2
                             RoomJson = (string)o.room.ToString(Newtonsoft.Json.Formatting.None),
                         });
                     }
+                    else if ((string)o.type == "addDockIcon")
+                    {
+                        var icon = o.icon;
+                        SendToParent(new LivelyMessageAddDockIconCmd
+                        {
+                            Scope = (string)o.scope ?? "desk",
+                            DeskIndex = (int?)o.deskIndex ?? 0,
+                            Label = (string)icon.label ?? string.Empty,
+                            IconPng = (string)icon.icon_png ?? string.Empty,
+                            Glyph = (string)icon.glyph ?? "?",
+                            Color = (string)icon.color ?? "#3b82f6",
+                            Action = (string)icon.action ?? string.Empty,
+                            LaunchTarget = (string)icon.launch.target ?? string.Empty,
+                            LaunchArgs = (string)icon.launch.args ?? string.Empty,
+                            LaunchWorkdir = (string)icon.launch.workdir ?? string.Empty,
+                        });
+                    }
                     else
                     {
                         SendToParent(new LivelyMessageLaunchCmd()

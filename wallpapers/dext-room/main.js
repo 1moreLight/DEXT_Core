@@ -353,6 +353,59 @@ function renderDockApps(cfg) {
   });
 }
 
+function dockDropHit(x, y) {
+  const cfg = dockCfg();
+  if (!cfg.enabled) return false;
+  const rect = dockEl.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function setDockDropFeedback(x, y) {
+  const hit = dockDropHit(x, y);
+  dockEl.classList.toggle("drop-target", hit);
+  return hit;
+}
+
+function addDockIconFromDesk(item) {
+  const launch = item?.launch;
+  const target = typeof launch?.target === "string" ? launch.target.trim() : "";
+  if (!target) {
+    showToast("该图标没有可用的启动目标");
+    return false;
+  }
+  const desk = ROOM.desks[currentDesk];
+  const cfg = dockCfg();
+  if (cfg.icons.some((icon) => icon?.launch?.target === target)) {
+    showToast("Dock 中已存在该应用");
+    return false;
+  }
+  if (!desk.dock || typeof desk.dock !== "object") desk.dock = {};
+  if (!Array.isArray(desk.dock.icons)) desk.dock.icons = cfg.icons.map((icon) => ({ ...icon, launch: icon.launch ? { ...icon.launch } : undefined }));
+  const label = typeof item.label === "string" && item.label ? item.label : target;
+  desk.dock.icons.push({
+    label,
+    icon_png: typeof item.icon_png === "string" ? item.icon_png : "",
+    glyph: item.glyph ?? "?",
+    color: item.color ?? "#3b82f6",
+    action: item.action ?? `启动 ${label}`,
+    launch: {
+      target,
+      args: typeof launch.args === "string" ? launch.args : "",
+      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
+    },
+  });
+  showToast(`已将 ${label} 添加到 Dock`);
+  if (window.chrome?.webview?.postMessage) {
+    window.chrome.webview.postMessage(JSON.stringify({
+      type: "addDockIcon",
+      scope: "desk",
+      deskIndex: currentDesk,
+      icon: desk.dock.icons[desk.dock.icons.length - 1],
+    }));
+  }
+  return true;
+}
+
 function persistRoom() {
   if (!window.chrome?.webview?.postMessage) return;
   window.chrome.webview.postMessage(JSON.stringify({ type: "saveRoom", room: ROOM }));
@@ -514,12 +567,22 @@ function startDrag(e, el, index) {
   const onMove = (ev) => {
     el.style.left = `${origLeft + ev.clientX - sx}px`;
     el.style.top = `${origTop + ev.clientY - sy}px`;
+    setDockDropFeedback(ev.clientX, ev.clientY);
   };
   const onUp = (ev) => {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
     el.classList.remove("dragging");
     el.style.transition = "";
+    const overDock = setDockDropFeedback(ev.clientX, ev.clientY);
+    dockEl.classList.remove("drop-target");
+    const desk = ROOM.desks[currentDesk];
+    const dragged = desk.icons[index];
+    if (overDock) {
+      addDockIconFromDesk(dragged);
+      renderDesk(currentDesk);
+      return;
+    }
     // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
     const s = sizeOf(ROOM.desks[currentDesk]);
@@ -527,8 +590,6 @@ function startDrag(e, el, index) {
     const rows = Math.max(1, Math.floor(rect.height / s.cellH));
     const col = Math.max(0, Math.min(cols - 1, Math.floor((ev.clientX - rect.left) / s.cellW)));
     const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / s.cellH)));
-    const desk = ROOM.desks[currentDesk];
-    const dragged = desk.icons[index];
     if (dragged.x === col && dragged.y === row) {
       renderDesk(currentDesk);
       return;
