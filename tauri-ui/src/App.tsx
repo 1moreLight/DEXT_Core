@@ -92,7 +92,7 @@ type EditNav = "library" | "room" | "dock";
 
 /* ---- room 思维导图 ----
    拓扑：启动画面只直连一个可选 Desk（无 switch，旧 Room 默认 d0）；
-   switch 只存在于相邻 desk 之间（一来一回）。 */
+   Desk 相邻上下双向连接，3 个以上时首尾从侧边双向环回。 */
 type GEdge = { id: string; from: string; to: string; trans: string };
 type Snapshot = {
   edges: GEdge[];
@@ -148,11 +148,32 @@ function seedEdges(ds: Desk[], hasStart: boolean, startDesk = 0): GEdge[] {
       { id: `s${i}b`, from: `d${i}`, to: `d${i - 1}`, trans: "fade" }
     );
   }
+  if (ds.length > 2) {
+    const last = ds.length - 1;
+    edges.push(
+      { id: "s-wrap-f", from: `d${last}`, to: "d0", trans: "slide" },
+      { id: "s-wrap-b", from: "d0", to: `d${last}`, trans: "fade" }
+    );
+  }
   return edges;
 }
 
 function pairKey(e: GEdge): string {
   return [e.from, e.to].sort().join("|");
+}
+
+function reconcileGraphEdges(
+  current: GEdge[],
+  desks: Desk[],
+  hasStart: boolean,
+  startDesk: number
+): GEdge[] {
+  const byRoute = new Map(current.map((edge) => [`${edge.from}>${edge.to}`, edge.trans]));
+  const byId = new Map(current.map((edge) => [edge.id, edge.trans]));
+  return seedEdges(desks, hasStart, startDesk).map((edge) => ({
+    ...edge,
+    trans: byRoute.get(`${edge.from}>${edge.to}`) ?? byId.get(edge.id) ?? edge.trans,
+  }));
 }
 
 function relativeGraphRect(node: HTMLElement, canvas: DOMRect): GraphNodeRect {
@@ -206,8 +227,26 @@ function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): Grap
 
   const fromIndex = parseInt(edge.from.slice(1), 10);
   const toIndex = parseInt(edge.to.slice(1), 10);
-  const down = toIndex > fromIndex;
-  const offset = Math.min(10, Math.max(5, Math.min(from.height, to.height) * 0.16));
+  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
+  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
+
+  if (!wraps) {
+    const down = toIndex > fromIndex;
+    const laneOffset = down ? -8 : 8;
+    const fromX = from.cx + laneOffset;
+    const toX = to.cx + laneOffset;
+    const fromY = down ? from.bottom : from.top;
+    const toY = down ? to.top : to.bottom;
+    const middleY = (fromY + toY) / 2;
+    return [
+      { x1: fromX, y1: fromY, x2: fromX, y2: middleY },
+      { x1: fromX, y1: middleY, x2: toX, y2: middleY },
+      { x1: toX, y1: middleY, x2: toX, y2: toY },
+    ];
+  }
+
+  const down = fromIndex < toIndex;
+  const offset = 8;
   const maxRight = Math.max(from.right, to.right);
   const laneX = maxRight + (down ? 30 : 66);
   const fromY = from.cy + (down ? offset : -offset);
@@ -226,6 +265,18 @@ function graphSwitchPosition(
   const from = nodes[edge.from];
   const to = nodes[edge.to];
   if (!from || !to) return null;
+  const fromIndex = parseInt(edge.from.slice(1), 10);
+  const toIndex = parseInt(edge.to.slice(1), 10);
+  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
+  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
+  if (!wraps) {
+    const upper = fromIndex < toIndex ? from : to;
+    const lower = fromIndex < toIndex ? to : from;
+    return {
+      left: (from.cx + to.cx) / 2,
+      top: (upper.bottom + lower.top) / 2,
+    };
+  }
   return {
     left: Math.max(from.right, to.right) + 48,
     top: (from.cy + to.cy) / 2,
@@ -1016,16 +1067,11 @@ export default function App() {
 
   function addDesk() {
     const newIndex = desks.length;
+    const nextDesks = [...desks, newDesk(newIndex)];
     pushHistory();
     touch();
-    setDesks((prev) => [...prev, newDesk(prev.length)]);
-    if (newIndex > 0) {
-      setEdges((prev) => [
-        ...prev,
-        { id: `s${newIndex}f`, from: `d${newIndex - 1}`, to: `d${newIndex}`, trans: "slide" },
-        { id: `s${newIndex}b`, from: `d${newIndex}`, to: `d${newIndex - 1}`, trans: "fade" },
-      ]);
-    }
+    setDesks(nextDesks);
+    setEdges((current) => reconcileGraphEdges(current, nextDesks, hasStart, startDesk));
     setActiveDesk(newIndex);
     setGraphSel(`d${newIndex}`);
   }
@@ -1851,10 +1897,48 @@ export default function App() {
 	                                aria-hidden="true"
 	                                className="pointer-events-none absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
 	                              />
-	                              <span
-	                                aria-hidden="true"
-	                                className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                              />
+	                              {i > 0 && (
+	                                <>
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ left: "calc(50% - 8px)" }}
+	                                    className="pointer-events-none absolute -top-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ left: "calc(50% + 8px)" }}
+	                                    className="pointer-events-none absolute -top-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                </>
+	                              )}
+	                              {i < desks.length - 1 && (
+	                                <>
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ left: "calc(50% - 8px)" }}
+	                                    className="pointer-events-none absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ left: "calc(50% + 8px)" }}
+	                                    className="pointer-events-none absolute -bottom-1.5 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                </>
+	                              )}
+	                              {desks.length > 2 && (i === 0 || i === desks.length - 1) && (
+	                                <>
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ top: "calc(50% - 8px)" }}
+	                                    className="pointer-events-none absolute -right-1.5 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                  <span
+	                                    aria-hidden="true"
+	                                    style={{ top: "calc(50% + 8px)" }}
+	                                    className="pointer-events-none absolute -right-1.5 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
+	                                  />
+	                                </>
+	                              )}
 	                            </button>
                           );
                         })}
