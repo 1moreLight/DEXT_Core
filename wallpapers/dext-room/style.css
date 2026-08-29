@@ -91,6 +91,11 @@ html, body {
   transform: scale(1.12);
 }
 
+.icon-layer.drop-target {
+  outline: 2px dashed var(--dext-success);
+  outline-offset: -4px;
+}
+
 @keyframes jiggle {
   0% { rotate: -1.4deg; }
   50% { rotate: 1.4deg; }
@@ -380,6 +385,11 @@ body.editing #dock-drop-hint { display: inline-flex; }
   padding: 2px;
   transition: transform 0.12s ease-out;
   transform-origin: center center;
+}
+.dock-icon.dragging {
+  z-index: 50;
+  opacity: 0.85;
+  pointer-events: none;
 }
 .dock-icon .icon-glyph,
 .dock-icon .icon-img {

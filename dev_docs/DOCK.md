@@ -162,6 +162,8 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIconCmd`，Core 在包内 `room.json` 的 `desks[deskIndex].dock.icons` 追加完整图标与启动信息；若目标已存在或启动目标为空则跳过。写包内成功后，读取 `__source` 并按目录/文件两种形态同步源房间。预览环境没有 `window.chrome.webview`，只更新内存预览，不触发写盘。
 
+同一编辑模式下也支持 Dock → 桌面：拖动 Dock 图标到桌面网格的虚线 drop 区，会将图标完整复制回当前 Desk 的 `icons` 并从当前 Desk Dock 移除；继承全局 Dock 的图标通过建立桌级覆盖实现“只从当前 Desk 移出”，不会影响其他 Desk。目标位置已有桌面图标或启动目标重复时保持原 Dock 不变。
+
 ## 四、当前演示与验收状态
 
 - 演示房间 `rooms/test-dock-hud/`：全局底部 + 两桌各自 icons（OpenCode/Steam 真图标），切桌只换应用、位置不动；autoHide 已关（功能保留）
