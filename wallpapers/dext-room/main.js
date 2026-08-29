@@ -383,10 +383,7 @@ function dockDropHit(x, y) {
   const cfg = dockCfg();
   if (!cfg.enabled) return false;
   const rect = dockEl.getBoundingClientRect();
-  const margin = 20;
-  return rect.width > 0 && rect.height > 0 &&
-    x >= rect.left - margin && x <= rect.right + margin &&
-    y >= rect.top - margin && y <= rect.bottom + margin;
+  return rect.width > 0 && rect.height > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
 function setDockDropFeedback(x, y) {
@@ -679,32 +676,23 @@ function attachPress(el, index) {
 function startDrag(e, el, index) {
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
-  const rect = el.getBoundingClientRect();
-  const ghost = el.cloneNode(true);
-  ghost.classList.add("icon-drag-ghost");
-  ghost.querySelector(".icon-del")?.remove();
-  ghost.style.left = `${rect.left}px`;
-  ghost.style.top = `${rect.top}px`;
-  ghost.style.width = `${rect.width}px`;
-  ghost.style.height = `${rect.height}px`;
-  document.body.appendChild(ghost);
-  el.classList.add("dragging-source");
+  el.classList.add("dragging");
+  el.style.transition = "none";
   const sx = e.clientX;
   const sy = e.clientY;
+  const origLeft = parseFloat(el.style.left);
+  const origTop = parseFloat(el.style.top);
 
   const onMove = (ev) => {
-    ghost.style.transform = `translate3d(${ev.clientX - sx}px, ${ev.clientY - sy}px, 0)`;
+    el.style.left = `${origLeft + ev.clientX - sx}px`;
+    el.style.top = `${origTop + ev.clientY - sy}px`;
     setDockDropFeedback(ev.clientX, ev.clientY);
   };
-  const cleanup = () => {
+  const onUp = (ev) => {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
-    el.removeEventListener("pointercancel", onCancel);
-    el.classList.remove("dragging-source");
-    ghost.remove();
-  };
-  const onUp = (ev) => {
-    cleanup();
+    el.classList.remove("dragging");
+    el.style.transition = "";
     const overDock = setDockDropFeedback(ev.clientX, ev.clientY);
     dockEl.classList.remove("drop-target");
     const desk = ROOM.desks[currentDesk];
@@ -735,14 +723,8 @@ function startDrag(e, el, index) {
     persistRoom();
     renderDesk(currentDesk);
   };
-  const onCancel = () => {
-    cleanup();
-    dockEl.classList.remove("drop-target");
-    renderDesk(currentDesk);
-  };
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerup", onUp);
-  el.addEventListener("pointercancel", onCancel);
 }
 
 function enterEdit() {

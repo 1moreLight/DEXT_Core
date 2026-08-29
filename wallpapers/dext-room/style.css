@@ -91,26 +91,6 @@ html, body {
   transform: scale(1.12);
 }
 
-.icon.dragging-source {
-  opacity: 0.3;
-}
-
-.icon-drag-ghost {
-  position: fixed !important;
-  z-index: 60;
-  margin: 0;
-  opacity: 0.95;
-  pointer-events: none;
-  animation: none !important;
-  transition: none !important;
-  will-change: transform;
-}
-
-.icon-drag-ghost .icon-img,
-.icon-drag-ghost .icon-glyph {
-  transform: scale(1.12);
-}
-
 .icon-layer.drop-target {
   outline: 2px dashed var(--dext-success);
   outline-offset: -4px;
