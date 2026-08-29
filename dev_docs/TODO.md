@@ -188,5 +188,5 @@
 - [x] 追加 ERRORS #27，并更新 README / PROJECT 的 Room 应用契约（2026-08-29）
 - [x] Rust 定向测试、`applies_room_wallpaper`、cargo check、前端构建、渲染器语法和差异检查通过（2026-08-29）
 - [x] Release 全量构建并启动本 worktree，实测 cockpit → my-room 后旧脚本/样式/素材均删除且桌面无 HUD/淡字（2026-08-29）
-- [~] 只暂存本工作包具名文件并提交，进入待用户验收
+- [x] 只暂存本工作包具名文件并提交实现 `54e165e`，进入待用户验收（2026-08-29）
 - [?] 用户按 `acceptance/ROOM-FIX-001-room-apply-isolation.md` 验收；通过前不合并 master

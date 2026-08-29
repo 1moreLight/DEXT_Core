@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`fix/room-fix-001-apply-isolation`
-- 提交：待提交
+- 提交：`54e165e`
 - 目标：应用新 Room 时完整替换运行包内属于 Room 的可选脚本、样式和素材，上一 Room 的 cockpit HUD 不再残留。
 - 范围外：DOCK-004 运行态、Dock 拖拽、`__source` 契约重构、C# / proto、多显示器及其他路线图功能。
 
