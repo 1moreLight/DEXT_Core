@@ -216,3 +216,14 @@
 - [x] 编辑模式支持 Dock 图标拖回桌面；继承全局 Dock 时仅建立当前 Desk 覆盖
 - [x] 自动检查通过：node --check、cargo test（Core 运行中）、cargo check、npm run build、build.ps1、git diff --check
 - [x] 用户验收通过（2026-08-29），已合并 master
+
+## UI-003 导图几何布局接线（2026-08-29）
+
+- [x] 使用真实 DOM 几何与 ResizeObserver 重做导图布局和贴边路由，修复长名称溢出
+- [x] 增加醒目的“新增 Desk”、可选启动目标、唯一启动线及撤回/重做快照
+- [x] Desk 拓扑定为环形：相邻上下连接，3 个以上首尾从侧边环回；1/2 Desk 不重复造边
+- [x] 每对 Desk 视觉收敛为一条两端带箭头的双向线，switch 面板仍分别编辑两个方向
+- [x] 2/3/4 Desk、启动目标、撤回/重做、深浅主题及宽窄窗口验收通过
+- [x] Room Scene 产品方向作为 DXT-001/SCENE-001 输入写入文档，不扩大 UI-003 代码范围
+- [x] 用户于 2026-08-29 回复“ok合并提交”，最终验收通过
+- [x] 合并到 master：`e51cb0a`；实现提交 `76b0d7b`、`0788884`、`4fefacc`、`6c1f13e`
