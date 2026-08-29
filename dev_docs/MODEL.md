@@ -61,7 +61,7 @@ Library（rooms/library.json）
 - **值的多态三态**（2026-08-25 扩）：字符串=预设名（slide/fade/zoom/none/text）、
   `{type:"video",src}`=stinger、`{type:"action",name}`=广播页面事件给房间脚本（见第六节）。
 - 环形导航下 from/to 取实际下标（如末桌→首桌为 `"2>0"`）。
-- **主 Desk**（2026-08-26 定稿）：启动画面直连 desks[0]（无 switch），desks[0] 即启动后默认看到的 desk；switch 边只存在于相邻 desk 之间。
+- **启动目标 Desk**（2026-08-29 修订）：启动画面只直连一个 Desk（无 switch），目标 Desk 可在配置器中选择；旧 Room 或缺少持久选择时默认 `desks[0]`。目标字段及真桌面运行语义由 DXT-001/UI-001 定稿；switch 边仍只存在于相邻 Desk 之间。
 
 ## 四、清理项
 

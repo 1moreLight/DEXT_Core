@@ -33,6 +33,7 @@
 | #26 | Windows 无 Bash 时 Playwright 包装脚本不可用 | [toolchain](errors/toolchain.md) |
 | #27 | apply_room 只覆盖不删除导致跨 Room 运行包污染 | [backend](errors/backend.md) |
 | #28 | flex 节点内 `truncate` 未约束宽度仍会溢出 | [frontend](errors/frontend.md) |
+| #29 | 撤回删除节点后选择状态仍指向不存在索引 | [frontend](errors/frontend.md) |
 
 ## 分册
 
