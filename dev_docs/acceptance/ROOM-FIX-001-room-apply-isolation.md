@@ -36,3 +36,4 @@
 
 - 2026-08-29 开发侧预验收：实际依次应用 `cockpit-room` 和 `my-room`；运行包中的 `room.js`、`room.css`、`transition`、`switch`、`start`、`end` 均按源 Room 清理，桌面截图无 cockpit HUD 和底部淡字。
 - 2026-08-29 用户确认通过并要求合并。
+- 2026-08-29 已合并 master：`e22f3f4`。
