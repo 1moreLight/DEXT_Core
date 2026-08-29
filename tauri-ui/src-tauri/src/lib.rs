@@ -193,49 +193,84 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
     Ok(room_dir.to_string_lossy().into_owned())
 }
 
-// copy room data (room.json + background/) into the wallpaper package, then reload.
-// WebView2 virtual host can only serve files inside the package dir (ERRORS #7).
-#[tauri::command]
-async fn apply_room(room_dir: String) -> Result<(), String> {
-    let src = std::path::Path::new(&room_dir);
-    let pkg = std::path::Path::new(WALLPAPER_DIR);
-    // stamp the library source so desktop-side edits (msg_save_room) sync back
+const ROOM_ASSET_DIRS: [&str; 5] = ["background", "transition", "switch", "start", "end"];
+const ROOM_OPTIONAL_FILES: [&str; 2] = ["room.js", "room.css"];
+
+fn remove_room_owned_path(path: &std::path::Path, label: &str) -> Result<(), String> {
+    if path.is_dir() {
+        std::fs::remove_dir_all(path).map_err(|e| format!("remove old {label} failed: {e}"))?;
+    } else if path.exists() {
+        std::fs::remove_file(path).map_err(|e| format!("remove old {label} failed: {e}"))?;
+    }
+    Ok(())
+}
+
+fn copy_room_dir(src: &std::path::Path, dst: &std::path::Path, label: &str) -> Result<(), String> {
+    std::fs::create_dir_all(dst).map_err(|e| format!("mkdir {label} failed: {e}"))?;
+    for entry in std::fs::read_dir(src).map_err(|e| format!("read {label} failed: {e}"))? {
+        let entry = entry.map_err(|e| format!("read {label} entry failed: {e}"))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|e| format!("inspect {label} entry failed: {e}"))?;
+        let target = dst.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_room_dir(&entry.path(), &target, label)?;
+        } else if file_type.is_file() {
+            std::fs::copy(entry.path(), target).map_err(|e| format!("copy {label} failed: {e}"))?;
+        }
+    }
+    Ok(())
+}
+
+fn sync_room_to_package(
+    src: &std::path::Path,
+    pkg: &std::path::Path,
+    source_stamp: &str,
+) -> Result<(), String> {
+    // Validate and serialize first: an unreadable Room must not clean the active package.
     let mut room: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(src.join("room.json"))
             .map_err(|e| format!("read room.json failed: {e}"))?,
     )
     .map_err(|e| format!("parse room.json failed: {e}"))?;
-    room["__source"] = serde_json::Value::String(room_dir.clone());
-    std::fs::write(
-        pkg.join("room.json"),
-        serde_json::to_string_pretty(&room).unwrap(),
-    )
-    .map_err(|e| format!("copy room.json failed: {e}"))?;
-    // room asset subdirs copied verbatim into the package
-    // ("transition" kept for pre-rename rooms; new name is "switch")
-    for sub in ["background", "transition", "switch", "start", "end"] {
-        let sub_src = src.join(sub);
-        if !sub_src.is_dir() {
-            continue;
-        }
-        let sub_dst = pkg.join(sub);
-        std::fs::create_dir_all(&sub_dst)
-            .map_err(|e| format!("mkdir {sub} failed: {e}"))?;
-        for entry in std::fs::read_dir(&sub_src).map_err(|e| format!("read {sub} failed: {e}"))? {
-            let entry = entry.map_err(|e| e.to_string())?;
-            if entry.file_type().map_err(|e| e.to_string())?.is_file() {
-                std::fs::copy(entry.path(), sub_dst.join(entry.file_name()))
-                    .map_err(|e| format!("copy {sub} failed: {e}"))?;
-            }
+    let object = room
+        .as_object_mut()
+        .ok_or_else(|| "parse room.json failed: root must be an object".to_string())?;
+    object.insert(
+        "__source".into(),
+        serde_json::Value::String(source_stamp.to_string()),
+    );
+    let room_json =
+        serde_json::to_vec_pretty(&room).map_err(|e| format!("serialize room.json failed: {e}"))?;
+
+    std::fs::create_dir_all(pkg).map_err(|e| format!("mkdir wallpaper package failed: {e}"))?;
+    for sub in ROOM_ASSET_DIRS {
+        let source = src.join(sub);
+        let target = pkg.join(sub);
+        remove_room_owned_path(&target, sub)?;
+        if source.is_dir() {
+            copy_room_dir(&source, &target, sub)?;
         }
     }
-    // optional room-owned script/style (programmable rooms, MODEL.md §6)
-    for f in ["room.js", "room.css"] {
-        let s = src.join(f);
-        if s.is_file() {
-            std::fs::copy(&s, pkg.join(f)).map_err(|e| format!("copy {f} failed: {e}"))?;
+    for name in ROOM_OPTIONAL_FILES {
+        let source = src.join(name);
+        let target = pkg.join(name);
+        remove_room_owned_path(&target, name)?;
+        if source.is_file() {
+            std::fs::copy(source, target).map_err(|e| format!("copy {name} failed: {e}"))?;
         }
     }
+    std::fs::write(pkg.join("room.json"), room_json)
+        .map_err(|e| format!("copy room.json failed: {e}"))
+}
+
+// Mirror Room-owned data into the wallpaper package, then reload it.
+// WebView2 virtual host can only serve files inside the package dir (ERRORS #7/#27).
+#[tauri::command]
+async fn apply_room(room_dir: String) -> Result<(), String> {
+    let src = std::path::Path::new(&room_dir);
+    let pkg = std::path::Path::new(WALLPAPER_DIR);
+    sync_room_to_package(src, pkg, &room_dir)?;
     grpc::set_wallpaper(WALLPAPER_DIR).await
 }
 
@@ -421,7 +456,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::save_room_css_file;
+    use super::{save_room_css_file, sync_room_to_package};
 
     fn test_dir(label: &str) -> std::path::PathBuf {
         let stamp = std::time::SystemTime::now()
@@ -456,5 +491,85 @@ mod tests {
         assert!(!dir.join("room.css").exists());
 
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn room_apply_removes_previous_room_owned_files() {
+        let root = test_dir("room-apply-isolation");
+        let src = root.join("source");
+        let pkg = root.join("package");
+        std::fs::create_dir_all(src.join("background/nested")).unwrap();
+        std::fs::create_dir_all(pkg.join("background/obsolete")).unwrap();
+        for sub in ["transition", "switch", "start", "end"] {
+            std::fs::create_dir_all(pkg.join(sub)).unwrap();
+            std::fs::write(pkg.join(sub).join("cockpit.txt"), "old").unwrap();
+        }
+        std::fs::write(
+            src.join("room.json"),
+            r#"{"desks":[{"name":"Clean","icons":[]}]}"#,
+        )
+        .unwrap();
+        std::fs::write(src.join("background/new.png"), "new background").unwrap();
+        std::fs::write(src.join("background/nested/asset.txt"), "nested").unwrap();
+        std::fs::write(pkg.join("room.json"), r#"{"name":"cockpit"}"#).unwrap();
+        std::fs::write(pkg.join("background/old.png"), "old background").unwrap();
+        std::fs::write(pkg.join("background/obsolete/old.txt"), "old nested").unwrap();
+        std::fs::write(pkg.join("room.js"), "cockpit script").unwrap();
+        std::fs::write(pkg.join("room.css"), "cockpit style").unwrap();
+
+        sync_room_to_package(&src, &pkg, "C:/rooms/clean-room").unwrap();
+
+        assert!(!pkg.join("room.js").exists());
+        assert!(!pkg.join("room.css").exists());
+        for sub in ["transition", "switch", "start", "end"] {
+            assert!(!pkg.join(sub).exists(), "stale {sub} directory remains");
+        }
+        assert!(!pkg.join("background/old.png").exists());
+        assert!(!pkg.join("background/obsolete").exists());
+        assert_eq!(
+            std::fs::read_to_string(pkg.join("background/new.png")).unwrap(),
+            "new background"
+        );
+        assert_eq!(
+            std::fs::read_to_string(pkg.join("background/nested/asset.txt")).unwrap(),
+            "nested"
+        );
+        let applied: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(pkg.join("room.json")).unwrap()).unwrap();
+        assert_eq!(applied["desks"][0]["name"], "Clean");
+        assert_eq!(applied["__source"], "C:/rooms/clean-room");
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn invalid_room_json_keeps_active_package_unchanged() {
+        let root = test_dir("room-apply-invalid");
+        let src = root.join("source");
+        let pkg = root.join("package");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::create_dir_all(pkg.join("start")).unwrap();
+        std::fs::write(src.join("room.json"), "{ invalid").unwrap();
+        std::fs::write(pkg.join("room.json"), "active room").unwrap();
+        std::fs::write(pkg.join("room.js"), "active script").unwrap();
+        std::fs::write(pkg.join("start/active.txt"), "active asset").unwrap();
+
+        let error = sync_room_to_package(&src, &pkg, "C:/rooms/broken").unwrap_err();
+
+        assert!(error.contains("parse room.json failed"));
+        assert_eq!(
+            std::fs::read_to_string(pkg.join("room.json")).unwrap(),
+            "active room"
+        );
+        assert_eq!(
+            std::fs::read_to_string(pkg.join("room.js")).unwrap(),
+            "active script"
+        );
+        assert_eq!(
+            std::fs::read_to_string(pkg.join("start/active.txt")).unwrap(),
+            "active asset"
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
     }
 }
