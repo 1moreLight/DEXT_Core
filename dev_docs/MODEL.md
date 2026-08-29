@@ -1,174 +1,205 @@
-# Room↔Desk 概念模型（schema v1 蓝图）
+# room.json v1 产品契约（DXT-001 需求确认稿）
 
-> 初稿于 2026-08-25，2026-08-29 按环形拓扑与官方 SceneHost 方向修订。
-> 本文是 schema v1 的前置输入；概念决策仍有效，当前实现状态和排期只看 ROADMAP.md。
+> 2026-08-29 根据配置器 UI-003 和本轮用户讨论重写。
+> 本文先固定产品语义；正式 JSON Schema、字段说明和验收文件仍由 DXT-001 开发阶段交付。
 
-## 一、实体与关系
+## 一、Room 和官方宿主的边界
 
-```
-Room ──── 分享单位（文件夹 → zip），自包含
- │   room.json        数据 + 内容清单（唯一契约）
- │   background/      Desk 背景 Scene 素材
- │   start/switch/end/ 对应演出 Scene 素材
- │   transition/      旧转场目录，仅兼容读取
- ├──▶ Desk[0..N]      页面：有序数组，环形导航（% length），≥ 1 个
- │      name / background / icons[] / iconSize
- └──▶ Icon[0..N/桌]   值拷贝语义：base64 图 + launch 快照
-                      稀疏网格坐标 (x,y)，同页内唯一（拖拽交换保证）
+- **Room** 是一个可分享的文件夹，`room.json` 是配置器、渲染器和未来 zip 共用的数据契约。
+- **Desk** 是 Room 中有顺序的一页；`desks` 数组顺序就是配置器里排好的页面顺序。
+- Dext 官方 HTML 宿主负责 Desk、Dock、图标、导航、IPC、保存、预览和生命周期。
+- 用户只定制 `background`、`start`、`switch`、`end` 的内容，可以是图片、视频或 HTML。
+- 用户 HTML 只能在受控内容容器中运行，不能替换官方宿主、直接操作 Dock 或伪造保存/运行态消息。
+- v1 是重构后的新格式，不承担旧 Room、旧 `transition`、顶层 `room.js` / `room.css` 或旧素材目录的兼容与迁移。
 
-Library（rooms/library.json）
-    配置器私有应用库，不属于任何 Room；
-    拖入 Desk 时快照为 Icon，此后与库无引用关系
-```
+## 二、v1 结构草案
 
-要点：
-
-- **Room = 主题包**，分享/上传/下载的单位；room.json 自包含，不引用包外资源。
-- **Desk = 页面**，对应手机主屏的一页；身份 = 数组下标（无 id），顺序即导航顺序。
-- **Icon 是拷贝不是引用**：从 Library 拖入即内嵌（base64 + launch 三元组快照），删库不影响桌面。
-
-## 二、字段归属判据
-
-> **切到另一页时希望它变吗？** 变 → desk 级；不变 → room 级。
-
-| 字段 | 层级 | 判定 |
-|---|---|---|
-| `name` | desk | ✓ 页面标识 |
-| `background` | desk | ✓ 每页换景；v1 目标为 image/video/html `ContentSpec`，空值纯黑兜底 |
-| `icons` + `x,y` | desk | ✓ 页面内容，稀疏网格 |
-| `iconSize` | desk | ✓ 每页密度独立 |
-| `switch` / `switches` | room | ✓ 切换行为，全房间一致（见下节；旧名 transition 兼容读取） |
-| 外观主题（颜色/字体/Dock 样式） | — | **暂不做**（2026-08-25 拍板 YAGNI），将来若做进 `room.theme` |
-
-## 三、转场：有向边模型（本轮核心决策）
-
-切桌动画按 **允许导航的 desk 有向边** 建模，不生成任意两桌之间的完整图。相邻 Desk 双向连接；N≥3 时首尾也双向连接。数据上用「房间默认 + 边级覆盖表」，两个方向可以不同：
+以下名称优先复用当前 UI 和既有 Room 字段，不增加 Desk ID，也不另建一套同义结构。
 
 ```jsonc
 {
-  "switch": "slide",                // 房间默认（旧字段 transition 兼容读取）
-  "switches": {                     // 可选：边级覆盖表（新字段，预留接口）
-    "0>1": "fade",
-    "1>0": { "type": "video", "src": "switch/back.mp4" },
-    "2>1": "zoom"
-  }
-}
-```
+  "version": 1,
+  "startDesk": 0,
 
-- key 格式 `"from>to"`，值为下标；方向天然区分来回。
-- 渲染时查找顺序：`switches["cur>next"] ?? switch ?? (旧字段 transition) ?? "slide"`。
-- 未覆盖的边全部走默认 → 现有房间零迁移。
-- **当前 v0.x 值类型**：字符串预设（slide/fade/zoom/none/text）、`{type:"video",src}` stinger、`{type:"action",name}` 顶层脚本事件。v1 目标改为官方预设或 image/video/html `ContentSpec`，兼容策略由 DXT-001 定稿。
-- 环形导航下 from/to 取实际下标（如末桌→首桌为 `"2>0"`）。
-- **启动目标 Desk**（2026-08-29 修订）：启动画面只直连一个 Desk（无 switch），目标 Desk 可在配置器中选择；旧 Room 或缺少持久选择时默认 `desks[0]`。目标字段及真桌面运行语义由 DXT-001/UI-001 定稿。
-- **Desk 环形导航**（2026-08-29 修订）：相邻 Desk 建一组双向边；Desk 数量 ≥3 时，首 Desk 与末 Desk 再建一组双向边，使每个 Desk 都有上一页和下一页。2 个 Desk 只保留一组双向边，1 个 Desk 无 switch。配置器几何中相邻边连接节点上/下，首尾环线走侧边；持久化由 UI-002 接线。
+  "start": {
+    "name": "开机画面",
+    "type": "image",
+    "src": "start/boot.png"
+  },
+  "end": {
+    "name": "关机画面",
+    "type": "html",
+    "src": "end/index.html"
+  },
 
-## 四、清理项
-
-- **`transitionText` 废弃**：v1 移除该字段。text 类型转场保留在预设里，文案改固定模板
-  （渲染器内部生成，不再是数据字段）。
-- **`__source`**：只属于已应用的运行包，是 apply_room 盖章、Core 保存回写使用的双写戳，不是 Room 内容。源 Room 和未来导出 zip 禁止携带，配置器预览也不生成；DXT-001 需把运行包扩展与可分享契约明确分开。
-
-## 五、不变量
-
-1. `desks.length ≥ 1`
-2. desk 身份 = 下标；数组顺序 = 导航顺序（环形）
-3. 同一 desk 内 icon 的 (x,y) 唯一（编辑器保证；宽容读取不校验重复）
-4. room.json 自包含：素材路径相对包根，一律 ASCII
-5. 宽容读取：缺字段一律默认值（ERRORS #4 教训）；未知字段忽略不报错
-6. 图标无 `launch` 时双击走 `action` toast 文案
-
-## 六、Room Scene 与官方宿主边界（2026-08-29 修订）
-
-> 高达驾驶舱的画面可以由作者用 HTML/CSS/JS 创作，但 Desk、Dock、图标、导航、IPC、保存和关闭流程仍属于 Dext 官方宿主。作品能高度自定义内容，不能替换软件底座。
-
-### 6.1 v1 目标分层
-
-- **官方宿主层**：Dext 自带并维护的 HTML/CSS/JS 骨架，负责 Desk、Dock、图标、输入、IPC、持久化、预览和生命周期。
-- **用户 Scene 内容层**：只进入 background/start/switch/end 的受控容器，可为 image、video 或 html。
-- image/video 是官方 SceneHost 的简单输入；html 是高级作者或官方骨架/vibe coding 生成的内容页面。
-- room.json 保留真实类型，配置器重开后仍知道用户选的是图片、视频还是 HTML。
-- 静态图片可由官方宿主统一叠加轻微动态效果；该效果属于渲染策略，不把动画进度等运行态写入 room.json。
-- HTML Scene 只能通过受控消息表达 ready、换页时机和 done；允许的消息、来源校验、超时和失败回退由 SCENE-001 定稿实现。
-
-### 6.2 内容类型草案
-
-```jsonc
-{ "type": "image", "src": "background/idle.png" }
-{ "type": "video", "src": "background/cruise.mp4", "loop": true }
-{ "type": "html",  "src": "background/combat/index.html" }
-```
-
-DXT-001 决定最终字段、各槽允许的选项与默认值。推荐保持一个共享的 `ContentSpec` 形状，避免四套播放器契约分叉。
-
-### 6.3 当前 v0.x 与目标的差距
-
-- `cockpit-room` 已证明 HTML 内容能在现有 WebView2/Lively 链路中运行；start/end 已有 HTML 原型。
-- background 当前只稳定支持图片/视频，switch 仍包含预设、视频和 action/顶层 room.js 路线，尚未统一成 SceneHost。
-- 顶层 `room.js` / `room.css` 可以直接影响官方 DOM，与 v1 “用户只控制内容层”的安全边界冲突。现阶段保留兼容，不把它写成新 Room 的推荐创作入口。
-- 当前 `window.dext` 和 `dext:slotDone` 是能力原型，不等于最终隔离协议；SCENE-001 必须补来源校验、允许消息清单、超时、失败回退和资源边界。
-
-### 6.4 统一 Scene 生命周期目标
-
-> 运行底座统一是官方 HTML SceneHost；image/video/html 是三种内容输入。start / end / switch / background 共用内容模型，但生命周期可按用途不同。
-
-```jsonc
-// 当前原型示意；最终字段由 DXT-001 定稿：
-{ "type": "image", "src": "start/intro.png" }
-{ "type": "video", "src": "start/intro.mp4", "loop": false }
-{ "type": "html",  "src": "start/index.html", "timeout": 20 }
-```
-
-- **start**：渲染器加载 → renderDesk → start Scene 全屏覆盖 → 结束揭晓。缺省无覆盖。
-- **end**：Core 发 cmd_close → Player 转发 `dext:end` → 渲染器播 end Scene → ack `dext:endDone` → Player 退出；Player 侧 5s 强制上限，无 Scene 零延迟。
-- **switch**：需要明确“何时换 Desk”和“何时结束”；video 可用默认中点，HTML 通过受控消息请求，异常时由官方超时回退。
-- **background**：默认长驻并随 Desk 切换，不允许自行写 Room 或操纵 Dock。
-- Room 目标素材目录：`background/`、`switch/`、`start/`、`end/`；旧 `transition/` 只兼容读取。
-
-## 七、room.json v1 字段总表（草案）
-
-```jsonc
-{
-  "desks": [                        // 必需，≥1
-    {
-      "name": "Desk 1",             // 缺省 "Desk N"
-      "background": <ContentSpec> | null,
-      "iconSize": "large"|"medium"|"small",   // 缺省 medium
-      "icons": [
-        {
-          "label": "...",
-          "icon_png": "<base64>",   // 可选；缺省用 glyph+color 兜底
-          "glyph": "🌐", "color": "#3b82f6",
-          "action": "...",          // 无 launch 时 toast 文案
-          "launch": {"target":"...","args":"...","workdir":"..."},  // 可选
-          "x": 0, "y": 2            // 稀疏网格；旧数据自动补齐
-        }
-      ]
+  "switch": "slide",
+  "switches": {
+    "0>1": {
+      "name": "主页到游戏",
+      "type": "video",
+      "src": "switch/home-to-game.mp4"
+    },
+    "1>0": {
+      "name": "游戏到主页",
+      "type": "html",
+      "src": "switch/game-to-home/index.html"
     }
-  ],
-  "switch": <ContentSpec或官方预设>,                      // 房间默认，缺省由 DXT-001 定稿
-  "switches": {"from>to": <同 switch 值>},               // 可选边级覆盖
-  "start": <slot>,                                  // 可选启动动画
-  "end": <slot>                                     // 可选退出动画
-  // "__source": 运行时保留字段，勿写
+  },
+
+  "dock": {},
+  "desks": [
+    {
+      "name": "主页",
+      "background": {
+        "name": "主页背景",
+        "type": "image",
+        "src": "background/home.png"
+      },
+      "iconSize": "medium",
+      "icons": [],
+      "dock": {}
+    },
+    {
+      "name": "游戏",
+      "background": {
+        "name": "游戏背景",
+        "type": "html",
+        "src": "background/game/index.html"
+      },
+      "iconSize": "medium",
+      "icons": []
+    }
+  ]
 }
 ```
 
-## 八、实现状态说明（2026-08-28 核对）
+### 内容对象
 
-当前已经实现：
+`background`、`start`、`switches`、`end` 中的用户内容统一复用三个字段：
 
-- 渲染器按 `switches["from>to"] → switch → 旧字段` 查找边级转场。
-- `room.js` / `room.css` 加载和 `window.dext` 最小事件集（v0.x 兼容能力，不是 v1 安全边界）。
-- action 类型的 `dext:switch` 广播。
-- start/switch/end 的 video/html/action 原型播放器。
+| 字段 | 作用 |
+|---|---|
+| `name` | 配置器中的用户可读名称；只负责展示，不作为身份，允许重名 |
+| `type` | `image` / `video` / `html` |
+| `src` | Room 根目录内的相对路径 |
 
-仍未闭环：
+正式 v1 写入时三项都存在。宽容读取遇到缺失 `name` 时，配置器可以临时使用文件名展示，但明确保存后应补成标准对象。
 
-- 配置器打开 Room 时还原 `switches`，并在保存时落盘（ROADMAP UI-002）。
-- schema v1 与 JSON Schema 正式文件（ROADMAP DXT-001）。
-- background/start/switch/end 的统一 image/video/html SceneHost、安全隔离和生命周期（ROADMAP SCENE-001）。
-- `transitionText` 代码残留清理（ROADMAP CLEAN-003）。
-- AI 创作契约与示例（ROADMAP AI-001）。
+房间级 `switch` 继续作为运行时安全默认，可以是官方预设名，也可以使用同样的 `name/type/src` 内容对象；`switches` 保存具体方向的覆盖。即使运行时存在默认值，配置器遇到新相邻方向时仍按第三节提示用户补充，不把默认值偷偷复制成方向内容。
 
-本节只解释模型与现状的差距，不再作为任务清单。
+## 三、Desk 顺序、默认 Desk 和 switch
+
+### 顺序与连接
+
+- `desks` 数组顺序就是 Desk 顺序，Desk 身份继续使用数组下标，不新增持久 ID。
+- 1 个 Desk 没有 switch。
+- 2 个 Desk 只有一组双向连接。
+- 3 个及以上 Desk：相邻 Desk 双向连接，并增加首尾双向连接。
+- 连接关系由 `desks` 顺序自动推导，不在 room.json 里重复保存线或拓扑对象。
+- UI 中每对 Desk 只显示一条双向线和一个 switch 入口；`switches` 仍分别保存两个方向。
+
+### 默认 Desk
+
+- 复用 UI-003 已有的 `startDesk`，表示启动画面连接的默认 Desk。
+- 启动时不恢复上次停留的页面：有 `start` 就播放后进入 `startDesk`，没有 `start` 就直接进入 `startDesk`。
+- `startDesk` 缺失、越界或非法时回退到 `desks[0]`。
+- 当前停留的 Desk、播放进度、HTML ready 状态等只属于运行时，不写入 room.json。
+
+### 调整 Desk 顺序
+
+切换内容跟随 Desk 本身和方向，不跟随旧数组位置：
+
+```text
+原顺序 [A, B]：A→B = 甲，B→A = 乙
+新顺序 [B, A]：B→A = 乙，A→B = 甲
+```
+
+配置器调整顺序时必须同时重映射 `startDesk` 和 `switches` 的下标。新顺序形成了以前不相邻的组合时：
+
+- 不自动复制、猜测或生成 switch。
+- UI 明确标记“需要补充切换”。
+- 编辑中的草稿允许暂存；点击“应用”前必须提示仍缺少哪些方向。
+- 正式保存只保留当前相邻与首尾连接使用的方向；撤销/重做可在编辑会话中恢复调整前状态。
+
+## 四、图片、视频和 HTML 的行为
+
+### 图片
+
+- background 图片静态常驻，不自动添加缩放、位移或其他动效。
+- start 图片静态显示 0.5 秒，然后进入 `startDesk`。
+- switch 图片静态显示 0.5 秒，然后切换 Desk。
+- end 图片静态显示 0.5 秒，然后退出。
+- 0.5 秒是官方固定行为，不为它增加 room.json 时间字段。
+
+### 视频
+
+- background 视频作为当前 Desk 的长驻背景，由官方宿主管理循环。
+- start 视频完整播放后进入 `startDesk`。
+- switch 视频完整播放后才切换 Desk，不在中点提前换页。
+- end 视频完整播放后退出；官方宿主仍需有不可由 Room 关闭的安全超时。
+- v1 不增加 `swapAt` 等时间字段；需要自定义复杂节奏时使用 HTML。
+
+### HTML
+
+- background HTML 在 Desk 可见期间长驻于受控内容容器。
+- start/switch/end HTML 通过官方限定的 ready、换页和完成消息参与生命周期。
+- 允许的消息、来源校验、超时和失败回退由 SCENE-001 实现；这些运行态值不进入 room.json。
+
+## 五、Dock 继承
+
+- `room.dock` 是全局基线。
+- `desks[i].dock` 只覆盖当前 Desk 明确写出的字段。
+- 普通字段按“默认值 → 全局 → 当前 Desk”覆盖；`style` 按字段合并。
+- Desk 写出 `icons` 时整组替换全局列表；`icons: []` 表示当前 Desk 明确为空。
+- Desk 没有 `icons` 表示继承全局；恢复跟随全局时删除 Desk 的 `icons` 字段。
+- Dock 的运行态圆点、展开状态、临时拖拽反馈和当前进程列表不得写入 room.json。
+
+## 六、预览、保存、应用和 `__source`
+
+```text
+配置器预览：只使用内存草稿，不写文件
+配置器保存：写源 Room 的 room.json，不写 __source
+配置器应用：复制源 Room 到运行包，并只在运行包盖 __source
+桌面编辑保存：先写运行包，再通过 __source 同步源 Room
+未来导出 zip：从源 Room 导出，禁止携带 __source
+```
+
+- `__source` 不是 Room 内容字段，只是运行包回写源目录使用的内部戳。
+- 源 Room、配置器预览和导出 zip 中出现 `__source` 都属于非法输入，写出时必须移除。
+- 切换当前 Desk、播放 start/switch/end、HTML 临时状态和 Dock 运行态不得触发真实 Room 保存。
+- 用户编辑当前 Desk 的背景、图标或 Dock 配置并明确保存时，才持久化对应 Desk 内容。
+
+## 七、缺失、未知和非法数据
+
+Schema 负责定义严格的官方写出格式，读取端负责不崩溃；“宽容读取”不等于把非法文件悄悄当成合法文件。
+
+- 缺少普通可选字段：使用官方默认值，并在内存中继续打开。
+- 单个背景、start、switch 或 end 非法：只停用并标红这一项，其他 Desk 继续可预览。
+- 新相邻方向没有 switch：按第三节显示待补充提示，不自动制造内容。
+- `version: 1` 出现未知字段：提示用户；明确保存时清理为官方 v1 格式。
+- 遇到未来的 `version > 1`：允许尽力预览，但禁止覆盖保存。
+- `desks` 缺失或为空：显示一个临时空 Desk 和修复提示，不自动改原文件，也不允许直接应用。
+- `startDesk` 非法：回退 `desks[0]` 并提示。
+- `src` 不存在、越界或类型不匹配：只停用对应内容并提示。
+- v1 不读取或迁移无 `version: 1` 的旧 Room；旧格式文件显示“不受支持”，不自动改写。
+
+## 八、路径和未来 zip 保证
+
+- v1 内容目录固定为 `background/`、`start/`、`switch/`、`end/`。
+- `src` 必须是相对 Room 根目录的规范路径，禁止绝对路径、盘符、URL、`..` 和逃逸 Room 根目录的形式。
+- HTML 内容及其依赖资源必须自包含在 Room 包内。
+- v1 不把顶层 `room.js` / `room.css` 当作用户可执行扩展；用户代码进入对应 HTML 内容目录。
+- Schema 至少保证版本可识别、Desk 非空、字段封闭、类型明确、switch key 可解析、索引合法和路径形态安全。
+- 真正的 zip 解包、重名处理和文件系统安全属于 ROOM-001/ROOM-002；DXT-001 只提前提供可校验、自包含的格式边界。
+
+## 九、范围边界
+
+DXT-001 负责正式 Schema、字段/继承说明、宽容策略、`__source` 和持久化边界，不实现 UI 或播放器。
+
+后续工作包：
+
+- SCENE-001：官方 SceneHost、图片/视频/HTML 运行、安全隔离和生命周期。
+- UI-001：background/start/end 内容配置和 `startDesk` 保存。
+- UI-002：Desk 排序、`switches` 重映射、缺失提示和方向内容保存。
+- MEDIA-001：素材选择与复制。
+- ROOM-001/ROOM-002：zip 导出和导入。

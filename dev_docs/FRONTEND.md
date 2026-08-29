@@ -4,15 +4,16 @@
 > ① **配置器**（tauri-ui/，React+TS+Tailwind）→ 设计模式见「第零节」
 > ② **桌面渲染器**（wallpapers/dext-room/，纯 HTML/JS/CSS）→ 见「第一节」及以后
 
-## 目标架构：官方宿主 + 用户 Scene（尚未实现）
+## 目标架构：官方宿主 + 用户内容（尚未实现）
 
 - 本文后面的函数表描述当前 v0.x 渲染器；目标架构由 ROADMAP 的 DXT-001 / SCENE-001 分两包落地。
 - 官方宿主继续拥有 Desk、Dock、图标、导航、编辑、IPC、保存和关闭流程。
-- 用户内容只挂载在 background/start/switch/end 的受控 Scene 容器中，不能替换官方宿主。
-- 四类 Scene 都支持 image/video/html；类型保留在 room.json，运行时由官方 HTML 宿主统一承载。
-- 图片可由官方宿主加轻微动态效果；视频由宿主管理播放；HTML 通过受控 ready/swap/done 生命周期通信。
-- 当前 `cockpit-room`、start/end HTML 槽可复用作验证基础；background、switch、隔离与消息校验仍需 SCENE-001 实现。
-- 顶层 `room.js` / `room.css` 是当前 v0.x 能力，与目标安全边界存在冲突；在 SCENE-001 定稿兼容策略前，不把它作为新 Room 的推荐扩展方式。
+- 用户内容只挂载在 background/start/switch/end 的受控容器中，不能替换官方宿主。
+- 四类内容统一写 `name/type/src`，类型为 image/video/html；运行时由官方 HTML 宿主承载。
+- 图片保持纯静态：background 长驻，start/switch/end 固定显示 0.5 秒，不叠加默认动效。
+- switch 视频完整播放后才换 Desk；HTML 通过受控 ready/换页/完成消息通信。
+- 当前 `cockpit-room`、顶层 room.js/room.css、action 和视频中点换页只代表 v0.x 现状，不进入 v1，也不要求兼容。
+- background、start、switch、end 的统一运行、隔离与消息校验由 SCENE-001 实现。
 
 ## 零、配置器 UI 设计模式（React，mock 数据）
 
@@ -145,7 +146,7 @@ wallpapers/dext-room/
 3. **编辑模式视觉**：抖动幅度节奏、删除钮尺寸、进入/退出的过渡（目前是瞬变）
 4. **排版**：label 字体栈（现 Segoe UI/微软雅黑）、字重、行高、多行截断
 5. **空状态**：无图标 desk 的引导提示、无背景 desk 的黑底质感（可加微妙渐变噪点）
-6. **过渡打磨**：slide 曲线/视差比例参数化、stinger 视频的 swapAt 可配（现固定 50%）
+6. **过渡重构**：由 SCENE-001 按 v1 改成视频完整播放后换 Desk；不再规划 `swapAt` 配置
 7. **多分辨率**：1366/1920/2560 宽下图标密度与 Dock 尺寸检查
 
 ## 七、纪律（务必）

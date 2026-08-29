@@ -3,11 +3,11 @@
 > 本文档是 Dock 功能（常驻图标区 + 样式自定义）的唯一接口说明。
 > 数据层只有 room.json；渲染器全在 `wallpapers/dext-room/main.js`；配置器在 `tauri-ui/src/`。
 
-## 零、与 Scene 的边界
+## 零、与用户内容的边界
 
-Dock 属于 Dext 官方宿主层，不属于用户的 background/start/switch/end Scene。Scene 可以在自己的内容区域播放图片、视频或 HTML，但不能直接改 Dock DOM、调用 Dock 保存或伪造运行态；需要联动时只能走未来 SceneHost 明确允许并校验的消息。
+Dock 属于 Dext 官方宿主层，不属于用户的 background/start/switch/end 内容。用户 HTML 只能在自己的受控容器运行，不能直接改 Dock DOM、调用 Dock 保存或伪造运行态；需要联动时只能走 SCENE-001 明确允许并校验的消息。
 
-当前 `room.css` 能覆盖官方 DOM，是 v0.x 已有能力，也与上述目标安全边界存在冲突。保留现有 Room 兼容，最终隔离和 Dock 皮肤能力如何迁移由 SCENE-001 单独定稿，不在 DXT-001 或本轮文档修改中假装已经解决。
+当前 `room.css` 能覆盖官方 DOM，是重构前的 v0.x 能力，也与上述安全边界冲突。新的 v1 不承诺兼容顶层 `room.css`；Dock 皮肤怎样迁入官方受控能力由 SCENE-001 单独处理，DXT-001 只固定 `dock` / `desks[i].dock` 数据。
 
 ## 一、数据契约：room.json 的 `dock` 节点
 

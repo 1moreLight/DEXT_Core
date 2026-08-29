@@ -16,9 +16,9 @@
 
 **Dext**：把 Windows 桌面变成手机式主屏。多个 Desk 放真图标应用、长按编辑、切桌动画；整套主题打包成 Room 分享。终局对标 Wallpaper Engine（创作者上架创意工坊，普通用户下载即用）。
 
-目标创作模型是“官方宿主 + 用户 Scene”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC 和保存；用户只定制 background/start/switch/end 内容。四类内容统一支持 image/video/html，会前端的作者可写受控 HTML Scene，不会写的用户通过配置器或官方骨架生成。
+目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC 和保存；用户只定制 background/start/switch/end。四类内容统一使用 `name/type/src`，类型为 image/video/html。
 
-这是 DXT-001/SCENE-001 的目标，不是当前实现声明。当前 v0.x 已有 cockpit-room HTML 能力、start/end 槽和顶层 room.js/room.css，但 background/switch 尚未统一，脚本隔离与消息校验也未达到目标边界。
+DXT-001 将直接定义全新的 v1，不兼容旧 Room；SCENE-001 再按它重构运行时。当前 v0.x 代码只用于说明重构起点，不再反向限制 v1 格式。
 
 ```
 ① 运行时渲染器  wallpapers/dext-room/{index.html,style.css,main.js}
@@ -55,7 +55,7 @@
 | `FRONTEND.md` | 渲染器外观迭代手册（实时预览、函数表、任务池、纪律） | 前端外观工作 |
 | `FRONTEND_WORK.md` | 旧配置器 UI 迭代记录 | 仅历史参考；状态不作数 |
 | `DOCK.md` | **Dock 模块契约**（room.json dock 节点 schema、合并规则、渲染器行为、配置器对接点） | 任何 dock 相关改动/UI 接线 |
-| `DOCK_STYLE.md` | **Dock 外观定制指南**（DOM 钩子/CSS 变量/状态类/配方示例/room.js 接口/AI 工作流） | AI 或作者生成 dock 皮肤代码时 |
+| `DOCK_STYLE.md` | Dock v0.x 外观定制指南；包含当前 DOM/CSS/room.js 接口，SCENE-001 重构后需同步更新 | 查看当前 Dock 皮肤实现时 |
 
 **铁律**：一个工作包一个分支和验收文件 → 动代码前写 TODO 和验收 → 自测通过后 commit → 停在分支等待用户验收 → 用户明确通过后才合并并删除分支/worktree。
 
@@ -67,45 +67,28 @@
 4. 当前分支 TODO
 5. TODO-archive、ACCEPTANCE、FRONTEND_WORK 等历史记录
 
-## 三、数据契约 room.json（v0.x，宽容读取：缺字段必须给默认值）
+## 三、room.json v1 需求确认稿
 
-```jsonc
-{
-  "desks": [
-    {
-      "name": "Desk 1",
-      "background": "background/x.png",        // 字符串=图片路径(相对房间根)；"" =黑底
-                                                // 或 {"type":"video","src":"background/x.mp4"}
-      "iconSize": "medium",                     // large|medium|small
-      "icons": [
-        {
-          "label": "Edge",
-          "x": 0, "y": 0,                       // 稀疏格子坐标；列数随 iconSize/屏宽动态
-          "icon_png": "<base64>",               // 可选；否则 glyph+color 兜底
-          "glyph": "🌐", "color": "#3b82f6",
-          "action": "启动 浏览器",               // 无 launch 时的 toast 文案
-          "launch": { "target": "", "args": "", "workdir": "" }
-        }
-      ]
-    }
-  ],
-  "transition": "slide",                        // 或 {"type":"video","src":"transition/x.mp4"}
-  "dock": { ... },                              // Dock 自定义（可选）：位置/样式/常驻图标，见 DOCK.md
-  "__source": "D:\\...\\rooms\\my-room"         // 配置器 apply 时盖的戳；桌面编辑据此双写回源库
-}
-```
+- `version: 1`；Desk 顺序来自 `desks`，默认 Desk 复用 UI 已有的 `startDesk`。
+- background/start/switch/end 的用户内容统一为 `{name,type,src}`，`type` 是 image/video/html。
+- background 图片纯静态；start/switch/end 图片纯静态显示 0.5 秒。
+- switch 视频完整播放后才换 Desk；复杂时序使用 HTML。
+- switch 只存在于相邻 Desk 与三页以上的首尾之间，两个方向分别保存在 `switches`。
+- Desk 排序时 switch 跟随 Desk 和方向重新映射；新相邻组合缺少内容时由 UI 提示，不自动生成。
+- v1 不兼容旧 Room、旧 `transition` 或顶层 room.js/room.css，也不提供迁移工具。
+- `__source` 只允许出现在运行包；预览、源 Room 和未来 zip 禁止携带。
+- 内容目录固定为 `background/`、`start/`、`switch/`、`end/`，所有 `src` 必须留在 Room 内。
 
-房间目标形态：`rooms/<房名>/` = `room.json + background/ + switch/ + start/ + end/`；各目录可装图片、视频或 HTML Scene 的自包含资源。旧 `transition/` 仅兼容读取。
-应用 = 配置器把 Room 内容拷进壁纸包 `wallpapers/dext-room/`（WebView2 虚拟主机只能读包内文件）。
+完整语义见 `MODEL.md`。当前 v0.x 渲染器和接口仍列在下文与 `FRONTEND.md`，只代表重构前现状。
 
 ## 四、接口总表
 
-### L1 渲染器扩展接口（main.js，纯静态无框架——保持这样）
+### L1 当前 v0.x 渲染器接口（SCENE-001 重构前现状）
 
 | 接口 | 形态 | 说明 |
 |---|---|---|
 | `TRANSITIONS` | 注册表 `{名字: {dur, run(stage,dir,done), cleanup()}}` | 切桌动画扩展点；现有 slide/fade/zoom/none；`dir` +1 下一桌 / -1 上一桌 |
-| 视频转场 | 特例 `playVideoTransition(next, src)` | stinger：全屏视频，播到 50% 换桌，ended 揭晓；失败回退 slide |
+| 视频转场 | 特例 `playVideoTransition(next, src)` | 当前仍在 50% 换桌；v1 将改为完整播放后换桌 |
 | `ICON_SIZES` / `sizeOf` | 常量表 | 大/中/小三档（图标/格子/字号联动），desk.iconSize 选用 |
 | `transitionSpec()` | 读取器 | room.transition 字符串/对象 → {name, src}，宽容缺省 slide |
 | `mountBackground(bg, video, desk)` | 函数 | 背景多态渲染（图片/视频/黑底），主层与 staging 共用 |
@@ -113,9 +96,9 @@
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 配置器预览注入 `{type:"dext:room", room, deskIndex}` → 整房重渲 |
 | `window.dext` | 房间脚本 API | onReady / onDeskChange / onEditChange / getRoom / getCurrentDesk（MODEL.md §6） |
-| `room.js` / `room.css` | 房间自带 | 渲染器加载（错误隔离）；apply_room 随包拷贝 |
+| `room.js` / `room.css` | v0.x 房间自带 | 当前渲染器仍加载；不进入新的 v1 契约 |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
-| 演出槽 playSlot | 统一播放器 | `{video|html|action}` 三态；start 覆盖层 / end / switch 共用（MODEL.md §6.5） |
+| 演出槽 playSlot | 当前原型播放器 | `{video|html|action}` 三态；SCENE-001 将按 MODEL.md 重构为 image/video/html |
 | `dext:end` | Player→页面 | cmd_close 转发；页面播 end 槽后 ack `dext:endDone`（5s 上限） |
 
 ### L2 渲染器 → Player → Core（上行 IPC，stdout 管道）
@@ -139,7 +122,7 @@
 | `save_room_css` | `(room_dir, css)` | 校验 Room 后写入 `room.css`；Dock 皮肤使用 |
 | `create_room` | `(dir, name) → path` | 骨架房（校验非法字符） |
 | `apply_room` | `(room_dir)` | 校验并盖 `__source` 戳 → 镜像替换包内 Room-owned 文件/素材 → SetWallpaper 重载；新 Room 缺失的可选成员会清除旧版本 |
-| `import_background` | `(room_dir, src_path, kind) → background值` | kind=image/video/transition；拷进对应子目录，时间戳命名 |
+| `import_background` | `(room_dir, src_path, kind) → background值` | 当前 v0.x 支持 image/video/transition；v1 素材接线由 MEDIA-001 重做 |
 
 ### L4 gRPC（Rust ↔ Core，GrpcDotNetNamedPipes 自定义线协议）
 
