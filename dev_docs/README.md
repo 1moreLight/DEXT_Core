@@ -199,13 +199,14 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 场景 | 命令 |
 |---|---|
 | 全量构建（改 C#/.proto 后必跑） | `scripts\build.ps1`（Player 必须 Release） |
-| 日常启动（核心+配置器） | `scripts\start.ps1` |
+| 日常启动（核心+配置器） | 双击 `scripts\start-dext.cmd`，或终端运行 `scripts\start.ps1`；输出缺失或仍是 Lively 产品元数据时自动执行完整构建 |
 | 渲染器外观迭代（无需 Lively） | `scripts\room-preview.ps1`（端口 5174 热刷新） |
 | 强制重铺壁纸 | `cargo test --lib applies_room_wallpaper`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
 | 渲染器语法自检 | `node --check wallpapers/dext-room/main.js` |
+| Room v1 Schema 夹具验证 | `python scripts\validate-room-schema.py` |
 | 日志 | `%LOCALAPPDATA%\Dext\logs\<最新>.txt`；首行可核对 PID、Core 绝对路径和运行身份 |
-| 运行身份核对 | `scripts\verify-runtime-identity.ps1`（只读报告进程路径、mutex、pipe、data、log） |
+| 运行身份核对 | `scripts\verify-runtime-identity.ps1`（只读报告 Core 二进制 ProductName、进程路径、mutex、pipe、data、log） |
 | 查代码 | `codegraph explore/node` 优先（索引已建） |
 
 ## 七、能力基线（master，2026-08-30）

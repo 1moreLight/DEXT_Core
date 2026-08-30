@@ -57,7 +57,18 @@ Write-Host "  Pipe:    $grpcPipeName"
 Write-Host "  Data:    $dextData"
 Write-Host "  Logs:    $dextLogs"
 
-$coreOk = Show-ProcessGroup "Core" @("Lively.exe") $coreExe
+$coreBinaryOk = $false
+if (Test-Path -LiteralPath $coreExe) {
+    $coreVersion = (Get-Item -LiteralPath $coreExe).VersionInfo
+    $coreBinaryOk = [string]::Equals($coreVersion.ProductName, $identity.productName, [StringComparison]::OrdinalIgnoreCase) -and
+        (-not [string]::IsNullOrWhiteSpace($coreVersion.FileDescription)) -and
+        $coreVersion.FileDescription.StartsWith($identity.productName, [StringComparison]::OrdinalIgnoreCase)
+    Write-Host "[$(if ($coreBinaryOk) { 'OK' } else { 'OTHER' })] Core binary ProductName='$($coreVersion.ProductName)', FileDescription='$($coreVersion.FileDescription)'"
+} else {
+    Write-Host "[MISSING] Core binary $coreExe"
+}
+
+$coreOk = (Show-ProcessGroup "Core" @("Lively.exe") $coreExe) -and $coreBinaryOk
 $watchdogOk = Show-ProcessGroup "Watchdog" @("Lively.Watchdog.exe", "Lively.Utility.Watchdog.exe") $coreOut
 $playerOk = Show-ProcessGroup "Player" @("Lively.Player.WebView2.exe") $coreOut
 $configuratorExe = Join-Path $root "tauri-ui\src-tauri\target\debug\dext-configurator.exe"

@@ -219,3 +219,24 @@
 - [x] 完成纯文档一致性检查；变更仅包含本工作包 5 份具名 dev_docs 文件，提交 `fc12818` 并停在待用户验收（2026-08-30）
 - [x] 用户确认 OPS-003 验收通过并授权合并（2026-08-30，回复“合并”）
 - [x] 合并到 master（merge `eb5e9ff`），CORE-002 保持唯一下一项（2026-08-30）
+
+## CORE-003 Dext 一键启动防旧构建（2026-08-30）
+
+> 目标：确保从 `scripts` 启动 Dext 时不会运行当前 worktree 中残留的上游 Lively 旧二进制；入口应自动重建无效 Core、验证 Dext 身份，并在启动验证失败时清理本次错误进程。
+> 范围外：不重命名 `Lively.exe` 或内部程序集/namespace；不修改 UI 页面、Room、Dock、idle、安装器或用户 rooms；不删除仍有独立用途的现有 scripts。
+> 人工验收：从 ProductName 为 Lively 的旧 Core 输出开始双击/运行新入口，确认自动构建后只启动当前 worktree 的 Dext Core，配置器连接成功；关闭后再次启动不重复构建。
+
+- [x] 复现 master 的 `scripts/start.ps1` 启动旧 `Lively.exe`：路径属于当前 master，但 ProductName/FileDescription 为 Lively，且 Dext mutex/pipe 均未创建（2026-08-30）
+- [x] 停止仅为复现启动的错误 PID 41732，不触碰用户其他 Lively/Dext 进程（2026-08-30）
+- [x] 从最新 `master@19d07fd` 建立独立 worktree `D:\use\Orca\DEXT_Core\core-003-dext-startup` 和分支 `fix/core-003-dext-startup-stale-binary`（2026-08-30）
+- [x] 检查 CodeGraph：新 worktree 未初始化独立索引，未擅自初始化并按规范使用普通只读搜索兜底（2026-08-30）
+- [x] 建立独立验收卡，冻结启动入口修复范围（2026-08-30）
+- [x] 启动前验证 Core 二进制 ProductName/FileDescription；缺失或非 Dext 时自动调用 `build.ps1 -Rebuild`（2026-08-30）
+- [x] 构建后再次验证二进制身份，不合格则禁止启动（2026-08-30）
+- [x] 本次新启动的 Core 未通过路径/mutex/pipe/log 验证时只清理该 PID；临时错误身份测试确认 PID 81688 被脚本停止（2026-08-30）
+- [x] 新增 `scripts/start-dext.cmd` 双击入口，仅转调 `start.ps1`，不复制启动逻辑；从 `C:\Windows\Temp` 调用成功（2026-08-30）
+- [x] 新 worktree 缺少配置器依赖时自动执行 `npm ci`；npm/Tauri 失败必须返回非零而不是假成功（2026-08-30）
+- [x] 完成 scripts 审计：删除无引用且硬编码改写旧 Room 的 `dock-demo-inject.mjs`；保留 build/start/preview/identity/schema 有效工具（2026-08-30）
+- [x] 从 ProductName=Lively 的真实旧输出完成强制重建；正常二次启动未重复 C# 构建；Core/Watchdog/Player/配置器均验证为本 worktree 绝对路径（2026-08-30）
+- [x] 追加 ERRORS #40/#41/#42，记录旧构建、缺依赖假成功和 PowerShell 单参数 splat 三个已解决坑（2026-08-30）
+- [ ] 只提交本工作包具名文件并停在待验收
