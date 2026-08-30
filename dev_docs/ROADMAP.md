@@ -15,7 +15,7 @@
 | 待验收 | **DOCK-004 运行态指示圆点** | 待验收 | `feat/dock-004-runtime-indicator`（`30fde9d`） | Dock 显示应用运行状态；真桌面 Dock 拖拽已转远期重做 |
 | 最近完成 | **DXT-001 room.json v1 契约与统一场景渲染** | 已完成 | master（merge `8f39fbb`） | v1 Schema、统一内容宿主、真实素材按钮、持久化闭环和创作者协议已验收合并 |
 | 待验收 | **DXT-002 Room 待机画面接入** | 待验收 | `feat/dxt-002-idle-screensaver`（`d679f3d`） | 已开发但按用户决定暂缓，不继续扩展待机入口，也未合并 master |
-| 待验收 | **OPS-003 开发优先级与 dev_docs 记录指南** | 待验收 | `docs/ops-003-devdocs-priority-reset` | 新开发顺序、Dext 身份隔离决策和日常记录方法已写入文档，等待用户确认 |
+| 最近完成 | **OPS-003 开发优先级与 dev_docs 记录指南** | 已完成 | master（merge `eb5e9ff`） | 新开发顺序、Dext 身份隔离决策和日常记录方法已验收合并 |
 | 下一项 | **CORE-002 Dext Core 运行身份隔离** | 下一项 | 待创建 | Dext 自有 Core 不再与另装的原版 Lively 共用实例、管道、数据目录或启动判断 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。

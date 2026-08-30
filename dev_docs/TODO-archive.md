@@ -248,3 +248,12 @@
 - [x] 增加 `ROOM_AUTHORING.md`，固化配置器、手工制作和 vibe coding 的准确协议
 - [x] 合并到 master：`8f39fbb`；实现基线 `ed13a33`、入口收口 `86ad139`、素材按钮修复 `945d0ed`、创作者协议 `152e45e`
 - [x] 删除已合并分支并移除 Git worktree 注册；真实验收运行包变化以 stash 消息 `dxt-001 live acceptance runtime package 2026-08-30` 保存，未混入源码
+
+## OPS-003 开发优先级与 dev_docs 记录指南（2026-08-30）
+
+- [x] 将 DXT-002 记录为待验收但暂缓，未误写为已完成或合并
+- [x] 将 CORE-002 Dext Core 运行身份隔离设为唯一下一项
+- [x] 在 README 增加 dev_docs 日常记录路由、固定流程和可复用开工提示词
+- [x] 在 PROJECT 记录 Dext 自有 Core 与原版 Lively 必须隔离的结构性决定
+- [x] 用户于 2026-08-30 回复“合并”，验收通过
+- [x] 合并到 master：`eb5e9ff`；独立验收文件永久保留
