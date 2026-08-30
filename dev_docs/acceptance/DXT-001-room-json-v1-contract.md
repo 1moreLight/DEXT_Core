@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`feat/dxt-001-room-json-v1-contract`
-- 提交：待提交（上一轮 `86ad139`；完整实现基线 `ed13a33`）
+- 提交：`945d0ed`（上一轮 `86ad139`；完整实现基线 `ed13a33`）
 - 目标：定稿 room.json v1，并让现有官方宿主、配置器预览、Rust 应用和 Player/Core 回写链按同一契约安全运行。
 - 范围外：end 的完整编辑入口、Desk 排序、成组 HTML 依赖导入、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段、无关 Player/Core 重构。Desk/start/switch 已存在的素材按钮因用户验收反馈纳入本包并接通真实导入。
 
