@@ -1,8 +1,9 @@
 # CORE-002 Dext Core 运行身份隔离验收
 
-- 状态：验收反馈修复中
+- 状态：待复验
 - 分支：`feat/core-002-dext-runtime-identity`
 - 实施提交：`039d468`
+- 验收修复提交：`a6be4c5`
 - 目标：Dext 使用仓库内自带的 Lively Core fork，并以独立的单实例、管道、数据/日志目录和可验证进程路径运行，不依赖或误连用户另装的原版 Lively。
 - 范围外：不修改或停止 DXT-002、DOCK-004 和用户 rooms；不实现 idle、Room zip、Dock、素材导入或 Player/Core 架构重构；不重命名内部 namespace、proto 包、源码目录和 Core/Player 可执行文件；不迁移旧 `%LOCALAPPDATA%\Lively Wallpaper` 数据；安装器/MSIX/AppUserModelId/屏保注册另立 PACKAGING-001。
 
@@ -91,4 +92,4 @@
 ## 验收记录
 
 - 2026-08-30：自动检查通过，实施提交 `039d468`；停在独立分支待用户按九步清单验收，未合并 master。
-- 2026-08-30：用户反馈托盘退出 Core 后配置器仍显示已连接，且现有 `v1testRoom` 因 DXT-002 `idle` 字段被阻断。已增加两秒实时身份刷新、断线禁用应用入口与明确提示；`idle` 仅校验/透传/写回保留，不实现其功能。实测退出态显示“Dext Core 未运行”，重启后恢复“已连接”，含 `idle` Room 显示“已应用 v1testRoom”；源 `room.json` 前后 SHA-256 均为 `0875C31EFC19004EE9FE66BB040478995264208DEF2AF723D750E561E551AD78`。
+- 2026-08-30：用户反馈托盘退出 Core 后配置器仍显示已连接，且现有 `v1testRoom` 因 DXT-002 `idle` 字段被阻断。修复提交 `a6be4c5` 增加两秒实时身份刷新、断线禁用应用入口与明确提示；`idle` 仅校验/透传/写回保留，不实现其功能。实测退出态显示“Dext Core 未运行”，重启后恢复“已连接”，含 `idle` Room 显示“已应用 v1testRoom”；源 `room.json` 前后 SHA-256 均为 `0875C31EFC19004EE9FE66BB040478995264208DEF2AF723D750E561E551AD78`。现停在待复验，未合并 master。
