@@ -1,6 +1,6 @@
 # DXT-001 room.json v1 契约与统一场景渲染 验收
 
-- 状态：待验收
+- 状态：已通过，待合并
 - 分支：`feat/dxt-001-room-json-v1-contract`
 - 提交：`945d0ed`（上一轮 `86ad139`；完整实现基线 `ed13a33`）
 - 目标：定稿 room.json v1，并让现有官方宿主、配置器预览、Rust 应用和 Player/Core 回写链按同一契约安全运行。
@@ -18,6 +18,7 @@
 - [x] 上述 Rust 测试包含 `grpc::tests::applies_room_wallpaper`，真实 Core 链路通过。
 - [x] 另存为测试确认四类素材全部复制、目标不含 `__source`、原 Room 不变；前端新增/应用/另存入口通过 TypeScript 构建。
 - [x] Playwright 配置器冒烟通过：编辑模式 Room 列表存在“新增 Room”，进入 Room 后“保存 / 另存为 / 应用”入口均可见；仅使用浏览器 mock，未触发真实文件写入。
+- [x] `ROOM_AUTHORING.md` 与 Schema、MODEL 和现有宿主核对一致，覆盖配置器、手工制作、HTML 完成消息、持久化和发布检查。
 - [x] `scripts/build.ps1` 以 Release Player 完成全量 C# 构建；随后 `scripts/start.ps1` 正常启动 Core、Player 和配置器。
 - [x] Git 差异只包含 DXT-001 契约、原地适配、安全修复、测试、示例和文档；未混入其他 worktree 改动。
 
@@ -53,4 +54,4 @@
 - 2026-08-30：浏览器配置器入口冒烟通过，临时 Playwright 会话和快照已清理。
 - 2026-08-30：用户验收不通过——新增 Room 后，Desk 属性栏“图片 / 网页代码 / 视频”按钮没有真实反应；回到同一分支修复。
 - 2026-08-30：接通 Desk/start/switch 的真实文件选择和统一内容复制；自包含单 HTML 为本轮明确边界，待重新验收。
-- 待用户确认。
+- 2026-08-30：用户回复“ok啊验收通过，感觉可以合并了”，DXT-001 验收通过并授权合并 master。
