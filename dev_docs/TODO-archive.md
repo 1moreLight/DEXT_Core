@@ -278,3 +278,17 @@
 - [x] 用户验收反馈：托盘退出 Core 后配置器仍错误显示“已连接”，且含 DXT-002 `idle` 字段的现有 Room 被严格校验阻断；已在同一分支提交 `a6be4c5`，修复实时断线状态、应用按钮保护和 `idle` 只读兼容/写回保留，不实现 idle、不修改用户 Room，转待复验（2026-08-30）
 - [x] 用户回复“ok啊都行了”，确认 CORE-002 复验通过并授权合并 master（2026-08-30）
 - [x] 合并到 master（merge `3835be1`），更新 ROADMAP/验收卡最终状态并归档 TODO；删除已合并分支和独立 worktree，用户 rooms 未触碰（2026-08-30）
+
+## CORE-003 Dext 一键启动防旧构建（2026-08-30）
+
+> 目标：确保从 `scripts` 启动 Dext 时不会运行当前 worktree 中残留的上游 Lively 旧二进制；入口应自动重建无效 Core、验证 Dext 身份，并在启动验证失败时清理本次错误进程。
+> 范围外：不重命名 `Lively.exe` 或内部程序集/namespace；不修改 UI 页面、Room、Dock、idle、安装器或用户 rooms；不删除仍有独立用途的现有 scripts。
+
+- [x] 复现 master 旧输出 ProductName/FileDescription 为 Lively，且 Dext mutex/pipe 均未创建
+- [x] 启动前验证二进制身份；缺失或非 Dext 时执行 `build.ps1 -Rebuild`，构建后再次验证
+- [x] 缺少配置器依赖时执行 `npm ci`，npm/Tauri 失败返回非零
+- [x] 新增只转调 `start.ps1` 的 `start-dext.cmd`；失败验证只清理本次启动 PID
+- [x] 从真实旧 Lively 输出完成强制重建；Core/Watchdog/Player/配置器路径和 Dext 身份验证通过
+- [x] 删除无引用且硬编码改写旧 Room 的 `dock-demo-inject.mjs`；其他有效脚本保留
+- [x] 实现提交 `7d1b10e`，用户于 2026-08-30 回复“通过”
+- [x] 合并到 master（merge `8c7c89a`），测试运行包变化保存为可恢复 stash；用户 rooms 未触碰
