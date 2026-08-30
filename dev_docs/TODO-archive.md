@@ -227,3 +227,24 @@
 - [x] Room Scene 产品方向作为 DXT-001/SCENE-001 输入写入文档，不扩大 UI-003 代码范围
 - [x] 用户于 2026-08-29 回复“ok合并提交”，最终验收通过
 - [x] 合并到 master：`e51cb0a`；实现提交 `76b0d7b`、`0788884`、`4fefacc`、`6c1f13e`
+
+## DXT-001 room.json v1 契约与统一场景渲染（2026-08-30）
+
+> 目标：在一个工作包内定稿 room.json v1，并原地改造现有渲染、配置器预览、Rust 应用和 Player/Core 回写链，使 image/video/html 场景、安全隔离与持久化边界真正生效。
+> 范围外：end 的完整编辑入口、Desk 排序、成组 HTML 依赖导入、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段和无关 Player/Core 重构。用户验收反馈后，现有 Desk/start/switch 属性栏按钮的真实导入已纳入本包。
+> 人工验收：按 `acceptance/DXT-001-room-json-v1-contract.md` 使用 v1 验收 Room，依次检查启动、双向切换、三类内容、预览不落盘、Dock 继承和 `__source` 边界。
+
+- [x] 核对 master、ROADMAP、UI-003、DOCK-004 和全部 worktree；确认只在 `feat/dxt-001-room-json-v1-contract` 开发
+- [x] 完整阅读入口、模型、流程、Dock、前端、IPC、持久化及错误分册
+- [x] 使用 CodeGraph 盘点现有场景渲染、预览和持久化链，确认原地改造
+- [x] 创建封闭的 `room.schema.json`、有效/无效夹具和可重复 Schema 检查
+- [x] 官方宿主支持 background/start/switch/end 的 image/video/html、固定图片时序、视频完整播放、HTML sandbox/实例消息/超时/清理
+- [x] 修正 `startDesk`、有向相邻 switch、缺失方向安全回退、Dock 继承和运行态不落盘
+- [x] 配置器打开/保存/预览保留完整 v1；真实 Desk/start/switch 素材按钮接通固定目录复制和内存草稿
+- [x] Rust 新建/保存/另存/应用链写出干净 v1；Player/Core 回写只信任运行包 `__source`
+- [x] Schema、JS、Rust、TypeScript、Release C# 构建及真实预览/桌面回归通过
+- [x] 用户验收发现属性栏按钮只有外观后，在同一分支修复；10 项 Rust 测试及前端构建通过
+- [x] 用户于 2026-08-30 回复“ok啊验收通过，感觉可以合并了”，最终验收通过
+- [x] 增加 `ROOM_AUTHORING.md`，固化配置器、手工制作和 vibe coding 的准确协议
+- [x] 合并到 master：`8f39fbb`；实现基线 `ed13a33`、入口收口 `86ad139`、素材按钮修复 `945d0ed`、创作者协议 `152e45e`
+- [x] 删除已合并分支并移除 Git worktree 注册；真实验收运行包变化以 stash 消息 `dxt-001 live acceptance runtime package 2026-08-30` 保存，未混入源码
