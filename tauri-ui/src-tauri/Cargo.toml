@@ -32,4 +32,6 @@ prost-types = "0.13"
 base64 = "0.22"
 percent-encoding = "2"
 tempfile = "3"
+trash = "5"
+zip = { version = "2", default-features = false, features = ["deflate"] }
 

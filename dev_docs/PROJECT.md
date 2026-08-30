@@ -88,6 +88,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-30 | **Dext 使用自己的 Lively Core fork，而不是依赖用户另装的原版 Lively**：Dext 配置器、Core、Player 和脚本必须作为同一产品闭环运行。开包时代码仍沿用 Lively 的应用名、单实例名、named pipe、`%LOCALAPPDATA%\Lively Wallpaper` 数据/日志目录和按进程名判断启动的逻辑，存在连错 Core、共享状态和误判已启动的风险；CORE-002 已在独立分支完成隔离实现，待用户验收后再合并。 |
 | 2026-08-30 | **开发顺序调整**：DXT-002 的 idle 实现保留在独立待验收分支，但暂不继续扩展或合并；先完成 CORE-002 运行身份隔离，再解决 DXT-002 契约去留，然后补 UI-001、UI-002 与 ROOM-001/002/003 的 Room 制作、导出、导入和校验闭环。 |
 | 2026-08-30 | **Dext 运行身份实现边界**：产品名 `Dext`、mutex `DEXT:DESKTOPSHELL`、pipe `Grpc_DEXT:DESKTOPSHELL<用户名>`、数据 `%LOCALAPPDATA%\Dext`、临时缓存 `%TEMP%\Dext`。不读取或静默迁移旧 Lively 数据；保留 Lively namespace、程序集、proto 包、源码目录及 Core/Player 文件名，避免无用户收益的高风险重构。身份可与原版同时存在，但不承诺同时控制 WorkerW。安装器/MSIX/AppUserModelId/屏保注册另由 PACKAGING-001 处理。 |
+| 2026-08-31 | **UI-V1 配置器运行真相与安全边界**：Room“使用中”只认 Core `GetWallpapers` 与运行包可信 `__source`，停止只关闭壁纸；Room zip、删除、库读写探测、诊断和文档打开都落在 Rust 白名单边界。设置写入固定为 Get 全量 → patch 允许字段 → Set 全量；配置器主题继续只存在前端。 |
 
 ## 工作流
 

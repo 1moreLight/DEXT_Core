@@ -180,11 +180,18 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v1，并复制原 Room 的四类素材目录；失败不留下半成品 |
 | `apply_room` | `(room_dir)` | 严格验证 v1，只镜像四个素材目录，清理旧扩展，并仅在运行包注入规范化 `__source` |
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/end` 的 image/video/HTML，并返回 `{name,type,src}` |
+| `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
+| `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v1 zip；防路径穿越、链接、重复项、解压炸弹、重名和残留 |
+| `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
+| `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段 |
+| `validate_room_library` | `(path) → canonical_path` | 创建并实际读写探测 Room 库，成功后前端才持久化路径 |
+| `diagnostics_json` / `export_diagnostics` | `→ JSON` / `(path)` | 汇总配置器/Core 版本、身份、进程、pipe、目录、运行包与源 Room |
+| `about_info` / `open_about_document` / `open_dext_directory` | 固定枚举 | 只打开仓库内许可/来源文档或已验证的 Dext data/log 目录，不向 WebView 开放任意路径 |
 
 ### L4 gRPC（Rust ↔ Core，GrpcDotNetNamedPipes 自定义线协议）
 
 - 管道：`\\.\pipe\Grpc_DEXT:DESKTOPSHELL<用户名>`；**不是标准 HTTP/2，tonic 不可用**，客户端在 `tauri-ui/src-tauri/src/grpc.rs` 手写帧（RequestInit→Headers→Payload→StreamEnd→Trailers），一次调用一条连接；每个业务 RPC 前先读取并验证 Dext Core 产品名、运行身份、PID、路径、数据目录和 pipe
-- 用到的 RPC（wallpaper.proto DesktopService）：`GetInstalledApps`(stream) / `LaunchApp` / `SetWallpaper` / `GetWallpapers`
+- 用到的 RPC：DesktopService `GetInstalledApps`(stream) / `LaunchApp` / `SetWallpaper` / `GetWallpapers` / `CloseAllWallpapers`；SettingsService `GetSettings` / `SetSettings`
 - proto 副本在 `src-tauri/proto/`，**必须去 BOM**（protox 限制）
 
 ### L5 `dext://` 自定义协议（配置器内嵌渲染器 = 实时预览通道）

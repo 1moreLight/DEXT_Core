@@ -10,6 +10,8 @@ Dext 基于仓库内自己的 Lively Core fork，保留上游协议类型和实�
 
 `Lively.exe`、Player/Watchdog 文件名、C# namespace、程序集、proto package 和 `LivelyInfo` 等技术类型继续保留，因为它们是 fork 内部兼容面，不再承担跨产品运行身份。旧 `%LOCALAPPDATA%\Lively Wallpaper` 不迁移。Dext 与原版可以同时保有独立进程/mutex/pipe/data，但 Windows WorkerW 的同时控制不属于本轮承诺。上游 LICENSE、README、版权和来源链接继续保留。
 
+UI-V1-001 配置器还通过同一条经身份验证的 named pipe 使用 DesktopService `GetWallpapers` / `CloseAllWallpapers` 和 SettingsService `GetSettings` / `SetSettings`。活动 Room 以运行包可信 `__source` 为准；设置修改必须先读取 Core 全量设置、只 patch 白名单字段、再写回全量对象，避免默认值覆盖未展示字段。配置器主题不写 Core `ApplicationTheme`。
+
 ## 零、全景分层图
 
 ```
