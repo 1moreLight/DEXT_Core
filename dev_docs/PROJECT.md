@@ -1,6 +1,6 @@
 # Dext 项目档案
 
-> 更新于 2026-08-28。结构性决策变更时更新此文件；当前开发顺序只看 ROADMAP.md。
+> 更新于 2026-08-30。结构性决策变更时更新此文件；当前开发顺序只看 ROADMAP.md。
 
 ## 一句话
 
@@ -42,7 +42,7 @@
                                 ①渲染器 全屏躺在 WorkerW 桌面层
 ```
 
-管道名：`\\.\pipe\Grpc_LIVELY:DESKTOPWALLPAPERSYSTEM<用户名>`（Constants.cs:75）
+当前遗留管道名：`\\.\pipe\Grpc_LIVELY:DESKTOPWALLPAPERSYSTEM<用户名>`（Constants.cs:75）。它仍与原版 Lively 使用同一身份，是已确认风险，不是 Dext 的最终接口；CORE-002 将统一替换 Core、Rust 客户端和脚本侧的身份引用。
 协议：GrpcDotNetNamedPipes 自定义线协议（非标准 HTTP/2，tonic 不可用），帧结构
 RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一条连接。
 
@@ -85,6 +85,8 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-29 | **Desk 排序保持语义**：调整 `desks` 顺序时，配置器按 Desk 和方向重映射 `startDesk` 与 `switches`；新形成的相邻组合缺少内容时提示补充，绝不自动复制或生成。 |
 | 2026-08-29 | **契约与重构原计划分包（历史）**：最初计划 DXT-001 只定 Room v1，SCENE-001 再实现 SceneHost；已被下一条 2026-08-30 决策取代。 |
 | 2026-08-30 | **DXT-001 契约与现有宿主一起改**：用户明确要求不再把渲染器留到下一包。DXT-001 在同一 worktree/分支/验收内定稿 v1，并原地扩展现有 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、预览和持久化链；除非现有结构无法满足安全隔离，否则禁止另写重复播放器。SCENE-001 不再单独开发。 |
+| 2026-08-30 | **Dext 使用自己的 Lively Core fork，而不是依赖用户另装的原版 Lively**：Dext 配置器、Core、Player 和脚本必须作为同一产品闭环运行。当前代码仍沿用 Lively 的应用名、单实例名、named pipe、`%LOCALAPPDATA%\Lively Wallpaper` 数据/日志目录和按进程名判断启动的逻辑，存在连错 Core、共享状态和误判已启动的风险。CORE-002 负责把这些运行身份统一隔离为 Dext；此条是已确认方向，代码尚未实现。 |
+| 2026-08-30 | **开发顺序调整**：DXT-002 的 idle 实现保留在独立待验收分支，但暂不继续扩展或合并；先完成 CORE-002 运行身份隔离，再解决 DXT-002 契约去留，然后补 UI-001、UI-002 与 ROOM-001/002/003 的 Room 制作、导出、导入和校验闭环。 |
 
 ## 工作流
 

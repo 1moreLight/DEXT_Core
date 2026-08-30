@@ -68,7 +68,61 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 4. 当前分支 TODO
 5. TODO-archive、ACCEPTANCE、FRONTEND_WORK 等历史记录
 
-## 三、room.json v1 正式口径
+## 三、以后怎样用 dev_docs 记录开发
+
+你不需要把所有事情都写进一个文件。先判断现在处于哪一步，再写到对应位置：
+
+| 现在发生的事情 | 写到哪里 | 怎么写 |
+|---|---|---|
+| 刚想到一个功能，还没决定做 | `ROADMAP.md` | 新增一个可独立验收的工作包，先标“排队” |
+| 决定接下来就做它 | `ROADMAP.md` | 全项目只把这一项标成“下一项” |
+| 产品方向或架构规则确认了 | `PROJECT.md` | 在“决策记录”追加日期、决定和原因，不删除旧决定；被取代时明确写“由哪条取代” |
+| room.json / Dock / Room 创作规则变化 | `MODEL.md` / `DOCK.md` / `ROOM_AUTHORING.md` | 更新唯一正式口径；ROADMAP 只写任务，不重复完整契约 |
+| 正式开工 | `TODO.md` + `acceptance/<ID>-<slug>.md` | 先写一句目标、范围外、步骤和人工验收，再动代码 |
+| 开发完成了一步 | 当前分支的 `TODO.md` 最后一节 | 立刻把这一项打勾；受阻则写原因和恢复条件 |
+| 遇到并解决一个坑 | `ERRORS.md` → `errors/` 对应分册 | 追加现象、原因、修复和下次检查方法，不删除历史坑 |
+| 自测完成，等你试用 | `ROADMAP.md` + 独立验收卡 | 状态改“待验收”，记录分支、提交、检查结果和你要操作的步骤 |
+| 你明确回复“通过” | 验收卡、ROADMAP、TODO-archive | 才能合并 master；随后标“已完成”、归档 TODO，并清理分支/worktree |
+
+### 一次开发最简单的记录流程
+
+```text
+想法出现
+  → ROADMAP 登记“排队”
+决定开工
+  → ROADMAP 唯一“下一项”
+  → 建独立 worktree/分支
+  → TODO 写计划 + acceptance 写验收
+开发过程中
+  → TODO 逐项打勾
+  → 决策写 PROJECT/MODEL，踩坑写 ERRORS
+代码完成
+  → 自测、commit、标“待验收”
+你回复“通过”
+  → 合并 master、标“已完成”、归档和清理
+```
+
+最重要的三个区别：
+
+- `ROADMAP` 是全项目待办和唯一顺序；`TODO` 只记录当前分支怎么执行，不能再堆未来愿望。
+- `PROJECT/MODEL/DOCK` 记录已经确认的长期规则；讨论中的猜测不要先写成正式契约。
+- `commit` 只表示代码已保存；只有你人工验收通过并合并 master，工作包才算完成。
+
+### 以后开新一轮可以直接使用的提示词
+
+```text
+请严格按照 AGENTS.md 和 dev_docs/WORKFLOW.md 开始工作包 <ID> <名称>。
+先读 dev_docs/README.md、ROADMAP.md、TODO.md、ERRORS.md 和本轮相关专题文档；
+确认 ROADMAP 状态和现有待验收分支，从最新 master 建独立 worktree/分支。
+动代码前先在 TODO 追加目标、范围外和步骤，并建立独立 acceptance 文件。
+开发中逐项更新 TODO，结构决策写 PROJECT/MODEL，解决的新坑追加 ERRORS。
+自测通过后只提交本工作包文件，停在待验收并给出与验收卡一致的人工步骤。
+在我明确回复“通过”前，不得合并 master。
+```
+
+如果只是讨论需求，可以在最后加一句：“本轮只讨论和登记 ROADMAP，不开分支、不改代码。”
+
+## 四、room.json v1 正式口径
 
 - `version: 1`；Desk 顺序来自 `desks`，默认 Desk 复用 UI 已有的 `startDesk`。
 - background/start/switch/end 的用户内容统一为 `{name,type,src}`，`type` 是 image/video/html。
@@ -82,7 +136,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 
 完整字段与宽容策略见 `MODEL.md`，机器校验见仓库根目录 `room.schema.json`。
 
-## 四、接口总表
+## 五、接口总表
 
 ### L1 room.json v1 官方宿主接口
 
@@ -138,7 +192,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 - 预览只改内存，不加载真实包的 room.json/room.js/room.css，也不会触发 `persistRoom`
 - 带路径穿越防护；mime 表覆盖 html/css/js/json/png/jpg/svg/mp4/webm
 
-## 五、工作流命令
+## 六、工作流命令
 
 | 场景 | 命令 |
 |---|---|
@@ -151,7 +205,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 | 日志 | `%LOCALAPPDATA%\Lively Wallpaper\logs\<最新>.txt` |
 | 查代码 | `codegraph explore/node` 优先（索引已建） |
 
-## 六、能力基线（DXT-001 开发分支，2026-08-30）
+## 七、能力基线（master，2026-08-30）
 
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/end 全部受控挂载。
 - 持久化：源 Room 严格 v1、运行包唯一可信 `__source`、顶层 IPC 和双写边界已收紧。
