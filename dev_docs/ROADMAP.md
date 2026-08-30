@@ -13,7 +13,7 @@
 | 最近完成 | **DOCK-003 桌面图标拖入 Dock** | 已完成 | master（merge `0d67359`） | 真桌面编辑时把桌面图标拖入 Dock，并支持 Dock → 桌面反向拖拽与双写持久化 |
 | 最近完成 | **UI-003 导图几何布局接线** | 已完成 | master（merge `e51cb0a`） | 每对 Desk 单条双向线；相邻上下、首尾侧边；启动目标可选 |
 | 待验收 | **DOCK-004 运行态指示圆点** | 待验收 | `feat/dock-004-runtime-indicator`（`30fde9d`） | Dock 显示应用运行状态；真桌面 Dock 拖拽已转远期重做 |
-| 待验收 | **DXT-001 room.json v1 契约与统一场景渲染** | 待验收 | `feat/dxt-001-room-json-v1-contract`（`ed13a33`） | v1、官方宿主三类内容、配置器预览、Rust 应用和 Player/Core 回写链已完成并通过开发侧检查 |
+| 待验收 | **DXT-001 room.json v1 契约与统一场景渲染** | 待验收 | `feat/dxt-001-room-json-v1-contract`（`86ad139`） | v1、官方宿主三类内容、配置器预览、Rust 应用和 Player/Core 回写链已完成并通过开发侧检查 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
