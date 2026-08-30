@@ -240,5 +240,5 @@
 - [x] 从 ProductName=Lively 的真实旧输出完成强制重建；正常二次启动未重复 C# 构建；Core/Watchdog/Player/配置器均验证为本 worktree 绝对路径（2026-08-30）
 - [x] 追加 ERRORS #40/#41/#42，记录旧构建、缺依赖假成功和 PowerShell 单参数 splat 三个已解决坑（2026-08-30）
 - [x] 只提交本工作包具名文件（实现提交 `7d1b10e`）并停在待验收（2026-08-30）
-- [ ] 用户按 `acceptance/CORE-003-dext-startup-stale-binary.md` 完成人工验收
+- [x] 用户回复“通过”，确认 `acceptance/CORE-003-dext-startup-stale-binary.md` 的人工验收通过（2026-08-30）
 - [ ] 用户明确回复“通过”后合并 master、归档 TODO 并清理工作分支/worktree
