@@ -22,7 +22,7 @@
 ## 一、A：壁纸侧 JS API（Lively → 页面）
 
 Player 用 `ExecuteScriptFunctionAsync` 调页面的**全局函数**（WebView2 Player `Form1.cs`）。
-**Dext 渲染器或 room.js 里定义同名全局函数即可直接收数，零改造。**
+这些函数会注入官方顶层页面。room.json v1 不再执行顶层 `room.js`；sandbox 用户 HTML 也不直接获得这些宿主能力。若未来开放给内容作者，必须先设计受控转发协议。
 
 | 全局函数 | 载荷 | 启用开关（LivelyInfo.json `"Arguments"`） | fork 状态 |
 |---|---|---|---|
@@ -142,7 +142,7 @@ fork **完整保留**：`Lively/Commandline/CommandHandler.cs`（658 行全套�
 
 | 能力 | 现状 | 对 Dext 的价值 |
 |---|---|---|
-| JS 注入函数 | fork Player 原样保留，**dext-room 房间现在就能用** | cockpit-room 加音乐可视化/仪表盘：LivelyInfo.json 加 `"Arguments": "--audio"`（或 `--system-nowplaying`/`--system-information`），room.js 里定义 `window.livelyAudioListener` 等全局函数即可，**C#/Rust/渲染器零改动** |
+| JS 注入函数 | fork Player 原样保留，官方顶层页面可用 | v1 用户内容尚未开放；未来需由官方宿主筛选并转发给 sandbox，而不是恢复顶层 room.js |
 | postMessage 回传 | fork 已扩 dext 消息（launch/saveRoom/dext:shutdownDone） | 我们自己的通道比上游原生更丰富，继续走这条线 |
 | 命令行控制 | fork 全保留 | 自动化测试可用（如 `setwp reload` 替代部分重铺场景）；创意工坊阶段可做 CLI 导入器 |
 | LivelyProperties | 机制在，但 Dext 配置器已自建编辑 UI | 暂不用；若将来要"桌面右键自定义壁纸参数"可复用此通道（setprop → livelyPropertyListener） |
@@ -152,7 +152,7 @@ fork **完整保留**：`Lively/Commandline/CommandHandler.cs`（658 行全套�
 
 1. `"Arguments": "--audio"` 在 `Type:"web"` 房间是否生效未实测（理论可行：Arguments 透传无条件执行）。
 2. 音频频谱需要 NAudioLoopback 捕获权限/设备存在；无声卡输出时数组可能恒 0。
-3. `livelyAudioListener` 等注入发生在**页面所有帧还是主 frame**未验证——dext-room 的 iframe 结构下应在顶层页面定义。
+3. `livelyAudioListener` 等注入发生在**页面所有帧还是主 frame**未验证；v1 先按只信任官方顶层页面处理，不向 sandbox 内容承诺。
 4. 暂停策略：`cmd_suspend` 会暂停页面 media 元素，Dext 的视频背景/演出槽受此影响属预期行为（跟随 Lively 暂停语义）。
 
 ## 七、参考

@@ -57,7 +57,17 @@ interface RoomIcon {
   y?: number;
 }
 
-type Background = string | { type: "video"; src: string } | null;
+type ContentType = "image" | "video" | "html";
+
+interface Content {
+  name: string;
+  type: ContentType;
+  src: string;
+}
+
+type Background = Content | null;
+type TransitionPreset = "slide" | "fade" | "zoom" | "none";
+type Transition = TransitionPreset | Content;
 
 interface Desk {
   name: string;
@@ -69,8 +79,7 @@ interface Desk {
 
 function bgLabel(bg: Background): string {
   if (!bg) return "黑底（未设置）";
-  if (typeof bg === "string") return bg;
-  return `🎬 视频 ${bg.src}`;
+  return `${bg.type === "image" ? "🖼" : bg.type === "video" ? "🎬" : "代码"} ${bg.name}`;
 }
 
 interface CoverRef {
@@ -91,9 +100,9 @@ type Mode = "use" | "edit" | "workshop" | "settings";
 type EditNav = "library" | "room" | "dock";
 
 /* ---- room 思维导图 ----
-   拓扑：启动画面只直连一个可选 Desk（无 switch，旧 Room 默认 d0）；
+   拓扑：启动画面只直连一个可选 Desk（无 switch，未指定时默认 d0）；
    Desk 相邻上下双向连接，3 个以上时首尾从侧边双向环回。 */
-type GEdge = { id: string; from: string; to: string; trans: string };
+type GEdge = { id: string; from: string; to: string; trans: Transition | null };
 type Snapshot = {
   edges: GEdge[];
   desks: Desk[];
@@ -126,33 +135,35 @@ type GraphSegment = {
 const EMPTY_GRAPH_GEOMETRY: GraphGeometry = { width: 0, height: 0, nodes: {} };
 const GRAPH_ROW_GAP = 32;
 
-const TRANSITION_OPTIONS: [string, string][] = [
+const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
   ["slide", "滑动"],
   ["fade", "淡入淡出"],
   ["zoom", "缩放"],
-  ["flip", "翻转"],
   ["none", "无"],
-  ["code", "代码"],
-  ["video", "视频"],
 ];
 
-function seedEdges(ds: Desk[], hasStart: boolean, startDesk = 0): GEdge[] {
+function seedEdges(
+  ds: Desk[],
+  hasStart: boolean,
+  startDesk = 0,
+  switches: Record<string, Transition> = {}
+): GEdge[] {
   const edges: GEdge[] = [];
   if (hasStart && ds.length > 0) {
     const target = Math.min(Math.max(startDesk, 0), ds.length - 1);
-    edges.push({ id: "start-in", from: "start", to: `d${target}`, trans: "slide" });
+    edges.push({ id: "start-in", from: "start", to: `d${target}`, trans: null });
   }
   for (let i = 1; i < ds.length; i++) {
     edges.push(
-      { id: `s${i}f`, from: `d${i - 1}`, to: `d${i}`, trans: "slide" },
-      { id: `s${i}b`, from: `d${i}`, to: `d${i - 1}`, trans: "fade" }
+      { id: `s${i}f`, from: `d${i - 1}`, to: `d${i}`, trans: switches[`${i - 1}>${i}`] ?? null },
+      { id: `s${i}b`, from: `d${i}`, to: `d${i - 1}`, trans: switches[`${i}>${i - 1}`] ?? null }
     );
   }
   if (ds.length > 2) {
     const last = ds.length - 1;
     edges.push(
-      { id: "s-wrap-f", from: `d${last}`, to: "d0", trans: "slide" },
-      { id: "s-wrap-b", from: "d0", to: `d${last}`, trans: "fade" }
+      { id: "s-wrap-f", from: `d${last}`, to: "d0", trans: switches[`${last}>0`] ?? null },
+      { id: "s-wrap-b", from: "d0", to: `d${last}`, trans: switches[`0>${last}`] ?? null }
     );
   }
   return edges;
@@ -180,10 +191,9 @@ function reconcileGraphEdges(
   startDesk: number
 ): GEdge[] {
   const byRoute = new Map(current.map((edge) => [`${edge.from}>${edge.to}`, edge.trans]));
-  const byId = new Map(current.map((edge) => [edge.id, edge.trans]));
   return seedEdges(desks, hasStart, startDesk).map((edge) => ({
     ...edge,
-    trans: byRoute.get(`${edge.from}>${edge.to}`) ?? byId.get(edge.id) ?? edge.trans,
+    trans: byRoute.get(`${edge.from}>${edge.to}`) ?? null,
   }));
 }
 
@@ -414,7 +424,7 @@ const MOCK_ROOMS: RoomInfo[] = [
 const MOCK_DESKS: Desk[] = [
   {
     name: "主页",
-    background: "",
+    background: null,
     iconSize: "medium",
     icons: MOCK_APPS.slice(0, 6).map((a, i) => ({
       label: a.name,
@@ -424,11 +434,11 @@ const MOCK_DESKS: Desk[] = [
       y: Math.floor(i / 4),
     })),
   },
-  { name: "游戏", background: "", iconSize: "large", icons: [] },
+  { name: "游戏", background: null, iconSize: "large", icons: [] },
 ];
 
 function newDesk(index: number): Desk {
-  return { name: `Desk ${index + 1}`, background: "", icons: [] };
+  return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [] };
 }
 
 function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
@@ -439,13 +449,111 @@ function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
   );
 }
 
-type Transition = string | { type: "video"; src: string };
-
 function transitionLabel(t: Transition): string {
   if (typeof t === "string") {
     return { slide: "滑动", fade: "淡入", zoom: "缩放", none: "无" }[t] ?? t;
   }
-  return "🎬 视频转场";
+  return `${t.type === "image" ? "🖼" : t.type === "video" ? "🎬" : "代码"} ${t.name}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function cleanContent(value: unknown, directory: "background" | "start" | "switch" | "end"): Content | null {
+  if (!isRecord(value) || !["image", "video", "html"].includes(String(value.type))) return null;
+  const name = typeof value.name === "string" ? value.name.trim() : "";
+  const src = typeof value.src === "string" ? value.src.replace(/\\/g, "/") : "";
+  if (!name || !src.startsWith(`${directory}/`) || src.split("/").some((part: string) => !part || part === "." || part === "..")) return null;
+  return { name, type: value.type as ContentType, src };
+}
+
+function cleanTransition(value: unknown): Transition | null {
+  if (["slide", "fade", "zoom", "none"].includes(String(value))) return value as TransitionPreset;
+  return cleanContent(value, "switch");
+}
+
+function cleanRoomIcon(value: unknown, index: number): RoomIcon {
+  const icon = isRecord(value) ? value : {};
+  const launch = isRecord(icon.launch) ? icon.launch : {};
+  return {
+    label: typeof icon.label === "string" && icon.label.trim() ? icon.label.trim() : `图标 ${index + 1}`,
+    icon_png: typeof icon.icon_png === "string" ? icon.icon_png : "",
+    launch: {
+      target: typeof launch.target === "string" ? launch.target : "",
+      args: typeof launch.args === "string" ? launch.args : "",
+      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
+    },
+    x: Number.isInteger(icon.x) && Number(icon.x) >= 0 ? Number(icon.x) : index % 4,
+    y: Number.isInteger(icon.y) && Number(icon.y) >= 0 ? Number(icon.y) : Math.floor(index / 4),
+    ...(typeof icon.glyph === "string" ? { glyph: icon.glyph } : {}),
+    ...(typeof icon.color === "string" ? { color: icon.color } : {}),
+    ...(typeof icon.action === "string" ? { action: icon.action } : {}),
+  } as RoomIcon;
+}
+
+function cleanDesk(value: unknown, index: number): Desk {
+  const desk = isRecord(value) ? value : {};
+  const iconSize = ["large", "medium", "small"].includes(String(desk.iconSize))
+    ? String(desk.iconSize)
+    : "medium";
+  return {
+    name: typeof desk.name === "string" && desk.name.trim() ? desk.name.trim() : `Desk ${index + 1}`,
+    background: cleanContent(desk.background, "background"),
+    iconSize,
+    icons: Array.isArray(desk.icons) ? desk.icons.map(cleanRoomIcon) : [],
+    ...(isRecord(desk.dock) ? { dock: desk.dock as DockConfig } : {}),
+  };
+}
+
+function roomIconForWrite(icon: RoomIcon, index: number, desktop: boolean) {
+  const out: Record<string, unknown> = {
+    label: icon.label?.trim() || `图标 ${index + 1}`,
+  };
+  if (icon.icon_png) out.icon_png = icon.icon_png;
+  const value = icon as RoomIcon & { glyph?: string; color?: string; action?: string };
+  if (value.glyph) out.glyph = value.glyph;
+  if (value.color) out.color = value.color;
+  if (value.action) out.action = value.action;
+  if (icon.launch?.target?.trim()) {
+    out.launch = {
+      target: icon.launch.target.trim(),
+      args: icon.launch.args ?? "",
+      workdir: icon.launch.workdir ?? "",
+    };
+  }
+  if (desktop) {
+    out.x = Number.isInteger(icon.x) && Number(icon.x) >= 0 ? Number(icon.x) : index % 4;
+    out.y = Number.isInteger(icon.y) && Number(icon.y) >= 0 ? Number(icon.y) : Math.floor(index / 4);
+  }
+  return out;
+}
+
+function dockForWrite(value: DockConfig | undefined): Record<string, unknown> | undefined {
+  if (!value) return undefined;
+  const out: Record<string, unknown> = {};
+  if (typeof value.enabled === "boolean") out.enabled = value.enabled;
+  if (["bottom", "top", "left", "right"].includes(String(value.position))) out.position = value.position;
+  if (typeof value.autoHide === "boolean") out.autoHide = value.autoHide;
+  if (["text", "dots"].includes(String(value.indicator))) out.indicator = value.indicator;
+  if (value.style) {
+    const style: Record<string, unknown> = {};
+    for (const key of ["bg", "blur", "radius", "gap", "pad", "icon"] as const) {
+      if (value.style[key] !== undefined) style[key] = value.style[key];
+    }
+    if (Object.keys(style).length) out.style = style;
+  }
+  if (Array.isArray(value.icons)) {
+    out.icons = value.icons.map((icon, index) => roomIconForWrite({
+      label: icon.label ?? `Dock ${index + 1}`,
+      icon_png: icon.icon_png ?? "",
+      launch: icon.launch ?? { target: "", args: "", workdir: "" },
+      ...(icon.glyph ? { glyph: icon.glyph } : {}),
+      ...(icon.color ? { color: icon.color } : {}),
+      ...(icon.action ? { action: icon.action } : {}),
+    } as RoomIcon, index, false));
+  }
+  return out;
 }
 
 /* ===== room cover collage ===== */
@@ -603,6 +711,9 @@ export default function App() {
   );
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
+  const [startContent, setStartContent] = useState<Content | null>(null);
+  const [endContent, setEndContent] = useState<Content | null>(null);
+  const [roomVersion, setRoomVersion] = useState<number | null>(1);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
@@ -634,6 +745,38 @@ export default function App() {
   );
   const previewRef = useRef<HTMLIFrameElement>(null);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
+
+  function buildRoomV1() {
+    const room: Record<string, unknown> = {
+      version: 1,
+      startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
+      switch: transition,
+      switches: Object.fromEntries(
+        edges.flatMap((edge) => {
+          if (!edge.trans || !/^d\d+$/.test(edge.from) || !/^d\d+$/.test(edge.to)) return [];
+          return [[`${Number(edge.from.slice(1))}>${Number(edge.to.slice(1))}`, edge.trans]];
+        })
+      ),
+      desks: desks.map((desk, deskIndex) => {
+        const next: Record<string, unknown> = {
+          name: desk.name.trim() || `Desk ${deskIndex + 1}`,
+          background: desk.background,
+          iconSize: ["large", "medium", "small"].includes(String(desk.iconSize))
+            ? desk.iconSize
+            : "medium",
+          icons: desk.icons.map((icon, index) => roomIconForWrite(icon, index, true)),
+        };
+        const deskDock = dockForWrite(desk.dock);
+        if (deskDock) next.dock = deskDock;
+        return next;
+      }),
+    };
+    if (startContent) room.start = { ...startContent, name: startName.trim() || startContent.name };
+    if (endContent) room.end = endContent;
+    const roomDock = dockForWrite(dock);
+    if (roomDock) room.dock = roomDock;
+    return room;
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -703,6 +846,11 @@ export default function App() {
       setActiveDesk(0);
       setRoomPath(path);
       setRoomCss("");
+      setStartContent(null);
+      setEndContent(null);
+      setRoomVersion(1);
+      setStartDesk(0);
+      setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
       return;
@@ -717,15 +865,41 @@ export default function App() {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
       const room = JSON.parse(json);
-      setDesks(room.desks?.length ? room.desks : [newDesk(0)]);
+      const nextDesks = Array.isArray(room.desks) && room.desks.length
+        ? room.desks.map(cleanDesk)
+        : [newDesk(0)];
+      const nextStartDesk = Number.isInteger(room.startDesk) && room.startDesk >= 0 && room.startDesk < nextDesks.length
+        ? room.startDesk
+        : 0;
+      const nextStart = cleanContent(room.start, "start");
+      const nextEnd = cleanContent(room.end, "end");
+      const rawSwitches = isRecord(room.switches) ? room.switches : {};
+      const nextSwitches = Object.fromEntries(
+        Object.entries(rawSwitches).flatMap(([key, value]) => {
+          const parsed = cleanTransition(value);
+          return parsed ? [[key, parsed]] : [];
+        })
+      );
+      setDesks(nextDesks);
       setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
-      setTransition(room.switch ?? room.transition ?? "slide");
+      setTransition(cleanTransition(room.switch) ?? "slide");
+      setStartContent(nextStart);
+      setEndContent(nextEnd);
+      setStartName(nextStart?.name ?? "启动画面");
+      setHasStart(true);
+      setStartDesk(nextStartDesk);
+      setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
+      setRoomVersion(typeof room.version === "number" ? room.version : null);
       setRoomCss(css);
-      setActiveDesk(0);
+      setActiveDesk(nextStartDesk);
       setRoomPath(path);
       setDirty(false);
       localStorage.setItem("dext.roomPath", path);
-      setStatus(`已打开 ${path.split("\\").pop()}`);
+      setStatus(
+        room.version === 1
+          ? `已打开 ${path.split("\\").pop()}`
+          : "该 Room 不是 v1：可查看，但必须另存为 v1，不能覆盖或应用"
+      );
     } catch (e) {
       setStatus(`error: ${e}`);
     }
@@ -737,10 +911,14 @@ export default function App() {
 
   async function saveRoom(): Promise<boolean> {
     if (!roomPath) return false;
+    if (roomVersion !== 1) {
+      setStatus("非 v1 Room 不能覆盖保存；请另存为新的 v1 Room");
+      return false;
+    }
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify({ desks, dock, switch: transition }, null, 2),
+        roomJson: JSON.stringify(buildRoomV1(), null, 2),
       });
       setDirty(false);
       return true;
@@ -764,6 +942,10 @@ export default function App() {
   async function applyCurrent() {
     if (!roomPath) {
       setStatus("先新建或选择一个房间");
+      return;
+    }
+    if (roomVersion !== 1) {
+      setStatus("非 v1 Room 不能覆盖或应用；请另存为 v1");
       return;
     }
     setStatus("saving...");
@@ -854,7 +1036,7 @@ export default function App() {
       const path = await invoke<string>("create_room", { dir: libDir, name });
       await invoke("write_room", {
         path: `${path}\\room.json`,
-        roomJson: JSON.stringify({ desks, dock, switch: transition }, null, 2),
+        roomJson: JSON.stringify(buildRoomV1(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -871,15 +1053,23 @@ export default function App() {
   }
 
   function postRoom() {
+    if (!roomPath) return;
+    const roomName = roomPath.split(/[\\/]/).filter(Boolean).pop();
+    if (!roomName) return;
     previewRef.current?.contentWindow?.postMessage(
-      { type: "dext:room", room: { desks, dock }, deskIndex: activeDesk, roomCss },
-      "*"
+      {
+        type: "dext:room",
+        room: buildRoomV1(),
+        deskIndex: activeDesk,
+        assetBase: `http://lib.localhost/${encodeURIComponent(roomName)}/`,
+      },
+      "http://dext.localhost"
     );
   }
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, dock, activeDesk, roomCss, showPreview]);
+  }, [desks, dock, activeDesk, showPreview, transition, edges, startContent, endContent, startDesk, startName]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -993,8 +1183,8 @@ export default function App() {
     if (!roomPath) return;
     const filters = [
       kind === "video"
-        ? { name: "视频", extensions: ["mp4", "webm", "mkv", "mov"] }
-        : { name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif"] },
+        ? { name: "视频", extensions: ["mp4", "webm"] }
+        : { name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif", "svg"] },
     ];
     const picked = await open({ filters, multiple: false });
     if (typeof picked !== "string") return;
@@ -1018,28 +1208,28 @@ export default function App() {
   function clearBackground() {
     touch();
     setDesks((prev) =>
-      prev.map((d, i) => (i === activeDesk ? { ...d, background: "" } : d))
+      prev.map((d, i) => (i === activeDesk ? { ...d, background: null } : d))
     );
   }
 
   async function changeTransition(value: string) {
     touch();
     if (value !== "video") {
-      setTransition(value);
+      setTransition(value as TransitionPreset);
       return;
     }
     if (!roomPath) return;
     const picked = await open({
-      filters: [{ name: "视频", extensions: ["mp4", "webm", "mkv", "mov"] }],
+      filters: [{ name: "视频", extensions: ["mp4", "webm"] }],
       multiple: false,
     });
     if (typeof picked !== "string") return;
     try {
       setStatus("copying...");
-      const t = await invoke<{ type: "video"; src: string }>("import_background", {
+      const t = await invoke<Content>("import_background", {
         roomDir: roomPath,
         srcPath: picked,
-        kind: "transition",
+        kind: "switch",
       });
       setTransition(t);
       setStatus("视频转场已选择，记得保存并应用");
@@ -1135,14 +1325,19 @@ export default function App() {
     setRoomPickPath(room.path);
   }
   function renameGraphNode(id: string, name: string) {
-    if (id === "start") setStartName(name);
+    if (id === "start") {
+      setStartName(name);
+      setStartContent((current) => current ? { ...current, name } : current);
+    }
     else {
       const i = parseInt(id.slice(1), 10);
       setDesks((prev) => prev.map((d, xi) => (xi === i ? { ...d, name } : d)));
     }
   }
   function setEdgeTrans(edgeId: string, trans: string) {
-    setEdges((prev) => prev.map((e) => (e.id === edgeId ? { ...e, trans } : e)));
+    setEdges((prev) => prev.map((e) =>
+      e.id === edgeId ? { ...e, trans: trans as TransitionPreset } : e
+    ));
   }
   function changeStartDesk(nextDesk: number) {
     if (nextDesk === startDesk || nextDesk < 0 || nextDesk >= desks.length) return;
@@ -1156,11 +1351,12 @@ export default function App() {
           edge.id === "start-in" ? { ...edge, to: `d${nextDesk}` } : edge
         );
       return [
-        { id: "start-in", from: "start", to: `d${nextDesk}`, trans: "slide" },
+        { id: "start-in", from: "start", to: `d${nextDesk}`, trans: null },
         ...prev,
       ];
     });
-    setStatus("启动目标已切换（当前编辑会话；持久化待 UI-001）");
+    touch();
+    setStatus("启动目标已切换，保存后写入 startDesk");
   }
   function snapshot(): Snapshot {
     return { edges, desks: desks.map((d) => ({ ...d })), startName, hasStart, startDesk };
@@ -1209,8 +1405,6 @@ export default function App() {
   }
   useEffect(() => {
     if (roomEntered) {
-      setStartDesk(0);
-      setEdges(seedEdges(desks, hasStart, 0));
       setPast([]);
       setFuture([]);
       setGraphSel(null);
@@ -1519,13 +1713,13 @@ export default function App() {
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
-                  src="http://dext.localhost/index.html"
+                  src="http://dext.localhost/index.html?preview=1"
                   onLoad={postRoom}
                   title="Room 预览"
                   className="aspect-video w-full max-w-4xl rounded-lg border border-border"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · Room 数据与 room.css 均使用当前编辑内容 · 双击图标不会真启动
+                  实时预览 · 只使用内存中的 room.json v1 草稿，不写源文件或运行包
                 </p>
               </div>
             ) : editNav === "library" ? (
@@ -2018,24 +2212,24 @@ export default function App() {
                                 {nameOf(e.from)} → {nameOf(e.to)}
                                 <div className="flex items-center gap-1.5">
                                   <select
-                                    value={e.trans}
+                                    value={typeof e.trans === "string" ? e.trans : e.trans ? "__content" : "__missing"}
                                     onChange={(ev) => {
+                                      if (ev.target.value.startsWith("__")) return;
                                       pushHistory();
                                       setEdgeTrans(e.id, ev.target.value);
                                     }}
                                     className="h-8 rounded-md border border-border bg-background px-2 text-sm"
                                   >
+                                    {!e.trans && <option value="__missing">需要补充切换</option>}
+                                    {e.trans && typeof e.trans === "object" && (
+                                      <option value="__content">{transitionLabel(e.trans)}</option>
+                                    )}
                                     {TRANSITION_OPTIONS.map(([v, l]) => (
                                       <option key={v} value={v}>
                                         {l}
                                       </option>
                                     ))}
                                   </select>
-                                  {(e.trans === "code" || e.trans === "video") && (
-                                    <Button variant="outline" size="sm" title="下一轮接真实导入">
-                                      {e.trans === "code" ? "选择代码" : "选择视频"}
-                                    </Button>
-                                  )}
                                 </div>
                               </label>
                             );

@@ -34,6 +34,11 @@
 | #27 | apply_room 只覆盖不删除导致跨 Room 运行包污染 | [backend](errors/backend.md) |
 | #28 | flex 节点内 `truncate` 未约束宽度仍会溢出 | [frontend](errors/frontend.md) |
 | #29 | 撤回删除节点后选择状态仍指向不存在索引 | [frontend](errors/frontend.md) |
+| #30 | 页面提交的 `__source` 造成任意路径回写 | [backend](errors/backend.md) |
+| #31 | sandbox iframe 的完成消息与 WebView IPC 必须双层验源 | [renderer](errors/renderer.md) |
+| #32 | Vite HMR 脚本被 sandbox opaque origin 的 CORS 拒绝 | [toolchain](errors/toolchain.md) |
+| #33 | Tauri 开发态 origin 与发布态不同导致预览被拒绝 | [renderer](errors/renderer.md) |
+| #34 | Core 同进程并发保存复用临时文件名 | [backend](errors/backend.md) |
 
 ## 分册
 

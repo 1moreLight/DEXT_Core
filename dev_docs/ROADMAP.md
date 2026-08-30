@@ -13,11 +13,11 @@
 | 最近完成 | **DOCK-003 桌面图标拖入 Dock** | 已完成 | master（merge `0d67359`） | 真桌面编辑时把桌面图标拖入 Dock，并支持 Dock → 桌面反向拖拽与双写持久化 |
 | 最近完成 | **UI-003 导图几何布局接线** | 已完成 | master（merge `e51cb0a`） | 每对 Desk 单条双向线；相邻上下、首尾侧边；启动目标可选 |
 | 待验收 | **DOCK-004 运行态指示圆点** | 待验收 | `feat/dock-004-runtime-indicator`（`30fde9d`） | Dock 显示应用运行状态；真桌面 Dock 拖拽已转远期重做 |
-| 下一项 | **DXT-001 room.json v1 契约定稿** | 下一项 | 待开发 | 需求已讨论：全新 v1、`startDesk`、`name/type/src`、Desk 排序重映射和持久化边界；尚未创建 Schema |
+| 开发中 | **DXT-001 room.json v1 契约与统一场景渲染** | 开发中 | `feat/dxt-001-room-json-v1-contract` | 同一定稿 v1，并原地适配官方宿主、配置器预览、Rust 应用和 Player/Core 回写链 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
-UI-003 已验收合并；DOCK-004 仍在独立分支待验收。产品方向讨论不把渲染器重构塞回这两个工作包；唯一推荐下一项是先完成 DXT-001 契约，再按契约开发 SCENE-001。
+UI-003 已验收合并；DOCK-004 仍在独立分支待验收。2026-08-30 用户明确决定把原 SCENE-001 必要实现并入 DXT-001：格式和现有渲染/预览/持久化链一起改完，但仍保持一个工作包、一个分支和一份验收。
 
 ## 二、完成的定义
 
@@ -49,14 +49,14 @@ UI-003 已验收合并；DOCK-004 仍在独立分支待验收。产品方向讨�
 | 顺序 | 工作包 | 状态 | 独立交付结果 | 依赖 |
 |---|---|---|---|---|
 | 5 | **UI-003 导图几何布局接线** | 已完成 | 节点尺寸变化后连线和布局仍正确；Desk 环形双向导航；启动目标可选 | 无 |
-| 6 | **DXT-001 room.json v1 契约定稿** | 下一项 | `room.schema.json` + 字段/继承/宽容策略；全新 v1 不兼容旧 Room，固化 `startDesk`、`name/type/src`、环形拓扑、Dock、`__source` 与预览/保存边界 | UI-003 与需求讨论输入 |
-| 7 | **SCENE-001 统一 SceneHost** | 排队 | 官方 HTML 宿主统一承载 background/start/switch/end 的 image/video/html 内容；图片按固定静态时序，switch 视频完整播放后换页，并补齐隔离与消息校验 | DXT-001 |
+| 6 | **DXT-001 room.json v1 契约与统一场景渲染** | 开发中 | `room.schema.json`、字段/继承/宽容策略，以及官方宿主对 background/start/switch/end 的 image/video/html 原地适配、安全隔离、预览和持久化闭环 | UI-003 与需求讨论输入 |
+| 7 | **SCENE-001 统一 SceneHost** | 已并入 DXT-001 | 2026-08-30 用户决定不再单独开包；其必要结果由 DXT-001 同一分支和验收卡交付 | DXT-001 |
 | 8 | **UI-001 内容配置** | 排队 | 配置器能为 background/start/end 选择 image/video/html，编辑 `name` 并保存 `startDesk`；不要求用户手写 JSON | DXT-001、SCENE-001 |
 | 9 | **UI-002 Desk 顺序与 switch 读写** | 排队 | 调整 Desk 顺序时按 Desk/方向重映射 `switches`；新相邻组合提示补充，两个方向可分别保存 | DXT-001、SCENE-001 |
 | 10 | **MEDIA-001 导图素材导入** | 排队 | 图片/视频/HTML 按钮能选择素材并写入正确 background/start/end/switch 位置 | UI-001、UI-002 |
 | 11 | **UI-004 撤销历史持久化** | 排队 | 刷新或重开后仍能恢复本轮编辑历史 | UI-001、UI-002 |
 
-DXT-001 只决定新数据怎样表达，不实现播放器或迁移旧 Room；SCENE-001 才负责渲染器重构。这样 Schema 可先成为 UI、运行时和未来 zip 的共同边界，重构也有独立验收入口。
+DXT-001 同时决定新数据怎样表达并让现有播放器真正执行该格式；仍不迁移旧 Room，也不顺带开发 UI-001/UI-002 素材界面。SCENE-001 只保留为历史映射，不再另开分支或验收。
 
 ### M3：让 Room 可以安全分享
 
@@ -97,10 +97,9 @@ DXT-001 只决定新数据怎样表达，不实现播放器或迁移旧 Room；S
 ```text
 OPS-001 文档流程
   ├─ DOCK-001 → DOCK-002 → DOCK-003 → DOCK-004
-  └─ UI-003 已确认拓扑 → DXT-001 Room 内容契约
-       ├─ SCENE-001 统一 SceneHost
-       │  ├─ UI-001 内容配置
-       │  └─ UI-002 边级转场读写
+  └─ UI-003 已确认拓扑 → DXT-001 Room 契约 + 统一场景宿主
+       ├─ UI-001 内容配置
+       ├─ UI-002 边级转场读写
        ├─ MEDIA-001 素材导入
        └─ ROOM-001 → ROOM-002 → ROOM-003
 ```

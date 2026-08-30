@@ -1,0 +1,10 @@
+{
+  "desks": [
+    {
+      "name": "旧 Room",
+      "background": "background/old.png",
+      "icons": []
+    }
+  ],
+  "transition": "slide"
+}

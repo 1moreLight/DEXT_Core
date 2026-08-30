@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "startDesk": 0,
+  "switches": {},
+  "desks": [
+    {
+      "name": "主页",
+      "background": null,
+      "iconSize": "medium",
+      "icons": []
+    }
+  ],
+  "__source": "C:/rooms/forged"
+}

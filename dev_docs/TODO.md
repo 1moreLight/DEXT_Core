@@ -203,3 +203,24 @@
 - [x] 重写 MODEL.md 的 v1 方向，删除旧兼容、默认图片动效、视频中点换页和临时新名词（2026-08-29）
 - [x] 同步 PROJECT/README/FRONTEND/DOCK/ROADMAP 的当前口径与现状边界（2026-08-29）
 - [x] 文档一致性检查通过；仅 7 个具名 dev_docs 文件，无代码、Schema、Room 或 UI 改动（2026-08-29）
+
+## DXT-001 room.json v1 契约与统一场景渲染（2026-08-30）
+
+> 目标：在一个工作包内定稿 room.json v1，并原地改造现有渲染、配置器预览、Rust 应用和 Player/Core 回写链，使 image/video/html 场景、安全隔离与持久化边界真正生效。
+> 范围外：UI-001/UI-002 素材配置界面、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段和无关 Player/Core 重构。
+> 人工验收：按 `acceptance/DXT-001-room-json-v1-contract.md` 使用 v1 验收 Room，依次检查启动、双向切换、三类内容、预览不落盘、Dock 继承和 `__source` 边界。
+
+- [x] 核对 master、ROADMAP、UI-003、DOCK-004 和全部 worktree；确认只在 `feat/dxt-001-room-json-v1-contract` 开发（2026-08-30）
+- [x] 完整阅读入口、模型、流程、Dock、前端、IPC、持久化及错误分册（2026-08-30）
+- [x] 使用 CodeGraph 盘点 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、`dockCfg`、`persistRoom`、配置器预览和 `sync_room_to_package`；确认可原地改造（2026-08-30）
+- [x] 创建独立验收卡并冻结 Schema、宽容读取、安全隔离和持久化标准（2026-08-30）
+- [x] 创建封闭的 `room.schema.json`、有效/无效夹具和可重复 Schema 检查（2026-08-30）
+- [x] 原地扩展现有渲染器：background/start/switch/end 的 image/video/html、固定图片时序、视频完整播放、HTML sandbox/实例消息/超时/清理（2026-08-30）
+- [x] 修正 `startDesk`、有向相邻 switch、缺失方向安全回退、Dock 继承和运行态不落盘（2026-08-30）
+- [x] 配置器打开/保存/预览保留完整 v1；预览只用内存草稿和源素材协议，不执行包内旧 Room 代码（2026-08-30）
+- [x] Rust 新建/保存/应用链写出干净 v1，只同步四个素材目录，并仅在运行包注入可信 `__source`（2026-08-30）
+- [x] Player/Core 只接受顶层官方宿主 IPC；运行包保留 `__source`，源 Room 回写前剥离且不信任页面提交路径（2026-08-30）
+- [x] 更新 README / ROADMAP / PROJECT / MODEL / FRONTEND / DOCK / LIVELY_API 及相关错误记录，移除 DXT/SCENE 分包旧口径和误导性的 room.js 教程（2026-08-30）
+- [x] 运行 Schema、JS、Rust、TypeScript、Release C# 构建及真实预览/桌面回归（2026-08-30）
+- [ ] 核对具名文件、提交独立分支并把工作包标为待验收
+- [?] 用户按独立验收卡确认通过后才允许合并 master

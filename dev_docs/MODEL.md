@@ -1,7 +1,7 @@
-# room.json v1 产品契约（DXT-001 需求确认稿）
+# room.json v1 正式契约（DXT-001）
 
-> 2026-08-29 根据配置器 UI-003 和本轮用户讨论重写。
-> 本文先固定产品语义；正式 JSON Schema、字段说明和验收文件仍由 DXT-001 开发阶段交付。
+> 2026-08-30 定稿。机器可校验格式见仓库根目录 `room.schema.json`；本文件解释字段、继承、宽容读取和持久化语义。
+> Schema 描述源 Room / 未来导出形态，故意不允许运行包内部字段 `__source`。
 
 ## 一、Room 和官方宿主的边界
 
@@ -12,7 +12,7 @@
 - 用户 HTML 只能在受控内容容器中运行，不能替换官方宿主、直接操作 Dock 或伪造保存/运行态消息。
 - v1 是重构后的新格式，不承担旧 Room、旧 `transition`、顶层 `room.js` / `room.css` 或旧素材目录的兼容与迁移。
 
-## 二、v1 结构草案
+## 二、v1 结构与字段
 
 以下名称优先复用当前 UI 和既有 Room 字段，不增加 Desk ID，也不另建一套同义结构。
 
@@ -83,9 +83,29 @@
 | `type` | `image` / `video` / `html` |
 | `src` | Room 根目录内的相对路径 |
 
-正式 v1 写入时三项都存在。宽容读取遇到缺失 `name` 时，配置器可以临时使用文件名展示，但明确保存后应补成标准对象。
+正式 v1 写入时三项都存在；缺少任何一项的 Content 都不是合法写出格式。宽容读取可临时停用该内容，但不能把非法对象原样写回。
 
 房间级 `switch` 继续作为运行时安全默认，可以是官方预设名，也可以使用同样的 `name/type/src` 内容对象；`switches` 保存具体方向的覆盖。即使运行时存在默认值，配置器遇到新相邻方向时仍按第三节提示用户补充，不把默认值偷偷复制成方向内容。
+
+### 根对象
+
+| 字段 | 必需 | 语义 |
+|---|---|---|
+| `version` | 是 | 固定整数 `1` |
+| `startDesk` | 是 | 启动后进入的 Desk 数组下标 |
+| `switches` | 是 | 有向边覆盖；允许空对象 |
+| `desks` | 是 | 至少一个 Desk，数组顺序即页面顺序 |
+| `start` / `end` | 否 | 对应目录的 Content |
+| `switch` | 否 | 缺少方向覆盖时的安全默认；预设为 `slide/fade/zoom/none` |
+| `dock` | 否 | 全局 Dock 基线 |
+
+### Desk 与图标
+
+- 每个 Desk 正式写出时必须有 `name/background/iconSize/icons`；`background` 未配置时写 `null`。
+- `iconSize` 只允许 `large/medium/small`。
+- 桌面图标必须有 `label/x/y`；Dock 图标必须有 `label` 且禁止 `x/y`。
+- `launch` 一旦存在，必须完整写出 `target/args/workdir`；没有启动目标的展示图标可以省略 `launch`。
+- 所有对象字段封闭；运行态字段或拼错字段不属于 v1。
 
 ## 三、Desk 顺序、默认 Desk 和 switch
 
@@ -142,8 +162,12 @@
 ### HTML
 
 - background HTML 在 Desk 可见期间长驻于受控内容容器。
-- start/switch/end HTML 通过官方限定的 ready、换页和完成消息参与生命周期。
-- 允许的消息、来源校验、超时和失败回退由 SCENE-001 实现；这些运行态值不进入 room.json。
+- start/switch/end HTML 由官方 `playSlot` 放进 `sandbox="allow-scripts"` iframe。
+- 宿主把不可预测的 `dextInstanceId` 放进 iframe URL；内容页只能发
+  `{type:"dext:scene",event:"ready"|"done",instanceId}`。
+- 宿主同时校验 `event.source === 当前 iframe.contentWindow` 和 `instanceId`；旧实例、同页伪造和其他 iframe 消息均无效。
+- HTML 不获得 `allow-same-origin`、顶层导航或弹窗权限；Player 也只接受顶层官方页面的 WebView IPC，因此内容页不能启动应用、保存 Room 或操作官方 DOM。
+- HTML 场景有 60 秒安全超时；end 整体另受 Player 65 秒退出上限保护。实例完成、报错、取消或超时后必须移除消息监听、iframe 和媒体资源。
 
 ## 五、Dock 继承
 
@@ -166,6 +190,8 @@
 
 - `__source` 不是 Room 内容字段，只是运行包回写源目录使用的内部戳。
 - 源 Room、配置器预览和导出 zip 中出现 `__source` 都属于非法输入，写出时必须移除。
+- `write_room` 会先剥离 `__source` 再验证并原子替换源文件；`apply_room` 只接受合法 v1，并从 Rust 已解析的真实源目录生成戳。
+- 桌面保存时页面提交的 `__source` 永远不可信。Core 只从应用时生成的现有运行包读取可信戳；包内继续保留该戳，写源 Room 前从 JSON 副本移除。
 - 切换当前 Desk、播放 start/switch/end、HTML 临时状态和 Dock 运行态不得触发真实 Room 保存。
 - 用户编辑当前 Desk 的背景、图标或 Dock 配置并明确保存时，才持久化对应 Desk 内容。
 
@@ -189,17 +215,17 @@ Schema 负责定义严格的官方写出格式，读取端负责不崩溃；“�
 - `src` 必须是相对 Room 根目录的规范路径，禁止绝对路径、盘符、URL、`..` 和逃逸 Room 根目录的形式。
 - HTML 内容及其依赖资源必须自包含在 Room 包内。
 - v1 不把顶层 `room.js` / `room.css` 当作用户可执行扩展；用户代码进入对应 HTML 内容目录。
+- 应用 Room 时只镜像以上四个目录；旧 `transition/`、`room.js`、`room.css` 会从运行包清理，不能污染下一 Room。
 - Schema 至少保证版本可识别、Desk 非空、字段封闭、类型明确、switch key 可解析、索引合法和路径形态安全。
 - 真正的 zip 解包、重名处理和文件系统安全属于 ROOM-001/ROOM-002；DXT-001 只提前提供可校验、自包含的格式边界。
 
-## 九、范围边界
+## 九、DXT-001 已实现边界与后续
 
-DXT-001 负责正式 Schema、字段/继承说明、宽容策略、`__source` 和持久化边界，不实现 UI 或播放器。
+DXT-001 同时交付 Schema、现有官方宿主的 image/video/html 运行、安全隔离、配置器完整 v1 预览/保存，以及 Rust/Player/Core 持久化闭环；原计划的 SCENE-001 已并入本包，不再另写播放器。
 
 后续工作包：
 
-- SCENE-001：官方 SceneHost、图片/视频/HTML 运行、安全隔离和生命周期。
-- UI-001：background/start/end 内容配置和 `startDesk` 保存。
-- UI-002：Desk 排序、`switches` 重映射、缺失提示和方向内容保存。
+- UI-001：为 background/start/end 提供真实素材按钮；DXT-001 只保证打开、保留、预览和保存既有 Content。
+- UI-002：提供 Desk 排序和方向素材编辑完整 UI；DXT-001 已保留既有 `switches` 并对缺失方向显示“需要补充切换”。
 - MEDIA-001：素材选择与复制。
 - ROOM-001/ROOM-002：zip 导出和导入。

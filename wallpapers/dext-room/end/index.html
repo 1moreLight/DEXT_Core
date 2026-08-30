@@ -46,7 +46,11 @@
       setTimeout(step, 450);
     } else {
       document.getElementById("hex").classList.add("off");
-      setTimeout(() => parent.postMessage("dext:slotDone", "*"), 1400);
+      const instanceId = new URLSearchParams(location.search).get("dextInstanceId");
+      parent.postMessage({ type: "dext:scene", event: "ready", instanceId }, "*");
+      setTimeout(() => parent.postMessage(
+        { type: "dext:scene", event: "done", instanceId }, "*"
+      ), 1400);
     }
   };
   setTimeout(step, 300);

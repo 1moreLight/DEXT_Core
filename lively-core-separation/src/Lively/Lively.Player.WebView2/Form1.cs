@@ -204,6 +204,10 @@ namespace Lively.Player.WebView2
             {
                 try
                 {
+                    // Only the official top document may reach Lively IPC. Sandboxed
+                    // background/start/switch/end frames are intentionally rejected.
+                    if (!IsTopLevelWebMessage(e))
+                        return;
                     var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
                     if ((string)o.type == "dext:endDone")
                         return; // consumed by HandleShutdownNotice
@@ -305,6 +309,21 @@ namespace Lively.Player.WebView2
             SendToParent(new LivelyMessageHwnd() {
                 Hwnd = webView.Handle.ToInt32()
             });
+        }
+
+        private bool IsTopLevelWebMessage(CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            var current = webView?.CoreWebView2?.Source;
+            if (string.IsNullOrWhiteSpace(current) || string.IsNullOrWhiteSpace(e?.Source))
+                return false;
+            if (!Uri.TryCreate(current, UriKind.Absolute, out var currentUri) ||
+                !Uri.TryCreate(e.Source, UriKind.Absolute, out var sourceUri))
+                return false;
+            var parts = UriComponents.SchemeAndServer | UriComponents.PathAndQuery;
+            return string.Equals(
+                currentUri.GetComponents(parts, UriFormat.SafeUnescaped),
+                sourceUri.GetComponents(parts, UriFormat.SafeUnescaped),
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private void CoreWebView2_DocumentTitleChanged(object sender, object e)
@@ -535,7 +554,7 @@ namespace Lively.Player.WebView2
             }
         }
 
-        // dext end slot: notify the page, wait for its ack (or 5s cap), then let the
+        // dext end slot: notify the page, wait for its ack (or 65s safety cap), then let the
         // caller break the message loop. Pages without a slot ack immediately.
         private async Task HandleShutdownNotice()
         {
@@ -547,6 +566,8 @@ namespace Lively.Player.WebView2
             {
                 try
                 {
+                    if (!IsTopLevelWebMessage(e))
+                        return;
                     var text = e.TryGetWebMessageAsString();
                     if (text != null && text.Contains("dext:endDone"))
                         tcs.TrySetResult(true);
@@ -560,7 +581,7 @@ namespace Lively.Player.WebView2
                 wv.WebMessageReceived += Handler;
                 wv.PostWebMessageAsJson("\"dext:end\"");
             }));
-            _ = Task.Delay(5000).ContinueWith(_ => tcs.TrySetResult(false));
+            _ = Task.Delay(65000).ContinueWith(_ => tcs.TrySetResult(false));
             _ = tcs.Task.ContinueWith(_ =>
             {
                 // teardown during close: UI/webview may already be gone, nothing to log into

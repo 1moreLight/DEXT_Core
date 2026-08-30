@@ -57,3 +57,10 @@
 - 根因：当前 Windows 环境有 Node/npx，但没有可执行的 Bash/WSL Linux 用户空间。
 - 解决：先确认 npx 存在，再用 `npx --package @playwright/cli playwright-cli ...` 执行同一 CLI。
 - 防再犯：Windows 本地 UI 验收先检查 Bash；没有时直接使用 npx 入口，不反复尝试 WSL 包装脚本。
+
+## 32. Vite HMR 脚本被 sandbox opaque origin 的 CORS 拒绝
+
+- 现象：正式页面正常，但用 Vite 预览 `sandbox="allow-scripts"` 的 Room HTML 时，iframe 控制台报 `@vite/client` 从 origin `null` 被 CORS 拒绝，场景自己的脚本也不执行。
+- 根因：Vite 会给 HTML 自动注入 HMR 模块；没有 `allow-same-origin` 的 sandbox 具有 opaque origin，模块请求必须经过 CORS。生产包不注入 HMR，所以只在开发预览出现。
+- 解决：做 sandbox HTML 浏览器验收时用 `vite ... --cors` 启动；仍保持 iframe 不增加 `allow-same-origin`。
+- 防再犯：不能为了让开发 HMR 工作而放宽生产 sandbox。先区分“Vite 注入失败”和“Room 脚本本身失败”，开发服务器按需开 CORS。

@@ -83,7 +83,8 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-29 | **官方宿主与用户内容分层**：Dext 官方 HTML 宿主持有 Desk、Dock、图标、IPC、保存、导航与生命周期；用户只提供 background/start/switch/end 内容，不能替换或直接控制官方宿主。会写前端的作者可制作受控 HTML，不会写的用户由配置器按钮或官方骨架/vibe coding 生成。 |
 | 2026-08-29 | **图片和视频时序**：background 图片纯静态；start/switch/end 图片纯静态显示 0.5 秒。switch 视频完整播放后才换 Desk，不使用中点换页；复杂节奏交给 HTML。 |
 | 2026-08-29 | **Desk 排序保持语义**：调整 `desks` 顺序时，配置器按 Desk 和方向重映射 `startDesk` 与 `switches`；新形成的相邻组合缺少内容时提示补充，绝不自动复制或生成。 |
-| 2026-08-29 | **契约与重构分包**：DXT-001 先定全新的 Room v1 数据、宽容读取和持久化边界，不承担旧 Room 兼容；SCENE-001 再实现统一 SceneHost、安全隔离和生命周期。UI-001/UI-002 随后接入真实配置与保存。 |
+| 2026-08-29 | **契约与重构原计划分包（历史）**：最初计划 DXT-001 只定 Room v1，SCENE-001 再实现 SceneHost；已被下一条 2026-08-30 决策取代。 |
+| 2026-08-30 | **DXT-001 契约与现有宿主一起改**：用户明确要求不再把渲染器留到下一包。DXT-001 在同一 worktree/分支/验收内定稿 v1，并原地扩展现有 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、预览和持久化链；除非现有结构无法满足安全隔离，否则禁止另写重复播放器。SCENE-001 不再单独开发。 |
 
 ## 工作流
 
