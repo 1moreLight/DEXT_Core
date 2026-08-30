@@ -222,5 +222,5 @@
 - [x] Player/Core 只接受顶层官方宿主 IPC；运行包保留 `__source`，源 Room 回写前剥离且不信任页面提交路径（2026-08-30）
 - [x] 更新 README / ROADMAP / PROJECT / MODEL / FRONTEND / DOCK / LIVELY_API 及相关错误记录，移除 DXT/SCENE 分包旧口径和误导性的 room.js 教程（2026-08-30）
 - [x] 运行 Schema、JS、Rust、TypeScript、Release C# 构建及真实预览/桌面回归（2026-08-30）
-- [ ] 核对具名文件、提交独立分支并把工作包标为待验收
+- [x] 核对 40 个具名文件并提交 `ed13a33`，工作包进入待验收（2026-08-30）
 - [?] 用户按独立验收卡确认通过后才允许合并 master

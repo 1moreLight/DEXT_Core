@@ -1,8 +1,8 @@
 # DXT-001 room.json v1 契约与统一场景渲染 验收
 
-- 状态：草拟
+- 状态：待验收
 - 分支：`feat/dxt-001-room-json-v1-contract`
-- 提交：待提交
+- 提交：`ed13a33`
 - 目标：定稿 room.json v1，并让现有官方宿主、配置器预览、Rust 应用和 Player/Core 回写链按同一契约安全运行。
 - 范围外：UI-001/UI-002 素材配置界面、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段、无关 Player/Core 重构。
 

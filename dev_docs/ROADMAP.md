@@ -1,6 +1,6 @@
 # Dext 开发路线图
 
-> 更新：2026-08-29。本文是**唯一全景计划**。
+> 更新：2026-08-30。本文是**唯一全景计划**。
 > 每个工作包必须能在一个独立分支完成和验收；执行方法见 `WORKFLOW.md`，分支内步骤见 `TODO.md`。
 
 ## 一、当前控制台
@@ -13,7 +13,7 @@
 | 最近完成 | **DOCK-003 桌面图标拖入 Dock** | 已完成 | master（merge `0d67359`） | 真桌面编辑时把桌面图标拖入 Dock，并支持 Dock → 桌面反向拖拽与双写持久化 |
 | 最近完成 | **UI-003 导图几何布局接线** | 已完成 | master（merge `e51cb0a`） | 每对 Desk 单条双向线；相邻上下、首尾侧边；启动目标可选 |
 | 待验收 | **DOCK-004 运行态指示圆点** | 待验收 | `feat/dock-004-runtime-indicator`（`30fde9d`） | Dock 显示应用运行状态；真桌面 Dock 拖拽已转远期重做 |
-| 开发中 | **DXT-001 room.json v1 契约与统一场景渲染** | 开发中 | `feat/dxt-001-room-json-v1-contract` | 同一定稿 v1，并原地适配官方宿主、配置器预览、Rust 应用和 Player/Core 回写链 |
+| 待验收 | **DXT-001 room.json v1 契约与统一场景渲染** | 待验收 | `feat/dxt-001-room-json-v1-contract`（`ed13a33`） | v1、官方宿主三类内容、配置器预览、Rust 应用和 Player/Core 回写链已完成并通过开发侧检查 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
@@ -49,7 +49,7 @@ UI-003 已验收合并；DOCK-004 仍在独立分支待验收。2026-08-30 用�
 | 顺序 | 工作包 | 状态 | 独立交付结果 | 依赖 |
 |---|---|---|---|---|
 | 5 | **UI-003 导图几何布局接线** | 已完成 | 节点尺寸变化后连线和布局仍正确；Desk 环形双向导航；启动目标可选 | 无 |
-| 6 | **DXT-001 room.json v1 契约与统一场景渲染** | 开发中 | `room.schema.json`、字段/继承/宽容策略，以及官方宿主对 background/start/switch/end 的 image/video/html 原地适配、安全隔离、预览和持久化闭环 | UI-003 与需求讨论输入 |
+| 6 | **DXT-001 room.json v1 契约与统一场景渲染** | 待验收 | `room.schema.json`、字段/继承/宽容策略，以及官方宿主对 background/start/switch/end 的 image/video/html 原地适配、安全隔离、预览和持久化闭环 | UI-003 与需求讨论输入 |
 | 7 | **SCENE-001 统一 SceneHost** | 已并入 DXT-001 | 2026-08-30 用户决定不再单独开包；其必要结果由 DXT-001 同一分支和验收卡交付 | DXT-001 |
 | 8 | **UI-001 内容配置** | 排队 | 配置器能为 background/start/end 选择 image/video/html，编辑 `name` 并保存 `startDesk`；不要求用户手写 JSON | DXT-001、SCENE-001 |
 | 9 | **UI-002 Desk 顺序与 switch 读写** | 排队 | 调整 Desk 顺序时按 Desk/方向重映射 `switches`；新相邻组合提示补充，两个方向可分别保存 | DXT-001、SCENE-001 |
