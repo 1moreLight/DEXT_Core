@@ -1,8 +1,8 @@
 # CORE-002 Dext Core 运行身份隔离验收
 
-- 状态：开发中
+- 状态：待验收
 - 分支：`feat/core-002-dext-runtime-identity`
-- 提交：待提交
+- 实施提交：`039d468`
 - 目标：Dext 使用仓库内自带的 Lively Core fork，并以独立的单实例、管道、数据/日志目录和可验证进程路径运行，不依赖或误连用户另装的原版 Lively。
 - 范围外：不修改或停止 DXT-002、DOCK-004 和用户 rooms；不实现 idle、Room zip、Dock、素材导入或 Player/Core 架构重构；不重命名内部 namespace、proto 包、源码目录和 Core/Player 可执行文件；不迁移旧 `%LOCALAPPDATA%\Lively Wallpaper` 数据；安装器/MSIX/AppUserModelId/屏保注册另立 PACKAGING-001。
 
@@ -89,4 +89,4 @@
 
 ## 验收记录
 
-- 待用户确认。
+- 2026-08-30：自动检查通过，实施提交 `039d468`；停在独立分支待用户按九步清单验收，未合并 master。

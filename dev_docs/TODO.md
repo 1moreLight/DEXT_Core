@@ -236,4 +236,4 @@
 - [x] 将用户可见核心身份 Dext 化，禁用旧 WinUI/Gallery/上游更新入口，保留合法上游归属与高风险内部名称（2026-08-30）
 - [x] 同步 README、ROADMAP、PROJECT、LIVELY_API、AGENTS、验收卡；解决构建脚本吞失败的新坑并追加 ERRORS #37（2026-08-30）
 - [x] 运行 C#、proto、Rust、React、脚本与真实进程验证，复查全部 `Lively` 字样并执行 `git diff --check`（2026-08-30）
-- [~] 只提交 CORE-002 具名文件，将 ROADMAP/验收卡标为待验收；用户明确回复“通过”前不合并 master
+- [x] 只提交 CORE-002 具名文件（实施提交 `039d468`），将 ROADMAP/验收卡标为待验收；用户明确回复“通过”前不合并 master（2026-08-30）
