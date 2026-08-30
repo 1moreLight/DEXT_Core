@@ -120,6 +120,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v1 并原子替换 |
 | `save_room_css` | `(room_dir, css)` | 保留给旧 Dock 模板编辑数据；v1 运行宿主不执行该 CSS |
 | `create_room` | `(dir, name) → path` | 建最小合法 v1 和四个素材目录 |
+| `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v1，并复制原 Room 的四类素材目录；失败不留下半成品 |
 | `apply_room` | `(room_dir)` | 严格验证 v1，只镜像四个素材目录，清理旧扩展，并仅在运行包注入规范化 `__source` |
 | `import_background` | `(room_dir, src_path, kind) → Content` | 返回 `{name,type,src}`；完整素材 UI 仍由 MEDIA-001 接线 |
 

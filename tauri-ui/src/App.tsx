@@ -1017,29 +1017,37 @@ export default function App() {
     return saved;
   }
 
-  async function newRoom() {
+  async function newRoom(): Promise<string | null> {
     const name = prompt("房间名（建议英文）");
-    if (!name) return;
+    if (!name) return null;
     try {
       const path = await invoke<string>("create_room", { dir: libDir, name });
       await refreshRooms(libDir);
       await openRoom(path, false);
+      return path;
     } catch (e) {
       setStatus(`error: ${e}`);
+      return null;
     }
   }
 
   async function saveAs() {
+    if (!roomPath) {
+      setStatus("先新建或选择一个房间");
+      return;
+    }
     const name = prompt("另存为（建议英文）");
     if (!name) return;
     try {
-      const path = await invoke<string>("create_room", { dir: libDir, name });
-      await invoke("write_room", {
-        path: `${path}\\room.json`,
+      const path = await invoke<string>("save_room_as", {
+        roomDir: roomPath,
+        dir: libDir,
+        name,
         roomJson: JSON.stringify(buildRoomV1(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
+      setRoomPickPath(path);
     } catch (e) {
       setStatus(`error: ${e}`);
     }
@@ -1323,6 +1331,16 @@ export default function App() {
     const room: RoomInfo = { name, path: `C:\\mock\\${name}`, desks: 1, icons: 0, covers: [] };
     setRooms([...rooms, room]);
     setRoomPickPath(room.path);
+  }
+  async function addRoomFromList() {
+    if (!IS_TAURI) {
+      addMockRoom();
+      return;
+    }
+    const path = await newRoom();
+    if (!path) return;
+    setRoomPickPath(path);
+    setRoomEntered(true);
   }
   function renameGraphNode(id: string, name: string) {
     if (id === "start") {
@@ -1861,6 +1879,11 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                  <div className="flex justify-end border-t border-border pt-3">
+                    <Button variant="outline" onClick={addRoomFromList}>
+                      <Plus className="h-4 w-4" /> 新增 Room
+                    </Button>
+                  </div>
                 </div>
 
                 {pickedRoom && (
@@ -1897,11 +1920,6 @@ export default function App() {
                         onClick={() => applyRoomDir(pickedRoom.path)}
                       >
                         {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
-                      </Button>
-                    </div>
-                    <div className="mt-auto border-t border-border pt-3">
-                      <Button variant="outline" className="w-full" onClick={addMockRoom}>
-                        <Plus className="h-4 w-4" /> 新增 Room
                       </Button>
                     </div>
                   </aside>
@@ -1944,7 +1962,17 @@ export default function App() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => pickedRoom && applyRoomDir(pickedRoom.path)}
+                      onClick={() => {
+                        if (IS_TAURI) saveAs();
+                        else setStatus("另存为请在桌面配置器中使用");
+                      }}
+                    >
+                      另存为
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={applyCurrent}
                     >
                       <Play className="h-3.5 w-3.5" /> 应用
                     </Button>

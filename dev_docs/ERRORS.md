@@ -39,6 +39,7 @@
 | #32 | Vite HMR 脚本被 sandbox opaque origin 的 CORS 拒绝 | [toolchain](errors/toolchain.md) |
 | #33 | Tauri 开发态 origin 与发布态不同导致预览被拒绝 | [renderer](errors/renderer.md) |
 | #34 | Core 同进程并发保存复用临时文件名 | [backend](errors/backend.md) |
+| #35 | UI 按钮存在但真实 Tauri 链路仍走 mock/漏保存素材 | [frontend](errors/frontend.md) |
 
 ## 分册
 

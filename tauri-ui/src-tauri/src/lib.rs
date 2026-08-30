@@ -556,11 +556,15 @@ async fn save_room_css(room_dir: String, css: String) -> Result<(), String> {
     save_room_css_file(std::path::Path::new(&room_dir), &css)
 }
 
-#[tauri::command]
-async fn create_room(dir: String, name: String) -> Result<String, String> {
+fn validate_room_name(name: &str) -> Result<(), String> {
     if name.is_empty()
+        || name != name.trim()
+        || name == "."
+        || name == ".."
+        || name.ends_with('.')
         || name.chars().any(|c| {
-            c == '\\'
+            c.is_control()
+                || c == '\\'
                 || c == '/'
                 || c == ':'
                 || c == '*'
@@ -571,13 +575,20 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
                 || c == '|'
         })
     {
-        return Err("invalid room name".into());
+        Err("invalid room name".into())
+    } else {
+        Ok(())
     }
-    let room_dir = std::path::Path::new(&dir).join(&name);
+}
+
+fn create_room_dir(dir: &std::path::Path, name: &str) -> Result<std::path::PathBuf, String> {
+    validate_room_name(name)?;
+    std::fs::create_dir_all(dir).map_err(|e| format!("mkdir library failed: {e}"))?;
+    let room_dir = dir.join(name);
     if room_dir.exists() {
         return Err(format!("room already exists: {name}"));
     }
-    std::fs::create_dir_all(&room_dir).map_err(|e| format!("mkdir failed: {e}"))?;
+    std::fs::create_dir(&room_dir).map_err(|e| format!("mkdir failed: {e}"))?;
     let skeleton = serde_json::json!({
         "version": 1,
         "startDesk": 0,
@@ -590,16 +601,29 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
             "icons": []
         }]
     });
-    atomic_write(
-        &room_dir.join("room.json"),
-        &serde_json::to_vec_pretty(&skeleton).unwrap(),
-    )
-    .map_err(|e| format!("write room.json failed: {e}"))?;
-    for directory in ["background", "start", "switch", "end"] {
-        std::fs::create_dir_all(room_dir.join(directory))
-            .map_err(|error| format!("mkdir {directory} failed: {error}"))?;
+    let result = (|| {
+        atomic_write(
+            &room_dir.join("room.json"),
+            &serde_json::to_vec_pretty(&skeleton).unwrap(),
+        )
+        .map_err(|e| format!("write room.json failed: {e}"))?;
+        for directory in ROOM_ASSET_DIRS {
+            std::fs::create_dir(room_dir.join(directory))
+                .map_err(|error| format!("mkdir {directory} failed: {error}"))?;
+        }
+        Ok::<(), String>(())
+    })();
+    if let Err(error) = result {
+        let _ = std::fs::remove_dir_all(&room_dir);
+        return Err(error);
     }
-    Ok(room_dir.to_string_lossy().into_owned())
+    Ok(room_dir)
+}
+
+#[tauri::command]
+async fn create_room(dir: String, name: String) -> Result<String, String> {
+    create_room_dir(std::path::Path::new(&dir), &name)
+        .map(|room_dir| room_dir.to_string_lossy().into_owned())
 }
 
 const ROOM_ASSET_DIRS: [&str; 4] = ["background", "switch", "start", "end"];
@@ -629,6 +653,56 @@ fn copy_room_dir(src: &std::path::Path, dst: &std::path::Path, label: &str) -> R
         }
     }
     Ok(())
+}
+
+fn save_room_as_dir(
+    source_room: &std::path::Path,
+    destination_root: &std::path::Path,
+    name: &str,
+    room_json: &str,
+) -> Result<std::path::PathBuf, String> {
+    let source_room = source_room
+        .canonicalize()
+        .map_err(|error| format!("source Room not found: {error}"))?;
+    if !source_room.join("room.json").is_file() {
+        return Err(format!(
+            "not a Room directory (room.json missing): {}",
+            source_room.display()
+        ));
+    }
+
+    let target = create_room_dir(destination_root, name)?;
+    let result = (|| {
+        write_room_file(&target.join("room.json"), room_json)?;
+        for directory in ROOM_ASSET_DIRS {
+            let source = source_room.join(directory);
+            if source.is_dir() {
+                copy_room_dir(&source, &target.join(directory), directory)?;
+            }
+        }
+        Ok::<(), String>(())
+    })();
+    if let Err(error) = result {
+        let _ = std::fs::remove_dir_all(&target);
+        return Err(error);
+    }
+    Ok(target)
+}
+
+#[tauri::command]
+async fn save_room_as(
+    room_dir: String,
+    dir: String,
+    name: String,
+    room_json: String,
+) -> Result<String, String> {
+    save_room_as_dir(
+        std::path::Path::new(&room_dir),
+        std::path::Path::new(&dir),
+        &name,
+        &room_json,
+    )
+    .map(|path| path.to_string_lossy().into_owned())
 }
 
 fn sync_room_to_package(
@@ -858,6 +932,7 @@ pub fn run() {
             write_room,
             save_room_css,
             create_room,
+            save_room_as,
             apply_room,
             import_background,
             set_wallpaper,
@@ -869,7 +944,10 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{save_room_css_file, sync_room_to_package, validate_room_v1, write_room_file};
+    use super::{
+        save_room_as_dir, save_room_css_file, sync_room_to_package, validate_room_v1,
+        write_room_file,
+    };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
         let stamp = std::time::SystemTime::now()
@@ -910,6 +988,78 @@ mod tests {
         assert!(!dir.join("room.css").exists());
 
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn save_as_copies_v1_assets_and_keeps_source_unchanged() {
+        let root = test_dir("room-save-as");
+        let source = root.join("source");
+        let library = root.join("library");
+        for directory in ["background", "start", "switch", "end"] {
+            std::fs::create_dir_all(source.join(directory)).unwrap();
+            std::fs::write(source.join(directory).join("asset.txt"), directory).unwrap();
+        }
+        let source_json = r#"{"legacy":"source stays untouched"}"#;
+        std::fs::write(source.join("room.json"), source_json).unwrap();
+        let room_json = r#"{
+            "version":1,
+            "startDesk":0,
+            "switch":"slide",
+            "switches":{},
+            "desks":[{
+                "name":"Copied",
+                "background":null,
+                "iconSize":"medium",
+                "icons":[]
+            }],
+            "__source":"C:/forged"
+        }"#;
+
+        let target = save_room_as_dir(&source, &library, "copy", room_json).unwrap();
+
+        assert_eq!(
+            std::fs::read_to_string(source.join("room.json")).unwrap(),
+            source_json
+        );
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(target.join("room.json")).unwrap())
+                .unwrap();
+        assert_eq!(saved["desks"][0]["name"], "Copied");
+        assert!(saved.get("__source").is_none());
+        for directory in ["background", "start", "switch", "end"] {
+            assert_eq!(
+                std::fs::read_to_string(target.join(directory).join("asset.txt")).unwrap(),
+                directory
+            );
+        }
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn failed_save_as_removes_new_target() {
+        let root = test_dir("room-save-as-invalid");
+        let source = root.join("source");
+        let library = root.join("library");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("room.json"), "{}").unwrap();
+
+        let error = save_room_as_dir(
+            &source,
+            &library,
+            "broken-copy",
+            r#"{"version":1,"unknown":true}"#,
+        )
+        .unwrap_err();
+
+        assert!(error.contains("unknown field"));
+        assert!(!library.join("broken-copy").exists());
+        assert_eq!(
+            std::fs::read_to_string(source.join("room.json")).unwrap(),
+            "{}"
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

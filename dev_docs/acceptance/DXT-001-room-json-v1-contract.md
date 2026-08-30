@@ -14,8 +14,9 @@
 - [x] Playwright 真实浏览器检查通过：图片 0.5 秒、视频播完、HTML source+instance 双校验、伪造消息拒绝和完成后清理。
 - [x] 真实 Tauri 开发态预览通过：内存新增 Desk 后 iframe 立即显示第 3 Desk，源文件 SHA-256 前后相同。
 - [x] `cd tauri-ui && npm run build` 通过。
-- [x] `cd tauri-ui/src-tauri && cargo check && cargo test --lib -- --skip grpc::tests::apps_and_launch` 通过（7 项；跳过项会实际启动 Notepad，与本包无关）。
+- [x] `cd tauri-ui/src-tauri && cargo check && cargo test --lib -- --skip grpc::tests::apps_and_launch` 通过（9 项；跳过项会实际启动 Notepad，与本包无关）。
 - [x] 上述 Rust 测试包含 `grpc::tests::applies_room_wallpaper`，真实 Core 链路通过。
+- [x] 另存为测试确认四类素材全部复制、目标不含 `__source`、原 Room 不变；前端新增/应用/另存入口通过 TypeScript 构建。
 - [x] `scripts/build.ps1` 以 Release Player 完成全量 C# 构建；随后 `scripts/start.ps1` 正常启动 Core、Player 和配置器。
 - [x] Git 差异只包含 DXT-001 契约、原地适配、安全修复、测试、示例和文档；未混入其他 worktree 改动。
 
@@ -32,7 +33,9 @@
 9. [ ] 应用 Room 后确认运行包 `room.json` 含 Rust 注入的真实 `__source`；源 Room 与未来可导出内容不含 `__source`。
 10. [ ] 在真桌面移动/删除图标并保存，确认运行包和源 Room 都更新，但源 Room 仍不含 `__source`，页面伪造路径不能改变回写目标。
 11. [ ] 检查全局 `room.dock` 与当前 Desk 覆盖：普通/style 字段合并，Desk `icons` 整组替换，`icons: []` 明确为空。
-12. [ ] 用缺字段、未知字段、非法资源和非法 switch 的夹具打开：可安全降级的项目只局部停用；没有任何有效 Desk 时才拒绝运行或应用。
+12. [ ] 用缺字段、未知字段、非法资源和非法 switch 的夹具打开：读取端不崩溃，可选缺失或单项非法只在内存中降级；任何不符合正式 v1 的源 Room 在保存/应用时明确拒绝，不被静默当成合法文件。
+13. [ ] 从 Room 列表（包括空库）点击“新增 Room”，确认成功后才进入新 Room；取消命名或创建失败时仍停在列表，不进入空编辑页。
+14. [ ] 修改 Room 后直接点编辑页“应用”，确认草稿先保存再应用；再点“另存为”，确认新 Room 保留四类素材和当前 v1 数据，原 Room 内容不变。
 
 ## 通过标准
 

@@ -183,6 +183,7 @@
 ```text
 配置器预览：只使用内存草稿，不写文件
 配置器保存：写源 Room 的 room.json，不写 __source
+配置器另存：写新的干净 v1，并复制 background/start/switch/end；原 Room 不变
 配置器应用：复制源 Room 到运行包，并只在运行包盖 __source
 桌面编辑保存：先写运行包，再通过 __source 同步源 Room
 未来导出 zip：从源 Room 导出，禁止携带 __source
@@ -191,6 +192,7 @@
 - `__source` 不是 Room 内容字段，只是运行包回写源目录使用的内部戳。
 - 源 Room、配置器预览和导出 zip 中出现 `__source` 都属于非法输入，写出时必须移除。
 - `write_room` 会先剥离 `__source` 再验证并原子替换源文件；`apply_room` 只接受合法 v1，并从 Rust 已解析的真实源目录生成戳。
+- `save_room_as` 把当前内存草稿写成新的 v1，同时复制原 Room 的四类素材目录；任一步失败都清理刚创建的目标，不修改原 Room。
 - 桌面保存时页面提交的 `__source` 永远不可信。Core 只从应用时生成的现有运行包读取可信戳；包内继续保留该戳，写源 Room 前从 JSON 副本移除。
 - 切换当前 Desk、播放 start/switch/end、HTML 临时状态和 Dock 运行态不得触发真实 Room 保存。
 - 用户编辑当前 Desk 的背景、图标或 Dock 配置并明确保存时，才持久化对应 Desk 内容。

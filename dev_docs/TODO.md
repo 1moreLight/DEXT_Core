@@ -223,4 +223,5 @@
 - [x] 更新 README / ROADMAP / PROJECT / MODEL / FRONTEND / DOCK / LIVELY_API 及相关错误记录，移除 DXT/SCENE 分包旧口径和误导性的 room.js 教程（2026-08-30）
 - [x] 运行 Schema、JS、Rust、TypeScript、Release C# 构建及真实预览/桌面回归（2026-08-30）
 - [x] 核对 40 个具名文件并提交 `ed13a33`，工作包进入待验收（2026-08-30）
+- [x] 收口真实 UI 入口：新增 Room 仅成功后进入编辑、编辑页应用先保存草稿、另存为复制四类素材并保持原 Room 不变；前端构建、Rust check 与 9 项测试通过（2026-08-30）
 - [?] 用户按独立验收卡确认通过后才允许合并 master
