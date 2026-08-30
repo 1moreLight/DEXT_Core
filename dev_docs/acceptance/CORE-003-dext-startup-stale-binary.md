@@ -1,8 +1,8 @@
 # CORE-003 Dext 一键启动防旧构建验收
 
-- 状态：草拟
+- 状态：待验收
 - 分支：`fix/core-003-dext-startup-stale-binary`
-- 提交：待提交
+- 实现提交：`7d1b10e`
 - 目标：启动入口必须拒绝或自动替换当前 worktree 内残留的上游 Lively 旧二进制，并只在 Dext 身份验证通过后启动配置器。
 - 范围外：不重命名 `Lively.exe` 或内部程序集/namespace；不修改 UI、Room、Dock、idle、安装器或用户 rooms；不删除仍有独立用途的 scripts。
 
@@ -45,4 +45,5 @@
 - 2026-08-30：从 master 的真实旧 `Lively.exe`（ProductName/FileDescription 均为 Lively）覆盖测试输出，双击入口识别后执行强制四步重建，重建结果为 ProductName=`Dext`、FileDescription=`Dext Core`。
 - 2026-08-30：运行 `cargo test --lib applies_room_wallpaper` 通过；`verify-runtime-identity.ps1` 随后确认 Core PID 77896、Watchdog PID 84688、Player PID 75640、配置器 PID 76020 全部属于 `D:\use\Orca\DEXT_Core\core-003-dext-startup`，mutex/pipe/data/log 均为 Dext。
 - 2026-08-30：二次启动只验证已有 Dext 二进制，未重复四步 C# 构建；临时错误运行身份测试中，脚本在等待失败后精确停止本次启动的 PID 81688，身份文件已恢复且无内容差异。
+- 2026-08-30：实现提交 `7d1b10e`；工作分支停在待验收，用户明确回复“通过”前不合并 master。
 - 待用户确认五项人工验收。
