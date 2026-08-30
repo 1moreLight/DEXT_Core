@@ -14,10 +14,8 @@ using Lively.Factories;
 using Lively.Grpc.Common.Proto.Commands;
 using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Display;
-using Lively.Grpc.Common.Proto.Update;
 using Lively.Helpers;
 using Lively.Models.Enums;
-using Lively.Models.Services;
 using Lively.RPC;
 using Lively.Services;
 using Lively.ViewModels;
@@ -25,11 +23,12 @@ using Lively.Views.WindowMsg;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 using static Lively.Common.CommandlineArgs;
 
 namespace Lively
@@ -41,7 +40,6 @@ namespace Lively
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly NamedPipeServer grpcServer;
-        private int updateNotifyAmt = 1;
         private static Mutex mutex;
 
         private readonly IServiceProvider _serviceProvider;
@@ -77,7 +75,7 @@ namespace Lively
                     }
                     catch (Exception e)
                     {
-                        _ = MessageBox.Show($"Failed to communicate with Core:\n{e.Message}", "Lively Wallpaper");
+                        _ = MessageBox.Show($"Failed to communicate with Dext Core:\n{e.Message}", Constants.ApplicationType.Name);
                     }
                     QuitApp();
                     return;
@@ -90,6 +88,7 @@ namespace Lively
                 // Ref: https://learn.microsoft.com/en-us/dotnet/api/system.threading.mutex?view=net-8.0
                 Debug.WriteLine(e.Message);
             }
+            ConfigureLoggingIdentity();
             // Call release on same thread.
             this.Exit += (_, _) => ReleaseMutex();
             // Parse commands (if any) before configuring services
@@ -105,6 +104,7 @@ namespace Lively
             }
 
             SetupUnhandledExceptionLogging();
+            Logger.Info($"Dext Core | runtimeIdentity={Constants.SingleInstance.UniqueAppName} | pid={Process.GetCurrentProcess().Id} | baseDirectory={AppDomain.CurrentDomain.BaseDirectory} | appDataDirectory={Constants.CommonPaths.AppDataDir} | grpcPipeName={Constants.SingleInstance.GrpcPipeServerName} | version={Assembly.GetExecutingAssembly().GetName().Version}");
             Logger.Info(LogUtil.GetHardwareInfo());
 
             //App() -> OnStartup() -> App.Startup event.
@@ -126,7 +126,7 @@ namespace Lively
             catch (Exception ex)
             {
                 Logger.Error(ex);
-                MessageBox.Show(ex.ToString(), ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), $"{Constants.ApplicationType.Name} - Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 QuitApp();
                 return;
             }
@@ -178,10 +178,6 @@ namespace Lively
                 Services.GetRequiredService<IDesktopCore>().RestoreWallpaper();
             }
 
-            // First run setup wizard show.
-            if (userSettings.Settings.IsFirstRun)
-                Services.GetRequiredService<IRunnerService>().ShowUI();
-
             if (userSettings.Settings.SystemTaskbarTheme != TaskbarTheme.none)
                 Services.GetRequiredService<ITransparentTbService>().Start(userSettings.Settings.SystemTaskbarTheme);
 
@@ -211,10 +207,6 @@ namespace Lively
                 }
             };
 
-            var appUpdater = Services.GetRequiredService<IAppUpdaterService>();
-            appUpdater.UpdateChecked += AppUpdateChecked;
-            _ = appUpdater.CheckUpdate(30 * 1000);
-            appUpdater.Start();
         }
 
         private IServiceProvider ConfigureServices()
@@ -230,7 +222,6 @@ namespace Lively
                 .AddSingleton<IPlayback, Playback>()
                 .AddSingleton<IRunnerService, RunnerService>()
                 .AddSingleton<ISystray, Systray>()
-                .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
                 .AddSingleton<ITransparentTbService, TranslucentTBService>()
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<WndProcMsgWindow>()
@@ -238,7 +229,6 @@ namespace Lively
                 .AddSingleton<DisplayManagerServer>()
                 .AddSingleton<UserSettingsServer>()
                 .AddSingleton<CommandsServer>()
-                .AddSingleton<AppUpdateServer>()
                 .AddSingleton<IResourceService, ResourceService>()
                 .AddSingleton<IWindowService, WindowService>()
                 // Transient
@@ -277,7 +267,6 @@ namespace Lively
             Grpc.Common.Proto.Settings.SettingsService.BindService(server.ServiceBinder, Services.GetRequiredService<UserSettingsServer>());
             DisplayService.BindService(server.ServiceBinder, Services.GetRequiredService<DisplayManagerServer>());
             CommandsService.BindService(server.ServiceBinder, Services.GetRequiredService<CommandsServer>());
-            UpdateService.BindService(server.ServiceBinder, Services.GetRequiredService<AppUpdateServer>());
             server.Start();
 
             return server;
@@ -317,23 +306,14 @@ namespace Lively
             currentTheme = theme;
         }
 
-        private void AppUpdateChecked(object sender, AppUpdaterEventArgs e)
+        private static void ConfigureLoggingIdentity()
         {
-            _ = Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new ThreadStart(delegate
+            Directory.CreateDirectory(Constants.CommonPaths.LogDir);
+            if (NLog.LogManager.Configuration != null)
             {
-                Logger.Info($"AppUpdate status: {e.UpdateStatus}");
-                if (e.UpdateStatus != AppUpdateStatus.available || updateNotifyAmt <= 0)
-                    return;
-
-                updateNotifyAmt--;
-                // If interface is visible then skip (shown in-app instead.)
-                if (!Services.GetRequiredService<IRunnerService>().IsVisibleUI)
-                {
-                    Services.GetRequiredService<ISystray>().ShowBalloonNotification(4000,
-                        "Lively Wallpaper",
-                        Lively.Properties.Resources.TextUpdateAvailable);
-                }
-            }));
+                NLog.LogManager.Configuration.Variables["dextLogDirectory"] = Constants.CommonPaths.LogDir;
+                NLog.LogManager.ReconfigExistingLoggers();
+            }
         }
 
         private void SetupUnhandledExceptionLogging()

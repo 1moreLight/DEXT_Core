@@ -21,7 +21,7 @@
 │   tauri-ui/ （Tauri2 + React + TS + Tailwind4 + shadcn）
 │   Rust 端自实现 gRPC 客户端 src-tauri/src/grpc.rs │
 ├─────────────────────────────────────────────────┤
-│ ③ 底座（Lively core fork，C# .NET9 WPF）          │
+│ ③ 底座（Dext 自带的 Lively Core fork，C# .NET9 WPF）│
 │   lively-core-separation/lively-core-separation/src/Lively
 │   AppCatalogService：枚举开始菜单应用+真图标 / Explorer 代启
 │   WinDesktopCoreServer：gRPC 服务端               │
@@ -35,14 +35,14 @@
 ### 进程链
 
 ```
-[配置器 Tauri] ──自定义gRPC(named pipe)──▶ [Lively Core]
+[Dext 配置器 Tauri] ──自定义gRPC(named pipe)──▶ [Dext Core / Lively fork]
                                             │ spawn
                                 [WebView2 Player 进程]
                                             │ 虚拟主机加载
                                 ①渲染器 全屏躺在 WorkerW 桌面层
 ```
 
-当前遗留管道名：`\\.\pipe\Grpc_LIVELY:DESKTOPWALLPAPERSYSTEM<用户名>`（Constants.cs:75）。它仍与原版 Lively 使用同一身份，是已确认风险，不是 Dext 的最终接口；CORE-002 将统一替换 Core、Rust 客户端和脚本侧的身份引用。
+当前 Dext 管道名：`\\.\pipe\Grpc_DEXT:DESKTOPSHELL<用户名>`，由仓库根 `dext-runtime-identity.json` 同时提供给 C#、Rust 和 PowerShell。配置器在每个业务 RPC 前验证产品名、运行身份、PID、Core 路径、数据目录和 pipe；Debug 构建拒绝当前 worktree 之外的 Core。
 协议：GrpcDotNetNamedPipes 自定义线协议（非标准 HTTP/2，tonic 不可用），帧结构
 RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一条连接。
 
@@ -85,8 +85,9 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-29 | **Desk 排序保持语义**：调整 `desks` 顺序时，配置器按 Desk 和方向重映射 `startDesk` 与 `switches`；新形成的相邻组合缺少内容时提示补充，绝不自动复制或生成。 |
 | 2026-08-29 | **契约与重构原计划分包（历史）**：最初计划 DXT-001 只定 Room v1，SCENE-001 再实现 SceneHost；已被下一条 2026-08-30 决策取代。 |
 | 2026-08-30 | **DXT-001 契约与现有宿主一起改**：用户明确要求不再把渲染器留到下一包。DXT-001 在同一 worktree/分支/验收内定稿 v1，并原地扩展现有 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、预览和持久化链；除非现有结构无法满足安全隔离，否则禁止另写重复播放器。SCENE-001 不再单独开发。 |
-| 2026-08-30 | **Dext 使用自己的 Lively Core fork，而不是依赖用户另装的原版 Lively**：Dext 配置器、Core、Player 和脚本必须作为同一产品闭环运行。当前代码仍沿用 Lively 的应用名、单实例名、named pipe、`%LOCALAPPDATA%\Lively Wallpaper` 数据/日志目录和按进程名判断启动的逻辑，存在连错 Core、共享状态和误判已启动的风险。CORE-002 负责把这些运行身份统一隔离为 Dext；此条是已确认方向，代码尚未实现。 |
+| 2026-08-30 | **Dext 使用自己的 Lively Core fork，而不是依赖用户另装的原版 Lively**：Dext 配置器、Core、Player 和脚本必须作为同一产品闭环运行。开包时代码仍沿用 Lively 的应用名、单实例名、named pipe、`%LOCALAPPDATA%\Lively Wallpaper` 数据/日志目录和按进程名判断启动的逻辑，存在连错 Core、共享状态和误判已启动的风险；CORE-002 已在独立分支完成隔离实现，待用户验收后再合并。 |
 | 2026-08-30 | **开发顺序调整**：DXT-002 的 idle 实现保留在独立待验收分支，但暂不继续扩展或合并；先完成 CORE-002 运行身份隔离，再解决 DXT-002 契约去留，然后补 UI-001、UI-002 与 ROOM-001/002/003 的 Room 制作、导出、导入和校验闭环。 |
+| 2026-08-30 | **Dext 运行身份实现边界**：产品名 `Dext`、mutex `DEXT:DESKTOPSHELL`、pipe `Grpc_DEXT:DESKTOPSHELL<用户名>`、数据 `%LOCALAPPDATA%\Dext`、临时缓存 `%TEMP%\Dext`。不读取或静默迁移旧 Lively 数据；保留 Lively namespace、程序集、proto 包、源码目录及 Core/Player 文件名，避免无用户收益的高风险重构。身份可与原版同时存在，但不承诺同时控制 WorkerW。安装器/MSIX/AppUserModelId/屏保注册另由 PACKAGING-001 处理。 |
 
 ## 工作流
 
@@ -94,7 +95,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 - `scripts/start.ps1`：部署检查+起 Core+起配置器 dev（纯前端改动只跑这个）
 - `cargo test --lib applies_room_wallpaper`（在 tauri-ui/src-tauri）：强制重新铺壁纸
 - Player 必须 Release（Debug 分支不发 hwnd → ShowAsync 永久挂起）
-- 日志：`%LOCALAPPDATA%\Lively Wallpaper\logs\<最新>.txt`
+- 日志：`%LOCALAPPDATA%\Dext\logs\<最新>.txt`；用首行 PID/BaseDirectory/identity 判断是否为 Dext Core
 
 ## 仓库地图
 

@@ -64,3 +64,10 @@
 - 根因：Vite 会给 HTML 自动注入 HMR 模块；没有 `allow-same-origin` 的 sandbox 具有 opaque origin，模块请求必须经过 CORS。生产包不注入 HMR，所以只在开发预览出现。
 - 解决：做 sandbox HTML 浏览器验收时用 `vite ... --cors` 启动；仍保持 iframe 不增加 `allow-same-origin`。
 - 防再犯：不能为了让开发 HMR 工作而放宽生产 sandbox。先区分“Vite 注入失败”和“Room 脚本本身失败”，开发服务器按需开 CORS。
+
+## 37. PowerShell 管道吞掉原生构建失败，脚本仍显示 Done
+
+- 现象：`dotnet build ... | Select-String " error "` 明确打印 C# error，但 `scripts/build.ps1` 继续部署插件并显示 `Done`，调用方也得到成功退出。
+- 原因：原生命令的非零退出码不会自动成为 PowerShell 终止错误；把输出直接送入 `Select-String` 后，脚本既没有保存退出码，也没有主动抛错。
+- 解决：每一步先捕获原生命令输出并立即保存 `$LASTEXITCODE`，筛选错误信息后对非零退出码 `throw`，成功后才进入下一步和部署。
+- 防再犯：PowerShell 封装任何 `dotnet` / MSBuild / npm / cargo 检查时，都要显式检查原生命令退出码；不能用控制台是否出现 `error` 或脚本最后一行是否打印成功来判定。

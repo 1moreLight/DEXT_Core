@@ -24,4 +24,10 @@
     <ProjectReference Include="..\Lively.Models\Lively.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\dext-runtime-identity.json"
+                      Link="dext-runtime-identity.json"
+                      LogicalName="Dext.RuntimeIdentity.json" />
+  </ItemGroup>
+
 </Project>

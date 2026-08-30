@@ -9,13 +9,13 @@ namespace Lively.Common
     {
         public static class CommonPaths
         {
-            public static string AppDataDir { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ApplicationType.Name);
+            public static string AppDataDir { get; } = DextRuntimeIdentity.Current.AppDataDirectory;
             public static string LogDir { get; } = Path.Combine(AppDataDir, "logs");
             public static string LogDirUI { get; } = Path.Combine(AppDataDir, "UI"); //temp use..
-            public static string TempDir { get; } = Path.Combine(AppDataDir, "temp");
-            public static string TempCefDir { get; } = Path.Combine(AppDataDir, "Cef");
-            public static string TempWebView2Dir { get; } = Path.Combine(AppDataDir, "WebView2");
-            public static string TempVideoDir { get; } = Path.Combine(AppDataDir, "Mpv");
+            public static string TempDir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "temp");
+            public static string TempCefDir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "Cef");
+            public static string TempWebView2Dir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "WebView2");
+            public static string TempVideoDir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "Mpv");
             public static string AppRulesPath { get; } = Path.Combine(AppDataDir, "AppRules.json");
             public static string WallpaperLayoutPath { get; } = Path.Combine(AppDataDir, "WallpaperLayout.json");
             public static string ScreenSaverLayoutPath { get; } = Path.Combine(AppDataDir, "ScreenSaverLayout.json");
@@ -23,8 +23,8 @@ namespace Lively.Common
             public static string MusicAppExclusionRulesPath { get; } = Path.Combine(AppDataDir, "MusicAppExclusionRules.json");
             public static string WeatherSettingsPath { get; } = Path.Combine(AppDataDir, "WeatherSettings.json");
             public static string ThemeDir { get; } = Path.Combine(AppDataDir, "Themes");
-            public static string ThemeCacheDir { get; } = Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "themes");
-            public static string CefRootCacheDir { get; } = Path.Combine(Path.GetTempPath(), "Lively Wallpaper", "CEF");
+            public static string ThemeCacheDir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "themes");
+            public static string CefRootCacheDir { get; } = Path.Combine(DextRuntimeIdentity.Current.TempRootDirectory, "CEF");
             public static string TokensPath { get; } = Path.Combine(AppDataDir, "Tokens.dat");
             public static string ScreenshotDir { get; } = Path.Combine(AppDataDir, "Screenshots");
         }
@@ -70,14 +70,14 @@ namespace Lively.Common
 
         public static class SingleInstance
         {
-            public static string UniqueAppName { get; } = "LIVELY:DESKTOPWALLPAPERSYSTEM";
+            public static string UniqueAppName { get; } = DextRuntimeIdentity.Current.RuntimeIdentity;
             public static string PipeServerName { get; } = UniqueAppName + Environment.UserName; //backward compatibility < v1.9
-            public static string GrpcPipeServerName { get; } = "Grpc_" + PipeServerName;
+            public static string GrpcPipeServerName { get; } = DextRuntimeIdentity.Current.GrpcPipePrefix + PipeServerName;
         }
         
         public static class ApplicationType
         {
-            public static string Name { get; } = "Lively Wallpaper";
+            public static string Name { get; } = DextRuntimeIdentity.Current.ProductName;
             public static bool IsTestBuild { get; } = false;
         }
 

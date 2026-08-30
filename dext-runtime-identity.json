@@ -1,0 +1,9 @@
+{
+  "productName": "Dext",
+  "runtimeIdentity": "DEXT:DESKTOPSHELL",
+  "grpcPipePrefix": "Grpc_",
+  "localAppDataDirectory": "Dext",
+  "tempDirectory": "Dext",
+  "startupEntryName": "Dext",
+  "configuratorProductName": "Dext Configurator"
+}

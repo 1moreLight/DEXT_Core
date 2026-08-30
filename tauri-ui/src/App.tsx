@@ -49,6 +49,17 @@ interface AppInfo {
   source: string;
 }
 
+interface CoreIdentity {
+  product_name: string;
+  runtime_identity: string;
+  process_id: number;
+  base_directory: string;
+  app_data_directory: string;
+  grpc_pipe_name: string;
+  assembly_version: string;
+  is_core_initialized: boolean;
+}
+
 interface RoomIcon {
   label: string;
   icon_png: string;
@@ -700,6 +711,8 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [renaming, setRenaming] = useState<number | null>(null);
   const [status, setStatus] = useState("loading...");
+  const [coreIdentity, setCoreIdentity] = useState<CoreIdentity | null>(null);
+  const [coreIdentityError, setCoreIdentityError] = useState<string | null>(null);
   const [libDir, setLibDir] = useState(
     () => initialLibDir()
   );
@@ -786,6 +799,19 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
   }, [localDockPresets]);
+
+  useEffect(() => {
+    if (!IS_TAURI) return;
+    invoke<CoreIdentity>("core_identity")
+      .then((identity) => {
+        setCoreIdentity(identity);
+        setCoreIdentityError(null);
+      })
+      .catch((error) => {
+        setCoreIdentity(null);
+        setCoreIdentityError(String(error));
+      });
+  }, []);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -1539,6 +1565,30 @@ export default function App() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          <span
+            className={`rounded-full border px-2 py-1 text-xs font-medium ${
+              !IS_TAURI
+                ? "border-border text-muted-foreground"
+                : coreIdentity
+                  ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "border-destructive/50 bg-destructive/10 text-destructive"
+            }`}
+            title={
+              !IS_TAURI
+                ? "UI 设计模式未连接 Core"
+                : coreIdentity
+                  ? `PID ${coreIdentity.process_id}\nCore ${coreIdentity.base_directory}\nPipe ${coreIdentity.grpc_pipe_name}\nData ${coreIdentity.app_data_directory}\nIdentity ${coreIdentity.runtime_identity}`
+                  : coreIdentityError ?? "正在验证 Dext Core 身份"
+            }
+          >
+            {!IS_TAURI
+              ? "Dext Core · mock"
+              : coreIdentity
+                ? "Dext Core 已连接"
+                : coreIdentityError
+                  ? "Dext Core 身份拒绝"
+                  : "正在验证 Dext Core"}
+          </span>
           <span className="text-sm text-muted-foreground">{status}</span>
           {mode === "edit" && IS_TAURI && (
             <Button

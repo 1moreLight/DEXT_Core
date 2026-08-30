@@ -67,6 +67,11 @@ namespace Lively.RPC
                 BaseDirectory = AppDomain.CurrentDomain.BaseDirectory,
                 AssemblyVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString(),
                 IsCoreInitialized = desktopCore.DesktopWorkerW != IntPtr.Zero,
+                ProductName = Constants.ApplicationType.Name,
+                RuntimeIdentity = Constants.SingleInstance.UniqueAppName,
+                ProcessId = Process.GetCurrentProcess().Id,
+                AppDataDirectory = Constants.CommonPaths.AppDataDir,
+                GrpcPipeName = Constants.SingleInstance.GrpcPipeServerName,
             });
         }
 

@@ -930,6 +930,11 @@ async fn core_stats() -> Result<String, String> {
     grpc::core_stats().await
 }
 
+#[tauri::command]
+async fn core_identity() -> Result<grpc::CoreIdentity, String> {
+    grpc::core_identity().await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -961,7 +966,8 @@ pub fn run() {
             apply_room,
             import_background,
             set_wallpaper,
-            core_stats
+            core_stats,
+            core_identity
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

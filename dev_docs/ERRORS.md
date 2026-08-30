@@ -41,6 +41,7 @@
 | #34 | Core 同进程并发保存复用临时文件名 | [backend](errors/backend.md) |
 | #35 | UI 按钮存在但真实 Tauri 链路仍走 mock/漏保存素材 | [frontend](errors/frontend.md) |
 | #36 | 属性栏素材按钮只有外观、没有点击动作 | [frontend](errors/frontend.md) |
+| #37 | PowerShell 管道吞掉原生构建失败，脚本仍显示 Done | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

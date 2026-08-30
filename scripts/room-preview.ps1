@@ -7,7 +7,7 @@ param([string]$Room)
 $root = Split-Path -Parent $PSScriptRoot
 $path = "/wallpapers/dext-room/"
 if ($Room) { $path = "$path`?room=../../rooms/$Room/" }
-Write-Host "Starting renderer live preview at http://localhost:5174$path ..."
+Write-Host "Starting Dext renderer live preview at http://localhost:5174$path ..."
 Write-Host "Edit wallpapers/dext-room/{index.html,style.css,main.js} - browser reloads instantly."
 Write-Host "(Launch is stubbed in preview: double-click shows a toast instead of starting apps.)"
 Push-Location $root

@@ -29,6 +29,13 @@ namespace Lively.Services
             Load<List<ApplicationRulesModel>>();
             Load<List<WallpaperLayoutModel>>();
 
+            if (string.IsNullOrWhiteSpace(Settings.WallpaperDir))
+            {
+                Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.AppDataDir, "Library");
+                Settings.WallpaperDirMoveExistingWallpaperNewDir = false;
+                Save<SettingsModel>();
+            }
+
             // Fallback incase player plugin is changed/missing.
             Settings.VideoPlayer = GetAvailableVideoPlayerOrDefault(Settings.VideoPlayer);
             Settings.GifPlayer = GetAvailableGifPlayerOrDefault(Settings.GifPlayer);

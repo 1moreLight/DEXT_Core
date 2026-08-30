@@ -1,22 +1,50 @@
 use prost::Message;
+use serde::Deserialize;
+use std::path::Path;
+use std::sync::OnceLock;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{GetCoreStatsResponse, GetWallpapersResponse};
 use crate::proto::grpc_dotnet_named_pipes::generated::{
-    transport_message::Data, Headers, PayloadInfo, RequestInit, RequestControl, TransportMessage,
+    transport_message::Data, Headers, PayloadInfo, RequestControl, RequestInit, TransportMessage,
 };
 
-pub fn pipe_name() -> String {
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RuntimeIdentityConfig {
+    product_name: String,
+    runtime_identity: String,
+    grpc_pipe_prefix: String,
+    local_app_data_directory: String,
+}
+
+fn runtime_identity() -> &'static RuntimeIdentityConfig {
+    static IDENTITY: OnceLock<RuntimeIdentityConfig> = OnceLock::new();
+    IDENTITY.get_or_init(|| {
+        serde_json::from_str(include_str!("../../../dext-runtime-identity.json"))
+            .expect("invalid dext-runtime-identity.json")
+    })
+}
+
+fn grpc_pipe_server_name() -> String {
     let user = std::env::var("USERNAME").unwrap_or_default();
-    format!(r"\\.\pipe\Grpc_LIVELY:DESKTOPWALLPAPERSYSTEM{}", user)
+    let identity = runtime_identity();
+    format!(
+        "{}{}{}",
+        identity.grpc_pipe_prefix, identity.runtime_identity, user
+    )
+}
+
+pub fn pipe_name() -> String {
+    format!(r"\\.\pipe\{}", grpc_pipe_server_name())
 }
 
 // ponytail: one pipe connection per call, same as the C# NamedPipeChannel does
-async fn call(method: &str, request: &[u8]) -> Result<Vec<Vec<u8>>, String> {
+async fn raw_call(method: &str, request: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     let mut pipe = ClientOptions::new()
         .open(pipe_name())
-        .map_err(|e| format!("pipe connect failed (is Lively core running?): {e}"))?;
+        .map_err(|e| format!("pipe connect failed (is Dext Core running?): {e}"))?;
 
     // request packet: length-delimited TransportMessages, payload inline (all our requests are tiny)
     let mut packet = Vec::new();
@@ -78,6 +106,92 @@ async fn call(method: &str, request: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     }
 }
 
+fn normalize_windows_path(value: &str) -> String {
+    value
+        .replace('/', "\\")
+        .trim_end_matches('\\')
+        .to_ascii_lowercase()
+}
+
+fn verify_core_identity_response(response: &GetCoreStatsResponse) -> Result<(), String> {
+    let expected = runtime_identity();
+    if response.product_name != expected.product_name {
+        return Err(format!(
+            "refusing Core product {:?}; expected {:?}",
+            response.product_name, expected.product_name
+        ));
+    }
+    if response.runtime_identity != expected.runtime_identity {
+        return Err(format!(
+            "refusing runtime identity {:?}; expected {:?}",
+            response.runtime_identity, expected.runtime_identity
+        ));
+    }
+    let expected_pipe = grpc_pipe_server_name();
+    if response.grpc_pipe_name != expected_pipe {
+        return Err(format!(
+            "refusing gRPC pipe {:?}; expected {:?}",
+            response.grpc_pipe_name, expected_pipe
+        ));
+    }
+    if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+        let expected_app_data = Path::new(&local_app_data).join(&expected.local_app_data_directory);
+        if normalize_windows_path(&response.app_data_directory)
+            != normalize_windows_path(&expected_app_data.to_string_lossy())
+        {
+            return Err(format!(
+                "refusing app-data directory {:?}; expected {:?}",
+                response.app_data_directory,
+                expected_app_data.display()
+            ));
+        }
+    }
+    if response.process_id <= 0 {
+        return Err("refusing Core with an invalid process id".into());
+    }
+
+    #[cfg(debug_assertions)]
+    {
+        let worktree_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let worktree_root = std::fs::canonicalize(&worktree_root).unwrap_or(worktree_root);
+        let core_directory = Path::new(&response.base_directory);
+        let core_directory =
+            std::fs::canonicalize(core_directory).unwrap_or_else(|_| core_directory.to_path_buf());
+        let root = normalize_windows_path(&worktree_root.to_string_lossy());
+        let core = normalize_windows_path(&core_directory.to_string_lossy());
+        if !core.starts_with(&(root + "\\")) {
+            return Err(format!(
+                "refusing Core outside this worktree: {:?}",
+                response.base_directory
+            ));
+        }
+    }
+    Ok(())
+}
+
+async fn raw_core_identity() -> Result<GetCoreStatsResponse, String> {
+    let payloads = raw_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetCoreStats",
+        &[],
+    )
+    .await?;
+    payloads
+        .iter()
+        .find_map(|payload| GetCoreStatsResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no identity payload".into())
+}
+
+async fn verified_core_identity() -> Result<GetCoreStatsResponse, String> {
+    let response = raw_core_identity().await?;
+    verify_core_identity_response(&response)?;
+    Ok(response)
+}
+
+async fn verified_call(method: &str, request: &[u8]) -> Result<Vec<Vec<u8>>, String> {
+    verified_core_identity().await?;
+    raw_call(method, request).await
+}
+
 enum ParseNext {
     Incomplete,
     Skip,
@@ -132,8 +246,35 @@ pub struct WallpaperInfo {
     pub thumbnail: String,
 }
 
+#[derive(Clone, serde::Serialize)]
+pub struct CoreIdentity {
+    pub product_name: String,
+    pub runtime_identity: String,
+    pub process_id: i32,
+    pub base_directory: String,
+    pub app_data_directory: String,
+    pub grpc_pipe_name: String,
+    pub assembly_version: String,
+    pub is_core_initialized: bool,
+}
+
+impl From<GetCoreStatsResponse> for CoreIdentity {
+    fn from(response: GetCoreStatsResponse) -> Self {
+        Self {
+            product_name: response.product_name,
+            runtime_identity: response.runtime_identity,
+            process_id: response.process_id,
+            base_directory: response.base_directory,
+            app_data_directory: response.app_data_directory,
+            grpc_pipe_name: response.grpc_pipe_name,
+            assembly_version: response.assembly_version,
+            is_core_initialized: response.is_core_initialized,
+        }
+    }
+}
+
 pub async fn get_wallpapers() -> Result<Vec<WallpaperInfo>, String> {
-    let payloads = call(
+    let payloads = verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetWallpapers",
         &[],
     )
@@ -154,19 +295,15 @@ pub async fn get_wallpapers() -> Result<Vec<WallpaperInfo>, String> {
     Ok(out)
 }
 
+pub async fn core_identity() -> Result<CoreIdentity, String> {
+    verified_core_identity().await.map(Into::into)
+}
+
 pub async fn core_stats() -> Result<String, String> {
-    let payloads = call(
-        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetCoreStats",
-        &[],
-    )
-    .await?;
-    let resp = payloads
-        .iter()
-        .find_map(|p| GetCoreStatsResponse::decode(&p[..]).ok())
-        .ok_or("no response payload")?;
+    let resp = verified_core_identity().await?;
     Ok(format!(
-        "core v{} initialized={} ({})",
-        resp.assembly_version, resp.is_core_initialized, resp.base_directory
+        "Dext Core v{} initialized={} pid={} ({})",
+        resp.assembly_version, resp.is_core_initialized, resp.process_id, resp.base_directory
     ))
 }
 
@@ -177,7 +314,7 @@ pub async fn set_wallpaper(folder: &str) -> Result<(), String> {
         monitor_id: String::new(),
         ..Default::default()
     };
-    call(
+    verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/SetWallpaper",
         &req.encode_to_vec(),
     )
@@ -197,7 +334,7 @@ pub struct AppInfoDto {
 
 pub async fn get_installed_apps() -> Result<Vec<AppInfoDto>, String> {
     use base64::Engine;
-    let payloads = call(
+    let payloads = verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetInstalledApps",
         &[],
     )
@@ -220,13 +357,17 @@ pub async fn get_installed_apps() -> Result<Vec<AppInfoDto>, String> {
     Ok(out)
 }
 
-pub async fn launch_app(target: String, arguments: String, working_dir: String) -> Result<(), String> {
+pub async fn launch_app(
+    target: String,
+    arguments: String,
+    working_dir: String,
+) -> Result<(), String> {
     let req = crate::proto::desktop::LaunchAppRequest {
         target,
         arguments,
         working_dir,
     };
-    call(
+    verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/LaunchApp",
         &req.encode_to_vec(),
     )
@@ -237,7 +378,7 @@ pub async fn launch_app(target: String, arguments: String, working_dir: String) 
 pub async fn resolve_app(path: String) -> Result<AppInfoDto, String> {
     use base64::Engine;
     let req = crate::proto::desktop::ResolveAppRequest { path };
-    let payloads = call(
+    let payloads = verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/ResolveApp",
         &req.encode_to_vec(),
     )
@@ -262,6 +403,79 @@ pub async fn resolve_app(path: String) -> Result<AppInfoDto, String> {
 
 #[cfg(test)]
 mod tests {
+    use super::{grpc_pipe_server_name, runtime_identity, verify_core_identity_response};
+    use crate::proto::desktop::GetCoreStatsResponse;
+
+    fn valid_identity() -> GetCoreStatsResponse {
+        let identity = runtime_identity();
+        let app_data_directory = std::env::var("LOCALAPPDATA")
+            .map(|root| {
+                std::path::Path::new(&root)
+                    .join(&identity.local_app_data_directory)
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .unwrap_or_else(|_| "C:\\Users\\test\\AppData\\Local\\Dext".into());
+        let worktree_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let worktree_root = std::fs::canonicalize(&worktree_root).unwrap_or(worktree_root);
+        GetCoreStatsResponse {
+            base_directory: worktree_root
+                .join("lively-core-separation/src/Lively/Lively/bin")
+                .to_string_lossy()
+                .into_owned(),
+            assembly_version: "2.2.1.5".into(),
+            is_core_initialized: true,
+            product_name: identity.product_name.clone(),
+            runtime_identity: identity.runtime_identity.clone(),
+            process_id: 42,
+            app_data_directory,
+            grpc_pipe_name: grpc_pipe_server_name(),
+        }
+    }
+
+    #[test]
+    fn builds_pipe_name_from_shared_identity() {
+        assert_eq!(runtime_identity().product_name, "Dext");
+        assert_eq!(runtime_identity().runtime_identity, "DEXT:DESKTOPSHELL");
+        assert_eq!(
+            super::pipe_name(),
+            format!(
+                r"\\.\pipe\Grpc_DEXT:DESKTOPSHELL{}",
+                std::env::var("USERNAME").unwrap_or_default()
+            )
+        );
+    }
+
+    #[test]
+    fn accepts_matching_dext_core_identity() {
+        verify_core_identity_response(&valid_identity()).unwrap();
+    }
+
+    #[test]
+    fn rejects_wrong_product_and_runtime_identity() {
+        let mut response = valid_identity();
+        response.product_name = "Lively Wallpaper".into();
+        assert!(verify_core_identity_response(&response)
+            .unwrap_err()
+            .contains("product"));
+
+        let mut response = valid_identity();
+        response.runtime_identity = "LIVELY:DESKTOPWALLPAPERSYSTEM".into();
+        assert!(verify_core_identity_response(&response)
+            .unwrap_err()
+            .contains("runtime identity"));
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn rejects_core_outside_current_worktree_in_debug() {
+        let mut response = valid_identity();
+        response.base_directory = "C:\\Program Files\\Lively Wallpaper".into();
+        assert!(verify_core_identity_response(&response)
+            .unwrap_err()
+            .contains("outside this worktree"));
+    }
+
     #[tokio::test]
     async fn applies_room_wallpaper() {
         super::set_wallpaper(concat!(
@@ -274,7 +488,9 @@ mod tests {
 
     #[tokio::test]
     async fn apps_and_launch() {
-        let apps = super::get_installed_apps().await.expect("get_installed_apps failed");
+        let apps = super::get_installed_apps()
+            .await
+            .expect("get_installed_apps failed");
         println!("installed apps: {}", apps.len());
         assert!(!apps.is_empty(), "no apps enumerated");
         let obsidian = apps.iter().find(|a| a.target.contains("Obsidian"));

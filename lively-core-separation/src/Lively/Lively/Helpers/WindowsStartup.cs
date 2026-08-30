@@ -1,7 +1,7 @@
 ﻿using Lively.Common.Helpers;
+using Lively.Common;
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 
@@ -27,22 +27,21 @@ namespace Lively.Helpers
         }
 
         /// <summary>
-        /// Adds startup entry in registry under application name "livelywpf", current user ONLY. (Does not require admin rights).
+        /// Adds the Dext startup entry for the current user only. (Does not require admin rights).
         /// </summary>
         /// <param name="isStartWithWindows">Add or delete entry.</param>
         private static void SetStartupRegistry(bool isStartWithWindows = false)
         {
             Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-            Assembly curAssembly = Assembly.GetExecutingAssembly();
             try
             {
                 if (isStartWithWindows)
                 {
-                    key.SetValue(curAssembly.GetName().Name, "\"" + Path.ChangeExtension(curAssembly.Location, ".exe") + "\"");
+                    key.SetValue(DextRuntimeIdentity.Current.StartupEntryName, "\"" + Environment.ProcessPath + "\"");
                 }
                 else
                 {
-                    key.DeleteValue(curAssembly.GetName().Name, false);
+                    key.DeleteValue(DextRuntimeIdentity.Current.StartupEntryName, false);
                 }
             }
             finally

@@ -188,8 +188,9 @@ namespace Lively.Models
             TileSize = 1;
             DisplayIdentification = DisplayIdentificationMode.deviceId;
             UIMode = LivelyGUIState.normal;
-            WallpaperDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lively Wallpaper", "Library");
-            WallpaperDirMoveExistingWallpaperNewDir = true;
+            // Core assigns the product-specific default from the shared runtime identity.
+            WallpaperDir = null;
+            WallpaperDirMoveExistingWallpaperNewDir = false;
             SysTrayIcon = true;
             WebDebugPort = string.Empty;
             AutoDetectOnlineStreams = true;

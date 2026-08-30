@@ -4,6 +4,12 @@
 > 结论先行：官方对外只有两套正式 API——**壁纸侧 JS 注入函数**与**命令行控制**；
 > 没有 HTTP/REST API（维护者在 discussion 中明确拒绝）。fork 两套都完整保留。
 
+## Dext 运行身份边界（CORE-002）
+
+Dext 基于仓库内自己的 Lively Core fork，保留上游协议类型和实现来源，但不依赖用户另外安装的原版 Lively。运行时已使用 Dext mutex `DEXT:DESKTOPSHELL`、named pipe `Grpc_DEXT:DESKTOPSHELL<用户名>`、数据 `%LOCALAPPDATA%\Dext` 和缓存 `%TEMP%\Dext`；Rust 配置器连接后必须验证 Core 返回的 Dext 产品名、运行身份、PID、绝对路径、数据目录与 pipe。
+
+`Lively.exe`、Player/Watchdog 文件名、C# namespace、程序集、proto package 和 `LivelyInfo` 等技术类型继续保留，因为它们是 fork 内部兼容面，不再承担跨产品运行身份。旧 `%LOCALAPPDATA%\Lively Wallpaper` 不迁移。Dext 与原版可以同时保有独立进程/mutex/pipe/data，但 Windows WorkerW 的同时控制不属于本轮承诺。上游 LICENSE、README、版权和来源链接继续保留。
+
 ## 零、全景分层图
 
 ```
@@ -110,7 +116,7 @@ fork 的上行 IPC 消息全集（`MessageType` 枚举上行半区）：
 
 ### 4.2 命令行控制（官方唯一外部控制方式）
 
-`lively.exe <args>`；已有实例运行时经单实例 mutex → gRPC `AutomationCommand` 转发（App.xaml.cs:72）。
+`Lively.exe <args>`（Dext 暂时保留内部文件名）；已有 Dext 实例运行时经 Dext 单实例 mutex → Dext gRPC `AutomationCommand` 转发（App.xaml.cs）。
 fork **完整保留**：`Lively/Commandline/CommandHandler.cs`（658 行全套）+
 `RPC/CommandsServer.cs:102` + 独立工具工程 `Lively.Utility.Commandline`（等价上游 livelycu.exe）。
 
