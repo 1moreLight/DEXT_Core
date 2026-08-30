@@ -16,7 +16,7 @@
 | 最近完成 | **DXT-001 room.json v1 契约与统一场景渲染** | 已完成 | master（merge `8f39fbb`） | v1 Schema、统一内容宿主、真实素材按钮、持久化闭环和创作者协议已验收合并 |
 | 待验收 | **DXT-002 Room 待机画面接入** | 待验收 | `feat/dxt-002-idle-screensaver`（`d679f3d`） | 已开发但按用户决定暂缓，不继续扩展待机入口，也未合并 master |
 | 最近完成 | **OPS-003 开发优先级与 dev_docs 记录指南** | 已完成 | master（merge `eb5e9ff`） | 新开发顺序、Dext 身份隔离决策和日常记录方法已验收合并 |
-| 下一项 | **CORE-002 Dext Core 运行身份隔离** | 下一项 | 待创建 | Dext 自有 Core 不再与另装的原版 Lively 共用实例、管道、数据目录或启动判断 |
+| 待合并 | **CORE-002 Dext Core 运行身份隔离** | 验收通过 | `feat/core-002-dext-runtime-identity`（修复 `a6be4c5`） | 用户已确认复验通过；待合并 master 并完成归档清理 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
@@ -40,7 +40,7 @@ DXT-001 已于 2026-08-30 验收并合并 master；其创作者协议见 `ROOM_A
 
 | 顺序 | 工作包 | 状态 | 独立交付结果 | 依赖 |
 |---|---|---|---|---|
-| 1 | **CORE-002 Dext Core 运行身份隔离** | 下一项 | Dext Core、配置器和脚本统一使用 Dext 自有的应用身份、单实例名、通信管道、本地数据/日志目录和进程识别；另装原版 Lively 时不会连错或共用状态 | 无 |
+| 1 | **CORE-002 Dext Core 运行身份隔离** | 验收通过，待合并 | Dext Core、配置器和脚本统一使用 Dext 自有的应用身份、单实例名、通信管道、本地数据/日志目录和进程识别；另装原版 Lively 时不会连错或共用状态 | 无 |
 
 CORE-002 只解决运行身份和开发启动可靠性，不顺带做 idle、安装器、自动更新、全量品牌文案替换或 Player/Core 重构。完成后必须能明确证明配置器连接的是仓库构建出的 Dext Core，而不是用户另外安装的原版 Lively。
 
@@ -103,12 +103,13 @@ DXT-001 同时决定新数据怎样表达、让现有播放器真正执行该格
 | DOCK-LIB-001 | Dock 模板导出、版本更新与创意工坊同步；下载项进入现有本地 Dock 卡片库 |
 | DOCK-PREVIEW-001 | Dock 模板卡片和 Room 内选择器不再依赖手填 `backdrop/surface/accent` 预览色；在隔离预览环境中执行模板实际 CSS/代码，渲染真实 Dock 外观并生成/缓存缩略图 |
 | DOCK-UX-001 | 重做真实 Player 中桌面图标与 Dock 之间的拖拽命中、跨边界手势和反馈；当前正式管理入口仍是配置器 DockEditor |
+| PACKAGING-001 | Dext 独立安装器/MSIX 身份：Inno AppId、安装目录、快捷方式、卸载信息、MSIX Identity/AppUserModelId、屏保注册与 Core 路径；同时保留上游许可证与来源归属 |
 
 ## 五、依赖主线
 
 ```text
 OPS-001 文档流程
-  ├─ CORE-002 Dext Core 运行身份隔离（唯一下一项）
+  ├─ CORE-002 Dext Core 运行身份隔离（验收通过，待合并）
   ├─ DOCK-001 → DOCK-002 → DOCK-003 → DOCK-004（待验收）
   └─ UI-003 已确认拓扑 → DXT-001 Room 契约 + 统一场景宿主
        ├─ DXT-002 idle（待验收，暂缓）

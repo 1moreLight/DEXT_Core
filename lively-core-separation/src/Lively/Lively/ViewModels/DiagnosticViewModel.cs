@@ -64,7 +64,7 @@ namespace Lively.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to generate log report:\n{ex.Message}", "Lively Wallpaper");
+                MessageBox.Show($"Failed to generate Dext log report:\n{ex.Message}", Constants.ApplicationType.Name);
             }
         }
     }

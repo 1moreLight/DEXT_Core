@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Lively.Watchdog")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Dext Watchdog")]
+[assembly: AssemblyDescription("Dext desktop runtime watchdog")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Lively.Watchdog")]
+[assembly: AssemblyCompany("Dext")]
+[assembly: AssemblyProduct("Dext")]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

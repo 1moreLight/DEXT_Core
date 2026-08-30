@@ -25,12 +25,14 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
    纯静态三件套，读 room.json 画桌面；跑在 Lively WebView2 Player 里
 ② 编辑器(配置器) tauri-ui/   Tauri2+React+TS+Tailwind4+shadcn
    使用/编辑双模式；房间库；背景/转场素材；保存并应用
-③ 底座(Lively fork)  lively-core-separation/src/Lively/  C# .NET9 WPF
+③ 底座(Dext 自带的 Lively Core fork)  lively-core-separation/src/Lively/  C# .NET9 WPF
    WorkerW 桌面层托管；应用枚举/启动；RPC 服务端；IPC 处理
 ④ 数据契约  room.json   ①只认它 ②只产它 AI 只写它
 ```
 
-进程链：`配置器 ──自定义gRPC(named pipe)──▶ Lively Core ──spawn──▶ WebView2 Player ──虚拟主机──▶ ①渲染器`
+进程链：`Dext 配置器 ──自定义gRPC(named pipe)──▶ Dext Core(Lively fork) ──spawn──▶ WebView2 Player ──虚拟主机──▶ ①渲染器`
+
+Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Lively 的实例或数据，也不要求用户先安装 Lively。CORE-002 后运行身份为 mutex `DEXT:DESKTOPSHELL`、pipe `Grpc_DEXT:DESKTOPSHELL<用户名>`、数据 `%LOCALAPPDATA%\Dext`、日志 `%LOCALAPPDATA%\Dext\logs`。旧 `%LOCALAPPDATA%\Lively Wallpaper` 不自动迁移。Dext 与原版 Lively 可以同时保持各自身份和进程，但不承诺两者同时控制同一个 Windows WorkerW 桌面。
 
 ## 二、dev_docs 文档体系
 
@@ -181,7 +183,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 
 ### L4 gRPC（Rust ↔ Core，GrpcDotNetNamedPipes 自定义线协议）
 
-- 管道：`\\.\pipe\Grpc_LIVELY:DESKTOPWALLPAPERSYSTEM<用户名>`；**不是标准 HTTP/2，tonic 不可用**，客户端在 `tauri-ui/src-tauri/src/grpc.rs` 手写帧（RequestInit→Headers→Payload→StreamEnd→Trailers），一次调用一条连接
+- 管道：`\\.\pipe\Grpc_DEXT:DESKTOPSHELL<用户名>`；**不是标准 HTTP/2，tonic 不可用**，客户端在 `tauri-ui/src-tauri/src/grpc.rs` 手写帧（RequestInit→Headers→Payload→StreamEnd→Trailers），一次调用一条连接；每个业务 RPC 前先读取并验证 Dext Core 产品名、运行身份、PID、路径、数据目录和 pipe
 - 用到的 RPC（wallpaper.proto DesktopService）：`GetInstalledApps`(stream) / `LaunchApp` / `SetWallpaper` / `GetWallpapers`
 - proto 副本在 `src-tauri/proto/`，**必须去 BOM**（protox 限制）
 
@@ -202,7 +204,8 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 | 强制重铺壁纸 | `cargo test --lib applies_room_wallpaper`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
 | 渲染器语法自检 | `node --check wallpapers/dext-room/main.js` |
-| 日志 | `%LOCALAPPDATA%\Lively Wallpaper\logs\<最新>.txt` |
+| 日志 | `%LOCALAPPDATA%\Dext\logs\<最新>.txt`；首行可核对 PID、Core 绝对路径和运行身份 |
+| 运行身份核对 | `scripts\verify-runtime-identity.ps1`（只读报告进程路径、mutex、pipe、data、log） |
 | 查代码 | `codegraph explore/node` 优先（索引已建） |
 
 ## 七、能力基线（master，2026-08-30）

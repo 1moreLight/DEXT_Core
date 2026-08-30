@@ -1087,8 +1087,8 @@ namespace Lively.Core
                 else
                 {
                     Logger.Warn("Explorer restarted multiple times in the last 30s.");
-                    _ = Task.Run(() => MessageBox.Show(Properties.Resources.DescExplorerCrash,
-                            $"{Properties.Resources.TitleAppName} - {Properties.Resources.TextError}",
+                    _ = Task.Run(() => MessageBox.Show("Dext encountered a fatal Windows Explorer error. Restart Dext after Explorer recovers.",
+                            $"{Constants.ApplicationType.Name} - {Properties.Resources.TextError}",
                             MessageBoxButton.OK, MessageBoxImage.Error));
                     CloseAllWallpapers();
                     await ResetWallpaperAsync();

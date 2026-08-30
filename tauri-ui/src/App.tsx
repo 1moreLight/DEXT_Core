@@ -49,6 +49,17 @@ interface AppInfo {
   source: string;
 }
 
+interface CoreIdentity {
+  product_name: string;
+  runtime_identity: string;
+  process_id: number;
+  base_directory: string;
+  app_data_directory: string;
+  grpc_pipe_name: string;
+  assembly_version: string;
+  is_core_initialized: boolean;
+}
+
 interface RoomIcon {
   label: string;
   icon_png: string;
@@ -700,6 +711,8 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [renaming, setRenaming] = useState<number | null>(null);
   const [status, setStatus] = useState("loading...");
+  const [coreIdentity, setCoreIdentity] = useState<CoreIdentity | null>(null);
+  const [coreIdentityError, setCoreIdentityError] = useState<string | null>(null);
   const [libDir, setLibDir] = useState(
     () => initialLibDir()
   );
@@ -714,6 +727,7 @@ export default function App() {
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [endContent, setEndContent] = useState<Content | null>(null);
   const [roomVersion, setRoomVersion] = useState<number | null>(1);
+  const [roomCompatibilityFields, setRoomCompatibilityFields] = useState<Record<string, unknown>>({});
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
@@ -745,9 +759,11 @@ export default function App() {
   );
   const previewRef = useRef<HTMLIFrameElement>(null);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
+  const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
 
   function buildRoomV1() {
     const room: Record<string, unknown> = {
+      ...roomCompatibilityFields,
       version: 1,
       startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
       switch: transition,
@@ -786,6 +802,36 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
   }, [localDockPresets]);
+
+  useEffect(() => {
+    if (!IS_TAURI) return;
+    let disposed = false;
+    let checking = false;
+    const refreshCoreIdentity = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const identity = await invoke<CoreIdentity>("core_identity");
+        if (!disposed) {
+          setCoreIdentity(identity);
+          setCoreIdentityError(null);
+        }
+      } catch (error) {
+        if (!disposed) {
+          setCoreIdentity(null);
+          setCoreIdentityError(String(error));
+        }
+      } finally {
+        checking = false;
+      }
+    };
+    void refreshCoreIdentity();
+    const timer = window.setInterval(() => void refreshCoreIdentity(), 2000);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -848,6 +894,7 @@ export default function App() {
       setRoomCss("");
       setStartContent(null);
       setEndContent(null);
+      setRoomCompatibilityFields({});
       setRoomVersion(1);
       setStartDesk(0);
       setEdges(seedEdges(MOCK_DESKS, true, 0));
@@ -890,6 +937,9 @@ export default function App() {
       setStartDesk(nextStartDesk);
       setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
       setRoomVersion(typeof room.version === "number" ? room.version : null);
+      setRoomCompatibilityFields(
+        Object.prototype.hasOwnProperty.call(room, "idle") ? { idle: room.idle } : {}
+      );
       setRoomCss(css);
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
@@ -929,13 +979,28 @@ export default function App() {
   }
 
   async function applyRoomDir(dir: string) {
+    if (IS_TAURI && !coreIdentity) {
+      setStatus(
+        coreUnavailable
+          ? "Dext Core 已退出；请重新运行 scripts/start.ps1 后再应用 Room"
+          : "Dext Core 身份尚未通过验证，不能应用 Room"
+      );
+      return;
+    }
     try {
       await invoke("apply_room", { roomDir: dir });
       setAppliedRoom(dir);
       localStorage.setItem("dext.appliedRoom", dir);
       setStatus(`已应用 ${dir.split("\\").pop()}`);
     } catch (e) {
-      setStatus(`error: ${e}`);
+      const message = String(e);
+      if (message.includes("pipe connect failed")) {
+        setCoreIdentity(null);
+        setCoreIdentityError(message);
+        setStatus("Dext Core 已断开；请重新运行 scripts/start.ps1 后再应用 Room");
+      } else {
+        setStatus(`error: ${message}`);
+      }
     }
   }
 
@@ -1539,6 +1604,32 @@ export default function App() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          <span
+            className={`rounded-full border px-2 py-1 text-xs font-medium ${
+              !IS_TAURI
+                ? "border-border text-muted-foreground"
+                : coreIdentity
+                  ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "border-destructive/50 bg-destructive/10 text-destructive"
+            }`}
+            title={
+              !IS_TAURI
+                ? "UI 设计模式未连接 Core"
+                : coreIdentity
+                  ? `PID ${coreIdentity.process_id}\nCore ${coreIdentity.base_directory}\nPipe ${coreIdentity.grpc_pipe_name}\nData ${coreIdentity.app_data_directory}\nIdentity ${coreIdentity.runtime_identity}`
+                  : coreIdentityError ?? "正在验证 Dext Core 身份"
+            }
+          >
+            {!IS_TAURI
+              ? "Dext Core · mock"
+              : coreIdentity
+                ? "Dext Core 已连接"
+                : coreIdentityError
+                  ? coreUnavailable
+                    ? "Dext Core 未运行"
+                    : "Dext Core 身份拒绝"
+                  : "正在验证 Dext Core"}
+          </span>
           <span className="text-sm text-muted-foreground">{status}</span>
           {mode === "edit" && IS_TAURI && (
             <Button
@@ -1601,6 +1692,8 @@ export default function App() {
                         variant={on ? "secondary" : "outline"}
                         size="xs"
                         className="shrink-0"
+                        disabled={IS_TAURI && !coreIdentity}
+                        title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
                         onClick={(e) => {
                           e.stopPropagation();
                           applyRoomDir(r.path);
@@ -1691,6 +1784,8 @@ export default function App() {
                   size="sm"
                   className="mt-4 px-4"
                   variant={heroRoom.path === appliedRoom ? "secondary" : "default"}
+                  disabled={IS_TAURI && !coreIdentity}
+                  title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
                   onClick={() => applyRoomDir(heroRoom.path)}
                 >
                   {heroRoom.path === appliedRoom ? "重新应用" : "应用此房间"}
@@ -1939,6 +2034,8 @@ export default function App() {
                       <Button
                         className="flex-1"
                         variant={pickedRoom.path === appliedRoom ? "secondary" : "outline"}
+                        disabled={IS_TAURI && !coreIdentity}
+                        title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
                         onClick={() => applyRoomDir(pickedRoom.path)}
                       >
                         {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
@@ -1994,6 +2091,8 @@ export default function App() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={IS_TAURI && !coreIdentity}
+                      title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
                       onClick={applyCurrent}
                     >
                       <Play className="h-3.5 w-3.5" /> 应用

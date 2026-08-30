@@ -5,9 +5,13 @@
     <TargetFramework>net9.0-windows10.0.18362.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <StartupObject></StartupObject>
-    <ApplicationIcon>appicon.ico</ApplicationIcon>
+    <ApplicationIcon>..\..\..\..\tauri-ui\src-tauri\icons\icon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyVersion>2.2.1.5</AssemblyVersion>
+    <AssemblyTitle>Dext Core</AssemblyTitle>
+    <Product>Dext</Product>
+    <Description>Dext desktop runtime core</Description>
+    <Company>Dext</Company>
     <Platforms>AnyCPU;x64</Platforms>
     <!-- .NET 9 Win10 issue, ref: https://github.com/rocksdanister/lively/issues/3028 -->
     <CETCompat>false</CETCompat>

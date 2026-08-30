@@ -28,10 +28,18 @@ namespace Lively
 
         public void Run()
         {
+            var isFirstRun = userSettings.Settings.IsFirstRun;
             CleanTempFiles();
             CreateRequiredDirectories();
             SetupWallpaperDirectories();
             HandleFirstRunOrUpdate(true);
+            if (isFirstRun)
+            {
+                userSettings.Settings.IsFirstRun = false;
+                userSettings.Settings.IsUpdatedNotify = false;
+                userSettings.Save<SettingsModel>();
+                Logger.Info("Dext first-run directory initialization completed; legacy Lively UI was not started.");
+            }
         }
 
         private void CleanTempFiles()

@@ -46,7 +46,9 @@
 - 只改前端（tauri-ui / wallpapers）→ `scripts/start.ps1` 即可
 - 强制重铺壁纸：`cargo test --lib applies_room_wallpaper`（在 tauri-ui/src-tauri 下）
 - Player 必须 Release 构建，Debug 会挂起（详见 ERRORS.md #1）
-- 日志位置：`%LOCALAPPDATA%\Lively Wallpaper\logs\`
+- 日志位置：`%LOCALAPPDATA%\Dext\logs\`；首行包含 Dext 运行身份、PID、Core 绝对路径、数据目录和版本
+- `scripts/start.ps1` 只按当前 worktree 构建出的 Core 规范化绝对路径判断已启动；其他安装或 worktree 的 `Lively.exe` 只报告，不停止也不复用
+- `scripts/verify-runtime-identity.ps1` 只读报告 Core、Player、Watchdog、配置器路径，以及 Dext mutex、pipe、data、log 状态
 - 仓库已建 CodeGraph 索引（CLI v1.5.0）：**查代码一律先用 codegraph**（`explore` / `node` / `callers` / `impact`），grep/read 只做兜底
 - CodeGraph 索引是快照，**不会自动跟随代码变化**：本轮动过代码后再查代码，先跑 `codegraph sync`（增量，秒级）；结果可疑时用 `codegraph status` 看 Pending Changes；大重构后用 `codegraph index` 全量重建
 - 前端外观迭代：`scripts/room-preview.ps1` 实时预览（无需 Lively），指南见 `dev_docs/FRONTEND.md`

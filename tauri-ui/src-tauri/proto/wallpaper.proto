@@ -94,6 +94,11 @@ message GetCoreStatsResponse {
 	string base_directory = 1;
 	string assembly_version = 2;
 	bool is_core_initialized = 3;
+	string product_name = 4;
+	string runtime_identity = 5;
+	int32 process_id = 6;
+	string app_data_directory = 7;
+	string grpc_pipe_name = 8;
 }
 
 message PreviewWallpaperRequest {
