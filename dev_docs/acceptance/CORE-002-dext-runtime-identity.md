@@ -1,6 +1,6 @@
 # CORE-002 Dext Core 运行身份隔离验收
 
-- 状态：待验收
+- 状态：验收反馈修复中
 - 分支：`feat/core-002-dext-runtime-identity`
 - 实施提交：`039d468`
 - 目标：Dext 使用仓库内自带的 Lively Core fork，并以独立的单实例、管道、数据/日志目录和可验证进程路径运行，不依赖或误连用户另装的原版 Lively。
@@ -60,7 +60,8 @@
 
 ### 自动检查记录
 
-- 当前 CORE-002 进程：Core PID 84120、Player PID 83644、Watchdog PID 78036、配置器 PID 81116；DXT-002 Core PID 70596 及其 Player/Watchdog 保持运行且只标记为 `OTHER`。
+- 初次自动检查进程：Core PID 84120、Player PID 83644、Watchdog PID 78036、配置器 PID 81116；当时 DXT-002 Core PID 70596 及其 Player/Watchdog 保持运行且只标记为 `OTHER`。
+- 验收反馈修复后进程：Core PID 85812、Player PID 75288、Watchdog PID 81044、配置器 PID 79680。
 - Core：`D:\use\Orca\DEXT_Core\core-002-dext-runtime-identity\lively-core-separation\src\Lively\Lively\bin\x64\Debug\net9.0-windows10.0.18362.0\Lively.exe`。
 - Player：`D:\use\Orca\DEXT_Core\core-002-dext-runtime-identity\lively-core-separation\src\Lively\Lively\bin\x64\Debug\net9.0-windows10.0.18362.0\plugins\webview2\Lively.Player.WebView2.exe`。
 - 配置器：`D:\use\Orca\DEXT_Core\core-002-dext-runtime-identity\tauri-ui\src-tauri\target\debug\dext-configurator.exe`。
@@ -90,3 +91,4 @@
 ## 验收记录
 
 - 2026-08-30：自动检查通过，实施提交 `039d468`；停在独立分支待用户按九步清单验收，未合并 master。
+- 2026-08-30：用户反馈托盘退出 Core 后配置器仍显示已连接，且现有 `v1testRoom` 因 DXT-002 `idle` 字段被阻断。已增加两秒实时身份刷新、断线禁用应用入口与明确提示；`idle` 仅校验/透传/写回保留，不实现其功能。实测退出态显示“Dext Core 未运行”，重启后恢复“已连接”，含 `idle` Room 显示“已应用 v1testRoom”；源 `room.json` 前后 SHA-256 均为 `0875C31EFC19004EE9FE66BB040478995264208DEF2AF723D750E561E551AD78`。

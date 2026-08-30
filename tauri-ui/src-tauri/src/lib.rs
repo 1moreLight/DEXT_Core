@@ -371,6 +371,7 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
             "startDesk",
             "start",
             "end",
+            "idle",
             "switch",
             "switches",
             "dock",
@@ -394,7 +395,7 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
     if start_desk >= desks.len() {
         return Err("room.startDesk is outside desks".into());
     }
-    for (key, directory) in [("start", "start"), ("end", "end")] {
+    for (key, directory) in [("start", "start"), ("end", "end"), ("idle", "idle")] {
         if let Some(value) = object.get(key) {
             validate_content(value, directory, &format!("room.{key}"))?;
         }
@@ -1226,7 +1227,7 @@ mod tests {
     }
 
     #[test]
-    fn write_room_strips_source_stamp_and_rejects_unknown_fields() {
+    fn write_room_strips_source_stamp_preserves_idle_and_rejects_unknown_fields() {
         let root = test_dir("room-write-v1");
         std::fs::create_dir_all(&root).unwrap();
         let path = root.join("room.json");
@@ -1236,6 +1237,7 @@ mod tests {
                 "version":1,
                 "startDesk":0,
                 "switches":{},
+                "idle":{"name":"Idle","type":"image","src":"idle/scene.png"},
                 "desks":[{
                     "name":"Desk 1",
                     "background":null,
@@ -1249,6 +1251,7 @@ mod tests {
         let saved: serde_json::Value =
             serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         assert!(saved.get("__source").is_none());
+        assert_eq!(saved["idle"]["src"], "idle/scene.png");
 
         let error = write_room_file(
             &path,

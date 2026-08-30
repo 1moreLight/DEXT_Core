@@ -42,6 +42,8 @@
 | #35 | UI 按钮存在但真实 Tauri 链路仍走 mock/漏保存素材 | [frontend](errors/frontend.md) |
 | #36 | 属性栏素材按钮只有外观、没有点击动作 | [frontend](errors/frontend.md) |
 | #37 | PowerShell 管道吞掉原生构建失败，脚本仍显示 Done | [toolchain](errors/toolchain.md) |
+| #38 | Core 身份只在配置器挂载时读取，退出后仍显示已连接 | [frontend](errors/frontend.md) |
+| #39 | 独立 worktree 共享用户 Room 时，未合并字段会被旧分支严格校验阻断 | [backend](errors/backend.md) |
 
 ## 分册
 

@@ -47,7 +47,7 @@ namespace Lively.Services
             closeMenu.Click += (_, _) => desktopCore.CloseAllWallpapers();
             notifyIcon.ContextMenuStrip.Items.Add(closeMenu);
 
-            var exitMenu = new ToolStripMenuItem("退出 Dext");
+            var exitMenu = new ToolStripMenuItem("退出 Dext Core（壁纸将关闭）");
             exitMenu.Click += (_, _) => App.QuitApp();
             notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             notifyIcon.ContextMenuStrip.Items.Add(exitMenu);
