@@ -17,6 +17,7 @@
 - [x] `cd tauri-ui/src-tauri && cargo check && cargo test --lib -- --skip grpc::tests::apps_and_launch` 通过（9 项；跳过项会实际启动 Notepad，与本包无关）。
 - [x] 上述 Rust 测试包含 `grpc::tests::applies_room_wallpaper`，真实 Core 链路通过。
 - [x] 另存为测试确认四类素材全部复制、目标不含 `__source`、原 Room 不变；前端新增/应用/另存入口通过 TypeScript 构建。
+- [x] Playwright 配置器冒烟通过：编辑模式 Room 列表存在“新增 Room”，进入 Room 后“保存 / 另存为 / 应用”入口均可见；仅使用浏览器 mock，未触发真实文件写入。
 - [x] `scripts/build.ps1` 以 Release Player 完成全量 C# 构建；随后 `scripts/start.ps1` 正常启动 Core、Player 和配置器。
 - [x] Git 差异只包含 DXT-001 契约、原地适配、安全修复、测试、示例和文档；未混入其他 worktree 改动。
 
@@ -47,4 +48,5 @@
 
 - 2026-08-30：开发侧自动检查、浏览器时序/隔离回归和真实 Tauri 预览不落盘检查通过。
 - 2026-08-30：补齐真实新增/应用/另存入口；9 项 Rust 测试确认素材复制、失败回滚、`__source` 和原 Room 边界。
+- 2026-08-30：浏览器配置器入口冒烟通过，临时 Playwright 会话和快照已清理。
 - 待用户确认。
