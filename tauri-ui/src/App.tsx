@@ -1187,30 +1187,67 @@ export default function App() {
     }
   }
 
-  async function pickBackground(kind: "image" | "video") {
-    if (!roomPath) return;
-    const filters = [
-      kind === "video"
-        ? { name: "视频", extensions: ["mp4", "webm"] }
-        : { name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif", "svg"] },
-    ];
-    const picked = await open({ filters, multiple: false });
-    if (typeof picked !== "string") return;
+  async function pickRoomContent(
+    slot: "background" | "start" | "switch" | "end",
+    contentType: ContentType,
+  ): Promise<Content | null> {
+    if (!IS_TAURI) {
+      setStatus("请在桌面配置器中选择 Room 素材");
+      return null;
+    }
+    if (!roomPath) {
+      setStatus("请先新建或打开一个 Room");
+      return null;
+    }
+    const filters = {
+      image: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif", "svg"] }],
+      html: [{ name: "网页代码", extensions: ["html", "htm"] }],
+      video: [{ name: "视频", extensions: ["mp4", "webm"] }],
+    }[contentType];
     try {
-      setStatus("copying...");
-      const bg = await invoke<Background>("import_background", {
+      const picked = await open({ filters, multiple: false });
+      if (typeof picked !== "string") return null;
+      setStatus("正在复制素材...");
+      const imported = await invoke<Content>("import_background", {
         roomDir: roomPath,
         srcPath: picked,
-        kind,
+        slot,
+        contentType,
       });
-      touch();
-      setDesks((prev) =>
-        prev.map((d, i) => (i === activeDesk ? { ...d, background: bg } : d))
-      );
-      setStatus("背景已选择，记得保存并应用");
+      const content = cleanContent(imported, slot);
+      if (!content) throw new Error("导入结果不是有效的 Room 内容");
+      setStatus("素材已选择，保存后写入 room.json");
+      return content;
     } catch (e) {
-      setStatus(`error: ${e}`);
+      setStatus(`素材导入失败：${e}`);
+      return null;
     }
+  }
+
+  async function setGraphNodeContent(nodeId: string, contentType: ContentType) {
+    const isStart = nodeId === "start";
+    const deskIndex = isStart ? -1 : Number(nodeId.slice(1));
+    if (!isStart && (!Number.isInteger(deskIndex) || !desks[deskIndex])) return;
+    const content = await pickRoomContent(isStart ? "start" : "background", contentType);
+    if (!content) return;
+    pushHistory();
+    touch();
+    if (isStart) {
+      setHasStart(true);
+      setStartContent({ ...content, name: startName.trim() || content.name });
+    } else {
+      setDesks((prev) =>
+        prev.map((desk, index) => index === deskIndex ? { ...desk, background: content } : desk)
+      );
+    }
+  }
+
+  async function setEdgeContent(edgeId: string, contentType: ContentType) {
+    const content = await pickRoomContent("switch", contentType);
+    if (!content) return;
+    pushHistory();
+    touch();
+    setEdges((prev) => prev.map((edge) => edge.id === edgeId ? { ...edge, trans: content } : edge));
   }
 
   function clearBackground() {
@@ -1221,29 +1258,15 @@ export default function App() {
   }
 
   async function changeTransition(value: string) {
-    touch();
     if (value !== "video") {
+      touch();
       setTransition(value as TransitionPreset);
       return;
     }
-    if (!roomPath) return;
-    const picked = await open({
-      filters: [{ name: "视频", extensions: ["mp4", "webm"] }],
-      multiple: false,
-    });
-    if (typeof picked !== "string") return;
-    try {
-      setStatus("copying...");
-      const t = await invoke<Content>("import_background", {
-        roomDir: roomPath,
-        srcPath: picked,
-        kind: "switch",
-      });
-      setTransition(t);
-      setStatus("视频转场已选择，记得保存并应用");
-    } catch (e) {
-      setStatus(`error: ${e}`);
-    }
+    const content = await pickRoomContent("switch", "video");
+    if (!content) return;
+    touch();
+    setTransition(content);
   }
 
   function toggle(app: AppInfo) {
@@ -1305,7 +1328,6 @@ export default function App() {
     transitionLabel,
     applyCurrent,
     removeDesk,
-    pickBackground,
     clearBackground,
     removeIcon,
     bgLabel,
@@ -2211,13 +2233,28 @@ export default function App() {
                                 <span className="text-xs text-muted-foreground">
                                   {isStart ? "画面素材：" : "壁纸素材："}
                                 </span>
-                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  title="选择图片"
+                                  onClick={() => void setGraphNodeContent(graphSel, "image")}
+                                >
                                   <Image className="h-3.5 w-3.5" /> 图片
                                 </Button>
-                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  title="选择自包含 HTML 文件"
+                                  onClick={() => void setGraphNodeContent(graphSel, "html")}
+                                >
                                   <Code className="h-3.5 w-3.5" /> 网页代码
                                 </Button>
-                                <Button variant="outline" size="sm" title="下一轮接真实导入">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  title="选择视频"
+                                  onClick={() => void setGraphNodeContent(graphSel, "video")}
+                                >
                                   <Video className="h-3.5 w-3.5" /> 视频
                                 </Button>
                               </div>
@@ -2258,6 +2295,30 @@ export default function App() {
                                       </option>
                                     ))}
                                   </select>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="选择图片切换"
+                                    onClick={() => void setEdgeContent(e.id, "image")}
+                                  >
+                                    <Image className="h-3.5 w-3.5" /> 图片
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="选择自包含 HTML 切换"
+                                    onClick={() => void setEdgeContent(e.id, "html")}
+                                  >
+                                    <Code className="h-3.5 w-3.5" /> 网页代码
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="选择视频切换"
+                                    onClick={() => void setEdgeContent(e.id, "video")}
+                                  >
+                                    <Video className="h-3.5 w-3.5" /> 视频
+                                  </Button>
                                 </div>
                               </label>
                             );

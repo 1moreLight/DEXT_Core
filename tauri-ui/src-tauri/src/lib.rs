@@ -756,18 +756,20 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
     grpc::set_wallpaper(WALLPAPER_DIR).await
 }
 
-// dext:// protocol maps the wallpaper package dir into the configurator webview,
-// so the editor can embed the real renderer in an iframe (preview).
-// copy a picked image/video into the room's background/ folder; returns the background value
-#[tauri::command]
-async fn import_background(
-    room_dir: String,
-    src_path: String,
-    kind: String,
+fn import_room_content_file(
+    room_dir: &std::path::Path,
+    src: &std::path::Path,
+    slot: &str,
+    content_type: &str,
 ) -> Result<serde_json::Value, String> {
-    let src = std::path::Path::new(&src_path);
+    if !room_dir.join("room.json").is_file() {
+        return Err(format!(
+            "not a Room directory (room.json missing): {}",
+            room_dir.display()
+        ));
+    }
     if !src.is_file() {
-        return Err(format!("file not found: {src_path}"));
+        return Err(format!("file not found: {}", src.display()));
     }
     let ext = src
         .extension()
@@ -779,33 +781,56 @@ async fn import_background(
         ext.as_str(),
         "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif" | "svg"
     );
-    // MEDIA-001 will expose the picker; this command already writes v1 Content.
-    let (ok, subdir, content_type) = match kind.as_str() {
-        "video" => (video, "background", "video"),
-        "switch" => (video, "switch", "video"),
-        _ => (image, "background", "image"),
+    let html = matches!(ext.as_str(), "html" | "htm");
+    let valid_type = match content_type {
+        "image" => image,
+        "video" => video,
+        "html" => html,
+        _ => return Err(format!("unsupported Room content type: {content_type}")),
     };
-    if !ok {
-        return Err(format!(".{ext} 不是有效的{kind}格式"));
+    if !valid_type {
+        return Err(format!(".{ext} 不是有效的{content_type}格式"));
     }
-    let dst_dir = std::path::Path::new(&room_dir).join(subdir);
+    if !ROOM_ASSET_DIRS.contains(&slot) {
+        return Err(format!("unsupported Room content slot: {slot}"));
+    }
+
+    let dst_dir = room_dir.join(slot);
     std::fs::create_dir_all(&dst_dir).map_err(|e| format!("mkdir failed: {e}"))?;
     let name = format!(
-        "{kind}-{}.{}",
+        "{content_type}-{}.{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_millis(),
+            .as_nanos(),
         ext
     );
     std::fs::copy(src, dst_dir.join(&name)).map_err(|e| format!("copy failed: {e}"))?;
-    let rel = format!("{subdir}/{name}");
     let display_name = src
         .file_stem()
         .and_then(|value| value.to_str())
         .filter(|value| !value.trim().is_empty())
         .unwrap_or("素材");
-    Ok(serde_json::json!({ "name": display_name, "type": content_type, "src": rel }))
+    Ok(
+        serde_json::json!({ "name": display_name, "type": content_type, "src": format!("{slot}/{name}") }),
+    )
+}
+
+// Reuse the existing command name, but make it a generic v1 content importer for
+// background/start/switch/end instead of maintaining one copy path per UI button.
+#[tauri::command]
+async fn import_background(
+    room_dir: String,
+    src_path: String,
+    slot: String,
+    content_type: String,
+) -> Result<serde_json::Value, String> {
+    import_room_content_file(
+        std::path::Path::new(&room_dir),
+        std::path::Path::new(&src_path),
+        &slot,
+        &content_type,
+    )
 }
 
 fn mime_of(path: &std::path::Path) -> &'static str {
@@ -945,8 +970,8 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        save_room_as_dir, save_room_css_file, sync_room_to_package, validate_room_v1,
-        write_room_file,
+        import_room_content_file, save_room_as_dir, save_room_css_file, sync_room_to_package,
+        validate_room_v1, write_room_file,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -1057,6 +1082,47 @@ mod tests {
         assert_eq!(
             std::fs::read_to_string(source.join("room.json")).unwrap(),
             "{}"
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn imports_all_v1_content_types_into_requested_slots() {
+        let root = test_dir("room-content-import");
+        let room = root.join("room");
+        let source = root.join("source");
+        let original_room_json = "{\"version\":1}";
+        std::fs::create_dir_all(&room).unwrap();
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(room.join("room.json"), original_room_json).unwrap();
+        std::fs::write(source.join("scene.png"), "image").unwrap();
+        std::fs::write(source.join("scene.mp4"), "video").unwrap();
+        std::fs::write(source.join("scene.html"), "<html></html>").unwrap();
+
+        for (slot, content_type, filename) in [
+            ("background", "image", "scene.png"),
+            ("start", "html", "scene.html"),
+            ("switch", "video", "scene.mp4"),
+            ("end", "image", "scene.png"),
+        ] {
+            let content =
+                import_room_content_file(&room, &source.join(filename), slot, content_type)
+                    .unwrap();
+            assert_eq!(content["name"], "scene");
+            assert_eq!(content["type"], content_type);
+            let relative = content["src"].as_str().unwrap();
+            assert!(relative.starts_with(&format!("{slot}/")));
+            assert!(room.join(relative).is_file());
+        }
+
+        let error =
+            import_room_content_file(&room, &source.join("scene.html"), "background", "video")
+                .unwrap_err();
+        assert!(error.contains("不是有效的video格式"));
+        assert_eq!(
+            std::fs::read_to_string(room.join("room.json")).unwrap(),
+            original_room_json
         );
 
         std::fs::remove_dir_all(root).unwrap();

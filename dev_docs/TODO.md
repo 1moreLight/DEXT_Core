@@ -207,7 +207,7 @@
 ## DXT-001 room.json v1 契约与统一场景渲染（2026-08-30）
 
 > 目标：在一个工作包内定稿 room.json v1，并原地改造现有渲染、配置器预览、Rust 应用和 Player/Core 回写链，使 image/video/html 场景、安全隔离与持久化边界真正生效。
-> 范围外：UI-001/UI-002 素材配置界面、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段和无关 Player/Core 重构。
+> 范围外：end 的完整编辑入口、Desk 排序、成组 HTML 依赖导入、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段和无关 Player/Core 重构。用户验收反馈后，现有 Desk/start/switch 属性栏按钮的真实导入已纳入本包。
 > 人工验收：按 `acceptance/DXT-001-room-json-v1-contract.md` 使用 v1 验收 Room，依次检查启动、双向切换、三类内容、预览不落盘、Dock 继承和 `__source` 边界。
 
 - [x] 核对 master、ROADMAP、UI-003、DOCK-004 和全部 worktree；确认只在 `feat/dxt-001-room-json-v1-contract` 开发（2026-08-30）
@@ -226,4 +226,5 @@
 - [x] 收口真实 UI 入口：新增 Room 仅成功后进入编辑、编辑页应用先保存草稿、另存为复制四类素材并保持原 Room 不变；前端构建、Rust check 与 9 项测试通过（2026-08-30）
 - [x] 提交 UI/Rust 收口修正 `86ad139`，继续停在 DXT-001 待验收分支（2026-08-30）
 - [x] Playwright 只读冒烟确认 Room 列表“新增 Room”和编辑页“保存 / 另存为 / 应用”入口可见；未触发真实写盘并已清理临时快照（2026-08-30）
+- [x] 用户验收发现属性栏“图片 / 网页代码 / 视频”只有外观、无真实动作；已在同一分支接通 Desk/start/switch 的文件选择、固定目录复制、内存预览和 v1 保存，前端构建、Rust check 与 10 项测试通过（2026-08-30）
 - [?] 用户按独立验收卡确认通过后才允许合并 master

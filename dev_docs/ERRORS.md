@@ -40,6 +40,7 @@
 | #33 | Tauri 开发态 origin 与发布态不同导致预览被拒绝 | [renderer](errors/renderer.md) |
 | #34 | Core 同进程并发保存复用临时文件名 | [backend](errors/backend.md) |
 | #35 | UI 按钮存在但真实 Tauri 链路仍走 mock/漏保存素材 | [frontend](errors/frontend.md) |
+| #36 | 属性栏素材按钮只有外观、没有点击动作 | [frontend](errors/frontend.md) |
 
 ## 分册
 

@@ -2,9 +2,9 @@
 
 - 状态：待验收
 - 分支：`feat/dxt-001-room-json-v1-contract`
-- 提交：`86ad139`（完整实现基线 `ed13a33`）
+- 提交：待提交（上一轮 `86ad139`；完整实现基线 `ed13a33`）
 - 目标：定稿 room.json v1，并让现有官方宿主、配置器预览、Rust 应用和 Player/Core 回写链按同一契约安全运行。
-- 范围外：UI-001/UI-002 素材配置界面、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段、无关 Player/Core 重构。
+- 范围外：end 的完整编辑入口、Desk 排序、成组 HTML 依赖导入、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段、无关 Player/Core 重构。Desk/start/switch 已存在的素材按钮因用户验收反馈纳入本包并接通真实导入。
 
 ## 自动检查
 
@@ -14,7 +14,7 @@
 - [x] Playwright 真实浏览器检查通过：图片 0.5 秒、视频播完、HTML source+instance 双校验、伪造消息拒绝和完成后清理。
 - [x] 真实 Tauri 开发态预览通过：内存新增 Desk 后 iframe 立即显示第 3 Desk，源文件 SHA-256 前后相同。
 - [x] `cd tauri-ui && npm run build` 通过。
-- [x] `cd tauri-ui/src-tauri && cargo check && cargo test --lib -- --skip grpc::tests::apps_and_launch` 通过（9 项；跳过项会实际启动 Notepad，与本包无关）。
+- [x] `cd tauri-ui/src-tauri && cargo check && cargo test --lib -- --skip grpc::tests::apps_and_launch` 通过（10 项；新增测试覆盖四个固定目录与三类内容；跳过项会实际启动 Notepad，与本包无关）。
 - [x] 上述 Rust 测试包含 `grpc::tests::applies_room_wallpaper`，真实 Core 链路通过。
 - [x] 另存为测试确认四类素材全部复制、目标不含 `__source`、原 Room 不变；前端新增/应用/另存入口通过 TypeScript 构建。
 - [x] Playwright 配置器冒烟通过：编辑模式 Room 列表存在“新增 Room”，进入 Room 后“保存 / 另存为 / 应用”入口均可见；仅使用浏览器 mock，未触发真实文件写入。
@@ -37,6 +37,8 @@
 12. [ ] 用缺字段、未知字段、非法资源和非法 switch 的夹具打开：读取端不崩溃，可选缺失或单项非法只在内存中降级；任何不符合正式 v1 的源 Room 在保存/应用时明确拒绝，不被静默当成合法文件。
 13. [ ] 从 Room 列表（包括空库）点击“新增 Room”，确认成功后才进入新 Room；取消命名或创建失败时仍停在列表，不进入空编辑页。
 14. [ ] 修改 Room 后直接点编辑页“应用”，确认草稿先保存再应用；再点“另存为”，确认新 Room 保留四类素材和当前 v1 数据，原 Room 内容不变。
+15. [ ] 新增或打开 Room，点 Desk/启动画面的“图片 / 网页代码 / 视频”，确认会打开对应文件选择；选中后素材复制到 `background/` 或 `start/`，预览更新，但保存前 `room.json` 不变。
+16. [ ] 点一条 switch 线，分别给 A→B 和 B→A 选择不同素材；确认文件复制到 `switch/`，两方向互不覆盖，保存并重开后仍各自保留。
 
 ## 通过标准
 
@@ -49,4 +51,6 @@
 - 2026-08-30：开发侧自动检查、浏览器时序/隔离回归和真实 Tauri 预览不落盘检查通过。
 - 2026-08-30：补齐真实新增/应用/另存入口；9 项 Rust 测试确认素材复制、失败回滚、`__source` 和原 Room 边界。
 - 2026-08-30：浏览器配置器入口冒烟通过，临时 Playwright 会话和快照已清理。
+- 2026-08-30：用户验收不通过——新增 Room 后，Desk 属性栏“图片 / 网页代码 / 视频”按钮没有真实反应；回到同一分支修复。
+- 2026-08-30：接通 Desk/start/switch 的真实文件选择和统一内容复制；自包含单 HTML 为本轮明确边界，待重新验收。
 - 待用户确认。

@@ -223,11 +223,11 @@ Schema 负责定义严格的官方写出格式，读取端负责不崩溃；“�
 
 ## 九、DXT-001 已实现边界与后续
 
-DXT-001 同时交付 Schema、现有官方宿主的 image/video/html 运行、安全隔离、配置器完整 v1 预览/保存，以及 Rust/Player/Core 持久化闭环；原计划的 SCENE-001 已并入本包，不再另写播放器。
+DXT-001 同时交付 Schema、现有官方宿主的 image/video/html 运行、安全隔离、配置器完整 v1 预览/保存、Desk/start/switch 属性栏的真实素材选择，以及 Rust/Player/Core 持久化闭环；原计划的 SCENE-001 已并入本包，不再另写播放器。
 
 后续工作包：
 
-- UI-001：为 background/start/end 提供真实素材按钮；DXT-001 只保证打开、保留、预览和保存既有 Content。
-- UI-002：提供 Desk 排序和方向素材编辑完整 UI；DXT-001 已保留既有 `switches` 并对缺失方向显示“需要补充切换”。
-- MEDIA-001：素材选择与复制。
+- UI-001：补 end 可视化入口、内容移除和更完整的名称编辑体验；Desk/background 与 start 的三类按钮已由 DXT-001 接通。
+- UI-002：提供 Desk 排序和方向重映射；两个方向的 switch 三类按钮已由 DXT-001 接通，缺失方向仍显示“需要补充切换”。
+- MEDIA-001：处理非自包含 HTML 的成组依赖导入、引用检查和孤儿素材；DXT-001 只导入单个自包含 HTML 文件。
 - ROOM-001/ROOM-002：zip 导出和导入。

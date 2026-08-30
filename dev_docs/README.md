@@ -122,7 +122,7 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 | `create_room` | `(dir, name) → path` | 建最小合法 v1 和四个素材目录 |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v1，并复制原 Room 的四类素材目录；失败不留下半成品 |
 | `apply_room` | `(room_dir)` | 严格验证 v1，只镜像四个素材目录，清理旧扩展，并仅在运行包注入规范化 `__source` |
-| `import_background` | `(room_dir, src_path, kind) → Content` | 返回 `{name,type,src}`；完整素材 UI 仍由 MEDIA-001 接线 |
+| `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/end` 的 image/video/HTML，并返回 `{name,type,src}` |
 
 ### L4 gRPC（Rust ↔ Core，GrpcDotNetNamedPipes 自定义线协议）
 
@@ -154,5 +154,5 @@ DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现
 
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/end 全部受控挂载。
 - 持久化：源 Room 严格 v1、运行包唯一可信 `__source`、顶层 IPC 和双写边界已收紧。
-- 配置器：现有 UI 可打开、保留、预览和保存完整 v1；真实素材选择和 Desk 排序编辑仍按 UI-001/UI-002/MEDIA-001 继续。
+- 配置器：现有导图属性栏可为 Desk/start/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览，明确保存时才写 `room.json`；end 的可视化入口、Desk 排序和成组 HTML 资产仍属后续工作。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。
