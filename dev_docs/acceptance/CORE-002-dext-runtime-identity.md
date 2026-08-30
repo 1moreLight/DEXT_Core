@@ -1,9 +1,10 @@
 # CORE-002 Dext Core 运行身份隔离验收
 
-- 状态：验收通过，待合并
-- 分支：`feat/core-002-dext-runtime-identity`
+- 状态：已完成
+- 已合并分支：`feat/core-002-dext-runtime-identity`（已删除）
 - 实施提交：`039d468`
 - 验收修复提交：`a6be4c5`
+- master 合并提交：`3835be1`
 - 目标：Dext 使用仓库内自带的 Lively Core fork，并以独立的单实例、管道、数据/日志目录和可验证进程路径运行，不依赖或误连用户另装的原版 Lively。
 - 范围外：不修改或停止 DXT-002、DOCK-004 和用户 rooms；不实现 idle、Room zip、Dock、素材导入或 Player/Core 架构重构；不重命名内部 namespace、proto 包、源码目录和 Core/Player 可执行文件；不迁移旧 `%LOCALAPPDATA%\Lively Wallpaper` 数据；安装器/MSIX/AppUserModelId/屏保注册另立 PACKAGING-001。
 
@@ -72,25 +73,26 @@
 
 ## 人工验收
 
-1. [ ] 电脑保留原版 Lively 安装。
-2. [ ] 启动 Dext，确认启动的是当前工作包构建出的 Dext Core 和 Player。
-3. [ ] 打开 Dext 配置器，确认身份状态显示 Dext Core，并可读取应用、应用 Room 和启动应用。
-4. [ ] 确认配置器展示的 PID、Core 路径和管道均不属于原版 Lively。
-5. [ ] 确认 Dext 日志、设置和运行数据写入 `%LOCALAPPDATA%\Dext`。
-6. [ ] 启动或保持原版 Lively 进程存在，确认 Dext 启动脚本不会误报“Dext 已启动”。
-7. [ ] 关闭 Dext，确认不会通过共享 mutex 或管道关闭、唤醒或控制原版 Lively。
-8. [ ] 检查配置器、托盘、错误提示、日志首行和活动二进制产品信息显示 Dext。
-9. [ ] 检查 LICENSE、上游 README/来源说明仍保留 Lively 的合法归属。
+1. [x] 电脑保留原版 Lively 安装。
+2. [x] 启动 Dext，确认启动的是当前工作包构建出的 Dext Core 和 Player。
+3. [x] 打开 Dext 配置器，确认身份状态显示 Dext Core，并可读取应用、应用 Room 和启动应用。
+4. [x] 确认配置器展示的 PID、Core 路径和管道均不属于原版 Lively。
+5. [x] 确认 Dext 日志、设置和运行数据写入 `%LOCALAPPDATA%\Dext`。
+6. [x] 启动或保持原版 Lively 进程存在，确认 Dext 启动脚本不会误报“Dext 已启动”。
+7. [x] 关闭 Dext，确认不会通过共享 mutex 或管道关闭、唤醒或控制原版 Lively。
+8. [x] 检查配置器、托盘、错误提示、日志首行和活动二进制产品信息显示 Dext。
+9. [x] 检查 LICENSE、上游 README/来源说明仍保留 Lively 的合法归属。
 
 ## 通过标准
 
 - 自动检查全部通过，九项人工验收均符合预期。
 - Dext 与原版 Lively 的 mutex、named pipe 和数据目录不重名；脚本和配置器不能误认、误连其他路径的 Core。
 - 当前只保证运行身份可共存，不承诺两者同时控制 Windows WorkerW 桌面。
-- 用户明确回复“通过”前不合并 master。
+- 用户已于 2026-08-30 确认通过；工作包已合并 master 并清理分支/worktree。
 
 ## 验收记录
 
 - 2026-08-30：自动检查通过，实施提交 `039d468`；停在独立分支待用户按九步清单验收，未合并 master。
 - 2026-08-30：用户反馈托盘退出 Core 后配置器仍显示已连接，且现有 `v1testRoom` 因 DXT-002 `idle` 字段被阻断。修复提交 `a6be4c5` 增加两秒实时身份刷新、断线禁用应用入口与明确提示；`idle` 仅校验/透传/写回保留，不实现其功能。实测退出态显示“Dext Core 未运行”，重启后恢复“已连接”，含 `idle` Room 显示“已应用 v1testRoom”；源 `room.json` 前后 SHA-256 均为 `0875C31EFC19004EE9FE66BB040478995264208DEF2AF723D750E561E551AD78`。现停在待复验，未合并 master。
 - 2026-08-30：用户回复“ok啊都行了”，确认复验通过并授权合并 master。
+- 2026-08-30：合并到 master（merge `3835be1`），删除已合并分支和独立 worktree；用户 rooms 未触碰。

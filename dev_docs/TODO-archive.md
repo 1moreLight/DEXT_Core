@@ -257,3 +257,24 @@
 - [x] 在 PROJECT 记录 Dext 自有 Core 与原版 Lively 必须隔离的结构性决定
 - [x] 用户于 2026-08-30 回复“合并”，验收通过
 - [x] 合并到 master：`eb5e9ff`；独立验收文件永久保留
+
+## CORE-002 Dext Core 运行身份隔离（2026-08-30）
+
+> 目标：让仓库自带的 Dext Core、Player、配置器和启动脚本使用独立运行身份，不能与用户另装的原版 Lively 串实例、管道、数据或启动判断。
+> 范围外：不修改或停止 DXT-002、DOCK-004 和用户 rooms；不开发 idle、Room zip、Dock、素材导入或 Player/Core 架构重构；不重命名内部 namespace、proto 包、源码目录和 Core/Player 可执行文件；不迁移旧 Lively 数据；安装器/MSIX/AppUserModelId/屏保注册另立 PACKAGING-001。
+> 人工验收：按 `dev_docs/acceptance/CORE-002-dext-runtime-identity.md` 的九步清单执行，并在对话中确认结果。
+
+- [x] 确认 OPS-003 已由用户验收并合并 master；核对 master、现有 worktree、待验收分支和用户 rooms 状态（2026-08-30）
+- [x] 从 `master@2130935` 建立独立 worktree `D:\use\Orca\DEXT_Core\core-002-dext-runtime-identity` 和分支 `feat/core-002-dext-runtime-identity`（2026-08-30）
+- [x] 建立独立验收卡并将 ROADMAP 标为开发中，冻结目标、范围外和九步人工验收（2026-08-30）
+- [x] 使用 CodeGraph 完整审计 Core、Player、配置器、脚本、存储、日志、包装和上游归属身份，形成必须改/建议改/保留/后续清单；新 worktree 的 `.codegraph` 未初始化，修改后复核按规范先检查 `codegraph status`，未擅自初始化并以只读搜索兜底（2026-08-30）
+- [x] 建立 C#、Rust、PowerShell 共同使用的 Dext 运行身份源，并隔离 mutex、named pipe、本地数据、日志、缓存和启动项（2026-08-30）
+- [x] 扩展 RPC 身份证明，配置器拒绝错误产品/身份/Debug 路径并展示 Dext Core PID、路径、管道和数据目录（2026-08-30）
+- [x] 修正启动/构建/预览脚本，按当前 worktree 的规范化绝对路径识别和验证进程；新增只读运行身份检查脚本（2026-08-30）
+- [x] 将用户可见核心身份 Dext 化，禁用旧 WinUI/Gallery/上游更新入口，保留合法上游归属与高风险内部名称（2026-08-30）
+- [x] 同步 README、ROADMAP、PROJECT、LIVELY_API、AGENTS、验收卡；解决构建脚本吞失败的新坑并追加 ERRORS #37（2026-08-30）
+- [x] 运行 C#、proto、Rust、React、脚本与真实进程验证，复查全部 `Lively` 字样并执行 `git diff --check`（2026-08-30）
+- [x] 只提交 CORE-002 具名文件（实施提交 `039d468`），将 ROADMAP/验收卡标为待验收；用户明确回复“通过”前不合并 master（2026-08-30）
+- [x] 用户验收反馈：托盘退出 Core 后配置器仍错误显示“已连接”，且含 DXT-002 `idle` 字段的现有 Room 被严格校验阻断；已在同一分支提交 `a6be4c5`，修复实时断线状态、应用按钮保护和 `idle` 只读兼容/写回保留，不实现 idle、不修改用户 Room，转待复验（2026-08-30）
+- [x] 用户回复“ok啊都行了”，确认 CORE-002 复验通过并授权合并 master（2026-08-30）
+- [x] 合并到 master（merge `3835be1`），更新 ROADMAP/验收卡最终状态并归档 TODO；删除已合并分支和独立 worktree，用户 rooms 未触碰（2026-08-30）
