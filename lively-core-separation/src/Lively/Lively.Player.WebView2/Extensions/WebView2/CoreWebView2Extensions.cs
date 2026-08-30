@@ -13,7 +13,7 @@ namespace Lively.Player.WebView2.Extensions.WebView2
 {
     public static class CoreWebView2Extensions
     {
-        public static void NavigateToLocalPath(this WebView webView, string filePath)
+        public static void NavigateToLocalPath(this WebView webView, string filePath, bool isScreensaver = false)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentNullException(nameof(filePath));
@@ -29,7 +29,8 @@ namespace Lively.Player.WebView2.Extensions.WebView2
                 directoryPath,
                 CoreWebView2HostResourceAccessKind.Allow);
 
-            webView.CoreWebView2.Navigate($"https://{hostName}/{fileName}");
+            var query = isScreensaver ? "?screensaver=1" : string.Empty;
+            webView.CoreWebView2.Navigate($"https://{hostName}/{fileName}{query}");
         }
 
         // Ref: https://stackoverflow.com/questions/62835549/equivalent-of-webbrowser-invokescriptstring-object-in-webview2

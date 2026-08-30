@@ -6,10 +6,10 @@
     "type": "image",
     "src": "start/boot.png"
   },
-  "end": {
-    "name": "退出",
+  "idle": {
+    "name": "待机",
     "type": "html",
-    "src": "end/index.html"
+    "src": "idle/index.html"
   },
   "switch": "none",
   "switches": {

@@ -94,6 +94,18 @@ html, body {
   object-fit: cover;
 }
 
+html[data-mode="screensaver"],
+html[data-mode="screensaver"] body {
+  background: #000;
+}
+
+html[data-mode="screensaver"] #desk,
+html[data-mode="screensaver"] #transition-video-wrap,
+html[data-mode="screensaver"] #transition,
+html[data-mode="screensaver"] #toast {
+  display: none !important;
+}
+
 .icon-layer {
   position: absolute;
   inset: 40px 40px 100px 40px;

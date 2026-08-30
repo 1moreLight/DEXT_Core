@@ -327,3 +327,17 @@
 - [x] 核对 Markdown 链接、工作包 ID、状态和 Git 改动范围；`git diff --check` 通过，等待用户验收（2026-08-31）
 - [x] 用户确认研究文档通过并授权合并 master（2026-08-31）
 - [x] 合并 `docs/widgets-v2-research-prep` 至 master（merge `484c5f6`）；v2 实现仍保持排队（2026-08-31）
+
+## DXT-002 Room 待机画面接入·最新 master 刷新（2026-08-31）
+
+> 目标：在最新 master 上正式采用 Room `idle` 并废弃 `end`，复用 Lively 屏保生命周期持续显示待机内容，为 DXT-003 提供唯一生命周期基线。
+> 范围外：不实现 Room v2 Widget Schema/WidgetHost，不修改 Dock 待验收分支，不迁移旧 end Room，不新增待机计时器、联网或系统权限。
+> 人工验收：在配置器为独立待机节点选择图片/视频/HTML，保存并应用后启动 Lively 屏保，确认只显示 idle；输入后回到原 Desk；普通关闭立即完成，带 end 的 Room 被拒绝。
+
+- [x] 用户确认采用 idle、废弃 end，DXT-003 在 DXT-002 验收合并后启动（2026-08-31）
+- [x] 只读审计所有 worktree、未合并分支、stash 和 master 用户 Room 改动；确认本轮继续原 DXT-002 独立 worktree（2026-08-31）
+- [x] 将旧活体测试运行包保存到可恢复 stash，开始把 DXT-002 重放到最新 master（2026-08-31）
+- [ ] 解决文档、Rust 和 React 冲突，保持最新 Room 管理/UI 能力并移除 idle 临时兼容层
+- [ ] 运行 Schema、渲染器、前端、Rust、C# Release 构建与启动检查
+- [ ] 更新验收卡和 ROADMAP，具名暂存本工作包文件并提交
+- [ ] 用户按 `dev_docs/acceptance/DXT-002-idle-screensaver.md` 验收通过

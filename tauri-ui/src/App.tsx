@@ -129,6 +129,9 @@ type Snapshot = {
   edges: GEdge[];
   desks: Desk[];
   startName: string;
+  startContent: Content | null;
+  idleName: string;
+  idleContent: Content | null;
   hasStart: boolean;
   startDesk: number;
 };
@@ -482,7 +485,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function cleanContent(value: unknown, directory: "background" | "start" | "switch" | "end"): Content | null {
+function cleanContent(value: unknown, directory: "background" | "start" | "switch" | "idle"): Content | null {
   if (!isRecord(value) || !["image", "video", "html"].includes(String(value.type))) return null;
   const name = typeof value.name === "string" ? value.name.trim() : "";
   const src = typeof value.src === "string" ? value.src.replace(/\\/g, "/") : "";
@@ -857,9 +860,8 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [transition, setTransition] = useState<Transition>("slide");
   const [startContent, setStartContent] = useState<Content | null>(null);
-  const [endContent, setEndContent] = useState<Content | null>(null);
+  const [idleContent, setIdleContent] = useState<Content | null>(null);
   const [roomVersion, setRoomVersion] = useState<number | null>(1);
-  const [roomCompatibilityFields, setRoomCompatibilityFields] = useState<Record<string, unknown>>({});
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
@@ -876,6 +878,7 @@ export default function App() {
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
   const [startName, setStartName] = useState("启动画面");
+  const [idleName, setIdleName] = useState("待机画面");
   const [hasStart, setHasStart] = useState(true);
   const [startDesk, setStartDesk] = useState(0);
   const [propsH, setPropsH] = useState(210);
@@ -897,7 +900,6 @@ export default function App() {
 
   function buildRoomV1() {
     const room: Record<string, unknown> = {
-      ...roomCompatibilityFields,
       version: 1,
       startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
       switch: transition,
@@ -922,7 +924,7 @@ export default function App() {
       }),
     };
     if (startContent) room.start = { ...startContent, name: startName.trim() || startContent.name };
-    if (endContent) room.end = endContent;
+    if (idleContent) room.idle = { ...idleContent, name: idleName.trim() || idleContent.name };
     const roomDock = dockForWrite(dock);
     if (roomDock) room.dock = roomDock;
     return room;
@@ -1054,8 +1056,8 @@ export default function App() {
       setRoomPath(path);
       setRoomCss("");
       setStartContent(null);
-      setEndContent(null);
-      setRoomCompatibilityFields({});
+      setIdleContent(null);
+      setIdleName("待机画面");
       setRoomVersion(1);
       setStartDesk(0);
       setEdges(seedEdges(MOCK_DESKS, true, 0));
@@ -1080,7 +1082,7 @@ export default function App() {
         ? room.startDesk
         : 0;
       const nextStart = cleanContent(room.start, "start");
-      const nextEnd = cleanContent(room.end, "end");
+      const nextIdle = cleanContent(room.idle, "idle");
       const rawSwitches = isRecord(room.switches) ? room.switches : {};
       const nextSwitches = Object.fromEntries(
         Object.entries(rawSwitches).flatMap(([key, value]) => {
@@ -1092,15 +1094,13 @@ export default function App() {
       setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
       setTransition(cleanTransition(room.switch) ?? "slide");
       setStartContent(nextStart);
-      setEndContent(nextEnd);
+      setIdleContent(nextIdle);
       setStartName(nextStart?.name ?? "启动画面");
+      setIdleName(nextIdle?.name ?? "待机画面");
       setHasStart(true);
       setStartDesk(nextStartDesk);
       setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
       setRoomVersion(typeof room.version === "number" ? room.version : null);
-      setRoomCompatibilityFields(
-        Object.prototype.hasOwnProperty.call(room, "idle") ? { idle: room.idle } : {}
-      );
       setRoomCss(css);
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
@@ -1315,7 +1315,7 @@ export default function App() {
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, dock, activeDesk, showPreview, transition, edges, startContent, endContent, startDesk, startName]);
+  }, [desks, dock, activeDesk, showPreview, transition, edges, startContent, idleContent, startDesk, startName, idleName, graphSel]);
 
   useEffect(() => {
     setSelected(new Set());
@@ -1409,7 +1409,7 @@ export default function App() {
   }
 
   async function pickRoomContent(
-    slot: "background" | "start" | "switch" | "end",
+    slot: "background" | "start" | "switch" | "idle",
     contentType: ContentType,
   ): Promise<Content | null> {
     if (!IS_TAURI) {
@@ -1447,15 +1447,18 @@ export default function App() {
 
   async function setGraphNodeContent(nodeId: string, contentType: ContentType) {
     const isStart = nodeId === "start";
-    const deskIndex = isStart ? -1 : Number(nodeId.slice(1));
-    if (!isStart && (!Number.isInteger(deskIndex) || !desks[deskIndex])) return;
-    const content = await pickRoomContent(isStart ? "start" : "background", contentType);
+    const isIdle = nodeId === "idle";
+    const deskIndex = isStart || isIdle ? -1 : Number(nodeId.slice(1));
+    if (!isStart && !isIdle && (!Number.isInteger(deskIndex) || !desks[deskIndex])) return;
+    const content = await pickRoomContent(isStart ? "start" : isIdle ? "idle" : "background", contentType);
     if (!content) return;
     pushHistory();
     touch();
     if (isStart) {
       setHasStart(true);
       setStartContent({ ...content, name: startName.trim() || content.name });
+    } else if (isIdle) {
+      setIdleContent({ ...content, name: idleName.trim() || content.name });
     } else {
       setDesks((prev) =>
         prev.map((desk, index) => index === deskIndex ? { ...desk, background: content } : desk)
@@ -1782,6 +1785,10 @@ export default function App() {
       setStartName(name);
       setStartContent((current) => current ? { ...current, name } : current);
     }
+    else if (id === "idle") {
+      setIdleName(name);
+      setIdleContent((current) => current ? { ...current, name } : current);
+    }
     else {
       const i = parseInt(id.slice(1), 10);
       setDesks((prev) => prev.map((d, xi) => (xi === i ? { ...d, name } : d)));
@@ -1812,12 +1819,24 @@ export default function App() {
     setStatus("启动目标已切换，保存后写入 startDesk");
   }
   function snapshot(): Snapshot {
-    return { edges, desks: desks.map((d) => ({ ...d })), startName, hasStart, startDesk };
+    return {
+      edges,
+      desks: desks.map((d) => ({ ...d })),
+      startName,
+      startContent,
+      idleName,
+      idleContent,
+      hasStart,
+      startDesk,
+    };
   }
   function applySnapshot(s: Snapshot) {
     setEdges(s.edges);
     setDesks(s.desks);
     setStartName(s.startName);
+    setStartContent(s.startContent);
+    setIdleName(s.idleName);
+    setIdleContent(s.idleContent);
     setHasStart(s.hasStart);
     setStartDesk(s.startDesk);
     setActiveDesk((current) => Math.min(current, Math.max(0, s.desks.length - 1)));
@@ -2194,7 +2213,7 @@ export default function App() {
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
-                  src="http://dext.localhost/index.html?preview=1"
+                  src={`http://dext.localhost/index.html?preview=1${graphSel === "idle" ? "&screensaver=1" : ""}`}
                   onLoad={postRoom}
                   title="Room 预览"
                   className="aspect-video w-full max-w-4xl rounded-lg border border-border"
@@ -2546,6 +2565,21 @@ export default function App() {
 	                            className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
 	                          />
 	                        </button>
+                        {/* 待机是 Lively 屏保入口，不属于 Desk 导航拓扑。 */}
+                        <button
+                          data-graph-node="idle"
+                          title={idleName}
+                          onClick={() => setGraphSel("idle")}
+                          className={`absolute right-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
+                            graphSel === "idle"
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-background hover:border-primary/50"
+                          }`}
+                        >
+                          <Moon className="h-5 w-5 text-primary" />
+                          <span className="w-full truncate px-1 text-xs font-medium">{idleName}</span>
+                          <span className="text-[10px] text-muted-foreground">Lively 待机</span>
+                        </button>
                         {/* Desk 矩形节点（desks[0] = 主 Desk，启动后第一个看到） */}
                         {desks.map((d, i) => {
                           const y = ((i + 1) / (desks.length + 1)) * 100;
@@ -2618,17 +2652,24 @@ export default function App() {
                         <div className="w-full text-center text-sm text-muted-foreground">
                           点击上方节点或 switch 连线，在这里编辑属性
                         </div>
-                      ) : graphSel === "start" || /^d\d+$/.test(graphSel) ? (
+                      ) : graphSel === "start" || graphSel === "idle" || /^d\d+$/.test(graphSel) ? (
                         (() => {
                           const isStart = graphSel === "start";
-                          const deskIndex = isStart ? -1 : parseInt(graphSel.slice(1), 10);
+                          const isIdle = graphSel === "idle";
+                          const deskIndex = isStart || isIdle ? -1 : parseInt(graphSel.slice(1), 10);
                           const name = isStart
                             ? startName
-                            : (desks[deskIndex]?.name ?? "");
-                          const content = isStart ? startContent : desks[deskIndex]?.background ?? null;
+                            : isIdle
+                              ? idleName
+                              : (desks[deskIndex]?.name ?? "");
+                          const content = isStart
+                            ? startContent
+                            : isIdle
+                              ? idleContent
+                              : desks[deskIndex]?.background ?? null;
                           return (
                             <>
-                              {!isStart && (
+                              {!isStart && !isIdle && (
                                 <DeskBackgroundCanvas
                                   desks={desks}
                                   roomPath={roomPath}
@@ -2642,10 +2683,12 @@ export default function App() {
                               <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium">
                                 {isStart ? (
                                   <MonitorPlay className="h-3.5 w-3.5 text-primary" />
+                                ) : isIdle ? (
+                                  <Moon className="h-3.5 w-3.5 text-primary" />
                                 ) : (
                                   <LayoutGrid className="h-3.5 w-3.5 text-primary" />
                                 )}
-                                {isStart ? "启动画面" : "Desk"}
+                                {isStart ? "启动画面" : isIdle ? "待机画面" : "Desk"}
                               </span>
                               <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                                 改名
@@ -2673,7 +2716,7 @@ export default function App() {
 	                                  </select>
 	                                </label>
 	                              )}
-	                              {!isStart && (
+	                              {!isStart && !isIdle && (
 	                                <Button
 	                                  size="sm"
 	                                  onClick={() => {
@@ -2699,7 +2742,7 @@ export default function App() {
 	                              )}
 	                              <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
-                                  {isStart ? "画面素材：" : "壁纸素材："}
+                                  {isStart ? "画面素材：" : isIdle ? "待机素材：" : "壁纸素材："}
                                 </span>
                                 <Button
                                   variant="outline"

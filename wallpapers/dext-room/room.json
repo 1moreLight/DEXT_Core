@@ -6,10 +6,10 @@
     "type": "html",
     "src": "start/index.html"
   },
-  "end": {
-    "name": "系统关闭",
+  "idle": {
+    "name": "系统待机",
     "type": "html",
-    "src": "end/index.html"
+    "src": "idle/index.html"
   },
   "switch": "slide",
   "switches": {

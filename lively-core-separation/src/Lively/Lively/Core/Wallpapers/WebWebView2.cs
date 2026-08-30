@@ -64,7 +64,8 @@ namespace Lively.Core.Wallpapers
             AppTheme theme,
             int volume,
             double? scale = null,
-            string audioVisualizerId = null)
+            string audioVisualizerId = null,
+            bool isScreensaver = false)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -84,6 +85,7 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(model.LivelyInfo.Type == WallpaperType.webaudio ? " --wallpaper-audio true" : " ");
             cmdArgs.Append(!string.IsNullOrEmpty(audioVisualizerId) ? " --wallpaper-audio-id " + audioVisualizerId : " ");
             cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --wallpaper-debug " + debugPort : " ");
+            cmdArgs.Append(isScreensaver ? " --wallpaper-screensaver true" : " ");
             cmdArgs.Append(model.LivelyInfo.Type.IsOnlineWallpaper() ? " --wallpaper-type online" : " --wallpaper-type local");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);

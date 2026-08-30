@@ -1,0 +1,40 @@
+# DXT-002 Room 待机画面接入 验收
+
+- 状态：开发中（最新 master 刷新）
+- 分支：`feat/dxt-002-idle-screensaver`
+- 提交：待刷新提交
+- 目标：复用 Lively Core 屏保链，让 Room 的可选 `idle` 内容在独立屏保实例中持续显示到唤醒，同时移除普通关闭时的 end 动画等待。
+- 范围外：旧 Room 迁移、Room zip、成组 HTML 导入、Dock 改造、新待机计时器和 Dext 待机设置页。
+
+## 自动检查
+
+- [x] `room.schema.json` 与正反夹具接受 `idle/` 并拒绝 `end`、非法路径和未知字段。
+- [x] Rust 测试覆盖创建、导入、另存、应用、运行包旧 `end/` 清理和 `__source` 边界。
+- [x] `node --check wallpapers/dext-room/main.js`、配置器 `npm run build` 通过。
+- [x] `cargo test --lib -- --skip grpc::tests::apps_and_launch` 与 `cargo test --lib applies_room_wallpaper` 通过。
+- [x] `scripts/build.ps1` 完成 Release Player/C# 构建；`scripts/start.ps1` 能正常启动。
+- [x] Git 差异不包含 DOCK-004、`rooms/v1testRoom/` 或范围外重构。
+
+## 人工验收
+
+1. [ ] 打开 Room 编辑器，确认导图中存在不连接 Desk 的“待机画面”节点。
+2. [ ] 分别选择图片、视频和自包含 HTML，确认素材进入 `idle/`，预览立即切到纯待机画面，保存并重开后仍保留。
+3. [ ] 启动 Lively 屏保，确认待机实例不播放 start、不显示 Desk 图标或 Dock，并覆盖整个桌面。
+4. [ ] 确认图片持续显示、视频静音循环、HTML 持续运行且不会因 `done` 或 60 秒超时退出。
+5. [ ] 移动鼠标、点击或按键后，屏保立即关闭并回到待机前的 Desk，不重播 start。
+6. [ ] 删除 Room 的 `idle` 后再次启动屏保，确认始终显示黑屏。
+7. [ ] 普通预览、应用 Room、切换 Room、关闭壁纸和退出 Lively 不会误进待机，也不再等待 end 动画。
+8. [ ] 分别选择 Lively 的“当前壁纸”和“单独屏保壁纸”，确认对应 Dext Room 都读取自己的 `idle`。
+9. [ ] 验证 Lively 现有待机时间、淡入、音量、多屏和唤醒锁屏设置仍然有效，room.json 不新增这些运行偏好。
+
+## 通过标准
+
+- Room Schema、配置器、Rust 持久化、Lively 屏保启动标记和渲染器使用同一套 `idle` 语义。
+- 普通关闭立即完成；待机完全由 Lively 生命周期控制；原桌面实例和当前 Desk 不受影响。
+- 自动检查通过，用户明确验收后才允许合并 master。
+
+## 验收记录
+
+- 2026-08-30：用户确认实施 DXT-002 计划；开发 worktree、分支和验收卡已建立。
+- 2026-08-30：Schema/JS/前端/Rust/C# 自动检查通过；真实配置器只读预验收确认独立待机节点、三类素材按钮、待机黑屏预览及切回普通 Desk 预览均正常，未保存或修改测试 Room。
+- 2026-08-31：用户明确确认“采用 idle、废弃 end”；本分支开始更新到最新 master，旧自动检查结果不作为本轮最终结果，需全部重跑。

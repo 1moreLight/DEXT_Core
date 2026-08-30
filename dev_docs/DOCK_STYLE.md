@@ -1,7 +1,7 @@
 # Dock v0.x 外观定制指南（历史，不适用于 room.json v1）
 
 > 历史说明：以下内容记录 DXT-001 之前的 `room.css` / `room.js` 钩子，只用于回溯。
-> room.json v1 的官方宿主不加载这两个顶层文件，作者与 AI 不得按本文生成新 Room；用户代码只能进入 background/start/switch/end 的 sandbox HTML。Dock 未来如需皮肤，必须使用尚待定义的官方受管格式。
+> room.json v1 的官方宿主不加载这两个顶层文件，作者与 AI 不得按本文生成新 Room；用户代码只能进入 background/start/switch/idle 的 sandbox HTML。Dock 未来如需皮肤，必须使用尚待定义的官方受管格式。
 
 ## 零、快速上手（30 秒验证）
 

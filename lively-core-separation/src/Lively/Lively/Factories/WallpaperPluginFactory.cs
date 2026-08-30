@@ -40,7 +40,8 @@ namespace Lively.Factories
         public IWallpaper CreateWallpaper(LibraryModel model,
             DisplayMonitor display,
             WallpaperArrangement arrangement,
-            bool isWindowed = false)
+            bool isWindowed = false,
+            bool isScreensaver = false)
         {
             switch (model.LivelyInfo.Type)
             {
@@ -69,7 +70,8 @@ namespace Lively.Factories
                                 userSettings.Settings.ApplicationTheme,
                                 userSettings.Settings.AudioVolumeGlobal,
                                 GetWebView2Scale(display, isWindowed),
-                                userSettings.Settings.VisualizerAudioDeviceId);
+                                userSettings.Settings.VisualizerAudioDeviceId,
+                                isScreensaver);
                     }
                     break;
                 case WallpaperType.video:
@@ -199,7 +201,8 @@ namespace Lively.Factories
                                                     GetWebView2UserDataDir(arrangement, display, isWindowed),
                                                     userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal,
-                                                    GetWebView2Scale(display, isWindowed)),
+                                                    GetWebView2Scale(display, isWindowed),
+                                                    isScreensaver: isScreensaver),
                         };
                     }
             }

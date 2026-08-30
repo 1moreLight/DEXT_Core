@@ -335,7 +335,7 @@ fn validate_room_asset_references(
     room: &serde_json::Value,
 ) -> Result<(), String> {
     let mut references = Vec::new();
-    for key in ["start", "end"] {
+    for key in ["start", "idle"] {
         if let Some(src) = room
             .get(key)
             .and_then(|value| value.get("src"))
@@ -665,7 +665,6 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
             "version",
             "startDesk",
             "start",
-            "end",
             "idle",
             "switch",
             "switches",
@@ -690,7 +689,7 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
     if start_desk >= desks.len() {
         return Err("room.startDesk is outside desks".into());
     }
-    for (key, directory) in [("start", "start"), ("end", "end"), ("idle", "idle")] {
+    for (key, directory) in [("start", "start"), ("idle", "idle")] {
         if let Some(value) = object.get(key) {
             validate_content(value, directory, &format!("room.{key}"))?;
         }
@@ -922,8 +921,8 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
         .map(|room_dir| room_dir.to_string_lossy().into_owned())
 }
 
-const ROOM_ASSET_DIRS: [&str; 4] = ["background", "switch", "start", "end"];
-const ROOM_LEGACY_PATHS: [&str; 3] = ["transition", "room.js", "room.css"];
+const ROOM_ASSET_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
+const ROOM_LEGACY_PATHS: [&str; 4] = ["transition", "end", "room.js", "room.css"];
 
 fn remove_room_owned_path(path: &std::path::Path, label: &str) -> Result<(), String> {
     if path.is_dir() {
@@ -1576,7 +1575,7 @@ fn import_room_content_file(
 }
 
 // Reuse the existing command name, but make it a generic v1 content importer for
-// background/start/switch/end instead of maintaining one copy path per UI button.
+// background/start/switch/idle instead of maintaining one copy path per UI button.
 #[tauri::command]
 async fn import_background(
     room_dir: String,
@@ -1828,7 +1827,7 @@ mod tests {
         let root = test_dir("room-save-as");
         let source = root.join("source");
         let library = root.join("library");
-        for directory in ["background", "start", "switch", "end"] {
+        for directory in ["background", "start", "switch", "idle"] {
             std::fs::create_dir_all(source.join(directory)).unwrap();
             std::fs::write(source.join(directory).join("asset.txt"), directory).unwrap();
         }
@@ -1859,7 +1858,7 @@ mod tests {
                 .unwrap();
         assert_eq!(saved["desks"][0]["name"], "Copied");
         assert!(saved.get("__source").is_none());
-        for directory in ["background", "start", "switch", "end"] {
+        for directory in ["background", "start", "switch", "idle"] {
             assert_eq!(
                 std::fs::read_to_string(target.join(directory).join("asset.txt")).unwrap(),
                 directory
@@ -1912,7 +1911,7 @@ mod tests {
             ("background", "image", "scene.png"),
             ("start", "html", "scene.html"),
             ("switch", "video", "scene.mp4"),
-            ("end", "image", "scene.png"),
+            ("idle", "image", "scene.png"),
         ] {
             let content =
                 import_room_content_file(&room, &source.join(filename), slot, content_type)
@@ -1943,7 +1942,7 @@ mod tests {
         let pkg = root.join("package");
         std::fs::create_dir_all(src.join("background/nested")).unwrap();
         std::fs::create_dir_all(pkg.join("background/obsolete")).unwrap();
-        for sub in ["transition", "switch", "start", "end"] {
+        for sub in ["transition", "switch", "start", "idle", "end"] {
             std::fs::create_dir_all(pkg.join(sub)).unwrap();
             std::fs::write(pkg.join(sub).join("cockpit.txt"), "old").unwrap();
         }
@@ -1975,7 +1974,7 @@ mod tests {
 
         assert!(!pkg.join("room.js").exists());
         assert!(!pkg.join("room.css").exists());
-        for sub in ["transition", "switch", "start", "end"] {
+        for sub in ["transition", "switch", "start", "idle", "end"] {
             assert!(!pkg.join(sub).exists(), "stale {sub} directory remains");
         }
         assert!(!pkg.join("background/old.png").exists());

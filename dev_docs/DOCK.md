@@ -5,7 +5,7 @@
 
 ## 零、与用户内容的边界
 
-Dock 属于 Dext 官方宿主层，不属于用户的 background/start/switch/end 内容。用户 HTML 只能在 `sandbox="allow-scripts"` 容器运行，不能直接改 Dock DOM、调用 Dock 保存或伪造运行态；DXT-001 不开放用户内容到 Dock 的控制消息。
+Dock 属于 Dext 官方宿主层，不属于用户的 background/start/switch/idle 内容。用户 HTML 只能在 `sandbox="allow-scripts"` 容器运行，不能直接改 Dock DOM、调用 Dock 保存或伪造运行态；屏保模式不渲染 Dock，也不开放用户内容到 Dock 的控制消息。
 
 顶层 `room.css` 覆盖官方 DOM 是 v0.x 历史能力，与安全边界冲突。v1 宿主不加载 `room.css`；现有 Dock 模板编辑数据暂时保留，但不会进入运行时。后续若恢复皮肤能力，必须转换成官方受管字段，不能重新执行任意 CSS。
 
