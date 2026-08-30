@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`docs/ops-003-devdocs-priority-reset`
-- 提交：待提交
+- 提交：`fc12818`
 - 目标：把新的开发顺序和 dev_docs 日常记录方法写成唯一、易执行的当前口径。
 - 范围外：不修改代码、Schema、Room 文件；不继续开发或合并 DXT-002；不触碰 DOCK-004。
 
