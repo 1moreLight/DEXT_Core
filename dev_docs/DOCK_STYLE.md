@@ -1,8 +1,7 @@
-# Dock 外观定制指南（给 AI / 房间作者的样式接口）
+# Dock v0.x 外观定制指南（历史，不适用于 room.json v1）
 
-> 目标：**不动渲染器、不动后端**，只靠房间自带文件就能把 Dock 改成任何样子。
-> 机制：渲染器加载房间时自动注入 `room.css`（样式层）+ `room.js`（脚本层），
-> 出错自动隔离不影响渲染器。本文档列出全部可覆写的钩子，AI 或作者按此生成样式代码即可。
+> 历史说明：以下内容记录 DXT-001 之前的 `room.css` / `room.js` 钩子，只用于回溯。
+> room.json v1 的官方宿主不加载这两个顶层文件，作者与 AI 不得按本文生成新 Room；用户代码只能进入 background/start/switch/end 的 sandbox HTML。Dock 未来如需皮肤，必须使用尚待定义的官方受管格式。
 
 ## 零、快速上手（30 秒验证）
 
@@ -10,8 +9,7 @@
 scripts/room-preview.ps1 -Room <房名>     # 浏览器打开，热刷新
 ```
 
-在 `<房名>/room.css` 写任意覆写 → 保存 → 浏览器即时生效 → 满意后配置器「应用」上线。
-（`apply_room` 已随包拷贝 room.css，**后端零改动**。）
+以下验证流程仅适用于历史分支；当前 v1 `apply_room` 会清理运行包中的 room.css，不能上线该样式。
 
 配置器内置 HUD / Minimal / Glass 预设会自动维护
 `/* dext-dock-skin:start ... */` 到 `/* dext-dock-skin:end */` 区块；切换预设只替换该区块，不删除作者的其他 CSS。
@@ -81,30 +79,8 @@ scripts/room-preview.ps1 -Room <房名>     # 浏览器打开，热刷新
 #dock .dock-sep { display: none; }
 ```
 
-## 五、脚本层 room.js（`window.dext` 契约，详见 MODEL.md §6）
+## 五、v1 之后怎么做
 
-```js
-window.dext.onReady(({deskCount}) => {})                 // 房间就绪
-window.dext.onDeskChange(({from,to,dir,phase}) => {})    // 切桌（phase: before/after）
-window.dext.onEditChange(({editing}) => {})              // 进出编辑模式
-window.dext.getRoom()                                    // 当前 room 对象（含 dock 配置）
-window.dext.getCurrentDesk()                             // 当前桌下标
-// 自定义事件：dext:slot（start/end/switch 槽）、dext:switch（切桌动画分派）
-```
-
-适合：dock 图标进场动画、切桌时 dock 高亮过渡、按桌显示不同 dock 尾巴。
-
-## 六、AI 生成样式的交付工作流
-
-1. 读本文档 + `DOCK.md`（数据契约）+ 目标房间的 room.json（看现有 dock 配置）
-2. 只生成两个文件：`room.css`（覆写钩子见上表）`room.js`（可选脚本）
-3. 自检：`node --check room.js`（如有 JS）；CSS 用浏览器 devtools 验证
-4. 预览：`scripts/room-preview.ps1 -Room <房名>`，切桌/编辑模式都过一遍
-5. 上线：配置器「应用」→ `apply_room` 自动带上两个文件（后端不用动）
-
-## 七、界限（别越界）
-
-- **别改** `#dock` 的 `position/left/bottom/transform`（定位由 JS 的 position 配置管）；要改布局改 `.dock-inner`
-- **别改** `wallpapers/dext-room/style.css`——那是所有房间共享的渲染器本体，皮肤一律走房间 room.css
-- room.js 抛错会被隔离（不影响渲染器），但别依赖窗口级 `chrome.webview` IPC（那是渲染器专属）
-- 配置器「皮肤预设」只维护带标记的 Dock 皮肤区块，与区块外手工样式并存
+- 本文前四节只用于理解旧 Dock 外观和当前受管 `dock.style` 字段，不再是作者交付教程。
+- 新 Room 不得生成顶层 `room.js` / `room.css`，也不能把 `window.dext` 当作用户接口。
+- 当前可持久化的 Dock 外观只限 `DOCK.md` 已列出的受管字段；更完整的皮肤发布格式留给后续独立工作包。

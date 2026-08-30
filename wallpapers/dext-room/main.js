@@ -1,8 +1,13 @@
 const DEFAULT_ROOM = {
+  version: 1,
+  startDesk: 0,
+  switch: "slide",
+  switches: {},
   desks: [
     {
       name: "主页",
-      background: "assets/desk1-bg.png",
+      background: { name: "主页背景", type: "image", src: "background/desk1-bg.png" },
+      iconSize: "medium",
       icons: [
         {
           glyph: "🌐",
@@ -11,36 +16,47 @@ const DEFAULT_ROOM = {
           action: "启动 浏览器",
           launch: {
             target: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+            args: "",
+            workdir: "",
           },
+          x: 0,
+          y: 0,
         },
-        { glyph: "🎮", label: "游戏", color: "#10b981", action: "启动 游戏" },
-        { glyph: "🎵", label: "音乐", color: "#f59e0b", action: "启动 音乐" },
+        { glyph: "🎮", label: "游戏", color: "#10b981", action: "启动 游戏", x: 1, y: 0 },
+        { glyph: "🎵", label: "音乐", color: "#f59e0b", action: "启动 音乐", x: 2, y: 0 },
         {
           glyph: "📁",
           label: "文件",
           color: "#8b5cf6",
           action: "打开 文件夹",
-          launch: { target: "explorer.exe", args: "shell:MyComputerFolder" },
+          launch: { target: "explorer.exe", args: "shell:MyComputerFolder", workdir: "" },
+          x: 3,
+          y: 0,
         },
         {
           glyph: "⚙️",
           label: "设置",
           color: "#6b7280",
           action: "打开 设置",
-          launch: { target: "ms-settings:" },
+          launch: { target: "ms-settings:", args: "", workdir: "" },
+          x: 0,
+          y: 1,
         },
       ],
     },
     {
       name: "工作台",
-      background: "assets/desk2-bg.png",
+      background: { name: "工作台背景", type: "image", src: "background/desk2-bg.png" },
+      iconSize: "medium",
       icons: [
         {
           glyph: "💻",
           label: "终端",
           color: "#111827",
           action: "启动 终端",
-          launch: { target: "wt.exe" },
+          launch: { target: "wt.exe", args: "", workdir: "" },
+          x: 0,
+          y: 0,
         },
         {
           glyph: "📝",
@@ -48,10 +64,12 @@ const DEFAULT_ROOM = {
           color: "#ef4444",
           action: "启动 笔记",
           launch: {
-            target: "C:\\Users\\JAN\\Desktop\\Obsidian.lnk",
+            target: "C:\\Users\\JAN\\Desktop\\Obsidian.lnk", args: "", workdir: "",
           },
+          x: 1,
+          y: 0,
         },
-        { glyph: "📊", label: "监控", color: "#06b6d4", action: "打开 监控面板" },
+        { glyph: "📊", label: "监控", color: "#06b6d4", action: "打开 监控面板", x: 2, y: 0 },
       ],
     },
   ],
@@ -62,9 +80,32 @@ let ROOM = DEFAULT_ROOM;
 
 // dev preview: ?room=<prefix>/ points at any room dir (e.g. ../../rooms/cockpit-room/);
 // production (Lively virtual host) has no param and uses package-relative paths.
-const RP = new URLSearchParams(location.search).get("room") ?? "";
+const SEARCH = new URLSearchParams(location.search);
+const PREVIEW_MODE = SEARCH.get("preview") === "1";
+const PREVIEW_PARENT_ORIGINS = new Set([
+  "http://tauri.localhost",
+  "http://localhost:1420",
+]);
+let assetBase = SEARCH.get("room") ?? "";
 
-// ---- room-script hooks (window.dext contract, dev_docs/MODEL.md §6) ----
+function safeAssetPath(src) {
+  return typeof src === "string" &&
+    src.length > 0 &&
+    !src.startsWith("/") &&
+    !src.includes("\\") &&
+    !src.split("/").some((part) => !part || part === "." || part === "..");
+}
+
+function assetUrl(src) {
+  if (!safeAssetPath(src)) return null;
+  try {
+    return new URL(src, assetBase ? new URL(assetBase, location.href) : location.href).href;
+  } catch {
+    return null;
+  }
+}
+
+// ---- official-host lifecycle hooks (not reachable from sandboxed Room content) ----
 const dextListeners = { ready: [], deskchange: [], editchange: [] };
 function dextEmit(kind, detail) {
   dextListeners[kind].forEach((fn) => {
@@ -79,90 +120,77 @@ window.dext = {
   getCurrentDesk: () => currentDesk,
 };
 
-// optional room-owned assets; missing files resolve without blocking
-function loadRoomAsset(path, tag, id) {
-  return new Promise((resolve) => {
-    const el = document.createElement(tag);
-    if (id) el.id = id;
-    if (id === "dext-room-css-link" && document.getElementById("dext-preview-room-css")) {
-      el.disabled = true;
-    }
-    if (tag === "link") {
-      el.rel = "stylesheet";
-      el.href = path;
-    } else {
-      el.src = path;
-    }
-    el.onload = () => resolve(true);
-    el.onerror = () => resolve(false);
-    document.head.appendChild(el);
-  });
-}
-
-// The configurator preview injects the source Room's current CSS over postMessage.
-// Disable the package's room.css link so a previously applied Room cannot leak styles
-// into a different Room that intentionally has no room.css.
-function applyPreviewRoomCss(css) {
-  const packaged = document.getElementById("dext-room-css-link");
-  if (packaged) packaged.disabled = true;
-  let injected = document.getElementById("dext-preview-room-css");
-  if (!injected) {
-    injected = document.createElement("style");
-    injected.id = "dext-preview-room-css";
-    document.head.appendChild(injected);
-  }
-  injected.textContent = typeof css === "string" ? css : "";
-}
-
-// ---- unified playable slot (MODEL.md §6.5) ----
-// {type:"video",src,loop?}  renderer-managed fullscreen <video> (local package path)
-// {type:"html",src,timeout?} room-owned page; ends on postMessage "dext:slotDone"
-// {type:"action",name}      event broadcast only
+// ---- unified playable slot (room.json v1) ----
+// User HTML is always a sandboxed child. It can render its own scene, but it cannot
+// reach the official Desk/Dock DOM or use the top-level WebView IPC channel.
+let activeSlot = null;
 function playSlot(slot, opts = {}) {
   const onDone = opts.onDone ?? (() => {});
-  if (!slot || typeof slot !== "object") {
+  const src = slot && typeof slot === "object" ? assetUrl(slot.src) : null;
+  if (!src || !["image", "video", "html"].includes(slot.type)) {
     onDone();
     return { cancel() {} };
   }
-
-  if (slot.type === "action" && slot.name) {
-    window.dispatchEvent(
-      new CustomEvent("dext:slot", { detail: { name: slot.name, kind: opts.kind ?? "" } })
-    );
-    onDone();
-    return { cancel() {} };
-  }
-
+  activeSlot?.cancel();
   const wrap = document.createElement("div");
-  wrap.style.cssText = "position:fixed;inset:0;z-index:300;background:#000;";
+  wrap.className = "dext-scene-slot";
+  wrap.dataset.kind = opts.kind ?? "";
   let finished = false;
   let timer = null;
   let onMsg = null;
+  let media = null;
   const finish = () => {
     if (finished) return;
     finished = true;
     clearTimeout(timer);
     if (onMsg) window.removeEventListener("message", onMsg);
+    if (media instanceof HTMLMediaElement) {
+      media.pause();
+      media.removeAttribute("src");
+      media.load();
+    } else if (media instanceof HTMLIFrameElement) {
+      media.src = "about:blank";
+    }
     wrap.remove();
+    if (activeSlot?.cancel === cancel) activeSlot = null;
     onDone();
   };
   const cancel = () => {
+    if (finished) return;
     finished = true;
     clearTimeout(timer);
     if (onMsg) window.removeEventListener("message", onMsg);
+    if (media instanceof HTMLMediaElement) {
+      media.pause();
+      media.removeAttribute("src");
+      media.load();
+    } else if (media instanceof HTMLIFrameElement) {
+      media.src = "about:blank";
+    }
     wrap.remove();
+    if (activeSlot?.cancel === cancel) activeSlot = null;
   };
-  const limit = slot.timeout ?? opts.timeout ?? (slot.type === "html" ? 20 : 60);
-  if (limit > 0) timer = setTimeout(finish, limit * 1000);
+  activeSlot = { cancel };
 
-  if (slot.type === "video" && slot.src) {
+  if (slot.type === "image") {
+    const image = document.createElement("img");
+    media = image;
+    image.src = src;
+    image.alt = slot.name ?? "";
+    image.addEventListener("error", finish, { once: true });
+    wrap.appendChild(image);
+    document.body.appendChild(wrap);
+    timer = setTimeout(finish, opts.durationMs ?? 500);
+    return { cancel };
+  }
+
+  if (slot.type === "video") {
     const v = document.createElement("video");
-    v.src = `${RP}${slot.src}`;
+    media = v;
+    v.src = src;
     v.muted = true;
     v.autoplay = true;
     v.playsInline = true;
-    v.loop = slot.loop ?? opts.loop ?? false;
-    v.style.cssText = "width:100%;height:100%;object-fit:cover;";
     v.addEventListener("ended", finish);
     v.addEventListener("error", finish);
     wrap.appendChild(v);
@@ -171,17 +199,29 @@ function playSlot(slot, opts = {}) {
     return { cancel };
   }
 
-  if (slot.type === "html" && slot.src) {
+  if (slot.type === "html") {
     const f = document.createElement("iframe");
-    f.src = `${RP}${slot.src}`;
+    media = f;
+    const instanceId = globalThis.crypto?.randomUUID?.() ??
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const sceneUrl = new URL(src);
+    sceneUrl.searchParams.set("dextInstanceId", instanceId);
+    sceneUrl.searchParams.set("dextKind", opts.kind ?? "");
+    f.src = sceneUrl.href;
+    f.sandbox = "allow-scripts";
     f.allow = "autoplay";
-    f.style.cssText = "width:100%;height:100%;border:0;";
+    f.referrerPolicy = "no-referrer";
     wrap.appendChild(f);
     document.body.appendChild(wrap);
     onMsg = (e) => {
-      if (e.data === "dext:slotDone") finish();
+      const data = e.data;
+      if (e.source !== f.contentWindow ||
+          data?.type !== "dext:scene" ||
+          data.instanceId !== instanceId) return;
+      if (data.event === "done") finish();
     };
     window.addEventListener("message", onMsg);
+    timer = setTimeout(finish, (opts.timeoutSeconds ?? 60) * 1000);
     return { cancel };
   }
 
@@ -198,17 +238,26 @@ function playStart() {
 }
 
 async function loadRoom() {
+  if (PREVIEW_MODE) {
+    currentDesk = 0;
+    renderDesk(currentDesk);
+    for (const origin of PREVIEW_PARENT_ORIGINS) {
+      window.parent.postMessage({ type: "dext:preview-ready" }, origin);
+    }
+    return;
+  }
   try {
-    const res = await fetch(`${RP}room.json`);
+    const res = await fetch(assetUrl("room.json") ?? "room.json");
     if (res.ok) {
       const room = await res.json();
-      if (room?.desks?.length) ROOM = room;
+      if (room?.version === 1 && room?.desks?.length) ROOM = room;
     }
   } catch (e) {
     // keep default (e.g. opened outside Lively via file://)
   }
-  await loadRoomAsset(`${RP}room.css`, "link", "dext-room-css-link");
-  await loadRoomAsset(`${RP}room.js`, "script");
+  currentDesk = Number.isInteger(ROOM.startDesk) && ROOM.startDesk >= 0 && ROOM.startDesk < ROOM.desks.length
+    ? ROOM.startDesk
+    : 0;
   renderDesk(currentDesk);
   playStart();
   dextEmit("ready", { deskCount: ROOM.desks.length });
@@ -226,7 +275,6 @@ if (window.chrome?.webview) {
     }
     playSlot(slot, {
       kind: "end",
-      timeout: 4, // stay under the Player-side 5s close cap
       onDone: () =>
         window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" })),
     });
@@ -322,17 +370,17 @@ function renderDock() {
 // 鱼眼放大已移除（2026-08-27 用户拍板暂不做；git 历史可恢复）
 function renderDockApps(cfg) {
   dockEl.classList.toggle("has-apps", cfg.icons.length > 0);
-  dockAppsEl.innerHTML = "";
+  dockAppsEl.replaceChildren();
   cfg.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "dock-icon";
     el.title = item.label ?? "";
-    el.innerHTML = `
-      ${item.icon_png
-        ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`
-        : `<div class="icon-glyph" style="background:${item.color ?? "#3b82f6"}">${item.glyph ?? "?"}</div>`}
-      <button class="icon-del dock-icon-del" title="删除">×</button>
-    `;
+    el.appendChild(iconVisual(item));
+    const removeButton = document.createElement("button");
+    removeButton.className = "icon-del dock-icon-del";
+    removeButton.title = "删除";
+    removeButton.textContent = "×";
+    el.appendChild(removeButton);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -342,7 +390,7 @@ function renderDockApps(cfg) {
         showToast(item.action ?? item.label ?? "");
       }
     });
-    el.querySelector(".dock-icon-del").addEventListener("click", (ev) => {
+    removeButton.addEventListener("click", (ev) => {
       ev.stopPropagation();
       if (!editMode) return;
       cfg.icons.splice(i, 1);
@@ -500,8 +548,10 @@ function startDockDrag(e, el, item, cfg) {
 }
 
 function persistRoom() {
-  if (!window.chrome?.webview?.postMessage) return;
-  window.chrome.webview.postMessage(JSON.stringify({ type: "saveRoom", room: ROOM }));
+  if (PREVIEW_MODE || !window.chrome?.webview?.postMessage) return;
+  const room = JSON.parse(JSON.stringify(ROOM));
+  delete room.__source;
+  window.chrome.webview.postMessage(JSON.stringify({ type: "saveRoom", room }));
 }
 
 // legacy rooms without coords get packed positions once; after that icons are sparse
@@ -526,22 +576,61 @@ function launchApp(launch) {
   }
 }
 
-// background is a string (image path, "" = black) or {type:"video",src}
-// only the active desk's video stays mounted; desk switches swap the src behind the transition mask
+function iconVisual(item) {
+  if (typeof item?.icon_png === "string" && item.icon_png) {
+    const image = document.createElement("img");
+    image.className = "icon-img";
+    image.draggable = false;
+    image.src = `data:image/png;base64,${item.icon_png}`;
+    return image;
+  }
+  const glyph = document.createElement("div");
+  glyph.className = "icon-glyph";
+  glyph.textContent = typeof item?.glyph === "string" && item.glyph ? item.glyph : "?";
+  const color = typeof item?.color === "string" && CSS.supports("color", item.color)
+    ? item.color
+    : "#3b82f6";
+  glyph.style.backgroundColor = color;
+  return glyph;
+}
+
+function clearBackground(bgTarget, videoTarget) {
+  videoTarget.pause();
+  videoTarget.removeAttribute("src");
+  videoTarget.load();
+  videoTarget.style.display = "none";
+  bgTarget.style.backgroundImage = "none";
+  bgTarget.replaceChildren();
+}
+
+// v1 background is Content|null. HTML stays below the official icon and Dock layers.
 function mountBackground(bgTarget, videoTarget, desk) {
   const bg = desk.background;
-  const isVideo = bg && typeof bg === "object" && bg.type === "video";
-  if (isVideo) {
-    bgTarget.style.backgroundImage = "none";
-    const vsrc = `${RP}${bg.src}`;
+  clearBackground(bgTarget, videoTarget);
+  const src = bg && typeof bg === "object" ? assetUrl(bg.src) : null;
+  if (!src) return;
+  if (bg.type === "video") {
+    const vsrc = src;
     if (videoTarget.getAttribute("src") !== vsrc) videoTarget.src = vsrc;
+    videoTarget.loop = true;
+    videoTarget.muted = true;
     videoTarget.style.display = "block";
     videoTarget.play().catch(() => {});
-  } else {
-    videoTarget.pause();
-    videoTarget.removeAttribute("src");
-    videoTarget.style.display = "none";
-    bgTarget.style.backgroundImage = bg ? `url("${RP}${bg}")` : "none";
+  } else if (bg.type === "image") {
+    bgTarget.style.backgroundImage = `url("${src.replaceAll('"', "%22")}")`;
+  } else if (bg.type === "html") {
+    const frame = document.createElement("iframe");
+    const instanceId = globalThis.crypto?.randomUUID?.() ??
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const sceneUrl = new URL(src);
+    sceneUrl.searchParams.set("dextInstanceId", instanceId);
+    sceneUrl.searchParams.set("dextKind", "background");
+    frame.src = sceneUrl.href;
+    frame.className = "dext-background-frame";
+    frame.sandbox = "allow-scripts";
+    frame.allow = "autoplay";
+    frame.referrerPolicy = "no-referrer";
+    bgTarget.appendChild(frame);
   }
 }
 
@@ -553,9 +642,10 @@ function renderIcons(layer, desk, s) {
   layer.style.setProperty("--icon-size", `${s.icon}px`);
   layer.style.setProperty("--label-size", `${s.label}px`);
 
-  if (!desk.icons.length || typeof desk.icons[0].x !== "number") normalizeCoords(desk, cols);
+  if (!Array.isArray(desk.icons)) desk.icons = [];
+  if (desk.icons.length && typeof desk.icons[0].x !== "number") normalizeCoords(desk, cols);
 
-  layer.innerHTML = "";
+  layer.replaceChildren();
   desk.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "icon";
@@ -563,14 +653,16 @@ function renderIcons(layer, desk, s) {
     // clamp into view for the current size without rewriting stored coords
     el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW}px`;
     el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH}px`;
-    const glyph = item.icon_png
-      ? `<img class="icon-img" draggable="false" src="data:image/png;base64,${item.icon_png}">`
-      : `<div class="icon-glyph" style="background:${item.color}">${item.glyph}</div>`;
-    el.innerHTML = `
-      ${glyph}
-      <div class="icon-label">${item.label}</div>
-      <button class="icon-del" title="删除">×</button>
-    `;
+    el.appendChild(iconVisual(item));
+    const label = document.createElement("div");
+    label.className = "icon-label";
+    label.textContent = item.label ?? "";
+    el.appendChild(label);
+    const removeButton = document.createElement("button");
+    removeButton.className = "icon-del";
+    removeButton.title = "删除";
+    removeButton.textContent = "×";
+    el.appendChild(removeButton);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -580,7 +672,7 @@ function renderIcons(layer, desk, s) {
         showToast(item.action);
       }
     });
-    el.querySelector(".icon-del").addEventListener("click", (ev) => {
+    removeButton.addEventListener("click", (ev) => {
       ev.stopPropagation();
       if (!editMode) return;
       desk.icons.splice(i, 1);
@@ -599,9 +691,12 @@ function renderDesk(index) {
   const n = ROOM.desks.length;
   if (dockCfg().indicator === "dots") {
     dockEl.classList.add("dots");
-    indicatorEl.innerHTML = ROOM.desks
-      .map((d, i) => `<i${i === index ? ' class="on"' : ""} title="${d.name ?? ""}"></i>`)
-      .join("");
+    indicatorEl.replaceChildren(...ROOM.desks.map((desk, i) => {
+      const dot = document.createElement("i");
+      dot.classList.toggle("on", i === index);
+      dot.title = desk.name ?? "";
+      return dot;
+    }));
   } else {
     dockEl.classList.remove("dots");
     indicatorEl.textContent = `${index + 1} / ${n} · ${desk.name}`;
@@ -812,86 +907,36 @@ function mountStaging(index) {
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
 }
 
-// switch resolution: edge override "from>to" first, then room default.
-// value: preset string | {type:"video",src} stinger | {type:"action",name} script event
-// (legacy key "transition(s)" still read for old rooms)
+const SWITCH_PRESETS = new Set(["slide", "fade", "zoom", "none"]);
+
+// v1 switch resolution: directed edge first, then the Room-wide default.
 function resolveTransition(from, to) {
-  const t = ROOM.switches?.[`${from}>${to}`] ?? ROOM.switch ??
-    ROOM.transitions?.[`${from}>${to}`] ?? ROOM.transition;
-  if (typeof t === "string") return { name: t, src: null, action: null };
-  if (t && typeof t === "object") {
-    if (t.type === "video" && t.src) return { name: "video", src: t.src, action: null };
-    if (t.type === "action" && t.name) return { name: "action", src: null, action: t.name };
-  }
-  return { name: "slide", src: null, action: null };
+  const value = ROOM.switches?.[`${from}>${to}`] ?? ROOM.switch ?? "slide";
+  if (typeof value === "string" && SWITCH_PRESETS.has(value)) return value;
+  if (value && typeof value === "object" &&
+      ["image", "video", "html"].includes(value.type) &&
+      assetUrl(value.src)) return value;
+  return "slide";
 }
 
-// stinger: fullscreen video covers the screen, desks swap at midpoint, reveal on end
-function playVideoTransition(next, src, from, delta) {
-  const tv = document.getElementById("transition-video");
-  const wrap = document.getElementById("transition-video-wrap");
-  let swapped = false;
-  let done = false;
-
-  const swap = () => {
-    if (swapped) return;
-    swapped = true;
-    currentDesk = next;
-    renderDesk(currentDesk);
-    dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
-    stageEl.style.display = "none";
-    stageEl.innerHTML = "";
-  };
-  const end = () => {
-    if (done) return;
-    done = true;
-    swap();
-    wrap.style.display = "none";
-    tv.onended = null;
-    tv.onerror = null;
-    tv.removeAttribute("src");
-    switching = false;
-  };
-  const fallback = () => {
-    if (done) return;
-    done = true;
-    tv.onended = null;
-    tv.onerror = null;
-    wrap.style.display = "none";
-    tv.removeAttribute("src");
-    if (swapped) {
-      switching = false;
-      return;
-    }
-    mountStaging(next);
-    TRANSITIONS.slide.run(stageEl, delta, () => {
+// Kept as the existing transition entry point; v1 delegates every custom Content
+// to playSlot and swaps Desk only after that scene completes.
+function playVideoTransition(next, slot, from, delta) {
+  return playSlot(slot, {
+    kind: "switch",
+    onDone: () => {
+      if (!switching) return;
+      const previous = currentDesk;
+      if (previous !== from) {
+        switching = false;
+        return;
+      }
       currentDesk = next;
       renderDesk(currentDesk);
       dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
-      TRANSITIONS.slide.cleanup();
       switching = false;
-    });
-  };
-
-  tv.onended = end;
-  tv.onerror = fallback;
-  tv.src = src;
-  wrap.style.display = "block";
-  const p = tv.play();
-  if (p && p.catch) p.catch(fallback);
-  tv.addEventListener("timeupdate", function onTime() {
-    if (done) {
-      tv.removeEventListener("timeupdate", onTime);
-      return;
-    }
-    if (tv.duration > 0 && tv.currentTime >= tv.duration / 2) {
-      swap();
-      tv.removeEventListener("timeupdate", onTime);
-    }
+    },
   });
-  setTimeout(() => {
-    if (!done && tv.readyState === 0) fallback();
-  }, 3000);
 }
 
 function switchDesk(delta) {
@@ -905,43 +950,11 @@ function switchDesk(delta) {
 
   dextEmit("deskchange", { from, to: next, dir: delta, phase: "before" });
 
-  if (spec.name === "action") {
-    // no built-in visuals: broadcast to the room script, swap immediately
-    window.dispatchEvent(
-      new CustomEvent("dext:switch", {
-        detail: { name: spec.action, from, to: next, dir: delta },
-      })
-    );
-    currentDesk = next;
-    renderDesk(currentDesk);
-    after();
-    switching = false;
+  if (spec && typeof spec === "object") {
+    playVideoTransition(next, spec, from, delta);
     return;
   }
-
-  if (spec.name === "video") {
-    playVideoTransition(next, spec.src, from, delta);
-    return;
-  }
-
-  if (spec.name === "text") {
-    transitionTextEl.textContent = `正在进入 ${ROOM.desks[next].name} ...`;
-    transitionEl.classList.add("active", "fade-in");
-    setTimeout(() => {
-      currentDesk = next;
-      renderDesk(currentDesk);
-      after();
-      transitionEl.classList.remove("fade-in");
-      transitionEl.classList.add("fade-out");
-      setTimeout(() => {
-        transitionEl.classList.remove("active", "fade-out");
-        switching = false;
-      }, 450);
-    }, 350);
-    return;
-  }
-
-  const t = TRANSITIONS[spec.name] ?? TRANSITIONS.slide;
+  const t = TRANSITIONS[spec] ?? TRANSITIONS.slide;
   mountStaging(next);
   t.run(stageEl, delta, () => {
     currentDesk = next;
@@ -989,12 +1002,22 @@ window.addEventListener("resize", () => renderDesk(currentDesk));
 
 window.addEventListener("message", (e) => {
   const d = e.data;
-  if (d?.type === "dext:room" && d.room?.desks?.length) {
+  if (!PREVIEW_MODE ||
+      e.source !== window.parent ||
+      !PREVIEW_PARENT_ORIGINS.has(e.origin) ||
+      d?.type !== "dext:room" ||
+      d.room?.version !== 1 ||
+      !d.room?.desks?.length) return;
+  try {
+    const base = new URL(d.assetBase);
+    if (base.origin !== "http://lib.localhost" || !base.pathname.endsWith("/")) return;
+    assetBase = base.href;
     ROOM = d.room;
     currentDesk = Math.min(d.deskIndex ?? 0, ROOM.desks.length - 1);
-    if (Object.prototype.hasOwnProperty.call(d, "roomCss")) applyPreviewRoomCss(d.roomCss);
     renderDesk(currentDesk);
     dextEmit("ready", { deskCount: ROOM.desks.length, injected: true });
+  } catch {
+    // Ignore malformed preview messages without disturbing the last good draft.
   }
 });
 

@@ -191,3 +191,43 @@
 - [x] 只暂存本工作包具名文件并提交实现 `54e165e`，进入待用户验收（2026-08-29）
 - [x] 用户按 `acceptance/ROOM-FIX-001-room-apply-isolation.md` 验收通过（2026-08-29，回复“通过 合并”）
 - [x] 合并到 master（merge `e22f3f4`），ROOM-FIX-001 收口，DOCK-004 继续为唯一下一项（2026-08-29）
+
+## DXT-001 需求讨论决策写回（2026-08-29）
+
+> 目标：把用户已确认的 room.json v1 使用规则写入现有 dev_docs，删除当前模型中的过时产品口径；本轮仍不创建 Schema、不改代码。
+> 范围外：`room.schema.json`、SceneHost 实现、配置器接线、旧 Room 迁移、素材导入和 zip 导入导出。
+> 人工确认：阅读 MODEL.md 的三 Desk 示例，确认顺序调整后双向 switch 跟随 Desk、图片 0.5 秒规则、视频完整播放和 `name/type/src` 均符合本轮讨论。
+
+- [x] 从最新 master 创建独立 Orca worktree，并使用纯文档分支 `docs/dxt-001-contract-decisions`（2026-08-29）
+- [x] CodeGraph 优先检查：新 worktree 的 `.codegraph` 未初始化，未自行建索引；普通搜索确认 UI 已使用 `startDesk`（2026-08-29）
+- [x] 重写 MODEL.md 的 v1 方向，删除旧兼容、默认图片动效、视频中点换页和临时新名词（2026-08-29）
+- [x] 同步 PROJECT/README/FRONTEND/DOCK/ROADMAP 的当前口径与现状边界（2026-08-29）
+- [x] 文档一致性检查通过；仅 7 个具名 dev_docs 文件，无代码、Schema、Room 或 UI 改动（2026-08-29）
+
+## DXT-001 room.json v1 契约与统一场景渲染（2026-08-30）
+
+> 目标：在一个工作包内定稿 room.json v1，并原地改造现有渲染、配置器预览、Rust 应用和 Player/Core 回写链，使 image/video/html 场景、安全隔离与持久化边界真正生效。
+> 范围外：end 的完整编辑入口、Desk 排序、成组 HTML 依赖导入、Room zip 导入导出、旧 Room 迁移、Dock 拖拽重做、运行态字段和无关 Player/Core 重构。用户验收反馈后，现有 Desk/start/switch 属性栏按钮的真实导入已纳入本包。
+> 人工验收：按 `acceptance/DXT-001-room-json-v1-contract.md` 使用 v1 验收 Room，依次检查启动、双向切换、三类内容、预览不落盘、Dock 继承和 `__source` 边界。
+
+- [x] 核对 master、ROADMAP、UI-003、DOCK-004 和全部 worktree；确认只在 `feat/dxt-001-room-json-v1-contract` 开发（2026-08-30）
+- [x] 完整阅读入口、模型、流程、Dock、前端、IPC、持久化及错误分册（2026-08-30）
+- [x] 使用 CodeGraph 盘点 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、`dockCfg`、`persistRoom`、配置器预览和 `sync_room_to_package`；确认可原地改造（2026-08-30）
+- [x] 创建独立验收卡并冻结 Schema、宽容读取、安全隔离和持久化标准（2026-08-30）
+- [x] 创建封闭的 `room.schema.json`、有效/无效夹具和可重复 Schema 检查（2026-08-30）
+- [x] 原地扩展现有渲染器：background/start/switch/end 的 image/video/html、固定图片时序、视频完整播放、HTML sandbox/实例消息/超时/清理（2026-08-30）
+- [x] 修正 `startDesk`、有向相邻 switch、缺失方向安全回退、Dock 继承和运行态不落盘（2026-08-30）
+- [x] 配置器打开/保存/预览保留完整 v1；预览只用内存草稿和源素材协议，不执行包内旧 Room 代码（2026-08-30）
+- [x] Rust 新建/保存/应用链写出干净 v1，只同步四个素材目录，并仅在运行包注入可信 `__source`（2026-08-30）
+- [x] Player/Core 只接受顶层官方宿主 IPC；运行包保留 `__source`，源 Room 回写前剥离且不信任页面提交路径（2026-08-30）
+- [x] 更新 README / ROADMAP / PROJECT / MODEL / FRONTEND / DOCK / LIVELY_API 及相关错误记录，移除 DXT/SCENE 分包旧口径和误导性的 room.js 教程（2026-08-30）
+- [x] 运行 Schema、JS、Rust、TypeScript、Release C# 构建及真实预览/桌面回归（2026-08-30）
+- [x] 核对 40 个具名文件并提交 `ed13a33`，工作包进入待验收（2026-08-30）
+- [x] 收口真实 UI 入口：新增 Room 仅成功后进入编辑、编辑页应用先保存草稿、另存为复制四类素材并保持原 Room 不变；前端构建、Rust check 与 9 项测试通过（2026-08-30）
+- [x] 提交 UI/Rust 收口修正 `86ad139`，继续停在 DXT-001 待验收分支（2026-08-30）
+- [x] Playwright 只读冒烟确认 Room 列表“新增 Room”和编辑页“保存 / 另存为 / 应用”入口可见；未触发真实写盘并已清理临时快照（2026-08-30）
+- [x] 用户验收发现属性栏“图片 / 网页代码 / 视频”只有外观、无真实动作；已在同一分支接通 Desk/start/switch 的文件选择、固定目录复制、内存预览和 v1 保存，前端构建、Rust check 与 10 项测试通过（2026-08-30）
+- [x] 提交属性栏真实导入修复 `945d0ed`，继续停在 DXT-001 待验收分支（2026-08-30）
+- [x] 用户确认 DXT-001 验收通过，并要求合并 master（2026-08-30，“ok啊验收通过，感觉可以合并了”）
+- [x] 补充面向配置器、手工作者和 vibe coding 的 `ROOM_AUTHORING.md` 准确协议（2026-08-30）
+- [~] 将 DXT-001 合并 master、更新完成状态并清理工作分支/worktree

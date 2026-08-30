@@ -26,3 +26,17 @@
   始于 b4a0827（rgba→var(--dext-*) 的批量替换把「background-color:」前缀连值一起误删）
 - 解决：对照 git show b4a0827~1 还原全部损坏规则，并用 node --check 式脚本全文件扫残留
 - 防再犯：批量正则替换样式属性后，用正则扫 /[{};]\s*-color|^\s*-color/ 自检 + 浏览器视检一遍再提交
+
+## 31. sandbox iframe 的完成消息与 WebView IPC 必须双层验源
+
+- 症状：旧 HTML 场景只判断裸字符串 `dext:slotDone`，任意 frame 或顶层页面都能提前结束当前场景；同时 WebView2 会接收子 iframe 的 web message，sandbox 本身不足以保护启动/保存 IPC。
+- 根因：只验证消息内容，没有绑定发送窗口、场景实例和 Player 顶层文档来源。
+- 解决：每次 HTML 场景生成 `instanceId`，宿主同时校验 `event.source === iframe.contentWindow` 和结构化消息里的实例；Player 再比较 WebView message 的 `Source` 与当前顶层 URL，只允许官方顶层文档上行。
+- 防再犯：跨窗口消息至少绑定来源窗口和一次性实例；涉及本机能力时还必须在最终宿主边界再次验源，不能只依赖前端 iframe sandbox。
+
+## 33. Tauri 开发态 origin 与发布态不同导致预览被拒绝
+
+- 症状：打包后的配置器预览正常，但 `npm run tauri dev` 中 iframe 一直停在默认 Room，内存草稿没有进入渲染器。
+- 根因：渲染器只放行发布态 `http://tauri.localhost`，而 Vite 开发父页面实际是 `http://localhost:1420`。
+- 解决：预览父页面使用固定双值白名单；仍校验 `event.source === window.parent`、消息结构和素材 origin，禁止 `*`。
+- 防再犯：涉及 Tauri 自定义协议与开发服务器的 postMessage 时，发布态和开发态 origin 都要实测；白名单必须是明确值。

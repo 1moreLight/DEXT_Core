@@ -59,7 +59,11 @@
       el.textContent += "ALL SYSTEMS GO\n";
       fill.style.width = "100%";
       fill.style.background = "rgba(120, 255, 160, 0.9)";
-      setTimeout(() => parent.postMessage("dext:slotDone", "*"), 1200);
+      const instanceId = new URLSearchParams(location.search).get("dextInstanceId");
+      parent.postMessage({ type: "dext:scene", event: "ready", instanceId }, "*");
+      setTimeout(() => parent.postMessage(
+        { type: "dext:scene", event: "done", instanceId }, "*"
+      ), 1200);
     }
   };
   setTimeout(step, 900);

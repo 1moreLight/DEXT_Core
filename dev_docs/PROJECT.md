@@ -63,49 +63,28 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-25 | 每 Desk 独立背景 |
 | 2026-08-25 | 图标手动格子定位 x,y（网格默认尺寸待定） |
 | 2026-08-25 | 抽共享渲染器：配置器内嵌实时预览，与桌面同一份代码 |
-| 2026-08-25 | **Room = 文件夹** { room.json + background/ 素材 }，导出分享 = zip。指令与素材分离；素材跨房间重复占用问题先不解决(YAGNI)，痛了再做哈希去重库。图标例外：仍内嵌 base64（程序生成的小图，不算素材） |
+| 2026-08-25 | **Room = 文件夹**，导出分享 = zip。v1 固定为 room.json + `background/` / `start/` / `switch/` / `end/` 自包含内容；素材跨房间重复占用先不解决。图标例外：仍内嵌 base64。 |
 | 2026-08-25 | schema 固版 v1 后做 AI skill（提示词模板生成合法房间） |
 | 2026-08-25 | 终局方向：Steam 创意工坊模式（创作者上传/用户下载） |
 | 2026-08-25 | 房间库默认在仓库 `rooms/` 目录，库路径可指定（前端 localStorage 记住）；**路径一律用英文/ASCII**（中文目录名在 PS 控制台/工具链易乱码） |
 | 2026-08-25 | 无背景 desk = 纯黑兜底：body 已 #000 + 渲染器空值守卫，不造黑色图片文件 |
 | 2026-08-25 | 应用机制：apply_room 把房间数据拷进壁纸包目录再 SetWallpaper——因 WebView2 虚拟主机只能读包内文件；Room-owned 路径必须按源 Room 镜像替换，不能保留上一 Room 缺失的可选脚本、样式或素材目录（2026-08-29 ROOM-FIX-001 补充） |
-| 2026-08-25 | **转场按有向边建模**：`transitions["from>to"]` 逐边覆盖 `transition` 房间默认，来回可不同；未覆盖回退默认（详见 dev_docs/MODEL.md） |
+| 2026-08-25 | **切换按有向边建模**：`switches["from>to"]` 逐方向保存，来回可不同；房间级 `switch` 是安全默认（详见 MODEL.md）。 |
 | 2026-08-25 | transitionText 字段废弃（text 转场类型保留，文案改固定模板）；外观主题(theme)暂不做，痛了再加 |
-| 2026-08-25 | **房间可编程性旧路线（已被 2026-08-29 安全边界修订）**：当前 v0.x 已有顶层 room.js/room.css 与 window.dext，作为 cockpit-room 能力证明和兼容对象保留；不再把“用户脚本直接控制官方页面”作为 v1 创作模型。详见 MODEL.md 第六节。 |
-| 2026-08-25 | **统一演出槽原型**：当前 start/end 已验证 video/html/action 播放链；v1 目标扩为 background/start/switch/end 共用 image/video/html 内容模型，由官方 SceneHost 管理生命周期。退出页仍受 Player 5s 上限保护。 |
-| 2026-08-25 | **三幕命名定稿**（用户拍板）：start（启动）/ switch（切换）/ end（结束），废弃 boot/transition/shutdown 旧名；旧字段/旧 transition/ 目录兼容读取 |
+| 2026-08-25 | **顶层房间脚本路线已废止**：v1 不兼容顶层 room.js/room.css 或 action 扩展；用户代码只进入 background/start/switch/end 的受控 HTML 内容，官方宿主不可替换。 |
+| 2026-08-25 | **统一内容方向**：background/start/switch/end 均使用带 `name/type/src` 的 image/video/html 内容；`name` 仅供 UI 展示。 |
+| 2026-08-25 | **三幕命名定稿**：start（启动）/ switch（切换）/ end（结束）；v1 不读取 boot/transition/shutdown 旧字段和旧 `transition/` 目录。 |
 | 2026-08-27 | **开发仓库唯一化**：所有开发只在本仓库（Orca/DEXT_Core，多 worktree 共享）进行；`D:\midDOW\` 彻底废弃、仅作历史参考。**任何进程/服务都不得再从 midDOW 启动**（曾发生老 vite 残留占端口 1421 导致本项目起不来）。配置器设计模式默认端口如被占用则顺延+1（1422…） |
-| 2026-08-26 | **Room 拓扑旧结论（启动目标已于 2026-08-29 修订）**：启动画面只直连一个入口 Desk（无 switch）；switch 只存在于相邻 Desk 之间（一来一回有向边）。入口旧默认是 `desks[0]`，现已改为可选择，缺字段才回退 `desks[0]`。配置器 Room 编辑 = 思维导图，Desk 增删自动同步。 |
+| 2026-08-26 | **Room 拓扑**：启动画面只直连 `startDesk`（无 switch）；Desk 顺序来自 `desks` 数组，switch 只存在于相邻 Desk 及三页以上的首尾之间。配置器 Room 编辑 = 思维导图，Desk 增删和排序自动同步。 |
 | 2026-08-28 | **开发方式收敛**：一个工作包只交付一个可独立验收的结果；每包独立 worktree、分支和验收文件。自测提交后停在待验收，用户明确通过才合并 master；合并后删除工作分支/worktree。ROADMAP 管全局顺序，TODO 只管当前分支。 |
 | 2026-08-28 | **Dock 是独立可复用资产**：编辑侧栏的 Dock 页是模板库，只负责浏览、选择和以后承接创意工坊下载项，不直接修改当前 Room；进入 Room 编辑器后才选择该 Room 使用哪个 Dock。当前选择以配置/CSS 快照写入 Room，保证 Room 可独立运行。 |
-| 2026-08-29 | **启动画面连接目标修订**：启动画面只连接一个 Desk，但目标不再概念上固定为 `desks[0]`；配置器允许选择目标 Desk并同步导图连线。旧 Room 或未保存选择时默认 `desks[0]`，持久字段与运行时语义留给 DXT-001/UI-001 定稿。 |
+| 2026-08-29 | **默认 Desk**：复用 UI-003 的 `startDesk`；启动时始终进入该 Desk，不恢复上次停留页。字段缺失或非法时才回退 `desks[0]`。 |
 | 2026-08-29 | **Desk 导航拓扑修订为环**：每个 Desk 都应有上一页和下一页。相邻 Desk 建双向边；Desk 数量 ≥3 时再增加首尾双向边，2 个 Desk 不重复造边，1 个 Desk 无 switch。配置器中相邻边走节点上下，只有首尾环线走侧边。 |
-| 2026-08-29 | **官方宿主与用户 Scene 分层**：Dext 官方 HTML 宿主持有 Desk、Dock、图标、IPC、保存、导航与生命周期；用户只提供 background/start/switch/end 的内容 Scene，不能替换或直接控制官方宿主。会写前端的作者可制作受控 HTML Scene，不会写的用户由配置器按钮或官方骨架/vibe coding 生成。 |
-| 2026-08-29 | **Scene 内容统一方向**：background、start、switch、end 均支持 image/video/html；room.json 保留原始内容类型，不因为运行时都落在 HTML 宿主中而抹平成 HTML。静态图片的默认轻动效属于官方宿主表现，不写成运行态字段。 |
-| 2026-08-29 | **契约与重构分包**：DXT-001 先定 Room/Scene v1 数据、兼容和持久化边界；SCENE-001 再实现统一 SceneHost、受控生命周期和安全隔离。UI-001/UI-002 在二者之后接入真实配置与保存。 |
-
-## 当前 room.json 隐式 schema (v0)
-
-```jsonc
-{
-  "desks": [
-    {
-      "name": "Desk 1",
-      "background": "assets/desk1-bg.png",     // 文件路径（v0 仅此形态）
-      "icons": [
-        {
-          "label": "Edge",
-          "icon_png": "<base64 png 可选>",      // 有则显示真图标
-          "glyph": "🌐", "color": "#3b82f6",    // 无 icon_png 时的兜底
-          "action": "启动 浏览器",                // 无 launch 时的 toast 文案
-          "launch": { "target": "...exe", "args": "", "workdir": "" }
-        }
-      ]
-    }
-  ],
-  "transitionText": "可选，缺省用默认文案"
-}
-```
+| 2026-08-29 | **官方宿主与用户内容分层**：Dext 官方 HTML 宿主持有 Desk、Dock、图标、IPC、保存、导航与生命周期；用户只提供 background/start/switch/end 内容，不能替换或直接控制官方宿主。会写前端的作者可制作受控 HTML，不会写的用户由配置器按钮或官方骨架/vibe coding 生成。 |
+| 2026-08-29 | **图片和视频时序**：background 图片纯静态；start/switch/end 图片纯静态显示 0.5 秒。switch 视频完整播放后才换 Desk，不使用中点换页；复杂节奏交给 HTML。 |
+| 2026-08-29 | **Desk 排序保持语义**：调整 `desks` 顺序时，配置器按 Desk 和方向重映射 `startDesk` 与 `switches`；新形成的相邻组合缺少内容时提示补充，绝不自动复制或生成。 |
+| 2026-08-29 | **契约与重构原计划分包（历史）**：最初计划 DXT-001 只定 Room v1，SCENE-001 再实现 SceneHost；已被下一条 2026-08-30 决策取代。 |
+| 2026-08-30 | **DXT-001 契约与现有宿主一起改**：用户明确要求不再把渲染器留到下一包。DXT-001 在同一 worktree/分支/验收内定稿 v1，并原地扩展现有 `playSlot`、`mountBackground`、`resolveTransition`、`switchDesk`、`playVideoTransition`、预览和持久化链；除非现有结构无法满足安全隔离，否则禁止另写重复播放器。SCENE-001 不再单独开发。 |
 
 ## 工作流
 

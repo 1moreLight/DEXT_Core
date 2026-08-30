@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "startDesk": 0,
+  "start": {
+    "type": "image",
+    "src": "start/boot.png"
+  },
+  "switches": {},
+  "desks": [
+    {
+      "name": "主页",
+      "background": null,
+      "iconSize": "medium",
+      "icons": []
+    }
+  ]
+}

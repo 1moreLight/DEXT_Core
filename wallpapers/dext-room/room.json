@@ -1,42 +1,63 @@
 {
-  "__source": "D:\\midDOW\\lively-core-separation\\rooms\\cockpit-room",
-  "start": { "type": "html", "src": "start/index.html", "timeout": 15 },
-  "end": { "type": "html", "src": "end/index.html", "timeout": 4 },
+  "version": 1,
+  "startDesk": 0,
+  "start": {
+    "name": "系统启动",
+    "type": "html",
+    "src": "start/index.html"
+  },
+  "end": {
+    "name": "系统关闭",
+    "type": "html",
+    "src": "end/index.html"
+  },
+  "switch": "slide",
+  "switches": {
+    "0>1": {
+      "name": "蓝色切换",
+      "type": "image",
+      "src": "switch/sample.svg"
+    },
+    "1>0": {
+      "name": "返回主页",
+      "type": "html",
+      "src": "switch/index.html"
+    }
+  },
   "desks": [
     {
-      "name": "STANDBY",
-      "background": "",
+      "name": "主页",
+      "background": {
+        "name": "主页背景",
+        "type": "image",
+        "src": "background/desk1-bg.png"
+      },
       "iconSize": "medium",
       "icons": [
-        { "label": "SYSTEM", "glyph": "⚙", "color": "#111827", "action": "系统自检中..." },
-        { "label": "ARCHIVE", "glyph": "▤", "color": "#111827", "action": "作战档案" }
+        {
+          "label": "浏览器",
+          "glyph": "🌐",
+          "color": "#3b82f6",
+          "action": "启动 浏览器",
+          "launch": {
+            "target": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+            "args": "",
+            "workdir": ""
+          },
+          "x": 0,
+          "y": 0
+        }
       ]
     },
     {
-      "name": "PATROL",
-      "background": "",
-      "iconSize": "medium",
-      "icons": [
-        { "label": "SCAN", "glyph": "◎", "color": "#0f172a", "action": "扫描周边空域..." },
-        { "label": "COMMS", "glyph": "≋", "color": "#0f172a", "action": "通讯链路建立" }
-      ]
-    },
-    {
-      "name": "COMBAT",
-      "background": "",
+      "name": "游戏",
+      "background": {
+        "name": "游戏动态背景",
+        "type": "html",
+        "src": "background/index.html"
+      },
       "iconSize": "large",
-      "icons": [
-        { "label": "LAUNCH", "glyph": "▲", "color": "#450a0a", "action": "出击授权确认" },
-        { "label": "ARM", "glyph": "✜", "color": "#450a0a", "action": "武装挂载完成" }
-      ]
+      "icons": []
     }
-  ],
-  "transitions": {
-    "0>1": { "type": "action", "name": "cockpit.patrol" },
-    "1>0": { "type": "action", "name": "cockpit.standby" },
-    "1>2": { "type": "action", "name": "cockpit.combat" },
-    "2>1": { "type": "action", "name": "cockpit.patrol" },
-    "0>2": { "type": "action", "name": "cockpit.combat" },
-    "2>0": { "type": "action", "name": "cockpit.standby" }
-  }
+  ]
 }

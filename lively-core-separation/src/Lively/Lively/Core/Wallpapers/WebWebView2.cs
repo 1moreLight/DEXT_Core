@@ -26,6 +26,7 @@ namespace Lively.Core.Wallpapers
         private readonly TaskCompletionSource contentReadyTcs = new();
         private bool IsContentReady => contentReadyTcs.Task.IsCompleted;
         private readonly Process process;
+        private readonly object roomPersistenceLock = new();
         private static int globalCount;
         private readonly int uniqueId;
         private readonly string wallpaperPath;
@@ -336,34 +337,13 @@ namespace Lively.Core.Wallpapers
                         var saveMsg = (LivelyMessageSaveRoomCmd)obj;
                         _ = Task.Run(() =>
                         {
-                        try
-                        {
-                            // path param is the wallpaper entry file (index.html); room.json lives beside it
-                            var roomDir = System.IO.File.Exists(wallpaperPath)
-                                ? System.IO.Path.GetDirectoryName(wallpaperPath)
-                                : wallpaperPath;
-                            var roomPath = System.IO.Path.Combine(roomDir, "room.json");
-                            System.IO.File.WriteAllText(roomPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
-                            Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
-                                try
-                                {
-                                    // dual-write to the source room in the library (stamped by the configurator on apply)
-                                    var jo = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(saveMsg.RoomJson);
-                                    var src = (string)jo?["__source"];
-                                    if (!string.IsNullOrWhiteSpace(src))
-                                    {
-                                        // __source is the room folder; write the file inside it
-                                        var srcPath = System.IO.Directory.Exists(src)
-                                            ? System.IO.Path.Combine(src, "room.json")
-                                            : src;
-                                        System.IO.File.WriteAllText(srcPath, saveMsg.RoomJson, new System.Text.UTF8Encoding(false));
-                                        Logger.Info($"Wv2{uniqueId}: SaveRoom source: {srcPath}");
-                                    }
-                                }
-                                catch (Exception de)
-                                {
-                                    Logger.Error($"Wv2{uniqueId}: SaveRoom source sync failed: {de.Message}");
-                                }
+                            try
+                            {
+                                var roomPath = GetPackageRoomPath();
+                                var incoming = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(saveMsg.RoomJson)
+                                    ?? throw new InvalidDataException("Room payload must be an object.");
+                                SaveTrustedRoomCopies(roomPath, incoming);
+                                Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
                             }
                             catch (Exception se)
                             {
@@ -383,76 +363,129 @@ namespace Lively.Core.Wallpapers
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(msg.LaunchTarget))
+                lock (roomPersistenceLock)
                 {
-                    Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: missing launch target");
-                    return;
-                }
-                var roomDir = System.IO.File.Exists(wallpaperPath)
-                    ? System.IO.Path.GetDirectoryName(wallpaperPath)
-                    : wallpaperPath;
-                var roomPath = System.IO.Path.Combine(roomDir, "room.json");
-                var jo = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(roomPath));
-                var scope = string.Equals(msg.Scope, "global", StringComparison.OrdinalIgnoreCase) ? "global" : "desk";
-                Newtonsoft.Json.Linq.JObject target;
-                if (scope == "global")
-                {
-                    target = jo["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
-                    jo["dock"] = target;
-                }
-                else
-                {
-                    var desks = jo["desks"] as Newtonsoft.Json.Linq.JArray;
-                    if (desks == null || msg.DeskIndex < 0 || msg.DeskIndex >= desks.Count || desks[msg.DeskIndex] is not Newtonsoft.Json.Linq.JObject desk)
+                    if (string.IsNullOrWhiteSpace(msg.LaunchTarget))
                     {
-                        Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: invalid desk index {msg.DeskIndex}");
+                        Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: missing launch target");
                         return;
                     }
-                    target = desk["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
-                    desk["dock"] = target;
-                }
-                var inheritedIcons = jo["dock"]?["icons"] as Newtonsoft.Json.Linq.JArray;
-                var icons = target["icons"] as Newtonsoft.Json.Linq.JArray
-                    ?? (scope == "desk" && inheritedIcons != null
-                        ? (Newtonsoft.Json.Linq.JArray)inheritedIcons.DeepClone()
-                        : new Newtonsoft.Json.Linq.JArray());
-                target["icons"] = icons;
-                if (icons.OfType<Newtonsoft.Json.Linq.JObject>().Any(icon => (string)icon["launch"]?["target"] == msg.LaunchTarget))
-                {
-                    Logger.Info($"Wv2{uniqueId}: AddDockIcon skipped duplicate: {msg.LaunchTarget}");
-                    return;
-                }
-                icons.Add(new Newtonsoft.Json.Linq.JObject
-                {
-                    ["label"] = msg.Label ?? msg.LaunchTarget,
-                    ["icon_png"] = msg.IconPng ?? string.Empty,
-                    ["glyph"] = msg.Glyph ?? "?",
-                    ["color"] = msg.Color ?? "#3b82f6",
-                    ["action"] = msg.Action ?? $"启动 {msg.Label ?? msg.LaunchTarget}",
-                    ["launch"] = new Newtonsoft.Json.Linq.JObject
+                    var roomPath = GetPackageRoomPath();
+                    var jo = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(roomPath));
+                    var scope = string.Equals(msg.Scope, "global", StringComparison.OrdinalIgnoreCase) ? "global" : "desk";
+                    Newtonsoft.Json.Linq.JObject target;
+                    if (scope == "global")
                     {
-                        ["target"] = msg.LaunchTarget,
-                        ["args"] = msg.LaunchArgs ?? string.Empty,
-                        ["workdir"] = msg.LaunchWorkdir ?? string.Empty,
-                    },
-                });
-                var json = jo.ToString(Newtonsoft.Json.Formatting.Indented);
-                System.IO.File.WriteAllText(roomPath, json, new System.Text.UTF8Encoding(false));
-                Logger.Info($"Wv2{uniqueId}: AddDockIcon: {roomPath}");
-                var src = (string)jo["__source"];
-                if (!string.IsNullOrWhiteSpace(src))
-                {
-                    var srcPath = System.IO.Directory.Exists(src)
-                        ? System.IO.Path.Combine(src, "room.json")
-                        : src;
-                    System.IO.File.WriteAllText(srcPath, json, new System.Text.UTF8Encoding(false));
-                    Logger.Info($"Wv2{uniqueId}: AddDockIcon source: {srcPath}");
+                        target = jo["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
+                        jo["dock"] = target;
+                    }
+                    else
+                    {
+                        var desks = jo["desks"] as Newtonsoft.Json.Linq.JArray;
+                        if (desks == null || msg.DeskIndex < 0 || msg.DeskIndex >= desks.Count || desks[msg.DeskIndex] is not Newtonsoft.Json.Linq.JObject desk)
+                        {
+                            Logger.Error($"Wv2{uniqueId}: AddDockIcon rejected: invalid desk index {msg.DeskIndex}");
+                            return;
+                        }
+                        target = desk["dock"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
+                        desk["dock"] = target;
+                    }
+                    var inheritedIcons = jo["dock"]?["icons"] as Newtonsoft.Json.Linq.JArray;
+                    var icons = target["icons"] as Newtonsoft.Json.Linq.JArray
+                        ?? (scope == "desk" && inheritedIcons != null
+                            ? (Newtonsoft.Json.Linq.JArray)inheritedIcons.DeepClone()
+                            : new Newtonsoft.Json.Linq.JArray());
+                    target["icons"] = icons;
+                    if (icons.OfType<Newtonsoft.Json.Linq.JObject>().Any(icon => (string)icon["launch"]?["target"] == msg.LaunchTarget))
+                    {
+                        Logger.Info($"Wv2{uniqueId}: AddDockIcon skipped duplicate: {msg.LaunchTarget}");
+                        return;
+                    }
+                    icons.Add(new Newtonsoft.Json.Linq.JObject
+                    {
+                        ["label"] = msg.Label ?? msg.LaunchTarget,
+                        ["icon_png"] = msg.IconPng ?? string.Empty,
+                        ["glyph"] = msg.Glyph ?? "?",
+                        ["color"] = msg.Color ?? "#3b82f6",
+                        ["action"] = msg.Action ?? $"启动 {msg.Label ?? msg.LaunchTarget}",
+                        ["launch"] = new Newtonsoft.Json.Linq.JObject
+                        {
+                            ["target"] = msg.LaunchTarget,
+                            ["args"] = msg.LaunchArgs ?? string.Empty,
+                            ["workdir"] = msg.LaunchWorkdir ?? string.Empty,
+                        },
+                    });
+                    SaveTrustedRoomCopies(roomPath, jo);
+                    Logger.Info($"Wv2{uniqueId}: AddDockIcon: {roomPath}");
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error($"Wv2{uniqueId}: AddDockIcon failed: {ex.Message}");
             }
+        }
+
+        private string GetPackageRoomPath()
+        {
+            var roomDir = File.Exists(wallpaperPath)
+                ? Path.GetDirectoryName(wallpaperPath)
+                : wallpaperPath;
+            return Path.Combine(roomDir, "room.json");
+        }
+
+        private static string ResolveTrustedSourceRoomPath(Newtonsoft.Json.Linq.JObject packageRoom)
+        {
+            var source = (string)packageRoom?["__source"];
+            if (string.IsNullOrWhiteSpace(source))
+                return null;
+            try
+            {
+                var fullPath = Path.GetFullPath(source);
+                if (Directory.Exists(fullPath))
+                    fullPath = Path.Combine(fullPath, "room.json");
+                if (!File.Exists(fullPath) ||
+                    !string.Equals(Path.GetFileName(fullPath), "room.json", StringComparison.OrdinalIgnoreCase))
+                    return null;
+                return fullPath;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void SaveTrustedRoomCopies(string packageRoomPath, Newtonsoft.Json.Linq.JObject incoming)
+        {
+            lock (roomPersistenceLock)
+            {
+                // The source stamp is trusted only from the existing package produced by Rust.
+                // A page-provided __source is always discarded before either write.
+                var existing = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(packageRoomPath));
+                var sourcePath = ResolveTrustedSourceRoomPath(existing);
+                var sourceStamp = (string)existing["__source"];
+                var clean = (Newtonsoft.Json.Linq.JObject)incoming.DeepClone();
+                clean.Remove("__source");
+                var package = (Newtonsoft.Json.Linq.JObject)clean.DeepClone();
+                if (!string.IsNullOrWhiteSpace(sourceStamp))
+                    package["__source"] = sourceStamp;
+
+                AtomicWriteJson(packageRoomPath, package);
+                if (sourcePath != null)
+                {
+                    AtomicWriteJson(sourcePath, clean);
+                    Logger.Info($"Wv2{uniqueId}: Room source sync: {sourcePath}");
+                }
+            }
+        }
+
+        private static void AtomicWriteJson(string path, Newtonsoft.Json.Linq.JObject room)
+        {
+            var tempPath = path + $".{Guid.NewGuid():N}.tmp";
+            File.WriteAllText(tempPath, room.ToString(Formatting.Indented), new UTF8Encoding(false));
+            if (File.Exists(path))
+                File.Replace(tempPath, path, null);
+            else
+                File.Move(tempPath, path);
         }
 
         public void Terminate()
