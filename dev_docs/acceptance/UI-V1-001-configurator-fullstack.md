@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`feat/ui-v1-001-configurator-fullstack`
-- 提交：`f0fa779`（首版实现）+ `1671f25`（首轮验收反馈）+ `d7eab61`（Desk 独立应用选择框）
+- 提交：`f0fa779`（首版实现）+ `1671f25`（首轮验收反馈）+ `d7eab61`（Desk 独立应用选择框）+ `7b98683`（Desk 画布与活体测试隔离）
 - 目标：完成 Room 安全管理、真实运行状态、使用页、编辑页、设置页和创意工坊空状态的前后端闭环。
 - 范围外：多显示器、DXT-002 idle、DOCK-004、Dock 架构重构、用户 Room 迁移或批量改写、在线创意工坊、更新/安装器、无真实底层能力的设置，以及 Player/Core 大范围重构。
 
@@ -50,7 +50,7 @@
 - [x] 真 Tauri 1296×839 验证：属性栏同时显示 `v1testRoom` 两个 Desk 的真实背景缩略画布，点击 Desk 2 后导图选择、名称和素材路径同步更新；深浅色均无阻断问题。
 - [x] `npm test`（6 项）、`npm run build`、`cargo check`、`cargo test --lib` 通过；Rust 结果为 21 项通过、2 项活体测试 ignored。
 - [x] 根因确认：旧背景来自 `grpc::tests::applies_room_wallpaper` 调用真实 Core 后持久化的 `rooms/v1testRoom` 运行包；`apps_and_launch` 也会启动 Notepad，两项现均需显式 `-- --ignored`。
-- [x] 已通过配置器停止旧测试壁纸：Player 退出、Core 保持连接，`%LOCALAPPDATA%\Dext\WallpaperLayout.json` 为 `[]`；再次运行普通 Rust 测试后仍未启动 Player或改写布局。
+- [x] 已通过配置器停止旧测试壁纸：Player 退出、Core 保持连接，`%LOCALAPPDATA%\Dext\WallpaperLayout.json` 为 `[]`；再次运行普通 Rust 测试后仍未启动 Player 或改写布局。
 - [x] `wallpapers/dext-room` 的运行态变化已保存为可恢复 stash `runtime v1testRoom snapshot before UI-V1-001 feedback cleanup`，随后恢复分支基线；用户 `rooms/v1testRoom` 仅只读检查，未删除或改写。
 - [x] 新增 ERRORS #45，并同步 AGENTS、README、PROJECT、WORKFLOW、旧总验收和 UI v1 计划中的活体测试命令及副作用说明。
 
