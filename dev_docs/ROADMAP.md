@@ -14,7 +14,7 @@
 | 最近完成 | **UI-003 导图几何布局接线** | 已完成 | master（merge `e51cb0a`） | 每对 Desk 单条双向线；相邻上下、首尾侧边；启动目标可选 |
 | 待验收 | **DOCK-004 运行态指示圆点** | 待验收 | `feat/dock-004-runtime-indicator`（`30fde9d`） | Dock 显示应用运行状态；真桌面 Dock 拖拽已转远期重做 |
 | 最近完成 | **DXT-001 room.json v1 契约与统一场景渲染** | 已完成 | master（merge `8f39fbb`） | v1 Schema、统一内容宿主、真实素材按钮、持久化闭环和创作者协议已验收合并 |
-| 开发中 | **DXT-002 Room 待机画面接入** | 开发中 | `feat/dxt-002-idle-screensaver` | 用户已确认采用 idle、废弃 end；正在把旧实现更新到最新 master 并重新验证 |
+| 待验收 | **DXT-002 Room 待机画面接入** | 待验收 | `feat/dxt-002-idle-screensaver`（`f140603`） | 已基于最新 master 刷新并通过自动检查；用户确认 idle 真机屏保行为后再合并 |
 | 最近完成 | **OPS-003 开发优先级与 dev_docs 记录指南** | 已完成 | master（merge `eb5e9ff`） | 新开发顺序、Dext 身份隔离决策和日常记录方法已验收合并 |
 | 最近完成 | **CORE-002 Dext Core 运行身份隔离** | 已完成 | master（merge `3835be1`） | Dext Core、配置器、脚本、mutex、pipe 和本地数据身份已隔离；验收反馈修复完成并清理工作分支/worktree |
 | 待验收 | **UI-USE-001 配置器使用页设计规格** | 待验收（纯文档） | `docs/ui-use-001-use-page-spec`（`4be6ca1`） | 已按用户要求建立逐页设计档案，未修改代码；保持独立分支等待验收，不混入本次启动修复 |
@@ -76,7 +76,7 @@ UI-V1-001 已完成配置器核心页面的首轮全栈闭环；后续新增结�
 | 5 | **UI-003 导图几何布局接线** | 已完成 | 节点尺寸变化后连线和布局仍正确；Desk 环形双向导航；启动目标可选 | 无 |
 | 6 | **DXT-001 room.json v1 契约与统一场景渲染** | 已完成 | `room.schema.json`、字段/继承/宽容策略、创作者协议，以及官方宿主对 background/start/switch/end 的 image/video/html 原地适配、安全隔离、预览和持久化闭环 | UI-003 与需求讨论输入 |
 | 7 | **SCENE-001 统一 SceneHost** | 已并入 DXT-001 | 2026-08-30 用户决定不再单独开包；其必要结果由 DXT-001 同一分支和验收卡交付 | DXT-001 |
-| 8 | **DXT-002 Room 待机画面接入** | 开发中 | 用 idle 替换 end 并接入 Lively 屏保链；正基于最新 master 刷新实现和回归，验收前不合并 | DXT-001 |
+| 8 | **DXT-002 Room 待机画面接入** | 待验收 | 用 idle 替换 end 并接入 Lively 屏保链；最新 master 回归已通过，等待用户真机验收 | DXT-001 |
 | 9 | **UI-001 内容配置** | 排队 | 补已配置内容的移除、替换反馈和更完整的名称编辑体验，不扩展待机触发能力 | DXT-001；开始前先解决 DXT-002 的契约去留 |
 | 10 | **UI-002 Desk 顺序与 switch 读写** | 排队 | 补 Desk 排序，并按 Desk/方向重映射 `switches`；新相邻组合提示补充 | DXT-001、UI-001 |
 | 11 | **MEDIA-001 成组 HTML 素材导入** | 排队 | 在单个自包含 HTML 已可导入的基础上，定义并实现 HTML 及其 CSS/JS/图片依赖的成组导入、引用检查和孤儿素材处理 | UI-001、UI-002 |

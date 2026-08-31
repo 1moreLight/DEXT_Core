@@ -1,19 +1,21 @@
 # DXT-002 Room 待机画面接入 验收
 
-- 状态：开发中（最新 master 刷新）
+- 状态：待验收
 - 分支：`feat/dxt-002-idle-screensaver`
-- 提交：待刷新提交
+- 提交：`f140603`（最新 master 刷新实现）
 - 目标：复用 Lively Core 屏保链，让 Room 的可选 `idle` 内容在独立屏保实例中持续显示到唤醒，同时移除普通关闭时的 end 动画等待。
 - 范围外：旧 Room 迁移、Room zip、成组 HTML 导入、Dock 改造、新待机计时器和 Dext 待机设置页。
 
 ## 自动检查
 
-- [x] `room.schema.json` 与正反夹具接受 `idle/` 并拒绝 `end`、非法路径和未知字段。
-- [x] Rust 测试覆盖创建、导入、另存、应用、运行包旧 `end/` 清理和 `__source` 边界。
-- [x] `node --check wallpapers/dext-room/main.js`、配置器 `npm run build` 通过。
-- [x] `cargo test --lib -- --skip grpc::tests::apps_and_launch` 与 `cargo test --lib applies_room_wallpaper` 通过。
-- [x] `scripts/build.ps1` 完成 Release Player/C# 构建；`scripts/start.ps1` 能正常启动。
-- [x] Git 差异不包含 DOCK-004、`rooms/v1testRoom/` 或范围外重构。
+- [x] `python scripts/validate-room-schema.py`：正反夹具全部通过，`end` 被拒绝。
+- [x] `node --check wallpapers/dext-room/main.js` 与 `git diff --check master...HEAD` 通过。
+- [x] `cargo check`、`cargo test --lib`：22 项通过，2 项显式活体测试按规定忽略。
+- [x] `npm test`：6 项通过；`npm run build` 生产构建通过。
+- [x] `scripts/build.ps1` 完成 C#、Release Player、Watchdog 与插件部署。
+- [x] `scripts/start.ps1` 与 `scripts/verify-runtime-identity.ps1`：Core/配置器来自本 worktree，Dext 产品、mutex、pipe、data、log 身份正确。
+- [x] Playwright 1440×900 浏览器态检查：待机节点独立显示，属性栏图片/HTML/视频入口存在，控制台 0 error / 0 warning。
+- [x] Git 差异不包含 DOCK-004、主 worktree 用户 `rooms/` 或范围外重构；QA 产物未进入仓库。
 
 ## 人工验收
 
@@ -38,3 +40,4 @@
 - 2026-08-30：用户确认实施 DXT-002 计划；开发 worktree、分支和验收卡已建立。
 - 2026-08-30：Schema/JS/前端/Rust/C# 自动检查通过；真实配置器只读预验收确认独立待机节点、三类素材按钮、待机黑屏预览及切回普通 Desk 预览均正常，未保存或修改测试 Room。
 - 2026-08-31：用户明确确认“采用 idle、废弃 end”；本分支开始更新到最新 master，旧自动检查结果不作为本轮最终结果，需全部重跑。
+- 2026-08-31：实现重放到 master `da24514` 后提交为 `f140603`；Schema、JS、前端、Rust、C# Release 构建、Dext 身份启动和浏览器态视觉检查全部通过，进入待用户真机验收。
