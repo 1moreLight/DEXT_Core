@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-08-30。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-08-31。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -58,7 +58,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `FRONTEND_WORK.md` | 旧配置器 UI 迭代记录 | 仅历史参考；状态不作数 |
 | `DOCK.md` | **Dock 模块契约**（room.json dock 节点 schema、合并规则、渲染器行为、配置器对接点） | 任何 dock 相关改动/UI 接线 |
 | `ROOM_AUTHORING.md` | **Room v1 创作者定制协议**：目录、字段、HTML 场景接口、配置器操作和发布检查 | 使用配置器、手工制作或 vibe coding 定制 Room 时 |
-| `WIDGETS_V2.md` | **Room v2 小组件研究与开发准备**：Widget 运行/权限/联网/分享安全、v2 契约草案、AI 创作边界和后续工作包 | 讨论或开始 Room v2、小组件、AI 创作与可分享扩展前 |
+| `WIDGETS_V2.md` | **Room v2 Widget 正式契约与后续设计**：DXT-003 已冻结 manifest、权限、联网、数据、实例和迁移边界；WidgetHost/分享安全仍为后续工作包 | 阅读或实现 Room v2、小组件、AI 创作与可分享扩展时 |
 | `DOCK_STYLE.md` | Dock v0.x 外观定制历史；包含已经不进入 v1 的 room.js/room.css 接口 | 仅回溯旧实现时 |
 
 **铁律**：一个工作包一个分支和验收文件 → 动代码前写 TODO 和验收 → 自测通过后 commit → 停在分支等待用户验收 → 用户明确通过后才合并并删除分支/worktree。
@@ -137,7 +137,16 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 - `__source` 只允许出现在运行包；预览、源 Room 和未来 zip 禁止携带。
 - 内容目录固定为 `background/`、`start/`、`switch/`、`idle/`，所有 `src` 必须留在 Room 内。
 
-完整字段与宽容策略见 `MODEL.md`，机器校验见仓库根目录 `room.schema.json`。
+完整字段与宽容策略见 `MODEL.md`。仓库根目录 `room.schema.json` 是保持原样的 v1 Schema；`room-v2.schema.json` 是独立的 v2 Schema，`scripts/validate-room-schema.py` 按 `version` 分派并校验 fixtures 与样包资源。
+
+### Room v2 Widget 契约边界
+
+- v2 保留全部 v1 字段和唯一待机字段 `idle`，固定 `version: 2`，并要求每个 Desk 写出 `widgets` 数组；`end` 在 v1/v2 均非法。
+- Widget manifest、路径/资源、1920×1080 placement、权限枚举、config 限制和数量限制以 `room-v2.schema.json` 与 `WIDGETS_V2.md` 为准。
+- WidgetHost 尚未实现：v2 当前只允许列出、只读打开和独立校验；编辑、覆盖保存、另存降级、应用、v1 iframe 预览以及现有 zip 导入导出均拒绝。
+- v1 继续保持 `version: 1`，可读、编辑、保存、另存、应用和使用现有 zip 操作；写出不得产生 `widgets` 或误升版本。
+- 未知版本只显示不支持，禁止写入和应用。v1→v2 仅定义显式复制规则与前后 fixtures，本工作包不提供迁移命令或 UI。
+- 自包含离线样包位于 `dev_docs/fixtures/room-v2/sample-library/widget-contract-sample/`。
 
 ## 五、接口总表
 
@@ -174,7 +183,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_installed_apps` | `→ AppInfo[]`（含 48px 图标 base64） | 开始菜单枚举 |
 | `launch_app` | `(target, arguments, working_dir)` | 走 RPC 启动 |
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
-| `list_rooms` | `(dir) → {name,path,desks,icons}[]` | 扫房间库（含 room.json 的子文件夹） |
+| `list_rooms` | `(dir) → {name,path,desks,icons,version,widgets}[]` | 扫房间库；识别版本并统计 Widget，不执行 Widget |
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v1 并原子替换 |
 | `save_room_css` | `(room_dir, css)` | 保留给旧 Dock 模板编辑数据；v1 运行宿主不执行该 CSS |
 | `create_room` | `(dir, name) → path` | 建最小合法 v1 和四个素材目录 |
@@ -212,7 +221,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 强制重铺壁纸（活体测试，会改变桌面与恢复布局） | `cargo test --lib applies_room_wallpaper -- --ignored`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
 | 渲染器语法自检 | `node --check wallpapers/dext-room/main.js` |
-| Room v1 Schema 夹具验证 | `python scripts\validate-room-schema.py` |
+| Room v1/v2 Schema、语义、fixtures 与样包验证 | `python scripts\validate-room-schema.py` |
 | 日志 | `%LOCALAPPDATA%\Dext\logs\<最新>.txt`；首行可核对 PID、Core 绝对路径和运行身份 |
 | 运行身份核对 | `scripts\verify-runtime-identity.ps1`（只读报告 Core 二进制 ProductName、进程路径、mutex、pipe、data、log） |
 | 查代码 | `codegraph explore/node` 优先（索引已建） |

@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "startDesk": 0,
+  "switches": {},
+  "desks": [
+    {
+      "name": "Undeclared resource",
+      "background": null,
+      "iconSize": "medium",
+      "icons": [],
+      "widgets": [
+        {
+          "id": "undeclared",
+          "name": "Undeclared",
+          "src": "widgets/undeclared/index.html",
+          "resources": ["widgets/undeclared/index.html"],
+          "placement": {"x": 0, "y": 0, "width": 64, "height": 64, "z": 0},
+          "config": {},
+          "permissions": []
+        }
+      ]
+    }
+  ]
+}

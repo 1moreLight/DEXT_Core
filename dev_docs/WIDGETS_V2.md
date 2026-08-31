@@ -1,8 +1,8 @@
-# Room v2 小组件：研究与开发准备
+# Room v2 Widget：正式契约与后续设计
 
-> 状态：研究结论已验收并合并；不代表 Schema 或运行时已经升级。
+> 状态：DXT-003 契约已实现，待验收；WidgetHost、能力执行与分享安全尚未实现。
 >
-> 工作包：WIDGETS-PLAN-001（纯文档）
+> 工作包：WIDGETS-PLAN-001（研究，已完成）→ DXT-003（契约，待验收）
 >
 > 更新：2026-08-31
 > 关联：`PROJECT.md`、`MODEL.md`、`ROOM_AUTHORING.md`、`LIVELY_API.md`、`ROADMAP.md`
@@ -13,13 +13,13 @@
 
 现有 Room v1 已具备正确的底座：官方宿主保留 Desktop、Dock、图标、保存和 IPC；用户 HTML 仅在受控 iframe 内运行。v2 不应推翻这个分层，而应把“小组件”提升为 Room 的正式受管内容，新增 WidgetHost、受限能力桥和分享安全策略。
 
-本文件的目标是为 v2 开包冻结需要先解决的问题：运行方式、系统安全、权限、包格式、AI 作者接口、测试和工作包拆分。除明确写为“建议”的内容外，本文件不直接改变 v1 正式契约。
+本文件记录 DXT-003 已冻结的 v2 manifest、版本、权限、联网、数据和迁移契约，并保留 WidgetHost、能力执行、分享安全与 AI 作者接口的后续设计。v1 继续由 `room.schema.json` 定义且保持原样。
 
 ## 1. 已核对的 v1 基线
 
 | 范围 | 已有事实 | 对 v2 的意义 |
 |---|---|---|
-| 官方渲染器 | `wallpapers/dext-room/main.js` 加载 `room.json`，绘制背景、图标、Dock 与切换；`background/start/switch/end` 都支持 image/video/html。 | 可以在官方 DOM 中新增小组件层，不需另写播放器。 |
+| 官方渲染器 | `wallpapers/dext-room/main.js` 加载 v1 `room.json`，绘制背景、图标、Dock 与切换；`background/start/switch/idle` 都支持 image/video/html。 | 后续可在官方 DOM 中新增小组件层，不需另写播放器；当前不得让 v2 进入此 v1 链。 |
 | 用户 HTML | `playSlot()` 和 `mountBackground()` 以 `sandbox="allow-scripts"` iframe 挂载；HTML 不能同源访问官方页面。 | 可继续用 iframe 隔离不可信的作者代码。 |
 | 子帧 IPC | Player 以 `CoreWebView2WebMessageReceivedEventArgs.Source` 与当前顶层 URL（含路径和 query）比较；不匹配的 iframe 消息直接丢弃。 | 子组件不能绕过宿主直接触发启动、保存等本机 IPC。 |
 | Lively 数据 | 顶层官方页可收到音频频谱、正在播放、硬件信息、暂停状态和 LivelyProperty 更新。 | v2 可选择性地把整理后的只读数据转发给获授权 Widget。 |
@@ -87,10 +87,10 @@ Widget 不获得 `window.dext`（它仍是官方顶层内部接口），也不�
 | 级别 | 示例能力 | 默认 | 安全规则 |
 |---|---|---|---|
 | P0 无能力 | 静态/动画/本地交互、Room 配置只读 | 自动允许 | iframe 仍受 sandbox 与资源政策约束。 |
-| P1 非敏感只读 | 当前时间、语言、窗口大小、当前 Desk、暂停状态 | 自动允许或全局开关 | 限定字段与刷新频率。 |
-| P2 系统信号 | 音频频谱、当前歌曲元数据、CPU/GPU/RAM/网络摘要 | 每 Room 明确同意 | 按能力单独授权；歌曲封面/标题视为个人数据。 |
-| P3 持久化 | Widget 自己的键值设置、待办数据 | 每 Room 同意 | 仅宿主提供的配额 KV；无任意文件路径；导出由用户显式选择。 |
-| P4 受控动作 | 切 Desk、显示 Dext 通知、调用用户映射的应用动作 | 每动作/每 Room 同意 | 参数做 schema/白名单校验，显示来源与后果。 |
+| P1 非敏感只读 | 当前时间、语言、视口、当前 Desk、暂停状态、音频频谱、CPU/GPU/RAM 摘要 | 自动允许 | 限定字段与刷新频率。 |
+| P2 敏感只读/联网 | 当前歌曲元数据与封面、网络摘要、Dext 代理联网 | 每 Room 明确同意 | 按能力单独授权；歌曲与网络信息视为个人数据。 |
+| P3 持久化（未来声明） | Widget 自己的配额 KV、待办数据 | 本包不执行 | 未来仅由宿主提供配额 KV；无任意文件路径。 |
+| P4 受控动作（未来声明） | Dext 内导航/通知、用户映射的应用 action | 本包不执行 | 未来按参数 schema 和用户映射执行；分享包不携带本机映射。 |
 | 禁止 | Shell、任意启动、原始文件系统、系统设置、设备权限 | 永不授予 | 不因“作者可信”或 AI 生成而绕过。 |
 
 ### 4.1 应用启动的特殊规则
@@ -102,18 +102,18 @@ Widget 不获得 `window.dext`（它仍是官方顶层内部接口），也不�
 `sandbox` 隔离 DOM 和顶层 IPC，但不是网络防火墙。v2 必须在 Player/宿主层强制资源政策，而不是依赖作者在 HTML 中自行写 CSP：
 
 - 默认离线：仅允许当前 Room 的虚拟主机资源；`connect-src`、远程 script、远程 iframe、下载和顶层导航默认拒绝。
-- 需要网络时，manifest 请求精确的来源/用途，配置器显示域名和数据类别；用户批准后只放行该白名单，不能用通配符。
+- manifest 只可声明 `network.proxy`，不接受域名白名单。未来联网只能经用户批准、可审计的 Dext 代理；Widget 直连始终禁止。
 - 由 WebView2 的导航与资源请求拦截在最终执行边界实施；预览必须使用同等限制，不能在配置器预览中放行、真桌面中再拒绝。
 - 每个 Widget 设 CPU/内存/帧率、请求频率、消息长度、订阅数和存储配额；连续崩溃或超额时自动隔离并提示用户。
 - 禁止直连时，天气等联网内容应由 Dext 可审计的代理/缓存服务提供，而不是把用户系统数据随请求一并转给任意站点。
 
 ### 4.3 持久化和数据所有权
 
-Widget 数据采用宿主管理的命名空间，例如 `roomStableId/widgetId/contentHash`，API 限制为配额内 KV/JSON。作者不能枚举其他 Room、读写 `room.json`、读取 Dext 配置或访问本机目录。用户应能在配置器查看大小、清除数据、导出自己的数据，并在卸载 Room 时选择保留或删除。
+`config` 是 Room 内容并随 Room 复制及未来导出。未来 Widget 可变数据采用宿主管理的命名空间，例如 `roomStableId/widgetId/contentHash`，API 限制为配额内 KV/JSON；它与授权记录仅保留本机，不随复制、另存或导出。作者不能枚举其他 Room、读写 `room.json`、读取 Dext 配置或访问本机目录。
 
-## 5. Room v2 格式方向（草案）
+## 5. Room v2 正式格式（DXT-003）
 
-v2 的目的不是给 v1 加一个任意 JSON 袋子，而是使可分享小组件的可验证信息进入 Schema。建议新建固定目录 `widgets/`，并使用 `version: 2`。
+v2 的目的不是给 v1 加一个任意 JSON 袋子，而是使可分享小组件的可验证信息进入独立 Schema。`room.schema.json` 保持为原样兼容的 v1；`room-v2.schema.json` 固定 `version: 2`，保留全部 v1 字段和 `idle`，并要求每个 Desk 写出 `widgets` 数组。`end` 在两个版本中均非法。
 
 ```jsonc
 {
@@ -131,7 +131,12 @@ v2 的目的不是给 v1 加一个任意 JSON 袋子，而是使可分享小组�
           "id": "music-meter",
           "name": "音乐频谱",
           "src": "widgets/music-meter/index.html",
-          "placement": { "x": 72, "y": 96, "width": 420, "height": 220 },
+          "resources": [
+            "widgets/music-meter/index.html",
+            "widgets/music-meter/style.css",
+            "widgets/music-meter/main.js"
+          ],
+          "placement": { "x": 72, "y": 96, "width": 420, "height": 220, "z": 1 },
           "config": { "accent": "#7cecff" },
           "permissions": ["audio.spectrum", "now-playing.read"]
         }
@@ -141,17 +146,22 @@ v2 的目的不是给 v1 加一个任意 JSON 袋子，而是使可分享小组�
 }
 ```
 
-正式 Schema 仍需决定坐标单位、缩放/多分辨率策略、最小/最大尺寸、Widget 数量上限、深度限制和可序列化 `config` 的最大字节数。最低规则应包括：
+正式限制如下：
 
-- `id` 在一个 Room 内唯一；`src` 必须位于 `widgets/`，使用正斜杠相对路径，不含 URL、盘符、反斜杠、`.` 或 `..`。
-- `placement` 为有限非负数，且尺寸有合理上下限；不接收 CSS 字符串、HTML 片段或 JavaScript 表达式。
-- `permissions` 是封闭枚举、去重、可由宿主识别；未知权限使导入/应用提示，而不是静默授予。
-- `config` 只允许受大小和深度限制的 JSON 值；秘密、令牌、批准记录和运行态不得进入 Room 文件。
-- 仅 manifest 列出的资源可被包校验器和 WidgetHost 使用；Room 不能覆盖官方渲染器文件。
+- `id` 是小写 ASCII slug，在一个 Room 内全局唯一；每个 Desk 的条目是独立 Widget 实例。
+- `src` 必须是 HTML 入口；`src` 与全部去重 `resources` 必须位于 `widgets/<id>/`，使用正斜杠相对路径，不含 URL、盘符、反斜杠、`.` 或 `..`。`src` 必须列入 `resources`；样包校验拒绝缺失资源和 Widget 目录中的未声明文件。
+- `placement` 保存 1920×1080 逻辑画布中的整数 `x/y/width/height/z`，矩形最小 64×64、必须完整在画布内，z 为 0..255；未来 WidgetHost 按居中等比 `contain` 缩放。
+- `permissions` 是封闭、去重枚举；未知权限直接使 v2 校验失败，不会静默授予。
+- `config` 必须是 JSON object；紧凑 UTF-8 JSON 最大 65,536 字节，根对象计深度 1，最大深度 12。秘密、令牌、批准记录和运行态不得进入 Room 文件。
+- 每 Desk 最多 32 个 Widget，全 Room 最多 64 个；单 Widget 最多 256 个资源。Room 不能覆盖官方渲染器文件。
 
 ### 5.1 版本和迁移原则
 
-v1 的严格封闭模型已经发布，因此保持 v1 原样可读、可应用、可导出。支持 Widgets 的客户端再解析 v2；旧客户端应显示“不支持 v2”，绝不删除 `widgets` 后保存。是否提供 v1→v2 迁移由独立工作包决定；迁移只复制已有字段，不自动给 Widget 授权，也不引入新的执行内容。
+v1 的严格封闭模型已经发布，因此保持 v1 原样可读、可编辑、可保存、可另存、可应用并使用现有 zip 操作；写出永远保持 `version: 1` 且不出现 `widgets`。v2 和未知版本不得落入 v1 写入或运行链。
+
+在 WidgetHost 实现前，v2 只允许列出、只读打开和独立严格校验；编辑、覆盖保存、另存降级、应用、v1 iframe 预览和当前 zip 导入导出均拒绝。未知版本只显示不支持并禁止全部写入和应用。Rust 必须在最终边界再次检查版本，失败不得修改源 Room、运行包或桌面。
+
+v1→v2 采用显式复制：先严格验证 v1，再创建新的 v2，保留全部 v1 字段和 `background/start/switch/idle` 四类素材，将版本改为 2，为各 Desk 添加空 `widgets` 并创建 `widgets/`；源 v1 不变，也不复制授权或运行数据。DXT-003 只交付 `dev_docs/fixtures/room-migration/` 前后 fixtures 和规则，不提供迁移命令或 UI。
 
 ## 6. AI 创作协议
 
@@ -175,7 +185,7 @@ Room v2 分享包仍是自包含 zip。`ROOM-001/002/003` 的安全基线应覆�
 1. 限制 zip 总大小、展开大小、条目数、压缩比和单文件大小，防 zip bomb。
 2. 拒绝绝对路径、`..`、符号链接/重解析点、重复或大小写冲突路径和不允许的文件类型。
 3. 解析版本对应 Schema，检查所有声明资源存在且在允许目录；不得保留 `__source`、用户批准记录或运行态字段。
-4. 生成清单（文件哈希、Widget id、请求权限、联网域名、资源占用），在用户应用前显示。
+4. 生成清单（文件哈希、Widget id、请求权限、是否请求 Dext 代理联网、资源占用），在用户应用前显示。
 5. 导入至新建受控 Room 目录并原子提交；任一步失败不得污染现有 Room 或运行包。
 6. 首次应用时先以 P0/P1 预览；P2+ 权限和网络必须明确确认。内容或 manifest 哈希改变后重新询问。
 
@@ -198,7 +208,7 @@ Room v2 分享包仍是自包含 zip。`ROOM-001/002/003` 的安全基线应覆�
 | 顺序 | 工作包 | 独立交付与验收重点 | 依赖 |
 |---|---|---|---|
 | 0 | **WIDGETS-PLAN-001** | 本研究和开发准备文档；不动运行时。 | 无 |
-| 1 | **DXT-003 Room v2 Widget 契约** | v2 Schema、fixtures、版本分派、迁移/兼容规则和独立验收样包。 | WIDGETS-PLAN-001；先明确 DXT-002 的契约去留。 |
+| 1 | **DXT-003 Room v2 Widget 契约** | v2 Schema、fixtures、版本分派、迁移/兼容规则和独立验收样包；当前待验收。 | WIDGETS-PLAN-001、DXT-002（已完成） |
 | 2 | **WIDGET-001 WidgetHost 离线运行** | 官方层渲染多个沙箱 Widget，完成布局/编辑/生命周期；不开放系统数据、存储、联网或启动。 | DXT-003 |
 | 3 | **WIDGET-002 受控只读能力桥** | instance/source 校验、P0/P1/P2 数据订阅、限流、权限 UI 与桌面/预览一致性。 | WIDGET-001；Lively API 真机验证。 |
 | 4 | **WIDGET-003 存储与受控动作** | 配额 KV、数据管理、Dext 内导航、用户映射的应用 action；无任意 launch。 | WIDGET-002 |
@@ -208,26 +218,26 @@ Room v2 分享包仍是自包含 zip。`ROOM-001/002/003` 的安全基线应覆�
 
 当前路线中的 `UI-001`、`UI-002`、`MEDIA-001`、`ROOM-001/002/003` 仍不被本研究自动替换。若用户决定“v2 优先于公开分享”，应在 DXT-003 开工时正式调整 ROADMAP：使导入导出从一开始支持版本分派，而非先发布仅 v1 的格式闭环。
 
-## 10. 开工前必须确认的决策
+## 10. 已确认的 DXT-003 开工决策
 
-以下问题在 DXT-003 前需要用户确认或通过原型验证：
+用户于 2026-08-31 确认以下六项，均已进入 Schema、校验器和正式模型：
 
-1. Widget 布局以 CSS px、逻辑画布单位还是百分比保存；缩放/DPI/未来多屏如何处理。
-2. P1 默认公开范围，以及当前歌曲封面和硬件网络摘要是否一律归为 P2。
-3. 是否允许联网 Widget；若允许，采用“禁止直连、Dext 代理”还是“用户批准的精确域名白名单”。
-4. 持久化数据是否跟随 Room 复制、另存和导出，还是只保留在本机。
-5. Widget 是否允许在所有 Desk 共享一实例，还是每 Desk 独立实例；第一版建议每 Desk 独立，语义最简单。
-6. v1→v2 是显式复制升级还是编辑时可选升级；第一版建议只提供显式升级，且不自动修改源 Room。
+1. 布局保存为 1920×1080 逻辑画布整数矩形与 z；未来按居中等比 `contain` 缩放。
+2. P1 自动允许时间、语言、视口、当前 Desk、暂停态、音频频谱、CPU/GPU/RAM 摘要；歌曲信息/封面、网络摘要、Dext 代理联网归 P2。
+3. 网络默认离线，禁止直连；未来只允许用户批准、可审计的 Dext 代理，manifest 不接收域名白名单。
+4. `config` 跟随 Room；未来宿主管理的授权、KV 和待办数据只留本机，不随复制、另存或导出。
+5. 每个 Desk 的 Widget 是独立实例；`id` 仍在 Room 内全局唯一。
+6. v1→v2 只做显式复制，绝不原地修改源 v1；本包没有迁移命令或 UI。
 
-## 11. DXT-003 的最低人工验收预案
+## 11. DXT-003 人工验收
 
-1. 用 v1 Room 打开、保存、应用，确认没有出现 `widgets` 或版本误升。
-2. 用合法 v2 Room 打开，确认每个 Widget 只加载 `widgets/` 中声明的文件，图标/Dock 仍属于官方层。
-3. 修改为非法路径、未知权限、重复 id、超尺寸 placement 或错误版本，确认预览给出人话提示，保存/应用拒绝且不破坏当前运行包。
-4. 在 Widget 中伪造顶层 IPC、旧实例消息和未获授权的能力请求，确认均无系统副作用且留可诊断日志。
-5. 首次应用请求 P2/P3/P4 或联网时，确认用户看见来源、数据/动作和拒绝选项；拒绝后 Widget 仍可降级运行。
-6. 导入恶意 zip（路径逃逸、压缩炸弹、额外可执行文件）时，确认不写入 Room 库、不启动内容且有可理解的错误。
+1. 打开、编辑、保存并应用一个 v1 Room；确认仍为 v1、无 widgets，Desk/Dock/start/switch/idle 行为不回归。
+2. 打开 v2 样包；确认显示 v2 与 Widget 数量，但编辑、保存、应用、降级另存和当前 zip 操作均被明确阻止，源样包与当前运行包未变化。
+3. 运行独立校验脚本；确认合法样包通过，重复 id、非法路径、未知权限、非法 placement、过深/过大 config 和 `end` fixtures 均被拒绝。
+4. 对照迁移前后 fixtures；确认升级只复制 v1 内容、改为 version 2 并加入空 widgets，不修改源 v1、不生成权限或可变数据。
 
-## 12. 本轮研究状态
+完整逐项记录见 `acceptance/DXT-003-room-v2-widget-contract.md`。
 
-本文件基于当前 Dext v1 代码与 `LIVELY_API.md` 核对形成。它确认 v2 小组件方向技术可行，并将“前端自由创作”与“系统能力最小授权”分开。下一步不是直接开放 Lively API，而是在用户确认本研究后，单独开 `DXT-003` 或先按用户调整路线图的优先级。
+## 12. 当前状态
+
+DXT-003 已交付独立 v2 Schema、版本分派、Widget manifest、正反 fixtures、迁移规则、自包含离线样包和 v2 只读保护，当前停在待验收。下一步仍是用户按独立验收卡确认本契约；在明确回复“通过”前不合并 master。WidgetHost、能力执行、联网、存储、布局编辑、v2 分享安全与 AI skill 均保持为后续独立工作包。

@@ -342,3 +342,19 @@
 - [x] 更新验收卡和 ROADMAP；实现提交 `f140603`，状态收口后进入待验收（2026-08-31）
 - [x] 用户按 `dev_docs/acceptance/DXT-002-idle-screensaver.md` 验收通过（2026-08-31，回复“通过 合并”）
 - [x] 合并到 master（merge `6544e52`）；DXT-003 提升为唯一下一项，工作分支/worktree 收口清理（2026-08-31）
+
+## DXT-003 Room v2 Widget 契约（2026-08-31）
+
+> 目标：在不改变 Room v1 与 idle 生命周期的前提下，交付可独立校验的 Room v2 Widget 契约、版本分派、兼容与显式复制迁移规则。
+> 范围外：不实现 WidgetHost/渲染、能力桥、权限执行、存储、联网、应用启动、布局编辑 UI、ROOM-004 分享安全闭环、AI skill、DOCK-004、UI-USE-001、用户 `rooms` 或其他待验收分支，也不重写现有渲染器。
+> 人工验收：按 `dev_docs/acceptance/DXT-003-room-v2-widget-contract.md` 验证 v1 保存/应用不回归、v2 样包只读与校验、非法 Widget fixtures 拒绝、显式复制迁移前后规则及 idle/end 边界。
+
+- [x] 核对 `master@096eacd`、worktree、未合并分支、stash 与主 worktree 用户 Room 状态；创建独立 worktree 和 `feat/dxt-003-room-v2-widget-contract`（2026-08-31）
+- [x] 冻结六项开工决策：1920×1080 逻辑画布、宽松 P1、Dext 代理联网、本机可变数据、每 Desk 独立实例、显式复制升级（2026-08-31）
+- [x] 建立独立验收卡并将 ROADMAP 标为开发中（2026-08-31）
+- [x] 新增 Room v2 Schema、正反 fixtures、自包含样包和版本分派校验脚本（2026-08-31）
+- [x] 实现 Rust v1/v2/未知版本分派、v2 Widget 语义校验和只读操作边界（2026-08-31）
+- [x] 实现 TypeScript 版本能力矩阵、v2 只读提示/禁用与相关测试（2026-08-31）
+- [x] 同步 README/PROJECT/MODEL/WIDGETS_V2 正式契约，并将版本守卫回归记录为 ERRORS #48（2026-08-31）
+- [x] 运行 Schema、Rust、TS、前端构建、渲染器语法与差异检查；`codegraph sync` 已按要求尝试，但独立 worktree 未初始化索引，未擅自初始化（2026-08-31）
+- [ ] 只暂存本工作包具名文件并提交；更新为待验收，等待用户明确确认

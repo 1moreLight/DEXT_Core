@@ -19,12 +19,13 @@
 | 最近完成 | **CORE-002 Dext Core 运行身份隔离** | 已完成 | master（merge `3835be1`） | Dext Core、配置器、脚本、mutex、pipe 和本地数据身份已隔离；验收反馈修复完成并清理工作分支/worktree |
 | 待验收 | **UI-USE-001 配置器使用页设计规格** | 待验收（纯文档） | `docs/ui-use-001-use-page-spec`（`4be6ca1`） | 已按用户要求建立逐页设计档案，未修改代码；保持独立分支等待验收，不混入本次启动修复 |
 | 最近完成 | **WIDGETS-PLAN-001 Room v2 小组件研究与开发准备** | 已完成 | master（merge `484c5f6`） | 小组件运行/权限/联网/分享安全、Room v2 草案和 AI 创作边界；不改当前实现或唯一下一项 |
+| 待验收 | **DXT-003 Room v2 Widget 契约** | 待验收 | `feat/dxt-003-room-v2-widget-contract` | v2 Schema、版本分派、Widget manifest/fixtures、兼容与迁移规则已完成自动检查；不实现 WidgetHost |
 | 最近完成 | **CORE-003 Dext 一键启动防旧构建** | 已完成 | master（merge `8c7c89a`） | 旧 Lively 构建会被强制重建为 Dext；双击入口、缺依赖恢复、退出码和失败进程清理已验收合并 |
 | 最近完成 | **UI-V1-001 配置器核心页面全栈闭环** | 已完成 | master（merge `61ea4c8`） | Room 安全管理与运行状态、使用/编辑/设置页、Desk/Dock 共用应用选择、测试隔离及六轮验收反馈均已完成 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
-DXT-001、CORE-002 与 CORE-003 已于 2026-08-30 验收并合并 master；UI-V1-001 与 DXT-002 于 2026-08-31 验收合并。Room 生命周期已统一为 idle，DXT-003 现为唯一下一项。DOCK-004 与 UI-USE-001 继续保持各自待验收状态，不混入 Room v2 契约工作包。
+DXT-001、CORE-002 与 CORE-003 已于 2026-08-30 验收并合并 master；UI-V1-001 与 DXT-002 于 2026-08-31 验收合并。Room 生命周期已统一为 idle，DXT-003 已在独立 worktree 完成自动检查并等待人工验收。DOCK-004 与 UI-USE-001 继续保持各自待验收状态，不混入 Room v2 契约工作包。
 
 ## 二、完成的定义
 
@@ -89,7 +90,7 @@ DXT-001 同时决定新数据怎样表达、让现有播放器真正执行该格
 | 顺序 | 工作包 | 状态 | 独立交付结果 | 依赖 |
 |---|---|---|---|---|
 | 0 | **WIDGETS-PLAN-001 Room v2 小组件研究与开发准备** | 已完成（merge `484c5f6`） | 已冻结小组件运行模型、系统权限、网络/导入安全、Room v2 草案、AI 作者边界与后续验收拆分；不改实现 | 当前 v1 基线与 Lively API 调研 |
-| 1 | **DXT-003 Room v2 Widget 契约** | 下一项 | Room v2 Schema、版本分派、Widget manifest/fixtures 与兼容规则 | WIDGETS-PLAN-001、DXT-002 |
+| 1 | **DXT-003 Room v2 Widget 契约** | 待验收 | Room v2 Schema、版本分派、Widget manifest/fixtures 与兼容规则 | WIDGETS-PLAN-001、DXT-002 |
 | 2 | **WIDGET-001 WidgetHost 离线运行** | 排队 | 官方层托管多个沙箱 Widget 的布局、编辑和生命周期；无系统能力 | DXT-003 |
 | 3 | **WIDGET-002 受控只读能力桥** | 排队 | 逐实例/逐权限的 Lively/Dext 数据桥、限流与预览一致性 | WIDGET-001 |
 | 4 | **WIDGET-003 存储与受控动作** | 排队 | 配额 KV、Dext 内动作和用户映射的应用 action；无任意启动 | WIDGET-002 |

@@ -1,0 +1,6 @@
+{
+  "version": 1, "startDesk": 0,
+  "idle": { "name": "待机", "type": "image", "src": "idle/standby.png" },
+  "switches": {},
+  "desks": [{ "name": "主页", "background": null, "iconSize": "medium", "icons": [] }]
+}

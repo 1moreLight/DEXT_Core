@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "startDesk": 0,
+  "idle": { "name": "待机", "type": "image", "src": "idle/standby.png" },
+  "switch": "fade",
+  "switches": { "0>1": "slide", "1>0": "zoom" },
+  "desks": [
+    {
+      "name": "工作台", "background": null, "iconSize": "medium", "icons": [],
+      "widgets": [{
+        "id": "system-meter", "name": "系统仪表", "src": "widgets/system-meter/index.html",
+        "resources": ["widgets/system-meter/index.html", "widgets/system-meter/style.css"],
+        "placement": { "x": 72, "y": 96, "width": 420, "height": 220, "z": 2 },
+        "config": { "accent": "#7cecff" },
+        "permissions": ["audio.spectrum", "hardware.cpu.read", "hardware.memory.read"]
+      }]
+    },
+    {
+      "name": "信息", "background": null, "iconSize": "small", "icons": [],
+      "widgets": [{
+        "id": "now-playing", "name": "正在播放", "src": "widgets/now-playing/index.html",
+        "resources": ["widgets/now-playing/index.html"],
+        "placement": { "x": 600, "y": 120, "width": 640, "height": 320, "z": 1 },
+        "config": {},
+        "permissions": ["now-playing.read", "now-playing.artwork.read", "network.proxy"]
+      }]
+    }
+  ]
+}
