@@ -17,11 +17,11 @@
 ## 人工验收
 
 1. [ ] 打开、编辑、保存并应用一个 v1 Room；确认仍为 `version: 1`、没有 `widgets`，Desk/Dock/start/switch/idle 行为正常。
-2. [ ] 打开随仓库提供的 v2 样包；确认显示 v2 与 Widget 数量，并明确提示 WidgetHost 尚未实现。
+2. [ ] 从本工作包 worktree 运行 `scripts/start.ps1`；在“设置 → Room 库”记下原路径，再临时切换到 `dev_docs/fixtures/room-v2/sample-library`。回到使用页打开 `widget-contract-sample`，确认显示 `v2`、`1 Widget`，并明确提示 WidgetHost 尚未实现。新建 Room 仍为 v1 是本包预期行为，不以新建方式产生 v2。
 3. [ ] 确认 v2 的编辑、覆盖保存、降级另存、应用、v1 iframe 预览和当前 zip 导入导出均被阻止；样包、当前运行包和桌面不被修改。
 4. [ ] 运行 Schema 校验；确认合法样包通过，重复 id、非法路径、未知权限、非法 placement、过深/过大 config 和 `end` fixtures 被拒绝。
 5. [ ] 对照 v1→v2 迁移前后 fixtures；确认只复制 v1 字段与四类素材规则、改为 version 2 并为各 Desk 加空 widgets，不修改源 v1、不产生授权或可变数据。
-6. [ ] 确认 v1/v2 都只接受 `idle`；`end` 不兼容且不会被恢复。
+6. [ ] 确认 v1/v2 都只接受 `idle`；`end` 不兼容且不会被恢复。验收结束后把“Room 库”恢复为步骤 2 记下的原路径。
 
 ## 通过标准
 
@@ -35,3 +35,4 @@
 - 2026-08-31：用户确认六项开工决策和实施计划；从 `master@096eacd` 建立独立 worktree/分支，主 worktree 用户 Room 状态未触碰。
 - 2026-08-31：自动检查通过，状态进入待验收；WidgetHost 仍未实现，v2 保持只读。
 - 2026-08-31：35 个具名文件提交为 `c60141e`；未合并 master，等待用户人工验收。
+- 2026-08-31：根据验收反馈补充 v2 样包的配置器入口，并明确“新建 Room 保持 v1”是兼容性要求。
