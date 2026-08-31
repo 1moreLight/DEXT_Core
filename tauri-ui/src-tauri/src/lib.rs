@@ -288,7 +288,7 @@ fn is_reparse_point(path: &std::path::Path) -> Result<bool, String> {
     Ok(false)
 }
 
-fn direct_room_in_library(
+fn direct_room_entry_in_library(
     library_dir: &std::path::Path,
     room_dir: &std::path::Path,
 ) -> Result<std::path::PathBuf, String> {
@@ -311,6 +311,15 @@ fn direct_room_in_library(
     if !room_json.is_file() || is_reparse_point(&room_json)? {
         return Err("selected directory is not a valid Room (room.json missing)".into());
     }
+    Ok(room)
+}
+
+fn direct_room_in_library(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    let room = direct_room_entry_in_library(library_dir, room_dir)?;
+    let room_json = room.join("room.json");
     let value: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(&room_json)
             .map_err(|error| format!("read room.json failed: {error}"))?,
@@ -994,7 +1003,7 @@ async fn save_room_as(
 
 #[tauri::command]
 async fn delete_room(library_dir: String, room_dir: String) -> Result<(), String> {
-    let room = direct_room_in_library(
+    let room = direct_room_entry_in_library(
         std::path::Path::new(&library_dir),
         std::path::Path::new(&room_dir),
     )?;
@@ -1739,10 +1748,10 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_settings_patch, direct_room_in_library, display_path, export_room_zip_file,
-        import_room_content_file, import_room_zip_file, save_room_as_dir, save_room_css_file,
-        sync_room_to_package, validate_room_library_path, validate_room_v1, write_room_file,
-        DextSettingsPatch, ROOM_ASSET_DIRS,
+        apply_settings_patch, direct_room_entry_in_library, direct_room_in_library, display_path,
+        export_room_zip_file, import_room_content_file, import_room_zip_file, save_room_as_dir,
+        save_room_css_file, sync_room_to_package, validate_room_library_path, validate_room_v1,
+        write_room_file, DextSettingsPatch, ROOM_ASSET_DIRS,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -2107,6 +2116,35 @@ mod tests {
         assert!(direct_room_in_library(&library, &outside)
             .unwrap_err()
             .contains("direct child"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn deletion_target_accepts_legacy_or_malformed_room_json() {
+        let root = test_dir("delete-legacy-room");
+        let library = root.join("library");
+        let legacy = library.join("legacy");
+        let malformed = library.join("malformed");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&malformed).unwrap();
+        std::fs::write(legacy.join("room.json"), r#"{"desks":[{"icons":[]}]}"#).unwrap();
+        std::fs::write(malformed.join("room.json"), "not json").unwrap();
+
+        assert_eq!(
+            direct_room_entry_in_library(&library, &legacy).unwrap(),
+            legacy.canonicalize().unwrap()
+        );
+        assert_eq!(
+            direct_room_entry_in_library(&library, &malformed).unwrap(),
+            malformed.canonicalize().unwrap()
+        );
+        assert!(direct_room_in_library(&library, &legacy)
+            .unwrap_err()
+            .contains("room.version must be 1"));
+        assert!(direct_room_in_library(&library, &malformed)
+            .unwrap_err()
+            .contains("parse room.json failed"));
 
         std::fs::remove_dir_all(root).unwrap();
     }

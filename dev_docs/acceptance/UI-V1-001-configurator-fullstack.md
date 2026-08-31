@@ -11,7 +11,7 @@
 - [x] `cd tauri-ui && npm test`：6 项 Desk 重映射测试通过
 - [x] `cd tauri-ui && npm run build`
 - [x] `cd tauri-ui/src-tauri && cargo check`
-- [x] `cd tauri-ui/src-tauri && cargo test --lib`：21 项通过，2 项真实环境测试默认 ignored
+- [x] `cd tauri-ui/src-tauri && cargo test --lib`：22 项通过，2 项真实环境测试默认 ignored
 - [x] `cd tauri-ui/src-tauri && cargo test --lib applies_room_wallpaper`（历史执行记录；第三轮修订后该活体测试改为显式 `-- --ignored`）
 - [x] 本包未修改 C# 或 `.proto` 源文件，无需重跑 `scripts/build.ps1`
 - [x] `scripts/start.ps1`：当前 worktree Core 与配置器成功启动
@@ -54,13 +54,21 @@
 - [x] `wallpapers/dext-room` 的运行态变化已保存为可恢复 stash `runtime v1testRoom snapshot before UI-V1-001 feedback cleanup`，随后恢复分支基线；用户 `rooms/v1testRoom` 仅只读检查，未删除或改写。
 - [x] 新增 ERRORS #45，并同步 AGENTS、README、PROJECT、WORKFLOW、旧总验收和 UI v1 计划中的活体测试命令及副作用说明。
 
+## 第四轮验收反馈验证（2026-08-31）
+
+- [x] 删除链只验证库直属目录、重解析点和真实 `room.json`；编辑、应用和导出链继续执行严格 v1 与素材引用校验。
+- [x] 新增 `deletion_target_accepts_legacy_or_malformed_room_json`：旧版和损坏 JSON 可成为安全删除目标，但仍无法通过严格 Room 校验。
+- [x] 真 Tauri 验证截图中的旧 `black-room` 删除成功，页面显示“已把 1 个 Room 移到回收站”并刷新列表；该目录可从 Windows 回收站恢复，其他 Room 未删除。
+- [x] `npm test`（6 项）、`npm run build`、`cargo fmt --check`、`cargo check`、`cargo test --lib`（22 项通过、2 项 ignored）与 `git diff --check` 通过。
+- [x] 新增 ERRORS #46；未放宽旧 Room 的应用、导入或导出权限。
+
 ## 人工验收
 
 1. [ ] 启动 Dext，确认 Core、Player 和配置器来自 UI-V1-001 当前 worktree 构建路径。
 2. [ ] 使用页单击 Room 只选中并显示详情，不切换壁纸；双击才应用。当前 Room 可停止，停止后 Core 与配置器仍连接，外部停止也会同步为空闲。
 3. [ ] Room 详情栏“编辑”可直接进入所选 Room 编辑模式；“应用此 Room”仍是独立动作。
 4. [ ] Room 详情固定 16:9 预览只显示简单背景；图片/视频可预览，HTML 或加载失败时显示稳定的简单占位，不出现应用图标或 Dock。
-5. [ ] 新增、删除、多选、导入和导出 Room；删除可恢复、重名不覆盖、非法 zip 被拒绝且库中无残留。
+5. [ ] 新增、删除、多选、导入和导出 Room；删除可恢复，且旧版/损坏但仍是库直属目录并含 `room.json` 的 Room 也可删除；库根、库外目录和重解析点仍被拒绝，重名不覆盖、非法 zip 被拒绝且库中无残留。
 6. [ ] 编辑页侧栏顺序为 Room → 应用库 → Dock；应用库删除按钮常驻，未选禁用、选中启用。
 7. [ ] Desk 属性栏“放入应用”在当前编辑页原地打开独立应用选择框，不跳转侧栏应用库；选择框不显示添加、删除、扫描或删除勾选，点击应用直接加入/移出当前 Desk，关闭后仍停留在原 Desk，并提示可在桌面长按图标拖动位置。
 8. [ ] 删除首、中、尾 Desk 后，`startDesk`、当前选择、撤销/重做和双向 Switch 正确；新邻接不继承不存在的旧效果。
