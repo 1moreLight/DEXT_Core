@@ -58,6 +58,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `FRONTEND_WORK.md` | 旧配置器 UI 迭代记录 | 仅历史参考；状态不作数 |
 | `DOCK.md` | **Dock 模块契约**（room.json dock 节点 schema、合并规则、渲染器行为、配置器对接点） | 任何 dock 相关改动/UI 接线 |
 | `ROOM_AUTHORING.md` | **Room v1 创作者定制协议**：目录、字段、HTML 场景接口、配置器操作和发布检查 | 使用配置器、手工制作或 vibe coding 定制 Room 时 |
+| `WIDGETS_V2.md` | **Room v2 小组件研究与开发准备**：Widget 运行/权限/联网/分享安全、v2 契约草案、AI 创作边界和后续工作包 | 讨论或开始 Room v2、小组件、AI 创作与可分享扩展前 |
 | `DOCK_STYLE.md` | Dock v0.x 外观定制历史；包含已经不进入 v1 的 room.js/room.css 接口 | 仅回溯旧实现时 |
 
 **铁律**：一个工作包一个分支和验收文件 → 动代码前写 TODO 和验收 → 自测通过后 commit → 停在分支等待用户验收 → 用户明确通过后才合并并删除分支/worktree。
