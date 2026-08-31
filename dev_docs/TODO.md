@@ -340,4 +340,4 @@
 - [x] 解决文档、Rust 和 React 冲突，保持最新 Room 管理/UI 能力并移除 idle 临时兼容层（2026-08-31）
 - [x] 运行 Schema、渲染器、前端、Rust、C# Release 构建与启动检查；浏览器态待机节点视觉/控制台检查通过（2026-08-31）
 - [x] 更新验收卡和 ROADMAP；实现提交 `f140603`，状态收口后进入待验收（2026-08-31）
-- [ ] 用户按 `dev_docs/acceptance/DXT-002-idle-screensaver.md` 验收通过
+- [x] 用户按 `dev_docs/acceptance/DXT-002-idle-screensaver.md` 验收通过（2026-08-31，回复“通过 合并”）
