@@ -94,7 +94,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 
 - `scripts/build.ps1`：全量构建+部署插件（改 C#/.proto 必跑）
 - `scripts/start.ps1`：部署检查+起 Core+起配置器 dev（纯前端改动只跑这个）
-- `cargo test --lib applies_room_wallpaper`（在 tauri-ui/src-tauri）：强制重新铺壁纸
+- `cargo test --lib applies_room_wallpaper -- --ignored`（在 tauri-ui/src-tauri）：显式运行会改变桌面和 Core 恢复布局的活体测试；普通 `cargo test --lib` 不运行
 - Player 必须 Release（Debug 分支不发 hwnd → ShowAsync 永久挂起）
 - 日志：`%LOCALAPPDATA%\Dext\logs\<最新>.txt`；用首行 PID/BaseDirectory/identity 判断是否为 Dext Core
 

@@ -134,7 +134,7 @@ Dext 同时包含 React、Rust、C# 和桌面渲染器，过去按“大阶段�
 | Rust / Tauri command | `cargo check` + 相关测试；必要时 `scripts/start.ps1` |
 | C# / `.proto` | `scripts/build.ps1` 后 `scripts/start.ps1`；Player 必须 Release |
 | 渲染器 JS/CSS | `node --check main.js` + `scripts/room-preview.ps1`；涉及真桌面再跑 `scripts/start.ps1` |
-| Room 应用链 | `cargo test --lib applies_room_wallpaper` + 真机应用 |
+| Room 应用链 | `cargo test --lib applies_room_wallpaper -- --ignored` + 真机应用（仅人工验收；会改变桌面和 Core 恢复布局） |
 | 纯文档 | 链接、工作包 ID、状态、Git 分支和相互引用一致性检查 |
 
 最低检查不是上限；验收文件应按风险补充本轮所需检查。

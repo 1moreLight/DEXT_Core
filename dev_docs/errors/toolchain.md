@@ -92,3 +92,10 @@
 - 原因：用 `if` 表达式给变量赋单元素数组时，PowerShell 管道输出被解包成普通字符串；对字符串使用 `@变量` splatting 会把每个字符当成独立参数。
 - 解决：先显式初始化空数组，再在条件内用 `+=` 加入 `/t:Rebuild` 或 `-t:Rebuild`，确保传给原生命令的始终是参数数组。
 - 防再犯：动态构造原生命令参数后，用一次真实命令查看完整命令行；不要假设单元素 `@(...)` 经过条件表达式后仍保持数组类型。
+
+## 45. 普通 Rust 测试实际铺设壁纸并污染 Core 恢复布局
+
+- 现象：每次跑完 `cargo test --lib` 后都会重新出现很早以前测试 Room 的背景；重启 Dext Core 后还会自动恢复。
+- 根因：`grpc::tests::applies_room_wallpaper` 直接调用真实 Core 的 `SetWallpaper`，`apps_and_launch` 还会启动 Notepad；两项活体测试此前混在普通单元测试中。Core 随后把 `wallpapers/dext-room` 写进 `%LOCALAPPDATA%\Dext\WallpaperLayout.json`，下次启动必然恢复，而运行包里的 `room.json.__source` 仍指向旧测试 Room。
+- 解决：两项测试标记为 Rust `#[ignore]`。普通 `cargo test --lib` 只跑无外部副作用的测试；需要真 Core 验收时显式运行 `cargo test --lib applies_room_wallpaper -- --ignored`，完成后再停止壁纸并核对恢复布局。
+- 防再犯：凡会调用真实 RPC、启动应用、修改桌面或写入用户状态的测试都必须默认 ignored，并在命令旁写清副作用和恢复步骤；不能把“测试通过”等同于“环境没有被改变”。

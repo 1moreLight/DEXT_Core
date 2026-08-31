@@ -513,6 +513,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "live test: changes the Windows desktop wallpaper and persisted restore layout"]
     async fn applies_room_wallpaper() {
         super::set_wallpaper(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -523,6 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "live test: enumerates installed apps and launches Notepad"]
     async fn apps_and_launch() {
         let apps = super::get_installed_apps()
             .await

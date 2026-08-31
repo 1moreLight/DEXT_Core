@@ -741,10 +741,7 @@ function ContentInspector({
   roomPath: string | null;
   emptyLabel: string;
 }) {
-  const roomName = roomPath?.split(/[\\/]/).filter(Boolean).pop();
-  const url = content && roomName
-    ? `http://lib.localhost/${encodeURIComponent(roomName)}/${content.src.split("/").map(encodeURIComponent).join("/")}`
-    : "";
+  const url = roomContentUrl(content, roomPath);
   const typeLabel = content?.type === "image" ? "图片" : content?.type === "video" ? "视频" : content?.type === "html" ? "HTML" : "未选择";
   return (
     <div className="flex shrink-0 items-center gap-3">
@@ -764,6 +761,73 @@ function ContentInspector({
         <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
         <div className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${content ? "bg-primary" : "bg-muted-foreground/40"}`} aria-hidden="true" /><span>{typeLabel}</span></div>
       </dl>
+    </div>
+  );
+}
+
+function roomContentUrl(content: Content | null, roomPath: string | null): string {
+  const roomName = roomPath?.split(/[\\/]/).filter(Boolean).pop();
+  return content && roomName
+    ? `http://lib.localhost/${encodeURIComponent(roomName)}/${content.src.split("/").map(encodeURIComponent).join("/")}`
+    : "";
+}
+
+function DeskBackgroundCanvas({
+  desks,
+  roomPath,
+  selectedIndex,
+  onSelect,
+}: {
+  desks: Desk[];
+  roomPath: string | null;
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div className="flex h-full w-[52vw] min-w-[32rem] max-w-3xl shrink-0 flex-col justify-center gap-2">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span className="font-medium uppercase tracking-[0.14em]">Desk 画布</span>
+        <span>{desks.length} 个 Desk · 点击切换</span>
+      </div>
+      <div role="listbox" aria-label="Desk 背景画布" className="flex gap-2 overflow-x-auto pb-1">
+        {desks.map((item, index) => {
+          const content = item.background;
+          const url = roomContentUrl(content, roomPath);
+          const selected = index === selectedIndex;
+          return (
+            <button
+              key={index}
+              type="button"
+              role="option"
+              aria-selected={selected}
+              onClick={() => onSelect(index)}
+              className={`group relative aspect-video w-44 shrink-0 overflow-hidden rounded-lg border-2 bg-black text-left transition-[border-color,transform] duration-150 hover:-translate-y-0.5 ${
+                selected ? "border-primary" : "border-border hover:border-primary/55"
+              }`}
+              title={`选择 ${item.name}`}
+            >
+              {!content ? (
+                <div className="flex h-full w-full items-center justify-center bg-muted/50 text-[11px] text-muted-foreground">
+                  未设置背景
+                </div>
+              ) : content.type === "image" ? (
+                <img src={url} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
+              ) : content.type === "video" ? (
+                <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-muted/55 text-muted-foreground">
+                  <Code className="h-5 w-5" />
+                  <span className="text-[10px]">HTML 场景</span>
+                </div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 pb-1.5 pt-6 text-white">
+                <span className="min-w-0 truncate text-xs font-medium">{item.name}</span>
+                <span className="shrink-0 text-[9px] text-white/70">{index === 0 ? "主 Desk" : `${index + 1}`}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -2544,7 +2608,7 @@ export default function App() {
                     />
                     {/* 下：属性栏 */}
                     <div
-                      className="flex shrink-0 items-center gap-8 overflow-x-auto rounded-lg border border-border px-4 py-2.5"
+                      className="flex shrink-0 items-center gap-5 overflow-x-auto rounded-lg border border-border px-4 py-2.5"
                       style={{ height: propsH }}
                     >
                       {!graphSel ? (
@@ -2554,11 +2618,24 @@ export default function App() {
                       ) : graphSel === "start" || /^d\d+$/.test(graphSel) ? (
                         (() => {
                           const isStart = graphSel === "start";
+                          const deskIndex = isStart ? -1 : parseInt(graphSel.slice(1), 10);
                           const name = isStart
                             ? startName
-                            : (desks[parseInt(graphSel.slice(1), 10)]?.name ?? "");
+                            : (desks[deskIndex]?.name ?? "");
+                          const content = isStart ? startContent : desks[deskIndex]?.background ?? null;
                           return (
                             <>
+                              {!isStart && (
+                                <DeskBackgroundCanvas
+                                  desks={desks}
+                                  roomPath={roomPath}
+                                  selectedIndex={deskIndex}
+                                  onSelect={(index) => {
+                                    setActiveDesk(index);
+                                    setGraphSel(`d${index}`);
+                                  }}
+                                />
+                              )}
                               <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium">
                                 {isStart ? (
                                   <MonitorPlay className="h-3.5 w-3.5 text-primary" />
@@ -2597,7 +2674,6 @@ export default function App() {
 	                                <Button
 	                                  size="sm"
 	                                  onClick={() => {
-	                                    const deskIndex = parseInt(graphSel.slice(1), 10);
 	                                    setActiveDesk(deskIndex);
 	                                    setAppPickerDesk(deskIndex);
 	                                    setStatus(`选择要放入 ${desks[deskIndex]?.name ?? "当前 Desk"} 的应用`);
@@ -2606,11 +2682,18 @@ export default function App() {
 	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
 	                                </Button>
 	                              )}
-	                              <ContentInspector
-	                                content={isStart ? startContent : desks[parseInt(graphSel.slice(1), 10)]?.background ?? null}
-	                                roomPath={roomPath}
-	                                emptyLabel={isStart ? "尚未选择启动画面" : "尚未选择 Desk 壁纸"}
-	                              />
+	                              {isStart ? (
+	                                <ContentInspector
+	                                  content={content}
+	                                  roomPath={roomPath}
+	                                  emptyLabel="尚未选择启动画面"
+	                                />
+	                              ) : (
+	                                <dl className="w-44 shrink-0 space-y-1 text-[11px]">
+	                                  <div><dt className="text-muted-foreground">当前素材</dt><dd className="truncate font-medium" title={content?.name}>{content?.name ?? "未选择"}</dd></div>
+	                                  <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
+	                                </dl>
+	                              )}
 	                              <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
                                   {isStart ? "画面素材：" : "壁纸素材："}
@@ -2621,7 +2704,7 @@ export default function App() {
                                   title="选择图片"
                                   onClick={() => void setGraphNodeContent(graphSel, "image")}
                                 >
-                                  <span className={`h-2 w-2 rounded-full ${(isStart ? startContent : desks[parseInt(graphSel.slice(1), 10)]?.background)?.type === "image" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 图片
+                                  <span className={`h-2 w-2 rounded-full ${content?.type === "image" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 图片
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -2629,7 +2712,7 @@ export default function App() {
                                   title="选择自包含 HTML 文件"
                                   onClick={() => void setGraphNodeContent(graphSel, "html")}
                                 >
-                                  <span className={`h-2 w-2 rounded-full ${(isStart ? startContent : desks[parseInt(graphSel.slice(1), 10)]?.background)?.type === "html" ? "bg-primary" : "bg-muted-foreground/35"}`} /> HTML
+                                  <span className={`h-2 w-2 rounded-full ${content?.type === "html" ? "bg-primary" : "bg-muted-foreground/35"}`} /> HTML
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -2637,7 +2720,7 @@ export default function App() {
                                   title="选择视频"
                                   onClick={() => void setGraphNodeContent(graphSel, "video")}
                                 >
-                                  <span className={`h-2 w-2 rounded-full ${(isStart ? startContent : desks[parseInt(graphSel.slice(1), 10)]?.background)?.type === "video" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 视频
+                                  <span className={`h-2 w-2 rounded-full ${content?.type === "video" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 视频
                                 </Button>
                               </div>
                             </>

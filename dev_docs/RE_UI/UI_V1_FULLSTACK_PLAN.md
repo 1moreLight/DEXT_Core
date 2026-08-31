@@ -208,7 +208,7 @@ Goal 负责跨多轮持续推进，但不改变仓库纪律：本包只使用一
 - `cd tauri-ui && npm run build`
 - `cd tauri-ui/src-tauri && cargo check`
 - `cd tauri-ui/src-tauri && cargo test --lib`
-- `cd tauri-ui/src-tauri && cargo test --lib applies_room_wallpaper`
+- `cd tauri-ui/src-tauri && cargo test --lib applies_room_wallpaper -- --ignored`（活体测试，会改变桌面与 Core 恢复布局）
 
 ### 新增测试重点
 

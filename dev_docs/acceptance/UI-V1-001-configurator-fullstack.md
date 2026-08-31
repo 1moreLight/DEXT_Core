@@ -11,8 +11,8 @@
 - [x] `cd tauri-ui && npm test`：6 项 Desk 重映射测试通过
 - [x] `cd tauri-ui && npm run build`
 - [x] `cd tauri-ui/src-tauri && cargo check`
-- [x] `cd tauri-ui/src-tauri && cargo test --lib`：23 项通过
-- [x] `cd tauri-ui/src-tauri && cargo test --lib applies_room_wallpaper`
+- [x] `cd tauri-ui/src-tauri && cargo test --lib`：21 项通过，2 项真实环境测试默认 ignored
+- [x] `cd tauri-ui/src-tauri && cargo test --lib applies_room_wallpaper`（历史执行记录；第三轮修订后该活体测试改为显式 `-- --ignored`）
 - [x] 本包未修改 C# 或 `.proto` 源文件，无需重跑 `scripts/build.ps1`
 - [x] `scripts/start.ps1`：当前 worktree Core 与配置器成功启动
 - [x] `scripts/verify-runtime-identity.ps1`
@@ -45,6 +45,15 @@
 - [x] `npm test`（6 项）、`npm run build`、`cargo check`、`cargo test --lib`（23 项）和 `git diff --check` 通过；浏览器控制台无错误。
 - [x] 测试期间加入的 mock 应用已移出；Playwright 临时截图与快照目录已删除，未启动真 Core、未读写用户 `rooms`。
 
+## 第三轮验收反馈验证（2026-08-31）
+
+- [x] 真 Tauri 1296×839 验证：属性栏同时显示 `v1testRoom` 两个 Desk 的真实背景缩略画布，点击 Desk 2 后导图选择、名称和素材路径同步更新；深浅色均无阻断问题。
+- [x] `npm test`（6 项）、`npm run build`、`cargo check`、`cargo test --lib` 通过；Rust 结果为 21 项通过、2 项活体测试 ignored。
+- [x] 根因确认：旧背景来自 `grpc::tests::applies_room_wallpaper` 调用真实 Core 后持久化的 `rooms/v1testRoom` 运行包；`apps_and_launch` 也会启动 Notepad，两项现均需显式 `-- --ignored`。
+- [x] 已通过配置器停止旧测试壁纸：Player 退出、Core 保持连接，`%LOCALAPPDATA%\Dext\WallpaperLayout.json` 为 `[]`；再次运行普通 Rust 测试后仍未启动 Player或改写布局。
+- [x] `wallpapers/dext-room` 的运行态变化已保存为可恢复 stash `runtime v1testRoom snapshot before UI-V1-001 feedback cleanup`，随后恢复分支基线；用户 `rooms/v1testRoom` 仅只读检查，未删除或改写。
+- [x] 新增 ERRORS #45，并同步 AGENTS、README、PROJECT、WORKFLOW、旧总验收和 UI v1 计划中的活体测试命令及副作用说明。
+
 ## 人工验收
 
 1. [ ] 启动 Dext，确认 Core、Player 和配置器来自 UI-V1-001 当前 worktree 构建路径。
@@ -60,11 +69,13 @@
 11. [ ] 更改 Room 库路径时不迁移旧 Room；可以打开 Dext 数据/日志目录并导出包含真实 Core 身份和路径的诊断。
 12. [ ] 关于页显示 Dext 配置器/Core 版本、路径、LICENSE 与上游 Lively fork 归属；创意工坊只显示“敬请期待”。
 13. [ ] 页面没有 Desk 音量假控件、多显示器和无效 FPS/质量/更新入口，也未修改 DXT-002、DOCK-004 或用户 `rooms`。
+14. [ ] 选中 Desk 后，属性栏以缩略画布展示当前 Room 的全部 Desk 背景；图片/视频可辨认，HTML/空背景有稳定占位，点击任一画布会同步选择对应导图节点和 Desk。
+15. [ ] 普通 `cargo test --lib` 不启动应用、不铺设壁纸，也不把旧测试 Room 写入 Dext 的恢复布局；需要真实 Core 的活体测试只能通过显式 ignored 命令运行。
 
 ## 通过标准
 
 - 所有必选自动检查通过。
-- 十三项人工验收均可观察且无阻断问题。
+- 十五项人工验收均可观察且无阻断问题。
 - 工作分支已提交并保持干净；用户确认前不合并 master。
 
 ## 验收记录

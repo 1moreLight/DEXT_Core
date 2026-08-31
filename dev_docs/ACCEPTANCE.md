@@ -33,7 +33,7 @@
 
 ### E. 自动化回归
 
-- [ ] **E1** `cargo test --lib applies_room_wallpaper` 全绿（tauri-ui/src-tauri 下）
+- [ ] **E1** `cargo test --lib applies_room_wallpaper -- --ignored` 全绿（tauri-ui/src-tauri 下；活体测试，会改变桌面与 Core 恢复布局）
 - [x] **E2** `npm run build` 无报错（2026-08-25 已验证）
 
 ---
