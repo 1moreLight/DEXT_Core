@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { ExternalLink, FileJson, FolderOpen, Info, Settings2 } from "lucide-react";
+import { ExternalLink, FileJson, FolderOpen, Info, Moon, Settings2, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-type Theme = "light" | "dark" | "system";
+type Theme = "light" | "dark";
 
 type CoreIdentity = {
   product_name: string;
@@ -24,7 +24,6 @@ type DextSettings = {
   fullscreenPause: boolean;
   batteryPause: boolean;
   powerSavePause: boolean;
-  audioVolume: number;
   audioOnlyOnDesktop: boolean;
 };
 
@@ -83,7 +82,6 @@ export function SettingsPage(props: SettingsPageProps) {
           fullscreenPause: true,
           batteryPause: false,
           powerSavePause: true,
-          audioVolume: 70,
           audioOnlyOnDesktop: true,
         }
   );
@@ -196,15 +194,32 @@ export function SettingsPage(props: SettingsPageProps) {
                   <div className="text-sm font-medium">配置器主题</div>
                   <div className="text-xs text-muted-foreground">只影响配置器，不触发 Core UI 重启</div>
                 </div>
-                <select
-                  value={props.theme}
-                  onChange={(event) => props.setTheme(event.target.value as Theme)}
-                  className="h-9 rounded-md border border-border bg-background px-3 text-sm"
-                >
-                  <option value="system">跟随系统</option>
-                  <option value="light">浅色</option>
-                  <option value="dark">深色</option>
-                </select>
+                <div className="flex rounded-md border border-border bg-muted/30 p-0.5" role="group" aria-label="配置器主题">
+                  <button
+                    type="button"
+                    aria-label="浅色主题"
+                    aria-pressed={props.theme === "light"}
+                    title="浅色主题"
+                    onClick={() => props.setTheme("light")}
+                    className={`flex h-8 w-9 items-center justify-center rounded transition-colors ${
+                      props.theme === "light" ? "bg-background text-amber-500 shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Sun className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="深色主题"
+                    aria-pressed={props.theme === "dark"}
+                    title="深色主题"
+                    onClick={() => props.setTheme("dark")}
+                    className={`flex h-8 w-9 items-center justify-center rounded transition-colors ${
+                      props.theme === "dark" ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Moon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               {rows.map(([key, title, description]) => (
                 <div key={key} className="flex items-center justify-between gap-6 py-4">
@@ -220,22 +235,6 @@ export function SettingsPage(props: SettingsPageProps) {
                   />
                 </div>
               ))}
-              <label className="block py-4">
-                <div className="mb-2 flex items-center justify-between text-sm">
-                  <span className="font-medium">全局壁纸音量</span>
-                  <span className="tabular-nums text-muted-foreground">{settings?.audioVolume ?? 0}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={settings?.audioVolume ?? 0}
-                  disabled={disabled || !settings}
-                  onChange={(event) => setSettings((current) => current ? { ...current, audioVolume: Number(event.target.value) } : current)}
-                  onPointerUp={(event) => void patch({ audioVolume: Number(event.currentTarget.value) })}
-                  className="w-full accent-[var(--primary)]"
-                />
-              </label>
             </div>
           </section>
 

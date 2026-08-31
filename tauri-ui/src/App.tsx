@@ -15,6 +15,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Pencil,
   Play,
   Plus,
   Redo2,
@@ -28,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
-import { RoomPreviewFrame } from "@/components/RoomPreviewFrame";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { deleteDeskGraph } from "@/lib/desk";
@@ -116,7 +116,7 @@ interface RoomInfo {
 
 type Mode = "use" | "edit" | "workshop" | "settings";
 
-type Theme = "light" | "dark" | "system";
+type Theme = "light" | "dark";
 
 type EditNav = "library" | "room" | "dock";
 
@@ -619,6 +619,25 @@ function roomCovers(r: RoomInfo): CoverTile[] {
   return tiles.length ? tiles : [nameGradient(r.name)];
 }
 
+function RoomBackgroundPreview({
+  room,
+  className = "",
+  label,
+}: {
+  room: RoomInfo;
+  className?: string;
+  label: string;
+}) {
+  return (
+    <div
+      className={`aspect-video overflow-hidden border border-border bg-muted/40 ${className}`}
+      aria-label={label}
+    >
+      <CoverTileBox tile={roomCovers(room)[0]} autoPlay />
+    </div>
+  );
+}
+
 // video cover: show first frame (preload=metadata only fetches headers, no decoding);
 // autoPlay=true (hero main slot) plays immediately, otherwise play while hovered, rewind on leave
 function VideoTile({ url, autoPlay = false }: { url: string; autoPlay?: boolean }) {
@@ -801,9 +820,11 @@ export default function App() {
   const startNodeRef = useRef<HTMLButtonElement>(null);
   const deskNodeRefs = useRef(new Map<string, HTMLButtonElement>());
   const [geom, setGeom] = useState<GraphGeometry>(EMPTY_GRAPH_GEOMETRY);
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("dext.theme") as Theme) ?? "system"
-  );
+  const [theme, setTheme] = useState<Theme>(() => {
+    const stored = localStorage.getItem("dext.theme");
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const previewRef = useRef<HTMLIFrameElement>(null);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
@@ -842,15 +863,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const dark = theme === "dark" || (theme === "system" && media.matches);
-      document.documentElement.classList.toggle("dark", dark);
-    };
-    apply();
-    media.addEventListener("change", apply);
+    document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("dext.theme", theme);
-    return () => media.removeEventListener("change", apply);
   }, [theme]);
 
   useEffect(() => {
@@ -981,14 +995,14 @@ export default function App() {
       setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
-      return;
+      return true;
     }
     if (
       checkDirty &&
       dirty &&
       !confirm("当前房间有未保存的修改，丢弃并切换？")
     )
-      return;
+      return false;
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
@@ -1031,8 +1045,10 @@ export default function App() {
           ? `已打开 ${path.split("\\").pop()}`
           : "该 Room 不是 v1：可查看，但必须另存为 v1，不能覆盖或应用"
       );
+      return true;
     } catch (e) {
       setStatus(`error: ${e}`);
+      return false;
     }
   }
 
@@ -1409,6 +1425,7 @@ export default function App() {
   }
 
   function toggle(app: AppInfo) {
+    const alreadyAdded = desk.icons.some((icon) => icon.launch.target === app.target);
     touch();
     setDesks((prev) =>
       prev.map((d, i) => {
@@ -1421,6 +1438,11 @@ export default function App() {
             : [...d.icons, { label: app.name, icon_png: app.icon_png, launch: { target: app.target, args: app.arguments, workdir: app.working_dir } }],
         };
       })
+    );
+    setStatus(
+      alreadyAdded
+        ? `已从 ${desk.name} 移除 ${app.name}`
+        : `已将 ${app.name} 放入 ${desk.name}；可在桌面长按图标拖动位置`
     );
   }
 
@@ -1530,14 +1552,25 @@ export default function App() {
       return next;
     });
   }
-  async function selectAndApplyRoom(room: RoomInfo) {
+  function selectRoom(room: RoomInfo) {
     if (roomBusy) return;
     setHeroPath(room.path);
     if (roomMultiMode) {
       toggleRoomSelection(room.path);
-      return;
     }
-    if (room.path !== appliedRoom) await applyRoomDir(room.path);
+  }
+  async function applyRoomFromCard(room: RoomInfo) {
+    if (roomBusy || roomMultiMode || room.path === appliedRoom) return;
+    setHeroPath(room.path);
+    await applyRoomDir(room.path);
+  }
+  async function enterRoomEditor(room: RoomInfo) {
+    const opened = await openRoom(room.path);
+    if (!opened) return;
+    setRoomPickPath(room.path);
+    setEditNav("room");
+    setRoomEntered(true);
+    setMode("edit");
   }
   async function stopWallpaper() {
     if (roomOperationRef.current || roomBusy) return;
@@ -1846,8 +1879,8 @@ export default function App() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => setTheme(theme === "system" ? "dark" : theme === "dark" ? "light" : "system")}
-            title={`当前主题：${theme === "system" ? "跟随系统" : theme === "dark" ? "深色" : "浅色"}`}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            title={`切换到${theme === "dark" ? "浅色" : "深色"}主题`}
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
@@ -1938,7 +1971,9 @@ export default function App() {
                   <button
                     key={room.path}
                     disabled={Boolean(roomBusy)}
-                    onClick={() => void selectAndApplyRoom(room)}
+                    onClick={() => selectRoom(room)}
+                    onDoubleClick={() => void applyRoomFromCard(room)}
+                    title={roomMultiMode ? "单击选择" : "单击查看详情，双击应用"}
                     aria-pressed={roomMultiMode ? picked : focused}
                     className={`group overflow-hidden text-left transition-opacity disabled:cursor-wait ${
                       roomMultiMode && !picked ? "opacity-60 hover:opacity-100" : "opacity-100"
@@ -1994,7 +2029,7 @@ export default function App() {
           <aside className="flex w-[360px] shrink-0 flex-col border-l border-border pl-5">
             {heroRoom ? (
               <div className="flex min-h-0 flex-1 flex-col">
-                <RoomPreviewFrame roomPath={heroRoom.path} className="rounded-lg" label={`${heroRoom.name} 预览`} />
+                <RoomBackgroundPreview room={heroRoom} className="rounded-lg" label={`${heroRoom.name} 背景预览`} />
                 <div className="mt-5 flex items-center gap-2">
                   <h2 className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight">{heroRoom.name}</h2>
                   {heroRoom.path === appliedRoom && (
@@ -2006,9 +2041,15 @@ export default function App() {
                   <div><dt className="text-muted-foreground">图标</dt><dd className="mt-0.5 font-medium">{heroRoom.icons}</dd></div>
                   <div className="col-span-2"><dt className="text-muted-foreground">源目录</dt><dd className="mt-0.5 truncate font-mono" title={heroRoom.path}>{heroRoom.path}</dd></div>
                 </dl>
-                <div className="mt-auto pt-5">
+                <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
                   <Button
-                    className="w-full"
+                    variant="outline"
+                    disabled={Boolean(roomBusy)}
+                    onClick={() => void enterRoomEditor(heroRoom)}
+                  >
+                    <Pencil className="h-4 w-4" /> 编辑
+                  </Button>
+                  <Button
                     variant={heroRoom.path === appliedRoom ? "outline" : "default"}
                     disabled={Boolean(roomBusy) || (IS_TAURI && !coreIdentity)}
                     title={IS_TAURI && !coreIdentity ? "Dext Core 未连接，仍可浏览本地 Room" : undefined}
@@ -2017,7 +2058,7 @@ export default function App() {
                     {heroRoom.path === appliedRoom ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     {heroRoom.path === appliedRoom ? "停止壁纸" : "应用此 Room"}
                   </Button>
-                  {!coreIdentity && IS_TAURI && <p className="mt-2 text-xs text-destructive">Dext Core 未连接；Room 浏览和文件管理仍可使用。</p>}
+                  {!coreIdentity && IS_TAURI && <p className="col-span-2 mt-1 text-xs text-destructive">Dext Core 未连接；Room 浏览和文件管理仍可使用。</p>}
                 </div>
               </div>
             ) : (
@@ -2124,6 +2165,9 @@ export default function App() {
                   onChange={(e) => setQuery(e.target.value)}
                   className="mb-3"
                 />
+                <p className="mb-3 text-xs text-muted-foreground">
+                  当前加入：{desk.name}。应用加入后，可在桌面长按图标拖动位置。
+                </p>
                 <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-6 gap-2 overflow-y-auto pr-1">
                   {apps.length === 0 && (
                     <div className="col-span-6 py-16 text-center text-sm text-muted-foreground">
@@ -2211,7 +2255,7 @@ export default function App() {
 
                 {pickedRoom && (
                   <aside className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-border pl-4">
-                    <RoomPreviewFrame roomPath={pickedRoom.path} className="rounded-lg" label={`${pickedRoom.name} 编辑预览`} />
+                    <RoomBackgroundPreview room={pickedRoom} className="rounded-lg" label={`${pickedRoom.name} 背景预览`} />
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-lg font-medium">{pickedRoom.name}</span>
@@ -2228,10 +2272,7 @@ export default function App() {
                     <div className="flex gap-2">
                       <Button
                         className="flex-1"
-                        onClick={() => {
-                          openRoom(pickedRoom.path);
-                          setRoomEntered(true);
-                        }}
+                        onClick={() => void enterRoomEditor(pickedRoom)}
                       >
                         编辑
                       </Button>
@@ -2542,6 +2583,19 @@ export default function App() {
 	                                    ))}
 	                                  </select>
 	                                </label>
+	                              )}
+	                              {!isStart && (
+	                                <Button
+	                                  size="sm"
+	                                  onClick={() => {
+	                                    const deskIndex = parseInt(graphSel.slice(1), 10);
+	                                    setActiveDesk(deskIndex);
+	                                    setEditNav("library");
+	                                    setStatus(`正在给 ${desks[deskIndex]?.name ?? "当前 Desk"} 放入应用`);
+	                                  }}
+	                                >
+	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
+	                                </Button>
 	                              )}
 	                              <ContentInspector
 	                                content={isStart ? startContent : desks[parseInt(graphSel.slice(1), 10)]?.background ?? null}

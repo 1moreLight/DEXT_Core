@@ -101,7 +101,6 @@ struct DextSettings {
     fullscreen_pause: bool,
     battery_pause: bool,
     power_save_pause: bool,
-    audio_volume: i32,
     audio_only_on_desktop: bool,
 }
 
@@ -112,7 +111,6 @@ struct DextSettingsPatch {
     fullscreen_pause: Option<bool>,
     battery_pause: Option<bool>,
     power_save_pause: Option<bool>,
-    audio_volume: Option<i32>,
     audio_only_on_desktop: Option<bool>,
 }
 
@@ -1436,7 +1434,6 @@ fn settings_view(settings: &crate::proto::settings::SettingsDataModel) -> DextSe
         fullscreen_pause: settings.app_fullscreen_pause == 0,
         battery_pause: settings.battery_pause == 0,
         power_save_pause: settings.power_save_mode_pause == 0,
-        audio_volume: settings.audio_volume_global,
         audio_only_on_desktop: settings.audio_only_on_desktop,
     }
 }
@@ -1463,12 +1460,6 @@ fn apply_settings_patch(
     }
     if let Some(value) = patch.power_save_pause {
         settings.power_save_mode_pause = if value { 0 } else { 1 };
-    }
-    if let Some(value) = patch.audio_volume {
-        if !(0..=100).contains(&value) {
-            return Err("wallpaper volume must be between 0 and 100".into());
-        }
-        settings.audio_volume_global = value;
     }
     if let Some(value) = patch.audio_only_on_desktop {
         settings.audio_only_on_desktop = value;
@@ -2246,7 +2237,7 @@ mod tests {
     }
 
     #[test]
-    fn settings_patch_preserves_unedited_fields_and_rejects_bad_volume() {
+    fn settings_patch_preserves_unedited_fields() {
         let mut settings = crate::proto::settings::SettingsDataModel {
             startup: false,
             app_version: "keep-me".into(),
@@ -2259,30 +2250,17 @@ mod tests {
             DextSettingsPatch {
                 startup: Some(true),
                 fullscreen_pause: Some(true),
-                battery_pause: None,
-                power_save_pause: None,
-                audio_volume: None,
+                battery_pause: Some(true),
+                power_save_pause: Some(true),
                 audio_only_on_desktop: None,
             },
         )
         .unwrap();
         assert!(settings.startup);
         assert_eq!(settings.app_fullscreen_pause, 0);
+        assert_eq!(settings.battery_pause, 0);
+        assert_eq!(settings.power_save_mode_pause, 0);
         assert_eq!(settings.audio_volume_global, 35);
         assert_eq!(settings.app_version, "keep-me");
-
-        let error = apply_settings_patch(
-            &mut settings,
-            DextSettingsPatch {
-                startup: None,
-                fullscreen_pause: None,
-                battery_pause: None,
-                power_save_pause: None,
-                audio_volume: Some(101),
-                audio_only_on_desktop: None,
-            },
-        )
-        .unwrap_err();
-        assert!(error.contains("between 0 and 100"));
     }
 }
