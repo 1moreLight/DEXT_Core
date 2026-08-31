@@ -237,7 +237,8 @@
 - [x] 真 Tauri 验证应用/活动态/停止、设置 RPC、诊断/关于入口；修复 opener ACL/scope 与 Windows `\\?\` 活动态路径问题（ERRORS #43/#44，2026-08-31）
 - [x] 同步 README/PROJECT/LIVELY_API/ERRORS/RE_UI 与验收卡；精确恢复测试改动的运行包并移除 QA 产物，用户 `rooms` 未改写（2026-08-31）
 - [x] 核对 26 个具名文件并提交到 `feat/ui-v1-001-configurator-fullstack`（实现提交 `f0fa779`），状态同步后停在待验收（2026-08-31）
-- [?] 用户按独立验收卡确认通过；确认前禁止合并 master
+- [x] 用户按独立验收卡确认通过（2026-08-31，回复“都合并，我已经停止我的 Dext 进程了，可以了”）
+- [ ] 合并到 master，更新最终状态并清理工作分支/worktree
 
 ### UI 设计工作模型
 
