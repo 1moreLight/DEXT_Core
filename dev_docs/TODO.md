@@ -376,6 +376,8 @@
 - [x] 在 ROADMAP 新增远期 `DOCK-UX-001`，后续独立重做真实 Player 输入捕获、跨层命中和边界处理
 - [x] 从 DOCK-004 验收门槛移除真桌面拖入回归；DOCK-004 继续仅等待运行态圆点相关人工验收
 - [x] 确认 DOCK-004 之后的唯一下一项为 `DXT-001 room.json v1 契约定稿`
+- [x] 用户确认通过；解决与最新 Room/idle/持久化实现的合并冲突，Release 构建通过并合并到 master `5dd5fe9`（2026-08-31）
+- [x] 清理 DOCK-004 独立分支/worktree；其中未提交的 `wallpapers/dext-room/room.*` 仅为含本机路径的测试运行包，未带入 master（2026-08-31）
 
 ## UI-USE-001 配置器使用页设计规格取消（2026-08-31）
 
