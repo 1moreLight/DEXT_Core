@@ -238,7 +238,7 @@
 - [x] 同步 README/PROJECT/LIVELY_API/ERRORS/RE_UI 与验收卡；精确恢复测试改动的运行包并移除 QA 产物，用户 `rooms` 未改写（2026-08-31）
 - [x] 核对 26 个具名文件并提交到 `feat/ui-v1-001-configurator-fullstack`（实现提交 `f0fa779`），状态同步后停在待验收（2026-08-31）
 - [x] 用户按独立验收卡确认通过（2026-08-31，回复“都合并，我已经停止我的 Dext 进程了，可以了”）
-- [ ] 合并到 master，更新最终状态并清理工作分支/worktree
+- [x] 合并到 master（merge `61ea4c8`），更新最终状态；运行包快照以可恢复 stash 保存，用户 Room 状态临时 stash 将在收口后原样恢复（2026-08-31）
 
 ### UI 设计工作模型
 

@@ -2,6 +2,7 @@
 
 - 状态：已通过
 - 分支：`feat/ui-v1-001-configurator-fullstack`
+- 合并：master merge `61ea4c8`
 - 提交：`f0fa779`（首版实现）+ `1671f25`（首轮反馈）+ `d7eab61`（Desk 应用选择）+ `7b98683`（Desk 画布与活体测试隔离）+ `9a6d1d1`（旧 Room 删除）+ `1b2ceb7`（Room 选择态）+ `779bff2`（Desk/Dock 共用应用选择）
 - 目标：完成 Room 安全管理、真实运行状态、使用页、编辑页、设置页和创意工坊空状态的前后端闭环。
 - 范围外：多显示器、DXT-002 idle、DOCK-004、Dock 架构重构、用户 Room 迁移或批量改写、在线创意工坊、更新/安装器、无真实底层能力的设置，以及 Player/Core 大范围重构。
@@ -106,3 +107,5 @@
 ## 验收记录
 
 - 2026-08-31：用户回复“都合并，我已经停止我的 Dext 进程了，可以了”，确认十七项验收通过并授权合并 UI-V1-001。
+- 2026-08-31：UI-V1-001 通过 merge commit `61ea4c8` 合入 master；运行包变化保存为可恢复 stash，未混入源码提交。
+- 2026-08-31：master 首次前端冒烟因旧 `node_modules` 缺 Vitest 未启动；按新 lockfile 执行 `npm ci` 后，`npm test`（6 项）、`npm run build`、`cargo check`、`cargo test --lib`（22 项通过、2 项 ignored）全部通过，未启动 Dext 或铺设壁纸。
