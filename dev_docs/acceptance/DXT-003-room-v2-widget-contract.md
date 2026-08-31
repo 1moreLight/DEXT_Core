@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`feat/dxt-003-room-v2-widget-contract`
-- 提交：待提交
+- 实现提交：`c60141e`
 - 目标：保持 Room v1 与 idle 原样可用，同时交付可独立校验、不会被降级覆盖的 Room v2 Widget 契约与版本边界。
 - 范围外：WidgetHost/实际渲染、能力桥、权限执行、存储、联网、应用启动、Widget 布局 UI、ROOM-004 分享安全闭环、AI skill、DOCK-004、UI-USE-001、用户 `rooms` 和渲染器重写。
 
@@ -34,3 +34,4 @@
 
 - 2026-08-31：用户确认六项开工决策和实施计划；从 `master@096eacd` 建立独立 worktree/分支，主 worktree 用户 Room 状态未触碰。
 - 2026-08-31：自动检查通过，状态进入待验收；WidgetHost 仍未实现，v2 保持只读。
+- 2026-08-31：35 个具名文件提交为 `c60141e`；未合并 master，等待用户人工验收。
