@@ -82,6 +82,7 @@ let ROOM = DEFAULT_ROOM;
 // production (Lively virtual host) has no param and uses package-relative paths.
 const SEARCH = new URLSearchParams(location.search);
 const PREVIEW_MODE = SEARCH.get("preview") === "1";
+const SCREENSAVER_MODE = SEARCH.get("screensaver") === "1";
 const PREVIEW_PARENT_ORIGINS = new Set([
   "http://tauri.localhost",
   "http://localhost:1420",
@@ -126,6 +127,7 @@ window.dext = {
 let activeSlot = null;
 function playSlot(slot, opts = {}) {
   const onDone = opts.onDone ?? (() => {});
+  const persistent = opts.persistent === true;
   const src = slot && typeof slot === "object" ? assetUrl(slot.src) : null;
   if (!src || !["image", "video", "html"].includes(slot.type)) {
     onDone();
@@ -180,7 +182,7 @@ function playSlot(slot, opts = {}) {
     image.addEventListener("error", finish, { once: true });
     wrap.appendChild(image);
     document.body.appendChild(wrap);
-    timer = setTimeout(finish, opts.durationMs ?? 500);
+    if (!persistent) timer = setTimeout(finish, opts.durationMs ?? 500);
     return { cancel };
   }
 
@@ -191,7 +193,8 @@ function playSlot(slot, opts = {}) {
     v.muted = true;
     v.autoplay = true;
     v.playsInline = true;
-    v.addEventListener("ended", finish);
+    v.loop = persistent;
+    if (!persistent) v.addEventListener("ended", finish);
     v.addEventListener("error", finish);
     wrap.appendChild(v);
     document.body.appendChild(wrap);
@@ -213,15 +216,17 @@ function playSlot(slot, opts = {}) {
     f.referrerPolicy = "no-referrer";
     wrap.appendChild(f);
     document.body.appendChild(wrap);
-    onMsg = (e) => {
-      const data = e.data;
-      if (e.source !== f.contentWindow ||
-          data?.type !== "dext:scene" ||
-          data.instanceId !== instanceId) return;
-      if (data.event === "done") finish();
-    };
-    window.addEventListener("message", onMsg);
-    timer = setTimeout(finish, (opts.timeoutSeconds ?? 60) * 1000);
+    if (!persistent) {
+      onMsg = (e) => {
+        const data = e.data;
+        if (e.source !== f.contentWindow ||
+            data?.type !== "dext:scene" ||
+            data.instanceId !== instanceId) return;
+        if (data.event === "done") finish();
+      };
+      window.addEventListener("message", onMsg);
+      timer = setTimeout(finish, (opts.timeoutSeconds ?? 60) * 1000);
+    }
     return { cancel };
   }
 
@@ -237,10 +242,17 @@ function playStart() {
   playSlot(slot, { kind: "start" });
 }
 
+function renderIdle() {
+  document.documentElement.dataset.mode = "screensaver";
+  activeSlot?.cancel();
+  playSlot(ROOM.idle, { kind: "idle", persistent: true });
+}
+
 async function loadRoom() {
   if (PREVIEW_MODE) {
     currentDesk = 0;
-    renderDesk(currentDesk);
+    if (SCREENSAVER_MODE) renderIdle();
+    else renderDesk(currentDesk);
     for (const origin of PREVIEW_PARENT_ORIGINS) {
       window.parent.postMessage({ type: "dext:preview-ready" }, origin);
     }
@@ -258,27 +270,14 @@ async function loadRoom() {
   currentDesk = Number.isInteger(ROOM.startDesk) && ROOM.startDesk >= 0 && ROOM.startDesk < ROOM.desks.length
     ? ROOM.startDesk
     : 0;
+  if (SCREENSAVER_MODE) {
+    renderIdle();
+    dextEmit("ready", { deskCount: ROOM.desks.length, screensaver: true });
+    return;
+  }
   renderDesk(currentDesk);
   playStart();
   dextEmit("ready", { deskCount: ROOM.desks.length });
-}
-
-// Core wraps up the wallpaper: Player forwards cmd_close as dext:end;
-// play the end slot then ack, or ack immediately when none is configured.
-if (window.chrome?.webview) {
-  window.chrome.webview.addEventListener("message", (e) => {
-    if (e.data !== "dext:end") return;
-    const slot = ROOM.end;
-    if (!slot) {
-      window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" }));
-      return;
-    }
-    playSlot(slot, {
-      kind: "end",
-      onDone: () =>
-        window.chrome.webview.postMessage(JSON.stringify({ type: "dext:endDone" })),
-    });
-  });
 }
 
 // Windows-style icon size presets; desk.iconSize picks one (default medium)
@@ -993,12 +992,15 @@ iconLayer.addEventListener("pointerdown", (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
+  if (SCREENSAVER_MODE) return;
   if (e.key === "ArrowRight") switchDesk(1);
   if (e.key === "ArrowLeft") switchDesk(-1);
   if (e.key === "Escape") exitEdit();
 });
 
-window.addEventListener("resize", () => renderDesk(currentDesk));
+window.addEventListener("resize", () => {
+  if (!SCREENSAVER_MODE) renderDesk(currentDesk);
+});
 
 window.addEventListener("message", (e) => {
   const d = e.data;
@@ -1014,8 +1016,13 @@ window.addEventListener("message", (e) => {
     assetBase = base.href;
     ROOM = d.room;
     currentDesk = Math.min(d.deskIndex ?? 0, ROOM.desks.length - 1);
-    renderDesk(currentDesk);
-    dextEmit("ready", { deskCount: ROOM.desks.length, injected: true });
+    if (SCREENSAVER_MODE) renderIdle();
+    else renderDesk(currentDesk);
+    dextEmit("ready", {
+      deskCount: ROOM.desks.length,
+      injected: true,
+      screensaver: SCREENSAVER_MODE,
+    });
   } catch {
     // Ignore malformed preview messages without disturbing the last good draft.
   }

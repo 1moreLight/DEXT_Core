@@ -12,7 +12,7 @@ Room 作者只定制四类内容：
 - `background`：某个 Desk 的长期背景。
 - `start`：Room 启动时的全屏内容。
 - `switch`：Desk 之间某一个方向的切换内容。
-- `end`：Room 退出前的全屏内容。
+- `idle`：Lively 进入屏保/待机时显示的全屏内容。
 
 四类内容都可以是图片、视频或 HTML。v1 不执行 Room 根目录的 `room.js`、`room.css`，也不允许用户 HTML 操作官方 Desk/Dock DOM、调用应用启动或伪造保存消息。
 
@@ -29,13 +29,13 @@ my-room/
 │     └─ assets/...
 ├─ start/
 ├─ switch/
-└─ end/
+└─ idle/
 ```
 
 规则：
 
 - `room.json` 必须位于 Room 根目录。
-- 内容只能放在 `background/`、`start/`、`switch/`、`end/`。
+- 内容只能放在 `background/`、`start/`、`switch/`、`idle/`。
 - `src` 使用 `/` 分隔的 Room 内相对路径；禁止绝对路径、盘符、URL、反斜杠、空路径段和 `..`。
 - 图片扩展名：`.png/.jpg/.jpeg/.webp/.bmp/.gif/.svg`；视频：`.mp4/.webm`；网页：`.html/.htm`。手工制作时使用小写扩展名。
 - HTML 引用的 CSS、JS、字体和图片也要放在同一 Room 的对应内容目录内，使用相对路径。为了可分享，不应依赖本机绝对路径或外部网站。
@@ -67,7 +67,7 @@ my-room/
 | `startDesk` | 必填，非负整数 | 启动后进入的 `desks` 数组下标 |
 | `switches` | 必填，可为空对象 | 每个有向 Desk 切换的覆盖 |
 | `desks` | 必填，至少一项 | Desk 顺序；数组下标也是 switch 身份 |
-| `start` / `end` | 可选 | 启动与退出 Content |
+| `start` / `idle` | 可选 | 启动与 Lively 待机 Content |
 | `switch` | 可选 | 某方向没有覆盖时的全局默认；缺省再回退 `slide` |
 | `dock` | 可选 | 全局 Dock 基线 |
 
@@ -89,7 +89,7 @@ my-room/
 | `type` | `image`、`video` 或 `html` |
 | `src` | 必须进入当前槽位对应目录，且扩展名与 `type` 一致 |
 
-`background` 的路径必须以 `background/` 开头；`start/end` 同理；房间级 `switch` 和 `switches` 中的 Content 都必须以 `switch/` 开头。
+`background` 的路径必须以 `background/` 开头；`start/idle` 同理；房间级 `switch` 和 `switches` 中的 Content 都必须以 `switch/` 开头。
 
 ## 五、Desk、顺序和双向 switch
 
@@ -146,18 +146,20 @@ Desk 正式写出结构：
 | background | 静态常驻 | 静音、循环常驻 | 当前 Desk 可见期间长驻 |
 | start | 显示 0.5 秒 | 完整播放 | 收到当前实例 `done` 或 60 秒超时 |
 | switch | 显示 0.5 秒后换 Desk | 完整播放后换 Desk | 收到当前实例 `done` 或 60 秒超时后换 Desk |
-| end | 显示 0.5 秒 | 完整播放 | 收到当前实例 `done` 或 60 秒超时；Player 总退出上限 65 秒 |
+| idle | 持续显示到唤醒 | 静音循环到唤醒 | 持续运行到唤醒；忽略 `done`，无结束超时 |
 
 视频由官方宿主静音播放。v1 不提供自定义图片时长、视频中点换页或 `swapAt`；复杂时序应在 HTML 内实现。
+
+`idle` 不负责判断用户是否空闲。待机时间、全屏保护、多屏布局、淡入、音量、输入唤醒和唤醒锁屏都使用 Lively 的全局屏保设置。Lively 启动独立屏保实例时，Dext 只显示 `idle`，不播放 start、不显示 Desk 图标或 Dock；未配置或加载失败时显示黑屏。用户输入后屏保实例直接关闭，原 Room 保留待机前的 Desk。
 
 ## 七、HTML 场景接口与安全边界
 
 用户 HTML 运行在 `sandbox="allow-scripts"` iframe 中，没有 `allow-same-origin`、顶层导航或弹窗权限。宿主在 URL 查询参数中提供：
 
 - `dextInstanceId`：当前场景实例的随机 ID。
-- `dextKind`：`background/start/switch/end`。
+- `dextKind`：`background/start/switch/idle`。
 
-start/switch/end 完成时使用：
+start/switch 完成时使用：
 
 ```html
 <script>
@@ -173,7 +175,7 @@ start/switch/end 完成时使用：
     }, "*");
   }
 
-  // 在动画、交互或自定义时序真正结束时调用。
+  // 只用于 start/switch；idle 由 Lively 唤醒关闭，不发送 done。
   // sceneDone();
 </script>
 ```
@@ -207,7 +209,7 @@ Dock 合并顺序是“官方默认 → `room.dock` → 当前 `desk.dock`”。
 
 ```text
 新建/打开 Room
-  → 选择 Desk、start 或某个方向的 switch
+  → 选择 Desk、start、独立待机节点或某个方向的 switch
   → 选择图片、网页代码或视频
   → 素材立即复制到对应固定目录，内存草稿更新
   → 点击保存，才替换源 Room 的 room.json
@@ -243,7 +245,7 @@ python scripts/validate-room-schema.py
 1. `room.json` 通过根目录 `room.schema.json`，且 `startDesk` 与所有 switch 下标有效。
 2. 所有 `src` 都存在、位于正确固定目录、扩展名与类型一致。
 3. 只配置相邻双向和三页以上首尾双向 switch；两个方向分别测试。
-4. HTML 不依赖 Room 外文件，start/switch/end 能发送当前实例 `done`，超时也不会卡住。
+4. HTML 不依赖 Room 外文件；start/switch 能发送当前实例 `done`，idle 不发送 `done` 并能持续运行。
 5. 源文件没有 `__source`、运行态字段、顶层 `room.js` 或 `room.css`。
 6. 图片、视频、HTML、Dock 继承、保存后重开和应用到真桌面都按预期运行。
 

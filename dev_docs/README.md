@@ -16,7 +16,7 @@
 
 **Dext**：把 Windows 桌面变成手机式主屏。多个 Desk 放真图标应用、长按编辑、切桌动画；整套主题打包成 Room 分享。终局对标 Wallpaper Engine（创作者上架创意工坊，普通用户下载即用）。
 
-目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC 和保存；用户只定制 background/start/switch/end。四类内容统一使用 `name/type/src`，类型为 image/video/html。
+目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC 和保存；用户只定制 background/start/switch/idle。四类内容统一使用 `name/type/src`，类型为 image/video/html。
 
 DXT-001 已在独立开发分支中同时定稿全新的 v1，并原地适配现有宿主、配置器预览和持久化链；原 SCENE-001 已并入本包，不再另写一套播放器。v1 不兼容旧 Room。
 
@@ -128,14 +128,14 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 ## 四、room.json v1 正式口径
 
 - `version: 1`；Desk 顺序来自 `desks`，默认 Desk 复用 UI 已有的 `startDesk`。
-- background/start/switch/end 的用户内容统一为 `{name,type,src}`，`type` 是 image/video/html。
-- background 图片纯静态；start/switch/end 图片纯静态显示 0.5 秒。
+- background/start/switch/idle 的用户内容统一为 `{name,type,src}`，`type` 是 image/video/html。
+- background 图片纯静态；start/switch 图片纯静态显示 0.5 秒；idle 图片持续显示到 Lively 唤醒。
 - switch 视频完整播放后才换 Desk；复杂时序使用 HTML。
 - switch 只存在于相邻 Desk 与三页以上的首尾之间，两个方向分别保存在 `switches`。
 - Desk 排序时 switch 跟随 Desk 和方向重新映射；新相邻组合缺少内容时由 UI 提示，不自动生成。
 - v1 不兼容旧 Room、旧 `transition` 或顶层 room.js/room.css，也不提供迁移工具。
 - `__source` 只允许出现在运行包；预览、源 Room 和未来 zip 禁止携带。
-- 内容目录固定为 `background/`、`start/`、`switch/`、`end/`，所有 `src` 必须留在 Room 内。
+- 内容目录固定为 `background/`、`start/`、`switch/`、`idle/`，所有 `src` 必须留在 Room 内。
 
 完整字段与宽容策略见 `MODEL.md`，机器校验见仓库根目录 `room.schema.json`。
 
@@ -146,7 +146,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 接口 | 形态 | 说明 |
 |---|---|---|
 | `TRANSITIONS` | 注册表 `{名字: {dur, run(stage,dir,done), cleanup()}}` | 切桌动画扩展点；现有 slide/fade/zoom/none；`dir` +1 下一桌 / -1 上一桌 |
-| `playSlot(slot, opts)` | 统一内容播放器 | start/switch/end 的 image=0.5 秒、video=完整播放、html=sandbox+实例消息；完成后彻底清理 |
+| `playSlot(slot, opts)` | 统一内容播放器 | start/switch 按完成语义播放；idle 以 persistent 模式持续到 Lively 关闭屏保实例 |
 | `playVideoTransition(next, slot, ...)` | 现有入口的薄适配 | 复用 `playSlot`；内容完成后才换 Desk，不再中点换页 |
 | `ICON_SIZES` / `sizeOf` | 常量表 | 大/中/小三档（图标/格子/字号联动），desk.iconSize 选用 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认 v1 预设或 Content |
@@ -156,7 +156,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v1、deskIndex、临时 assetBase |
 | `room.js` / `room.css` | 旧 Room 扩展 | v1 宿主不加载；用户代码只能放入四类 HTML Content |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
-| `dext:end` | Player→页面 | cmd_close 转发；页面播 end 后 ack `dext:endDone`，Player 有 65 秒安全上限 |
+| `--wallpaper-screensaver` / `?screensaver=1` | Core→Player→页面 | Lively 屏保实例标记；Dext 只渲染 `room.idle`，普通关闭立即完成 |
 
 ### L2 渲染器 → Player → Core（上行 IPC，stdout 管道）
 
@@ -180,7 +180,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `create_room` | `(dir, name) → path` | 建最小合法 v1 和四个素材目录 |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v1，并复制原 Room 的四类素材目录；失败不留下半成品 |
 | `apply_room` | `(room_dir)` | 严格验证 v1，只镜像四个素材目录，清理旧扩展，并仅在运行包注入规范化 `__source` |
-| `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/end` 的 image/video/HTML，并返回 `{name,type,src}` |
+| `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
 | `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v1 zip；防路径穿越、链接、重复项、解压炸弹、重名和残留 |
 | `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
@@ -219,7 +219,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 
 ## 七、能力基线（master，2026-08-30）
 
-- 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/end 全部受控挂载。
+- 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/idle 全部受控挂载。
 - 持久化：源 Room 严格 v1、运行包唯一可信 `__source`、顶层 IPC 和双写边界已收紧。
-- 配置器：现有导图属性栏可为 Desk/start/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览，明确保存时才写 `room.json`；end 的可视化入口、Desk 排序和成组 HTML 资产仍属后续工作。
+- 配置器：导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览，明确保存时才写 `room.json`；Desk 排序和成组 HTML 资产仍属后续工作。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。

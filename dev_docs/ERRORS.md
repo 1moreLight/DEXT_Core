@@ -51,6 +51,7 @@
 | #44 | Windows canonicalize 的 `\\?\` 前缀破坏 Room 活动态匹配 | [backend](errors/backend.md) |
 | #45 | 普通 Rust 测试实际铺设壁纸并污染 Core 恢复布局 | [toolchain](errors/toolchain.md) |
 | #46 | 删除 Room 复用 v1 内容校验导致旧/损坏 Room 无法清理 | [backend](errors/backend.md) |
+| #47 | 普通窗口预览标记误当屏保标记会错误进入 idle | [backend](errors/backend.md) |
 
 ## 分册
 

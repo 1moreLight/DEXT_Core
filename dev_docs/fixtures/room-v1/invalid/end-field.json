@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "startDesk": 0,
+  "end": {
+    "name": "旧退出字段",
+    "type": "image",
+    "src": "end/old.png"
+  },
+  "switches": {},
+  "desks": [
+    {
+      "name": "主页",
+      "background": null,
+      "iconSize": "medium",
+      "icons": []
+    }
+  ]
+}

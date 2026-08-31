@@ -332,7 +332,8 @@ namespace Lively.Services
                 model,
                 display,
                 userSettings.Settings.ScreensaverArragement,
-                isAutoLoad: false)
+                isAutoLoad: false,
+                isScreensaver: true)
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 BorderThickness = new Thickness(0),
@@ -354,7 +355,8 @@ namespace Lively.Services
             var window = new WallpaperPreview(model,
                 displayManager.PrimaryDisplayMonitor,
                 userSettings.Settings.ScreensaverArragement,
-                isAutoLoad: false)
+                isAutoLoad: false,
+                isScreensaver: true)
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 BorderThickness = new Thickness(0),

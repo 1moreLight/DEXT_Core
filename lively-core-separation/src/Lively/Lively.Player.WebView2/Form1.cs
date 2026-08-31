@@ -205,12 +205,10 @@ namespace Lively.Player.WebView2
                 try
                 {
                     // Only the official top document may reach Lively IPC. Sandboxed
-                    // background/start/switch/end frames are intentionally rejected.
+                    // background/start/switch/idle frames are intentionally rejected.
                     if (!IsTopLevelWebMessage(e))
                         return;
                     var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
-                    if ((string)o.type == "dext:endDone")
-                        return; // consumed by HandleShutdownNotice
                     if ((string)o.type == "saveRoom")
                     {
                         SendToParent(new LivelyMessageSaveRoomCmd()
@@ -298,7 +296,7 @@ namespace Lively.Player.WebView2
                 case WebPageType.local:
                     {
                         $"Opening local project: {startArgs.Url}".SendLog(SendToParent);
-                        webView.NavigateToLocalPath(startArgs.Url);
+                        webView.NavigateToLocalPath(startArgs.Url, startArgs.Screensaver);
                     }
                     break;
             }
@@ -516,8 +514,6 @@ namespace Lively.Player.WebView2
                                 var obj = JsonConvert.DeserializeObject<IpcMessage>(text, new JsonSerializerSettings() { Converters = { new IpcMessageConverter() } });
                                 if (obj.Type == MessageType.cmd_close)
                                 {
-                                    // give the page a chance to play its shutdown slot (dext), then exit
-                                    await HandleShutdownNotice();
                                     break;
                                 }
 
@@ -552,42 +548,6 @@ namespace Lively.Player.WebView2
                 reader?.Dispose();
                 this.Invoke((Action)Application.Exit);
             }
-        }
-
-        // dext end slot: notify the page, wait for its ack (or 65s safety cap), then let the
-        // caller break the message loop. Pages without a slot ack immediately.
-        private async Task HandleShutdownNotice()
-        {
-            var wv = webView?.CoreWebView2;
-            if (wv == null)
-                return;
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            void Handler(object s, CoreWebView2WebMessageReceivedEventArgs e)
-            {
-                try
-                {
-                    if (!IsTopLevelWebMessage(e))
-                        return;
-                    var text = e.TryGetWebMessageAsString();
-                    if (text != null && text.Contains("dext:endDone"))
-                        tcs.TrySetResult(true);
-                }
-                catch { /* non-ack web message, nothing to consume */ }
-            }
-
-            // WebView2 calls must run on the UI thread (same pattern as the message loop)
-            Invoke((Action)(() =>
-            {
-                wv.WebMessageReceived += Handler;
-                wv.PostWebMessageAsJson("\"dext:end\"");
-            }));
-            _ = Task.Delay(65000).ContinueWith(_ => tcs.TrySetResult(false));
-            _ = tcs.Task.ContinueWith(_ =>
-            {
-                // teardown during close: UI/webview may already be gone, nothing to log into
-                try { Invoke((Action)(() => wv.WebMessageReceived -= Handler)); } catch { }
-            });
-            await tcs.Task;
         }
 
         private async Task ProcessMessage(IpcMessage obj)

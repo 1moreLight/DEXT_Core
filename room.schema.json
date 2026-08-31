@@ -10,7 +10,7 @@
     "version": { "const": 1 },
     "startDesk": { "type": "integer", "minimum": 0 },
     "start": { "$ref": "#/$defs/startContent" },
-    "end": { "$ref": "#/$defs/endContent" },
+    "idle": { "$ref": "#/$defs/idleContent" },
     "switch": { "$ref": "#/$defs/switchValue" },
     "switches": {
       "type": "object",
@@ -52,10 +52,10 @@
         { "pattern": "^switch/(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$)).+" }
       ]
     },
-    "endPath": {
+    "idlePath": {
       "allOf": [
         { "$ref": "#/$defs/safeRelativePath" },
-        { "pattern": "^end/(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$)).+" }
+        { "pattern": "^idle/(?!\\.{1,2}(?:/|$))(?!.*\\/\\.{1,2}(?:/|$)).+" }
       ]
     },
     "content": {
@@ -102,10 +102,10 @@
       ],
       "unevaluatedProperties": false
     },
-    "endContent": {
+    "idleContent": {
       "allOf": [
         { "$ref": "#/$defs/content" },
-        { "properties": { "src": { "$ref": "#/$defs/endPath" } } }
+        { "properties": { "src": { "$ref": "#/$defs/idlePath" } } }
       ],
       "unevaluatedProperties": false
     },

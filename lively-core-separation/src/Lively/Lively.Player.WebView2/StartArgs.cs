@@ -83,6 +83,12 @@ namespace Lively.Player.WebView2
         HelpText = "Try to pause all webpage media when wallpaper pause")]
         public bool PauseWebMedia { get; set; }
 
+        [Option("wallpaper-screensaver",
+        Required = false,
+        Default = false,
+        HelpText = "Wallpaper is running in Lively screensaver mode.")]
+        public bool Screensaver { get; set; }
+
         [Option("wallpaper-verbose-log",
         Required = false,
         HelpText = "Verbose Logging.")]
