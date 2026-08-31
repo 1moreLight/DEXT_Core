@@ -84,6 +84,20 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 | `dext:room` 消息（window message） | `{type:"dext:room", room:<完整v1>, deskIndex, assetBase}` | 仅 preview 模式接收固定父窗口消息；整房替换后重渲，dock 一并生效 |
 | `persistRoom()` | `postMessage({type:"saveRoom", room:ROOM})` | 桌面编辑（含 dock 删图标）双写持久化；预览环境自动跳过 |
 
+### DOCK-004 运行态遥测（不落盘）
+
+Dock 图标的运行态不属于 `room.json`。图标点击仍发送既有 `msg_launch`；Core 成功代启后按
+`launch.target` 进行宽容进程轮询，并经 Player 转发页面消息：
+
+```jsonc
+{ "type": "dext:app-status", "target": "C:\\Apps\\Demo.exe", "running": true }
+```
+
+渲染器只在内存集合中按启动目标（大小写不敏感）维护状态，并在对应 `.dock-icon` 上切换
+`is-running` 类和绿色圆点。状态随当前渲染器实例/切 Desk 重绘，不参与 `persistRoom()`；Room
+重新应用或重启后配置仍由 `room.json` 提供，运行态需重新由 Core 遥测确认。缺失/非法目标和进程
+查询异常按宽容原则忽略，不影响现有 Dock 点击启动。
+
 ## 三、配置器对接点（tauri-ui，后续 UI 接线的锚点）
 
 ### 已就位
@@ -142,12 +156,14 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 ### 待补（按独立工作包接线）
 
-1. **拖拽进 Dock（DOCK-003，已完成）**：渲染器编辑模式拖桌面图标到 dock 区 → `addDockIcon` 上行消息 → Core 落盘；真实 Player 的边界命中体验后续由 DOCK-UX-001 重做。
-2. **分享/下载 Dock 皮肤（后续重新设计）**：v1 zip 不携带或执行顶层 room.css；皮肤需先定义官方受管格式。
-3. **运行态小圆点（DOCK-004，独立分支待验收）**：Core 进程遥测和 Dock 指示已实现，验收前不算完成。
+1. **真桌面拖拽重做（DOCK-UX-001，远期）**：现有消息与持久化链保留，但真实 Player 的跨层命中和边界处理不稳定，不作为当前受支持入口；现阶段统一在配置器 `DockEditor` 添加、移除 Dock 图标。
+2. **分享/下载 Dock 皮肤（后续重新设计）**：v1 zip 不携带或执行顶层 `room.css`；皮肤需先定义官方受管格式。
+3. **运行态小圆点（DOCK-004，已完成）**：Core 进程遥测和 Dock 指示已通过人工验收并合入 master。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
 ### DOCK-003 拖入消息与持久化
+
+> 2026-08-29 实机限制：从桌面上方/侧面向 Dock 拖动会被图标层边界限制；从 Dock 下方进入虽能触发绿色命中反馈，释放后仍可能不落入。用户决定跳过该交互目标，当前正式维护入口改为配置器 `DockEditor`；真桌面双向拖拽的输入捕获与命中重做登记为远期 `DOCK-UX-001`。
 
 编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
 

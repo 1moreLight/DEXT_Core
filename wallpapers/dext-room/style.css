@@ -423,6 +423,19 @@ body.editing #dock-drop-hint { display: inline-flex; }
   transition: transform 0.12s ease-out;
   transform-origin: center center;
 }
+.dock-icon.is-running::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  border: 2px solid rgba(20, 20, 20, 0.82);
+  border-radius: 50%;
+  background: var(--dext-success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.75);
+  pointer-events: none;
+}
 .dock-icon.dragging {
   z-index: 50;
   opacity: 0.85;
