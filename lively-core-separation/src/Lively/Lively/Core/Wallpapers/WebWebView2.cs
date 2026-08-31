@@ -10,6 +10,7 @@ using Lively.Models.Message;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -30,6 +31,10 @@ namespace Lively.Core.Wallpapers
         private static int globalCount;
         private readonly int uniqueId;
         private readonly string wallpaperPath;
+        private readonly CancellationTokenSource appMonitorCts = new();
+        private readonly object appMonitorLock = new();
+        private readonly object sendLock = new();
+        private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private int currentVolume = 0;
         private bool isInitialized;
         private bool isMuted;
@@ -145,7 +150,8 @@ namespace Lively.Core.Wallpapers
             try
             {
                 // Setting process StandardInputEncoding to UTF8.
-                process?.StandardInput.WriteLine(msg);
+                lock (sendLock)
+                    process?.StandardInput.WriteLine(msg);
                 // Or convert message to UTF8.
                 //byte[] bytes = Encoding.UTF8.GetBytes(msg);
                 //Proc.StandardInput.BaseStream.Write(bytes, 0, bytes.Length);
@@ -221,6 +227,7 @@ namespace Lively.Core.Wallpapers
                     tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
             }
             process.OutputDataReceived -= Proc_OutputDataReceived;
+            appMonitorCts.Cancel();
             process?.Dispose();
             IsExited = true;
             Exited?.Invoke(this, EventArgs.Empty);
@@ -326,8 +333,15 @@ namespace Lively.Core.Wallpapers
                         {
                             try
                             {
+                                if (string.IsNullOrWhiteSpace(launchTarget))
+                                {
+                                    Logger.Error($"Wv2{uniqueId}: LaunchApp rejected: missing target");
+                                    return;
+                                }
+
                                 new Lively.Services.AppCatalogService().Launch(launchTarget, launchArgs, launchWorkdir);
                                 Logger.Info($"Wv2{uniqueId}: LaunchApp: {launchTarget}");
+                                TrackLaunchedApp(launchTarget);
                             }
                             catch (Exception le)
                             {
@@ -488,6 +502,108 @@ namespace Lively.Core.Wallpapers
                 File.Replace(tempPath, path, null);
             else
                 File.Move(tempPath, path);
+        }
+
+        private void TrackLaunchedApp(string target)
+        {
+            var normalized = target?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return;
+
+            lock (appMonitorLock)
+            {
+                if (!monitoredAppTargets.Add(normalized))
+                    return;
+            }
+
+            SendMessage(new LivelyMessageAppStatus { Target = normalized, Running = true });
+            _ = MonitorLaunchedApp(normalized, appMonitorCts.Token);
+        }
+
+        private async Task MonitorLaunchedApp(string target, CancellationToken cancellationToken)
+        {
+            var observedRunning = false;
+            var launchGraceUntil = DateTime.UtcNow.AddSeconds(5);
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested && !IsExited)
+                {
+                    var running = IsTargetRunning(target);
+                    if (running)
+                    {
+                        observedRunning = true;
+                        launchGraceUntil = DateTime.UtcNow.AddSeconds(5);
+                    }
+                    else if (observedRunning || DateTime.UtcNow >= launchGraceUntil)
+                    {
+                        SendMessage(new LivelyMessageAppStatus { Target = target, Running = false });
+                        return;
+                    }
+
+                    await Task.Delay(500, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Wallpaper is closing; stop runtime telemetry with it.
+            }
+            finally
+            {
+                lock (appMonitorLock)
+                    monitoredAppTargets.Remove(target);
+            }
+        }
+
+        private static bool IsTargetRunning(string target)
+        {
+            string processName;
+            try
+            {
+                processName = Path.GetFileNameWithoutExtension(target);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(processName))
+                return false;
+
+            Process[] processes;
+            try
+            {
+                processes = Process.GetProcessesByName(processName);
+            }
+            catch
+            {
+                return false;
+            }
+
+            var targetPath = Path.IsPathRooted(target) ? Path.GetFullPath(target) : null;
+            foreach (var candidate in processes)
+            {
+                try
+                {
+                    if (targetPath is null)
+                        return true;
+
+                    var candidatePath = candidate.MainModule?.FileName;
+                    if (string.IsNullOrWhiteSpace(candidatePath) ||
+                        string.Equals(Path.GetFullPath(candidatePath), targetPath, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                catch
+                {
+                    // Access-denied process metadata is still a useful name-level match.
+                    return true;
+                }
+                finally
+                {
+                    candidate.Dispose();
+                }
+            }
+
+            return false;
         }
 
         public void Terminate()

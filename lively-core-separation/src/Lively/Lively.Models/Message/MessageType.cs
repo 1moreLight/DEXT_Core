@@ -25,5 +25,6 @@
         lp_chekbox,
         lp_dropdown_scaler,
         msg_add_dock_icon,
+        msg_app_status,
     }
 }

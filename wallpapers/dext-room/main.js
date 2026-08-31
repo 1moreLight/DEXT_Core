@@ -280,6 +280,32 @@ async function loadRoom() {
   dextEmit("ready", { deskCount: ROOM.desks.length });
 }
 
+// Runtime telemetry is deliberately kept outside ROOM so it can never be saved.
+const runningAppTargets = new Set();
+function launchTargetKey(target) {
+  return typeof target === "string" && target.trim() ? target.trim().toLocaleLowerCase() : "";
+}
+
+function updateAppRuntimeStatus(target, running) {
+  const key = launchTargetKey(target);
+  if (!key) return;
+  if (running) runningAppTargets.add(key);
+  else runningAppTargets.delete(key);
+  renderDockApps(dockCfg());
+}
+
+if (window.chrome?.webview) {
+  window.chrome.webview.addEventListener("message", (e) => {
+    let data = e.data;
+    if (typeof data === "string") {
+      try { data = JSON.parse(data); } catch { return; }
+    }
+    if (data?.type === "dext:app-status") {
+      updateAppRuntimeStatus(data.target, data.running);
+    }
+  });
+}
+
 // Windows-style icon size presets; desk.iconSize picks one (default medium)
 const ICON_SIZES = {
   large: { icon: 72, cellW: 124, cellH: 152, label: 14 },
@@ -374,6 +400,7 @@ function renderDockApps(cfg) {
     const el = document.createElement("div");
     el.className = "dock-icon";
     el.title = item.label ?? "";
+    el.classList.toggle("is-running", runningAppTargets.has(launchTargetKey(item.launch?.target)));
     el.appendChild(iconVisual(item));
     const removeButton = document.createElement("button");
     removeButton.className = "icon-del dock-icon-del";

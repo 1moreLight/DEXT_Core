@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -79,13 +80,13 @@ namespace Lively.Services
             }
         }
 
-        public void Launch(string target, string arguments, string workingDirectory)
+        public Process Launch(string target, string arguments, string workingDirectory)
         {
             if (string.IsNullOrWhiteSpace(workingDirectory) && !Path.IsPathRooted(target))
                 workingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
 
             if (ExplorerShellLaunchService.TryOpen(target, workingDirectory, "open", out _))
-                return;
+                return null;
 
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
@@ -96,7 +97,7 @@ namespace Lively.Services
                     ? Path.GetDirectoryName(Path.GetFullPath(target))
                     : workingDirectory,
             };
-            System.Diagnostics.Process.Start(startInfo);
+            return Process.Start(startInfo);
         }
 
         // resolve a single .lnk (or plain .exe) into a library entry; null if unresolvable
