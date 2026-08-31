@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
+import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { deleteDeskGraph } from "@/lib/desk";
@@ -1904,14 +1905,6 @@ export default function App() {
       cancelAnimationFrame(frame);
     };
   }, [roomEntered, edges.length, desks.length]);
-  useEffect(() => {
-    if (appPickerDesk === null) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAppPickerDesk(null);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [appPickerDesk]);
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
@@ -2824,68 +2817,14 @@ export default function App() {
         />
       )}
       {pickerDesk && appPickerDesk !== null && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5 backdrop-blur-[2px]"
-          onMouseDown={(event) => {
-            if (event.currentTarget === event.target) setAppPickerDesk(null);
-          }}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="app-picker-title"
-            className="flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-              <div>
-                <h2 id="app-picker-title" className="text-base font-semibold">
-                  放入应用 · {pickerDesk.name}
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  点击应用即可加入或移出；加入后可在桌面长按图标拖动位置。
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setAppPickerDesk(null)}>
-                完成
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              {apps.length === 0 ? (
-                <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border px-6 text-center text-sm text-muted-foreground">
-                  还没有可用应用。请先关闭此窗口，再到侧栏“应用库”添加或扫描应用。
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-2 md:grid-cols-5">
-                  {apps.map((app) => {
-                    const on = pickerDesk.icons.some((icon) => icon.launch.target === app.target);
-                    return (
-                      <button
-                        key={app.source + app.target}
-                        type="button"
-                        aria-pressed={on}
-                        onClick={() => toggleDeskApp(app, appPickerDesk)}
-                        className={`relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-lg border p-3 text-center transition-colors ${
-                          on
-                            ? "border-primary bg-primary/10"
-                            : "border-transparent bg-muted/45 hover:border-border hover:bg-accent"
-                        }`}
-                        title={`${app.target}\n单击${on ? "移出" : "加入"} ${pickerDesk.name}`}
-                      >
-                        <AppIcon app={app} />
-                        <span className="line-clamp-2 text-xs leading-tight">{app.name}</span>
-                        {on && (
-                          <span className="absolute right-2 top-2 text-[10px] font-semibold text-primary">
-                            已加入 ✓
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
+        <AppPickerDialog
+          title={`放入应用 · ${pickerDesk.name}`}
+          description="点击应用即可加入或移出；加入后可在桌面长按图标拖动位置。"
+          apps={apps}
+          isSelected={(app) => pickerDesk.icons.some((icon) => icon.launch.target === app.target)}
+          onToggle={(app) => toggleDeskApp(app, appPickerDesk)}
+          onClose={() => setAppPickerDesk(null)}
+        />
       )}
     </main>
   );
