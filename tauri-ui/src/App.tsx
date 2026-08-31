@@ -2043,6 +2043,7 @@ export default function App() {
                 const focused = room.path === heroRoom?.path;
                 const active = room.path === appliedRoom;
                 const picked = selectedRooms.has(room.path);
+                const selected = roomMultiMode ? picked : focused;
                 return (
                   <button
                     key={room.path}
@@ -2051,21 +2052,25 @@ export default function App() {
                     onDoubleClick={() => void applyRoomFromCard(room)}
                     title={roomMultiMode ? "单击选择" : "单击查看详情，双击应用"}
                     aria-pressed={roomMultiMode ? picked : focused}
-                    className={`group overflow-hidden text-left transition-opacity disabled:cursor-wait ${
+                    className={`group overflow-hidden rounded-xl p-1.5 text-left outline-none transition-[opacity,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:cursor-wait ${
                       roomMultiMode && !picked ? "opacity-60 hover:opacity-100" : "opacity-100"
+                    } ${
+                      selected
+                        ? "bg-cyan-500/10 ring-2 ring-cyan-500/50 ring-offset-2 ring-offset-background"
+                        : "bg-transparent hover:bg-muted/40"
                     }`}
                   >
                     <div className={`relative aspect-video overflow-hidden rounded-lg border-2 ${
-                      picked || focused ? "border-primary" : "border-transparent group-hover:border-border"
+                      selected ? "border-cyan-500" : "border-transparent group-hover:border-border"
                     }`}>
                       <CoverStack tiles={roomCovers(room)} />
-                      {roomMultiMode && (
-                        <span className={`absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded border text-xs font-bold ${
-                          picked ? "border-primary bg-primary text-primary-foreground" : "border-white/70 bg-black/30 text-white"
-                        }`}>
-                          {picked ? "✓" : ""}
+                      {selected ? (
+                        <span className="absolute left-2 top-2 rounded-md border border-white/20 bg-cyan-600 px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-cyan-400 dark:text-slate-950">
+                          {roomMultiMode ? "✓ 已选择" : "已选中"}
                         </span>
-                      )}
+                      ) : roomMultiMode ? (
+                        <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded border border-white/70 bg-black/30 text-xs font-bold text-white" />
+                      ) : null}
                     </div>
                     <div className="mt-2 flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -2296,14 +2301,19 @@ export default function App() {
                       <button
                         key={r.path}
                         onClick={() => setRoomPickPath(r.path)}
-                        className={`overflow-hidden rounded-xl border text-left transition-colors ${
+                        className={`overflow-hidden rounded-xl border text-left outline-none transition-[border-color,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-cyan-500 ${
                           pickedRoom && r.path === pickedRoom.path
-                            ? "border-primary"
-                            : "border-border hover:border-primary/40"
+                            ? "border-cyan-500 bg-cyan-500/10 ring-2 ring-cyan-500/50 ring-offset-2 ring-offset-background shadow-sm"
+                            : "border-border bg-card hover:border-cyan-500/40 hover:bg-muted/30"
                         }`}
                       >
-                        <div className="aspect-video w-full">
+                        <div className="relative aspect-video w-full">
                           <CoverStack tiles={roomCovers(r)} />
+                          {pickedRoom && r.path === pickedRoom.path && (
+                            <span className="absolute left-2 top-2 rounded-md border border-white/20 bg-cyan-600 px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-cyan-400 dark:text-slate-950">
+                              已选中
+                            </span>
+                          )}
                         </div>
                         <div className="p-3">
                           <div className="truncate text-sm font-medium">{r.name}</div>
