@@ -343,11 +343,11 @@
 - [x] 用户按 `dev_docs/acceptance/DXT-002-idle-screensaver.md` 验收通过（2026-08-31，回复“通过 合并”）
 - [x] 合并到 master（merge `6544e52`）；DXT-003 提升为唯一下一项，工作分支/worktree 收口清理（2026-08-31）
 
-## DXT-003 Room v2 Widget 契约（2026-08-31）
+## DXT-003 Room v2 Widget 后端与系统接口（2026-08-31）
 
-> 目标：在不改变 Room v1 与 idle 生命周期的前提下，交付可独立校验的 Room v2 Widget 契约、版本分派、兼容与显式复制迁移规则。
-> 范围外：不实现 WidgetHost/渲染、能力桥、权限执行、存储、联网、应用启动、布局编辑 UI、ROOM-004 分享安全闭环、AI skill、DOCK-004、UI-USE-001、用户 `rooms` 或其他待验收分支，也不重写现有渲染器。
-> 人工验收：按 `dev_docs/acceptance/DXT-003-room-v2-widget-contract.md` 验证 v1 保存/应用不回归、v2 样包只读与校验、非法 Widget fixtures 拒绝、显式复制迁移前后规则及 idle/end 边界。
+> 目标：在不改变 Room v1 与 idle 生命周期的前提下，完成可独立校验且可由配置器安全存储、复制、打包和应用的 Room v2 后端，并通过封闭 RPC/Tauri 接口提供当前系统媒体和 Windows 默认输出主音量能力。
+> 范围外：本包不实现 WidgetHost 视觉渲染、配置器 Widget 布局 UI、权限确认 UI、壁纸热点/可信手势层、Scene 直连系统接口、任意 Shell/文件/URL/命令、Dext 代理联网、ROOM-004 分享授权清单、AI skill，也不修改用户 `rooms`。
+> 人工验收：按 `dev_docs/acceptance/DXT-003-room-v2-widget-contract.md` 验证 v1 不回归、v2 操作保留全部 Widget 数据与资源、恶意包拒绝、媒体读写动作和系统主音量接口，以及前端接入与安全边界文档。
 
 - [x] 核对 `master@096eacd`、worktree、未合并分支、stash 与主 worktree 用户 Room 状态；创建独立 worktree 和 `feat/dxt-003-room-v2-widget-contract`（2026-08-31）
 - [x] 冻结六项开工决策：1920×1080 逻辑画布、宽松 P1、Dext 代理联网、本机可变数据、每 Desk 独立实例、显式复制升级（2026-08-31）
@@ -358,6 +358,12 @@
 - [x] 同步 README/PROJECT/MODEL/WIDGETS_V2 正式契约，并将版本守卫回归记录为 ERRORS #48（2026-08-31）
 - [x] 运行 Schema、Rust、TS、前端构建、渲染器语法与差异检查；`codegraph sync` 已按要求尝试，但独立 worktree 未初始化索引，未擅自初始化（2026-08-31）
 - [x] 只暂存本工作包 35 个具名文件并提交为 `c60141e`；更新为待验收，等待用户明确确认（2026-08-31）
+- [x] 用户决定不在契约边界停下，继续同一 DXT-003 分支完成 v2 后端和系统接口；同步 master（含 DOCK-004 收口）为 `3d71acf`（2026-08-31）
+- [ ] 让 v2 的写入、另存、应用、导入和导出按版本分派工作，完整镜像/校验 `widgets/` 声明资源且失败无残留
+- [ ] 在 Core gRPC 增加封闭的系统媒体快照/动作与默认输出主音量读写接口，并在 Rust/Tauri 暴露受控命令
+- [ ] 增加 Rust/C#/Schema/前端回归，证明未知版本、非法资源、非法媒体动作和越界音量均在最终边界被拒绝
+- [ ] 编写 `ROOM_V2_FRONTEND_CHECKLIST.md` 与 `ROOM_V2_SYSTEM_API.md`，明确可信宿主手势、权限和 Scene 不可直接调用的边界
+- [ ] 运行 Schema、Rust、TypeScript、前端、C# Release 构建与启动验证，只提交本工作包具名文件并重新进入待验收
 ## DOCK-004 运行态指示圆点（2026-08-29）
 
 目标：Dock 图标按其启动目标显示应用是否运行；应用退出后状态及时清除。
