@@ -799,6 +799,7 @@ export default function App() {
   const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
@@ -1424,12 +1425,14 @@ export default function App() {
     setTransition(content);
   }
 
-  function toggle(app: AppInfo) {
-    const alreadyAdded = desk.icons.some((icon) => icon.launch.target === app.target);
+  function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
+    const targetDesk = desks[deskIndex];
+    if (!targetDesk) return;
+    const alreadyAdded = targetDesk.icons.some((icon) => icon.launch.target === app.target);
     touch();
     setDesks((prev) =>
       prev.map((d, i) => {
-        if (i !== activeDesk) return d;
+        if (i !== deskIndex) return d;
         const has = d.icons.some((x) => x.launch.target === app.target);
         return {
           ...d,
@@ -1441,8 +1444,8 @@ export default function App() {
     );
     setStatus(
       alreadyAdded
-        ? `已从 ${desk.name} 移除 ${app.name}`
-        : `已将 ${app.name} 放入 ${desk.name}；可在桌面长按图标拖动位置`
+        ? `已从 ${targetDesk.name} 移除 ${app.name}`
+        : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
     );
   }
 
@@ -1837,6 +1840,14 @@ export default function App() {
       cancelAnimationFrame(frame);
     };
   }, [roomEntered, edges.length, desks.length]);
+  useEffect(() => {
+    if (appPickerDesk === null) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAppPickerDesk(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [appPickerDesk]);
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );
@@ -1850,6 +1861,7 @@ export default function App() {
   const filtered = apps.filter((a) =>
     a.name.toLowerCase().includes(query.toLowerCase())
   );
+  const pickerDesk = appPickerDesk === null ? null : desks[appPickerDesk] ?? null;
   const tabCls = (on: boolean) =>
     `rounded px-3 py-1 text-sm whitespace-nowrap ${on ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`;
 
@@ -2165,9 +2177,6 @@ export default function App() {
                   onChange={(e) => setQuery(e.target.value)}
                   className="mb-3"
                 />
-                <p className="mb-3 text-xs text-muted-foreground">
-                  当前加入：{desk.name}。应用加入后，可在桌面长按图标拖动位置。
-                </p>
                 <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-6 gap-2 overflow-y-auto pr-1">
                   {apps.length === 0 && (
                     <div className="col-span-6 py-16 text-center text-sm text-muted-foreground">
@@ -2183,7 +2192,7 @@ export default function App() {
                         className={`relative rounded-lg border transition-colors ${picked ? "border-destructive/60" : on ? "border-primary" : "border-transparent"}`}
                       >
                         <button
-                          onClick={() => toggle(app)}
+                          onClick={() => toggleDeskApp(app)}
                           className={`flex h-full w-full flex-col items-center gap-1.5 rounded-lg p-3 ${on ? "bg-primary/10" : "hover:bg-accent"}`}
                           title={`${app.target}\n单击${on ? "从" : "加入"}当前 Desk`}
                         >
@@ -2590,8 +2599,8 @@ export default function App() {
 	                                  onClick={() => {
 	                                    const deskIndex = parseInt(graphSel.slice(1), 10);
 	                                    setActiveDesk(deskIndex);
-	                                    setEditNav("library");
-	                                    setStatus(`正在给 ${desks[deskIndex]?.name ?? "当前 Desk"} 放入应用`);
+	                                    setAppPickerDesk(deskIndex);
+	                                    setStatus(`选择要放入 ${desks[deskIndex]?.name ?? "当前 Desk"} 的应用`);
 	                                  }}
 	                                >
 	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
@@ -2720,6 +2729,70 @@ export default function App() {
           coreIdentity={coreIdentity}
           setStatus={setStatus}
         />
+      )}
+      {pickerDesk && appPickerDesk !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setAppPickerDesk(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="app-picker-title"
+            className="flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+              <div>
+                <h2 id="app-picker-title" className="text-base font-semibold">
+                  放入应用 · {pickerDesk.name}
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  点击应用即可加入或移出；加入后可在桌面长按图标拖动位置。
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setAppPickerDesk(null)}>
+                完成
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              {apps.length === 0 ? (
+                <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border px-6 text-center text-sm text-muted-foreground">
+                  还没有可用应用。请先关闭此窗口，再到侧栏“应用库”添加或扫描应用。
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2 md:grid-cols-5">
+                  {apps.map((app) => {
+                    const on = pickerDesk.icons.some((icon) => icon.launch.target === app.target);
+                    return (
+                      <button
+                        key={app.source + app.target}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleDeskApp(app, appPickerDesk)}
+                        className={`relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-lg border p-3 text-center transition-colors ${
+                          on
+                            ? "border-primary bg-primary/10"
+                            : "border-transparent bg-muted/45 hover:border-border hover:bg-accent"
+                        }`}
+                        title={`${app.target}\n单击${on ? "移出" : "加入"} ${pickerDesk.name}`}
+                      >
+                        <AppIcon app={app} />
+                        <span className="line-clamp-2 text-xs leading-tight">{app.name}</span>
+                        {on && (
+                          <span className="absolute right-2 top-2 text-[10px] font-semibold text-primary">
+                            已加入 ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       )}
     </main>
   );
