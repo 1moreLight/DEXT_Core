@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
+import { AppPickerDialog } from "@/components/AppPickerDialog";
 import {
   type DockConfig,
   type DockIconItem,
@@ -61,7 +62,7 @@ export function DockEditor({
   const [globalDock, setGlobalDock] = useState<DockConfig>(dock);
   const [deskDocks, setDeskDocks] = useState<DockConfig[]>(desks.map((d) => d.dock ?? {}));
   const [iconScope, setIconScope] = useState<DockIconScope>("global");
-  const [appQuery, setAppQuery] = useState("");
+  const [appPickerOpen, setAppPickerOpen] = useState(false);
 
   useEffect(() => setGlobalDock(dock), [dock]);
   useEffect(() => setDeskDocks(desks.map((d) => d.dock ?? {})), [desks]);
@@ -76,15 +77,6 @@ export function DockEditor({
   const scopedTargets = new Set(
     scopedIcons.map((icon) => icon.launch?.target).filter((target): target is string => !!target)
   );
-  const filteredApps = useMemo(() => {
-    const q = appQuery.trim().toLocaleLowerCase();
-    if (!q) return apps;
-    return apps.filter(
-      (app) =>
-        app.name.toLocaleLowerCase().includes(q) ||
-        app.target.toLocaleLowerCase().includes(q)
-    );
-  }, [apps, appQuery]);
 
   function saveGlobal() {
     setDock(globalDock);
@@ -133,9 +125,10 @@ export function DockEditor({
     updateDesk({ icons });
   }
 
-  function addDockApp(app: DockAppInfo) {
+  function toggleDockApp(app: DockAppInfo) {
     if (scopedTargets.has(app.target)) {
-      setStatus(`「${app.name}」已在${iconScope === "global" ? "全局" : "当前桌"} Dock 中`);
+      const index = scopedIcons.findIndex((icon) => icon.launch?.target === app.target);
+      if (index >= 0) removeScopedIcon(index);
       return;
     }
     const icon: DockIconItem = {
@@ -194,25 +187,30 @@ export function DockEditor({
               从现有应用库写入真图标和启动信息；修改后使用 Room 顶栏的“保存”落盘。
             </p>
           </div>
-          <div className="flex rounded-md border border-border bg-background p-0.5">
-            <button
-              type="button"
-              className={`rounded px-2.5 py-1 text-xs ${
-                iconScope === "global" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-              }`}
-              onClick={() => setIconScope("global")}
-            >
-              全局 Dock · {globalIcons.length}
-            </button>
-            <button
-              type="button"
-              className={`rounded px-2.5 py-1 text-xs ${
-                iconScope === "desk" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
-              }`}
-              onClick={() => setIconScope("desk")}
-            >
-              {desks[activeDesk]?.name ?? `Desk ${activeDesk + 1}`} · {deskIcons.length}
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-md border border-border bg-background p-0.5">
+              <button
+                type="button"
+                className={`rounded px-2.5 py-1 text-xs ${
+                  iconScope === "global" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                }`}
+                onClick={() => setIconScope("global")}
+              >
+                全局 Dock · {globalIcons.length}
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2.5 py-1 text-xs ${
+                  iconScope === "desk" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                }`}
+                onClick={() => setIconScope("desk")}
+              >
+                {desks[activeDesk]?.name ?? `Desk ${activeDesk + 1}`} · {deskIcons.length}
+              </button>
+            </div>
+            <Button size="sm" onClick={() => setAppPickerOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> 放入应用
+            </Button>
           </div>
         </div>
 
@@ -231,69 +229,13 @@ export function DockEditor({
           </div>
         )}
 
-        <Input
-          value={appQuery}
-          onChange={(e) => setAppQuery(e.target.value)}
-          placeholder="搜索应用名称或启动路径..."
-          aria-label="搜索 Dock 应用"
-        />
-
-        <div className="grid max-h-48 grid-cols-1 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2">
-          {apps.length === 0 && (
-            <p className="col-span-full rounded-md border border-dashed border-border px-3 py-5 text-center text-xs text-muted-foreground">
-              应用库为空，请先到“应用库”扫描或手动添加程序。
-            </p>
-          )}
-          {apps.length > 0 && filteredApps.length === 0 && (
-            <p className="col-span-full px-3 py-5 text-center text-xs text-muted-foreground">
-              没有匹配“{appQuery}”的应用。
-            </p>
-          )}
-          {filteredApps.map((app) => {
-            const added = scopedTargets.has(app.target);
-            return (
-              <div
-                key={`${app.target}\u0000${app.arguments}`}
-                className={`flex min-w-0 items-center gap-2 rounded-md border p-2 ${
-                  added ? "border-primary/50 bg-primary/5" : "border-border bg-background"
-                }`}
-                title={app.target}
-              >
-                {app.icon_png ? (
-                  <img
-                    src={`data:image/png;base64,${app.icon_png}`}
-                    alt=""
-                    className="h-8 w-8 shrink-0 object-contain"
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-muted text-xs font-medium">
-                    {app.name.slice(0, 1).toLocaleUpperCase()}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-xs font-medium">{app.name}</div>
-                  <div className="truncate text-[10px] text-muted-foreground">{app.target}</div>
-                </div>
-                <Button
-                  size="xs"
-                  variant={added ? "secondary" : "outline"}
-                  disabled={added}
-                  onClick={() => addDockApp(app)}
-                >
-                  {added ? "已加入" : "加入"}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-
         <div className="space-y-1.5">
           <div className="text-xs font-medium">
             {iconScope === "global" ? "全局 Dock" : "当前桌 Dock"} 已选（{scopedIcons.length}）
           </div>
           {scopedIcons.length === 0 && (
             <p className="rounded-md border border-dashed border-border px-3 py-3 text-xs text-muted-foreground">
-              暂无常驻应用。
+              暂无常驻应用。点击“放入应用”从应用库中选择。
             </p>
           )}
           {scopedIcons.map((icon, index) => (
@@ -510,6 +452,17 @@ export function DockEditor({
           ))}
         </div>
       </section>
+
+      {appPickerOpen && (
+        <AppPickerDialog
+          title={`放入应用 · ${iconScope === "global" ? "全局 Dock" : `${desks[activeDesk]?.name ?? `Desk ${activeDesk + 1}`} Dock`}`}
+          description="点击应用即可加入或移出当前 Dock 作用域；修改后使用 Room 顶栏的“保存”落盘。"
+          apps={apps}
+          isSelected={(app) => scopedTargets.has(app.target)}
+          onToggle={toggleDockApp}
+          onClose={() => setAppPickerOpen(false)}
+        />
+      )}
 
     </div>
   );

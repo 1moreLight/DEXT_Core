@@ -75,3 +75,10 @@
 - 根因：`core_identity` 只在 React 首次挂载时调用一次，绿色状态保存的是历史快照，不是当前连接状态。
 - 解决：配置器每两秒重新验证一次 Core 身份；断线立即清空 identity，显示“Dext Core 未运行”并禁用全部应用 Room 入口；RPC 在两次轮询之间断开时也会主动降级状态。
 - 防再犯：连接、进程和设备状态都不能用一次性初始化结果长期展示；必须定义刷新/事件机制，并把业务按钮可用性绑定到同一份实时状态。
+
+## 43. Tauri `openPath` 有命令权限仍会被路径 scope 拒绝
+
+- 现象：设置页“打开数据目录”和关于文档按钮都已渲染；补上 `opener:allow-open-path` 后，点击仍报 `Not allowed to open path`。
+- 根因：Tauri opener 的命令 ACL 与路径 scope 是两层约束；前端直接提交任意绝对路径既需要广泛 scope，也扩大了 WebView 被注入时的文件打开面。
+- 解决：前端只提交固定枚举；Rust `open_about_document` 重新映射并校验仓库内三份文档，`open_dext_directory` 从已验证 Core 身份派生 data/log 路径，再由原生 `OpenerExt` 打开。仅保留诊断保存所需的 `dialog:allow-save`，不授予 WebView 任意路径 opener scope。
+- 防再犯：真实 Tauri 功能必须点击验证，不能以按钮出现或 TypeScript 编译通过代替；涉及文件、shell、opener 的能力优先设计为后端白名单 command，不向 WebView 开放通配路径权限。

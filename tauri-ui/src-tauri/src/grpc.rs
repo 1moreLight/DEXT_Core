@@ -5,10 +5,13 @@ use std::sync::OnceLock;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::windows::named_pipe::ClientOptions;
 
-use crate::proto::desktop::{GetCoreStatsResponse, GetWallpapersResponse};
+use crate::proto::desktop::{
+    CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse,
+};
 use crate::proto::grpc_dotnet_named_pipes::generated::{
     transport_message::Data, Headers, PayloadInfo, RequestControl, RequestInit, TransportMessage,
 };
+use crate::proto::settings::SettingsDataModel;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -322,6 +325,39 @@ pub async fn set_wallpaper(folder: &str) -> Result<(), String> {
     .map(|_| ())
 }
 
+pub async fn close_all_wallpapers() -> Result<(), String> {
+    let request = CloseAllWallpapersRequest::default();
+    verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/CloseAllWallpapers",
+        &request.encode_to_vec(),
+    )
+    .await
+    .map(|_| ())
+}
+
+pub async fn get_settings() -> Result<SettingsDataModel, String> {
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Settings.SettingsService/GetSettings",
+        &[],
+    )
+    .await?;
+    payloads
+        .first()
+        .ok_or_else(|| "Dext Core returned no settings payload".to_string())
+        .and_then(|payload| {
+            SettingsDataModel::decode(&payload[..]).map_err(|error| error.to_string())
+        })
+}
+
+pub async fn set_settings(settings: &SettingsDataModel) -> Result<(), String> {
+    verified_call(
+        "/Lively.Grpc.Common.Proto.Settings.SettingsService/SetSettings",
+        &settings.encode_to_vec(),
+    )
+    .await
+    .map(|_| ())
+}
+
 #[derive(serde::Serialize)]
 pub struct AppInfoDto {
     pub name: String,
@@ -477,6 +513,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "live test: changes the Windows desktop wallpaper and persisted restore layout"]
     async fn applies_room_wallpaper() {
         super::set_wallpaper(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -487,6 +524,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "live test: enumerates installed apps and launches Notepad"]
     async fn apps_and_launch() {
         let apps = super::get_installed_apps()
             .await

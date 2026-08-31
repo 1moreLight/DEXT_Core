@@ -5,6 +5,7 @@ fn main() {
     let fds = protox::compile(
         [
             "proto/wallpaper.proto",
+            "proto/settings.proto",
             "proto/display.proto",
             "proto/transport.proto",
         ],

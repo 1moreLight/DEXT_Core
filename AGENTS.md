@@ -45,7 +45,7 @@
 - 改了 C# / .proto → 必须先跑 `scripts/build.ps1` 再 `scripts/start.ps1`
 - 只改前端（tauri-ui / wallpapers）→ `scripts/start.ps1` 即可
 - 日常可双击 `scripts/start-dext.cmd`；它只转调 `start.ps1`。`start.ps1` 会先检查 Core 的 Dext 产品元数据，输出缺失或仍是旧 Lively 构建时自动运行 `build.ps1`
-- 强制重铺壁纸：`cargo test --lib applies_room_wallpaper`（在 tauri-ui/src-tauri 下）
+- 强制重铺壁纸（会改变桌面并写入 Core 恢复布局，仅人工验收时运行）：`cargo test --lib applies_room_wallpaper -- --ignored`（在 tauri-ui/src-tauri 下）
 - Player 必须 Release 构建，Debug 会挂起（详见 ERRORS.md #1）
 - 日志位置：`%LOCALAPPDATA%\Dext\logs\`；首行包含 Dext 运行身份、PID、Core 绝对路径、数据目录和版本
 - `scripts/start.ps1` 只按当前 worktree 构建出的 Core 规范化绝对路径判断已启动；其他安装或 worktree 的 `Lively.exe` 只报告，不停止也不复用

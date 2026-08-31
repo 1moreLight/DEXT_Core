@@ -47,6 +47,10 @@
 | #40 | master 源码已 Dext 化，但忽略的旧构建输出仍是 Lively，启动脚本只检查存在性而误启动 | [toolchain](errors/toolchain.md) |
 | #41 | 新 worktree 没有 node_modules，启动脚本找不到 Tauri 后仍返回成功 | [toolchain](errors/toolchain.md) |
 | #42 | PowerShell 条件表达式返回单个原生参数时退化成字符串，splat 后按字符传给 MSBuild | [toolchain](errors/toolchain.md) |
+| #43 | Tauri `openPath` 有命令权限仍会被路径 scope 拒绝 | [frontend](errors/frontend.md) |
+| #44 | Windows canonicalize 的 `\\?\` 前缀破坏 Room 活动态匹配 | [backend](errors/backend.md) |
+| #45 | 普通 Rust 测试实际铺设壁纸并污染 Core 恢复布局 | [toolchain](errors/toolchain.md) |
+| #46 | 删除 Room 复用 v1 内容校验导致旧/损坏 Room 无法清理 | [backend](errors/backend.md) |
 
 ## 分册
 

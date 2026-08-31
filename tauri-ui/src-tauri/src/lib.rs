@@ -9,6 +9,12 @@ pub mod proto {
             "/lively.grpc.common.proto.desktop.rs"
         ));
     }
+    pub mod settings {
+        include!(concat!(
+            env!("OUT_DIR"),
+            "/lively.grpc.common.proto.settings.rs"
+        ));
+    }
     pub mod grpc_dotnet_named_pipes {
         pub mod generated {
             include!(concat!(
@@ -79,6 +85,295 @@ struct RoomInfo {
     desks: usize,
     icons: usize,
     covers: Vec<CoverRef>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ActiveRoom {
+    source_path: String,
+    runtime_path: String,
+}
+
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DextSettings {
+    startup: bool,
+    fullscreen_pause: bool,
+    battery_pause: bool,
+    power_save_pause: bool,
+    audio_only_on_desktop: bool,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DextSettingsPatch {
+    startup: Option<bool>,
+    fullscreen_pause: Option<bool>,
+    battery_pause: Option<bool>,
+    power_save_pause: Option<bool>,
+    audio_only_on_desktop: Option<bool>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AboutDocument {
+    id: String,
+    label: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AboutInfo {
+    configurator_version: String,
+    documents: Vec<AboutDocument>,
+}
+
+const MAX_ARCHIVE_FILES: usize = 2048;
+const MAX_ARCHIVE_FILE_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_ARCHIVE_TOTAL_BYTES: u64 = 1024 * 1024 * 1024;
+
+fn validate_room_library_path(path: &std::path::Path) -> Result<std::path::PathBuf, String> {
+    if path.as_os_str().is_empty() {
+        return Err("Room library path cannot be empty".into());
+    }
+    if path.exists() && is_reparse_point(path)? {
+        return Err("Room library cannot be a symlink or reparse point".into());
+    }
+    std::fs::create_dir_all(path)
+        .map_err(|error| format!("create Room library failed: {error}"))?;
+    if !path.is_dir() {
+        return Err("Room library path is not a directory".into());
+    }
+    let canonical = path
+        .canonicalize()
+        .map_err(|error| format!("resolve Room library failed: {error}"))?;
+    if is_reparse_point(&canonical)? {
+        return Err("Room library cannot be a symlink or reparse point".into());
+    }
+    std::fs::read_dir(&canonical)
+        .map_err(|error| format!("Room library is not readable: {error}"))?;
+
+    use std::io::Write;
+    let mut probe = tempfile::Builder::new()
+        .prefix(".dext-write-check-")
+        .tempfile_in(&canonical)
+        .map_err(|error| format!("Room library is not writable: {error}"))?;
+    probe
+        .write_all(b"dext")
+        .and_then(|_| probe.flush())
+        .map_err(|error| format!("Room library write check failed: {error}"))?;
+    probe
+        .close()
+        .map_err(|error| format!("Room library cleanup check failed: {error}"))?;
+    Ok(canonical)
+}
+
+#[tauri::command]
+async fn validate_room_library(path: String) -> Result<String, String> {
+    validate_room_library_path(std::path::Path::new(&path))
+        .map(|validated| validated.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+async fn about_info() -> Result<AboutInfo, String> {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let entries = [
+        (
+            "license",
+            "Lively Core 许可证",
+            "lively-core-separation/LICENSE",
+        ),
+        (
+            "lively-readme",
+            "Lively Core 上游说明",
+            "lively-core-separation/README.md",
+        ),
+        (
+            "configurator-readme",
+            "Dext 配置器说明",
+            "tauri-ui/README.md",
+        ),
+    ];
+    let mut documents = Vec::with_capacity(entries.len());
+    for (id, label, relative) in entries {
+        let path = root.join(relative);
+        if !path.is_file() {
+            return Err(format!("About document is missing: {relative}"));
+        }
+        let canonical = path
+            .canonicalize()
+            .map_err(|error| format!("resolve About document failed: {error}"))?;
+        if !canonical.starts_with(&root) {
+            return Err(format!(
+                "About document escaped the Dext repository: {relative}"
+            ));
+        }
+        documents.push(AboutDocument {
+            id: id.into(),
+            label: label.into(),
+        });
+    }
+    Ok(AboutInfo {
+        configurator_version: env!("CARGO_PKG_VERSION").into(),
+        documents,
+    })
+}
+
+fn about_document_path(document_id: &str) -> Result<std::path::PathBuf, String> {
+    let relative = match document_id {
+        "license" => "lively-core-separation/LICENSE",
+        "lively-readme" => "lively-core-separation/README.md",
+        "configurator-readme" => "tauri-ui/README.md",
+        _ => return Err("unknown About document".into()),
+    };
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let path = root
+        .join(relative)
+        .canonicalize()
+        .map_err(|error| format!("resolve About document failed: {error}"))?;
+    if !path.is_file() || !path.starts_with(&root) {
+        return Err("About document is outside the Dext repository".into());
+    }
+    Ok(path)
+}
+
+#[tauri::command]
+async fn open_about_document(app: tauri::AppHandle, document_id: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    let path = about_document_path(&document_id)?;
+    app.opener()
+        .open_path(path.to_string_lossy().into_owned(), None::<&str>)
+        .map_err(|error| format!("open About document failed: {error}"))
+}
+
+#[tauri::command]
+async fn open_dext_directory(app: tauri::AppHandle, kind: String) -> Result<(), String> {
+    use tauri_plugin_opener::OpenerExt;
+    let identity = grpc::core_identity().await?;
+    let data = std::path::PathBuf::from(identity.app_data_directory);
+    let target = match kind.as_str() {
+        "data" => data,
+        "logs" => data.join("logs"),
+        _ => return Err("unknown Dext directory".into()),
+    };
+    std::fs::create_dir_all(&target)
+        .map_err(|error| format!("create Dext directory failed: {error}"))?;
+    let canonical = target
+        .canonicalize()
+        .map_err(|error| format!("resolve Dext directory failed: {error}"))?;
+    app.opener()
+        .open_path(canonical.to_string_lossy().into_owned(), None::<&str>)
+        .map_err(|error| format!("open Dext directory failed: {error}"))
+}
+
+fn is_reparse_point(path: &std::path::Path) -> Result<bool, String> {
+    let metadata =
+        std::fs::symlink_metadata(path).map_err(|error| format!("inspect path failed: {error}"))?;
+    if metadata.file_type().is_symlink() {
+        return Ok(true);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+        return Ok(metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0);
+    }
+    #[cfg(not(windows))]
+    Ok(false)
+}
+
+fn direct_room_entry_in_library(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    let library = library_dir
+        .canonicalize()
+        .map_err(|error| format!("Room library not found: {error}"))?;
+    if is_reparse_point(&library)? {
+        return Err("Room library cannot be a symlink or reparse point".into());
+    }
+    let room = room_dir
+        .canonicalize()
+        .map_err(|error| format!("Room directory not found: {error}"))?;
+    if room == library || room.parent() != Some(library.as_path()) {
+        return Err("Room must be a direct child of the selected Room library".into());
+    }
+    if is_reparse_point(&room)? {
+        return Err("Room cannot be a symlink or reparse point".into());
+    }
+    let room_json = room.join("room.json");
+    if !room_json.is_file() || is_reparse_point(&room_json)? {
+        return Err("selected directory is not a valid Room (room.json missing)".into());
+    }
+    Ok(room)
+}
+
+fn direct_room_in_library(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    let room = direct_room_entry_in_library(library_dir, room_dir)?;
+    let room_json = room.join("room.json");
+    let value: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&room_json)
+            .map_err(|error| format!("read room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse room.json failed: {error}"))?;
+    validate_room_v1(&value)?;
+    validate_room_asset_references(&room, &value)?;
+    Ok(room)
+}
+
+fn validate_room_asset_references(
+    room_dir: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<(), String> {
+    let mut references = Vec::new();
+    for key in ["start", "end"] {
+        if let Some(src) = room
+            .get(key)
+            .and_then(|value| value.get("src"))
+            .and_then(|value| value.as_str())
+        {
+            references.push((key.to_string(), src.to_string()));
+        }
+    }
+    if let Some(desks) = room.get("desks").and_then(|value| value.as_array()) {
+        for (index, desk) in desks.iter().enumerate() {
+            if let Some(src) = desk
+                .get("background")
+                .and_then(|value| value.get("src"))
+                .and_then(|value| value.as_str())
+            {
+                references.push((format!("desks[{index}].background"), src.to_string()));
+            }
+        }
+    }
+    if let Some(switches) = room.get("switches").and_then(|value| value.as_object()) {
+        for (route, value) in switches {
+            if let Some(src) = value.get("src").and_then(|value| value.as_str()) {
+                references.push((format!("switches[{route}]"), src.to_string()));
+            }
+        }
+    }
+    for (label, source) in references {
+        let path = room_dir.join(source.replace('/', std::path::MAIN_SEPARATOR_STR));
+        if !path.is_file() {
+            return Err(format!("{label} references missing asset {source:?}"));
+        }
+        if is_reparse_point(&path)? {
+            return Err(format!(
+                "{label} asset cannot be a symlink or reparse point"
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn push_cover(covers: &mut Vec<CoverRef>, bg: &serde_json::Value) {
@@ -706,6 +1001,328 @@ async fn save_room_as(
     .map(|path| path.to_string_lossy().into_owned())
 }
 
+#[tauri::command]
+async fn delete_room(library_dir: String, room_dir: String) -> Result<(), String> {
+    let room = direct_room_entry_in_library(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+    )?;
+    trash::delete(&room).map_err(|error| {
+        format!(
+            "move Room {:?} to the Windows Recycle Bin failed: {error}",
+            room.file_name().unwrap_or_default()
+        )
+    })
+}
+
+fn zip_directory(
+    writer: &mut zip::ZipWriter<&mut std::fs::File>,
+    root: &std::path::Path,
+    directory: &str,
+) -> Result<(), String> {
+    use std::io::Write;
+    let source = root.join(directory);
+    if !source.exists() {
+        return Ok(());
+    }
+    if !source.is_dir() || is_reparse_point(&source)? {
+        return Err(format!("{directory}/ must be a regular directory"));
+    }
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated)
+        .unix_permissions(0o644);
+    let mut pending = vec![source];
+    while let Some(current) = pending.pop() {
+        let mut entries = std::fs::read_dir(&current)
+            .map_err(|error| format!("read {directory}/ failed: {error}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|error| format!("read {directory}/ entry failed: {error}"))?;
+        entries.sort_by_key(|entry| entry.file_name());
+        for entry in entries {
+            let path = entry.path();
+            if is_reparse_point(&path)? {
+                return Err(format!(
+                    "archive input cannot contain links: {}",
+                    path.display()
+                ));
+            }
+            if path.is_dir() {
+                pending.push(path);
+                continue;
+            }
+            if !path.is_file() {
+                return Err(format!(
+                    "archive input is not a regular file: {}",
+                    path.display()
+                ));
+            }
+            let relative = path
+                .strip_prefix(root)
+                .map_err(|_| "archive path escaped Room root".to_string())?
+                .to_string_lossy()
+                .replace('\\', "/");
+            writer
+                .start_file(relative, options)
+                .map_err(|error| format!("write zip entry failed: {error}"))?;
+            let bytes = std::fs::read(&path)
+                .map_err(|error| format!("read archive asset failed: {error}"))?;
+            writer
+                .write_all(&bytes)
+                .map_err(|error| format!("write zip asset failed: {error}"))?;
+        }
+    }
+    Ok(())
+}
+
+fn export_room_zip_file(
+    room_dir: &std::path::Path,
+    destination: &std::path::Path,
+) -> Result<(), String> {
+    use std::io::Write;
+    let mut room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(room_dir.join("room.json"))
+            .map_err(|error| format!("read room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse room.json failed: {error}"))?;
+    room.as_object_mut()
+        .ok_or_else(|| "room root must be an object".to_string())?
+        .remove("__source");
+    validate_room_v1(&room)?;
+    validate_room_asset_references(room_dir, &room)?;
+
+    let parent = destination
+        .parent()
+        .ok_or_else(|| "zip destination has no parent directory".to_string())?;
+    std::fs::create_dir_all(parent)
+        .map_err(|error| format!("create zip destination failed: {error}"))?;
+    let mut temp = tempfile::NamedTempFile::new_in(parent)
+        .map_err(|error| format!("create temporary zip failed: {error}"))?;
+    {
+        let mut writer = zip::ZipWriter::new(temp.as_file_mut());
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated)
+            .unix_permissions(0o644);
+        writer
+            .start_file("room.json", options)
+            .map_err(|error| format!("write room.json entry failed: {error}"))?;
+        writer
+            .write_all(
+                &serde_json::to_vec_pretty(&room)
+                    .map_err(|error| format!("serialize room.json failed: {error}"))?,
+            )
+            .map_err(|error| format!("write room.json entry failed: {error}"))?;
+        for directory in ROOM_ASSET_DIRS {
+            zip_directory(&mut writer, room_dir, directory)?;
+        }
+        writer
+            .finish()
+            .map_err(|error| format!("finish zip failed: {error}"))?;
+    }
+    temp.as_file_mut()
+        .sync_all()
+        .map_err(|error| format!("flush zip failed: {error}"))?;
+    if destination.exists() {
+        return Err(format!(
+            "destination already exists: {}",
+            destination.display()
+        ));
+    }
+    temp.persist(destination)
+        .map(|_| ())
+        .map_err(|error| format!("commit zip failed: {}", error.error))
+}
+
+#[tauri::command]
+async fn export_room_zip(
+    library_dir: String,
+    room_dir: String,
+    destination: String,
+) -> Result<String, String> {
+    let room = direct_room_in_library(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+    )?;
+    let destination = std::path::PathBuf::from(destination);
+    export_room_zip_file(&room, &destination)?;
+    Ok(destination.to_string_lossy().into_owned())
+}
+
+fn validate_archive_entry_name(name: &str) -> Result<std::path::PathBuf, String> {
+    if name.is_empty()
+        || name.starts_with('/')
+        || name.starts_with('\\')
+        || name.contains('\\')
+        || name.contains(':')
+        || name.contains('\0')
+    {
+        return Err(format!("unsafe zip entry path: {name:?}"));
+    }
+    let path = std::path::Path::new(name);
+    if path.components().any(|component| {
+        matches!(
+            component,
+            std::path::Component::ParentDir
+                | std::path::Component::RootDir
+                | std::path::Component::Prefix(_)
+        )
+    }) {
+        return Err(format!("unsafe zip entry path: {name:?}"));
+    }
+    let top = path
+        .components()
+        .next()
+        .and_then(|component| component.as_os_str().to_str())
+        .unwrap_or_default();
+    if top != "room.json" && !ROOM_ASSET_DIRS.contains(&top) {
+        return Err(format!("unsupported top-level zip entry: {top:?}"));
+    }
+    if top == "room.json" && path.components().count() != 1 {
+        return Err("room.json must be at the zip root".into());
+    }
+    Ok(path.to_path_buf())
+}
+
+fn import_room_zip_file(
+    library_dir: &std::path::Path,
+    archive_path: &std::path::Path,
+    requested_name: Option<&str>,
+) -> Result<std::path::PathBuf, String> {
+    use std::io::Read;
+    let library = library_dir
+        .canonicalize()
+        .or_else(|_| {
+            std::fs::create_dir_all(library_dir)?;
+            library_dir.canonicalize()
+        })
+        .map_err(|error: std::io::Error| format!("prepare Room library failed: {error}"))?;
+    if is_reparse_point(&library)? {
+        return Err("Room library cannot be a symlink or reparse point".into());
+    }
+    if !archive_path.is_file() || is_reparse_point(archive_path)? {
+        return Err("selected archive is not a regular zip file".into());
+    }
+    let file = std::fs::File::open(archive_path)
+        .map_err(|error| format!("open Room zip failed: {error}"))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|error| format!("open Room zip failed: {error}"))?;
+    if archive.len() == 0 || archive.len() > MAX_ARCHIVE_FILES {
+        return Err(format!(
+            "Room zip must contain 1..={MAX_ARCHIVE_FILES} entries"
+        ));
+    }
+    let staging = tempfile::Builder::new()
+        .prefix(".dext-import-")
+        .tempdir_in(&library)
+        .map_err(|error| format!("create import staging directory failed: {error}"))?;
+    let mut names = std::collections::HashSet::new();
+    let mut total = 0u64;
+    for index in 0..archive.len() {
+        let mut entry = archive
+            .by_index(index)
+            .map_err(|error| format!("read zip entry failed: {error}"))?;
+        let name = entry.name().to_string();
+        let relative = validate_archive_entry_name(&name)?;
+        let normalized = name.trim_end_matches('/').to_ascii_lowercase();
+        if normalized.is_empty() || !names.insert(normalized) {
+            return Err(format!("duplicate zip entry: {name:?}"));
+        }
+        if entry
+            .unix_mode()
+            .is_some_and(|mode| mode & 0o170000 == 0o120000)
+        {
+            return Err(format!("zip entry cannot be a symbolic link: {name:?}"));
+        }
+        if entry.size() > MAX_ARCHIVE_FILE_BYTES {
+            return Err(format!("zip entry is too large: {name:?}"));
+        }
+        total = total
+            .checked_add(entry.size())
+            .ok_or_else(|| "Room zip size overflow".to_string())?;
+        if total > MAX_ARCHIVE_TOTAL_BYTES {
+            return Err("Room zip expands beyond the 1 GiB limit".into());
+        }
+        if entry.size() > 10 * 1024 * 1024
+            && (entry.compressed_size() == 0 || entry.size() / entry.compressed_size().max(1) > 500)
+        {
+            return Err(format!("suspicious compression ratio for {name:?}"));
+        }
+        let output = staging.path().join(relative);
+        if entry.is_dir() {
+            std::fs::create_dir_all(&output)
+                .map_err(|error| format!("create extracted directory failed: {error}"))?;
+            continue;
+        }
+        let parent = output
+            .parent()
+            .ok_or_else(|| format!("invalid zip entry path: {name:?}"))?;
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("create extracted directory failed: {error}"))?;
+        let mut output_file = std::fs::File::create(&output)
+            .map_err(|error| format!("create extracted file failed: {error}"))?;
+        let copied = std::io::copy(
+            &mut entry.by_ref().take(MAX_ARCHIVE_FILE_BYTES + 1),
+            &mut output_file,
+        )
+        .map_err(|error| format!("extract zip entry failed: {error}"))?;
+        if copied > MAX_ARCHIVE_FILE_BYTES {
+            return Err(format!("zip entry is too large: {name:?}"));
+        }
+    }
+    let room_path = staging.path().join("room.json");
+    if !room_path.is_file() {
+        return Err("Room zip is missing root room.json".into());
+    }
+    let mut room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&room_path)
+            .map_err(|error| format!("read imported room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse imported room.json failed: {error}"))?;
+    if room.get("__source").is_some() {
+        return Err("imported room.json must not contain __source".into());
+    }
+    room.as_object_mut()
+        .ok_or_else(|| "room root must be an object".to_string())?;
+    validate_room_v1(&room)?;
+    validate_room_asset_references(staging.path(), &room)?;
+    for directory in ROOM_ASSET_DIRS {
+        std::fs::create_dir_all(staging.path().join(directory))
+            .map_err(|error| format!("create imported {directory} directory failed: {error}"))?;
+    }
+
+    let inferred = archive_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("imported-room");
+    let name = requested_name.unwrap_or(inferred).trim();
+    validate_room_name(name)?;
+    let destination = library.join(name);
+    if destination.exists() {
+        return Err(format!(
+            "room already exists: {name}; choose a different name"
+        ));
+    }
+    let staged = staging.keep();
+    if let Err(error) = std::fs::rename(&staged, &destination) {
+        let _ = std::fs::remove_dir_all(&staged);
+        return Err(format!("commit imported Room failed: {error}"));
+    }
+    Ok(destination)
+}
+
+#[tauri::command]
+async fn import_room_zip(
+    library_dir: String,
+    archive_path: String,
+    requested_name: Option<String>,
+) -> Result<String, String> {
+    import_room_zip_file(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&archive_path),
+        requested_name.as_deref(),
+    )
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
 fn sync_room_to_package(
     src: &std::path::Path,
     pkg: &std::path::Path,
@@ -753,8 +1370,149 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
         .map_err(|error| format!("Room directory not found: {error}"))?;
     let src = canonical.as_path();
     let pkg = std::path::Path::new(WALLPAPER_DIR);
-    sync_room_to_package(src, pkg, &canonical.to_string_lossy())?;
+    sync_room_to_package(src, pkg, &display_path(&canonical))?;
     grpc::set_wallpaper(WALLPAPER_DIR).await
+}
+
+fn display_path(path: &std::path::Path) -> String {
+    let value = path.to_string_lossy();
+    #[cfg(windows)]
+    {
+        if let Some(stripped) = value.strip_prefix(r"\\?\UNC\") {
+            return format!(r"\\{stripped}");
+        }
+        if let Some(stripped) = value.strip_prefix(r"\\?\") {
+            return stripped.to_string();
+        }
+    }
+    value.into_owned()
+}
+
+fn normalized_path(path: &std::path::Path) -> String {
+    path.to_string_lossy()
+        .replace('/', "\\")
+        .trim_end_matches('\\')
+        .to_ascii_lowercase()
+}
+
+async fn active_room_value() -> Result<Option<ActiveRoom>, String> {
+    let wallpapers = grpc::get_wallpapers().await?;
+    let runtime = std::path::Path::new(WALLPAPER_DIR)
+        .canonicalize()
+        .unwrap_or_else(|_| std::path::PathBuf::from(WALLPAPER_DIR));
+    let runtime_norm = normalized_path(&runtime);
+    let is_running = wallpapers.iter().any(|wallpaper| {
+        let path = std::path::Path::new(&wallpaper.path)
+            .canonicalize()
+            .unwrap_or_else(|_| std::path::PathBuf::from(&wallpaper.path));
+        let candidate = normalized_path(&path);
+        candidate == runtime_norm || candidate.starts_with(&(runtime_norm.clone() + "\\"))
+    });
+    if !is_running {
+        return Ok(None);
+    }
+    let room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(runtime.join("room.json"))
+            .map_err(|error| format!("read active room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse active room.json failed: {error}"))?;
+    let source = room
+        .get("__source")
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.trim().is_empty())
+        .ok_or_else(|| "active Dext package has no trusted __source".to_string())?;
+    Ok(Some(ActiveRoom {
+        source_path: display_path(std::path::Path::new(source)),
+        runtime_path: display_path(&runtime),
+    }))
+}
+
+#[tauri::command]
+async fn active_room() -> Result<Option<ActiveRoom>, String> {
+    active_room_value().await
+}
+
+#[tauri::command]
+async fn stop_wallpapers() -> Result<(), String> {
+    grpc::close_all_wallpapers().await
+}
+
+fn settings_view(settings: &crate::proto::settings::SettingsDataModel) -> DextSettings {
+    DextSettings {
+        startup: settings.startup,
+        fullscreen_pause: settings.app_fullscreen_pause == 0,
+        battery_pause: settings.battery_pause == 0,
+        power_save_pause: settings.power_save_mode_pause == 0,
+        audio_only_on_desktop: settings.audio_only_on_desktop,
+    }
+}
+
+#[tauri::command]
+async fn get_dext_settings() -> Result<DextSettings, String> {
+    grpc::get_settings()
+        .await
+        .map(|settings| settings_view(&settings))
+}
+
+fn apply_settings_patch(
+    settings: &mut crate::proto::settings::SettingsDataModel,
+    patch: DextSettingsPatch,
+) -> Result<(), String> {
+    if let Some(value) = patch.startup {
+        settings.startup = value;
+    }
+    if let Some(value) = patch.fullscreen_pause {
+        settings.app_fullscreen_pause = if value { 0 } else { 1 };
+    }
+    if let Some(value) = patch.battery_pause {
+        settings.battery_pause = if value { 0 } else { 1 };
+    }
+    if let Some(value) = patch.power_save_pause {
+        settings.power_save_mode_pause = if value { 0 } else { 1 };
+    }
+    if let Some(value) = patch.audio_only_on_desktop {
+        settings.audio_only_on_desktop = value;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn patch_dext_settings(patch: DextSettingsPatch) -> Result<DextSettings, String> {
+    let mut settings = grpc::get_settings().await?;
+    apply_settings_patch(&mut settings, patch)?;
+    grpc::set_settings(&settings).await?;
+    Ok(settings_view(&settings))
+}
+
+async fn diagnostic_value() -> Result<serde_json::Value, String> {
+    let identity = grpc::core_identity().await?;
+    let wallpapers = grpc::get_wallpapers().await?;
+    let active = active_room_value().await?;
+    Ok(serde_json::json!({
+        "configuratorVersion": env!("CARGO_PKG_VERSION"),
+        "core": identity,
+        "pipe": grpc::pipe_name(),
+        "dataDirectory": identity.app_data_directory,
+        "logDirectory": std::path::Path::new(&identity.app_data_directory).join("logs"),
+        "wallpapers": wallpapers,
+        "activeRoom": active,
+    }))
+}
+
+#[tauri::command]
+async fn diagnostics_json() -> Result<String, String> {
+    serde_json::to_string_pretty(&diagnostic_value().await?)
+        .map_err(|error| format!("serialize diagnostics failed: {error}"))
+}
+
+#[tauri::command]
+async fn export_diagnostics(path: String) -> Result<String, String> {
+    let value = diagnostic_value().await?;
+    let bytes = serde_json::to_vec_pretty(&value)
+        .map_err(|error| format!("serialize diagnostics failed: {error}"))?;
+    let path = std::path::PathBuf::from(path);
+    atomic_write(&path, &bytes)?;
+    Ok(path.to_string_lossy().into_owned())
 }
 
 fn import_room_content_file(
@@ -964,8 +1722,21 @@ pub fn run() {
             save_room_css,
             create_room,
             save_room_as,
+            delete_room,
+            export_room_zip,
+            import_room_zip,
             apply_room,
+            active_room,
+            stop_wallpapers,
             import_background,
+            get_dext_settings,
+            patch_dext_settings,
+            diagnostics_json,
+            export_diagnostics,
+            validate_room_library,
+            about_info,
+            open_about_document,
+            open_dext_directory,
             set_wallpaper,
             core_stats,
             core_identity
@@ -977,8 +1748,10 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        import_room_content_file, save_room_as_dir, save_room_css_file, sync_room_to_package,
-        validate_room_v1, write_room_file,
+        apply_settings_patch, direct_room_entry_in_library, direct_room_in_library, display_path,
+        export_room_zip_file, import_room_content_file, import_room_zip_file, save_room_as_dir,
+        save_room_css_file, sync_room_to_package, validate_room_library_path, validate_room_v1,
+        write_room_file, DextSettingsPatch, ROOM_ASSET_DIRS,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -987,6 +1760,34 @@ mod tests {
             .unwrap_or_default()
             .as_nanos();
         std::env::temp_dir().join(format!("dext-{label}-{}-{stamp}", std::process::id()))
+    }
+
+    fn write_valid_room(path: &std::path::Path, with_asset: bool) {
+        std::fs::create_dir_all(path).unwrap();
+        let background = if with_asset {
+            std::fs::create_dir_all(path.join("background")).unwrap();
+            std::fs::write(path.join("background/scene.png"), b"png fixture").unwrap();
+            serde_json::json!({"name":"Scene","type":"image","src":"background/scene.png"})
+        } else {
+            serde_json::Value::Null
+        };
+        let room = serde_json::json!({
+            "version": 1,
+            "startDesk": 0,
+            "switch": "slide",
+            "switches": {},
+            "desks": [{
+                "name": "Desk 1",
+                "background": background,
+                "iconSize": "medium",
+                "icons": []
+            }]
+        });
+        std::fs::write(
+            path.join("room.json"),
+            serde_json::to_vec_pretty(&room).unwrap(),
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1293,5 +2094,211 @@ mod tests {
         });
         let error = validate_room_v1(&room).unwrap_err();
         assert!(error.contains("not adjacent"));
+    }
+
+    #[test]
+    fn room_library_boundary_rejects_root_and_outside_paths() {
+        let root = test_dir("room-boundary");
+        let library = root.join("library");
+        let inside = library.join("inside");
+        let outside = root.join("outside");
+        std::fs::create_dir_all(&library).unwrap();
+        write_valid_room(&inside, false);
+        write_valid_room(&outside, false);
+
+        assert_eq!(
+            direct_room_in_library(&library, &inside).unwrap(),
+            inside.canonicalize().unwrap()
+        );
+        assert!(direct_room_in_library(&library, &library)
+            .unwrap_err()
+            .contains("direct child"));
+        assert!(direct_room_in_library(&library, &outside)
+            .unwrap_err()
+            .contains("direct child"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn deletion_target_accepts_legacy_or_malformed_room_json() {
+        let root = test_dir("delete-legacy-room");
+        let library = root.join("library");
+        let legacy = library.join("legacy");
+        let malformed = library.join("malformed");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&malformed).unwrap();
+        std::fs::write(legacy.join("room.json"), r#"{"desks":[{"icons":[]}]}"#).unwrap();
+        std::fs::write(malformed.join("room.json"), "not json").unwrap();
+
+        assert_eq!(
+            direct_room_entry_in_library(&library, &legacy).unwrap(),
+            legacy.canonicalize().unwrap()
+        );
+        assert_eq!(
+            direct_room_entry_in_library(&library, &malformed).unwrap(),
+            malformed.canonicalize().unwrap()
+        );
+        assert!(direct_room_in_library(&library, &legacy)
+            .unwrap_err()
+            .contains("room.version must be 1"));
+        assert!(direct_room_in_library(&library, &malformed)
+            .unwrap_err()
+            .contains("parse room.json failed"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn room_zip_roundtrip_strips_source_and_keeps_assets() {
+        let root = test_dir("room-zip-roundtrip");
+        let source_library = root.join("source-library");
+        let source = source_library.join("source-room");
+        let target_library = root.join("target-library");
+        let archive = root.join("source-room.zip");
+        std::fs::create_dir_all(&source_library).unwrap();
+        std::fs::create_dir_all(&target_library).unwrap();
+        write_valid_room(&source, true);
+        let mut stamped: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(source.join("room.json")).unwrap())
+                .unwrap();
+        stamped["__source"] = serde_json::Value::String("C:/must-not-leak".into());
+        std::fs::write(
+            source.join("room.json"),
+            serde_json::to_vec_pretty(&stamped).unwrap(),
+        )
+        .unwrap();
+        std::fs::write(source.join("room.js"), "legacy").unwrap();
+
+        export_room_zip_file(&source, &archive).unwrap();
+        let imported = import_room_zip_file(&target_library, &archive, Some("imported")).unwrap();
+        let room: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(imported.join("room.json")).unwrap())
+                .unwrap();
+        assert!(room.get("__source").is_none());
+        assert!(imported.join("background/scene.png").is_file());
+        for directory in ROOM_ASSET_DIRS {
+            assert!(
+                imported.join(directory).is_dir(),
+                "missing imported {directory} directory"
+            );
+        }
+        assert!(!imported.join("room.js").exists());
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn room_library_validation_creates_and_write_checks_target() {
+        let root = test_dir("room-library-validation");
+        let library = root.join("new-library");
+
+        let validated = validate_room_library_path(&library).unwrap();
+
+        assert_eq!(validated, library.canonicalize().unwrap());
+        assert!(library.is_dir());
+        assert_eq!(std::fs::read_dir(&library).unwrap().count(), 0);
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn room_library_validation_rejects_file_target() {
+        let root = test_dir("room-library-file");
+        std::fs::create_dir_all(&root).unwrap();
+        let file = root.join("not-a-directory");
+        std::fs::write(&file, "fixture").unwrap();
+
+        let error = validate_room_library_path(&file).unwrap_err();
+        assert!(error.contains("create Room library failed") || error.contains("not a directory"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn strips_windows_extended_prefix_from_display_paths() {
+        #[cfg(windows)]
+        {
+            assert_eq!(
+                display_path(std::path::Path::new(r"\\?\D:\rooms\demo")),
+                r"D:\rooms\demo"
+            );
+            assert_eq!(
+                display_path(std::path::Path::new(r"\\?\UNC\server\share\demo")),
+                r"\\server\share\demo"
+            );
+        }
+    }
+
+    #[test]
+    fn room_zip_rejects_path_traversal_without_residue() {
+        use std::io::Write;
+        let root = test_dir("room-zip-traversal");
+        let library = root.join("library");
+        let archive_path = root.join("bad.zip");
+        std::fs::create_dir_all(&library).unwrap();
+        let file = std::fs::File::create(&archive_path).unwrap();
+        let mut archive = zip::ZipWriter::new(file);
+        archive
+            .start_file("../escape.txt", zip::write::SimpleFileOptions::default())
+            .unwrap();
+        archive.write_all(b"escape").unwrap();
+        archive.finish().unwrap();
+
+        let error = import_room_zip_file(&library, &archive_path, None).unwrap_err();
+        assert!(error.contains("unsafe zip entry"));
+        assert!(!root.join("escape.txt").exists());
+        assert_eq!(std::fs::read_dir(&library).unwrap().count(), 0);
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn room_zip_rejects_missing_assets_and_name_conflicts() {
+        let root = test_dir("room-zip-validation");
+        let source = root.join("source");
+        let library = root.join("library");
+        let archive = root.join("source.zip");
+        std::fs::create_dir_all(&library).unwrap();
+        write_valid_room(&source, true);
+        export_room_zip_file(&source, &archive).unwrap();
+        std::fs::remove_file(source.join("background/scene.png")).unwrap();
+        assert!(export_room_zip_file(&source, &root.join("missing.zip"))
+            .unwrap_err()
+            .contains("missing asset"));
+
+        write_valid_room(&library.join("taken"), false);
+        let error = import_room_zip_file(&library, &archive, Some("taken")).unwrap_err();
+        assert!(error.contains("already exists"));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn settings_patch_preserves_unedited_fields() {
+        let mut settings = crate::proto::settings::SettingsDataModel {
+            startup: false,
+            app_version: "keep-me".into(),
+            audio_volume_global: 35,
+            app_fullscreen_pause: 1,
+            ..Default::default()
+        };
+        apply_settings_patch(
+            &mut settings,
+            DextSettingsPatch {
+                startup: Some(true),
+                fullscreen_pause: Some(true),
+                battery_pause: Some(true),
+                power_save_pause: Some(true),
+                audio_only_on_desktop: None,
+            },
+        )
+        .unwrap();
+        assert!(settings.startup);
+        assert_eq!(settings.app_fullscreen_pause, 0);
+        assert_eq!(settings.battery_pause, 0);
+        assert_eq!(settings.power_save_mode_pause, 0);
+        assert_eq!(settings.audio_volume_global, 35);
+        assert_eq!(settings.app_version, "keep-me");
     }
 }
