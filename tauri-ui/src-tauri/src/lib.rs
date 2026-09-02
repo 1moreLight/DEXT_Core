@@ -1972,6 +1972,202 @@ async fn import_background(
     )
 }
 
+fn copy_widget_source(
+    source_root: &std::path::Path,
+    current: &std::path::Path,
+    target_root: &std::path::Path,
+    widget_id: &str,
+    resources: &mut Vec<String>,
+    total_bytes: &mut u64,
+) -> Result<(), String> {
+    if is_reparse_point(current)? {
+        return Err("Widget source cannot contain symlinks or reparse points".into());
+    }
+    for entry in std::fs::read_dir(current)
+        .map_err(|error| format!("read Widget source failed: {error}"))?
+    {
+        let entry = entry.map_err(|error| format!("read Widget entry failed: {error}"))?;
+        let path = entry.path();
+        if is_reparse_point(&path)? {
+            return Err(format!("Widget source contains a link: {}", path.display()));
+        }
+        let relative = path
+            .strip_prefix(source_root)
+            .map_err(|_| "Widget source escaped its root".to_string())?;
+        let target = target_root.join(relative);
+        if path.is_dir() {
+            std::fs::create_dir_all(&target)
+                .map_err(|error| format!("create Widget directory failed: {error}"))?;
+            copy_widget_source(source_root, &path, target_root, widget_id, resources, total_bytes)?;
+            continue;
+        }
+        if !path.is_file() {
+            return Err(format!("Widget resource is not a regular file: {}", path.display()));
+        }
+        let relative_text = relative.to_string_lossy().replace('\\', "/");
+        let room_path = format!("widgets/{widget_id}/{relative_text}");
+        if !widget_path_is_valid(&room_path, widget_id, false) {
+            return Err(format!("unsupported Widget resource path {relative_text:?}"));
+        }
+        if resources.len() >= MAX_WIDGET_RESOURCES {
+            return Err(format!("Widget exceeds {MAX_WIDGET_RESOURCES} resources"));
+        }
+        let bytes = path
+            .metadata()
+            .map_err(|error| format!("inspect Widget resource failed: {error}"))?
+            .len();
+        if bytes > MAX_ARCHIVE_FILE_BYTES {
+            return Err(format!("Widget resource is too large: {relative_text}"));
+        }
+        *total_bytes = total_bytes
+            .checked_add(bytes)
+            .ok_or_else(|| "Widget resource size overflow".to_string())?;
+        if *total_bytes > MAX_ARCHIVE_TOTAL_BYTES {
+            return Err("Widget resources exceed the package size limit".into());
+        }
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| format!("create Widget resource directory failed: {error}"))?;
+        }
+        std::fs::copy(&path, &target)
+            .map_err(|error| format!("copy Widget resource failed: {error}"))?;
+        resources.push(room_path);
+    }
+    Ok(())
+}
+
+fn import_widget_dir(
+    room_dir: &std::path::Path,
+    source_dir: &std::path::Path,
+    widget_id: &str,
+    widget_name: &str,
+    desk_index: usize,
+    room_json: &str,
+) -> Result<serde_json::Value, String> {
+    if !widget_id_is_valid(widget_id) {
+        return Err("Widget id must be a lowercase ASCII slug".into());
+    }
+    if widget_name.trim().is_empty() || widget_name.chars().count() > 120 {
+        return Err("Widget name must contain 1..=120 characters".into());
+    }
+    if !room_dir.join("room.json").is_file() {
+        return Err("not a Room directory (room.json missing)".into());
+    }
+    let source = source_dir
+        .canonicalize()
+        .map_err(|error| format!("resolve Widget source failed: {error}"))?;
+    if !source.is_dir() || is_reparse_point(&source)? {
+        return Err("Widget source must be a regular directory".into());
+    }
+    let room_root = room_dir
+        .canonicalize()
+        .map_err(|error| format!("resolve Room failed: {error}"))?;
+    if source.starts_with(&room_root) {
+        return Err("Widget source must be outside the target Room".into());
+    }
+    let mut room: serde_json::Value = serde_json::from_str(room_json)
+        .map_err(|error| format!("parse Room draft failed: {error}"))?;
+    validate_room_contract(&room)?;
+    let desks = room
+        .get("desks")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "Room draft desks are missing".to_string())?;
+    let desk = desks
+        .get(desk_index)
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| "target Desk is outside the Room".to_string())?;
+    let widgets = desk
+        .get("widgets")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "target Desk widgets are missing".to_string())?;
+    let widget_count = widgets.len();
+    if widget_count >= MAX_WIDGETS_PER_DESK {
+        return Err(format!("Desk already has {MAX_WIDGETS_PER_DESK} Widgets"));
+    }
+    let duplicate = desks.iter().any(|desk| {
+        desk.get("widgets")
+            .and_then(|value| value.as_array())
+            .into_iter()
+            .flatten()
+            .any(|widget| widget.get("id").and_then(|value| value.as_str()) == Some(widget_id))
+    });
+    if duplicate {
+        return Err(format!("Widget id already exists: {widget_id}"));
+    }
+
+    let widgets_root = room_root.join("widgets");
+    std::fs::create_dir_all(&widgets_root)
+        .map_err(|error| format!("create widgets directory failed: {error}"))?;
+    let target = widgets_root.join(widget_id);
+    if target.exists() {
+        return Err(format!("Widget directory already exists: {widget_id}"));
+    }
+    let staging = widgets_root.join(format!(".dext-import-{widget_id}-{}", std::process::id()));
+    if staging.exists() {
+        return Err("Widget import staging directory already exists".into());
+    }
+    std::fs::create_dir(&staging)
+        .map_err(|error| format!("create Widget staging directory failed: {error}"))?;
+    let result = (|| {
+        let mut resources = Vec::new();
+        let mut total_bytes = 0;
+        copy_widget_source(&source, &source, &staging, widget_id, &mut resources, &mut total_bytes)?;
+        resources.sort();
+        let src = format!("widgets/{widget_id}/index.html");
+        if !resources.iter().any(|resource| resource == &src) {
+            return Err("Widget source must contain index.html".into());
+        }
+        let offset = widget_count as u64 * 32;
+        let widget = serde_json::json!({
+            "id": widget_id,
+            "name": widget_name.trim(),
+            "src": src,
+            "resources": resources,
+            "placement": { "x": 96 + offset, "y": 96 + offset, "width": 480, "height": 240, "z": widget_count },
+            "config": {},
+            "permissions": []
+        });
+        room["desks"][desk_index]["widgets"]
+            .as_array_mut()
+            .ok_or_else(|| "target Desk widgets are missing".to_string())?
+            .push(widget.clone());
+        std::fs::rename(&staging, &target)
+            .map_err(|error| format!("commit Widget directory failed: {error}"))?;
+        if let Err(error) = validate_room_asset_references(&room_root, &room) {
+            let _ = std::fs::remove_dir_all(&target);
+            return Err(error);
+        }
+        if let Err(error) = write_room_file(&room_root.join("room.json"), &serde_json::to_string_pretty(&room).unwrap()) {
+            let _ = std::fs::remove_dir_all(&target);
+            return Err(error);
+        }
+        Ok(widget)
+    })();
+    if result.is_err() && staging.exists() {
+        let _ = std::fs::remove_dir_all(&staging);
+    }
+    result
+}
+
+#[tauri::command]
+async fn import_widget(
+    room_dir: String,
+    source_dir: String,
+    widget_id: String,
+    widget_name: String,
+    desk_index: usize,
+    room_json: String,
+) -> Result<serde_json::Value, String> {
+    import_widget_dir(
+        std::path::Path::new(&room_dir),
+        std::path::Path::new(&source_dir),
+        &widget_id,
+        &widget_name,
+        desk_index,
+        &room_json,
+    )
+}
+
 fn mime_of(path: &std::path::Path) -> &'static str {
     match path.extension().and_then(|e| e.to_str()).unwrap_or("") {
         "html" => "text/html; charset=utf-8",
@@ -2131,6 +2327,7 @@ pub fn run() {
             active_room,
             stop_wallpapers,
             import_background,
+            import_widget,
             get_dext_settings,
             patch_dext_settings,
             diagnostics_json,
@@ -2156,6 +2353,7 @@ mod tests {
     use super::{
         apply_settings_patch, create_room_dir, direct_room_entry_in_library,
         direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
+        import_widget_dir,
         import_room_zip_file, save_room_as_dir, sync_room_to_package, validate_room_contract,
         validate_room_library_path, validate_room_v2, write_room_file, DextSettingsPatch,
         ROOM_ASSET_DIRS,
@@ -2261,6 +2459,39 @@ mod tests {
         assert!(validate_room_contract(&unknown)
             .unwrap_err()
             .contains("unsupported room.version 3"));
+    }
+
+    #[test]
+    fn imports_widget_directory_and_rolls_back_missing_entry() {
+        let root = test_dir("widget-import");
+        let room = root.join("room");
+        let source = root.join("source");
+        let broken = root.join("broken");
+        write_valid_room(&room, false);
+        std::fs::create_dir_all(source.join("assets")).unwrap();
+        std::fs::write(source.join("index.html"), b"<!doctype html><title>Widget</title>").unwrap();
+        std::fs::write(source.join("assets/style.css"), b"body{color:white}").unwrap();
+        std::fs::create_dir_all(&broken).unwrap();
+        std::fs::write(broken.join("main.js"), b"console.log('missing entry')").unwrap();
+        let draft = std::fs::read_to_string(room.join("room.json")).unwrap();
+
+        let widget = import_widget_dir(&room, &source, "status-panel", "Status panel", 0, &draft).unwrap();
+        assert_eq!(widget["id"], "status-panel");
+        assert!(room.join("widgets/status-panel/index.html").is_file());
+        let saved: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(room.join("room.json")).unwrap()
+        ).unwrap();
+        assert_eq!(saved["desks"][0]["widgets"][0]["id"], "status-panel");
+
+        let saved_text = serde_json::to_string_pretty(&saved).unwrap();
+        let error = import_widget_dir(&room, &broken, "broken-widget", "Broken", 0, &saved_text).unwrap_err();
+        assert!(error.contains("index.html"));
+        assert!(!room.join("widgets/broken-widget").exists());
+        assert!(!room.join("widgets").read_dir().unwrap().any(|entry| {
+            entry.unwrap().file_name().to_string_lossy().starts_with(".dext-import-broken-widget")
+        }));
+
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

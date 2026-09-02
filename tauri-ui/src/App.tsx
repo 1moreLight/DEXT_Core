@@ -57,6 +57,7 @@ import {
   type RoomIcon,
   type Transition,
   type TransitionPreset,
+  type WidgetDefinition,
 } from "@/lib/room-v2";
 
 interface AppInfo {
@@ -908,10 +909,10 @@ export default function App() {
   const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
   const activeRoomPolicy = roomContractPolicy(roomVersion);
 
-  function buildRoomV2() {
+  function buildRoomV2(sourceDesks: Desk[] = desks) {
     const room: Record<string, unknown> = {
       version: 2,
-      startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
+      startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, sourceDesks.length - 1)),
       switch: transition,
       switches: Object.fromEntries(
         edges.flatMap((edge) => {
@@ -919,7 +920,7 @@ export default function App() {
           return [[`${Number(edge.from.slice(1))}>${Number(edge.to.slice(1))}`, edge.trans]];
         })
       ),
-      desks: desks.map((desk, deskIndex) => {
+      desks: sourceDesks.map((desk, deskIndex) => {
         const next: Record<string, unknown> = {
           name: desk.name.trim() || `Desk ${deskIndex + 1}`,
           background: desk.background,
@@ -1227,6 +1228,49 @@ export default function App() {
     } catch (error) {
       setStatus(`Dock 导入失败：${error}`);
       return null;
+    }
+  }
+
+  async function importWidgetForDesk() {
+    if (!roomPath || !desks[activeDesk]) {
+      setStatus("先打开一个 Room 并选择 Desk");
+      return;
+    }
+    if (!IS_TAURI) {
+      setStatus("Widget 文件夹导入请在桌面配置器中使用；设计模式已提供可编辑样例");
+      return;
+    }
+    const sourceDir = await open({ multiple: false, directory: true });
+    if (typeof sourceDir !== "string") return;
+    const fallback = sourceDir.split(/[\\/]/).filter(Boolean).pop()?.toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "widget";
+    const widgetId = prompt("Widget id（小写英文、数字和连字符）", /^[a-z]/.test(fallback) ? fallback : `widget-${fallback}`)?.trim();
+    if (!widgetId) return;
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(widgetId)) {
+      setStatus("Widget id 必须是小写英文开头的 slug");
+      return;
+    }
+    if (desks.some((desk) => desk.widgets.some((widget) => widget.id === widgetId))) {
+      setStatus(`Widget id 已存在：${widgetId}`);
+      return;
+    }
+    const widgetName = prompt("Widget 显示名称", widgetId)?.trim();
+    if (!widgetName) return;
+    try {
+      const widget = await invoke<WidgetDefinition>("import_widget", {
+        roomDir: roomPath,
+        sourceDir,
+        widgetId,
+        widgetName,
+        deskIndex: activeDesk,
+        roomJson: JSON.stringify(buildRoomV2(), null, 2),
+      });
+      await openRoom(roomPath, false);
+      setSelectedWidgetId(widget.id);
+      setEditorView("canvas");
+      setStatus(`已安全导入 Widget「${widget.name}」并保存 Room`);
+    } catch (error) {
+      setStatus(`Widget 导入失败：${error}`);
     }
   }
 
@@ -2415,6 +2459,9 @@ export default function App() {
 	                    <button type="button" onClick={() => setEditorView("flow")} className={`rounded px-2.5 py-1 text-xs ${editorView === "flow" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>Desk 流程</button>
 	                  </div>
 	                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
+	                    <Button variant="outline" size="sm" onClick={() => void importWidgetForDesk()}>
+	                      <FolderOpen className="h-3.5 w-3.5" /> 导入 Widget
+	                    </Button>
 	                    <Button size="sm" className="font-semibold shadow-sm" onClick={addDesk}>
 	                      <Plus className="h-3.5 w-3.5" /> 新增 Desk
 	                    </Button>

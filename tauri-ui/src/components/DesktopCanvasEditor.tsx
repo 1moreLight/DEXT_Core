@@ -2,7 +2,7 @@ import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { ChevronDown, ChevronUp, Grip, Layers3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ROOM_CANVAS, type Content, type Desk, type WidgetDefinition } from "@/lib/room-v2";
+import { ROOM_CANVAS, WIDGET_PERMISSIONS, type Content, type Desk, type WidgetDefinition } from "@/lib/room-v2";
 import { avoidIconObstacles, clampPlacement, type Rect } from "@/lib/widget-layout";
 
 const ICON_GRID = { cellWidth: 96, cellHeight: 120, columns: 19, rows: 7 } as const;
@@ -270,6 +270,33 @@ export function DesktopCanvasEditor({
               <div className="flex flex-wrap gap-1">
                 {selected.permissions.length ? selected.permissions.map((permission) => <span key={permission} className="rounded bg-muted px-1.5 py-1 text-[10px]">{permission}</span>) : <span className="text-xs text-muted-foreground">无</span>}
               </div>
+              <details className="mt-2 rounded-md border border-border">
+                <summary className="cursor-pointer px-2 py-1.5 text-[11px] font-medium">审阅和修改声明</summary>
+                <div className="max-h-44 space-y-1 overflow-y-auto border-t border-border p-2">
+                  {WIDGET_PERMISSIONS.map((permission) => {
+                    const checked = selected.permissions.includes(permission);
+                    const unavailable = permission === "network.proxy";
+                    return (
+                      <label key={permission} className={`flex items-center gap-2 text-[10px] ${unavailable ? "text-muted-foreground/55" : "text-muted-foreground"}`} title={unavailable ? "本工作包保持离线，不开放代理联网" : permission}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={unavailable}
+                          onChange={(event) => {
+                            onBeginChange();
+                            const permissions = event.target.checked
+                              ? [...selected.permissions, permission]
+                              : selected.permissions.filter((item) => item !== permission);
+                            replaceWidget(selected.id, { ...selected, permissions }, "Widget 能力声明已更新；分享导入后仍需本机授权");
+                          }}
+                        />
+                        <span className="truncate">{permission}</span>
+                        {unavailable && <span className="ml-auto">离线</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </details>
             </div>
             <div className="border-t border-border pt-3">
               <div className="truncate font-mono text-[10px] text-muted-foreground" title={selected.src}>{selected.src}</div>
