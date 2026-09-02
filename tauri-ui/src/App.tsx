@@ -3,10 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
-  Bot,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
   Copy,
   Dock,
   FolderOpen,
@@ -16,25 +12,22 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Pencil,
-  Play,
   Plus,
-  Redo2,
-  Save,
-  Square,
   Trash2,
-  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DockLibrary } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
-import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
+import { EditorHierarchy, type EditorView } from "@/features/room-editor/EditorHierarchy";
+import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
+import { UsePage, type RoomSort } from "@/pages/UsePage";
 import {
   AppIcon,
   ContentInspector,
@@ -102,7 +95,6 @@ import {
 } from "@/lib/room-v2";
 
 type EditNav = "library" | "room" | "dock";
-type EditorView = "canvas" | "flow";
 type Snapshot = RoomEditorSnapshot;
 
 const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
@@ -333,7 +325,7 @@ export default function App() {
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
-  const [roomSort, setRoomSort] = useState<"name-asc" | "name-desc" | "desks-desc">("name-asc");
+  const [roomSort, setRoomSort] = useState<RoomSort>("name-asc");
   const [roomPage, setRoomPage] = useState(1);
   const [editNav, setEditNav] = useState<EditNav>("room");
   const [navOpen, setNavOpen] = useState(true);
@@ -1540,179 +1532,51 @@ export default function App() {
       />
 
       {mode === "use" ? (
-        <section className="flex min-h-0 flex-1 gap-5 p-5">
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <RoomToolbar
-              multiMode={roomMultiMode}
-              selectedCount={roomActionPaths.length}
-              totalCount={filteredRooms.length}
-              busy={roomBusy}
-              onNew={() => void (async () => {
-                if (!IS_TAURI) return addMockRoom();
-                const path = await newRoom();
-                if (path) setHeroPath(path);
-              })()}
-              onImport={() => void importRooms()}
-              onToggleMulti={() => {
-                if (roomMultiMode) {
-                  setRoomMultiMode(false);
-                  setSelectedRooms(new Set());
-                } else {
-                  setRoomMultiMode(true);
-                  setSelectedRooms(heroRoom ? new Set([heroRoom.path]) : new Set());
-                }
-              }}
-              onSelectAll={() => setSelectedRooms(new Set(filteredRooms.map((room) => room.path)))}
-              onClear={() => setSelectedRooms(new Set())}
-              onExport={() => void exportRooms(roomActionPaths)}
-              onDelete={() => void deleteRooms(roomActionPaths)}
-            />
-            <div className="flex gap-2">
-              <Input
-                placeholder="搜索 Room"
-                value={roomQuery}
-                onChange={(event) => {
-                  setRoomQuery(event.target.value);
-                  setRoomPage(1);
-                }}
-              />
-              <select
-                aria-label="Room 排序"
-                value={roomSort}
-                onChange={(event) => { setRoomSort(event.target.value as typeof roomSort); setRoomPage(1); }}
-                className="h-8 shrink-0 rounded-lg border border-input bg-background px-2.5 text-sm"
-              >
-                <option value="name-asc">名称 A–Z</option>
-                <option value="name-desc">名称 Z–A</option>
-                <option value="desks-desc">Desk 数量</option>
-              </select>
-            </div>
-            <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-x-4 gap-y-5 overflow-y-auto pr-2 xl:grid-cols-3">
-              {pagedRooms.map((room) => {
-                const focused = room.path === heroRoom?.path;
-                const active = room.path === appliedRoom;
-                const picked = selectedRooms.has(room.path);
-                const selected = roomMultiMode ? picked : focused;
-                const policy = roomContractPolicy(room.version);
-                return (
-                  <button
-                    key={room.path}
-                    disabled={Boolean(roomBusy)}
-                    onClick={() => selectRoom(room)}
-                    onDoubleClick={() => void applyRoomFromCard(room)}
-                    title={roomMultiMode ? "单击选择" : policy.apply ? "单击查看详情，双击应用" : readOnlyRoomMessage(room.version)}
-                    aria-pressed={roomMultiMode ? picked : focused}
-                    className={`group overflow-hidden rounded-xl p-1.5 text-left outline-none transition-[opacity,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:cursor-wait ${
-                      roomMultiMode && !picked ? "opacity-60 hover:opacity-100" : "opacity-100"
-                    } ${
-                      selected
-                        ? "bg-cyan-500/10 ring-2 ring-cyan-500/50 ring-offset-2 ring-offset-background"
-                        : "bg-transparent hover:bg-muted/40"
-                    }`}
-                  >
-                    <div className={`relative aspect-video overflow-hidden rounded-lg border-2 ${
-                      selected ? "border-cyan-500" : "border-transparent group-hover:border-border"
-                    }`}>
-                      <CoverStack tiles={roomCovers(room)} />
-                      {selected ? (
-                        <span className="absolute left-2 top-2 rounded-md border border-white/20 bg-cyan-600 px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-cyan-400 dark:text-slate-950">
-                          {roomMultiMode ? "✓ 已选择" : "已选中"}
-                        </span>
-                      ) : roomMultiMode ? (
-                        <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded border border-white/70 bg-black/30 text-xs font-bold text-white" />
-                      ) : null}
-                      <span className="absolute right-2 top-2 rounded-md border border-white/20 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white">
-                        {policy.versionLabel}{room.widgets ? ` · ${room.widgets} Widget` : ""}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <span className="truncate">{room.name}</span>
-                          {active && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" title="正在使用" />}
-                        </div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{room.desks} Desk · {room.icons} 图标 · {room.widgets} Widget</div>
-                      </div>
-                      {active && <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">使用中</span>}
-                    </div>
-                  </button>
-                );
-              })}
-              {rooms.length === 0 && (
-                <div className="col-span-full py-20 text-center text-sm text-muted-foreground">
-                  Room 库为空。使用“新增”创建，或导入一个安全的 Room zip。
-                </div>
-              )}
-              {rooms.length > 0 && filteredRooms.length === 0 && (
-                <div className="col-span-full py-20 text-center text-sm text-muted-foreground">
-                  没有匹配“{roomQuery}”的 Room
-                </div>
-              )}
-            </div>
-            {roomPageCount > 1 && (
-              <div className="flex items-center gap-1 border-t border-border pt-3">
-                <Button variant="ghost" size="icon-sm" disabled={roomPageCur === 1} title="第一页" onClick={() => setRoomPage(1)}><ChevronsLeft /></Button>
-                <Button variant="ghost" size="icon-sm" disabled={roomPageCur === 1} title="上一页" onClick={() => setRoomPage(roomPageCur - 1)}><ChevronLeft /></Button>
-                <span className="px-2 text-xs tabular-nums text-muted-foreground">{roomPageCur} / {roomPageCount}</span>
-                <Button variant="ghost" size="icon-sm" disabled={roomPageCur === roomPageCount} title="下一页" onClick={() => setRoomPage(roomPageCur + 1)}><ChevronRight /></Button>
-                <span className="ml-auto text-xs text-muted-foreground">共 {filteredRooms.length} 个 Room</span>
-              </div>
-            )}
-          </div>
-
-          <aside className="flex w-[360px] shrink-0 flex-col border-l border-border pl-5">
-            {heroRoom ? (
-              <div className="flex min-h-0 flex-1 flex-col">
-                <RoomBackgroundPreview room={heroRoom} className="rounded-lg" label={`${heroRoom.name} 背景预览`} />
-                <div className="mt-5 flex items-center gap-2">
-                  <h2 className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight">{heroRoom.name}</h2>
-                  {heroRoom.path === appliedRoom && (
-                    <span className="shrink-0 rounded-full bg-emerald-500/12 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">使用中</span>
-                  )}
-                </div>
-                <dl className="mt-4 grid grid-cols-2 gap-y-3 border-y border-border py-4 text-xs">
-                  <div><dt className="text-muted-foreground">Desk</dt><dd className="mt-0.5 font-medium">{heroRoom.desks}</dd></div>
-                  <div><dt className="text-muted-foreground">图标</dt><dd className="mt-0.5 font-medium">{heroRoom.icons}</dd></div>
-                  <div><dt className="text-muted-foreground">契约</dt><dd className="mt-0.5 font-medium">{roomContractPolicy(heroRoom.version).versionLabel}</dd></div>
-                  <div><dt className="text-muted-foreground">Widget</dt><dd className="mt-0.5 font-medium">{heroRoom.widgets}</dd></div>
-                  <div className="col-span-2"><dt className="text-muted-foreground">源目录</dt><dd className="mt-0.5 truncate font-mono" title={heroRoom.path}>{heroRoom.path}</dd></div>
-                </dl>
-                {!roomContractPolicy(heroRoom.version).edit && (
-                  <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
-                    {readOnlyRoomMessage(heroRoom.version)}。不会读取为草稿、改写或丢弃 Widget 数据。
-                  </p>
-                )}
-                <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
-                  <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => void duplicateRoom(heroRoom)}>
-                    <Copy className="h-4 w-4" /> 复制
-                  </Button>
-                  <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => void renameRoom(heroRoom)}>
-                    <Pencil className="h-4 w-4" /> 重命名
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={Boolean(roomBusy)}
-                    onClick={() => void enterRoomEditor(heroRoom)}
-                  >
-                    <Pencil className="h-4 w-4" /> {roomContractPolicy(heroRoom.version).edit ? "编辑" : "只读查看"}
-                  </Button>
-                  <Button
-                    variant={heroRoom.path === appliedRoom ? "outline" : "default"}
-                    disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).apply || (IS_TAURI && !coreIdentity)}
-                    title={!roomContractPolicy(heroRoom.version).apply ? readOnlyRoomMessage(heroRoom.version) : IS_TAURI && !coreIdentity ? "Dext Core 未连接，仍可浏览本地 Room" : undefined}
-                    onClick={() => heroRoom.path === appliedRoom ? void stopWallpaper() : void applyRoomDir(heroRoom.path)}
-                  >
-                    {heroRoom.path === appliedRoom ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    {heroRoom.path === appliedRoom ? "停止壁纸" : "应用此 Room"}
-                  </Button>
-                  {!coreIdentity && IS_TAURI && <p className="col-span-2 mt-1 text-xs text-destructive">Dext Core 未连接；Room 浏览和文件管理仍可使用。</p>}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">选择一个 Room 查看详情</div>
-            )}
-          </aside>
-        </section>
+        <UsePage
+          rooms={rooms}
+          visibleRooms={pagedRooms}
+          filteredCount={filteredRooms.length}
+          heroRoom={heroRoom}
+          appliedRoom={appliedRoom}
+          query={roomQuery}
+          sort={roomSort}
+          page={roomPageCur}
+          pageCount={roomPageCount}
+          multiMode={roomMultiMode}
+          selectedRooms={selectedRooms}
+          selectedCount={roomActionPaths.length}
+          busy={roomBusy}
+          coreIdentity={coreIdentity}
+          isTauri={IS_TAURI}
+          onQuery={(value) => { setRoomQuery(value); setRoomPage(1); }}
+          onSort={(value) => { setRoomSort(value); setRoomPage(1); }}
+          onPage={setRoomPage}
+          onNew={() => void (async () => {
+            if (!IS_TAURI) return addMockRoom();
+            const path = await newRoom();
+            if (path) setHeroPath(path);
+          })()}
+          onImport={() => void importRooms()}
+          onToggleMulti={() => {
+            if (roomMultiMode) {
+              setRoomMultiMode(false);
+              setSelectedRooms(new Set());
+            } else {
+              setRoomMultiMode(true);
+              setSelectedRooms(heroRoom ? new Set([heroRoom.path]) : new Set());
+            }
+          }}
+          onSelectAll={() => setSelectedRooms(new Set(filteredRooms.map((room) => room.path)))}
+          onClear={() => setSelectedRooms(new Set())}
+          onExport={() => void exportRooms(roomActionPaths)}
+          onDelete={() => void deleteRooms(roomActionPaths)}
+          onSelectRoom={selectRoom}
+          onApplyRoom={(room) => void applyRoomFromCard(room)}
+          onDuplicateRoom={(room) => void duplicateRoom(room)}
+          onRenameRoom={(room) => void renameRoom(room)}
+          onEditRoom={(room) => void enterRoomEditor(room)}
+          onStopRoom={() => void stopWallpaper()}
+        />
       ) : mode === "edit" ? (
         /* ===== edit mode ===== */
         <div className="flex min-h-0 flex-1">
@@ -1949,91 +1813,85 @@ export default function App() {
             ) : (
               /* entered a room: desk editing */
               <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <div className="flex min-h-10 shrink-0 items-center gap-3 overflow-x-auto pb-1">
-                  <Button variant="outline" size="sm" onClick={() => setRoomEntered(false)}>
-                    ← 房间列表
-                  </Button>
-                  <span className="shrink-0 text-sm font-medium">
-                    {roomPath?.split("\\").pop() ?? "（未选房间）"}
-                  </span>
-	                  {dirty && <span className="shrink-0 text-xs font-medium text-amber-500">● 未保存</span>}
-	                  <div className="flex shrink-0 rounded-md border border-border bg-muted/35 p-0.5">
-	                    <button type="button" onClick={() => setEditorView("canvas")} className={`rounded px-2.5 py-1 text-xs ${editorView === "canvas" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>桌面画布</button>
-	                    <button type="button" onClick={() => setEditorView("flow")} className={`rounded px-2.5 py-1 text-xs ${editorView === "flow" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>Desk 流程</button>
-	                  </div>
-	                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
-	                    <Button variant="outline" size="sm" onClick={() => setShowCreatorImport(true)}>
-	                      <Bot className="h-3.5 w-3.5" /> AI 创作
-	                    </Button>
-	                    <Button variant="outline" size="sm" onClick={() => void importWidgetForDesk()}>
-	                      <FolderOpen className="h-3.5 w-3.5" /> 导入 Widget
-	                    </Button>
-	                    <Button size="sm" className="font-semibold shadow-sm" onClick={addDesk}>
-	                      <Plus className="h-3.5 w-3.5" /> 新增 Desk
-	                    </Button>
-	                    <Button variant="outline" size="sm" disabled={activeDesk <= 0} onClick={() => moveDesk(activeDesk, activeDesk - 1)}>
-	                      上移 Desk
-	                    </Button>
-	                    <Button variant="outline" size="sm" disabled={activeDesk >= desks.length - 1} onClick={() => moveDesk(activeDesk, activeDesk + 1)}>
-	                      下移 Desk
-	                    </Button>
-	                    <Button variant="outline" size="sm" disabled={past.length === 0} onClick={undo}>
-                      <Undo2 className="h-3.5 w-3.5" /> 撤回
-                    </Button>
-                    <Button variant="outline" size="sm" disabled={future.length === 0} onClick={redo}>
-                      <Redo2 className="h-3.5 w-3.5" /> 重做
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        if (IS_TAURI) await saveRoom();
-                        else {
-                          setDirty(false);
-                          setStatus("已保存（mock，未写盘）");
-                        }
-                      }}
-                    >
-                      <Save className="h-3.5 w-3.5" /> 保存
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (IS_TAURI) saveAs();
-                        else setStatus("另存为请在桌面配置器中使用");
-                      }}
-                    >
-                      另存为
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={IS_TAURI && !coreIdentity}
-                      title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
-                      onClick={applyCurrent}
-                    >
-                      <Play className="h-3.5 w-3.5" /> 应用
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      disabled={desks.length <= 1 || !desks[activeDesk]}
-                      onClick={() => {
-                        const current = desks[activeDesk];
-                        if (current && confirm(`删除「${current.name}」？此操作可用撤销恢复。`)) removeDesk(activeDesk);
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> 删除 Desk
-                    </Button>
-                  </div>
-                </div>
-                <details className="shrink-0 rounded-lg border border-border bg-background">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-                    当前 Room Dock
-                  </summary>
-                  <div className="max-h-[58vh] overflow-y-auto border-t border-border p-3">
+                <RoomEditorHeader
+                  roomName={roomPath?.split("\\").pop() ?? "（未选房间）"}
+                  dirty={dirty}
+                  editorView={editorView}
+                  canUndo={past.length > 0}
+                  canRedo={future.length > 0}
+                  canApply={!IS_TAURI || Boolean(coreIdentity)}
+                  canDeleteDesk={desks.length > 1 && Boolean(desks[activeDesk])}
+                  onBack={() => setRoomEntered(false)}
+                  onView={setEditorView}
+                  onCreatorImport={() => setShowCreatorImport(true)}
+                  onImportWidget={() => void importWidgetForDesk()}
+                  onAddDesk={addDesk}
+                  onUndo={undo}
+                  onRedo={redo}
+                  onSave={() => void (async () => {
+                    if (IS_TAURI) await saveRoom();
+                    else {
+                      setDirty(false);
+                      setStatus("已保存（mock，未写盘）");
+                    }
+                  })()}
+                  onSaveAs={() => {
+                    if (IS_TAURI) void saveAs();
+                    else setStatus("另存为请在桌面配置器中使用");
+                  }}
+                  onApply={() => void applyCurrent()}
+                  onDeleteDesk={() => {
+                    const current = desks[activeDesk];
+                    if (current && confirm(`删除「${current.name}」？此操作可用撤销恢复。`)) removeDesk(activeDesk);
+                  }}
+                />
+                <div className="flex min-h-0 flex-1 gap-3">
+                  <EditorHierarchy
+                    desks={desks}
+                    activeDesk={activeDesk}
+                    selectedWidgetId={selectedWidgetId}
+                    editorView={editorView}
+                    graphSelection={graphSel}
+                    startName={startName}
+                    idleName={idleName}
+                    onSelectDesk={(index) => {
+                      setActiveDesk(index);
+                      setGraphSel(`d${index}`);
+                      setSelectedWidgetId(null);
+                      setEditorView("canvas");
+                    }}
+                    onSelectScene={(index) => {
+                      setActiveDesk(index);
+                      setGraphSel(`d${index}`);
+                      setSelectedWidgetId(null);
+                      setEditorView("canvas");
+                    }}
+                    onSelectIcons={(index) => {
+                      setActiveDesk(index);
+                      setSelectedWidgetId(null);
+                      setEditorView("canvas");
+                      setStatus(`${desks[index]?.name ?? "当前 Desk"} 有 ${desks[index]?.icons.length ?? 0} 个图标；在画布或应用库中编辑`);
+                    }}
+                    onSelectWidget={(index, widgetId) => {
+                      setActiveDesk(index);
+                      setSelectedWidgetId(widgetId);
+                      setEditorView("canvas");
+                    }}
+                    onSelectDock={(index) => {
+                      setActiveDesk(index);
+                      setSelectedWidgetId(null);
+                      setEditorView("dock");
+                    }}
+                    onSelectFlowNode={(nodeId) => {
+                      setGraphSel(nodeId);
+                      setSelectedWidgetId(null);
+                      setEditorView("flow");
+                    }}
+                    onMoveDesk={moveDesk}
+                  />
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                {editorView === "dock" ? (
+                  <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background p-3">
                     <DockEditor
                       dock={dock}
                       setDock={setDock}
@@ -2046,8 +1904,7 @@ export default function App() {
                       setStatus={setStatus}
                     />
                   </div>
-                </details>
-                {editorView === "canvas" ? (
+                ) : editorView === "canvas" ? (
                   <DesktopCanvasEditor
                     desks={desks}
                     activeDesk={activeDesk}
@@ -2457,6 +2314,8 @@ export default function App() {
                     </div>
                   </>
                 )}
+                  </div>
+                </div>
               </div>
             )}
           </section>

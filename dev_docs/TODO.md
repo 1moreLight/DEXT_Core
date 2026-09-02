@@ -463,5 +463,8 @@
 - [x] 补齐空间库排序、复制和重命名的真实 UI → Tauri → 文件系统闭环与回归（2026-09-02）
 - [x] 补齐 Desk 身份级重排、switch/startDesk 重映射、历史事务和流程 UI（2026-09-02）
 - [x] 删除 `DockEditor` 的全局/每桌本地草稿副本，所有 Dock 编辑直接使用 Room 草稿唯一真相源，文本编辑按聚焦合并为一次历史事务（2026-09-02）
+- [x] 增加 Room 层级树（Desk/Scene/Icons/Widgets/Dock），层级选择驱动画布/流程/Dock，Desk 上下移入口与历史事务统一（2026-09-02）
+- [x] 提取 `RoomEditorHeader` 与 `UsePage`，降低 `App.tsx` 页面装配与编辑器顶栏职责；`npm test` 30/30、`npm run build` 通过（2026-09-02）
+- [x] 浏览器复验层级 Widget 选择、Dock 编辑入口、流程节点、层级内 Desk 重排及 1100×900 无横向溢出（2026-09-02）
 - [ ] 继续审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链剩余缺口
 - [ ] 重跑全量自动检查、浏览器视觉、真实 Core/Tauri/Player 验证，重新进入一次性待验收
