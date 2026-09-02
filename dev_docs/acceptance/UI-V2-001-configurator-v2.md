@@ -1,21 +1,21 @@
 # UI-V2-001 配置器 v2 端到端验收
 
-- 状态：开发中
+- 状态：待验收
 - 分支：`feat/ui-v2-001-configurator-v2`
-- 提交：待实现
+- 提交：`02c76d0`（最终实现；后续仅验收状态记录）
 - 目标：一次性交付唯一 Room v2 配置器、Scene/Widget 运行宿主、受控系统能力、安全分享和 AI 前端包创作闭环。
 - 范围外：创意工坊云服务、安装器、多显示器、内置第三方 AI 服务、Dext 代理联网、任意系统命令与 v1 兼容。
 
 ## 自动检查
 
-- [ ] Room v2 Schema、资源、权限、zip 正反 fixtures 全部通过。
-- [ ] `tauri-ui` 单元测试、`npm test` 与 `npm run build` 通过。
-- [ ] `tauri-ui/src-tauri` 的 `cargo check`、`cargo test --lib` 通过。
-- [ ] `node --check wallpapers/dext-room/main.js` 和渲染器自动测试通过。
-- [ ] C#/.proto 有改动时，`scripts/build.ps1` 后 `scripts/start.ps1` 通过，Player 为 Release。
-- [ ] 多 Widget 生命周期、坐标、拖放、层级、图标避让、历史持久化和权限桥有自动回归。
-- [ ] 伪造实例/来源/token、未知动作、越界参数、超大消息、直连网络、导航、下载、弹窗和恶意 zip 被拒绝。
-- [ ] `git diff --check` 通过；提交只包含本工作包具名文件，主 worktree 用户 `rooms/` 未被修改或暂存。
+- [x] Room v2 Schema、资源、权限、zip 正反 fixtures 全部通过。
+- [x] `tauri-ui` 28 项单元测试、`npm test` 与 `npm run build` 通过。
+- [x] `tauri-ui/src-tauri` 的 `cargo check`、`cargo test --lib` 通过（33 passed，3 个真实桌面测试显式 ignored）。
+- [x] `node --check wallpapers/dext-room/main.js` 和 capability bridge 自动测试通过。
+- [x] C#/.proto 改动已通过 `scripts/build.ps1`；最终 `scripts/start.ps1` 启动当前 worktree 的 Core 与 Tauri 配置器，Core 身份、mutex、pipe 正确，Player 保持 Release 构建规则。
+- [x] 多 Widget 生命周期、坐标、拖放、层级、图标避让、历史持久化、流程图和权限桥有自动回归。
+- [x] 伪造实例/来源/token、未知动作、越界参数、超大消息、直连网络、导航、下载、弹窗和恶意 zip 被拒绝。
+- [x] `git diff --check` 通过；提交只包含本工作包具名文件，主 worktree 用户 `rooms/` 未修改或暂存。
 
 ## 人工验收
 
@@ -43,4 +43,4 @@
 
 ## 验收记录
 
-- 待实现完成后提交用户一次性验收。
+- 2026-09-02：自动检查与真实 Core/Tauri 启动通过，提交用户一次性人工验收；用户明确通过前禁止合并 master。
