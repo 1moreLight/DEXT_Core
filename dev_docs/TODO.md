@@ -452,3 +452,4 @@
 - [x] 将 Desk/Scene/Widget/Dock/转场完整编辑快照和撤销/重做栈持久化到 IndexedDB；按 Room 路径和规范化磁盘基线恢复，外部文件变化时自动放弃陈旧草稿（2026-09-02）
 - [x] 删除 `DockEditor any[]`，改用共享 `Desk[]` 类型；浏览器 mock 更新为三个不同尺寸 Widget 以覆盖多选布局视觉测试（2026-09-02）
 - [x] 提取共享 `SceneCapabilityEditor`，让 background/start/idle/每个方向 switch 的 HTML Scene 都能编辑能力声明、可信热点与本机授权；图片/视频明确无作者代码能力（2026-09-02）
+- [x] 在不改变配置器布局与视觉语言的前提下拆分 `App.tsx`：提取顶栏、Room 流程图纯函数、Room v2 清洗/单一写出器、运行时类型和 Room/Scene 预览组件，并新增 6 项纯函数回归（2026-09-02）

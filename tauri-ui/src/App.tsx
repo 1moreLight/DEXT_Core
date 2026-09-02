@@ -7,9 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  Code,
   Dock,
-  Film,
   FolderOpen,
   LayoutGrid,
   MonitorPlay,
@@ -22,7 +20,6 @@ import {
   Redo2,
   Save,
   Square,
-  Sun,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -36,6 +33,43 @@ import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
+import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
+import {
+  AppIcon,
+  ContentInspector,
+  CoverStack,
+  DeskBackgroundCanvas,
+  RoomBackgroundPreview,
+  roomCovers,
+} from "@/features/room-library/previews";
+import type {
+  ActiveRoom,
+  AppInfo,
+  CoreIdentity,
+  PermissionReview,
+  RoomInfo,
+} from "@/features/runtime/types";
+import {
+  EMPTY_GRAPH_GEOMETRY,
+  GRAPH_ROW_GAP,
+  graphSwitchPosition,
+  pairKey,
+  reconcileGraphEdges,
+  relativeGraphRect,
+  routeGraphEdge,
+  sameGraphGeometry,
+  seedEdges,
+  visualGraphEdges,
+  type GEdge,
+  type GraphGeometry,
+  type GraphNodeRect,
+} from "@/features/room-editor/graph";
+import {
+  cleanContent,
+  cleanDesk,
+  cleanTransition,
+  serializeRoomV2,
+} from "@/features/room-editor/room-draft";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
   cloneEditorSnapshot,
@@ -45,7 +79,6 @@ import {
   type RoomEditorSnapshot,
 } from "@/lib/editor-history";
 import {
-  assertRoomV2WritePayload,
   readOnlyRoomMessage,
   roomContractPolicy,
 } from "@/lib/room-contract";
@@ -58,109 +91,24 @@ import {
   parseDockPresetFile,
 } from "@/lib/dock";
 import {
-  cleanWidget,
-  cleanHotspots,
-  WIDGET_PERMISSIONS,
   isRecord,
   type Background,
   type Content,
   type ContentType,
   type Desk,
-  type RoomIcon,
   type Transition,
   type TransitionPreset,
   type WidgetDefinition,
 } from "@/lib/room-v2";
-
-interface AppInfo {
-  name: string;
-  target: string;
-  arguments: string;
-  working_dir: string;
-  icon_png: string;
-  source: string;
-}
-
-interface CoreIdentity {
-  product_name: string;
-  runtime_identity: string;
-  process_id: number;
-  base_directory: string;
-  app_data_directory: string;
-  grpc_pipe_name: string;
-  assembly_version: string;
-  is_core_initialized: boolean;
-}
-
-interface ActiveRoom {
-  sourcePath: string;
-  runtimePath: string;
-}
-
-interface PermissionReview {
-  id: string;
-  label: string;
-  declared: string[];
-  granted: string[];
-  current: boolean;
-}
 
 function bgLabel(bg: Background): string {
   if (!bg) return "黑底（未设置）";
   return `${bg.type === "image" ? "🖼" : bg.type === "video" ? "🎬" : "代码"} ${bg.name}`;
 }
 
-interface CoverRef {
-  kind: "image" | "video";
-  src: string;
-}
-
-interface RoomInfo {
-  name: string;
-  path: string;
-  version: number | null;
-  desks: number;
-  icons: number;
-  widgets: number;
-  covers?: CoverRef[];
-}
-
-type Mode = "use" | "edit" | "settings";
-
-type Theme = "light" | "dark";
-
 type EditNav = "library" | "room" | "dock";
 type EditorView = "canvas" | "flow";
-
-/* ---- room 思维导图 ----
-   拓扑：启动画面只直连一个可选 Desk（无 switch，未指定时默认 d0）；
-   Desk 相邻上下双向连接，3 个以上时首尾从侧边双向环回。 */
-type GEdge = { id: string; from: string; to: string; trans: Transition | null };
 type Snapshot = RoomEditorSnapshot;
-type GraphNodeRect = {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-  width: number;
-  height: number;
-  cx: number;
-  cy: number;
-};
-type GraphGeometry = {
-  width: number;
-  height: number;
-  nodes: Record<string, GraphNodeRect>;
-};
-type GraphSegment = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-};
-
-const EMPTY_GRAPH_GEOMETRY: GraphGeometry = { width: 0, height: 0, nodes: {} };
-const GRAPH_ROW_GAP = 32;
 
 const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
   ["slide", "滑动"],
@@ -168,165 +116,6 @@ const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
   ["zoom", "缩放"],
   ["none", "无"],
 ];
-
-function seedEdges(
-  ds: Desk[],
-  hasStart: boolean,
-  startDesk = 0,
-  switches: Record<string, Transition> = {}
-): GEdge[] {
-  const edges: GEdge[] = [];
-  if (hasStart && ds.length > 0) {
-    const target = Math.min(Math.max(startDesk, 0), ds.length - 1);
-    edges.push({ id: "start-in", from: "start", to: `d${target}`, trans: null });
-  }
-  for (let i = 1; i < ds.length; i++) {
-    edges.push(
-      { id: `s${i}f`, from: `d${i - 1}`, to: `d${i}`, trans: switches[`${i - 1}>${i}`] ?? null },
-      { id: `s${i}b`, from: `d${i}`, to: `d${i - 1}`, trans: switches[`${i}>${i - 1}`] ?? null }
-    );
-  }
-  if (ds.length > 2) {
-    const last = ds.length - 1;
-    edges.push(
-      { id: "s-wrap-f", from: `d${last}`, to: "d0", trans: switches[`${last}>0`] ?? null },
-      { id: "s-wrap-b", from: "d0", to: `d${last}`, trans: switches[`0>${last}`] ?? null }
-    );
-  }
-  return edges;
-}
-
-function pairKey(e: GEdge): string {
-  return [e.from, e.to].sort().join("|");
-}
-
-function visualGraphEdges(edges: GEdge[]): GEdge[] {
-  const pairs = new Set<string>();
-  return edges.filter((edge) => {
-    if (edge.from === "start" || edge.to === "start") return true;
-    const key = pairKey(edge);
-    if (pairs.has(key)) return false;
-    pairs.add(key);
-    return true;
-  });
-}
-
-function reconcileGraphEdges(
-  current: GEdge[],
-  desks: Desk[],
-  hasStart: boolean,
-  startDesk: number
-): GEdge[] {
-  const byRoute = new Map(current.map((edge) => [`${edge.from}>${edge.to}`, edge.trans]));
-  return seedEdges(desks, hasStart, startDesk).map((edge) => ({
-    ...edge,
-    trans: byRoute.get(`${edge.from}>${edge.to}`) ?? null,
-  }));
-}
-
-function relativeGraphRect(node: HTMLElement, canvas: DOMRect): GraphNodeRect {
-  const rect = node.getBoundingClientRect();
-  const left = rect.left - canvas.left;
-  const top = rect.top - canvas.top;
-  return {
-    left,
-    right: left + rect.width,
-    top,
-    bottom: top + rect.height,
-    width: rect.width,
-    height: rect.height,
-    cx: left + rect.width / 2,
-    cy: top + rect.height / 2,
-  };
-}
-
-function sameGraphGeometry(a: GraphGeometry, b: GraphGeometry): boolean {
-  const close = (x: number, y: number) => Math.abs(x - y) < 0.5;
-  const aKeys = Object.keys(a.nodes);
-  const bKeys = Object.keys(b.nodes);
-  if (!close(a.width, b.width) || !close(a.height, b.height) || aKeys.length !== bKeys.length)
-    return false;
-  return aKeys.every((key) => {
-    const x = a.nodes[key];
-    const y = b.nodes[key];
-    return (
-      !!y &&
-      close(x.left, y.left) &&
-      close(x.right, y.right) &&
-      close(x.top, y.top) &&
-      close(x.bottom, y.bottom)
-    );
-  });
-}
-
-function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): GraphSegment[] {
-  const from = nodes[edge.from];
-  const to = nodes[edge.to];
-  if (!from || !to) return [];
-
-  if (edge.from === "start") {
-    const elbowX = from.right + Math.max(18, (to.left - from.right) / 2);
-    return [
-      { x1: from.right, y1: from.cy, x2: elbowX, y2: from.cy },
-      { x1: elbowX, y1: from.cy, x2: elbowX, y2: to.cy },
-      { x1: elbowX, y1: to.cy, x2: to.left, y2: to.cy },
-    ];
-  }
-
-  const fromIndex = parseInt(edge.from.slice(1), 10);
-  const toIndex = parseInt(edge.to.slice(1), 10);
-  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
-  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
-
-  if (!wraps) {
-    const down = toIndex > fromIndex;
-    const fromX = from.cx;
-    const toX = to.cx;
-    const fromY = down ? from.bottom : from.top;
-    const toY = down ? to.top : to.bottom;
-    const middleY = (fromY + toY) / 2;
-    return [
-      { x1: fromX, y1: fromY, x2: fromX, y2: middleY },
-      { x1: fromX, y1: middleY, x2: toX, y2: middleY },
-      { x1: toX, y1: middleY, x2: toX, y2: toY },
-    ];
-  }
-
-  const maxRight = Math.max(from.right, to.right);
-  const laneX = maxRight + 48;
-  const fromY = from.cy;
-  const toY = to.cy;
-  return [
-    { x1: from.right, y1: fromY, x2: laneX, y2: fromY },
-    { x1: laneX, y1: fromY, x2: laneX, y2: toY },
-    { x1: laneX, y1: toY, x2: to.right, y2: toY },
-  ];
-}
-
-function graphSwitchPosition(
-  edge: GEdge,
-  nodes: Record<string, GraphNodeRect>
-): { left: number; top: number } | null {
-  const from = nodes[edge.from];
-  const to = nodes[edge.to];
-  if (!from || !to) return null;
-  const fromIndex = parseInt(edge.from.slice(1), 10);
-  const toIndex = parseInt(edge.to.slice(1), 10);
-  const deskCount = Object.keys(nodes).filter((id) => /^d\d+$/.test(id)).length;
-  const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
-  if (!wraps) {
-    const upper = fromIndex < toIndex ? from : to;
-    const lower = fromIndex < toIndex ? to : from;
-    return {
-      left: (from.cx + to.cx) / 2,
-      top: (upper.bottom + lower.top) / 2,
-    };
-  }
-  return {
-    left: Math.max(from.right, to.right) + 48,
-    top: (from.cy + to.cy) / 2,
-  };
-}
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
 const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
@@ -510,382 +299,11 @@ function newDesk(index: number): Desk {
   return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [], widgets: [] };
 }
 
-function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
-  return app.icon_png ? (
-    <img src={`data:image/png;base64,${app.icon_png}`} alt="" className={size} />
-  ) : (
-    <div className={`${size} rounded bg-muted`} />
-  );
-}
-
 function transitionLabel(t: Transition): string {
   if (typeof t === "string") {
     return { slide: "滑动", fade: "淡入", zoom: "缩放", none: "无" }[t] ?? t;
   }
   return `${t.type === "image" ? "🖼" : t.type === "video" ? "🎬" : "代码"} ${t.name}`;
-}
-
-function cleanContent(value: unknown, directory: "background" | "start" | "switch" | "idle"): Content | null {
-  if (!isRecord(value) || !["image", "video", "html"].includes(String(value.type))) return null;
-  const name = typeof value.name === "string" ? value.name.trim() : "";
-  const src = typeof value.src === "string" ? value.src.replace(/\\/g, "/") : "";
-  if (!name || !src.startsWith(`${directory}/`) || src.split("/").some((part: string) => !part || part === "." || part === "..")) return null;
-  const permissions = Array.isArray(value.permissions)
-    ? [...new Set(value.permissions.filter((item): item is typeof WIDGET_PERMISSIONS[number] =>
-        typeof item === "string" && WIDGET_PERMISSIONS.includes(item as typeof WIDGET_PERMISSIONS[number])
-      ))]
-    : [];
-  return {
-    name,
-    type: value.type as ContentType,
-    src,
-    ...(permissions.length ? { permissions } : {}),
-    ...(Array.isArray(value.hotspots) ? { hotspots: cleanHotspots(value.hotspots) } : {}),
-  };
-}
-
-function cleanTransition(value: unknown): Transition | null {
-  if (["slide", "fade", "zoom", "none"].includes(String(value))) return value as TransitionPreset;
-  return cleanContent(value, "switch");
-}
-
-function cleanRoomIcon(value: unknown, index: number): RoomIcon {
-  const icon = isRecord(value) ? value : {};
-  const launch = isRecord(icon.launch) ? icon.launch : {};
-  return {
-    label: typeof icon.label === "string" && icon.label.trim() ? icon.label.trim() : `图标 ${index + 1}`,
-    icon_png: typeof icon.icon_png === "string" ? icon.icon_png : "",
-    launch: {
-      target: typeof launch.target === "string" ? launch.target : "",
-      args: typeof launch.args === "string" ? launch.args : "",
-      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
-    },
-    x: Number.isInteger(icon.x) && Number(icon.x) >= 0 ? Number(icon.x) : index % 4,
-    y: Number.isInteger(icon.y) && Number(icon.y) >= 0 ? Number(icon.y) : Math.floor(index / 4),
-    ...(typeof icon.glyph === "string" ? { glyph: icon.glyph } : {}),
-    ...(typeof icon.color === "string" ? { color: icon.color } : {}),
-    ...(typeof icon.action === "string" ? { action: icon.action } : {}),
-  } as RoomIcon;
-}
-
-function cleanDesk(value: unknown, index: number): Desk {
-  const desk = isRecord(value) ? value : {};
-  const iconSize = ["large", "medium", "small"].includes(String(desk.iconSize))
-    ? String(desk.iconSize)
-    : "medium";
-  return {
-    name: typeof desk.name === "string" && desk.name.trim() ? desk.name.trim() : `Desk ${index + 1}`,
-    background: cleanContent(desk.background, "background"),
-    iconSize,
-    icons: Array.isArray(desk.icons) ? desk.icons.map(cleanRoomIcon) : [],
-    widgets: Array.isArray(desk.widgets) ? desk.widgets.map(cleanWidget).filter((widget) => widget !== null) : [],
-    ...(isRecord(desk.dock) ? { dock: desk.dock as DockConfig } : {}),
-  };
-}
-
-function roomIconForWrite(icon: RoomIcon, index: number, desktop: boolean) {
-  const out: Record<string, unknown> = {
-    label: icon.label?.trim() || `图标 ${index + 1}`,
-  };
-  if (icon.icon_png) out.icon_png = icon.icon_png;
-  const value = icon as RoomIcon & { glyph?: string; color?: string; action?: string };
-  if (value.glyph) out.glyph = value.glyph;
-  if (value.color) out.color = value.color;
-  if (value.action) out.action = value.action;
-  if (icon.launch?.target?.trim()) {
-    out.launch = {
-      target: icon.launch.target.trim(),
-      args: icon.launch.args ?? "",
-      workdir: icon.launch.workdir ?? "",
-    };
-  }
-  if (desktop) {
-    out.x = Number.isInteger(icon.x) && Number(icon.x) >= 0 ? Number(icon.x) : index % 4;
-    out.y = Number.isInteger(icon.y) && Number(icon.y) >= 0 ? Number(icon.y) : Math.floor(index / 4);
-  }
-  return out;
-}
-
-function dockForWrite(value: DockConfig | undefined): Record<string, unknown> | undefined {
-  if (!value) return undefined;
-  const out: Record<string, unknown> = {};
-  if (typeof value.enabled === "boolean") out.enabled = value.enabled;
-  if (["bottom", "top", "left", "right"].includes(String(value.position))) out.position = value.position;
-  if (typeof value.autoHide === "boolean") out.autoHide = value.autoHide;
-  if (["text", "dots"].includes(String(value.indicator))) out.indicator = value.indicator;
-  if (value.style) {
-    const style: Record<string, unknown> = {};
-    for (const key of ["bg", "blur", "radius", "gap", "pad", "icon"] as const) {
-      if (value.style[key] !== undefined) style[key] = value.style[key];
-    }
-    if (Object.keys(style).length) out.style = style;
-  }
-  if (Array.isArray(value.icons)) {
-    out.icons = value.icons.map((icon, index) => roomIconForWrite({
-      label: icon.label ?? `Dock ${index + 1}`,
-      icon_png: icon.icon_png ?? "",
-      launch: icon.launch ?? { target: "", args: "", workdir: "" },
-      ...(icon.glyph ? { glyph: icon.glyph } : {}),
-      ...(icon.color ? { color: icon.color } : {}),
-      ...(icon.action ? { action: icon.action } : {}),
-    } as RoomIcon, index, false));
-  }
-  return out;
-}
-
-/* ===== room cover collage ===== */
-
-type CoverTile =
-  | { kind: "image"; url: string }
-  | { kind: "video"; url: string }
-  | { kind: "gradient"; from: string; to: string };
-
-const GRADIENTS: [string, string][] = [
-  ["#0f172a", "#334155"],
-  ["#1e1b4b", "#6d28d9"],
-  ["#064e3b", "#0f766e"],
-  ["#7c2d12", "#c2410c"],
-  ["#831843", "#be185d"],
-  ["#082f49", "#0369a1"],
-];
-
-function nameGradient(name: string): CoverTile {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  const [from, to] = GRADIENTS[h % GRADIENTS.length];
-  return { kind: "gradient", from, to };
-}
-
-function coverTileOf(c: CoverRef, room: RoomInfo): CoverTile {
-  // real backend serves room files via the lib:// protocol; browser mock has no files
-  const url =
-    IS_TAURI && c.src
-      ? `http://lib.localhost/${encodeURIComponent(room.name)}/${c.src
-          .split(/[\\/]/)
-          .map(encodeURIComponent)
-          .join("/")}`
-      : "";
-  if (c.kind === "video") return { kind: "video", url };
-  if (!url) return nameGradient(room.name);
-  return { kind: "image", url };
-}
-
-function roomCovers(r: RoomInfo): CoverTile[] {
-  const tiles = (r.covers ?? []).map((c) => coverTileOf(c, r));
-  return tiles.length ? tiles : [nameGradient(r.name)];
-}
-
-function RoomBackgroundPreview({
-  room,
-  className = "",
-  label,
-}: {
-  room: RoomInfo;
-  className?: string;
-  label: string;
-}) {
-  return (
-    <div
-      className={`aspect-video overflow-hidden border border-border bg-muted/40 ${className}`}
-      aria-label={label}
-    >
-      <CoverTileBox tile={roomCovers(room)[0]} autoPlay />
-    </div>
-  );
-}
-
-// video cover: show first frame (preload=metadata only fetches headers, no decoding);
-// autoPlay=true (hero main slot) plays immediately, otherwise play while hovered, rewind on leave
-function VideoTile({ url, autoPlay = false }: { url: string; autoPlay?: boolean }) {
-  const ref = useRef<HTMLVideoElement>(null);
-  if (!url)
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-neutral-800 to-black">
-        <Film className="h-5 w-5 text-white/40" />
-      </div>
-    );
-  return (
-    <video
-      ref={ref}
-      src={url}
-      muted
-      loop
-      playsInline
-      autoPlay={autoPlay}
-      preload={autoPlay ? "auto" : "metadata"}
-      className="h-full w-full object-cover"
-      onMouseEnter={autoPlay ? undefined : () => {
-        // play() rejects when interrupted (e.g. quick leave) — that is fine to ignore
-        ref.current?.play().catch(() => {});
-      }}
-      onMouseLeave={autoPlay ? undefined : () => {
-        const v = ref.current;
-        if (v) {
-          v.pause();
-          v.currentTime = 0;
-        }
-      }}
-    />
-  );
-}
-
-function CoverTileBox({ tile, autoPlay = false }: { tile: CoverTile; autoPlay?: boolean }) {
-  if (tile.kind === "gradient")
-    return (
-      <div
-        className="h-full w-full"
-        style={{ background: `linear-gradient(135deg, ${tile.from}, ${tile.to})` }}
-      />
-    );
-  if (tile.kind === "video") return <VideoTile url={tile.url} autoPlay={autoPlay} />;
-  return <img src={tile.url} alt="" draggable={false} className="h-full w-full object-cover" />;
-}
-
-// photo-stack cover: first background fills the card, the rest pile up
-// as small tilted photos in the bottom-right corner (max 2 + "+N" badge);
-// clicking a piled photo swaps it into the main slot
-function CoverStack({ tiles, autoPlayMain = false }: { tiles: CoverTile[]; autoPlayMain?: boolean }) {
-  const [idx, setIdx] = useState(0);
-  const safeIdx = Math.min(idx, tiles.length - 1);
-  const base = tiles[safeIdx];
-  const piled = tiles.filter((_, i) => i !== safeIdx).slice(0, 2);
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-black">
-      <CoverTileBox tile={base} autoPlay={autoPlayMain} />
-      {piled.length > 0 && (
-        // proportional sizing (w-% + aspect-video) so small cards look identical to big panels
-        <div className="absolute inset-0 flex items-end justify-end p-[4%]">
-          {piled.map((t, pi) => {
-            const realIdx = tiles.indexOf(t);
-            return (
-              <div
-                key={realIdx}
-                role="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIdx(realIdx);
-                }}
-                title="点击换到主展示位"
-                className="w-[30%] aspect-video cursor-pointer overflow-hidden rounded-md border border-white/90 bg-black shadow-lg transition-transform hover:scale-105"
-                style={{
-                  transform: `rotate(${(pi - (piled.length - 1) / 2) * 5}deg)`,
-                  marginLeft: pi > 0 ? "-8%" : undefined,
-                  zIndex: piled.length - pi,
-                }}
-              >
-                <CoverTileBox tile={t} />
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {tiles.length > 1 + piled.length && (
-        <span className="absolute bottom-[5%] left-[3.5%] rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
-          +{tiles.length - 1 - piled.length}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function ContentInspector({
-  content,
-  roomPath,
-  emptyLabel,
-}: {
-  content: Content | null;
-  roomPath: string | null;
-  emptyLabel: string;
-}) {
-  const url = roomContentUrl(content, roomPath);
-  const typeLabel = content?.type === "image" ? "图片" : content?.type === "video" ? "视频" : content?.type === "html" ? "HTML" : "未选择";
-  return (
-    <div className="flex shrink-0 items-center gap-3">
-      <div className="flex aspect-video w-44 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
-        {!content ? (
-          <span className="px-3 text-center text-[11px] text-muted-foreground">{emptyLabel}</span>
-        ) : content.type === "image" ? (
-          <img src={url} alt={content.name} className="h-full w-full object-cover" />
-        ) : content.type === "video" ? (
-          <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex flex-col items-center gap-1 text-muted-foreground"><Code className="h-5 w-5" /><span className="text-[10px]">HTML 场景</span></div>
-        )}
-      </div>
-      <dl className="w-44 space-y-1 text-[11px]">
-        <div><dt className="text-muted-foreground">素材</dt><dd className="truncate font-medium" title={content?.name}>{content?.name ?? "未选择"}</dd></div>
-        <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
-        <div className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${content ? "bg-primary" : "bg-muted-foreground/40"}`} aria-hidden="true" /><span>{typeLabel}</span></div>
-      </dl>
-    </div>
-  );
-}
-
-function roomContentUrl(content: Content | null, roomPath: string | null): string {
-  const roomName = roomPath?.split(/[\\/]/).filter(Boolean).pop();
-  return content && roomName
-    ? `http://lib.localhost/${encodeURIComponent(roomName)}/${content.src.split("/").map(encodeURIComponent).join("/")}`
-    : "";
-}
-
-function DeskBackgroundCanvas({
-  desks,
-  roomPath,
-  selectedIndex,
-  onSelect,
-}: {
-  desks: Desk[];
-  roomPath: string | null;
-  selectedIndex: number;
-  onSelect: (index: number) => void;
-}) {
-  return (
-    <div className="flex h-full w-[52vw] min-w-[32rem] max-w-3xl shrink-0 flex-col justify-center gap-2">
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-        <span className="font-medium uppercase tracking-[0.14em]">Desk 画布</span>
-        <span>{desks.length} 个 Desk · 点击切换</span>
-      </div>
-      <div role="listbox" aria-label="Desk 背景画布" className="flex gap-2 overflow-x-auto pb-1">
-        {desks.map((item, index) => {
-          const content = item.background;
-          const url = roomContentUrl(content, roomPath);
-          const selected = index === selectedIndex;
-          return (
-            <button
-              key={index}
-              type="button"
-              role="option"
-              aria-selected={selected}
-              onClick={() => onSelect(index)}
-              className={`group relative aspect-video w-44 shrink-0 overflow-hidden rounded-lg border-2 bg-black text-left transition-[border-color,transform] duration-150 hover:-translate-y-0.5 ${
-                selected ? "border-primary" : "border-border hover:border-primary/55"
-              }`}
-              title={`选择 ${item.name}`}
-            >
-              {!content ? (
-                <div className="flex h-full w-full items-center justify-center bg-muted/50 text-[11px] text-muted-foreground">
-                  未设置背景
-                </div>
-              ) : content.type === "image" ? (
-                <img src={url} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-              ) : content.type === "video" ? (
-                <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-muted/55 text-muted-foreground">
-                  <Code className="h-5 w-5" />
-                  <span className="text-[10px]">HTML 场景</span>
-                </div>
-              )}
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 pb-1.5 pt-6 text-white">
-                <span className="min-w-0 truncate text-xs font-medium">{item.name}</span>
-                <span className="shrink-0 text-[9px] text-white/70">{index === 0 ? "主 Desk" : `${index + 1}`}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export default function App() {
@@ -957,38 +375,17 @@ export default function App() {
   const activeRoomPolicy = roomContractPolicy(roomVersion);
 
   function buildRoomV2(sourceDesks: Desk[] = desks) {
-    const room: Record<string, unknown> = {
-      version: 2,
-      startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, sourceDesks.length - 1)),
-      switch: transition,
-      switches: Object.fromEntries(
-        edges.flatMap((edge) => {
-          if (!edge.trans || !/^d\d+$/.test(edge.from) || !/^d\d+$/.test(edge.to)) return [];
-          return [[`${Number(edge.from.slice(1))}>${Number(edge.to.slice(1))}`, edge.trans]];
-        })
-      ),
-      desks: sourceDesks.map((desk, deskIndex) => {
-        const next: Record<string, unknown> = {
-          name: desk.name.trim() || `Desk ${deskIndex + 1}`,
-          background: desk.background,
-          iconSize: ["large", "medium", "small"].includes(String(desk.iconSize))
-            ? desk.iconSize
-            : "medium",
-          icons: desk.icons.map((icon, index) => roomIconForWrite(icon, index, true)),
-          widgets: (desk.widgets ?? []).map(
-            (widget) => JSON.parse(JSON.stringify(widget)) as unknown
-          ),
-        };
-        const deskDock = dockForWrite(desk.dock);
-        if (deskDock) next.dock = deskDock;
-        return next;
-      }),
-    };
-    if (startContent) room.start = { ...startContent, name: startName.trim() || startContent.name };
-    if (idleContent) room.idle = { ...idleContent, name: idleName.trim() || idleContent.name };
-    const roomDock = dockForWrite(dock);
-    if (roomDock) room.dock = roomDock;
-    return assertRoomV2WritePayload(room);
+    return serializeRoomV2({
+      desks: sourceDesks,
+      startDesk,
+      transition,
+      edges,
+      startContent,
+      startName,
+      idleContent,
+      idleName,
+      dock,
+    });
   }
 
   useEffect(() => {
@@ -2094,80 +1491,25 @@ export default function App() {
     a.name.toLowerCase().includes(query.toLowerCase())
   );
   const pickerDesk = appPickerDesk === null ? null : desks[appPickerDesk] ?? null;
-  const tabCls = (on: boolean) =>
-    `rounded px-3 py-1 text-sm whitespace-nowrap ${on ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`;
-
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
-      {/* top bar */}
-      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border px-5 py-3">
-        <div className="flex shrink-0 items-center gap-3">
-          <h1 className="text-lg font-semibold">Dext</h1>
-          <div className="flex shrink-0 rounded-md border border-border p-0.5">
-            <button className={tabCls(mode === "use")} onClick={() => setMode("use")}>
-              使用
-            </button>
-            <button className={tabCls(mode === "edit")} onClick={() => setMode("edit")}>
-              编辑
-            </button>
-            <button className={tabCls(mode === "settings")} onClick={() => setMode("settings")}>
-              设置
-            </button>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            title={`切换到${theme === "dark" ? "浅色" : "深色"}主题`}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <span
-            className={`rounded-full border px-2 py-1 text-xs font-medium ${
-              !IS_TAURI
-                ? "border-border text-muted-foreground"
-                : coreIdentity
-                  ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  : "border-destructive/50 bg-destructive/10 text-destructive"
-            }`}
-            title={
-              !IS_TAURI
-                ? "UI 设计模式未连接 Core"
-                : coreIdentity
-                  ? `PID ${coreIdentity.process_id}\nCore ${coreIdentity.base_directory}\nPipe ${coreIdentity.grpc_pipe_name}\nData ${coreIdentity.app_data_directory}\nIdentity ${coreIdentity.runtime_identity}`
-                  : coreIdentityError ?? "正在验证 Dext Core 身份"
-            }
-          >
-            {!IS_TAURI
-              ? "Dext Core · mock"
-              : coreIdentity
-                ? "Dext Core 已连接"
-                : coreIdentityError
-                  ? coreUnavailable
-                    ? "Dext Core 未运行"
-                    : "Dext Core 身份拒绝"
-                  : "正在验证 Dext Core"}
-          </span>
-          <span className="text-sm text-muted-foreground">{status}</span>
-          {mode === "edit" && IS_TAURI && (
-            <Button
-              variant={showPreview ? "secondary" : "outline"}
-              size="sm"
-              disabled={!activeRoomPolicy.preview}
-              title={!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined}
-              onClick={() => {
-                setShowPreview((v) => !v);
-                if (!showPreview) setEditNav("room");
-              }}
-            >
-              预览
-            </Button>
-          )}
-        </div>
-      </header>
+      <AppHeader
+        mode={mode}
+        onMode={setMode}
+        theme={theme}
+        onTheme={setTheme}
+        isTauri={IS_TAURI}
+        coreIdentity={coreIdentity}
+        coreIdentityError={coreIdentityError}
+        status={status}
+        showPreview={showPreview}
+        canPreview={activeRoomPolicy.preview}
+        previewDisabledReason={!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined}
+        onTogglePreview={() => {
+          setShowPreview((value) => !value);
+          if (!showPreview) setEditNav("room");
+        }}
+      />
 
       {mode === "use" ? (
         <section className="flex min-h-0 flex-1 gap-5 p-5">
