@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "kind": "widget",
+  "id": "system-meter",
+  "name": "系统仪表",
+  "entry": "index.html",
+  "resources": ["index.html", "style.css", "main.js", "dext-sdk.js"],
+  "permissions": ["time.read", "hardware.cpu.read", "hardware.memory.read"],
+  "hotspots": [],
+  "placement": { "x": 96, "y": 96, "width": 480, "height": 240, "z": 1 }
+}

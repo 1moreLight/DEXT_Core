@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "kind": "scene",
+  "id": "media-landscape",
+  "name": "媒体景观",
+  "entry": "index.html",
+  "resources": ["index.html", "style.css", "main.js", "dext-sdk.js"],
+  "permissions": ["time.read", "now-playing.read", "now-playing.artwork.read", "system.volume.read", "action.invoke"],
+  "hotspots": [
+    { "id": "play-toggle", "label": "播放或暂停", "placement": { "x": 120, "y": 790, "width": 180, "height": 90, "z": 4 }, "action": { "id": "system.media.toggle-play-pause" } }
+  ]
+}

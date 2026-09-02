@@ -1,4 +1,5 @@
 mod grpc;
+mod creator;
 
 use tauri::Manager;
 
@@ -2559,6 +2560,7 @@ async fn core_identity() -> Result<grpc::CoreIdentity, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(creator::CreatorImports::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {
@@ -2570,6 +2572,12 @@ pub fn run() {
                 None => String::new(),
             };
             serve_lib_file(request.uri().path(), &dir)
+        })
+        .register_uri_scheme_protocol("creator", |ctx, request| {
+            match ctx.app_handle().try_state::<creator::CreatorImports>() {
+                Some(imports) => creator::serve_creator_file(request.uri().path(), &imports),
+                None => tauri::http::Response::builder().status(500).body(Vec::new()).unwrap(),
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_wallpapers,
@@ -2591,6 +2599,10 @@ pub fn run() {
             stop_wallpapers,
             import_background,
             import_widget,
+            creator::export_ai_context,
+            creator::inspect_creator_pack,
+            creator::confirm_creator_import,
+            creator::discard_creator_import,
             get_dext_settings,
             patch_dext_settings,
             diagnostics_json,

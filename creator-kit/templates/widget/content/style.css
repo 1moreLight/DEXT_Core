@@ -1,0 +1,7 @@
+:root { color-scheme: dark; font: 16px system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100vh; color: white; background: linear-gradient(135deg, #10232dE8, #071014D9); }
+main { height: 100%; padding: 28px; display: grid; gap: 14px; border: 1px solid #75e7ff55; border-radius: 28px; }
+time { font-size: 42px; font-weight: 650; letter-spacing: -.04em; }
+label { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 12px; }
+progress { width: 100%; accent-color: #75e7ff; }

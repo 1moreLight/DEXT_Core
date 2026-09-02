@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
+  Bot,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -33,6 +34,7 @@ import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
+import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
   assertRoomV2WritePayload,
@@ -115,7 +117,7 @@ interface RoomInfo {
   covers?: CoverRef[];
 }
 
-type Mode = "use" | "edit" | "workshop" | "settings";
+type Mode = "use" | "edit" | "settings";
 
 type Theme = "light" | "dark";
 
@@ -906,6 +908,7 @@ export default function App() {
   const [roomEntered, setRoomEntered] = useState(false);
   const [editorView, setEditorView] = useState<EditorView>("canvas");
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+  const [showCreatorImport, setShowCreatorImport] = useState(false);
   const [permissionReviews, setPermissionReviews] = useState<PermissionReview[]>([]);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [edges, setEdges] = useState<GEdge[]>([]);
@@ -1094,7 +1097,7 @@ export default function App() {
       setStartContent(null);
       setIdleContent(null);
       setIdleName("待机画面");
-      setRoomVersion(1);
+      setRoomVersion(2);
       setStartDesk(0);
       setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
@@ -2042,9 +2045,6 @@ export default function App() {
             <button className={tabCls(mode === "edit")} onClick={() => setMode("edit")}>
               编辑
             </button>
-            <button className={tabCls(mode === "workshop")} onClick={() => setMode("workshop")}>
-              创意工坊
-            </button>
             <button className={tabCls(mode === "settings")} onClick={() => setMode("settings")}>
               设置
             </button>
@@ -2501,6 +2501,9 @@ export default function App() {
 	                    <button type="button" onClick={() => setEditorView("flow")} className={`rounded px-2.5 py-1 text-xs ${editorView === "flow" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>Desk 流程</button>
 	                  </div>
 	                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
+	                    <Button variant="outline" size="sm" onClick={() => setShowCreatorImport(true)}>
+	                      <Bot className="h-3.5 w-3.5" /> AI 创作
+	                    </Button>
 	                    <Button variant="outline" size="sm" onClick={() => void importWidgetForDesk()}>
 	                      <FolderOpen className="h-3.5 w-3.5" /> 导入 Widget
 	                    </Button>
@@ -2960,16 +2963,6 @@ export default function App() {
             )}
           </section>
         </div>
-      ) : mode === "workshop" ? (
-        <section className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-border text-primary">
-            <Film className="h-6 w-6" />
-          </div>
-          <h2 className="text-xl font-semibold tracking-tight">创意工坊，敬请期待</h2>
-          <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            未来这里会承接 Room 的发现、下载与订阅；真实服务上线前不提供无效的上传、登录或搜索入口。
-          </p>
-        </section>
       ) : (
         <SettingsPage
           theme={theme}
@@ -2988,6 +2981,20 @@ export default function App() {
           isSelected={(app) => pickerDesk.icons.some((icon) => icon.launch.target === app.target)}
           onToggle={(app) => toggleDeskApp(app, appPickerDesk)}
           onClose={() => setAppPickerDesk(null)}
+        />
+      )}
+      {showCreatorImport && roomPath && (
+        <CreatorImportDialog
+          roomPath={roomPath}
+          roomJson={buildRoomV2()}
+          activeDesk={activeDesk}
+          deskCount={desks.length}
+          onImported={async () => {
+            await openRoom(roomPath, false);
+            setEditorView("canvas");
+            setStatus("AI 创作内容已安全写入 Room；系统能力仍需本机单独授权");
+          }}
+          onClose={() => setShowCreatorImport(false)}
         />
       )}
     </main>

@@ -62,6 +62,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_FRONTEND_CHECKLIST.md` | WidgetHost、Scene 数据绑定、可信热点、拖拽/层叠与图标避让实施清单 | 开发 v2 前端宿主时 |
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
+| `../creator-kit/` | Creator Pack v1 Schema、版本化 SDK、Scene/Widget 模板与安全正反 fixtures | 导出 AI 上下文、制作或审查 `.dext-content.zip` 时 |
 | `CONFIGURATOR_V2_PLAN.md` | **UI-V2-001 单工作包总计划**：配置器、Scene、WidgetHost、系统能力、安全分享与 AI 创作端到端范围 | 开发或验收配置器 v2 时 |
 | `CONFIGURATOR_V2_LUNA_PROMPT.md` | 可直接交给 `gpt-5.6-luna` 的 UI-V2-001 执行指令 | 将整个 v2 工作包交接给执行模型时 |
 | `DOCK_STYLE.md` | Dock v0.x 外观定制历史；包含已废弃的 room.js/room.css 接口 | 仅回溯旧实现时 |
@@ -195,6 +196,9 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
 | `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v2 zip；校验 Widget 声明并防路径穿越、链接、重复项、解压炸弹、重名和残留 |
+| `export_ai_context` | `(destination, room_json) → path` | 导出脱敏 Room 结构、提示词、Schema、SDK、模板与 fixtures；不调用外部 AI |
+| `inspect_creator_pack` / `discard_creator_import` | `(archive_path) → report` / `(token)` | 只在临时区检查 Creator Pack，返回隔离预览 token；不修改 Room |
+| `confirm_creator_import` | `(token, room_dir, room_json, desk_index, scene_target?) → Content/Widget` | 用户确认后事务式写入 Scene/Widget；重新执行完整 Room/资源校验 |
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
 | `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |

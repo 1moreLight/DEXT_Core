@@ -1,0 +1,4 @@
+{
+  "version": 1, "kind": "scene", "id": "remote-script", "name": "Remote Script",
+  "entry": "index.html", "resources": ["index.html"], "permissions": [], "hotspots": []
+}

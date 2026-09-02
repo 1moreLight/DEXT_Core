@@ -1,0 +1,4 @@
+{
+  "version": 1, "kind": "scene", "id": "bad-permission", "name": "Bad Permission",
+  "entry": "index.html", "resources": ["index.html"], "permissions": ["shell.execute"], "hotspots": []
+}

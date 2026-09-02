@@ -445,3 +445,6 @@
 - [x] 实现本机授权审阅、批准和撤销；源路径 + `room.json` SHA-256 绑定，内容变化/另存/重导自动失效且授权不进入 Room/zip（2026-09-02）
 - [x] 为 Dext Room Player 启用专用离线边界：同一虚拟主机资源外的请求/导航/iframe、下载、弹窗和 Web 权限全部拒绝（2026-09-02）
 - [x] 能力桥里程碑通过 Schema fixtures、前端 17 项、Rust 27 项、JS bridge、生产构建、C# Release 四阶段构建和 `scripts/start.ps1` 真 Core/Tauri 启动；Playwright 复验 1366×768 权限/热点检查器（2026-09-02）
+- [x] 建立 Creator Pack v1 Schema、版本化 SDK、可运行 Scene/Widget 模板和正反 fixtures；AI 上下文导出会剥离本机路径、启动参数、图标 base64 与运行戳（2026-09-02）
+- [x] 实现创作包两阶段事务：临时区静态安全报告、一次性 token、CSP + opaque sandbox 隔离预览、用户确认后原子写入 Room，失败/取消无半成品（2026-09-02）
+- [x] 将 AI 创作入口并入 Room 编辑器，并删除无真实服务的空白“创意工坊”一级页面；不接任何外部模型 API（2026-09-02）

@@ -11,6 +11,9 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = {2: ROOT / "room-v2.schema.json"}
+CREATOR_SCHEMA = ROOT / "creator-kit" / "creator-pack.schema.json"
+CREATOR_FIXTURES = ROOT / "creator-kit" / "fixtures"
+CREATOR_TEMPLATES = ROOT / "creator-kit" / "templates"
 FIXTURES = ROOT / "dev_docs" / "fixtures"
 SAMPLE_LIBRARY = FIXTURES / "room-v2" / "sample-library"
 INVALID_SAMPLE_LIBRARY = FIXTURES / "room-v2" / "invalid-sample-library"
@@ -212,6 +215,9 @@ def main() -> int:
     parser.add_argument("--room", type=Path, help="validate one self-contained Room directory")
     args = parser.parse_args()
     validators = load_validators()
+    creator_schema = json.loads(CREATOR_SCHEMA.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(creator_schema)
+    creator_validator = Draft202012Validator(creator_schema)
     failed = False
     for version in (2,):
         fixture_dir = FIXTURES / f"room-v{version}"
@@ -252,6 +258,33 @@ def main() -> int:
             else:
                 failed = True
                 print(f"FAIL invalid-package/{package_dir.name}: unexpectedly valid")
+        for path in sorted(CREATOR_TEMPLATES.glob("*/creator.json")):
+            value = json.loads(path.read_text(encoding="utf-8"))
+            errors = list(creator_validator.iter_errors(value))
+            if errors:
+                failed = True
+                print(f"FAIL creator-template/{path.parent.name}: {errors[0].message}")
+            else:
+                print(f"PASS creator-template/{path.parent.name}")
+        for path in sorted(CREATOR_FIXTURES.glob("valid/*/creator.json")):
+            value = json.loads(path.read_text(encoding="utf-8"))
+            errors = list(creator_validator.iter_errors(value))
+            if errors:
+                failed = True
+                print(f"FAIL creator-valid/{path.parent.name}: {errors[0].message}")
+            else:
+                print(f"PASS creator-valid/{path.parent.name}")
+        for path in sorted(CREATOR_FIXTURES.glob("invalid/*/creator.json")):
+            value = json.loads(path.read_text(encoding="utf-8"))
+            errors = list(creator_validator.iter_errors(value))
+            if path.parent.name == "remote-script":
+                # The manifest is valid; Rust source audit rejects its remote script.
+                print("PASS creator-invalid/remote-script: manifest valid, source audit fixture")
+            elif errors:
+                print(f"PASS creator-invalid/{path.parent.name}: {errors[0].message}")
+            else:
+                failed = True
+                print(f"FAIL creator-invalid/{path.parent.name}: unexpectedly valid")
     return 1 if failed else 0
 
 
