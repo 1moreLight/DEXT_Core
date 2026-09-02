@@ -77,6 +77,36 @@ html, body {
   background: #000;
 }
 
+.widget-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dext-widget {
+  position: absolute;
+  min-width: 64px;
+  min-height: 64px;
+  overflow: hidden;
+  pointer-events: auto;
+  contain: layout paint style;
+}
+
+.dext-widget > iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+  background: transparent;
+}
+
+.dext-widget[data-state="error"] {
+  outline: 1px solid rgba(239, 68, 68, 0.8);
+  background: rgba(30, 5, 8, 0.72);
+}
+
 .dext-scene-slot {
   position: fixed;
   inset: 0;
@@ -109,6 +139,7 @@ html[data-mode="screensaver"] #toast {
 .icon-layer {
   position: absolute;
   inset: 40px 40px 100px 40px;
+  z-index: 10;
 }
 
 .icon-layer .icon {

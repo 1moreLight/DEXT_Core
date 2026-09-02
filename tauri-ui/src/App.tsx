@@ -46,6 +46,17 @@ import {
   newLocalDockPresetId,
   parseDockPresetFile,
 } from "@/lib/dock";
+import {
+  cleanWidget,
+  isRecord,
+  type Background,
+  type Content,
+  type ContentType,
+  type Desk,
+  type RoomIcon,
+  type Transition,
+  type TransitionPreset,
+} from "@/lib/room-v2";
 
 interface AppInfo {
   name: string;
@@ -70,35 +81,6 @@ interface CoreIdentity {
 interface ActiveRoom {
   sourcePath: string;
   runtimePath: string;
-}
-
-interface RoomIcon {
-  label: string;
-  icon_png: string;
-  launch: { target: string; args: string; workdir: string };
-  x?: number;
-  y?: number;
-}
-
-type ContentType = "image" | "video" | "html";
-
-interface Content {
-  name: string;
-  type: ContentType;
-  src: string;
-}
-
-type Background = Content | null;
-type TransitionPreset = "slide" | "fade" | "zoom" | "none";
-type Transition = TransitionPreset | Content;
-
-interface Desk {
-  name: string;
-  background: Background;
-  icons: RoomIcon[];
-  iconSize?: string;
-  dock?: DockConfig;
-  widgets?: unknown[];
 }
 
 function bgLabel(bg: Background): string {
@@ -474,8 +456,9 @@ const MOCK_DESKS: Desk[] = [
       x: i % 4,
       y: Math.floor(i / 4),
     })),
+    widgets: [],
   },
-  { name: "游戏", background: null, iconSize: "large", icons: [] },
+  { name: "游戏", background: null, iconSize: "large", icons: [], widgets: [] },
 ];
 
 function newDesk(index: number): Desk {
@@ -495,10 +478,6 @@ function transitionLabel(t: Transition): string {
     return { slide: "滑动", fade: "淡入", zoom: "缩放", none: "无" }[t] ?? t;
   }
   return `${t.type === "image" ? "🖼" : t.type === "video" ? "🎬" : "代码"} ${t.name}`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 function cleanContent(value: unknown, directory: "background" | "start" | "switch" | "idle"): Content | null {
@@ -543,9 +522,7 @@ function cleanDesk(value: unknown, index: number): Desk {
     background: cleanContent(desk.background, "background"),
     iconSize,
     icons: Array.isArray(desk.icons) ? desk.icons.map(cleanRoomIcon) : [],
-    widgets: Array.isArray(desk.widgets)
-      ? desk.widgets.map((widget) => JSON.parse(JSON.stringify(widget)) as unknown)
-      : [],
+    widgets: Array.isArray(desk.widgets) ? desk.widgets.map(cleanWidget).filter((widget) => widget !== null) : [],
     ...(isRecord(desk.dock) ? { dock: desk.dock as DockConfig } : {}),
   };
 }

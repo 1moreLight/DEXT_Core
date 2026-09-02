@@ -90,6 +90,9 @@ const PREVIEW_PARENT_ORIGINS = new Set([
   "http://localhost:1420",
 ]);
 let assetBase = SEARCH.get("room") ?? "";
+const ROOM_CANVAS = { width: 1920, height: 1080 };
+const WIDGET_PROTOCOL = 1;
+const MAX_WIDGET_MESSAGE_BYTES = 64 * 1024;
 
 function safeAssetPath(src) {
   return typeof src === "string" &&
@@ -325,6 +328,7 @@ const stageEl = document.getElementById("desk-staging");
 const bgEl = deskMain.querySelector(".desk-bg");
 const bgVideo = deskMain.querySelector(".desk-video");
 const iconLayer = deskMain.querySelector(".icon-layer");
+const widgetLayer = deskMain.querySelector(".widget-layer");
 const indicatorEl = document.getElementById("desk-indicator");
 const transitionEl = document.getElementById("transition");
 const transitionTextEl = document.getElementById("transition-text");
@@ -336,6 +340,130 @@ const dockAppsEl = document.getElementById("dock-apps");
 let currentDesk = 0;
 let switching = false;
 let editMode = false;
+
+// ---- trusted WidgetHost ----------------------------------------------------
+// Widget documents remain opaque sandbox origins. The official host owns their
+// rectangle, lifecycle and message identity; author code never receives the
+// top-level WebView object or direct access to Desk/Dock DOM.
+const widgetInstancesBySource = new Map();
+const widgetInstancesByLayer = new WeakMap();
+
+function newInstanceId() {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function validWidget(widget) {
+  const p = widget?.placement;
+  return widget && typeof widget === "object" &&
+    typeof widget.id === "string" && widget.id.length > 0 &&
+    typeof widget.name === "string" && widget.name.length > 0 &&
+    assetUrl(widget.src) && p && typeof p === "object" &&
+    [p.x, p.y, p.width, p.height, p.z].every(Number.isInteger);
+}
+
+function safePlacement(value) {
+  const width = Math.min(Math.max(value.width, 64), ROOM_CANVAS.width);
+  const height = Math.min(Math.max(value.height, 64), ROOM_CANVAS.height);
+  return {
+    x: Math.min(Math.max(value.x, 0), ROOM_CANVAS.width - width),
+    y: Math.min(Math.max(value.y, 0), ROOM_CANVAS.height - height),
+    width,
+    height,
+    z: Math.min(Math.max(value.z, 0), 255),
+  };
+}
+
+function disposeWidgets(layer) {
+  const instances = widgetInstancesByLayer.get(layer) ?? [];
+  for (const instance of instances) {
+    widgetInstancesBySource.delete(instance.frame.contentWindow);
+    instance.disposed = true;
+    instance.frame.src = "about:blank";
+    instance.wrap.remove();
+  }
+  widgetInstancesByLayer.delete(layer);
+  layer.replaceChildren();
+}
+
+function postWidgetInit(instance) {
+  if (instance.disposed || !instance.frame.contentWindow) return;
+  instance.frame.contentWindow.postMessage({
+    type: "dext:widget:init",
+    protocol: WIDGET_PROTOCOL,
+    instanceId: instance.instanceId,
+    token: instance.token,
+    widgetId: instance.widget.id,
+    deskIndex: instance.deskIndex,
+    config: instance.widget.config && typeof instance.widget.config === "object"
+      ? JSON.parse(JSON.stringify(instance.widget.config))
+      : {},
+    permissions: Array.isArray(instance.widget.permissions) ? [...instance.widget.permissions] : [],
+    viewport: { ...ROOM_CANVAS },
+  }, "*");
+}
+
+function mountWidgets(layer, desk, deskIndex) {
+  disposeWidgets(layer);
+  const widgets = Array.isArray(desk.widgets) ? desk.widgets.filter(validWidget) : [];
+  const instances = [];
+  for (const widget of widgets) {
+    const src = assetUrl(widget.src);
+    if (!src) continue;
+    const placement = safePlacement(widget.placement);
+    const wrap = document.createElement("div");
+    wrap.className = "dext-widget";
+    wrap.dataset.widgetId = widget.id;
+    wrap.dataset.state = "loading";
+    wrap.style.left = `${placement.x / ROOM_CANVAS.width * 100}%`;
+    wrap.style.top = `${placement.y / ROOM_CANVAS.height * 100}%`;
+    wrap.style.width = `${placement.width / ROOM_CANVAS.width * 100}%`;
+    wrap.style.height = `${placement.height / ROOM_CANVAS.height * 100}%`;
+    wrap.style.zIndex = String(placement.z);
+
+    const frame = document.createElement("iframe");
+    const instanceId = newInstanceId();
+    const token = newInstanceId();
+    const widgetUrl = new URL(src);
+    widgetUrl.searchParams.set("dextInstanceId", instanceId);
+    widgetUrl.searchParams.set("dextKind", "widget");
+    frame.src = widgetUrl.href;
+    frame.title = widget.name;
+    frame.sandbox = "allow-scripts";
+    frame.allow = "autoplay";
+    frame.referrerPolicy = "no-referrer";
+    wrap.appendChild(frame);
+    layer.appendChild(wrap);
+
+    const instance = { instanceId, token, widget, deskIndex, frame, wrap, disposed: false };
+    instances.push(instance);
+    widgetInstancesBySource.set(frame.contentWindow, instance);
+    frame.addEventListener("load", () => postWidgetInit(instance));
+    frame.addEventListener("error", () => { wrap.dataset.state = "error"; });
+  }
+  widgetInstancesByLayer.set(layer, instances);
+}
+
+function clearStaging() {
+  const layer = stageEl.querySelector(".widget-layer");
+  if (layer) disposeWidgets(layer);
+  stageEl.replaceChildren();
+}
+
+window.addEventListener("message", (event) => {
+  const instance = widgetInstancesBySource.get(event.source);
+  if (!instance || instance.disposed) return;
+  let size = MAX_WIDGET_MESSAGE_BYTES + 1;
+  try { size = new TextEncoder().encode(JSON.stringify(event.data)).byteLength; } catch { return; }
+  if (size > MAX_WIDGET_MESSAGE_BYTES) return;
+  const data = event.data;
+  if (!data || typeof data !== "object" ||
+      data.type !== "dext:widget" ||
+      data.protocol !== WIDGET_PROTOCOL ||
+      data.instanceId !== instance.instanceId ||
+      data.token !== instance.token) return;
+  if (data.event === "ready") instance.wrap.dataset.state = "ready";
+  if (data.event === "error") instance.wrap.dataset.state = "error";
+});
 
 // ---- dock customization (room.json "dock" key; 宽容读取，全字段可选) ----
 // enabled   关掉整条 dock
@@ -716,6 +844,7 @@ function renderIcons(layer, desk, s) {
 function renderDesk(index) {
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk);
+  mountWidgets(widgetLayer, desk, index);
   renderDock();
   const n = ROOM.desks.length;
   if (dockCfg().indicator === "dots") {
@@ -869,7 +998,7 @@ const TRANSITIONS = {
       stageEl.style.display = "none";
       stageEl.style.transition = "none";
       stageEl.style.transform = "";
-      stageEl.innerHTML = "";
+      clearStaging();
       deskMain.style.transition = "none";
       deskMain.style.transform = "";
     },
@@ -890,7 +1019,7 @@ const TRANSITIONS = {
       stageEl.style.display = "none";
       stageEl.style.transition = "none";
       stageEl.style.opacity = "";
-      stageEl.innerHTML = "";
+      clearStaging();
     },
   },
   zoom: {
@@ -912,7 +1041,7 @@ const TRANSITIONS = {
       stageEl.style.transition = "none";
       stageEl.style.opacity = "";
       stageEl.style.transform = "";
-      stageEl.innerHTML = "";
+      clearStaging();
     },
   },
   none: {
@@ -921,7 +1050,7 @@ const TRANSITIONS = {
       done();
     },
     cleanup() {
-      stageEl.innerHTML = "";
+      clearStaging();
     },
   },
 };
@@ -931,8 +1060,10 @@ function mountStaging(index) {
   stageEl.innerHTML = `
     <video class="desk-video" autoplay muted loop playsinline></video>
     <div class="desk-bg"></div>
+    <div class="widget-layer"></div>
     <div class="icon-layer"></div>`;
   mountBackground(stageEl.querySelector(".desk-bg"), stageEl.querySelector(".desk-video"), desk);
+  mountWidgets(stageEl.querySelector(".widget-layer"), desk, index);
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
 }
 
