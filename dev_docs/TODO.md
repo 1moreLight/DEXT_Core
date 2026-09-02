@@ -472,5 +472,6 @@
 - [x] 提取 `EditorAppLibrary`，应用库扫描、增删、搜索与 Desk 投放交互从页面组件移出；生产构建通过（2026-09-02）
 - [x] 真实启动检查确认当前 worktree Core 身份、PID、pipe、data/log 均正确；清理本次启动留下的孤立配置器进程（2026-09-02）
 - [ ] 真实 Tauri/Player 活体验证：当前被同一 worktree 残留 Vite/Tauri 监听 1423 阻塞，待不影响用户进程的条件下复用或释放端口后继续
+- [x] `verify-runtime-identity.ps1` 只读核对通过 Core Product/Runtime/PID/pipe/mutex/data/log；Player、Watchdog、Configurator 当前未运行，不能据此宣称最终活体验收完成（2026-09-02）
 - [ ] 继续审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链剩余缺口
 - [ ] 重跑全量自动检查、浏览器视觉、真实 Core/Tauri/Player 验证，重新进入一次性待验收
