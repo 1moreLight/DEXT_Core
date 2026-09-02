@@ -470,5 +470,7 @@
 - [x] 提取 `EditorNavigation`，编辑模式一级导航不再由 `App.tsx` 直接渲染；`App.tsx` 降至约 2200 行且保持现有视觉与行为（2026-09-02）
 - [x] 提取 `EditorRoomLibrary`，编辑模式 Room 列表、详情、复制/重命名/应用入口与主页面解耦；生产构建通过（2026-09-02）
 - [x] 提取 `EditorAppLibrary`，应用库扫描、增删、搜索与 Desk 投放交互从页面组件移出；生产构建通过（2026-09-02）
+- [x] 真实启动检查确认当前 worktree Core 身份、PID、pipe、data/log 均正确；清理本次启动留下的孤立配置器进程（2026-09-02）
+- [ ] 真实 Tauri/Player 活体验证：当前被同一 worktree 残留 Vite/Tauri 监听 1423 阻塞，待不影响用户进程的条件下复用或释放端口后继续
 - [ ] 继续审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链剩余缺口
 - [ ] 重跑全量自动检查、浏览器视觉、真实 Core/Tauri/Player 验证，重新进入一次性待验收
