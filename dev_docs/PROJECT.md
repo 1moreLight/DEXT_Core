@@ -92,6 +92,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-31 | **Room 生命周期采用 idle、废弃 end**：用户在 Room v2 开工前明确确认采用 `idle` 并废弃 `end`，取代 2026-08-25 的“三幕/end”决定。Room v1/v2 的正式可选待机内容均使用 `idle`/`idle/`；图片常驻、视频静音循环、HTML 持续运行，缺失时黑屏。普通关闭立即结束，旧 `end` 不迁移也不兼容。 |
 | 2026-08-31 | **待机生命周期复用 Lively Core**：只认 `ScreensaverService` 明确传入的 screensaver 启动标记，复用其空闲检测、全屏窗口、多屏、媒体保护、输入唤醒与锁屏设置；Dext 不新增待机计时器或设备偏好字段。 |
 | 2026-08-31 | **Room v2 Widget 契约冻结**：Widget placement 保存为 1920×1080 逻辑画布整数矩形与 z，未来宿主按居中等比 contain 缩放；P1 自动允许时间、语言、视口、当前 Desk、暂停态、音频频谱及 CPU/GPU/RAM 摘要，歌曲/封面、网络摘要和 Dext 代理联网为 P2，P3/P4 只保留配额 KV、Dext 内导航/通知和用户映射 action 的未来声明。网络默认离线且禁止直连，manifest 不接受域名白名单或可执行路径；每个 Desk 的 Widget 是独立实例但 id 在 Room 内全局唯一；config 随 Room，宿主管理的可变数据与授权只留本机。v1→v2 只能显式复制并保留源 v1；WidgetHost 前 v2 仅可列出、只读打开和校验，禁止编辑、保存、另存降级、应用、v1 预览和当前 zip 操作。 |
+| 2026-08-31 | **Room 契约收口为原生 v2-only**：用户确认当前 Room 均为 demo，无需保留 v1 兼容、迁移或降级路径。新建、读取、编辑、保存、另存、预览、应用与 zip 只接受/产生 `version: 2`；每个 Desk 始终带 `widgets`。删除 v1 Schema、fixtures、版本分派、`buildRoomV1()` 及只为兼容旧 Room 存在的代码和提示；历史 v1 文档只作历史记录，不再是运行契约。该决定取代上一条中的 v1 保留、显式复制升级和 WidgetHost 前 v2 只读限制。 |
 
 ## 工作流
 

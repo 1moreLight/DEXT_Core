@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Dext Room v1/v2 fixtures and the self-contained v2 sample package."""
+"""Validate the native Dext Room v2 contract and self-contained sample packages."""
 
 from __future__ import annotations
 
@@ -9,11 +9,8 @@ import sys
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
-from referencing import Registry, Resource
-
-
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMAS = {1: ROOT / "room.schema.json", 2: ROOT / "room-v2.schema.json"}
+SCHEMAS = {2: ROOT / "room-v2.schema.json"}
 FIXTURES = ROOT / "dev_docs" / "fixtures"
 SAMPLE_LIBRARY = FIXTURES / "room-v2" / "sample-library"
 INVALID_SAMPLE_LIBRARY = FIXTURES / "room-v2" / "invalid-sample-library"
@@ -108,13 +105,10 @@ def semantic_errors(room: object) -> list[str]:
 
 def load_validators() -> dict[int, Draft202012Validator]:
     schemas = {version: json.loads(path.read_text(encoding="utf-8")) for version, path in SCHEMAS.items()}
-    registry = Registry().with_resources(
-        (schema["$id"], Resource.from_contents(schema)) for schema in schemas.values()
-    )
     validators: dict[int, Draft202012Validator] = {}
     for version, schema in schemas.items():
         Draft202012Validator.check_schema(schema)
-        validators[version] = Draft202012Validator(schema, registry=registry)
+        validators[version] = Draft202012Validator(schema)
     return validators
 
 
@@ -219,7 +213,7 @@ def main() -> int:
     args = parser.parse_args()
     validators = load_validators()
     failed = False
-    for version in (1, 2):
+    for version in (2,):
         fixture_dir = FIXTURES / f"room-v{version}"
         for path in sorted((fixture_dir / "valid").glob("*.json")):
             errors = validate_file(validators, path)

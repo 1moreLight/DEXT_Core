@@ -105,3 +105,10 @@
 - 根因：把“识别并阻止显式 v2/未来版本源”写成了“源 Room 必须先通过完整 v1 校验”，无意中扩大了操作的历史前置条件；真正需要严格校验的是即将写出的 v1 payload 和明确的新版本边界。
 - 解决：源 `room.json` 仅在能识别到显式 `version >= 2` 时阻止降级；缺失版本继续保持既有素材复制行为，目标 payload 仍走完整 v1 校验和原子写入。
 - 防再犯：加入新版本写保护时先列出原操作既有输入域；只在最终写入/应用边界加强必要校验，不能顺手把来源元数据或占位目录变成新的业务前置条件。
+
+## 49. Windows 系统媒体 API 与封面流可能永久阻塞
+
+- 现象：Core 直接调用 `GlobalSystemMediaTransportControlsSessionManager.RequestAsync()` 时真实环境超过 60 秒不返回；改用 NPSMLib 后，标题、作者、状态和控制均能快速工作，但 Apple Music 的 `GetThumbnailStream()` 读取会永久阻塞，并使后续媒体查询也超时。
+- 根因：GSMTC 会受 Windows 媒体会话服务不稳定影响；部分提供者暴露的 NPSMLib 封面 COM stream 不会完成读取，取消 token 和移到后台线程都不能可靠中断底层同步读取。
+- 解决：Core 复用 Lively 已依赖的 NPSMLib 读取媒体元数据和执行封闭动作，但不在 RPC 轮询路径主动读取封面流；Rust `verified_call` 增加 10 秒总超时。封面在未来 Widget Bridge 中复用 Lively Player 已有 `livelyCurrentTrack` 缓存并作为 P2 可选数据转发。
+- 防再犯：任何 Windows/COM 媒体调用都必须有进程边界或最终超时，不能在锁内读取未知 stream；“放到后台线程”不等于可取消，若阻塞会污染共享媒体会话。活体测试至少连续读取两次，并在动作/音量探测后恢复原状态。

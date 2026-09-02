@@ -223,6 +223,7 @@ namespace Lively
                 .AddSingleton<IRunnerService, RunnerService>()
                 .AddSingleton<ISystray, Systray>()
                 .AddSingleton<ITransparentTbService, TranslucentTBService>()
+                .AddSingleton<ISystemControlService, SystemControlService>()
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<WinDesktopCoreServer>()

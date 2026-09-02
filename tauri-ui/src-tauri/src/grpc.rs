@@ -6,7 +6,9 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{
-    CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse,
+    CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, SetSystemVolumeRequest,
+    SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
+    SystemVolumeSnapshot,
 };
 use crate::proto::grpc_dotnet_named_pipes::generated::{
     transport_message::Data, Headers, PayloadInfo, RequestControl, RequestInit, TransportMessage,
@@ -192,7 +194,12 @@ async fn verified_core_identity() -> Result<GetCoreStatsResponse, String> {
 
 async fn verified_call(method: &str, request: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     verified_core_identity().await?;
-    raw_call(method, request).await
+    tokio::time::timeout(
+        std::time::Duration::from_secs(10),
+        raw_call(method, request),
+    )
+    .await
+    .map_err(|_| format!("Dext Core RPC timed out: {method}"))?
 }
 
 enum ParseNext {
@@ -335,6 +342,172 @@ pub async fn close_all_wallpapers() -> Result<(), String> {
     .map(|_| ())
 }
 
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemMediaDto {
+    pub has_session: bool,
+    pub source_app_id: String,
+    pub title: String,
+    pub artist: String,
+    pub album_title: String,
+    pub album_artist: String,
+    pub thumbnail_base64: String,
+    pub thumbnail_content_type: String,
+    pub playback_status: String,
+    pub position_ms: i64,
+    pub duration_ms: i64,
+    pub can_play: bool,
+    pub can_pause: bool,
+    pub can_toggle_play_pause: bool,
+    pub can_next: bool,
+    pub can_previous: bool,
+}
+
+impl From<SystemMediaSnapshot> for SystemMediaDto {
+    fn from(snapshot: SystemMediaSnapshot) -> Self {
+        use base64::Engine;
+        Self {
+            has_session: snapshot.has_session,
+            source_app_id: snapshot.source_app_id,
+            title: snapshot.title,
+            artist: snapshot.artist,
+            album_title: snapshot.album_title,
+            album_artist: snapshot.album_artist,
+            thumbnail_base64: base64::engine::general_purpose::STANDARD.encode(snapshot.thumbnail),
+            thumbnail_content_type: snapshot.thumbnail_content_type,
+            playback_status: snapshot.playback_status,
+            position_ms: snapshot.position_ms,
+            duration_ms: snapshot.duration_ms,
+            can_play: snapshot.can_play,
+            can_pause: snapshot.can_pause,
+            can_toggle_play_pause: snapshot.can_toggle_play_pause,
+            can_next: snapshot.can_next,
+            can_previous: snapshot.can_previous,
+        }
+    }
+}
+
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemVolumeDto {
+    pub level: f64,
+    pub muted: bool,
+    pub device_id: String,
+    pub device_name: String,
+}
+
+impl From<SystemVolumeSnapshot> for SystemVolumeDto {
+    fn from(snapshot: SystemVolumeSnapshot) -> Self {
+        Self {
+            level: snapshot.level,
+            muted: snapshot.muted,
+            device_id: snapshot.device_id,
+            device_name: snapshot.device_name,
+        }
+    }
+}
+
+fn system_media_action(value: &str) -> Result<SystemMediaAction, String> {
+    match value {
+        "play" => Ok(SystemMediaAction::Play),
+        "pause" => Ok(SystemMediaAction::Pause),
+        "toggle-play-pause" => Ok(SystemMediaAction::TogglePlayPause),
+        "next" => Ok(SystemMediaAction::Next),
+        "previous" => Ok(SystemMediaAction::Previous),
+        _ => Err(format!("unsupported system media action {value:?}")),
+    }
+}
+
+pub async fn get_system_media() -> Result<SystemMediaDto, String> {
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetSystemMedia",
+        &[],
+    )
+    .await?;
+    payloads
+        .first()
+        .ok_or_else(|| "Dext Core returned no system media payload".to_string())
+        .and_then(|payload| {
+            SystemMediaSnapshot::decode(&payload[..])
+                .map(Into::into)
+                .map_err(|error| error.to_string())
+        })
+}
+
+pub async fn control_system_media(action: &str) -> Result<(), String> {
+    let request = SystemMediaControlRequest {
+        action: system_media_action(action)? as i32,
+    };
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/ControlSystemMedia",
+        &request.encode_to_vec(),
+    )
+    .await?;
+    let response = payloads
+        .first()
+        .ok_or_else(|| "Dext Core returned no media control payload".to_string())
+        .and_then(|payload| {
+            SystemMediaControlResponse::decode(&payload[..]).map_err(|error| error.to_string())
+        })?;
+    if response.accepted {
+        Ok(())
+    } else {
+        Err("Windows has no controllable current media session".into())
+    }
+}
+
+pub async fn get_system_volume() -> Result<SystemVolumeDto, String> {
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetSystemVolume",
+        &[],
+    )
+    .await?;
+    payloads
+        .first()
+        .ok_or_else(|| "Dext Core returned no system volume payload".to_string())
+        .and_then(|payload| {
+            SystemVolumeSnapshot::decode(&payload[..])
+                .map(Into::into)
+                .map_err(|error| error.to_string())
+        })
+}
+
+fn validate_system_volume_patch(level: Option<f64>, muted: Option<bool>) -> Result<(), String> {
+    if level.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value)) {
+        return Err("system volume must be a finite number between 0.0 and 1.0".into());
+    }
+    if level.is_none() && muted.is_none() {
+        return Err("at least one system volume field must be provided".into());
+    }
+    Ok(())
+}
+
+pub async fn set_system_volume(
+    level: Option<f64>,
+    muted: Option<bool>,
+) -> Result<SystemVolumeDto, String> {
+    validate_system_volume_patch(level, muted)?;
+    let request = SetSystemVolumeRequest {
+        level: level.unwrap_or_default(),
+        set_level: level.is_some(),
+        muted: muted.unwrap_or_default(),
+        set_muted: muted.is_some(),
+    };
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/SetSystemVolume",
+        &request.encode_to_vec(),
+    )
+    .await?;
+    payloads
+        .first()
+        .ok_or_else(|| "Dext Core returned no system volume payload".to_string())
+        .and_then(|payload| {
+            SystemVolumeSnapshot::decode(&payload[..])
+                .map(Into::into)
+                .map_err(|error| error.to_string())
+        })
+}
+
 pub async fn get_settings() -> Result<SettingsDataModel, String> {
     let payloads = verified_call(
         "/Lively.Grpc.Common.Proto.Settings.SettingsService/GetSettings",
@@ -439,7 +612,10 @@ pub async fn resolve_app(path: String) -> Result<AppInfoDto, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{grpc_pipe_server_name, runtime_identity, verify_core_identity_response};
+    use super::{
+        grpc_pipe_server_name, runtime_identity, system_media_action, validate_system_volume_patch,
+        verify_core_identity_response,
+    };
     use crate::proto::desktop::GetCoreStatsResponse;
 
     fn valid_identity() -> GetCoreStatsResponse {
@@ -467,6 +643,19 @@ mod tests {
             app_data_directory,
             grpc_pipe_name: grpc_pipe_server_name(),
         }
+    }
+
+    #[test]
+    fn system_controls_reject_open_ended_actions_and_invalid_volume() {
+        assert!(system_media_action("play").is_ok());
+        assert!(system_media_action("next").is_ok());
+        assert!(system_media_action("shell:calc.exe").is_err());
+        assert!(validate_system_volume_patch(Some(0.5), None).is_ok());
+        assert!(validate_system_volume_patch(None, Some(true)).is_ok());
+        assert!(validate_system_volume_patch(None, None).is_err());
+        assert!(validate_system_volume_patch(Some(-0.01), None).is_err());
+        assert!(validate_system_volume_patch(Some(1.01), None).is_err());
+        assert!(validate_system_volume_patch(Some(f64::NAN), None).is_err());
     }
 
     #[test]
@@ -538,5 +727,63 @@ mod tests {
         super::launch_app("notepad.exe".into(), String::new(), String::new())
             .await
             .expect("launch_app failed");
+    }
+
+    #[tokio::test]
+    #[ignore = "live test: reads system media and briefly changes then restores Windows master volume"]
+    async fn system_media_and_volume_against_current_core() {
+        let original = super::get_system_volume()
+            .await
+            .expect("get_system_volume failed");
+        println!(
+            "volume: level={} muted={} device={:?}",
+            original.level, original.muted, original.device_name
+        );
+        let probe = if original.level >= 0.01 {
+            original.level - 0.01
+        } else {
+            original.level + 0.01
+        };
+        let changed = super::set_system_volume(Some(probe), Some(original.muted))
+            .await
+            .expect("set_system_volume probe failed");
+        assert!((changed.level - probe).abs() < 0.01);
+        let restored = super::set_system_volume(Some(original.level), Some(original.muted))
+            .await
+            .expect("restore system volume failed");
+        assert!((restored.level - original.level).abs() < 0.01);
+        assert_eq!(restored.muted, original.muted);
+
+        let media = super::get_system_media()
+            .await
+            .expect("get_system_media failed");
+        println!(
+            "media: has_session={} source={:?} title={:?} artist={:?} status={:?} artwork_bytes={}",
+            media.has_session,
+            media.source_app_id,
+            media.title,
+            media.artist,
+            media.playback_status,
+            media.thumbnail_base64.len()
+        );
+        let probe = match media.playback_status.as_str() {
+            "playing" => Some(("pause", "play")),
+            "paused" => Some(("play", "pause")),
+            _ => None,
+        };
+        if let Some((probe_action, restore_action)) = probe {
+            super::control_system_media(probe_action)
+                .await
+                .expect("system media probe action failed");
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            super::control_system_media(restore_action)
+                .await
+                .expect("restore system media state failed");
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            let restored_media = super::get_system_media()
+                .await
+                .expect("read restored system media state failed");
+            assert_eq!(restored_media.playback_status, media.playback_status);
+        }
     }
 }

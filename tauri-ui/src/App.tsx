@@ -27,14 +27,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
+import { DockLibrary } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
-  assertV1WritePayload,
+  assertRoomV2WritePayload,
   readOnlyRoomMessage,
   roomContractPolicy,
 } from "@/lib/room-contract";
@@ -43,10 +43,8 @@ import {
   type DockPresetInfo,
   DEFAULT_DOCK,
   DOCK_PRESET_CATALOG,
-  dockSkinName,
   newLocalDockPresetId,
   parseDockPresetFile,
-  withDockPreset,
 } from "@/lib/dock";
 
 interface AppInfo {
@@ -100,6 +98,7 @@ interface Desk {
   icons: RoomIcon[];
   iconSize?: string;
   dock?: DockConfig;
+  widgets?: unknown[];
 }
 
 function bgLabel(bg: Background): string {
@@ -403,7 +402,7 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "my-room",
     path: "C:\\mock\\my-room",
-    version: 1,
+    version: 2,
     desks: 2,
     icons: 8,
     widgets: 0,
@@ -412,11 +411,11 @@ const MOCK_ROOMS: RoomInfo[] = [
       { kind: "image", src: "background/bg.png" },
     ],
   },
-  { name: "black-room", path: "C:\\mock\\black-room", version: 1, desks: 1, icons: 0, widgets: 0, covers: [] },
+  { name: "black-room", path: "C:\\mock\\black-room", version: 2, desks: 1, icons: 0, widgets: 0, covers: [] },
   {
     name: "game-room",
     path: "C:\\mock\\game-room",
-    version: 1,
+    version: 2,
     desks: 3,
     icons: 15,
     widgets: 0,
@@ -429,7 +428,7 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "neon-city",
     path: "C:\\mock\\neon-city",
-    version: 1,
+    version: 2,
     desks: 2,
     icons: 6,
     widgets: 0,
@@ -441,7 +440,7 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "sunset",
     path: "C:\\mock\\sunset",
-    version: 1,
+    version: 2,
     desks: 3,
     icons: 12,
     widgets: 0,
@@ -451,11 +450,11 @@ const MOCK_ROOMS: RoomInfo[] = [
       { kind: "image", src: "background/2.png" },
     ],
   },
-  { name: "minimal", path: "C:\\mock\\minimal", version: 1, desks: 1, icons: 3, widgets: 0, covers: [] },
+  { name: "minimal", path: "C:\\mock\\minimal", version: 2, desks: 1, icons: 3, widgets: 0, covers: [] },
   {
     name: "retro",
     path: "C:\\mock\\retro",
-    version: 1,
+    version: 2,
     desks: 2,
     icons: 9,
     widgets: 0,
@@ -480,7 +479,7 @@ const MOCK_DESKS: Desk[] = [
 ];
 
 function newDesk(index: number): Desk {
-  return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [] };
+  return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [], widgets: [] };
 }
 
 function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
@@ -544,6 +543,9 @@ function cleanDesk(value: unknown, index: number): Desk {
     background: cleanContent(desk.background, "background"),
     iconSize,
     icons: Array.isArray(desk.icons) ? desk.icons.map(cleanRoomIcon) : [],
+    widgets: Array.isArray(desk.widgets)
+      ? desk.widgets.map((widget) => JSON.parse(JSON.stringify(widget)) as unknown)
+      : [],
     ...(isRecord(desk.dock) ? { dock: desk.dock as DockConfig } : {}),
   };
 }
@@ -878,9 +880,8 @@ export default function App() {
   const [transition, setTransition] = useState<Transition>("slide");
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [idleContent, setIdleContent] = useState<Content | null>(null);
-  const [roomVersion, setRoomVersion] = useState<number | null>(1);
+  const [roomVersion, setRoomVersion] = useState<number | null>(2);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
-  const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
@@ -916,9 +917,9 @@ export default function App() {
   const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
   const activeRoomPolicy = roomContractPolicy(roomVersion);
 
-  function buildRoomV1() {
+  function buildRoomV2() {
     const room: Record<string, unknown> = {
-      version: 1,
+      version: 2,
       startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
       switch: transition,
       switches: Object.fromEntries(
@@ -935,6 +936,9 @@ export default function App() {
             ? desk.iconSize
             : "medium",
           icons: desk.icons.map((icon, index) => roomIconForWrite(icon, index, true)),
+          widgets: (desk.widgets ?? []).map(
+            (widget) => JSON.parse(JSON.stringify(widget)) as unknown
+          ),
         };
         const deskDock = dockForWrite(desk.dock);
         if (deskDock) next.dock = deskDock;
@@ -945,7 +949,7 @@ export default function App() {
     if (idleContent) room.idle = { ...idleContent, name: idleName.trim() || idleContent.name };
     const roomDock = dockForWrite(dock);
     if (roomDock) room.dock = roomDock;
-    return assertV1WritePayload(room);
+    return assertRoomV2WritePayload(room);
   }
 
   useEffect(() => {
@@ -1072,7 +1076,6 @@ export default function App() {
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
       setRoomPath(path);
-      setRoomCss("");
       setStartContent(null);
       setIdleContent(null);
       setIdleName("待机画面");
@@ -1091,7 +1094,6 @@ export default function App() {
       return false;
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
-      const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
       const room = JSON.parse(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
         ? room.desks.map(cleanDesk)
@@ -1119,14 +1121,13 @@ export default function App() {
       setStartDesk(nextStartDesk);
       setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
       setRoomVersion(typeof room.version === "number" ? room.version : null);
-      if (room.version !== 1) setShowPreview(false);
-      setRoomCss(css);
+      if (room.version !== 2) setShowPreview(false);
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
       setDirty(false);
       localStorage.setItem("dext.roomPath", path);
       setStatus(
-        room.version === 1
+        room.version === 2
           ? `已打开 ${path.split("\\").pop()}`
           : readOnlyRoomMessage(room.version)
       );
@@ -1150,7 +1151,7 @@ export default function App() {
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify(buildRoomV1(), null, 2),
+        roomJson: JSON.stringify(buildRoomV2(), null, 2),
       });
       setDirty(false);
       return true;
@@ -1215,30 +1216,6 @@ export default function App() {
     await applyRoomDir(roomPath);
   }
 
-  async function applyDockPreset(preset: DockPresetInfo): Promise<boolean> {
-    if (!roomPath) {
-      setStatus("先新建或选择一个房间");
-      return false;
-    }
-    try {
-      const css = withDockPreset(roomCss, preset);
-      if (IS_TAURI) {
-        await invoke("save_room_css", { roomDir: roomPath, css });
-      }
-      setRoomCss(css);
-      const roomName = roomPath.split("\\").pop() ?? roomPath;
-      setStatus(
-        IS_TAURI
-          ? `Dock「${preset.name}」已保存到 ${roomName} / room.css`
-          : `Dock「${preset.name}」已应用（UI 设计模式）`
-      );
-      return true;
-    } catch (e) {
-      setStatus(`error: ${e}`);
-      return false;
-    }
-  }
-
   async function importDockPreset(): Promise<string | null> {
     if (!IS_TAURI) {
       setStatus("Dock 文件导入请在桌面配置器中使用");
@@ -1298,7 +1275,7 @@ export default function App() {
       setStatus("先新建或选择一个房间");
       return;
     }
-    if (!activeRoomPolicy.saveAsV1) {
+    if (!activeRoomPolicy.saveAs) {
       setStatus(readOnlyRoomMessage(roomVersion));
       return;
     }
@@ -1309,7 +1286,7 @@ export default function App() {
         roomDir: roomPath,
         dir: libDir,
         name,
-        roomJson: JSON.stringify(buildRoomV1(), null, 2),
+        roomJson: JSON.stringify(buildRoomV2(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -1327,13 +1304,13 @@ export default function App() {
   }
 
   function postRoom() {
-    if (!roomPath || !activeRoomPolicy.previewV1) return;
+    if (!roomPath || !activeRoomPolicy.preview) return;
     const roomName = roomPath.split(/[\\/]/).filter(Boolean).pop();
     if (!roomName) return;
     previewRef.current?.contentWindow?.postMessage(
       {
         type: "dext:room",
-        room: buildRoomV1(),
+        room: buildRoomV2(),
         deskIndex: activeDesk,
         assetBase: `http://lib.localhost/${encodeURIComponent(roomName)}/`,
       },
@@ -1629,7 +1606,7 @@ export default function App() {
     let n = rooms.length + 1;
     while (rooms.some((r) => r.name === `new-room-${n}`)) n++;
     const name = `new-room-${n}`;
-    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 1, desks: 1, icons: 0, widgets: 0, covers: [] };
+    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 2, desks: 1, icons: 0, widgets: 0, covers: [] };
     setRooms([...rooms, room]);
     setRoomPickPath(room.path);
   }
@@ -1744,9 +1721,9 @@ export default function App() {
     if (!IS_TAURI || !paths.length) return;
     const items = paths.map((path) => rooms.find((room) => room.path === path)).filter(Boolean) as RoomInfo[];
     if (!items.length) return;
-    const readOnly = items.find((room) => !roomContractPolicy(room.version).zipV1);
+    const readOnly = items.find((room) => !roomContractPolicy(room.version).zip);
     if (readOnly) {
-      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version)}；当前 zip 仅支持 v1`);
+      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version)}`);
       return;
     }
     setRoomBusy(`准备导出 ${items.length} 个 Room…`);
@@ -2037,8 +2014,8 @@ export default function App() {
             <Button
               variant={showPreview ? "secondary" : "outline"}
               size="sm"
-              disabled={!activeRoomPolicy.previewV1}
-              title={!activeRoomPolicy.previewV1 ? readOnlyRoomMessage(roomVersion) : undefined}
+              disabled={!activeRoomPolicy.preview}
+              title={!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined}
               onClick={() => {
                 setShowPreview((v) => !v);
                 if (!showPreview) setEditNav("room");
@@ -2178,7 +2155,7 @@ export default function App() {
                 </dl>
                 {!roomContractPolicy(heroRoom.version).edit && (
                   <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
-                    {readOnlyRoomMessage(heroRoom.version)}。不会降级保存或应用。
+                    {readOnlyRoomMessage(heroRoom.version)}。不会读取为草稿、改写或丢弃 Widget 数据。
                   </p>
                 )}
                 <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
@@ -2256,7 +2233,7 @@ export default function App() {
 
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
-            {showPreview && activeRoomPolicy.previewV1 ? (
+            {showPreview && activeRoomPolicy.preview ? (
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
@@ -2266,7 +2243,7 @@ export default function App() {
                   className="aspect-video w-full max-w-4xl rounded-lg border border-border"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · 只使用内存中的 room.json v1 草稿，不写源文件或运行包
+                  实时预览 · 只使用内存中的原生 room.json v2 草稿，不写源文件或运行包
                 </p>
               </div>
             ) : editNav === "library" ? (
@@ -2500,15 +2477,9 @@ export default function App() {
                 </div>
                 <details className="shrink-0 rounded-lg border border-border bg-background">
                   <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-                    当前 Room Dock · {dockSkinName(roomCss)}
+                    当前 Room Dock
                   </summary>
-                  <div className="max-h-[58vh] space-y-3 overflow-y-auto border-t border-border p-3">
-                    <RoomDockPicker
-                      presets={dockPresets}
-                      activePreset={dockSkinName(roomCss)}
-                      onApplyPreset={applyDockPreset}
-                    />
-                    <div className="border-t border-border pt-3">
+                  <div className="max-h-[58vh] overflow-y-auto border-t border-border p-3">
                     <DockEditor
                       dock={dock}
                       setDock={setDock}
@@ -2519,7 +2490,6 @@ export default function App() {
                       touch={touch}
                       setStatus={setStatus}
                     />
-                    </div>
                   </div>
                 </details>
                 {edges.length > 0 ? (

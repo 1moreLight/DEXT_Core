@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "startDesk": 2,
+  "startDesk": 0,
   "switches": {},
   "desks": [
     {
-      "name": "唯一 Desk",
+      "name": "Unsupported v1",
       "background": null,
       "iconSize": "medium",
       "icons": []

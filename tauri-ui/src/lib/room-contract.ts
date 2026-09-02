@@ -3,36 +3,33 @@ export type RoomContractPolicy = {
   recognized: boolean;
   edit: boolean;
   save: boolean;
-  saveAsV1: boolean;
+  saveAs: boolean;
   apply: boolean;
-  previewV1: boolean;
-  zipV1: boolean;
+  preview: boolean;
+  zip: boolean;
 };
 
 const READ_ONLY = {
   edit: false,
   save: false,
-  saveAsV1: false,
+  saveAs: false,
   apply: false,
-  previewV1: false,
-  zipV1: false,
+  preview: false,
+  zip: false,
 };
 
 export function roomContractPolicy(version: unknown): RoomContractPolicy {
-  if (version === 1) {
+  if (version === 2) {
     return {
-      versionLabel: "v1",
+      versionLabel: "v2",
       recognized: true,
       edit: true,
       save: true,
-      saveAsV1: true,
+      saveAs: true,
       apply: true,
-      previewV1: true,
-      zipV1: true,
+      preview: true,
+      zip: true,
     };
-  }
-  if (version === 2) {
-    return { versionLabel: "v2", recognized: true, ...READ_ONLY };
   }
   return {
     versionLabel: typeof version === "number" ? `v${version}` : "未知版本",
@@ -41,18 +38,25 @@ export function roomContractPolicy(version: unknown): RoomContractPolicy {
   };
 }
 
-export function assertV1WritePayload(room: Record<string, unknown>): Record<string, unknown> {
-  if (room.version !== 1) throw new Error("v1 write payload must keep version 1");
+export function assertRoomV2WritePayload(room: Record<string, unknown>): Record<string, unknown> {
+  if (room.version !== 2) throw new Error("Room write payload must keep version 2");
   const desks = Array.isArray(room.desks) ? room.desks : [];
-  if (desks.some((desk) => Boolean(desk && typeof desk === "object" && "widgets" in desk))) {
-    throw new Error("v1 write payload must not contain widgets");
+  if (
+    desks.length === 0 ||
+    desks.some(
+      (desk) =>
+        !desk ||
+        typeof desk !== "object" ||
+        !("widgets" in desk) ||
+        !Array.isArray((desk as { widgets?: unknown }).widgets)
+    )
+  ) {
+    throw new Error("Room v2 write payload requires a widgets array on every Desk");
   }
   return room;
 }
 
 export function readOnlyRoomMessage(version: unknown): string {
   const policy = roomContractPolicy(version);
-  return version === 2
-    ? "Room v2 契约已识别；WidgetHost 尚未实现，当前只能查看和校验"
-    : `${policy.versionLabel} 暂不支持；当前只能查看，不能保存或应用`;
+  return `${policy.versionLabel} 不受支持；Dext 现在只接受原生 Room v2`;
 }
