@@ -32,6 +32,7 @@ import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
+import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
   assertRoomV2WritePayload,
@@ -108,6 +109,7 @@ type Mode = "use" | "edit" | "workshop" | "settings";
 type Theme = "light" | "dark";
 
 type EditNav = "library" | "room" | "dock";
+type EditorView = "canvas" | "flow";
 
 /* ---- room 思维导图 ----
    拓扑：启动画面只直连一个可选 Desk（无 switch，未指定时默认 d0）；
@@ -456,7 +458,17 @@ const MOCK_DESKS: Desk[] = [
       x: i % 4,
       y: Math.floor(i / 4),
     })),
-    widgets: [],
+    widgets: [
+      {
+        id: "system-meter",
+        name: "系统仪表",
+        src: "widgets/system-meter/index.html",
+        resources: ["widgets/system-meter/index.html"],
+        placement: { x: 1180, y: 96, width: 560, height: 260, z: 2 },
+        config: { accent: "#67e8f9" },
+        permissions: ["time.read", "hardware.cpu.read", "hardware.memory.read"],
+      },
+    ],
   },
   { name: "游戏", background: null, iconSize: "large", icons: [], widgets: [] },
 ];
@@ -869,6 +881,8 @@ export default function App() {
   const [editNav, setEditNav] = useState<EditNav>("room");
   const [navOpen, setNavOpen] = useState(true);
   const [roomEntered, setRoomEntered] = useState(false);
+  const [editorView, setEditorView] = useState<EditorView>("canvas");
+  const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
@@ -2388,14 +2402,18 @@ export default function App() {
             ) : (
               /* entered a room: desk editing */
               <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex min-h-10 shrink-0 items-center gap-3 overflow-x-auto pb-1">
                   <Button variant="outline" size="sm" onClick={() => setRoomEntered(false)}>
                     ← 房间列表
                   </Button>
-                  <span className="text-sm font-medium">
+                  <span className="shrink-0 text-sm font-medium">
                     {roomPath?.split("\\").pop() ?? "（未选房间）"}
                   </span>
-	                  {dirty && <span className="text-xs font-medium text-amber-500">● 未保存</span>}
+	                  {dirty && <span className="shrink-0 text-xs font-medium text-amber-500">● 未保存</span>}
+	                  <div className="flex shrink-0 rounded-md border border-border bg-muted/35 p-0.5">
+	                    <button type="button" onClick={() => setEditorView("canvas")} className={`rounded px-2.5 py-1 text-xs ${editorView === "canvas" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>桌面画布</button>
+	                    <button type="button" onClick={() => setEditorView("flow")} className={`rounded px-2.5 py-1 text-xs ${editorView === "flow" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}>Desk 流程</button>
+	                  </div>
 	                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
 	                    <Button size="sm" className="font-semibold shadow-sm" onClick={addDesk}>
 	                      <Plus className="h-3.5 w-3.5" /> 新增 Desk
@@ -2469,7 +2487,25 @@ export default function App() {
                     />
                   </div>
                 </details>
-                {edges.length > 0 ? (
+                {editorView === "canvas" ? (
+                  <DesktopCanvasEditor
+                    desks={desks}
+                    activeDesk={activeDesk}
+                    roomPath={roomPath}
+                    selectedWidgetId={selectedWidgetId}
+                    onActiveDesk={(index) => {
+                      setActiveDesk(index);
+                      setGraphSel(`d${index}`);
+                    }}
+                    onSelectWidget={setSelectedWidgetId}
+                    onBeginChange={pushHistory}
+                    onDeskChange={(nextDesk, message) => {
+                      setDesks((current) => current.map((item, index) => index === activeDesk ? nextDesk : item));
+                      touch();
+                      if (message) setStatus(message);
+                    }}
+                  />
+                ) : edges.length > 0 ? (
                   <>
                     {/* 上：Room 结构思维导图（Desk 对视觉上合并为一条双向线） */}
 	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
