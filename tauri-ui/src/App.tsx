@@ -35,6 +35,7 @@ import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
+import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
   cloneEditorSnapshot,
@@ -2855,6 +2856,7 @@ export default function App() {
                             : isIdle
                               ? idleContent
                               : desks[deskIndex]?.background ?? null;
+                          const subjectId = isStart ? "scene:start" : isIdle ? "scene:idle" : `scene:desk:${deskIndex}`;
                           return (
                             <>
                               {!isStart && !isIdle && (
@@ -2928,7 +2930,7 @@ export default function App() {
 	                                  <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
 	                                </dl>
 	                              )}
-	                              <div className="flex shrink-0 items-center gap-2">
+                              <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
                                   {isStart ? "画面素材：" : isIdle ? "待机素材：" : "壁纸素材："}
                                 </span>
@@ -2957,6 +2959,24 @@ export default function App() {
                                   <span className={`h-2 w-2 rounded-full ${content?.type === "video" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 视频
                                 </Button>
                               </div>
+                              {content?.type === "html" && (
+                                <div className="w-[52rem] shrink-0 border-l border-border pl-4">
+                                  <SceneCapabilityEditor
+                                    compact
+                                    scene={content}
+                                    permissionReview={permissionReviews.find((item) => item.id === subjectId) ?? null}
+                                    onPermissionChange={(approved) => setSubjectPermission(subjectId, approved)}
+                                    onBeginChange={pushHistory}
+                                    onSceneChange={(next, message) => {
+                                      if (isStart) setStartContent(next);
+                                      else if (isIdle) setIdleContent(next);
+                                      else setDesks((current) => current.map((desk, index) => index === deskIndex ? { ...desk, background: next } : desk));
+                                      touch();
+                                      setStatus(message);
+                                    }}
+                                  />
+                                </div>
+                              )}
                             </>
                           );
                         })()
@@ -2969,6 +2989,8 @@ export default function App() {
                                 ? startName
                                 : (desks[parseInt(id.slice(1), 10)]?.name ?? id);
                             const content = typeof e.trans === "object" ? e.trans : null;
+                            const route = `${Number(e.from.slice(1))}>${Number(e.to.slice(1))}`;
+                            const subjectId = `scene:switch:${route}`;
                             return (
                               <div key={e.id} className="flex shrink-0 items-center gap-4 border-r border-border pr-5 text-xs text-muted-foreground last:border-r-0">
                                 <div className="w-36 shrink-0">
@@ -3009,6 +3031,22 @@ export default function App() {
                                     </select>
                                   )}
                                 </div>
+                                {content?.type === "html" && (
+                                  <div className="w-[52rem] shrink-0 border-l border-border pl-4">
+                                    <SceneCapabilityEditor
+                                      compact
+                                      scene={content}
+                                      permissionReview={permissionReviews.find((item) => item.id === subjectId) ?? null}
+                                      onPermissionChange={(approved) => setSubjectPermission(subjectId, approved)}
+                                      onBeginChange={pushHistory}
+                                      onSceneChange={(next, message) => {
+                                        setEdges((current) => current.map((edge) => edge.id === e.id ? { ...edge, trans: next } : edge));
+                                        touch();
+                                        setStatus(message);
+                                      }}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             );
                           })
