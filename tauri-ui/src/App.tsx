@@ -92,7 +92,6 @@ import {
 } from "@/lib/dock";
 import {
   isRecord,
-  type Background,
   type Content,
   type ContentType,
   type Desk,
@@ -100,11 +99,6 @@ import {
   type TransitionPreset,
   type WidgetDefinition,
 } from "@/lib/room-v2";
-
-function bgLabel(bg: Background): string {
-  if (!bg) return "黑底（未设置）";
-  return `${bg.type === "image" ? "🖼" : bg.type === "video" ? "🎬" : "代码"} ${bg.name}`;
-}
 
 type EditNav = "library" | "room" | "dock";
 type EditorView = "canvas" | "flow";
@@ -312,7 +306,6 @@ export default function App() {
   const [desks, setDesks] = useState<Desk[]>([newDesk(0)]);
   const [activeDesk, setActiveDesk] = useState(0);
   const [query, setQuery] = useState("");
-  const [renaming, setRenaming] = useState<number | null>(null);
   const [status, setStatus] = useState("loading...");
   const [coreIdentity, setCoreIdentity] = useState<CoreIdentity | null>(null);
   const [coreIdentityError, setCoreIdentityError] = useState<string | null>(null);
@@ -999,28 +992,6 @@ export default function App() {
     setEdges((prev) => prev.map((edge) => edge.id === edgeId ? { ...edge, trans: content } : edge));
   }
 
-  function clearBackground() {
-    pushHistory();
-    touch();
-    setDesks((prev) =>
-      prev.map((d, i) => (i === activeDesk ? { ...d, background: null } : d))
-    );
-  }
-
-  async function changeTransition(value: string) {
-    if (value !== "video") {
-      pushHistory();
-      touch();
-      setTransition(value as TransitionPreset);
-      return;
-    }
-    const content = await pickRoomContent("switch", "video");
-    if (!content) return;
-    pushHistory();
-    touch();
-    setTransition(content);
-  }
-
   function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
     const targetDesk = desks[deskIndex];
     if (!targetDesk) return;
@@ -1043,16 +1014,6 @@ export default function App() {
       alreadyAdded
         ? `已从 ${targetDesk.name} 移除 ${app.name}`
         : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
-    );
-  }
-
-  function removeIcon(target: string) {
-    pushHistory();
-    touch();
-    setDesks((prev) =>
-      prev.map((d, i) =>
-        i === activeDesk ? { ...d, icons: d.icons.filter((x) => x.launch.target !== target) } : d
-      )
     );
   }
 
@@ -1094,24 +1055,6 @@ export default function App() {
     .map(([, rect]) => rect.height);
   const graphRowHeight = Math.max(56, ...measuredDeskHeights) + GRAPH_ROW_GAP;
   const graphMinHeight = Math.max(240, (desks.length + 1) * graphRowHeight);
-  /* header controls (room select / 新建 / 另存为 / 库路径 / 转场 / 保存 / 应用) removed from UI;
-     functions kept here until the Room view re-homes them */
-  void [
-    newRoom,
-    saveAs,
-    changeLib,
-    changeTransition,
-    transitionLabel,
-    applyCurrent,
-    removeDesk,
-    clearBackground,
-    removeIcon,
-    bgLabel,
-    renaming,
-    setRenaming,
-    desk,
-    touch,
-  ];
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
     rooms.find((r) => r.path === appliedRoom) ??
