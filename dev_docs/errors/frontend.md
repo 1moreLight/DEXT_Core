@@ -82,3 +82,10 @@
 - 根因：Tauri opener 的命令 ACL 与路径 scope 是两层约束；前端直接提交任意绝对路径既需要广泛 scope，也扩大了 WebView 被注入时的文件打开面。
 - 解决：前端只提交固定枚举；Rust `open_about_document` 重新映射并校验仓库内三份文档，`open_dext_directory` 从已验证 Core 身份派生 data/log 路径，再由原生 `OpenerExt` 打开。仅保留诊断保存所需的 `dialog:allow-save`，不授予 WebView 任意路径 opener scope。
 - 防再犯：真实 Tauri 功能必须点击验证，不能以按钮出现或 TypeScript 编译通过代替；涉及文件、shell、opener 的能力优先设计为后端白名单 command，不向 WebView 开放通配路径权限。
+
+## 51. 条件挂载画布的测量 effect 未依赖视图，流程连线为空
+
+- 现象：Desk 流程视图的启动、Desk、待机节点正常出现，但 SVG 中没有任何 `line`，肉眼看不到节点间关系。
+- 根因：几何测量 `useLayoutEffect` 在 Room 进入时执行，此时默认是桌面画布、流程 DOM 尚未挂载，于是因 `canvasRef` 为空提前返回；切换到流程视图时依赖项没有变化，effect 不会重跑。
+- 解决：把 `editorView` 加入依赖，并仅在 `flow` 视图挂载后测量；零连线时也保留节点几何测量，不再用 `edges.length` 阻止初始化。
+- 防再犯：任何测量条件挂载 DOM 的 effect 都必须依赖控制挂载的视图/开关状态；视觉验收同时检查 SVG 实际元素数量，不能只确认节点出现。

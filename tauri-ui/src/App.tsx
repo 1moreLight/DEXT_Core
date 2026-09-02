@@ -1444,7 +1444,7 @@ export default function App() {
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
-    if (!roomEntered || !canvas || edges.length === 0) return;
+    if (!roomEntered || editorView !== "flow" || !canvas) return;
 
     let frame = 0;
     const measure = () => {
@@ -1481,7 +1481,7 @@ export default function App() {
       window.removeEventListener("resize", measure);
       cancelAnimationFrame(frame);
     };
-  }, [roomEntered, edges.length, desks.length]);
+  }, [roomEntered, editorView, edges.length, desks.length]);
   const filteredRooms = rooms.filter((r) =>
     r.name.toLowerCase().includes(roomQuery.toLowerCase())
   );

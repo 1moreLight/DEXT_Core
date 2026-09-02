@@ -55,6 +55,7 @@
 | #48 | v2 降级保护误把源占位目录升级为新的 v1 校验前置条件 | [backend](errors/backend.md) |
 | #49 | Windows 系统媒体 API 与封面流可能永久阻塞 | [backend](errors/backend.md) |
 | #50 | Player 目标框架缺少较新的 ASCII 字符判断 API | [toolchain](errors/toolchain.md) |
+| #51 | 条件挂载画布的测量 effect 未依赖视图，流程连线为空 | [frontend](errors/frontend.md) |
 
 ## 分册
 
