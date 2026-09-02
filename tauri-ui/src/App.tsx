@@ -4,13 +4,9 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
   Copy,
-  Dock,
-  FolderOpen,
   LayoutGrid,
   MonitorPlay,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   Pencil,
   Plus,
   Trash2,
@@ -27,6 +23,7 @@ import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
 import { EditorHierarchy, type EditorView } from "@/features/room-editor/EditorHierarchy";
 import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
+import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
 import {
   AppIcon,
@@ -84,7 +81,6 @@ import {
   type WidgetDefinition,
 } from "@/lib/room-v2";
 
-type EditNav = "library" | "room" | "dock";
 type Snapshot = RoomEditorSnapshot;
 
 const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
@@ -1468,51 +1464,15 @@ export default function App() {
       ) : mode === "edit" ? (
         /* ===== edit mode ===== */
         <div className="flex min-h-0 flex-1">
-          {/* edit nav sidebar (collapsible) */}
-          <aside
-            className={`flex shrink-0 flex-col border-r border-border py-2 transition-all ${
-              navOpen ? "w-44 px-2" : "w-12 items-center px-1"
-            }`}
-          >
-            <button
-              onClick={() => setNavOpen((v) => !v)}
-              className="mb-2 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent"
-              title={navOpen ? "折叠侧栏" : "展开侧栏"}
-            >
-              {navOpen ? (
-                <PanelLeftClose className="h-4 w-4" />
-              ) : (
-                <PanelLeftOpen className="h-4 w-4" />
-              )}
-            </button>
-            <nav className="flex flex-col gap-1">
-              {(
-                [
-                  ["room", "Room", FolderOpen],
-                  ["library", "应用库", LayoutGrid],
-                  ["dock", "Dock", Dock],
-                ] as const
-              ).map(([key, label, Icon]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setEditNav(key);
-                    if (key === "room") setRoomEntered(false);
-                  }}
-                  title={label}
-                  className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm ${
-                    editNav === key
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  } ${navOpen ? "" : "justify-center"}`}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {navOpen && <span className="whitespace-nowrap">{label}</span>}
-                </button>
-              ))}
-            </nav>
-          </aside>
-
+          <EditorNavigation
+            navOpen={navOpen}
+            editNav={editNav}
+            onToggle={() => setNavOpen((value) => !value)}
+            onNavigate={(value) => {
+              setEditNav(value);
+              if (value === "room") setRoomEntered(false);
+            }}
+          />
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
             {showPreview && activeRoomPolicy.preview ? (
