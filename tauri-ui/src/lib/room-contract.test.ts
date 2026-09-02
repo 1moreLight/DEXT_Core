@@ -1,0 +1,34 @@
+import { describe, expect, it } from "vitest";
+import { assertRoomV2WritePayload, roomContractPolicy } from "./room-contract";
+
+describe("room contract operation matrix", () => {
+  it("enables the complete native v2 workflow", () => {
+    expect(roomContractPolicy(2)).toEqual({
+      versionLabel: "v2",
+      recognized: true,
+      edit: true,
+      save: true,
+      saveAs: true,
+      apply: true,
+      preview: true,
+      zip: true,
+    });
+  });
+
+  it("rejects v1 and unknown versions", () => {
+    expect(roomContractPolicy(1)).toMatchObject({
+      versionLabel: "v1",
+      recognized: false,
+      edit: false,
+      apply: false,
+    });
+    expect(roomContractPolicy(3)).toMatchObject({ recognized: false, edit: false, apply: false });
+  });
+
+  it("requires native v2 payloads with a widgets array on every Desk", () => {
+    const v2 = { version: 2, desks: [{ name: "Desk", icons: [], widgets: [] }] };
+    expect(assertRoomV2WritePayload(v2)).toBe(v2);
+    expect(() => assertRoomV2WritePayload({ version: 1, desks: [] })).toThrow("version 2");
+    expect(() => assertRoomV2WritePayload({ version: 2, desks: [{ icons: [] }] })).toThrow("widgets");
+  });
+});

@@ -1,0 +1,18 @@
+{
+  "version": 2, "startDesk": 0, "switches": {},
+  "desks": [{
+    "name": "Widget Contract", "background": null, "iconSize": "medium", "icons": [],
+    "widgets": [{
+      "id": "contract-clock", "name": "离线契约时钟",
+      "src": "widgets/contract-clock/index.html",
+      "resources": [
+        "widgets/contract-clock/index.html",
+        "widgets/contract-clock/style.css",
+        "widgets/contract-clock/main.js"
+      ],
+      "placement": { "x": 120, "y": 96, "width": 480, "height": 240, "z": 1 },
+      "config": { "accent": "#7cecff", "format": "24h" },
+      "permissions": ["time.read", "locale.read", "viewport.read"]
+    }]
+  }]
+}

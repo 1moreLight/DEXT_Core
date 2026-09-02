@@ -309,3 +309,12 @@
 - [x] Schema、Rust、React、渲染器、C# Release 构建、Dext 身份启动和浏览器态视觉检查通过
 - [x] 用户回复“通过 合并”，确认真机屏保显示、唤醒与普通关闭行为通过
 - [x] 合并到 master：`6544e52`；DXT-003 提升为唯一下一项，用户 Room 改动未进入提交
+
+## DXT-003 Room v2 Widget 后端与系统接口（2026-09-02）
+
+- [x] 项目收口为唯一原生 Room v2；删除 v1 Schema、fixtures、迁移、降级与兼容重建路径
+- [x] 新建、编辑、保存、另存、预览、应用与 zip 全链只接受/产生 v2，并无损保留每 Desk `widgets` 与声明资源
+- [x] Core→Rust/Tauri 提供封闭的系统媒体读/控与 Windows 默认输出主音量接口，非法动作和越界参数在最终边界拒绝
+- [x] 交付 WidgetHost/Scene 分工、可信热点、图标避让、系统安全与 AI 创作提示词文档
+- [x] Schema、Rust、前端、渲染器、C# Release、真实启动及媒体/音量活体检查通过；实现提交 `695e3e7`
+- [x] 用户于 2026-09-02 回复“通过 合并”，确认验收通过；主 worktree 用户 `rooms/` 改动未进入本工作包

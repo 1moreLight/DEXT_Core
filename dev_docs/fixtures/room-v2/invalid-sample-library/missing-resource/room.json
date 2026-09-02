@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "startDesk": 0,
+  "switches": {},
+  "desks": [
+    {
+      "name": "Missing resource",
+      "background": null,
+      "iconSize": "medium",
+      "icons": [],
+      "widgets": [
+        {
+          "id": "missing",
+          "name": "Missing",
+          "src": "widgets/missing/index.html",
+          "resources": ["widgets/missing/index.html"],
+          "placement": {"x": 0, "y": 0, "width": 64, "height": 64, "z": 0},
+          "config": {},
+          "permissions": []
+        }
+      ]
+    }
+  ]
+}

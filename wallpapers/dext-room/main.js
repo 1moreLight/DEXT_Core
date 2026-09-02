@@ -1,5 +1,5 @@
 const DEFAULT_ROOM = {
-  version: 1,
+  version: 2,
   startDesk: 0,
   switch: "slide",
   switches: {},
@@ -43,6 +43,7 @@ const DEFAULT_ROOM = {
           y: 1,
         },
       ],
+      widgets: [],
     },
     {
       name: "工作台",
@@ -71,6 +72,7 @@ const DEFAULT_ROOM = {
         },
         { glyph: "📊", label: "监控", color: "#06b6d4", action: "打开 监控面板", x: 2, y: 0 },
       ],
+      widgets: [],
     },
   ],
 };
@@ -121,7 +123,7 @@ window.dext = {
   getCurrentDesk: () => currentDesk,
 };
 
-// ---- unified playable slot (room.json v1) ----
+// ---- unified playable slot (native room.json v2) ----
 // User HTML is always a sandboxed child. It can render its own scene, but it cannot
 // reach the official Desk/Dock DOM or use the top-level WebView IPC channel.
 let activeSlot = null;
@@ -262,7 +264,8 @@ async function loadRoom() {
     const res = await fetch(assetUrl("room.json") ?? "room.json");
     if (res.ok) {
       const room = await res.json();
-      if (room?.version === 1 && room?.desks?.length) ROOM = room;
+      // Widget code remains inert until the separate trusted WidgetHost work package.
+      if (room?.version === 2 && room?.desks?.length) ROOM = room;
     }
   } catch (e) {
     // keep default (e.g. opened outside Lively via file://)
@@ -580,7 +583,7 @@ function persistRoom() {
   window.chrome.webview.postMessage(JSON.stringify({ type: "saveRoom", room }));
 }
 
-// legacy rooms without coords get packed positions once; after that icons are sparse
+// Malformed icons without coordinates get safe packed positions at runtime.
 function normalizeCoords(desk, cols) {
   desk.icons.forEach((ic, i) => {
     ic.x = i % cols;
@@ -629,7 +632,7 @@ function clearBackground(bgTarget, videoTarget) {
   bgTarget.replaceChildren();
 }
 
-// v1 background is Content|null. HTML stays below the official icon and Dock layers.
+// A v2 background is Content|null. HTML stays below the official icon and Dock layers.
 function mountBackground(bgTarget, videoTarget, desk) {
   const bg = desk.background;
   clearBackground(bgTarget, videoTarget);
@@ -935,7 +938,7 @@ function mountStaging(index) {
 
 const SWITCH_PRESETS = new Set(["slide", "fade", "zoom", "none"]);
 
-// v1 switch resolution: directed edge first, then the Room-wide default.
+// v2 switch resolution: directed edge first, then the Room-wide default.
 function resolveTransition(from, to) {
   const value = ROOM.switches?.[`${from}>${to}`] ?? ROOM.switch ?? "slide";
   if (typeof value === "string" && SWITCH_PRESETS.has(value)) return value;
@@ -945,7 +948,7 @@ function resolveTransition(from, to) {
   return "slide";
 }
 
-// Kept as the existing transition entry point; v1 delegates every custom Content
+// Kept as the existing transition entry point; v2 delegates every custom Content
 // to playSlot and swaps Desk only after that scene completes.
 function playVideoTransition(next, slot, from, delta) {
   return playSlot(slot, {
@@ -1035,7 +1038,7 @@ window.addEventListener("message", (e) => {
       e.source !== window.parent ||
       !PREVIEW_PARENT_ORIGINS.has(e.origin) ||
       d?.type !== "dext:room" ||
-      d.room?.version !== 1 ||
+      d.room?.version !== 2 ||
       !d.room?.desks?.length) return;
   try {
     const base = new URL(d.assetBase);

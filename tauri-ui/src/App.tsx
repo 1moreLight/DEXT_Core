@@ -27,21 +27,24 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DockLibrary, RoomDockPicker } from "@/components/DockLibrary";
+import { DockLibrary } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { RoomToolbar } from "@/components/RoomToolbar";
 import { SettingsPage } from "@/components/SettingsPage";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
+  assertRoomV2WritePayload,
+  readOnlyRoomMessage,
+  roomContractPolicy,
+} from "@/lib/room-contract";
+import {
   type DockConfig,
   type DockPresetInfo,
   DEFAULT_DOCK,
   DOCK_PRESET_CATALOG,
-  dockSkinName,
   newLocalDockPresetId,
   parseDockPresetFile,
-  withDockPreset,
 } from "@/lib/dock";
 
 interface AppInfo {
@@ -95,6 +98,7 @@ interface Desk {
   icons: RoomIcon[];
   iconSize?: string;
   dock?: DockConfig;
+  widgets?: unknown[];
 }
 
 function bgLabel(bg: Background): string {
@@ -110,8 +114,10 @@ interface CoverRef {
 interface RoomInfo {
   name: string;
   path: string;
+  version: number | null;
   desks: number;
   icons: number;
+  widgets: number;
   covers?: CoverRef[];
 }
 
@@ -396,19 +402,23 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "my-room",
     path: "C:\\mock\\my-room",
+    version: 2,
     desks: 2,
     icons: 8,
+    widgets: 0,
     covers: [
       { kind: "video", src: "background/bg.mp4" },
       { kind: "image", src: "background/bg.png" },
     ],
   },
-  { name: "black-room", path: "C:\\mock\\black-room", desks: 1, icons: 0, covers: [] },
+  { name: "black-room", path: "C:\\mock\\black-room", version: 2, desks: 1, icons: 0, widgets: 0, covers: [] },
   {
     name: "game-room",
     path: "C:\\mock\\game-room",
+    version: 2,
     desks: 3,
     icons: 15,
+    widgets: 0,
     covers: [
       { kind: "image", src: "background/1.png" },
       { kind: "image", src: "background/2.png" },
@@ -418,8 +428,10 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "neon-city",
     path: "C:\\mock\\neon-city",
+    version: 2,
     desks: 2,
     icons: 6,
+    widgets: 0,
     covers: [
       { kind: "image", src: "background/a.png" },
       { kind: "image", src: "background/b.png" },
@@ -428,20 +440,24 @@ const MOCK_ROOMS: RoomInfo[] = [
   {
     name: "sunset",
     path: "C:\\mock\\sunset",
+    version: 2,
     desks: 3,
     icons: 12,
+    widgets: 0,
     covers: [
       { kind: "video", src: "background/sun.mp4" },
       { kind: "image", src: "background/1.png" },
       { kind: "image", src: "background/2.png" },
     ],
   },
-  { name: "minimal", path: "C:\\mock\\minimal", desks: 1, icons: 3, covers: [] },
+  { name: "minimal", path: "C:\\mock\\minimal", version: 2, desks: 1, icons: 3, widgets: 0, covers: [] },
   {
     name: "retro",
     path: "C:\\mock\\retro",
+    version: 2,
     desks: 2,
     icons: 9,
+    widgets: 0,
     covers: [{ kind: "image", src: "background/crt.png" }],
   },
 ];
@@ -463,7 +479,7 @@ const MOCK_DESKS: Desk[] = [
 ];
 
 function newDesk(index: number): Desk {
-  return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [] };
+  return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [], widgets: [] };
 }
 
 function AppIcon({ app, size = "h-10 w-10" }: { app: AppInfo; size?: string }) {
@@ -527,6 +543,9 @@ function cleanDesk(value: unknown, index: number): Desk {
     background: cleanContent(desk.background, "background"),
     iconSize,
     icons: Array.isArray(desk.icons) ? desk.icons.map(cleanRoomIcon) : [],
+    widgets: Array.isArray(desk.widgets)
+      ? desk.widgets.map((widget) => JSON.parse(JSON.stringify(widget)) as unknown)
+      : [],
     ...(isRecord(desk.dock) ? { dock: desk.dock as DockConfig } : {}),
   };
 }
@@ -861,9 +880,8 @@ export default function App() {
   const [transition, setTransition] = useState<Transition>("slide");
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [idleContent, setIdleContent] = useState<Content | null>(null);
-  const [roomVersion, setRoomVersion] = useState<number | null>(1);
+  const [roomVersion, setRoomVersion] = useState<number | null>(2);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
-  const [roomCss, setRoomCss] = useState("");
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
@@ -897,10 +915,11 @@ export default function App() {
   const previewRef = useRef<HTMLIFrameElement>(null);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
+  const activeRoomPolicy = roomContractPolicy(roomVersion);
 
-  function buildRoomV1() {
+  function buildRoomV2() {
     const room: Record<string, unknown> = {
-      version: 1,
+      version: 2,
       startDesk: Math.min(Math.max(startDesk, 0), Math.max(0, desks.length - 1)),
       switch: transition,
       switches: Object.fromEntries(
@@ -917,6 +936,9 @@ export default function App() {
             ? desk.iconSize
             : "medium",
           icons: desk.icons.map((icon, index) => roomIconForWrite(icon, index, true)),
+          widgets: (desk.widgets ?? []).map(
+            (widget) => JSON.parse(JSON.stringify(widget)) as unknown
+          ),
         };
         const deskDock = dockForWrite(desk.dock);
         if (deskDock) next.dock = deskDock;
@@ -927,7 +949,7 @@ export default function App() {
     if (idleContent) room.idle = { ...idleContent, name: idleName.trim() || idleContent.name };
     const roomDock = dockForWrite(dock);
     if (roomDock) room.dock = roomDock;
-    return room;
+    return assertRoomV2WritePayload(room);
   }
 
   useEffect(() => {
@@ -1054,7 +1076,6 @@ export default function App() {
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
       setRoomPath(path);
-      setRoomCss("");
       setStartContent(null);
       setIdleContent(null);
       setIdleName("待机画面");
@@ -1073,7 +1094,6 @@ export default function App() {
       return false;
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
-      const css = await invoke<string>("read_room", { path: `${path}\\room.css` }).catch(() => "");
       const room = JSON.parse(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
         ? room.desks.map(cleanDesk)
@@ -1101,15 +1121,15 @@ export default function App() {
       setStartDesk(nextStartDesk);
       setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
       setRoomVersion(typeof room.version === "number" ? room.version : null);
-      setRoomCss(css);
+      if (room.version !== 2) setShowPreview(false);
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
       setDirty(false);
       localStorage.setItem("dext.roomPath", path);
       setStatus(
-        room.version === 1
+        room.version === 2
           ? `已打开 ${path.split("\\").pop()}`
-          : "该 Room 不是 v1：可查看，但必须另存为 v1，不能覆盖或应用"
+          : readOnlyRoomMessage(room.version)
       );
       return true;
     } catch (e) {
@@ -1124,14 +1144,14 @@ export default function App() {
 
   async function saveRoom(): Promise<boolean> {
     if (!roomPath) return false;
-    if (roomVersion !== 1) {
-      setStatus("非 v1 Room 不能覆盖保存；请另存为新的 v1 Room");
+    if (!activeRoomPolicy.save) {
+      setStatus(readOnlyRoomMessage(roomVersion));
       return false;
     }
     try {
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify(buildRoomV1(), null, 2),
+        roomJson: JSON.stringify(buildRoomV2(), null, 2),
       });
       setDirty(false);
       return true;
@@ -1143,6 +1163,11 @@ export default function App() {
 
   async function applyRoomDir(dir: string) {
     if (roomOperationRef.current || roomBusy) return;
+    const target = rooms.find((room) => room.path === dir);
+    if (target && !roomContractPolicy(target.version).apply) {
+      setStatus(readOnlyRoomMessage(target.version));
+      return;
+    }
     if (!IS_TAURI) {
       setAppliedRoom(dir);
       setStatus(`已应用 ${dir.split("\\").pop()}（UI 设计模式）`);
@@ -1182,37 +1207,13 @@ export default function App() {
       setStatus("先新建或选择一个房间");
       return;
     }
-    if (roomVersion !== 1) {
-      setStatus("非 v1 Room 不能覆盖或应用；请另存为 v1");
+    if (!activeRoomPolicy.apply) {
+      setStatus(readOnlyRoomMessage(roomVersion));
       return;
     }
     setStatus("saving...");
     if (dirty && !(await saveRoom())) return;
     await applyRoomDir(roomPath);
-  }
-
-  async function applyDockPreset(preset: DockPresetInfo): Promise<boolean> {
-    if (!roomPath) {
-      setStatus("先新建或选择一个房间");
-      return false;
-    }
-    try {
-      const css = withDockPreset(roomCss, preset);
-      if (IS_TAURI) {
-        await invoke("save_room_css", { roomDir: roomPath, css });
-      }
-      setRoomCss(css);
-      const roomName = roomPath.split("\\").pop() ?? roomPath;
-      setStatus(
-        IS_TAURI
-          ? `Dock「${preset.name}」已保存到 ${roomName} / room.css`
-          : `Dock「${preset.name}」已应用（UI 设计模式）`
-      );
-      return true;
-    } catch (e) {
-      setStatus(`error: ${e}`);
-      return false;
-    }
   }
 
   async function importDockPreset(): Promise<string | null> {
@@ -1274,6 +1275,10 @@ export default function App() {
       setStatus("先新建或选择一个房间");
       return;
     }
+    if (!activeRoomPolicy.saveAs) {
+      setStatus(readOnlyRoomMessage(roomVersion));
+      return;
+    }
     const name = prompt("另存为（建议英文）");
     if (!name) return;
     try {
@@ -1281,7 +1286,7 @@ export default function App() {
         roomDir: roomPath,
         dir: libDir,
         name,
-        roomJson: JSON.stringify(buildRoomV1(), null, 2),
+        roomJson: JSON.stringify(buildRoomV2(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -1299,13 +1304,13 @@ export default function App() {
   }
 
   function postRoom() {
-    if (!roomPath) return;
+    if (!roomPath || !activeRoomPolicy.preview) return;
     const roomName = roomPath.split(/[\\/]/).filter(Boolean).pop();
     if (!roomName) return;
     previewRef.current?.contentWindow?.postMessage(
       {
         type: "dext:room",
-        room: buildRoomV1(),
+        room: buildRoomV2(),
         deskIndex: activeDesk,
         assetBase: `http://lib.localhost/${encodeURIComponent(roomName)}/`,
       },
@@ -1601,7 +1606,7 @@ export default function App() {
     let n = rooms.length + 1;
     while (rooms.some((r) => r.name === `new-room-${n}`)) n++;
     const name = `new-room-${n}`;
-    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, desks: 1, icons: 0, covers: [] };
+    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 2, desks: 1, icons: 0, widgets: 0, covers: [] };
     setRooms([...rooms, room]);
     setRoomPickPath(room.path);
   }
@@ -1640,8 +1645,9 @@ export default function App() {
     if (!opened) return;
     setRoomPickPath(room.path);
     setEditNav("room");
-    setRoomEntered(true);
+    setRoomEntered(roomContractPolicy(room.version).edit);
     setMode("edit");
+    if (!roomContractPolicy(room.version).edit) setStatus(readOnlyRoomMessage(room.version));
   }
   async function stopWallpaper() {
     if (roomOperationRef.current || roomBusy) return;
@@ -1715,6 +1721,11 @@ export default function App() {
     if (!IS_TAURI || !paths.length) return;
     const items = paths.map((path) => rooms.find((room) => room.path === path)).filter(Boolean) as RoomInfo[];
     if (!items.length) return;
+    const readOnly = items.find((room) => !roomContractPolicy(room.version).zip);
+    if (readOnly) {
+      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version)}`);
+      return;
+    }
     setRoomBusy(`准备导出 ${items.length} 个 Room…`);
     try {
       if (items.length === 1) {
@@ -2003,6 +2014,8 @@ export default function App() {
             <Button
               variant={showPreview ? "secondary" : "outline"}
               size="sm"
+              disabled={!activeRoomPolicy.preview}
+              title={!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined}
               onClick={() => {
                 setShowPreview((v) => !v);
                 if (!showPreview) setEditNav("room");
@@ -2056,13 +2069,14 @@ export default function App() {
                 const active = room.path === appliedRoom;
                 const picked = selectedRooms.has(room.path);
                 const selected = roomMultiMode ? picked : focused;
+                const policy = roomContractPolicy(room.version);
                 return (
                   <button
                     key={room.path}
                     disabled={Boolean(roomBusy)}
                     onClick={() => selectRoom(room)}
                     onDoubleClick={() => void applyRoomFromCard(room)}
-                    title={roomMultiMode ? "单击选择" : "单击查看详情，双击应用"}
+                    title={roomMultiMode ? "单击选择" : policy.apply ? "单击查看详情，双击应用" : readOnlyRoomMessage(room.version)}
                     aria-pressed={roomMultiMode ? picked : focused}
                     className={`group overflow-hidden rounded-xl p-1.5 text-left outline-none transition-[opacity,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:cursor-wait ${
                       roomMultiMode && !picked ? "opacity-60 hover:opacity-100" : "opacity-100"
@@ -2083,6 +2097,9 @@ export default function App() {
                       ) : roomMultiMode ? (
                         <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded border border-white/70 bg-black/30 text-xs font-bold text-white" />
                       ) : null}
+                      <span className="absolute right-2 top-2 rounded-md border border-white/20 bg-black/55 px-2 py-1 text-[10px] font-semibold text-white">
+                        {policy.versionLabel}{room.widgets ? ` · ${room.widgets} Widget` : ""}
+                      </span>
                     </div>
                     <div className="mt-2 flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -2090,7 +2107,7 @@ export default function App() {
                           <span className="truncate">{room.name}</span>
                           {active && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" title="正在使用" />}
                         </div>
-                        <div className="mt-0.5 text-xs text-muted-foreground">{room.desks} Desk · {room.icons} 图标</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{room.desks} Desk · {room.icons} 图标 · {room.widgets} Widget</div>
                       </div>
                       {active && <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">使用中</span>}
                     </div>
@@ -2132,20 +2149,27 @@ export default function App() {
                 <dl className="mt-4 grid grid-cols-2 gap-y-3 border-y border-border py-4 text-xs">
                   <div><dt className="text-muted-foreground">Desk</dt><dd className="mt-0.5 font-medium">{heroRoom.desks}</dd></div>
                   <div><dt className="text-muted-foreground">图标</dt><dd className="mt-0.5 font-medium">{heroRoom.icons}</dd></div>
+                  <div><dt className="text-muted-foreground">契约</dt><dd className="mt-0.5 font-medium">{roomContractPolicy(heroRoom.version).versionLabel}</dd></div>
+                  <div><dt className="text-muted-foreground">Widget</dt><dd className="mt-0.5 font-medium">{heroRoom.widgets}</dd></div>
                   <div className="col-span-2"><dt className="text-muted-foreground">源目录</dt><dd className="mt-0.5 truncate font-mono" title={heroRoom.path}>{heroRoom.path}</dd></div>
                 </dl>
+                {!roomContractPolicy(heroRoom.version).edit && (
+                  <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+                    {readOnlyRoomMessage(heroRoom.version)}。不会读取为草稿、改写或丢弃 Widget 数据。
+                  </p>
+                )}
                 <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
                   <Button
                     variant="outline"
                     disabled={Boolean(roomBusy)}
                     onClick={() => void enterRoomEditor(heroRoom)}
                   >
-                    <Pencil className="h-4 w-4" /> 编辑
+                    <Pencil className="h-4 w-4" /> {roomContractPolicy(heroRoom.version).edit ? "编辑" : "只读查看"}
                   </Button>
                   <Button
                     variant={heroRoom.path === appliedRoom ? "outline" : "default"}
-                    disabled={Boolean(roomBusy) || (IS_TAURI && !coreIdentity)}
-                    title={IS_TAURI && !coreIdentity ? "Dext Core 未连接，仍可浏览本地 Room" : undefined}
+                    disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).apply || (IS_TAURI && !coreIdentity)}
+                    title={!roomContractPolicy(heroRoom.version).apply ? readOnlyRoomMessage(heroRoom.version) : IS_TAURI && !coreIdentity ? "Dext Core 未连接，仍可浏览本地 Room" : undefined}
                     onClick={() => heroRoom.path === appliedRoom ? void stopWallpaper() : void applyRoomDir(heroRoom.path)}
                   >
                     {heroRoom.path === appliedRoom ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -2209,7 +2233,7 @@ export default function App() {
 
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
-            {showPreview ? (
+            {showPreview && activeRoomPolicy.preview ? (
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
@@ -2219,7 +2243,7 @@ export default function App() {
                   className="aspect-video w-full max-w-4xl rounded-lg border border-border"
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · 只使用内存中的 room.json v1 草稿，不写源文件或运行包
+                  实时预览 · 只使用内存中的原生 room.json v2 草稿，不写源文件或运行包
                 </p>
               </div>
             ) : editNav === "library" ? (
@@ -2328,9 +2352,9 @@ export default function App() {
                           )}
                         </div>
                         <div className="p-3">
-                          <div className="truncate text-sm font-medium">{r.name}</div>
+                          <div className="flex items-center gap-2"><span className="truncate text-sm font-medium">{r.name}</span><span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">{roomContractPolicy(r.version).versionLabel}</span></div>
                           <div className="text-xs text-muted-foreground">
-                            {r.desks} Desk · {r.icons} 图标
+                            {r.desks} Desk · {r.icons} 图标 · {r.widgets} Widget
                           </div>
                         </div>
                       </button>
@@ -2361,7 +2385,7 @@ export default function App() {
                         )}
                       </div>
                       <div className="mt-0.5 text-xs text-muted-foreground">
-                        {pickedRoom.desks} Desk · {pickedRoom.icons} 图标
+                        {pickedRoom.desks} Desk · {pickedRoom.icons} 图标 · {pickedRoom.widgets} Widget · {roomContractPolicy(pickedRoom.version).versionLabel}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -2369,13 +2393,13 @@ export default function App() {
                         className="flex-1"
                         onClick={() => void enterRoomEditor(pickedRoom)}
                       >
-                        编辑
+                        {roomContractPolicy(pickedRoom.version).edit ? "编辑" : "只读查看"}
                       </Button>
                       <Button
                         className="flex-1"
                         variant={pickedRoom.path === appliedRoom ? "secondary" : "outline"}
-                        disabled={Boolean(roomBusy) || (IS_TAURI && !coreIdentity)}
-                        title={IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
+                        disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).apply || (IS_TAURI && !coreIdentity)}
+                        title={!roomContractPolicy(pickedRoom.version).apply ? readOnlyRoomMessage(pickedRoom.version) : IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
                         onClick={() => void applyRoomDir(pickedRoom.path)}
                       >
                         {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
@@ -2453,15 +2477,9 @@ export default function App() {
                 </div>
                 <details className="shrink-0 rounded-lg border border-border bg-background">
                   <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-                    当前 Room Dock · {dockSkinName(roomCss)}
+                    当前 Room Dock
                   </summary>
-                  <div className="max-h-[58vh] space-y-3 overflow-y-auto border-t border-border p-3">
-                    <RoomDockPicker
-                      presets={dockPresets}
-                      activePreset={dockSkinName(roomCss)}
-                      onApplyPreset={applyDockPreset}
-                    />
-                    <div className="border-t border-border pt-3">
+                  <div className="max-h-[58vh] overflow-y-auto border-t border-border p-3">
                     <DockEditor
                       dock={dock}
                       setDock={setDock}
@@ -2472,7 +2490,6 @@ export default function App() {
                       touch={touch}
                       setStatus={setStatus}
                     />
-                    </div>
                   </div>
                 </details>
                 {edges.length > 0 ? (

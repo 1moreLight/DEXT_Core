@@ -82,8 +82,10 @@ struct CoverRef {
 struct RoomInfo {
     name: String,
     path: String,
+    version: Option<u64>,
     desks: usize,
     icons: usize,
+    widgets: usize,
     covers: Vec<CoverRef>,
 }
 
@@ -131,6 +133,11 @@ struct AboutInfo {
 const MAX_ARCHIVE_FILES: usize = 2048;
 const MAX_ARCHIVE_FILE_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_ARCHIVE_TOTAL_BYTES: u64 = 1024 * 1024 * 1024;
+const MAX_WIDGETS_PER_DESK: usize = 32;
+const MAX_WIDGETS_PER_ROOM: usize = 64;
+const MAX_WIDGET_RESOURCES: usize = 256;
+const MAX_WIDGET_CONFIG_BYTES: usize = 65_536;
+const MAX_WIDGET_CONFIG_DEPTH: usize = 12;
 
 fn validate_room_library_path(path: &std::path::Path) -> Result<std::path::PathBuf, String> {
     if path.as_os_str().is_empty() {
@@ -325,7 +332,7 @@ fn direct_room_in_library(
             .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
-    validate_room_v1(&value)?;
+    validate_room_contract(&value)?;
     validate_room_asset_references(&room, &value)?;
     Ok(room)
 }
@@ -353,6 +360,24 @@ fn validate_room_asset_references(
             {
                 references.push((format!("desks[{index}].background"), src.to_string()));
             }
+            if let Some(widgets) = desk.get("widgets").and_then(|value| value.as_array()) {
+                for (widget_index, widget) in widgets.iter().enumerate() {
+                    if let Some(resources) =
+                        widget.get("resources").and_then(|value| value.as_array())
+                    {
+                        for (resource_index, resource) in resources.iter().enumerate() {
+                            if let Some(resource) = resource.as_str() {
+                                references.push((
+                                    format!(
+                                        "desks[{index}].widgets[{widget_index}].resources[{resource_index}]"
+                                    ),
+                                    resource.to_string(),
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     if let Some(switches) = room.get("switches").and_then(|value| value.as_object()) {
@@ -371,6 +396,84 @@ fn validate_room_asset_references(
             return Err(format!(
                 "{label} asset cannot be a symlink or reparse point"
             ));
+        }
+    }
+    validate_room_contract(room)?;
+    validate_widget_resource_inventory(room_dir, room)
+}
+
+fn validate_widget_resource_inventory(
+    room_dir: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<(), String> {
+    let mut declared = std::collections::HashSet::new();
+    for desk in room
+        .get("desks")
+        .and_then(|value| value.as_array())
+        .into_iter()
+        .flatten()
+    {
+        for widget in desk
+            .get("widgets")
+            .and_then(|value| value.as_array())
+            .into_iter()
+            .flatten()
+        {
+            for resource in widget
+                .get("resources")
+                .and_then(|value| value.as_array())
+                .into_iter()
+                .flatten()
+            {
+                if let Some(resource) = resource.as_str() {
+                    declared.insert(resource.to_ascii_lowercase());
+                }
+            }
+        }
+    }
+
+    let root = room_dir.join("widgets");
+    if !root.exists() {
+        return if declared.is_empty() {
+            Ok(())
+        } else {
+            Err("Room v2 declares Widget resources but widgets/ is missing".into())
+        };
+    }
+    if !root.is_dir() || is_reparse_point(&root)? {
+        return Err("widgets/ must be a regular directory".into());
+    }
+    let mut pending = vec![root];
+    while let Some(current) = pending.pop() {
+        for entry in
+            std::fs::read_dir(&current).map_err(|error| format!("read widgets/ failed: {error}"))?
+        {
+            let entry = entry.map_err(|error| format!("read widgets/ entry failed: {error}"))?;
+            let path = entry.path();
+            if is_reparse_point(&path)? {
+                return Err(format!(
+                    "Widget resources cannot contain links: {}",
+                    path.display()
+                ));
+            }
+            if path.is_dir() {
+                pending.push(path);
+            } else if path.is_file() {
+                let relative = path
+                    .strip_prefix(room_dir)
+                    .map_err(|_| "Widget resource escaped Room root".to_string())?
+                    .to_string_lossy()
+                    .replace('\\', "/")
+                    .to_ascii_lowercase();
+                if !declared.contains(&relative) {
+                    return Err(format!("undeclared Widget resource {relative:?}"));
+                }
+            } else {
+                return Err(format!(
+                    "Widget resource is not a regular file: {}",
+                    path.display()
+                ));
+            }
         }
     }
     Ok(())
@@ -655,7 +758,269 @@ fn allowed_switches(desk_count: usize) -> std::collections::HashSet<String> {
     allowed
 }
 
-fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
+fn room_version(room: &serde_json::Value) -> Result<u64, String> {
+    room.as_object()
+        .ok_or_else(|| "room root must be an object".to_string())?
+        .get("version")
+        .and_then(|value| value.as_u64())
+        .ok_or_else(|| "room.version must be a positive integer".to_string())
+}
+
+fn widget_id_is_valid(value: &str) -> bool {
+    if value.is_empty() || value.len() > 64 || !value.is_ascii() {
+        return false;
+    }
+    let mut parts = value.split('-');
+    let first = parts.next().unwrap_or_default();
+    !first.is_empty()
+        && first.as_bytes()[0].is_ascii_lowercase()
+        && first
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+        && parts.all(|part| {
+            !part.is_empty()
+                && part
+                    .bytes()
+                    .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+        })
+}
+
+fn widget_path_is_valid(path: &str, widget_id: &str, html_only: bool) -> bool {
+    const RESOURCE_EXTENSIONS: &[&str] = &[
+        "html", "htm", "css", "js", "mjs", "json", "png", "jpg", "jpeg", "webp", "gif", "svg",
+        "woff", "woff2", "ttf", "otf",
+    ];
+    if path.len() > 1024
+        || path.contains('\\')
+        || path.starts_with('/')
+        || !path.starts_with(&format!("widgets/{widget_id}/"))
+        || path
+            .chars()
+            .any(|character| character.is_control() || ":*?\"<>|".contains(character))
+        || path.split('/').any(|part| {
+            part.is_empty()
+                || part == "."
+                || part == ".."
+                || part.ends_with('.')
+                || part.ends_with(' ')
+        })
+    {
+        return false;
+    }
+    let extension = std::path::Path::new(path)
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
+    if html_only {
+        matches!(extension, "html" | "htm")
+    } else {
+        RESOURCE_EXTENSIONS.contains(&extension)
+    }
+}
+
+fn json_depth(value: &serde_json::Value, depth: usize) -> usize {
+    match value {
+        serde_json::Value::Object(object) => object
+            .values()
+            .map(|value| json_depth(value, depth + 1))
+            .max()
+            .unwrap_or(depth),
+        serde_json::Value::Array(array) => array
+            .iter()
+            .map(|value| json_depth(value, depth + 1))
+            .max()
+            .unwrap_or(depth),
+        _ => depth,
+    }
+}
+
+fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, String> {
+    const PERMISSIONS: &[&str] = &[
+        "time.read",
+        "locale.read",
+        "viewport.read",
+        "desk.read",
+        "playback.read",
+        "audio.spectrum",
+        "hardware.cpu.read",
+        "hardware.gpu.read",
+        "hardware.memory.read",
+        "now-playing.read",
+        "now-playing.artwork.read",
+        "hardware.network.read",
+        "network.proxy",
+        "storage.kv",
+        "navigation.go",
+        "notification.show",
+        "action.invoke",
+    ];
+    let object = value
+        .as_object()
+        .ok_or_else(|| format!("{label} must be an object"))?;
+    reject_unknown_keys(
+        object,
+        &[
+            "id",
+            "name",
+            "src",
+            "resources",
+            "placement",
+            "config",
+            "permissions",
+        ],
+        label,
+    )?;
+    let id = required_string(object, "id", label)?;
+    if !widget_id_is_valid(id) {
+        return Err(format!("{label}.id must be a lowercase ASCII slug"));
+    }
+    ensure_string_limit(
+        required_string(object, "name", label)?,
+        120,
+        &format!("{label}.name"),
+    )?;
+    let src = required_string(object, "src", label)?;
+    if !widget_path_is_valid(src, id, true) {
+        return Err(format!(
+            "{label}.src must be an HTML file inside widgets/{id}/"
+        ));
+    }
+    let resources = object
+        .get("resources")
+        .and_then(|value| value.as_array())
+        .filter(|items| !items.is_empty() && items.len() <= MAX_WIDGET_RESOURCES)
+        .ok_or_else(|| {
+            format!("{label}.resources must contain 1..={MAX_WIDGET_RESOURCES} paths")
+        })?;
+    let mut resource_set = std::collections::HashSet::new();
+    for (index, resource) in resources.iter().enumerate() {
+        let resource = resource
+            .as_str()
+            .ok_or_else(|| format!("{label}.resources[{index}] must be a string"))?;
+        if !widget_path_is_valid(resource, id, false) {
+            return Err(format!(
+                "{label}.resources[{index}] must stay inside widgets/{id}/"
+            ));
+        }
+        if !resource_set.insert(resource) {
+            return Err(format!(
+                "{label}.resources contains duplicate path {resource:?}"
+            ));
+        }
+    }
+    if !resource_set.contains(src) {
+        return Err(format!("{label}.src must be listed in resources"));
+    }
+    let placement = object
+        .get("placement")
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| format!("{label}.placement must be an object"))?;
+    reject_unknown_keys(
+        placement,
+        &["x", "y", "width", "height", "z"],
+        &format!("{label}.placement"),
+    )?;
+    let integer = |key: &str| {
+        placement
+            .get(key)
+            .and_then(|value| value.as_u64())
+            .ok_or_else(|| format!("{label}.placement.{key} must be a non-negative integer"))
+    };
+    let x = integer("x")?;
+    let y = integer("y")?;
+    let width = integer("width")?;
+    let height = integer("height")?;
+    let z = integer("z")?;
+    if !(64..=1920).contains(&width)
+        || !(64..=1080).contains(&height)
+        || x + width > 1920
+        || y + height > 1080
+        || z > 255
+    {
+        return Err(format!(
+            "{label}.placement must stay inside the 1920x1080 canvas"
+        ));
+    }
+    let config = object
+        .get("config")
+        .filter(|value| value.is_object())
+        .ok_or_else(|| format!("{label}.config must be an object"))?;
+    let config_bytes = serde_json::to_vec(config)
+        .map_err(|error| format!("serialize {label}.config failed: {error}"))?;
+    if config_bytes.len() > MAX_WIDGET_CONFIG_BYTES {
+        return Err(format!(
+            "{label}.config exceeds {MAX_WIDGET_CONFIG_BYTES} bytes"
+        ));
+    }
+    if json_depth(config, 1) > MAX_WIDGET_CONFIG_DEPTH {
+        return Err(format!(
+            "{label}.config exceeds depth {MAX_WIDGET_CONFIG_DEPTH}"
+        ));
+    }
+    let permissions = object
+        .get("permissions")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| format!("{label}.permissions must be an array"))?;
+    let mut permission_set = std::collections::HashSet::new();
+    for (index, permission) in permissions.iter().enumerate() {
+        let permission = permission
+            .as_str()
+            .ok_or_else(|| format!("{label}.permissions[{index}] must be a string"))?;
+        if !PERMISSIONS.contains(&permission) {
+            return Err(format!(
+                "{label}.permissions contains unknown permission {permission:?}"
+            ));
+        }
+        if !permission_set.insert(permission) {
+            return Err(format!(
+                "{label}.permissions contains duplicate permission {permission:?}"
+            ));
+        }
+    }
+    Ok(id.to_string())
+}
+
+fn validate_room_v2(room: &serde_json::Value) -> Result<(), String> {
+    validate_room_structure(room)?;
+    let object = room.as_object().unwrap();
+
+    let desks = object["desks"].as_array().unwrap();
+    let mut widget_ids = std::collections::HashSet::new();
+    let mut widget_count = 0usize;
+    for (desk_index, desk) in desks.iter().enumerate() {
+        let label = format!("room.desks[{desk_index}]");
+        let desk = desk.as_object().unwrap();
+        let widgets = desk
+            .get("widgets")
+            .and_then(|value| value.as_array())
+            .ok_or_else(|| format!("{label}.widgets must be an array"))?;
+        if widgets.len() > MAX_WIDGETS_PER_DESK {
+            return Err(format!(
+                "{label}.widgets exceeds {MAX_WIDGETS_PER_DESK} items"
+            ));
+        }
+        widget_count += widgets.len();
+        for (widget_index, widget) in widgets.iter().enumerate() {
+            let id = validate_widget(widget, &format!("{label}.widgets[{widget_index}]"))?;
+            if !widget_ids.insert(id.clone()) {
+                return Err(format!("duplicate Widget id {id:?}"));
+            }
+        }
+    }
+    if widget_count > MAX_WIDGETS_PER_ROOM {
+        return Err(format!("Room has more than {MAX_WIDGETS_PER_ROOM} Widgets"));
+    }
+    Ok(())
+}
+
+fn validate_room_contract(room: &serde_json::Value) -> Result<(), String> {
+    match room_version(room)? {
+        2 => validate_room_v2(room),
+        version => Err(format!("unsupported room.version {version}")),
+    }
+}
+
+fn validate_room_structure(room: &serde_json::Value) -> Result<(), String> {
     let object = room
         .as_object()
         .ok_or_else(|| "room root must be an object".to_string())?;
@@ -673,8 +1038,8 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
         ],
         "room",
     )?;
-    if object.get("version").and_then(|value| value.as_u64()) != Some(1) {
-        return Err("room.version must be 1".into());
+    if object.get("version").and_then(|value| value.as_u64()) != Some(2) {
+        return Err("room.version must be 2".into());
     }
     let desks = object
         .get("desks")
@@ -718,7 +1083,7 @@ fn validate_room_v1(room: &serde_json::Value) -> Result<(), String> {
             .ok_or_else(|| format!("{label} must be an object"))?;
         reject_unknown_keys(
             desk,
-            &["name", "background", "iconSize", "icons", "dock"],
+            &["name", "background", "iconSize", "icons", "dock", "widgets"],
             &label,
         )?;
         ensure_string_limit(
@@ -780,14 +1145,17 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
         let entry = entry.map_err(|e| e.to_string())?;
         let p = entry.path();
         if p.is_dir() && p.join("room.json").is_file() {
-            let (mut desks, mut icons) = (0usize, 0usize);
+            let (mut desks, mut icons, mut widgets) = (0usize, 0usize, 0usize);
+            let mut version = None;
             let mut covers = Vec::new();
             if let Ok(txt) = std::fs::read_to_string(p.join("room.json")) {
                 if let Ok(j) = serde_json::from_str::<serde_json::Value>(&txt) {
+                    version = j.get("version").and_then(|value| value.as_u64());
                     if let Some(arr) = j["desks"].as_array() {
                         desks = arr.len();
                         for d in arr {
                             icons += d["icons"].as_array().map(|a| a.len()).unwrap_or(0);
+                            widgets += d["widgets"].as_array().map(|a| a.len()).unwrap_or(0);
                             push_cover(&mut covers, &d["background"]);
                         }
                     }
@@ -796,8 +1164,10 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
             out.push(RoomInfo {
                 name: entry.file_name().to_string_lossy().into_owned(),
                 path: p.to_string_lossy().into_owned(),
+                version,
                 desks,
                 icons,
+                widgets,
                 covers,
             });
         }
@@ -826,29 +1196,14 @@ fn write_room_file(path: &std::path::Path, room_json: &str) -> Result<(), String
         .as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?;
     object.remove("__source");
-    validate_room_v1(&room)?;
+    validate_room_contract(&room)?;
+    let room_dir = path
+        .parent()
+        .ok_or_else(|| "room.json target has no parent directory".to_string())?;
+    validate_room_asset_references(room_dir, &room)?;
     let bytes = serde_json::to_vec_pretty(&room)
         .map_err(|error| format!("serialize room.json failed: {error}"))?;
     atomic_write(path, &bytes)
-}
-
-fn save_room_css_file(room_dir: &std::path::Path, css: &str) -> Result<(), String> {
-    if !room_dir.is_dir() {
-        return Err(format!("room directory not found: {}", room_dir.display()));
-    }
-    if !room_dir.join("room.json").is_file() {
-        return Err(format!(
-            "not a Room directory (room.json missing): {}",
-            room_dir.display()
-        ));
-    }
-    std::fs::write(room_dir.join("room.css"), css)
-        .map_err(|e| format!("write room.css failed: {e}"))
-}
-
-#[tauri::command]
-async fn save_room_css(room_dir: String, css: String) -> Result<(), String> {
-    save_room_css_file(std::path::Path::new(&room_dir), &css)
 }
 
 fn validate_room_name(name: &str) -> Result<(), String> {
@@ -885,7 +1240,7 @@ fn create_room_dir(dir: &std::path::Path, name: &str) -> Result<std::path::PathB
     }
     std::fs::create_dir(&room_dir).map_err(|e| format!("mkdir failed: {e}"))?;
     let skeleton = serde_json::json!({
-        "version": 1,
+        "version": 2,
         "startDesk": 0,
         "switch": "slide",
         "switches": {},
@@ -893,7 +1248,8 @@ fn create_room_dir(dir: &std::path::Path, name: &str) -> Result<std::path::PathB
             "name": "Desk 1",
             "background": null,
             "iconSize": "medium",
-            "icons": []
+            "icons": [],
+            "widgets": []
         }]
     });
     let result = (|| {
@@ -921,7 +1277,8 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
         .map(|room_dir| room_dir.to_string_lossy().into_owned())
 }
 
-const ROOM_ASSET_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
+const ROOM_CONTENT_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
+const ROOM_ASSET_DIRS: [&str; 5] = ["background", "switch", "start", "idle", "widgets"];
 const ROOM_LEGACY_PATHS: [&str; 4] = ["transition", "end", "room.js", "room.css"];
 
 fn remove_room_owned_path(path: &std::path::Path, label: &str) -> Result<(), String> {
@@ -965,16 +1322,33 @@ fn save_room_as_dir(
             source_room.display()
         ));
     }
+    let mut target_value: serde_json::Value = serde_json::from_str(room_json)
+        .map_err(|error| format!("parse target room.json failed: {error}"))?;
+    target_value
+        .as_object_mut()
+        .ok_or_else(|| "room root must be an object".to_string())?
+        .remove("__source");
+    validate_room_contract(&target_value)?;
+    let source_value: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(source_room.join("room.json"))
+            .map_err(|error| format!("read source room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse source room.json failed: {error}"))?;
+    validate_room_contract(&source_value)?;
+    validate_room_asset_references(&source_room, &target_value)?;
 
     let target = create_room_dir(destination_root, name)?;
     let result = (|| {
-        write_room_file(&target.join("room.json"), room_json)?;
         for directory in ROOM_ASSET_DIRS {
             let source = source_room.join(directory);
             if source.is_dir() {
                 copy_room_dir(&source, &target.join(directory), directory)?;
+            } else {
+                std::fs::create_dir_all(target.join(directory))
+                    .map_err(|error| format!("mkdir {directory} failed: {error}"))?;
             }
         }
+        write_room_file(&target.join("room.json"), room_json)?;
         Ok::<(), String>(())
     })();
     if let Err(error) = result {
@@ -1086,7 +1460,7 @@ fn export_room_zip_file(
     room.as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?
         .remove("__source");
-    validate_room_v1(&room)?;
+    validate_room_contract(&room)?;
     validate_room_asset_references(room_dir, &room)?;
 
     let parent = destination
@@ -1281,7 +1655,7 @@ fn import_room_zip_file(
     }
     room.as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?;
-    validate_room_v1(&room)?;
+    validate_room_contract(&room)?;
     validate_room_asset_references(staging.path(), &room)?;
     for directory in ROOM_ASSET_DIRS {
         std::fs::create_dir_all(staging.path().join(directory))
@@ -1333,7 +1707,8 @@ fn sync_room_to_package(
             .map_err(|e| format!("read room.json failed: {e}"))?,
     )
     .map_err(|e| format!("parse room.json failed: {e}"))?;
-    validate_room_v1(&room)?;
+    validate_room_contract(&room)?;
+    validate_room_asset_references(src, &room)?;
     let object = room
         .as_object_mut()
         .ok_or_else(|| "parse room.json failed: root must be an object".to_string())?;
@@ -1526,6 +1901,12 @@ fn import_room_content_file(
             room_dir.display()
         ));
     }
+    let room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(room_dir.join("room.json"))
+            .map_err(|error| format!("read room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse room.json failed: {error}"))?;
+    validate_room_contract(&room)?;
     if !src.is_file() {
         return Err(format!("file not found: {}", src.display()));
     }
@@ -1549,7 +1930,7 @@ fn import_room_content_file(
     if !valid_type {
         return Err(format!(".{ext} 不是有效的{content_type}格式"));
     }
-    if !ROOM_ASSET_DIRS.contains(&slot) {
+    if !ROOM_CONTENT_DIRS.contains(&slot) {
         return Err(format!("unsupported Room content slot: {slot}"));
     }
 
@@ -1574,7 +1955,7 @@ fn import_room_content_file(
     )
 }
 
-// Reuse the existing command name, but make it a generic v1 content importer for
+// Reuse the existing command name, but make it a generic Room content importer for
 // background/start/switch/idle instead of maintaining one copy path per UI button.
 #[tauri::command]
 async fn import_background(
@@ -1689,6 +2070,29 @@ async fn core_stats() -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn get_system_media() -> Result<grpc::SystemMediaDto, String> {
+    grpc::get_system_media().await
+}
+
+#[tauri::command]
+async fn control_system_media(action: String) -> Result<(), String> {
+    grpc::control_system_media(&action).await
+}
+
+#[tauri::command]
+async fn get_system_volume() -> Result<grpc::SystemVolumeDto, String> {
+    grpc::get_system_volume().await
+}
+
+#[tauri::command]
+async fn set_system_volume(
+    level: Option<f64>,
+    muted: Option<bool>,
+) -> Result<grpc::SystemVolumeDto, String> {
+    grpc::set_system_volume(level, muted).await
+}
+
+#[tauri::command]
 async fn core_identity() -> Result<grpc::CoreIdentity, String> {
     grpc::core_identity().await
 }
@@ -1718,7 +2122,6 @@ pub fn run() {
             list_rooms,
             read_room,
             write_room,
-            save_room_css,
             create_room,
             save_room_as,
             delete_room,
@@ -1738,7 +2141,11 @@ pub fn run() {
             open_dext_directory,
             set_wallpaper,
             core_stats,
-            core_identity
+            core_identity,
+            get_system_media,
+            control_system_media,
+            get_system_volume,
+            set_system_volume
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -1747,10 +2154,11 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_settings_patch, direct_room_entry_in_library, direct_room_in_library, display_path,
-        export_room_zip_file, import_room_content_file, import_room_zip_file, save_room_as_dir,
-        save_room_css_file, sync_room_to_package, validate_room_library_path, validate_room_v1,
-        write_room_file, DextSettingsPatch, ROOM_ASSET_DIRS,
+        apply_settings_patch, create_room_dir, direct_room_entry_in_library,
+        direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
+        import_room_zip_file, save_room_as_dir, sync_room_to_package, validate_room_contract,
+        validate_room_library_path, validate_room_v2, write_room_file, DextSettingsPatch,
+        ROOM_ASSET_DIRS,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -1771,7 +2179,7 @@ mod tests {
             serde_json::Value::Null
         };
         let room = serde_json::json!({
-            "version": 1,
+            "version": 2,
             "startDesk": 0,
             "switch": "slide",
             "switches": {},
@@ -1779,7 +2187,8 @@ mod tests {
                 "name": "Desk 1",
                 "background": background,
                 "iconSize": "medium",
-                "icons": []
+                "icons": [],
+                "widgets": []
             }]
         });
         std::fs::write(
@@ -1789,41 +2198,209 @@ mod tests {
         .unwrap();
     }
 
-    #[test]
-    fn saves_and_overwrites_room_css() {
-        let dir = test_dir("room-css");
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("room.json"), r#"{"desks":[{"icons":[]}]}"#).unwrap();
+    fn valid_v2_room() -> serde_json::Value {
+        serde_json::json!({
+            "version": 2,
+            "startDesk": 0,
+            "idle": {"name":"Idle","type":"image","src":"idle/standby.png"},
+            "switches": {},
+            "desks": [{
+                "name": "Desk 1",
+                "background": null,
+                "iconSize": "medium",
+                "icons": [],
+                "widgets": [{
+                    "id": "system-meter",
+                    "name": "System meter",
+                    "src": "widgets/system-meter/index.html",
+                    "resources": [
+                        "widgets/system-meter/index.html",
+                        "widgets/system-meter/style.css"
+                    ],
+                    "placement": {"x":72,"y":96,"width":420,"height":220,"z":2},
+                    "config": {"accent":"#7cecff"},
+                    "permissions": ["audio.spectrum","hardware.cpu.read"]
+                }]
+            }]
+        })
+    }
 
-        save_room_css_file(&dir, "/* first */").unwrap();
-        assert_eq!(
-            std::fs::read_to_string(dir.join("room.css")).unwrap(),
-            "/* first */"
-        );
-
-        save_room_css_file(&dir, "/* second */").unwrap();
-        assert_eq!(
-            std::fs::read_to_string(dir.join("room.css")).unwrap(),
-            "/* second */"
-        );
-
-        std::fs::remove_dir_all(dir).unwrap();
+    fn write_valid_v2_room(path: &std::path::Path) {
+        std::fs::create_dir_all(path.join("idle")).unwrap();
+        std::fs::create_dir_all(path.join("widgets/system-meter")).unwrap();
+        std::fs::write(path.join("idle/standby.png"), b"idle fixture").unwrap();
+        std::fs::write(
+            path.join("widgets/system-meter/index.html"),
+            b"<!doctype html><title>system meter</title>",
+        )
+        .unwrap();
+        std::fs::write(
+            path.join("widgets/system-meter/style.css"),
+            b":root{color-scheme:dark}",
+        )
+        .unwrap();
+        std::fs::write(
+            path.join("room.json"),
+            serde_json::to_vec_pretty(&valid_v2_room()).unwrap(),
+        )
+        .unwrap();
     }
 
     #[test]
-    fn rejects_non_room_for_room_css() {
-        let dir = test_dir("not-room");
-        std::fs::create_dir_all(&dir).unwrap();
-
-        let error = save_room_css_file(&dir, "/* nope */").unwrap_err();
-        assert!(error.contains("room.json missing"));
-        assert!(!dir.join("room.css").exists());
-
-        std::fs::remove_dir_all(dir).unwrap();
+    fn accepts_only_native_v2_rooms() {
+        let v1 = serde_json::json!({
+            "version":1,"startDesk":0,"switches":{},
+            "desks":[{"name":"Desk","background":null,"iconSize":"medium","icons":[]}]
+        });
+        assert!(validate_room_contract(&v1)
+            .unwrap_err()
+            .contains("unsupported room.version 1"));
+        validate_room_contract(&valid_v2_room()).unwrap();
+        let mut unknown = valid_v2_room();
+        unknown["version"] = serde_json::Value::from(3);
+        assert!(validate_room_contract(&unknown)
+            .unwrap_err()
+            .contains("unsupported room.version 3"));
     }
 
     #[test]
-    fn save_as_copies_v1_assets_and_keeps_source_unchanged() {
+    fn validates_v2_widget_identity_paths_permissions_placement_and_config() {
+        let mut duplicate = valid_v2_room();
+        let copy = duplicate["desks"][0]["widgets"][0].clone();
+        duplicate["desks"][0]["widgets"]
+            .as_array_mut()
+            .unwrap()
+            .push(copy);
+        assert!(validate_room_v2(&duplicate)
+            .unwrap_err()
+            .contains("duplicate Widget id"));
+
+        let mut wrong_path = valid_v2_room();
+        wrong_path["desks"][0]["widgets"][0]["src"] =
+            serde_json::Value::String("widgets/other/index.html".into());
+        assert!(validate_room_v2(&wrong_path)
+            .unwrap_err()
+            .contains("widgets/system-meter/"));
+
+        let mut unknown_permission = valid_v2_room();
+        unknown_permission["desks"][0]["widgets"][0]["permissions"] =
+            serde_json::json!(["shell.execute"]);
+        assert!(validate_room_v2(&unknown_permission)
+            .unwrap_err()
+            .contains("unknown permission"));
+
+        let mut outside = valid_v2_room();
+        outside["desks"][0]["widgets"][0]["placement"]["x"] = serde_json::Value::from(1800);
+        assert!(validate_room_v2(&outside)
+            .unwrap_err()
+            .contains("1920x1080"));
+
+        let mut too_large = valid_v2_room();
+        too_large["desks"][0]["widgets"][0]["config"] =
+            serde_json::json!({"payload":"x".repeat(65_536)});
+        assert!(validate_room_v2(&too_large)
+            .unwrap_err()
+            .contains("65536 bytes"));
+
+        let mut too_deep = valid_v2_room();
+        let mut nested = serde_json::Value::Object(serde_json::Map::new());
+        for _ in 0..12 {
+            nested = serde_json::json!({"next": nested});
+        }
+        too_deep["desks"][0]["widgets"][0]["config"] = nested;
+        assert!(validate_room_v2(&too_deep)
+            .unwrap_err()
+            .contains("depth 12"));
+    }
+
+    #[test]
+    fn v2_write_save_as_zip_and_apply_preserve_declared_widget_resources() {
+        let root = test_dir("room-v2-operations");
+        let source = root.join("source");
+        let library = root.join("library");
+        let import_library = root.join("import-library");
+        let package = root.join("package");
+        std::fs::create_dir_all(&library).unwrap();
+        std::fs::create_dir_all(&import_library).unwrap();
+        std::fs::create_dir_all(&package).unwrap();
+        write_valid_v2_room(&source);
+        let mut room = valid_v2_room();
+        room["desks"][0]["widgets"][0]["config"]["accent"] =
+            serde_json::Value::String("#00ffaa".into());
+        let room_json = serde_json::to_string_pretty(&room).unwrap();
+        write_room_file(&source.join("room.json"), &room_json).unwrap();
+
+        let copied = save_room_as_dir(&source, &library, "copied-v2", &room_json).unwrap();
+        assert!(copied.join("widgets/system-meter/index.html").is_file());
+        assert!(copied.join("widgets/system-meter/style.css").is_file());
+        let copied_room: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(copied.join("room.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            copied_room["desks"][0]["widgets"][0]["config"]["accent"],
+            "#00ffaa"
+        );
+
+        let archive = root.join("v2.zip");
+        export_room_zip_file(&source, &archive).unwrap();
+        let imported =
+            import_room_zip_file(&import_library, &archive, Some("imported-v2")).unwrap();
+        assert!(imported.join("widgets/system-meter/index.html").is_file());
+        let imported_room: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(imported.join("room.json")).unwrap())
+                .unwrap();
+        assert_eq!(imported_room["version"], 2);
+        assert!(imported_room.get("__source").is_none());
+
+        std::fs::write(package.join("room.json"), "active package").unwrap();
+        std::fs::create_dir_all(package.join("widgets/old")).unwrap();
+        std::fs::write(package.join("widgets/old/old.js"), "old").unwrap();
+        sync_room_to_package(&source, &package, "C:/rooms/v2").unwrap();
+        assert!(!package.join("widgets/old").exists());
+        assert!(package.join("widgets/system-meter/index.html").is_file());
+        let applied: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(package.join("room.json")).unwrap())
+                .unwrap();
+        assert_eq!(applied["version"], 2);
+        assert_eq!(applied["__source"], "C:/rooms/v2");
+
+        let asset = root.join("asset.png");
+        std::fs::write(&asset, b"asset").unwrap();
+        let imported_content =
+            import_room_content_file(&source, &asset, "background", "image").unwrap();
+        assert!(source
+            .join(imported_content["src"].as_str().unwrap())
+            .is_file());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn v2_missing_or_undeclared_widget_resources_leave_active_package_unchanged() {
+        let root = test_dir("room-v2-resource-boundary");
+        let source = root.join("source");
+        let package = root.join("package");
+        write_valid_v2_room(&source);
+        std::fs::create_dir_all(&package).unwrap();
+        std::fs::write(package.join("room.json"), "active package").unwrap();
+        std::fs::write(source.join("widgets/system-meter/extra.js"), "extra").unwrap();
+
+        let error = sync_room_to_package(&source, &package, "C:/rooms/v2").unwrap_err();
+        assert!(error.contains("undeclared Widget resource"));
+        assert_eq!(
+            std::fs::read_to_string(package.join("room.json")).unwrap(),
+            "active package"
+        );
+
+        std::fs::remove_file(source.join("widgets/system-meter/extra.js")).unwrap();
+        std::fs::remove_file(source.join("widgets/system-meter/style.css")).unwrap();
+        let error = export_room_zip_file(&source, &root.join("invalid.zip")).unwrap_err();
+        assert!(error.contains("references missing asset"));
+        assert!(!root.join("invalid.zip").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn save_as_copies_v2_assets_and_keeps_source_unchanged() {
         let root = test_dir("room-save-as");
         let source = root.join("source");
         let library = root.join("library");
@@ -1831,10 +2408,10 @@ mod tests {
             std::fs::create_dir_all(source.join(directory)).unwrap();
             std::fs::write(source.join(directory).join("asset.txt"), directory).unwrap();
         }
-        let source_json = r#"{"legacy":"source stays untouched"}"#;
-        std::fs::write(source.join("room.json"), source_json).unwrap();
+        write_valid_room(&source, false);
+        let source_json = std::fs::read_to_string(source.join("room.json")).unwrap();
         let room_json = r#"{
-            "version":1,
+            "version":2,
             "startDesk":0,
             "switch":"slide",
             "switches":{},
@@ -1842,7 +2419,8 @@ mod tests {
                 "name":"Copied",
                 "background":null,
                 "iconSize":"medium",
-                "icons":[]
+                "icons":[],
+                "widgets":[]
             }],
             "__source":"C:/forged"
         }"#;
@@ -1873,14 +2451,14 @@ mod tests {
         let root = test_dir("room-save-as-invalid");
         let source = root.join("source");
         let library = root.join("library");
-        std::fs::create_dir_all(&source).unwrap();
-        std::fs::write(source.join("room.json"), "{}").unwrap();
+        write_valid_room(&source, false);
+        let source_json = std::fs::read_to_string(source.join("room.json")).unwrap();
 
         let error = save_room_as_dir(
             &source,
             &library,
             "broken-copy",
-            r#"{"version":1,"unknown":true}"#,
+            r#"{"version":2,"unknown":true}"#,
         )
         .unwrap_err();
 
@@ -1888,21 +2466,20 @@ mod tests {
         assert!(!library.join("broken-copy").exists());
         assert_eq!(
             std::fs::read_to_string(source.join("room.json")).unwrap(),
-            "{}"
+            source_json
         );
 
         std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
-    fn imports_all_v1_content_types_into_requested_slots() {
+    fn imports_all_v2_content_types_into_requested_slots() {
         let root = test_dir("room-content-import");
         let room = root.join("room");
         let source = root.join("source");
-        let original_room_json = "{\"version\":1}";
-        std::fs::create_dir_all(&room).unwrap();
+        write_valid_room(&room, false);
+        let original_room_json = std::fs::read_to_string(room.join("room.json")).unwrap();
         std::fs::create_dir_all(&source).unwrap();
-        std::fs::write(room.join("room.json"), original_room_json).unwrap();
         std::fs::write(source.join("scene.png"), "image").unwrap();
         std::fs::write(source.join("scene.mp4"), "video").unwrap();
         std::fs::write(source.join("scene.html"), "<html></html>").unwrap();
@@ -1949,7 +2526,7 @@ mod tests {
         std::fs::write(
             src.join("room.json"),
             r#"{
-                "version":1,
+                "version":2,
                 "startDesk":0,
                 "switch":"slide",
                 "switches":{},
@@ -1957,7 +2534,8 @@ mod tests {
                     "name":"Clean",
                     "background":null,
                     "iconSize":"medium",
-                    "icons":[]
+                    "icons":[],
+                    "widgets":[]
                 }]
             }"#,
         )
@@ -2028,13 +2606,14 @@ mod tests {
 
     #[test]
     fn write_room_strips_source_stamp_preserves_idle_and_rejects_unknown_fields() {
-        let root = test_dir("room-write-v1");
-        std::fs::create_dir_all(&root).unwrap();
+        let root = test_dir("room-write-v2");
+        std::fs::create_dir_all(root.join("idle")).unwrap();
+        std::fs::write(root.join("idle/scene.png"), "idle").unwrap();
         let path = root.join("room.json");
         write_room_file(
             &path,
             r#"{
-                "version":1,
+                "version":2,
                 "startDesk":0,
                 "switches":{},
                 "idle":{"name":"Idle","type":"image","src":"idle/scene.png"},
@@ -2042,7 +2621,8 @@ mod tests {
                     "name":"Desk 1",
                     "background":null,
                     "iconSize":"medium",
-                    "icons":[]
+                    "icons":[],
+                    "widgets":[]
                 }],
                 "__source":"C:/forged"
             }"#,
@@ -2056,14 +2636,15 @@ mod tests {
         let error = write_room_file(
             &path,
             r#"{
-                "version":1,
+                "version":2,
                 "startDesk":0,
                 "switches":{},
                 "desks":[{
                     "name":"Desk 1",
                     "background":null,
                     "iconSize":"medium",
-                    "icons":[]
+                    "icons":[],
+                    "widgets":[]
                 }],
                 "runtimeState":true
             }"#,
@@ -2081,17 +2662,18 @@ mod tests {
                     "name": format!("Desk {}", index + 1),
                     "background": null,
                     "iconSize": "medium",
-                    "icons": []
+                    "icons": [],
+                    "widgets": []
                 })
             })
             .collect::<Vec<_>>();
         let room = serde_json::json!({
-            "version": 1,
+            "version": 2,
             "startDesk": 0,
             "switches": { "0>2": "fade" },
             "desks": desks
         });
-        let error = validate_room_v1(&room).unwrap_err();
+        let error = validate_room_v2(&room).unwrap_err();
         assert!(error.contains("not adjacent"));
     }
 
@@ -2120,31 +2702,46 @@ mod tests {
     }
 
     #[test]
-    fn deletion_target_accepts_legacy_or_malformed_room_json() {
-        let root = test_dir("delete-legacy-room");
+    fn deletion_target_accepts_unsupported_or_malformed_room_json() {
+        let root = test_dir("delete-unsupported-room");
         let library = root.join("library");
-        let legacy = library.join("legacy");
+        let unsupported = library.join("unsupported");
         let malformed = library.join("malformed");
-        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::create_dir_all(&unsupported).unwrap();
         std::fs::create_dir_all(&malformed).unwrap();
-        std::fs::write(legacy.join("room.json"), r#"{"desks":[{"icons":[]}]}"#).unwrap();
+        std::fs::write(unsupported.join("room.json"), r#"{"version":1}"#).unwrap();
         std::fs::write(malformed.join("room.json"), "not json").unwrap();
 
         assert_eq!(
-            direct_room_entry_in_library(&library, &legacy).unwrap(),
-            legacy.canonicalize().unwrap()
+            direct_room_entry_in_library(&library, &unsupported).unwrap(),
+            unsupported.canonicalize().unwrap()
         );
         assert_eq!(
             direct_room_entry_in_library(&library, &malformed).unwrap(),
             malformed.canonicalize().unwrap()
         );
-        assert!(direct_room_in_library(&library, &legacy)
+        assert!(direct_room_in_library(&library, &unsupported)
             .unwrap_err()
-            .contains("room.version must be 1"));
+            .contains("unsupported room.version 1"));
         assert!(direct_room_in_library(&library, &malformed)
             .unwrap_err()
             .contains("parse room.json failed"));
 
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn create_room_builds_a_native_v2_skeleton() {
+        let root = test_dir("create-room-v2");
+        let room = create_room_dir(&root, "new-room").unwrap();
+        let manifest: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(room.join("room.json")).unwrap())
+                .unwrap();
+        assert_eq!(manifest["version"], 2);
+        assert_eq!(manifest["desks"][0]["widgets"], serde_json::json!([]));
+        for directory in ROOM_ASSET_DIRS {
+            assert!(room.join(directory).is_dir(), "missing {directory}");
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 

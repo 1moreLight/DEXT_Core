@@ -21,7 +21,61 @@ service DesktopService {
    rpc GetInstalledApps (google.protobuf.Empty) returns (stream AppInfo);
    rpc LaunchApp (LaunchAppRequest) returns (google.protobuf.Empty);
    rpc ResolveApp (ResolveAppRequest) returns (AppInfo);
+   rpc GetSystemMedia (google.protobuf.Empty) returns (SystemMediaSnapshot);
+   rpc ControlSystemMedia (SystemMediaControlRequest) returns (SystemMediaControlResponse);
+   rpc GetSystemVolume (google.protobuf.Empty) returns (SystemVolumeSnapshot);
+   rpc SetSystemVolume (SetSystemVolumeRequest) returns (SystemVolumeSnapshot);
  }
+
+enum SystemMediaAction {
+  unspecified = 0;
+  play = 1;
+  pause = 2;
+  toggle_play_pause = 3;
+  next = 4;
+  previous = 5;
+}
+
+message SystemMediaControlRequest {
+  SystemMediaAction action = 1;
+}
+
+message SystemMediaControlResponse {
+  bool accepted = 1;
+}
+
+message SystemMediaSnapshot {
+  bool has_session = 1;
+  string source_app_id = 2;
+  string title = 3;
+  string artist = 4;
+  string album_title = 5;
+  string album_artist = 6;
+  bytes thumbnail = 7;
+  string thumbnail_content_type = 8;
+  string playback_status = 9;
+  int64 position_ms = 10;
+  int64 duration_ms = 11;
+  bool can_play = 12;
+  bool can_pause = 13;
+  bool can_toggle_play_pause = 14;
+  bool can_next = 15;
+  bool can_previous = 16;
+}
+
+message SystemVolumeSnapshot {
+  double level = 1;
+  bool muted = 2;
+  string device_id = 3;
+  string device_name = 4;
+}
+
+message SetSystemVolumeRequest {
+  double level = 1;
+  bool set_level = 2;
+  bool muted = 3;
+  bool set_muted = 4;
+}
 
 message AppInfo {
   string name = 1;

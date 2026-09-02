@@ -60,7 +60,7 @@ scripts\room-preview.ps1
   - 双击图标 → toast 提示"不在 Lively 环境内"（IPC 守卫，不会真启动应用）
   - 编辑保存 → `persistRoom()` 静默跳过（不写盘）
   - 视频背景/切桌动画/长按编辑/尺寸切换 → 全部正常可用
-  - 配置器内嵌预览使用 `?preview=1`，只接受发布态 `http://tauri.localhost` 或开发态 `http://localhost:1420` 父窗口的完整 v1 草稿和 `lib://` 素材根目录
+  - 配置器内嵌预览使用 `?preview=1`，只接受发布态 `http://tauri.localhost` 或开发态允许源的完整 v2 草稿和 `lib://` 素材根目录
   - 待机节点预览使用 `?preview=1&screensaver=1`，隐藏 Desk/Dock 并只显示 idle；缺少 idle 时为黑屏
   - 单独用 Vite 检查 sandbox HTML 时需开启 CORS；否则 Vite 注入的 `@vite/client` 会被 opaque origin 拒绝，生产运行不受影响
 
@@ -80,7 +80,7 @@ wallpapers/dext-room/
 │    │   └─ #desk-staging       过渡时"来客桌"挂这里，动画完清空
 │    ├─ #dock                   底部 Dock（‹ 指示器 › / 大中小 / ✓），不随动画动
 │    ├─ .dext-scene-slot        start/switch/idle 的统一 image/video/html 覆盖层
-│    ├─ #transition-video-wrap  历史 DOM，占位保留但 v1 不再直接使用
+│    ├─ #transition-video-wrap  历史 DOM，占位保留但当前 Room 不再直接使用
 │    ├─ #transition             预设动画兼容层
 │    └─ #toast
 ├─ style.css    顶部 :root 主题变量（--dext-*），改外观优先动这里
@@ -91,9 +91,9 @@ wallpapers/dext-room/
 
 | 函数 | 职责 |
 |---|---|
-| `loadRoom()` | 正常模式读取 v1 并进入 startDesk；screensaver 模式只显示 idle；preview 模式等待内存草稿 |
+| `loadRoom()` | 正常模式只读取 v2 并进入 startDesk；screensaver 模式只显示 idle；preview 模式等待 v2 内存草稿 |
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + 指示器 + 尺寸按钮高亮 |
-| `mountBackground(bgEl, videoEl, desk)` | v1 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
+| `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
 | `renderIcons(layer, desk, s)` | 图标循环：坐标钳制、真图标/emoji 兜底、双击启动、删除钮、长按 |
 | `attachPress / startDrag` | 长按 500ms 进编辑；编辑态拖拽（稀疏格子，占用格交换） |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
@@ -103,11 +103,11 @@ wallpapers/dext-room/
 | `persistRoom()` | 删除页面副本的 `__source` 后上行；preview 自动跳过，Core 使用包内可信戳双写 |
 | `ICON_SIZES` | 大/中/小三档（图标、格子、字号联动） |
 
-## 四、room.json v1 示例
+## 四、room.json v2 示例
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
   "startDesk": 0,
   "switch": "slide",
   "switches": {
@@ -128,13 +128,14 @@ wallpapers/dext-room/
           "action": "启动 浏览器",
           "launch": { "target": "...", "args": "", "workdir": "" }
         }
-      ]
+      ],
+      "widgets": []
     }
   ]
 }
 ```
 
-源 Room 严禁 `__source`；只有 Rust 应用后的运行包带该戳。完整封闭字段和路径规则见 `MODEL.md` / `room.schema.json`。
+源 Room 严禁 `__source`；只有 Rust 应用后的运行包带该戳。完整封闭字段和路径规则见 `MODEL.md` / `room-v2.schema.json`。
 
 ## 五、主题变量（改外观的第一入口）
 
@@ -158,7 +159,7 @@ wallpapers/dext-room/
 3. **编辑模式视觉**：抖动幅度节奏、删除钮尺寸、进入/退出的过渡（目前是瞬变）
 4. **排版**：label 字体栈（现 Segoe UI/微软雅黑）、字重、行高、多行截断
 5. **空状态**：无图标 desk 的引导提示、无背景 desk 的黑底质感（可加微妙渐变噪点）
-6. **内容骨架样例**：为作者提供 background/start/switch/idle HTML 骨架和消息示例（不改变 v1）
+6. **内容骨架样例**：为作者提供 background/start/switch/idle Scene 和 Widget HTML 骨架与消息示例
 7. **多分辨率**：1366/1920/2560 宽下图标密度与 Dock 尺寸检查
 
 ## 七、纪律（务必）

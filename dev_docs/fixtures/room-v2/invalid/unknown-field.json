@@ -1,0 +1,4 @@
+{
+  "version": 2, "startDesk": 0, "switches": {}, "experimental": true,
+  "desks": [{ "name": "Desk", "background": null, "iconSize": "medium", "icons": [], "widgets": [] }]
+}

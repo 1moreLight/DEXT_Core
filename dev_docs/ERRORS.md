@@ -52,6 +52,8 @@
 | #45 | 普通 Rust 测试实际铺设壁纸并污染 Core 恢复布局 | [toolchain](errors/toolchain.md) |
 | #46 | 删除 Room 复用 v1 内容校验导致旧/损坏 Room 无法清理 | [backend](errors/backend.md) |
 | #47 | 普通窗口预览标记误当屏保标记会错误进入 idle | [backend](errors/backend.md) |
+| #48 | v2 降级保护误把源占位目录升级为新的 v1 校验前置条件 | [backend](errors/backend.md) |
+| #49 | Windows 系统媒体 API 与封面流可能永久阻塞 | [backend](errors/backend.md) |
 
 ## 分册
 
