@@ -139,6 +139,158 @@ const MAX_WIDGET_RESOURCES: usize = 256;
 const MAX_WIDGET_CONFIG_BYTES: usize = 65_536;
 const MAX_WIDGET_CONFIG_DEPTH: usize = 12;
 
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PermissionStore {
+    version: u32,
+    rooms: std::collections::BTreeMap<String, RoomPermissionGrant>,
+}
+
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RoomPermissionGrant {
+    fingerprint: String,
+    subjects: std::collections::BTreeMap<String, Vec<String>>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PermissionReview {
+    id: String,
+    label: String,
+    declared: Vec<String>,
+    granted: Vec<String>,
+    current: bool,
+}
+
+fn permission_store_path() -> std::path::PathBuf {
+    grpc::local_app_data_path().join("permissions-v1.json")
+}
+
+fn normalized_room_path(path: &std::path::Path) -> Result<(std::path::PathBuf, String), String> {
+    let candidate = if path.is_dir() { path.join("room.json") } else { path.to_path_buf() };
+    if candidate.file_name().and_then(|name| name.to_str()) != Some("room.json") || !candidate.is_file() {
+        return Err("permission target must be an existing room.json".into());
+    }
+    let canonical = candidate
+        .canonicalize()
+        .map_err(|error| format!("resolve permission target failed: {error}"))?;
+    let normalized = canonical.to_string_lossy().replace('\\', "/").to_lowercase();
+    Ok((canonical, normalized))
+}
+
+fn room_fingerprint(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn permission_subjects(room: &serde_json::Value) -> Vec<(String, String, Vec<String>)> {
+    let permissions = |value: &serde_json::Value| {
+        value.get("permissions")
+            .and_then(|item| item.as_array())
+            .into_iter()
+            .flatten()
+            .filter_map(|item| item.as_str().map(str::to_string))
+            .collect::<Vec<_>>()
+    };
+    let mut subjects = Vec::new();
+    for key in ["start", "idle"] {
+        if let Some(content) = room.get(key).filter(|item| item.is_object()) {
+            subjects.push((format!("scene:{key}"), format!("{} Scene", if key == "start" { "启动" } else { "待机" }), permissions(content)));
+        }
+    }
+    if let Some(switches) = room.get("switches").and_then(|item| item.as_object()) {
+        for (route, content) in switches.iter().filter(|(_, item)| item.is_object()) {
+            subjects.push((format!("scene:switch:{route}"), format!("切换 {route} Scene"), permissions(content)));
+        }
+    }
+    if let Some(desks) = room.get("desks").and_then(|item| item.as_array()) {
+        for (desk_index, desk) in desks.iter().enumerate() {
+            if let Some(content) = desk.get("background").filter(|item| item.is_object()) {
+                subjects.push((format!("scene:desk:{desk_index}"), format!("Desk {} Scene", desk_index + 1), permissions(content)));
+            }
+            if let Some(widgets) = desk.get("widgets").and_then(|item| item.as_array()) {
+                for widget in widgets {
+                    if let Some(id) = widget.get("id").and_then(|item| item.as_str()) {
+                        subjects.push((
+                            format!("widget:{id}"),
+                            widget.get("name").and_then(|item| item.as_str()).unwrap_or(id).to_string(),
+                            permissions(widget),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    subjects
+}
+
+fn read_permission_store() -> Result<PermissionStore, String> {
+    let path = permission_store_path();
+    if !path.is_file() {
+        return Ok(PermissionStore { version: 1, ..Default::default() });
+    }
+    let bytes = std::fs::read(&path).map_err(|error| format!("read permission store failed: {error}"))?;
+    let store: PermissionStore = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse permission store failed: {error}"))?;
+    if store.version != 1 {
+        return Err("unsupported permission store version".into());
+    }
+    Ok(store)
+}
+
+fn write_permission_store(store: &PermissionStore) -> Result<(), String> {
+    let bytes = serde_json::to_vec_pretty(store)
+        .map_err(|error| format!("serialize permission store failed: {error}"))?;
+    atomic_write(&permission_store_path(), &bytes)
+}
+
+#[tauri::command]
+async fn get_permission_review(path: String) -> Result<Vec<PermissionReview>, String> {
+    let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
+    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse room permissions failed: {error}"))?;
+    validate_room_contract(&room)?;
+    validate_room_asset_references(room_path.parent().unwrap(), &room)?;
+    let fingerprint = room_fingerprint(&bytes);
+    let store = read_permission_store()?;
+    let grant = store.rooms.get(&key).filter(|item| item.fingerprint == fingerprint);
+    Ok(permission_subjects(&room).into_iter().map(|(id, label, declared)| {
+        let granted = grant.and_then(|item| item.subjects.get(&id)).cloned().unwrap_or_default();
+        PermissionReview { id, label, declared, granted, current: grant.is_some() }
+    }).collect())
+}
+
+#[tauri::command]
+async fn set_subject_permission(path: String, subject_id: String, approved: bool) -> Result<Vec<PermissionReview>, String> {
+    let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
+    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse room permissions failed: {error}"))?;
+    validate_room_contract(&room)?;
+    validate_room_asset_references(room_path.parent().unwrap(), &room)?;
+    let subjects = permission_subjects(&room);
+    let declared = subjects.iter().find(|(id, _, _)| id == &subject_id)
+        .map(|(_, _, permissions)| permissions.clone())
+        .ok_or_else(|| "permission subject is not part of this Room".to_string())?;
+    let fingerprint = room_fingerprint(&bytes);
+    let mut store = read_permission_store()?;
+    store.version = 1;
+    let grant = store.rooms.entry(key).or_default();
+    if grant.fingerprint != fingerprint {
+        grant.fingerprint = fingerprint;
+        grant.subjects.clear();
+    }
+    if approved {
+        grant.subjects.insert(subject_id, declared);
+    } else {
+        grant.subjects.remove(&subject_id);
+    }
+    write_permission_store(&store)?;
+    get_permission_review(room_path.to_string_lossy().into_owned()).await
+}
+
 fn validate_room_library_path(path: &std::path::Path) -> Result<std::path::PathBuf, String> {
     if path.as_os_str().is_empty() {
         return Err("Room library path cannot be empty".into());
@@ -531,11 +683,136 @@ fn ensure_string_limit(value: &str, maximum: usize, label: &str) -> Result<(), S
     }
 }
 
+const CONTENT_PERMISSIONS: &[&str] = &[
+    "time.read",
+    "locale.read",
+    "viewport.read",
+    "desk.read",
+    "playback.read",
+    "audio.spectrum",
+    "hardware.cpu.read",
+    "hardware.gpu.read",
+    "hardware.memory.read",
+    "now-playing.read",
+    "now-playing.artwork.read",
+    "system.volume.read",
+    "hardware.network.read",
+    "action.invoke",
+];
+
+fn validate_permissions(
+    value: Option<&serde_json::Value>,
+    required: bool,
+    label: &str,
+) -> Result<std::collections::HashSet<String>, String> {
+    let Some(value) = value else {
+        return if required {
+            Err(format!("{label} must be an array"))
+        } else {
+            Ok(std::collections::HashSet::new())
+        };
+    };
+    let permissions = value
+        .as_array()
+        .ok_or_else(|| format!("{label} must be an array"))?;
+    let mut permission_set = std::collections::HashSet::new();
+    for (index, permission) in permissions.iter().enumerate() {
+        let permission = permission
+            .as_str()
+            .ok_or_else(|| format!("{label}[{index}] must be a string"))?;
+        if !CONTENT_PERMISSIONS.contains(&permission) {
+            return Err(format!("{label} contains unknown permission {permission:?}"));
+        }
+        if !permission_set.insert(permission.to_string()) {
+            return Err(format!("{label} contains duplicate permission {permission:?}"));
+        }
+    }
+    Ok(permission_set)
+}
+
+fn validate_hotspots(
+    value: Option<&serde_json::Value>,
+    bounds_width: u64,
+    bounds_height: u64,
+    permissions: &std::collections::HashSet<String>,
+    label: &str,
+) -> Result<(), String> {
+    let Some(value) = value else { return Ok(()); };
+    let hotspots = value
+        .as_array()
+        .filter(|items| items.len() <= 64)
+        .ok_or_else(|| format!("{label} must be an array with at most 64 items"))?;
+    if !hotspots.is_empty() && !permissions.contains("action.invoke") {
+        return Err(format!("{label} requires action.invoke permission"));
+    }
+    let mut ids = std::collections::HashSet::new();
+    for (index, hotspot) in hotspots.iter().enumerate() {
+        let item_label = format!("{label}[{index}]");
+        let object = hotspot
+            .as_object()
+            .ok_or_else(|| format!("{item_label} must be an object"))?;
+        reject_unknown_keys(object, &["id", "label", "placement", "action"], &item_label)?;
+        let id = required_string(object, "id", &item_label)?;
+        if !widget_id_is_valid(id) || !ids.insert(id.to_string()) {
+            return Err(format!("{item_label}.id must be a unique lowercase ASCII slug"));
+        }
+        ensure_string_limit(
+            required_string(object, "label", &item_label)?,
+            120,
+            &format!("{item_label}.label"),
+        )?;
+        let placement = object
+            .get("placement")
+            .and_then(|item| item.as_object())
+            .ok_or_else(|| format!("{item_label}.placement must be an object"))?;
+        reject_unknown_keys(
+            placement,
+            &["x", "y", "width", "height", "z"],
+            &format!("{item_label}.placement"),
+        )?;
+        let integer = |key: &str| {
+            placement
+                .get(key)
+                .and_then(|item| item.as_u64())
+                .ok_or_else(|| format!("{item_label}.placement.{key} must be a non-negative integer"))
+        };
+        let x = integer("x")?;
+        let y = integer("y")?;
+        let width = integer("width")?;
+        let height = integer("height")?;
+        let z = integer("z")?;
+        if width < 16 || height < 16 || x + width > bounds_width || y + height > bounds_height || z > 255 {
+            return Err(format!("{item_label}.placement must stay inside its content bounds"));
+        }
+        let action = object
+            .get("action")
+            .and_then(|item| item.as_object())
+            .ok_or_else(|| format!("{item_label}.action must be an object"))?;
+        reject_unknown_keys(action, &["id", "value"], &format!("{item_label}.action"))?;
+        let action_id = required_string(action, "id", &format!("{item_label}.action"))?;
+        let value = action.get("value");
+        match action_id {
+            "system.media.play"
+            | "system.media.pause"
+            | "system.media.toggle-play-pause"
+            | "system.media.next"
+            | "system.media.previous"
+            | "system.volume.toggle-mute" if value.is_none() => {}
+            "system.volume.set" if value
+                .and_then(|item| item.as_f64())
+                .is_some_and(|item| item.is_finite() && (0.0..=1.0).contains(&item)) => {}
+            "system.volume.mute" if value.is_some_and(|item| item.is_boolean()) => {}
+            _ => return Err(format!("{item_label}.action has an unsupported id or value")),
+        }
+    }
+    Ok(())
+}
+
 fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> Result<(), String> {
     let object = value
         .as_object()
         .ok_or_else(|| format!("{label} must be a Content object"))?;
-    reject_unknown_keys(object, &["name", "type", "src"], label)?;
+    reject_unknown_keys(object, &["name", "type", "src", "permissions", "hotspots"], label)?;
     ensure_string_limit(
         required_string(object, "name", label)?,
         120,
@@ -581,6 +858,17 @@ fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> 
             "{label}.src extension does not match {content_type}"
         ));
     }
+    if content_type != "html" && (object.contains_key("permissions") || object.contains_key("hotspots")) {
+        return Err(format!("{label} capabilities are only valid for HTML content"));
+    }
+    let permissions = validate_permissions(object.get("permissions"), false, &format!("{label}.permissions"))?;
+    validate_hotspots(
+        object.get("hotspots"),
+        1920,
+        1080,
+        &permissions,
+        &format!("{label}.hotspots"),
+    )?;
     Ok(())
 }
 
@@ -835,25 +1123,6 @@ fn json_depth(value: &serde_json::Value, depth: usize) -> usize {
 }
 
 fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, String> {
-    const PERMISSIONS: &[&str] = &[
-        "time.read",
-        "locale.read",
-        "viewport.read",
-        "desk.read",
-        "playback.read",
-        "audio.spectrum",
-        "hardware.cpu.read",
-        "hardware.gpu.read",
-        "hardware.memory.read",
-        "now-playing.read",
-        "now-playing.artwork.read",
-        "hardware.network.read",
-        "network.proxy",
-        "storage.kv",
-        "navigation.go",
-        "notification.show",
-        "action.invoke",
-    ];
     let object = value
         .as_object()
         .ok_or_else(|| format!("{label} must be an object"))?;
@@ -867,6 +1136,7 @@ fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, Str
             "placement",
             "config",
             "permissions",
+            "hotspots",
         ],
         label,
     )?;
@@ -957,26 +1227,18 @@ fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, Str
             "{label}.config exceeds depth {MAX_WIDGET_CONFIG_DEPTH}"
         ));
     }
-    let permissions = object
-        .get("permissions")
-        .and_then(|value| value.as_array())
-        .ok_or_else(|| format!("{label}.permissions must be an array"))?;
-    let mut permission_set = std::collections::HashSet::new();
-    for (index, permission) in permissions.iter().enumerate() {
-        let permission = permission
-            .as_str()
-            .ok_or_else(|| format!("{label}.permissions[{index}] must be a string"))?;
-        if !PERMISSIONS.contains(&permission) {
-            return Err(format!(
-                "{label}.permissions contains unknown permission {permission:?}"
-            ));
-        }
-        if !permission_set.insert(permission) {
-            return Err(format!(
-                "{label}.permissions contains duplicate permission {permission:?}"
-            ));
-        }
-    }
+    let permission_set = validate_permissions(
+        object.get("permissions"),
+        true,
+        &format!("{label}.permissions"),
+    )?;
+    validate_hotspots(
+        object.get("hotspots"),
+        width,
+        height,
+        &permission_set,
+        &format!("{label}.hotspots"),
+    )?;
     Ok(id.to_string())
 }
 
@@ -2125,7 +2387,8 @@ fn import_widget_dir(
             "resources": resources,
             "placement": { "x": 96 + offset, "y": 96 + offset, "width": 480, "height": 240, "z": widget_count },
             "config": {},
-            "permissions": []
+            "permissions": [],
+            "hotspots": []
         });
         room["desks"][desk_index]["widgets"]
             .as_array_mut()
@@ -2342,7 +2605,9 @@ pub fn run() {
             get_system_media,
             control_system_media,
             get_system_volume,
-            set_system_volume
+            set_system_volume,
+            get_permission_review,
+            set_subject_permission
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -2542,6 +2807,24 @@ mod tests {
         assert!(validate_room_v2(&too_deep)
             .unwrap_err()
             .contains("depth 12"));
+
+        let mut hotspot = valid_v2_room();
+        hotspot["desks"][0]["widgets"][0]["hotspots"] = serde_json::json!([{
+            "id":"play", "label":"Play",
+            "placement":{"x":0,"y":0,"width":80,"height":32,"z":1},
+            "action":{"id":"system.media.play"}
+        }]);
+        assert!(validate_room_v2(&hotspot)
+            .unwrap_err()
+            .contains("requires action.invoke"));
+        hotspot["desks"][0]["widgets"][0]["permissions"] =
+            serde_json::json!(["action.invoke"]);
+        assert!(validate_room_v2(&hotspot).is_ok());
+        hotspot["desks"][0]["widgets"][0]["hotspots"][0]["action"] =
+            serde_json::json!({"id":"system.volume.set","value":1.5});
+        assert!(validate_room_v2(&hotspot)
+            .unwrap_err()
+            .contains("unsupported id or value"));
     }
 
     #[test]

@@ -22,7 +22,7 @@
         "resources": ["widgets/now-playing/index.html"],
         "placement": { "x": 600, "y": 120, "width": 640, "height": 320, "z": 1 },
         "config": {},
-        "permissions": ["now-playing.read", "now-playing.artwork.read", "network.proxy"]
+        "permissions": ["now-playing.read", "now-playing.artwork.read", "system.volume.read"]
       }]
     }
   ]

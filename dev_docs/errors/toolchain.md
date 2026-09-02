@@ -99,3 +99,10 @@
 - 根因：`grpc::tests::applies_room_wallpaper` 直接调用真实 Core 的 `SetWallpaper`，`apps_and_launch` 还会启动 Notepad；两项活体测试此前混在普通单元测试中。Core 随后把 `wallpapers/dext-room` 写进 `%LOCALAPPDATA%\Dext\WallpaperLayout.json`，下次启动必然恢复，而运行包里的 `room.json.__source` 仍指向旧测试 Room。
 - 解决：两项测试标记为 Rust `#[ignore]`。普通 `cargo test --lib` 只跑无外部副作用的测试；需要真 Core 验收时显式运行 `cargo test --lib applies_room_wallpaper -- --ignored`，完成后再停止壁纸并核对恢复布局。
 - 防再犯：凡会调用真实 RPC、启动应用、修改桌面或写入用户状态的测试都必须默认 ignored，并在命令旁写清副作用和恢复步骤；不能把“测试通过”等同于“环境没有被改变”。
+
+## #50 Player 目标框架缺少较新的 ASCII 字符判断 API（2026-09-02）
+
+- 现象：Dext WebView2 Player Release 构建在可信系统请求 id 校验处报 CS0117，找不到 `char.IsAsciiLetterOrDigit`。
+- 原因：Player 当前目标框架未提供该较新的 `char` API。
+- 处理：改为显式 `a-z` / `A-Z` / `0-9` / `-` 范围判断，保持严格 ASCII 白名单且兼容现有框架。
+- 预防：Player/Core 新增安全字符校验时优先使用项目目标框架已有 API，并以 `scripts/build.ps1` Release 全构建为准。

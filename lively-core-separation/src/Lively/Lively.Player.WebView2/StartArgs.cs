@@ -94,6 +94,12 @@ namespace Lively.Player.WebView2
         HelpText = "Verbose Logging.")]
         public bool VerboseLog { get; set; }
 
+        [Option("dext-trusted-host",
+        Required = false,
+        Default = false,
+        HelpText = "Enable the offline Dext Room host boundary.")]
+        public bool DextTrustedHost { get; set; }
+
         [Option("wallpaper-color-scheme",
         Required = false,
         HelpText = "Set PreferredColorScheme.")]

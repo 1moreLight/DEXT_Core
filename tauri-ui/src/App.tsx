@@ -49,6 +49,8 @@ import {
 } from "@/lib/dock";
 import {
   cleanWidget,
+  cleanHotspots,
+  WIDGET_PERMISSIONS,
   isRecord,
   type Background,
   type Content,
@@ -83,6 +85,14 @@ interface CoreIdentity {
 interface ActiveRoom {
   sourcePath: string;
   runtimePath: string;
+}
+
+interface PermissionReview {
+  id: string;
+  label: string;
+  declared: string[];
+  granted: string[];
+  current: boolean;
 }
 
 function bgLabel(bg: Background): string {
@@ -468,6 +478,7 @@ const MOCK_DESKS: Desk[] = [
         placement: { x: 1180, y: 96, width: 560, height: 260, z: 2 },
         config: { accent: "#67e8f9" },
         permissions: ["time.read", "hardware.cpu.read", "hardware.memory.read"],
+        hotspots: [],
       },
     ],
   },
@@ -498,7 +509,18 @@ function cleanContent(value: unknown, directory: "background" | "start" | "switc
   const name = typeof value.name === "string" ? value.name.trim() : "";
   const src = typeof value.src === "string" ? value.src.replace(/\\/g, "/") : "";
   if (!name || !src.startsWith(`${directory}/`) || src.split("/").some((part: string) => !part || part === "." || part === "..")) return null;
-  return { name, type: value.type as ContentType, src };
+  const permissions = Array.isArray(value.permissions)
+    ? [...new Set(value.permissions.filter((item): item is typeof WIDGET_PERMISSIONS[number] =>
+        typeof item === "string" && WIDGET_PERMISSIONS.includes(item as typeof WIDGET_PERMISSIONS[number])
+      ))]
+    : [];
+  return {
+    name,
+    type: value.type as ContentType,
+    src,
+    ...(permissions.length ? { permissions } : {}),
+    ...(Array.isArray(value.hotspots) ? { hotspots: cleanHotspots(value.hotspots) } : {}),
+  };
 }
 
 function cleanTransition(value: unknown): Transition | null {
@@ -884,6 +906,7 @@ export default function App() {
   const [roomEntered, setRoomEntered] = useState(false);
   const [editorView, setEditorView] = useState<EditorView>("canvas");
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+  const [permissionReviews, setPermissionReviews] = useState<PermissionReview[]>([]);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
@@ -1075,6 +1098,7 @@ export default function App() {
       setStartDesk(0);
       setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
+      setPermissionReviews([]);
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
       return true;
     }
@@ -1117,6 +1141,7 @@ export default function App() {
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
       setDirty(false);
+      setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path }));
       localStorage.setItem("dext.roomPath", path);
       setStatus(
         room.version === 2
@@ -1146,6 +1171,7 @@ export default function App() {
         roomJson: JSON.stringify(buildRoomV2(), null, 2),
       });
       setDirty(false);
+      setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path: roomPath }));
       return true;
     } catch (e) {
       setStatus(`error: ${e}`);
@@ -1228,6 +1254,22 @@ export default function App() {
     } catch (error) {
       setStatus(`Dock 导入失败：${error}`);
       return null;
+    }
+  }
+
+  async function setSubjectPermission(subjectId: string, approved: boolean) {
+    if (!roomPath || !IS_TAURI) return;
+    if (dirty && !(await saveRoom())) return;
+    try {
+      const reviews = await invoke<PermissionReview[]>("set_subject_permission", {
+        path: roomPath,
+        subjectId,
+        approved,
+      });
+      setPermissionReviews(reviews);
+      setStatus(approved ? "已在本机批准该内容当前版本的能力；内容变化后会自动失效" : "已撤销该内容的本机能力授权");
+    } catch (error) {
+      setStatus(`权限更新失败：${error}`);
     }
   }
 
@@ -2540,6 +2582,8 @@ export default function App() {
                     activeDesk={activeDesk}
                     roomPath={roomPath}
                     selectedWidgetId={selectedWidgetId}
+                    permissionReview={permissionReviews.find((item) => item.id === (selectedWidgetId ? `widget:${selectedWidgetId}` : `scene:desk:${activeDesk}`)) ?? null}
+                    onPermissionChange={(approved) => setSubjectPermission(selectedWidgetId ? `widget:${selectedWidgetId}` : `scene:desk:${activeDesk}`, approved)}
                     onActiveDesk={(index) => {
                       setActiveDesk(index);
                       setGraphSel(`d${index}`);

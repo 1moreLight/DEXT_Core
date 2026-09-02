@@ -75,6 +75,27 @@ html, body {
   border: 0;
   display: block;
   background: #000;
+  pointer-events: none;
+}
+
+.dext-trusted-hotspot {
+  position: absolute;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dext-trusted-hotspot:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.95);
+  outline-offset: -2px;
+}
+
+body.editing .dext-trusted-hotspot {
+  pointer-events: none;
 }
 
 .widget-layer {

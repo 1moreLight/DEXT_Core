@@ -94,6 +94,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-08-31 | **Room v2 Widget 契约冻结**：Widget placement 保存为 1920×1080 逻辑画布整数矩形与 z，未来宿主按居中等比 contain 缩放；P1 自动允许时间、语言、视口、当前 Desk、暂停态、音频频谱及 CPU/GPU/RAM 摘要，歌曲/封面、网络摘要和 Dext 代理联网为 P2，P3/P4 只保留配额 KV、Dext 内导航/通知和用户映射 action 的未来声明。网络默认离线且禁止直连，manifest 不接受域名白名单或可执行路径；每个 Desk 的 Widget 是独立实例但 id 在 Room 内全局唯一；config 随 Room，宿主管理的可变数据与授权只留本机。v1→v2 只能显式复制并保留源 v1；WidgetHost 前 v2 仅可列出、只读打开和校验，禁止编辑、保存、另存降级、应用、v1 预览和当前 zip 操作。 |
 | 2026-08-31 | **Room 契约收口为原生 v2-only**：用户确认当前 Room 均为 demo，无需保留 v1 兼容、迁移或降级路径。新建、读取、编辑、保存、另存、预览、应用与 zip 只接受/产生 `version: 2`；每个 Desk 始终带 `widgets`。删除 v1 Schema、fixtures、版本分派、`buildRoomV1()` 及只为兼容旧 Room 存在的代码和提示；历史 v1 文档只作历史记录，不再是运行契约。该决定取代上一条中的 v1 保留、显式复制升级和 WidgetHost 前 v2 只读限制。 |
 | 2026-09-02 | **配置器 v2 采用单工作包端到端交付**：用户明确要求不再把配置器 UI、WidgetHost、Scene 数据展示、图标避让、可信系统热点和安全分享拆成多个中途验收步骤。UI-V2-001 在一个 worktree/分支中保留现有设计语言并重构代码职责，同时完成真实运行链；内部允许按风险顺序提交，但只在全部范围完成后做一次人工验收。创意工坊云服务、内置外部 AI、代理联网、安装器和多显示器仍不在本包。 |
+| 2026-09-02 | **v2 能力授权绑定源 Room 内容哈希**：Scene/Widget 的声明不等于批准；本机授权存放在 `%LOCALAPPDATA%\\Dext\\permissions-v1.json`，按规范化源 Room 路径、整份 `room.json` SHA-256 和内容 subject 绑定。保存修改、另存或重新导入后授权自动失效。v2 当前完全离线，未实现的代理联网、导航、通用存储和通知能力从允许枚举删除，而不是保留不可兑现入口。 |
 
 ## 工作流
 

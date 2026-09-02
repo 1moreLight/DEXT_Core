@@ -120,6 +120,21 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 1024
+        },
+        "permissions": {
+          "type": "array",
+          "maxItems": 14,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/permission"
+          }
+        },
+        "hotspots": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/hotspot"
+          }
         }
       },
       "allOf": [
@@ -502,11 +517,8 @@
         "hardware.memory.read",
         "now-playing.read",
         "now-playing.artwork.read",
+        "system.volume.read",
         "hardware.network.read",
-        "network.proxy",
-        "storage.kv",
-        "navigation.go",
-        "notification.show",
         "action.invoke"
       ]
     },
@@ -545,6 +557,54 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 255
+        }
+      }
+    },
+    "hotspotPlacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "z"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0, "maximum": 1904 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 1064 },
+        "width": { "type": "integer", "minimum": 16, "maximum": 1920 },
+        "height": { "type": "integer", "minimum": 16, "maximum": 1080 },
+        "z": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "systemActionId": {
+      "enum": [
+        "system.media.play",
+        "system.media.pause",
+        "system.media.toggle-play-pause",
+        "system.media.next",
+        "system.media.previous",
+        "system.volume.set",
+        "system.volume.mute",
+        "system.volume.toggle-mute"
+      ]
+    },
+    "hotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "placement", "action"],
+      "properties": {
+        "id": { "$ref": "#/$defs/widgetId" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "placement": { "$ref": "#/$defs/hotspotPlacement" },
+        "action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": {
+            "id": { "$ref": "#/$defs/systemActionId" },
+            "value": {
+              "oneOf": [
+                { "type": "number", "minimum": 0, "maximum": 1 },
+                { "type": "boolean" }
+              ]
+            }
+          }
         }
       }
     },
@@ -596,10 +656,17 @@
         },
         "permissions": {
           "type": "array",
-          "maxItems": 17,
+          "maxItems": 14,
           "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/permission"
+          }
+        },
+        "hotspots": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/hotspot"
           }
         }
       }

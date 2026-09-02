@@ -437,5 +437,11 @@
 - [x] 配置器默认接入真实桌面画布与独立 Desk 流程切换，显示 Scene、图标、Widget 和 Dock 安全区（2026-09-02）
 - [x] 接通 Widget 选择、拖动、缩放、placement 数值编辑、层级、删除、图标避让和统一历史事务（2026-09-02）
 - [x] 使用 Playwright 在真实浏览器复验窄窗口，修正顶栏挤压并加入 v2 Widget mock；单击选择不再误写草稿（2026-09-02）
-- [x] 完成 Widget 文件夹安全导入与权限审阅 UI：小写 slug、资源白名单、数量/大小限制、拒绝链接与 reparse point、staging 原子回滚、整份草稿同步保存和 `network.proxy` 离线禁用（2026-09-02）
+- [x] 完成 Widget 文件夹安全导入与权限审阅 UI：小写 slug、资源白名单、数量/大小限制、拒绝链接与 reparse point、staging 原子回滚、整份草稿同步保存，并从 v2 权限枚举删除未实现的联网/导航等能力（2026-09-02）
 - [x] Widget 导入里程碑通过 Rust 27 项、前端 14 项、生产构建、`cargo check`、渲染器语法和差异检查（2026-09-02）
+- [x] 扩展 v2 Content/Widget 契约：HTML 能力声明、相对/全局矩形热点和封闭媒体/系统主音量 action；删除未实现的联网、导航、通用存储和通知权限（2026-09-02）
+- [x] 打通 Scene/Widget → 官方宿主 → Player → Core 能力链，按实例/token/subject 推送时间、语言、视口、Desk、暂停、CPU/GPU/RAM、网络摘要、频谱、媒体/封面和系统主音量（2026-09-02）
+- [x] 实现官方透明热点、真实 `isTrusted` 手势、120ms 限频、Player 白名单解析和 Core 最终 action/参数/本机授权复核（2026-09-02）
+- [x] 实现本机授权审阅、批准和撤销；源路径 + `room.json` SHA-256 绑定，内容变化/另存/重导自动失效且授权不进入 Room/zip（2026-09-02）
+- [x] 为 Dext Room Player 启用专用离线边界：同一虚拟主机资源外的请求/导航/iframe、下载、弹窗和 Web 权限全部拒绝（2026-09-02）
+- [x] 能力桥里程碑通过 Schema fixtures、前端 17 项、Rust 27 项、JS bridge、生产构建、C# Release 四阶段构建和 `scripts/start.ps1` 真 Core/Tauri 启动；Playwright 复验 1366×768 权限/热点检查器（2026-09-02）

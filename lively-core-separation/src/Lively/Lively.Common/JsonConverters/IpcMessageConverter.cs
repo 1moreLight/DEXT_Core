@@ -40,6 +40,8 @@ namespace Lively.Common.JsonConverters
                 MessageType.msg_save_room => jo.ToObject<LivelyMessageSaveRoomCmd>(serializer),
                 MessageType.msg_add_dock_icon => jo.ToObject<LivelyMessageAddDockIconCmd>(serializer),
                 MessageType.msg_app_status => jo.ToObject<LivelyMessageAppStatus>(serializer),
+                MessageType.msg_system_control_request => jo.ToObject<LivelyMessageSystemControlRequest>(serializer),
+                MessageType.cmd_system_control_response => jo.ToObject<LivelyMessageSystemControlResponse>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

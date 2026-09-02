@@ -2,7 +2,15 @@ import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { ChevronDown, ChevronUp, Grip, Layers3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ROOM_CANVAS, WIDGET_PERMISSIONS, type Content, type Desk, type WidgetDefinition } from "@/lib/room-v2";
+import {
+  ROOM_CANVAS,
+  SYSTEM_ACTION_IDS,
+  WIDGET_PERMISSIONS,
+  type Content,
+  type Desk,
+  type TrustedHotspot,
+  type WidgetDefinition,
+} from "@/lib/room-v2";
 import { avoidIconObstacles, clampPlacement, type Rect } from "@/lib/widget-layout";
 
 const ICON_GRID = { cellWidth: 96, cellHeight: 120, columns: 19, rows: 7 } as const;
@@ -20,6 +28,113 @@ function Background({ content, roomPath }: { content: Content | null; roomPath: 
   if (content.type === "image") return <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />;
   if (content.type === "video") return <video src={src} muted loop playsInline className="absolute inset-0 h-full w-full object-cover" />;
   return <iframe src={src} title={content.name} sandbox="allow-scripts" className="pointer-events-none absolute inset-0 h-full w-full border-0" />;
+}
+
+function HotspotEditor({
+  hotspots,
+  bounds,
+  onBeginChange,
+  onChange,
+}: {
+  hotspots: TrustedHotspot[];
+  bounds: { width: number; height: number };
+  onBeginChange: () => void;
+  onChange: (hotspots: TrustedHotspot[]) => void;
+}) {
+  const patch = (index: number, next: TrustedHotspot) => {
+    onBeginChange();
+    onChange(hotspots.map((item, itemIndex) => itemIndex === index ? next : item));
+  };
+  return (
+    <details className="rounded-md border border-border">
+      <summary className="cursor-pointer px-2 py-1.5 text-[11px] font-medium">可信热点 · {hotspots.length}</summary>
+      <div className="space-y-2 border-t border-border p-2">
+        {hotspots.map((hotspot, index) => (
+          <div key={hotspot.id} className="space-y-1.5 rounded border border-border/70 p-2">
+            <div className="flex items-center gap-1">
+              <Input
+                value={hotspot.label}
+                onFocus={onBeginChange}
+                onChange={(event) => patch(index, { ...hotspot, label: event.target.value })}
+                className="h-7 text-[10px]"
+                aria-label="热点名称"
+              />
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { onBeginChange(); onChange(hotspots.filter((_, itemIndex) => itemIndex !== index)); }}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+            <select
+              value={hotspot.action.id}
+              onChange={(event) => {
+                const id = event.target.value as TrustedHotspot["action"]["id"];
+                patch(index, {
+                  ...hotspot,
+                  action: id === "system.volume.set" ? { id, value: 0.5 }
+                    : id === "system.volume.mute" ? { id, value: true }
+                    : { id },
+                });
+              }}
+              className="h-7 w-full rounded border border-input bg-background px-2 text-[10px]"
+            >
+              {SYSTEM_ACTION_IDS.map((id) => <option key={id} value={id}>{id}</option>)}
+            </select>
+            {hotspot.action.id === "system.volume.set" && (
+              <Input type="number" min={0} max={1} step={0.05} value={Number(hotspot.action.value)} onFocus={onBeginChange} onChange={(event) => patch(index, { ...hotspot, action: { id: "system.volume.set", value: Math.min(1, Math.max(0, Number(event.target.value))) } })} className="h-7 text-[10px]" />
+            )}
+            {hotspot.action.id === "system.volume.mute" && (
+              <label className="flex items-center gap-2 text-[10px] text-muted-foreground"><input type="checkbox" checked={Boolean(hotspot.action.value)} onChange={(event) => patch(index, { ...hotspot, action: { id: "system.volume.mute", value: event.target.checked } })} />静音</label>
+            )}
+            <div className="grid grid-cols-4 gap-1">
+              {(["x", "y", "width", "height"] as const).map((key) => (
+                <label key={key} className="text-[9px] text-muted-foreground">{key}
+                  <Input
+                    type="number"
+                    min={key === "width" || key === "height" ? 16 : 0}
+                    max={key === "x" || key === "width" ? bounds.width : bounds.height}
+                    value={hotspot.placement[key]}
+                    onFocus={onBeginChange}
+                    onChange={(event) => {
+                      const value = Math.round(Number(event.target.value));
+                      const placement = { ...hotspot.placement, [key]: value };
+                      placement.width = Math.min(Math.max(16, placement.width), bounds.width);
+                      placement.height = Math.min(Math.max(16, placement.height), bounds.height);
+                      placement.x = Math.min(Math.max(0, placement.x), bounds.width - placement.width);
+                      placement.y = Math.min(Math.max(0, placement.y), bounds.height - placement.height);
+                      patch(index, { ...hotspot, placement });
+                    }}
+                    className="mt-0.5 h-6 px-1 text-[9px]"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          disabled={hotspots.length >= 64}
+          onClick={() => {
+            onBeginChange();
+            let suffix = hotspots.length + 1;
+            while (hotspots.some((item) => item.id === `hotspot-${suffix}`)) suffix += 1;
+            onChange([...hotspots, {
+              id: `hotspot-${suffix}`,
+              label: `热点 ${suffix}`,
+              placement: { x: 0, y: 0, width: Math.min(160, bounds.width), height: Math.min(64, bounds.height), z: 1 },
+              action: { id: "system.media.toggle-play-pause" },
+            }]);
+          }}
+        >
+          <PlusIcon /> 添加热点
+        </Button>
+      </div>
+    </details>
+  );
+}
+
+function PlusIcon() {
+  return <span className="text-sm leading-none">＋</span>;
 }
 
 function dockReserve(desk: Desk): Rect | null {
@@ -46,6 +161,8 @@ interface DesktopCanvasEditorProps {
   activeDesk: number;
   roomPath: string | null;
   selectedWidgetId: string | null;
+  permissionReview: { declared: string[]; granted: string[]; current: boolean } | null;
+  onPermissionChange: (approved: boolean) => void;
   onActiveDesk: (index: number) => void;
   onSelectWidget: (id: string | null) => void;
   onBeginChange: () => void;
@@ -57,6 +174,8 @@ export function DesktopCanvasEditor({
   activeDesk,
   roomPath,
   selectedWidgetId,
+  permissionReview,
+  onPermissionChange,
   onActiveDesk,
   onSelectWidget,
   onBeginChange,
@@ -65,6 +184,7 @@ export function DesktopCanvasEditor({
   const canvasRef = useRef<HTMLDivElement>(null);
   const desk = desks[activeDesk];
   const selected = desk?.widgets.find((widget) => widget.id === selectedWidgetId) ?? null;
+  const scene = !selected && desk?.background?.type === "html" ? desk.background : null;
 
   if (!desk) return <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">没有可编辑的 Desk</div>;
 
@@ -168,6 +288,18 @@ export function DesktopCanvasEditor({
             className="relative aspect-video max-h-full w-full max-w-[calc((100vh-15rem)*16/9)] overflow-hidden bg-black shadow-[0_18px_70px_rgba(0,0,0,.28)] ring-1 ring-border"
           >
             <Background content={desk.background} roomPath={roomPath} />
+            {scene?.hotspots?.map((hotspot) => (
+              <div
+                key={`scene-${hotspot.id}`}
+                className="pointer-events-none absolute z-[450] border border-dashed border-amber-300/90 bg-amber-300/10 text-[7px] text-amber-100"
+                style={{
+                  left: `${hotspot.placement.x / ROOM_CANVAS.width * 100}%`,
+                  top: `${hotspot.placement.y / ROOM_CANVAS.height * 100}%`,
+                  width: `${hotspot.placement.width / ROOM_CANVAS.width * 100}%`,
+                  height: `${hotspot.placement.height / ROOM_CANVAS.height * 100}%`,
+                }}
+              >{hotspot.label}</div>
+            ))}
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.025)_1px,transparent_1px)] bg-[size:5%_8.888%]" />
 
             {desk.widgets.slice().sort((a, b) => a.placement.z - b.placement.z).map((widget) => {
@@ -213,6 +345,19 @@ export function DesktopCanvasEditor({
                   <span className="pointer-events-none absolute left-1.5 top-1.5 rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
                     {widget.name}
                   </span>
+                  {isSelected && widget.hotspots.map((hotspot) => (
+                    <span
+                      key={hotspot.id}
+                      className="pointer-events-none absolute border border-dashed border-amber-300/90 bg-amber-300/10 text-[7px] text-amber-100"
+                      style={{
+                        left: `${hotspot.placement.x / placement.width * 100}%`,
+                        top: `${hotspot.placement.y / placement.height * 100}%`,
+                        width: `${hotspot.placement.width / placement.width * 100}%`,
+                        height: `${hotspot.placement.height / placement.height * 100}%`,
+                        zIndex: 260,
+                      }}
+                    >{hotspot.label}</span>
+                  ))}
                 </div>
               );
             })}
@@ -275,13 +420,11 @@ export function DesktopCanvasEditor({
                 <div className="max-h-44 space-y-1 overflow-y-auto border-t border-border p-2">
                   {WIDGET_PERMISSIONS.map((permission) => {
                     const checked = selected.permissions.includes(permission);
-                    const unavailable = permission === "network.proxy";
                     return (
-                      <label key={permission} className={`flex items-center gap-2 text-[10px] ${unavailable ? "text-muted-foreground/55" : "text-muted-foreground"}`} title={unavailable ? "本工作包保持离线，不开放代理联网" : permission}>
+                      <label key={permission} className="flex items-center gap-2 text-[10px] text-muted-foreground" title={permission}>
                         <input
                           type="checkbox"
                           checked={checked}
-                          disabled={unavailable}
                           onChange={(event) => {
                             onBeginChange();
                             const permissions = event.target.checked
@@ -291,12 +434,38 @@ export function DesktopCanvasEditor({
                           }}
                         />
                         <span className="truncate">{permission}</span>
-                        {unavailable && <span className="ml-auto">离线</span>}
                       </label>
                     );
                   })}
                 </div>
               </details>
+              <div className="mt-2">
+                <HotspotEditor
+                  hotspots={selected.hotspots}
+                  bounds={{ width: selected.placement.width, height: selected.placement.height }}
+                  onBeginChange={onBeginChange}
+                  onChange={(hotspots) => replaceWidget(selected.id, {
+                    ...selected,
+                    hotspots,
+                    permissions: hotspots.length && !selected.permissions.includes("action.invoke")
+                      ? [...selected.permissions, "action.invoke"]
+                      : selected.permissions,
+                  }, "Widget 可信热点已更新")}
+                />
+              </div>
+              <div className="mt-2 rounded-md border border-border p-2 text-[10px]">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">本机运行授权</span>
+                  <span className={permissionReview?.current && permissionReview.granted.length === permissionReview.declared.length ? "text-emerald-500" : "text-amber-500"}>
+                    {permissionReview?.current && permissionReview.granted.length === permissionReview.declared.length ? "当前版本已批准" : "未批准或已失效"}
+                  </span>
+                </div>
+                <p className="mt-1 leading-relaxed text-muted-foreground">授权仅保存在本机；Room 内容变化或重新导入后自动失效，不会写入分享包。</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" onClick={() => onPermissionChange(true)} disabled={!selected.permissions.length}>批准声明</Button>
+                  <Button variant="outline" size="sm" onClick={() => onPermissionChange(false)}>撤销</Button>
+                </div>
+              </div>
             </div>
             <div className="border-t border-border pt-3">
               <div className="truncate font-mono text-[10px] text-muted-foreground" title={selected.src}>{selected.src}</div>
@@ -312,6 +481,61 @@ export function DesktopCanvasEditor({
               >
                 <Trash2 /> 删除 Widget
               </Button>
+            </div>
+          </div>
+        ) : scene ? (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Scene 的 HTML/CSS/Canvas 构图保持自由；这里只声明受控数据与官方命中热点。</p>
+            <details className="rounded-md border border-border">
+              <summary className="cursor-pointer px-2 py-1.5 text-[11px] font-medium">Scene 能力声明 · {scene.permissions?.length ?? 0}</summary>
+              <div className="max-h-52 space-y-1 overflow-y-auto border-t border-border p-2">
+                {WIDGET_PERMISSIONS.map((permission) => {
+                  const permissions = scene.permissions ?? [];
+                  return (
+                    <label key={permission} className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={permissions.includes(permission)}
+                        onChange={(event) => {
+                          onBeginChange();
+                          const next = event.target.checked ? [...permissions, permission] : permissions.filter((item) => item !== permission);
+                          onDeskChange({ ...desk, background: { ...scene, permissions: next } }, "Scene 能力声明已更新；需要重新授权");
+                        }}
+                      />
+                      {permission}
+                    </label>
+                  );
+                })}
+              </div>
+            </details>
+            <HotspotEditor
+              hotspots={scene.hotspots ?? []}
+              bounds={ROOM_CANVAS}
+              onBeginChange={onBeginChange}
+              onChange={(hotspots) => {
+                const permissions = scene.permissions ?? [];
+                onDeskChange({
+                  ...desk,
+                  background: {
+                    ...scene,
+                    hotspots,
+                    permissions: hotspots.length && !permissions.includes("action.invoke") ? [...permissions, "action.invoke"] : permissions,
+                  },
+                }, "Scene 可信热点已更新");
+              }}
+            />
+            <div className="rounded-md border border-border p-2 text-[10px]">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">本机运行授权</span>
+                <span className={permissionReview?.current && permissionReview.granted.length === permissionReview.declared.length ? "text-emerald-500" : "text-amber-500"}>
+                  {permissionReview?.current && permissionReview.granted.length === permissionReview.declared.length ? "当前版本已批准" : "未批准或已失效"}
+                </span>
+              </div>
+              <p className="mt-1 leading-relaxed text-muted-foreground">仅保存在本机；Scene 或 Room 内容变化后自动失效。</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" onClick={() => onPermissionChange(true)} disabled={!scene.permissions?.length}>批准声明</Button>
+                <Button variant="outline" size="sm" onClick={() => onPermissionChange(false)}>撤销</Button>
+              </div>
             </div>
           </div>
         ) : (

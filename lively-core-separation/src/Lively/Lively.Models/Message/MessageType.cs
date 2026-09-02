@@ -26,5 +26,7 @@
         lp_dropdown_scaler,
         msg_add_dock_icon,
         msg_app_status,
+        msg_system_control_request,
+        cmd_system_control_response,
     }
 }
