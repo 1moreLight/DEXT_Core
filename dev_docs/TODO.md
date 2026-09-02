@@ -365,7 +365,7 @@
 - [x] 在 Core gRPC 增加封闭的系统媒体快照/动作与默认输出主音量读写接口，并在 Rust/Tauri 暴露受控命令（2026-09-02）
 - [x] 增加 Rust/Schema/前端回归，证明未知版本、非法资源、非法媒体动作和越界音量均在最终边界被拒绝；C# 由完整 Release 构建和活体 RPC 覆盖（2026-09-02）
 - [x] 编写 `ROOM_V2_FRONTEND_CHECKLIST.md`、`ROOM_V2_SYSTEM_API.md` 与 `ROOM_V2_AI_PROMPT.md`，明确 Scene/多 Widget 分工、可信宿主手势、图标避让、权限和系统安全边界（2026-09-02）
-- [~] Schema、Rust、TypeScript、前端、C# Release、真实启动与媒体/音量活体检查通过；待核对具名文件并提交工作分支（2026-09-02）
+- [?] Schema、Rust、TypeScript、前端、C# Release、真实启动与媒体/音量活体检查通过；具名文件提交为 `695e3e7`，等待用户按独立验收卡确认（2026-09-02）
 ## DOCK-004 运行态指示圆点（2026-08-29）
 
 目标：Dock 图标按其启动目标显示应用是否运行；应用退出后状态及时清除。

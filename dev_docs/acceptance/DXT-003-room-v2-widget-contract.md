@@ -3,6 +3,7 @@
 - 状态：待验收
 - 分支：`feat/dxt-003-room-v2-widget-contract`
 - 基线提交：契约 `c60141e`；同步 master `3d71acf`
+- 实现提交：`695e3e7`
 - 目标：把项目收口为唯一原生 Room v2，完成不会丢失 Widget 数据/资源的存储、复制、打包和应用后端，并交付封闭的系统媒体与 Windows 主音量接口。
 - 范围外：WidgetHost 视觉渲染、Widget 布局/权限 UI、壁纸热点与可信手势层、Scene 直接调用系统接口、任意 Shell/文件/URL/通用命令、联网代理、AI skill、用户 `rooms` 和渲染器大重写。
 
@@ -13,7 +14,7 @@
 - [x] `npm test` 与 `npm run build`：9 个前端测试和生产构建通过。
 - [x] `scripts/build.ps1` 与 `scripts/start.ps1`：新增 `.proto`/C#、Player Release、Core、配置器及 named-pipe 调用链通过。
 - [x] 系统接口活体测试：真实读取 Apple Music 元数据；play/pause 探测后恢复原状态；主音量修改后恢复原 level/mute；非法动作与越界音量单测通过。
-- [x] `node --check wallpapers/dext-room/main.js` 与具名文件扫描通过；未运行会铺设壁纸的 `applies_room_wallpaper`。
+- [x] `node --check wallpapers/dext-room/main.js`、`git diff --check` 与具名文件/主 worktree Room 状态扫描通过；未运行会铺设壁纸的 `applies_room_wallpaper`。
 
 ## 人工验收
 
@@ -42,3 +43,4 @@
 - 2026-08-31：用户明确要求继续完成 v2 后端，并追加当前系统媒体、Windows 主音量、前端接入清单和系统 API 手册；验收状态退回开发中，原契约提交作为基线保留。
 - 2026-08-31：用户确认所有现有 Room 都是 demo，取消 v1 兼容、迁移与降级；DXT-003 改为原生 v2-only，完成前无需验收。
 - 2026-09-02：v2-only 后端、Widget 资源全链、系统媒体/主音量接口、三份前端/安全/AI 文档和全部自动检查完成，重新进入待验收。
+- 2026-09-02：实现与文档提交为 `695e3e7`；主 worktree 用户 `rooms/` 改动未触碰，分支停在待验收，用户明确通过前禁止合并 master。
