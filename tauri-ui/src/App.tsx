@@ -1000,6 +1000,7 @@ export default function App() {
   }
 
   function clearBackground() {
+    pushHistory();
     touch();
     setDesks((prev) =>
       prev.map((d, i) => (i === activeDesk ? { ...d, background: null } : d))
@@ -1008,12 +1009,14 @@ export default function App() {
 
   async function changeTransition(value: string) {
     if (value !== "video") {
+      pushHistory();
       touch();
       setTransition(value as TransitionPreset);
       return;
     }
     const content = await pickRoomContent("switch", "video");
     if (!content) return;
+    pushHistory();
     touch();
     setTransition(content);
   }
@@ -1022,6 +1025,7 @@ export default function App() {
     const targetDesk = desks[deskIndex];
     if (!targetDesk) return;
     const alreadyAdded = targetDesk.icons.some((icon) => icon.launch.target === app.target);
+    pushHistory();
     touch();
     setDesks((prev) =>
       prev.map((d, i) => {
@@ -1043,6 +1047,7 @@ export default function App() {
   }
 
   function removeIcon(target: string) {
+    pushHistory();
     touch();
     setDesks((prev) =>
       prev.map((d, i) =>
@@ -1981,6 +1986,7 @@ export default function App() {
                       desks={desks}
                       setDesks={setDesks}
                       activeDesk={activeDesk}
+                      onBeginChange={pushHistory}
                       touch={touch}
                       setStatus={setStatus}
                     />
@@ -2006,7 +2012,7 @@ export default function App() {
                       if (message) setStatus(message);
                     }}
                   />
-                ) : edges.length > 0 ? (
+                ) : (
                   <>
                     {/* 上：Room 结构思维导图（Desk 对视觉上合并为一条双向线） */}
 	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
@@ -2395,13 +2401,6 @@ export default function App() {
                       )}
                     </div>
                   </>
-                ) : (
-                  <div className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                    <p>Desk 编辑区（改造中）</p>
-                    <p className="text-xs">
-                      Desk 管理 / 背景 / 图标尺寸先沿用左侧栏，下一轮重排
-                    </p>
-                  </div>
                 )}
               </div>
             )}

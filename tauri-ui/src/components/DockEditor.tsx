@@ -17,6 +17,7 @@ interface DockEditorProps {
   desks: Desk[];
   setDesks: React.Dispatch<React.SetStateAction<Desk[]>>;
   activeDesk: number;
+  onBeginChange: () => void;
   touch: () => void;
   setStatus: (s: string) => void;
 }
@@ -55,6 +56,7 @@ export function DockEditor({
   desks,
   setDesks,
   activeDesk,
+  onBeginChange,
   touch,
   setStatus,
 }: DockEditorProps) {
@@ -79,6 +81,7 @@ export function DockEditor({
   );
 
   function saveGlobal() {
+    onBeginChange();
     setDock(globalDock);
     touch();
     setStatus("全局 Dock 配置已保存");
@@ -86,6 +89,7 @@ export function DockEditor({
 
   function updateGlobalIcons(icons: DockIconItem[], message: string) {
     const next = { ...globalDock, icons };
+    onBeginChange();
     setGlobalDock(next);
     setDock(next);
     touch();
@@ -95,12 +99,14 @@ export function DockEditor({
   // ---- 每桌覆盖：写回父级 desks（这样 room.json 保存时能带上 desks[i].dock）----
   function updateDesk(patch: Partial<DockConfig>) {
     const next = { ...deskDock, ...patch };
+    onBeginChange();
     setDeskDocks((prev) => prev.map((d, i) => (i === activeDesk ? next : d)));
     setDesks((prev) => prev.map((d, i) => (i === activeDesk ? { ...d, dock: next } : d)));
     touch();
   }
 
   function replaceDeskDock(next: DockConfig) {
+    onBeginChange();
     setDeskDocks((prev) => prev.map((d, i) => (i === activeDesk ? next : d)));
     setDesks((prev) => prev.map((d, i) => (i === activeDesk ? { ...d, dock: next } : d)));
     touch();
