@@ -8,14 +8,14 @@ import {
   type DockIconItem,
   DEFAULT_DOCK_STYLE,
 } from "@/lib/dock";
+import type { Desk } from "@/lib/room-v2";
 
 interface DockEditorProps {
   dock: DockConfig;
   setDock: (d: DockConfig) => void;
   apps: DockAppInfo[];
-  // Desk[] 与最小结构间存在逆变问题，用 any[] 保持与 App 的 setDesks 直接可赋值
-  desks: any[];
-  setDesks: React.Dispatch<React.SetStateAction<any[]>>;
+  desks: Desk[];
+  setDesks: React.Dispatch<React.SetStateAction<Desk[]>>;
   activeDesk: number;
   touch: () => void;
   setStatus: (s: string) => void;

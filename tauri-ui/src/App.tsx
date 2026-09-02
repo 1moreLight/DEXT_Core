@@ -37,6 +37,13 @@ import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { deleteDeskGraph } from "@/lib/desk";
 import {
+  cloneEditorSnapshot,
+  loadEditorHistory,
+  normalizeRoomJson,
+  saveEditorHistory,
+  type RoomEditorSnapshot,
+} from "@/lib/editor-history";
+import {
   assertRoomV2WritePayload,
   readOnlyRoomMessage,
   roomContractPolicy,
@@ -128,16 +135,7 @@ type EditorView = "canvas" | "flow";
    拓扑：启动画面只直连一个可选 Desk（无 switch，未指定时默认 d0）；
    Desk 相邻上下双向连接，3 个以上时首尾从侧边双向环回。 */
 type GEdge = { id: string; from: string; to: string; trans: Transition | null };
-type Snapshot = {
-  edges: GEdge[];
-  desks: Desk[];
-  startName: string;
-  startContent: Content | null;
-  idleName: string;
-  idleContent: Content | null;
-  hasStart: boolean;
-  startDesk: number;
-};
+type Snapshot = RoomEditorSnapshot;
 type GraphNodeRect = {
   left: number;
   right: number;
@@ -402,7 +400,7 @@ const MOCK_ROOMS: RoomInfo[] = [
     version: 2,
     desks: 2,
     icons: 8,
-    widgets: 0,
+    widgets: 3,
     covers: [
       { kind: "video", src: "background/bg.mp4" },
       { kind: "image", src: "background/bg.png" },
@@ -480,6 +478,26 @@ const MOCK_DESKS: Desk[] = [
         placement: { x: 1180, y: 96, width: 560, height: 260, z: 2 },
         config: { accent: "#67e8f9" },
         permissions: ["time.read", "hardware.cpu.read", "hardware.memory.read"],
+        hotspots: [],
+      },
+      {
+        id: "now-playing",
+        name: "正在播放",
+        src: "widgets/now-playing/index.html",
+        resources: ["widgets/now-playing/index.html"],
+        placement: { x: 720, y: 680, width: 640, height: 240, z: 1 },
+        config: {},
+        permissions: ["now-playing.read", "system.volume.read"],
+        hotspots: [],
+      },
+      {
+        id: "clock",
+        name: "浮动时钟",
+        src: "widgets/clock/index.html",
+        resources: ["widgets/clock/index.html"],
+        placement: { x: 96, y: 720, width: 360, height: 180, z: 3 },
+        config: {},
+        permissions: ["time.read"],
         hotspots: [],
       },
     ],
@@ -920,6 +938,8 @@ export default function App() {
   const [propsH, setPropsH] = useState(210);
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
+  const roomBaselineRef = useRef("");
+  const historyReadyRef = useRef(false);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const startNodeRef = useRef<HTMLButtonElement>(null);
@@ -1090,6 +1110,7 @@ export default function App() {
   }
 
   async function openRoom(path: string, checkDirty = true) {
+    historyReadyRef.current = false;
     if (!IS_TAURI) {
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
@@ -1102,6 +1123,10 @@ export default function App() {
       setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
       setPermissionReviews([]);
+      setPast([]);
+      setFuture([]);
+      roomBaselineRef.current = "mock-v2";
+      historyReadyRef.current = true;
       setStatus(`已打开 ${path.split("\\").pop()}（mock）`);
       return true;
     }
@@ -1114,6 +1139,7 @@ export default function App() {
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
+      const baseline = normalizeRoomJson(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
         ? room.desks.map(cleanDesk)
         : [newDesk(0)];
@@ -1145,10 +1171,24 @@ export default function App() {
       setRoomPath(path);
       setDirty(false);
       setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path }));
+      roomBaselineRef.current = baseline;
+      const restored = await loadEditorHistory(path, baseline).catch(() => null);
+      if (restored) {
+        applySnapshot(restored.current);
+        setPast(restored.past.map(cloneEditorSnapshot));
+        setFuture(restored.future.map(cloneEditorSnapshot));
+        setDirty(restored.dirty);
+      } else {
+        setPast([]);
+        setFuture([]);
+      }
+      historyReadyRef.current = true;
       localStorage.setItem("dext.roomPath", path);
       setStatus(
         room.version === 2
-          ? `已打开 ${path.split("\\").pop()}`
+          ? restored?.dirty
+            ? `已恢复 ${path.split("\\").pop()} 的未保存草稿和撤销历史`
+            : `已打开 ${path.split("\\").pop()}`
           : readOnlyRoomMessage(room.version)
       );
       return true;
@@ -1169,10 +1209,12 @@ export default function App() {
       return false;
     }
     try {
+      const roomJson = JSON.stringify(buildRoomV2(), null, 2);
       await invoke("write_room", {
         path: `${roomPath}\\room.json`,
-        roomJson: JSON.stringify(buildRoomV2(), null, 2),
+        roomJson,
       });
+      roomBaselineRef.current = normalizeRoomJson(roomJson);
       setDirty(false);
       setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path: roomPath }));
       return true;
@@ -1910,20 +1952,25 @@ export default function App() {
     setStatus("启动目标已切换，保存后写入 startDesk");
   }
   function snapshot(): Snapshot {
-    return {
+    return cloneEditorSnapshot({
       edges,
-      desks: desks.map((d) => ({ ...d })),
+      desks,
+      dock,
+      transition,
       startName,
       startContent,
       idleName,
       idleContent,
       hasStart,
       startDesk,
-    };
+    });
   }
   function applySnapshot(s: Snapshot) {
-    setEdges(s.edges);
-    setDesks(s.desks);
+    const next = cloneEditorSnapshot(s);
+    setEdges(next.edges);
+    setDesks(next.desks);
+    setDock(next.dock);
+    setTransition(next.transition);
     setStartName(s.startName);
     setStartContent(s.startContent);
     setIdleName(s.idleName);
@@ -1937,7 +1984,7 @@ export default function App() {
     });
   }
   function pushHistory() {
-    setPast((p) => [...p.slice(-49), snapshot()]);
+    setPast((p) => [...p.slice(-49), cloneEditorSnapshot(snapshot())]);
     setFuture([]);
   }
   function undo() {
@@ -1946,6 +1993,7 @@ export default function App() {
     setPast(past.slice(0, -1));
     setFuture([snapshot(), ...future]);
     applySnapshot(s);
+    setDirty(true);
   }
   function redo() {
     if (future.length === 0) return;
@@ -1953,6 +2001,7 @@ export default function App() {
     setFuture(future.slice(1));
     setPast([...past, snapshot()]);
     applySnapshot(s);
+    setDirty(true);
   }
   function onDividerDown(e: PointerEvent<HTMLDivElement>) {
     dragRef.current = { startY: e.clientY, startH: propsH };
@@ -1968,12 +2017,27 @@ export default function App() {
   }
   useEffect(() => {
     if (roomEntered) {
-      setPast([]);
-      setFuture([]);
       setGraphSel(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomEntered, roomPath]);
+
+  useEffect(() => {
+    if (!IS_TAURI || !roomEntered || !roomPath || !historyReadyRef.current || !roomBaselineRef.current) return;
+    const timer = window.setTimeout(() => {
+      void saveEditorHistory({
+        version: 1,
+        roomPath,
+        baseRoomJson: roomBaselineRef.current,
+        current: cloneEditorSnapshot(snapshot()),
+        past: past.slice(-50).map(cloneEditorSnapshot),
+        future: future.slice(0, 50).map(cloneEditorSnapshot),
+        dirty,
+        updatedAt: Date.now(),
+      }).catch((error) => setStatus(`草稿历史持久化失败：${error}`));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [roomEntered, roomPath, dirty, edges, desks, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk, past, future]);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;

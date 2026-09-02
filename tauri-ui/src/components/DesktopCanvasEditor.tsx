@@ -1,5 +1,5 @@
-import { useRef, type PointerEvent as ReactPointerEvent } from "react";
-import { ChevronDown, ChevronUp, Grip, Layers3, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { AlignCenterHorizontal, AlignCenterVertical, AlignEndHorizontal, AlignEndVertical, AlignStartHorizontal, AlignStartVertical, ChevronDown, ChevronUp, Grip, Layers3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +11,7 @@ import {
   type TrustedHotspot,
   type WidgetDefinition,
 } from "@/lib/room-v2";
-import { avoidIconObstacles, clampPlacement, type Rect } from "@/lib/widget-layout";
+import { alignWidgetPlacements, avoidIconObstacles, clampPlacement, snapPlacement, type Rect, type WidgetAlignment } from "@/lib/widget-layout";
 
 const ICON_GRID = { cellWidth: 96, cellHeight: 120, columns: 19, rows: 7 } as const;
 
@@ -182,9 +182,24 @@ export function DesktopCanvasEditor({
   onDeskChange,
 }: DesktopCanvasEditorProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(selectedWidgetId ? [selectedWidgetId] : []));
   const desk = desks[activeDesk];
-  const selected = desk?.widgets.find((widget) => widget.id === selectedWidgetId) ?? null;
+  const selected = desk?.widgets.find((widget) => widget.id === selectedWidgetId)
+    ?? desk?.widgets.find((widget) => selectedIds.has(widget.id))
+    ?? null;
+  const selectedWidgets = desk?.widgets.filter((widget) => selectedIds.has(widget.id)) ?? [];
   const scene = !selected && desk?.background?.type === "html" ? desk.background : null;
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+    onSelectWidget(null);
+  }, [activeDesk]);
+
+  useEffect(() => {
+    if (selectedWidgetId && !selectedIds.has(selectedWidgetId)) {
+      setSelectedIds(new Set([selectedWidgetId]));
+    }
+  }, [selectedWidgetId]);
 
   if (!desk) return <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">没有可编辑的 Desk</div>;
 
@@ -192,8 +207,29 @@ export function DesktopCanvasEditor({
     onDeskChange({ ...desk, widgets: desk.widgets.map((widget) => widget.id === id ? next : widget) }, message);
   };
 
-  const finishPlacement = (id: string, next: WidgetDefinition) => {
-    const widgets = desk.widgets.map((widget) => widget.id === id ? next : widget);
+  const replaceWidgets = (next: Map<string, WidgetDefinition>, message?: string) => {
+    onDeskChange({ ...desk, widgets: desk.widgets.map((widget) => next.get(widget.id) ?? widget) }, message);
+  };
+
+  const selectWidget = (id: string | null, additive = false) => {
+    if (!id) {
+      setSelectedIds(new Set());
+      onSelectWidget(null);
+      return;
+    }
+    if (!additive) {
+      setSelectedIds(new Set([id]));
+      onSelectWidget(id);
+      return;
+    }
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+    onSelectWidget(next.has(id) ? id : [...next][0] ?? null);
+  };
+
+  const finishPlacement = (widgets: WidgetDefinition[]) => {
     const reserved = dockReserve(desk);
     const avoided = avoidIconObstacles(
       desk.icons,
@@ -213,13 +249,25 @@ export function DesktopCanvasEditor({
     if (event.button !== 0 || !canvasRef.current) return;
     event.preventDefault();
     event.stopPropagation();
-    onSelectWidget(widget.id);
+    const additive = event.shiftKey || event.ctrlKey || event.metaKey;
+    if (additive) {
+      selectWidget(widget.id, true);
+      return;
+    }
+    const dragIds = !resize && selectedIds.has(widget.id) ? new Set(selectedIds) : new Set([widget.id]);
+    if (!selectedIds.has(widget.id)) selectWidget(widget.id);
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = rect.width / ROOM_CANVAS.width;
+    const moving = desk.widgets.filter((item) => dragIds.has(item.id));
+    const origins = new Map(moving.map((item) => [item.id, { ...item.placement }]));
     const origin = { ...widget.placement };
-    let latest = widget;
+    const minX = Math.min(...moving.map((item) => item.placement.x));
+    const minY = Math.min(...moving.map((item) => item.placement.y));
+    const maxX = Math.max(...moving.map((item) => item.placement.x + item.placement.width));
+    const maxY = Math.max(...moving.map((item) => item.placement.y + item.placement.height));
+    let latest = desk.widgets;
     let started = false;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -229,19 +277,37 @@ export function DesktopCanvasEditor({
         started = true;
         onBeginChange();
       }
-      const dx = (move.clientX - startX) / scale;
-      const dy = (move.clientY - startY) / scale;
-      const placement = clampPlacement(resize
-        ? { ...origin, width: origin.width + dx, height: origin.height + dy }
-        : { ...origin, x: origin.x + dx, y: origin.y + dy });
-      latest = { ...widget, placement };
-      replaceWidget(widget.id, latest);
+      let dx = (move.clientX - startX) / scale;
+      let dy = (move.clientY - startY) / scale;
+      const updates = new Map<string, WidgetDefinition>();
+      if (resize) {
+        const placement = snapPlacement(
+          clampPlacement({ ...origin, width: origin.width + dx, height: origin.height + dy }),
+          desk.widgets.filter((item) => item.id !== widget.id).map((item) => item.placement),
+        );
+        updates.set(widget.id, { ...widget, placement });
+      } else {
+        dx = Math.min(Math.max(dx, -minX), ROOM_CANVAS.width - maxX);
+        dy = Math.min(Math.max(dy, -minY), ROOM_CANVAS.height - maxY);
+        const primary = snapPlacement(
+          { ...origin, x: origin.x + dx, y: origin.y + dy },
+          desk.widgets.filter((item) => !dragIds.has(item.id)).map((item) => item.placement),
+        );
+        dx += primary.x - (origin.x + dx);
+        dy += primary.y - (origin.y + dy);
+        for (const item of moving) {
+          const itemOrigin = origins.get(item.id)!;
+          updates.set(item.id, { ...item, placement: clampPlacement({ ...itemOrigin, x: itemOrigin.x + dx, y: itemOrigin.y + dy }) });
+        }
+      }
+      latest = desk.widgets.map((item) => updates.get(item.id) ?? item);
+      replaceWidgets(updates);
     };
     const finish = () => {
       target.removeEventListener("pointermove", onMove);
       target.removeEventListener("pointerup", onUp);
       target.removeEventListener("pointercancel", onCancel);
-      if (started) finishPlacement(widget.id, latest);
+      if (started) finishPlacement(latest);
     };
     const onUp = () => finish();
     const onCancel = () => finish();
@@ -262,6 +328,25 @@ export function DesktopCanvasEditor({
     replaceWidget(selected.id, { ...selected, placement: { ...selected.placement, z } }, delta > 0 ? "Widget 已上移一层" : "Widget 已下移一层");
   };
 
+  const alignSelection = (alignment: WidgetAlignment) => {
+    if (selectedWidgets.length < 2) return;
+    onBeginChange();
+    const placements = alignWidgetPlacements(selectedWidgets.map((item) => item.placement), alignment);
+    replaceWidgets(new Map(selectedWidgets.map((item, index) => [item.id, { ...item, placement: placements[index] }])), "已对齐所选 Widget");
+  };
+
+  const moveSelectionToEdge = (front: boolean) => {
+    if (!selectedWidgets.length) return;
+    onBeginChange();
+    const selected = new Set(selectedWidgets.map((item) => item.id));
+    const ordered = desk.widgets.slice().sort((a, b) => a.placement.z - b.placement.z || a.id.localeCompare(b.id));
+    const nextOrder = front
+      ? [...ordered.filter((item) => !selected.has(item.id)), ...ordered.filter((item) => selected.has(item.id))]
+      : [...ordered.filter((item) => selected.has(item.id)), ...ordered.filter((item) => !selected.has(item.id))];
+    const updates = new Map(nextOrder.map((item, index) => [item.id, { ...item, placement: { ...item.placement, z: Math.min(255, index) } }]));
+    replaceWidgets(updates, front ? "所选 Widget 已置顶" : "所选 Widget 已置底");
+  };
+
   return (
     <div className="flex min-h-0 flex-1 gap-3">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -270,7 +355,7 @@ export function DesktopCanvasEditor({
             <button
               key={index}
               type="button"
-              onClick={() => { onActiveDesk(index); onSelectWidget(null); }}
+              onClick={() => { onActiveDesk(index); selectWidget(null); }}
               className={`shrink-0 rounded-md px-3 py-1.5 text-xs transition-colors ${index === activeDesk ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
             >
               {item.name} <span className="opacity-65">· {item.widgets.length}</span>
@@ -284,7 +369,7 @@ export function DesktopCanvasEditor({
             ref={canvasRef}
             role="application"
             aria-label={`${desk.name} 桌面画布`}
-            onPointerDown={() => onSelectWidget(null)}
+            onPointerDown={() => selectWidget(null)}
             className="relative aspect-video max-h-full w-full max-w-[calc((100vh-15rem)*16/9)] overflow-hidden bg-black shadow-[0_18px_70px_rgba(0,0,0,.28)] ring-1 ring-border"
           >
             <Background content={desk.background} roomPath={roomPath} />
@@ -304,7 +389,7 @@ export function DesktopCanvasEditor({
 
             {desk.widgets.slice().sort((a, b) => a.placement.z - b.placement.z).map((widget) => {
               const placement = widget.placement;
-              const isSelected = widget.id === selectedWidgetId;
+              const isSelected = selectedIds.has(widget.id);
               return (
                 <div
                   key={widget.id}
@@ -382,12 +467,25 @@ export function DesktopCanvasEditor({
         <div className="flex items-center gap-2 pb-3">
           <Layers3 className="h-4 w-4 text-primary" />
           <div>
-            <div className="text-sm font-medium">{selected?.name ?? desk.name}</div>
-            <div className="text-[11px] text-muted-foreground">{selected ? "Widget 实例" : `${desk.widgets.length} Widget · ${desk.icons.length} 图标`}</div>
+            <div className="text-sm font-medium">{selectedWidgets.length > 1 ? `已选择 ${selectedWidgets.length} 个 Widget` : selected?.name ?? desk.name}</div>
+            <div className="text-[11px] text-muted-foreground">{selected ? selectedWidgets.length > 1 ? "多选布局" : "Widget 实例" : `${desk.widgets.length} Widget · ${desk.icons.length} 图标`}</div>
           </div>
         </div>
         {selected ? (
           <div className="space-y-4">
+            {selectedWidgets.length > 1 && (
+              <div className="space-y-2 rounded-md border border-border p-2">
+                <div className="text-[11px] font-medium">多选对齐</div>
+                <div className="grid grid-cols-3 gap-1">
+                  <Button variant="outline" size="icon" title="左对齐" onClick={() => alignSelection("left")}><AlignStartVertical /></Button>
+                  <Button variant="outline" size="icon" title="水平居中" onClick={() => alignSelection("center-x")}><AlignCenterVertical /></Button>
+                  <Button variant="outline" size="icon" title="右对齐" onClick={() => alignSelection("right")}><AlignEndVertical /></Button>
+                  <Button variant="outline" size="icon" title="顶对齐" onClick={() => alignSelection("top")}><AlignStartHorizontal /></Button>
+                  <Button variant="outline" size="icon" title="垂直居中" onClick={() => alignSelection("center-y")}><AlignCenterHorizontal /></Button>
+                  <Button variant="outline" size="icon" title="底对齐" onClick={() => alignSelection("bottom")}><AlignEndHorizontal /></Button>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               {(["x", "y", "width", "height"] as const).map((key) => (
                 <label key={key} className="text-[11px] text-muted-foreground">
@@ -408,6 +506,8 @@ export function DesktopCanvasEditor({
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" size="sm" onClick={() => moveLayer(-1)}><ChevronDown /> 下移</Button>
                 <Button variant="outline" size="sm" onClick={() => moveLayer(1)}><ChevronUp /> 上移</Button>
+                <Button variant="outline" size="sm" onClick={() => moveSelectionToEdge(false)}>置底</Button>
+                <Button variant="outline" size="sm" onClick={() => moveSelectionToEdge(true)}>置顶</Button>
               </div>
             </div>
             <div>
@@ -475,11 +575,12 @@ export function DesktopCanvasEditor({
                 className="mt-3 w-full text-destructive hover:text-destructive"
                 onClick={() => {
                   onBeginChange();
-                  onDeskChange({ ...desk, widgets: desk.widgets.filter((widget) => widget.id !== selected.id) }, `已移除 Widget「${selected.name}」`);
-                  onSelectWidget(null);
+                  const removing = new Set(selectedWidgets.map((widget) => widget.id));
+                  onDeskChange({ ...desk, widgets: desk.widgets.filter((widget) => !removing.has(widget.id)) }, selectedWidgets.length > 1 ? `已移除 ${selectedWidgets.length} 个 Widget` : `已移除 Widget「${selected.name}」`);
+                  selectWidget(null);
                 }}
               >
-                <Trash2 /> 删除 Widget
+                <Trash2 /> {selectedWidgets.length > 1 ? `删除 ${selectedWidgets.length} 个 Widget` : "删除 Widget"}
               </Button>
             </div>
           </div>

@@ -20,6 +20,8 @@ export interface IconAvoidanceResult {
   unresolved: number[];
 }
 
+export type WidgetAlignment = "left" | "center-x" | "right" | "top" | "center-y" | "bottom";
+
 const overlaps = (a: Rect, b: Rect) =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 
@@ -55,6 +57,79 @@ export function canvasTransform(
     offsetX: (viewportWidth - width) / 2,
     offsetY: (viewportHeight - height) / 2,
   };
+}
+
+function nearestSnap(value: number, targets: number[], threshold: number) {
+  let best = value;
+  let distance = threshold + 1;
+  for (const target of targets) {
+    const nextDistance = Math.abs(target - value);
+    if (nextDistance < distance) {
+      best = target;
+      distance = nextDistance;
+    }
+  }
+  return { value: best, distance };
+}
+
+export function snapPlacement(
+  placement: WidgetPlacement,
+  neighbors: WidgetPlacement[],
+  threshold = 12,
+): WidgetPlacement {
+  const xTargets = [0, ROOM_CANVAS.width / 2, ROOM_CANVAS.width];
+  const yTargets = [0, ROOM_CANVAS.height / 2, ROOM_CANVAS.height];
+  for (const neighbor of neighbors) {
+    xTargets.push(neighbor.x, neighbor.x + neighbor.width / 2, neighbor.x + neighbor.width);
+    yTargets.push(neighbor.y, neighbor.y + neighbor.height / 2, neighbor.y + neighbor.height);
+  }
+  const xEdges = [placement.x, placement.x + placement.width / 2, placement.x + placement.width];
+  const yEdges = [placement.y, placement.y + placement.height / 2, placement.y + placement.height];
+  let snappedX = placement.x;
+  let snappedY = placement.y;
+  let xDistance = threshold + 1;
+  let yDistance = threshold + 1;
+  xEdges.forEach((edge) => {
+    const target = nearestSnap(edge, xTargets, threshold);
+    const distance = target.distance;
+    if (distance < xDistance) {
+      xDistance = distance;
+      snappedX = placement.x + target.value - edge;
+    }
+  });
+  yEdges.forEach((edge) => {
+    const target = nearestSnap(edge, yTargets, threshold);
+    const distance = target.distance;
+    if (distance < yDistance) {
+      yDistance = distance;
+      snappedY = placement.y + target.value - edge;
+    }
+  });
+  return clampPlacement({ ...placement, x: snappedX, y: snappedY });
+}
+
+export function alignWidgetPlacements(
+  placements: WidgetPlacement[],
+  alignment: WidgetAlignment,
+): WidgetPlacement[] {
+  if (placements.length < 2) return placements.map((placement) => ({ ...placement }));
+  const left = Math.min(...placements.map((placement) => placement.x));
+  const right = Math.max(...placements.map((placement) => placement.x + placement.width));
+  const top = Math.min(...placements.map((placement) => placement.y));
+  const bottom = Math.max(...placements.map((placement) => placement.y + placement.height));
+  const centerX = (left + right) / 2;
+  const centerY = (top + bottom) / 2;
+  return placements.map((placement) => clampPlacement({
+    ...placement,
+    x: alignment === "left" ? left
+      : alignment === "center-x" ? centerX - placement.width / 2
+      : alignment === "right" ? right - placement.width
+      : placement.x,
+    y: alignment === "top" ? top
+      : alignment === "center-y" ? centerY - placement.height / 2
+      : alignment === "bottom" ? bottom - placement.height
+      : placement.y,
+  }));
 }
 
 function iconRect(x: number, y: number, grid: IconGrid): Rect {

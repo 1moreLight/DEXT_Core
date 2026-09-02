@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RoomIcon, WidgetPlacement } from "./room-v2";
-import { avoidIconObstacles, canvasTransform, clampPlacement } from "./widget-layout";
+import { alignWidgetPlacements, avoidIconObstacles, canvasTransform, clampPlacement, snapPlacement } from "./widget-layout";
 
 const icon = (label: string, x: number, y: number): RoomIcon => ({
   label,
@@ -59,5 +59,23 @@ describe("widget layout", () => {
       );
     expect(run().icons[0]).toMatchObject({ x: 1, y: 0 });
     expect(run()).toEqual(run());
+  });
+
+  it("snaps Widget edges and centers to canvas and neighboring Widgets", () => {
+    const neighbor: WidgetPlacement = { x: 500, y: 300, width: 300, height: 200, z: 0 };
+    expect(snapPlacement({ x: 310, y: 298, width: 180, height: 100, z: 1 }, [neighbor]))
+      .toMatchObject({ x: 320, y: 300 });
+    expect(snapPlacement({ x: 705, y: 505, width: 200, height: 80, z: 1 }, [neighbor]))
+      .toMatchObject({ x: 700, y: 500 });
+  });
+
+  it("aligns a multi-selection while preserving sizes and canvas bounds", () => {
+    const source: WidgetPlacement[] = [
+      { x: 100, y: 120, width: 200, height: 100, z: 0 },
+      { x: 500, y: 420, width: 300, height: 200, z: 1 },
+    ];
+    expect(alignWidgetPlacements(source, "left").map(({ x }) => x)).toEqual([100, 100]);
+    expect(alignWidgetPlacements(source, "center-y").map(({ y }) => y)).toEqual([320, 270]);
+    expect(alignWidgetPlacements(source, "bottom").map(({ y, height }) => y + height)).toEqual([620, 620]);
   });
 });
