@@ -62,6 +62,8 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_FRONTEND_CHECKLIST.md` | WidgetHost、Scene 数据绑定、可信热点、拖拽/层叠与图标避让实施清单 | 开发 v2 前端宿主时 |
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
+| `CONFIGURATOR_V2_PLAN.md` | **UI-V2-001 单工作包总计划**：配置器、Scene、WidgetHost、系统能力、安全分享与 AI 创作端到端范围 | 开发或验收配置器 v2 时 |
+| `CONFIGURATOR_V2_LUNA_PROMPT.md` | 可直接交给 `gpt-5.6-luna` 的 UI-V2-001 执行指令 | 将整个 v2 工作包交接给执行模型时 |
 | `DOCK_STYLE.md` | Dock v0.x 外观定制历史；包含已废弃的 room.js/room.css 接口 | 仅回溯旧实现时 |
 
 **铁律**：一个工作包一个分支和验收文件 → 动代码前写 TODO 和验收 → 自测通过后 commit → 停在分支等待用户验收 → 用户明确通过后才合并并删除分支/worktree。
