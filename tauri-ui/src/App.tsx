@@ -3,11 +3,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
-  Copy,
   LayoutGrid,
   MonitorPlay,
   Moon,
-  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -25,13 +23,11 @@ import { EditorHierarchy, type EditorView } from "@/features/room-editor/EditorH
 import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
 import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
+import { EditorRoomLibrary } from "@/pages/EditorRoomLibrary";
 import {
   AppIcon,
   ContentInspector,
-  CoverStack,
   DeskBackgroundCanvas,
-  RoomBackgroundPreview,
-  roomCovers,
 } from "@/features/room-library/previews";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
@@ -1568,96 +1564,20 @@ export default function App() {
                 onSave={saveDockPreset}
               />
             ) : editNav === "room" && !roomEntered ? (
-              /* room list + WE-style detail panel */
-              <div className="flex min-h-0 flex-1 gap-4">
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
-                  <div className="text-sm text-muted-foreground">
-                    选择房间查看详情；「编辑」进入 Desk 编辑
-                  </div>
-                  <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-3 content-start gap-3 overflow-y-auto pr-1">
-                    {sortedRooms.map((r) => (
-                      <button
-                        key={r.path}
-                        onClick={() => setRoomPickPath(r.path)}
-                        className={`overflow-hidden rounded-xl border text-left outline-none transition-[border-color,background-color,box-shadow] focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                          pickedRoom && r.path === pickedRoom.path
-                            ? "border-cyan-500 bg-cyan-500/10 ring-2 ring-cyan-500/50 ring-offset-2 ring-offset-background shadow-sm"
-                            : "border-border bg-card hover:border-cyan-500/40 hover:bg-muted/30"
-                        }`}
-                      >
-                        <div className="relative aspect-video w-full">
-                          <CoverStack tiles={roomCovers(r)} />
-                          {pickedRoom && r.path === pickedRoom.path && (
-                            <span className="absolute left-2 top-2 rounded-md border border-white/20 bg-cyan-600 px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-cyan-400 dark:text-slate-950">
-                              已选中
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <div className="flex items-center gap-2"><span className="truncate text-sm font-medium">{r.name}</span><span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">{roomContractPolicy(r.version).versionLabel}</span></div>
-                          <div className="text-xs text-muted-foreground">
-                            {r.desks} Desk · {r.icons} 图标 · {r.widgets} Widget
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                    {rooms.length === 0 && (
-                      <div className="col-span-3 py-16 text-center text-sm text-muted-foreground">
-                        房间库为空——点下方「新增 Room」创建一个吧
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end border-t border-border pt-3">
-                    <Button variant="outline" onClick={addRoomFromList}>
-                      <Plus className="h-4 w-4" /> 新增 Room
-                    </Button>
-                  </div>
-                </div>
-
-                {pickedRoom && (
-                  <aside className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-border pl-4">
-                    <RoomBackgroundPreview room={pickedRoom} className="rounded-lg" label={`${pickedRoom.name} 背景预览`} />
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-lg font-medium">{pickedRoom.name}</span>
-                        {pickedRoom.path === appliedRoom && (
-                          <span className="rounded-full bg-emerald-500/90 px-2 py-0.5 text-xs font-medium text-white">
-                            应用中
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {pickedRoom.desks} Desk · {pickedRoom.icons} 图标 · {pickedRoom.widgets} Widget · {roomContractPolicy(pickedRoom.version).versionLabel}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        onClick={() => void enterRoomEditor(pickedRoom)}
-                      >
-                        {roomContractPolicy(pickedRoom.version).edit ? "编辑" : "只读查看"}
-                      </Button>
-                      <Button
-                        className="flex-1"
-                        variant={pickedRoom.path === appliedRoom ? "secondary" : "outline"}
-                        disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).apply || (IS_TAURI && !coreIdentity)}
-                        title={!roomContractPolicy(pickedRoom.version).apply ? readOnlyRoomMessage(pickedRoom.version) : IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined}
-                        onClick={() => void applyRoomDir(pickedRoom.path)}
-                      >
-                        {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).edit} onClick={() => void duplicateRoom(pickedRoom)}>
-                        <Copy className="h-4 w-4" /> 复制
-                      </Button>
-                      <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).edit} onClick={() => void renameRoom(pickedRoom)}>
-                        <Pencil className="h-4 w-4" /> 重命名
-                      </Button>
-                    </div>
-                  </aside>
-                )}
-              </div>
+              <EditorRoomLibrary
+                rooms={sortedRooms}
+                selectedRoom={pickedRoom}
+                appliedRoom={appliedRoom}
+                busy={roomBusy}
+                coreIdentity={coreIdentity}
+                isTauri={IS_TAURI}
+                onSelect={(room) => setRoomPickPath(room.path)}
+                onNew={() => void addRoomFromList()}
+                onEdit={(room) => void enterRoomEditor(room)}
+                onApply={(room) => void applyRoomDir(room.path)}
+                onDuplicate={(room) => void duplicateRoom(room)}
+                onRename={(room) => void renameRoom(room)}
+              />
             ) : (
               /* entered a room: desk editing */
               <div className="flex min-h-0 flex-1 flex-col gap-3">
