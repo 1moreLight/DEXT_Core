@@ -1,6 +1,6 @@
 # UI-V2-001 配置器 v2 端到端工作规划
 
-> 状态：开发中；计划与验收边界已冻结，等待 `gpt-5.6-luna` 在同一工作包内执行。
+> 状态：开发中；计划与验收边界已冻结，当前由 `feat/ui-v2-001-configurator-v2` 按本计划执行。
 > 工作分支：`feat/ui-v2-001-configurator-v2`
 > 独立 worktree：`D:\use\Orca\DEXT_Core\ui-v2-001-configurator-v2`
 > 最终验收：`acceptance/UI-V2-001-configurator-v2.md`
@@ -59,7 +59,7 @@
 
 ### 3.3 React/Tauri 结构
 
-当前 `tauri-ui/src/App.tsx` 约 2784 行并集中 40 多组状态。目标结构应让 `App.tsx` 只装配应用，不再保存所有页面和编辑逻辑。推荐边界如下，最终命名可按代码事实调整：
+当前 `tauri-ui/src/App.tsx` 仍集中较多状态与流程逻辑（本轮已提取使用页、编辑器顶栏、层级树和运行时轮询）。目标结构应让 `App.tsx` 只装配应用，不再保存所有页面和编辑逻辑。推荐边界如下，最终命名可按代码事实调整：
 
 ```text
 src/

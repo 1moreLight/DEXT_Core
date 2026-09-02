@@ -306,7 +306,7 @@ async function loadRoom() {
     const res = await fetch(assetUrl("room.json") ?? "room.json");
     if (res.ok) {
       const room = await res.json();
-      // Widget code remains inert until the separate trusted WidgetHost work package.
+      // Room v2 content is mounted only through the trusted Scene/Widget hosts below.
       if (room?.version === 2 && room?.desks?.length) ROOM = room;
     }
   } catch (e) {

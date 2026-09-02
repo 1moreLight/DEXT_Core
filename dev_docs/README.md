@@ -16,7 +16,7 @@
 
 **Dext**：把 Windows 桌面变成手机式主屏。多个 Desk 放真图标应用、长按编辑、切桌动画；整套主题打包成 Room 分享。终局对标 Wallpaper Engine（创作者上架创意工坊，普通用户下载即用）。
 
-目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与未来 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
+目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
 
 DXT-003 将项目收口为唯一原生 Room v2；v1 与更旧 demo 不兼容、不迁移、不重建。新建、编辑、保存、另存、预览、应用和 zip 全链只接受/产生 v2。
 
@@ -149,7 +149,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 
 - 固定 `version: 2`，唯一待机字段为 `idle`，每个 Desk 写出 `widgets` 数组；`end` 非法。
 - Widget manifest、路径/资源、1920×1080 placement、权限枚举、config 限制和数量限制以 `room-v2.schema.json` 与 `WIDGETS_V2.md` 为准。
-- WidgetHost 尚未实现视觉执行，但 v2 已可编辑、覆盖保存、另存、预览 Scene、应用和 zip；现有 Widget 数据与资源必须无损保留。
+- WidgetHost 已实现首版离线视觉执行：v2 可编辑、覆盖保存、另存、预览、应用和 zip；现有 Widget 数据与资源必须无损保留。
 - v1 与未知版本只显示不支持；除安全删除外不得进入保存、预览、应用或 zip 链。
 - 自包含离线样包位于 `dev_docs/fixtures/room-v2/sample-library/widget-contract-sample/`。
 
@@ -241,5 +241,5 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/idle 全部受控挂载。
 - 持久化：源 Room 严格 v2、运行包唯一可信 `__source`、Widget 资源镜像、顶层 IPC 和双写边界已收紧。
-- 配置器：导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览，明确保存时才写 `room.json`；Desk 排序和成组 HTML 资产仍属后续工作。
+- 配置器：Room 层级树和导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览；Desk 身份级排序、Dock 覆盖和成组 HTML 资产均按 v2 单一写出器保存。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。

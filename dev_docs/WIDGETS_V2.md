@@ -1,6 +1,6 @@
 # Room v2 Widget 正式契约与路线
 
-> Room v2 是唯一受支持格式。DXT-003 交付 manifest、存储/复制/应用/zip 后端和受控系统接口；WidgetHost、权限 UI、可信热点与联网隔离在后续工作包实现。
+> Room v2 是唯一受支持格式。UI-V2-001 已交付 manifest、存储/复制/应用/zip 后端、离线 WidgetHost、权限 UI、可信热点与联网隔离；后续工作仅用于扩展契约，不改变安全边界。
 
 ## 1. 结论
 
@@ -92,13 +92,15 @@ AI 可生成 room.json v2、Scene、Widget HTML/CSS/JS、图片、字体和离�
 
 正式提示词见 `ROOM_V2_AI_PROMPT.md`。未来应提供版本化 SDK、类型定义、最小模板和 fixtures，不能只依赖自然语言。
 
-## 9. 后续工作包
+## 9. 历史工作包记录
 
-1. `WIDGET-001`：离线 WidgetHost，多实例、拖拽、缩放、z、生命周期与图标避让。
-2. `WIDGET-002`：Scene/Widget 共用只读 Capability Bridge、订阅、限频和权限 UI。
-3. `WIDGET-003`：KV、Dext 内动作、可信热点与受控媒体/音量动作。
-4. `WIDGET-004`：Player 网络/导航/下载拦截、代理联网、配额和熔断。
-5. `ROOM-004`：v2 分享清单、授权重询问、恶意包回归和创意工坊准备。
-6. `AI-001`：Room/Widget 创作 skill、SDK、模板与自动验证。
+> 以下编号保留用于追溯。UI-V2-001 已在当前分支完成对应的离线范围；未实现的联网、云端与安装器能力仍明确不在范围内。
+
+1. `WIDGET-001`：离线 WidgetHost，多实例、拖拽、缩放、z、生命周期与图标避让（UI-V2-001 已完成）。
+2. `WIDGET-002`：Scene/Widget 共用只读 Capability Bridge、订阅、限频和权限 UI（UI-V2-001 已完成）。
+3. `WIDGET-003`：KV、Dext 内动作、可信热点与受控媒体/音量动作（UI-V2-001 已完成受控媒体/音量部分）。
+4. `WIDGET-004`：Player 网络/导航/下载拦截、代理联网、配额和熔断（离线拒绝已完成；代理联网仍不做）。
+5. `ROOM-004`：v2 分享清单、授权重询问、恶意包回归和创意工坊准备（UI-V2-001 已完成本地分享与导入安全部分）。
+6. `AI-001`：Room/Widget 创作 skill、SDK、模板与自动验证（UI-V2-001 已完成本地上下文、模板与隔离导入部分）。
 
 前端实现清单见 `ROOM_V2_FRONTEND_CHECKLIST.md`，系统接口见 `ROOM_V2_SYSTEM_API.md`。

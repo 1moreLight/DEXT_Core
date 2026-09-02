@@ -466,5 +466,6 @@
 - [x] 增加 Room 层级树（Desk/Scene/Icons/Widgets/Dock），层级选择驱动画布/流程/Dock，Desk 上下移入口与历史事务统一（2026-09-02）
 - [x] 提取 `RoomEditorHeader` 与 `UsePage`，降低 `App.tsx` 页面装配与编辑器顶栏职责；`npm test` 30/30、`npm run build` 通过（2026-09-02）
 - [x] 浏览器复验层级 Widget 选择、Dock 编辑入口、流程节点、层级内 Desk 重排及 1100×900 无横向溢出（2026-09-02）
+- [x] 提取 `useDextRuntime` 与 `useGraphGeometry`，将 Core/当前 Room 轮询和流程图 DOM 测量从页面组件移出；同步修正 WidgetHost 旧注释（2026-09-02）
 - [ ] 继续审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链剩余缺口
 - [ ] 重跑全量自动检查、浏览器视觉、真实 Core/Tauri/Player 验证，重新进入一次性待验收

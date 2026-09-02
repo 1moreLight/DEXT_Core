@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
@@ -36,28 +36,18 @@ import {
   RoomBackgroundPreview,
   roomCovers,
 } from "@/features/room-library/previews";
-import type {
-  ActiveRoom,
-  AppInfo,
-  CoreIdentity,
-  PermissionReview,
-  RoomInfo,
-} from "@/features/runtime/types";
+import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
+import { useDextRuntime } from "@/features/runtime/useDextRuntime";
 import {
-  EMPTY_GRAPH_GEOMETRY,
-  GRAPH_ROW_GAP,
   graphSwitchPosition,
   pairKey,
   reconcileGraphEdges,
-  relativeGraphRect,
   routeGraphEdge,
-  sameGraphGeometry,
   seedEdges,
   visualGraphEdges,
   type GEdge,
-  type GraphGeometry,
-  type GraphNodeRect,
 } from "@/features/room-editor/graph";
+import { useGraphGeometry } from "@/features/room-editor/useGraphGeometry";
 import {
   cleanContent,
   cleanDesk,
@@ -300,15 +290,13 @@ export default function App() {
   const [activeDesk, setActiveDesk] = useState(0);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("loading...");
-  const [coreIdentity, setCoreIdentity] = useState<CoreIdentity | null>(null);
-  const [coreIdentityError, setCoreIdentityError] = useState<string | null>(null);
   const [libDir, setLibDir] = useState(
     () => initialLibDir()
   );
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [appliedRoom, setAppliedRoom] = useState<string | null>(null);
+  const { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected } = useDextRuntime(IS_TAURI);
   const [roomMultiMode, setRoomMultiMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
   const [roomBusy, setRoomBusy] = useState<string | null>(null);
@@ -347,16 +335,19 @@ export default function App() {
   const roomBaselineRef = useRef("");
   const historyReadyRef = useRef(false);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const startNodeRef = useRef<HTMLButtonElement>(null);
-  const deskNodeRefs = useRef(new Map<string, HTMLButtonElement>());
-  const [geom, setGeom] = useState<GraphGeometry>(EMPTY_GRAPH_GEOMETRY);
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("dext.theme");
     if (stored === "light" || stored === "dark") return stored;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const previewRef = useRef<HTMLIFrameElement>(null);
+  const {
+    canvasRef,
+    startNodeRef,
+    deskNodeRefs,
+    geometry: geom,
+    minHeight: graphMinHeight,
+  } = useGraphGeometry(roomEntered && editorView === "flow", desks, edges.length);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
   const activeRoomPolicy = roomContractPolicy(roomVersion);
@@ -383,63 +374,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
   }, [localDockPresets]);
-
-  useEffect(() => {
-    if (!IS_TAURI) return;
-    let disposed = false;
-    let checking = false;
-    const refreshCoreIdentity = async () => {
-      if (checking) return;
-      checking = true;
-      try {
-        const identity = await invoke<CoreIdentity>("core_identity");
-        if (!disposed) {
-          setCoreIdentity(identity);
-          setCoreIdentityError(null);
-        }
-      } catch (error) {
-        if (!disposed) {
-          setCoreIdentity(null);
-          setCoreIdentityError(String(error));
-        }
-      } finally {
-        checking = false;
-      }
-    };
-    void refreshCoreIdentity();
-    const timer = window.setInterval(() => void refreshCoreIdentity(), 2000);
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!IS_TAURI || !coreIdentity) {
-      setAppliedRoom(null);
-      return;
-    }
-    let disposed = false;
-    let checking = false;
-    const refresh = async () => {
-      if (checking) return;
-      checking = true;
-      try {
-        const active = await invoke<ActiveRoom | null>("active_room");
-        if (!disposed) setAppliedRoom(active?.sourcePath ?? null);
-      } catch {
-        if (!disposed) setAppliedRoom(null);
-      } finally {
-        checking = false;
-      }
-    };
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 2000);
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-    };
-  }, [coreIdentity]);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -638,8 +572,7 @@ export default function App() {
     } catch (e) {
       const message = String(e);
       if (message.includes("pipe connect failed")) {
-        setCoreIdentity(null);
-        setCoreIdentityError(message);
+        markCoreDisconnected(message);
         setStatus("Dext Core 已断开；请重新运行 scripts/start.ps1 后再应用 Room");
       } else {
         setStatus(`error: ${message}`);
@@ -1065,11 +998,6 @@ export default function App() {
   }
 
   const desk = desks[activeDesk];
-  const measuredDeskHeights = Object.entries(geom.nodes)
-    .filter(([id]) => id.startsWith("d"))
-    .map(([, rect]) => rect.height);
-  const graphRowHeight = Math.max(56, ...measuredDeskHeights) + GRAPH_ROW_GAP;
-  const graphMinHeight = Math.max(240, (desks.length + 1) * graphRowHeight);
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
     rooms.find((r) => r.path === appliedRoom) ??
@@ -1454,46 +1382,6 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [roomEntered, roomPath, dirty, edges, desks, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk, past, future]);
 
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current;
-    if (!roomEntered || editorView !== "flow" || !canvas) return;
-
-    let frame = 0;
-    const measure = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const currentCanvas = canvasRef.current;
-        if (!currentCanvas) return;
-        const canvasRect = currentCanvas.getBoundingClientRect();
-        const nodes: Record<string, GraphNodeRect> = {};
-        if (startNodeRef.current)
-          nodes.start = relativeGraphRect(startNodeRef.current, canvasRect);
-        desks.forEach((_, index) => {
-          const id = `d${index}`;
-          const node = deskNodeRefs.current.get(id);
-          if (node) nodes[id] = relativeGraphRect(node, canvasRect);
-        });
-        const next = { width: canvasRect.width, height: canvasRect.height, nodes };
-        setGeom((current) => (sameGraphGeometry(current, next) ? current : next));
-      });
-    };
-
-    const observer = new ResizeObserver(measure);
-    observer.observe(canvas);
-    if (startNodeRef.current) observer.observe(startNodeRef.current);
-    desks.forEach((_, index) => {
-      const node = deskNodeRefs.current.get(`d${index}`);
-      if (node) observer.observe(node);
-    });
-    window.addEventListener("resize", measure);
-    measure();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-      cancelAnimationFrame(frame);
-    };
-  }, [roomEntered, editorView, edges.length, desks.length]);
   const sortedRooms = [...rooms].sort((left, right) => roomSort === "name-desc"
     ? right.name.localeCompare(left.name)
     : roomSort === "desks-desc"
