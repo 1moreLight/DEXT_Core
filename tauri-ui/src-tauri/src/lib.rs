@@ -1637,6 +1637,64 @@ async fn save_room_as(
     .map(|path| path.to_string_lossy().into_owned())
 }
 
+fn duplicate_room_dir(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+    name: &str,
+) -> Result<std::path::PathBuf, String> {
+    let source = direct_room_in_library(library_dir, room_dir)?;
+    let room_json = std::fs::read_to_string(source.join("room.json"))
+        .map_err(|error| format!("read source room.json failed: {error}"))?;
+    save_room_as_dir(&source, library_dir, name, &room_json)
+}
+
+#[tauri::command]
+async fn duplicate_room(
+    library_dir: String,
+    room_dir: String,
+    name: String,
+) -> Result<String, String> {
+    duplicate_room_dir(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+        &name,
+    )
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
+fn rename_room_dir(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+    name: &str,
+) -> Result<std::path::PathBuf, String> {
+    validate_room_name(name)?;
+    let source = direct_room_in_library(library_dir, room_dir)?;
+    let library = source
+        .parent()
+        .ok_or_else(|| "Room has no library parent".to_string())?;
+    let target = library.join(name);
+    if target.exists() {
+        return Err(format!("room already exists: {name}"));
+    }
+    std::fs::rename(&source, &target)
+        .map_err(|error| format!("rename Room failed: {error}"))?;
+    Ok(target)
+}
+
+#[tauri::command]
+async fn rename_room(
+    library_dir: String,
+    room_dir: String,
+    name: String,
+) -> Result<String, String> {
+    rename_room_dir(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+        &name,
+    )
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
 #[tauri::command]
 async fn delete_room(library_dir: String, room_dir: String) -> Result<(), String> {
     let room = direct_room_entry_in_library(
@@ -2591,6 +2649,8 @@ pub fn run() {
             write_room,
             create_room,
             save_room_as,
+            duplicate_room,
+            rename_room,
             delete_room,
             export_room_zip,
             import_room_zip,
@@ -2628,10 +2688,10 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_settings_patch, create_room_dir, direct_room_entry_in_library,
+        apply_settings_patch, create_room_dir, direct_room_entry_in_library, duplicate_room_dir,
         direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
         import_widget_dir,
-        import_room_zip_file, save_room_as_dir, sync_room_to_package, validate_room_contract,
+        import_room_zip_file, rename_room_dir, save_room_as_dir, sync_room_to_package, validate_room_contract,
         validate_room_library_path, validate_room_v2, write_room_file, DextSettingsPatch,
         ROOM_ASSET_DIRS,
     };
@@ -3268,6 +3328,31 @@ mod tests {
         for directory in ROOM_ASSET_DIRS {
             assert!(room.join(directory).is_dir(), "missing {directory}");
         }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn duplicate_and_rename_room_stay_inside_library_and_preserve_assets() {
+        let root = test_dir("duplicate-rename-room");
+        let library = root.join("library");
+        let source = library.join("source");
+        std::fs::create_dir_all(&library).unwrap();
+        write_valid_room(&source, true);
+
+        let duplicate = duplicate_room_dir(&library, &source, "copy").unwrap();
+        assert_eq!(duplicate.parent(), Some(library.as_path()));
+        assert!(duplicate.join("background/scene.png").is_file());
+        assert_eq!(
+            std::fs::read_to_string(duplicate.join("room.json")).unwrap(),
+            std::fs::read_to_string(source.join("room.json")).unwrap()
+        );
+
+        let renamed = rename_room_dir(&library, &duplicate, "renamed").unwrap();
+        assert!(!duplicate.exists());
+        assert!(renamed.join("background/scene.png").is_file());
+        assert!(rename_room_dir(&library, &renamed, "source").unwrap_err().contains("already exists"));
+        assert!(duplicate_room_dir(&library, &source, "../escape").is_err());
+
         std::fs::remove_dir_all(root).unwrap();
     }
 

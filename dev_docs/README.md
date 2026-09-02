@@ -192,6 +192,8 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
 | `create_room` | `(dir, name) → path` | 建最小合法 v2 和五个内容目录 |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v2，并镜像五类资源；失败不留下半成品 |
+| `duplicate_room` | `(library_dir, room_dir, name) → path` | 仅复制库内直接子 Room，完整镜像 v2 JSON 与五类资源，失败清理目标 |
+| `rename_room` | `(library_dir, room_dir, name) → path` | 仅重命名库内直接子 Room，拒绝非法名称、重名、链接和库外路径；运行中 Room 随后重新应用刷新来源戳 |
 | `apply_room` | `(room_dir)` | 严格验证 v2，镜像五类资源，并仅在运行包注入规范化 `__source` |
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |

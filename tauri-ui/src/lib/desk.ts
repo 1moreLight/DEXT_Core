@@ -23,6 +23,11 @@ export type DeleteDeskResult<D, T> = {
   graphSelection: string | null;
 };
 
+export type MoveDeskInput<D, T> = Omit<DeleteDeskInput<D, T>, "deleteIndex"> & {
+  fromIndex: number;
+  toIndex: number;
+};
+
 function oldIndexForNew(newIndex: number, deleted: number): number {
   return newIndex < deleted ? newIndex : newIndex + 1;
 }
@@ -91,6 +96,72 @@ export function deleteDeskGraph<D, T>(input: DeleteDeskInput<D, T>): DeleteDeskR
     edges: nextEdges,
     startDesk: nextStart,
     activeDesk,
+    graphSelection,
+  };
+}
+
+export function moveDeskGraph<D, T>(input: MoveDeskInput<D, T>): DeleteDeskResult<D, T> {
+  const { desks, edges, fromIndex, toIndex, hasStart } = input;
+  if (![fromIndex, toIndex].every(Number.isInteger) ||
+      fromIndex < 0 || fromIndex >= desks.length || toIndex < 0 || toIndex >= desks.length) {
+    throw new Error("Desk move index is outside the Desk list");
+  }
+  if (fromIndex === toIndex) {
+    return {
+      desks: [...desks],
+      edges: edges.map((edge) => ({ ...edge })),
+      startDesk: input.startDesk,
+      activeDesk: input.activeDesk,
+      graphSelection: input.graphSelection,
+    };
+  }
+
+  const order = desks.map((_, index) => index);
+  const [movedOldIndex] = order.splice(fromIndex, 1);
+  order.splice(toIndex, 0, movedOldIndex);
+  const oldToNew = new Map(order.map((oldIndex, newIndex) => [oldIndex, newIndex]));
+  const nextDesks = order.map((oldIndex) => desks[oldIndex]);
+  const routeTransitions = new Map(
+    edges
+      .filter((edge) => /^d\d+$/.test(edge.from) && /^d\d+$/.test(edge.to))
+      .map((edge) => [`${edge.from}>${edge.to}`, edge.trans] as const)
+  );
+  const nextStart = oldToNew.get(input.startDesk) ?? 0;
+  const nextEdges: RemappableEdge<T>[] = hasStart
+    ? [{ id: "start-in", from: "start", to: `d${nextStart}`, trans: null }]
+    : [];
+  const addRoute = (id: string, from: number, to: number) => {
+    const oldFrom = order[from];
+    const oldTo = order[to];
+    nextEdges.push({
+      id,
+      from: `d${from}`,
+      to: `d${to}`,
+      trans: routeTransitions.get(`d${oldFrom}>d${oldTo}`) ?? null,
+    });
+  };
+  for (let index = 1; index < nextDesks.length; index += 1) {
+    addRoute(`s${index}f`, index - 1, index);
+    addRoute(`s${index}b`, index, index - 1);
+  }
+  if (nextDesks.length > 2) {
+    const last = nextDesks.length - 1;
+    addRoute("s-wrap-f", last, 0);
+    addRoute("s-wrap-b", 0, last);
+  }
+
+  const nextActive = oldToNew.get(input.activeDesk) ?? 0;
+  let graphSelection = input.graphSelection;
+  if (graphSelection && /^d\d+$/.test(graphSelection)) {
+    graphSelection = `d${oldToNew.get(Number(graphSelection.slice(1))) ?? nextActive}`;
+  } else if (graphSelection && graphSelection !== "start" && graphSelection !== "idle") {
+    graphSelection = null;
+  }
+  return {
+    desks: nextDesks,
+    edges: nextEdges,
+    startDesk: nextStart,
+    activeDesk: nextActive,
     graphSelection,
   };
 }

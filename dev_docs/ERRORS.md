@@ -56,6 +56,7 @@
 | #49 | Windows 系统媒体 API 与封面流可能永久阻塞 | [backend](errors/backend.md) |
 | #50 | Player 目标框架缺少较新的 ASCII 字符判断 API | [toolchain](errors/toolchain.md) |
 | #51 | 条件挂载画布的测量 effect 未依赖视图，流程连线为空 | [frontend](errors/frontend.md) |
+| #52 | 自动检查全绿但未逐条对照计划，导致缺失真实入口仍过早进入待验收 | [frontend](errors/frontend.md) |
 
 ## 分册
 

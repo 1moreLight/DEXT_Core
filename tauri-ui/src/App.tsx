@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
+  Copy,
   Dock,
   FolderOpen,
   LayoutGrid,
@@ -70,7 +71,7 @@ import {
   cleanTransition,
   serializeRoomV2,
 } from "@/features/room-editor/room-draft";
-import { deleteDeskGraph } from "@/lib/desk";
+import { deleteDeskGraph, moveDeskGraph } from "@/lib/desk";
 import {
   cloneEditorSnapshot,
   loadEditorHistory,
@@ -332,6 +333,7 @@ export default function App() {
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
+  const [roomSort, setRoomSort] = useState<"name-asc" | "name-desc" | "desks-desc">("name-asc");
   const [roomPage, setRoomPage] = useState(1);
   const [editNav, setEditNav] = useState<EditNav>("room");
   const [navOpen, setNavOpen] = useState(true);
@@ -1048,6 +1050,27 @@ export default function App() {
     setGraphSel(next.graphSelection);
     setStatus("Desk 已删除；新形成的相邻方向需要单独补充 switch");
   }
+  function moveDesk(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || toIndex < 0 || toIndex >= desks.length) return;
+    pushHistory();
+    const next = moveDeskGraph<Desk, Transition>({
+      desks,
+      edges,
+      fromIndex,
+      toIndex,
+      startDesk,
+      activeDesk,
+      graphSelection: graphSel,
+      hasStart,
+    });
+    setDesks(next.desks);
+    setEdges(next.edges);
+    setStartDesk(next.startDesk);
+    setActiveDesk(next.activeDesk);
+    setGraphSel(next.graphSelection);
+    touch();
+    setStatus("Desk 顺序已调整；原 Desk 身份、startDesk 和仍相邻的有向 switch 已同步重映射");
+  }
 
   const desk = desks[activeDesk];
   const measuredDeskHeights = Object.entries(geom.nodes)
@@ -1311,6 +1334,60 @@ export default function App() {
       startDesk,
     });
   }
+  async function duplicateRoom(room: RoomInfo) {
+    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    const name = prompt("复制后的 Room 名称", `${room.name}-copy`)?.trim();
+    if (!name) return;
+    if (!IS_TAURI) {
+      const next = { ...room, name, path: `C:\\mock\\${name}` };
+      setRooms((current) => [...current, next]);
+      setHeroPath(next.path);
+      setStatus(`已复制 ${room.name} → ${name}（UI 设计模式）`);
+      return;
+    }
+    setRoomBusy(`正在复制 ${room.name}…`);
+    try {
+      const path = await invoke<string>("duplicate_room", { libraryDir: libDir, roomDir: room.path, name });
+      await refreshRooms(libDir);
+      setHeroPath(path);
+      setRoomPickPath(path);
+      setStatus(`已复制 ${room.name} → ${name}`);
+    } catch (error) {
+      setStatus(`Room 复制失败：${String(error)}`);
+    } finally {
+      setRoomBusy(null);
+    }
+  }
+  async function renameRoom(room: RoomInfo) {
+    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    const name = prompt("新的 Room 名称", room.name)?.trim();
+    if (!name || name === room.name) return;
+    if (!IS_TAURI) {
+      const path = `C:\\mock\\${name}`;
+      setRooms((current) => current.map((item) => item.path === room.path ? { ...item, name, path } : item));
+      setHeroPath(path);
+      setRoomPickPath(path);
+      setStatus(`已重命名 ${room.name} → ${name}（UI 设计模式）`);
+      return;
+    }
+    setRoomBusy(`正在重命名 ${room.name}…`);
+    try {
+      const path = await invoke<string>("rename_room", { libraryDir: libDir, roomDir: room.path, name });
+      if (appliedRoom === room.path) {
+        await invoke("apply_room", { roomDir: path });
+        setAppliedRoom(path);
+      }
+      if (roomPath === room.path) setRoomPath(path);
+      await refreshRooms(libDir);
+      setHeroPath(path);
+      setRoomPickPath(path);
+      setStatus(`已重命名 ${room.name} → ${name}`);
+    } catch (error) {
+      setStatus(`Room 重命名失败：${String(error)}`);
+    } finally {
+      setRoomBusy(null);
+    }
+  }
   function applySnapshot(s: Snapshot) {
     const next = cloneEditorSnapshot(s);
     setEdges(next.edges);
@@ -1425,9 +1502,12 @@ export default function App() {
       cancelAnimationFrame(frame);
     };
   }, [roomEntered, editorView, edges.length, desks.length]);
-  const filteredRooms = rooms.filter((r) =>
-    r.name.toLowerCase().includes(roomQuery.toLowerCase())
-  );
+  const sortedRooms = [...rooms].sort((left, right) => roomSort === "name-desc"
+    ? right.name.localeCompare(left.name)
+    : roomSort === "desks-desc"
+      ? right.desks - left.desks || left.name.localeCompare(right.name)
+      : left.name.localeCompare(right.name));
+  const filteredRooms = sortedRooms.filter((r) => r.name.toLowerCase().includes(roomQuery.toLowerCase()));
   const ROOMS_PER_PAGE = 6;
   const roomPageCount = Math.max(1, Math.ceil(filteredRooms.length / ROOMS_PER_PAGE));
   const roomPageCur = Math.min(roomPage, roomPageCount);
@@ -1487,14 +1567,26 @@ export default function App() {
               onExport={() => void exportRooms(roomActionPaths)}
               onDelete={() => void deleteRooms(roomActionPaths)}
             />
-            <Input
-              placeholder="搜索 Room"
-              value={roomQuery}
-              onChange={(event) => {
-                setRoomQuery(event.target.value);
-                setRoomPage(1);
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="搜索 Room"
+                value={roomQuery}
+                onChange={(event) => {
+                  setRoomQuery(event.target.value);
+                  setRoomPage(1);
+                }}
+              />
+              <select
+                aria-label="Room 排序"
+                value={roomSort}
+                onChange={(event) => { setRoomSort(event.target.value as typeof roomSort); setRoomPage(1); }}
+                className="h-8 shrink-0 rounded-lg border border-input bg-background px-2.5 text-sm"
+              >
+                <option value="name-asc">名称 A–Z</option>
+                <option value="name-desc">名称 Z–A</option>
+                <option value="desks-desc">Desk 数量</option>
+              </select>
+            </div>
             <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-2 content-start gap-x-4 gap-y-5 overflow-y-auto pr-2 xl:grid-cols-3">
               {pagedRooms.map((room) => {
                 const focused = room.path === heroRoom?.path;
@@ -1591,6 +1683,12 @@ export default function App() {
                   </p>
                 )}
                 <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
+                  <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => void duplicateRoom(heroRoom)}>
+                    <Copy className="h-4 w-4" /> 复制
+                  </Button>
+                  <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => void renameRoom(heroRoom)}>
+                    <Pencil className="h-4 w-4" /> 重命名
+                  </Button>
                   <Button
                     variant="outline"
                     disabled={Boolean(roomBusy)}
@@ -1765,7 +1863,7 @@ export default function App() {
                     选择房间查看详情；「编辑」进入 Desk 编辑
                   </div>
                   <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-3 content-start gap-3 overflow-y-auto pr-1">
-                    {rooms.map((r) => (
+                    {sortedRooms.map((r) => (
                       <button
                         key={r.path}
                         onClick={() => setRoomPickPath(r.path)}
@@ -1837,6 +1935,14 @@ export default function App() {
                         {pickedRoom.path === appliedRoom ? "重新应用" : "应用"}
                       </Button>
                     </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).edit} onClick={() => void duplicateRoom(pickedRoom)}>
+                        <Copy className="h-4 w-4" /> 复制
+                      </Button>
+                      <Button variant="outline" disabled={Boolean(roomBusy) || !roomContractPolicy(pickedRoom.version).edit} onClick={() => void renameRoom(pickedRoom)}>
+                        <Pencil className="h-4 w-4" /> 重命名
+                      </Button>
+                    </div>
                   </aside>
                 )}
               </div>
@@ -1864,6 +1970,12 @@ export default function App() {
 	                    </Button>
 	                    <Button size="sm" className="font-semibold shadow-sm" onClick={addDesk}>
 	                      <Plus className="h-3.5 w-3.5" /> 新增 Desk
+	                    </Button>
+	                    <Button variant="outline" size="sm" disabled={activeDesk <= 0} onClick={() => moveDesk(activeDesk, activeDesk - 1)}>
+	                      上移 Desk
+	                    </Button>
+	                    <Button variant="outline" size="sm" disabled={activeDesk >= desks.length - 1} onClick={() => moveDesk(activeDesk, activeDesk + 1)}>
+	                      下移 Desk
 	                    </Button>
 	                    <Button variant="outline" size="sm" disabled={past.length === 0} onClick={undo}>
                       <Undo2 className="h-3.5 w-3.5" /> 撤回
