@@ -489,3 +489,4 @@
 - [x] Creator Pack 隔离预览 token 增加 10 分钟 TTL，inspect 时清理过期 staging，confirm/discard 拒绝过期 token，并新增回归（2026-09-03）
 - [x] 统一配置器顶部断线错误分类，连接/管道不可用时显示 Core 未运行并保持依赖动作禁用；前端测试与构建通过（2026-09-03）
 - [x] 抽取 `isCoreUnavailable` 运行时纯函数，App/AppHeader 共用单一断线分类逻辑并新增 2 项回归（2026-09-03）
+- [x] Creator 导入报告补充实际入口路径与可展开资源清单，忙碌期间禁用关闭避免 confirm/ discard 竞态；前端 32/32 与构建通过（2026-09-03）

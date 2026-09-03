@@ -190,7 +190,7 @@ export function CreatorImportDialog({
               <p className="mt-0.5 text-xs text-muted-foreground">导出规范给 AI，检查并预览其 Scene / Widget 包；Dext 不连接任何外部模型。</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => void close()} aria-label="关闭"><X className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => void close()} aria-label="关闭" disabled={Boolean(busy)}><X className="h-4 w-4" /></Button>
         </header>
 
         <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-5 lg:grid-cols-[310px_minmax(0,1fr)]">
@@ -233,7 +233,7 @@ export function CreatorImportDialog({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2"><FileCheck2 className="h-4 w-4 text-emerald-500" /><strong className="text-sm">{report.name}</strong><span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase">{report.kind}</span></div>
-                      <p className="mt-1 text-xs text-muted-foreground">{report.id} · {report.resources.length} 个资源 · {(report.totalBytes / 1024).toFixed(1)} KiB · {report.hotspots} 个可信热点</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{report.id} · 入口 {report.entry} · {report.resources.length} 个资源 · {(report.totalBytes / 1024).toFixed(1)} KiB · {report.hotspots} 个可信热点</p>
                     </div>
                     <div className="flex items-end gap-2">
                       {report.kind === "scene" && (
@@ -257,6 +257,12 @@ export function CreatorImportDialog({
                       <p className="mt-2 text-[10px] leading-4 text-amber-600 dark:text-amber-400">写入后仍未授权；保存内容版本后需在属性检查器中由本机用户批准。</p>
                     </div>
                   </div>
+                  <details className="mt-3 rounded-lg border border-border p-3">
+                    <summary className="cursor-pointer text-xs font-medium">资源清单（{report.resources.length}）</summary>
+                    <ul className="mt-2 max-h-28 space-y-1 overflow-y-auto font-mono text-[10px] text-muted-foreground">
+                      {report.resources.map((resource) => <li key={resource} className="break-all">{resource}</li>)}
+                    </ul>
+                  </details>
                 </div>
               </div>
             ) : (
