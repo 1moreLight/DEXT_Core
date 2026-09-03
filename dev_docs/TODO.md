@@ -491,3 +491,4 @@
 - [x] 抽取 `isCoreUnavailable` 运行时纯函数，App/AppHeader 共用单一断线分类逻辑并新增 2 项回归（2026-09-03）
 - [x] Creator 导入报告补充实际入口路径与可展开资源清单，忙碌期间禁用关闭避免 confirm/ discard 竞态；前端 32/32 与构建通过（2026-09-03）
 - [x] 设置页接入 `diagnostics_json` 刷新面板，可直接查看 Core、Player/壁纸列表、活动 Room、Pipe 与目录状态；断线时显示读取错误（2026-09-03）
+- [x] Creator 预览资源服务同步执行 TTL 检查，过期 token 删除 staging 并返回 410，避免过期 URL 继续读取隔离内容（2026-09-03）

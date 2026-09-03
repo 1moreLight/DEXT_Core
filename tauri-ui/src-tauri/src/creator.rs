@@ -889,7 +889,7 @@ pub(crate) fn serve_creator_file(
             .body(Vec::new())
             .unwrap();
     }
-    let values = match imports.0.lock() {
+    let mut values = match imports.0.lock() {
         Ok(values) => values,
         Err(_) => {
             return tauri::http::Response::builder()
@@ -898,6 +898,16 @@ pub(crate) fn serve_creator_file(
                 .unwrap()
         }
     };
+    if values
+        .get(segments[0])
+        .is_some_and(|staging| creator_preview_expired(staging.created_at))
+    {
+        values.remove(segments[0]);
+        return tauri::http::Response::builder()
+            .status(410)
+            .body(Vec::new())
+            .unwrap();
+    }
     let Some(staging) = values.get(segments[0]) else {
         return tauri::http::Response::builder()
             .status(404)

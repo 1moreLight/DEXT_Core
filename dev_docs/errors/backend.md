@@ -130,3 +130,12 @@
 修复：为 staging 记录 `Instant`，设置 10 分钟 TTL；新 inspect 时清理过期条目，confirm/discard 对过期 token 明确拒绝并释放临时目录。
 
 防再犯：任何隔离导入状态都必须有有限生命周期，并覆盖过期状态测试。
+# #62 过期 Creator 预览 URL 仍可读取
+
+现象：token 过期后 confirm/discard 会失败，但已打开的预览 URL 仍可能从资源协议读取 staging 文件。
+
+原因：`serve_creator_file` 只查 token 是否存在，没有复用预览 TTL。
+
+修复：资源服务检查 `created_at`，过期时删除 staging 并返回 HTTP 410；有效 token 仍使用 no-store 和离线 CSP。
+
+防再犯：隔离 token 的 TTL 必须覆盖 inspect、资源服务、confirm 和 discard 四个入口。
