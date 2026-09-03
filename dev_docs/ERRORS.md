@@ -59,6 +59,7 @@
 | #52 | 自动检查全绿但未逐条对照计划，导致缺失真实入口仍过早进入待验收 | [frontend](errors/frontend.md) |
 | #53 | start.ps1 的 Tauri 端口被同一 worktree 的残留 Vite 监听占用 | [toolchain](errors/toolchain.md) |
 | #54 | v2 LivelyInfo 已带命名空间仍被 Player 启动参数适配器重复加前缀 | [backend](errors/backend.md) |
+| #55 | 切 Desk 后能力实例未收到新的 desk.read 快照 | [renderer](errors/renderer.md) |
 
 ## 分册
 

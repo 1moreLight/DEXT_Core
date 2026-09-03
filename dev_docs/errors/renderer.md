@@ -40,3 +40,12 @@
 - 根因：渲染器只放行发布态 `http://tauri.localhost`，而 Vite 开发父页面实际是 `http://localhost:1420`。
 - 解决：预览父页面使用固定双值白名单；仍校验 `event.source === window.parent`、消息结构和素材 origin，禁止 `*`。
 - 防再犯：涉及 Tauri 自定义协议与开发服务器的 postMessage 时，发布态和开发态 origin 都要实测；白名单必须是明确值。
+# #55 切 Desk 后能力实例保持旧身份
+
+现象：Scene/Widget 能收到初始化时的 `desk.read`，但切换 Desk 后可能继续显示旧 Desk 名称或索引。
+
+原因：渲染器只更新 `currentDesk` 并触发 UI 生命周期事件，没有调用能力桥的 `deskChanged()` 广播。
+
+修复：把 `capabilityHost.deskChanged()` 放入 `renderDesk()` 的统一刷新路径，并增加 capability bridge 回归验证。
+
+防再犯：任何改变 `currentDesk` 的入口必须经过 `renderDesk()`；新增能力字段时同步覆盖初始化快照和状态变更广播。
