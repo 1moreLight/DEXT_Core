@@ -30,6 +30,7 @@ import {
 } from "@/features/room-library/previews";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
+import { isCoreUnavailable } from "@/features/runtime/core-status";
 import {
   graphSwitchPosition,
   pairKey,
@@ -340,9 +341,7 @@ export default function App() {
     minHeight: graphMinHeight,
   } = useGraphGeometry(roomEntered && editorView === "flow", desks, edges.length);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
-  const coreUnavailable = coreIdentityError
-    ? /pipe|connect|unavailable|not running|退出|断开|未运行/i.test(coreIdentityError)
-    : false;
+  const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const activeRoomPolicy = roomContractPolicy(roomVersion);
 
   function buildRoomV2(sourceDesks: Desk[] = desks) {
