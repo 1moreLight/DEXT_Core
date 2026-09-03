@@ -1028,6 +1028,27 @@ mod tests {
     }
 
     #[test]
+    fn creator_preview_resource_protocol_rejects_special_paths() {
+        let temporary = tempfile::tempdir().unwrap();
+        let archive = temporary.path().join("valid.zip");
+        archive_directory(
+            &Path::new(CREATOR_ROOT).join("fixtures/valid/widget"),
+            &archive,
+        );
+        let staging = inspect_creator_pack_file(&archive).unwrap();
+        let token = staging.report.token.clone();
+        let imports = CreatorImports::default();
+        imports.0.lock().unwrap().insert(token.clone(), staging);
+
+        let valid = serve_creator_file(&format!("/{token}/index.html"), &imports);
+        assert_eq!(valid.status(), 200);
+        let special = serve_creator_file(&format!("/{token}/C:/secret.js"), &imports);
+        assert_eq!(special.status(), 403);
+        let trailing = serve_creator_file(&format!("/{token}/assets/foo.js%20"), &imports);
+        assert_eq!(trailing.status(), 403);
+    }
+
+    #[test]
     fn inspected_widget_is_committed_only_after_confirmation() {
         let temporary = tempfile::tempdir().unwrap();
         let archive = temporary.path().join("valid.zip");
