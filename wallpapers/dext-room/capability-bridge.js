@@ -93,6 +93,7 @@
     let volume = { level: 0, muted: false, available: false };
     let spectrum = [];
     let playback = { paused: false };
+    let paused = false;
 
     function post(instance, capability, data) {
       if (instance.disposed || !instance.permissions.has(capability)) return;
@@ -146,6 +147,7 @@
 
     function updateHardware(value) {
       hardware = sanitizeHardware(value);
+      if (paused) return;
       publish("hardware.cpu.read", hardware.cpu);
       publish("hardware.gpu.read", hardware.gpu);
       publish("hardware.memory.read", hardware.memory);
@@ -154,6 +156,7 @@
 
     function updateMedia(value) {
       media = sanitizeMedia(value, true);
+      if (paused) return;
       for (const instance of instances) {
         post(instance, "now-playing.read", sanitizeMedia(media, false));
         post(instance, "now-playing.artwork.read", sanitizeMedia(media, true));
@@ -167,20 +170,28 @@
         muted: Boolean(data.muted),
         available: data.available !== false,
       };
+      if (paused) return;
       publish("system.volume.read", volume);
     }
 
     function updateSpectrum(value) {
       spectrum = sanitizeSpectrum(value);
+      if (paused) return;
       publish("audio.spectrum", spectrum);
     }
 
     function updatePlayback(value) {
       playback = { paused: Boolean(value?.isPaused ?? value?.IsPaused ?? value?.paused) };
+      const wasPaused = paused;
+      paused = playback.paused;
       publish("playback.read", playback);
+      if (wasPaused && !paused) {
+        for (const instance of instances) pushSnapshot(instance);
+      }
     }
 
     function tick() {
+      if (paused) return;
       const now = new Date();
       publish("time.read", { epochMs: now.getTime(), iso: now.toISOString() });
     }

@@ -49,3 +49,12 @@
 修复：把 `capabilityHost.deskChanged()` 放入 `renderDesk()` 的统一刷新路径，并增加 capability bridge 回归验证。
 
 防再犯：任何改变 `currentDesk` 的入口必须经过 `renderDesk()`；新增能力字段时同步覆盖初始化快照和状态变更广播。
+# #56 暂停状态仍持续推送能力数据
+
+现象：Player 进入暂停后，能力桥的周期性 `time.read` 以及硬件、媒体、音量、频谱更新仍可能持续发送给 Scene/Widget。
+
+原因：能力桥只把暂停当作一个普通 playback 字段，没有将其作为推送调度状态。
+
+修复：暂停时缓存最新值但停止周期性发布；恢复时发送 `playback.read` 后为每个实例补发完整快照，保证恢复后不需要重建实例。
+
+防再犯：涉及 Player suspend/resume 的能力都必须覆盖“暂停不推送、恢复补快照”的测试。

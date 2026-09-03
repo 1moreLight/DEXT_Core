@@ -484,3 +484,4 @@
 - [ ] 仍需人工确认 Player 画面内容、Scene/Widget 交互及 Core 断线恢复；日志保留一次 WebView `OperationCanceled`，不影响进程存活，需在最终验收中观察
 - [x] 自动检查复跑完成：tauri-ui 30/30、生产构建、Rust 34 passed/3 ignored、渲染器语法与 capability bridge 通过（2026-09-03）
 - [x] 修正渲染器切 Desk 后未广播 `desk.read` 的能力桥缺口，并新增 deskChanged 回归（2026-09-03）
+- [x] 能力桥暂停时冻结周期性硬件/媒体/音量/频谱/时间推送，恢复时补发完整快照，并新增暂停恢复回归（2026-09-03）
