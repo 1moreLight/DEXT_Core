@@ -844,7 +844,15 @@ namespace Lively.Core.Wallpapers
             var words = args.Split(' ');
             for (int i = 0; i < words.Length; i++)
             {
-                if (words[i].StartsWith("--"))
+                // Lively's persisted Arguments historically used bare option
+                // names (for example `--system-information`) and this helper
+                // adds the wallpaper namespace.  Dext Room metadata already
+                // stores fully-qualified options, including the private
+                // `--dext-*` boundary flag; prefixing those a second time
+                // makes the Player reject an otherwise valid launch.
+                if (words[i].StartsWith("--")
+                    && !words[i].StartsWith("--wallpaper-", StringComparison.OrdinalIgnoreCase)
+                    && !words[i].StartsWith("--dext-", StringComparison.OrdinalIgnoreCase))
                 {
                     words[i] = string.Concat("--wallpaper-", words[i].AsSpan(2));
                 }

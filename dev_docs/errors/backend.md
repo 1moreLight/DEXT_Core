@@ -112,3 +112,12 @@
 - 根因：GSMTC 会受 Windows 媒体会话服务不稳定影响；部分提供者暴露的 NPSMLib 封面 COM stream 不会完成读取，取消 token 和移到后台线程都不能可靠中断底层同步读取。
 - 解决：Core 复用 Lively 已依赖的 NPSMLib 读取媒体元数据和执行封闭动作，但不在 RPC 轮询路径主动读取封面流；Rust `verified_call` 增加 10 秒总超时。封面在未来 Widget Bridge 中复用 Lively Player 已有 `livelyCurrentTrack` 缓存并作为 P2 可选数据转发。
 - 防再犯：任何 Windows/COM 媒体调用都必须有进程边界或最终超时，不能在锁内读取未知 stream；“放到后台线程”不等于可取消，若阻塞会污染共享媒体会话。活体测试至少连续读取两次，并在动作/音量探测后恢复原状态。
+# #54 v2 LivelyInfo 参数被重复加前缀
+
+现象：真实铺设时 `Lively.Player.WebView2` 以 `CommandLine.UnknownOptionError` 退出，Core 日志显示启动参数无法解析。
+
+原因：`WebWebView2.TryParseUserCommandArgs` 为兼容旧 Lively 参数无条件给所有 `--...` 加 `--wallpaper-`；v2 的 `LivelyInfo.json` 已使用完整的 `--wallpaper-*` 与 `--dext-*` 参数，导致重复命名空间。
+
+修复：仅对未带 `wallpaper-` 或 `dext-` 命名空间的参数补前缀；完整 v2 参数原样传给 Player。重建 Release Player 后重新铺设，Player 正常存活。
+
+下次检查：修改 Player 启动参数或 `LivelyInfo.json` 后，必须运行 `cargo test --lib applies_room_wallpaper -- --ignored` 并检查 `Lively.Player.WebView2.exe` 进程及 Core 最新日志。

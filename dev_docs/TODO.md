@@ -475,3 +475,10 @@
 - [x] `verify-runtime-identity.ps1` 只读核对通过 Core Product/Runtime/PID/pipe/mutex/data/log；Player、Watchdog、Configurator 当前未运行，不能据此宣称最终活体验收完成（2026-09-02）
 - [ ] 继续审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链剩余缺口
 - [ ] 重跑全量自动检查、浏览器视觉、真实 Core/Tauri/Player 验证，重新进入一次性待验收
+
+### UI-V2-001 活体验证修复（2026-09-03）
+
+- [x] 复现真实铺设失败：Player 因 `TryParseUserCommandArgs` 将已带 `wallpaper-`/`dext-` 命名空间的 v2 参数重复加前缀而退出（2026-09-03）
+- [x] 修正参数命名空间归一化，重跑 `scripts/build.ps1` 完成 Release Player/Watchdog/Core 构建（2026-09-03）
+- [x] 重新铺设当前 Room：Core/Watchdog/Player 均启动，Player 保持响应；媒体/音量活体测试通过（2026-09-03）
+- [ ] 仍需人工确认 Player 画面内容、Scene/Widget 交互及 Core 断线恢复；日志保留一次 WebView `OperationCanceled`，不影响进程存活，需在最终验收中观察
