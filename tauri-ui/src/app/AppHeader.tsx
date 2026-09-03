@@ -39,7 +39,9 @@ export function AppHeader({
   previewDisabledReason?: string;
   onTogglePreview: () => void;
 }) {
-  const coreUnavailable = coreIdentityError?.includes("pipe connect failed") ?? false;
+  const coreUnavailable = coreIdentityError
+    ? /pipe|connect|unavailable|not running|退出|断开|未运行/i.test(coreIdentityError)
+    : false;
   const tabClass = (active: boolean) => `rounded px-3 py-1 text-sm whitespace-nowrap ${active ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`;
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border px-5 py-3">

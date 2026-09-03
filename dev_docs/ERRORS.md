@@ -63,6 +63,7 @@
 | #56 | Player 暂停后能力桥仍持续推送周期性数据 | [renderer](errors/renderer.md) |
 | #57 | WebView 文档销毁仅依赖自然回收，后台轮询和实例没有统一失效点 | [renderer](errors/renderer.md) |
 | #58 | Creator 隔离预览 token 无期限导致 staging 长期保留 | [backend](errors/backend.md) |
+| #59 | 配置器只识别单一断线文案，其他连接错误被误报为身份拒绝 | [frontend](errors/frontend.md) |
 
 ## 分册
 
