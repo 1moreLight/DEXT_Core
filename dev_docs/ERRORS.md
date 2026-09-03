@@ -61,6 +61,7 @@
 | #54 | v2 LivelyInfo 已带命名空间仍被 Player 启动参数适配器重复加前缀 | [backend](errors/backend.md) |
 | #55 | 切 Desk 后能力实例未收到新的 desk.read 快照 | [renderer](errors/renderer.md) |
 | #56 | Player 暂停后能力桥仍持续推送周期性数据 | [renderer](errors/renderer.md) |
+| #57 | WebView 文档销毁仅依赖自然回收，后台轮询和实例没有统一失效点 | [renderer](errors/renderer.md) |
 
 ## 分册
 

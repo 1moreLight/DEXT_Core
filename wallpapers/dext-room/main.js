@@ -475,8 +475,8 @@ window.livelySystemInformation = (value) => capabilityHost.updateHardware(value)
 window.livelyCurrentTrack = (value) => capabilityHost.updateMedia(value);
 window.livelyAudioListener = (value) => capabilityHost.updateSpectrum(value);
 window.livelyWallpaperPlaybackChanged = (value) => capabilityHost.updatePlayback(value);
-setInterval(() => capabilityHost.tick(), 1000);
-setInterval(() => {
+const capabilityTickTimer = setInterval(() => capabilityHost.tick(), 1000);
+const volumePollTimer = setInterval(() => {
   if (!window.chrome?.webview?.postMessage) return;
   window.chrome.webview.postMessage(JSON.stringify({
     type: "dext:system-control",
@@ -484,7 +484,7 @@ setInterval(() => {
     action: { id: "system.volume.read" },
   }));
 }, 1500);
-setInterval(() => {
+const permissionPollTimer = setInterval(() => {
   if (!window.chrome?.webview?.postMessage) return;
   window.chrome.webview.postMessage(JSON.stringify({
     type: "dext:system-control",
@@ -612,6 +612,27 @@ function clearStaging() {
   if (background) disposeSceneContainer(background);
   stageEl.replaceChildren();
 }
+
+// Player instances can be torn down without a full process exit (Room replace,
+// WebView recreation, or watchdog recovery).  Make teardown explicit so no
+// timer, capability registration, iframe or active transition can keep
+// receiving callbacks after the document is gone.
+let runtimeDisposed = false;
+function disposeRuntime() {
+  if (runtimeDisposed) return;
+  runtimeDisposed = true;
+  clearInterval(capabilityTickTimer);
+  clearInterval(volumePollTimer);
+  clearInterval(permissionPollTimer);
+  activeSlot?.cancel();
+  disposeWidgets(widgetLayer);
+  disposeSceneContainer(bgEl);
+  bgVideo.pause();
+  bgVideo.removeAttribute("src");
+  capabilityHost.dispose();
+  clearStaging();
+}
+window.addEventListener("pagehide", disposeRuntime, { once: true });
 
 window.addEventListener("message", (event) => {
   const instance = widgetInstancesBySource.get(event.source);

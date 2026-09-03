@@ -58,3 +58,12 @@
 修复：暂停时缓存最新值但停止周期性发布；恢复时发送 `playback.read` 后为每个实例补发完整快照，保证恢复后不需要重建实例。
 
 防再犯：涉及 Player suspend/resume 的能力都必须覆盖“暂停不推送、恢复补快照”的测试。
+# #57 WebView 销毁缺少统一生命周期收口
+
+现象：Room 替换、Player 重建或 WebView 页面销毁时，能力轮询定时器与实例注册主要依赖浏览器自然回收，旧回调存在继续触发的风险。
+
+原因：能力轮询使用匿名 `setInterval`，Scene/Widget/转场资源没有统一的文档销毁入口。
+
+修复：保存轮询句柄并新增幂等 `disposeRuntime()`，在 `pagehide` 时停止轮询、取消 active slot、卸载 Widget/Scene、停止视频、清空能力实例和 staging。
+
+防再犯：新增 Player 级后台任务必须登记到 `disposeRuntime()`，不得留下不可取消的匿名定时器。
