@@ -883,6 +883,14 @@ pub(crate) fn serve_creator_file(
         || segments
             .iter()
             .any(|item| *item == "." || *item == ".." || item.contains('\\'))
+        || segments[1..segments.len() - 1].iter().any(|item| {
+            item.is_empty()
+                || item.contains(':')
+                || item.chars().any(char::is_control)
+                || item.ends_with('.')
+                || item.ends_with(' ')
+        })
+        || !safe_resource_path(segments[segments.len() - 1], false)
     {
         return tauri::http::Response::builder()
             .status(403)

@@ -67,6 +67,7 @@
 | #60 | Creator 报告只显示资源数量且忙碌时可关闭造成导入竞态 | [frontend](errors/frontend.md) |
 | #61 | 运行诊断命令只有导出入口，配置器内无法查看当前运行态 | [frontend](errors/frontend.md) |
 | #62 | Creator confirm/discard 有 TTL 但预览资源服务仍可读取过期 token | [backend](errors/backend.md) |
+| #63 | Creator 预览 URL 未复用资源路径规则，Windows 特殊路径字符可能进入服务端拼接 | [backend](errors/backend.md) |
 
 ## 分册
 

@@ -139,3 +139,12 @@
 修复：资源服务检查 `created_at`，过期时删除 staging 并返回 HTTP 410；有效 token 仍使用 no-store 和离线 CSP。
 
 防再犯：隔离 token 的 TTL 必须覆盖 inspect、资源服务、confirm 和 discard 四个入口。
+# #63 Creator 预览 URL 路径校验不完整
+
+现象：资源协议只拒绝 `..` 和反斜杠，手工构造 URL 时仍可携带冒号、控制字符或尾随点/空格。
+
+原因：预览服务没有复用 Creator manifest 使用的 `safe_resource_path` 规则。
+
+修复：中间目录段拒绝 Windows 特殊字符，最终文件段必须通过安全资源路径和扩展名校验。
+
+防再犯：所有从 token/URL 解析出的资源路径都必须经过与 manifest 相同的逐段校验。
