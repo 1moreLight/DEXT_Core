@@ -1047,6 +1047,11 @@ function renderDesk(index) {
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk, index);
   mountWidgets(widgetLayer, desk, index);
+  // The active desk is part of the read-only capability snapshot.  Rendering
+  // a new desk must notify already-registered Scene/Widget instances as well
+  // as the public lifecycle event, otherwise a surviving instance can keep
+  // displaying the previous desk identity until its next reload.
+  capabilityHost.deskChanged();
   renderDock();
   const n = ROOM.desks.length;
   if (dockCfg().indicator === "dots") {

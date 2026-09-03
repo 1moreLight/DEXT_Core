@@ -15,14 +15,18 @@ assert.equal(hardware.memory.usedPercent, 75);
 assert.equal("NameCpu" in hardware.cpu, false);
 
 const messages = [];
+let activeDesk = { index: 0, name: "Desk" };
 const host = bridge.createHost({
   viewport: () => ({ width: 1920, height: 1080 }),
-  desk: () => ({ index: 0, name: "Desk" }),
+  desk: () => activeDesk,
 });
 const unregister = host.register({
-  instanceId: "instance", token: "token", permissions: ["hardware.cpu.read", "now-playing.read"],
+  instanceId: "instance", token: "token", permissions: ["hardware.cpu.read", "now-playing.read", "desk.read"],
   post: (message) => messages.push(message),
 });
+activeDesk = { index: 1, name: "第二桌" };
+host.deskChanged();
+assert(messages.some((message) => message.capability === "desk.read" && message.data.index === 1 && message.data.name === "第二桌"));
 host.updateHardware({ CurrentCpu: 42 });
 host.updateMedia({ Title: "Song", Artist: "Artist", Thumbnail: "secret-art" });
 assert(messages.some((message) => message.capability === "hardware.cpu.read" && message.data.usage === 42));
