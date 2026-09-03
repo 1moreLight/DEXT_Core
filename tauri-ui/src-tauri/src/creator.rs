@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
@@ -18,6 +19,11 @@ const RESOURCE_EXTENSIONS: &[&str] = &[
     "html", "htm", "css", "js", "mjs", "json", "png", "jpg", "jpeg", "webp", "gif", "svg", "woff",
     "woff2", "ttf", "otf", "mp4", "webm",
 ];
+const CREATOR_PREVIEW_TTL: Duration = Duration::from_secs(10 * 60);
+
+fn creator_preview_expired(created_at: Instant) -> bool {
+    created_at.elapsed() >= CREATOR_PREVIEW_TTL
+}
 
 #[derive(serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -39,6 +45,7 @@ struct CreatorStaging {
     directory: tempfile::TempDir,
     manifest: Value,
     report: CreatorPackReport,
+    created_at: Instant,
 }
 
 #[derive(Default)]
@@ -463,6 +470,7 @@ fn inspect_creator_pack_file(archive_path: &Path) -> Result<CreatorStaging, Stri
         directory: staging,
         manifest,
         report,
+        created_at: Instant::now(),
     })
 }
 
@@ -477,6 +485,7 @@ pub(crate) async fn inspect_creator_pack(
         .0
         .lock()
         .map_err(|_| "Creator Pack state is unavailable".to_string())?;
+    values.retain(|_, value| !creator_preview_expired(value.created_at));
     if values.len() >= 8 {
         return Err("close or import an existing Creator Pack preview first".into());
     }
@@ -489,12 +498,15 @@ pub(crate) async fn discard_creator_import(
     token: String,
     imports: tauri::State<'_, CreatorImports>,
 ) -> Result<(), String> {
-    imports
+    let staging = imports
         .0
         .lock()
         .map_err(|_| "Creator Pack state is unavailable".to_string())?
         .remove(&token)
         .ok_or_else(|| "Creator Pack preview token is unknown or expired".to_string())?;
+    if creator_preview_expired(staging.created_at) {
+        return Err("Creator Pack preview token has expired; inspect the pack again".into());
+    }
     Ok(())
 }
 
@@ -682,6 +694,9 @@ pub(crate) async fn confirm_creator_import(
         .map_err(|_| "Creator Pack state is unavailable".to_string())?
         .remove(&token)
         .ok_or_else(|| "Creator Pack preview token is unknown or expired".to_string())?;
+    if creator_preview_expired(staging.created_at) {
+        return Err("Creator Pack preview token has expired; inspect the pack again".into());
+    }
     confirm_creator_import_file(
         staging,
         Path::new(&room_dir),
@@ -983,6 +998,15 @@ mod tests {
         assert!(archive_entry_path("../creator.json").is_err());
         assert!(archive_entry_path("other/file.js").is_err());
         assert!(archive_entry_path("content\\file.js").is_err());
+    }
+
+    #[test]
+    fn creator_preview_expiry_is_deterministic() {
+        assert!(!creator_preview_expired(Instant::now()));
+        let old = Instant::now()
+            .checked_sub(CREATOR_PREVIEW_TTL + Duration::from_secs(1))
+            .unwrap();
+        assert!(creator_preview_expired(old));
     }
 
     #[test]

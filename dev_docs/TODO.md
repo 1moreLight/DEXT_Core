@@ -486,3 +486,4 @@
 - [x] 修正渲染器切 Desk 后未广播 `desk.read` 的能力桥缺口，并新增 deskChanged 回归（2026-09-03）
 - [x] 能力桥暂停时冻结周期性硬件/媒体/音量/频谱/时间推送，恢复时补发完整快照，并新增暂停恢复回归（2026-09-03）
 - [x] 增加 Player `pagehide` 统一清理：停止能力轮询、失效实例、卸载 Scene/Widget、取消转场并释放媒体资源（2026-09-03）
+- [x] Creator Pack 隔离预览 token 增加 10 分钟 TTL，inspect 时清理过期 staging，confirm/discard 拒绝过期 token，并新增回归（2026-09-03）

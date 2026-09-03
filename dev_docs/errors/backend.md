@@ -121,3 +121,12 @@
 修复：仅对未带 `wallpaper-` 或 `dext-` 命名空间的参数补前缀；完整 v2 参数原样传给 Player。重建 Release Player 后重新铺设，Player 正常存活。
 
 下次检查：修改 Player 启动参数或 `LivelyInfo.json` 后，必须运行 `cargo test --lib applies_room_wallpaper -- --ignored` 并检查 `Lively.Player.WebView2.exe` 进程及 Core 最新日志。
+# #58 Creator 预览 token 长期有效
+
+现象：配置器打开期间，已检查但未确认的 Creator Pack staging 目录和 token 会一直保留。
+
+原因：`CreatorImports` 只按 token 保存临时包，没有时间边界。
+
+修复：为 staging 记录 `Instant`，设置 10 分钟 TTL；新 inspect 时清理过期条目，confirm/discard 对过期 token 明确拒绝并释放临时目录。
+
+防再犯：任何隔离导入状态都必须有有限生命周期，并覆盖过期状态测试。

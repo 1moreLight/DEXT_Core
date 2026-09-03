@@ -62,6 +62,7 @@
 | #55 | 切 Desk 后能力实例未收到新的 desk.read 快照 | [renderer](errors/renderer.md) |
 | #56 | Player 暂停后能力桥仍持续推送周期性数据 | [renderer](errors/renderer.md) |
 | #57 | WebView 文档销毁仅依赖自然回收，后台轮询和实例没有统一失效点 | [renderer](errors/renderer.md) |
+| #58 | Creator 隔离预览 token 无期限导致 staging 长期保留 | [backend](errors/backend.md) |
 
 ## 分册
 
