@@ -22,7 +22,8 @@
 | 最近完成 | **CORE-003 Dext 一键启动防旧构建** | 已完成 | master（merge `8c7c89a`） | 旧 Lively 构建会被强制重建为 Dext；双击入口、缺依赖恢复、退出码和失败进程清理已验收合并 |
 | 最近完成 | **UI-V1-001 配置器核心页面全栈闭环** | 已完成 | master（merge `61ea4c8`） | Room 安全管理与运行状态、使用/编辑/设置页、Desk/Dock 共用应用选择、测试隔离及六轮验收反馈均已完成 |
 | 最近完成 | **DXT-003 Room v2 Widget 后端与系统接口** | 已完成 | master（merge `56dc602`；实现 `695e3e7`） | 唯一原生 v2、Widget 资源全链、系统媒体/主音量与前端安全文档已验收 |
-| 当前项 | **UI-V2-001 配置器 v2 端到端闭环** | 开发中 | `feat/ui-v2-001-configurator-v2` | 完成度复审发现空间库排序/复制/重命名和 Desk 重排仍无真实入口，继续在原工作包补齐；禁止提前合并 |
+| 当前项 | **UI-V2-001 配置器 v2 端到端闭环** | 开发中（2026-09-05 起为 DOCK-UX-001 让位，未完项保留） | `feat/ui-v2-001-configurator-v2` | 完成度复审发现空间库排序/复制/重命名和 Desk 重排仍无真实入口，继续在原工作包补齐；禁止提前合并 |
+| 当前项 | **DOCK-UX-001 Dock 双向拖拽重做** | 开发中（2026-09-05 用户指定开工） | `feat/ui-v2-001-configurator-v2`（沿用 v2 工作线，master 尚无 ERRORS #64 修复） | 桌面图标拖入 Dock 为移动语义并写当前 Desk 覆盖；双向稳定落点；验收卡 `acceptance/DOCK-UX-001-dock-drag-rework.md` |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
 
@@ -136,7 +137,7 @@ M2.5 是用户指定的远期方向研究，不自动改变 UI-001/UI-002/M3 的
 | MARKET-001 | 创意工坊上传、下载、订阅和安全模型 |
 | DOCK-LIB-001 | Dock 模板导出、版本更新与创意工坊同步；下载项进入现有本地 Dock 卡片库 |
 | DOCK-PREVIEW-001 | Dock 模板卡片和 Room 内选择器不再依赖手填 `backdrop/surface/accent` 预览色；在隔离预览环境中执行模板实际 CSS/代码，渲染真实 Dock 外观并生成/缓存缩略图 |
-| DOCK-UX-001 | 重做真实 Player 中桌面图标与 Dock 之间的拖拽命中、跨边界手势和反馈；当前正式管理入口仍是配置器 DockEditor |
+| DOCK-UX-001 | 已提升为当前项（2026-09-05 用户指定）：重做真实 Player 中桌面图标与 Dock 之间的拖拽命中、跨边界手势和反馈；移动语义、当前 Desk 覆盖、ghost + 吸附带 |
 | PACKAGING-001 | Dext 独立安装器/MSIX 身份：Inno AppId、安装目录、快捷方式、卸载信息、MSIX Identity/AppUserModelId、屏保注册与 Core 路径；同时保留上游许可证与来源归属 |
 
 ## 五、依赖主线

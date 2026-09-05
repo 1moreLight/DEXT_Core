@@ -161,9 +161,10 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 3. **运行态小圆点（DOCK-004，已完成）**：Core 进程遥测和 Dock 指示已通过人工验收并合入 master。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
-### DOCK-003 拖入消息与持久化
+### DOCK-003 拖入消息与持久化（链保留；渲染器已改走 DOCK-UX-001 通道）
 
 > 2026-08-29 实机限制：从桌面上方/侧面向 Dock 拖动会被图标层边界限制；从 Dock 下方进入虽能触发绿色命中反馈，释放后仍可能不落入。用户决定跳过该交互目标，当前正式维护入口改为配置器 `DockEditor`；真桌面双向拖拽的输入捕获与命中重做登记为远期 `DOCK-UX-001`。
+> **2026-09-05 更新**：`DOCK-UX-001` 已实施（见下节），真桌面拖拽恢复为受支持入口；本节保留作历史与 Player/Core 兼容链说明。
 
 编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
 
@@ -185,6 +186,24 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIconCmd`，Core 在包内 `room.json` 的 `desks[deskIndex].dock.icons` 追加完整图标与启动信息；若目标已存在或启动目标为空则跳过。Player 只接受顶层官方宿主；Core 只信任现有运行包里的 `__source`，包内保留该戳，源 Room 写出前剥离。预览环境不触发写盘。
 
 同一编辑模式下也支持 Dock → 桌面：拖动 Dock 图标到桌面网格的虚线 drop 区，会将图标完整复制回当前 Desk 的 `icons` 并从当前 Desk Dock 移除；继承全局 Dock 的图标通过建立桌级覆盖实现“只从当前 Desk 移出”，不会影响其他 Desk。目标位置已有桌面图标或启动目标重复时保持原 Dock 不变。
+
+### DOCK-UX-001 双向拖拽重做（2026-09-05，真桌面拖拽恢复为受支持入口）
+
+用户拍板：桌面→Dock 为**移动**语义（图标从当前 Desk 移除，非复制）；只写**当前 Desk** 的 `dock.icons`
+覆盖，全局 Dock 仍仅配置器 DockEditor 可设；仅编辑模式可拖；autoHide 行为不变。
+
+实现要点（`wallpapers/dext-room/main.js`）：
+
+| 机制 | 说明 |
+|---|---|
+| `drag-ghost` | document 级 fixed 幽灵（`iconVisual` 复用），替代原图标位移；原图标原位变暗（`.dragging`）。图标层裁剪/窗口边界不再能吞掉拖拽视觉 |
+| `dockDropHit` 吸附带 | Dock 视觉矩形向四周膨胀 `DOCK_SNAP_PX`（48px）；贴边/任务栏附近的指针也算命中（修复「绿色命中但松手不落入」） |
+| 统一结束事件 | `pointerup` / `pointercancel` / `lostpointercapture` 都进入同一条提交路径，一律用**最后已知指针位置**判定；`DRAG_MIN_TRAVEL_PX`（24px）以下视为点击不提交 |
+| 持久化 | 两个方向都直接改 `ROOM` 后 `persistRoom()`（saveRoom 全量双写，dock 一并覆盖）；渲染器**不再发送** `addDockIcon` 专用消息（Player/Core 链保留兼容，其他调用方不存在） |
+| schema 形状 | 移入 Dock 时重建 icon 对象（剥离 x/y，保持 v2 `dockIcon` 形状）；拖回桌面时重新计算格坐标 |
+
+Dock → 桌面方向沿用 DOCK-003 语义：落空格成功并从当前 Desk Dock 移除（继承全局时建立桌级覆盖），
+占用格/重复目标拒绝并 toast。验收卡：`dev_docs/acceptance/DOCK-UX-001-dock-drag-rework.md`。
 
 ## 四、当前演示与验收状态
 

@@ -494,3 +494,24 @@
 - [x] Creator 预览资源服务同步执行 TTL 检查，过期 token 删除 staging 并返回 410，避免过期 URL 继续读取隔离内容（2026-09-03）
 - [x] Creator 预览资源服务复用安全资源路径规则，拒绝 URL 冒号、控制字符、尾随点/空格和非法文件扩展名（2026-09-03）
 - [x] 为 Creator 资源协议增加合法/恶意 URL 回归，验证有效入口返回 200、特殊路径返回 403（Creator 测试 8/8）（2026-09-03）
+
+## DOCK-UX-001 Dock 双向拖拽重做（2026-09-05 开工）
+
+> 用户拍板（2026-09-05）：真桌面编辑模式重做双向拖拽；桌面→Dock 为**移动**语义（图标从桌面移除，
+> 非复制）；写入**当前 Desk 的 dock 覆盖**，全局 dock 仅配置器可设；仅编辑模式；autoHide 不动。
+> 背景：DOCK-003/004 实机拖拽不稳定（上方/侧面被图标层边界卡住；下方进入有绿色命中但松手不落入），
+> 当年转远期本包。#64 修复后桌面已恢复；用户指定沿用 ui-v2-001 worktree/分支作为基线
+> （master 尚无 #64 修复，回滚点 9ae48d8）。DOCK-SKIN-001（沙箱皮肤受管格式）随后另立设计稿。
+
+- [x] 2026-09-05 计划冻结 + 验收卡 `dev_docs/acceptance/DOCK-UX-001-dock-drag-rework.md` + ROADMAP 状态同步
+- [x] 2026-09-05 渲染器：拖拽幽灵（ghost，document 级 fixed 元素）替代原图标位移，摆脱图标层裁剪/窗口边界影响
+- [x] 2026-09-05 渲染器：Dock 吸附带命中（rect 膨胀 48px）+ 结束事件统一（pointerup / pointercancel /
+      lostpointercapture 一律用最后已知指针位置提交，<24px 位移视为点击），修复「绿色命中但松手不落入」
+- [x] 2026-09-05 桌面→Dock 移动语义：校验 launch.target 与去重 → 移出 desk.icons → 写入 desks[cur].dock.icons
+      （新覆盖复制全局列表；重建 icon 对象剥离 x/y 保 v2 dockIcon 形状）→ persistRoom 双写；
+      addDockIcon 专用消息停用（Player/Core 链保留兼容）
+- [x] 2026-09-05 Dock→桌面：同 ghost/结束事件重构，落格判定保持（占用格拒绝并 toast），persistRoom 已有
+- [x] 2026-09-05 编辑模式提示文案按移动语义更新（index.html）；DOCK.md（DOCK-UX-001 契约节 + DOCK-003 历史标注）/ ROADMAP 同步
+- [x] 2026-09-05 自测：node --check main.js + capability bridge + CSS 括号平衡 + npm run build 全绿
+      （用户 17:04 已自行停止 Dext，重铺验收留给下次启动后的真机检查）
+- [~] 2026-09-05 提交后停在待用户真机验收

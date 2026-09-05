@@ -744,11 +744,84 @@ function renderDockApps(cfg) {
   });
 }
 
+// ---- DOCK-UX-001: edit-mode desk<->dock drags ----
+// The dragged icon is shown by a document-level ghost instead of moving the
+// original element, so icon-layer clipping and window-edge quirks can no
+// longer hide it. All drops commit from the last known pointer position:
+// WebView2 may cancel pointer capture at screen edges (taskbar) after the
+// user already reached the target (DOCK-003 regression).
+const DOCK_SNAP_PX = 48;
+const DRAG_MIN_TRAVEL_PX = 24;
+
+let ghostEl = null;
+
+function ghostStart(item) {
+  ghostEnd();
+  const g = document.createElement("div");
+  g.className = "drag-ghost";
+  g.appendChild(iconVisual(item));
+  document.body.appendChild(g);
+  ghostEl = g;
+}
+
+function ghostMove(x, y) {
+  if (ghostEl) {
+    ghostEl.style.left = `${x}px`;
+    ghostEl.style.top = `${y}px`;
+  }
+}
+
+function ghostEnd() {
+  if (ghostEl) {
+    ghostEl.remove();
+    ghostEl = null;
+  }
+}
+
+// Drop-zone helper shared by both drag directions: run fn with commit state
+// tracked from every move, then finish from pointerup/cancel/capture-loss.
+function makeDragSession(el, onMoveExtra) {
+  let lastX = 0;
+  let lastY = 0;
+  let traveled = 0;
+  let done = false;
+  const sx = { x: 0, y: 0 };
+  const session = {
+    get lastX() { return lastX; },
+    get lastY() { return lastY; },
+    onDown(e) {
+      sx.x = e.clientX;
+      sx.y = e.clientY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      el.setPointerCapture(e.pointerId);
+    },
+    onMove(e) {
+      lastX = e.clientX;
+      lastY = e.clientY;
+      traveled = Math.max(traveled, Math.hypot(e.clientX - sx.x, e.clientY - sx.y));
+      ghostMove(e.clientX, e.clientY);
+      onMoveExtra?.(e);
+    },
+    // returns null when the gesture never became a drag
+    finish() {
+      if (done) return null;
+      done = true;
+      return traveled >= DRAG_MIN_TRAVEL_PX ? { x: lastX, y: lastY } : null;
+    },
+  };
+  return session;
+}
+
 function dockDropHit(x, y) {
   const cfg = dockCfg();
-  if (!cfg.enabled) return false;
+  if (!cfg.enabled || !editMode) return false;
   const rect = dockEl.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  if (!(rect.width > 0 && rect.height > 0)) return false;
+  // snap band: the hit area extends past the visual strip so pointers that
+  // stop at the screen/taskbar edge still commit (DOCK-003 regression).
+  return x >= rect.left - DOCK_SNAP_PX && x <= rect.right + DOCK_SNAP_PX &&
+    y >= rect.top - DOCK_SNAP_PX && y <= rect.bottom + DOCK_SNAP_PX;
 }
 
 function setDockDropFeedback(x, y) {
@@ -757,21 +830,29 @@ function setDockDropFeedback(x, y) {
   return hit;
 }
 
-function addDockIconFromDesk(item) {
-  const launch = item?.launch;
+// DOCK-UX-001: dragging a desk icon onto the dock MOVES it there — the icon
+// leaves desk.icons and joins the current desk's dock override. Global dock
+// editing stays configurator-only; persistence goes through persistRoom()
+// (full-room double write), so the dedicated addDockIcon message is unused now.
+function moveDeskIconToDock(index) {
+  const desk = ROOM.desks[currentDesk];
+  const item = desk.icons[index];
+  if (!item) return false;
+  const launch = item.launch;
   const target = typeof launch?.target === "string" ? launch.target.trim() : "";
   if (!target) {
     showToast("该图标没有可用的启动目标");
     return false;
   }
-  const desk = ROOM.desks[currentDesk];
   const cfg = dockCfg();
   if (cfg.icons.some((icon) => icon?.launch?.target === target)) {
     showToast("Dock 中已存在该应用");
     return false;
   }
   if (!desk.dock || typeof desk.dock !== "object") desk.dock = {};
-  if (!Array.isArray(desk.dock.icons)) desk.dock.icons = cfg.icons.map((icon) => ({ ...icon, launch: icon.launch ? { ...icon.launch } : undefined }));
+  if (!Array.isArray(desk.dock.icons)) {
+    desk.dock.icons = cfg.icons.map((icon) => ({ ...icon, launch: icon.launch ? { ...icon.launch } : undefined }));
+  }
   const label = typeof item.label === "string" && item.label ? item.label : target;
   desk.dock.icons.push({
     label,
@@ -779,21 +860,12 @@ function addDockIconFromDesk(item) {
     glyph: item.glyph ?? "?",
     color: item.color ?? "#3b82f6",
     action: item.action ?? `启动 ${label}`,
-    launch: {
-      target,
-      args: typeof launch.args === "string" ? launch.args : "",
-      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
-    },
+    launch: { target, args: launch?.args ?? "", workdir: launch?.workdir ?? "" },
   });
-  showToast(`已将 ${label} 添加到 Dock`);
-  if (window.chrome?.webview?.postMessage) {
-    window.chrome.webview.postMessage(JSON.stringify({
-      type: "addDockIcon",
-      scope: "desk",
-      deskIndex: currentDesk,
-      icon: desk.dock.icons[desk.dock.icons.length - 1],
-    }));
-  }
+  desk.icons.splice(index, 1);
+  persistRoom();
+  renderDock();
+  showToast(`已将 ${label} 移入 Dock`);
   return true;
 }
 
@@ -862,31 +934,38 @@ function attachDockPress(el, item, cfg) {
 
 function startDockDrag(e, el, item, cfg) {
   e.preventDefault();
-  el.setPointerCapture(e.pointerId);
+  const session = makeDragSession(el);
+  session.onDown(e);
   el.classList.add("dragging");
-  const sx = e.clientX;
-  const sy = e.clientY;
+  ghostStart(item);
   const onMove = (ev) => {
-    el.style.transform = `translate(${ev.clientX - sx}px, ${ev.clientY - sy}px)`;
+    session.onMove(ev);
     iconLayer.classList.toggle("drop-target", desktopDropHit(ev.clientX, ev.clientY));
   };
-  const finish = (ev, canceled = false) => {
+  const finish = () => {
     el.removeEventListener("pointermove", onMove);
-    el.removeEventListener("pointerup", onUp);
-    el.removeEventListener("pointercancel", onCancel);
+    el.removeEventListener("pointerup", finish);
+    el.removeEventListener("pointercancel", finish);
+    el.removeEventListener("lostpointercapture", finish);
     el.classList.remove("dragging");
-    el.style.transform = "";
+    ghostEnd();
     iconLayer.classList.remove("drop-target");
-    if (!canceled && desktopDropHit(ev.clientX, ev.clientY)) {
-      if (moveDockIconToDesk(item, cfg, ev.clientX, ev.clientY)) renderDesk(currentDesk);
+    const drop = session.finish();
+    if (!drop) {
+      renderDock();
+      return;
+    }
+    if (desktopDropHit(drop.x, drop.y)) {
+      if (moveDockIconToDesk(item, cfg, drop.x, drop.y)) renderDesk(currentDesk);
       else renderDock();
+    } else {
+      renderDock();
     }
   };
-  const onUp = (ev) => finish(ev);
-  const onCancel = (ev) => finish(ev, true);
   el.addEventListener("pointermove", onMove);
-  el.addEventListener("pointerup", onUp);
-  el.addEventListener("pointercancel", onCancel);
+  el.addEventListener("pointerup", finish);
+  el.addEventListener("pointercancel", finish);
+  el.addEventListener("lostpointercapture", finish);
 }
 
 function persistRoom() {
@@ -1131,40 +1210,43 @@ function attachPress(el, index) {
 
 function startDrag(e, el, index) {
   e.preventDefault();
-  el.setPointerCapture(e.pointerId);
+  const desk = ROOM.desks[currentDesk];
+  const dragged = desk.icons[index];
+  if (!dragged) return;
+  const session = makeDragSession(el);
+  session.onDown(e);
   el.classList.add("dragging");
-  el.style.transition = "none";
-  const sx = e.clientX;
-  const sy = e.clientY;
-  const origLeft = parseFloat(el.style.left);
-  const origTop = parseFloat(el.style.top);
-
+  ghostStart(dragged);
   const onMove = (ev) => {
-    el.style.left = `${origLeft + ev.clientX - sx}px`;
-    el.style.top = `${origTop + ev.clientY - sy}px`;
+    session.onMove(ev);
     setDockDropFeedback(ev.clientX, ev.clientY);
   };
-  const onUp = (ev) => {
+  const finish = () => {
     el.removeEventListener("pointermove", onMove);
-    el.removeEventListener("pointerup", onUp);
+    el.removeEventListener("pointerup", finish);
+    el.removeEventListener("pointercancel", finish);
+    el.removeEventListener("lostpointercapture", finish);
     el.classList.remove("dragging");
-    el.style.transition = "";
-    const overDock = setDockDropFeedback(ev.clientX, ev.clientY);
+    ghostEnd();
     dockEl.classList.remove("drop-target");
-    const desk = ROOM.desks[currentDesk];
-    const dragged = desk.icons[index];
-    if (overDock) {
-      addDockIconFromDesk(dragged);
+    const drop = session.finish();
+    if (!drop) {
+      renderDesk(currentDesk);
+      return;
+    }
+    if (dockDropHit(drop.x, drop.y)) {
+      // DOCK-UX-001: dropping onto the dock MOVES the icon into the desk dock.
+      moveDeskIconToDock(index);
       renderDesk(currentDesk);
       return;
     }
     // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
-    const s = sizeOf(ROOM.desks[currentDesk]);
+    const s = sizeOf(desk);
     const cols = Math.max(4, Math.floor(rect.width / s.cellW));
     const rows = Math.max(1, Math.floor(rect.height / s.cellH));
-    const col = Math.max(0, Math.min(cols - 1, Math.floor((ev.clientX - rect.left) / s.cellW)));
-    const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / s.cellH)));
+    const col = Math.max(0, Math.min(cols - 1, Math.floor((drop.x - rect.left) / s.cellW)));
+    const row = Math.max(0, Math.min(rows - 1, Math.floor((drop.y - rect.top) / s.cellH)));
     if (dragged.x === col && dragged.y === row) {
       renderDesk(currentDesk);
       return;
@@ -1180,7 +1262,9 @@ function startDrag(e, el, index) {
     renderDesk(currentDesk);
   };
   el.addEventListener("pointermove", onMove);
-  el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointerup", finish);
+  el.addEventListener("pointercancel", finish);
+  el.addEventListener("lostpointercapture", finish);
 }
 
 function enterEdit() {
