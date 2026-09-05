@@ -561,3 +561,19 @@
       真机交互验收并入 SKIN-001b（配置器窗口内迭代），001a 分支保留待续
 - [ ] 续做时起点：先定位命中层点击失效（怀疑方向：命中 rect 坐标系/事件被 iframe 焦点吞掉/
       isTrusted 链），再进 001b（皮肤选择 UI + custom 命中动作绑定 + 预览）
+
+### TRAY-小改：托盘加「打开配置器」（2026-09-06 追加，用户豁免 worktree 流程直改 master）
+
+> 目标：托盘菜单新增「打开配置器」→ 启动 tauri-ui release 产物 dext-configurator.exe；
+> 找不到 exe 时后台拉起 
+pm run tauri build 并气泡提示，完成后重试即可。
+
+- [ ] 2026-09-06 Systray.cs：FindConfiguratorExe（从 Core exe 向上找 tauri-ui\src-tauri\target\release\dext-configurator.exe）+ 菜单项 + 构建兜底
+- [ ] 2026-09-06 停 Core → build.ps1 → 重启 Core，托盘实测
+- [ ] 2026-09-06 commit + 用户验收
+
+- [x] 2026-09-06 Systray.cs：FindConfiguratorExe（从 Core exe 向上找 tauri-ui\src-tauri\target\release\dext-configurator.exe）+ 菜单项 + 构建兜底
+- [x] 2026-09-06 停 Core → build.ps1 → 重启 Core；UIA 实测菜单 4 项、点击触发构建兜底（commit 292f930）
+- [ ] 2026-09-06 构建完成后再次点击验证配置器拉起 + 用户验收
+- [x] 2026-09-06 release 构建完成（15.6MB），UIA 实测点击「打开配置器」成功拉起 dext-configurator.exe
+- [ ] 2026-09-06 用户验收
