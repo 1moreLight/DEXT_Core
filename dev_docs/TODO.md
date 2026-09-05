@@ -483,6 +483,14 @@
 - [x] 重跑全量自动检查（2026-09-05）：前端 vitest 32/32、生产构建、Rust 36 passed / 3 ignored（活体）、
       渲染器 main.js + capability-bridge 语法、room-v2 Schema fixtures 全 PASS；
       浏览器视觉与整体人工验收留给用户一次性验收
+- [x] 用户指令直接合并（2026-09-05「直接合并吧」，一次性验收由用户自行豁免）：合并到 master
+      merge `e8cd700`；主 worktree 重建 Core/Player/Watchdog（含 ERRORS #64 修复）并切换栈，
+      `Success:true` 零 navigation failed，用户主 worktree 配置器与 Core 同源连接恢复
+- [x] 主 worktree 合并前状态保全：运行时 room.json 存 stash（main-worktree runtime room.json,
+      pre UI-V2-001 merge）；rooms/v2、library.json 未跟踪内容原样保留
+- [ ] 已知观察：主 worktree build.ps1 的 Core 步骤（step 3）连续两次 exit 1，但同一命令 standalone
+      稳定成功（0 错误、2.2s）——疑似 step1/2 的 VS msbuild 节点残留锁；临时解法为 standalone
+      dotnet build + 手动 deploy。待归因后记 ERRORS 或修脚本（未影响本次交付）
 
 ### UI-V2-001 活体验证修复（2026-09-03）
 
