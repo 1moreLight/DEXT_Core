@@ -24,10 +24,7 @@ import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNav
 import { UsePage, type RoomSort } from "@/pages/UsePage";
 import { EditorRoomLibrary } from "@/pages/EditorRoomLibrary";
 import { EditorAppLibrary } from "@/pages/EditorAppLibrary";
-import {
-  ContentInspector,
-  DeskBackgroundCanvas,
-} from "@/features/room-library/previews";
+import { ContentInspector } from "@/features/room-library/previews";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
 import { isCoreUnavailable } from "@/features/runtime/core-status";
@@ -1826,17 +1823,6 @@ export default function App() {
                           const subjectId = isStart ? "scene:start" : isIdle ? "scene:idle" : `scene:desk:${deskIndex}`;
                           return (
                             <>
-                              {!isStart && !isIdle && (
-                                <DeskBackgroundCanvas
-                                  desks={desks}
-                                  roomPath={roomPath}
-                                  selectedIndex={deskIndex}
-                                  onSelect={(index) => {
-                                    setActiveDesk(index);
-                                    setGraphSel(`d${index}`);
-                                  }}
-                                />
-                              )}
                               <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium">
                                 {isStart ? (
                                   <MonitorPlay className="h-3.5 w-3.5 text-primary" />
@@ -1885,18 +1871,11 @@ export default function App() {
 	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
 	                                </Button>
 	                              )}
-	                              {isStart ? (
-	                                <ContentInspector
-	                                  content={content}
-	                                  roomPath={roomPath}
-	                                  emptyLabel="尚未选择启动画面"
-	                                />
-	                              ) : (
-	                                <dl className="w-44 shrink-0 space-y-1 text-[11px]">
-	                                  <div><dt className="text-muted-foreground">当前素材</dt><dd className="truncate font-medium" title={content?.name}>{content?.name ?? "未选择"}</dd></div>
-	                                  <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
-	                                </dl>
-	                              )}
+                              <ContentInspector
+                                content={content}
+                                roomPath={roomPath}
+                                emptyLabel={isStart ? "尚未选择启动画面" : isIdle ? "尚未设置待机画面" : "尚未设置背景"}
+                              />
                               <div className="flex shrink-0 items-center gap-2">
                                 <span className="text-xs text-muted-foreground">
                                   {isStart ? "画面素材：" : isIdle ? "待机素材：" : "壁纸素材："}

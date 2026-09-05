@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Code, Film } from "lucide-react";
-import type { Content, Desk } from "@/lib/room-v2";
+import type { Content } from "@/lib/room-v2";
 import type { AppInfo, CoverRef, RoomInfo } from "@/features/runtime/types";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -147,30 +147,6 @@ export function ContentInspector({ content, roomPath, emptyLabel }: { content: C
         <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
         <div className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${content ? "bg-primary" : "bg-muted-foreground/40"}`} aria-hidden="true" /><span>{typeLabel}</span></div>
       </dl>
-    </div>
-  );
-}
-
-export function DeskBackgroundCanvas({ desks, roomPath, selectedIndex, onSelect }: { desks: Desk[]; roomPath: string | null; selectedIndex: number; onSelect: (index: number) => void }) {
-  return (
-    <div className="flex h-full w-[52vw] min-w-[32rem] max-w-3xl shrink-0 flex-col justify-center gap-2">
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground"><span className="font-medium uppercase tracking-[0.14em]">Desk 画布</span><span>{desks.length} 个 Desk · 点击切换</span></div>
-      <div role="listbox" aria-label="Desk 背景画布" className="flex gap-2 overflow-x-auto pb-1">
-        {desks.map((desk, index) => {
-          const content = desk.background;
-          const url = roomContentUrl(content, roomPath);
-          const selected = index === selectedIndex;
-          return (
-            <button key={index} type="button" role="option" aria-selected={selected} onClick={() => onSelect(index)} className={`group relative aspect-video w-44 shrink-0 overflow-hidden rounded-lg border-2 bg-black text-left transition-[border-color,transform] duration-150 hover:-translate-y-0.5 ${selected ? "border-primary" : "border-border hover:border-primary/55"}`} title={`选择 ${desk.name}`}>
-              {!content ? <div className="flex h-full w-full items-center justify-center bg-muted/50 text-[11px] text-muted-foreground">未设置背景</div>
-                : content.type === "image" ? <img src={url} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
-                : content.type === "video" ? <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                : <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-muted/55 text-muted-foreground"><Code className="h-5 w-5" /><span className="text-[10px]">HTML 场景</span></div>}
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 pb-1.5 pt-6 text-white"><span className="min-w-0 truncate text-xs font-medium">{desk.name}</span><span className="shrink-0 text-[9px] text-white/70">{index === 0 ? "主 Desk" : `${index + 1}`}</span></div>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }
