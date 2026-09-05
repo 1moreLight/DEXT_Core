@@ -23,6 +23,7 @@
 | 最近完成 | **UI-V1-001 配置器核心页面全栈闭环** | 已完成 | master（merge `61ea4c8`） | Room 安全管理与运行状态、使用/编辑/设置页、Desk/Dock 共用应用选择、测试隔离及六轮验收反馈均已完成 |
 | 最近完成 | **DXT-003 Room v2 Widget 后端与系统接口** | 已完成 | master（merge `56dc602`；实现 `695e3e7`） | 唯一原生 v2、Widget 资源全链、系统媒体/主音量与前端安全文档已验收 |
 | 最近完成 | **UI-V2-001 配置器 v2 端到端闭环** | 已完成 | master（merge `e8cd700`；用户 2026-09-05 指令直接合并，一次性验收由用户豁免） | Room v2 配置器架构、Scene/WidgetHost、受控系统能力、安全分享、AI 创作导入与 ERRORS #64 修复一并入库 |
+| 当前项 | **DOCK-SKIN-001 Dock 沙箱皮肤受管格式** | 设计稿待拍板（2026-09-05） | `docs/dock-skin-001-skin-contract`（worktree `dock-skin-001-design`） | 设计契约 `dev_docs/DOCK_SKIN.md`：dock.skin 契约、方案 B 运行模型、命中握手、能力桥增量、降级兜底；用户拍板 §9 后立 SKIN-001a 实现 |
 | 已取消 | **DOCK-UX-001 Dock 双向拖拽重做** | 已取消（2026-09-05 用户决定放弃真桌面拖入 Dock） | 实现 `638ee0e` 已 revert（`de04a33`），不合并独立验收 | 两次实机尝试均不稳定（DOCK-003、本包）；Dock 图标管理正式路径 = 配置器 DockEditor；详见 ERRORS #65 |
 
 规则：默认只有一个“开发中”和一个“下一项”。用户可改变顺序，但每次仍只选一个工作包。
