@@ -3,12 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppIcon } from "@/features/room-library/previews";
 import type { AppInfo } from "@/features/runtime/types";
-import type { Desk } from "@/lib/room-v2";
 
 interface EditorAppLibraryProps {
   apps: AppInfo[];
   filteredApps: AppInfo[];
-  desk: Desk;
   query: string;
   selected: Set<string>;
   source: "auto" | "custom";
@@ -16,7 +14,6 @@ interface EditorAppLibraryProps {
   onAdd: () => void;
   onDelete: () => void;
   onScan: () => void;
-  onToggleApp: (app: AppInfo) => void;
   onToggleSelect: (app: AppInfo) => void;
 }
 
@@ -34,13 +31,12 @@ export function EditorAppLibrary(props: EditorAppLibraryProps) {
       <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-6 gap-2 overflow-y-auto pr-1">
         {props.apps.length === 0 && <div className="col-span-6 py-16 text-center text-sm text-muted-foreground">库为空——点「扫描合并」一键读取开始菜单，或「+ 添加」手动加入 lnk/exe</div>}
         {props.filteredApps.map((app) => {
-          const on = props.desk.icons.some((icon) => icon.launch.target === app.target);
           const picked = props.selected.has(app.target);
           return (
-            <div key={app.source + app.target} className={`relative rounded-lg border transition-colors ${picked ? "border-destructive/60" : on ? "border-primary" : "border-transparent"}`}>
-              <button type="button" onClick={() => props.onToggleApp(app)} className={`flex h-full w-full flex-col items-center gap-1.5 rounded-lg p-3 ${on ? "bg-primary/10" : "hover:bg-accent"}`} title={`${app.target}\n单击${on ? "从" : "加入"}当前 Desk`}>
-                <AppIcon app={app} /><span className="line-clamp-2 text-center text-xs leading-tight">{app.name}</span>{on && <span className="absolute right-1.5 top-1.5 text-[10px] font-bold text-primary">Desk ✓</span>}
-              </button>
+            <div key={app.source + app.target} className={`relative rounded-lg border transition-colors ${picked ? "border-destructive/60" : "border-transparent"}`}>
+              <div className={`flex h-full w-full flex-col items-center gap-1.5 rounded-lg p-3 ${picked ? "bg-destructive/10" : ""}`} title={app.target}>
+                <AppIcon app={app} /><span className="line-clamp-2 text-center text-xs leading-tight">{app.name}</span>
+              </div>
               <button type="button" aria-label={`${picked ? "取消选择" : "选择删除"} ${app.name}`} aria-pressed={picked} onClick={() => props.onToggleSelect(app)} className={`absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded border text-[10px] ${picked ? "border-destructive bg-destructive text-white" : "border-border bg-background/90 text-muted-foreground"}`}>{picked ? "✓" : ""}</button>
             </div>
           );

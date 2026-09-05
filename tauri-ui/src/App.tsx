@@ -989,7 +989,6 @@ export default function App() {
     setStatus("Desk 顺序已调整；原 Desk 身份、startDesk 和仍相邻的有向 switch 已同步重映射");
   }
 
-  const desk = desks[activeDesk];
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
     rooms.find((r) => r.path === appliedRoom) ??
@@ -1488,7 +1487,6 @@ export default function App() {
               <EditorAppLibrary
                 apps={apps}
                 filteredApps={filtered}
-                desk={desk}
                 query={query}
                 selected={selected}
                 source={libSource}
@@ -1496,7 +1494,6 @@ export default function App() {
                 onAdd={() => void manualAdd()}
                 onDelete={() => void deleteFromLibrary()}
                 onScan={() => void scanMerge()}
-                onToggleApp={(app) => toggleDeskApp(app)}
                 onToggleSelect={toggleSelect}
               />
             ) : editNav === "dock" ? (
