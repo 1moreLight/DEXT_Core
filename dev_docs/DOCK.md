@@ -164,7 +164,7 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 ### DOCK-003 拖入消息与持久化（链保留；渲染器已改走 DOCK-UX-001 通道）
 
 > 2026-08-29 实机限制：从桌面上方/侧面向 Dock 拖动会被图标层边界限制；从 Dock 下方进入虽能触发绿色命中反馈，释放后仍可能不落入。用户决定跳过该交互目标，当前正式维护入口改为配置器 `DockEditor`；真桌面双向拖拽的输入捕获与命中重做登记为远期 `DOCK-UX-001`。
-> **2026-09-05 更新**：`DOCK-UX-001` 已实施（见下节），真桌面拖拽恢复为受支持入口；本节保留作历史与 Player/Core 兼容链说明。
+> **2026-09-05 更新**：`DOCK-UX-001` 已实施一版（ghost/吸附带/统一结束事件）并真机复验，仍不稳定；用户决定**放弃真桌面拖入 Dock**，代码已 revert。配置器 `DockEditor` 继续是 Dock 图标管理的唯一正式入口。详见下节与 ERRORS #65。
 
 编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
 
@@ -187,23 +187,14 @@ Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIc
 
 同一编辑模式下也支持 Dock → 桌面：拖动 Dock 图标到桌面网格的虚线 drop 区，会将图标完整复制回当前 Desk 的 `icons` 并从当前 Desk Dock 移除；继承全局 Dock 的图标通过建立桌级覆盖实现“只从当前 Desk 移出”，不会影响其他 Desk。目标位置已有桌面图标或启动目标重复时保持原 Dock 不变。
 
-### DOCK-UX-001 双向拖拽重做（2026-09-05，真桌面拖拽恢复为受支持入口）
+### DOCK-UX-001 双向拖拽重做（2026-09-05 已取消）
 
-用户拍板：桌面→Dock 为**移动**语义（图标从当前 Desk 移除，非复制）；只写**当前 Desk** 的 `dock.icons`
-覆盖，全局 Dock 仍仅配置器 DockEditor 可设；仅编辑模式可拖；autoHide 行为不变。
-
-实现要点（`wallpapers/dext-room/main.js`）：
-
-| 机制 | 说明 |
-|---|---|
-| `drag-ghost` | document 级 fixed 幽灵（`iconVisual` 复用），替代原图标位移；原图标原位变暗（`.dragging`）。图标层裁剪/窗口边界不再能吞掉拖拽视觉 |
-| `dockDropHit` 吸附带 | Dock 视觉矩形向四周膨胀 `DOCK_SNAP_PX`（48px）；贴边/任务栏附近的指针也算命中（修复「绿色命中但松手不落入」） |
-| 统一结束事件 | `pointerup` / `pointercancel` / `lostpointercapture` 都进入同一条提交路径，一律用**最后已知指针位置**判定；`DRAG_MIN_TRAVEL_PX`（24px）以下视为点击不提交 |
-| 持久化 | 两个方向都直接改 `ROOM` 后 `persistRoom()`（saveRoom 全量双写，dock 一并覆盖）；渲染器**不再发送** `addDockIcon` 专用消息（Player/Core 链保留兼容，其他调用方不存在） |
-| schema 形状 | 移入 Dock 时重建 icon 对象（剥离 x/y，保持 v2 `dockIcon` 形状）；拖回桌面时重新计算格坐标 |
-
-Dock → 桌面方向沿用 DOCK-003 语义：落空格成功并从当前 Desk Dock 移除（继承全局时建立桌级覆盖），
-占用格/重复目标拒绝并 toast。验收卡：`dev_docs/acceptance/DOCK-UX-001-dock-drag-rework.md`。
+用户拍板的交付口径：桌面→Dock 为**移动**语义、只写当前 Desk 的 `dock.icons` 覆盖、仅编辑模式、
+autoHide 不动。实现（ghost 拖拽视觉 + Dock 吸附带命中 + pointerup/cancel/capture-loss 统一按最后
+指针位置提交 + persistRoom 单一持久化）自动检查全绿，但真机复验仍不稳定，用户决定放弃该交互目标；
+实现提交 `638ee0e` 已整体 revert（`de04a33`）。结论与后续条件见 ERRORS #65：
+真桌面拖拽若重启，必须先立 WebView2 指针/WorkerW 命中的专项研究包，不再直接做交互实现。
+Dock 图标管理的正式入口 = 配置器 `DockEditor`。
 
 ## 四、当前演示与验收状态
 

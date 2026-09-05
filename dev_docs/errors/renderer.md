@@ -67,3 +67,17 @@
 修复：保存轮询句柄并新增幂等 `disposeRuntime()`，在 `pagehide` 时停止轮询、取消 active slot、卸载 Widget/Scene、停止视频、清空能力实例和 staging。
 
 防再犯：新增 Player 级后台任务必须登记到 `disposeRuntime()`，不得留下不可取消的匿名定时器。
+# #65 真桌面跨层拖拽两次实机失败，已放弃该交互目标
+
+现象：DOCK-003（2026-08-29 原版：指针 rect 命中）与 DOCK-UX-001（2026-09-05 加固版：document 级
+ghost、Dock 吸附带膨胀 48px、pointerup/pointercancel/lostpointercapture 统一按最后指针位置提交、
+<24px 防误触）两版自动检查全绿、预览可用，但真实 Player（WorkerW 壁纸层）中拖拽仍不稳定；
+第二版失败现场细节未采集，用户决定放弃真桌面拖入/拖出 Dock（实现 `638ee0e` 已 revert `de04a33`）。
+
+原因（推断，未实证）：WebView2 壁纸窗口位于 WorkerW 层，拖拽跨越官方图标层与 Dock 层的指针捕获
+边界；任务栏等 topmost 窗口会截走指针并触发 capture 丢失/pointercancel，事件层无法稳定还原
+「拖拽中」语义。属于宿主输入链限制而非页面代码缺陷。
+
+防再犯：真桌面跨层拖拽方向若重启，必须先立专项研究包（WebView2 指针捕获在 WorkerW/被 topmost
+遮挡场景下的行为实证 + Player 原生输入桥可行性），不再直接实现页面级交互；Dock 图标管理的
+正式入口保持为配置器 `DockEditor`。

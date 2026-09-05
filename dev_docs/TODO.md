@@ -514,4 +514,7 @@
 - [x] 2026-09-05 编辑模式提示文案按移动语义更新（index.html）；DOCK.md（DOCK-UX-001 契约节 + DOCK-003 历史标注）/ ROADMAP 同步
 - [x] 2026-09-05 自测：node --check main.js + capability bridge + CSS 括号平衡 + npm run build 全绿
       （用户 17:04 已自行停止 Dext，重铺验收留给下次启动后的真机检查）
-- [~] 2026-09-05 提交后停在待用户真机验收
+- [x] 已取消(2026-09-05)：实现提交 `638ee0e` 后用户真机复验仍失败，用户决定**放弃真桌面拖入 Dock**
+      目标；代码整体回退（revert `de04a33`），配置器 DockEditor 继续作为 Dock 图标管理的唯一正式入口。
+      两次实机尝试（DOCK-003 原版、本包 ghost+吸附带+统一结束事件）均不稳定，已记 ERRORS #65；
+      失败现场细节未采集，若重启该方向须先做 WebView2 指针/WorkerW 命中的专项研究包
