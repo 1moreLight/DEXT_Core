@@ -616,3 +616,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 验收反馈：ContentInspector 信息列 w-44 → min-w-0 max-w-44（贴内容自适应，长名仍截断）；
       重跑 build + tauri build 并重新拉起
 - [ ] 2026-09-06 用户验收
+
+### UI-小改：switch 方向 chip 下沉 + 属性栏单方向编辑（2026-09-06 追加，方案 A）
+
+> 用户定调：switch 双方向横排两组编辑器不友好。方案 A：画布上每对 Desk 拆成 ↓/↑ 两个方向 chip
+> （错位排在连线两侧），点哪个 chip 属性栏就只显示哪个方向的编辑组；反向内容点另一 chip 即达。
+> graphSel 从 pairKey 改为边 id；graphSwitchPosition / 契约 / 历史结构不动。
+
+- [x] 2026-09-06 App.tsx：chip 改按边渲染（方向箭头 + 水平错位），属性栏 switch 分支按边 id 过滤；
+      npm test 32/32 + npm run build + tauri build 绿并重新拉起
+- [ ] 2026-09-06 用户验收
