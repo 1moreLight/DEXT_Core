@@ -613,4 +613,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 App.tsx：移除 DeskBackgroundCanvas 用法与导入；Desk/idle 分支改用 ContentInspector
 - [x] 2026-09-06 previews.tsx：删除失用的 DeskBackgroundCanvas；npm test（32/32）+ npm run build 自测
 - [x] 2026-09-06 tauri build 更新 release 产物并重新拉起配置器（旧进程占用 exe 已先关闭）
+- [x] 2026-09-06 验收反馈：ContentInspector 信息列 w-44 → min-w-0 max-w-44（贴内容自适应，长名仍截断）；
+      重跑 build + tauri build 并重新拉起
 - [ ] 2026-09-06 用户验收
