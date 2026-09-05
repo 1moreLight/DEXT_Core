@@ -33,7 +33,6 @@ import {
   reconcileGraphEdges,
   routeGraphEdge,
   seedEdges,
-  visualGraphEdges,
   type GEdge,
 } from "@/features/room-editor/graph";
 import { useGraphGeometry } from "@/features/room-editor/useGraphGeometry";
@@ -1629,7 +1628,7 @@ export default function App() {
                   />
                 ) : (
                   <>
-                    {/* 上：Room 结构思维导图（Desk 对视觉上合并为一条双向线） */}
+                    {/* 上：Room 结构思维导图（Desk 对拆为两条方向线，各带箭头与 switch chip） */}
 	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
 	                      <div
 	                        ref={canvasRef}
@@ -1651,11 +1650,14 @@ export default function App() {
                               <path d="M0,0L10,5L0,10z" fill="currentColor" />
 	                            </marker>
 	                          </defs>
-	                          {visualGraphEdges(edges).map((edge) => {
-	                            const segments = routeGraphEdge(edge, geom.nodes);
-	                            const bidirectional = edge.from !== "start" && edge.to !== "start";
+	                          {edges.map((edge) => {
+	                            const fromNode = geom.nodes[edge.from];
+	                            const toNode = geom.nodes[edge.to];
+	                            const pair = edge.from !== "start" && edge.to !== "start";
+	                            const laneOffset = pair && fromNode && toNode ? (toNode.cy >= fromNode.cy ? -20 : 20) : 0;
+	                            const segments = routeGraphEdge(edge, geom.nodes, laneOffset);
 	                            return (
-	                              <g key={edge.id} data-graph-edge={edge.id} className="text-foreground/60">
+	                              <g key={edge.id} data-graph-edge={edge.id} className={pair && graphSel === edge.id ? "text-primary" : "text-foreground/60"}>
 	                                {segments.map((segment, index) => (
 	                                  <line
 	                                    key={index}
@@ -1665,9 +1667,6 @@ export default function App() {
 	                                    strokeWidth={2.2}
 	                                    strokeLinecap="round"
 	                                    vectorEffect="non-scaling-stroke"
-	                                    markerStart={
-	                                      bidirectional && index === 0 ? "url(#garrow)" : undefined
-	                                    }
 	                                    markerEnd={index === segments.length - 1 ? "url(#garrow)" : undefined}
 	                                  />
 	                                ))}
@@ -1675,7 +1674,7 @@ export default function App() {
 	                            );
 	                          })}
 	                        </svg>
-	                        {/* switch 标记（每对 Desk 正/反方向各一个，点选即编辑该方向） */}
+	                        {/* switch 标记（每条方向线一个，骑线显示，点选即编辑该方向） */}
 	                        {edges
 	                          .filter((edge) => edge.from !== "start" && edge.to !== "start")
 	                          .map((e) => {
@@ -1685,20 +1684,22 @@ export default function App() {
 	                          const base = graphSwitchPosition(e, geom.nodes);
 	                          if (!base) return null;
 	                          const downward = toNode.cy >= fromNode.cy;
+	                          const nameOf = (id: string) => desks[parseInt(id.slice(1), 10)]?.name ?? id;
 	                          return (
 	                            <button
 	                              key={e.id}
 	                              data-graph-switch={e.id}
+	                              title={`切换：${nameOf(e.from)} → ${nameOf(e.to)}`}
 	                              onClick={() => setGraphSel(e.id)}
-	                              style={{ left: base.left + (downward ? -44 : 44), top: base.top }}
-                              className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] transition-colors ${
+	                              style={{ left: base.left + (downward ? -20 : 20), top: base.top }}
+                              className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 text-[10px] transition-colors ${
                                 graphSel === e.id
                                   ? "border-primary bg-primary/10 font-medium text-primary"
                                   : "border-border text-muted-foreground hover:border-primary/50"
                               }`}
                             >
                               <ArrowRightLeft className="h-3 w-3" />
-                              <span aria-hidden="true">{downward ? "↓" : "↑"}</span> switch
+                              <span aria-hidden="true">{downward ? "↓" : "↑"}</span>
                             </button>
                           );
 	                          })}

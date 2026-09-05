@@ -68,7 +68,7 @@ export function sameGraphGeometry(a: GraphGeometry, b: GraphGeometry) {
   });
 }
 
-export function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>): GraphSegment[] {
+export function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>, laneOffset = 0): GraphSegment[] {
   const from = nodes[edge.from];
   const to = nodes[edge.to];
   if (!from || !to) return [];
@@ -86,8 +86,8 @@ export function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>
   const wraps = deskCount > 2 && Math.abs(fromIndex - toIndex) === deskCount - 1;
   if (!wraps) {
     const down = toIndex > fromIndex;
-    const fromX = from.cx;
-    const toX = to.cx;
+    const fromX = from.cx + laneOffset;
+    const toX = to.cx + laneOffset;
     const fromY = down ? from.bottom : from.top;
     const toY = down ? to.top : to.bottom;
     const middleY = (fromY + toY) / 2;
@@ -97,7 +97,7 @@ export function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>
       { x1: toX, y1: middleY, x2: toX, y2: toY },
     ];
   }
-  const laneX = Math.max(from.right, to.right) + 48;
+  const laneX = Math.max(from.right, to.right) + 48 + laneOffset;
   return [
     { x1: from.right, y1: from.cy, x2: laneX, y2: from.cy },
     { x1: laneX, y1: from.cy, x2: laneX, y2: to.cy },
