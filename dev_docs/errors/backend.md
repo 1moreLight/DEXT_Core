@@ -148,3 +148,18 @@
 修复：中间目录段拒绝 Windows 特殊字符，最终文件段必须通过安全资源路径和扩展名校验。
 
 防再犯：所有从 token/URL 解析出的资源路径都必须经过与 manifest 相同的逐段校验。
+# #64 Offline Boundary 把首屏导航当外域取消，Player 每次铺壁纸都黑屏
+
+现象：2026-09-03 09:49 起每次 Player 启动日志必现
+`WebView navigation failed: OperationCanceled`，之后永远等不到 `{"Type":2,"Success":true}`，
+桌面全黑无 dock（用户 09-05 报「应用壁纸读不到」即此坑，与启动方式无关）。
+
+原因：`IsAllowedDextResource` 的首航兜底写成 `Source 为空串时放行 *.localhost`，
+但 WebView2 首次导航前 `CoreWebView2.Source` 返回的是初始文档 `about:blank` 而非空串 →
+首个 `https://<hash>.localhost/` 导航被 `NavigationStarting` Cancel → WebErrorStatus.OperationCanceled。
+
+修复：兜底条件改为「Source 为空串或等于 about:blank 均视为尚无文档」，再要求 host 以
+`.localhost` 结尾（同域判断不变，外域仍然拦截）。
+
+防再犯：WebView2 生命周期断言（Source/初始文档/事件顺序）要用日志实证再写进拦截器；
+导航被主动 Cancel 的统一表现就是 OperationCanceled，见到它先查自家 NavigationStarting。
