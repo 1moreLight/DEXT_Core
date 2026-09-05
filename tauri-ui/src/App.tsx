@@ -30,7 +30,6 @@ import { useDextRuntime } from "@/features/runtime/useDextRuntime";
 import { isCoreUnavailable } from "@/features/runtime/core-status";
 import {
   graphSwitchPosition,
-  pairKey,
   reconcileGraphEdges,
   routeGraphEdge,
   seedEdges,
@@ -1676,26 +1675,30 @@ export default function App() {
 	                            );
 	                          })}
 	                        </svg>
-	                        {/* switch 标记（每条双向视觉线一个） */}
-	                        {visualGraphEdges(edges)
+	                        {/* switch 标记（每对 Desk 正/反方向各一个，点选即编辑该方向） */}
+	                        {edges
 	                          .filter((edge) => edge.from !== "start" && edge.to !== "start")
 	                          .map((e) => {
-	                          const k = pairKey(e);
-	                          const position = graphSwitchPosition(e, geom.nodes);
-	                          if (!position) return null;
+	                          const fromNode = geom.nodes[e.from];
+	                          const toNode = geom.nodes[e.to];
+	                          if (!fromNode || !toNode) return null;
+	                          const base = graphSwitchPosition(e, geom.nodes);
+	                          if (!base) return null;
+	                          const downward = toNode.cy >= fromNode.cy;
 	                          return (
 	                            <button
-	                              key={k}
-	                              data-graph-switch={k}
-	                              onClick={() => setGraphSel(k)}
-	                              style={{ left: position.left, top: position.top }}
+	                              key={e.id}
+	                              data-graph-switch={e.id}
+	                              onClick={() => setGraphSel(e.id)}
+	                              style={{ left: base.left + (downward ? -44 : 44), top: base.top }}
                               className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-md border bg-background px-1.5 py-0.5 text-[10px] transition-colors ${
-                                graphSel === k
+                                graphSel === e.id
                                   ? "border-primary bg-primary/10 font-medium text-primary"
                                   : "border-border text-muted-foreground hover:border-primary/50"
                               }`}
                             >
-                              <ArrowRightLeft className="h-3 w-3" /> switch
+                              <ArrowRightLeft className="h-3 w-3" />
+                              <span aria-hidden="true">{downward ? "↓" : "↑"}</span> switch
                             </button>
                           );
 	                          })}
@@ -1928,7 +1931,7 @@ export default function App() {
                         })()
                       ) : (
                         edges
-                          .filter((e) => pairKey(e) === graphSel)
+                          .filter((e) => e.id === graphSel)
                           .map((e) => {
                             const nameOf = (id: string) =>
                               id === "start"
