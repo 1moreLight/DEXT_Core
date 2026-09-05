@@ -1,4 +1,5 @@
 mod grpc;
+mod creator;
 
 use tauri::Manager;
 
@@ -138,6 +139,158 @@ const MAX_WIDGETS_PER_ROOM: usize = 64;
 const MAX_WIDGET_RESOURCES: usize = 256;
 const MAX_WIDGET_CONFIG_BYTES: usize = 65_536;
 const MAX_WIDGET_CONFIG_DEPTH: usize = 12;
+
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PermissionStore {
+    version: u32,
+    rooms: std::collections::BTreeMap<String, RoomPermissionGrant>,
+}
+
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RoomPermissionGrant {
+    fingerprint: String,
+    subjects: std::collections::BTreeMap<String, Vec<String>>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PermissionReview {
+    id: String,
+    label: String,
+    declared: Vec<String>,
+    granted: Vec<String>,
+    current: bool,
+}
+
+fn permission_store_path() -> std::path::PathBuf {
+    grpc::local_app_data_path().join("permissions-v1.json")
+}
+
+fn normalized_room_path(path: &std::path::Path) -> Result<(std::path::PathBuf, String), String> {
+    let candidate = if path.is_dir() { path.join("room.json") } else { path.to_path_buf() };
+    if candidate.file_name().and_then(|name| name.to_str()) != Some("room.json") || !candidate.is_file() {
+        return Err("permission target must be an existing room.json".into());
+    }
+    let canonical = candidate
+        .canonicalize()
+        .map_err(|error| format!("resolve permission target failed: {error}"))?;
+    let normalized = canonical.to_string_lossy().replace('\\', "/").to_lowercase();
+    Ok((canonical, normalized))
+}
+
+fn room_fingerprint(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn permission_subjects(room: &serde_json::Value) -> Vec<(String, String, Vec<String>)> {
+    let permissions = |value: &serde_json::Value| {
+        value.get("permissions")
+            .and_then(|item| item.as_array())
+            .into_iter()
+            .flatten()
+            .filter_map(|item| item.as_str().map(str::to_string))
+            .collect::<Vec<_>>()
+    };
+    let mut subjects = Vec::new();
+    for key in ["start", "idle"] {
+        if let Some(content) = room.get(key).filter(|item| item.is_object()) {
+            subjects.push((format!("scene:{key}"), format!("{} Scene", if key == "start" { "启动" } else { "待机" }), permissions(content)));
+        }
+    }
+    if let Some(switches) = room.get("switches").and_then(|item| item.as_object()) {
+        for (route, content) in switches.iter().filter(|(_, item)| item.is_object()) {
+            subjects.push((format!("scene:switch:{route}"), format!("切换 {route} Scene"), permissions(content)));
+        }
+    }
+    if let Some(desks) = room.get("desks").and_then(|item| item.as_array()) {
+        for (desk_index, desk) in desks.iter().enumerate() {
+            if let Some(content) = desk.get("background").filter(|item| item.is_object()) {
+                subjects.push((format!("scene:desk:{desk_index}"), format!("Desk {} Scene", desk_index + 1), permissions(content)));
+            }
+            if let Some(widgets) = desk.get("widgets").and_then(|item| item.as_array()) {
+                for widget in widgets {
+                    if let Some(id) = widget.get("id").and_then(|item| item.as_str()) {
+                        subjects.push((
+                            format!("widget:{id}"),
+                            widget.get("name").and_then(|item| item.as_str()).unwrap_or(id).to_string(),
+                            permissions(widget),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    subjects
+}
+
+fn read_permission_store() -> Result<PermissionStore, String> {
+    let path = permission_store_path();
+    if !path.is_file() {
+        return Ok(PermissionStore { version: 1, ..Default::default() });
+    }
+    let bytes = std::fs::read(&path).map_err(|error| format!("read permission store failed: {error}"))?;
+    let store: PermissionStore = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse permission store failed: {error}"))?;
+    if store.version != 1 {
+        return Err("unsupported permission store version".into());
+    }
+    Ok(store)
+}
+
+fn write_permission_store(store: &PermissionStore) -> Result<(), String> {
+    let bytes = serde_json::to_vec_pretty(store)
+        .map_err(|error| format!("serialize permission store failed: {error}"))?;
+    atomic_write(&permission_store_path(), &bytes)
+}
+
+#[tauri::command]
+async fn get_permission_review(path: String) -> Result<Vec<PermissionReview>, String> {
+    let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
+    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse room permissions failed: {error}"))?;
+    validate_room_contract(&room)?;
+    validate_room_asset_references(room_path.parent().unwrap(), &room)?;
+    let fingerprint = room_fingerprint(&bytes);
+    let store = read_permission_store()?;
+    let grant = store.rooms.get(&key).filter(|item| item.fingerprint == fingerprint);
+    Ok(permission_subjects(&room).into_iter().map(|(id, label, declared)| {
+        let granted = grant.and_then(|item| item.subjects.get(&id)).cloned().unwrap_or_default();
+        PermissionReview { id, label, declared, granted, current: grant.is_some() }
+    }).collect())
+}
+
+#[tauri::command]
+async fn set_subject_permission(path: String, subject_id: String, approved: bool) -> Result<Vec<PermissionReview>, String> {
+    let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
+    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse room permissions failed: {error}"))?;
+    validate_room_contract(&room)?;
+    validate_room_asset_references(room_path.parent().unwrap(), &room)?;
+    let subjects = permission_subjects(&room);
+    let declared = subjects.iter().find(|(id, _, _)| id == &subject_id)
+        .map(|(_, _, permissions)| permissions.clone())
+        .ok_or_else(|| "permission subject is not part of this Room".to_string())?;
+    let fingerprint = room_fingerprint(&bytes);
+    let mut store = read_permission_store()?;
+    store.version = 1;
+    let grant = store.rooms.entry(key).or_default();
+    if grant.fingerprint != fingerprint {
+        grant.fingerprint = fingerprint;
+        grant.subjects.clear();
+    }
+    if approved {
+        grant.subjects.insert(subject_id, declared);
+    } else {
+        grant.subjects.remove(&subject_id);
+    }
+    write_permission_store(&store)?;
+    get_permission_review(room_path.to_string_lossy().into_owned()).await
+}
 
 fn validate_room_library_path(path: &std::path::Path) -> Result<std::path::PathBuf, String> {
     if path.as_os_str().is_empty() {
@@ -531,11 +684,136 @@ fn ensure_string_limit(value: &str, maximum: usize, label: &str) -> Result<(), S
     }
 }
 
+const CONTENT_PERMISSIONS: &[&str] = &[
+    "time.read",
+    "locale.read",
+    "viewport.read",
+    "desk.read",
+    "playback.read",
+    "audio.spectrum",
+    "hardware.cpu.read",
+    "hardware.gpu.read",
+    "hardware.memory.read",
+    "now-playing.read",
+    "now-playing.artwork.read",
+    "system.volume.read",
+    "hardware.network.read",
+    "action.invoke",
+];
+
+fn validate_permissions(
+    value: Option<&serde_json::Value>,
+    required: bool,
+    label: &str,
+) -> Result<std::collections::HashSet<String>, String> {
+    let Some(value) = value else {
+        return if required {
+            Err(format!("{label} must be an array"))
+        } else {
+            Ok(std::collections::HashSet::new())
+        };
+    };
+    let permissions = value
+        .as_array()
+        .ok_or_else(|| format!("{label} must be an array"))?;
+    let mut permission_set = std::collections::HashSet::new();
+    for (index, permission) in permissions.iter().enumerate() {
+        let permission = permission
+            .as_str()
+            .ok_or_else(|| format!("{label}[{index}] must be a string"))?;
+        if !CONTENT_PERMISSIONS.contains(&permission) {
+            return Err(format!("{label} contains unknown permission {permission:?}"));
+        }
+        if !permission_set.insert(permission.to_string()) {
+            return Err(format!("{label} contains duplicate permission {permission:?}"));
+        }
+    }
+    Ok(permission_set)
+}
+
+fn validate_hotspots(
+    value: Option<&serde_json::Value>,
+    bounds_width: u64,
+    bounds_height: u64,
+    permissions: &std::collections::HashSet<String>,
+    label: &str,
+) -> Result<(), String> {
+    let Some(value) = value else { return Ok(()); };
+    let hotspots = value
+        .as_array()
+        .filter(|items| items.len() <= 64)
+        .ok_or_else(|| format!("{label} must be an array with at most 64 items"))?;
+    if !hotspots.is_empty() && !permissions.contains("action.invoke") {
+        return Err(format!("{label} requires action.invoke permission"));
+    }
+    let mut ids = std::collections::HashSet::new();
+    for (index, hotspot) in hotspots.iter().enumerate() {
+        let item_label = format!("{label}[{index}]");
+        let object = hotspot
+            .as_object()
+            .ok_or_else(|| format!("{item_label} must be an object"))?;
+        reject_unknown_keys(object, &["id", "label", "placement", "action"], &item_label)?;
+        let id = required_string(object, "id", &item_label)?;
+        if !widget_id_is_valid(id) || !ids.insert(id.to_string()) {
+            return Err(format!("{item_label}.id must be a unique lowercase ASCII slug"));
+        }
+        ensure_string_limit(
+            required_string(object, "label", &item_label)?,
+            120,
+            &format!("{item_label}.label"),
+        )?;
+        let placement = object
+            .get("placement")
+            .and_then(|item| item.as_object())
+            .ok_or_else(|| format!("{item_label}.placement must be an object"))?;
+        reject_unknown_keys(
+            placement,
+            &["x", "y", "width", "height", "z"],
+            &format!("{item_label}.placement"),
+        )?;
+        let integer = |key: &str| {
+            placement
+                .get(key)
+                .and_then(|item| item.as_u64())
+                .ok_or_else(|| format!("{item_label}.placement.{key} must be a non-negative integer"))
+        };
+        let x = integer("x")?;
+        let y = integer("y")?;
+        let width = integer("width")?;
+        let height = integer("height")?;
+        let z = integer("z")?;
+        if width < 16 || height < 16 || x + width > bounds_width || y + height > bounds_height || z > 255 {
+            return Err(format!("{item_label}.placement must stay inside its content bounds"));
+        }
+        let action = object
+            .get("action")
+            .and_then(|item| item.as_object())
+            .ok_or_else(|| format!("{item_label}.action must be an object"))?;
+        reject_unknown_keys(action, &["id", "value"], &format!("{item_label}.action"))?;
+        let action_id = required_string(action, "id", &format!("{item_label}.action"))?;
+        let value = action.get("value");
+        match action_id {
+            "system.media.play"
+            | "system.media.pause"
+            | "system.media.toggle-play-pause"
+            | "system.media.next"
+            | "system.media.previous"
+            | "system.volume.toggle-mute" if value.is_none() => {}
+            "system.volume.set" if value
+                .and_then(|item| item.as_f64())
+                .is_some_and(|item| item.is_finite() && (0.0..=1.0).contains(&item)) => {}
+            "system.volume.mute" if value.is_some_and(|item| item.is_boolean()) => {}
+            _ => return Err(format!("{item_label}.action has an unsupported id or value")),
+        }
+    }
+    Ok(())
+}
+
 fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> Result<(), String> {
     let object = value
         .as_object()
         .ok_or_else(|| format!("{label} must be a Content object"))?;
-    reject_unknown_keys(object, &["name", "type", "src"], label)?;
+    reject_unknown_keys(object, &["name", "type", "src", "permissions", "hotspots"], label)?;
     ensure_string_limit(
         required_string(object, "name", label)?,
         120,
@@ -581,6 +859,17 @@ fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> 
             "{label}.src extension does not match {content_type}"
         ));
     }
+    if content_type != "html" && (object.contains_key("permissions") || object.contains_key("hotspots")) {
+        return Err(format!("{label} capabilities are only valid for HTML content"));
+    }
+    let permissions = validate_permissions(object.get("permissions"), false, &format!("{label}.permissions"))?;
+    validate_hotspots(
+        object.get("hotspots"),
+        1920,
+        1080,
+        &permissions,
+        &format!("{label}.hotspots"),
+    )?;
     Ok(())
 }
 
@@ -835,25 +1124,6 @@ fn json_depth(value: &serde_json::Value, depth: usize) -> usize {
 }
 
 fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, String> {
-    const PERMISSIONS: &[&str] = &[
-        "time.read",
-        "locale.read",
-        "viewport.read",
-        "desk.read",
-        "playback.read",
-        "audio.spectrum",
-        "hardware.cpu.read",
-        "hardware.gpu.read",
-        "hardware.memory.read",
-        "now-playing.read",
-        "now-playing.artwork.read",
-        "hardware.network.read",
-        "network.proxy",
-        "storage.kv",
-        "navigation.go",
-        "notification.show",
-        "action.invoke",
-    ];
     let object = value
         .as_object()
         .ok_or_else(|| format!("{label} must be an object"))?;
@@ -867,6 +1137,7 @@ fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, Str
             "placement",
             "config",
             "permissions",
+            "hotspots",
         ],
         label,
     )?;
@@ -957,26 +1228,18 @@ fn validate_widget(value: &serde_json::Value, label: &str) -> Result<String, Str
             "{label}.config exceeds depth {MAX_WIDGET_CONFIG_DEPTH}"
         ));
     }
-    let permissions = object
-        .get("permissions")
-        .and_then(|value| value.as_array())
-        .ok_or_else(|| format!("{label}.permissions must be an array"))?;
-    let mut permission_set = std::collections::HashSet::new();
-    for (index, permission) in permissions.iter().enumerate() {
-        let permission = permission
-            .as_str()
-            .ok_or_else(|| format!("{label}.permissions[{index}] must be a string"))?;
-        if !PERMISSIONS.contains(&permission) {
-            return Err(format!(
-                "{label}.permissions contains unknown permission {permission:?}"
-            ));
-        }
-        if !permission_set.insert(permission) {
-            return Err(format!(
-                "{label}.permissions contains duplicate permission {permission:?}"
-            ));
-        }
-    }
+    let permission_set = validate_permissions(
+        object.get("permissions"),
+        true,
+        &format!("{label}.permissions"),
+    )?;
+    validate_hotspots(
+        object.get("hotspots"),
+        width,
+        height,
+        &permission_set,
+        &format!("{label}.hotspots"),
+    )?;
     Ok(id.to_string())
 }
 
@@ -1370,6 +1633,64 @@ async fn save_room_as(
         std::path::Path::new(&dir),
         &name,
         &room_json,
+    )
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
+fn duplicate_room_dir(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+    name: &str,
+) -> Result<std::path::PathBuf, String> {
+    let source = direct_room_in_library(library_dir, room_dir)?;
+    let room_json = std::fs::read_to_string(source.join("room.json"))
+        .map_err(|error| format!("read source room.json failed: {error}"))?;
+    save_room_as_dir(&source, library_dir, name, &room_json)
+}
+
+#[tauri::command]
+async fn duplicate_room(
+    library_dir: String,
+    room_dir: String,
+    name: String,
+) -> Result<String, String> {
+    duplicate_room_dir(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+        &name,
+    )
+    .map(|path| path.to_string_lossy().into_owned())
+}
+
+fn rename_room_dir(
+    library_dir: &std::path::Path,
+    room_dir: &std::path::Path,
+    name: &str,
+) -> Result<std::path::PathBuf, String> {
+    validate_room_name(name)?;
+    let source = direct_room_in_library(library_dir, room_dir)?;
+    let library = source
+        .parent()
+        .ok_or_else(|| "Room has no library parent".to_string())?;
+    let target = library.join(name);
+    if target.exists() {
+        return Err(format!("room already exists: {name}"));
+    }
+    std::fs::rename(&source, &target)
+        .map_err(|error| format!("rename Room failed: {error}"))?;
+    Ok(target)
+}
+
+#[tauri::command]
+async fn rename_room(
+    library_dir: String,
+    room_dir: String,
+    name: String,
+) -> Result<String, String> {
+    rename_room_dir(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+        &name,
     )
     .map(|path| path.to_string_lossy().into_owned())
 }
@@ -1972,6 +2293,203 @@ async fn import_background(
     )
 }
 
+fn copy_widget_source(
+    source_root: &std::path::Path,
+    current: &std::path::Path,
+    target_root: &std::path::Path,
+    widget_id: &str,
+    resources: &mut Vec<String>,
+    total_bytes: &mut u64,
+) -> Result<(), String> {
+    if is_reparse_point(current)? {
+        return Err("Widget source cannot contain symlinks or reparse points".into());
+    }
+    for entry in std::fs::read_dir(current)
+        .map_err(|error| format!("read Widget source failed: {error}"))?
+    {
+        let entry = entry.map_err(|error| format!("read Widget entry failed: {error}"))?;
+        let path = entry.path();
+        if is_reparse_point(&path)? {
+            return Err(format!("Widget source contains a link: {}", path.display()));
+        }
+        let relative = path
+            .strip_prefix(source_root)
+            .map_err(|_| "Widget source escaped its root".to_string())?;
+        let target = target_root.join(relative);
+        if path.is_dir() {
+            std::fs::create_dir_all(&target)
+                .map_err(|error| format!("create Widget directory failed: {error}"))?;
+            copy_widget_source(source_root, &path, target_root, widget_id, resources, total_bytes)?;
+            continue;
+        }
+        if !path.is_file() {
+            return Err(format!("Widget resource is not a regular file: {}", path.display()));
+        }
+        let relative_text = relative.to_string_lossy().replace('\\', "/");
+        let room_path = format!("widgets/{widget_id}/{relative_text}");
+        if !widget_path_is_valid(&room_path, widget_id, false) {
+            return Err(format!("unsupported Widget resource path {relative_text:?}"));
+        }
+        if resources.len() >= MAX_WIDGET_RESOURCES {
+            return Err(format!("Widget exceeds {MAX_WIDGET_RESOURCES} resources"));
+        }
+        let bytes = path
+            .metadata()
+            .map_err(|error| format!("inspect Widget resource failed: {error}"))?
+            .len();
+        if bytes > MAX_ARCHIVE_FILE_BYTES {
+            return Err(format!("Widget resource is too large: {relative_text}"));
+        }
+        *total_bytes = total_bytes
+            .checked_add(bytes)
+            .ok_or_else(|| "Widget resource size overflow".to_string())?;
+        if *total_bytes > MAX_ARCHIVE_TOTAL_BYTES {
+            return Err("Widget resources exceed the package size limit".into());
+        }
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| format!("create Widget resource directory failed: {error}"))?;
+        }
+        std::fs::copy(&path, &target)
+            .map_err(|error| format!("copy Widget resource failed: {error}"))?;
+        resources.push(room_path);
+    }
+    Ok(())
+}
+
+fn import_widget_dir(
+    room_dir: &std::path::Path,
+    source_dir: &std::path::Path,
+    widget_id: &str,
+    widget_name: &str,
+    desk_index: usize,
+    room_json: &str,
+) -> Result<serde_json::Value, String> {
+    if !widget_id_is_valid(widget_id) {
+        return Err("Widget id must be a lowercase ASCII slug".into());
+    }
+    if widget_name.trim().is_empty() || widget_name.chars().count() > 120 {
+        return Err("Widget name must contain 1..=120 characters".into());
+    }
+    if !room_dir.join("room.json").is_file() {
+        return Err("not a Room directory (room.json missing)".into());
+    }
+    let source = source_dir
+        .canonicalize()
+        .map_err(|error| format!("resolve Widget source failed: {error}"))?;
+    if !source.is_dir() || is_reparse_point(&source)? {
+        return Err("Widget source must be a regular directory".into());
+    }
+    let room_root = room_dir
+        .canonicalize()
+        .map_err(|error| format!("resolve Room failed: {error}"))?;
+    if source.starts_with(&room_root) {
+        return Err("Widget source must be outside the target Room".into());
+    }
+    let mut room: serde_json::Value = serde_json::from_str(room_json)
+        .map_err(|error| format!("parse Room draft failed: {error}"))?;
+    validate_room_contract(&room)?;
+    let desks = room
+        .get("desks")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "Room draft desks are missing".to_string())?;
+    let desk = desks
+        .get(desk_index)
+        .and_then(|value| value.as_object())
+        .ok_or_else(|| "target Desk is outside the Room".to_string())?;
+    let widgets = desk
+        .get("widgets")
+        .and_then(|value| value.as_array())
+        .ok_or_else(|| "target Desk widgets are missing".to_string())?;
+    let widget_count = widgets.len();
+    if widget_count >= MAX_WIDGETS_PER_DESK {
+        return Err(format!("Desk already has {MAX_WIDGETS_PER_DESK} Widgets"));
+    }
+    let duplicate = desks.iter().any(|desk| {
+        desk.get("widgets")
+            .and_then(|value| value.as_array())
+            .into_iter()
+            .flatten()
+            .any(|widget| widget.get("id").and_then(|value| value.as_str()) == Some(widget_id))
+    });
+    if duplicate {
+        return Err(format!("Widget id already exists: {widget_id}"));
+    }
+
+    let widgets_root = room_root.join("widgets");
+    std::fs::create_dir_all(&widgets_root)
+        .map_err(|error| format!("create widgets directory failed: {error}"))?;
+    let target = widgets_root.join(widget_id);
+    if target.exists() {
+        return Err(format!("Widget directory already exists: {widget_id}"));
+    }
+    let staging = widgets_root.join(format!(".dext-import-{widget_id}-{}", std::process::id()));
+    if staging.exists() {
+        return Err("Widget import staging directory already exists".into());
+    }
+    std::fs::create_dir(&staging)
+        .map_err(|error| format!("create Widget staging directory failed: {error}"))?;
+    let result = (|| {
+        let mut resources = Vec::new();
+        let mut total_bytes = 0;
+        copy_widget_source(&source, &source, &staging, widget_id, &mut resources, &mut total_bytes)?;
+        resources.sort();
+        let src = format!("widgets/{widget_id}/index.html");
+        if !resources.iter().any(|resource| resource == &src) {
+            return Err("Widget source must contain index.html".into());
+        }
+        let offset = widget_count as u64 * 32;
+        let widget = serde_json::json!({
+            "id": widget_id,
+            "name": widget_name.trim(),
+            "src": src,
+            "resources": resources,
+            "placement": { "x": 96 + offset, "y": 96 + offset, "width": 480, "height": 240, "z": widget_count },
+            "config": {},
+            "permissions": [],
+            "hotspots": []
+        });
+        room["desks"][desk_index]["widgets"]
+            .as_array_mut()
+            .ok_or_else(|| "target Desk widgets are missing".to_string())?
+            .push(widget.clone());
+        std::fs::rename(&staging, &target)
+            .map_err(|error| format!("commit Widget directory failed: {error}"))?;
+        if let Err(error) = validate_room_asset_references(&room_root, &room) {
+            let _ = std::fs::remove_dir_all(&target);
+            return Err(error);
+        }
+        if let Err(error) = write_room_file(&room_root.join("room.json"), &serde_json::to_string_pretty(&room).unwrap()) {
+            let _ = std::fs::remove_dir_all(&target);
+            return Err(error);
+        }
+        Ok(widget)
+    })();
+    if result.is_err() && staging.exists() {
+        let _ = std::fs::remove_dir_all(&staging);
+    }
+    result
+}
+
+#[tauri::command]
+async fn import_widget(
+    room_dir: String,
+    source_dir: String,
+    widget_id: String,
+    widget_name: String,
+    desk_index: usize,
+    room_json: String,
+) -> Result<serde_json::Value, String> {
+    import_widget_dir(
+        std::path::Path::new(&room_dir),
+        std::path::Path::new(&source_dir),
+        &widget_id,
+        &widget_name,
+        desk_index,
+        &room_json,
+    )
+}
+
 fn mime_of(path: &std::path::Path) -> &'static str {
     match path.extension().and_then(|e| e.to_str()).unwrap_or("") {
         "html" => "text/html; charset=utf-8",
@@ -2100,6 +2618,7 @@ async fn core_identity() -> Result<grpc::CoreIdentity, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(creator::CreatorImports::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {
@@ -2111,6 +2630,12 @@ pub fn run() {
                 None => String::new(),
             };
             serve_lib_file(request.uri().path(), &dir)
+        })
+        .register_uri_scheme_protocol("creator", |ctx, request| {
+            match ctx.app_handle().try_state::<creator::CreatorImports>() {
+                Some(imports) => creator::serve_creator_file(request.uri().path(), &imports),
+                None => tauri::http::Response::builder().status(500).body(Vec::new()).unwrap(),
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_wallpapers,
@@ -2124,6 +2649,8 @@ pub fn run() {
             write_room,
             create_room,
             save_room_as,
+            duplicate_room,
+            rename_room,
             delete_room,
             export_room_zip,
             import_room_zip,
@@ -2131,6 +2658,11 @@ pub fn run() {
             active_room,
             stop_wallpapers,
             import_background,
+            import_widget,
+            creator::export_ai_context,
+            creator::inspect_creator_pack,
+            creator::confirm_creator_import,
+            creator::discard_creator_import,
             get_dext_settings,
             patch_dext_settings,
             diagnostics_json,
@@ -2145,7 +2677,9 @@ pub fn run() {
             get_system_media,
             control_system_media,
             get_system_volume,
-            set_system_volume
+            set_system_volume,
+            get_permission_review,
+            set_subject_permission
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -2154,9 +2688,10 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_settings_patch, create_room_dir, direct_room_entry_in_library,
+        apply_settings_patch, create_room_dir, direct_room_entry_in_library, duplicate_room_dir,
         direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
-        import_room_zip_file, save_room_as_dir, sync_room_to_package, validate_room_contract,
+        import_widget_dir,
+        import_room_zip_file, rename_room_dir, save_room_as_dir, sync_room_to_package, validate_room_contract,
         validate_room_library_path, validate_room_v2, write_room_file, DextSettingsPatch,
         ROOM_ASSET_DIRS,
     };
@@ -2264,6 +2799,39 @@ mod tests {
     }
 
     #[test]
+    fn imports_widget_directory_and_rolls_back_missing_entry() {
+        let root = test_dir("widget-import");
+        let room = root.join("room");
+        let source = root.join("source");
+        let broken = root.join("broken");
+        write_valid_room(&room, false);
+        std::fs::create_dir_all(source.join("assets")).unwrap();
+        std::fs::write(source.join("index.html"), b"<!doctype html><title>Widget</title>").unwrap();
+        std::fs::write(source.join("assets/style.css"), b"body{color:white}").unwrap();
+        std::fs::create_dir_all(&broken).unwrap();
+        std::fs::write(broken.join("main.js"), b"console.log('missing entry')").unwrap();
+        let draft = std::fs::read_to_string(room.join("room.json")).unwrap();
+
+        let widget = import_widget_dir(&room, &source, "status-panel", "Status panel", 0, &draft).unwrap();
+        assert_eq!(widget["id"], "status-panel");
+        assert!(room.join("widgets/status-panel/index.html").is_file());
+        let saved: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(room.join("room.json")).unwrap()
+        ).unwrap();
+        assert_eq!(saved["desks"][0]["widgets"][0]["id"], "status-panel");
+
+        let saved_text = serde_json::to_string_pretty(&saved).unwrap();
+        let error = import_widget_dir(&room, &broken, "broken-widget", "Broken", 0, &saved_text).unwrap_err();
+        assert!(error.contains("index.html"));
+        assert!(!room.join("widgets/broken-widget").exists());
+        assert!(!room.join("widgets").read_dir().unwrap().any(|entry| {
+            entry.unwrap().file_name().to_string_lossy().starts_with(".dext-import-broken-widget")
+        }));
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn validates_v2_widget_identity_paths_permissions_placement_and_config() {
         let mut duplicate = valid_v2_room();
         let copy = duplicate["desks"][0]["widgets"][0].clone();
@@ -2311,6 +2879,24 @@ mod tests {
         assert!(validate_room_v2(&too_deep)
             .unwrap_err()
             .contains("depth 12"));
+
+        let mut hotspot = valid_v2_room();
+        hotspot["desks"][0]["widgets"][0]["hotspots"] = serde_json::json!([{
+            "id":"play", "label":"Play",
+            "placement":{"x":0,"y":0,"width":80,"height":32,"z":1},
+            "action":{"id":"system.media.play"}
+        }]);
+        assert!(validate_room_v2(&hotspot)
+            .unwrap_err()
+            .contains("requires action.invoke"));
+        hotspot["desks"][0]["widgets"][0]["permissions"] =
+            serde_json::json!(["action.invoke"]);
+        assert!(validate_room_v2(&hotspot).is_ok());
+        hotspot["desks"][0]["widgets"][0]["hotspots"][0]["action"] =
+            serde_json::json!({"id":"system.volume.set","value":1.5});
+        assert!(validate_room_v2(&hotspot)
+            .unwrap_err()
+            .contains("unsupported id or value"));
     }
 
     #[test]
@@ -2742,6 +3328,31 @@ mod tests {
         for directory in ROOM_ASSET_DIRS {
             assert!(room.join(directory).is_dir(), "missing {directory}");
         }
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn duplicate_and_rename_room_stay_inside_library_and_preserve_assets() {
+        let root = test_dir("duplicate-rename-room");
+        let library = root.join("library");
+        let source = library.join("source");
+        std::fs::create_dir_all(&library).unwrap();
+        write_valid_room(&source, true);
+
+        let duplicate = duplicate_room_dir(&library, &source, "copy").unwrap();
+        assert_eq!(duplicate.parent(), Some(library.as_path()));
+        assert!(duplicate.join("background/scene.png").is_file());
+        assert_eq!(
+            std::fs::read_to_string(duplicate.join("room.json")).unwrap(),
+            std::fs::read_to_string(source.join("room.json")).unwrap()
+        );
+
+        let renamed = rename_room_dir(&library, &duplicate, "renamed").unwrap();
+        assert!(!duplicate.exists());
+        assert!(renamed.join("background/scene.png").is_file());
+        assert!(rename_room_dir(&library, &renamed, "source").unwrap_err().contains("already exists"));
+        assert!(duplicate_room_dir(&library, &source, "../escape").is_err());
+
         std::fs::remove_dir_all(root).unwrap();
     }
 

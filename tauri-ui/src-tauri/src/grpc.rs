@@ -32,6 +32,13 @@ fn runtime_identity() -> &'static RuntimeIdentityConfig {
     })
 }
 
+pub fn local_app_data_path() -> std::path::PathBuf {
+    std::env::var("LOCALAPPDATA")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir())
+        .join(&runtime_identity().local_app_data_directory)
+}
+
 fn grpc_pipe_server_name() -> String {
     let user = std::env::var("USERNAME").unwrap_or_default();
     let identity = runtime_identity();

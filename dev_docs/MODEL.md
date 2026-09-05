@@ -50,10 +50,12 @@
 - `idle` 只能引用 `idle/`。
 - 路径使用正斜杠、相对于 Room 根目录，禁止 URL、绝对路径、盘符、反斜杠、`.`、`..` 和重解析点逃逸。
 - 图片支持 png/jpeg/webp/bmp/gif/svg，视频支持 mp4/webm，HTML 使用 html/htm。
+- HTML Content 可选 `permissions` 和 `hotspots`；非 HTML Content 不得携带能力或热点。
+- `hotspots` 使用 1920×1080 逻辑坐标和封闭的系统媒体/系统主音量 action id；存在热点时必须声明 `action.invoke`。
 
 运行语义：背景图片静态、背景视频循环、背景 HTML 在 Desk 可见期间长驻；start/switch 图片显示 0.5 秒，视频播放完成，HTML 发可信 `done` 或在 60 秒超时后完成；idle 在 Lively 屏保实例内持续到唤醒。
 
-HTML iframe 固定 `sandbox="allow-scripts"`，不加 `allow-same-origin`。Scene 完成消息必须同时通过 `event.source`、不可预测 `instanceId`、消息版本与字段校验。
+HTML iframe 固定 `sandbox="allow-scripts"`，不加 `allow-same-origin`。Scene 完成消息必须同时通过 `event.source`、不可预测 `instanceId`、消息版本与字段校验。Dext Room Player 另在 WebView2 最终边界拒绝远程请求、跨主机导航、下载、弹窗和 Web 权限。
 
 ## 四、Desk、图标与 Dock
 

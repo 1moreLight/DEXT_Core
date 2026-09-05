@@ -54,6 +54,22 @@
 | #47 | 普通窗口预览标记误当屏保标记会错误进入 idle | [backend](errors/backend.md) |
 | #48 | v2 降级保护误把源占位目录升级为新的 v1 校验前置条件 | [backend](errors/backend.md) |
 | #49 | Windows 系统媒体 API 与封面流可能永久阻塞 | [backend](errors/backend.md) |
+| #50 | Player 目标框架缺少较新的 ASCII 字符判断 API | [toolchain](errors/toolchain.md) |
+| #51 | 条件挂载画布的测量 effect 未依赖视图，流程连线为空 | [frontend](errors/frontend.md) |
+| #52 | 自动检查全绿但未逐条对照计划，导致缺失真实入口仍过早进入待验收 | [frontend](errors/frontend.md) |
+| #53 | start.ps1 的 Tauri 端口被同一 worktree 的残留 Vite 监听占用 | [toolchain](errors/toolchain.md) |
+| #54 | v2 LivelyInfo 已带命名空间仍被 Player 启动参数适配器重复加前缀 | [backend](errors/backend.md) |
+| #55 | 切 Desk 后能力实例未收到新的 desk.read 快照 | [renderer](errors/renderer.md) |
+| #56 | Player 暂停后能力桥仍持续推送周期性数据 | [renderer](errors/renderer.md) |
+| #57 | WebView 文档销毁仅依赖自然回收，后台轮询和实例没有统一失效点 | [renderer](errors/renderer.md) |
+| #58 | Creator 隔离预览 token 无期限导致 staging 长期保留 | [backend](errors/backend.md) |
+| #59 | 配置器只识别单一断线文案，其他连接错误被误报为身份拒绝 | [frontend](errors/frontend.md) |
+| #60 | Creator 报告只显示资源数量且忙碌时可关闭造成导入竞态 | [frontend](errors/frontend.md) |
+| #61 | 运行诊断命令只有导出入口，配置器内无法查看当前运行态 | [frontend](errors/frontend.md) |
+| #62 | Creator confirm/discard 有 TTL 但预览资源服务仍可读取过期 token | [backend](errors/backend.md) |
+| #63 | Creator 预览 URL 未复用资源路径规则，Windows 特殊路径字符可能进入服务端拼接 | [backend](errors/backend.md) |
+| #64 | Offline Boundary 误判首航 Source（about:blank≠空串），Player 每次铺壁纸导航被取消黑屏 | [backend](errors/backend.md) |
+| #65 | 真桌面跨层拖拽（桌面↔Dock）两版实机均不稳定，方向已取消；重启需先立输入链研究包 | [renderer](errors/renderer.md) |
 
 ## 分册
 

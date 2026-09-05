@@ -1,6 +1,7 @@
 {
   "Title": "Dext Room",
-  "Type": "web",
+  "Type": "webaudio",
   "FileName": "index.html",
-  "IsAbsolutePath": false
+  "IsAbsolutePath": false,
+  "Arguments": "--wallpaper-system-information true --wallpaper-system-nowplaying true --wallpaper-pause-event true --dext-trusted-host true"
 }

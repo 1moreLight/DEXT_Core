@@ -112,3 +112,54 @@
 - 根因：GSMTC 会受 Windows 媒体会话服务不稳定影响；部分提供者暴露的 NPSMLib 封面 COM stream 不会完成读取，取消 token 和移到后台线程都不能可靠中断底层同步读取。
 - 解决：Core 复用 Lively 已依赖的 NPSMLib 读取媒体元数据和执行封闭动作，但不在 RPC 轮询路径主动读取封面流；Rust `verified_call` 增加 10 秒总超时。封面在未来 Widget Bridge 中复用 Lively Player 已有 `livelyCurrentTrack` 缓存并作为 P2 可选数据转发。
 - 防再犯：任何 Windows/COM 媒体调用都必须有进程边界或最终超时，不能在锁内读取未知 stream；“放到后台线程”不等于可取消，若阻塞会污染共享媒体会话。活体测试至少连续读取两次，并在动作/音量探测后恢复原状态。
+# #54 v2 LivelyInfo 参数被重复加前缀
+
+现象：真实铺设时 `Lively.Player.WebView2` 以 `CommandLine.UnknownOptionError` 退出，Core 日志显示启动参数无法解析。
+
+原因：`WebWebView2.TryParseUserCommandArgs` 为兼容旧 Lively 参数无条件给所有 `--...` 加 `--wallpaper-`；v2 的 `LivelyInfo.json` 已使用完整的 `--wallpaper-*` 与 `--dext-*` 参数，导致重复命名空间。
+
+修复：仅对未带 `wallpaper-` 或 `dext-` 命名空间的参数补前缀；完整 v2 参数原样传给 Player。重建 Release Player 后重新铺设，Player 正常存活。
+
+下次检查：修改 Player 启动参数或 `LivelyInfo.json` 后，必须运行 `cargo test --lib applies_room_wallpaper -- --ignored` 并检查 `Lively.Player.WebView2.exe` 进程及 Core 最新日志。
+# #58 Creator 预览 token 长期有效
+
+现象：配置器打开期间，已检查但未确认的 Creator Pack staging 目录和 token 会一直保留。
+
+原因：`CreatorImports` 只按 token 保存临时包，没有时间边界。
+
+修复：为 staging 记录 `Instant`，设置 10 分钟 TTL；新 inspect 时清理过期条目，confirm/discard 对过期 token 明确拒绝并释放临时目录。
+
+防再犯：任何隔离导入状态都必须有有限生命周期，并覆盖过期状态测试。
+# #62 过期 Creator 预览 URL 仍可读取
+
+现象：token 过期后 confirm/discard 会失败，但已打开的预览 URL 仍可能从资源协议读取 staging 文件。
+
+原因：`serve_creator_file` 只查 token 是否存在，没有复用预览 TTL。
+
+修复：资源服务检查 `created_at`，过期时删除 staging 并返回 HTTP 410；有效 token 仍使用 no-store 和离线 CSP。
+
+防再犯：隔离 token 的 TTL 必须覆盖 inspect、资源服务、confirm 和 discard 四个入口。
+# #63 Creator 预览 URL 路径校验不完整
+
+现象：资源协议只拒绝 `..` 和反斜杠，手工构造 URL 时仍可携带冒号、控制字符或尾随点/空格。
+
+原因：预览服务没有复用 Creator manifest 使用的 `safe_resource_path` 规则。
+
+修复：中间目录段拒绝 Windows 特殊字符，最终文件段必须通过安全资源路径和扩展名校验。
+
+防再犯：所有从 token/URL 解析出的资源路径都必须经过与 manifest 相同的逐段校验。
+# #64 Offline Boundary 把首屏导航当外域取消，Player 每次铺壁纸都黑屏
+
+现象：2026-09-03 09:49 起每次 Player 启动日志必现
+`WebView navigation failed: OperationCanceled`，之后永远等不到 `{"Type":2,"Success":true}`，
+桌面全黑无 dock（用户 09-05 报「应用壁纸读不到」即此坑，与启动方式无关）。
+
+原因：`IsAllowedDextResource` 的首航兜底写成 `Source 为空串时放行 *.localhost`，
+但 WebView2 首次导航前 `CoreWebView2.Source` 返回的是初始文档 `about:blank` 而非空串 →
+首个 `https://<hash>.localhost/` 导航被 `NavigationStarting` Cancel → WebErrorStatus.OperationCanceled。
+
+修复：兜底条件改为「Source 为空串或等于 about:blank 均视为尚无文档」，再要求 host 以
+`.localhost` 结尾（同域判断不变，外域仍然拦截）。
+
+防再犯：WebView2 生命周期断言（Source/初始文档/事件顺序）要用日志实证再写进拦截器；
+导航被主动 Cancel 的统一表现就是 OperationCanceled，见到它先查自家 NavigationStarting。

@@ -7,6 +7,7 @@ using Lively.Common.JsonConverters;
 using Lively.Models;
 using Lively.Models.Enums;
 using Lively.Models.Message;
+using Lively.Grpc.Common.Proto.Desktop;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using System;
@@ -15,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,6 +37,7 @@ namespace Lively.Core.Wallpapers
         private readonly object appMonitorLock = new();
         private readonly object sendLock = new();
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Lively.Services.SystemControlService systemControlService = new();
         private int currentVolume = 0;
         private bool isInitialized;
         private bool isMuted;
@@ -371,8 +374,127 @@ namespace Lively.Core.Wallpapers
                         var addDockMsg = (LivelyMessageAddDockIconCmd)obj;
                         _ = Task.Run(() => AddDockIconToRoom(addDockMsg));
                         break;
+                    case MessageType.msg_system_control_request:
+                        _ = HandleSystemControlRequestAsync((LivelyMessageSystemControlRequest)obj);
+                        break;
                 }
             }
+        }
+
+        private async Task HandleSystemControlRequestAsync(LivelyMessageSystemControlRequest request)
+        {
+            var response = new LivelyMessageSystemControlResponse
+            {
+                RequestId = request.RequestId ?? string.Empty,
+                UserVisible = !string.Equals(request.Action, "volume-read", StringComparison.Ordinal)
+                    && !string.Equals(request.Action, "permissions-read", StringComparison.Ordinal),
+            };
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.RequestId) || request.RequestId.Length > 80)
+                    throw new InvalidDataException("Invalid system control request id.");
+
+                switch (request.Action)
+                {
+                    case "permissions-read":
+                        response.PermissionsJson = LoadCurrentPermissionGrants().ToString(Formatting.None);
+                        break;
+                    case "volume-read":
+                        SetVolumeResponse(response, systemControlService.GetVolume());
+                        break;
+                    case "volume-set":
+                        EnsureActionPermission(request.Subject);
+                        SetVolumeResponse(response, systemControlService.SetVolume(request.Level, null));
+                        break;
+                    case "volume-mute":
+                        EnsureActionPermission(request.Subject);
+                        SetVolumeResponse(response, systemControlService.SetVolume(null, request.Muted));
+                        break;
+                    case "volume-toggle-mute":
+                        EnsureActionPermission(request.Subject);
+                        var current = systemControlService.GetVolume();
+                        SetVolumeResponse(response, systemControlService.SetVolume(null, !current.Muted));
+                        break;
+                    case "play":
+                    case "pause":
+                    case "toggle-play-pause":
+                    case "next":
+                    case "previous":
+                        EnsureActionPermission(request.Subject);
+                        using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                        {
+                            var action = request.Action switch
+                            {
+                                "play" => SystemMediaAction.Play,
+                                "pause" => SystemMediaAction.Pause,
+                                "toggle-play-pause" => SystemMediaAction.TogglePlayPause,
+                                "next" => SystemMediaAction.Next,
+                                "previous" => SystemMediaAction.Previous,
+                                _ => throw new InvalidOperationException(),
+                            };
+                            if (!await systemControlService.ControlMediaAsync(action, timeout.Token))
+                                throw new InvalidOperationException("Windows has no controllable current media session.");
+                        }
+                        break;
+                    default:
+                        throw new InvalidDataException($"Unsupported system action {request.Action}.");
+                }
+                response.Success = true;
+            }
+            catch (Exception error)
+            {
+                response.Success = false;
+                response.Error = error.Message;
+                Logger.Warn($"Wv2{uniqueId}: System control rejected: {error.Message}");
+            }
+            SendMessage(response);
+        }
+
+        private void EnsureActionPermission(string subject)
+        {
+            if (string.IsNullOrWhiteSpace(subject))
+                throw new UnauthorizedAccessException("System action has no permission subject.");
+            var grants = LoadCurrentPermissionGrants();
+            var permissions = grants[subject] as Newtonsoft.Json.Linq.JArray;
+            if (permissions == null || !permissions.Values<string>().Contains("action.invoke", StringComparer.Ordinal))
+                throw new UnauthorizedAccessException("This content version is not authorized for system actions.");
+        }
+
+        private Newtonsoft.Json.Linq.JObject LoadCurrentPermissionGrants()
+        {
+            try
+            {
+                var package = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(GetPackageRoomPath()));
+                var sourcePath = ResolveTrustedSourceRoomPath(package);
+                if (sourcePath == null)
+                    return new Newtonsoft.Json.Linq.JObject();
+                var normalized = Path.GetFullPath(sourcePath).Replace('\\', '/').ToLowerInvariant();
+                var fingerprint = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(sourcePath))).ToLowerInvariant();
+                var storePath = Path.Combine(DextRuntimeIdentity.Current.AppDataDirectory, "permissions-v1.json");
+                if (!File.Exists(storePath))
+                    return new Newtonsoft.Json.Linq.JObject();
+                var store = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(storePath));
+                var grant = (int?)store["version"] == 1
+                    ? store["rooms"]?[normalized] as Newtonsoft.Json.Linq.JObject
+                    : null;
+                if (grant == null || !string.Equals((string)grant["fingerprint"], fingerprint, StringComparison.Ordinal))
+                    return new Newtonsoft.Json.Linq.JObject();
+                return grant["subjects"] as Newtonsoft.Json.Linq.JObject ?? new Newtonsoft.Json.Linq.JObject();
+            }
+            catch (Exception error)
+            {
+                Logger.Warn($"Wv2{uniqueId}: Permission store unavailable: {error.Message}");
+                return new Newtonsoft.Json.Linq.JObject();
+            }
+        }
+
+        private static void SetVolumeResponse(
+            LivelyMessageSystemControlResponse response,
+            SystemVolumeSnapshot volume)
+        {
+            response.HasVolume = true;
+            response.Level = volume.Level;
+            response.Muted = volume.Muted;
         }
 
         private void AddDockIconToRoom(LivelyMessageAddDockIconCmd msg)
@@ -722,7 +844,15 @@ namespace Lively.Core.Wallpapers
             var words = args.Split(' ');
             for (int i = 0; i < words.Length; i++)
             {
-                if (words[i].StartsWith("--"))
+                // Lively's persisted Arguments historically used bare option
+                // names (for example `--system-information`) and this helper
+                // adds the wallpaper namespace.  Dext Room metadata already
+                // stores fully-qualified options, including the private
+                // `--dext-*` boundary flag; prefixing those a second time
+                // makes the Player reject an otherwise valid launch.
+                if (words[i].StartsWith("--")
+                    && !words[i].StartsWith("--wallpaper-", StringComparison.OrdinalIgnoreCase)
+                    && !words[i].StartsWith("--dext-", StringComparison.OrdinalIgnoreCase))
                 {
                     words[i] = string.Concat("--wallpaper-", words[i].AsSpan(2));
                 }

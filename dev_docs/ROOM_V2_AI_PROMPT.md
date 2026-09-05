@@ -5,7 +5,7 @@
 ## 可直接复制的提示词
 
 ```text
-你正在为 Dext 创作一个可分享的原生 Room v2。请把它当作“官方桌面宿主中的受限前端内容”，不要生成桌面程序、Shell 脚本或通用系统自动化。
+你正在为 Dext 创作一个可分享的 Creator Pack v1，由用户确认后加入原生 Room v2。请把它当作“官方桌面宿主中的受限前端内容”，不要生成桌面程序、Shell 脚本、完整 Room 或通用系统自动化。
 
 目标与风格：
 - [在这里描述主题、视觉风格、目标分辨率观感和交互]
@@ -36,17 +36,17 @@
 - 不得自行访问系统媒体、主音量或硬件 API。只写 Dext 版本化能力桥的适配层；若当前 SDK 尚未提供该能力，使用清晰的 mock 数据并标注待接线，不要伪造可运行接口。
 - 系统操作只能声明 Dext 标准 action id，并由官方可信热点在真实用户点击后执行。作者脚本不能自动播放/暂停、改音量或把 postMessage 冒充用户手势。
 
-输出目录：
-- room.json
-- background/、start/、switch/、idle/ 中实际使用的自包含内容
-- widgets/<id>/ 中每个 Widget 的 HTML/CSS/JS/图片/字体
-- README.md：说明视觉、Desk、Scene、Widget、请求权限、系统动作和人工测试
+唯一输出包结构：
+- creator.json：严格符合随上下文提供的 `creator-kit/creator-pack.schema.json`。
+- content/：entry、CSS、JS、图片、字体等全部离线资源；`resources` 相对 content/ 逐项声明，实际文件必须与清单完全一致。
+- 最终将 creator.json 与 content/ 直接压在 zip 根目录，文件名使用 `<id>.dext-content.zip`。不要输出 room.json，也不要把完整 Room 或本机应用绑定装入包。
+- 优先复用 `creator-kit/sdk/dext-sdk.js` 和 `.d.ts`；模板见 `creator-kit/templates/scene` 与 `creator-kit/templates/widget`。
 
 输出要求：
 1. 先给出“Scene 还是 Widget”的设计判断及理由。
-2. 列出完整文件树和每个 Widget 的权限、placement、resources。
+2. 列出完整文件树和内容的权限、可信热点；Widget 还要写 placement。
 3. 生成完整文件内容，不省略关键 CSS/JS，不引用外网。
-4. 提供合法的 room.json v2。
+4. 提供合法的 creator.json v1；Dext 配置器负责把它安全合并到当前 Room。
 5. 提供安全自检：非法路径、未声明资源、网络、危险 API、权限、系统动作、消息来源和资源大小。
 6. 提供 1920×1080、16:10、超宽屏下的布局检查，以及多 Widget 拖动/重叠/图标避让的人工验收步骤。
 7. 如果需求超出 Dext 已定义能力，明确写“需要新增官方能力”，不要用绕过方案实现。
@@ -55,6 +55,6 @@
 ## 使用建议
 
 - 首轮让 AI 只做 P0/P1 的离线视觉与 mock，隔离预览稳定后再接 P2 媒体数据或可信动作。
-- 把 `room-v2.schema.json`、一个合法 fixture 和未来 SDK 类型定义一同提供给 AI，可靠性远高于只发自然语言提示词。
-- AI 修改已有 Room 时要求它只改列出的具名文件，并在输出后重新枚举 resources，避免漏文件或留下孤儿资源。
+- 直接使用配置器“AI 创作 → 导出 AI 上下文”，它会提供脱敏后的当前 Room、两个 Schema、SDK、模板、fixtures 和安全说明。
+- AI 修改设计时仍重新生成一个完整 Creator Pack，并在输出后重新枚举 resources，避免漏文件或隐藏孤儿资源。
 - 对高度艺术化页面，优先让 AI 写一个完整 Scene，再选择性拆出真正需要用户拖动的模块。

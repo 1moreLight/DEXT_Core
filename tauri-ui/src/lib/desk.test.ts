@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteDeskGraph, type RemappableEdge } from "./desk";
+import { deleteDeskGraph, moveDeskGraph, type RemappableEdge } from "./desk";
 
 type Desk = { name: string };
 type Transition = string;
@@ -89,5 +89,43 @@ describe("deleteDeskGraph", () => {
         hasStart: true,
       })
     ).toThrow("at least one Desk");
+  });
+});
+
+describe("moveDeskGraph", () => {
+  it("moves the complete Desk identity and remaps start, active and selection", () => {
+    const result = moveDeskGraph({
+      desks: desks(4),
+      edges: edges(4),
+      fromIndex: 3,
+      toIndex: 1,
+      startDesk: 3,
+      activeDesk: 3,
+      graphSelection: "d3",
+      hasStart: true,
+    });
+    expect(result.desks.map((desk) => desk.name)).toEqual(["Desk 0", "Desk 3", "Desk 1", "Desk 2"]);
+    expect(result.startDesk).toBe(1);
+    expect(result.activeDesk).toBe(1);
+    expect(result.graphSelection).toBe("d1");
+    expect(result.edges.find((edge) => edge.id === "start-in")?.to).toBe("d1");
+  });
+
+  it("preserves transitions only when the same Desk identities remain adjacent", () => {
+    const result = moveDeskGraph({
+      desks: desks(4),
+      edges: edges(4),
+      fromIndex: 3,
+      toIndex: 1,
+      startDesk: 0,
+      activeDesk: 0,
+      graphSelection: "d0|d1",
+      hasStart: true,
+    });
+    const byRoute = new Map(result.edges.map((edge) => [`${edge.from}>${edge.to}`, edge.trans]));
+    expect(byRoute.get("d2>d3")).toBe("1>2");
+    expect(byRoute.get("d0>d1")).toBe("0>3");
+    expect(byRoute.get("d1>d2")).toBeNull();
+    expect(result.graphSelection).toBeNull();
   });
 });

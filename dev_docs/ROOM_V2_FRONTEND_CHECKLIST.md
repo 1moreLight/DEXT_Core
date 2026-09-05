@@ -1,6 +1,6 @@
 # Room v2 前端与 WidgetHost 开发准备清单
 
-> 状态：DXT-003 后端契约完成后使用；WidgetHost 与可信热点仍属于后续工作包。
+> 状态：UI-V2-001 实现核对清单；离线 WidgetHost、可信热点和受控能力桥已接入，联网代理仍明确不做。
 > 关联：`MODEL.md`、`WIDGETS_V2.md`、`ROOM_V2_SYSTEM_API.md`、`ROOM_V2_AI_PROMPT.md`。
 
 ## 一、产品结论
@@ -38,7 +38,7 @@ Scene：background HTML/image/video
 - 使用 `placement {x,y,width,height,z}`，基于 1920×1080 逻辑画布保存；实际视口按居中等比 `contain` 映射。
 - Widget 可以重叠，z 由官方宿主管理；选择、置顶、置底和删除只在编辑模式出现。
 - 切 Desk、Room 替换、暂停和 Player 销毁时，必须完整卸载旧 iframe、订阅、计时器和消息 token。
-- 当前配置器尚无布局 UI时，也必须原样保留 `desks[i].widgets`，不能因保存 Room 而丢失。
+- 配置器层级树与真实画布已提供布局 UI；保存 Room 必须原样保留 `desks[i].widgets` 与声明资源。
 
 ### 3.2 拖动、缩放与图标避让
 
@@ -69,7 +69,7 @@ Scene：background HTML/image/video
 <img data-dext-image="media.artwork" alt="当前媒体封面">
 ```
 
-上面只是后续 SDK 的建议形态，不是当前已实现 API。正式实现应由官方宿主把经过权限检查、限频和裁剪的数据以结构化消息送进 Scene。作者可以自由决定元素长什么样、在什么位置和如何动画，不需要先创建一个矩形卡片。
+上面是作者可采用的表现形态；当前正式桥由官方宿主把经过权限检查、限频和裁剪的数据以 `dext:capability` 结构化消息送进 Scene/Widget。作者可以自由决定元素长什么样、在什么位置和如何动画，不需要先创建一个矩形卡片。
 
 适合 Scene 的例子：
 
@@ -107,12 +107,12 @@ Room 可以声明“某个位置可点击”，但作者页面本身不执行系
 
 ## 六、前端接入顺序
 
-1. 先实现只渲染本地资源、无系统能力的 WidgetHost，多 Widget、拖动、缩放、z、卸载和预览一致性。
-2. 再实现 Scene/Widget 共用的只读 Capability Bridge：时间、视口、Desk、暂停、音频频谱、CPU/GPU/RAM。
-3. 增加 P2 媒体元数据；封面优先复用 Player 已有 `livelyCurrentTrack` 缓存，避免 Core 同步读取问题媒体流。
-4. 增加官方可信热点和封闭媒体/音量动作；未授权、非用户手势和 iframe 直接调用均拒绝。
-5. 增加配置器权限审阅、冲突提示、图标自动避让、撤销/重做和数据清理。
-6. 最后做 Dext 代理联网、资源配额、熔断、分享清单和 AI 创作 skill。
+1. 已完成：只渲染本地资源、无外网的 WidgetHost，多 Widget、拖动、缩放、z、卸载和预览一致性。
+2. 已完成：Scene/Widget 共用只读 Capability Bridge，覆盖时间、视口、Desk、暂停、音频频谱、CPU/GPU/RAM、媒体封面和主音量。
+3. 已完成：复用 Player 的 `livelyCurrentTrack` 与频谱回调，避免作者侧读取本机媒体流。
+4. 已完成：官方可信热点和封闭媒体/音量动作；未授权、非用户手势和 iframe 直接调用均拒绝。
+5. 已完成：配置器权限审阅、冲突提示、图标自动避让、撤销/重做和数据清理。
+6. 明确不做：Dext 代理联网；分享清单和 AI 创作 skill 已完成本地安全部分，后续只扩展契约。
 
 ## 七、最低自动测试
 

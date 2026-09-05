@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
@@ -8,15 +8,16 @@ import {
   type DockIconItem,
   DEFAULT_DOCK_STYLE,
 } from "@/lib/dock";
+import type { Desk } from "@/lib/room-v2";
 
 interface DockEditorProps {
   dock: DockConfig;
   setDock: (d: DockConfig) => void;
   apps: DockAppInfo[];
-  // Desk[] 与最小结构间存在逆变问题，用 any[] 保持与 App 的 setDesks 直接可赋值
-  desks: any[];
-  setDesks: React.Dispatch<React.SetStateAction<any[]>>;
+  desks: Desk[];
+  setDesks: React.Dispatch<React.SetStateAction<Desk[]>>;
   activeDesk: number;
+  onBeginChange: () => void;
   touch: () => void;
   setStatus: (s: string) => void;
 }
@@ -55,19 +56,15 @@ export function DockEditor({
   desks,
   setDesks,
   activeDesk,
+  onBeginChange,
   touch,
   setStatus,
 }: DockEditorProps) {
-  // 本地草稿状态；父组件的 dock/desks 变化（开房间/切桌/预览回写）时同步进来
-  const [globalDock, setGlobalDock] = useState<DockConfig>(dock);
-  const [deskDocks, setDeskDocks] = useState<DockConfig[]>(desks.map((d) => d.dock ?? {}));
   const [iconScope, setIconScope] = useState<DockIconScope>("global");
   const [appPickerOpen, setAppPickerOpen] = useState(false);
 
-  useEffect(() => setGlobalDock(dock), [dock]);
-  useEffect(() => setDeskDocks(desks.map((d) => d.dock ?? {})), [desks]);
-
-  const deskDock = deskDocks[activeDesk] ?? {};
+  const globalDock = dock;
+  const deskDock = desks[activeDesk]?.dock ?? {};
   const deskStyle = deskDock.style ?? {};
   const gStyle = globalDock.style ?? {};
   const deskHasOwnIcons = Object.prototype.hasOwnProperty.call(deskDock, "icons");
@@ -78,45 +75,40 @@ export function DockEditor({
     scopedIcons.map((icon) => icon.launch?.target).filter((target): target is string => !!target)
   );
 
-  function saveGlobal() {
-    setDock(globalDock);
+  function updateGlobal(patch: Partial<DockConfig>, begin = true) {
+    if (begin) onBeginChange();
+    setDock({ ...globalDock, ...patch });
     touch();
-    setStatus("全局 Dock 配置已保存");
   }
 
   function updateGlobalIcons(icons: DockIconItem[], message: string) {
     const next = { ...globalDock, icons };
-    setGlobalDock(next);
+    onBeginChange();
     setDock(next);
     touch();
     setStatus(message);
   }
 
   // ---- 每桌覆盖：写回父级 desks（这样 room.json 保存时能带上 desks[i].dock）----
-  function updateDesk(patch: Partial<DockConfig>) {
+  function updateDesk(patch: Partial<DockConfig>, begin = true) {
     const next = { ...deskDock, ...patch };
-    setDeskDocks((prev) => prev.map((d, i) => (i === activeDesk ? next : d)));
+    if (begin) onBeginChange();
     setDesks((prev) => prev.map((d, i) => (i === activeDesk ? { ...d, dock: next } : d)));
     touch();
   }
 
   function replaceDeskDock(next: DockConfig) {
-    setDeskDocks((prev) => prev.map((d, i) => (i === activeDesk ? next : d)));
+    onBeginChange();
     setDesks((prev) => prev.map((d, i) => (i === activeDesk ? { ...d, dock: next } : d)));
     touch();
   }
 
-  function updateDeskStyle(patch: Partial<NonNullable<DockConfig["style"]>>) {
-    updateDesk({ style: { ...deskStyle, ...patch } });
+  function updateDeskStyle(patch: Partial<NonNullable<DockConfig["style"]>>, begin = true) {
+    updateDesk({ style: { ...deskStyle, ...patch } }, begin);
   }
 
   function addDeskIcon() {
     const icons = [...(deskDock.icons ?? []), { label: "新图标", glyph: "?", color: "#3b82f6" }];
-    updateDesk({ icons });
-  }
-
-  function patchDeskIcon(i: number, patch: Partial<DockIconItem>) {
-    const icons = (deskDock.icons ?? []).map((ic, j) => (j === i ? { ...ic, ...patch } : ic));
     updateDesk({ icons });
   }
 
@@ -275,7 +267,7 @@ export function DockEditor({
             <select
               className={selCls}
               value={globalDock.position ?? "bottom"}
-              onChange={(e) => setGlobalDock({ ...globalDock, position: e.target.value as DockConfig["position"] })}
+              onChange={(e) => updateGlobal({ position: e.target.value as DockConfig["position"] })}
             >
               {Object.entries(DOCK_POSITION_LABELS).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
@@ -286,7 +278,7 @@ export function DockEditor({
             <select
               className={selCls}
               value={globalDock.indicator ?? "text"}
-              onChange={(e) => setGlobalDock({ ...globalDock, indicator: e.target.value as "text" | "dots" })}
+              onChange={(e) => updateGlobal({ indicator: e.target.value as "text" | "dots" })}
             >
               <option value="text">文字 1/3</option>
               <option value="dots">圆点</option>
@@ -298,7 +290,7 @@ export function DockEditor({
                 type="checkbox"
                 className="h-4 w-4"
                 checked={!!globalDock.autoHide}
-                onChange={(e) => setGlobalDock({ ...globalDock, autoHide: e.target.checked })}
+                onChange={(e) => updateGlobal({ autoHide: e.target.checked })}
               />
               {globalDock.autoHide ? "开启" : "关闭"}
             </label>
@@ -307,42 +299,48 @@ export function DockEditor({
             <Input
               value={gStyle.bg ?? DEFAULT_DOCK_STYLE.bg}
               placeholder={DEFAULT_DOCK_STYLE.bg}
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, bg: e.target.value } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, bg: e.target.value } }, false)}
             />
           </Field>
           <Field label="毛玻璃 blur(px)">
             <Input
               type="number"
               value={gStyle.blur ?? DEFAULT_DOCK_STYLE.blur}
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, blur: Number(e.target.value) } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, blur: Number(e.target.value) } }, false)}
             />
           </Field>
           <Field label="圆角">
             <Input
               value={gStyle.radius ?? DEFAULT_DOCK_STYLE.radius}
               placeholder="999px / 16px"
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, radius: e.target.value } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, radius: e.target.value } }, false)}
             />
           </Field>
           <Field label="间距 gap(px)">
             <Input
               type="number"
               value={gStyle.gap ?? DEFAULT_DOCK_STYLE.gap}
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, gap: Number(e.target.value) } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, gap: Number(e.target.value) } }, false)}
             />
           </Field>
           <Field label="内边距 pad">
             <Input
               value={gStyle.pad ?? DEFAULT_DOCK_STYLE.pad}
               placeholder="10px 20px"
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, pad: e.target.value } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, pad: e.target.value } }, false)}
             />
           </Field>
           <Field label="图标尺寸(px)">
             <Input
               type="number"
               value={gStyle.icon ?? DEFAULT_DOCK_STYLE.icon}
-              onChange={(e) => setGlobalDock({ ...globalDock, style: { ...gStyle, icon: Number(e.target.value) } })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateGlobal({ style: { ...gStyle, icon: Number(e.target.value) } }, false)}
             />
           </Field>
           <Field label="显示开关">
@@ -351,13 +349,13 @@ export function DockEditor({
                 type="checkbox"
                 className="h-4 w-4"
                 checked={globalDock.enabled !== false}
-                onChange={(e) => setGlobalDock({ ...globalDock, enabled: e.target.checked })}
+                onChange={(e) => updateGlobal({ enabled: e.target.checked })}
               />
               {globalDock.enabled === false ? "隐藏整条" : "显示"}
             </label>
           </Field>
         </div>
-        <Button size="sm" onClick={saveGlobal}>保存全局 Dock 配置</Button>
+        <p className="text-xs text-muted-foreground">修改会立即进入当前 Room 草稿；使用顶部“保存”统一写入 room.json。</p>
       </section>
 
       {/* ── 每桌覆盖 ── */}
@@ -407,7 +405,8 @@ export function DockEditor({
             <Input
               value={deskStyle.bg ?? ""}
               placeholder="跟随全局"
-              onChange={(e) => updateDeskStyle({ bg: e.target.value })}
+              onFocus={onBeginChange}
+              onChange={(e) => updateDeskStyle({ bg: e.target.value }, false)}
             />
           </Field>
         </div>
@@ -431,19 +430,31 @@ export function DockEditor({
                 className="h-7 flex-1"
                 value={ic.label ?? ""}
                 placeholder="名称"
-                onChange={(e) => patchDeskIcon(i, { label: e.target.value })}
+                onFocus={onBeginChange}
+                onChange={(e) => {
+                  const icons = (deskDock.icons ?? []).map((item, index) => index === i ? { ...item, label: e.target.value } : item);
+                  updateDesk({ icons }, false);
+                }}
               />
               <Input
                 className="h-7 w-16"
                 value={ic.color ?? ""}
                 placeholder="色"
-                onChange={(e) => patchDeskIcon(i, { color: e.target.value })}
+                onFocus={onBeginChange}
+                onChange={(e) => {
+                  const icons = (deskDock.icons ?? []).map((item, index) => index === i ? { ...item, color: e.target.value } : item);
+                  updateDesk({ icons }, false);
+                }}
               />
               <Input
                 className="h-7 w-12"
                 value={ic.glyph ?? ""}
                 placeholder="图标"
-                onChange={(e) => patchDeskIcon(i, { glyph: e.target.value })}
+                onFocus={onBeginChange}
+                onChange={(e) => {
+                  const icons = (deskDock.icons ?? []).map((item, index) => index === i ? { ...item, glyph: e.target.value } : item);
+                  updateDesk({ icons }, false);
+                }}
               />
               <Button variant="ghost" size="icon-sm" title="删除" onClick={() => removeDeskIcon(i)}>
                 <Trash2 />

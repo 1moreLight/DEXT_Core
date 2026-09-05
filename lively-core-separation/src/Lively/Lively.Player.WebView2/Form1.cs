@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -199,6 +200,8 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
             webView.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
             webView.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;
+            if (startArgs.DextTrustedHost)
+                ConfigureDextOfflineBoundary();
             // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
             webView.CoreWebView2.WebMessageReceived += (s, e) =>
             {
@@ -232,6 +235,12 @@ namespace Lively.Player.WebView2
                             LaunchArgs = (string)icon.launch.args ?? string.Empty,
                             LaunchWorkdir = (string)icon.launch.workdir ?? string.Empty,
                         });
+                    }
+                    else if ((string)o.type == "dext:system-control")
+                    {
+                        var request = BuildSystemControlRequest(o);
+                        if (request != null)
+                            SendToParent(request);
                     }
                     else
                     {
@@ -322,6 +331,116 @@ namespace Lively.Player.WebView2
                 currentUri.GetComponents(parts, UriFormat.SafeUnescaped),
                 sourceUri.GetComponents(parts, UriFormat.SafeUnescaped),
                 StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ConfigureDextOfflineBoundary()
+        {
+            webView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+            webView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+            webView.CoreWebView2.Settings.AreHostObjectsAllowed = false;
+            webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+            webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+            {
+                if (!IsAllowedDextResource(args.Request.Uri))
+                    args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
+                        null, 403, "Dext Offline Boundary", "Content-Type: text/plain");
+            };
+            webView.CoreWebView2.NavigationStarting += (sender, args) =>
+            {
+                if (!IsAllowedDextResource(args.Uri))
+                    args.Cancel = true;
+            };
+            webView.CoreWebView2.FrameNavigationStarting += (sender, args) =>
+            {
+                if (!IsAllowedDextResource(args.Uri))
+                    args.Cancel = true;
+            };
+            webView.CoreWebView2.PermissionRequested += (sender, args) =>
+            {
+                args.State = CoreWebView2PermissionState.Deny;
+                args.Handled = true;
+            };
+        }
+
+        private bool IsAllowedDextResource(string uri)
+        {
+            if (string.Equals(uri, "about:blank", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (!Uri.TryCreate(uri, UriKind.Absolute, out var candidate) ||
+                !string.Equals(candidate.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                return false;
+            var current = webView?.CoreWebView2?.Source;
+            if (Uri.TryCreate(current, UriKind.Absolute, out var top) &&
+                string.Equals(candidate.Host, top.Host, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Before the first navigation completes there is no real Source yet —
+            // WebView2 reports the initial about:blank document, not an empty string.
+            // The official local virtual host always ends in .localhost; remote hosts remain blocked.
+            var noDocumentYet = string.IsNullOrWhiteSpace(current) ||
+                string.Equals(current, "about:blank", StringComparison.OrdinalIgnoreCase);
+            return noDocumentYet &&
+                candidate.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static LivelyMessageSystemControlRequest BuildSystemControlRequest(dynamic payload)
+        {
+            string requestId = (string)payload?.requestId;
+            string action = (string)payload?.action?.id;
+            if (string.IsNullOrWhiteSpace(requestId) || requestId.Length > 80 ||
+                requestId.Any(character => !(
+                    character >= 'a' && character <= 'z' ||
+                    character >= 'A' && character <= 'Z' ||
+                    character >= '0' && character <= '9' ||
+                    character == '-')))
+                return null;
+
+            var request = new LivelyMessageSystemControlRequest { RequestId = requestId };
+            switch (action)
+            {
+                case "system.permissions.read":
+                    request.Action = "permissions-read";
+                    break;
+                case "system.volume.read":
+                    request.Action = "volume-read";
+                    break;
+                case "system.volume.set":
+                    request.Action = "volume-set";
+                    request.Level = (double?)payload.action.value;
+                    if (!request.Level.HasValue || double.IsNaN(request.Level.Value) ||
+                        double.IsInfinity(request.Level.Value) || request.Level.Value < 0 || request.Level.Value > 1)
+                        return null;
+                    break;
+                case "system.volume.mute":
+                    request.Action = "volume-mute";
+                    request.Muted = (bool?)payload.action.value;
+                    if (!request.Muted.HasValue)
+                        return null;
+                    break;
+                case "system.volume.toggle-mute":
+                    request.Action = "volume-toggle-mute";
+                    break;
+                case "system.media.play":
+                case "system.media.pause":
+                case "system.media.toggle-play-pause":
+                case "system.media.next":
+                case "system.media.previous":
+                    request.Action = action.Substring("system.media.".Length);
+                    break;
+                default:
+                    return null;
+            }
+            if (request.Action != "permissions-read" && request.Action != "volume-read")
+            {
+                request.Subject = (string)payload?.subject;
+                if (string.IsNullOrWhiteSpace(request.Subject) || request.Subject.Length > 160 ||
+                    request.Subject.Any(character => !(
+                        character >= 'a' && character <= 'z' ||
+                        character >= '0' && character <= '9' ||
+                        character == '-' || character == ':' || character == '>')))
+                    return null;
+            }
+            return request;
         }
 
         private void CoreWebView2_DocumentTitleChanged(object sender, object e)
@@ -650,6 +769,27 @@ namespace Lively.Player.WebView2
                         running = appStatus.Running,
                     };
                     webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(statusPayload));
+                    break;
+                case MessageType.cmd_system_control_response:
+                    var response = (LivelyMessageSystemControlResponse)obj;
+                    var systemPayload = new
+                    {
+                        type = "dext:system-control-result",
+                        requestId = response.RequestId ?? string.Empty,
+                        success = response.Success,
+                        error = response.Error ?? string.Empty,
+                        userVisible = response.UserVisible,
+                        permissions = string.IsNullOrWhiteSpace(response.PermissionsJson)
+                            ? null
+                            : JsonConvert.DeserializeObject(response.PermissionsJson),
+                        volume = response.HasVolume ? new
+                        {
+                            level = response.Level,
+                            muted = response.Muted,
+                            available = true,
+                        } : null,
+                    };
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(systemPayload));
                     break;
             }
         }

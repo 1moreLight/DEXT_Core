@@ -16,7 +16,7 @@
 
 **Dext**：把 Windows 桌面变成手机式主屏。多个 Desk 放真图标应用、长按编辑、切桌动画；整套主题打包成 Room 分享。终局对标 Wallpaper Engine（创作者上架创意工坊，普通用户下载即用）。
 
-目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与未来 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
+目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
 
 DXT-003 将项目收口为唯一原生 Room v2；v1 与更旧 demo 不兼容、不迁移、不重建。新建、编辑、保存、另存、预览、应用和 zip 全链只接受/产生 v2。
 
@@ -62,6 +62,9 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_FRONTEND_CHECKLIST.md` | WidgetHost、Scene 数据绑定、可信热点、拖拽/层叠与图标避让实施清单 | 开发 v2 前端宿主时 |
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
+| `../creator-kit/` | Creator Pack v1 Schema、版本化 SDK、Scene/Widget 模板与安全正反 fixtures | 导出 AI 上下文、制作或审查 `.dext-content.zip` 时 |
+| `CONFIGURATOR_V2_PLAN.md` | **UI-V2-001 单工作包总计划**：配置器、Scene、WidgetHost、系统能力、安全分享与 AI 创作端到端范围 | 开发或验收配置器 v2 时 |
+| `CONFIGURATOR_V2_LUNA_PROMPT.md` | 可直接交给 `gpt-5.6-luna` 的 UI-V2-001 执行指令 | 将整个 v2 工作包交接给执行模型时 |
 | `DOCK_STYLE.md` | Dock v0.x 外观定制历史；包含已废弃的 room.js/room.css 接口 | 仅回溯旧实现时 |
 
 **铁律**：一个工作包一个分支和验收文件 → 动代码前写 TODO 和验收 → 自测通过后 commit → 停在分支等待用户验收 → 用户明确通过后才合并并删除分支/worktree。
@@ -146,7 +149,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 
 - 固定 `version: 2`，唯一待机字段为 `idle`，每个 Desk 写出 `widgets` 数组；`end` 非法。
 - Widget manifest、路径/资源、1920×1080 placement、权限枚举、config 限制和数量限制以 `room-v2.schema.json` 与 `WIDGETS_V2.md` 为准。
-- WidgetHost 尚未实现视觉执行，但 v2 已可编辑、覆盖保存、另存、预览 Scene、应用和 zip；现有 Widget 数据与资源必须无损保留。
+- WidgetHost 已实现首版离线视觉执行：v2 可编辑、覆盖保存、另存、预览、应用和 zip；现有 Widget 数据与资源必须无损保留。
 - v1 与未知版本只显示不支持；除安全删除外不得进入保存、预览、应用或 zip 链。
 - 自包含离线样包位于 `dev_docs/fixtures/room-v2/sample-library/widget-contract-sample/`。
 
@@ -189,10 +192,15 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
 | `create_room` | `(dir, name) → path` | 建最小合法 v2 和五个内容目录 |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v2，并镜像五类资源；失败不留下半成品 |
+| `duplicate_room` | `(library_dir, room_dir, name) → path` | 仅复制库内直接子 Room，完整镜像 v2 JSON 与五类资源，失败清理目标 |
+| `rename_room` | `(library_dir, room_dir, name) → path` | 仅重命名库内直接子 Room，拒绝非法名称、重名、链接和库外路径；运行中 Room 随后重新应用刷新来源戳 |
 | `apply_room` | `(room_dir)` | 严格验证 v2，镜像五类资源，并仅在运行包注入规范化 `__source` |
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
 | `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v2 zip；校验 Widget 声明并防路径穿越、链接、重复项、解压炸弹、重名和残留 |
+| `export_ai_context` | `(destination, room_json) → path` | 导出脱敏 Room 结构、提示词、Schema、SDK、模板与 fixtures；不调用外部 AI |
+| `inspect_creator_pack` / `discard_creator_import` | `(archive_path) → report` / `(token)` | 只在临时区检查 Creator Pack，返回隔离预览 token；不修改 Room |
+| `confirm_creator_import` | `(token, room_dir, room_json, desk_index, scene_target?) → Content/Widget` | 用户确认后事务式写入 Scene/Widget；重新执行完整 Room/资源校验 |
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
 | `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
@@ -233,5 +241,5 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/idle 全部受控挂载。
 - 持久化：源 Room 严格 v2、运行包唯一可信 `__source`、Widget 资源镜像、顶层 IPC 和双写边界已收紧。
-- 配置器：导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览，明确保存时才写 `room.json`；Desk 排序和成组 HTML 资产仍属后续工作。
+- 配置器：Room 层级树和导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览；Desk 身份级排序、Dock 覆盖和成组 HTML 资产均按 v2 单一写出器保存。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。

@@ -1,0 +1,10 @@
+:root { color-scheme: dark; font: 18px system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100vh; overflow: hidden; color: white; background: radial-gradient(circle at 70% 25%, #246077, #071014 55%); }
+.glow { position: absolute; inset: 8% 8% auto auto; width: 42vw; aspect-ratio: 1; border-radius: 50%; background: #6ee7ff33; filter: blur(90px); }
+section { position: absolute; left: 6.25%; bottom: 12%; width: 44%; }
+time { font-size: clamp(64px, 8vw, 150px); font-weight: 650; letter-spacing: -.07em; }
+#title { margin: 22px 0 4px; font-size: 30px; }
+#artist { color: #b7cbd2; }
+.volume { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 16px; margin-top: 32px; }
+progress { width: 100%; accent-color: #75e7ff; }

@@ -161,9 +161,10 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 3. **运行态小圆点（DOCK-004，已完成）**：Core 进程遥测和 Dock 指示已通过人工验收并合入 master。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
-### DOCK-003 拖入消息与持久化
+### DOCK-003 拖入消息与持久化（链保留；渲染器已改走 DOCK-UX-001 通道）
 
 > 2026-08-29 实机限制：从桌面上方/侧面向 Dock 拖动会被图标层边界限制；从 Dock 下方进入虽能触发绿色命中反馈，释放后仍可能不落入。用户决定跳过该交互目标，当前正式维护入口改为配置器 `DockEditor`；真桌面双向拖拽的输入捕获与命中重做登记为远期 `DOCK-UX-001`。
+> **2026-09-05 更新**：`DOCK-UX-001` 已实施一版（ghost/吸附带/统一结束事件）并真机复验，仍不稳定；用户决定**放弃真桌面拖入 Dock**，代码已 revert。配置器 `DockEditor` 继续是 Dock 图标管理的唯一正式入口。详见下节与 ERRORS #65。
 
 编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
 
@@ -185,6 +186,15 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIconCmd`，Core 在包内 `room.json` 的 `desks[deskIndex].dock.icons` 追加完整图标与启动信息；若目标已存在或启动目标为空则跳过。Player 只接受顶层官方宿主；Core 只信任现有运行包里的 `__source`，包内保留该戳，源 Room 写出前剥离。预览环境不触发写盘。
 
 同一编辑模式下也支持 Dock → 桌面：拖动 Dock 图标到桌面网格的虚线 drop 区，会将图标完整复制回当前 Desk 的 `icons` 并从当前 Desk Dock 移除；继承全局 Dock 的图标通过建立桌级覆盖实现“只从当前 Desk 移出”，不会影响其他 Desk。目标位置已有桌面图标或启动目标重复时保持原 Dock 不变。
+
+### DOCK-UX-001 双向拖拽重做（2026-09-05 已取消）
+
+用户拍板的交付口径：桌面→Dock 为**移动**语义、只写当前 Desk 的 `dock.icons` 覆盖、仅编辑模式、
+autoHide 不动。实现（ghost 拖拽视觉 + Dock 吸附带命中 + pointerup/cancel/capture-loss 统一按最后
+指针位置提交 + persistRoom 单一持久化）自动检查全绿，但真机复验仍不稳定，用户决定放弃该交互目标；
+实现提交 `638ee0e` 已整体 revert（`de04a33`）。结论与后续条件见 ERRORS #65：
+真桌面拖拽若重启，必须先立 WebView2 指针/WorkerW 命中的专项研究包，不再直接做交互实现。
+Dock 图标管理的正式入口 = 配置器 `DockEditor`。
 
 ## 四、当前演示与验收状态
 

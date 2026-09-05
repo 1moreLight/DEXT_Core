@@ -99,3 +99,17 @@
 - 根因：`grpc::tests::applies_room_wallpaper` 直接调用真实 Core 的 `SetWallpaper`，`apps_and_launch` 还会启动 Notepad；两项活体测试此前混在普通单元测试中。Core 随后把 `wallpapers/dext-room` 写进 `%LOCALAPPDATA%\Dext\WallpaperLayout.json`，下次启动必然恢复，而运行包里的 `room.json.__source` 仍指向旧测试 Room。
 - 解决：两项测试标记为 Rust `#[ignore]`。普通 `cargo test --lib` 只跑无外部副作用的测试；需要真 Core 验收时显式运行 `cargo test --lib applies_room_wallpaper -- --ignored`，完成后再停止壁纸并核对恢复布局。
 - 防再犯：凡会调用真实 RPC、启动应用、修改桌面或写入用户状态的测试都必须默认 ignored，并在命令旁写清副作用和恢复步骤；不能把“测试通过”等同于“环境没有被改变”。
+
+## #50 Player 目标框架缺少较新的 ASCII 字符判断 API（2026-09-02）
+
+- 现象：Dext WebView2 Player Release 构建在可信系统请求 id 校验处报 CS0117，找不到 `char.IsAsciiLetterOrDigit`。
+- 原因：Player 当前目标框架未提供该较新的 `char` API。
+- 处理：改为显式 `a-z` / `A-Z` / `0-9` / `-` 范围判断，保持严格 ASCII 白名单且兼容现有框架。
+- 预防：Player/Core 新增安全字符校验时优先使用项目目标框架已有 API，并以 `scripts/build.ps1` Release 全构建为准。
+
+## 53. start.ps1 的 Tauri 端口被残留 Vite 进程占用
+
+- 现象：当前 worktree 的 Core 身份已验证，但 `start.ps1` 在 `npm run tauri dev` 阶段因端口 1423 已被占用而退出。
+- 原因：同一 worktree 的旧 `vite --port 1423 --strictPort` 进程仍在监听；脚本的配置器开发端口不是动态分配。
+- 处理：只读确认监听 PID、可执行文件和命令行后再决定是否由启动者清理；本次未终止不明进程，并使用独立端口/页面完成前端验证。
+- 预防：启动前检查 1423/1421 监听者是否属于当前会话；不要盲目结束用户进程，必要时先复用或让用户关闭残留开发服务。

@@ -408,3 +408,121 @@
 
 - [x] 用户明确取消 UI-USE-001 验收；其早期设计规格已被已完成的 UI-V1-001 实际实现取代（2026-08-31）
 - [x] 不合并 `docs/ui-use-001-use-page-spec`，清理对应独立分支与 worktree（2026-08-31）
+
+## UI-V2-001 配置器 v2 端到端闭环（2026-09-02）
+
+> 目标：保留现有配置器设计语言，在一个工作包中一次性交付 Room v2 配置器架构、Scene/WidgetHost、图标避让、受控系统能力、安全分享和 AI 创作导入闭环。
+> 范围外：创意工坊云服务、安装器、多显示器、内置外部 AI、Dext 代理联网、任意系统命令与 v1 兼容。
+> 人工验收：全部实现完成后只按 `dev_docs/acceptance/UI-V2-001-configurator-v2.md` 做一次整体人工验收，中途不拆包、不合并半成品。
+
+- [x] 用户确认采用单工作包端到端交付，并冻结范围外事项（2026-09-02）
+- [x] 建立独立 worktree `ui-v2-001-configurator-v2` 与分支 `feat/ui-v2-001-configurator-v2`（2026-09-02）
+- [x] 编写总计划、Luna 执行指令和独立最终验收卡（2026-09-02）
+- [x] 使用 CodeGraph 完成配置器、Tauri、渲染器、Core、Schema 和测试的实现审计与删除清单（2026-09-02）
+- [x] 建立共享 v2 类型、单一编辑状态、历史事务和纯算法测试基线（2026-09-02）
+- [x] 重构配置器壳、空间库、真实画布、属性权限检查器和 Desk 流程视图（2026-09-02）
+- [x] 完成 WidgetHost、多实例布局、拖动缩放层级、图标避让和 Dock 安全区（2026-09-02）
+- [x] 完成 Scene/Widget 只读能力桥、性能/媒体/音量数据与可信热点动作（2026-09-02）
+- [x] 完成 v2 安全分享、权限重询问、AI 模板/SDK/导入报告和隔离预览（2026-09-02）
+- [x] 删除 v1/demo/旧入口/死状态，更新接口与创作者文档（2026-09-02）
+- [x] 完成自动测试、构建、视觉检查和真实 Core/Player/Tauri 活体验证（会改变桌面的强制铺设留给人工验收）（2026-09-02）
+- [x] 具名提交全部实现并进入待验收；用户通过前禁止合并 master（2026-09-02）
+
+### 实施记录
+
+- [x] 提取 Room v2 Content/Desk/Widget/权限共享类型，App 不再把 Widget 保存为 `unknown[]`（2026-09-02）
+- [x] 实现 1920×1080 placement、contain 映射和确定性图标避让纯函数，新增 5 项回归（2026-09-02）
+- [x] 在真实渲染器接入首版离线 WidgetHost：多实例沙箱、官方 placement/z、实例 source+token+协议+大小校验和卸载失效（2026-09-02）
+- [x] 前端 14 项测试、生产构建和渲染器语法检查通过（2026-09-02）
+- [x] 配置器默认接入真实桌面画布与独立 Desk 流程切换，显示 Scene、图标、Widget 和 Dock 安全区（2026-09-02）
+- [x] 接通 Widget 选择、拖动、缩放、placement 数值编辑、层级、删除、图标避让和统一历史事务（2026-09-02）
+- [x] 使用 Playwright 在真实浏览器复验窄窗口，修正顶栏挤压并加入 v2 Widget mock；单击选择不再误写草稿（2026-09-02）
+- [x] 完成 Widget 文件夹安全导入与权限审阅 UI：小写 slug、资源白名单、数量/大小限制、拒绝链接与 reparse point、staging 原子回滚、整份草稿同步保存，并从 v2 权限枚举删除未实现的联网/导航等能力（2026-09-02）
+- [x] Widget 导入里程碑通过 Rust 27 项、前端 14 项、生产构建、`cargo check`、渲染器语法和差异检查（2026-09-02）
+- [x] 扩展 v2 Content/Widget 契约：HTML 能力声明、相对/全局矩形热点和封闭媒体/系统主音量 action；删除未实现的联网、导航、通用存储和通知权限（2026-09-02）
+- [x] 打通 Scene/Widget → 官方宿主 → Player → Core 能力链，按实例/token/subject 推送时间、语言、视口、Desk、暂停、CPU/GPU/RAM、网络摘要、频谱、媒体/封面和系统主音量（2026-09-02）
+- [x] 实现官方透明热点、真实 `isTrusted` 手势、120ms 限频、Player 白名单解析和 Core 最终 action/参数/本机授权复核（2026-09-02）
+- [x] 实现本机授权审阅、批准和撤销；源路径 + `room.json` SHA-256 绑定，内容变化/另存/重导自动失效且授权不进入 Room/zip（2026-09-02）
+- [x] 为 Dext Room Player 启用专用离线边界：同一虚拟主机资源外的请求/导航/iframe、下载、弹窗和 Web 权限全部拒绝（2026-09-02）
+- [x] 能力桥里程碑通过 Schema fixtures、前端 17 项、Rust 27 项、JS bridge、生产构建、C# Release 四阶段构建和 `scripts/start.ps1` 真 Core/Tauri 启动；Playwright 复验 1366×768 权限/热点检查器（2026-09-02）
+- [x] 建立 Creator Pack v1 Schema、版本化 SDK、可运行 Scene/Widget 模板和正反 fixtures；AI 上下文导出会剥离本机路径、启动参数、图标 base64 与运行戳（2026-09-02）
+- [x] 实现创作包两阶段事务：临时区静态安全报告、一次性 token、CSP + opaque sandbox 隔离预览、用户确认后原子写入 Room，失败/取消无半成品（2026-09-02）
+- [x] 将 AI 创作入口并入 Room 编辑器，并删除无真实服务的空白“创意工坊”一级页面；不接任何外部模型 API（2026-09-02）
+- [x] 补齐 Widget Shift/Ctrl 多选、成组拖动、画布/相邻边缘与中心吸附、六向对齐、置顶/置底和批量删除；布局与图标避让仍为单一历史事务（2026-09-02）
+- [x] 将 Desk/Scene/Widget/Dock/转场完整编辑快照和撤销/重做栈持久化到 IndexedDB；按 Room 路径和规范化磁盘基线恢复，外部文件变化时自动放弃陈旧草稿（2026-09-02）
+- [x] 删除 `DockEditor any[]`，改用共享 `Desk[]` 类型；浏览器 mock 更新为三个不同尺寸 Widget 以覆盖多选布局视觉测试（2026-09-02）
+- [x] 提取共享 `SceneCapabilityEditor`，让 background/start/idle/每个方向 switch 的 HTML Scene 都能编辑能力声明、可信热点与本机授权；图片/视频明确无作者代码能力（2026-09-02）
+- [x] 在不改变配置器布局与视觉语言的前提下拆分 `App.tsx`：提取顶栏、Room 流程图纯函数、Room v2 清洗/单一写出器、运行时类型和 Room/Scene 预览组件，并新增 6 项纯函数回归（2026-09-02）
+- [x] 补齐全局/每 Desk Dock、背景清除、Room 转场和 Desk 图标增删的修改前历史事务；流程视图不再因零连线落入“改造中”死占位（2026-09-02）
+- [x] 浏览器复验 1366×768 与 1100×900：Dock 修改可撤回/重做、页面无横向溢出；修复流程视图条件挂载后测量 effect 不重跑导致 SVG 连线为空（2026-09-02）
+- [x] 删除 `App.tsx` 靠 `void` 保活的旧无入口状态/函数，并把渲染器页面标题从 Demo 收口为正式 `Dext Room`；保留 Creator Pack 自身版本和旧 Room 拒绝反向测试（2026-09-02）
+
+### UI-V2-001 完成度复审续作（2026-09-02）
+
+- [x] 逐条对照 `CONFIGURATOR_V2_PLAN.md` 与验收卡，确认现有绿测不能证明全部范围完成
+- [x] 补齐空间库排序、复制和重命名的真实 UI → Tauri → 文件系统闭环与回归（2026-09-02）
+- [x] 补齐 Desk 身份级重排、switch/startDesk 重映射、历史事务和流程 UI（2026-09-02）
+- [x] 删除 `DockEditor` 的全局/每桌本地草稿副本，所有 Dock 编辑直接使用 Room 草稿唯一真相源，文本编辑按聚焦合并为一次历史事务（2026-09-02）
+- [x] 增加 Room 层级树（Desk/Scene/Icons/Widgets/Dock），层级选择驱动画布/流程/Dock，Desk 上下移入口与历史事务统一（2026-09-02）
+- [x] 提取 `RoomEditorHeader` 与 `UsePage`，降低 `App.tsx` 页面装配与编辑器顶栏职责；`npm test` 30/30、`npm run build` 通过（2026-09-02）
+- [x] 浏览器复验层级 Widget 选择、Dock 编辑入口、流程节点、层级内 Desk 重排及 1100×900 无横向溢出（2026-09-02）
+- [x] 提取 `useDextRuntime` 与 `useGraphGeometry`，将 Core/当前 Room 轮询和流程图 DOM 测量从页面组件移出；同步修正 WidgetHost 旧注释（2026-09-02）
+- [x] 提取 `EditorNavigation`，编辑模式一级导航不再由 `App.tsx` 直接渲染；`App.tsx` 降至约 2200 行且保持现有视觉与行为（2026-09-02）
+- [x] 提取 `EditorRoomLibrary`，编辑模式 Room 列表、详情、复制/重命名/应用入口与主页面解耦；生产构建通过（2026-09-02）
+- [x] 提取 `EditorAppLibrary`，应用库扫描、增删、搜索与 Desk 投放交互从页面组件移出；生产构建通过（2026-09-02）
+- [x] 真实启动检查确认当前 worktree Core 身份、PID、pipe、data/log 均正确；清理本次启动留下的孤立配置器进程（2026-09-02）
+- [x] 真实 Tauri/Player 活体验证（2026-09-05）：1423 被用户主 worktree 配置器占用（活跃进程，未触碰），
+      改以 1425 配置覆盖独立起 ui-v2 的 `tauri dev`——vite 就绪、`dext-configurator.exe`（PID 1900）
+      自本 worktree target 启动且窗口正常，验证后即关闭；Core/Watchdog/Player 全部出自本 worktree、
+      `verify-runtime-identity.ps1` 全 OK、Player `{"Type":2,"Success":true}`、壁纸铺设无 navigation failed
+- [x] `verify-runtime-identity.ps1` 只读核对通过 Core Product/Runtime/PID/pipe/mutex/data/log；Player、Watchdog、Configurator 当前未运行，不能据此宣称最终活体验收完成（2026-09-02）
+- [x] 审计配置器壳/单一状态、运行诊断、Scene/Widget 生命周期和 Creator 真链（2026-09-05）：
+      App.tsx 2020 行且零 `void` 死代码保活、room-draft 单一草稿态有纯函数测试；`diagnostics_json`
+      Rust+SettingsPage 双向接通；渲染器 `disposeRuntime()`+`pagehide` 收口、能力桥暂停冻结/恢复补快照；
+      Creator 两阶段事务 + TTL + 资源路径校验有前后端与 fixtures 覆盖——未发现阻断性缺口
+- [x] 重跑全量自动检查（2026-09-05）：前端 vitest 32/32、生产构建、Rust 36 passed / 3 ignored（活体）、
+      渲染器 main.js + capability-bridge 语法、room-v2 Schema fixtures 全 PASS；
+      浏览器视觉与整体人工验收留给用户一次性验收
+
+### UI-V2-001 活体验证修复（2026-09-03）
+
+- [x] 复现真实铺设失败：Player 因 `TryParseUserCommandArgs` 将已带 `wallpaper-`/`dext-` 命名空间的 v2 参数重复加前缀而退出（2026-09-03）
+- [x] 修正参数命名空间归一化，重跑 `scripts/build.ps1` 完成 Release Player/Watchdog/Core 构建（2026-09-03）
+- [x] 重新铺设当前 Room：Core/Watchdog/Player 均启动，Player 保持响应；媒体/音量活体测试通过（2026-09-03）
+- [ ] 仍需人工确认 Player 画面内容、Scene/Widget 交互及 Core 断线恢复；日志保留一次 WebView `OperationCanceled`，不影响进程存活，需在最终验收中观察
+- [x] 自动检查复跑完成：tauri-ui 30/30、生产构建、Rust 34 passed/3 ignored、渲染器语法与 capability bridge 通过（2026-09-03）
+- [x] 修正渲染器切 Desk 后未广播 `desk.read` 的能力桥缺口，并新增 deskChanged 回归（2026-09-03）
+- [x] 能力桥暂停时冻结周期性硬件/媒体/音量/频谱/时间推送，恢复时补发完整快照，并新增暂停恢复回归（2026-09-03）
+- [x] 增加 Player `pagehide` 统一清理：停止能力轮询、失效实例、卸载 Scene/Widget、取消转场并释放媒体资源（2026-09-03）
+- [x] Creator Pack 隔离预览 token 增加 10 分钟 TTL，inspect 时清理过期 staging，confirm/discard 拒绝过期 token，并新增回归（2026-09-03）
+- [x] 统一配置器顶部断线错误分类，连接/管道不可用时显示 Core 未运行并保持依赖动作禁用；前端测试与构建通过（2026-09-03）
+- [x] 抽取 `isCoreUnavailable` 运行时纯函数，App/AppHeader 共用单一断线分类逻辑并新增 2 项回归（2026-09-03）
+- [x] Creator 导入报告补充实际入口路径与可展开资源清单，忙碌期间禁用关闭避免 confirm/ discard 竞态；前端 32/32 与构建通过（2026-09-03）
+- [x] 设置页接入 `diagnostics_json` 刷新面板，可直接查看 Core、Player/壁纸列表、活动 Room、Pipe 与目录状态；断线时显示读取错误（2026-09-03）
+- [x] Creator 预览资源服务同步执行 TTL 检查，过期 token 删除 staging 并返回 410，避免过期 URL 继续读取隔离内容（2026-09-03）
+- [x] Creator 预览资源服务复用安全资源路径规则，拒绝 URL 冒号、控制字符、尾随点/空格和非法文件扩展名（2026-09-03）
+- [x] 为 Creator 资源协议增加合法/恶意 URL 回归，验证有效入口返回 200、特殊路径返回 403（Creator 测试 8/8）（2026-09-03）
+
+## DOCK-UX-001 Dock 双向拖拽重做（2026-09-05 开工）
+
+> 用户拍板（2026-09-05）：真桌面编辑模式重做双向拖拽；桌面→Dock 为**移动**语义（图标从桌面移除，
+> 非复制）；写入**当前 Desk 的 dock 覆盖**，全局 dock 仅配置器可设；仅编辑模式；autoHide 不动。
+> 背景：DOCK-003/004 实机拖拽不稳定（上方/侧面被图标层边界卡住；下方进入有绿色命中但松手不落入），
+> 当年转远期本包。#64 修复后桌面已恢复；用户指定沿用 ui-v2-001 worktree/分支作为基线
+> （master 尚无 #64 修复，回滚点 9ae48d8）。DOCK-SKIN-001（沙箱皮肤受管格式）随后另立设计稿。
+
+- [x] 2026-09-05 计划冻结 + 验收卡 `dev_docs/acceptance/DOCK-UX-001-dock-drag-rework.md` + ROADMAP 状态同步
+- [x] 2026-09-05 渲染器：拖拽幽灵（ghost，document 级 fixed 元素）替代原图标位移，摆脱图标层裁剪/窗口边界影响
+- [x] 2026-09-05 渲染器：Dock 吸附带命中（rect 膨胀 48px）+ 结束事件统一（pointerup / pointercancel /
+      lostpointercapture 一律用最后已知指针位置提交，<24px 位移视为点击），修复「绿色命中但松手不落入」
+- [x] 2026-09-05 桌面→Dock 移动语义：校验 launch.target 与去重 → 移出 desk.icons → 写入 desks[cur].dock.icons
+      （新覆盖复制全局列表；重建 icon 对象剥离 x/y 保 v2 dockIcon 形状）→ persistRoom 双写；
+      addDockIcon 专用消息停用（Player/Core 链保留兼容）
+- [x] 2026-09-05 Dock→桌面：同 ghost/结束事件重构，落格判定保持（占用格拒绝并 toast），persistRoom 已有
+- [x] 2026-09-05 编辑模式提示文案按移动语义更新（index.html）；DOCK.md（DOCK-UX-001 契约节 + DOCK-003 历史标注）/ ROADMAP 同步
+- [x] 2026-09-05 自测：node --check main.js + capability bridge + CSS 括号平衡 + npm run build 全绿
+      （用户 17:04 已自行停止 Dext，重铺验收留给下次启动后的真机检查）
+- [x] 已取消(2026-09-05)：实现提交 `638ee0e` 后用户真机复验仍失败，用户决定**放弃真桌面拖入 Dock**
+      目标；代码整体回退（revert `de04a33`），配置器 DockEditor 继续作为 Dock 图标管理的唯一正式入口。
+      两次实机尝试（DOCK-003 原版、本包 ghost+吸附带+统一结束事件）均不稳定，已记 ERRORS #65；
+      失败现场细节未采集，若重启该方向须先做 WebView2 指针/WorkerW 命中的专项研究包

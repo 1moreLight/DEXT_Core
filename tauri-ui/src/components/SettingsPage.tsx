@@ -90,6 +90,8 @@ export function SettingsPage(props: SettingsPageProps) {
   const [about, setAbout] = useState<AboutInfo | null>(
     IS_TAURI ? null : { configuratorVersion: "0.1.0", documents: [] }
   );
+  const [diagnostics, setDiagnostics] = useState<string | null>(null);
+  const [diagnosticsBusy, setDiagnosticsBusy] = useState(false);
 
   useEffect(() => {
     if (!IS_TAURI || !props.coreIdentity) return;
@@ -167,6 +169,22 @@ export function SettingsPage(props: SettingsPageProps) {
       props.setStatus(`诊断已导出到 ${path}`);
     } catch (error) {
       props.setStatus(`导出诊断失败：${String(error)}`);
+    }
+  }
+
+  async function refreshDiagnostics() {
+    if (!IS_TAURI) {
+      setDiagnostics(JSON.stringify({ core: "mock", activeRoom: null }, null, 2));
+      return;
+    }
+    setDiagnosticsBusy(true);
+    try {
+      const value = await invoke<string>("diagnostics_json");
+      setDiagnostics(value);
+    } catch (error) {
+      setDiagnostics(`诊断读取失败：${String(error)}`);
+    } finally {
+      setDiagnosticsBusy(false);
     }
   }
 
@@ -259,7 +277,15 @@ export function SettingsPage(props: SettingsPageProps) {
                 <Button variant="outline" size="sm" disabled={!props.coreIdentity} onClick={exportDiagnostics}>
                   <FileJson className="h-3.5 w-3.5" /> 导出诊断
                 </Button>
+                <Button variant="outline" size="sm" disabled={diagnosticsBusy} onClick={() => void refreshDiagnostics()}>
+                  {diagnosticsBusy ? "读取中…" : "刷新运行诊断"}
+                </Button>
               </div>
+              {diagnostics && (
+                <pre className="mt-3 max-h-56 overflow-auto rounded-lg border border-border bg-muted/30 p-3 font-mono text-[10px] leading-4 text-muted-foreground whitespace-pre-wrap break-all">
+                  {diagnostics}
+                </pre>
+              )}
             </div>
           </section>
         </div>

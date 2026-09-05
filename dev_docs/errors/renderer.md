@@ -40,3 +40,44 @@
 - 根因：渲染器只放行发布态 `http://tauri.localhost`，而 Vite 开发父页面实际是 `http://localhost:1420`。
 - 解决：预览父页面使用固定双值白名单；仍校验 `event.source === window.parent`、消息结构和素材 origin，禁止 `*`。
 - 防再犯：涉及 Tauri 自定义协议与开发服务器的 postMessage 时，发布态和开发态 origin 都要实测；白名单必须是明确值。
+# #55 切 Desk 后能力实例保持旧身份
+
+现象：Scene/Widget 能收到初始化时的 `desk.read`，但切换 Desk 后可能继续显示旧 Desk 名称或索引。
+
+原因：渲染器只更新 `currentDesk` 并触发 UI 生命周期事件，没有调用能力桥的 `deskChanged()` 广播。
+
+修复：把 `capabilityHost.deskChanged()` 放入 `renderDesk()` 的统一刷新路径，并增加 capability bridge 回归验证。
+
+防再犯：任何改变 `currentDesk` 的入口必须经过 `renderDesk()`；新增能力字段时同步覆盖初始化快照和状态变更广播。
+# #56 暂停状态仍持续推送能力数据
+
+现象：Player 进入暂停后，能力桥的周期性 `time.read` 以及硬件、媒体、音量、频谱更新仍可能持续发送给 Scene/Widget。
+
+原因：能力桥只把暂停当作一个普通 playback 字段，没有将其作为推送调度状态。
+
+修复：暂停时缓存最新值但停止周期性发布；恢复时发送 `playback.read` 后为每个实例补发完整快照，保证恢复后不需要重建实例。
+
+防再犯：涉及 Player suspend/resume 的能力都必须覆盖“暂停不推送、恢复补快照”的测试。
+# #57 WebView 销毁缺少统一生命周期收口
+
+现象：Room 替换、Player 重建或 WebView 页面销毁时，能力轮询定时器与实例注册主要依赖浏览器自然回收，旧回调存在继续触发的风险。
+
+原因：能力轮询使用匿名 `setInterval`，Scene/Widget/转场资源没有统一的文档销毁入口。
+
+修复：保存轮询句柄并新增幂等 `disposeRuntime()`，在 `pagehide` 时停止轮询、取消 active slot、卸载 Widget/Scene、停止视频、清空能力实例和 staging。
+
+防再犯：新增 Player 级后台任务必须登记到 `disposeRuntime()`，不得留下不可取消的匿名定时器。
+# #65 真桌面跨层拖拽两次实机失败，已放弃该交互目标
+
+现象：DOCK-003（2026-08-29 原版：指针 rect 命中）与 DOCK-UX-001（2026-09-05 加固版：document 级
+ghost、Dock 吸附带膨胀 48px、pointerup/pointercancel/lostpointercapture 统一按最后指针位置提交、
+<24px 防误触）两版自动检查全绿、预览可用，但真实 Player（WorkerW 壁纸层）中拖拽仍不稳定；
+第二版失败现场细节未采集，用户决定放弃真桌面拖入/拖出 Dock（实现 `638ee0e` 已 revert `de04a33`）。
+
+原因（推断，未实证）：WebView2 壁纸窗口位于 WorkerW 层，拖拽跨越官方图标层与 Dock 层的指针捕获
+边界；任务栏等 topmost 窗口会截走指针并触发 capture 丢失/pointercancel，事件层无法稳定还原
+「拖拽中」语义。属于宿主输入链限制而非页面代码缺陷。
+
+防再犯：真桌面跨层拖拽方向若重启，必须先立专项研究包（WebView2 指针捕获在 WorkerW/被 topmost
+遮挡场景下的行为实证 + Player 原生输入桥可行性），不再直接实现页面级交互；Dock 图标管理的
+正式入口保持为配置器 `DockEditor`。

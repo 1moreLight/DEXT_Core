@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dext.app/schema/creator-pack-v1.json",
+  "title": "Dext Creator Pack v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "kind", "id", "name", "entry", "resources", "permissions", "hotspots"],
+  "properties": {
+    "version": { "const": 1 },
+    "kind": { "enum": ["scene", "widget"] },
+    "id": { "$ref": "#/$defs/slug" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "entry": { "$ref": "#/$defs/htmlResource" },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/resource" }
+    },
+    "permissions": {
+      "type": "array",
+      "maxItems": 14,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "hotspots": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/hotspot" }
+    },
+    "placement": { "$ref": "#/$defs/placement" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "widget" } }, "required": ["kind"] },
+      "then": { "required": ["placement"] },
+      "else": { "not": { "required": ["placement"] } }
+    }
+  ],
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "resource": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 512,
+      "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[. ](?:/|$))(?!.*[\\\\:*?\"<>|])[^\\u0000-\\u001F/]+(?:/[^\\u0000-\\u001F/]+)*\\.(?:html?|css|m?js|json|png|jpe?g|webp|gif|svg|woff2?|ttf|otf|mp4|webm)$"
+    },
+    "htmlResource": {
+      "allOf": [
+        { "$ref": "#/$defs/resource" },
+        { "pattern": "\\.html?$" }
+      ]
+    },
+    "permission": {
+      "enum": [
+        "time.read", "locale.read", "viewport.read", "desk.read", "playback.read",
+        "audio.spectrum", "hardware.cpu.read", "hardware.gpu.read", "hardware.memory.read",
+        "now-playing.read", "now-playing.artwork.read", "system.volume.read",
+        "hardware.network.read", "action.invoke"
+      ]
+    },
+    "placement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "z"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0, "maximum": 1856 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 1016 },
+        "width": { "type": "integer", "minimum": 64, "maximum": 1920 },
+        "height": { "type": "integer", "minimum": 64, "maximum": 1080 },
+        "z": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "hotspotPlacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "z"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0, "maximum": 1904 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 1064 },
+        "width": { "type": "integer", "minimum": 16, "maximum": 1920 },
+        "height": { "type": "integer", "minimum": 16, "maximum": 1080 },
+        "z": { "type": "integer", "minimum": 0, "maximum": 255 }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "enum": [
+            "system.media.play", "system.media.pause", "system.media.toggle-play-pause",
+            "system.media.next", "system.media.previous", "system.volume.set",
+            "system.volume.mute", "system.volume.toggle-mute"
+          ]
+        },
+        "value": {
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "boolean" }
+          ]
+        }
+      }
+    },
+    "hotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "placement", "action"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "placement": { "$ref": "#/$defs/hotspotPlacement" },
+        "action": { "$ref": "#/$defs/action" }
+      }
+    }
+  }
+}

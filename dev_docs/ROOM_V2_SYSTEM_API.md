@@ -1,6 +1,6 @@
 # Room v2 受控系统 API
 
-> 状态：DXT-003 已实现 Core gRPC 与 Tauri 后端；Scene/Widget 能力桥和可信热点尚未实现。
+> 状态：Core gRPC、Tauri 后端、真实 Player 能力桥、Scene/Widget 实例授权和可信热点已实现；最终活体媒体/音量验收仍随 UI-V2-001 一次执行。
 > 本文只描述可分享内容最终允许接触的封闭系统能力，不是通用自动化接口。
 
 ## 一、安全原则
@@ -53,7 +53,7 @@ Core RPC：
 
 这里只操作 **Windows 系统默认输出主音量**，不是壁纸视频、Scene、Widget 或 Dext 自己的音量。
 
-## 三、未来 Capability Bridge
+## 三、Capability Bridge
 
 作者侧只看到版本化、结构化 API，例如：
 
@@ -65,7 +65,7 @@ dext.subscribe("system.media.changed", renderMedia);
 dext.subscribe("system.volume.changed", renderVolume);
 ```
 
-这些名字是后续 SDK 方向，不代表当前 iframe 已可调用。桥接层必须：
+当前 iframe 通过 `dext:scene:init` / `dext:widget:init` 建立实例，之后只接收 `dext:capability` 结构化消息。桥接层已经：
 
 - 按 Room、Widget/Scene、内容哈希保存授权；内容变化后重新询问。
 - 对数据做裁剪，默认不泄露设备 id、进程路径或其他会话列表。
@@ -73,7 +73,7 @@ dext.subscribe("system.volume.changed", renderVolume);
 - 页面销毁或切 Desk 后立即撤销订阅，旧 instanceId 消息无效。
 - P2 的歌曲信息和封面需要明确授权；P1 的音频频谱不自动包含歌曲身份。
 
-## 四、未来可信动作
+## 四、可信动作
 
 作者只能声明热点或按钮希望执行的标准 action：
 
