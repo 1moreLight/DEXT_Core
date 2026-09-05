@@ -374,9 +374,13 @@ namespace Lively.Player.WebView2
                 string.Equals(candidate.Host, top.Host, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Before first navigation there is no Source yet. The official local
-            // virtual host always ends in .localhost; remote hosts remain blocked.
-            return string.IsNullOrWhiteSpace(current) && candidate.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase);
+            // Before the first navigation completes there is no real Source yet —
+            // WebView2 reports the initial about:blank document, not an empty string.
+            // The official local virtual host always ends in .localhost; remote hosts remain blocked.
+            var noDocumentYet = string.IsNullOrWhiteSpace(current) ||
+                string.Equals(current, "about:blank", StringComparison.OrdinalIgnoreCase);
+            return noDocumentYet &&
+                candidate.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase);
         }
 
         private static LivelyMessageSystemControlRequest BuildSystemControlRequest(dynamic payload)
