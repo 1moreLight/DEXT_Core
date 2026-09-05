@@ -577,3 +577,17 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 2026-09-06 构建完成后再次点击验证配置器拉起 + 用户验收
 - [x] 2026-09-06 release 构建完成（15.6MB），UIA 实测点击「打开配置器」成功拉起 dext-configurator.exe
 - [ ] 2026-09-06 用户验收
+
+### UI-小改：「放入应用」弹窗改纯应用库管理（2026-09-06 追加）
+
+> 用户定调：编辑模式 desk 属性栏的选应用弹窗只管「库里有哪些应用可加」（浏览/搜索/加库/删库/扫描），
+> 单击不得直接写入 desk；上桌入口属 room 编辑后续流程，本步不动。
+
+- [ ] 2026-09-06 App.tsx：appPickerDesk → appManagerOpen；按钮改「应用库管理」；新 AppLibraryDialog（搜索+加库+扫描合并+多选删库，无 desk 写入）
+- [ ] 2026-09-06 移除 AppPickerDialog 用法；npm run build 自测 + tauri build 更新 release 产物
+- [ ] 2026-09-06 commit + 用户验收
+- [x] 2026-09-06 App.tsx：appPickerDesk → appManagerOpen；按钮改「应用库管理」；新 AppLibraryDialog（搜索+加库+扫描合并+多选删库，无 desk 写入）；AppPickerDialog 保留（DockEditor 仍在用）
+- [x] 2026-09-06 npm run build 绿 + tauri build 更新 release 产物并拉起（fe68808）
+- [ ] 2026-09-06 用户验收
+- [x] 已取消(2026-09-06) 「放入应用」弹窗改纯应用库管理——用户表达偏差，已 revert（af2a187）；
+      实际诉求=弹窗选中态改绿色高亮（ff35cea）。上桌写入行为保持原样
