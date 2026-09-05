@@ -75,7 +75,7 @@ export function AppPickerDialog<TApp extends AppPickerItem>({
                     onClick={() => onToggle(app)}
                     className={`relative flex min-h-28 flex-col items-center justify-center gap-2 rounded-lg border p-3 text-center transition-colors ${
                       selected
-                        ? "border-primary bg-primary/10"
+                        ? "border-green-500 bg-green-500/15"
                         : "border-transparent bg-muted/45 hover:border-border hover:bg-accent"
                     }`}
                     title={`${app.target}\n单击${selected ? "移出" : "加入"}`}
@@ -93,7 +93,7 @@ export function AppPickerDialog<TApp extends AppPickerItem>({
                     )}
                     <span className="line-clamp-2 text-xs leading-tight">{app.name}</span>
                     {selected && (
-                      <span className="absolute right-2 top-2 text-[10px] font-semibold text-primary">
+                      <span className="absolute right-2 top-2 text-[10px] font-semibold text-green-600 dark:text-green-400">
                         已加入 ✓
                       </span>
                     )}
