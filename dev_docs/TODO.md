@@ -626,3 +626,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 App.tsx：chip 改按边渲染（方向箭头 + 水平错位），属性栏 switch 分支按边 id 过滤；
       npm test 32/32 + npm run build + tauri build 绿并重新拉起
 - [ ] 2026-09-06 用户验收
+
+### UI-小改：Desk 对画布拆双方向线（2026-09-06 追加，用户拍板）
+
+> 用户反馈：与其一条双向线配两个旁置 chip，不如直接画两条方向线。每对 Desk 两条平行线
+> （各带指向箭头 + 骑线 mini chip ⇄↓/⇄↑），选中方向线与 chip 一起青色高亮；start 线不变。
+> routeGraphEdge 增加可选 laneOffset（默认 0，不影响既有测试）。
+
+- [x] 2026-09-06 graph.ts：routeGraphEdge 支持 laneOffset；App.tsx：线条按边渲染（方向偏移 + 高亮），chip 骑线紧凑化；
+      npm test 32/32 + npm run build + tauri build 绿并重新拉起
+- [ ] 2026-09-06 用户验收
