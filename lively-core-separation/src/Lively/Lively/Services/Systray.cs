@@ -8,6 +8,7 @@ using Lively.Themes;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace Lively.Services
@@ -47,6 +48,10 @@ namespace Lively.Services
             closeMenu.Click += (_, _) => desktopCore.CloseAllWallpapers();
             notifyIcon.ContextMenuStrip.Items.Add(closeMenu);
 
+            var openConfiguratorMenu = new ToolStripMenuItem("打开配置器");
+            openConfiguratorMenu.Click += (_, _) => OpenConfigurator();
+            notifyIcon.ContextMenuStrip.Items.Add(openConfiguratorMenu);
+
             var exitMenu = new ToolStripMenuItem("退出 Dext Core（壁纸将关闭）");
             exitMenu.Click += (_, _) => App.QuitApp();
             notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
@@ -78,6 +83,46 @@ namespace Lively.Services
         }
 
         private void PlaybackPolicyChanged(object sender, PlaybackPolicy policy) => UpdatePauseMenu(policy);
+
+        private void OpenConfigurator()
+        {
+            var exe = FindConfiguratorExe();
+            if (exe != null)
+            {
+                Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+                return;
+            }
+
+            var repoRoot = new DirectoryInfo(AppContext.BaseDirectory);
+            while (repoRoot != null && !File.Exists(Path.Combine(repoRoot.FullName, "tauri-ui", "package.json")))
+                repoRoot = repoRoot.Parent;
+
+            if (repoRoot == null)
+            {
+                notifyIcon.ShowBalloonTip(3000, Constants.ApplicationType.Name, "未找到配置器（tauri-ui）", ToolTipIcon.Warning);
+                return;
+            }
+
+            notifyIcon.ShowBalloonTip(5000, Constants.ApplicationType.Name, "未找到配置器构建产物，已开始构建（npm run tauri build），完成后请重试", ToolTipIcon.Info);
+            Process.Start(new ProcessStartInfo("cmd.exe", "/c npm run tauri build")
+            {
+                WorkingDirectory = Path.Combine(repoRoot.FullName, "tauri-ui"),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+        }
+
+        private static string FindConfiguratorExe()
+        {
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            for (; dir != null; dir = dir.Parent)
+            {
+                var candidate = Path.Combine(dir.FullName, "tauri-ui", "src-tauri", "target", "release", "dext-configurator.exe");
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+            return null;
+        }
 
         private void UpdatePauseMenu(PlaybackPolicy policy)
         {
