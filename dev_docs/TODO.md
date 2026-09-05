@@ -591,3 +591,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 2026-09-06 用户验收
 - [x] 已取消(2026-09-06) 「放入应用」弹窗改纯应用库管理——用户表达偏差，已 revert（af2a187）；
       实际诉求=弹窗选中态改绿色高亮（ff35cea）。上桌写入行为保持原样
+
+### UI-小改：侧栏应用库改纯库管理（2026-09-06 追加）
+
+> 用户定调：上桌入口已有（「放入应用」弹窗，绿色选中即写入 desk）；侧栏应用库只管库本身。
+> 卡片改只读，勾选仅靠左上角方框（批量删除）。
+
+- [ ] 2026-09-06 EditorAppLibrary：去 onToggleApp/desk/Desk✓，卡片只读+方框勾选
+- [ ] 2026-09-06 npm run build + tauri build 更新 release + commit + 用户验收
+- [x] 2026-09-06 EditorAppLibrary：去 onToggleApp/desk/Desk✓，卡片只读+方框勾选（f85841e）；
+      顺手删 App.tsx 失引用的 desk 变量；npm build + tauri build 绿，新配置器已拉起
+- [ ] 2026-09-06 用户验收
