@@ -142,7 +142,7 @@ export function ContentInspector({ content, roomPath, emptyLabel }: { content: C
           : content.type === "video" ? <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
           : <div className="flex flex-col items-center gap-1 text-muted-foreground"><Code className="h-5 w-5" /><span className="text-[10px]">HTML 场景</span></div>}
       </div>
-      <dl className="w-44 space-y-1 text-[11px]">
+      <dl className="min-w-0 max-w-44 space-y-1 text-[11px]">
         <div><dt className="text-muted-foreground">素材</dt><dd className="truncate font-medium" title={content?.name}>{content?.name ?? "未选择"}</dd></div>
         <div><dt className="text-muted-foreground">路径</dt><dd className="truncate font-mono" title={content?.src}>{content?.src ?? "—"}</dd></div>
         <div className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${content ? "bg-primary" : "bg-muted-foreground/40"}`} aria-hidden="true" /><span>{typeLabel}</span></div>
