@@ -534,3 +534,16 @@
       目标；代码整体回退（revert `de04a33`），配置器 DockEditor 继续作为 Dock 图标管理的唯一正式入口。
       两次实机尝试（DOCK-003 原版、本包 ghost+吸附带+统一结束事件）均不稳定，已记 ERRORS #65；
       失败现场细节未采集，若重启该方向须先做 WebView2 指针/WorkerW 命中的专项研究包
+
+## DOCK-SKIN-001 Dock 沙箱皮肤受管格式 · 设计稿（2026-09-05 开工）
+
+> 用户定调：dock 样式要能像 desk 那样提交代码，机制与 Room v2 同款，官方给接口、恶意代码不可越界。
+> 本包只交**设计契约**（dev_docs/DOCK_SKIN.md），实现按 §8 拆分另立工作包；用户拍板 §9 决策点后进入。
+
+- [x] 2026-09-05 建独立 worktree + `docs/dock-skin-001-skin-contract` 分支（基线 f4b672c，含合并后全量）
+- [x] 2026-09-05 设计稿 `dev_docs/DOCK_SKIN.md`：数据契约（dock.skin）/ 方案 B 运行模型 /
+      命中握手协议 / 能力桥 dock.read / 安全边界 / 降级兜底 / 实施拆分
+- [x] 2026-09-05 验收卡 `acceptance/DOCK-SKIN-001-dock-skin-contract.md` + ROADMAP 登记当前项
+- [x] 2026-09-05 用户拍板（对话）：D1=全覆盖(B)、D3=皮肤允许每桌覆盖（一个 dock 用一个）、
+      D2/D4 按推荐（D4=自包含，已向用户解释语义）；设计稿按拍板更新（提交 ebc3632 后修订）
+- [x] 2026-09-05 合并 master + 清理分支/worktree；下一步立 SKIN-001a（契约与宿主实现）
