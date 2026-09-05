@@ -602,3 +602,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 EditorAppLibrary：去 onToggleApp/desk/Desk✓，卡片只读+方框勾选（f85841e）；
       顺手删 App.tsx 失引用的 desk 变量；npm build + tauri build 绿，新配置器已拉起
 - [ ] 2026-09-06 用户验收
+
+### UI-小改：Desk 属性栏去掉全量缩略条（2026-09-06 追加）
+
+> 用户定调：底部属性栏是「当前选中节点」的专属表单，不该横摆全部 Desk 缩略图兼任切换器；
+> 1 个 Desk 时定宽容器（w-[52vw]，max-w-3xl）大面积留白。方案 2：删除 DeskBackgroundCanvas，
+> Desk 选中时改用 ContentInspector（只显示当前选中 Desk 的背景小缩略图 + 素材/路径，与 start/idle 统一）。
+> 切 Desk 入口不变：流程图节点 + Room 层级树。
+
+- [x] 2026-09-06 App.tsx：移除 DeskBackgroundCanvas 用法与导入；Desk/idle 分支改用 ContentInspector
+- [x] 2026-09-06 previews.tsx：删除失用的 DeskBackgroundCanvas；npm test（32/32）+ npm run build 自测
+- [x] 2026-09-06 tauri build 更新 release 产物并重新拉起配置器（旧进程占用 exe 已先关闭）
+- [ ] 2026-09-06 用户验收
