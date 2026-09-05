@@ -615,7 +615,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 tauri build 更新 release 产物并重新拉起配置器（旧进程占用 exe 已先关闭）
 - [x] 2026-09-06 验收反馈：ContentInspector 信息列 w-44 → min-w-0 max-w-44（贴内容自适应，长名仍截断）；
       重跑 build + tauri build 并重新拉起
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06，回复“可以 合并”；三轮均直改 master，无独立分支）
 
 ### UI-小改：switch 方向 chip 下沉 + 属性栏单方向编辑（2026-09-06 追加，方案 A）
 
@@ -625,7 +625,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 2026-09-06 App.tsx：chip 改按边渲染（方向箭头 + 水平错位），属性栏 switch 分支按边 id 过滤；
       npm test 32/32 + npm run build + tauri build 绿并重新拉起
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06）
 
 ### UI-小改：Desk 对画布拆双方向线（2026-09-06 追加，用户拍板）
 
@@ -635,4 +635,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 2026-09-06 graph.ts：routeGraphEdge 支持 laneOffset；App.tsx：线条按边渲染（方向偏移 + 高亮），chip 骑线紧凑化；
       npm test 32/32 + npm run build + tauri build 绿并重新拉起
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06，回复“可以 合并”）
