@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DockLibrary } from "@/components/DockLibrary";
 import { DockEditor } from "@/components/DockEditor";
-import { AppLibraryDialog } from "@/components/AppLibraryDialog";
+import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
@@ -301,7 +301,7 @@ export default function App() {
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [appManagerOpen, setAppManagerOpen] = useState(false);
+  const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
@@ -1390,6 +1390,7 @@ export default function App() {
   const filtered = apps.filter((a) =>
     a.name.toLowerCase().includes(query.toLowerCase())
   );
+  const pickerDesk = appPickerDesk === null ? null : desks[appPickerDesk] ?? null;
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
       <AppHeader
@@ -1875,14 +1876,18 @@ export default function App() {
 	                                  </select>
 	                                </label>
 	                              )}
- 	                              {!isStart && !isIdle && (
- 	                                <Button
- 	                                  size="sm"
- 	                                  onClick={() => setAppManagerOpen(true)}
- 	                                >
- 	                                  <Plus className="h-3.5 w-3.5" /> 应用库管理
- 	                                </Button>
- 	                              )}
+	                              {!isStart && !isIdle && (
+	                                <Button
+	                                  size="sm"
+	                                  onClick={() => {
+	                                    setActiveDesk(deskIndex);
+	                                    setAppPickerDesk(deskIndex);
+	                                    setStatus(`选择要放入 ${desks[deskIndex]?.name ?? "当前 Desk"} 的应用`);
+	                                  }}
+	                                >
+	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
+	                                </Button>
+	                              )}
 	                              {isStart ? (
 	                                <ContentInspector
 	                                  content={content}
@@ -2035,19 +2040,14 @@ export default function App() {
           setStatus={setStatus}
         />
       )}
-      {appManagerOpen && (
-        <AppLibraryDialog
+      {pickerDesk && appPickerDesk !== null && (
+        <AppPickerDialog
+          title={`放入应用 · ${pickerDesk.name}`}
+          description="点击应用即可加入或移出；加入后可在桌面长按图标拖动位置。"
           apps={apps}
-          filteredApps={filtered}
-          query={query}
-          selected={selected}
-          source={libSource}
-          onQuery={setQuery}
-          onAdd={() => void manualAdd()}
-          onScan={() => void scanMerge()}
-          onDelete={() => void deleteFromLibrary()}
-          onToggleSelect={toggleSelect}
-          onClose={() => setAppManagerOpen(false)}
+          isSelected={(app) => pickerDesk.icons.some((icon) => icon.launch.target === app.target)}
+          onToggle={(app) => toggleDeskApp(app, appPickerDesk)}
+          onClose={() => setAppPickerDesk(null)}
         />
       )}
       {showCreatorImport && roomPath && (
