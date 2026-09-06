@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
@@ -330,6 +331,8 @@ export default function App() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const previewRef = useRef<HTMLIFrameElement>(null);
+  const fullscreenPreviewRef = useRef<HTMLIFrameElement>(null);
+  const [fullscreenPreview, setFullscreenPreview] = useState(false);
   const {
     canvasRef,
     startNodeRef,
@@ -736,20 +739,43 @@ export default function App() {
     if (!roomPath || !activeRoomPolicy.preview) return;
     const roomName = roomPath.split(/[\\/]/).filter(Boolean).pop();
     if (!roomName) return;
-    previewRef.current?.contentWindow?.postMessage(
-      {
-        type: "dext:room",
-        room: buildRoomV2(),
-        deskIndex: activeDesk,
-        assetBase: `http://lib.localhost/${encodeURIComponent(roomName)}/`,
-      },
-      "http://dext.localhost"
-    );
+    for (const frame of [previewRef.current, fullscreenPreviewRef.current]) {
+      frame?.contentWindow?.postMessage(
+        {
+          type: "dext:room",
+          room: buildRoomV2(),
+          deskIndex: activeDesk,
+          assetBase: `http://lib.localhost/${encodeURIComponent(roomName)}/`,
+        },
+        "http://dext.localhost"
+      );
+    }
   }
 
   useEffect(() => {
     if (showPreview) postRoom();
-  }, [desks, dock, activeDesk, showPreview, transition, edges, startContent, idleContent, startDesk, startName, idleName, graphSel]);
+  }, [desks, dock, activeDesk, showPreview, fullscreenPreview, transition, edges, startContent, idleContent, startDesk, startName, idleName, graphSel]);
+
+  function exitFullscreenPreview() {
+    setFullscreenPreview(false);
+    if (IS_TAURI) void getCurrentWindow().setFullscreen(false).catch(() => {});
+  }
+
+  function enterFullscreenPreview() {
+    setFullscreenPreview(true);
+    if (IS_TAURI) void getCurrentWindow().setFullscreen(true).catch(() => {});
+  }
+
+  useEffect(() => {
+    if (!fullscreenPreview) return;
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") exitFullscreenPreview();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreenPreview]);
+
+  const previewSrc = `http://dext.localhost/index.html?preview=1${graphSel === "idle" ? "&screensaver=1" : ""}`;
 
   useEffect(() => {
     setSelected(new Set());
@@ -1471,14 +1497,17 @@ export default function App() {
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
-                  src={`http://dext.localhost/index.html?preview=1${graphSel === "idle" ? "&screensaver=1" : ""}`}
+                  src={previewSrc}
                   onLoad={postRoom}
                   title="Room 预览"
                   className="aspect-video w-full max-w-4xl rounded-lg border border-border"
                 />
-                <p className="mt-2 text-xs text-muted-foreground">
-                  实时预览 · 只使用内存中的原生 room.json v2 草稿，不写源文件或运行包
-                </p>
+                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>实时预览 · 只使用内存中的原生 room.json v2 草稿，不写源文件或运行包</span>
+                  <Button variant="outline" size="sm" onClick={enterFullscreenPreview}>
+                    全屏预览
+                  </Button>
+                </div>
               </div>
             ) : editNav === "library" ? (
               <EditorAppLibrary
@@ -2025,6 +2054,23 @@ export default function App() {
           }}
           onClose={() => setShowCreatorImport(false)}
         />
+      )}
+      {fullscreenPreview && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <iframe
+            ref={fullscreenPreviewRef}
+            src={previewSrc}
+            onLoad={postRoom}
+            title="Room 全屏预览"
+            className="h-full w-full border-0 bg-black"
+          />
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-3 rounded-md border border-white/15 bg-black/60 px-3 py-1.5 backdrop-blur">
+            <span className="text-[11px] text-white/70">全屏预览 · 只读 · Esc 退出</span>
+            <Button variant="outline" size="sm" onClick={exitFullscreenPreview}>
+              退出全屏
+            </Button>
+          </div>
+        </div>
       )}
     </main>
   );
