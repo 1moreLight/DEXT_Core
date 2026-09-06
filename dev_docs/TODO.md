@@ -674,4 +674,19 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 ROADMAP 登记 UI-006/007/008 三步路线；capabilities 加 core:window:allow-set-fullscreen
 - [x] 2026-09-06 App.tsx：预览页加全屏入口；全屏遮罩 iframe 复用 postRoom 注入；Esc/退出按钮；Tauri setFullscreen；
       npm test 33/33 + npm run build + tauri build 绿并重新拉起
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户反馈（2026-09-06「不是啊…」）：要的是真桌面拖动编辑；UI-006 实现保留可随时 revert；
+      UI-007 取消，改立 WIDGET-DRAG-001
+
+## WIDGET-DRAG-001 真桌面 Widget 拖动编辑（2026-09-06 开工，当前项）
+
+> 用户定调：在使用过程中直接在桌面拖动编辑 Widget（像桌面图标那样），placement 持久化；
+> 实机不稳则视情况整体回退（参照 DOCK-UX-001 先例，ERRORS #65 风险已知）。
+> 技术要点：编辑模式 Widget 覆盖透明把手层（解决 iframe 吃指针）、复用图标拖动机制、
+> placement 吸附/钳制、persistRoom 双写（确认 widget 序列化现状后定）。
+> 范围外：图标自动避让（v1 不做，仅记录）、预览窗口编辑、桌面画布 tab 去留。
+
+- [x] 2026-09-06 渲染器：研究图标编辑态拖动 + persistRoom 现状（ROOM 深克隆整体序列化，widget placement 改内存即持久化；不重挂实例避免 iframe 重载）
+- [x] 2026-09-06 渲染器：Widget 编辑覆盖层（虚线框+名称+右下角缩放把手）+ 长按进编辑 + 拖动/缩放 + safePlacement 钳制 + persistRoom；
+      编辑态 widget 层抬到图标层之上解决 iframe 吞指针；空白区长按也能进编辑（无图标桌面可入）；
+      缩放后同步重挂可信热点；node --check + CSS 括号平衡通过
+- [ ] 2026-09-06 commit + 用户真机验收（不稳即回退）
