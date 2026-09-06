@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="style.css">
+  <script src="dext-sdk.js"></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <header>
+      <div class="time"><span id="hh">--</span><span class="colon">:</span><span id="mm">--</span><span class="ss" id="ss"></span></div>
+      <div class="date" id="date">—</div>
+    </header>
+    <section class="meters">
+      <div class="meter"><span class="label">CPU</span><div class="bar"><i id="bar-cpu"></i></div><span class="value" id="val-cpu">--</span></div>
+      <div class="meter"><span class="label">GPU</span><div class="bar"><i id="bar-gpu"></i></div><span class="value" id="val-gpu">--</span></div>
+      <div class="meter"><span class="label">内存</span><div class="bar"><i id="bar-ram"></i></div><span class="value" id="val-ram">--</span></div>
+      <div class="meter net"><span class="label">网速</span><div class="bar"><i id="bar-net"></i></div><span class="value" id="val-net">--</span></div>
+    </section>
+  </main>
+</body>
+</html>
