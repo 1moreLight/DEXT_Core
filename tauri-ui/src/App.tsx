@@ -1658,7 +1658,6 @@ export default function App() {
                               }`}
                             >
                               <ArrowRightLeft className="h-3 w-3" />
-                              <span aria-hidden="true">{downward ? "↓" : "↑"}</span>
                             </button>
                           );
 	                          })}
