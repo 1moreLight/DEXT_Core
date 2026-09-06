@@ -662,3 +662,16 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 2026-09-06 graph.ts 端口错开 + graph.test.ts 回归（33/33）；build + tauri build + 拉起完成
 - [x] 2026-09-06 用户验收（2026-09-06，回复“验收通过 合并”）
+
+## UI-006 Room 全屏预览（2026-09-06 开工，当前项）
+
+> 背景：内嵌画布/预览被缩进小框，大小与叠层看不准。用户拍板走全屏预览路线，分三步：
+> 006 全屏只读预览（应用内窗口，复用 dext:// 预览通道）→ 007 预览窗口 Widget 拖动
+> （placement 回写草稿，与未来真桌面拖动共用手势）→ 008 删除桌面画布 tab。
+> 本包范围：只做 006；系统浏览器方案否决（dext.localhost 是 WebView2 私有协议，起本地 HTTP 服务不值得）。
+> 范围外：007/008、预览窗口内编辑、真桌面拖动、HTTP 服务。
+
+- [x] 2026-09-06 ROADMAP 登记 UI-006/007/008 三步路线；capabilities 加 core:window:allow-set-fullscreen
+- [x] 2026-09-06 App.tsx：预览页加全屏入口；全屏遮罩 iframe 复用 postRoom 注入；Esc/退出按钮；Tauri setFullscreen；
+      npm test 33/33 + npm run build + tauri build 绿并重新拉起
+- [ ] 2026-09-06 用户验收
