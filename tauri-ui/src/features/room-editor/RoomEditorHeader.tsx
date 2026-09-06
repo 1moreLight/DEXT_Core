@@ -1,6 +1,6 @@
 import { Bot, FolderOpen, Play, Plus, Redo2, Save, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { EditorView } from "@/features/room-editor/EditorHierarchy";
+import type { EditorView } from "@/features/room-editor/view";
 
 interface RoomEditorHeaderProps {
   roomName: string;

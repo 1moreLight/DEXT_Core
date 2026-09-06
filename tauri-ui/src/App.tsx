@@ -3,6 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   ArrowRightLeft,
+  ChevronDown,
+  ChevronUp,
   LayoutGrid,
   MonitorPlay,
   Moon,
@@ -18,13 +20,13 @@ import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
-import { EditorHierarchy, type EditorView } from "@/features/room-editor/EditorHierarchy";
 import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
 import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
 import { EditorRoomLibrary } from "@/pages/EditorRoomLibrary";
 import { EditorAppLibrary } from "@/pages/EditorAppLibrary";
 import { ContentInspector } from "@/features/room-library/previews";
+import type { EditorView } from "@/features/room-editor/view";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
 import { isCoreUnavailable } from "@/features/runtime/core-status";
@@ -1548,49 +1550,6 @@ export default function App() {
                   }}
                 />
                 <div className="flex min-h-0 flex-1 gap-3">
-                  <EditorHierarchy
-                    desks={desks}
-                    activeDesk={activeDesk}
-                    selectedWidgetId={selectedWidgetId}
-                    editorView={editorView}
-                    graphSelection={graphSel}
-                    startName={startName}
-                    idleName={idleName}
-                    onSelectDesk={(index) => {
-                      setActiveDesk(index);
-                      setGraphSel(`d${index}`);
-                      setSelectedWidgetId(null);
-                      setEditorView("canvas");
-                    }}
-                    onSelectScene={(index) => {
-                      setActiveDesk(index);
-                      setGraphSel(`d${index}`);
-                      setSelectedWidgetId(null);
-                      setEditorView("canvas");
-                    }}
-                    onSelectIcons={(index) => {
-                      setActiveDesk(index);
-                      setSelectedWidgetId(null);
-                      setEditorView("canvas");
-                      setStatus(`${desks[index]?.name ?? "当前 Desk"} 有 ${desks[index]?.icons.length ?? 0} 个图标；在画布或应用库中编辑`);
-                    }}
-                    onSelectWidget={(index, widgetId) => {
-                      setActiveDesk(index);
-                      setSelectedWidgetId(widgetId);
-                      setEditorView("canvas");
-                    }}
-                    onSelectDock={(index) => {
-                      setActiveDesk(index);
-                      setSelectedWidgetId(null);
-                      setEditorView("dock");
-                    }}
-                    onSelectFlowNode={(nodeId) => {
-                      setGraphSel(nodeId);
-                      setSelectedWidgetId(null);
-                      setEditorView("flow");
-                    }}
-                    onMoveDesk={moveDesk}
-                  />
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 {editorView === "dock" ? (
                   <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background p-3">
@@ -1845,7 +1804,31 @@ export default function App() {
                                   onChange={(ev) => renameGraphNode(graphSel, ev.target.value)}
                                   className="h-8 w-44"
                                 />
-	                              </label>
+                              </label>
+                              {!isStart && !isIdle && (
+                                <div className="flex shrink-0 items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-7 w-7"
+                                    title="上移 Desk"
+                                    disabled={deskIndex === 0}
+                                    onClick={() => moveDesk(deskIndex, deskIndex - 1)}
+                                  >
+                                    <ChevronUp className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="h-7 w-7"
+                                    title="下移 Desk"
+                                    disabled={deskIndex === desks.length - 1}
+                                    onClick={() => moveDesk(deskIndex, deskIndex + 1)}
+                                  >
+                                    <ChevronDown className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              )}
 	                              {isStart && (
 	                                <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
 	                                  连接到
