@@ -636,3 +636,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 graph.ts：routeGraphEdge 支持 laneOffset；App.tsx：线条按边渲染（方向偏移 + 高亮），chip 骑线紧凑化；
       npm test 32/32 + npm run build + tauri build 绿并重新拉起
 - [x] 2026-09-06 用户验收（2026-09-06，回复“可以 合并”）
+
+### UI-小改：删除 Room 层级侧栏（2026-09-06 追加，用户拍板）
+
+> 用户定调：Room 层级树与流程图/画布重复、难用。删除整块侧栏，主工作区占满全宽；
+> 唯一独有功能 Desk 上移/下移移到 Desk 流程属性栏（改名旁，复用 moveDesk 含重映射）。
+> EditorView 类型移入独立 view.ts，删除 EditorHierarchy.tsx。
+
+- [x] 2026-09-06 新建 view.ts（EditorView）；App/RoomEditorHeader 改导入；删 EditorHierarchy 用法与文件
+- [x] 2026-09-06 属性栏 Desk 分支加上移/下移按钮；npm test 32/32 + npm run build + tauri build 绿并重新拉起
+- [ ] 2026-09-06 用户验收
