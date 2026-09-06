@@ -32,4 +32,18 @@ describe("Room flow graph", () => {
     expect(routeGraphEdge(wrap, nodes)[0]).toEqual({ x1: 100, y1: 225, x2: 148, y2: 225 });
     expect(graphSwitchPosition(wrap, nodes)).toEqual({ left: 148, top: 125 });
   });
+
+  it("offsets wrap lane ports so paired arrowheads do not overlap", () => {
+    const nodes = {
+      d0: { left: 0, right: 100, top: 0, bottom: 50, width: 100, height: 50, cx: 50, cy: 25 },
+      d1: { left: 0, right: 100, top: 100, bottom: 150, width: 100, height: 50, cx: 50, cy: 125 },
+      d2: { left: 0, right: 100, top: 200, bottom: 250, width: 100, height: 50, cx: 50, cy: 225 },
+    };
+    const down = routeGraphEdge({ id: "wf", from: "d0", to: "d2", trans: null }, nodes, -20);
+    expect(down[0]).toEqual({ x1: 100, y1: 5, x2: 128, y2: 5 });
+    expect(down[2]).toEqual({ x1: 128, y1: 205, x2: 100, y2: 205 });
+    const up = routeGraphEdge({ id: "wb", from: "d2", to: "d0", trans: null }, nodes, 20);
+    expect(up[0]).toEqual({ x1: 100, y1: 245, x2: 168, y2: 245 });
+    expect(up[2]).toEqual({ x1: 168, y1: 45, x2: 100, y2: 45 });
+  });
 });

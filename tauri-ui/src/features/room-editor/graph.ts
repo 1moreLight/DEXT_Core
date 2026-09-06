@@ -98,10 +98,12 @@ export function routeGraphEdge(edge: GEdge, nodes: Record<string, GraphNodeRect>
     ];
   }
   const laneX = Math.max(from.right, to.right) + 48 + laneOffset;
+  const yFrom = from.cy + laneOffset;
+  const yTo = to.cy + laneOffset;
   return [
-    { x1: from.right, y1: from.cy, x2: laneX, y2: from.cy },
-    { x1: laneX, y1: from.cy, x2: laneX, y2: to.cy },
-    { x1: laneX, y1: to.cy, x2: to.right, y2: to.cy },
+    { x1: from.right, y1: yFrom, x2: laneX, y2: yFrom },
+    { x1: laneX, y1: yFrom, x2: laneX, y2: yTo },
+    { x1: laneX, y1: yTo, x2: to.right, y2: yTo },
   ];
 }
 
