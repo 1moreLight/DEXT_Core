@@ -128,6 +128,63 @@ body.editing .dext-trusted-hotspot {
   background: rgba(30, 5, 8, 0.72);
 }
 
+/* Widget 编辑拖动（WIDGET-DRAG-001）：编辑态 Widget 层整体抬到图标层之上，
+   每个 Widget 覆盖透明把手层（虚线框 + 名称 + 右下角缩放把手）。 */
+body.editing .widget-layer {
+  z-index: 20;
+}
+
+.widget-edit-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 999999;
+  display: none;
+  border: 2px dashed color-mix(in srgb, var(--dext-accent) 75%, transparent);
+  cursor: move;
+  touch-action: none;
+}
+
+body.editing .widget-edit-layer {
+  display: block;
+}
+
+.widget-edit-layer .widget-edit-name {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 100%;
+  padding: 2px 8px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.62);
+  border-radius: 0 0 6px 0;
+  pointer-events: none;
+}
+
+.widget-edit-layer .widget-edit-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 3px 0 0 0;
+  background: color-mix(in srgb, var(--dext-accent) 55%, transparent);
+  cursor: nwse-resize;
+}
+
+.dext-widget.widget-dragging {
+  opacity: 0.92;
+}
+
+.dext-widget.widget-dragging .widget-edit-layer {
+  background: color-mix(in srgb, var(--dext-accent) 8%, transparent);
+}
+
 .dext-scene-slot {
   position: fixed;
   inset: 0;

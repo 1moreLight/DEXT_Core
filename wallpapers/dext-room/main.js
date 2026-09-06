@@ -589,6 +589,7 @@ function mountWidgets(layer, desk, deskIndex) {
     frame.referrerPolicy = "no-referrer";
     wrap.appendChild(frame);
     mountTrustedHotspots(wrap, { ...widget, subject: `widget:${widget.id}` }, { width: placement.width, height: placement.height });
+    wrap.appendChild(widgetEditOverlay({ widget, wrap, subject: `widget:${widget.id}` }));
     layer.appendChild(wrap);
 
     const instance = {
@@ -887,6 +888,121 @@ function startDockDrag(e, el, item, cfg) {
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerup", onUp);
   el.addEventListener("pointercancel", onCancel);
+}
+
+// ---- Widget 编辑拖动（WIDGET-DRAG-001）-------------------------------------
+// 编辑模式下每个 Widget 盖一层透明把手层：未编辑时长按进入编辑态；编辑态拖动移动、
+// 右下角把手缩放。placement 直接写回 ROOM 并经 persistRoom 双写；不重挂载实例，
+// 避免 iframe 重载丢状态。覆盖层同时解决 Widget iframe 吞掉指针事件的问题。
+
+function widgetEditOverlay(instance) {
+  const overlay = document.createElement("div");
+  overlay.className = "widget-edit-layer";
+  const name = document.createElement("span");
+  name.className = "widget-edit-name";
+  name.textContent = instance.widget.name;
+  overlay.appendChild(name);
+  const resize = document.createElement("span");
+  resize.className = "widget-edit-resize";
+  resize.title = "拖动缩放";
+  overlay.appendChild(resize);
+
+  let pressTimer = null;
+  let pressX = 0, pressY = 0;
+
+  overlay.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    pressX = e.clientX;
+    pressY = e.clientY;
+    if (editMode) {
+      startWidgetDrag(e, instance, resize.contains(e.target));
+      return;
+    }
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      enterEdit();
+    }, 500);
+  });
+  overlay.addEventListener("pointermove", (e) => {
+    if (pressTimer && Math.hypot(e.clientX - pressX, e.clientY - pressY) > 8) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  });
+  const cancelPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+  overlay.addEventListener("pointerup", cancelPress);
+  overlay.addEventListener("pointercancel", cancelPress);
+  return overlay;
+}
+
+function applyWidgetPlacement(instance, placement) {
+  instance.wrap.style.left = `${placement.x / ROOM_CANVAS.width * 100}%`;
+  instance.wrap.style.top = `${placement.y / ROOM_CANVAS.height * 100}%`;
+  instance.wrap.style.width = `${placement.width / ROOM_CANVAS.width * 100}%`;
+  instance.wrap.style.height = `${placement.height / ROOM_CANVAS.height * 100}%`;
+  instance.wrap.style.zIndex = String(placement.z);
+}
+
+function syncWidgetHotspots(instance) {
+  instance.wrap.querySelectorAll(".dext-trusted-hotspot").forEach((el) => el.remove());
+  mountTrustedHotspots(
+    instance.wrap,
+    { ...instance.widget, subject: instance.subject },
+    { width: instance.widget.placement.width, height: instance.widget.placement.height }
+  );
+}
+
+function startWidgetDrag(e, instance, resizing) {
+  e.preventDefault();
+  e.stopPropagation();
+  const wrap = instance.wrap;
+  wrap.setPointerCapture(e.pointerId);
+  wrap.classList.add("widget-dragging");
+  const layerRect = widgetLayer.getBoundingClientRect();
+  const scale = layerRect.width / ROOM_CANVAS.width || 1;
+  const sx = e.clientX;
+  const sy = e.clientY;
+  const placement = instance.widget.placement;
+  const origin = { ...placement };
+
+  const commit = () => {
+    const safe = safePlacement(placement);
+    Object.assign(placement, safe);
+    applyWidgetPlacement(instance, safe);
+  };
+  const finish = () => {
+    wrap.removeEventListener("pointermove", onMove);
+    wrap.removeEventListener("pointerup", finish);
+    wrap.removeEventListener("pointercancel", cancel);
+    wrap.classList.remove("widget-dragging");
+    commit();
+    if (resizing) syncWidgetHotspots(instance);
+    persistRoom();
+  };
+  const cancel = () => {
+    Object.assign(placement, origin);
+    finish();
+  };
+  const onMove = (ev) => {
+    const dx = (ev.clientX - sx) / scale;
+    const dy = (ev.clientY - sy) / scale;
+    if (resizing) {
+      placement.width = Math.round(origin.width + dx);
+      placement.height = Math.round(origin.height + dy);
+    } else {
+      placement.x = Math.round(origin.x + dx);
+      placement.y = Math.round(origin.y + dy);
+    }
+    commit();
+  };
+  wrap.addEventListener("pointermove", onMove);
+  wrap.addEventListener("pointerup", finish);
+  wrap.addEventListener("pointercancel", cancel);
 }
 
 function persistRoom() {
@@ -1189,7 +1305,7 @@ function enterEdit() {
   document.body.classList.add("editing");
   renderDesk(currentDesk);
   dextEmit("editchange", { editing: true });
-  showToast("编辑模式：拖动排列，× 删除");
+  showToast("编辑模式：拖动图标 / Widget 排列，Esc 或「完成」退出");
 }
 
 function exitEdit() {
@@ -1378,9 +1494,29 @@ document.querySelectorAll("#size-group .size-btn").forEach((btn) =>
   })
 );
 
+let deskPressTimer = null;
+let deskPressX = 0, deskPressY = 0;
 iconLayer.addEventListener("pointerdown", (e) => {
-  if (editMode && e.target === iconLayer) exitEdit();
+  if (editMode) {
+    if (e.target === iconLayer) exitEdit();
+    return;
+  }
+  if (e.button !== 0 || e.target !== iconLayer) return;
+  deskPressX = e.clientX;
+  deskPressY = e.clientY;
+  deskPressTimer = setTimeout(() => {
+    deskPressTimer = null;
+    enterEdit();
+  }, 500);
 });
+["pointermove", "pointerup", "pointercancel"].forEach((type) =>
+  iconLayer.addEventListener(type, (e) => {
+    if (deskPressTimer && (type !== "pointermove" || Math.hypot(e.clientX - deskPressX, e.clientY - deskPressY) > 8)) {
+      clearTimeout(deskPressTimer);
+      deskPressTimer = null;
+    }
+  })
+);
 
 window.addEventListener("keydown", (e) => {
   if (SCREENSAVER_MODE) return;
