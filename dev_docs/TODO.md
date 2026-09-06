@@ -645,7 +645,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 2026-09-06 新建 view.ts（EditorView）；App/RoomEditorHeader 改导入；删 EditorHierarchy 用法与文件
 - [x] 2026-09-06 属性栏 Desk 分支加上移/下移按钮；npm test 32/32 + npm run build + tauri build 绿并重新拉起
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06，回复“验收通过 合并”；直改 master，无独立分支）
 
 ### UI-小改：switch chip 去掉方向箭头（2026-09-06 追加）
 
@@ -653,7 +653,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 > 位置偏移仍按方向计算）。
 
 - [x] 2026-09-06 App.tsx：删 chip 内箭头字符；build + tauri build + 拉起完成
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06）
 
 ### UI-小改：首尾回绕线出/入端口错开（2026-09-06 追加）
 
@@ -661,4 +661,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 > 也按 laneOffset（±20）错开，双车道端口分离；默认 0 不影响旧测试，另补端口分离回归。
 
 - [x] 2026-09-06 graph.ts 端口错开 + graph.test.ts 回归（33/33）；build + tauri build + 拉起完成
-- [ ] 2026-09-06 用户验收
+- [x] 2026-09-06 用户验收（2026-09-06，回复“验收通过 合并”）
