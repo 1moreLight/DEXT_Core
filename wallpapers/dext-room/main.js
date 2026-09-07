@@ -491,27 +491,7 @@ const parseLivelyPayload = (value) => {
     return null;
   }
 };
-// TEMP 诊断（WIDGET-DRAG-001 硬件链排查，验证后删除）：requestId 编码标记透传到 Core 日志。
-function debugPost(tag) {
-  try {
-    if (window.chrome?.webview?.postMessage) {
-      window.chrome.webview.postMessage(JSON.stringify({
-        type: "dext:system-control",
-        requestId: tag,
-        action: { id: "system.volume.read" },
-      }));
-    }
-  } catch { }
-}
-debugPost("pagehw-assigned");
-window.livelySystemInformation = (value) => {
-  const parsed = parseLivelyPayload(value);
-  window.__dextHwDebugCount = (window.__dextHwDebugCount ?? 0) + 1;
-  if (window.__dextHwDebugCount <= 3) {
-    debugPost(`pagehw-called-${window.__dextHwDebugCount}-type-${value === null ? "null" : typeof value}`);
-  }
-  capabilityHost.updateHardware(parsed);
-};
+window.livelySystemInformation = (value) => capabilityHost.updateHardware(parseLivelyPayload(value));
 window.livelyCurrentTrack = (value) => capabilityHost.updateMedia(parseLivelyPayload(value));
 window.livelyAudioListener = (value) => capabilityHost.updateSpectrum(parseLivelyPayload(value));
 window.livelyWallpaperPlaybackChanged = (value) => capabilityHost.updatePlayback(parseLivelyPayload(value));
@@ -631,7 +611,6 @@ function mountWidgets(layer, desk, deskIndex) {
     mountTrustedHotspots(wrap, { ...widget, subject: `widget:${widget.id}` }, { width: placement.width, height: placement.height });
     wrap.appendChild(widgetEditOverlay({ widget, wrap, subject: `widget:${widget.id}` }));
     layer.appendChild(wrap);
-    debugPost(`wgt-mount-${Math.min(performance.now() | 0, 99999999)}`);
 
     const instance = {
       instanceId, token, widget, deskIndex, frame, wrap, disposed: false,
@@ -641,10 +620,7 @@ function mountWidgets(layer, desk, deskIndex) {
     };
     instances.push(instance);
     widgetInstancesBySource.set(frame.contentWindow, instance);
-    frame.addEventListener("load", () => {
-      debugPost(`wgt-frameload-${Math.min(performance.now() | 0, 99999999)}`);
-      postWidgetInit(instance);
-    });
+    frame.addEventListener("load", () => postWidgetInit(instance));
     frame.addEventListener("error", () => { wrap.dataset.state = "error"; });
   }
   widgetInstancesByLayer.set(layer, instances);
@@ -682,10 +658,6 @@ window.addEventListener("pagehide", disposeRuntime, { once: true });
 window.addEventListener("message", (event) => {
   const instance = widgetInstancesBySource.get(event.source);
   if (!instance || instance.disposed) return;
-  if (event.data && event.data.type === "dext:widget-debug") {
-    debugPost(`wgt-inner-${event.data.phase}-${event.data.t}`);
-    return;
-  }
   let size = MAX_WIDGET_MESSAGE_BYTES + 1;
   try { size = new TextEncoder().encode(JSON.stringify(event.data)).byteLength; } catch { return; }
   if (size > MAX_WIDGET_MESSAGE_BYTES) return;
@@ -695,10 +667,7 @@ window.addEventListener("message", (event) => {
       data.protocol !== WIDGET_PROTOCOL ||
       data.instanceId !== instance.instanceId ||
       data.token !== instance.token) return;
-  if (data.event === "ready") {
-    debugPost(`wgt-sdkready-${Math.min(performance.now() | 0, 99999999)}`);
-    instance.wrap.dataset.state = "ready";
-  }
+  if (data.event === "ready") instance.wrap.dataset.state = "ready";
   if (data.event === "error") instance.wrap.dataset.state = "error";
 });
 

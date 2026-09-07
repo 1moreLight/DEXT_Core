@@ -1,6 +1,4 @@
-"use strict";
-
-try { parent.postMessage({ type: "dext:widget-debug", phase: "main-start", t: Math.round(performance.now()) }, "*"); } catch (e) { }
+﻿"use strict";
 
 const el = (id) => document.getElementById(id);
 const state = {

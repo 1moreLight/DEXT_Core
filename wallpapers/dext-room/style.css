@@ -128,6 +128,26 @@ body.editing .dext-trusted-hotspot {
   background: rgba(30, 5, 8, 0.72);
 }
 
+/* WebView2 给沙箱 iframe 冷启动有 0.7~7s 的随机导航延迟（ERRORS #68 跟进实测）；
+   骨架屏在挂载瞬间给出占位，iframe 内容就绪后自然盖住它。 */
+.dext-widget[data-state="loading"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: clamp(8px, 2vw, 16px);
+  background:
+    linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.07) 50%, transparent 65%),
+    rgba(10, 16, 28, 0.5);
+  background-size: 220% 100%, auto;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  animation: dext-widget-skeleton 1.3s linear infinite;
+}
+
+@keyframes dext-widget-skeleton {
+  from { background-position: 160% 0, 0 0; }
+  to { background-position: -60% 0, 0 0; }
+}
+
 /* Widget 编辑拖动（WIDGET-DRAG-001）：编辑态 Widget 层整体抬到图标层之上，
    每个 Widget 覆盖透明把手层（虚线框 + 名称 + 右下角缩放把手）。 */
 body.editing .widget-layer {
