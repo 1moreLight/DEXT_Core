@@ -98,3 +98,20 @@ livelyWallpaperPlaybackChanged` 全部过一遍；对象负载原样通过。
 
 防再犯：跨进程/宿主注入回调先确认负载是对象还是序列化字符串；能力桥 sanitize 全走
 `typeof === "object"` 兜底，字符串不 parse 就等于永久空数据，且无任何报错。
+
+# #69 P1 能力没有"自动允许"的落地方，授权 store 缺失时全部只读能力被静默丢弃
+
+现象：Widget 硬件数据在 #68 修复后仍为空；`%LOCALAPPDATA%\Dext\permissions-v1.json` 根本不存在。
+
+原因：授权链是 `permissions-v1.json` → Core `permissions-read` → 渲染器 `grantedPermissions`
+（declared ∩ granted）。P1 只在 WIDGETS_V2 写了"自动允许"，运行时从未落地：没有任何代码
+自动写 P1 授权，store 缺失即授权全空，`capabilityHost.post` 把 time/hardware 等全部丢弃。
+时钟看似正常是因为 Widget 兜底时钟（加载时一次性判断无 session 即本地起跳）恰好工作，
+掩盖了能力桥断链。
+
+修复：渲染器 `grantedPermissions` 按契约落地 P1 自动允许（time/locale/viewport/desk/playback/
+spectrum/hardware.* 只读集合，declared ∩ (granted ∪ P1)）；P2（媒体/音量读取）与
+P4（action.invoke）仍必须来自 store 显式授权。
+
+防再犯："自动允许"是运行时行为，不是文档形容词；加能力分级时同步实现对应授权路径，
+并用空 store 场景验证 P1 可用、P2/P4 仍被拒。

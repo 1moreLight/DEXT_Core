@@ -394,9 +394,18 @@ const capabilityHost = capabilityApi.createHost({
   desk: () => ({ index: currentDesk, name: ROOM.desks[currentDesk]?.name ?? "" }),
 });
 
+// P1 能力按契约自动允许（WIDGETS_V2 §4：只读、宿主侧裁剪），无需授权 store 记录；
+// P2（媒体/音量）与 P4（action.invoke）仍必须来自 permissions-v1.json 的显式授权。
+const P1_AUTO_GRANTS = new Set([
+  "time.read", "locale.read", "viewport.read", "desk.read", "playback.read",
+  "audio.spectrum", "hardware.cpu.read", "hardware.gpu.read", "hardware.memory.read",
+  "hardware.network.read",
+]);
+
 function grantedPermissions(subject, declared) {
   const granted = runtimeGrants.get(subject) ?? [];
-  return capabilityApi.cleanPermissions(declared).filter((permission) => granted.includes(permission));
+  return capabilityApi.cleanPermissions(declared)
+    .filter((permission) => P1_AUTO_GRANTS.has(permission) || granted.includes(permission));
 }
 
 function postSystemControl(action, subject) {
