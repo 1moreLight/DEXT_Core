@@ -689,7 +689,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 渲染器：Widget 编辑覆盖层（虚线框+名称+右下角缩放把手）+ 长按进编辑 + 拖动/缩放 + safePlacement 钳制 + persistRoom；
       编辑态 widget 层抬到图标层之上解决 iframe 吞指针；空白区长按也能进编辑（无图标桌面可入）；
       缩放后同步重挂可信热点；node --check + CSS 括号平衡通过
-- [ ] 2026-09-06 commit + 用户真机验收（不稳即回退）
+- [x] 2026-09-06 commit + 用户真机验收（2026-09-07“验收通过”，真机稳定未触发回退）
 
 ### 示例 Widget：clock-hardware（2026-09-06 追加）
 
@@ -717,4 +717,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
       对象 → sanitize 全零且被静默吞掉；main.js 注入边界统一 parseLivelyPayload（四个注入函数全过）；
       node --check 通过；提交后用户重应用（渲染器直接从 worktree 路径加载，无需重建）
 - [x] 2026-09-06 用户复验硬件仍空（ERRORS #69）：permissions-v1.json 不存在 → 授权全空 → 能力桥丢弃全部 P1；落地 P1 自动允许（declared ∩ (granted ∪ P1 只读集)），P2/P4 仍走 store；node --check 通过
-- [ ] 2026-09-06 用户重应用 Room 复验硬件数据 + Widget 拖动
+- [x] 2026-09-06 用户重应用 Room 复验硬件数据 + Widget 拖动
+- [x] 2026-09-06 验收通过（2026-09-07 用户回复“验收通过”）：硬件数据全通、Widget 拖动/缩放真机正常、
+      骨架屏观感与网速求和修复一并确认
