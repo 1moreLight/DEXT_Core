@@ -704,6 +704,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 顺手修 start.ps1 配置器步骤必失败：dev 端口 1420/1423 落入 Windows 保留区
       （EACCES，ERRORS #67），迁至 1620/1621（tauri.conf/vite.config/dev:ui/文档/渲染器白名单）；
       vite 1620 绑定实测 HTTP 200；Core 新构建已运行，双配置器清理
+- [x] 2026-09-06 用户复验链路确认（诊断日志）：HWMonitor 有真实数据、livelySystemInformation 已被调用、
+      页面已解析——真正断点在导入：用户走「导入 Widget」文件夹导入器（硬编码 permissions:[]，不读
+      creator.json），widget id 变成 "content" 且无权限声明 → SDK 全丢。已直接修 MSIroom/v2 两个
+      Room（id/权限/目录改名 clock-hardware），绕过坏导入
+- [ ] 2026-09-06 待办：import_widget 文件夹导入器接入 creator.json（id/权限/热点）；Widget 删除应清理
+      Room 内孤儿资源目录（当前删除只改草稿，残留文件会让后续导入/保存撞 undeclared 校验）；
+      硬件链验证通过后移除 main.js/Player 临时诊断（ERRORS #68 后续）
+- [ ] 2026-09-06 用户重开 Room → 重新应用：复验硬件数据 + Widget 拖动
 - [ ] 2026-09-06 用户重应用 Room：复验硬件数据 + Widget 拖动
 - [x] 2026-09-06 用户复验硬件仍空。真因（ERRORS #68）：Lively 注入负载是 JSON 字符串，能力桥只吃
       对象 → sanitize 全零且被静默吞掉；main.js 注入边界统一 parseLivelyPayload（四个注入函数全过）；

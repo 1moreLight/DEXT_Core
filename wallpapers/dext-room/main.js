@@ -491,7 +491,27 @@ const parseLivelyPayload = (value) => {
     return null;
   }
 };
-window.livelySystemInformation = (value) => capabilityHost.updateHardware(parseLivelyPayload(value));
+// TEMP 诊断（WIDGET-DRAG-001 硬件链排查，验证后删除）：requestId 编码标记透传到 Core 日志。
+function debugPost(tag) {
+  try {
+    if (window.chrome?.webview?.postMessage) {
+      window.chrome.webview.postMessage(JSON.stringify({
+        type: "dext:system-control",
+        requestId: tag,
+        action: { id: "system.volume.read" },
+      }));
+    }
+  } catch { }
+}
+debugPost("pagehw-assigned");
+window.livelySystemInformation = (value) => {
+  const parsed = parseLivelyPayload(value);
+  window.__dextHwDebugCount = (window.__dextHwDebugCount ?? 0) + 1;
+  if (window.__dextHwDebugCount <= 3) {
+    debugPost(`pagehw-called-${window.__dextHwDebugCount}-type-${value === null ? "null" : typeof value}`);
+  }
+  capabilityHost.updateHardware(parsed);
+};
 window.livelyCurrentTrack = (value) => capabilityHost.updateMedia(parseLivelyPayload(value));
 window.livelyAudioListener = (value) => capabilityHost.updateSpectrum(parseLivelyPayload(value));
 window.livelyWallpaperPlaybackChanged = (value) => capabilityHost.updatePlayback(parseLivelyPayload(value));
