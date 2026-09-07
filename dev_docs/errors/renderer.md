@@ -81,3 +81,20 @@ ghost、Dock 吸附带膨胀 48px、pointerup/pointercancel/lostpointercapture �
 防再犯：真桌面跨层拖拽方向若重启，必须先立专项研究包（WebView2 指针捕获在 WorkerW/被 topmost
 遮挡场景下的行为实证 + Player 原生输入桥可行性），不再直接实现页面级交互；Dock 图标管理的
 正式入口保持为配置器 `DockEditor`。
+
+# #68 Lively 注入负载是 JSON 字符串，直接交给能力桥导致硬件/媒体全空
+
+现象：`--wallpaper-system-information` 已开启、Player 正常运行，但 Widget 的 CPU/GPU/内存/网速
+永远为 0；媒体/频谱同理。时钟正常（本地生成，不经注入）。
+
+原因：`Form1.cs` 用 `ExecuteScriptFunctionAsync("livelySystemInformation", JsonConvert.SerializeObject(e))`
+注入的是 **JSON 字符串**（LIVELY_API.md 已注明），官方示例均先 `JSON.parse(data)`；
+而 `main.js` 把字符串原样传给 `capabilityHost.updateHardware`，`sanitizeHardware` 的
+`typeof value === "object"` 判断不过 → 走全零兜底，异常被 `catch { }` 静默吞掉。
+
+修复：在注入边界统一解析（`parseLivelyPayload`）：字符串先 `JSON.parse`（失败按 null），
+四个注入函数 `livelySystemInformation / livelyCurrentTrack / livelyAudioListener /
+livelyWallpaperPlaybackChanged` 全部过一遍；对象负载原样通过。
+
+防再犯：跨进程/宿主注入回调先确认负载是对象还是序列化字符串；能力桥 sanitize 全走
+`typeof === "object"` 兜底，字符串不 parse 就等于永久空数据，且无任何报错。

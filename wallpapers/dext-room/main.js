@@ -472,10 +472,20 @@ function updateRuntimeGrants(value) {
   }
 }
 
-window.livelySystemInformation = (value) => capabilityHost.updateHardware(value);
-window.livelyCurrentTrack = (value) => capabilityHost.updateMedia(value);
-window.livelyAudioListener = (value) => capabilityHost.updateSpectrum(value);
-window.livelyWallpaperPlaybackChanged = (value) => capabilityHost.updatePlayback(value);
+// Lively Player 经 ExecuteScriptFunctionAsync 注入的负载都是 JSON 字符串（含 null），
+// 能力桥只吃对象，这里统一在边界解析；解析失败按无数据处理。
+const parseLivelyPayload = (value) => {
+  if (typeof value !== "string" || value.length === 0) return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+window.livelySystemInformation = (value) => capabilityHost.updateHardware(parseLivelyPayload(value));
+window.livelyCurrentTrack = (value) => capabilityHost.updateMedia(parseLivelyPayload(value));
+window.livelyAudioListener = (value) => capabilityHost.updateSpectrum(parseLivelyPayload(value));
+window.livelyWallpaperPlaybackChanged = (value) => capabilityHost.updatePlayback(parseLivelyPayload(value));
 const capabilityTickTimer = setInterval(() => capabilityHost.tick(), 1000);
 const volumePollTimer = setInterval(() => {
   if (!window.chrome?.webview?.postMessage) return;

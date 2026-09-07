@@ -72,6 +72,7 @@
 | #65 | 真桌面跨层拖拽（桌面↔Dock）两版实机均不稳定，方向已取消；重启需先立输入链研究包 | [renderer](errors/renderer.md) |
 | #66 | 与 LivelyInfo.json 重复追加 `--wallpaper-system-information`，Player 退出码 87 壁纸应用失败 | [backend](errors/backend.md) |
 | #67 | dev 端口 1420/1423 落入 Windows 保留端口区，vite EACCES；dev 迁至 1620/1621 | [toolchain](errors/toolchain.md) |
+| #68 | Lively 注入负载是 JSON 字符串未 parse，能力桥硬件/媒体/频谱静默全空 | [renderer](errors/renderer.md) |
 
 ## 分册
 

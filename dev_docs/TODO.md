@@ -705,3 +705,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
       （EACCES，ERRORS #67），迁至 1620/1621（tauri.conf/vite.config/dev:ui/文档/渲染器白名单）；
       vite 1620 绑定实测 HTTP 200；Core 新构建已运行，双配置器清理
 - [ ] 2026-09-06 用户重应用 Room：复验硬件数据 + Widget 拖动
+- [x] 2026-09-06 用户复验硬件仍空。真因（ERRORS #68）：Lively 注入负载是 JSON 字符串，能力桥只吃
+      对象 → sanitize 全零且被静默吞掉；main.js 注入边界统一 parseLivelyPayload（四个注入函数全过）；
+      node --check 通过；提交后用户重应用（渲染器直接从 worktree 路径加载，无需重建）
