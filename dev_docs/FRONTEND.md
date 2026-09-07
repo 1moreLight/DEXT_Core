@@ -22,15 +22,15 @@
 
 ```powershell
 cd tauri-ui
-npm run dev:ui        # vite 端口 1421，自动开浏览器
+npm run dev:ui        # vite 端口 1621，自动开浏览器
 ```
 
-- **VS Code 分屏**：Ctrl+Shift+P → "Simple Browser: Show" → `http://localhost:1421` → 拖到右侧
+- **VS Code 分屏**：Ctrl+Shift+P → "Simple Browser: Show" → `http://localhost:1621` → 拖到右侧
 - 改 `src/App.tsx` / `src/*.css` → HMR 秒刷（无需重启）
 - mock 数据在 `App.tsx` 顶部（MOCK_APPS/MOCK_ROOMS/MOCK_DESKS，canvas 生成彩色首字母图标）；
   要什么假数据直接改那里
 - 预览按钮（dext:// iframe）在设计模式自动隐藏；保存/应用等 invoke 操作会报错——设计模式不管它们
-- **注意**：`npm run tauri dev` 也占 1420 端口，设计模式用 1421，两者可并存
+- **注意**：`npm run tauri dev` 也占 1620 端口，设计模式用 1621，两者可并存
 
 ## 一、桌面渲染器实时预览
 

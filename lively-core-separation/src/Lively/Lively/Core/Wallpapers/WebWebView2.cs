@@ -94,9 +94,6 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(!string.IsNullOrEmpty(audioVisualizerId) ? " --wallpaper-audio-id " + audioVisualizerId : " ");
             cmdArgs.Append(!string.IsNullOrWhiteSpace(debugPort) ? " --wallpaper-debug " + debugPort : " ");
             cmdArgs.Append(isScreensaver ? " --wallpaper-screensaver true" : " ");
-            // 官方能力桥的 CPU/GPU/RAM/网络数据依赖 Lively hw monitor API；
-            // 不加此开关 Player 不会启动 HardwareUsageService，livelySystemInformation 永远不来。
-            cmdArgs.Append(" --wallpaper-system-information true");
             cmdArgs.Append(model.LivelyInfo.Type.IsOnlineWallpaper() ? " --wallpaper-type online" : " --wallpaper-type local");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);

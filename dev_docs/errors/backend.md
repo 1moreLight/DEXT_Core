@@ -163,3 +163,21 @@
 
 防再犯：WebView2 生命周期断言（Source/初始文档/事件顺序）要用日志实证再写进拦截器；
 导航被主动 Cancel 的统一表现就是 OperationCanceled，见到它先查自家 NavigationStarting。
+
+# #66 与 LivelyInfo.json 重复追加 Player 开关，壁纸应用失败退出码 87
+
+现象：给 `WebWebView2` 恒加 `--wallpaper-system-information true` 后，每次应用壁纸 Player 都
+以退出码 87 退出，Core 报 `Error initializing. Unknown options are passed.`（日志实为
+`CommandLine.RepeatedOptionError`）。
+
+原因：`wallpapers/dext-room/LivelyInfo.json` 的 `Arguments` 早已携带
+`--wallpaper-system-information / --wallpaper-system-nowplaying / --wallpaper-pause-event /
+--dext-trusted-host`（21a1bff 能力桥提交），Core 再恒加一次即重复参数；Player 解析失败
+按约定 `Environment.Exit(87)`，Core 把 87 归纳为「Unknown options」。此前"Widget 硬件无数据"
+的原因另查（元数据开关其实一直在传）。
+
+修复：撤回 Core 恒加开关的改动，参数唯一来源保持 `LivelyInfo.json`。
+
+防再犯：给 Player 增删启动参数前先看 `wallpapers/dext-room/LivelyInfo.json` 的 `Arguments`
+与 `TryParseUserCommandArgs` 的命名空间归一化，同一开关只允许一个来源；遇到退出码 87 直接查
+Core 日志里的 CommandLine 错误类型（Repeated/Unknown）。

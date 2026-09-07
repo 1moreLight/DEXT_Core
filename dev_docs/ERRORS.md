@@ -70,6 +70,8 @@
 | #63 | Creator 预览 URL 未复用资源路径规则，Windows 特殊路径字符可能进入服务端拼接 | [backend](errors/backend.md) |
 | #64 | Offline Boundary 误判首航 Source（about:blank≠空串），Player 每次铺壁纸导航被取消黑屏 | [backend](errors/backend.md) |
 | #65 | 真桌面跨层拖拽（桌面↔Dock）两版实机均不稳定，方向已取消；重启需先立输入链研究包 | [renderer](errors/renderer.md) |
+| #66 | 与 LivelyInfo.json 重复追加 `--wallpaper-system-information`，Player 退出码 87 壁纸应用失败 | [backend](errors/backend.md) |
+| #67 | dev 端口 1420/1423 落入 Windows 保留端口区，vite EACCES；dev 迁至 1620/1621 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

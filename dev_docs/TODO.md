@@ -698,8 +698,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 创作包 `dev_docs/fixtures/creator-packs/clock-hardware/`：creator.json（P1 只读权限：时间/语言/CPU/GPU/内存/网速）+ content（index/style/main + dext-sdk.js）；
       时钟走 time.read/locale.read，硬件走 hardware.*.read 订阅，vw/vh 随拖缩等比缩放，脱离宿主有本地时钟兜底
 - [x] 2026-09-06 打包 `clock-hardware.dext-content.zip`（python zipfile，正斜杠条目）；资源清单/未声明文件/slug 校验通过
-- [x] 2026-09-06 用户验收反馈：时钟有数据、CPU/GPU/内存/网速全空。定位：Player 默认不启硬件监控
-      （`--wallpaper-system-information` 默认 false），Core 拼参数从未传过 → livelySystemInformation 不来。
-      修 Core WebWebView2.cs 恒加该开关；停栈 → build.ps1 全量 Release → start.ps1 重启（Core 恢复，
-      start.ps1 的 tauri dev 配置器步骤失败，直接拉 release 配置器，问题另查）
-- [ ] 2026-09-06 用户重应用 Room 复验硬件数据 + Widget 拖动
+- [x] 2026-09-06 用户重应用复验发现应用失败（Player 退出码 87）。真因：LivelyInfo.json 早已携带
+      `--wallpaper-system-information` 等开关，Core 恒加导致重复参数（RepeatedOptionError）→ 撤回 Core
+      改动，记 ERRORS #66；此前硬件无数据疑似旧 Debug 残留栈，待重应用复验
+- [x] 2026-09-06 顺手修 start.ps1 配置器步骤必失败：dev 端口 1420/1423 落入 Windows 保留区
+      （EACCES，ERRORS #67），迁至 1620/1621（tauri.conf/vite.config/dev:ui/文档/渲染器白名单）；
+      vite 1620 绑定实测 HTTP 200；Core 新构建已运行，双配置器清理
+- [ ] 2026-09-06 用户重应用 Room：复验硬件数据 + Widget 拖动

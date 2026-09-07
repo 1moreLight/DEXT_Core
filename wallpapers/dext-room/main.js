@@ -87,6 +87,7 @@ const PREVIEW_MODE = SEARCH.get("preview") === "1";
 const SCREENSAVER_MODE = SEARCH.get("screensaver") === "1";
 const PREVIEW_PARENT_ORIGINS = new Set([
   "http://tauri.localhost",
+  "http://localhost:1620",
   "http://localhost:1420",
 ]);
 let assetBase = SEARCH.get("room") ?? "";

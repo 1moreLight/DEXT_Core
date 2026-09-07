@@ -113,3 +113,13 @@
 - 原因：同一 worktree 的旧 `vite --port 1423 --strictPort` 进程仍在监听；脚本的配置器开发端口不是动态分配。
 - 处理：只读确认监听 PID、可执行文件和命令行后再决定是否由启动者清理；本次未终止不明进程，并使用独立端口/页面完成前端验证。
 - 预防：启动前检查 1423/1421 监听者是否属于当前会话；不要盲目结束用户进程，必要时先复用或让用户关闭残留开发服务。
+
+# #67 dev 端口落入 Windows 保留端口区，vite EACCES 起不来
+
+现象：`npm run tauri dev` / `start.ps1` 的配置器步骤报 `Error: listen EACCES: permission denied ::1:142x`，beforeDevCommand 非零退出；`Get-NetTCPConnection` 查不到任何占用。
+
+原因：Windows（Hyper-V/WSL 动态保留）把 TCP 1333–1432、1463–1562 等区间列为排除端口（`netsh interface ipv4/ipv6 show excludedportrange protocol=tcp` 可见），1420/1421/1423 全部命中，Node 无法绑定，与进程无关。
+
+修复：配置器 dev 端口整体迁出保留区——tauri dev 用 1620（`tauri.conf.json` beforeDevCommand/devUrl + `vite.config.ts` server.port），浏览器设计模式 1621（`dev:ui`、hmr.port 与文档同步）；渲染器 `PREVIEW_PARENT_ORIGINS` 增加 `http://localhost:1620`。
+
+防再犯：换 dev 端口或遇到 EACCES 时先对照 `netsh interface ipv4/ipv6 show excludedportrange protocol=tcp` 的排除区间，别去杀进程。
