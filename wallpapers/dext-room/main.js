@@ -682,6 +682,10 @@ window.addEventListener("pagehide", disposeRuntime, { once: true });
 window.addEventListener("message", (event) => {
   const instance = widgetInstancesBySource.get(event.source);
   if (!instance || instance.disposed) return;
+  if (event.data && event.data.type === "dext:widget-debug") {
+    debugPost(`wgt-inner-${event.data.phase}-${event.data.t}`);
+    return;
+  }
   let size = MAX_WIDGET_MESSAGE_BYTES + 1;
   try { size = new TextEncoder().encode(JSON.stringify(event.data)).byteLength; } catch { return; }
   if (size > MAX_WIDGET_MESSAGE_BYTES) return;

@@ -1,5 +1,7 @@
 "use strict";
 
+try { parent.postMessage({ type: "dext:widget-debug", phase: "main-start", t: Math.round(performance.now()) }, "*"); } catch (e) { }
+
 const el = (id) => document.getElementById(id);
 const state = {
   language: navigator.language || "zh-CN",
