@@ -17,8 +17,8 @@ namespace Lively.Common.Services
         //counter variables
         private PerformanceCounter cpuCounter = null;
         private PerformanceCounter ramCounter = null;
-        private PerformanceCounter netDownCounter = null;
-        private PerformanceCounter netUpCounter = null;
+        private List<PerformanceCounter> netDownCounters = new List<PerformanceCounter>();
+        private List<PerformanceCounter> netUpCounters = new List<PerformanceCounter>();
 
         public HardwareUsageService()
         {
@@ -50,7 +50,7 @@ namespace Lively.Common.Services
                 //hw info
                 perfData.NameCpu = SystemInfo.GetCpu().Count != 0 ? SystemInfo.GetCpu()[0] : null;
                 perfData.NameGpu = SystemInfo.GetGpu().Count != 0 ? SystemInfo.GetGpu()[0] : null;
-                perfData.NameNetCard = GetNetworkCards().Count != 0 ? GetNetworkCards()[0] : null;
+                perfData.NameNetCard = "all-interfaces (sum)";
                 perfData.TotalRam = SystemInfo.GetTotalInstalledMemory();
 
                 //counters
@@ -60,14 +60,28 @@ namespace Lively.Common.Services
                 ramCounter = new PerformanceCounter
                     ("Memory", "Available MBytes");
 
-                if (perfData.NameNetCard != null)
+                // 单选第一块网卡会命中虚拟/断开适配器（isatap 等）导致网速恒为 0；
+                // 对所有接口实例求和，虚拟适配器贡献 0，真实流量不受影响。
+                var category = new PerformanceCounterCategory("Network Interface");
+                foreach (var instanceName in category.GetInstanceNames())
                 {
-                    //only considering the first card for now.
-                    netDownCounter = new PerformanceCounter("Network Interface",
-                                   "Bytes Received/sec", perfData.NameNetCard);
-
-                    netUpCounter = new PerformanceCounter("Network Interface",
-                                   "Bytes Sent/sec", perfData.NameNetCard);
+                    if (string.IsNullOrWhiteSpace(instanceName))
+                        continue;
+                    foreach (var counter in category.GetCounters(instanceName))
+                    {
+                        using (counter)
+                        {
+                            if (counter.CounterName == "Bytes Received/sec")
+                                netDownCounters.Add(new PerformanceCounter("Network Interface", "Bytes Received/sec", instanceName));
+                            else if (counter.CounterName == "Bytes Sent/sec")
+                                netUpCounters.Add(new PerformanceCounter("Network Interface", "Bytes Sent/sec", instanceName));
+                        }
+                    }
+                }
+                if (netDownCounters.Count == 0 || netUpCounters.Count == 0)
+                {
+                    netDownCounters.Clear();
+                    netUpCounters.Clear();
                 }
             }
             catch
@@ -90,8 +104,10 @@ namespace Lively.Common.Services
                             perfData.CurrentCpu = perfData.CurrentGpu3D = perfData.CurrentRamAvail = perfData.CurrentNetUp = perfData.CurrentNetDown = 0;
                             perfData.CurrentCpu = cpuCounter.NextValue();
                             perfData.CurrentRamAvail = ramCounter.NextValue();
-                            perfData.CurrentNetDown = netDownCounter != null ? netDownCounter.NextValue() : 0f;
-                            perfData.CurrentNetUp = netUpCounter != null ? netUpCounter.NextValue() : 0f;
+                            foreach (var counter in netDownCounters)
+                                perfData.CurrentNetDown += counter.NextValue();
+                            foreach (var counter in netUpCounters)
+                                perfData.CurrentNetUp += counter.NextValue();
                             //min 1sec wait required since some timers use pervious value for calculation.
                             //ref: https://docs.microsoft.com/en-us/archive/blogs/bclteam/how-to-read-performance-counters-ryan-byington
                             perfData.CurrentGpu3D = await GetGPUUsage();
@@ -114,8 +130,10 @@ namespace Lively.Common.Services
             {
                 cpuCounter?.Dispose();
                 ramCounter?.Dispose();
-                netDownCounter?.Dispose();
-                netUpCounter?.Dispose();
+                foreach (var counter in netDownCounters)
+                    counter.Dispose();
+                foreach (var counter in netUpCounters)
+                    counter.Dispose();
             }
         }
 
