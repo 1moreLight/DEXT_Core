@@ -749,4 +749,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 渲染器删除尺寸、删除和 Desk↔Dock 跨层拖拽，仅保留桌面移动及既有 Widget 编辑；Playwright 旧行为断言先按预期失败，改后控件与双向拖拽行为检查通过
 - [x] 更新 README/DOCK/FRONTEND 正式口径：`iconSize` 仅保留数据兼容，DockEditor 为唯一 Dock 管理入口，后端 `addDockIcon` 链仅作旧兼容
 - [x] 全量自动检查通过：`npm test` 39/39、`npm run build`、`node --check`、Room Schema、`git diff --check`；16 份具名文件提交 `d8655a9`
-- [?] 用户按 `dev_docs/acceptance/DESK-EDIT-001-safe-placement-edit-mode.md` 验收
+- [x] 2026-09-11 用户回复“验收通过”；合并到 master `355bc79`，验收记录已归档
