@@ -1,18 +1,19 @@
 # DESK-EDIT-001 Desk 安全放置与精简编辑验收
 
-- 状态：开发中
+- 状态：待验收
 - 分支：`feat/DESK-EDIT-001-safe-placement-edit-mode`
 - 目标：配置器向 Desk 添加应用时立即选择未占用位置；真桌面长按编辑模式只保留桌面图标移动。
 - 范围外：不删除 Room v2 的 `iconSize` 字段；不改变 Widget 移动/缩放；不删除 C# `addDockIcon` 兼容协议；不改 DockEditor 的管理能力。
 
 ## 自动检查
 
-- [ ] 空位分配单元测试覆盖稀疏图标、Widget/Dock 障碍、满网格和输入不可变。
-- [ ] `npm test` 通过。
-- [ ] `npm run build` 通过。
-- [ ] `node --check wallpapers/dext-room/main.js` 通过。
-- [ ] `python scripts/validate-room-schema.py` 通过。
-- [ ] `git diff --check` 通过。
+- [x] 空位分配单元测试覆盖稀疏图标、全局/桌级 Dock、Widget 障碍、满网格、输入不可变和三档历史网格兼容。
+- [x] `npm test` 通过（39/39）。
+- [x] `npm run build` 通过。
+- [x] `node --check wallpapers/dext-room/main.js` 通过。
+- [x] `python scripts/validate-room-schema.py` 通过。
+- [x] `git diff --check` 通过。
+- [x] Playwright 真页面检查：编辑态禁用控件断言先失败后通过；Desk→Dock 与 Dock→Desk 拖动均不再改变图标归属。
 
 ## 人工验收
 
@@ -31,5 +32,4 @@
 
 ## 验收记录
 
-- 待实现与自测完成后由用户确认。
-
+- 2026-09-11：实现与自动检查完成，等待用户按以上步骤验收。

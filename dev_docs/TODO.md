@@ -744,9 +744,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 从最新 `master` `817d881` 建立独立 worktree 和 `feat/DESK-EDIT-001-safe-placement-edit-mode` 分支；基线 `npm test`（33/33）、`npm run build`、`node --check` 通过（2026-09-11）
 - [x] 完成代码链调查与方案冻结：新增应用当前缺失 `x/y`，画布按 `(0,0)` 渲染，保存才用固定索引补位；真桌面同时残留删除、尺寸切换和 Desk↔Dock 拖拽
 - [x] 建立实施计划与独立验收卡
-- [ ] TDD：新增图标空位查找覆盖稀疏坐标、Widget/Dock 障碍、满网格和不可变输入
-- [ ] 配置器 `toggleDeskApp` 新增时写入安全 `x/y`，无空位时拒绝且不污染历史/dirty
-- [ ] 渲染器删除尺寸、删除和 Desk↔Dock 跨层拖拽，仅保留桌面移动及既有 Widget 编辑
-- [ ] 更新 README/DOCK/FRONTEND 正式口径
-- [ ] 全量自动检查、具名文件提交并进入待验收
-- [ ] 用户按 `dev_docs/acceptance/DESK-EDIT-001-safe-placement-edit-mode.md` 验收
+- [x] TDD：新增图标空位查找覆盖稀疏坐标、Widget/全局或桌级 Dock 障碍、满网格、不可变输入及 large/medium/small 运行网格；各用例先按预期失败后转绿
+- [x] 配置器 `toggleDeskApp` 改走纯函数写入安全 `x/y`；满网格返回 `full`，不写历史、不置 dirty；定向测试先 2 项按预期失败，完成后全量 38/38 与构建通过
+- [x] 渲染器删除尺寸、删除和 Desk↔Dock 跨层拖拽，仅保留桌面移动及既有 Widget 编辑；Playwright 旧行为断言先按预期失败，改后控件与双向拖拽行为检查通过
+- [x] 更新 README/DOCK/FRONTEND 正式口径：`iconSize` 仅保留数据兼容，DockEditor 为唯一 Dock 管理入口，后端 `addDockIcon` 链仅作旧兼容
+- [~] 全量自动检查已通过：`npm test` 39/39、`npm run build`、`node --check`、Room Schema、`git diff --check`；待具名文件提交
+- [?] 用户按 `dev_docs/acceptance/DESK-EDIT-001-safe-placement-edit-mode.md` 验收

@@ -30,27 +30,27 @@
 
 **Interfaces:**
 - Consumes: `Desk`、`RoomIcon`、`WidgetDefinition`、`ROOM_CANVAS`。
-- Produces: `DESKTOP_ICON_GRID`；`findOpenDeskIconCell(desk, grid?) => {x:number,y:number} | null`。
+- Produces: `DESKTOP_ICON_GRIDS`；`desktopIconGrid(iconSize) => IconGrid`；`findOpenDeskIconCell(desk, grid?, roomDock?) => {x:number,y:number} | null`。
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
   在 `widget-layout.test.ts` 增加字面量用例：稀疏坐标选择首个空格、跳过 Widget/Dock 区域、满网格返回 `null`，并断言输入 Desk/旧图标坐标未被修改。
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
   Run: `npm test -- src/lib/widget-layout.test.ts`
 
   Expected: FAIL，因为 `findOpenDeskIconCell` / `DESKTOP_ICON_GRID` 尚不存在。
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
-  在 `widget-layout.ts` 用行优先扫描网格；已有图标使用显式坐标，缺坐标时使用其数组序号的网格回退；候选格与 Widget 扩展 40px 的区域或 Dock 扩展 40px 的保留区相交时跳过。`DesktopCanvasEditor` 改用同一个 `DESKTOP_ICON_GRID`。
+  在 `widget-layout.ts` 用行优先扫描网格；已有图标使用显式坐标，缺坐标时使用其数组序号的网格回退；候选格与 Widget 安全区域或有效全局/桌级 Dock 保留区相交时跳过。`DesktopCanvasEditor` 与新增逻辑按 `iconSize` 共用 large/medium/small 网格。
 
-- [ ] **Step 4: Wire application addition**
+- [x] **Step 4: Wire application addition**
 
   `toggleDeskApp` 在新增分支调用 `findOpenDeskIconCell` 并写入 `x/y`；无空位时不写历史、不置 dirty、不添加，并显示“Desk 没有可用的图标位置”。移除分支维持现状。
 
-- [ ] **Step 5: Run focused and full checks**
+- [x] **Step 5: Run focused and full checks**
 
   Run: `npm test -- src/lib/widget-layout.test.ts`
 
@@ -69,15 +69,15 @@
 - Consumes: 现有 `attachPress`、`startDrag`、Widget 编辑层、`exitEdit`。
 - Produces: 只有桌面网格内移动语义的图标编辑态；只读 Dock 运行态。
 
-- [ ] **Step 1: Remove edit-only controls and mutation paths**
+- [x] **Step 1: Remove edit-only controls and mutation paths**
 
   删除尺寸按钮和 Dock 投放提示 DOM；删除桌面/Dock 删除按钮；删除 Desk→Dock 与 Dock→Desk 命中、移动和事件绑定；`startDrag` 松手只执行桌面格子交换或移动。
 
-- [ ] **Step 2: Remove orphaned styles and listeners**
+- [x] **Step 2: Remove orphaned styles and listeners**
 
   删除 `.icon-del`、`.dock-icon-del`、`#size-group`、`#dock-drop-hint`、跨层 drop target 与 Dock dragging/edit jiggle 样式，以及尺寸按钮监听和高亮代码；保留图标拖动反馈、Widget 编辑样式与完成按钮。
 
-- [ ] **Step 3: Verify renderer behavior**
+- [x] **Step 3: Verify renderer behavior**
 
   Run: `node --check wallpapers/dext-room/main.js`
 
@@ -99,11 +99,11 @@
 - Consumes: Task 1 与 Task 2 的最终行为。
 - Produces: 当前实现一致的唯一文档口径和人工验收步骤。
 
-- [ ] **Step 1: Update product-facing documentation**
+- [x] **Step 1: Update product-facing documentation**
 
   将渲染器编辑描述改成“图标只移动”；明确 DockEditor 是增删/排序唯一入口；记录 `iconSize` 仍兼容但真桌面无切换入口。
 
-- [ ] **Step 2: Run final verification**
+- [x] **Step 2: Run final verification**
 
   Run: `npm test`
 
@@ -120,4 +120,3 @@
 - [ ] **Step 3: Commit named files**
 
   先用 `git status --short` 核对，仅暂存本计划列出的具名文件，再提交到 `feat/DESK-EDIT-001-safe-placement-edit-mode`；提交后将验收卡和 ROADMAP 标为待验收，不合并 `master`。
-

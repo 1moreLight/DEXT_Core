@@ -257,11 +257,6 @@ html[data-mode="screensaver"] #toast {
   transform: scale(1.12);
 }
 
-.icon-layer.drop-target {
-  outline: 2px dashed var(--dext-success);
-  outline-offset: -4px;
-}
-
 @keyframes jiggle {
   0% { rotate: -1.4deg; }
   50% { rotate: 1.4deg; }
@@ -271,29 +266,6 @@ html[data-mode="screensaver"] #toast {
 body.editing .icon {
   animation: jiggle 0.35s ease-in-out infinite;
   cursor: grab;
-}
-
-.icon-del {
-  display: none;
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 22px;
-  height: 22px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--dext-danger);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 2;
-  align-items: center;
-  justify-content: center;
-}
-
-body.editing .icon-del {
-  display: flex;
 }
 
 body.editing #prev-desk,
@@ -327,29 +299,6 @@ body.editing .dock-sep {
   display: none;
 }
 
-.dock-icon-del {
-  display: none;
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--dext-danger);
-  color: #fff;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 2;
-  align-items: center;
-  justify-content: center;
-}
-
-body.editing .dock-icon-del {
-  display: flex;
-}
-
 #edit-done {
   display: none;
   background-color: var(--dext-success);
@@ -358,35 +307,6 @@ body.editing .dock-icon-del {
 
 body.editing #edit-done {
   display: block;
-}
-
-#size-group {
-  display: none;
-  gap: 6px;
-}
-
-body.editing #size-group {
-  display: flex;
-}
-
-.size-btn {
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--dext-btn-bg);
-  color: #fff;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.size-btn:hover {
-  background-color: var(--dext-dock-hover);
-}
-
-.size-btn.active {
-  background-color: var(--dext-success);
 }
 
 .icon {
@@ -518,21 +438,6 @@ body.editing #size-group {
   align-items: center;
   gap: var(--dock-gap, 16px);
 }
-#dock-drop-hint {
-  display: none;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
-  white-space: nowrap;
-  padding: 4px 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.35);
-  border-radius: 8px;
-}
-body.editing #dock-drop-hint { display: inline-flex; }
-#dock.drop-target .dock-inner {
-  outline: 2px solid var(--dext-success);
-  outline-offset: 3px;
-  background-color: rgba(16, 185, 129, 0.28);
-}
 #dock:not(.has-apps) #dock-apps { display: none; }
 #dock.has-apps .dock-sep {
   width: 1px;
@@ -565,18 +470,11 @@ body.editing #dock-drop-hint { display: inline-flex; }
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.75);
   pointer-events: none;
 }
-.dock-icon.dragging {
-  z-index: 50;
-  opacity: 0.85;
-  pointer-events: none;
-}
 .dock-icon .icon-glyph,
 .dock-icon .icon-img {
   --icon-size: var(--dock-icon, 40px);
 }
 .dock-icon .icon-img { border-radius: 8px; }
-body.editing .dock-icon { animation: jiggle 0.35s ease-in-out infinite; }
-
 .dock-btn {
   width: 34px;
   height: 34px;

@@ -1,4 +1,11 @@
-import { ROOM_CANVAS, type RoomIcon, type WidgetPlacement } from "@/lib/room-v2";
+import {
+  ROOM_CANVAS,
+  type Desk,
+  type RoomIcon,
+  type WidgetDefinition,
+  type WidgetPlacement,
+} from "@/lib/room-v2";
+import type { DockConfig } from "@/lib/dock";
 
 export interface Rect {
   x: number;
@@ -18,6 +25,16 @@ export interface IconAvoidanceResult {
   icons: RoomIcon[];
   moved: number[];
   unresolved: number[];
+}
+
+export const DESKTOP_ICON_GRIDS = {
+  large: { cellWidth: 124, cellHeight: 152, columns: 14, rows: 6 },
+  medium: { cellWidth: 96, cellHeight: 120, columns: 19, rows: 7 },
+  small: { cellWidth: 64, cellHeight: 84, columns: 28, rows: 11 },
+} as const;
+
+export function desktopIconGrid(iconSize: Desk["iconSize"]): IconGrid {
+  return DESKTOP_ICON_GRIDS[iconSize === "large" || iconSize === "small" ? iconSize : "medium"];
 }
 
 export type WidgetAlignment = "left" | "center-x" | "right" | "top" | "center-y" | "bottom";
@@ -143,6 +160,57 @@ function iconRect(x: number, y: number, grid: IconGrid): Rect {
 
 function cellKey(x: number, y: number) {
   return `${x}:${y}`;
+}
+
+export function deskDockReserve(desk: Desk, roomDock?: DockConfig): Rect | null {
+  const dock = { ...roomDock, ...desk.dock };
+  if (dock?.enabled === false) return null;
+  const position = dock?.position ?? "bottom";
+  if (position === "top") return { x: 0, y: 0, width: ROOM_CANVAS.width, height: 100 };
+  if (position === "left") return { x: 0, y: 0, width: 120, height: ROOM_CANVAS.height };
+  if (position === "right") {
+    return { x: ROOM_CANVAS.width - 120, y: 0, width: 120, height: ROOM_CANVAS.height };
+  }
+  return { x: 0, y: ROOM_CANVAS.height - 100, width: ROOM_CANVAS.width, height: 100 };
+}
+
+export function widgetPlacementObstacles(widgets: WidgetDefinition[]): Rect[] {
+  return widgets.map(({ placement }) => ({
+    x: placement.x - 40,
+    y: placement.y - 40,
+    width: placement.width,
+    height: placement.height,
+  }));
+}
+
+export function findOpenDeskIconCell(
+  desk: Desk,
+  grid: IconGrid = desktopIconGrid(desk.iconSize),
+  roomDock?: DockConfig,
+): { x: number; y: number } | null {
+  if (grid.cellWidth <= 0 || grid.cellHeight <= 0 || grid.columns <= 0 || grid.rows <= 0) {
+    throw new Error("icon grid dimensions must be positive");
+  }
+  const occupied = new Set<string>();
+  desk.icons.forEach((icon, index) => {
+    const x = Math.min(Math.max(Math.round(icon.x ?? index % grid.columns), 0), grid.columns - 1);
+    const y = Math.min(Math.max(Math.round(icon.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1);
+    occupied.add(cellKey(x, y));
+  });
+  const dock = deskDockReserve(desk, roomDock);
+  const blocked = [
+    ...widgetPlacementObstacles(desk.widgets ?? []),
+    ...(dock ? [{ ...dock, x: dock.x - 40, y: dock.y - 40 }] : []),
+  ];
+
+  for (let y = 0; y < grid.rows; y += 1) {
+    for (let x = 0; x < grid.columns; x += 1) {
+      if (occupied.has(cellKey(x, y))) continue;
+      if (blocked.some((rect) => overlaps(iconRect(x, y, grid), rect))) continue;
+      return { x, y };
+    }
+  }
+  return null;
 }
 
 function candidates(originX: number, originY: number, grid: IconGrid) {
