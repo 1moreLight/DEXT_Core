@@ -1,3 +1,7 @@
+import type { Desk } from "@/lib/room-v2";
+import type { DockConfig } from "@/lib/dock";
+import { findOpenDeskIconCell, type IconGrid } from "@/lib/widget-layout";
+
 export type RemappableEdge<T> = {
   id: string;
   from: string;
@@ -27,6 +31,51 @@ export type MoveDeskInput<D, T> = Omit<DeleteDeskInput<D, T>, "deleteIndex"> & {
   fromIndex: number;
   toIndex: number;
 };
+
+export interface DeskApplication {
+  name: string;
+  target: string;
+  arguments: string;
+  working_dir: string;
+  icon_png: string;
+}
+
+export type ToggleDeskApplicationResult = {
+  desk: Desk;
+  action: "added" | "removed" | "full";
+};
+
+export function toggleDeskApplication(
+  desk: Desk,
+  app: DeskApplication,
+  grid?: IconGrid,
+  roomDock?: DockConfig,
+): ToggleDeskApplicationResult {
+  if (desk.icons.some((icon) => icon.launch.target === app.target)) {
+    return {
+      desk: { ...desk, icons: desk.icons.filter((icon) => icon.launch.target !== app.target) },
+      action: "removed",
+    };
+  }
+
+  const position = findOpenDeskIconCell(desk, grid, roomDock);
+  if (!position) return { desk, action: "full" };
+  return {
+    desk: {
+      ...desk,
+      icons: [
+        ...desk.icons,
+        {
+          label: app.name,
+          icon_png: app.icon_png,
+          launch: { target: app.target, args: app.arguments, workdir: app.working_dir },
+          ...position,
+        },
+      ],
+    },
+    action: "added",
+  };
+}
 
 function oldIndexForNew(newIndex: number, deleted: number): number {
   return newIndex < deleted ? newIndex : newIndex + 1;

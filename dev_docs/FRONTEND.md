@@ -59,7 +59,7 @@ scripts\room-preview.ps1
 - 预览环境差异（都是设计好的守卫，别"修"它们）：
   - 双击图标 → toast 提示"不在 Lively 环境内"（IPC 守卫，不会真启动应用）
   - 编辑保存 → `persistRoom()` 静默跳过（不写盘）
-  - 视频背景/切桌动画/长按编辑/尺寸切换 → 全部正常可用
+  - 视频背景/切桌动画/长按移动编辑 → 全部正常可用；尺寸切换、删除和 Desk↔Dock 拖拽已从真桌面移除
   - 配置器内嵌预览使用 `?preview=1`，只接受发布态 `http://tauri.localhost` 或开发态允许源的完整 v2 草稿和 `lib://` 素材根目录
   - 待机节点预览使用 `?preview=1&screensaver=1`，隐藏 Desk/Dock 并只显示 idle；缺少 idle 时为黑屏
   - 单独用 Vite 检查 sandbox HTML 时需开启 CORS；否则 Vite 注入的 `@vite/client` 会被 opaque origin 拒绝，生产运行不受影响
@@ -78,7 +78,7 @@ wallpapers/dext-room/
 │    ├─ #desk-viewport          切桌动画的舞台（overflow hidden）
 │    │   ├─ #desk-main          当前桌（.desk-video + .desk-bg + .icon-layer）
 │    │   └─ #desk-staging       过渡时"来客桌"挂这里，动画完清空
-│    ├─ #dock                   底部 Dock（‹ 指示器 › / 大中小 / ✓），不随动画动
+│    ├─ #dock                   底部 Dock（常驻应用 / ‹ 指示器 › / ✓），不随动画动
 │    ├─ .dext-scene-slot        start/switch/idle 的统一 image/video/html 覆盖层
 │    ├─ #transition-video-wrap  历史 DOM，占位保留但当前 Room 不再直接使用
 │    ├─ #transition             预设动画兼容层
@@ -92,9 +92,9 @@ wallpapers/dext-room/
 | 函数 | 职责 |
 |---|---|
 | `loadRoom()` | 正常模式只读取 v2 并进入 startDesk；screensaver 模式只显示 idle；preview 模式等待 v2 内存草稿 |
-| `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + 指示器 + 尺寸按钮高亮 |
+| `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
-| `renderIcons(layer, desk, s)` | 图标循环：坐标钳制、真图标/emoji 兜底、双击启动、删除钮、长按 |
+| `renderIcons(layer, desk, s)` | 图标循环：坐标钳制、真图标/emoji 兜底、双击启动、长按进入移动编辑 |
 | `attachPress / startDrag` | 长按 500ms 进编辑；编辑态拖拽（稀疏格子，占用格交换） |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `resolveTransition / switchDesk` | 有向 edge → 房间默认 → slide；Content 完成后换 Desk，预设走原动画注册表 |
@@ -156,7 +156,7 @@ wallpapers/dext-room/
 
 1. **Dock 精致化**：间距/圆角/毛玻璃参数、按钮 hover 反馈层次、指示器排版
 2. **图标交互态**：hover 底衬与缩放反馈、label 阴影可读性、选中/拖拽中的视觉
-3. **编辑模式视觉**：抖动幅度节奏、删除钮尺寸、进入/退出的过渡（目前是瞬变）
+3. **编辑模式视觉**：移动反馈与进入/退出的过渡（目前是瞬变）；不再增加删除、尺寸或 Dock 投放控件
 4. **排版**：label 字体栈（现 Segoe UI/微软雅黑）、字重、行高、多行截断
 5. **空状态**：无图标 desk 的引导提示、无背景 desk 的黑底质感（可加微妙渐变噪点）
 6. **内容骨架样例**：为作者提供 background/start/switch/idle Scene 和 Widget HTML 骨架与消息示例

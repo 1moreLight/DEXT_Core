@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { deleteDeskGraph, moveDeskGraph, type RemappableEdge } from "./desk";
+import type { Desk as RoomDesk } from "./room-v2";
+import { deleteDeskGraph, moveDeskGraph, toggleDeskApplication, type RemappableEdge } from "./desk";
 
 type Desk = { name: string };
 type Transition = string;
@@ -127,5 +128,63 @@ describe("moveDeskGraph", () => {
     expect(byRoute.get("d0>d1")).toBe("0>3");
     expect(byRoute.get("d1>d2")).toBeNull();
     expect(result.graphSelection).toBeNull();
+  });
+});
+
+describe("toggleDeskApplication", () => {
+  const app = {
+    name: "New App",
+    target: "C:\\Apps\\new.exe",
+    arguments: "--start",
+    working_dir: "C:\\Apps",
+    icon_png: "png",
+  };
+
+  it("adds an application at a free position without changing existing icons", () => {
+    const desk: RoomDesk = {
+      name: "Desk",
+      background: null,
+      iconSize: "medium",
+      icons: [
+        { label: "A", icon_png: "", launch: { target: "a.exe", args: "", workdir: "" }, x: 0, y: 0 },
+        { label: "C", icon_png: "", launch: { target: "c.exe", args: "", workdir: "" }, x: 2, y: 0 },
+      ],
+      widgets: [],
+      dock: { enabled: false },
+    };
+    const before = structuredClone(desk);
+
+    const result = toggleDeskApplication(desk, app, { cellWidth: 100, cellHeight: 100, columns: 3, rows: 2 });
+
+    expect(result.action).toBe("added");
+    expect(result.desk.icons[2]).toMatchObject({
+      label: "New App",
+      x: 1,
+      y: 0,
+      launch: { target: "C:\\Apps\\new.exe", args: "--start", workdir: "C:\\Apps" },
+    });
+    expect(desk).toEqual(before);
+  });
+
+  it("removes an existing application and reports a full Desk without mutation", () => {
+    const existing: RoomDesk = {
+      name: "Desk",
+      background: null,
+      icons: [{ label: "New App", icon_png: "png", launch: { target: app.target, args: "", workdir: "" }, x: 0, y: 0 }],
+      widgets: [],
+      dock: { enabled: false },
+    };
+    expect(toggleDeskApplication(existing, app, { cellWidth: 100, cellHeight: 100, columns: 1, rows: 1 }))
+      .toMatchObject({ action: "removed", desk: { icons: [] } });
+
+    const full: RoomDesk = {
+      ...existing,
+      icons: [{ label: "Other", icon_png: "", launch: { target: "other.exe", args: "", workdir: "" }, x: 0, y: 0 }],
+    };
+    const before = structuredClone(full);
+    const result = toggleDeskApplication(full, app, { cellWidth: 100, cellHeight: 100, columns: 1, rows: 1 });
+    expect(result.action).toBe("full");
+    expect(result.desk).toEqual(before);
+    expect(full).toEqual(before);
   });
 });

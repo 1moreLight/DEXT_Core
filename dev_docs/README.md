@@ -162,10 +162,10 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `TRANSITIONS` | 注册表 `{名字: {dur, run(stage,dir,done), cleanup()}}` | 切桌动画扩展点；现有 slide/fade/zoom/none；`dir` +1 下一桌 / -1 上一桌 |
 | `playSlot(slot, opts)` | 统一内容播放器 | start/switch 按完成语义播放；idle 以 persistent 模式持续到 Lively 关闭屏保实例 |
 | `playVideoTransition(next, slot, ...)` | 现有入口的薄适配 | 复用 `playSlot`；内容完成后才换 Desk，不再中点换页 |
-| `ICON_SIZES` / `sizeOf` | 常量表 | 大/中/小三档（图标/格子/字号联动），desk.iconSize 选用 |
+| `ICON_SIZES` / `sizeOf` | 常量表 | 继续按 `desk.iconSize` 兼容读取大/中/小三档；真桌面编辑态不再提供尺寸切换入口 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
-| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按/删除），主层与 staging 共用 |
+| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `room.js` / `room.css` | 旧 Room 扩展 | 宿主不加载；用户代码只能放入 Scene/Widget 受控目录 |
@@ -242,6 +242,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/idle 全部受控挂载。
 - 持久化：源 Room 严格 v2、运行包唯一可信 `__source`、Widget 资源镜像、顶层 IPC 和双写边界已收紧。
 - 配置器：流程图与选中节点属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览；Desk 身份级排序、Dock 覆盖和成组 HTML 资产均按 v2 单一写出器保存。重复的 Room 层级侧栏已从 master 删除。
+- Desk 应用放置：配置器加入应用时按共享桌面网格寻找首个空位，避开已有图标、Widget 和 Dock 保留区；真桌面长按编辑只允许在桌面网格内移动图标，应用增删仍在配置器完成。
 - Room v2 编辑与分享：配置器已接通 v2 Room 创建/复制/重命名/删除、Scene/Widget、权限审阅、zip 导入导出、Creator Pack 检查与隔离预览；UI-V2-001 已合并 master。
 - 真桌面 Widget：编辑模式支持长按进入、拖动、缩放和 placement 双写持久化；时间、CPU/GPU、内存、网速等 P1 只读能力链及加载骨架屏已通过真机验收。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。

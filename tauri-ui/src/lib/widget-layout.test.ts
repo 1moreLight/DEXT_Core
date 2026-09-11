@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { RoomIcon, WidgetPlacement } from "./room-v2";
-import { alignWidgetPlacements, avoidIconObstacles, canvasTransform, clampPlacement, snapPlacement } from "./widget-layout";
+import type { Desk, RoomIcon, WidgetPlacement } from "./room-v2";
+import {
+  alignWidgetPlacements,
+  avoidIconObstacles,
+  canvasTransform,
+  clampPlacement,
+  findOpenDeskIconCell,
+  snapPlacement,
+} from "./widget-layout";
 
 const icon = (label: string, x: number, y: number): RoomIcon => ({
   label,
@@ -77,5 +84,74 @@ describe("widget layout", () => {
     expect(alignWidgetPlacements(source, "left").map(({ x }) => x)).toEqual([100, 100]);
     expect(alignWidgetPlacements(source, "center-y").map(({ y }) => y)).toEqual([320, 270]);
     expect(alignWidgetPlacements(source, "bottom").map(({ y, height }) => y + height)).toEqual([620, 620]);
+  });
+
+  it("places a new Desk icon in the first sparse free cell without moving existing icons", () => {
+    const desk: Desk = {
+      name: "Sparse",
+      background: null,
+      iconSize: "medium",
+      icons: [icon("first", 0, 0), icon("third", 2, 0)],
+      widgets: [],
+      dock: { enabled: false },
+    };
+    const before = structuredClone(desk);
+
+    expect(findOpenDeskIconCell(desk, { cellWidth: 100, cellHeight: 100, columns: 3, rows: 2 }))
+      .toEqual({ x: 1, y: 0 });
+    expect(desk).toEqual(before);
+  });
+
+  it("skips Widget and Dock regions when finding a Desk icon cell", () => {
+    const desk: Desk = {
+      name: "Blocked",
+      background: null,
+      iconSize: "medium",
+      icons: [],
+      widgets: [{
+        id: "widget",
+        name: "Widget",
+        src: "widgets/widget/index.html",
+        resources: ["widgets/widget/index.html"],
+        placement: { x: 40, y: 140, width: 120, height: 100, z: 0 },
+        config: {},
+        permissions: [],
+        hotspots: [],
+      }],
+    };
+
+    expect(findOpenDeskIconCell(
+      desk,
+      { cellWidth: 100, cellHeight: 100, columns: 3, rows: 3 },
+      { enabled: true, position: "top" },
+    ))
+      .toEqual({ x: 2, y: 1 });
+  });
+
+  it("returns null when every Desk icon cell is occupied", () => {
+    const desk: Desk = {
+      name: "Full",
+      background: null,
+      iconSize: "medium",
+      icons: [icon("a", 0, 0), icon("b", 1, 0), icon("c", 0, 1), icon("d", 1, 1)],
+      widgets: [],
+      dock: { enabled: false },
+    };
+
+    expect(findOpenDeskIconCell(desk, { cellWidth: 100, cellHeight: 100, columns: 2, rows: 2 }))
+      .toBeNull();
+  });
+
+  it("uses the persisted icon size grid instead of placing large icons in medium-only columns", () => {
+    const desk: Desk = {
+      name: "Large icons",
+      background: null,
+      iconSize: "large",
+      icons: Array.from({ length: 14 }, (_, x) => icon(String(x), x, 0)),
+      widgets: [],
+      dock: { enabled: false },
+    };
+
+    expect(findOpenDeskIconCell(desk)).toEqual({ x: 0, y: 1 });
   });
 });

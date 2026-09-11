@@ -734,3 +734,19 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 更新 UI-V2-001 验收例外，并补齐 UI-006、WIDGET-DRAG-001 的独立历史验收卡（2026-09-11）
 - [x] 文档一致性检查通过；仅 7 份具名文档，提交 `5091a36`（2026-09-11）
 - [x] 2026-09-11 用户回复“验收通过”；分支快进合并 `master`，合并后 `npm test`（33/33）与 `npm run build` 通过，原分支/worktree 已清理
+
+## DESK-EDIT-001 Desk 安全放置与精简编辑（2026-09-11 开工）
+
+> 目标：配置器向 Desk 添加应用时立即分配未占用坐标；真桌面长按编辑态只保留桌面图标移动。
+> 范围外：不删除 `iconSize` 数据兼容，不改变 Widget 移动/缩放，不删除 C# `addDockIcon` 兼容协议，不削弱配置器 DockEditor。
+> 人工验收：在稀疏图标、Widget 和 Dock 共存的 Desk 连续添加应用；应用到真桌面后长按检查只可移动，且 Dock 启动/运行态与 DockEditor 管理不回归。
+
+- [x] 从最新 `master` `817d881` 建立独立 worktree 和 `feat/DESK-EDIT-001-safe-placement-edit-mode` 分支；基线 `npm test`（33/33）、`npm run build`、`node --check` 通过（2026-09-11）
+- [x] 完成代码链调查与方案冻结：新增应用当前缺失 `x/y`，画布按 `(0,0)` 渲染，保存才用固定索引补位；真桌面同时残留删除、尺寸切换和 Desk↔Dock 拖拽
+- [x] 建立实施计划与独立验收卡
+- [x] TDD：新增图标空位查找覆盖稀疏坐标、Widget/全局或桌级 Dock 障碍、满网格、不可变输入及 large/medium/small 运行网格；各用例先按预期失败后转绿
+- [x] 配置器 `toggleDeskApp` 改走纯函数写入安全 `x/y`；满网格返回 `full`，不写历史、不置 dirty；定向测试先 2 项按预期失败，完成后全量 38/38 与构建通过
+- [x] 渲染器删除尺寸、删除和 Desk↔Dock 跨层拖拽，仅保留桌面移动及既有 Widget 编辑；Playwright 旧行为断言先按预期失败，改后控件与双向拖拽行为检查通过
+- [x] 更新 README/DOCK/FRONTEND 正式口径：`iconSize` 仅保留数据兼容，DockEditor 为唯一 Dock 管理入口，后端 `addDockIcon` 链仅作旧兼容
+- [x] 全量自动检查通过：`npm test` 39/39、`npm run build`、`node --check`、Room Schema、`git diff --check`；16 份具名文件提交 `d8655a9`
+- [?] 用户按 `dev_docs/acceptance/DESK-EDIT-001-safe-placement-edit-mode.md` 验收

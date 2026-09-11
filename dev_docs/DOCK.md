@@ -67,7 +67,7 @@ icons 桌级存在则整体替换（不追加）
 |---|---|
 | `dockCfg()` | 合并全局+桌级配置（见上），每次调用都读 `currentDesk` |
 | `renderDock()` | 位置 class / autoHide class / style 变量写入（**未设置的变量用 removeProperty 清除**，防跨桌残留）；调 renderDockApps |
-| `renderDockApps(cfg)` | 渲染常驻图标（真图标/emoji 兜底）、编辑模式 × 删除（splice 后 persistRoom） |
+| `renderDockApps(cfg)` | 渲染常驻图标（真图标/emoji 兜底）、双击启动与运行状态圆点；真桌面编辑态不修改 Dock |
 | 切桌链路 | `switchDesk` → `renderDesk` → `renderDock` → 该桌 dock 生效 |
 
 ### 层级（style.css）
@@ -82,7 +82,7 @@ dock 在 z-index 20：转场时**始终可见**（stinger/文字转场是全屏�
 | 通道 | 载荷 | 用途 |
 |---|---|---|
 | `dext:room` 消息（window message） | `{type:"dext:room", room:<完整v2>, deskIndex, assetBase}` | 仅 preview 模式接收固定父窗口消息；整房替换后重渲，dock 一并生效 |
-| `persistRoom()` | `postMessage({type:"saveRoom", room:ROOM})` | 桌面编辑（含 dock 删图标）双写持久化；预览环境自动跳过 |
+| `persistRoom()` | `postMessage({type:"saveRoom", room:ROOM})` | 桌面图标位置与 Widget placement 编辑双写持久化；预览环境自动跳过 |
 
 ### DOCK-004 运行态遥测（不落盘）
 
@@ -156,17 +156,17 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 
 ### 待补（按独立工作包接线）
 
-1. **真桌面拖拽重做（DOCK-UX-001，远期）**：现有消息与持久化链保留，但真实 Player 的跨层命中和边界处理不稳定，不作为当前受支持入口；现阶段统一在配置器 `DockEditor` 添加、移除 Dock 图标。
+1. **真桌面 Dock 管理已关闭（DESK-EDIT-001）**：删除、尺寸切换及 Desk↔Dock 拖拽均不属于真桌面编辑态；统一在配置器 `DockEditor` 添加、移除和排序 Dock 图标。
 2. **分享/下载 Dock 皮肤（后续重新设计）**：Room v2 zip 不携带或执行顶层 `room.css`；皮肤需先定义官方受管格式。
 3. **运行态小圆点（DOCK-004，已完成）**：Core 进程遥测和 Dock 指示已通过人工验收并合入 master。
 4. **模板发布与创意工坊（DOCK-LIB-001）**：补模板导出/版本更新；创意工坊下载项进入现有本地卡片库。
 
-### DOCK-003 拖入消息与持久化（链保留；渲染器已改走 DOCK-UX-001 通道）
+### DOCK-003 历史拖入消息与持久化（仅保留后端兼容链）
 
 > 2026-08-29 实机限制：从桌面上方/侧面向 Dock 拖动会被图标层边界限制；从 Dock 下方进入虽能触发绿色命中反馈，释放后仍可能不落入。用户决定跳过该交互目标，当前正式维护入口改为配置器 `DockEditor`；真桌面双向拖拽的输入捕获与命中重做登记为远期 `DOCK-UX-001`。
 > **2026-09-05 更新**：`DOCK-UX-001` 已实施一版（ghost/吸附带/统一结束事件）并真机复验，仍不稳定；用户决定**放弃真桌面拖入 Dock**，代码已 revert。配置器 `DockEditor` 继续是 Dock 图标管理的唯一正式入口。详见下节与 ERRORS #65。
 
-编辑模式下，桌面图标拖到 Dock 的可见 drop 区会按启动目标去重，并发送：
+历史版本在编辑模式下把桌面图标拖到 Dock 时曾发送以下消息；DESK-EDIT-001 已删除渲染器入口与发送方，当前真桌面不会再产生该消息：
 
 ```jsonc
 {
@@ -183,9 +183,7 @@ Dock 页“新建”不是创建空模板，而是立即选择并导入 JSON 文
 }
 ```
 
-Player 将其转换为 `MessageType.msg_add_dock_icon` / `LivelyMessageAddDockIconCmd`，Core 在包内 `room.json` 的 `desks[deskIndex].dock.icons` 追加完整图标与启动信息；若目标已存在或启动目标为空则跳过。Player 只接受顶层官方宿主；Core 只信任现有运行包里的 `__source`，包内保留该戳，源 Room 写出前剥离。预览环境不触发写盘。
-
-同一编辑模式下也支持 Dock → 桌面：拖动 Dock 图标到桌面网格的虚线 drop 区，会将图标完整复制回当前 Desk 的 `icons` 并从当前 Desk Dock 移除；继承全局 Dock 的图标通过建立桌级覆盖实现“只从当前 Desk 移出”，不会影响其他 Desk。目标位置已有桌面图标或启动目标重复时保持原 Dock 不变。
+Player/Core 的 `MessageType.msg_add_dock_icon`、`LivelyMessageAddDockIconCmd` 和写盘处理暂时作为旧运行包兼容链保留，但官方渲染器没有调用者。当前 Dock 图标增删、排序及每桌覆盖只由配置器 `DockEditor` 写入 Room 草稿，再经统一保存/应用链生效。
 
 ### DOCK-UX-001 双向拖拽重做（2026-09-05 已取消）
 
@@ -195,6 +193,8 @@ autoHide 不动。实现（ghost 拖拽视觉 + Dock 吸附带命中 + pointerup
 实现提交 `638ee0e` 已整体 revert（`de04a33`）。结论与后续条件见 ERRORS #65：
 真桌面拖拽若重启，必须先立 WebView2 指针/WorkerW 命中的专项研究包，不再直接做交互实现。
 Dock 图标管理的正式入口 = 配置器 `DockEditor`。
+
+> 2026-09-11 DESK-EDIT-001 收口：真桌面删除尺寸按钮、图标删除按钮、投放提示和 Desk↔Dock 双向拖拽；Dock 在真桌面只负责展示、双击启动、运行圆点和 Desk 导航。
 
 ## 四、当前演示与验收状态
 

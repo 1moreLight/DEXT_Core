@@ -733,17 +733,12 @@ function renderDock() {
 function renderDockApps(cfg) {
   dockEl.classList.toggle("has-apps", cfg.icons.length > 0);
   dockAppsEl.replaceChildren();
-  cfg.icons.forEach((item, i) => {
+  cfg.icons.forEach((item) => {
     const el = document.createElement("div");
     el.className = "dock-icon";
     el.title = item.label ?? "";
     el.classList.toggle("is-running", runningAppTargets.has(launchTargetKey(item.launch?.target)));
     el.appendChild(iconVisual(item));
-    const removeButton = document.createElement("button");
-    removeButton.className = "icon-del dock-icon-del";
-    removeButton.title = "删除";
-    removeButton.textContent = "×";
-    el.appendChild(removeButton);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -753,161 +748,8 @@ function renderDockApps(cfg) {
         showToast(item.action ?? item.label ?? "");
       }
     });
-    removeButton.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      if (!editMode) return;
-      cfg.icons.splice(i, 1);
-      persistRoom();
-      renderDock();
-    });
-    attachDockPress(el, item, cfg);
     dockAppsEl.appendChild(el);
   });
-}
-
-function dockDropHit(x, y) {
-  const cfg = dockCfg();
-  if (!cfg.enabled) return false;
-  const rect = dockEl.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-}
-
-function setDockDropFeedback(x, y) {
-  const hit = dockDropHit(x, y);
-  dockEl.classList.toggle("drop-target", hit);
-  return hit;
-}
-
-function addDockIconFromDesk(item) {
-  const launch = item?.launch;
-  const target = typeof launch?.target === "string" ? launch.target.trim() : "";
-  if (!target) {
-    showToast("该图标没有可用的启动目标");
-    return false;
-  }
-  const desk = ROOM.desks[currentDesk];
-  const cfg = dockCfg();
-  if (cfg.icons.some((icon) => icon?.launch?.target === target)) {
-    showToast("Dock 中已存在该应用");
-    return false;
-  }
-  if (!desk.dock || typeof desk.dock !== "object") desk.dock = {};
-  if (!Array.isArray(desk.dock.icons)) desk.dock.icons = cfg.icons.map((icon) => ({ ...icon, launch: icon.launch ? { ...icon.launch } : undefined }));
-  const label = typeof item.label === "string" && item.label ? item.label : target;
-  desk.dock.icons.push({
-    label,
-    icon_png: typeof item.icon_png === "string" ? item.icon_png : "",
-    glyph: item.glyph ?? "?",
-    color: item.color ?? "#3b82f6",
-    action: item.action ?? `启动 ${label}`,
-    launch: {
-      target,
-      args: typeof launch.args === "string" ? launch.args : "",
-      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
-    },
-  });
-  showToast(`已将 ${label} 添加到 Dock`);
-  if (window.chrome?.webview?.postMessage) {
-    window.chrome.webview.postMessage(JSON.stringify({
-      type: "addDockIcon",
-      scope: "desk",
-      deskIndex: currentDesk,
-      icon: desk.dock.icons[desk.dock.icons.length - 1],
-    }));
-  }
-  return true;
-}
-
-function desktopDropHit(x, y) {
-  const rect = iconLayer.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-}
-
-function moveDockIconToDesk(item, cfg, x, y) {
-  const target = typeof item?.launch?.target === "string" ? item.launch.target.trim() : "";
-  if (!target) {
-    showToast("该 Dock 图标没有可用的启动目标");
-    return false;
-  }
-  const desk = ROOM.desks[currentDesk];
-  if (desk.icons.some((icon) => icon?.launch?.target === target)) {
-    showToast("桌面中已存在该应用");
-    return false;
-  }
-  const rect = iconLayer.getBoundingClientRect();
-  const s = sizeOf(desk);
-  const cols = Math.max(4, Math.floor(rect.width / s.cellW));
-  const rows = Math.max(1, Math.floor(rect.height / s.cellH));
-  const col = Math.max(0, Math.min(cols - 1, Math.floor((x - rect.left) / s.cellW)));
-  const row = Math.max(0, Math.min(rows - 1, Math.floor((y - rect.top) / s.cellH)));
-  if (desk.icons.some((icon) => icon.x === col && icon.y === row)) {
-    showToast("该桌面位置已有图标");
-    return false;
-  }
-  const launch = item.launch ?? {};
-  const label = typeof item.label === "string" && item.label ? item.label : target;
-  desk.icons.push({
-    label,
-    x: col,
-    y: row,
-    icon_png: typeof item.icon_png === "string" ? item.icon_png : "",
-    glyph: item.glyph ?? "?",
-    color: item.color ?? "#3b82f6",
-    action: item.action ?? `启动 ${label}`,
-    launch: {
-      target,
-      args: typeof launch.args === "string" ? launch.args : "",
-      workdir: typeof launch.workdir === "string" ? launch.workdir : "",
-    },
-  });
-  // A desk override makes removing an inherited global icon local to this desk.
-  if (!desk.dock || typeof desk.dock !== "object") desk.dock = {};
-  if (Array.isArray(desk.dock.icons)) {
-    desk.dock.icons = desk.dock.icons.filter((icon) => icon?.launch?.target !== target);
-  } else {
-    desk.dock.icons = cfg.icons
-      .filter((icon) => icon?.launch?.target !== target)
-      .map((icon) => ({ ...icon, launch: icon.launch ? { ...icon.launch } : undefined }));
-  }
-  persistRoom();
-  showToast(`已将 ${label} 移到桌面`);
-  return true;
-}
-
-function attachDockPress(el, item, cfg) {
-  el.addEventListener("pointerdown", (e) => {
-    if (!editMode || e.button !== 0 || e.target.closest(".dock-icon-del")) return;
-    startDockDrag(e, el, item, cfg);
-  });
-}
-
-function startDockDrag(e, el, item, cfg) {
-  e.preventDefault();
-  el.setPointerCapture(e.pointerId);
-  el.classList.add("dragging");
-  const sx = e.clientX;
-  const sy = e.clientY;
-  const onMove = (ev) => {
-    el.style.transform = `translate(${ev.clientX - sx}px, ${ev.clientY - sy}px)`;
-    iconLayer.classList.toggle("drop-target", desktopDropHit(ev.clientX, ev.clientY));
-  };
-  const finish = (ev, canceled = false) => {
-    el.removeEventListener("pointermove", onMove);
-    el.removeEventListener("pointerup", onUp);
-    el.removeEventListener("pointercancel", onCancel);
-    el.classList.remove("dragging");
-    el.style.transform = "";
-    iconLayer.classList.remove("drop-target");
-    if (!canceled && desktopDropHit(ev.clientX, ev.clientY)) {
-      if (moveDockIconToDesk(item, cfg, ev.clientX, ev.clientY)) renderDesk(currentDesk);
-      else renderDock();
-    }
-  };
-  const onUp = (ev) => finish(ev);
-  const onCancel = (ev) => finish(ev, true);
-  el.addEventListener("pointermove", onMove);
-  el.addEventListener("pointerup", onUp);
-  el.addEventListener("pointercancel", onCancel);
 }
 
 // ---- Widget 编辑拖动（WIDGET-DRAG-001）-------------------------------------
@@ -1174,11 +1016,6 @@ function renderIcons(layer, desk, s) {
     label.className = "icon-label";
     label.textContent = item.label ?? "";
     el.appendChild(label);
-    const removeButton = document.createElement("button");
-    removeButton.className = "icon-del";
-    removeButton.title = "删除";
-    removeButton.textContent = "×";
-    el.appendChild(removeButton);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -1187,13 +1024,6 @@ function renderIcons(layer, desk, s) {
       } else {
         showToast(item.action);
       }
-    });
-    removeButton.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      if (!editMode) return;
-      desk.icons.splice(i, 1);
-      renderDesk(currentDesk);
-      persistRoom();
     });
     attachPress(el, i);
     layer.appendChild(el);
@@ -1226,9 +1056,6 @@ function renderDesk(index) {
   renderIcons(iconLayer, desk, sizeOf(desk));
   capabilityHost.deskChanged();
 
-  document.querySelectorAll("#size-group .size-btn").forEach((b) =>
-    b.classList.toggle("active", b.dataset.size === (desk.iconSize ?? "medium"))
-  );
 }
 
 // long-press enters edit mode; in edit mode pointerdown starts a drag
@@ -1278,22 +1105,14 @@ function startDrag(e, el, index) {
   const onMove = (ev) => {
     el.style.left = `${origLeft + ev.clientX - sx}px`;
     el.style.top = `${origTop + ev.clientY - sy}px`;
-    setDockDropFeedback(ev.clientX, ev.clientY);
   };
   const onUp = (ev) => {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
     el.classList.remove("dragging");
     el.style.transition = "";
-    const overDock = setDockDropFeedback(ev.clientX, ev.clientY);
-    dockEl.classList.remove("drop-target");
     const desk = ROOM.desks[currentDesk];
     const dragged = desk.icons[index];
-    if (overDock) {
-      addDockIconFromDesk(dragged);
-      renderDesk(currentDesk);
-      return;
-    }
     // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
     const s = sizeOf(ROOM.desks[currentDesk]);
@@ -1502,17 +1321,6 @@ function showToast(msg) {
 document.getElementById("next-desk").addEventListener("click", () => switchDesk(1));
 document.getElementById("prev-desk").addEventListener("click", () => switchDesk(-1));
 doneBtn.addEventListener("click", exitEdit);
-
-document.querySelectorAll("#size-group .size-btn").forEach((btn) =>
-  btn.addEventListener("click", () => {
-    if (!editMode) return;
-    const desk = ROOM.desks[currentDesk];
-    if (desk.iconSize === btn.dataset.size) return;
-    desk.iconSize = btn.dataset.size;
-    renderDesk(currentDesk);
-    persistRoom();
-  })
-);
 
 let deskPressTimer = null;
 let deskPressX = 0, deskPressY = 0;

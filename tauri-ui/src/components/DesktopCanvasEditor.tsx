@@ -9,10 +9,18 @@ import {
   type Desk,
   type WidgetDefinition,
 } from "@/lib/room-v2";
-import { alignWidgetPlacements, avoidIconObstacles, clampPlacement, snapPlacement, type Rect, type WidgetAlignment } from "@/lib/widget-layout";
+import type { DockConfig } from "@/lib/dock";
+import {
+  alignWidgetPlacements,
+  avoidIconObstacles,
+  clampPlacement,
+  deskDockReserve,
+  desktopIconGrid,
+  snapPlacement,
+  widgetPlacementObstacles,
+  type WidgetAlignment,
+} from "@/lib/widget-layout";
 import { HotspotEditor, SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
-
-const ICON_GRID = { cellWidth: 96, cellHeight: 120, columns: 19, rows: 7 } as const;
 
 function assetUrl(roomPath: string | null, src: string) {
   const roomName = roomPath?.split(/[\\/]/).filter(Boolean).pop();
@@ -29,28 +37,10 @@ function Background({ content, roomPath }: { content: Content | null; roomPath: 
   return <iframe src={src} title={content.name} sandbox="allow-scripts" className="pointer-events-none absolute inset-0 h-full w-full border-0" />;
 }
 
-function dockReserve(desk: Desk): Rect | null {
-  const dock = desk.dock;
-  if (dock?.enabled === false) return null;
-  const position = dock?.position ?? "bottom";
-  if (position === "top") return { x: 0, y: 0, width: ROOM_CANVAS.width, height: 100 };
-  if (position === "left") return { x: 0, y: 0, width: 120, height: ROOM_CANVAS.height };
-  if (position === "right") return { x: ROOM_CANVAS.width - 120, y: 0, width: 120, height: ROOM_CANVAS.height };
-  return { x: 0, y: ROOM_CANVAS.height - 100, width: ROOM_CANVAS.width, height: 100 };
-}
-
-function placementObstacles(widgets: WidgetDefinition[]): Rect[] {
-  return widgets.map(({ placement }) => ({
-    x: placement.x - 40,
-    y: placement.y - 40,
-    width: placement.width,
-    height: placement.height,
-  }));
-}
-
 interface DesktopCanvasEditorProps {
   desks: Desk[];
   activeDesk: number;
+  roomDock: DockConfig;
   roomPath: string | null;
   selectedWidgetId: string | null;
   permissionReview: { declared: string[]; granted: string[]; current: boolean } | null;
@@ -64,6 +54,7 @@ interface DesktopCanvasEditorProps {
 export function DesktopCanvasEditor({
   desks,
   activeDesk,
+  roomDock,
   roomPath,
   selectedWidgetId,
   permissionReview,
@@ -94,6 +85,8 @@ export function DesktopCanvasEditor({
   }, [selectedWidgetId]);
 
   if (!desk) return <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">没有可编辑的 Desk</div>;
+  const iconGrid = desktopIconGrid(desk.iconSize);
+  const effectiveDock = { ...roomDock, ...desk.dock };
 
   const replaceWidget = (id: string, next: WidgetDefinition, message?: string) => {
     onDeskChange({ ...desk, widgets: desk.widgets.map((widget) => widget.id === id ? next : widget) }, message);
@@ -122,11 +115,11 @@ export function DesktopCanvasEditor({
   };
 
   const finishPlacement = (widgets: WidgetDefinition[]) => {
-    const reserved = dockReserve(desk);
+    const reserved = deskDockReserve(desk, roomDock);
     const avoided = avoidIconObstacles(
       desk.icons,
-      placementObstacles(widgets),
-      ICON_GRID,
+      widgetPlacementObstacles(widgets),
+      iconGrid,
       reserved ? [{ ...reserved, x: reserved.x - 40, y: reserved.y - 40 }] : []
     );
     const detail = avoided.unresolved.length
@@ -343,14 +336,14 @@ export function DesktopCanvasEditor({
               <div
                 key={`${item.label}-${index}`}
                 className="pointer-events-none absolute z-[300] flex w-[5%] flex-col items-center gap-1 text-white drop-shadow"
-                style={{ left: `${(40 + (item.x ?? 0) * ICON_GRID.cellWidth) / ROOM_CANVAS.width * 100}%`, top: `${(40 + (item.y ?? 0) * ICON_GRID.cellHeight) / ROOM_CANVAS.height * 100}%` }}
+                style={{ left: `${(40 + (item.x ?? 0) * iconGrid.cellWidth) / ROOM_CANVAS.width * 100}%`, top: `${(40 + (item.y ?? 0) * iconGrid.cellHeight) / ROOM_CANVAS.height * 100}%` }}
               >
                 {item.icon_png ? <img src={`data:image/png;base64,${item.icon_png}`} alt="" className="aspect-square w-[58%] object-contain" /> : <span className="flex aspect-square w-[58%] items-center justify-center rounded-md bg-slate-700 text-[10px]">{item.glyph ?? "?"}</span>}
                 <span className="max-w-full truncate text-[8px]">{item.label}</span>
               </div>
             ))}
 
-            <div className={`pointer-events-none absolute z-[400] rounded-full border border-white/15 bg-black/55 backdrop-blur ${desk.dock?.position === "top" ? "left-1/2 top-[2%] h-[7%] w-[34%] -translate-x-1/2" : desk.dock?.position === "left" ? "bottom-[10%] left-[1.5%] top-[10%] w-[6%]" : desk.dock?.position === "right" ? "bottom-[10%] right-[1.5%] top-[10%] w-[6%]" : "bottom-[2%] left-1/2 h-[7%] w-[34%] -translate-x-1/2"}`} />
+            <div className={`pointer-events-none absolute z-[400] rounded-full border border-white/15 bg-black/55 backdrop-blur ${effectiveDock.position === "top" ? "left-1/2 top-[2%] h-[7%] w-[34%] -translate-x-1/2" : effectiveDock.position === "left" ? "bottom-[10%] left-[1.5%] top-[10%] w-[6%]" : effectiveDock.position === "right" ? "bottom-[10%] right-[1.5%] top-[10%] w-[6%]" : "bottom-[2%] left-1/2 h-[7%] w-[34%] -translate-x-1/2"}`} />
           </div>
         </div>
       </div>
