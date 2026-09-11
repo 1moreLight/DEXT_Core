@@ -488,16 +488,16 @@
       `Success:true` 零 navigation failed，用户主 worktree 配置器与 Core 同源连接恢复
 - [x] 主 worktree 合并前状态保全：运行时 room.json 存 stash（main-worktree runtime room.json,
       pre UI-V2-001 merge）；rooms/v2、library.json 未跟踪内容原样保留
-- [ ] 已知观察：主 worktree build.ps1 的 Core 步骤（step 3）连续两次 exit 1，但同一命令 standalone
-      稳定成功（0 错误、2.2s）——疑似 step1/2 的 VS msbuild 节点残留锁；临时解法为 standalone
-      dotnet build + 手动 deploy。待归因后记 ERRORS 或修脚本（未影响本次交付）
+- [x] 2026-09-11 台账收口：主 worktree `build.ps1` Core step 的偶发 exit 1 只保留为历史观察；当时
+      standalone build 稳定成功且未阻塞 UI-V2-001 合并。当前不把未复现猜测写成已确认故障；若再现，
+      另立工具链工作包定位并追加 ERRORS
 
 ### UI-V2-001 活体验证修复（2026-09-03）
 
 - [x] 复现真实铺设失败：Player 因 `TryParseUserCommandArgs` 将已带 `wallpaper-`/`dext-` 命名空间的 v2 参数重复加前缀而退出（2026-09-03）
 - [x] 修正参数命名空间归一化，重跑 `scripts/build.ps1` 完成 Release Player/Watchdog/Core 构建（2026-09-03）
 - [x] 重新铺设当前 Room：Core/Watchdog/Player 均启动，Player 保持响应；媒体/音量活体测试通过（2026-09-03）
-- [ ] 仍需人工确认 Player 画面内容、Scene/Widget 交互及 Core 断线恢复；日志保留一次 WebView `OperationCanceled`，不影响进程存活，需在最终验收中观察
+- [x] 2026-09-05 用户明确授权直接合并并豁免 UI-V2-001 逐项人工验收；本项未单独执行，不倒填为已验证
 - [x] 自动检查复跑完成：tauri-ui 30/30、生产构建、Rust 34 passed/3 ignored、渲染器语法与 capability bridge 通过（2026-09-03）
 - [x] 修正渲染器切 Desk 后未广播 `desk.read` 的能力桥缺口，并新增 deskChanged 回归（2026-09-03）
 - [x] 能力桥暂停时冻结周期性硬件/媒体/音量/频谱/时间推送，恢复时补发完整快照，并新增暂停恢复回归（2026-09-03）
@@ -559,8 +559,8 @@
       回退主因）**③演示皮肤观感差（占位货，非机制问题）
 - [x] 已暂停(2026-09-05)：用户决定回退；桌面已恢复主栈+用户房间（Success:true）。皮肤类工作的
       真机交互验收并入 SKIN-001b（配置器窗口内迭代），001a 分支保留待续
-- [ ] 续做时起点：先定位命中层点击失效（怀疑方向：命中 rect 坐标系/事件被 iframe 焦点吞掉/
-      isTrusted 链），再进 001b（皮肤选择 UI + custom 命中动作绑定 + 预览）
+- [!] 已暂停；用户恢复该方向时，先定位命中层点击失效（怀疑方向：命中 rect 坐标系/事件被 iframe
+      焦点吞掉/isTrusted 链），再进 001b（皮肤选择 UI + custom 命中动作绑定 + 预览）
 
 ### TRAY-小改：托盘加「打开配置器」（2026-09-06 追加，用户豁免 worktree 流程直改 master）
 
@@ -568,27 +568,27 @@
 > 找不到 exe 时后台拉起 
 pm run tauri build 并气泡提示，完成后重试即可。
 
-- [ ] 2026-09-06 Systray.cs：FindConfiguratorExe（从 Core exe 向上找 tauri-ui\src-tauri\target\release\dext-configurator.exe）+ 菜单项 + 构建兜底
-- [ ] 2026-09-06 停 Core → build.ps1 → 重启 Core，托盘实测
-- [ ] 2026-09-06 commit + 用户验收
+- [x] 2026-09-11 台账去重：Systray 实现计划已被下方 `292f930` 完成记录覆盖
+- [x] 2026-09-11 台账去重：构建与托盘实测计划已被下方 UIA 验证记录覆盖
+- [x] 2026-09-11 台账去重：实现已提交；用户明确验收仍按下方 `[?]` 如实保留
 
 - [x] 2026-09-06 Systray.cs：FindConfiguratorExe（从 Core exe 向上找 tauri-ui\src-tauri\target\release\dext-configurator.exe）+ 菜单项 + 构建兜底
 - [x] 2026-09-06 停 Core → build.ps1 → 重启 Core；UIA 实测菜单 4 项、点击触发构建兜底（commit 292f930）
-- [ ] 2026-09-06 构建完成后再次点击验证配置器拉起 + 用户验收
+- [x] 2026-09-06 构建完成后再次点击，UIA 已验证配置器成功拉起；用户明确验收另见下一项
 - [x] 2026-09-06 release 构建完成（15.6MB），UIA 实测点击「打开配置器」成功拉起 dext-configurator.exe
-- [ ] 2026-09-06 用户验收
+- [?] 2026-09-06 用户验收：未找到明确回复“通过”的记录；实现和 UIA 验证已在 master，作为不阻塞路线的验收债保留
 
 ### UI-小改：「放入应用」弹窗改纯应用库管理（2026-09-06 追加）
 
 > 用户定调：编辑模式 desk 属性栏的选应用弹窗只管「库里有哪些应用可加」（浏览/搜索/加库/删库/扫描），
 > 单击不得直接写入 desk；上桌入口属 room 编辑后续流程，本步不动。
 
-- [ ] 2026-09-06 App.tsx：appPickerDesk → appManagerOpen；按钮改「应用库管理」；新 AppLibraryDialog（搜索+加库+扫描合并+多选删库，无 desk 写入）
-- [ ] 2026-09-06 移除 AppPickerDialog 用法；npm run build 自测 + tauri build 更新 release 产物
-- [ ] 2026-09-06 commit + 用户验收
+- [x] 已取消(2026-09-06)：首版 AppLibraryDialog 方案已实现后整体 revert，实际诉求改为选中态绿色高亮
+- [x] 已取消(2026-09-06)：移除 AppPickerDialog 的计划随首版方案一起关闭；DockEditor 继续使用该组件
+- [x] 已取消(2026-09-06)：原方案无需继续验收，revert 和替代实现提交见下方记录
 - [x] 2026-09-06 App.tsx：appPickerDesk → appManagerOpen；按钮改「应用库管理」；新 AppLibraryDialog（搜索+加库+扫描合并+多选删库，无 desk 写入）；AppPickerDialog 保留（DockEditor 仍在用）
 - [x] 2026-09-06 npm run build 绿 + tauri build 更新 release 产物并拉起（fe68808）
-- [ ] 2026-09-06 用户验收
+- [x] 已取消(2026-09-06)：原方案已 revert，不再等待该方案验收
 - [x] 已取消(2026-09-06) 「放入应用」弹窗改纯应用库管理——用户表达偏差，已 revert（af2a187）；
       实际诉求=弹窗选中态改绿色高亮（ff35cea）。上桌写入行为保持原样
 
@@ -597,11 +597,11 @@ pm run tauri build 并气泡提示，完成后重试即可。
 > 用户定调：上桌入口已有（「放入应用」弹窗，绿色选中即写入 desk）；侧栏应用库只管库本身。
 > 卡片改只读，勾选仅靠左上角方框（批量删除）。
 
-- [ ] 2026-09-06 EditorAppLibrary：去 onToggleApp/desk/Desk✓，卡片只读+方框勾选
-- [ ] 2026-09-06 npm run build + tauri build 更新 release + commit + 用户验收
+- [x] 2026-09-11 台账去重：EditorAppLibrary 实现计划已被下方 `f85841e` 完成记录覆盖
+- [x] 2026-09-11 台账去重：构建与提交已完成；用户明确验收仍按下方 `[?]` 如实保留
 - [x] 2026-09-06 EditorAppLibrary：去 onToggleApp/desk/Desk✓，卡片只读+方框勾选（f85841e）；
       顺手删 App.tsx 失引用的 desk 变量；npm build + tauri build 绿，新配置器已拉起
-- [ ] 2026-09-06 用户验收
+- [?] 2026-09-06 用户验收：未找到明确回复“通过”的记录；实现已在 master，后续触及应用库时纳入独立回归
 
 ### UI-小改：Desk 属性栏去掉全量缩略条（2026-09-06 追加）
 
@@ -663,7 +663,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 graph.ts 端口错开 + graph.test.ts 回归（33/33）；build + tauri build + 拉起完成
 - [x] 2026-09-06 用户验收（2026-09-06，回复“验收通过 合并”）
 
-## UI-006 Room 全屏预览（2026-09-06 开工，当前项）
+## UI-006 Room 全屏预览（2026-09-06 原路线取消，历史记录）
 
 > 背景：内嵌画布/预览被缩进小框，大小与叠层看不准。用户拍板走全屏预览路线，分三步：
 > 006 全屏只读预览（应用内窗口，复用 dext:// 预览通道）→ 007 预览窗口 Widget 拖动
@@ -677,7 +677,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 用户反馈（2026-09-06「不是啊…」）：要的是真桌面拖动编辑；UI-006 实现保留可随时 revert；
       UI-007 取消，改立 WIDGET-DRAG-001
 
-## WIDGET-DRAG-001 真桌面 Widget 拖动编辑（2026-09-06 开工，当前项）
+## WIDGET-DRAG-001 真桌面 Widget 拖动编辑（2026-09-07 已验收，历史记录）
 
 > 用户定调：在使用过程中直接在桌面拖动编辑 Widget（像桌面图标那样），placement 持久化；
 > 实机不稳则视情况整体回退（参照 DOCK-UX-001 先例，ERRORS #65 风险已知）。
@@ -708,11 +708,11 @@ pm run tauri build 并气泡提示，完成后重试即可。
       页面已解析——真正断点在导入：用户走「导入 Widget」文件夹导入器（硬编码 permissions:[]，不读
       creator.json），widget id 变成 "content" 且无权限声明 → SDK 全丢。已直接修 MSIroom/v2 两个
       Room（id/权限/目录改名 clock-hardware），绕过坏导入
-- [ ] 2026-09-06 待办：import_widget 文件夹导入器接入 creator.json（id/权限/热点）；Widget 删除应清理
+- [x] 2026-09-11 已迁移至 ROADMAP 唯一下一项 UI-008：import_widget 文件夹导入器接入 creator.json（id/权限/热点）；Widget 删除应清理
       Room 内孤儿资源目录（当前删除只改草稿，残留文件会让后续导入/保存撞 undeclared 校验）；
-      硬件链验证通过后移除 main.js/Player 临时诊断（ERRORS #68 后续）
-- [ ] 2026-09-06 用户重开 Room → 重新应用：复验硬件数据 + Widget 拖动
-- [ ] 2026-09-06 用户重应用 Room：复验硬件数据 + Widget 拖动
+      硬件链临时诊断已由 `ddc0bd0` 移除
+- [x] 2026-09-11 台账收口：重开/重新应用后的硬件数据与 Widget 拖动复验，已被下方 2026-09-07 用户验收记录覆盖
+- [x] 2026-09-11 台账收口：重复的“用户重应用”待办，已被下方完成记录覆盖
 - [x] 2026-09-06 用户复验硬件仍空。真因（ERRORS #68）：Lively 注入负载是 JSON 字符串，能力桥只吃
       对象 → sanitize 全零且被静默吞掉；main.js 注入边界统一 parseLivelyPayload（四个注入函数全过）；
       node --check 通过；提交后用户重应用（渲染器直接从 worktree 路径加载，无需重建）
@@ -720,3 +720,17 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 2026-09-06 用户重应用 Room 复验硬件数据 + Widget 拖动
 - [x] 2026-09-06 验收通过（2026-09-07 用户回复“验收通过”）：硬件数据全通、Widget 拖动/缩放真机正常、
       骨架屏观感与网速求和修复一并确认
+
+## OPS-004 master 状态文档对齐（2026-09-11 开工）
+
+> 目标：以 `master` 提交历史和现有文件为事实源，统一 ROADMAP、TODO 与独立验收记录，让当前状态、最近完成、唯一下一项和历史验收例外互相一致。
+> 范围外：不修改产品代码、Room/运行包或用户素材；不清理历史分支、worktree、stash；不替未实际执行的人工验收补写“通过”。
+> 人工验收：核对 ROADMAP 当前控制台、近期路线和验收债，再核对 TODO 最后一节及 UI-V2-001、UI-006、WIDGET-DRAG-001 验收卡，确认都与 `master` 历史一致。
+
+- [x] 从 `master` `a8a865e` 建立独立 worktree 和 `docs/ops-004-master-docs-sync` 分支，确认基线干净（2026-09-11）
+- [x] 审计 `master` 最近提交、ROADMAP/TODO、现有验收卡、未合并分支和运行态工作区差异（2026-09-11）
+- [x] 重整 ROADMAP 当前控制台，修正 UI-V2-001 等前后状态冲突，明确 UI-008 为唯一下一项（2026-09-11）
+- [x] 收口 TODO 历史未勾项：只补充后续事实或迁移去向，不伪造用户验收（2026-09-11）
+- [x] 更新 UI-V2-001 验收例外，并补齐 UI-006、WIDGET-DRAG-001 的独立历史验收卡（2026-09-11）
+- [ ] 运行文档一致性检查，核对具名文件并提交纯文档改动
+- [ ] 用户按 `dev_docs/acceptance/OPS-004-master-docs-sync.md` 验收

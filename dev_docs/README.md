@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-08-31。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-09-11。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -237,9 +237,11 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 运行身份核对 | `scripts\verify-runtime-identity.ps1`（只读报告 Core 二进制 ProductName、进程路径、mutex、pipe、data、log） |
 | 查代码 | `codegraph explore/node` 优先（索引已建） |
 
-## 七、能力基线（master，2026-08-30）
+## 七、能力基线（master `a8a865e`，2026-09-07）
 
 - 桌面：图标网格与 Dock 保持；方向预设及 image/video/html switch 共用现有切桌入口；HTML background/start/switch/idle 全部受控挂载。
 - 持久化：源 Room 严格 v2、运行包唯一可信 `__source`、Widget 资源镜像、顶层 IPC 和双写边界已收紧。
-- 配置器：Room 层级树和导图属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览；Desk 身份级排序、Dock 覆盖和成组 HTML 资产均按 v2 单一写出器保存。
+- 配置器：流程图与选中节点属性栏可为 Desk/start/独立 idle 节点/两个方向的 switch 选择 image/video/自包含单 HTML，复制进固定目录后更新内存预览；Desk 身份级排序、Dock 覆盖和成组 HTML 资产均按 v2 单一写出器保存。重复的 Room 层级侧栏已从 master 删除。
+- Room v2 编辑与分享：配置器已接通 v2 Room 创建/复制/重命名/删除、Scene/Widget、权限审阅、zip 导入导出、Creator Pack 检查与隔离预览；UI-V2-001 已合并 master。
+- 真桌面 Widget：编辑模式支持长按进入、拖动、缩放和 placement 双写持久化；时间、CPU/GPU、内存、网速等 P1 只读能力链及加载骨架屏已通过真机验收。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。

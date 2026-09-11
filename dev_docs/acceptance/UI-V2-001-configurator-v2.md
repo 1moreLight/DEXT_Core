@@ -1,16 +1,16 @@
 # UI-V2-001 配置器 v2 端到端验收
 
-- 状态：开发中（完成度复审后续作）
-- 分支：`feat/ui-v2-001-configurator-v2`
-- 提交：`947ca64`（Player v2 启动参数命名空间修复）
+- 状态：已完成（2026-09-05 用户授权直接合并，并明确豁免一次性逐项人工验收）
+- 分支：`feat/ui-v2-001-configurator-v2`（已合并并清理）
+- 提交：master merge `e8cd700`；合并后状态记录 `f4b672c`
 - 目标：一次性交付唯一 Room v2 配置器、Scene/Widget 运行宿主、受控系统能力、安全分享和 AI 前端包创作闭环。
 - 范围外：创意工坊云服务、安装器、多显示器、内置第三方 AI 服务、Dext 代理联网、任意系统命令与 v1 兼容。
 
 ## 自动检查
 
 - [x] Room v2 Schema、资源、权限、zip 正反 fixtures 全部通过。
-- [x] `tauri-ui` 28 项单元测试、`npm test` 与 `npm run build` 通过。
-- [x] `tauri-ui/src-tauri` 的 `cargo check`、`cargo test --lib` 通过（33 passed，3 个真实桌面测试显式 ignored）。
+- [x] 合并前最终复跑：`tauri-ui` vitest 32/32、`npm run build` 通过。
+- [x] `tauri-ui/src-tauri` 的 `cargo check`、`cargo test --lib` 通过（36 passed，3 个真实桌面测试显式 ignored）。
 - [x] `node --check wallpapers/dext-room/main.js` 和 capability bridge 自动测试通过。
 - [x] C#/.proto 改动已通过 `scripts/build.ps1`；最终 `scripts/start.ps1` 启动当前 worktree 的 Core 与 Tauri 配置器，Core 身份、mutex、pipe 正确，Player 保持 Release 构建规则。
 - [x] 多 Widget 生命周期、坐标、拖放、层级、图标避让、历史持久化、流程图和权限桥有自动回归。
@@ -18,6 +18,8 @@
 - [x] `git diff --check` 通过；提交只包含本工作包具名文件，主 worktree 用户 `rooms/` 未修改或暂存。
 
 ## 人工验收
+
+> 以下 14 项是原定的一次性整体验收清单。用户于 2026-09-05 明确要求“直接合并”，豁免逐项执行；因此保留未勾状态作为真实历史，不能解释为 14 项均已逐项验证。
 
 1. [ ] 启动真实 Dext 配置器，确认空间库可搜索、选择、创建、复制、重命名、删除、导入、导出、应用和重新应用 v2 Room；状态与 Core 真值一致。
 2. [ ] 打开 Room 编辑器，确认保留 Dext 现有视觉语言；左侧层级、中间画布/流程、右侧属性权限和顶部保存/预览/应用清晰可用，常用窗口尺寸无关键遮挡。
@@ -36,7 +38,7 @@
 
 ## 通过标准
 
-- 所有自动检查和人工验收必选项通过。
+- 标准流程要求所有自动检查和人工验收必选项通过；本包最终按用户明确授权的例外流程收口。
 - 不存在只在 mock 中工作、只有按钮没有真实链路、权限绕过、数据丢失或阻断性视觉问题。
 - v1/demo 兼容路径和被替代的旧配置器入口已经清理。
 - 没有改动用户未提交的 `rooms/`。
@@ -46,3 +48,5 @@
 - 2026-09-02：自动检查与真实 Core/Tauri 启动通过，提交用户一次性人工验收；用户明确通过前禁止合并 master。
 - 2026-09-02：完成度复审发现空间库排序/复制/重命名与 Desk 重排缺少真实入口，撤回待验收状态，继续在同一工作包开发。
 - 2026-09-03：真实铺设复现 Player 参数重复前缀并修复；`scripts/build.ps1` 完成 Release Player/Watchdog/Core，重新铺设后 Core/Watchdog/Player 存活，媒体/音量活体通过。人工验收仍未完成，保持开发中。
+- 2026-09-05：完成度复审和最终自动检查通过；用户明确回复“直接合并吧”，豁免一次性逐项人工验收。分支以 merge `e8cd700` 合入 master，后续状态记录为 `f4b672c`。
+- 2026-09-11：OPS-004 按 master 历史补齐本卡状态；未把未执行的 14 项人工步骤倒填为通过。
