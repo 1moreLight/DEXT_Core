@@ -117,6 +117,6 @@
 
   Expected: 所有命令退出码 0。
 
-- [ ] **Step 3: Commit named files**
+- [x] **Step 3: Commit named files**
 
   先用 `git status --short` 核对，仅暂存本计划列出的具名文件，再提交到 `feat/DESK-EDIT-001-safe-placement-edit-mode`；提交后将验收卡和 ROADMAP 标为待验收，不合并 `master`。

@@ -7,7 +7,7 @@
 
 | 角色 | 工作包 | 状态 | 分支 | 结果 |
 |---|---|---|---|---|
-| 当前工作包 | **DESK-EDIT-001 Desk 安全放置与精简编辑** | 待验收 | `feat/DESK-EDIT-001-safe-placement-edit-mode` | 新增 Desk 应用立即寻找安全空位；真桌面长按编辑只保留桌面图标移动 |
+| 当前工作包 | **DESK-EDIT-001 Desk 安全放置与精简编辑** | 待验收 | `feat/DESK-EDIT-001-safe-placement-edit-mode`（实现 `d8655a9`） | 新增 Desk 应用立即寻找安全空位；真桌面长按编辑只保留桌面图标移动 |
 | 最近完成 | **OPS-004 master 状态文档对齐** | 已完成（2026-09-11 用户验收通过） | master `9342a21` | 以 `master` 为事实源统一 ROADMAP、TODO 与验收记录；未改产品代码或运行态文件 |
 | 最近主要里程碑 | **UI-V2-001 配置器 v2 端到端闭环** | 已完成（2026-09-05 用户授权直接合并并豁免逐项人工验收） | master merge `e8cd700` | Room v2 配置器、Scene/WidgetHost、受控系统能力、安全分享与 AI Creator Pack 基础链路入库 |
 | 唯一下一项 | **UI-008 桌面画布 tab 移除与 Widget 资源收口** | 下一项 | 尚未开分支 | 删除被真桌面编辑取代的内嵌画布；让文件夹导入读取 `creator.json`；删除 Widget 时清理孤儿资源目录 |
