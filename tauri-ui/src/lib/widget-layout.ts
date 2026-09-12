@@ -25,6 +25,7 @@ export interface IconAvoidanceResult {
   icons: RoomIcon[];
   moved: number[];
   unresolved: number[];
+  committed: boolean;
 }
 
 export const DESKTOP_ICON_GRIDS = {
@@ -41,6 +42,17 @@ export type WidgetAlignment = "left" | "center-x" | "right" | "top" | "center-y"
 
 const overlaps = (a: Rect, b: Rect) =>
   a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+
+const ICON_SAFETY_MARGIN = 40;
+
+function withIconSafetyMargin(rect: Rect): Rect {
+  return {
+    x: rect.x - ICON_SAFETY_MARGIN,
+    y: rect.y - ICON_SAFETY_MARGIN,
+    width: rect.width + ICON_SAFETY_MARGIN * 2,
+    height: rect.height + ICON_SAFETY_MARGIN * 2,
+  };
+}
 
 export function clampPlacement(
   placement: WidgetPlacement,
@@ -175,9 +187,9 @@ export function deskDockReserve(desk: Desk, roomDock?: DockConfig): Rect | null 
 }
 
 export function widgetPlacementObstacles(widgets: WidgetDefinition[]): Rect[] {
-  return widgets.map(({ placement }) => ({
-    x: placement.x - 40,
-    y: placement.y - 40,
+  return widgets.map(({ placement }) => withIconSafetyMargin({
+    x: placement.x,
+    y: placement.y,
     width: placement.width,
     height: placement.height,
   }));
@@ -192,25 +204,40 @@ export function findOpenDeskIconCell(
     throw new Error("icon grid dimensions must be positive");
   }
   const occupied = new Set<string>();
+  const occupiedCells: Array<{ x: number; y: number }> = [];
   desk.icons.forEach((icon, index) => {
     const x = Math.min(Math.max(Math.round(icon.x ?? index % grid.columns), 0), grid.columns - 1);
     const y = Math.min(Math.max(Math.round(icon.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1);
-    occupied.add(cellKey(x, y));
+    if (!occupied.has(cellKey(x, y))) {
+      occupied.add(cellKey(x, y));
+      occupiedCells.push({ x, y });
+    }
   });
   const dock = deskDockReserve(desk, roomDock);
   const blocked = [
     ...widgetPlacementObstacles(desk.widgets ?? []),
-    ...(dock ? [{ ...dock, x: dock.x - 40, y: dock.y - 40 }] : []),
+    ...(dock ? [withIconSafetyMargin(dock)] : []),
   ];
 
+  const candidates: Array<{ x: number; y: number; adjacent: number; distance: number }> = [];
   for (let y = 0; y < grid.rows; y += 1) {
     for (let x = 0; x < grid.columns; x += 1) {
       if (occupied.has(cellKey(x, y))) continue;
       if (blocked.some((rect) => overlaps(iconRect(x, y, grid), rect))) continue;
-      return { x, y };
+      if (occupiedCells.length === 0) return { x, y };
+      const distances = occupiedCells.map((cell) => Math.abs(x - cell.x) + Math.abs(y - cell.y));
+      candidates.push({
+        x,
+        y,
+        adjacent: distances.filter((distance) => distance === 1).length,
+        distance: Math.min(...distances),
+      });
     }
   }
-  return null;
+  candidates.sort((a, b) =>
+    b.adjacent - a.adjacent || a.distance - b.distance || a.y - b.y || a.x - b.x
+  );
+  return candidates[0] ? { x: candidates[0].x, y: candidates[0].y } : null;
 }
 
 function candidates(originX: number, originY: number, grid: IconGrid) {
@@ -233,6 +260,7 @@ export function avoidIconObstacles(
     throw new Error("icon grid dimensions must be positive");
   }
   const blocked = [...obstacles, ...reserved];
+  const originalIcons = sourceIcons.map((icon) => ({ ...icon, launch: { ...icon.launch } }));
   const icons = sourceIcons.map((icon) => ({ ...icon, launch: { ...icon.launch } }));
   const conflicts = new Set<number>();
   const occupied = new Set<string>();
@@ -250,24 +278,35 @@ export function avoidIconObstacles(
     }
   });
 
+  const pending = [...conflicts];
   const moved: number[] = [];
-  const unresolved: number[] = [];
-  for (const index of conflicts) {
-    const icon = icons[index];
-    const originX = icon.x ?? 0;
-    const originY = icon.y ?? 0;
-    const target = candidates(originX, originY, grid).find(({ x, y }) => {
-      if (occupied.has(cellKey(x, y))) return false;
-      return !blocked.some((rect) => overlaps(iconRect(x, y, grid), rect));
-    });
-    if (!target) {
-      unresolved.push(index);
-      continue;
+  while (pending.length) {
+    const options = pending.map((index) => {
+      const icon = icons[index];
+      const originX = icon.x ?? 0;
+      const originY = icon.y ?? 0;
+      const targets = candidates(originX, originY, grid).filter(({ x, y }) =>
+        !occupied.has(cellKey(x, y)) && !blocked.some((rect) => overlaps(iconRect(x, y, grid), rect))
+      );
+      return { index, originX, originY, targets };
+    }).sort((a, b) => a.targets.length - b.targets.length || a.index - b.index);
+    const next = options[0];
+    if (!next.targets.length) {
+      return {
+        icons: originalIcons,
+        moved: [],
+        unresolved: [...conflicts],
+        committed: false,
+      };
     }
+    const { index, originX, originY } = next;
+    const target = next.targets[0];
+    const icon = icons[index];
     icon.x = target.x;
     icon.y = target.y;
     occupied.add(cellKey(target.x, target.y));
     if (target.x !== originX || target.y !== originY) moved.push(index);
+    pending.splice(pending.indexOf(index), 1);
   }
-  return { icons, moved, unresolved };
+  return { icons, moved, unresolved: [], committed: true };
 }
