@@ -760,7 +760,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 从 `master` `da01ed7` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-live-001` 和分支 `feat/DESK-LIVE-001-live-layout-sync`；基线 `npm test` 39/39 通过
 - [x] 用户确认需求：智能靠近现有图标组；当前 Room 实时热同步；默认新增后最小化并自动进入编辑；Widget 优先、冲突图标松手后让位
 - [x] 完成方案比较、错误分册复核、正式设计与独立验收卡
-- [ ] 用户复核正式设计
-- [ ] 设计通过后编写实施计划并按 TDD 执行
+- [x] 2026-09-12 用户复核正式设计并回复“通过”
+- [x] 编写 `docs/superpowers/plans/2026-09-12-desk-live-layout-sync.md`，拆为 8 个可独立测试/提交的实施任务
+- [ ] 按实施计划和 TDD 顺序执行
 - [ ] 完成自动检查、提交实现并转待验收
 - [ ] 用户按独立验收卡确认

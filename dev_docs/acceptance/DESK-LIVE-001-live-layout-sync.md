@@ -1,6 +1,6 @@
 # DESK-LIVE-001 实时应用放置与 Widget 优先避让验收
 
-- 状态：草拟
+- 状态：设计通过，实施计划完成
 - 分支：`feat/DESK-LIVE-001-live-layout-sync`
 - 设计：`docs/superpowers/specs/2026-09-11-desk-live-layout-sync-design.md`
 - 目标：当前 Room 放入应用后无需保存/重新应用即可在真实桌面编辑；Widget 拖动/缩放后优先占位并让冲突图标自动避让。
@@ -29,3 +29,4 @@
 ## 验收记录
 
 - 2026-09-11：用户确认实时热同步、默认自动最小化进入编辑、智能成组放置和 Widget 优先避让设计；等待设计文档复核后进入实施计划。
+- 2026-09-12：用户回复“通过”；设计评审完成，实施计划见 `docs/superpowers/plans/2026-09-12-desk-live-layout-sync.md`，下一步按 TDD 开始实现。
