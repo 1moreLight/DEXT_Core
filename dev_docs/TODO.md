@@ -768,6 +768,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 3：Rust 受控布局写入与 Core RPC 客户端；定向 Rust 3/3 与 cargo check 通过（2026-09-12）
 - [x] Task 4：Core → Player `Type=26` 类型化 Room 布局消息；Release build.ps1 通过（2026-09-12）
 - [x] Task 5：真实桌面同 Desk 图标热更新、编辑高亮与 Widget 原子避让；Node 纯函数 3/3 和语法检查通过（2026-09-12）
-- [~] Task 6：配置器画布遵守同一 Widget 原子回退语义
+- [x] Task 6：配置器画布 Widget 避让改为整体回退，Dock 保留区四周一致；Vitest 与前端 build 通过（2026-09-12）
+- [~] Task 7：接通配置器实时同步、自动最小化与焦点回读
 - [ ] 完成自动检查、提交实现并转待验收
 - [ ] 用户按独立验收卡确认
