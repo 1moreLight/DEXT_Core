@@ -17,6 +17,11 @@ export interface DeskLayoutSyncResult {
   liveError: string | null;
 }
 
+export interface DeskLayoutSyncCompletion {
+  latest: boolean;
+  result: DeskLayoutSyncResult | null;
+}
+
 export function deskAppSyncOutcome(input: {
   action: "added" | "removed";
   preference: boolean;
@@ -77,28 +82,25 @@ export function mergeLiveLayoutFields(
 }
 
 type Waiter = {
-  resolve: (result: DeskLayoutSyncResult) => void;
+  resolve: (completion: DeskLayoutSyncCompletion) => void;
   reject: (reason: unknown) => void;
 };
 
 export function createDeskLayoutSyncQueue(
   send: (request: DeskLayoutSyncRequest) => Promise<DeskLayoutSyncResult>,
   onSettled: (request: DeskLayoutSyncRequest, result: DeskLayoutSyncResult) => void,
-): { submit(request: DeskLayoutSyncRequest): Promise<DeskLayoutSyncResult> } {
+): { submit(request: DeskLayoutSyncRequest): Promise<DeskLayoutSyncCompletion> } {
   let sending = false;
   let pending: DeskLayoutSyncRequest | null = null;
-  let waiters: Waiter[] = [];
+  let activeWaiters: Waiter[] = [];
+  let pendingWaiters: Waiter[] = [];
 
-  const settle = (result: DeskLayoutSyncResult) => {
-    const current = waiters;
-    waiters = [];
-    current.forEach(({ resolve }) => resolve(result));
+  const settle = (waiters: Waiter[], latest: boolean, result: DeskLayoutSyncResult | null) => {
+    waiters.forEach(({ resolve }) => resolve({ latest, result }));
   };
 
-  const reject = (error: unknown) => {
-    const current = waiters;
-    waiters = [];
-    current.forEach(({ reject: rejectWaiter }) => rejectWaiter(error));
+  const reject = (waiters: Waiter[], error: unknown) => {
+    waiters.forEach(({ reject: rejectWaiter }) => rejectWaiter(error));
   };
 
   const run = (request: DeskLayoutSyncRequest) => {
@@ -106,7 +108,11 @@ export function createDeskLayoutSyncQueue(
       (result) => {
         if (pending) {
           const next = pending;
+          const nextWaiters = pendingWaiters;
           pending = null;
+          pendingWaiters = [];
+          settle(activeWaiters, false, result);
+          activeWaiters = nextWaiters;
           run(next);
           return;
         }
@@ -114,34 +120,43 @@ export function createDeskLayoutSyncQueue(
         try {
           onSettled(request, result);
         } finally {
-          settle(result);
+          settle(activeWaiters, true, result);
+          activeWaiters = [];
         }
       },
       (error) => {
         if (pending) {
           const next = pending;
+          const nextWaiters = pendingWaiters;
           pending = null;
+          pendingWaiters = [];
+          settle(activeWaiters, false, null);
+          activeWaiters = nextWaiters;
           run(next);
           return;
         }
         sending = false;
-        reject(error);
+        reject(activeWaiters, error);
+        activeWaiters = [];
       },
     );
   };
 
   return {
     submit(request) {
-      const response = new Promise<DeskLayoutSyncResult>((resolve, rejectWaiter) => {
-        waiters.push({ resolve, reject: rejectWaiter });
-      });
-      if (sending) {
-        pending = request;
-      } else {
+      const waiter = new Promise<DeskLayoutSyncCompletion>((resolve, reject) => {
+        const nextWaiter = { resolve, reject };
+        if (sending) {
+          if (pending) settle(pendingWaiters, false, null);
+          pending = request;
+          pendingWaiters = [nextWaiter];
+          return;
+        }
         sending = true;
+        activeWaiters = [nextWaiter];
         run(request);
-      }
-      return response;
+      });
+      return waiter;
     },
   };
 }

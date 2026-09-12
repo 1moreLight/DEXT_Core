@@ -87,7 +87,7 @@ describe("live Desk layout helpers", () => {
     expect(draft.desks[0].icons[0]).toMatchObject({ label: "Old", x: 0, y: 0 });
   });
 
-  it("serializes requests and settles coalesced callers from the latest snapshot only", async () => {
+  it("serializes requests and marks callers superseded by the latest snapshot", async () => {
     const first = deferred<DeskLayoutSyncResult>();
     const latest = deferred<DeskLayoutSyncResult>();
     const sent: string[] = [];
@@ -112,8 +112,35 @@ describe("live Desk layout helpers", () => {
 
     latest.resolve(result());
 
-    await expect(Promise.all([firstCaller, middleCaller, latestCaller])).resolves.toEqual([result(), result(), result()]);
+    await expect(Promise.all([firstCaller, middleCaller, latestCaller])).resolves.toEqual([
+      { latest: false, result: result() },
+      { latest: false, result: null },
+      { latest: true, result: result() },
+    ]);
     expect(settled).toEqual(["latest.exe"]);
+  });
+
+  it("marks an earlier add as stale when a removal becomes the latest layout", async () => {
+    const add = deferred<DeskLayoutSyncResult>();
+    const remove = deferred<DeskLayoutSyncResult>();
+    const sent: string[] = [];
+    const sends = [add, remove];
+    const queue = createDeskLayoutSyncQueue(
+      async (next) => {
+        sent.push(next.icons[0].launch.target);
+        return sends.shift()!.promise;
+      },
+      () => {},
+    );
+
+    const added = queue.submit(request("added.exe"));
+    const removed = queue.submit(request("removed.exe"));
+    add.resolve(result());
+
+    await vi.waitFor(() => expect(sent).toEqual(["added.exe", "removed.exe"]));
+    remove.resolve(result());
+    await expect(added).resolves.toMatchObject({ latest: false });
+    await expect(removed).resolves.toMatchObject({ latest: true, result: result() });
   });
 
   it("minimizes only after a newly added icon has been saved and hot-synced", () => {

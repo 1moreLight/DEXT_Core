@@ -993,7 +993,9 @@ export default function App() {
       highlightTarget: action === "added" ? target : null,
     };
     try {
-      const result = await deskLayoutSyncQueueRef.current.submit(request);
+      const completion = await deskLayoutSyncQueueRef.current.submit(request);
+      if (!completion.latest || !completion.result) return;
+      const result = completion.result;
       if (result.roomJson) {
         const baseline = normalizeRoomJson(result.roomJson);
         roomBaselineRef.current = baseline;
