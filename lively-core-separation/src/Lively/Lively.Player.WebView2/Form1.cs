@@ -10,6 +10,7 @@ using Lively.Models.Message;
 using Lively.Player.WebView2.Extensions.WebView2;
 using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -769,6 +770,28 @@ namespace Lively.Player.WebView2
                         running = appStatus.Running,
                     };
                     webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(statusPayload));
+                    break;
+                case MessageType.cmd_room_layout_sync:
+                    var layout = (LivelyMessageRoomLayoutSyncCmd)obj;
+                    if (string.IsNullOrWhiteSpace(layout.RoomJson))
+                        break;
+                    try
+                    {
+                        var room = JObject.Parse(layout.RoomJson);
+                        var layoutPayload = new
+                        {
+                            type = "dext:room-layout",
+                            room,
+                            deskIndex = layout.DeskIndex,
+                            enterEdit = layout.EnterEdit,
+                            highlightTarget = layout.HighlightTarget ?? string.Empty,
+                        };
+                        webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(layoutPayload));
+                    }
+                    catch (JsonReaderException)
+                    {
+                        // Reject malformed payloads before they cross into the page.
+                    }
                     break;
                 case MessageType.cmd_system_control_response:
                     var response = (LivelyMessageSystemControlResponse)obj;

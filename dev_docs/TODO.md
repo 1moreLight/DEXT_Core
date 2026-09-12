@@ -766,6 +766,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 1：智能成组图标放置、四周安全边距与 Widget 避让整体回退；定向 Vitest 25/25 通过（2026-09-12）
 - [x] Task 2：本地偏好、布局焦点合并与 latest-wins 热同步队列；定向 Vitest 5/5 通过（2026-09-12）
 - [x] Task 3：Rust 受控布局写入与 Core RPC 客户端；定向 Rust 3/3 与 cargo check 通过（2026-09-12）
-- [~] Task 4：Core → Player 类型化 Room 布局消息
+- [x] Task 4：Core → Player `Type=26` 类型化 Room 布局消息；Release build.ps1 通过（2026-09-12）
+- [~] Task 5：真实桌面热更新图标与 Widget 原子避让
 - [ ] 完成自动检查、提交实现并转待验收
 - [ ] 用户按独立验收卡确认
