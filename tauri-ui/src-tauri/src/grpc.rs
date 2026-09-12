@@ -8,7 +8,7 @@ use tokio::net::windows::named_pipe::ClientOptions;
 use crate::proto::desktop::{
     CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, SetSystemVolumeRequest,
     SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
-    SystemVolumeSnapshot,
+    SystemVolumeSnapshot, WallpaperMessageRequest,
 };
 use crate::proto::grpc_dotnet_named_pipes::generated::{
     transport_message::Data, Headers, PayloadInfo, RequestControl, RequestInit, TransportMessage,
@@ -334,6 +334,20 @@ pub async fn set_wallpaper(folder: &str) -> Result<(), String> {
     verified_call(
         "/Lively.Grpc.Common.Proto.Desktop.DesktopService/SetWallpaper",
         &req.encode_to_vec(),
+    )
+    .await
+    .map(|_| ())
+}
+
+pub async fn send_message_wallpaper(lively_info_path: &str, msg: &str) -> Result<(), String> {
+    let request = WallpaperMessageRequest {
+        monitor_id: String::new(),
+        lively_info_path: lively_info_path.to_string(),
+        msg: msg.to_string(),
+    };
+    verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/SendMessageWallpaper",
+        &request.encode_to_vec(),
     )
     .await
     .map(|_| ())
