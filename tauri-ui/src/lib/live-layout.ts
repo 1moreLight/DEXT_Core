@@ -17,6 +17,33 @@ export interface DeskLayoutSyncResult {
   liveError: string | null;
 }
 
+export function deskAppSyncOutcome(input: {
+  action: "added" | "removed";
+  preference: boolean;
+  isActiveRoom: boolean;
+  coreConnected: boolean;
+  result?: DeskLayoutSyncResult;
+}): { minimize: boolean; closePicker: boolean; message: string } {
+  if (!input.isActiveRoom) {
+    return { minimize: false, closePicker: false, message: "应用 Room 后可在桌面编辑" };
+  }
+  if (!input.coreConnected) {
+    return { minimize: false, closePicker: false, message: "Dext Core 未连接，已保留草稿" };
+  }
+  if (input.result && !input.result.active) {
+    return { minimize: false, closePicker: false, message: "应用 Room 后可在桌面编辑" };
+  }
+  if (!input.result?.saved || !input.result.liveUpdated) {
+    return { minimize: false, closePicker: false, message: "已保存，桌面同步失败" };
+  }
+  const shouldEnterEdit = input.action === "added" && input.preference;
+  return {
+    minimize: shouldEnterEdit,
+    closePicker: shouldEnterEdit,
+    message: shouldEnterEdit ? "已同步到桌面编辑" : "已实时同步到真实桌面",
+  };
+}
+
 function cloneIcons(icons: RoomIcon[]): RoomIcon[] {
   return icons.map((icon) => ({ ...icon, launch: { ...icon.launch } }));
 }

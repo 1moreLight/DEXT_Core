@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { RoomEditorSnapshot } from "./editor-history";
 import {
   createDeskLayoutSyncQueue,
+  deskAppSyncOutcome,
   mergeLiveLayoutFields,
   type DeskLayoutSyncRequest,
   type DeskLayoutSyncResult,
@@ -113,5 +114,39 @@ describe("live Desk layout helpers", () => {
 
     await expect(Promise.all([firstCaller, middleCaller, latestCaller])).resolves.toEqual([result(), result(), result()]);
     expect(settled).toEqual(["latest.exe"]);
+  });
+
+  it("minimizes only after a newly added icon has been saved and hot-synced", () => {
+    expect(deskAppSyncOutcome({
+      action: "added",
+      preference: true,
+      isActiveRoom: true,
+      coreConnected: true,
+      result: result(),
+    })).toMatchObject({ minimize: true, closePicker: true });
+
+    expect(deskAppSyncOutcome({
+      action: "added",
+      preference: true,
+      isActiveRoom: true,
+      coreConnected: true,
+      result: { ...result(), liveUpdated: false, liveError: "pipe failed" },
+    })).toMatchObject({ minimize: false, closePicker: false, message: "已保存，桌面同步失败" });
+
+    expect(deskAppSyncOutcome({
+      action: "removed",
+      preference: true,
+      isActiveRoom: true,
+      coreConnected: true,
+      result: result(),
+    })).toMatchObject({ minimize: false, closePicker: false });
+
+    expect(deskAppSyncOutcome({
+      action: "added",
+      preference: true,
+      isActiveRoom: true,
+      coreConnected: true,
+      result: { ...result(), active: false, saved: false, liveUpdated: false },
+    })).toMatchObject({ message: "应用 Room 后可在桌面编辑" });
   });
 });
