@@ -160,7 +160,8 @@ revision 明确标为 `Stress · rapid`。Playwright 同时断言外层 FLIP ani
 修复：统一以“复选框或系统媒体查询命中”作为 reduced-motion 来源；任一来源变为 reduce 时立即
 发布无动画 revision 并保持已写入的最终坐标，同时在 class 和媒体规则两层禁止内层 jiggle。若当前
 是拖拽预览，则继续使用 preview mode 以保留 `previewBase`，后续取消仍能恢复。Playwright 覆盖运行中
-切换、系统偏好以及降速后取消预览。
+切换、系统偏好以及降速后取消预览；生产 CSS 同时移除 icon face 与 placeholder 的 transition，避免托起
+和占位仍缓动。
 
 防再犯：reduced-motion 不只是创建动画前的分支；所有运行时偏好都要测试初始命中和中途切换，
 并分别验证脚本动画与 CSS 动画。
@@ -250,3 +251,45 @@ drag 对象和 pointer capture。旧 pointerup 因此仍有提交权。
 
 防再犯：视觉对象的 jiggle 所有权应落在用户认知中的完整对象，而不是为了技术分层任意选内层；
 浏览器测试同时断言外框有 animation、内容层没有独立 animation。
+
+# #82 拖拽回归必须先证明手势真的进入 dragging
+
+现象：最初的真实桌面 Playwright 只检查“拖到 Dock 后未保存”和“热更新后旧松手未覆盖”，在图标/Widget
+根本没有开始拖动时也会得到相同终态，导致缺失手势实现仍可能假绿。
+
+原因：测试只断言负向结果，没有在 pointerdown 后验证 `.dragging` / `.widget-dragging`、placeholder 或预览
+动画等中间态；“什么都没发生”和“正确取消”无法区分。
+
+修复：每条取消/权威中断回归先断言手势状态已经建立，再投递 move、cancel、lost capture 或热更新；Widget
+让位额外断言真实图标节点存在 WAAPI animation，避免旧的直接改 left/top 实现蒙混通过。
+
+防再犯：涉及 cancel、rollback、stale callback 的测试必须采用“三段式”断言：进入事务 → 出现临时状态 →
+恢复或权威终态。只检查最后没有保存不构成有效拖拽测试。
+
+# #83 Dock 安全余量必须在 Room 坐标与屏幕像素之间换算
+
+现象：Widget 在 Room 逻辑坐标中与 Dock 保留 2px 后，1440×960 实际画面仍有约 0.9px 外接框侵入 Dock；
+Playwright 的真实 bounding box 检查失败。
+
+原因：Widget placement 使用 1920×1080 Room 坐标，Dock 命中来自屏幕像素；2 个逻辑像素缩放后不足
+2 个屏幕像素，整卡 ±0.38° rotate 的外接框又会额外增大。
+
+修复：Dock rect 先统一映射到 Room 坐标，生产 Widget 钳制使用 8 个逻辑像素的安全缝，再由真实 DOM
+bounding box 验证旋转暂停前后的卡片均不进入 Dock。图标避让仍对 Dock reserve 额外扩张 40 逻辑像素。
+
+防再犯：跨坐标系的安全距离必须注明单位；布局纯函数测试覆盖四个 Dock 方向，浏览器测试再用实际
+`getBoundingClientRect()` 验证最终视觉边界，不能把逻辑 px 直接当 CSS px。
+
+# #84 通用 abort 不能假定每种输入事务都有布局快照
+
+现象：对仍处于 500ms `pressing` 的控制器调用 `abort({restore:true})`，会把已发布图标快照清成空数组；
+press transaction 只有计时器和指针信息，并没有 `baseIcons`。
+
+原因：外部 Widget 和图标拖动都带布局基线，通用 abort 因而无条件执行 `cloneIcons(transaction.baseIcons)`，
+把不同状态的事务误当成同一结构。
+
+修复：只有事务显式携带 `baseIcons` 数组时才恢复 published icons；pressing 仅清 timer 和状态。Node 回归
+先进入 pressing，再 restore abort，验证原图标快照保持不变。
+
+防再犯：状态机共享清理入口时，恢复字段必须按状态或字段存在性判断；不能用一个“最大事务结构”假定
+所有状态都拥有相同快照。

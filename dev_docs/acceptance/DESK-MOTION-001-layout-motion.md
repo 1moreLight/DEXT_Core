@@ -1,6 +1,6 @@
 # DESK-MOTION-001 桌面自动重排动画验收
 
-- 状态：开发中（阶段 B）
+- 状态：待验收（阶段 B，未合并 master）
 - 分支：`feat/DESK-MOTION-001-layout-motion`
 - 设计：`docs/superpowers/specs/2026-09-19-desk-layout-motion-design.md`
 - 计划：`docs/superpowers/plans/2026-09-19-desk-layout-motion.md`
@@ -33,12 +33,22 @@
 
 ## 阶段 B：真实桌面集成（浏览器验收后）
 
-1. [ ] Widget 推开单个/多个图标、快速折返与无解回弹符合浏览器确认的运动语言。
-2. [ ] 图标连续跨格路径重排、取消与落位稳定；pointerup 只提交一次，Widget 不被图标排序移动，Dock 不接受放置。
-3. [ ] 当前 Room 实时新增/移除复用节点并正确动画；旧 revision 不覆盖新节点。
-4. [ ] 初次加载、Desk staging 切换和窗口缩放不播放自动重排动画。
-5. [ ] Desk 切换、Widget 内容、应用启动、Dock、保存与重启持久化不回归。
-6. [ ] 系统 reduced-motion 生效；布局读取与写入各批处理一次，以 60fps 为目标。
+### 自动检查
+
+- [x] Node 21/21：默认 MotionProfile、稳定身份/重复签名、move/enter/exit、80ms 候选稳定、重复 pointerup、长按中断、Widget 双快照回滚、路径重排、四向 Dock 钳制、revision/cancel/reduced-motion。
+- [x] 真实 `wallpapers/dext-room` Playwright 14/14：节点和 iframe 复用、热新增/移除、图标/Widget 拖动与缩放、Dock/取消/丢失捕获、权威更新、双击空白、启动/Dock 点击、reduced-motion。
+- [x] 全套 Playwright 39/39；Vitest 50/50；`npm run build`、渲染器 `node --check`、Room Schema 和 `git diff --check` 通过。
+
+### 真实桌面人工验收
+
+1. [ ] 长按图标或 Widget，确认真实完整对象抖动且 Widget iframe 不重载。
+2. [ ] 连续跨格拖动图标，确认占位稳定、路径让位、松手后顺序持久化。
+3. [ ] 快速折返、拖入 Dock、丢失捕获和取消时完整恢复。
+4. [ ] 拖动/缩放 Widget，确认 Widget 优先、图标避让且 Dock 不可进入。
+5. [ ] 编辑中实时新增/移除应用，确认节点不闪烁、旧手势不覆盖新布局。
+6. [ ] 双击真正空白退出；双击图标、Widget、编辑控件和 Dock 不退出。
+7. [ ] 切 Desk、缩放窗口、启动应用、重启后检查布局和 Widget 状态。
+8. [ ] 开启 Windows“关闭动画效果”后，确认 FLIP、托起过渡和抖动关闭，最终布局与占位语义仍正常。
 
 ## 验收记录
 
@@ -57,3 +67,5 @@
 - 2026-09-19：用户复验指出 Widget 只有文字抖动，并要求双击空白退出编辑；修正目标为整张 Widget 卡片抖动，且仅舞台背景的 `dblclick` 可退出。
 - 2026-09-19：两条新行为回归先失败后转绿；完整 25 项浏览器回归发现整卡 rotate 外接框侵入 Dock 安全缝，追加 2px 旋转余量后 25/25 通过。
 - 2026-09-19：用户明确实验台只是动画规则实验，不应成为生产桌面外观；生产接入复用运动引擎和默认参数，保留真实图标、Widget iframe、主题、边框与 Dock，并要求先消除稳定性阻塞项。用户随后明确要求实施阶段 B。
+- 2026-09-20：阶段 B 已接入真实桌面。生产 DOM 保留原图标、Widget iframe、主题、编辑边框和 Dock；新增控制器只协调稳定节点、手势事务、Sortable 占位、Widget 优先避让与动画。
+- 2026-09-20：真实 renderer 14/14、整套 Playwright 39/39、Vitest 50/50、Node 21/21 和构建/语法/Schema 检查全绿；当前停在真实桌面人工验收，未合并 master。

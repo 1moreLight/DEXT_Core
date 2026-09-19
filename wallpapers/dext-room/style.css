@@ -250,6 +250,24 @@ html[data-mode="screensaver"] #toast {
   touch-action: none;
 }
 
+#reorder-placeholder {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  scale: .92;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--dext-accent) 7%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--dext-accent) 72%, white);
+  outline-offset: -12px;
+  transition: opacity 110ms ease, scale 160ms cubic-bezier(.22,1,.36,1);
+}
+
+#reorder-placeholder[data-active="true"] {
+  opacity: 1;
+  scale: 1;
+}
+
 .icon.dragging,
 #icon-layer .icon.dragging {
   transition: none;
@@ -259,11 +277,6 @@ html[data-mode="screensaver"] #toast {
 
 .icon.dragging .icon-face {
   animation: none;
-}
-
-.icon.widget-avoid-preview {
-  outline: 2px dashed color-mix(in srgb, var(--dext-accent) 85%, white);
-  outline-offset: -4px;
 }
 
 .icon.live-layout-highlight {
@@ -371,6 +384,11 @@ body.editing #edit-done {
   body.editing .icon-face,
   body.editing .dext-widget {
     animation: none !important;
+  }
+
+  .icon-face,
+  #reorder-placeholder {
+    transition: none !important;
   }
 }
 

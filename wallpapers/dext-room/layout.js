@@ -22,6 +22,32 @@
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   }
 
+  function clampRectOutsideReserved(value, bounds, reserved = [], padding = 0) {
+    const width = Math.min(Math.max(Number(value?.width) || 0, 0), bounds.width);
+    const height = Math.min(Math.max(Number(value?.height) || 0, 0), bounds.height);
+    const requested = {
+      x: Math.min(Math.max(Number(value?.x) || 0, 0), bounds.width - width),
+      y: Math.min(Math.max(Number(value?.y) || 0, 0), bounds.height - height),
+      width,
+      height,
+    };
+    if (!reserved.some((rect) => overlaps(requested, rect))) return requested;
+    const candidates = reserved.flatMap((rect) => [
+      { ...requested, x: rect.x - width - padding },
+      { ...requested, x: rect.x + rect.width + padding },
+      { ...requested, y: rect.y - height - padding },
+      { ...requested, y: rect.y + rect.height + padding },
+    ]).map((candidate) => ({
+      ...candidate,
+      x: Math.min(Math.max(candidate.x, 0), bounds.width - width),
+      y: Math.min(Math.max(candidate.y, 0), bounds.height - height),
+    })).filter((candidate) => !reserved.some((rect) => overlaps(candidate, rect)));
+    candidates.sort((a, b) =>
+      Math.hypot(a.x - requested.x, a.y - requested.y) - Math.hypot(b.x - requested.x, b.y - requested.y)
+    );
+    return candidates[0] ?? null;
+  }
+
   function iconRect(x, y, grid) {
     return { x: x * grid.cellWidth, y: y * grid.cellHeight, width: grid.cellWidth, height: grid.cellHeight };
   }
@@ -142,5 +168,5 @@
     return { committed: true, icons, moved, reason: null };
   }
 
-  return { logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance };
+  return { clampRectOutsideReserved, logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance };
 });

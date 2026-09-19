@@ -64,7 +64,7 @@ scripts\room-preview.ps1
   - 待机节点预览使用 `?preview=1&screensaver=1`，隐藏 Desk/Dock 并只显示 idle；缺少 idle 时为黑屏
   - 单独用 Vite 检查 sandbox HTML 时需开启 CORS；否则 Vite 注入的 `@vite/client` 会被 opaque origin 拒绝，生产运行不受影响
 
-### 自动重排动画实验台（DESK-MOTION-001 阶段 A）
+### 自动重排动画实验台与真实桌面（DESK-MOTION-001）
 
 ```powershell
 # 仓库根；启动 127.0.0.1:5174 并打开独立实验台
@@ -82,7 +82,7 @@ npm run test:renderer:e2e
 
 Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图和视频（Git 忽略）。测试文件必须留在 `tauri-ui/tests/renderer/`，否则 Node 不会从仓库级 `wallpapers/` 目录向下解析 `tauri-ui/node_modules`（ERRORS #70）。
 
-当前阶段只验证动画引擎和运动质感；用户明确确认浏览器验收通过前，禁止把控制器接入真实桌面 `main.js`。
+实验台只验证运动规则与默认参数，不代表生产外观。阶段 B 已把同一求解器和动画引擎接入真实桌面；生产仍使用现有图标、Widget iframe、主题、编辑边框与 Dock，不复用实验台示例卡片。
 
 ## 二、验证到真桌面
 
@@ -105,7 +105,8 @@ wallpapers/dext-room/
 │    └─ #toast
 ├─ style.css    顶部 :root 主题变量（--dext-*），改外观优先动这里
 ├─ layout.js    纯布局求解（Widget 优先避让 + 图标路径重排）
-├─ layout-motion.js  稳定身份、diff 与 FLIP/WAAPI 控制器（阶段 A 已供实验台使用）
+├─ layout-motion.js  稳定身份、diff、默认 MotionProfile 与 FLIP/WAAPI 控制器
+├─ desktop-layout-controller.js  真实桌面稳定节点、输入事务、预览与提交协调器
 └─ main.js      全部逻辑（无框架、无构建，保持这样）
 ```
 
@@ -116,8 +117,9 @@ wallpapers/dext-room/
 | `loadRoom()` | 正常模式只读取 v2 并进入 startDesk；screensaver 模式只显示 idle；preview 模式等待 v2 内存草稿 |
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
-| `renderIcons(layer, desk, s)` | 图标循环：坐标钳制、真图标/emoji 兜底、双击启动、长按进入移动编辑；当前 Desk 布局热更新时只重绘本层 |
-| `attachPress / startDrag` | 长按 500ms 进编辑；编辑态拖拽（稀疏格子，占用格交换） |
+| `renderIcons(layer, desk, s)` | 主层按规范化 launch 身份复用真实节点并提交给 `DextDesktopLayoutController`；staging 静态即时渲染 |
+| `DextDesktopLayoutController` | 500ms 长按、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
+| `startWidgetDrag` | Widget placement 与 icons 双快照事务；预览只动真实节点，有效松手后原子更新内存并持久化一次 |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `dext:room-layout` | Core/Player 定向布局消息：替换目标 Desk 图标；当前 Desk 保留已挂载 Widget/Scene，新增时可直接进入编辑并高亮 |
 | `resolveTransition / switchDesk` | 有向 edge → 房间默认 → slide；Content 完成后换 Desk，预设走原动画注册表 |
@@ -126,7 +128,7 @@ wallpapers/dext-room/
 | `persistRoom()` | 删除页面副本的 `__source` 后上行；preview 自动跳过，Core 使用包内可信戳双写 |
 | `ICON_SIZES` | 大/中/小三档（图标、格子、字号联动） |
 
-### layout.js / layout-motion.js 接口（浏览器阶段）
+### layout.js / layout-motion.js / desktop-layout-controller.js 接口
 
 | 接口 | 职责 |
 |---|---|
@@ -137,8 +139,9 @@ wallpapers/dext-room/
 | `apply(items, {mode, excludeKeys})` | 立即写最终 left/top，再执行 move/enter/exit；revision 中断从当前视觉位置续接 |
 | `cancel({restore})` | 取消当前 revision；预览模式可按 300ms 回到进入预览前的完整布局 |
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
+| `new DextDesktopLayoutController(container, options)` | 真实桌面节点协调器；公开 `render/setEditing/beginExternalGesture/previewExternal/commitExternal/cancelExternal/abort/dispose` |
 
-时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；500ms 长按进入编辑后，图标 face 以 ±1.35°/350ms jiggle，Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面舞台真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；Reset 会终止全部 press/drag、长按 timer 与 pointer capture。`initial`、`staging`、`resize` 与 reduced-motion 立即落位并关闭 jiggle。真实桌面接线仍受阶段 A 人工验收门槛约束。
+时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；500ms 长按进入编辑后，图标 face 以 ±1.35°/350ms jiggle，Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；热布局、Desk 切换、resize 和退出编辑会撤销旧手势提交权。`initial`、`staging`、`resize` 与 reduced-motion 立即落位并关闭 jiggle。
 
 ## 四、room.json v2 示例
 

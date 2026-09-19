@@ -165,8 +165,9 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ICON_SIZES` / `sizeOf` | 常量表 | 继续按 `desk.iconSize` 兼容读取大/中/小三档；真桌面编辑态不再提供尺寸切换入口 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
-| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息只重绘图标层，不重挂 Scene/Widget |
-| `DextLayoutMotion` | 浏览器阶段动画控制器 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；稳定身份、FLIP/WAAPI、revision 中断和 reduced-motion。DESK-MOTION-001 浏览器验收前尚未接入真实桌面 `main.js` |
+| `renderIcons(layer, desk, s)` | 函数 | 主层由稳定节点协调器增量更新，staging 使用静态即时渲染；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息不重挂 Scene/Widget |
+| `DextLayoutMotion` | 动画控制器 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；稳定身份、FLIP/WAAPI、revision 中断和 reduced-motion；实验台与真实桌面共用 |
+| `DextDesktopLayoutController` | 真实桌面布局控制器 | 协调图标节点、编辑状态、图标 Sortable 手势和 Widget external gesture；预览不写 Room，有效松手后单次提交 |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |

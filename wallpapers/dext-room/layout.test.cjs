@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance } = require("./layout.js");
+const { clampRectOutsideReserved, logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance } = require("./layout.js");
 
 const icon = (label, x, y) => ({
   label,
@@ -103,4 +103,28 @@ test("resolveIconReorder rejects Widget obstacles and Dock reserved cells withou
 
   assert.deepEqual(widget, { committed: false, icons: source, moved: [], reason: "blocked" });
   assert.deepEqual(dock, { committed: false, icons: source, moved: [], reason: "blocked" });
+});
+
+test("clampRectOutsideReserved keeps a Widget outside Dock reserves on every edge", () => {
+  const bounds = { width: 1000, height: 600 };
+  assert.deepEqual(
+    clampRectOutsideReserved({ x: 400, y: 480, width: 200, height: 100 }, bounds, [{ x: 0, y: 500, width: 1000, height: 100 }], 2),
+    { x: 400, y: 398, width: 200, height: 100 },
+  );
+  assert.deepEqual(
+    clampRectOutsideReserved({ x: 400, y: 20, width: 200, height: 100 }, bounds, [{ x: 0, y: 0, width: 1000, height: 100 }], 2),
+    { x: 400, y: 102, width: 200, height: 100 },
+  );
+  assert.deepEqual(
+    clampRectOutsideReserved({ x: 50, y: 200, width: 200, height: 100 }, bounds, [{ x: 0, y: 0, width: 120, height: 600 }], 2),
+    { x: 122, y: 200, width: 200, height: 100 },
+  );
+  assert.deepEqual(
+    clampRectOutsideReserved({ x: 850, y: 200, width: 200, height: 100 }, bounds, [{ x: 880, y: 0, width: 120, height: 600 }], 2),
+    { x: 678, y: 200, width: 200, height: 100 },
+  );
+  assert.equal(
+    clampRectOutsideReserved({ x: 0, y: 0, width: 1000, height: 600 }, bounds, [{ x: 0, y: 0, width: 1000, height: 600 }], 2),
+    null,
+  );
 });

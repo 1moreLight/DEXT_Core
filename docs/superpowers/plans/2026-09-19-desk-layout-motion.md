@@ -59,22 +59,22 @@
 
 ### Task 7：稳定节点协调
 
-- [ ] 先写 Node/Playwright 失败测试，锁定默认 MotionProfile、稳定节点复用、事件按 key 读取当前数据以及 Widget iframe 不重挂。
-- [ ] 新增 `desktop-layout-controller.js`，实现计划约定的控制器接口；图标手势归控制器，Widget 使用 external gesture。
-- [ ] `renderIcons()` 改为协调真实节点；外层 icon 只负责位置和 FLIP，内层 face 保留真实视觉、启动行为与苹果式抖动。
-- [ ] 初始、staging、resize 立即落位；热更新、新增、移除和坐标变化走同一 motion revision。
+- [x] 先写 Node/Playwright 失败测试，锁定默认 MotionProfile、稳定节点复用、事件按 key 读取当前数据以及 Widget iframe 不重挂。
+- [x] 新增 `desktop-layout-controller.js`，实现计划约定的控制器接口；图标手势归控制器，Widget 使用 external gesture。
+- [x] `renderIcons()` 改为协调真实节点；外层 icon 只负责位置和 FLIP，内层 face 保留真实视觉、启动行为与苹果式抖动。
+- [x] 初始、staging、resize 立即落位；热更新、新增、移除和坐标变化走同一 motion revision。
 
 ### Task 8：Widget 与图标实时预览
 
-- [ ] 先写真实指针失败测试：80ms 候选稳定、路径让位、Dock/Widget 障碍、pointercancel、capture 丢失、重复 pointerup 和权威更新中断。
-- [ ] 图标拖动采用 placeholder + Sortable 路径重排；预览不修改 Room，有效松手一次提交。
-- [ ] Widget 拖动/缩放使用 placement + icons 双快照；Widget 保持优先，图标避让，Dock 四向禁区包含 2px 抖动安全余量。
-- [ ] 热布局、Desk 切换、resize、退出编辑统一使旧 transaction/revision 失效；动画异常立即落最终布局。
-- [ ] 双击真正空白退出编辑；交互对象不退出；系统 reduced-motion 同时关闭 WAAPI、托起过渡和整卡抖动。
+- [x] 先写真实指针失败测试：80ms 候选稳定、路径让位、Dock/Widget 障碍、pointercancel、capture 丢失、重复 pointerup 和权威更新中断。
+- [x] 图标拖动采用 placeholder + Sortable 路径重排；预览不修改 Room，有效松手一次提交。
+- [x] Widget 拖动/缩放使用 placement + icons 双快照；Widget 保持优先，图标避让，Dock 四向禁区包含整卡抖动安全余量。
+- [x] 热布局、Desk 切换、resize、退出编辑统一使旧 transaction/revision 失效；动画异常立即落最终布局。
+- [x] 双击真正空白退出编辑；交互对象不退出；系统 reduced-motion 同时关闭 WAAPI、托起过渡和整卡抖动。
 
 ### Task 9：最终验证与交付
 
-- [ ] Playwright 覆盖真实 renderer 的节点/iframe 复用、热消息、快速折返、启动/Dock 回归和 reduced-motion。
-- [ ] 更新 README/FRONTEND、TODO、ROADMAP 和独立验收卡；设置编辑器保持范围外。
-- [ ] 运行 Vitest、Node、Playwright、build、语法、Schema 和 diff check；提交全部具名文件。
-- [ ] 启动真实桌面供人工验收，停在分支待确认，不合并 master。
+- [x] Playwright 覆盖真实 renderer 的节点/iframe 复用、热消息、快速折返、启动/Dock 回归和 reduced-motion。
+- [x] 更新 README/FRONTEND、TODO、ROADMAP 和独立验收卡；设置编辑器保持范围外。
+- [x] 运行 Vitest、Node、Playwright、build、语法、Schema 和 diff check。
+- [ ] 提交全部具名文件并停在真实桌面人工验收，不合并 master。

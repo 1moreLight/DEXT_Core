@@ -803,8 +803,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 25/25、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
 - [x] 2026-09-19 用户确认实验台只用于验证运动规则和默认参数，并明确要求实施真实桌面阶段 B；生产环境不复制实验台外观
 - [x] 2026-09-20 导出默认 MotionProfile，新增独立 DextDesktopLayoutController，按稳定身份协调真实图标节点；真实编辑切换与热布局更新均复用图标节点和 Widget iframe
-- [ ] 真实图标 Sortable：外层 FLIP、内层托起/抖动、80ms 候选稳定、路径让位、单次提交和完整取消
-- [ ] Widget 事务式拖动/缩放：真实整卡抖动、Widget 优先、图标避让、Dock 禁区与原子提交/回滚
-- [ ] 权威更新中断：热布局、Desk 切换、resize、退出编辑统一终止旧手势，旧回调不得覆盖新状态
-- [ ] 真实 renderer Playwright：节点/iframe 复用、热更新、双击空白、reduced-motion、启动/Dock 回归
-- [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收
+- [x] 真实图标 Sortable：外层 FLIP、内层托起/抖动、80ms 候选稳定、路径让位、单次提交和完整取消（2026-09-20）
+- [x] Widget 事务式拖动/缩放：真实整卡抖动、Widget 优先、图标避让、Dock 禁区与原子提交/回滚（2026-09-20）
+- [x] 权威更新中断：热布局、Desk 切换、resize、退出编辑统一终止旧手势，旧回调不得覆盖新状态（2026-09-20）
+- [x] 真实 renderer Playwright：节点/iframe 复用、热更新、双击空白、reduced-motion、启动/Dock 回归（14/14；2026-09-20）
+- [x] 全量自动回归：Vitest 50/50、Node 21/21、Playwright 39/39、build、语法、Schema 与 diff check（2026-09-20）
+- [x] `codegraph sync` 按规范尝试；独立 worktree 的 `.codegraph` 仅有 ignore 文件且 `status` 为 Not initialized，未擅自初始化（2026-09-20）
+- [~] 提交阶段 B 并停在真实桌面人工验收；禁止合并 master
