@@ -30,7 +30,7 @@ button, input { font: inherit; }
 .topbar {
   min-height: 76px;
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
   gap: 34px;
   border-bottom: 1px solid var(--line);
@@ -60,6 +60,18 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
 
 .motion-toggle { cursor: pointer; }
 .motion-toggle input { accent-color: var(--accent); }
+
+#edit-done {
+  border: 1px solid #4e8066;
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: #183126;
+  color: #dffbea;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+[hidden] { display: none !important; }
 
 .scenario-strip {
   display: flex;
@@ -142,6 +154,12 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
 .motion-icon {
   width: 72px;
   height: 84px;
+  will-change: transform, opacity;
+}
+
+.motion-icon-face {
+  width: 72px;
+  height: 84px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -152,11 +170,10 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
   align-items: center;
   user-select: none;
   touch-action: none;
-  cursor: grab;
-  will-change: transform, opacity;
+  cursor: default;
 }
 
-.motion-icon:active { cursor: grabbing; }
+.motion-icon-face:active { cursor: grabbing; }
 
 .motion-icon .glyph {
   width: 52px;
@@ -185,6 +202,25 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
 .motion-icon[data-new-highlight="true"] .glyph {
   border-color: rgba(158, 240, 197, .72);
   box-shadow: 0 0 0 3px rgba(158, 240, 197, .09), 0 8px 24px rgba(0,0,0,.22);
+}
+
+@keyframes motion-icon-jiggle {
+  0% { rotate: -1.35deg; }
+  50% { rotate: 1.35deg; }
+  100% { rotate: -1.35deg; }
+}
+
+body.editing .motion-icon-face {
+  animation: motion-icon-jiggle .35s ease-in-out infinite;
+  cursor: grab;
+}
+
+body.editing .motion-icon:nth-of-type(even) .motion-icon-face {
+  animation-delay: -.175s;
+}
+
+body.reduce-motion .motion-icon-face {
+  animation: none;
 }
 
 .demo-widget {
@@ -240,4 +276,5 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  body .motion-icon-face { animation: none !important; }
 }

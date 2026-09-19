@@ -16,6 +16,17 @@ test.beforeEach(async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.motionLab?.ready)).toBe(true);
 });
 
+async function enterAppleEditMode(page: import("@playwright/test").Page) {
+  const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
+  const box = await face.boundingBox();
+  if (!box) throw new Error("icon face geometry unavailable");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(530);
+  await page.mouse.up();
+  await expect(page.locator("body")).toHaveClass(/editing/);
+}
+
 test("move animation reuses the icon node, exposes a transform, and finishes at the target grid cell", async ({ page }) => {
   await page.evaluate(() => {
     window.__alphaNode = document.querySelector('[data-icon-id="alpha"]') ?? undefined;
@@ -33,6 +44,22 @@ test("move animation reuses the icon node, exposes a transform, and finishes at 
   await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
   expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-icon-id="alpha"]'))).toBe(true);
   await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("top", "24px");
+});
+
+test("500ms long press keeps the Apple-style inner jiggle while the outer node performs FLIP", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const alpha = page.locator('[data-icon-id="alpha"]');
+  const face = alpha.locator(".motion-icon-face");
+  await expect(face).toHaveCSS("animation-name", "motion-icon-jiggle");
+
+  await page.evaluate(() => { void window.motionLab.runScenario("widget-single"); });
+  await expect.poll(() => alpha.evaluate((node) => node.getAnimations().length)).toBeGreaterThan(0);
+  expect(await alpha.evaluate((node) => node.getAnimations()[0]?.effect?.getTiming().duration)).toBe(280);
+  await expect(face).toHaveCSS("animation-name", "motion-icon-jiggle");
+
+  await page.getByRole("button", { name: "Done editing" }).click();
+  await expect(page.locator("body")).not.toHaveClass(/editing/);
+  await expect(face).toHaveCSS("animation-name", "none");
 });
 
 test("rapid revisions continue from the current visual state and never flash back to an old layout", async ({ page }) => {
@@ -57,6 +84,7 @@ test("icon swap waits for the 80ms stable-cell threshold", async ({ page }) => {
 });
 
 test("leaving an occupied icon before 80ms cancels the pending pointer swap", async ({ page }) => {
+  await enterAppleEditMode(page);
   const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
   const bravo = await page.locator('[data-icon-id="bravo"]').boundingBox();
   const stage = await page.locator("#motion-stage").boundingBox();
@@ -75,6 +103,7 @@ test("leaving an occupied icon before 80ms cancels the pending pointer swap", as
 });
 
 test("pointercancel restores published icon and Widget previews", async ({ page }) => {
+  await enterAppleEditMode(page);
   const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
   const bravo = await page.locator('[data-icon-id="bravo"]').boundingBox();
   if (!alpha || !bravo) throw new Error("icon geometry unavailable");
@@ -147,6 +176,47 @@ test("reduced motion applies final coordinates immediately without WAAPI animati
   await expect(page.locator('[data-icon-id="india"]')).toHaveCSS("left", "392px");
   expect(await page.locator(".motion-icon").evaluateAll((nodes) => nodes.flatMap((node) => node.getAnimations()).length)).toBe(0);
   await expect(page.locator('[data-icon-id="india"]')).toHaveAttribute("data-new-highlight", "true");
+});
+
+test("enabling reduced motion mid-FLIP immediately settles the outer positioner", async ({ page }) => {
+  await page.evaluate(() => { void window.motionLab.runScenario("widget-single"); });
+  await expect.poll(() => page.locator(".motion-icon").evaluateAll(
+    (nodes) => nodes.flatMap((node) => node.getAnimations()).length,
+  )).toBeGreaterThan(0);
+
+  await page.getByLabel("Reduce motion").check();
+
+  expect(await page.locator(".motion-icon").evaluateAll(
+    (nodes) => nodes.flatMap((node) => node.getAnimations()).length,
+  )).toBe(0);
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
+});
+
+test("enabling reduced motion during a preview preserves its cancel baseline", async ({ page }) => {
+  await page.evaluate(() => {
+    void window.motionLab.runScenario("cancel");
+    const checkbox = document.querySelector<HTMLInputElement>("#reduce-motion");
+    if (!checkbox) throw new Error("reduced-motion checkbox unavailable");
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "24px");
+});
+
+test("system reduced-motion preference disables both FLIP and edit-mode jiggle", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await enterAppleEditMode(page);
+  const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
+  await expect(face).toHaveCSS("animation-name", "none");
+
+  await page.evaluate(() => window.motionLab.runScenario("widget-single"));
+  expect(await page.locator(".motion-icon").evaluateAll(
+    (nodes) => nodes.flatMap((node) => node.getAnimations()).length,
+  )).toBe(0);
 });
 
 test("100-icon pressure scenario keeps stable unique nodes and reaches the final revision", async ({ page }) => {

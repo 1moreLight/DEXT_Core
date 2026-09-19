@@ -134,10 +134,10 @@ wallpapers/dext-room/
 | `diffMotionItems(previous, next, excludeKeys)` | 计算 move/enter/exit/stay；被拖动节点仍落最终坐标但不做 FLIP move |
 | `new DextLayoutMotion(container, options)` | 建立稳定 key→DOM 映射；调用方提供节点创建/更新和 reduced-motion 来源 |
 | `apply(items, {mode, excludeKeys})` | 立即写最终 left/top，再执行 move/enter/exit；revision 中断从当前视觉位置续接 |
-| `cancel({restore})` | 取消当前 revision；预览模式可按 260ms 回到进入预览前的完整布局 |
+| `cancel({restore})` | 取消当前 revision；预览模式可按 300ms 回到进入预览前的完整布局 |
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
 
-时序：move/swap 220ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 260ms。只动画 transform/opacity。`initial`、`staging`、`resize` 与 reduced-motion 立即落位。真实桌面接线仍受阶段 A 人工验收门槛约束。
+时序：move/swap 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画外层 positioner 的 transform/opacity；500ms 长按进入编辑和 0.35s jiggle 留在内层图标 face，保持苹果式编辑模式且能与重排同时运行。`initial`、`staging`、`resize` 与 reduced-motion 立即落位。真实桌面接线仍受阶段 A 人工验收门槛约束。
 
 ## 四、room.json v2 示例
 

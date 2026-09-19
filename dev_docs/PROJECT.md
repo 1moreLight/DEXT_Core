@@ -97,6 +97,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-09-02 | **v2 能力授权绑定源 Room 内容哈希**：Scene/Widget 的声明不等于批准；本机授权存放在 `%LOCALAPPDATA%\\Dext\\permissions-v1.json`，按规范化源 Room 路径、整份 `room.json` SHA-256 和内容 subject 绑定。保存修改、另存或重新导入后授权自动失效。v2 当前完全离线，未实现的代理联网、导航、通用存储和通知能力从允许枚举删除，而不是保留不可兑现入口。 |
 | 2026-09-11 | **当前 Room 的 Desk 布局采用受控热同步**：配置器放入/移除应用只提交目标 Desk 图标布局，Rust 从可信源 Room 读改写并同步匹配的运行包，再通过 Core 向官方顶层宿主发送完整运行快照；不以自动 `apply_room` 重启壁纸，也不让客户端提供 `__source` 或写入路径。新增后默认最小化配置器、切目标 Desk 并进入编辑，可在设置中关闭跳转但不关闭热同步。Widget placement 优先于图标，真桌面松手时只移动冲突图标；无完整合法布局则整体回退。 |
 | 2026-09-19 | **Desk 自动重排采用浏览器先行的自研轻量动画层**：`DextLayout` 只负责最终坐标，新增 `DextLayoutMotion` 以稳定身份和 FLIP/WAAPI 统一执行 move/enter/exit、revision 中断与 reduced-motion；不引入通用拖拽/网格运行时。先用直接调用同一引擎的浏览器实验台和 Playwright 固化行为，用户确认运动质感前禁止接入真实桌面 `main.js`。动画不改变 room.json 或 Widget 优先、Dock 禁区、无解整体回退规则。 |
+| 2026-09-19 | **自动重排不得替换苹果式长按编辑模式**：用户验收反馈要求保留 500ms 长按、0.35s 图标抖动和完成退出。FLIP/WAAPI 只拥有外层 positioner 的 transform/opacity，内层图标 face 独立执行 jiggle；默认 move 从 220ms 调整为 280ms、rollback 从 260ms 调整为 300ms。极限连续 revision 只作为明确标注的压力场景，不代表日常切换速度。 |
 
 ## 工作流
 

@@ -4,7 +4,7 @@
   root.DextLayoutMotion = api.DextLayoutMotion;
   root.DextLayoutMotionApi = api;
 })(globalThis, function () {
-  const DEFAULT_DURATIONS = Object.freeze({ move: 220, enter: 180, exit: 140, rollback: 260 });
+  const DEFAULT_DURATIONS = Object.freeze({ move: 280, enter: 180, exit: 140, rollback: 300 });
   const DEFAULT_EASING = "cubic-bezier(.22,1,.36,1)";
   const IMMEDIATE_MODES = new Set(["immediate", "initial", "staging", "resize"]);
 

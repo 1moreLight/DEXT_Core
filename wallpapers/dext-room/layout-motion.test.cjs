@@ -168,7 +168,7 @@ test("cancel with restore rolls a preview back using the rollback duration", asy
 
   assert.equal(container.children[0].style.left, "0px");
   assert.equal(container.children[0].style.top, "0px");
-  assert.equal(container.children[0].animations.at(-1).options.duration, 260);
+  assert.equal(container.children[0].animations.at(-1).options.duration, 300);
   container.children[0].animations.at(-1).finish();
   await rollback.finished;
 });

@@ -22,7 +22,8 @@
 
 - 用真实 DOM/浏览器行为验证稳定节点复用、FLIP transform、最终 left/top、enter/exit 和过期 completion。
 - 实现 `apply(items,{mode,excludeKeys})`、`cancel({restore})`、`dispose()`。
-- 支持 move 220ms、enter 180ms、exit 140ms、rollback 260ms、reduced-motion 与无 WAAPI 降级。
+- 支持 move 280ms、enter 180ms、exit 140ms、rollback 300ms、reduced-motion 与无 WAAPI 降级。
+- 动画外层 positioner，内层图标继续承载 500ms 长按进入编辑与 0.35s 苹果式 jiggle；浏览器实验台必须证明两者可同时运行。
 
 ### Task 4：交互实验台
 

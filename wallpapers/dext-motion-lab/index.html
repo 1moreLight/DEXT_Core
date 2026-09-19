@@ -18,6 +18,7 @@
         <span class="state-dot"></span>
         <span id="motion-status">initializing</span>
       </div>
+      <button id="edit-done" type="button" aria-label="Done editing" hidden>Done</button>
       <label class="motion-toggle">
         <input id="reduce-motion" type="checkbox" />
         <span>Reduce motion</span>
@@ -27,7 +28,7 @@
     <nav class="scenario-strip" aria-label="Motion scenarios">
       <button type="button" data-scenario="widget-single">Widget · one</button>
       <button type="button" data-scenario="widget-multi">Widget · group</button>
-      <button type="button" data-scenario="zigzag">Rapid revisions</button>
+      <button type="button" data-scenario="zigzag">Stress · rapid</button>
       <button type="button" data-scenario="icon-swap">80ms swap</button>
       <button type="button" data-scenario="add">Add</button>
       <button type="button" data-scenario="remove">Remove</button>
@@ -42,7 +43,7 @@
       <section class="stage-frame" aria-label="Interactive desktop motion stage">
         <div class="stage-caption">
           <span>1920 × 1080 logical field</span>
-          <span>Drag the widget or any icon</span>
+          <span>Long-press 500ms, then drag the widget or an icon</span>
         </div>
         <div id="motion-stage" data-conflict="false">
           <div id="demo-widget" class="demo-widget" tabindex="0" aria-label="Draggable widget">
@@ -56,9 +57,9 @@
 
     <footer class="diagnostics">
       <div><span>ENGINE</span><strong>FLIP / WAAPI</strong></div>
-      <div><span>MOVE</span><strong>220ms</strong></div>
+      <div><span>MOVE</span><strong>280ms</strong></div>
       <div><span>ENTER / EXIT</span><strong>180 / 140ms</strong></div>
-      <div><span>ROLLBACK</span><strong>260ms</strong></div>
+      <div><span>ROLLBACK</span><strong>300ms</strong></div>
       <p id="motion-detail">Stable nodes. Final coordinates land before motion begins.</p>
     </footer>
   </div>

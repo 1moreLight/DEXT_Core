@@ -132,3 +132,35 @@ P4（action.invoke）仍必须来自 store 显式授权。
 
 防再犯：带停留阈值的拖拽必须测试进入、停留、离开、换目标、取消和 capture 丢失；异步 revision
 的有效性检查应放在每个异步边界之后，而不是只在任务开始时检查。
+
+# #73 布局位移与苹果式编辑抖动必须分层拥有动画属性
+
+现象：浏览器动画实验台能展示自动让位，但没有 500ms 长按进入编辑和图标抖动，用户看到后合理地
+认为新重排会吃掉原有苹果式编辑模式；极限折返又以约 52ms 连续触发，看起来像日常动画过快。
+
+原因：实验台把整个图标按钮直接作为 FLIP 节点，只展示布局技术场景，没有复现产品的编辑状态；
+正常运动和压力测试也没有在命名与视觉上分开。真实桌面代码虽然未改，实验台却没有证明两类动画
+能够共存。
+
+修复：稳定 DOM 改为外层 positioner + 内层 icon face；FLIP/WAAPI 只写外层 transform/opacity，
+500ms 长按后的 0.35s jiggle 只写内层 rotate。默认 move/rollback 放缓到 280/300ms，52ms 连续
+revision 明确标为 `Stress · rapid`。Playwright 同时断言外层 FLIP animation 和内层 jiggle 存在。
+
+防再犯：动画实验台必须包含被新机制影响的既有产品状态，不能只证明新动画自身；多个动画语义不要
+共同拥有同一 DOM 层的 transform，压力场景必须与用户日常时序明确区分。
+
+# #74 reduced-motion 必须处理运行中切换和系统偏好
+
+现象：在 280ms FLIP 运行途中勾选 Reduce motion，外层 WAAPI 仍继续；系统设置
+`prefers-reduced-motion: reduce` 时，内层编辑 jiggle 仍在播放。
+
+原因：动画控制器只在下一次 `apply()` 查询实验台复选框，开关事件只切 CSS class；同时该 class
+没有合并系统媒体查询，媒体规则也只压缩 transition，没有停止新加入的 keyframe animation。
+
+修复：统一以“复选框或系统媒体查询命中”作为 reduced-motion 来源；任一来源变为 reduce 时立即
+发布无动画 revision 并保持已写入的最终坐标，同时在 class 和媒体规则两层禁止内层 jiggle。若当前
+是拖拽预览，则继续使用 preview mode 以保留 `previewBase`，后续取消仍能恢复。Playwright 覆盖运行中
+切换、系统偏好以及降速后取消预览。
+
+防再犯：reduced-motion 不只是创建动画前的分支；所有运行时偏好都要测试初始命中和中途切换，
+并分别验证脚本动画与 CSS 动画。

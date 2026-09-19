@@ -2,8 +2,10 @@
   const stage = document.getElementById("motion-stage");
   const widget = document.getElementById("demo-widget");
   const reduceMotion = document.getElementById("reduce-motion");
+  const editDone = document.getElementById("edit-done");
   const status = document.getElementById("motion-status");
   const detail = document.getElementById("motion-detail");
+  const reducedMotionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
   const ORIGIN_X = 24;
   const ORIGIN_Y = 24;
   const CELL_W = 92;
@@ -30,6 +32,10 @@
   let scenarioToken = 0;
   let widgetDrag = null;
   let iconDrag = null;
+  let widgetPress = null;
+  let iconPress = null;
+  let editMode = false;
+  let previewActive = false;
 
   function cloneIcons(source) {
     return source.map((icon) => ({ ...icon, launch: { ...icon.launch } }));
@@ -45,30 +51,54 @@
   }
 
   function createIconNode(item) {
-    const node = document.createElement("button");
-    node.type = "button";
+    const node = document.createElement("div");
     node.className = "motion-icon";
-    node.innerHTML = '<span class="glyph"></span><span class="label"></span>';
-    node.addEventListener("pointerdown", startIconDrag);
-    node.addEventListener("lostpointercapture", finishIconDrag);
+    node.innerHTML = '<button type="button" class="motion-icon-face"><span class="glyph"></span><span class="label"></span></button>';
+    const face = node.querySelector(".motion-icon-face");
+    face.addEventListener("pointerdown", startIconPressOrDrag);
+    face.addEventListener("pointermove", trackIconPress);
+    face.addEventListener("pointerup", cancelIconPress);
+    face.addEventListener("pointercancel", cancelIconPress);
+    face.addEventListener("lostpointercapture", cancelIconPress);
+    face.addEventListener("lostpointercapture", finishIconDrag);
     updateIconNode(node, item);
     return node;
   }
 
   function updateIconNode(node, item) {
     const icon = item.data;
+    const face = node.querySelector(".motion-icon-face");
     node.dataset.iconId = icon.id;
-    node.setAttribute("aria-label", `${icon.label} icon`);
+    face.setAttribute("aria-label", `${icon.label} icon`);
     node.style.setProperty("--icon-accent", icon.color ?? COLORS[0]);
     node.querySelector(".glyph").textContent = icon.glyph ?? icon.label?.slice(0, 1) ?? "·";
     node.querySelector(".label").textContent = icon.label ?? icon.id;
   }
 
+  function prefersReducedMotion() {
+    return reduceMotion.checked || reducedMotionMedia.matches;
+  }
+
   const motion = new DextLayoutMotion(stage, {
     createNode: createIconNode,
     updateNode: updateIconNode,
-    reducedMotion: () => reduceMotion.checked,
+    reducedMotion: prefersReducedMotion,
   });
+
+  function cancelMotion(options) {
+    const result = motion.cancel(options);
+    previewActive = false;
+    return result;
+  }
+
+  function syncReducedMotion({ settle = false } = {}) {
+    const reduced = prefersReducedMotion();
+    document.body.classList.toggle("reduce-motion", reduced);
+    if (!reduced || !settle) return;
+    const mode = previewActive ? "preview" : "immediate";
+    const result = motion.apply(motionItems(icons, stage.classList.contains("dense")), { mode });
+    describe(result, "reduced motion");
+  }
 
   function setNewHighlights(previousIds) {
     for (const node of stage.querySelectorAll(".motion-icon")) {
@@ -88,6 +118,7 @@
     const previousIds = new Set(icons.map((icon) => icon.id));
     icons = cloneIcons(source);
     const result = motion.apply(motionItems(icons, dense), { mode, excludeKeys });
+    previewActive = mode === "preview";
     setNewHighlights(previousIds);
     describe(result, label);
     return result;
@@ -118,6 +149,7 @@
     widget.style.width = "";
     widget.style.height = "";
     widget.classList.remove("is-compact");
+    setEditing(false);
     const result = apply(baseIcons, { mode: "immediate", label: "reset" });
     if (!keepRevision) detail.textContent = "Stable nodes. Final coordinates land before motion begins.";
     return result;
@@ -144,6 +176,8 @@
       track(result.finished);
       return;
     }
+
+    setEditing(true);
 
     if (name === "widget-single") {
       widget.classList.add("is-compact");
@@ -236,7 +270,7 @@
       track((async () => {
         await sleep(70);
         if (token !== scenarioToken) return;
-        const rollback = motion.cancel({ restore: true });
+        const rollback = cancelMotion({ restore: true });
         if (rollback) {
           icons = cloneIcons(baseIcons);
           describe(rollback, "cancel restored");
@@ -261,7 +295,7 @@
         await sleep(72);
         if (token !== scenarioToken) return;
         stage.dataset.conflict = "true";
-        const rollback = motion.cancel({ restore: true });
+        const rollback = cancelMotion({ restore: true });
         if (rollback) {
           icons = cloneIcons(baseIcons);
           describe(rollback, "no legal layout · rollback");
@@ -311,6 +345,47 @@
     widget.setPointerCapture(event.pointerId);
   }
 
+  function setEditing(next) {
+    editMode = Boolean(next);
+    document.body.classList.toggle("editing", editMode);
+    stage.dataset.editing = String(editMode);
+    editDone.hidden = !editMode;
+    if (editMode) detail.textContent = "Edit mode · inner icons jiggle while the outer positioner owns layout motion.";
+  }
+
+  function startWidgetPressOrDrag(event) {
+    if (event.button !== 0) return;
+    if (editMode) {
+      startWidgetDrag(event);
+      return;
+    }
+    widgetPress = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      timer: setTimeout(() => {
+        widgetPress = null;
+        setEditing(true);
+      }, 500),
+    };
+    widget.setPointerCapture(event.pointerId);
+  }
+
+  function trackWidgetPress(event) {
+    if (widgetPress && event.pointerId === widgetPress.pointerId
+      && Math.hypot(event.clientX - widgetPress.x, event.clientY - widgetPress.y) > 8) {
+      clearTimeout(widgetPress.timer);
+      widgetPress = null;
+    }
+    moveWidget(event);
+  }
+
+  function cancelWidgetPress(event) {
+    if (!widgetPress || event.pointerId !== widgetPress.pointerId) return;
+    clearTimeout(widgetPress.timer);
+    widgetPress = null;
+  }
+
   function moveWidget(event) {
     if (!widgetDrag || event.pointerId !== widgetDrag.pointerId) return;
     const stageRect = stage.getBoundingClientRect();
@@ -340,7 +415,7 @@
       const result = apply(drag.preview, { label: "Widget layout committed" });
       track(result.finished);
     } else {
-      const rollback = motion.cancel({ restore: true });
+      const rollback = cancelMotion({ restore: true });
       icons = cloneIcons(drag.base);
       widget.style.left = drag.left;
       widget.style.top = drag.top;
@@ -351,11 +426,44 @@
 
   function startIconDrag(event) {
     if (event.button !== 0) return;
-    const id = event.currentTarget.dataset.iconId;
+    const slot = event.currentTarget.closest(".motion-icon");
+    const id = slot?.dataset.iconId;
     const source = icons.find((icon) => icon.id === id);
     if (!source) return;
     iconDrag = { pointerId: event.pointerId, id, base: cloneIcons(icons), targetId: null, timer: null, preview: null };
     event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function startIconPressOrDrag(event) {
+    if (event.button !== 0) return;
+    if (editMode) {
+      startIconDrag(event);
+      return;
+    }
+    iconPress = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      timer: setTimeout(() => {
+        iconPress = null;
+        setEditing(true);
+      }, 500),
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function trackIconPress(event) {
+    if (iconPress && event.pointerId === iconPress.pointerId
+      && Math.hypot(event.clientX - iconPress.x, event.clientY - iconPress.y) > 8) {
+      clearTimeout(iconPress.timer);
+      iconPress = null;
+    }
+  }
+
+  function cancelIconPress(event) {
+    if (!iconPress || event.pointerId !== iconPress.pointerId) return;
+    clearTimeout(iconPress.timer);
+    iconPress = null;
   }
 
   function moveIcon(event) {
@@ -367,7 +475,7 @@
       iconDrag.timer = null;
       iconDrag.targetId = null;
       if (iconDrag.preview) {
-        const rollback = motion.cancel({ restore: true });
+        const rollback = cancelMotion({ restore: true });
         icons = cloneIcons(iconDrag.base);
         iconDrag.preview = null;
         if (rollback) {
@@ -380,7 +488,7 @@
     if (iconDrag.targetId === targetId) return;
     clearTimeout(iconDrag.timer);
     if (iconDrag.preview) {
-      const rollback = motion.cancel({ restore: true });
+      const rollback = cancelMotion({ restore: true });
       icons = cloneIcons(iconDrag.base);
       iconDrag.preview = null;
       if (rollback) track(rollback.finished);
@@ -412,7 +520,7 @@
       const result = apply(drag.preview, { label: "icon swap committed" });
       track(result.finished);
     } else {
-      const rollback = motion.cancel({ restore: true });
+      const rollback = cancelMotion({ restore: true });
       icons = cloneIcons(drag.base);
       if (rollback) {
         describe(rollback, canceled ? "icon drag canceled" : "icon drag restored");
@@ -421,10 +529,13 @@
     }
   }
 
-  widget.addEventListener("pointerdown", startWidgetDrag);
-  widget.addEventListener("pointermove", moveWidget);
+  widget.addEventListener("pointerdown", startWidgetPressOrDrag);
+  widget.addEventListener("pointermove", trackWidgetPress);
+  widget.addEventListener("pointerup", cancelWidgetPress);
   widget.addEventListener("pointerup", finishWidgetDrag);
+  widget.addEventListener("pointercancel", cancelWidgetPress);
   widget.addEventListener("pointercancel", finishWidgetDrag);
+  widget.addEventListener("lostpointercapture", cancelWidgetPress);
   widget.addEventListener("lostpointercapture", finishWidgetDrag);
   stage.addEventListener("pointermove", moveIcon);
   stage.addEventListener("pointerup", finishIconDrag);
@@ -432,6 +543,10 @@
   document.querySelectorAll("[data-scenario]").forEach((button) => {
     button.addEventListener("click", () => runScenario(button.dataset.scenario));
   });
+  editDone.addEventListener("click", () => setEditing(false));
+  reduceMotion.addEventListener("change", () => syncReducedMotion({ settle: true }));
+  reducedMotionMedia.addEventListener?.("change", () => syncReducedMotion({ settle: true }));
+  syncReducedMotion();
 
   const initial = motion.apply(motionItems(icons), { mode: "initial" });
   for (const node of stage.querySelectorAll(".motion-icon")) node.dataset.newHighlight = "true";

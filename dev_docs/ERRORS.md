@@ -77,6 +77,8 @@
 | #70 | Playwright 测试放在 npm 包目录外时无法从测试文件位置解析 `@playwright/test` | [toolchain](errors/toolchain.md) |
 | #71 | Playwright `*.spec.ts` 被同包 Vitest 一并发现，导致生命周期 API 冲突 | [toolchain](errors/toolchain.md) |
 | #72 | 拖拽预览未清理稳定计时器/取消事件/过期异步回调，导致离开后仍交换或取消时提交 | [renderer](errors/renderer.md) |
+| #73 | 布局 FLIP 与长按 jiggle 未分层展示，浏览器实验台看起来替换了苹果式编辑模式 | [renderer](errors/renderer.md) |
+| #74 | reduced-motion 只在下一次布局生效，动画中途切换和系统偏好仍保留 FLIP/jiggle | [renderer](errors/renderer.md) |
 
 ## 分册
 

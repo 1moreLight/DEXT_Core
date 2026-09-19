@@ -23,13 +23,15 @@ motion.dispose()
 
 | 场景 | 时长 | 行为 |
 |---|---:|---|
-| 自动让位/交换 | 220ms | `cubic-bezier(.22,1,.36,1)`；先写最终 left/top，再以反向 transform FLIP 到视觉原位并归零 |
+| 自动让位/交换 | 280ms | `cubic-bezier(.22,1,.36,1)`；先写最终 left/top，再以反向 transform FLIP 到视觉原位并归零 |
 | 新增 | 180ms | opacity 0→1，scale .92→1 |
 | 移除 | 140ms | opacity 1→0，scale 1→.92；仅本 revision 完成后移除节点 |
-| 无解回弹 | 260ms | 从当前视觉位回到已提交布局 |
+| 无解回弹 | 300ms | 从当前视觉位回到已提交布局 |
 | 跨格交换 | 80ms 稳定阈值 | 指针持续位于新占用格才发布预览，离开/取消恢复 |
 
 只动画 `transform` 和 `opacity`；`left/top` 立即写入最终值。新 revision 先捕获当前视觉位置，再取消旧动画并从该位置继续。所有完成回调都校验 revision 和节点身份，旧回调不得删除、覆盖或清理新节点。
+
+运动节点必须是外层 positioner；原图标视觉和标签放在内层 face。FLIP 只写外层 transform/opacity，长按 500ms 后的苹果式 `jiggle` 只写内层 rotate，两者可同时运行且互不覆盖。真实桌面集成不得删除既有 `body.editing`、500ms 长按或 0.35s 抖动语义。
 
 reduced-motion 下立即写最终布局并清理动画，只保留冲突状态和新增高亮。初次加载、Desk 切换 staging 和窗口缩放使用即时模式。
 
