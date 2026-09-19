@@ -137,3 +137,15 @@
 - 根因：Vitest 和 Playwright 的默认发现模式都包含 `*.spec.ts`；两个 runner 在同一 npm 包内时，仅分开放目录不足以避免交叉收集。
 - 解决：renderer Playwright 文件使用专用 `*.e2e.ts` 后缀，并在 `playwright.renderer.config.ts` 显式设置 `testMatch: "**/*.e2e.ts"`；Vitest 默认不再发现，Playwright 仍精确收集。
 - 防再犯：同包引入第二个测试 runner 时必须为每个 runner 设置互斥的文件命名或 include/exclude，不依赖默认 glob 碰巧不重叠。
+# #81 Playwright 会等待持续抖动的目标稳定，普通 dblclick 因而超时
+
+现象：Widget 正在无限 rotate jiggle 时，`locator.dblclick()` 一直等待 element stable，直到 20 秒测试
+超时；产品事件本身没有失败。
+
+原因：Playwright 的 actionability 检查要求点击目标位置稳定，持续动画的外框永远无法满足该条件。
+
+修复：只在验证“抖动中的交互对象收到双击但不得退出编辑”这一目标路由用例中使用
+`dblclick({ force: true })`；空白舞台仍使用普通双击，拖动几何和命中由其他真实指针用例覆盖。
+
+防再犯：对设计上持续运动的元素测试事件路由时显式处理 actionability；不要通过关闭动画让测试通过，
+也不要把 force 扩散到本应验证可点击性或几何命中的用例。

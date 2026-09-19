@@ -31,7 +31,7 @@ motion.dispose()
 
 只动画 `transform` 和 `opacity`；`left/top` 立即写入最终值。新 revision 先捕获当前视觉位置，再取消旧动画并从该位置继续。所有完成回调都校验 revision 和节点身份，旧回调不得删除、覆盖或清理新节点。
 
-运动节点必须是外层 positioner；原图标视觉、Widget 内容和标签放在各自内层 face。FLIP/Widget 坐标只由外层负责，长按 500ms 后的苹果式 `jiggle` 只写内层 rotate，两者可同时运行且互不覆盖。图标 face 以 ±1.35°/350ms 抖动；面积更大的 Widget face 使用更克制的 ±0.38°/420ms，拖动当前对象时暂停，松手或取消后恢复。拖起图标时内层 face 使用 `translate3d + scale(1.06)` 跟随指针，当前目标由独立 placeholder 留位；被拖节点排除 FLIP，其他路径图标参与 FLIP。真实桌面集成不得删除既有 `body.editing`、500ms 长按或抖动语义。
+图标运动节点必须是外层 positioner，图标视觉和标签放在内层 face：FLIP 只写外层 transform/opacity，图标 face 以 ±1.35°/350ms 执行苹果式 `jiggle`。Widget 坐标继续由外框的 `left/top` 负责，但整张 Widget 外框使用 CSS individual `rotate` 以 ±0.38°/420ms 抖动，让边框、背景、阴影与内容保持一体；拖动当前对象时暂停，松手或取消后恢复。拖起图标时内层 face 使用 `translate3d + scale(1.06)` 跟随指针，当前目标由独立 placeholder 留位；被拖节点排除 FLIP，其他路径图标参与 FLIP。双击舞台真正空白处退出编辑，交互对象冒泡的双击不得退出。真实桌面集成不得删除既有 `body.editing`、500ms 长按或抖动语义。
 
 图标重排只改变图标坐标，不移动 Widget；Widget 当前矩形作为不可放置障碍。Widget 自身仍可拖动并继续优先占位，让冲突图标避让。Dock 是图标和 Widget 的禁放区：图标进入时撤销路径预览并隐藏占位，释放恢复原顺序；Widget 接近时钳制在 Dock 外。松手只提交一次新的图标坐标顺序，pointercancel、lostpointercapture、无解和非法目标都恢复基线。
 

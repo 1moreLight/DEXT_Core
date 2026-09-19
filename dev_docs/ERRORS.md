@@ -84,6 +84,8 @@
 | #77 | Reset 只重置画面却未终止 pointer capture 与长按计时，后续事件会再次改写布局 | [renderer](errors/renderer.md) |
 | #78 | 多段预览共用旧 `previewBase`，新手势取消会跳回更早的场景布局 | [renderer](errors/renderer.md) |
 | #79 | 非 Reset 场景切换未取消真实拖拽，旧 pointerup 会覆盖新场景结果 | [renderer](errors/renderer.md) |
+| #80 | Widget jiggle 只挂内容层，造成文字动而边框静止的割裂效果 | [renderer](errors/renderer.md) |
+| #81 | Playwright 对持续旋转元素执行双击会因“元素不稳定”超时 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

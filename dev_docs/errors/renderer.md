@@ -235,3 +235,18 @@ drag 对象和 pointer capture。旧 pointerup 因此仍有提交权。
 和执行新场景 revision。Playwright 覆盖“真实路径预览 → Add → 旧 pointerup”，最终保持 9 个节点。
 
 防再犯：任何能从手势外部发布布局的入口都必须先撤销当前手势的提交权；不能只处理 Reset 特例。
+
+# #80 Widget 的编辑抖动必须包含整张卡片
+
+现象：编辑模式下 Widget 只有时间和说明文字在抖，边框、背景与阴影保持静止，看起来像内容从卡片里
+脱开，不符合苹果式“整个可编辑对象在抖动”的视觉语义。
+
+原因：为了分离坐标与动画，把 `motion-widget-jiggle` 错挂在 `.demo-widget-face` 内容层；Widget 外框
+仍是静态 positioner，因此只有内部子树旋转。
+
+修复：Widget 继续用 `left/top` 承担坐标，但把 CSS individual `rotate` 动画挂到 `.demo-widget` 整体；
+边框、背景、阴影和内容共同运动。拖动以 `is-dragging` 暂停，reduced-motion 仍关闭；Dock 钳制额外保留
+2px，覆盖 rotate 后外接框比静态 `offsetHeight` 增大的部分。
+
+防再犯：视觉对象的 jiggle 所有权应落在用户认知中的完整对象，而不是为了技术分层任意选内层；
+浏览器测试同时断言外框有 animation、内容层没有独立 animation。

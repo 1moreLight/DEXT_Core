@@ -12,6 +12,7 @@
   const ORIGIN_Y = 24;
   const CELL_W = 92;
   const CELL_H = 108;
+  const WIDGET_JIGGLE_SAFETY = 2;
   const GRID = { cellWidth: CELL_W, cellHeight: CELL_H, columns: 11, rows: 5 };
   const COLORS = ["#9ef0c5", "#9fc5ff", "#f6c177", "#c4a7e7", "#eb8f8f", "#8bd5ca"];
 
@@ -485,6 +486,10 @@
     if (editMode) detail.textContent = "Edit mode · icon and Widget faces jiggle while outer positioners own layout motion.";
   }
 
+  function exitEditingOnEmptyStage(event) {
+    if (editMode && event.target === stage) setEditing(false);
+  }
+
   function startWidgetPressOrDrag(event) {
     if (event.button !== 0) return;
     if (editMode) {
@@ -529,7 +534,7 @@
     const dockTop = dockRect.top - stageRect.top;
     const overlapsDockHorizontally = left < dockRight && left + widget.offsetWidth > dockLeft;
     if (overlapsDockHorizontally && top + widget.offsetHeight > dockTop - 8) {
-      top = Math.max(0, dockTop - widget.offsetHeight - 8);
+      top = Math.max(0, dockTop - widget.offsetHeight - 8 - WIDGET_JIGGLE_SAFETY);
       setDropZone("blocked");
     } else {
       setDropZone();
@@ -712,6 +717,7 @@
   stage.addEventListener("pointermove", moveIcon);
   stage.addEventListener("pointerup", finishIconDrag);
   stage.addEventListener("pointercancel", finishIconDrag);
+  stage.addEventListener("dblclick", exitEditingOnEmptyStage);
   document.querySelectorAll("[data-scenario]").forEach((button) => {
     button.addEventListener("click", () => runScenario(button.dataset.scenario));
   });

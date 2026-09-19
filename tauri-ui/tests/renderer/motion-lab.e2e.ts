@@ -62,24 +62,38 @@ test("500ms long press keeps the Apple-style inner jiggle while the outer node p
   await expect(face).toHaveCSS("animation-name", "none");
 });
 
-test("Widget shares the edit jiggle, pauses while dragged, and resumes on release", async ({ page }) => {
+test("the complete Widget card jiggles, pauses while dragged, and resumes on release", async ({ page }) => {
   await enterAppleEditMode(page);
   const widget = page.locator("#demo-widget");
   const face = widget.locator(".demo-widget-face");
-  await expect(face).toHaveCSS("animation-name", "motion-widget-jiggle");
+  await expect(widget).toHaveCSS("animation-name", "motion-widget-jiggle");
+  await expect(face).toHaveCSS("animation-name", "none");
 
   const box = await widget.boundingBox();
   if (!box) throw new Error("Widget geometry unavailable");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await expect(widget).toHaveClass(/is-dragging/);
-  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(widget).toHaveCSS("animation-name", "none");
   await page.mouse.up();
 
   await expect(widget).not.toHaveClass(/is-dragging/);
-  await expect(face).toHaveCSS("animation-name", "motion-widget-jiggle");
+  await expect(widget).toHaveCSS("animation-name", "motion-widget-jiggle");
   await page.getByRole("button", { name: "Done editing" }).click();
-  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(widget).toHaveCSS("animation-name", "none");
+});
+
+test("double-clicking the empty desktop exits edit mode", async ({ page }) => {
+  await enterAppleEditMode(page);
+  await page.locator("#motion-stage").dblclick({ position: { x: 620, y: 300 } });
+  await expect(page.locator("body")).not.toHaveClass(/editing/);
+  await expect(page.locator('[data-icon-id="alpha"] .motion-icon-face')).toHaveCSS("animation-name", "none");
+});
+
+test("double-clicking the Widget does not exit edit mode", async ({ page }) => {
+  await enterAppleEditMode(page);
+  await page.locator("#demo-widget").dblclick({ force: true });
+  await expect(page.locator("body")).toHaveClass(/editing/);
 });
 
 test("rapid revisions continue from the current visual state and never flash back to an old layout", async ({ page }) => {
@@ -395,7 +409,7 @@ test("system reduced-motion preference disables both FLIP and edit-mode jiggle",
   await enterAppleEditMode(page);
   const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
   await expect(face).toHaveCSS("animation-name", "none");
-  await expect(page.locator("#demo-widget .demo-widget-face")).toHaveCSS("animation-name", "none");
+  await expect(page.locator("#demo-widget")).toHaveCSS("animation-name", "none");
 
   await page.evaluate(() => window.motionLab.runScenario("widget-single"));
   expect(await page.locator(".motion-icon").evaluateAll(

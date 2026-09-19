@@ -138,7 +138,7 @@ wallpapers/dext-room/
 | `cancel({restore})` | 取消当前 revision；预览模式可按 300ms 回到进入预览前的完整布局 |
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
 
-时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画外层 positioner 的 transform/opacity；500ms 长按进入编辑后，图标 face 以 ±1.35°/350ms、Widget face 以 ±0.38°/420ms 独立 jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；Reset 会终止全部 press/drag、长按 timer 与 pointer capture。`initial`、`staging`、`resize` 与 reduced-motion 立即落位并关闭 jiggle。真实桌面接线仍受阶段 A 人工验收门槛约束。
+时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；500ms 长按进入编辑后，图标 face 以 ±1.35°/350ms jiggle，Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面舞台真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；Reset 会终止全部 press/drag、长按 timer 与 pointer capture。`initial`、`staging`、`resize` 与 reduced-motion 立即落位并关闭 jiggle。真实桌面接线仍受阶段 A 人工验收门槛约束。
 
 ## 四、room.json v2 示例
 
