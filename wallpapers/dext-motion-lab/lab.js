@@ -1,6 +1,8 @@
 (() => {
   const stage = document.getElementById("motion-stage");
   const widget = document.getElementById("demo-widget");
+  const dock = document.getElementById("demo-dock");
+  const reorderPlaceholder = document.getElementById("reorder-placeholder");
   const reduceMotion = document.getElementById("reduce-motion");
   const editDone = document.getElementById("edit-done");
   const status = document.getElementById("motion-status");
@@ -50,6 +52,64 @@
     return DextLayoutMotionApi.createMotionItems(source, (icon) => positionFor(icon, dense));
   }
 
+  function pointInside(clientX, clientY, rect) {
+    return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+  }
+
+  function setDropZone(value = "idle") {
+    stage.dataset.dropZone = value;
+  }
+
+  function showPlaceholder(target) {
+    const position = positionFor(target);
+    reorderPlaceholder.style.left = `${position.left}px`;
+    reorderPlaceholder.style.top = `${position.top}px`;
+    reorderPlaceholder.dataset.active = "true";
+  }
+
+  function hidePlaceholder() {
+    reorderPlaceholder.dataset.active = "false";
+  }
+
+  function widgetObstacle() {
+    return {
+      x: widget.offsetLeft - ORIGIN_X,
+      y: widget.offsetTop - ORIGIN_Y,
+      width: widget.offsetWidth,
+      height: widget.offsetHeight,
+    };
+  }
+
+  function pointerTargetCell(event) {
+    const rect = stage.getBoundingClientRect();
+    const x = Math.round((event.clientX - rect.left - ORIGIN_X - 36) / CELL_W);
+    const y = Math.round((event.clientY - rect.top - ORIGIN_Y - 42) / CELL_H);
+    if (x < 0 || x >= GRID.columns || y < 0 || y >= GRID.rows) return null;
+    return { x, y };
+  }
+
+  function updateDraggedFace(drag, event) {
+    const rect = drag.node.getBoundingClientRect();
+    const dx = event.clientX - rect.left - rect.width / 2;
+    const dy = event.clientY - rect.top - rect.height / 2 - 6;
+    drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(1.06)`;
+  }
+
+  function clearDraggedFace(drag) {
+    drag.node.classList.remove("is-dragging");
+    drag.face.style.transform = "";
+    hidePlaceholder();
+    setDropZone();
+  }
+
+  function clearAllIconLifts() {
+    for (const node of stage.querySelectorAll(".motion-icon.is-dragging")) {
+      node.classList.remove("is-dragging");
+      const face = node.querySelector(".motion-icon-face");
+      if (face) face.style.transform = "";
+    }
+  }
+
   function createIconNode(item) {
     const node = document.createElement("div");
     node.className = "motion-icon";
@@ -89,6 +149,48 @@
     const result = motion.cancel(options);
     previewActive = false;
     return result;
+  }
+
+  function settleGestureBaseline() {
+    cancelMotion({ restore: false });
+  }
+
+  function releasePointerCapture(element, pointerId) {
+    try {
+      if (element?.hasPointerCapture?.(pointerId)) element.releasePointerCapture(pointerId);
+    } catch (_error) {
+      // The browser can release capture before reset reaches this cleanup path.
+    }
+  }
+
+  function abortActiveInput({ restoreGesture = false } = {}) {
+    const activeWidgetPress = widgetPress;
+    const activeIconPress = iconPress;
+    const activeWidgetDrag = widgetDrag;
+    const activeIconDrag = iconDrag;
+
+    widgetPress = null;
+    iconPress = null;
+    widgetDrag = null;
+    iconDrag = null;
+
+    if (activeWidgetPress) clearTimeout(activeWidgetPress.timer);
+    if (activeIconPress) clearTimeout(activeIconPress.timer);
+    if (activeIconDrag) clearDraggedFace(activeIconDrag);
+
+    const activeDrag = activeIconDrag ?? activeWidgetDrag;
+    if (restoreGesture && activeDrag) {
+      cancelMotion({ restore: true });
+      icons = cloneIcons(activeDrag.base);
+      if (activeWidgetDrag) {
+        widget.style.left = activeWidgetDrag.left;
+        widget.style.top = activeWidgetDrag.top;
+      }
+    }
+
+    releasePointerCapture(widget, activeWidgetPress?.pointerId ?? activeWidgetDrag?.pointerId);
+    releasePointerCapture(activeIconDrag?.face, activeIconDrag?.pointerId);
+    releasePointerCapture(activeIconPress?.face, activeIconPress?.pointerId);
   }
 
   function syncReducedMotion({ settle = false } = {}) {
@@ -142,7 +244,11 @@
 
   function reset({ keepRevision = false } = {}) {
     ++scenarioToken;
+    abortActiveInput();
     stage.dataset.conflict = "false";
+    setDropZone();
+    hidePlaceholder();
+    clearAllIconLifts();
     stage.classList.remove("dense");
     widget.style.left = "744px";
     widget.style.top = "368px";
@@ -165,6 +271,10 @@
   }
 
   function runScenario(name) {
+    if (name !== "reset") abortActiveInput({ restoreGesture: true });
+    clearAllIconLifts();
+    hidePlaceholder();
+    setDropZone();
     document.querySelectorAll("[data-scenario]").forEach((button) => {
       button.dataset.active = String(button.dataset.scenario === name);
     });
@@ -223,12 +333,31 @@
       return;
     }
 
-    if (name === "icon-swap") {
+    if (name === "icon-reorder") {
+      const solved = DextLayout.resolveIconReorder(icons, 0, { x: 2, y: 0 }, GRID, [widgetObstacle()]);
+      if (!solved.committed) return;
+      const node = stage.querySelector('[data-icon-id="alpha"]');
+      const face = node?.querySelector(".motion-icon-face");
+      if (node && face) {
+        node.classList.add("is-dragging");
+        face.style.transform = "translate3d(0, -8px, 0) scale(1.06)";
+      }
+      showPlaceholder({ x: 2, y: 0 });
+      const draggedKey = motionItems(solved.icons).find((item) => item.data.id === "alpha")?.key;
+      const preview = apply(solved.icons, {
+        mode: "preview",
+        excludeKeys: draggedKey ? [draggedKey] : [],
+        label: "reorder path preview",
+      });
       track((async () => {
-        await sleep(80);
+        await preview.finished;
+        await sleep(320);
         if (token !== scenarioToken) return;
-        const result = apply(moved(["alpha", 1, 0], ["bravo", 0, 0]), { mode: "preview", label: "stable-cell swap" });
-        await result.finished;
+        const committed = apply(solved.icons, { label: "reorder path committed" });
+        node?.classList.remove("is-dragging");
+        if (face) face.style.transform = "";
+        hidePlaceholder();
+        await committed.finished;
       })());
       return;
     }
@@ -332,6 +461,7 @@
 
   function startWidgetDrag(event) {
     if (event.button !== 0) return;
+    settleGestureBaseline();
     const rect = widget.getBoundingClientRect();
     widgetDrag = {
       pointerId: event.pointerId,
@@ -389,8 +519,19 @@
   function moveWidget(event) {
     if (!widgetDrag || event.pointerId !== widgetDrag.pointerId) return;
     const stageRect = stage.getBoundingClientRect();
-    const left = Math.max(0, Math.min(stageRect.width - widget.offsetWidth, event.clientX - stageRect.left - widgetDrag.dx));
-    const top = Math.max(0, Math.min(stageRect.height - widget.offsetHeight, event.clientY - stageRect.top - widgetDrag.dy));
+    const dockRect = dock.getBoundingClientRect();
+    let left = Math.max(0, Math.min(stageRect.width - widget.offsetWidth, event.clientX - stageRect.left - widgetDrag.dx));
+    let top = Math.max(0, Math.min(stageRect.height - widget.offsetHeight, event.clientY - stageRect.top - widgetDrag.dy));
+    const dockLeft = dockRect.left - stageRect.left;
+    const dockRight = dockRect.right - stageRect.left;
+    const dockTop = dockRect.top - stageRect.top;
+    const overlapsDockHorizontally = left < dockRight && left + widget.offsetWidth > dockLeft;
+    if (overlapsDockHorizontally && top + widget.offsetHeight > dockTop - 8) {
+      top = Math.max(0, dockTop - widget.offsetHeight - 8);
+      setDropZone("blocked");
+    } else {
+      setDropZone();
+    }
     widget.style.left = `${left}px`;
     widget.style.top = `${top}px`;
     const solved = DextLayout.resolveWidgetIconAvoidance(
@@ -410,6 +551,7 @@
     if (!widgetDrag || event.pointerId !== widgetDrag.pointerId) return;
     const drag = widgetDrag;
     widgetDrag = null;
+    setDropZone();
     const canceled = event.type !== "pointerup";
     if (!canceled && drag.preview && stage.dataset.conflict !== "true") {
       const result = apply(drag.preview, { label: "Widget layout committed" });
@@ -428,9 +570,24 @@
     if (event.button !== 0) return;
     const slot = event.currentTarget.closest(".motion-icon");
     const id = slot?.dataset.iconId;
-    const source = icons.find((icon) => icon.id === id);
-    if (!source) return;
-    iconDrag = { pointerId: event.pointerId, id, base: cloneIcons(icons), targetId: null, timer: null, preview: null };
+    const index = icons.findIndex((icon) => icon.id === id);
+    if (index < 0 || !slot) return;
+    settleGestureBaseline();
+    iconDrag = {
+      pointerId: event.pointerId,
+      id,
+      index,
+      base: cloneIcons(icons),
+      preview: null,
+      targetKey: null,
+      valid: true,
+      node: slot,
+      face: event.currentTarget,
+    };
+    slot.classList.add("is-dragging");
+    showPlaceholder(icons[index]);
+    setDropZone("valid");
+    updateDraggedFace(iconDrag, event);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
@@ -442,6 +599,7 @@
     }
     iconPress = {
       pointerId: event.pointerId,
+      face: event.currentTarget,
       x: event.clientX,
       y: event.clientY,
       timer: setTimeout(() => {
@@ -466,58 +624,68 @@
     iconPress = null;
   }
 
+  function restoreIconPathPreview(drag, event) {
+    if (!drag.preview) return;
+    drag.preview = null;
+    const draggedKey = motionItems(drag.base).find((item) => item.data.id === drag.id)?.key;
+    const result = apply(drag.base, {
+      mode: "preview",
+      excludeKeys: draggedKey ? [draggedKey] : [],
+      label: "reorder target blocked",
+    });
+    updateDraggedFace(drag, event);
+    track(result.finished);
+  }
+
   function moveIcon(event) {
     if (!iconDrag || event.pointerId !== iconDrag.pointerId) return;
-    const underPointer = document.elementFromPoint(event.clientX, event.clientY)?.closest?.(".motion-icon");
-    const targetId = underPointer?.dataset.iconId;
-    if (!targetId || targetId === iconDrag.id) {
-      clearTimeout(iconDrag.timer);
-      iconDrag.timer = null;
-      iconDrag.targetId = null;
-      if (iconDrag.preview) {
-        const rollback = cancelMotion({ restore: true });
-        icons = cloneIcons(iconDrag.base);
-        iconDrag.preview = null;
-        if (rollback) {
-          describe(rollback, "icon swap restored");
-          track(rollback.finished);
-        }
-      }
+    const drag = iconDrag;
+    updateDraggedFace(drag, event);
+    const dockRect = dock.getBoundingClientRect();
+    const widgetRect = widget.getBoundingClientRect();
+    const target = pointerTargetCell(event);
+    if (!target || pointInside(event.clientX, event.clientY, dockRect)
+      || pointInside(event.clientX, event.clientY, widgetRect)) {
+      drag.valid = false;
+      drag.targetKey = null;
+      restoreIconPathPreview(drag, event);
+      hidePlaceholder();
+      setDropZone("blocked");
       return;
     }
-    if (iconDrag.targetId === targetId) return;
-    clearTimeout(iconDrag.timer);
-    if (iconDrag.preview) {
-      const rollback = cancelMotion({ restore: true });
-      icons = cloneIcons(iconDrag.base);
-      iconDrag.preview = null;
-      if (rollback) track(rollback.finished);
+    const targetKey = `${target.x}:${target.y}`;
+    if (drag.valid && drag.targetKey === targetKey) return;
+    const solved = DextLayout.resolveIconReorder(drag.base, drag.index, target, GRID, [widgetObstacle()]);
+    if (!solved.committed) {
+      drag.valid = false;
+      drag.targetKey = null;
+      restoreIconPathPreview(drag, event);
+      hidePlaceholder();
+      setDropZone("blocked");
+      return;
     }
-    iconDrag.targetId = targetId;
-    const drag = iconDrag;
-    iconDrag.timer = setTimeout(() => {
-      if (iconDrag !== drag || drag.targetId !== targetId) return;
-      const next = cloneIcons(drag.base);
-      const source = next.find((icon) => icon.id === drag.id);
-      const target = next.find((icon) => icon.id === targetId);
-      if (!source || !target) return;
-      [source.x, target.x] = [target.x, source.x];
-      [source.y, target.y] = [target.y, source.y];
-      drag.preview = next;
-      const draggedKey = motionItems(next).find((item) => item.data.id === source.id)?.key;
-      const result = apply(next, { mode: "preview", excludeKeys: draggedKey ? [draggedKey] : [], label: "80ms icon swap preview" });
-      track(result.finished);
-    }, 80);
+    drag.valid = true;
+    drag.targetKey = targetKey;
+    drag.preview = solved.icons;
+    showPlaceholder(target);
+    setDropZone("valid");
+    const draggedKey = motionItems(solved.icons).find((item) => item.data.id === drag.id)?.key;
+    const result = apply(solved.icons, {
+      mode: "preview",
+      excludeKeys: draggedKey ? [draggedKey] : [],
+      label: `reorder preview · ${solved.moved.length} moved`,
+    });
+    updateDraggedFace(drag, event);
+    track(result.finished);
   }
 
   function finishIconDrag(event) {
     if (!iconDrag || event.pointerId !== iconDrag.pointerId) return;
     const drag = iconDrag;
     iconDrag = null;
-    clearTimeout(drag.timer);
     const canceled = event.type !== "pointerup";
-    if (!canceled && drag.preview) {
-      const result = apply(drag.preview, { label: "icon swap committed" });
+    if (!canceled && drag.preview && drag.valid) {
+      const result = apply(drag.preview, { label: "icon reorder committed" });
       track(result.finished);
     } else {
       const rollback = cancelMotion({ restore: true });
@@ -527,6 +695,7 @@
         track(rollback.finished);
       }
     }
+    clearDraggedFace(drag);
   }
 
   widget.addEventListener("pointerdown", startWidgetPressOrDrag);

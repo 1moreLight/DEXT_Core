@@ -29,7 +29,7 @@
       <button type="button" data-scenario="widget-single">Widget · one</button>
       <button type="button" data-scenario="widget-multi">Widget · group</button>
       <button type="button" data-scenario="zigzag">Stress · rapid</button>
-      <button type="button" data-scenario="icon-swap">80ms swap</button>
+      <button type="button" data-scenario="icon-reorder">Reorder · path</button>
       <button type="button" data-scenario="add">Add</button>
       <button type="button" data-scenario="remove">Remove</button>
       <button type="button" data-scenario="remove-reenter">Exit interrupt</button>
@@ -45,11 +45,15 @@
           <span>1920 × 1080 logical field</span>
           <span>Long-press 500ms, then drag the widget or an icon</span>
         </div>
-        <div id="motion-stage" data-conflict="false">
+        <div id="motion-stage" data-conflict="false" data-drop-zone="idle">
+          <div id="reorder-placeholder" data-active="false" aria-hidden="true"></div>
           <div id="demo-widget" class="demo-widget" tabindex="0" aria-label="Draggable widget">
             <span class="widget-kicker">FOCUS</span>
             <strong>09:41</strong>
             <small>Drag to reserve space</small>
+          </div>
+          <div id="demo-dock" aria-label="Dock drop exclusion zone">
+            <span></span><span></span><span></span><small>DOCK · NO DROP</small>
           </div>
         </div>
       </section>

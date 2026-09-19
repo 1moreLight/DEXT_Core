@@ -28,7 +28,8 @@
 ### Task 4：交互实验台
 
 - 新建 `wallpapers/dext-motion-lab/`，直接加载 `../dext-room/layout-motion.js`。
-- 实现场景切换、Widget 拖动、80ms 图标交换预览、连续 revision、取消/reduced-motion 和 100 图标压力场景。
+- TDD 增加 `resolveIconReorder`：按目标占位做路径插入，Widget 障碍和 Dock 保留区不允许放置，输入保持不可变。
+- 实现场景切换、Widget 拖动、图标托起/占位/路径让位/松手提交、Dock 禁放、连续 revision、取消/reduced-motion 和 100 图标压力场景。
 - 保持单一舞台、克制诊断栏和清晰交互状态。
 
 ### Task 5：Playwright 与开发命令
@@ -55,7 +56,8 @@
 ### Task 8：Widget 与图标实时预览
 
 - Widget 拖动继续实时求解，由控制器展示让位；pointerup 只提交一次，取消/无解恢复。
-- 图标进入占用格稳定 80ms 后预览交换；松手提交，取消恢复。
+- 图标越过合法格中线后移动 placeholder，路径图标依次让位；Widget 不动且作为障碍，Dock 不接受图标或 Widget；松手提交，取消恢复。
+- 每次真实拖动先以当前已发布布局建立独立恢复基线；Reset/场景切换统一终止 drag/press、长按 timer 与 pointer capture，旧输入不得跨重置继续生效。
 - 任意动画错误立即降级为最终布局，不影响保存或启动。
 
 ### Task 9：最终验证与交付

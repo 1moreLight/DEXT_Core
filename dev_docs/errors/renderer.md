@@ -164,3 +164,74 @@ revision 明确标为 `Stress · rapid`。Playwright 同时断言外层 FLIP ani
 
 防再犯：reduced-motion 不只是创建动画前的分支；所有运行时偏好都要测试初始命中和中途切换，
 并分别验证脚本动画与 CSS 动画。
+
+# #75 图标 Reorder 不是占用格两两交换
+
+现象：实验台把图标拖动实现为“进入占用格后交换两枚图标”，用户要求的却是卡片排序：当前图标
+托起、目标位置留位、路径中的其他图标依次让开，松手后保留新顺序。
+
+原因：把旧桌面的 sparse-grid swap 当成了运动语言本身，没有先区分“交换坐标”和“插入排序”两种
+数据语义。即使 FLIP 平滑，两两交换也不会产生连续队列让位的视觉。
+
+修复：`resolveIconReorder` 按当前有序槽位移除 dragged item 并插入目标槽，再把沿途图标映射回槽位；
+拖动 face 独立跟随指针并 `scale(1.06)`，placeholder 占目标格，其他图标由外层 FLIP 让位。Widget
+作为不可移动障碍传入，Dock 作为 reserved/指针禁区。
+
+防再犯：涉及 reorder/sort 的需求先写出序列变化示例（如 `A B C → B C A`），不能用“换位”一词
+代替数据语义；测试至少跨过两个相邻项，避免两项样本让 swap 与 insert 看起来相同。
+
+# #76 非法拖放和场景中断必须同时恢复布局与视觉状态
+
+现象：图标先发布路径重排预览、再进入 Dock/Widget 等非法区时，只隐藏 placeholder 会留下已经让位
+的其他图标；脚本 Reorder 场景在抬起状态被 Reset，中断 token 虽阻止旧回调改布局，却会残留
+`is-dragging` 与 face transform。
+
+原因：把临时状态分散为布局 preview、placeholder、drop-zone、lift class 和 inline transform，却只在
+各自主流程清理，没有为非法目标和外部中断定义完整恢复边界。
+
+修复：非法目标立即以 preview mode 发布拖拽基线，保留控制器 `previewBase` 供最终取消，同时清空
+目标占位；Reset 或切换场景时统一扫描并清理全部 lift 状态，旧异步回调仍由 scenario token 拦截。
+Playwright 覆盖“先合法让位再进入 Dock”“脚本托起途中 Reset”和“托起途中切换场景”。
+
+防再犯：拖拽临时状态测试必须覆盖 valid→invalid→release 和 active→external reset 两条路径；清理
+不能只依赖 pointerup。
+
+# #77 Reset 必须同时终止画面状态、指针所有权和长按计时
+
+现象：Widget 拖动中点击 Reset 后，画面先回到初始位置，但同一指针后续 move/up 仍会再次移动 Widget
+并提交避让布局；图标或 Widget 的 500ms 长按尚未到时点击 Reset，计时器随后仍会重新进入编辑模式。
+
+原因：Reset 只清了图标拖动样式和布局，没有清空 `widgetDrag/widgetPress/iconPress`，也没有取消 timer
+和释放 pointer capture。重置后的旧输入序列仍被事件处理器视为活跃手势。
+
+修复：统一 `abortActiveInput`，先令全部 press/drag 状态失效，再清计时器、托起样式和 pointer capture；
+之后才发布 Reset 的最终布局。Playwright 覆盖拖动中 Reset 后继续 move/up，以及长按计时中 Reset。
+
+防再犯：任何外部 Reset/切换都要按一个输入事务的 abort 处理，不能只清视觉；测试必须在 Reset 后继续
+投递原指针事件，并等待超过长按阈值。
+
+# #78 每个真实拖动手势必须建立自己的取消基线
+
+现象：先运行 Widget 推开场景，再开始图标或 Widget 拖动并取消，DOM 会跳回运行场景前的初始布局，
+但实验台内存仍保存手势开始时的布局；下一次交互因此从与画面不一致的数据继续。
+
+原因：控制器的 `previewBase` 只在首个 preview 建立。脚本场景留下的基线跨进了后续真实手势，
+`cancel({restore:true})` 恢复的是更早场景，而不是本次 pointerdown 时用户看到的布局。
+
+修复：真实图标或 Widget 拖动开始前先无恢复地结清当前动画/预览并清空旧基线，再以当前已发布布局
+创建本次 drag.base；本手势首次 preview 随后建立独立基线。Playwright 分别覆盖图标和 Widget 取消。
+
+防再犯：取消基线属于手势事务，不属于页面全局；测试“预览 A → 手势 B → 取消 B”而不只测从初始态取消。
+
+# #79 任意外部场景切换都必须先取消真实拖拽
+
+现象：拖着 Alpha 已发布路径让位时切换到 Add，India 会先出现；随后旧指针松手仍进入
+`finishIconDrag`，用不含 India 的旧 `drag.preview` 提交，导致新场景结果被删除。
+
+原因：场景切换只在没有 `iconDrag` 时清理视觉，Reset 虽已 abort 输入，其他场景入口却保留了真实
+drag 对象和 pointer capture。旧 pointerup 因此仍有提交权。
+
+修复：所有非 Reset 场景也先调用统一输入 abort；若存在真实 drag，先恢复该手势基线，再释放 capture
+和执行新场景 revision。Playwright 覆盖“真实路径预览 → Add → 旧 pointerup”，最终保持 9 个节点。
+
+防再犯：任何能从手势外部发布布局的入口都必须先撤销当前手势的提交权；不能只处理 Reset 特例。

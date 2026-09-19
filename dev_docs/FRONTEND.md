@@ -78,7 +78,7 @@ npx playwright install chromium
 npm run test:renderer:e2e
 ```
 
-实验台地址为 `http://127.0.0.1:5174/wallpapers/dext-motion-lab/`，提供 Widget 单/多图标让位、连续 revision、80ms 图标交换、新增、移除、无解回弹、取消、reduced-motion 和 100 图标压力场景。它直接加载 `wallpapers/dext-room/layout-motion.js`，不是演示副本。
+实验台地址为 `http://127.0.0.1:5174/wallpapers/dext-motion-lab/`，提供 Widget 单/多图标让位、连续 revision、Sortable 图标路径重排、Dock 禁放、新增、移除、无解回弹、取消、reduced-motion 和 100 图标压力场景。它直接加载 `wallpapers/dext-room/layout.js` 与 `layout-motion.js`，不是演示副本。
 
 Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图和视频（Git 忽略）。测试文件必须留在 `tauri-ui/tests/renderer/`，否则 Node 不会从仓库级 `wallpapers/` 目录向下解析 `tauri-ui/node_modules`（ERRORS #70）。
 
@@ -104,7 +104,7 @@ wallpapers/dext-room/
 │    ├─ #transition             预设动画兼容层
 │    └─ #toast
 ├─ style.css    顶部 :root 主题变量（--dext-*），改外观优先动这里
-├─ layout.js    纯布局求解（Widget 优先避让）
+├─ layout.js    纯布局求解（Widget 优先避让 + 图标路径重排）
 ├─ layout-motion.js  稳定身份、diff 与 FLIP/WAAPI 控制器（阶段 A 已供实验台使用）
 └─ main.js      全部逻辑（无框架、无构建，保持这样）
 ```
@@ -126,18 +126,19 @@ wallpapers/dext-room/
 | `persistRoom()` | 删除页面副本的 `__source` 后上行；preview 自动跳过，Core 使用包内可信戳双写 |
 | `ICON_SIZES` | 大/中/小三档（图标、格子、字号联动） |
 
-### layout-motion.js 接口（浏览器阶段）
+### layout.js / layout-motion.js 接口（浏览器阶段）
 
 | 接口 | 职责 |
 |---|---|
 | `createMotionItems(icons, positionOf)` | 规范化 launch 身份；兼容 action/label/glyph 并为重复签名追加序号 |
+| `resolveIconReorder(icons, draggedIndex, target, grid, obstacles, reserved)` | 将拖起图标插入目标占位，沿路径顺移其他图标；Widget/Dock 障碍拒绝且不改输入 |
 | `diffMotionItems(previous, next, excludeKeys)` | 计算 move/enter/exit/stay；被拖动节点仍落最终坐标但不做 FLIP move |
 | `new DextLayoutMotion(container, options)` | 建立稳定 key→DOM 映射；调用方提供节点创建/更新和 reduced-motion 来源 |
 | `apply(items, {mode, excludeKeys})` | 立即写最终 left/top，再执行 move/enter/exit；revision 中断从当前视觉位置续接 |
 | `cancel({restore})` | 取消当前 revision；预览模式可按 300ms 回到进入预览前的完整布局 |
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
 
-时序：move/swap 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画外层 positioner 的 transform/opacity；500ms 长按进入编辑和 0.35s jiggle 留在内层图标 face，保持苹果式编辑模式且能与重排同时运行。`initial`、`staging`、`resize` 与 reduced-motion 立即落位。真实桌面接线仍受阶段 A 人工验收门槛约束。
+时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画外层 positioner 的 transform/opacity；500ms 长按进入编辑和 0.35s jiggle 留在内层图标 face。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；Reset 会终止全部 press/drag、长按 timer 与 pointer capture。`initial`、`staging`、`resize` 与 reduced-motion 立即落位。真实桌面接线仍受阶段 A 人工验收门槛约束。
 
 ## 四、room.json v2 示例
 

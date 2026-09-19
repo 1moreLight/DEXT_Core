@@ -73,33 +73,80 @@ test("rapid revisions continue from the current visual state and never flash bac
   await expect(page.locator("#motion-status")).toContainText("revision 4");
 });
 
-test("icon swap waits for the 80ms stable-cell threshold", async ({ page }) => {
-  await page.evaluate(() => window.motionLab.runScenario("icon-swap"));
-  await page.waitForTimeout(45);
-  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
-
-  await expect.poll(() => page.locator('[data-icon-id="alpha"]').evaluate((node) => getComputedStyle(node).left)).toBe("116px");
-  await page.evaluate(() => window.motionLab.waitForIdle());
-  await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("left", "24px");
-});
-
-test("leaving an occupied icon before 80ms cancels the pending pointer swap", async ({ page }) => {
+test("lifted icon moves a placeholder while path icons yield and the Widget stays fixed", async ({ page }) => {
   await enterAppleEditMode(page);
   const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
-  const bravo = await page.locator('[data-icon-id="bravo"]').boundingBox();
-  const stage = await page.locator("#motion-stage").boundingBox();
-  if (!alpha || !bravo || !stage) throw new Error("motion lab geometry unavailable");
+  const charlie = await page.locator('[data-icon-id="charlie"]').boundingBox();
+  if (!alpha || !charlie) throw new Error("icon geometry unavailable");
+  const widgetPosition = await page.locator("#demo-widget").evaluate((node) => [
+    (node as HTMLElement).style.left,
+    (node as HTMLElement).style.top,
+  ]);
 
   await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
   await page.mouse.down();
-  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(30);
-  await page.mouse.move(stage.x + 600, stage.y + 300);
-  await page.waitForTimeout(100);
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveClass(/is-dragging/);
+  await expect(page.locator('[data-icon-id="alpha"] .motion-icon-face')).toHaveAttribute("style", /scale\(1\.06\)/);
+  await page.mouse.move(charlie.x + charlie.width / 2, charlie.y + charlie.height / 2);
 
-  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
+  await expect(page.locator("#reorder-placeholder")).toHaveCSS("left", "208px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "208px");
+  await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="charlie"]')).toHaveCSS("left", "116px");
+
+  await page.mouse.up();
+  await page.evaluate(() => window.motionLab.waitForIdle());
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "208px");
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
+  expect(await page.locator("#demo-widget").evaluate((node) => [
+    (node as HTMLElement).style.left,
+    (node as HTMLElement).style.top,
+  ])).toEqual(widgetPosition);
+});
+
+test("Dock rejects icon drops and restores the original order", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const dock = page.locator("#demo-dock");
+  await expect(dock).toBeVisible();
+  const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
+  const charlie = await page.locator('[data-icon-id="charlie"]').boundingBox();
+  const dockBox = await dock.boundingBox();
+  if (!alpha || !charlie || !dockBox) throw new Error("drag geometry unavailable");
+
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(charlie.x + charlie.width / 2, charlie.y + charlie.height / 2);
+  await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("left", "24px");
+  await page.mouse.move(dockBox.x + dockBox.width / 2, dockBox.y + dockBox.height / 2);
+  await expect(page.locator("#motion-stage")).toHaveAttribute("data-drop-zone", "blocked");
   await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("left", "116px");
   await page.mouse.up();
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "24px");
+});
+
+test("Widget remains draggable but is clamped above the Dock", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const widget = page.locator("#demo-widget");
+  const dock = page.locator("#demo-dock");
+  await expect(dock).toBeVisible();
+  const before = await widget.boundingBox();
+  const dockBox = await dock.boundingBox();
+  if (!before || !dockBox) throw new Error("Widget geometry unavailable");
+
+  await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dockBox.x + dockBox.width / 2, dockBox.y + dockBox.height / 2);
+  await page.mouse.up();
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  const after = await widget.boundingBox();
+  if (!after) throw new Error("Widget geometry unavailable after drag");
+  expect(after.y).not.toBe(before.y);
+  expect(after.y + after.height).toBeLessThanOrEqual(dockBox.y - 8);
 });
 
 test("pointercancel restores published icon and Widget previews", async ({ page }) => {
@@ -131,6 +178,79 @@ test("pointercancel restores published icon and Widget previews", async ({ page 
   await page.mouse.up();
 });
 
+test("a gesture cancel restores the layout visible when that gesture started", async ({ page }) => {
+  await page.evaluate(() => window.motionLab.runScenario("widget-single"));
+  await page.evaluate(() => window.motionLab.waitForIdle());
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
+
+  const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
+  const bravo = await page.locator('[data-icon-id="bravo"]').boundingBox();
+  if (!alpha || !bravo) throw new Error("icon geometry unavailable");
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
+  await page.locator('[data-icon-id="alpha"]').dispatchEvent("pointercancel", { pointerId: 1 });
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
+  await page.mouse.up();
+});
+
+test("a Widget cancel also restores its own current gesture baseline", async ({ page }) => {
+  await page.evaluate(() => window.motionLab.runScenario("widget-single"));
+  await page.evaluate(() => window.motionLab.waitForIdle());
+  const widget = await page.locator("#demo-widget").boundingBox();
+  const stage = await page.locator("#motion-stage").boundingBox();
+  if (!widget || !stage) throw new Error("Widget geometry unavailable");
+
+  await page.mouse.move(widget.x + widget.width / 2, widget.y + widget.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(stage.x + 520, stage.y + 220);
+  await page.locator("#demo-widget").dispatchEvent("pointercancel", { pointerId: 1 });
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator("#demo-widget")).toHaveCSS("left", "18px");
+  await expect(page.locator("#demo-widget")).toHaveCSS("top", "16px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
+  await page.mouse.up();
+});
+
+test("reset aborts an active Widget drag before later pointer events arrive", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const widget = await page.locator("#demo-widget").boundingBox();
+  const stage = await page.locator("#motion-stage").boundingBox();
+  if (!widget || !stage) throw new Error("Widget geometry unavailable");
+
+  await page.mouse.move(widget.x + widget.width / 2, widget.y + widget.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(stage.x + 80, stage.y + 80);
+  await page.evaluate(() => window.motionLab.runScenario("reset"));
+  await page.mouse.move(stage.x + 320, stage.y + 260);
+  await page.mouse.up();
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator("#demo-widget")).toHaveCSS("left", "744px");
+  await expect(page.locator("#demo-widget")).toHaveCSS("top", "368px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "24px");
+  await expect(page.locator("#motion-status")).toContainText("reset");
+});
+
+test("reset clears a pending long press before its timer can reopen edit mode", async ({ page }) => {
+  const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
+  const alpha = await face.boundingBox();
+  if (!alpha) throw new Error("icon geometry unavailable");
+
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await page.evaluate(() => window.motionLab.runScenario("reset"));
+  await page.waitForTimeout(530);
+  await page.mouse.up();
+
+  await expect(page.locator("body")).not.toHaveClass(/editing/);
+});
+
 test("reset invalidates delayed scenario callbacks", async ({ page }) => {
   await page.evaluate(() => window.motionLab.runScenario("zigzag"));
   await page.waitForTimeout(24);
@@ -141,6 +261,49 @@ test("reset invalidates delayed scenario callbacks", async ({ page }) => {
   await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
   await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "24px");
   await expect(page.locator("#motion-status")).toContainText("reset");
+});
+
+test("reset clears a scripted reorder lift without allowing stale cleanup to overwrite it", async ({ page }) => {
+  await page.evaluate(() => window.motionLab.runScenario("icon-reorder"));
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveClass(/is-dragging/);
+  await page.evaluate(() => window.motionLab.runScenario("reset"));
+  await page.waitForTimeout(520);
+
+  await expect(page.locator('[data-icon-id="alpha"]')).not.toHaveClass(/is-dragging/);
+  await expect(page.locator('[data-icon-id="alpha"] .motion-icon-face')).not.toHaveAttribute("style", /transform/);
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+});
+
+test("switching scenarios clears a scripted reorder lift before the next scenario runs", async ({ page }) => {
+  await page.evaluate(() => window.motionLab.runScenario("icon-reorder"));
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveClass(/is-dragging/);
+  await page.evaluate(() => window.motionLab.runScenario("add"));
+  await page.waitForTimeout(520);
+
+  await expect(page.locator('[data-icon-id="alpha"]')).not.toHaveClass(/is-dragging/);
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
+  await expect(page.locator('[data-icon-id="india"]')).toHaveCount(1);
+});
+
+test("switching scenarios aborts a real drag so its later pointerup cannot overwrite the new result", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const alpha = await page.locator('[data-icon-id="alpha"]').boundingBox();
+  const charlie = await page.locator('[data-icon-id="charlie"]').boundingBox();
+  if (!alpha || !charlie) throw new Error("icon geometry unavailable");
+
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(charlie.x + charlie.width / 2, charlie.y + charlie.height / 2);
+  await expect(page.locator('[data-icon-id="bravo"]')).toHaveCSS("left", "24px");
+  await page.evaluate(() => window.motionLab.runScenario("add"));
+  await page.mouse.up();
+  await page.evaluate(() => window.motionLab.waitForIdle());
+
+  await expect(page.locator('[data-icon-id="india"]')).toHaveCount(1);
+  await expect(page.locator(".motion-icon")).toHaveCount(9);
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("left", "24px");
+  await expect(page.locator("#motion-status")).toContainText("add icon");
 });
 
 test("enter and exit animate while stale exit completion cannot remove a re-entered node", async ({ page }) => {

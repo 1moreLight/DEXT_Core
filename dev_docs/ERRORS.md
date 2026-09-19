@@ -79,6 +79,11 @@
 | #72 | 拖拽预览未清理稳定计时器/取消事件/过期异步回调，导致离开后仍交换或取消时提交 | [renderer](errors/renderer.md) |
 | #73 | 布局 FLIP 与长按 jiggle 未分层展示，浏览器实验台看起来替换了苹果式编辑模式 | [renderer](errors/renderer.md) |
 | #74 | reduced-motion 只在下一次布局生效，动画中途切换和系统偏好仍保留 FLIP/jiggle | [renderer](errors/renderer.md) |
+| #75 | 把图标重排理解成两两交换，无法形成托起、占位和路径让位的 Sortable 语义 | [renderer](errors/renderer.md) |
+| #76 | 拖入非法目标或 Reset 时只隐藏占位，旧路径布局/托起样式可能残留 | [renderer](errors/renderer.md) |
+| #77 | Reset 只重置画面却未终止 pointer capture 与长按计时，后续事件会再次改写布局 | [renderer](errors/renderer.md) |
+| #78 | 多段预览共用旧 `previewBase`，新手势取消会跳回更早的场景布局 | [renderer](errors/renderer.md) |
+| #79 | 非 Reset 场景切换未取消真实拖拽，旧 pointerup 会覆盖新场景结果 | [renderer](errors/renderer.md) |
 
 ## 分册
 

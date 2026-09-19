@@ -779,12 +779,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 > 目标：为已有 Desk 自动布局变化提供统一、可中断、稳定节点复用的 FLIP/WAAPI 动画；先在浏览器实验台验收运动质感，再接入真实桌面。
 > 范围外：不引入 Muuri、dnd-kit、React Grid Layout 等运行时依赖；不改变 room.json；不实现按名称/频率一键整理；浏览器验收前不修改真实桌面 `main.js` 的交互。
-> 人工验收：先运行 `npm run dev:motion`，逐项检查 Widget 单/多图标让位、连续折返、图标交换、新增、移除、无解回弹、取消、reduced-motion 与 100 图标压力场景；浏览器阶段明确通过后才进入真桌面集成。
+> 人工验收：先运行 `npm run dev:motion`，逐项检查 Widget 单/多图标让位、连续折返、图标路径重排、新增、移除、无解回弹、取消、reduced-motion 与 100 图标压力场景；浏览器阶段明确通过后才进入真桌面集成。
 
 - [x] DESK-LIVE-001 于 2026-09-19 用户验收通过并合入 master `64ab03f`
 - [x] 从最新 master 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-motion-001` 和分支 `feat/DESK-MOTION-001-layout-motion`
 - [x] 固化设计、实施计划、结构决策和独立验收卡
-- [x] TDD：稳定身份、重复签名、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 8/8；Playwright 14/14）
+- [x] TDD：稳定身份、路径重排、Widget/Dock 障碍、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 14/14；Playwright 22/22）
 - [x] 实现独立 `DextLayoutMotion`，保持 `apply/cancel/dispose` 固定接口
 - [x] 建立浏览器实验台与全部交互场景，实验台直接使用产品动画引擎
 - [x] 增加 Playwright、`dev:motion`、`test:renderer:e2e` 与 Windows 运行说明
@@ -792,6 +792,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 独立代码审查：修复离开格仍交换、pointercancel 错误提交、旧场景覆盖 Reset；新增真实指针回归 3 项
 - [x] 2026-09-19 浏览器验收反馈：确认真实桌面旧长按/jiggle 未被本分支修改；实验台改为外层 FLIP + 内层苹果式抖动，补 500ms 长按与 Done，move/rollback 放缓为 280/300ms，极限折返明确标为压力测试
 - [x] 复审修复：运行中启用或系统级 reduced-motion 均立即结束 FLIP、落最终坐标并关闭 jiggle，且预览取消基线不丢失；新增浏览器回归 3 项
+- [x] 2026-09-19 用户明确重排语义：图标托起、目标占位、路径图标依次让位、松手保存；Widget 自身可拖但图标排序不得移动 Widget；Dock 禁止放入
+- [x] TDD：新增纯 `resolveIconReorder`，覆盖前移/后移、Widget 障碍、Dock 禁区与输入不变
+- [x] 将实验台两两交换改为真实 Sortable 拖拽：托起层、占位、连续让位、提交/取消与非法目标
+- [x] 补 Widget 可拖且始终优先、Dock 禁止图标/Widget 放入的真实指针回归
+- [x] 复核修复：Reset 终止全部 drag/press、timer 与 pointer capture；每个真实手势结清旧预览并建立独立取消基线；4 条浏览器回归覆盖图标/Widget 取消、拖动中 Reset 与长按中 Reset
+- [x] 二次复核修复：非 Reset 场景切换也先取消真实拖拽并恢复本手势基线，旧 pointerup 不再覆盖新场景；新增 1 条回归
+- [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 22/22、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
 - [ ] 用户明确确认浏览器动画质感通过
 - [ ] 浏览器通过后：按稳定身份协调真实桌面图标节点，接入 Widget/图标预览与热更新
 - [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收

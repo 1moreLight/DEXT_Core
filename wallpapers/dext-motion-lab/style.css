@@ -151,9 +151,14 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
   background: rgba(248, 113, 113, .035);
 }
 
+#motion-stage[data-drop-zone="blocked"]::after {
+  border-color: rgba(248, 113, 113, .72);
+}
+
 .motion-icon {
   width: 72px;
   height: 84px;
+  z-index: 2;
   will-change: transform, opacity;
 }
 
@@ -171,6 +176,7 @@ h1 { margin: 0; font-size: 30px; font-weight: 560; letter-spacing: -.04em; }
   user-select: none;
   touch-action: none;
   cursor: default;
+  transition: transform 160ms cubic-bezier(.22,1,.36,1), filter 160ms ease;
 }
 
 .motion-icon-face:active { cursor: grabbing; }
@@ -219,6 +225,45 @@ body.editing .motion-icon:nth-of-type(even) .motion-icon-face {
   animation-delay: -.175s;
 }
 
+.motion-icon.is-dragging {
+  z-index: 8;
+}
+
+.motion-icon.is-dragging .motion-icon-face {
+  animation: none;
+  cursor: grabbing;
+  filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .42));
+  transition: none;
+}
+
+#reorder-placeholder {
+  position: absolute;
+  z-index: 1;
+  width: 72px;
+  height: 84px;
+  pointer-events: none;
+  opacity: 0;
+  scale: .92;
+  transition: opacity 110ms ease, scale 160ms cubic-bezier(.22,1,.36,1);
+}
+
+#reorder-placeholder::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 3px;
+  width: 50px;
+  height: 50px;
+  border: 1px dashed rgba(158, 240, 197, .72);
+  border-radius: 15px;
+  background: rgba(158, 240, 197, .07);
+}
+
+#reorder-placeholder[data-active="true"] {
+  opacity: 1;
+  scale: 1;
+}
+
 body.reduce-motion .motion-icon-face {
   animation: none;
 }
@@ -259,6 +304,46 @@ body.reduce-motion .motion-icon-face {
 .demo-widget.is-compact .widget-kicker,
 .demo-widget.is-compact small { display: none; }
 .demo-widget.is-compact strong { font-size: 18px; letter-spacing: -.03em; }
+
+#demo-dock {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 14px;
+  width: 360px;
+  height: 64px;
+  translate: -50% 0;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 20px;
+  background: rgba(26, 31, 37, .88);
+  box-shadow: 0 16px 40px rgba(0,0,0,.34);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+#demo-dock span {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #2b333c;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+#demo-dock small {
+  margin-left: 8px;
+  color: #717b85;
+  font: 700 8px/1 ui-monospace, monospace;
+  letter-spacing: .12em;
+}
+
+#motion-stage[data-drop-zone="blocked"] #demo-dock {
+  border-color: rgba(248, 113, 113, .68);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, .08), 0 16px 40px rgba(0,0,0,.34);
+}
 
 .diagnostics {
   min-height: 76px;

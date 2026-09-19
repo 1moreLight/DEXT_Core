@@ -90,5 +90,57 @@
     return { committed: true, icons, moved, unresolved: [] };
   }
 
-  return { logicalIconGrid, resolveWidgetIconAvoidance };
+  function resolveIconReorder(sourceIcons, draggedIndex, target, grid, obstacles = [], reserved = []) {
+    if (!grid || grid.cellWidth <= 0 || grid.cellHeight <= 0 || grid.columns <= 0 || grid.rows <= 0) {
+      throw new Error("icon grid dimensions must be positive");
+    }
+    const originalIcons = cloneIcons(sourceIcons);
+    const reject = (reason) => ({ committed: false, icons: originalIcons, moved: [], reason });
+    if (!Number.isInteger(draggedIndex) || draggedIndex < 0 || draggedIndex >= sourceIcons.length) {
+      return reject("invalid-dragged-index");
+    }
+    const targetX = Number(target?.x);
+    const targetY = Number(target?.y);
+    if (!Number.isInteger(targetX) || !Number.isInteger(targetY)
+      || targetX < 0 || targetX >= grid.columns || targetY < 0 || targetY >= grid.rows) {
+      return reject("outside-grid");
+    }
+    const blocked = [...obstacles, ...reserved];
+    if (blocked.some((rect) => overlaps(iconRect(targetX, targetY, grid), rect))) return reject("blocked");
+
+    const coordinates = originalIcons.map((item, index) => ({
+      index,
+      x: Math.min(Math.max(Math.round(item.x ?? index % grid.columns), 0), grid.columns - 1),
+      y: Math.min(Math.max(Math.round(item.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1),
+    }));
+    const draggedCell = coordinates[draggedIndex];
+    const targetKey = cellKey(targetX, targetY);
+    const slotsByKey = new Map(coordinates.map(({ x, y }) => [cellKey(x, y), { x, y }]));
+    if (slotsByKey.size !== originalIcons.length) return reject("duplicate-cell");
+    if (!slotsByKey.has(targetKey)) {
+      slotsByKey.delete(cellKey(draggedCell.x, draggedCell.y));
+      slotsByKey.set(targetKey, { x: targetX, y: targetY });
+    }
+
+    const slots = [...slotsByKey.values()].sort((a, b) => a.y - b.y || a.x - b.x);
+    const targetSlotIndex = slots.findIndex(({ x, y }) => x === targetX && y === targetY);
+    const ordered = coordinates
+      .slice()
+      .sort((a, b) => a.y - b.y || a.x - b.x || a.index - b.index)
+      .map(({ index }) => index)
+      .filter((index) => index !== draggedIndex);
+    ordered.splice(targetSlotIndex, 0, draggedIndex);
+
+    const icons = cloneIcons(originalIcons);
+    ordered.forEach((iconIndex, slotIndex) => {
+      icons[iconIndex].x = slots[slotIndex].x;
+      icons[iconIndex].y = slots[slotIndex].y;
+    });
+    const moved = icons.flatMap((item, index) =>
+      item.x !== originalIcons[index].x || item.y !== originalIcons[index].y ? [index] : []
+    );
+    return { committed: true, icons, moved, reason: null };
+  }
+
+  return { logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance };
 });
