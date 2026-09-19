@@ -115,3 +115,20 @@ P4（action.invoke）仍必须来自 store 显式授权。
 
 防再犯："自动允许"是运行时行为，不是文档形容词；加能力分级时同步实现对应授权路径，
 并用空 store 场景验证 P1 可用、P2/P4 仍被拒。
+
+# #72 拖拽预览的计时器、取消与异步 revision 必须共同失效
+
+现象：图标在占用格停留不足 80ms 后移到空白，旧计时器仍会触发交换；`pointercancel` 会像
+`pointerup` 一样提交已发布预览；实验台 Reset 后，旧 Zigzag/回弹/压力场景的延时回调还会覆盖
+新布局。
+
+原因：稳定格计时器只在进入另一个有效目标时清理，没有覆盖空白/源格；完成函数没有区分提交
+与浏览器/OS 取消；场景 token 只在部分回调入口检查，没有在每次 `await` 后重新验证。
+
+修复：离开候选格立即清理 timer 并恢复已发布预览；只有 `pointerup` 可提交，`pointercancel` 与
+`lostpointercapture` 一律恢复拖拽基线；每个延时点返回后、任何 `apply/cancel/describe` 前都核对
+当前 token。Playwright 使用真实 pointer 路径覆盖“30ms 后移开”“已交换后 pointercancel”和
+“Zigzag 中 Reset”。
+
+防再犯：带停留阈值的拖拽必须测试进入、停留、离开、换目标、取消和 capture 丢失；异步 revision
+的有效性检查应放在每个异步边界之后，而不是只在任务开始时检查。

@@ -12,7 +12,7 @@
 ### 自动检查
 
 - [x] Node 8/8 覆盖稳定身份、重复签名、move/enter/exit diff、受影响范围、revision、取消、回弹和 reduced-motion。
-- [x] Playwright 7/7 覆盖稳定 DOM、动画中 transform、最终格坐标、连续 revision、中断恢复、新增/移除、无解回弹、reduced-motion 和 100 图标压力场景。
+- [x] Playwright 10/10 覆盖稳定 DOM、动画中 transform、最终格坐标、连续 revision、中断恢复、真实指针 80ms 离格取消、pointercancel 恢复、新增/移除、无解回弹、reduced-motion 和 100 图标压力场景。
 - [x] `npm test`（50/50）、`npm run build`、`npm run test:renderer:e2e`、渲染器 Node 测试（11/11）、语法检查、Room Schema 与 `git diff --check` 通过。
 
 ### 人工验收
@@ -42,3 +42,4 @@
 - 2026-09-19：用户确认 DESK-LIVE-001 验收通过；依赖已合入 master，DESK-MOTION-001 开工。
 - 2026-09-19：用户已批准浏览器先行、自研轻量动画层与两阶段硬门槛；当前等待阶段 A 实现和浏览器人工验收。
 - 2026-09-19：阶段 A 实现完成；Playwright CLI 真实浏览器快照与截图复核通过，自动检查全绿。当前停在浏览器视觉验收，未修改真实桌面 `main.js`。
+- 2026-09-19：独立代码审查发现并修复 3 项实验台手势竞态：离开候选格清理 80ms timer、pointercancel/lostpointercapture 恢复基线、异步场景逐 await 校验 token；对应 Playwright 回归由失败转为通过。

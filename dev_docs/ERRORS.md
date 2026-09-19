@@ -76,6 +76,7 @@
 | #69 | P1 能力"自动允许"未落地，授权 store 缺失时全部只读能力被静默丢弃 | [renderer](errors/renderer.md) |
 | #70 | Playwright 测试放在 npm 包目录外时无法从测试文件位置解析 `@playwright/test` | [toolchain](errors/toolchain.md) |
 | #71 | Playwright `*.spec.ts` 被同包 Vitest 一并发现，导致生命周期 API 冲突 | [toolchain](errors/toolchain.md) |
+| #72 | 拖拽预览未清理稳定计时器/取消事件/过期异步回调，导致离开后仍交换或取消时提交 | [renderer](errors/renderer.md) |
 
 ## 分册
 

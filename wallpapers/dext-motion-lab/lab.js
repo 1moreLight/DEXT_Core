@@ -50,6 +50,7 @@
     node.className = "motion-icon";
     node.innerHTML = '<span class="glyph"></span><span class="label"></span>';
     node.addEventListener("pointerdown", startIconDrag);
+    node.addEventListener("lostpointercapture", finishIconDrag);
     updateIconNode(node, item);
     return node;
   }
@@ -177,8 +178,10 @@
       const sequence = async () => {
         const first = apply(moved(["alpha", 2, 2]), { mode: "preview", label: "rapid 1/3" });
         await sleep(52);
+        if (token !== scenarioToken) return;
         const second = apply(moved(["alpha", 0, 3]), { mode: "preview", label: "rapid 2/3" });
         await sleep(52);
+        if (token !== scenarioToken) return;
         const third = apply(moved(["alpha", 4, 2]), { mode: "preview", label: "rapid 3/3" });
         await Promise.all([first.finished, second.finished, third.finished]);
       };
@@ -220,6 +223,7 @@
       const sequence = async () => {
         const leaving = apply(icons.filter((icon) => icon.id !== "india"), { label: "exit interrupted" });
         await sleep(58);
+        if (token !== scenarioToken) return;
         const returning = apply(original, { label: "re-enter current revision" });
         await Promise.all([leaving.finished, returning.finished]);
       };
@@ -231,6 +235,7 @@
       const result = apply(moved(["alpha", 4, 3], ["bravo", 5, 3]), { mode: "preview", label: "preview before cancel" });
       track((async () => {
         await sleep(70);
+        if (token !== scenarioToken) return;
         const rollback = motion.cancel({ restore: true });
         if (rollback) {
           icons = cloneIcons(baseIcons);
@@ -254,6 +259,7 @@
       });
       track((async () => {
         await sleep(72);
+        if (token !== scenarioToken) return;
         stage.dataset.conflict = "true";
         const rollback = motion.cancel({ restore: true });
         if (rollback) {
@@ -281,6 +287,7 @@
       const entered = apply(hundred, { dense: true, label: "100 nodes entering" });
       track((async () => {
         await sleep(48);
+        if (token !== scenarioToken) return;
         const shifted = hundred.map((icon) => ({ ...icon, x: (icon.x + 1) % 10 }));
         const movedResult = apply(shifted, { dense: true, label: "100 nodes pressure pass" });
         await Promise.all([entered.finished, movedResult.finished]);
@@ -298,6 +305,8 @@
       dy: event.clientY - rect.top,
       base: cloneIcons(icons),
       preview: null,
+      left: widget.style.left,
+      top: widget.style.top,
     };
     widget.setPointerCapture(event.pointerId);
   }
@@ -324,15 +333,20 @@
 
   function finishWidgetDrag(event) {
     if (!widgetDrag || event.pointerId !== widgetDrag.pointerId) return;
-    if (widgetDrag.preview && stage.dataset.conflict !== "true") {
-      const result = apply(widgetDrag.preview, { label: "Widget layout committed" });
+    const drag = widgetDrag;
+    widgetDrag = null;
+    const canceled = event.type !== "pointerup";
+    if (!canceled && drag.preview && stage.dataset.conflict !== "true") {
+      const result = apply(drag.preview, { label: "Widget layout committed" });
       track(result.finished);
     } else {
       const rollback = motion.cancel({ restore: true });
-      icons = cloneIcons(widgetDrag.base);
+      icons = cloneIcons(drag.base);
+      widget.style.left = drag.left;
+      widget.style.top = drag.top;
+      stage.dataset.conflict = "false";
       if (rollback) track(rollback.finished);
     }
-    widgetDrag = null;
   }
 
   function startIconDrag(event) {
@@ -348,18 +362,40 @@
     if (!iconDrag || event.pointerId !== iconDrag.pointerId) return;
     const underPointer = document.elementFromPoint(event.clientX, event.clientY)?.closest?.(".motion-icon");
     const targetId = underPointer?.dataset.iconId;
-    if (!targetId || targetId === iconDrag.id) return;
+    if (!targetId || targetId === iconDrag.id) {
+      clearTimeout(iconDrag.timer);
+      iconDrag.timer = null;
+      iconDrag.targetId = null;
+      if (iconDrag.preview) {
+        const rollback = motion.cancel({ restore: true });
+        icons = cloneIcons(iconDrag.base);
+        iconDrag.preview = null;
+        if (rollback) {
+          describe(rollback, "icon swap restored");
+          track(rollback.finished);
+        }
+      }
+      return;
+    }
     if (iconDrag.targetId === targetId) return;
-    iconDrag.targetId = targetId;
     clearTimeout(iconDrag.timer);
+    if (iconDrag.preview) {
+      const rollback = motion.cancel({ restore: true });
+      icons = cloneIcons(iconDrag.base);
+      iconDrag.preview = null;
+      if (rollback) track(rollback.finished);
+    }
+    iconDrag.targetId = targetId;
+    const drag = iconDrag;
     iconDrag.timer = setTimeout(() => {
-      const next = cloneIcons(iconDrag.base);
-      const source = next.find((icon) => icon.id === iconDrag.id);
+      if (iconDrag !== drag || drag.targetId !== targetId) return;
+      const next = cloneIcons(drag.base);
+      const source = next.find((icon) => icon.id === drag.id);
       const target = next.find((icon) => icon.id === targetId);
       if (!source || !target) return;
       [source.x, target.x] = [target.x, source.x];
       [source.y, target.y] = [target.y, source.y];
-      iconDrag.preview = next;
+      drag.preview = next;
       const draggedKey = motionItems(next).find((item) => item.data.id === source.id)?.key;
       const result = apply(next, { mode: "preview", excludeKeys: draggedKey ? [draggedKey] : [], label: "80ms icon swap preview" });
       track(result.finished);
@@ -368,22 +404,28 @@
 
   function finishIconDrag(event) {
     if (!iconDrag || event.pointerId !== iconDrag.pointerId) return;
-    clearTimeout(iconDrag.timer);
-    if (iconDrag.preview) {
-      const result = apply(iconDrag.preview, { label: "icon swap committed" });
+    const drag = iconDrag;
+    iconDrag = null;
+    clearTimeout(drag.timer);
+    const canceled = event.type !== "pointerup";
+    if (!canceled && drag.preview) {
+      const result = apply(drag.preview, { label: "icon swap committed" });
       track(result.finished);
     } else {
       const rollback = motion.cancel({ restore: true });
-      icons = cloneIcons(iconDrag.base);
-      if (rollback) track(rollback.finished);
+      icons = cloneIcons(drag.base);
+      if (rollback) {
+        describe(rollback, canceled ? "icon drag canceled" : "icon drag restored");
+        track(rollback.finished);
+      }
     }
-    iconDrag = null;
   }
 
   widget.addEventListener("pointerdown", startWidgetDrag);
   widget.addEventListener("pointermove", moveWidget);
   widget.addEventListener("pointerup", finishWidgetDrag);
   widget.addEventListener("pointercancel", finishWidgetDrag);
+  widget.addEventListener("lostpointercapture", finishWidgetDrag);
   stage.addEventListener("pointermove", moveIcon);
   stage.addEventListener("pointerup", finishIconDrag);
   stage.addEventListener("pointercancel", finishIconDrag);

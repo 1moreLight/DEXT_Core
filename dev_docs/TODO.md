@@ -784,11 +784,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] DESK-LIVE-001 于 2026-09-19 用户验收通过并合入 master `64ab03f`
 - [x] 从最新 master 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-motion-001` 和分支 `feat/DESK-MOTION-001-layout-motion`
 - [x] 固化设计、实施计划、结构决策和独立验收卡
-- [x] TDD：稳定身份、重复签名、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 8/8；Playwright 7/7）
+- [x] TDD：稳定身份、重复签名、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 8/8；Playwright 10/10）
 - [x] 实现独立 `DextLayoutMotion`，保持 `apply/cancel/dispose` 固定接口
 - [x] 建立浏览器实验台与全部交互场景，实验台直接使用产品动画引擎
 - [x] 增加 Playwright、`dev:motion`、`test:renderer:e2e` 与 Windows 运行说明
 - [x] 浏览器阶段自动检查通过并完成阶段 A 提交，停在“浏览器视觉验收”硬门槛
+- [x] 独立代码审查：修复离开格仍交换、pointercancel 错误提交、旧场景覆盖 Reset；新增真实指针回归 3 项
 - [ ] 用户明确确认浏览器动画质感通过
 - [ ] 浏览器通过后：按稳定身份协调真实桌面图标节点，接入 Widget/图标预览与热更新
 - [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收
