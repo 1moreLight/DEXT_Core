@@ -39,6 +39,8 @@ type SettingsPageProps = {
   onChangeLib: (path: string) => void;
   coreIdentity: CoreIdentity | null;
   setStatus: (message: string) => void;
+  minimizeAfterDeskAppAdd: boolean;
+  onMinimizeAfterDeskAppAddChange: (value: boolean) => void;
 };
 
 function Toggle({
@@ -253,6 +255,23 @@ export function SettingsPage(props: SettingsPageProps) {
                   />
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-4 text-sm font-semibold">偏好设置</h2>
+            <div className="divide-y divide-border border-y border-border">
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">放入应用后前往桌面编辑</div>
+                  <div className="text-xs text-muted-foreground">新增成功后最小化配置器，并在目标 Desk 高亮新图标</div>
+                </div>
+                <Toggle
+                  label="放入应用后前往桌面编辑"
+                  checked={props.minimizeAfterDeskAppAdd}
+                  onChange={props.onMinimizeAfterDeskAppAddChange}
+                />
+              </div>
             </div>
           </section>
 

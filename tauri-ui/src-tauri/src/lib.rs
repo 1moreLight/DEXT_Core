@@ -72,6 +72,8 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 // 2026-08-27: derive from CARGO_MANIFEST_DIR (tauri-ui/src-tauri) so the path
 // survives repo relocation; recompile after moving the repo.
 const WALLPAPER_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room");
+const CMD_ROOM_LAYOUT_SYNC: i32 = 26;
+static DESK_LAYOUT_SYNC_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 #[derive(serde::Serialize)]
 struct CoverRef {
@@ -95,6 +97,21 @@ struct RoomInfo {
 struct ActiveRoom {
     source_path: String,
     runtime_path: String,
+}
+
+struct ActiveWallpaper {
+    room: ActiveRoom,
+    lively_info_path: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DeskLayoutSyncResult {
+    active: bool,
+    saved: bool,
+    live_updated: bool,
+    room_json: Option<String>,
+    live_error: Option<String>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -1469,6 +1486,92 @@ fn write_room_file(path: &std::path::Path, room_json: &str) -> Result<(), String
     atomic_write(path, &bytes)
 }
 
+fn replace_desk_icons(
+    room: &mut serde_json::Value,
+    desk_index: usize,
+    icons: serde_json::Value,
+) -> Result<(), String> {
+    if !icons.is_array() {
+        return Err("Desk icons must be an array".into());
+    }
+    let desks = room
+        .get_mut("desks")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "room.desks must be an array".to_string())?;
+    let desk = desks
+        .get_mut(desk_index)
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "target Desk is outside the Room".to_string())?;
+    desk.insert("icons".into(), icons);
+    Ok(())
+}
+
+fn update_desk_layout_source(
+    source: &std::path::Path,
+    desk_index: usize,
+    icons: serde_json::Value,
+) -> Result<String, String> {
+    let path = source.join("room.json");
+    let mut room: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&path).map_err(|error| format!("read room.json failed: {error}"))?,
+    )
+    .map_err(|error| format!("parse room.json failed: {error}"))?;
+    replace_desk_icons(&mut room, desk_index, icons)?;
+    let object = room
+        .as_object_mut()
+        .ok_or_else(|| "room root must be an object".to_string())?;
+    object.remove("__source");
+    let room_json = serde_json::to_string_pretty(&room)
+        .map_err(|error| format!("serialize room.json failed: {error}"))?;
+    write_room_file(&path, &room_json)?;
+    Ok(room_json)
+}
+
+fn room_layout_message(
+    room_json: &str,
+    desk_index: usize,
+    enter_edit: bool,
+    highlight_target: Option<&str>,
+) -> Result<String, String> {
+    let room: serde_json::Value = serde_json::from_str(room_json)
+        .map_err(|error| format!("serialize room layout message failed: {error}"))?;
+    let mut source_contract = room.clone();
+    source_contract
+        .as_object_mut()
+        .ok_or_else(|| "room layout message root must be an object".to_string())?
+        .remove("__source");
+    validate_room_contract(&source_contract)?;
+    serde_json::to_string(&serde_json::json!({
+        "Type": CMD_ROOM_LAYOUT_SYNC,
+        "RoomJson": room_json,
+        "DeskIndex": desk_index,
+        "EnterEdit": enter_edit,
+        "HighlightTarget": highlight_target.unwrap_or_default(),
+    }))
+    .map_err(|error| format!("serialize room layout message failed: {error}"))
+}
+
+fn write_runtime_desk_layout(
+    runtime_dir: &std::path::Path,
+    room_json: &str,
+    source: &std::path::Path,
+) -> Result<String, String> {
+    let mut runtime_room: serde_json::Value = serde_json::from_str(room_json)
+        .map_err(|error| format!("parse synced room.json failed: {error}"))?;
+    let runtime_object = runtime_room
+        .as_object_mut()
+        .ok_or_else(|| "synced room root must be an object".to_string())?;
+    runtime_object.insert(
+        "__source".into(),
+        serde_json::Value::String(display_path(source)),
+    );
+    let runtime_json = serde_json::to_string_pretty(&runtime_room)
+        .map_err(|error| format!("serialize active room.json failed: {error}"))?;
+    atomic_write(&runtime_dir.join("room.json"), runtime_json.as_bytes())
+        .map_err(|error| format!("write active room.json failed: {error}"))?;
+    Ok(runtime_json)
+}
+
 fn validate_room_name(name: &str) -> Result<(), String> {
     if name.is_empty()
         || name != name.trim()
@@ -2090,22 +2193,20 @@ fn normalized_path(path: &std::path::Path) -> String {
         .to_ascii_lowercase()
 }
 
-async fn active_room_value() -> Result<Option<ActiveRoom>, String> {
+async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
     let wallpapers = grpc::get_wallpapers().await?;
     let runtime = std::path::Path::new(WALLPAPER_DIR)
         .canonicalize()
         .unwrap_or_else(|_| std::path::PathBuf::from(WALLPAPER_DIR));
     let runtime_norm = normalized_path(&runtime);
-    let is_running = wallpapers.iter().any(|wallpaper| {
+    let running = wallpapers.into_iter().find(|wallpaper| {
         let path = std::path::Path::new(&wallpaper.path)
             .canonicalize()
             .unwrap_or_else(|_| std::path::PathBuf::from(&wallpaper.path));
         let candidate = normalized_path(&path);
         candidate == runtime_norm || candidate.starts_with(&(runtime_norm.clone() + "\\"))
     });
-    if !is_running {
-        return Ok(None);
-    }
+    let Some(running) = running else { return Ok(None); };
     let room: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(runtime.join("room.json"))
             .map_err(|error| format!("read active room.json failed: {error}"))?,
@@ -2116,15 +2217,107 @@ async fn active_room_value() -> Result<Option<ActiveRoom>, String> {
         .and_then(|value| value.as_str())
         .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| "active Dext package has no trusted __source".to_string())?;
-    Ok(Some(ActiveRoom {
-        source_path: display_path(std::path::Path::new(source)),
-        runtime_path: display_path(&runtime),
+    Ok(Some(ActiveWallpaper {
+        room: ActiveRoom {
+            source_path: display_path(std::path::Path::new(source)),
+            runtime_path: display_path(&runtime),
+        },
+        lively_info_path: running.path,
     }))
+}
+
+async fn active_room_value() -> Result<Option<ActiveRoom>, String> {
+    active_wallpaper_value().await.map(|active| active.map(|value| value.room))
 }
 
 #[tauri::command]
 async fn active_room() -> Result<Option<ActiveRoom>, String> {
     active_room_value().await
+}
+
+#[tauri::command]
+async fn sync_active_desk_icons(
+    library_dir: String,
+    room_dir: String,
+    desk_index: usize,
+    icons: serde_json::Value,
+    enter_edit: bool,
+    highlight_target: Option<String>,
+) -> Result<DeskLayoutSyncResult, String> {
+    let _guard = DESK_LAYOUT_SYNC_LOCK.lock().await;
+    let source = direct_room_in_library(
+        std::path::Path::new(&library_dir),
+        std::path::Path::new(&room_dir),
+    )?;
+    let Some(active) = active_wallpaper_value().await? else {
+        return Ok(DeskLayoutSyncResult {
+            active: false,
+            saved: false,
+            live_updated: false,
+            room_json: None,
+            live_error: None,
+        });
+    };
+    let active_source = std::path::Path::new(&active.room.source_path)
+        .canonicalize()
+        .unwrap_or_else(|_| std::path::PathBuf::from(&active.room.source_path));
+    if normalized_path(&source) != normalized_path(&active_source) {
+        return Ok(DeskLayoutSyncResult {
+            active: false,
+            saved: false,
+            live_updated: false,
+            room_json: None,
+            live_error: None,
+        });
+    }
+
+    let room_json = update_desk_layout_source(&source, desk_index, icons)?;
+    let runtime_result = write_runtime_desk_layout(
+        std::path::Path::new(WALLPAPER_DIR),
+        &room_json,
+        &source,
+    );
+    let runtime_json = match runtime_result {
+        Ok(value) => value,
+        Err(error) => return Ok(DeskLayoutSyncResult {
+            active: true,
+            saved: true,
+            live_updated: false,
+            room_json: Some(room_json),
+            live_error: Some(error),
+        }),
+    };
+    let message = match room_layout_message(
+        &runtime_json,
+        desk_index,
+        enter_edit,
+        highlight_target.as_deref(),
+    ) {
+        Ok(value) => value,
+        Err(error) => return Ok(DeskLayoutSyncResult {
+            active: true,
+            saved: true,
+            live_updated: false,
+            room_json: Some(room_json),
+            live_error: Some(error),
+        }),
+    };
+    match grpc::send_message_wallpaper(&active.lively_info_path, &message).await {
+        Ok(()) => Ok(DeskLayoutSyncResult {
+            active: true,
+            saved: true,
+            live_updated: true,
+            room_json: Some(room_json),
+            live_error: None,
+        }),
+        Err(error) => Ok(DeskLayoutSyncResult {
+            active: true,
+            saved: true,
+            live_updated: false,
+            room_json: Some(room_json),
+            live_error: Some(error),
+        }),
+    }
 }
 
 #[tauri::command]
@@ -2656,6 +2849,7 @@ pub fn run() {
             import_room_zip,
             apply_room,
             active_room,
+            sync_active_desk_icons,
             stop_wallpapers,
             import_background,
             import_widget,
@@ -2691,8 +2885,9 @@ mod tests {
         apply_settings_patch, create_room_dir, direct_room_entry_in_library, duplicate_room_dir,
         direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
         import_widget_dir,
-        import_room_zip_file, rename_room_dir, save_room_as_dir, sync_room_to_package, validate_room_contract,
-        validate_room_library_path, validate_room_v2, write_room_file, DextSettingsPatch,
+        import_room_zip_file, rename_room_dir, replace_desk_icons, room_layout_message, save_room_as_dir,
+        sync_room_to_package, update_desk_layout_source, validate_room_contract, validate_room_library_path,
+        validate_room_v2, write_room_file, write_runtime_desk_layout, DextSettingsPatch,
         ROOM_ASSET_DIRS,
     };
 
@@ -3237,6 +3432,85 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.contains("unknown field"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn desk_layout_updates_only_requested_icons_and_rejects_invalid_input() {
+        let mut room = valid_v2_room();
+        room["desks"][0]["icons"] = serde_json::json!([{
+            "label":"Old", "icon_png":"", "launch":{"target":"old.exe","args":"","workdir":""}, "x":0, "y":0
+        }]);
+        let before = room.clone();
+        let icons = serde_json::json!([{
+            "label":"New", "icon_png":"", "launch":{"target":"new.exe","args":"","workdir":""}, "x":4, "y":2
+        }]);
+
+        replace_desk_icons(&mut room, 0, icons).unwrap();
+
+        assert_eq!(room["desks"][0]["icons"][0]["label"], "New");
+        assert_eq!(room["desks"][0]["widgets"], before["desks"][0]["widgets"]);
+        assert!(replace_desk_icons(&mut room, 1, serde_json::json!([]))
+            .unwrap_err()
+            .contains("target Desk"));
+        assert!(replace_desk_icons(&mut room, 0, serde_json::json!({}))
+            .unwrap_err()
+            .contains("icons"));
+    }
+
+    #[test]
+    fn desk_layout_source_write_and_message_keep_paths_trusted() {
+        let root = test_dir("desk-layout-source");
+        let library = root.join("library");
+        let room = library.join("current");
+        std::fs::create_dir_all(&library).unwrap();
+        write_valid_v2_room(&room);
+        let icons = serde_json::json!([{
+            "label":"New", "icon_png":"", "launch":{"target":"new.exe","args":"","workdir":""}, "x":1, "y":2
+        }]);
+
+        let room_json = update_desk_layout_source(&room, 0, icons).unwrap();
+        let saved: serde_json::Value = serde_json::from_str(&room_json).unwrap();
+        assert_eq!(saved["desks"][0]["icons"][0]["launch"]["target"], "new.exe");
+        assert!(saved.get("__source").is_none());
+
+        let message: serde_json::Value = serde_json::from_str(
+            &room_layout_message(&room_json, 0, true, Some("new.exe")).unwrap(),
+        ).unwrap();
+        assert_eq!(message["Type"], 26);
+        assert_eq!(message["DeskIndex"], 0);
+        assert_eq!(message["EnterEdit"], true);
+        assert_eq!(message["HighlightTarget"], "new.exe");
+        assert_eq!(message["RoomJson"], room_json);
+
+        let mut runtime_room = saved;
+        runtime_room["__source"] = serde_json::Value::String("C:/trusted/source".into());
+        let runtime_json = serde_json::to_string(&runtime_room).unwrap();
+        assert!(room_layout_message(&runtime_json, 0, false, None).is_ok());
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn desk_layout_runtime_failure_keeps_the_already_saved_source_layout() {
+        let root = test_dir("desk-layout-runtime-failure");
+        let room = root.join("room");
+        write_valid_v2_room(&room);
+        let icons = serde_json::json!([{
+            "label":"Saved", "icon_png":"", "launch":{"target":"saved.exe","args":"","workdir":""}, "x":3, "y":1
+        }]);
+
+        let room_json = update_desk_layout_source(&room, 0, icons).unwrap();
+        let runtime_file = root.join("not-a-runtime-directory");
+        std::fs::write(&runtime_file, "file").unwrap();
+        let error = write_runtime_desk_layout(&runtime_file, &room_json, &room).unwrap_err();
+
+        assert!(error.contains("write active room.json"));
+        let saved: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(room.join("room.json")).unwrap(),
+        ).unwrap();
+        assert_eq!(saved["desks"][0]["icons"][0]["label"], "Saved");
+
         std::fs::remove_dir_all(root).unwrap();
     }
 

@@ -114,20 +114,28 @@ export function DesktopCanvasEditor({
     onSelectWidget(next.has(id) ? id : [...next][0] ?? null);
   };
 
-  const finishPlacement = (widgets: WidgetDefinition[]) => {
+  const finishPlacement = (widgets: WidgetDefinition[], originWidgets: WidgetDefinition[]) => {
     const reserved = deskDockReserve(desk, roomDock);
     const avoided = avoidIconObstacles(
       desk.icons,
       widgetPlacementObstacles(widgets),
       iconGrid,
-      reserved ? [{ ...reserved, x: reserved.x - 40, y: reserved.y - 40 }] : []
+      reserved ? [{
+        x: reserved.x - 40,
+        y: reserved.y - 40,
+        width: reserved.width + 80,
+        height: reserved.height + 80,
+      }] : []
     );
-    const detail = avoided.unresolved.length
-      ? `Widget 已更新；${avoided.unresolved.length} 个图标没有合法避让位置`
-      : avoided.moved.length
-        ? `Widget 已更新，并移动 ${avoided.moved.length} 个被遮挡图标`
-        : "Widget 布局已更新";
+    if (!avoided.committed) {
+      onDeskChange({ ...desk, widgets: originWidgets, icons: desk.icons }, "空间不足，Widget 已恢复原位");
+      return false;
+    }
+    const detail = avoided.moved.length
+      ? `Widget 已更新，并移动 ${avoided.moved.length} 个被遮挡图标`
+      : "Widget 布局已更新";
     onDeskChange({ ...desk, widgets, icons: avoided.icons }, detail);
+    return true;
   };
 
   const startPlacement = (event: ReactPointerEvent<HTMLButtonElement>, widget: WidgetDefinition, resize: boolean) => {
@@ -148,6 +156,7 @@ export function DesktopCanvasEditor({
     const moving = desk.widgets.filter((item) => dragIds.has(item.id));
     const origins = new Map(moving.map((item) => [item.id, { ...item.placement }]));
     const origin = { ...widget.placement };
+    const originWidgets = structuredClone(desk.widgets);
     const minX = Math.min(...moving.map((item) => item.placement.x));
     const minY = Math.min(...moving.map((item) => item.placement.y));
     const maxX = Math.max(...moving.map((item) => item.placement.x + item.placement.width));
@@ -188,14 +197,20 @@ export function DesktopCanvasEditor({
       latest = desk.widgets.map((item) => updates.get(item.id) ?? item);
       replaceWidgets(updates);
     };
-    const finish = () => {
+    const removeListeners = () => {
       target.removeEventListener("pointermove", onMove);
       target.removeEventListener("pointerup", onUp);
       target.removeEventListener("pointercancel", onCancel);
-      if (started) finishPlacement(latest);
+    };
+    const finish = () => {
+      removeListeners();
+      if (started) finishPlacement(latest, originWidgets);
     };
     const onUp = () => finish();
-    const onCancel = () => finish();
+    const onCancel = () => {
+      removeListeners();
+      if (started) onDeskChange({ ...desk, widgets: originWidgets, icons: desk.icons }, "已取消 Widget 布局调整");
+    };
     target.addEventListener("pointermove", onMove);
     target.addEventListener("pointerup", onUp);
     target.addEventListener("pointercancel", onCancel);

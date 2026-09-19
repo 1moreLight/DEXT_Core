@@ -43,6 +43,7 @@ describe("widget layout", () => {
     expect(result.icons.map(({ x, y }) => [x, y])).toEqual([[0, 1], [1, 0]]);
     expect(result.moved).toEqual([0]);
     expect(result.unresolved).toEqual([]);
+    expect(result.committed).toBe(true);
   });
 
   it("respects dock reserves and reports an icon when no cell is legal", () => {
@@ -55,6 +56,22 @@ describe("widget layout", () => {
     expect(result.icons[0]).toMatchObject({ x: 0, y: 0 });
     expect(result.moved).toEqual([]);
     expect(result.unresolved).toEqual([0]);
+    expect(result.committed).toBe(false);
+  });
+
+  it("returns every icon to its original position when one conflicted icon has no legal cell", () => {
+    const source = [icon("covered", 0, 0), icon("fixed", 1, 0)];
+    const before = structuredClone(source);
+
+    const result = avoidIconObstacles(
+      source,
+      [{ x: 0, y: 0, width: 100, height: 100 }],
+      { cellWidth: 100, cellHeight: 100, columns: 2, rows: 1 },
+    );
+
+    expect(result).toMatchObject({ committed: false, moved: [], unresolved: [0] });
+    expect(result.icons).toEqual(before);
+    expect(source).toEqual(before);
   });
 
   it("uses row-major order to break equal-distance ties deterministically", () => {
@@ -102,6 +119,45 @@ describe("widget layout", () => {
     expect(desk).toEqual(before);
   });
 
+  it("places a new icon beside an existing group instead of taking a distant top-left cell", () => {
+    const desk: Desk = {
+      name: "Grouped",
+      background: null,
+      iconSize: "medium",
+      icons: [icon("left", 2, 1), icon("right", 3, 1)],
+      widgets: [],
+      dock: { enabled: false },
+    };
+    const before = structuredClone(desk);
+
+    expect(findOpenDeskIconCell(desk, { cellWidth: 100, cellHeight: 100, columns: 4, rows: 3 }))
+      .toEqual({ x: 2, y: 0 });
+    expect(desk).toEqual(before);
+  });
+
+  it("keeps a forty-pixel safety margin on every side of a Widget", () => {
+    const desk: Desk = {
+      name: "Widget margin",
+      background: null,
+      iconSize: "medium",
+      icons: [],
+      widgets: [{
+        id: "widget",
+        name: "Widget",
+        src: "widgets/widget/index.html",
+        resources: ["widgets/widget/index.html"],
+        placement: { x: 0, y: 0, width: 100, height: 100, z: 0 },
+        config: {},
+        permissions: [],
+        hotspots: [],
+      }],
+      dock: { enabled: false },
+    };
+
+    expect(findOpenDeskIconCell(desk, { cellWidth: 100, cellHeight: 100, columns: 3, rows: 1 }))
+      .toEqual({ x: 2, y: 0 });
+  });
+
   it("skips Widget and Dock regions when finding a Desk icon cell", () => {
     const desk: Desk = {
       name: "Blocked",
@@ -125,7 +181,7 @@ describe("widget layout", () => {
       { cellWidth: 100, cellHeight: 100, columns: 3, rows: 3 },
       { enabled: true, position: "top" },
     ))
-      .toEqual({ x: 2, y: 1 });
+      .toEqual({ x: 2, y: 2 });
   });
 
   it("returns null when every Desk icon cell is occupied", () => {

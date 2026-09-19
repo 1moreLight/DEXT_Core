@@ -47,6 +47,17 @@ import {
 } from "@/features/room-editor/room-draft";
 import { deleteDeskGraph, moveDeskGraph, toggleDeskApplication } from "@/lib/desk";
 import {
+  loadMinimizeAfterDeskAppAdd,
+  saveMinimizeAfterDeskAppAdd,
+} from "@/lib/config-preferences";
+import {
+  createDeskLayoutSyncQueue,
+  deskAppSyncOutcome,
+  mergeLiveLayoutFields,
+  type DeskLayoutSyncRequest,
+  type DeskLayoutSyncResult,
+} from "@/lib/live-layout";
+import {
   cloneEditorSnapshot,
   loadEditorHistory,
   normalizeRoomJson,
@@ -300,6 +311,9 @@ export default function App() {
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
+  const [minimizeAfterDeskAppAdd, setMinimizeAfterDeskAppAdd] = useState(
+    () => loadMinimizeAfterDeskAppAdd(localStorage),
+  );
   const [libSource, setLibSource] = useState<"auto" | "custom">("auto");
   const [heroPath, setHeroPath] = useState<string | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
@@ -323,6 +337,19 @@ export default function App() {
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const roomBaselineRef = useRef("");
+  const libDirRef = useRef(libDir);
+  libDirRef.current = libDir;
+  const deskLayoutSyncQueueRef = useRef(createDeskLayoutSyncQueue(
+    (request) => invoke<DeskLayoutSyncResult>("sync_active_desk_icons", {
+      libraryDir: libDirRef.current,
+      roomDir: request.roomDir,
+      deskIndex: request.deskIndex,
+      icons: request.icons,
+      enterEdit: request.enterEdit,
+      highlightTarget: request.highlightTarget,
+    }),
+    () => {},
+  ));
   const historyReadyRef = useRef(false);
   const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [theme, setTheme] = useState<Theme>(() => {
@@ -934,6 +961,71 @@ export default function App() {
     setEdges((prev) => prev.map((edge) => edge.id === edgeId ? { ...edge, trans: content } : edge));
   }
 
+  function updateMinimizeAfterDeskAppAdd(value: boolean) {
+    setMinimizeAfterDeskAppAdd(value);
+    saveMinimizeAfterDeskAppAdd(localStorage, value);
+  }
+
+  async function syncDeskIcons(
+    nextDesks: Desk[],
+    deskIndex: number,
+    action: "added" | "removed",
+    target: string,
+  ) {
+    const isActiveRoom = roomPath !== null && roomPath === appliedRoom;
+    const coreConnected = Boolean(coreIdentity);
+    const targetDesk = nextDesks[deskIndex];
+    if (!targetDesk) return;
+    if (!isActiveRoom || !coreConnected) {
+      setStatus(deskAppSyncOutcome({
+        action,
+        preference: minimizeAfterDeskAppAdd,
+        isActiveRoom,
+        coreConnected,
+      }).message);
+      return;
+    }
+    const request: DeskLayoutSyncRequest = {
+      roomDir: roomPath,
+      deskIndex,
+      icons: targetDesk.icons,
+      enterEdit: action === "added" && minimizeAfterDeskAppAdd,
+      highlightTarget: action === "added" ? target : null,
+    };
+    try {
+      const completion = await deskLayoutSyncQueueRef.current.submit(request);
+      if (!completion.latest || !completion.result) return;
+      const result = completion.result;
+      if (result.roomJson) {
+        const baseline = normalizeRoomJson(result.roomJson);
+        roomBaselineRef.current = baseline;
+        setDirty(normalizeRoomJson(JSON.stringify(buildRoomV2(nextDesks))) !== baseline);
+      }
+      const outcome = deskAppSyncOutcome({
+        action,
+        preference: minimizeAfterDeskAppAdd,
+        isActiveRoom: result.active,
+        coreConnected,
+        result,
+      });
+      setStatus(outcome.message);
+      if (outcome.closePicker) setAppPickerDesk(null);
+      if (outcome.minimize && IS_TAURI) await getCurrentWindow().minimize().catch(() => {});
+    } catch (error) {
+      const message = String(error);
+      if (message.includes("pipe connect failed")) markCoreDisconnected(message);
+      setStatus(`桌面同步失败：${message}`);
+    }
+  }
+
+  function syncHistoryDeskLayouts(before: Desk[], after: Desk[]) {
+    after.forEach((desk, index) => {
+      if (JSON.stringify(before[index]?.icons ?? []) !== JSON.stringify(desk.icons)) {
+        void syncDeskIcons(after, index, "removed", "");
+      }
+    });
+  }
+
   function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
     const targetDesk = desks[deskIndex];
     if (!targetDesk) return;
@@ -944,14 +1036,14 @@ export default function App() {
     }
     pushHistory();
     touch();
-    setDesks((prev) =>
-      prev.map((desk, index) => index === deskIndex ? result.desk : desk)
-    );
+    const nextDesks = desks.map((desk, index) => index === deskIndex ? result.desk : desk);
+    setDesks(nextDesks);
     setStatus(
       result.action === "removed"
         ? `已从 ${targetDesk.name} 移除 ${app.name}`
         : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
     );
+    void syncDeskIcons(nextDesks, deskIndex, result.action, app.target);
   }
 
   function addDesk() {
@@ -1342,18 +1434,22 @@ export default function App() {
   function undo() {
     if (past.length === 0) return;
     const s = past[past.length - 1];
+    const before = snapshot();
     setPast(past.slice(0, -1));
-    setFuture([snapshot(), ...future]);
+    setFuture([before, ...future]);
     applySnapshot(s);
     setDirty(true);
+    syncHistoryDeskLayouts(before.desks, s.desks);
   }
   function redo() {
     if (future.length === 0) return;
     const s = future[0];
+    const before = snapshot();
     setFuture(future.slice(1));
-    setPast([...past, snapshot()]);
+    setPast([...past, before]);
     applySnapshot(s);
     setDirty(true);
+    syncHistoryDeskLayouts(before.desks, s.desks);
   }
   function onDividerDown(e: PointerEvent<HTMLDivElement>) {
     dragRef.current = { startY: e.clientY, startH: propsH };
@@ -1390,6 +1486,35 @@ export default function App() {
     }, 250);
     return () => window.clearTimeout(timer);
   }, [roomEntered, roomPath, dirty, edges, desks, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk, past, future]);
+
+  useEffect(() => {
+    if (!IS_TAURI || !roomEntered || !roomPath || roomPath !== appliedRoom) return;
+    let disposed = false;
+    let revision = 0;
+    const mergeDesktopLayout = async () => {
+      const targetPath = roomPath;
+      const currentRevision = ++revision;
+      try {
+        const json = await invoke<string>("read_room", { path: `${targetPath}\\room.json` });
+        const room = JSON.parse(json);
+        if (disposed || currentRevision !== revision || targetPath !== roomPath || appliedRoom !== targetPath) return;
+        const persistedDesks = Array.isArray(room.desks) ? room.desks.map(cleanDesk) : null;
+        if (!persistedDesks?.length) return;
+        const merged = mergeLiveLayoutFields(snapshot(), persistedDesks);
+        const baseline = normalizeRoomJson(json);
+        roomBaselineRef.current = baseline;
+        setDesks(merged.desks);
+        setDirty(normalizeRoomJson(JSON.stringify(buildRoomV2(merged.desks))) !== baseline);
+      } catch (error) {
+        if (!disposed) setStatus(`桌面布局回读失败：${String(error)}`);
+      }
+    };
+    window.addEventListener("focus", mergeDesktopLayout);
+    return () => {
+      disposed = true;
+      window.removeEventListener("focus", mergeDesktopLayout);
+    };
+  }, [roomEntered, roomPath, appliedRoom, desks, edges, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk]);
 
   const sortedRooms = [...rooms].sort((left, right) => roomSort === "name-desc"
     ? right.name.localeCompare(left.name)
@@ -2025,6 +2150,8 @@ export default function App() {
           onChangeLib={(path) => void changeLib(path)}
           coreIdentity={coreIdentity}
           setStatus={setStatus}
+          minimizeAfterDeskAppAdd={minimizeAfterDeskAppAdd}
+          onMinimizeAfterDeskAppAddChange={updateMinimizeAfterDeskAppAdd}
         />
       )}
       {pickerDesk && appPickerDesk !== null && (

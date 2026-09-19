@@ -165,9 +165,10 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ICON_SIZES` / `sizeOf` | 常量表 | 继续按 `desk.iconSize` 兼容读取大/中/小三档；真桌面编辑态不再提供尺寸切换入口 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
-| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock |
+| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息只重绘图标层，不重挂 Scene/Widget |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
+| `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |
 | `room.js` / `room.css` | 旧 Room 扩展 | 宿主不加载；用户代码只能放入 Scene/Widget 受控目录 |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
 | `--wallpaper-screensaver` / `?screensaver=1` | Core→Player→页面 | Lively 屏保实例标记；Dext 只渲染 `room.idle`，普通关闭立即完成 |
@@ -190,6 +191,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
 | `list_rooms` | `(dir) → {name,path,desks,icons,version,widgets}[]` | 扫房间库；识别版本并统计 Widget，不执行 Widget |
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
+| `sync_active_desk_icons` | `(library_dir, room_dir, desk_index, icons, enter_edit, highlight_target?) → {active,saved,liveUpdated,roomJson?,liveError?}` | 仅库内、来源戳匹配的当前 Room 可写；原子更新源 Room 与运行包并发送布局消息，运行时失败仍保留源文件保存结果 |
 | `create_room` | `(dir, name) → path` | 建最小合法 v2 和五个内容目录 |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v2，并镜像五类资源；失败不留下半成品 |
 | `duplicate_room` | `(library_dir, room_dir, name) → path` | 仅复制库内直接子 Room，完整镜像 v2 JSON 与五类资源，失败清理目标 |
@@ -212,7 +214,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 ### L4 gRPC（Rust ↔ Core，GrpcDotNetNamedPipes 自定义线协议）
 
 - 管道：`\\.\pipe\Grpc_DEXT:DESKTOPSHELL<用户名>`；**不是标准 HTTP/2，tonic 不可用**，客户端在 `tauri-ui/src-tauri/src/grpc.rs` 手写帧（RequestInit→Headers→Payload→StreamEnd→Trailers），一次调用一条连接；每个业务 RPC 前先读取并验证 Dext Core 产品名、运行身份、PID、路径、数据目录和 pipe
-- 用到的 RPC：DesktopService `GetInstalledApps`(stream) / `LaunchApp` / `SetWallpaper` / `GetWallpapers` / `CloseAllWallpapers`；SettingsService `GetSettings` / `SetSettings`
+- 用到的 RPC：DesktopService `GetInstalledApps`(stream) / `LaunchApp` / `SetWallpaper` / `GetWallpapers` / `CloseAllWallpapers` / `SendMessageWallpaper`；SettingsService `GetSettings` / `SetSettings`
 - proto 副本在 `src-tauri/proto/`，**必须去 BOM**（protox 限制）
 
 ### L5 `dext://` 自定义协议（配置器内嵌渲染器 = 实时预览通道）

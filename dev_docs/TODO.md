@@ -750,3 +750,27 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 更新 README/DOCK/FRONTEND 正式口径：`iconSize` 仅保留数据兼容，DockEditor 为唯一 Dock 管理入口，后端 `addDockIcon` 链仅作旧兼容
 - [x] 全量自动检查通过：`npm test` 39/39、`npm run build`、`node --check`、Room Schema、`git diff --check`；16 份具名文件提交 `d8655a9`
 - [x] 2026-09-11 用户回复“验收通过”；合并到 master `355bc79`，验收记录已归档
+
+## DESK-LIVE-001 实时应用放置与 Widget 优先避让（2026-09-11 开工）
+
+> 目标：当前使用中的 Room 放入应用后立即热同步到真实桌面；默认最小化配置器并进入目标 Desk 编辑；Widget 拖动/缩放优先占位并让冲突图标自动避让。
+> 范围外：不恢复 Desk↔Dock 拖拽、桌面删除或尺寸切换；不把背景/Scene/switch/Dock 等普通草稿改成全量实时协同；不改变 DockEditor 职责。
+> 人工验收：按 `dev_docs/acceptance/DESK-LIVE-001-live-layout-sync.md` 检查默认/关闭偏好、当前/非当前 Room、失败处理、智能成组放置、Widget 避让/无解回退、焦点回读和既有能力回归。
+
+- [x] 从 `master` `da01ed7` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-live-001` 和分支 `feat/DESK-LIVE-001-live-layout-sync`；基线 `npm test` 39/39 通过
+- [x] 用户确认需求：智能靠近现有图标组；当前 Room 实时热同步；默认新增后最小化并自动进入编辑；Widget 优先、冲突图标松手后让位
+- [x] 完成方案比较、错误分册复核、正式设计与独立验收卡
+- [x] 2026-09-12 用户复核正式设计并回复“通过”
+- [x] 编写 `docs/superpowers/plans/2026-09-12-desk-live-layout-sync.md`，拆为 8 个可独立测试/提交的实施任务
+- [x] 按实施计划和 TDD 顺序执行
+- [x] Task 1：智能成组图标放置、四周安全边距与 Widget 避让整体回退；定向 Vitest 25/25 通过（2026-09-12）
+- [x] Task 2：本地偏好、布局焦点合并与 latest-wins 热同步队列；定向 Vitest 5/5 通过（2026-09-12）
+- [x] Task 3：Rust 受控布局写入与 Core RPC 客户端；定向 Rust 3/3 与 cargo check 通过（2026-09-12）
+- [x] Task 4：Core → Player `Type=26` 类型化 Room 布局消息；Release build.ps1 通过（2026-09-12）
+- [x] Task 5：真实桌面同 Desk 图标热更新、编辑高亮与 Widget 原子避让；Node 纯函数 3/3 和语法检查通过（2026-09-12）
+- [x] Task 6：配置器画布 Widget 避让改为整体回退，Dock 保留区四周一致；Vitest 与前端 build 通过（2026-09-12）
+- [x] Task 7：配置器实时同步、默认自动前往桌面编辑、关闭偏好连续添加、撤销/重做复用队列与焦点回读合并；补充“新增后立刻撤销不触发过期最小化/高亮”回归，定向 Vitest 7/7 与前端 build 通过（2026-09-12）
+- [x] Task 8：全链验证、文档收口并进入待验收
+- [x] 全量自动检查通过：Vitest 50/50、前端生产构建、Rust 39/39（3 项改动系统桌面的活体测试按约定忽略）、cargo check、渲染器 Node 3/3 与语法检查、Room Schema、`git diff --check`（2026-09-12）
+- [ ] 提交实现并转待验收
+- [ ] 用户按独立验收卡确认

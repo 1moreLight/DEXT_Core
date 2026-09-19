@@ -166,6 +166,30 @@ describe("toggleDeskApplication", () => {
     expect(desk).toEqual(before);
   });
 
+  it("adds an application beside an existing group without moving that group", () => {
+    const desk: RoomDesk = {
+      name: "Desk",
+      background: null,
+      iconSize: "medium",
+      icons: [
+        { label: "A", icon_png: "", launch: { target: "a.exe", args: "", workdir: "" }, x: 2, y: 1 },
+        { label: "B", icon_png: "", launch: { target: "b.exe", args: "", workdir: "" }, x: 3, y: 1 },
+      ],
+      widgets: [],
+      dock: { enabled: false },
+    };
+    const before = structuredClone(desk);
+
+    const result = toggleDeskApplication(desk, app, { cellWidth: 100, cellHeight: 100, columns: 4, rows: 3 });
+
+    expect(result).toMatchObject({ action: "added", desk: { icons: [
+      { x: 2, y: 1 },
+      { x: 3, y: 1 },
+      { x: 2, y: 0 },
+    ] } });
+    expect(desk).toEqual(before);
+  });
+
   it("removes an existing application and reports a full Desk without mutation", () => {
     const existing: RoomDesk = {
       name: "Desk",
