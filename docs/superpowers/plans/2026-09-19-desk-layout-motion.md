@@ -77,4 +77,4 @@
 - [x] Playwright 覆盖真实 renderer 的节点/iframe 复用、热消息、快速折返、启动/Dock 回归和 reduced-motion。
 - [x] 更新 README/FRONTEND、TODO、ROADMAP 和独立验收卡；设置编辑器保持范围外。
 - [x] 运行 Vitest、Node、Playwright、build、语法、Schema 和 diff check。
-- [ ] 提交全部具名文件并停在真实桌面人工验收，不合并 master。
+- [x] 提交全部具名文件并停在真实桌面人工验收，不合并 master（阶段 B：`64af642`）。

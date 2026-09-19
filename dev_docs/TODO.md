@@ -809,4 +809,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 真实 renderer Playwright：节点/iframe 复用、热更新、双击空白、reduced-motion、启动/Dock 回归（14/14；2026-09-20）
 - [x] 全量自动回归：Vitest 50/50、Node 21/21、Playwright 39/39、build、语法、Schema 与 diff check（2026-09-20）
 - [x] `codegraph sync` 按规范尝试；独立 worktree 的 `.codegraph` 仅有 ignore 文件且 `status` 为 Not initialized，未擅自初始化（2026-09-20）
-- [~] 提交阶段 B 并停在真实桌面人工验收；禁止合并 master
+- [x] 阶段 B 实现提交 `64af642`；已停在真实桌面人工验收，禁止合并 master（2026-09-20）
