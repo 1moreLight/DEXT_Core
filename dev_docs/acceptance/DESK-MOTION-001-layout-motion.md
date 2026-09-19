@@ -12,12 +12,12 @@
 ### 自动检查
 
 - [x] Node 14/14 覆盖稳定身份、重复签名、路径插入重排、Widget/Dock 障碍、move/enter/exit diff、受影响范围、revision、取消、回弹和 reduced-motion。
-- [x] Playwright 22/22 覆盖稳定 DOM、外层 FLIP 与内层 jiggle 并存、托起/占位/路径让位/提交、Widget 保持与拖动、Dock 禁放、连续 revision、Reset/场景切换清理、每手势独立取消基线、旧 pointerup 失效、pointercancel、新增/移除、无解回弹、开关与系统级 reduced-motion 和 100 图标压力场景。
+- [x] Playwright 23/23 覆盖稳定 DOM、图标与 Widget 的内层 jiggle、拖动暂停/恢复、外层 FLIP、托起/占位/路径让位/提交、Widget 保持与拖动、Dock 禁放、连续 revision、Reset/场景切换清理、每手势独立取消基线、旧 pointerup 失效、pointercancel、新增/移除、无解回弹、开关与系统级 reduced-motion 和 100 图标压力场景。
 - [x] `npm test`（50/50）、`npm run build`、`npm run test:renderer:e2e`、渲染器 Node 测试（14/14）、语法检查、Room Schema 与 `git diff --check` 通过。
 
 ### 人工验收
 
-1. [ ] 长按图标约 500ms 进入苹果式编辑模式，图标持续轻微抖动；重排时抖动与位移动画同时存在，点击 Done 退出。
+1. [ ] 长按图标或 Widget 约 500ms 进入苹果式编辑模式，图标与 Widget 持续轻微抖动；拖起当前对象时仅该对象暂停抖动，松手/取消后恢复，点击 Done 退出。
 2. [ ] 运行 `npm run dev:motion`；Widget 推开单个图标时，图标以 280ms 克制地滑入最近空格，没有跳变。
 3. [ ] Widget 同时推开多个图标时，仅受影响图标移动，未冲突图标保持稳定。
 4. [ ] `Stress · rapid` 作为极限连续 revision 场景不闪回旧位置、不出现重复节点或完成回调覆盖新布局；它不代表日常速度。
@@ -52,3 +52,5 @@
 - 2026-09-19：独立复核补出两个输入事务边界：Reset 未终止 Widget/长按手势，以及旧场景 `previewBase` 污染下一次取消。新增 4 条真实指针回归并修复：Reset 统一 abort 全部输入状态；每次图标/Widget 拖动从当前可见布局建立独立恢复基线。
 - 2026-09-19：二次复核发现非 Reset 场景切换仍保留真实 drag，旧 pointerup 可覆盖 Add 结果；统一在所有外部场景切换前撤销当前手势提交权，新增回归确保 India 和 9 节点终态不被覆盖。
 - 2026-09-19：最终独立复核无 Critical/Important；全量验证为 Vitest 50/50、Node 14/14、Playwright 22/22，前端构建、语法检查、Room Schema 与 `git diff --check` 均通过。继续停在阶段 A 浏览器人工验收，不接入真实桌面。
+- 2026-09-19：用户确认 Sortable/Widget 优先/Dock 禁放方向可用，并补充 Widget 在编辑模式下也应抖动；采用 Widget 外层负责坐标、内层 face 独立 jiggle，拖动暂停且 reduced-motion 关闭。
+- 2026-09-19：Widget 编辑态 jiggle 浏览器回归先按预期失败后转绿；幅度为 ±0.38°、周期 420ms，拖动当前 Widget 时暂停，松手/取消恢复，退出编辑或 reduced-motion 时关闭。

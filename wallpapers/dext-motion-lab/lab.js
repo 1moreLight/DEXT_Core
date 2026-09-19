@@ -177,6 +177,7 @@
     if (activeWidgetPress) clearTimeout(activeWidgetPress.timer);
     if (activeIconPress) clearTimeout(activeIconPress.timer);
     if (activeIconDrag) clearDraggedFace(activeIconDrag);
+    widget.classList.remove("is-dragging");
 
     const activeDrag = activeIconDrag ?? activeWidgetDrag;
     if (restoreGesture && activeDrag) {
@@ -462,6 +463,7 @@
   function startWidgetDrag(event) {
     if (event.button !== 0) return;
     settleGestureBaseline();
+    widget.classList.add("is-dragging");
     const rect = widget.getBoundingClientRect();
     widgetDrag = {
       pointerId: event.pointerId,
@@ -480,7 +482,7 @@
     document.body.classList.toggle("editing", editMode);
     stage.dataset.editing = String(editMode);
     editDone.hidden = !editMode;
-    if (editMode) detail.textContent = "Edit mode · inner icons jiggle while the outer positioner owns layout motion.";
+    if (editMode) detail.textContent = "Edit mode · icon and Widget faces jiggle while outer positioners own layout motion.";
   }
 
   function startWidgetPressOrDrag(event) {
@@ -551,6 +553,7 @@
     if (!widgetDrag || event.pointerId !== widgetDrag.pointerId) return;
     const drag = widgetDrag;
     widgetDrag = null;
+    widget.classList.remove("is-dragging");
     setDropZone();
     const canceled = event.type !== "pointerup";
     if (!canceled && drag.preview && stage.dataset.conflict !== "true") {

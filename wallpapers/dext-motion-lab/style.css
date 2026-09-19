@@ -268,6 +268,12 @@ body.reduce-motion .motion-icon-face {
   animation: none;
 }
 
+@keyframes motion-widget-jiggle {
+  0% { rotate: -.38deg; }
+  50% { rotate: .38deg; }
+  100% { rotate: -.38deg; }
+}
+
 .demo-widget {
   position: absolute;
   z-index: 5;
@@ -279,9 +285,6 @@ body.reduce-motion .motion-icon-face {
   border: 1px solid #39444e;
   background: #171d23;
   color: #f5f7f8;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -289,6 +292,24 @@ body.reduce-motion .motion-icon-face {
 }
 
 .demo-widget:active { cursor: grabbing; }
+.demo-widget-face {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform-origin: center;
+}
+
+body.editing .demo-widget-face {
+  animation: motion-widget-jiggle .42s ease-in-out infinite;
+}
+
+body.editing .demo-widget.is-dragging .demo-widget-face,
+body.reduce-motion .demo-widget-face {
+  animation: none;
+}
+
 .widget-kicker { color: var(--accent); font: 700 9px/1 ui-monospace, monospace; letter-spacing: .16em; }
 .demo-widget strong { font-size: 44px; font-weight: 450; letter-spacing: -.06em; }
 .demo-widget small { color: #7f8993; font-size: 10px; }
@@ -297,6 +318,9 @@ body.reduce-motion .motion-icon-face {
   width: 78px;
   height: 82px;
   padding: 12px;
+}
+
+.demo-widget.is-compact .demo-widget-face {
   justify-content: center;
   align-items: center;
 }

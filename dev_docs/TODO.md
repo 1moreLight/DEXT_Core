@@ -784,7 +784,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] DESK-LIVE-001 于 2026-09-19 用户验收通过并合入 master `64ab03f`
 - [x] 从最新 master 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-motion-001` 和分支 `feat/DESK-MOTION-001-layout-motion`
 - [x] 固化设计、实施计划、结构决策和独立验收卡
-- [x] TDD：稳定身份、路径重排、Widget/Dock 障碍、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 14/14；Playwright 22/22）
+- [x] TDD：稳定身份、路径重排、Widget/Dock 障碍、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 14/14；Playwright 23/23）
 - [x] 实现独立 `DextLayoutMotion`，保持 `apply/cancel/dispose` 固定接口
 - [x] 建立浏览器实验台与全部交互场景，实验台直接使用产品动画引擎
 - [x] 增加 Playwright、`dev:motion`、`test:renderer:e2e` 与 Windows 运行说明
@@ -798,7 +798,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 补 Widget 可拖且始终优先、Dock 禁止图标/Widget 放入的真实指针回归
 - [x] 复核修复：Reset 终止全部 drag/press、timer 与 pointer capture；每个真实手势结清旧预览并建立独立取消基线；4 条浏览器回归覆盖图标/Widget 取消、拖动中 Reset 与长按中 Reset
 - [x] 二次复核修复：非 Reset 场景切换也先取消真实拖拽并恢复本手势基线，旧 pointerup 不再覆盖新场景；新增 1 条回归
-- [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 22/22、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
+- [x] 浏览器验收补充：Widget 在编辑模式下轻微抖动，拖动期间暂停、松手/取消后恢复，reduced-motion 下关闭；定向 Playwright 先失败后转绿
+- [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 23/23、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
 - [ ] 用户明确确认浏览器动画质感通过
 - [ ] 浏览器通过后：按稳定身份协调真实桌面图标节点，接入 Widget/图标预览与热更新
 - [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收

@@ -62,6 +62,26 @@ test("500ms long press keeps the Apple-style inner jiggle while the outer node p
   await expect(face).toHaveCSS("animation-name", "none");
 });
 
+test("Widget shares the edit jiggle, pauses while dragged, and resumes on release", async ({ page }) => {
+  await enterAppleEditMode(page);
+  const widget = page.locator("#demo-widget");
+  const face = widget.locator(".demo-widget-face");
+  await expect(face).toHaveCSS("animation-name", "motion-widget-jiggle");
+
+  const box = await widget.boundingBox();
+  if (!box) throw new Error("Widget geometry unavailable");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(widget).toHaveClass(/is-dragging/);
+  await expect(face).toHaveCSS("animation-name", "none");
+  await page.mouse.up();
+
+  await expect(widget).not.toHaveClass(/is-dragging/);
+  await expect(face).toHaveCSS("animation-name", "motion-widget-jiggle");
+  await page.getByRole("button", { name: "Done editing" }).click();
+  await expect(face).toHaveCSS("animation-name", "none");
+});
+
 test("rapid revisions continue from the current visual state and never flash back to an old layout", async ({ page }) => {
   await page.evaluate(() => window.motionLab.runScenario("zigzag"));
   await page.evaluate(() => window.motionLab.waitForIdle());
@@ -375,6 +395,7 @@ test("system reduced-motion preference disables both FLIP and edit-mode jiggle",
   await enterAppleEditMode(page);
   const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
   await expect(face).toHaveCSS("animation-name", "none");
+  await expect(page.locator("#demo-widget .demo-widget-face")).toHaveCSS("animation-name", "none");
 
   await page.evaluate(() => window.motionLab.runScenario("widget-single"));
   expect(await page.locator(".motion-icon").evaluateAll(
