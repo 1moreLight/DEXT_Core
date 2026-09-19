@@ -772,5 +772,23 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 7：配置器实时同步、默认自动前往桌面编辑、关闭偏好连续添加、撤销/重做复用队列与焦点回读合并；补充“新增后立刻撤销不触发过期最小化/高亮”回归，定向 Vitest 7/7 与前端 build 通过（2026-09-12）
 - [x] Task 8：全链验证、文档收口并进入待验收
 - [x] 全量自动检查通过：Vitest 50/50、前端生产构建、Rust 39/39（3 项改动系统桌面的活体测试按约定忽略）、cargo check、渲染器 Node 3/3 与语法检查、Room Schema、`git diff --check`（2026-09-12）
-- [ ] 提交实现并转待验收
-- [ ] 用户按独立验收卡确认
+- [x] 提交实现并转待验收（实现提交 `9867516`）
+- [x] 2026-09-19 用户回复“验收通过”；合并到 master `64ab03f`，原分支/worktree 已清理
+
+## DESK-MOTION-001 桌面自动重排动画（2026-09-19 开工）
+
+> 目标：为已有 Desk 自动布局变化提供统一、可中断、稳定节点复用的 FLIP/WAAPI 动画；先在浏览器实验台验收运动质感，再接入真实桌面。
+> 范围外：不引入 Muuri、dnd-kit、React Grid Layout 等运行时依赖；不改变 room.json；不实现按名称/频率一键整理；浏览器验收前不修改真实桌面 `main.js` 的交互。
+> 人工验收：先运行 `npm run dev:motion`，逐项检查 Widget 单/多图标让位、连续折返、图标交换、新增、移除、无解回弹、取消、reduced-motion 与 100 图标压力场景；浏览器阶段明确通过后才进入真桌面集成。
+
+- [x] DESK-LIVE-001 于 2026-09-19 用户验收通过并合入 master `64ab03f`
+- [x] 从最新 master 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-motion-001` 和分支 `feat/DESK-MOTION-001-layout-motion`
+- [x] 固化设计、实施计划、结构决策和独立验收卡
+- [ ] TDD：稳定身份、重复签名、move/enter/exit diff、revision/cancel/restore/reduced-motion
+- [ ] 实现独立 `DextLayoutMotion`，保持 `apply/cancel/dispose` 固定接口
+- [ ] 建立浏览器实验台与全部交互场景，实验台直接使用产品动画引擎
+- [ ] 增加 Playwright、`dev:motion`、`test:renderer:e2e` 与 Windows 运行说明
+- [ ] 浏览器阶段自动检查通过并提交，停在“浏览器视觉验收”硬门槛
+- [ ] 用户明确确认浏览器动画质感通过
+- [ ] 浏览器通过后：按稳定身份协调真实桌面图标节点，接入 Widget/图标预览与热更新
+- [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收

@@ -96,6 +96,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-09-02 | **配置器 v2 采用单工作包端到端交付**：用户明确要求不再把配置器 UI、WidgetHost、Scene 数据展示、图标避让、可信系统热点和安全分享拆成多个中途验收步骤。UI-V2-001 在一个 worktree/分支中保留现有设计语言并重构代码职责，同时完成真实运行链；内部允许按风险顺序提交，但只在全部范围完成后做一次人工验收。创意工坊云服务、内置外部 AI、代理联网、安装器和多显示器仍不在本包。 |
 | 2026-09-02 | **v2 能力授权绑定源 Room 内容哈希**：Scene/Widget 的声明不等于批准；本机授权存放在 `%LOCALAPPDATA%\\Dext\\permissions-v1.json`，按规范化源 Room 路径、整份 `room.json` SHA-256 和内容 subject 绑定。保存修改、另存或重新导入后授权自动失效。v2 当前完全离线，未实现的代理联网、导航、通用存储和通知能力从允许枚举删除，而不是保留不可兑现入口。 |
 | 2026-09-11 | **当前 Room 的 Desk 布局采用受控热同步**：配置器放入/移除应用只提交目标 Desk 图标布局，Rust 从可信源 Room 读改写并同步匹配的运行包，再通过 Core 向官方顶层宿主发送完整运行快照；不以自动 `apply_room` 重启壁纸，也不让客户端提供 `__source` 或写入路径。新增后默认最小化配置器、切目标 Desk 并进入编辑，可在设置中关闭跳转但不关闭热同步。Widget placement 优先于图标，真桌面松手时只移动冲突图标；无完整合法布局则整体回退。 |
+| 2026-09-19 | **Desk 自动重排采用浏览器先行的自研轻量动画层**：`DextLayout` 只负责最终坐标，新增 `DextLayoutMotion` 以稳定身份和 FLIP/WAAPI 统一执行 move/enter/exit、revision 中断与 reduced-motion；不引入通用拖拽/网格运行时。先用直接调用同一引擎的浏览器实验台和 Playwright 固化行为，用户确认运动质感前禁止接入真实桌面 `main.js`。动画不改变 room.json 或 Widget 优先、Dock 禁区、无解整体回退规则。 |
 
 ## 工作流
 
