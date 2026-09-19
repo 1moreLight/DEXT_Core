@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  DEFAULT_MOTION_PROFILE,
   DextLayoutMotion,
   createMotionItems,
   diffMotionItems,
@@ -190,4 +191,21 @@ test("an exit callback from an older revision cannot delete a re-entered node", 
 
   assert.equal(container.children.includes(bNode), true);
   assert.equal(bNode.dataset.motionKey, "b");
+});
+
+test("the default motion profile drives the production move timing", () => {
+  const container = new FakeContainer();
+  const motion = new DextLayoutMotion(container, {
+    durations: DEFAULT_MOTION_PROFILE.durations,
+    easing: DEFAULT_MOTION_PROFILE.easing,
+    reducedMotion: false,
+  });
+  motion.apply([{ key: "a", left: 0, top: 0, data: { label: "A" } }], { mode: "initial" });
+
+  motion.apply([{ key: "a", left: 120, top: 0, data: { label: "A" } }]);
+
+  assert.equal(container.children[0].animations.at(-1).options.duration, 280);
+  assert.equal(container.children[0].animations.at(-1).options.easing, "cubic-bezier(.22,1,.36,1)");
+  assert.equal(DEFAULT_MOTION_PROFILE.targetDwell, 80);
+  assert.deepEqual(DEFAULT_MOTION_PROFILE.iconLift, { y: -8, scale: 1.06 });
 });

@@ -4,7 +4,7 @@
 
 现有 `DextLayout` 继续只计算最终布局：Widget 避让由 `resolveWidgetIconAvoidance` 求解，图标路径重排由 `resolveIconReorder` 求解；调用方传入 Widget 障碍和 Dock 保留区。独立 `DextLayoutMotion` 接收最终布局和稳定身份，在 DOM 上执行可中断的 move、enter、exit 与 rollback 动画。两层都不修改 `room.json`，也不引入通用网格或拖拽运行时。
 
-本工作包分为两个强制阶段：先在浏览器实验台直接使用产品动画引擎并由用户验收运动质感；只有明确通过后，才允许修改真实桌面 `main.js` 的图标协调、Widget 预览和图标路径重排逻辑。
+本工作包分为两个强制阶段：先在浏览器实验台直接使用产品动画引擎并由用户验收运动规则；明确通过后再修改真实桌面。实验台的示例卡片、颜色和布局不进入生产环境，生产环境只复用求解器、动画引擎、默认参数和交互语义，继续使用真实图标、Widget iframe、主题、编辑边框与 Dock。
 
 ## 接口
 
@@ -16,6 +16,10 @@ motion.dispose()
 ```
 
 `MotionItem` 至少包含稳定 `key`、最终 `left/top` 和原始图标数据。控制器拥有节点映射、视觉快照、当前 revision 和动画句柄；调用方拥有布局求解、拖动手势和最终持久化。
+
+默认 `MotionProfile` 为 `{ move:280, enter:180, exit:140, rollback:300, easing:"cubic-bezier(.22,1,.36,1)", targetDwell:80, iconLiftY:-8, iconLiftScale:1.06, iconJiggleDegrees:1.35, iconJiggleDuration:350, widgetJiggleDegrees:0.38, widgetJiggleDuration:420 }`。本工作包只使用该默认值，不增加设置页、持久化或运行中热切换。
+
+真实桌面由独立 `DextDesktopLayoutController` 协调，公开 `render`、`setEditing`、`beginExternalGesture`、`previewExternal`、`commitExternal`、`cancelExternal`、`abort`、`dispose`。图标手势由控制器内部持有；Widget 拖动和缩放通过 external gesture 传入候选 placement 与图标布局。
 
 应用图标的 key 取规范化 launch target/args/workdir；旧图标没有可靠 launch 时，以 action、label、glyph 的规范化签名加同签名序号区分。相同布局中 key 必须稳定且唯一。
 
@@ -36,6 +40,8 @@ motion.dispose()
 图标重排只改变图标坐标，不移动 Widget；Widget 当前矩形作为不可放置障碍。Widget 自身仍可拖动并继续优先占位，让冲突图标避让。Dock 是图标和 Widget 的禁放区：图标进入时撤销路径预览并隐藏占位，释放恢复原顺序；Widget 接近时钳制在 Dock 外。松手只提交一次新的图标坐标顺序，pointercancel、lostpointercapture、无解和非法目标都恢复基线。
 
 恢复基线以一次真实 pointer 手势为边界：pointerdown 开始拖动前先结清旧场景或旧动画的 preview 状态，以当前已发布布局建立本手势基线。Reset/场景切换必须作为输入事务 abort，先清 drag/press、长按 timer 与 pointer capture，再发布重置布局，旧 pointer 事件不得继续生效。
+
+生产控制器状态限定为 `idle / pressing / draggingIcon / draggingWidget / resizingWidget`，同一时刻只有一个事务。候选格跨过中心后必须连续有效 80ms 才发布新占位；`pointercancel`、`lostpointercapture`、非法目标和退出编辑恢复手势基线。热布局、Desk 切换和 resize 是权威状态，先使旧事务失效再立即渲染新状态，不允许恢复旧快照。Widget placement 与图标避让仅在预览快照中变化，有效 pointerup 才一次性提交并持久化。
 
 reduced-motion 下立即写最终布局并清理动画，只保留冲突状态和新增高亮。初次加载、Desk 切换 staging 和窗口缩放使用即时模式。
 

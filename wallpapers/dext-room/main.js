@@ -389,14 +389,14 @@ function applyRoomLayoutUpdate(data) {
   const moveToTarget = data.enterEdit === true && target !== currentDesk;
   if (moveToTarget) {
     currentDesk = target;
-    renderDesk(currentDesk);
+    renderDesk(currentDesk, { iconMode: "staging" });
   } else if (target === currentDesk) {
-    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
+    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]), {
+      mode: "hot",
+      highlightTarget: data.highlightTarget,
+    });
   }
   if (data.enterEdit === true) enterEdit({ rerender: false });
-  if (target === currentDesk && typeof data.highlightTarget === "string" && data.highlightTarget) {
-    highlightIcon(data.highlightTarget);
-  }
 }
 
 const deskMain = document.getElementById("desk-main");
@@ -419,6 +419,15 @@ let editMode = false;
 let lastTrustedActionAt = 0;
 const runtimeGrants = new Map();
 const capabilityInstances = new Set();
+const motionProfile = globalThis.DextLayoutMotionApi?.DEFAULT_MOTION_PROFILE;
+if (!motionProfile || !globalThis.DextDesktopLayoutController) {
+  throw new Error("Dext desktop motion runtime is unavailable");
+}
+
+document.documentElement.style.setProperty("--dext-icon-jiggle-angle", `${motionProfile.iconJiggle.degrees}deg`);
+document.documentElement.style.setProperty("--dext-icon-jiggle-duration", `${motionProfile.iconJiggle.duration}ms`);
+document.documentElement.style.setProperty("--dext-widget-jiggle-angle", `${motionProfile.widgetJiggle.degrees}deg`);
+document.documentElement.style.setProperty("--dext-widget-jiggle-duration", `${motionProfile.widgetJiggle.duration}ms`);
 
 const capabilityHost = capabilityApi.createHost({
   viewport: () => ({ width: ROOM_CANVAS.width, height: ROOM_CANVAS.height, scale: window.devicePixelRatio || 1 }),
@@ -1094,54 +1103,109 @@ function mountBackground(bgTarget, videoTarget, desk, deskIndex) {
   }
 }
 
-function renderIcons(layer, desk, s) {
+function createDesktopIconNode() {
+  const el = document.createElement("div");
+  el.className = "icon";
+  const face = document.createElement("div");
+  face.className = "icon-face";
+  const label = document.createElement("div");
+  label.className = "icon-label";
+  face.appendChild(label);
+  el.appendChild(face);
+  return el;
+}
+
+function updateDesktopIconNode(el, motionItem) {
+  const item = motionItem.data;
+  const face = el.querySelector(".icon-face");
+  const label = face.querySelector(".icon-label");
+  const wantsImage = typeof item?.icon_png === "string" && item.icon_png;
+  let visual = face.querySelector(".icon-img, .icon-glyph");
+  if (!visual || (wantsImage && !visual.classList.contains("icon-img")) ||
+      (!wantsImage && !visual.classList.contains("icon-glyph"))) {
+    visual?.remove();
+    visual = iconVisual(item);
+    face.insertBefore(visual, label);
+  } else if (wantsImage) {
+    const nextSrc = `data:image/png;base64,${item.icon_png}`;
+    if (visual.getAttribute("src") !== nextSrc) visual.setAttribute("src", nextSrc);
+  } else {
+    visual.textContent = typeof item?.glyph === "string" && item.glyph ? item.glyph : "?";
+    visual.style.backgroundColor = typeof item?.color === "string" && CSS.supports("color", item.color)
+      ? item.color
+      : "#3b82f6";
+  }
+  label.textContent = item.label ?? "";
+  el.dataset.launchTarget = item.launch?.target ?? "";
+  el.dataset.motionKey = motionItem.key;
+}
+
+const desktopLayoutController = new globalThis.DextDesktopLayoutController(iconLayer, {
+  profile: motionProfile,
+  reducedMotion: () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  createIconNode: () => createDesktopIconNode(),
+  updateIconNode: updateDesktopIconNode,
+  onRequestEdit: () => enterEdit(),
+  onActivate: (item) => {
+    if (item.launch) {
+      showToast(`正在启动 ${item.label} ...`);
+      launchApp(item.launch);
+    } else {
+      showToast(item.action);
+    }
+  },
+  positionOf: (icon) => {
+    const desk = ROOM.desks[currentDesk];
+    const s = sizeOf(desk);
+    const width = iconLayer.clientWidth || window.innerWidth - 80;
+    const height = iconLayer.clientHeight || window.innerHeight - 140;
+    const cols = Math.max(4, Math.floor(width / s.cellW));
+    const rows = Math.max(1, Math.floor(height / s.cellH));
+    return {
+      left: Math.min(Math.max(icon.x ?? 0, 0), cols - 1) * s.cellW,
+      top: Math.min(Math.max(icon.y ?? 0, 0), rows - 1) * s.cellH,
+    };
+  },
+});
+
+function renderStaticIcons(layer, desk, s) {
+  const width = layer.clientWidth || window.innerWidth - 80;
+  const height = layer.clientHeight || window.innerHeight - 140;
+  const cols = Math.max(4, Math.floor(width / s.cellW));
+  const rows = Math.max(1, Math.floor(height / s.cellH));
+  layer.replaceChildren();
+  globalThis.DextLayoutMotionApi.createMotionItems(desk.icons ?? [], (item) => ({
+    left: Math.min(Math.max(item.x ?? 0, 0), cols - 1) * s.cellW,
+    top: Math.min(Math.max(item.y ?? 0, 0), rows - 1) * s.cellH,
+  })).forEach((motionItem) => {
+    const el = createDesktopIconNode();
+    updateDesktopIconNode(el, motionItem);
+    el.style.width = `${s.cellW}px`;
+    el.style.left = `${motionItem.left}px`;
+    el.style.top = `${motionItem.top}px`;
+    layer.appendChild(el);
+  });
+}
+
+function renderIcons(layer, desk, s, { mode = "auto", highlightTarget = "" } = {}) {
   const W = layer.clientWidth || window.innerWidth - 80;
-  const H = layer.clientHeight || window.innerHeight - 140;
   const cols = Math.max(4, Math.floor(W / s.cellW));
-  const rows = Math.max(1, Math.floor(H / s.cellH));
   layer.style.setProperty("--icon-size", `${s.icon}px`);
   layer.style.setProperty("--label-size", `${s.label}px`);
 
   if (!Array.isArray(desk.icons)) desk.icons = [];
   if (desk.icons.length && typeof desk.icons[0].x !== "number") normalizeCoords(desk, cols);
 
-  layer.replaceChildren();
-  desk.icons.forEach((item, i) => {
-    const el = document.createElement("div");
-    el.className = "icon";
-    el.dataset.launchTarget = item.launch?.target ?? "";
-    el.style.width = `${s.cellW}px`;
-    // clamp into view for the current size without rewriting stored coords
-    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW}px`;
-    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH}px`;
-    el.appendChild(iconVisual(item));
-    const label = document.createElement("div");
-    label.className = "icon-label";
-    label.textContent = item.label ?? "";
-    el.appendChild(label);
-    el.addEventListener("dblclick", () => {
-      if (editMode) return;
-      if (item.launch) {
-        showToast(`正在启动 ${item.label} ...`);
-        launchApp(item.launch);
-      } else {
-        showToast(item.action);
-      }
-    });
-    attachPress(el, i);
-    layer.appendChild(el);
-  });
+  if (layer !== iconLayer) {
+    renderStaticIcons(layer, desk, s);
+    return null;
+  }
+  const result = desktopLayoutController.render(desk.icons, { mode, highlightTarget });
+  for (const el of layer.querySelectorAll(".icon")) el.style.width = `${s.cellW}px`;
+  return result;
 }
 
-function highlightIcon(target) {
-  const icon = [...iconLayer.querySelectorAll(".icon")]
-    .find((element) => element.dataset.launchTarget === target);
-  if (!icon) return;
-  icon.classList.add("live-layout-highlight");
-  setTimeout(() => icon.classList.remove("live-layout-highlight"), 1800);
-}
-
-function renderDesk(index) {
+function renderDesk(index, { iconMode = "initial" } = {}) {
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk, index);
   mountWidgets(widgetLayer, desk, index);
@@ -1164,7 +1228,7 @@ function renderDesk(index) {
     dockEl.classList.remove("dots");
     indicatorEl.textContent = `${index + 1} / ${n} · ${desk.name}`;
   }
-  renderIcons(iconLayer, desk, sizeOf(desk));
+  renderIcons(iconLayer, desk, sizeOf(desk), { mode: iconMode });
   capabilityHost.deskChanged();
 
 }
@@ -1253,7 +1317,7 @@ function enterEdit({ rerender = true } = {}) {
   if (editMode || switching) return;
   editMode = true;
   document.body.classList.add("editing");
-  if (rerender) renderDesk(currentDesk);
+  desktopLayoutController.setEditing(true);
   dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动图标 / Widget 排列，Esc 或「完成」退出");
 }
@@ -1262,7 +1326,7 @@ function exitEdit() {
   if (!editMode) return;
   editMode = false;
   document.body.classList.remove("editing");
-  renderDesk(currentDesk);
+  desktopLayoutController.setEditing(false);
   dextEmit("editchange", { editing: false });
   persistRoom();
 }
@@ -1359,7 +1423,7 @@ function mountStaging(index) {
     <div class="icon-layer"></div>`;
   mountBackground(stageEl.querySelector(".desk-bg"), stageEl.querySelector(".desk-video"), desk, index);
   mountWidgets(stageEl.querySelector(".widget-layer"), desk, index);
-  renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
+  renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk), { mode: "staging" });
 }
 
 const SWITCH_PRESETS = new Set(["slide", "fade", "zoom", "none"]);
@@ -1388,7 +1452,7 @@ function playVideoTransition(next, slot, from, delta) {
         return;
       }
       currentDesk = next;
-      renderDesk(currentDesk);
+      renderDesk(currentDesk, { iconMode: "staging" });
       dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
       switching = false;
     },
@@ -1414,7 +1478,7 @@ function switchDesk(delta) {
   mountStaging(next);
   t.run(stageEl, delta, () => {
     currentDesk = next;
-    renderDesk(currentDesk);
+    renderDesk(currentDesk, { iconMode: "staging" });
     after();
     t.cleanup();
     switching = false;
@@ -1437,7 +1501,6 @@ let deskPressTimer = null;
 let deskPressX = 0, deskPressY = 0;
 iconLayer.addEventListener("pointerdown", (e) => {
   if (editMode) {
-    if (e.target === iconLayer) exitEdit();
     return;
   }
   if (e.button !== 0 || e.target !== iconLayer) return;
@@ -1457,6 +1520,10 @@ iconLayer.addEventListener("pointerdown", (e) => {
   })
 );
 
+iconLayer.addEventListener("dblclick", (e) => {
+  if (editMode && e.target === iconLayer) exitEdit();
+});
+
 window.addEventListener("keydown", (e) => {
   if (SCREENSAVER_MODE) return;
   if (e.key === "ArrowRight") switchDesk(1);
@@ -1465,7 +1532,10 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => {
-  if (!SCREENSAVER_MODE) renderDesk(currentDesk);
+  if (!SCREENSAVER_MODE) {
+    desktopLayoutController.abort({ restore: false });
+    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]), { mode: "resize" });
+  }
 });
 
 window.addEventListener("message", (e) => {

@@ -801,6 +801,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 浏览器验收补充：Widget 在编辑模式下轻微抖动，拖动期间暂停、松手/取消后恢复，reduced-motion 下关闭；定向 Playwright 先失败后转绿
 - [x] 浏览器验收修正：Widget 边框/背景/文字整体抖动；双击桌面空白退出编辑，双击交互对象不退出；Dock 钳制增加整卡旋转安全余量
 - [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 25/25、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
-- [ ] 用户明确确认浏览器动画质感通过
-- [ ] 浏览器通过后：按稳定身份协调真实桌面图标节点，接入 Widget/图标预览与热更新
+- [x] 2026-09-19 用户确认实验台只用于验证运动规则和默认参数，并明确要求实施真实桌面阶段 B；生产环境不复制实验台外观
+- [x] 2026-09-20 导出默认 MotionProfile，新增独立 DextDesktopLayoutController，按稳定身份协调真实图标节点；真实编辑切换与热布局更新均复用图标节点和 Widget iframe
+- [ ] 真实图标 Sortable：外层 FLIP、内层托起/抖动、80ms 候选稳定、路径让位、单次提交和完整取消
+- [ ] Widget 事务式拖动/缩放：真实整卡抖动、Widget 优先、图标避让、Dock 禁区与原子提交/回滚
+- [ ] 权威更新中断：热布局、Desk 切换、resize、退出编辑统一终止旧手势，旧回调不得覆盖新状态
+- [ ] 真实 renderer Playwright：节点/iframe 复用、热更新、双击空白、reduced-motion、启动/Dock 回归
 - [ ] 全量回归、真实桌面人工验收、提交并停在最终待验收

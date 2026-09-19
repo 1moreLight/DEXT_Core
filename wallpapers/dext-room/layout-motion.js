@@ -6,6 +6,14 @@
 })(globalThis, function () {
   const DEFAULT_DURATIONS = Object.freeze({ move: 280, enter: 180, exit: 140, rollback: 300 });
   const DEFAULT_EASING = "cubic-bezier(.22,1,.36,1)";
+  const DEFAULT_MOTION_PROFILE = Object.freeze({
+    durations: DEFAULT_DURATIONS,
+    easing: DEFAULT_EASING,
+    targetDwell: 80,
+    iconLift: Object.freeze({ y: -8, scale: 1.06 }),
+    iconJiggle: Object.freeze({ degrees: 1.35, duration: 350 }),
+    widgetJiggle: Object.freeze({ degrees: 0.38, duration: 420 }),
+  });
   const IMMEDIATE_MODES = new Set(["immediate", "initial", "staging", "resize"]);
 
   function compactWhitespace(value) {
@@ -314,6 +322,7 @@
   return {
     DEFAULT_DURATIONS,
     DEFAULT_EASING,
+    DEFAULT_MOTION_PROFILE,
     DextLayoutMotion,
     createMotionItems,
     diffMotionItems,

@@ -247,7 +247,7 @@ html[data-mode="screensaver"] #toast {
 
 .icon-layer .icon {
   position: absolute;
-  transition: left 0.25s ease, top 0.25s ease, background-color 0.15s, transform 0.15s;
+  touch-action: none;
 }
 
 .icon.dragging,
@@ -257,9 +257,8 @@ html[data-mode="screensaver"] #toast {
   opacity: 0.85;
 }
 
-.icon.dragging .icon-img,
-.icon.dragging .icon-glyph {
-  transform: scale(1.12);
+.icon.dragging .icon-face {
+  animation: none;
 }
 
 .icon.widget-avoid-preview {
@@ -273,15 +272,33 @@ html[data-mode="screensaver"] #toast {
   background: color-mix(in srgb, var(--dext-accent) 28%, transparent);
 }
 
-@keyframes jiggle {
-  0% { rotate: -1.4deg; }
-  50% { rotate: 1.4deg; }
-  100% { rotate: -1.4deg; }
+@keyframes dext-icon-jiggle {
+  0% { rotate: calc(-1 * var(--dext-icon-jiggle-angle, 1.35deg)); }
+  50% { rotate: var(--dext-icon-jiggle-angle, 1.35deg); }
+  100% { rotate: calc(-1 * var(--dext-icon-jiggle-angle, 1.35deg)); }
 }
 
-body.editing .icon {
-  animation: jiggle 0.35s ease-in-out infinite;
+body.editing .icon-face {
+  animation: dext-icon-jiggle var(--dext-icon-jiggle-duration, 350ms) ease-in-out infinite;
   cursor: grab;
+}
+
+body.editing .icon:nth-child(even) .icon-face {
+  animation-delay: calc(var(--dext-icon-jiggle-duration, 350ms) / -2);
+}
+
+@keyframes dext-widget-jiggle {
+  0% { rotate: calc(-1 * var(--dext-widget-jiggle-angle, .38deg)); }
+  50% { rotate: var(--dext-widget-jiggle-angle, .38deg); }
+  100% { rotate: calc(-1 * var(--dext-widget-jiggle-angle, .38deg)); }
+}
+
+body.editing .dext-widget {
+  animation: dext-widget-jiggle var(--dext-widget-jiggle-duration, 420ms) ease-in-out infinite;
+}
+
+body.editing .dext-widget.widget-dragging {
+  animation: none;
 }
 
 body.editing #prev-desk,
@@ -327,6 +344,10 @@ body.editing #edit-done {
 
 .icon {
   width: 96px;
+}
+
+.icon-face {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -337,13 +358,20 @@ body.editing #edit-done {
   transition: background-color 0.15s, transform 0.15s;
 }
 
-.icon:hover {
+.icon:hover .icon-face {
   background-color: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(6px);
 }
 
-.icon:active {
+.icon:active .icon-face {
   transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.editing .icon-face,
+  body.editing .dext-widget {
+    animation: none !important;
+  }
 }
 
 .icon-glyph {

@@ -1,4 +1,14 @@
-# DESK-MOTION-001 实施计划
+# DESK-MOTION-001 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 将浏览器确认的运动规则稳定接入真实桌面图标和 Widget，同时保留生产组件、主题与 iframe 生命周期。
+
+**Architecture:** `DextLayout` 继续负责纯布局，`DextLayoutMotion` 负责 FLIP/WAAPI，新增 `DextDesktopLayoutController` 负责稳定节点、输入事务、预览和提交。浏览器实验台只作为运动调试器，不复刻到生产 DOM。
+
+**Tech Stack:** Vanilla JavaScript/CSS、WAAPI、Node test runner、Playwright、Vite。
+
+**Spec:** `docs/superpowers/specs/2026-09-19-desk-layout-motion-design.md`
 
 ## 交付纪律
 
@@ -45,23 +55,26 @@
 - 更新 TODO、FRONTEND 与验收卡，提交阶段 A。
 - 启动 `npm run dev:motion` 供用户人工验收；不得修改真实桌面 `main.js`。
 
-## 阶段 B：真实桌面集成（仅在用户明确通过阶段 A 后）
+## 阶段 B：真实桌面集成（2026-09-19 用户已明确授权）
 
 ### Task 7：稳定节点协调
 
-- `renderIcons()` 改为按稳定身份复用/协调节点。
-- 事件处理按 key 查询当前图标数据，移除旧索引闭包。
-- 初始、staging、resize 使用即时模式；热更新走动画控制器。
+- [ ] 先写 Node/Playwright 失败测试，锁定默认 MotionProfile、稳定节点复用、事件按 key 读取当前数据以及 Widget iframe 不重挂。
+- [ ] 新增 `desktop-layout-controller.js`，实现计划约定的控制器接口；图标手势归控制器，Widget 使用 external gesture。
+- [ ] `renderIcons()` 改为协调真实节点；外层 icon 只负责位置和 FLIP，内层 face 保留真实视觉、启动行为与苹果式抖动。
+- [ ] 初始、staging、resize 立即落位；热更新、新增、移除和坐标变化走同一 motion revision。
 
 ### Task 8：Widget 与图标实时预览
 
-- Widget 拖动继续实时求解，由控制器展示让位；pointerup 只提交一次，取消/无解恢复。
-- 图标越过合法格中线后移动 placeholder，路径图标依次让位；Widget 不动且作为障碍，Dock 不接受图标或 Widget；松手提交，取消恢复。
-- 每次真实拖动先以当前已发布布局建立独立恢复基线；Reset/场景切换统一终止 drag/press、长按 timer 与 pointer capture，旧输入不得跨重置继续生效。
-- 任意动画错误立即降级为最终布局，不影响保存或启动。
+- [ ] 先写真实指针失败测试：80ms 候选稳定、路径让位、Dock/Widget 障碍、pointercancel、capture 丢失、重复 pointerup 和权威更新中断。
+- [ ] 图标拖动采用 placeholder + Sortable 路径重排；预览不修改 Room，有效松手一次提交。
+- [ ] Widget 拖动/缩放使用 placement + icons 双快照；Widget 保持优先，图标避让，Dock 四向禁区包含 2px 抖动安全余量。
+- [ ] 热布局、Desk 切换、resize、退出编辑统一使旧 transaction/revision 失效；动画异常立即落最终布局。
+- [ ] 双击真正空白退出编辑；交互对象不退出；系统 reduced-motion 同时关闭 WAAPI、托起过渡和整卡抖动。
 
 ### Task 9：最终验证与交付
 
-- 补真实 renderer e2e、chrome.webview 消息与快速折返回归。
-- 更新 README/FRONTEND 函数表、时序和 reduced-motion 规则。
-- 跑全量自动检查并提交，停在真实桌面待验收，不合并 master。
+- [ ] Playwright 覆盖真实 renderer 的节点/iframe 复用、热消息、快速折返、启动/Dock 回归和 reduced-motion。
+- [ ] 更新 README/FRONTEND、TODO、ROADMAP 和独立验收卡；设置编辑器保持范围外。
+- [ ] 运行 Vitest、Node、Playwright、build、语法、Schema 和 diff check；提交全部具名文件。
+- [ ] 启动真实桌面供人工验收，停在分支待确认，不合并 master。
