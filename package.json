@@ -5,6 +5,8 @@
   "scripts": {
     "dev:ui": "npm run dev:ui --prefix tauri-ui",
     "dev:room": "npm run dev:room --prefix tauri-ui",
+    "dev:motion": "npm run dev:motion --prefix tauri-ui",
+    "test:renderer:e2e": "npm run test:renderer:e2e --prefix tauri-ui",
     "build": "npm run build --prefix tauri-ui"
   }
 }

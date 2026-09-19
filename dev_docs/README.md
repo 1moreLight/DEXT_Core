@@ -166,6 +166,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
 | `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息只重绘图标层，不重挂 Scene/Widget |
+| `DextLayoutMotion` | 浏览器阶段动画控制器 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；稳定身份、FLIP/WAAPI、revision 中断和 reduced-motion。DESK-MOTION-001 浏览器验收前尚未接入真实桌面 `main.js` |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |
@@ -231,6 +232,8 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 全量构建（改 C#/.proto 后必跑） | `scripts\build.ps1`（Player 必须 Release） |
 | 日常启动（核心+配置器） | 双击 `scripts\start-dext.cmd`，或终端运行 `scripts\start.ps1`；输出缺失或仍是 Lively 产品元数据时自动执行完整构建 |
 | 渲染器外观迭代（无需 Lively） | `scripts\room-preview.ps1`（端口 5174 热刷新） |
+| 自动重排动画实验台（无需 Lively） | `npm run dev:motion`（`127.0.0.1:5174/wallpapers/dext-motion-lab/`） |
+| 渲染器浏览器自动测试 | 首次 `cd tauri-ui; npx playwright install chromium`，之后 `npm run test:renderer:e2e` |
 | 强制重铺壁纸（活体测试，会改变桌面与恢复布局） | `cargo test --lib applies_room_wallpaper -- --ignored`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
 | 渲染器语法自检 | `node --check wallpapers/dext-room/main.js` |

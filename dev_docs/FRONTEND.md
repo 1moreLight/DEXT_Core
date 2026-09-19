@@ -64,6 +64,26 @@ scripts\room-preview.ps1
   - 待机节点预览使用 `?preview=1&screensaver=1`，隐藏 Desk/Dock 并只显示 idle；缺少 idle 时为黑屏
   - 单独用 Vite 检查 sandbox HTML 时需开启 CORS；否则 Vite 注入的 `@vite/client` 会被 opaque origin 拒绝，生产运行不受影响
 
+### 自动重排动画实验台（DESK-MOTION-001 阶段 A）
+
+```powershell
+# 仓库根；启动 127.0.0.1:5174 并打开独立实验台
+npm run dev:motion
+
+# 首次安装 Chromium（Windows 直接使用 npx，不依赖 Bash/WSL）
+cd tauri-ui
+npx playwright install chromium
+
+# 自动启动 Vite，运行 renderer e2e
+npm run test:renderer:e2e
+```
+
+实验台地址为 `http://127.0.0.1:5174/wallpapers/dext-motion-lab/`，提供 Widget 单/多图标让位、连续 revision、80ms 图标交换、新增、移除、无解回弹、取消、reduced-motion 和 100 图标压力场景。它直接加载 `wallpapers/dext-room/layout-motion.js`，不是演示副本。
+
+Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图和视频（Git 忽略）。测试文件必须留在 `tauri-ui/tests/renderer/`，否则 Node 不会从仓库级 `wallpapers/` 目录向下解析 `tauri-ui/node_modules`（ERRORS #70）。
+
+当前阶段只验证动画引擎和运动质感；用户明确确认浏览器验收通过前，禁止把控制器接入真实桌面 `main.js`。
+
 ## 二、验证到真桌面
 
 预览满意后：配置器「重新应用」或重启 Lively（渲染器文件就是壁纸包内文件，重载即生效）。
@@ -84,6 +104,8 @@ wallpapers/dext-room/
 │    ├─ #transition             预设动画兼容层
 │    └─ #toast
 ├─ style.css    顶部 :root 主题变量（--dext-*），改外观优先动这里
+├─ layout.js    纯布局求解（Widget 优先避让）
+├─ layout-motion.js  稳定身份、diff 与 FLIP/WAAPI 控制器（阶段 A 已供实验台使用）
 └─ main.js      全部逻辑（无框架、无构建，保持这样）
 ```
 
@@ -103,6 +125,19 @@ wallpapers/dext-room/
 | `playVideoTransition()` | 保留原函数名的薄适配层，内部统一调用 playSlot，不再中点换页 |
 | `persistRoom()` | 删除页面副本的 `__source` 后上行；preview 自动跳过，Core 使用包内可信戳双写 |
 | `ICON_SIZES` | 大/中/小三档（图标、格子、字号联动） |
+
+### layout-motion.js 接口（浏览器阶段）
+
+| 接口 | 职责 |
+|---|---|
+| `createMotionItems(icons, positionOf)` | 规范化 launch 身份；兼容 action/label/glyph 并为重复签名追加序号 |
+| `diffMotionItems(previous, next, excludeKeys)` | 计算 move/enter/exit/stay；被拖动节点仍落最终坐标但不做 FLIP move |
+| `new DextLayoutMotion(container, options)` | 建立稳定 key→DOM 映射；调用方提供节点创建/更新和 reduced-motion 来源 |
+| `apply(items, {mode, excludeKeys})` | 立即写最终 left/top，再执行 move/enter/exit；revision 中断从当前视觉位置续接 |
+| `cancel({restore})` | 取消当前 revision；预览模式可按 260ms 回到进入预览前的完整布局 |
+| `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
+
+时序：move/swap 220ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 260ms。只动画 transform/opacity。`initial`、`staging`、`resize` 与 reduced-motion 立即落位。真实桌面接线仍受阶段 A 人工验收门槛约束。
 
 ## 四、room.json v2 示例
 

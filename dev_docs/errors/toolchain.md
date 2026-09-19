@@ -123,3 +123,17 @@
 修复：配置器 dev 端口整体迁出保留区——tauri dev 用 1620（`tauri.conf.json` beforeDevCommand/devUrl + `vite.config.ts` server.port），浏览器设计模式 1621（`dev:ui`、hmr.port 与文档同步）；渲染器 `PREVIEW_PARENT_ORIGINS` 增加 `http://localhost:1620`。
 
 防再犯：换 dev 端口或遇到 EACCES 时先对照 `netsh interface ipv4/ipv6 show excludedportrange protocol=tcp` 的排除区间，别去杀进程。
+
+## 70. Playwright 测试放在 npm 包目录外无法解析测试依赖
+
+- 现象：`tauri-ui` 已安装 `@playwright/test`，CLI 也能启动，但测试文件放在仓库级 `wallpapers/.../tests` 时仍报 `Cannot find module '@playwright/test'`，随后显示 `No tests found`。
+- 根因：Node 从测试文件所在目录向父目录解析模块；测试位于 `tauri-ui` 之外，不会向下查找 `tauri-ui/node_modules`。Playwright 配置的 `testDir` 能发现文件，但不改变模块解析起点。
+- 解决：把 renderer e2e 规格放到 `tauri-ui/tests/renderer/`，配置仍可通过 Vite 访问仓库级实验台页面；依赖、配置和测试文件处于同一个 npm 包边界。
+- 防再犯：新增包级测试依赖时，测试文件应位于该 `package.json` 的目录树内；若必须跨包，先建立正式 workspace/module resolution，而不是依赖启动命令的当前目录。
+
+## 71. Playwright spec 被 Vitest 一并发现
+
+- 现象：独立 `npm run test:renderer:e2e` 7/7 通过，但常规 `npm test` 会加载 `tests/renderer/motion-lab.spec.ts`，随后报 `Playwright Test did not expect test.beforeEach() to be called here`。
+- 根因：Vitest 和 Playwright 的默认发现模式都包含 `*.spec.ts`；两个 runner 在同一 npm 包内时，仅分开放目录不足以避免交叉收集。
+- 解决：renderer Playwright 文件使用专用 `*.e2e.ts` 后缀，并在 `playwright.renderer.config.ts` 显式设置 `testMatch: "**/*.e2e.ts"`；Vitest 默认不再发现，Playwright 仍精确收集。
+- 防再犯：同包引入第二个测试 runner 时必须为每个 runner 设置互斥的文件命名或 include/exclude，不依赖默认 glob 碰巧不重叠。

@@ -1,6 +1,6 @@
 # DESK-MOTION-001 桌面自动重排动画验收
 
-- 状态：开发中（浏览器阶段）
+- 状态：待浏览器验收（阶段 A）
 - 分支：`feat/DESK-MOTION-001-layout-motion`
 - 设计：`docs/superpowers/specs/2026-09-19-desk-layout-motion-design.md`
 - 计划：`docs/superpowers/plans/2026-09-19-desk-layout-motion.md`
@@ -11,9 +11,9 @@
 
 ### 自动检查
 
-- [ ] Node 单元测试覆盖稳定身份、重复签名、move/enter/exit diff、受影响范围、revision、取消、回弹和 reduced-motion。
-- [ ] Playwright 覆盖稳定 DOM、动画中 transform、最终格坐标、连续 revision、中断恢复、新增/移除、无解回弹、reduced-motion 和 100 图标压力场景。
-- [ ] `npm test`、`npm run build`、`npm run test:renderer:e2e`、渲染器 Node 测试、语法检查与 `git diff --check` 通过。
+- [x] Node 8/8 覆盖稳定身份、重复签名、move/enter/exit diff、受影响范围、revision、取消、回弹和 reduced-motion。
+- [x] Playwright 7/7 覆盖稳定 DOM、动画中 transform、最终格坐标、连续 revision、中断恢复、新增/移除、无解回弹、reduced-motion 和 100 图标压力场景。
+- [x] `npm test`（50/50）、`npm run build`、`npm run test:renderer:e2e`、渲染器 Node 测试（11/11）、语法检查、Room Schema 与 `git diff --check` 通过。
 
 ### 人工验收
 
@@ -41,3 +41,4 @@
 
 - 2026-09-19：用户确认 DESK-LIVE-001 验收通过；依赖已合入 master，DESK-MOTION-001 开工。
 - 2026-09-19：用户已批准浏览器先行、自研轻量动画层与两阶段硬门槛；当前等待阶段 A 实现和浏览器人工验收。
+- 2026-09-19：阶段 A 实现完成；Playwright CLI 真实浏览器快照与截图复核通过，自动检查全绿。当前停在浏览器视觉验收，未修改真实桌面 `main.js`。
