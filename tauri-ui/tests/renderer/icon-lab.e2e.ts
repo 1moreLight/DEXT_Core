@@ -113,8 +113,8 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
       return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
     });
   });
-  expect(jiggleAngles[0]).toBeCloseTo(-5, 1);
-  expect(jiggleAngles.at(-1)).toBeCloseTo(5, 1);
+  expect(jiggleAngles[0]).toBeCloseTo(-3, 1);
+  expect(jiggleAngles.at(-1)).toBeCloseTo(3, 1);
   await page.getByRole("button", { name: "悬停", exact: true }).click();
   await expect(face).toHaveCSS("animation-name", "none");
   await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");

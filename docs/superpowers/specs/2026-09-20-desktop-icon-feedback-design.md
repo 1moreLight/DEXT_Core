@@ -41,7 +41,7 @@ type DesktopIconPreferences = {
 - `compact`：图标与单行名称形成最大约 88px 的紧凑表面。
 - `bare`：不绘制表面，只增加亮度、阴影和轻微缩放。
 - footprint 之间的 gap 可在 4×12、20×28、40×40 三档之间比较；gap 不接收指针，间距切换不改变 footprint，只有 `.icon-face` 命中。
-- 图标编辑抖动为 ±5° / 150ms；长按为 300ms，Widget 抖动参数不在本阶段修改。
+- 图标编辑抖动为 ±3° / 150ms；长按为 300ms，Widget 抖动参数不在本阶段修改。
 - reduced-motion 下关闭缩放、过渡和抖动，保留 hover 状态、名称省略和命中区。
 
 ## Browser lab

@@ -845,6 +845,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Playwright 以受控页面时钟锁定 299ms/300ms 编辑边界，并读取真实 CSSAnimation 时长与关键帧；RED→GREEN（2026-09-20）
 - [x] 更新说明与验收卡；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
 
+### 阶段 A 补充：抖动幅度收敛到 3°（2026-09-20）
+
+- [x] 图标 jiggle 幅度由 ±5° 收敛为 ±3°；300ms 长按、150ms 周期及其他交互不变（2026-09-20）
+- [x] Playwright 读取真实 CSSAnimation 关键帧验证 RED→GREEN（2026-09-20）
+- [x] 同步验收口径；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）

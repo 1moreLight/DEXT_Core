@@ -204,8 +204,8 @@
 }
 
 @keyframes dext-icon-jiggle {
-  from { transform: rotate(-5deg); }
-  to { transform: rotate(5deg); }
+  from { transform: rotate(-3deg); }
+  to { transform: rotate(3deg); }
 }
 
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,
