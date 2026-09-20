@@ -1,0 +1,167 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === "object" && module.exports) module.exports = api;
+  root.DextIconFeedback = api;
+})(globalThis, function () {
+  const ICON_FEEDBACK_STYLES = Object.freeze(["halo", "compact", "bare"]);
+  const DEFAULT_DESKTOP_ICON_PREFERENCES = Object.freeze({
+    feedbackStyle: "halo",
+    showLabels: true,
+  });
+
+  function normalizeDesktopIconPreferences(value) {
+    const input = value && typeof value === "object" ? value : {};
+    return {
+      feedbackStyle: ICON_FEEDBACK_STYLES.includes(input.feedbackStyle)
+        ? input.feedbackStyle
+        : DEFAULT_DESKTOP_ICON_PREFERENCES.feedbackStyle,
+      showLabels: typeof input.showLabels === "boolean"
+        ? input.showLabels
+        : DEFAULT_DESKTOP_ICON_PREFERENCES.showLabels,
+    };
+  }
+
+  function applyDesktopIconPreferences(rootElement, value) {
+    if (!rootElement || !rootElement.dataset) {
+      throw new TypeError("A root element with a dataset is required.");
+    }
+    const preferences = normalizeDesktopIconPreferences(value);
+    rootElement.dataset.iconFeedback = preferences.feedbackStyle;
+    rootElement.dataset.iconLabels = preferences.showLabels ? "shown" : "hidden";
+    return preferences;
+  }
+
+  function isHiddenLabelTooltipEligible(state) {
+    return state?.showLabels === false
+      && state?.hovered === true
+      && state?.editing !== true
+      && state?.pressed !== true
+      && state?.dragging !== true;
+  }
+
+  function createDesktopIconFeedbackController(rootElement, options = {}) {
+    if (!rootElement || typeof rootElement.addEventListener !== "function") {
+      throw new TypeError("A DOM root element is required.");
+    }
+
+    const tooltipDelay = Number.isFinite(options.tooltipDelay)
+      ? Math.max(0, options.tooltipDelay)
+      : 500;
+    let preferences = applyDesktopIconPreferences(rootElement, options.preferences);
+    let hoveredFace = null;
+    let pressed = false;
+    let editing = false;
+    let dragging = false;
+    let tooltipTimer = 0;
+
+    function faceFromTarget(target) {
+      const face = target?.closest?.("[data-dext-icon-face]");
+      return face && rootElement.contains(face) ? face : null;
+    }
+
+    function tooltipFor(face) {
+      return face?.querySelector?.(".icon-label-tooltip") ?? null;
+    }
+
+    function hideTooltip() {
+      if (tooltipTimer) {
+        clearTimeout(tooltipTimer);
+        tooltipTimer = 0;
+      }
+      const tooltip = tooltipFor(hoveredFace);
+      if (tooltip) tooltip.dataset.visible = "false";
+    }
+
+    function tooltipState() {
+      return {
+        showLabels: preferences.showLabels,
+        hovered: Boolean(hoveredFace),
+        editing,
+        pressed,
+        dragging,
+      };
+    }
+
+    function scheduleTooltip() {
+      hideTooltip();
+      if (!isHiddenLabelTooltipEligible(tooltipState())) return;
+      const scheduledFace = hoveredFace;
+      tooltipTimer = setTimeout(() => {
+        tooltipTimer = 0;
+        if (scheduledFace !== hoveredFace || !isHiddenLabelTooltipEligible(tooltipState())) return;
+        const tooltip = tooltipFor(scheduledFace);
+        if (tooltip) tooltip.dataset.visible = "true";
+      }, tooltipDelay);
+    }
+
+    function onPointerOver(event) {
+      const face = faceFromTarget(event.target);
+      if (!face || face === hoveredFace) return;
+      hideTooltip();
+      hoveredFace = face;
+      scheduleTooltip();
+    }
+
+    function onPointerOut(event) {
+      const face = faceFromTarget(event.target);
+      if (!face || face !== hoveredFace || face.contains(event.relatedTarget)) return;
+      hideTooltip();
+      hoveredFace = null;
+    }
+
+    function onPointerDown(event) {
+      if (!faceFromTarget(event.target)) return;
+      pressed = true;
+      rootElement.dataset.iconPressed = "true";
+      hideTooltip();
+    }
+
+    function onPointerEnd() {
+      if (!pressed) return;
+      pressed = false;
+      rootElement.dataset.iconPressed = "false";
+      scheduleTooltip();
+    }
+
+    rootElement.addEventListener("pointerover", onPointerOver);
+    rootElement.addEventListener("pointerout", onPointerOut);
+    rootElement.addEventListener("pointerdown", onPointerDown);
+    rootElement.addEventListener("pointerup", onPointerEnd);
+    rootElement.addEventListener("pointercancel", onPointerEnd);
+
+    return {
+      setPreferences(value) {
+        preferences = applyDesktopIconPreferences(rootElement, value);
+        scheduleTooltip();
+        return preferences;
+      },
+      setEditing(active) {
+        editing = Boolean(active);
+        rootElement.dataset.iconEditing = String(editing);
+        scheduleTooltip();
+      },
+      setDragging(active) {
+        dragging = Boolean(active);
+        rootElement.dataset.iconDragging = String(dragging);
+        scheduleTooltip();
+      },
+      dispose() {
+        hideTooltip();
+        rootElement.removeEventListener("pointerover", onPointerOver);
+        rootElement.removeEventListener("pointerout", onPointerOut);
+        rootElement.removeEventListener("pointerdown", onPointerDown);
+        rootElement.removeEventListener("pointerup", onPointerEnd);
+        rootElement.removeEventListener("pointercancel", onPointerEnd);
+      },
+    };
+  }
+
+  return {
+    ICON_FEEDBACK_STYLES,
+    DEFAULT_DESKTOP_ICON_PREFERENCES,
+    normalizeDesktopIconPreferences,
+    applyDesktopIconPreferences,
+    isHiddenLabelTooltipEligible,
+    createDesktopIconFeedbackController,
+  };
+});

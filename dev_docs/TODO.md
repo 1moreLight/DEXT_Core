@@ -819,8 +819,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
-- [ ] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换
-- [ ] TDD：三种模式、收缩命中区、单行省略、500ms 名称浮层及编辑/拖动抑制
+- [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）
+- [x] TDD：三种模式、收缩命中区、单行省略、500ms 名称浮层及编辑/拖动抑制（Playwright 5/5；2026-09-20）
 - [ ] 建立浏览器图标实验台与 `npm run dev:icons`
 - [ ] 阶段 A 全量自动检查和独立审查
 - [ ] 提交阶段 A，停在浏览器人工验收硬门槛
