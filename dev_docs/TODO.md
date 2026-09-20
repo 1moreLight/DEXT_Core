@@ -810,3 +810,17 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 全量自动回归：Vitest 50/50、Node 21/21、Playwright 39/39、build、语法、Schema 与 diff check（2026-09-20）
 - [x] `codegraph sync` 按规范尝试；独立 worktree 的 `.codegraph` 仅有 ignore 文件且 `status` 为 Not initialized，未擅自初始化（2026-09-20）
 - [x] 阶段 B 实现提交 `64af642`；已停在真实桌面人工验收，禁止合并 master（2026-09-20）
+
+## DESK-ICON-001 桌面图标反馈与命中区优化（2026-09-20 开工）
+
+> 目标：先用未来生产共用的视觉层，在浏览器中验证“图标光晕 / 紧凑内容框 / 纯净无边框”、收缩命中区和名称显示规则。
+> 范围外：浏览器验收前不修改真实桌面、设置页、Core、proto、Widget、Dock 或 Room Schema；不先于 DESK-MOTION-001 合并 master。
+> 人工验收：按 `dev_docs/acceptance/DESK-ICON-001-icon-feedback.md` 的阶段 A 六步在浏览器确认；明确通过后才进入生产集成。
+
+- [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
+- [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
+- [ ] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换
+- [ ] TDD：三种模式、收缩命中区、单行省略、500ms 名称浮层及编辑/拖动抑制
+- [ ] 建立浏览器图标实验台与 `npm run dev:icons`
+- [ ] 阶段 A 全量自动检查和独立审查
+- [ ] 提交阶段 A，停在浏览器人工验收硬门槛
