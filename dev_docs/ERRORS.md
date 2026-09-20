@@ -93,6 +93,7 @@
 | #86 | 在 window capture 阶段监听 blur，会把控件失焦误判成窗口失焦 | [renderer](errors/renderer.md) |
 | #87 | 异步场景未等待实际发布，reduced-motion 测试可能假绿或偶发读到动画 | [toolchain](errors/toolchain.md) |
 | #88 | Playwright 用真实时间验证 80ms 短窗口，跨进程断言可能在窗口结束后才开始 | [toolchain](errors/toolchain.md) |
+| #89 | 图标命中区由内容自适应撑开，长短名称造成框体宽度和中心不一致 | [renderer](errors/renderer.md) |
 
 ## 分册
 

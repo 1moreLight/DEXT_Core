@@ -5,12 +5,14 @@
   const showHitboxes = document.getElementById("show-hitboxes");
   const reduceMotion = document.getElementById("reduce-motion");
   const cellSize = document.getElementById("cell-size");
+  const hitSize = document.getElementById("hit-size");
   const status = document.getElementById("lab-status");
   const profileName = document.getElementById("profile-name");
   const profileDetail = document.getElementById("profile-detail");
   const feedbackButtons = [...document.querySelectorAll("[data-feedback-style]")];
   const previewStateButtons = [...document.querySelectorAll("[data-preview-state]")];
   const spacingButtons = [...document.querySelectorAll("button[data-icon-spacing]")];
+  const hitSizeButtons = [...document.querySelectorAll("button[data-icon-hit-size]")];
   const backgroundButtons = [...document.querySelectorAll("[data-background]")].filter((node) => node.tagName === "BUTTON");
   const icons = [...document.querySelectorAll(".lab-icon")];
 
@@ -26,7 +28,13 @@
     spacious: { label: "SPACIOUS", cell: "120 × 124" },
   };
 
-  let preferences = { feedbackStyle: "halo", showLabels: true };
+  const HIT_SIZES = {
+    small: { label: "SMALL", size: "72 × 80" },
+    standard: { label: "STANDARD", size: "80 × 84" },
+    large: { label: "LARGE", size: "84 × 88" },
+  };
+
+  let preferences = { feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard" };
   let previewState = "normal";
   let spacing = "standard";
   const controller = DextIconFeedback.createDesktopIconFeedbackController(root, {
@@ -35,7 +43,7 @@
   });
 
   function renderStatus() {
-    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"}`;
+    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · HIT ${HIT_SIZES[preferences.hitTargetSize].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"}`;
   }
 
   function setFeedbackStyle(style) {
@@ -74,6 +82,16 @@
     renderStatus();
   }
 
+  function setHitTargetSize(value) {
+    if (!HIT_SIZES[value]) return;
+    preferences = controller.setPreferences({ ...preferences, hitTargetSize: value });
+    hitSizeButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.iconHitSize === value));
+    });
+    hitSize.textContent = `${HIT_SIZES[value].size} hit target`;
+    renderStatus();
+  }
+
   feedbackButtons.forEach((button) => {
     button.addEventListener("click", () => setFeedbackStyle(button.dataset.feedbackStyle));
   });
@@ -84,6 +102,10 @@
 
   spacingButtons.forEach((button) => {
     button.addEventListener("click", () => setSpacing(button.dataset.iconSpacing));
+  });
+
+  hitSizeButtons.forEach((button) => {
+    button.addEventListener("click", () => setHitTargetSize(button.dataset.iconHitSize));
   });
 
   backgroundButtons.forEach((button) => {
@@ -119,6 +141,7 @@
 
   setPreviewState("normal");
   setSpacing("standard");
+  setHitTargetSize("standard");
   renderStatus();
-  window.iconLab = { ready: true, setPreviewState, setSpacing };
+  window.iconLab = { ready: true, setPreviewState, setSpacing, setHitTargetSize };
 })();

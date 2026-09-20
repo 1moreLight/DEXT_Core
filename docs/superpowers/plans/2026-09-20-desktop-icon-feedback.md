@@ -55,3 +55,9 @@ Expected: 阶段 A 提交存在，工作树干净；真实桌面、设置页和 
 ## Stage B gate
 
 只有用户明确回复浏览器实验通过后，才新增真实 `.icon-visual`、全局设置字段、`dext:desktop-preferences` 消息和启动偏好快照。阶段 B 仍在同一 DESK-ICON-001 分支完成，但必须等待 DESK-MOTION-001 先合入 master。
+
+## Stage A acceptance amendment (2026-09-20)
+
+- [x] 用 RED→GREEN 覆盖统一命中框、图标中心对齐、名称切换几何不变和紧凑间距不重叠。
+- [x] `DesktopIconPreferences` 增加 `hitTargetSize`，提供 small 72×80、standard 80×84、large 84×88 三档。
+- [x] 实验台将命中框档位与网格间距独立控制；阶段 A 不接入真实桌面或设置页。

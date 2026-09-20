@@ -223,3 +223,57 @@ test("switches compact standard and spacious density without overlapping hit tar
   expect(await horizontalPitch()).toBe(120);
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
+
+test("keeps every hit target uniform and centered while switching independent size presets", async ({ page }) => {
+  const root = page.locator("#icon-lab");
+  const icons = page.locator(".lab-icon");
+  const faces = page.locator(".icon-face");
+  const visuals = page.locator(".icon-visual");
+  await page.evaluate(() => {
+    window.__iconLabNode = document.querySelector('[data-icon-id="hermes"]') ?? undefined;
+  });
+
+  const geometry = async () => Promise.all([0, 1, 2, 3].map(async (index) => {
+    const face = await faces.nth(index).boundingBox();
+    const visual = await visuals.nth(index).boundingBox();
+    if (!face || !visual) throw new Error("icon hit geometry unavailable");
+    return {
+      width: face.width,
+      height: face.height,
+      faceCenterX: face.x + face.width / 2,
+      visualCenterX: visual.x + visual.width / 2,
+    };
+  }));
+
+  await expect(root).toHaveAttribute("data-icon-hit-size", "standard");
+  let boxes = await geometry();
+  expect(boxes.map(({ width, height }) => [width, height])).toEqual([
+    [80, 84], [80, 84], [80, 84], [80, 84],
+  ]);
+  boxes.forEach(({ faceCenterX, visualCenterX }) => expect(faceCenterX).toBeCloseTo(visualCenterX, 1));
+
+  await page.getByLabel("显示桌面图标名称").uncheck();
+  expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
+    [80, 84], [80, 84], [80, 84], [80, 84],
+  ]);
+
+  await page.getByRole("button", { name: "小命中框" }).click();
+  await expect(root).toHaveAttribute("data-icon-hit-size", "small");
+  expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
+    [72, 80], [72, 80], [72, 80], [72, 80],
+  ]);
+
+  await page.getByRole("button", { name: "大命中框" }).click();
+  await expect(root).toHaveAttribute("data-icon-hit-size", "large");
+  expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
+    [84, 88], [84, 88], [84, 88], [84, 88],
+  ]);
+
+  await page.getByRole("button", { name: "紧凑间距" }).click();
+  const firstFace = await faces.nth(0).boundingBox();
+  const secondFace = await faces.nth(1).boundingBox();
+  if (!firstFace || !secondFace) throw new Error("compact hit geometry unavailable");
+  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(4);
+  expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
+  expect(await icons.count()).toBe(4);
+});

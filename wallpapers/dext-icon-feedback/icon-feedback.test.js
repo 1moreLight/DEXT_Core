@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   ICON_FEEDBACK_STYLES,
+  ICON_HIT_TARGET_SIZES,
   DEFAULT_DESKTOP_ICON_PREFERENCES,
   normalizeDesktopIconPreferences,
   applyDesktopIconPreferences,
@@ -11,9 +12,11 @@ const {
 
 test("normalizes desktop icon preferences to the halo and visible-label defaults", () => {
   assert.deepEqual(ICON_FEEDBACK_STYLES, ["halo", "compact", "bare"]);
+  assert.deepEqual(ICON_HIT_TARGET_SIZES, ["small", "standard", "large"]);
   assert.deepEqual(DEFAULT_DESKTOP_ICON_PREFERENCES, {
     feedbackStyle: "halo",
     showLabels: true,
+    hitTargetSize: "standard",
   });
   assert.deepEqual(normalizeDesktopIconPreferences(), DEFAULT_DESKTOP_ICON_PREFERENCES);
   assert.deepEqual(
@@ -23,6 +26,12 @@ test("normalizes desktop icon preferences to the halo and visible-label defaults
   assert.deepEqual(normalizeDesktopIconPreferences({ feedbackStyle: "bare", showLabels: false }), {
     feedbackStyle: "bare",
     showLabels: false,
+    hitTargetSize: "standard",
+  });
+  assert.deepEqual(normalizeDesktopIconPreferences({ hitTargetSize: "large" }), {
+    feedbackStyle: "halo",
+    showLabels: true,
+    hitTargetSize: "large",
   });
 });
 
@@ -36,11 +45,13 @@ test("applies preference datasets without replacing existing icon nodes", () => 
   const applied = applyDesktopIconPreferences(root, {
     feedbackStyle: "compact",
     showLabels: false,
+    hitTargetSize: "small",
   });
 
-  assert.deepEqual(applied, { feedbackStyle: "compact", showLabels: false });
+  assert.deepEqual(applied, { feedbackStyle: "compact", showLabels: false, hitTargetSize: "small" });
   assert.equal(root.dataset.iconFeedback, "compact");
   assert.equal(root.dataset.iconLabels, "hidden");
+  assert.equal(root.dataset.iconHitSize, "small");
   assert.equal(root.firstElementChild, iconNode);
 });
 
