@@ -56,7 +56,7 @@ button, input { font: inherit; }
   letter-spacing: .14em;
 }
 
-.mode-switch, .background-switch {
+.mode-switch, .background-switch, .choice-switch {
   display: flex;
   gap: 4px;
   padding: 4px;
@@ -65,7 +65,7 @@ button, input { font: inherit; }
   background: rgba(255, 255, 255, .035);
 }
 
-.mode-switch button, .background-switch button, .text-button {
+.mode-switch button, .background-switch button, .choice-switch button, .text-button {
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -80,7 +80,8 @@ button, input { font: inherit; }
 }
 
 .mode-switch button[aria-pressed="true"],
-.background-switch button[aria-pressed="true"] {
+.background-switch button[aria-pressed="true"],
+.choice-switch button[aria-pressed="true"] {
   background: #edf1f7;
   color: #11151d;
   box-shadow: 0 3px 12px rgba(0, 0, 0, .24);
@@ -115,7 +116,15 @@ button, input { font: inherit; }
 }
 
 .background-switch { width: max-content; }
-.background-switch button { padding: 7px 9px; font-size: 11px; }
+.background-switch button, .choice-switch button { padding: 7px 9px; font-size: 11px; }
+
+.state-switch {
+  width: 188px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.spacing-switch { width: max-content; }
 
 .text-button {
   width: max-content;
@@ -179,6 +188,36 @@ button, input { font: inherit; }
 
 .icon-stage[data-background="photo"] {
   background: linear-gradient(rgba(7, 10, 17, .08), rgba(7, 10, 17, .18)), url("../dext-room/assets/desk1-bg.png") center / cover;
+}
+
+#icon-lab[data-icon-spacing="compact"] {
+  --dext-icon-cell-width: 88px;
+  --dext-icon-cell-height: 100px;
+}
+
+#icon-lab[data-icon-spacing="standard"] {
+  --dext-icon-cell-width: 100px;
+  --dext-icon-cell-height: 112px;
+}
+
+#icon-lab[data-icon-spacing="spacious"] {
+  --dext-icon-cell-width: 120px;
+  --dext-icon-cell-height: 124px;
+}
+
+.icon-grid {
+  position: absolute;
+  left: 58px;
+  top: 58px;
+  display: grid;
+  grid-template-columns: repeat(4, var(--dext-icon-cell-width));
+  grid-auto-rows: var(--dext-icon-cell-height);
+}
+
+#icon-lab .icon-stage .lab-icon {
+  position: relative;
+  left: auto;
+  top: auto;
 }
 
 .stage-note {

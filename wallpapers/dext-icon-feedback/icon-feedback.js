@@ -79,7 +79,7 @@
         showLabels: preferences.showLabels,
         hovered: Boolean(hoveredFace),
         editing,
-        pressed,
+        pressed: pressed || rootElement.dataset.iconPreviewState === "pressed",
         dragging,
       };
     }
