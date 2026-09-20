@@ -47,7 +47,7 @@
   place-items: center;
   border-radius: 15px;
   background-color: transparent;
-  transform-origin: 50% 56%;
+  transform-origin: 50% 50%;
   transition: transform 160ms var(--dext-icon-feedback-ease), background-color 150ms ease, box-shadow 150ms ease, filter 150ms ease;
 }
 
