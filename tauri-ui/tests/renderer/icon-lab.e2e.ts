@@ -114,5 +114,34 @@ test("reduced motion removes transitions and jiggle while keeping feedback", asy
 
   await expect(face).toHaveCSS("animation-name", "none");
   await expect(visual).toHaveCSS("transition-duration", "0s");
+  await expect(visual).toHaveCSS("transform", "none");
   expect(await visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+
+  await page.getByRole("button", { name: "模拟拖动" }).click();
+  await expect(face).toHaveCSS("transform", "none");
+
+  await page.getByLabel("减少动态效果").uncheck();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(visual).toHaveCSS("transform", "none");
+  await expect(face).toHaveCSS("transform", "none");
+});
+
+test("releasing a pressed icon outside the viewport restores hover and delayed labels", async ({ page }) => {
+  await page.getByLabel("显示桌面图标名称").uncheck();
+  const root = page.locator("#icon-lab");
+  const face = page.locator('[data-icon-id="creative-suite"] .icon-face');
+  const tooltip = face.locator(".icon-label-tooltip");
+  const box = await face.boundingBox();
+  if (!box) throw new Error("icon geometry unavailable");
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(root).toHaveAttribute("data-icon-pressed", "true");
+  await page.mouse.move(-20, -20);
+  await page.mouse.up();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(root).toHaveAttribute("data-icon-pressed", "false");
+  await page.waitForTimeout(550);
+  await expect(tooltip).toHaveAttribute("data-visible", "true");
 });

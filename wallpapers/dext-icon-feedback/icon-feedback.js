@@ -53,6 +53,8 @@
     let editing = false;
     let dragging = false;
     let tooltipTimer = 0;
+    let activePointerId = null;
+    const ownerWindow = rootElement.ownerDocument?.defaultView ?? globalThis;
 
     function faceFromTarget(target) {
       const face = target?.closest?.("[data-dext-icon-face]");
@@ -110,15 +112,21 @@
     }
 
     function onPointerDown(event) {
-      if (!faceFromTarget(event.target)) return;
+      const face = faceFromTarget(event.target);
+      if (!face) return;
       pressed = true;
+      activePointerId = Number.isFinite(event.pointerId) ? event.pointerId : null;
       rootElement.dataset.iconPressed = "true";
       hideTooltip();
     }
 
-    function onPointerEnd() {
+    function onPointerEnd(event) {
       if (!pressed) return;
+      if (Number.isFinite(event?.pointerId)
+        && activePointerId !== null
+        && event.pointerId !== activePointerId) return;
       pressed = false;
+      activePointerId = null;
       rootElement.dataset.iconPressed = "false";
       scheduleTooltip();
     }
@@ -126,8 +134,9 @@
     rootElement.addEventListener("pointerover", onPointerOver);
     rootElement.addEventListener("pointerout", onPointerOut);
     rootElement.addEventListener("pointerdown", onPointerDown);
-    rootElement.addEventListener("pointerup", onPointerEnd);
-    rootElement.addEventListener("pointercancel", onPointerEnd);
+    ownerWindow.addEventListener("pointerup", onPointerEnd, true);
+    ownerWindow.addEventListener("pointercancel", onPointerEnd, true);
+    ownerWindow.addEventListener("blur", onPointerEnd);
 
     return {
       setPreferences(value) {
@@ -150,8 +159,9 @@
         rootElement.removeEventListener("pointerover", onPointerOver);
         rootElement.removeEventListener("pointerout", onPointerOut);
         rootElement.removeEventListener("pointerdown", onPointerDown);
-        rootElement.removeEventListener("pointerup", onPointerEnd);
-        rootElement.removeEventListener("pointercancel", onPointerEnd);
+        ownerWindow.removeEventListener("pointerup", onPointerEnd, true);
+        ownerWindow.removeEventListener("pointercancel", onPointerEnd, true);
+        ownerWindow.removeEventListener("blur", onPointerEnd);
       },
     };
   }

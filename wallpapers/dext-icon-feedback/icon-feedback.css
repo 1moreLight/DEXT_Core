@@ -196,11 +196,23 @@
   transition-duration: 0s !important;
 }
 
+[data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,
+[data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-visual,
+[data-dext-icon-feedback-root][data-reduced-motion="true"] .lab-icon.is-dragging .icon-face {
+  transform: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-dext-icon-feedback-root] .icon-face,
   [data-dext-icon-feedback-root] .icon-visual,
   [data-dext-icon-feedback-root] .icon-label-tooltip {
     animation: none !important;
     transition-duration: 0s !important;
+  }
+
+  [data-dext-icon-feedback-root] .icon-face,
+  [data-dext-icon-feedback-root] .icon-visual,
+  [data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
+    transform: none !important;
   }
 }
