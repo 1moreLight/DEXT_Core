@@ -10,7 +10,7 @@
 
 ## 阶段 A 自动检查
 
-- [x] Node：图标偏好 3/3；连同既有 motion/controller/bridge 共 18/18。
+- [x] Node：图标偏好 3/3；连同既有 layout/motion/controller/bridge 共 25/25。
 - [x] Playwright：图标实验台 8/8；连同真实桌面与 motion 实验台共 47/47。
 - [x] Vitest 50/50、前端 build、语法、Room Schema 与 diff check。
 - [x] 独立代码审查无 Critical；两项 Important 已修复并由先失败后转绿的回归覆盖。
@@ -36,3 +36,4 @@
 - 2026-09-20：最终自动检查为 Node 18/18、Vitest 50/50、renderer Playwright 45/45、前端 build、语法、Room Schema 与 diff check 全绿；`codegraph sync` 按规范尝试，但本 worktree 索引为 Not initialized，未擅自初始化。
 - 2026-09-20：阶段 A 人工验收反馈指出隐式 hover、紧凑 padding 和拖动 transform 混在同一画布，图标看起来乱跳且状态不可固定；决定改为显式状态预览，并增加 88/100/120px 三档水平密度。真实用户设置是否加入阶段 B，待本轮浏览器密度验收后决定。
 - 2026-09-20：固定状态与三档密度完成；hover 不再位移，紧凑框不再用 padding 推动内容，按下缩放原点固定为几何中心。图标实验台 8/8、renderer 全量 47/47。
+- 2026-09-20：最终复验为 Vitest 50/50、Node 25/25、renderer Playwright 47/47，前端 build、语法、Room Schema、生产边界与 diff check 通过。
