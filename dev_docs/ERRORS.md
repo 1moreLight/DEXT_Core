@@ -96,6 +96,7 @@
 | #89 | 图标命中区由内容自适应撑开，长短名称造成框体宽度和中心不一致 | [renderer](errors/renderer.md) |
 | #90 | 固定预览属性常驻会屏蔽真实 hover/press，使实验台看似不能点击 | [renderer](errors/renderer.md) |
 | #91 | 布局 cell 与命中框分设尺寸，调试边界永远无法重合且难以管理 | [renderer](errors/renderer.md) |
+| #92 | 隐藏图标名称后仍保留标签高度，产生无意义空白命中区且尺寸读数易失真 | [renderer](errors/renderer.md) |
 
 ## 分册
 

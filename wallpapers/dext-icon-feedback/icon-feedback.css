@@ -20,6 +20,21 @@
   --dext-icon-footprint-height: 88px;
 }
 
+[data-dext-icon-feedback-root][data-icon-labels="hidden"][data-icon-hit-size="small"] {
+  --dext-icon-footprint-width: 64px;
+  --dext-icon-footprint-height: 64px;
+}
+
+[data-dext-icon-feedback-root][data-icon-labels="hidden"][data-icon-hit-size="standard"] {
+  --dext-icon-footprint-width: 72px;
+  --dext-icon-footprint-height: 72px;
+}
+
+[data-dext-icon-feedback-root][data-icon-labels="hidden"][data-icon-hit-size="large"] {
+  --dext-icon-footprint-width: 80px;
+  --dext-icon-footprint-height: 80px;
+}
+
 [data-dext-icon-feedback-root] .lab-icon {
   position: absolute;
   width: var(--dext-icon-footprint-width);
@@ -162,7 +177,7 @@
 }
 
 [data-dext-icon-feedback-root][data-icon-editing="true"] .icon-face {
-  animation: dext-icon-jiggle 350ms ease-in-out infinite alternate;
+  animation: dext-icon-jiggle 280ms ease-in-out infinite alternate;
 }
 
 [data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
@@ -189,8 +204,8 @@
 }
 
 @keyframes dext-icon-jiggle {
-  from { transform: rotate(-1.35deg); }
-  to { transform: rotate(1.35deg); }
+  from { transform: rotate(-1.5deg); }
+  to { transform: rotate(1.5deg); }
 }
 
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,

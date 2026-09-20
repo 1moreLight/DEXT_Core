@@ -831,6 +831,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Playwright 先以真实 bounding box 复现两框不重合，再锁定四边重合、三档 gap 与空隙不命中；RED→GREEN（2026-09-20）
 - [x] 更新说明、验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，继续停在阶段 A 人工验收（2026-09-20）
 
+### 阶段 A 补充：隐藏名称紧凑框与抖动节奏（2026-09-20）
+
+- [x] 隐藏名称时三档 footprint 收为 64×64 / 72×72 / 80×80，布局与命中继续完全重合，gap 不变（2026-09-20）
+- [x] 图标编辑抖动由 ±1.35°/350ms 调整为 ±1.5°/280ms；长按阈值、Widget 和 reduced-motion 不变（2026-09-20）
+- [x] 先以真实 bounding box、动态标尺和 CSS 动画关键帧建立 Playwright RED，再修改共享视觉实现（2026-09-20）
+- [x] 更新说明与验收卡；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）

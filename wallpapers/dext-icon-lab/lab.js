@@ -29,9 +29,9 @@
   };
 
   const HIT_SIZES = {
-    small: { label: "SMALL", size: "72 × 80" },
-    standard: { label: "STANDARD", size: "80 × 84" },
-    large: { label: "LARGE", size: "84 × 88" },
+    small: { label: "SMALL", size: "72 × 80", hiddenSize: "64 × 64" },
+    standard: { label: "STANDARD", size: "80 × 84", hiddenSize: "72 × 72" },
+    large: { label: "LARGE", size: "84 × 88", hiddenSize: "80 × 80" },
   };
 
   let preferences = { feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard" };
@@ -223,14 +223,20 @@
     renderStatus();
   }
 
+  function renderFootprintSize() {
+    const profile = HIT_SIZES[preferences.hitTargetSize];
+    const size = preferences.showLabels ? profile.size : profile.hiddenSize;
+    footprintSize.textContent = `${size} unified footprint`;
+    icons.forEach((icon) => { icon.dataset.cellSize = size; });
+  }
+
   function setHitTargetSize(value) {
     if (!HIT_SIZES[value]) return;
     preferences = controller.setPreferences({ ...preferences, hitTargetSize: value });
     hitSizeButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.iconHitSize === value));
     });
-    footprintSize.textContent = `${HIT_SIZES[value].size} unified footprint`;
-    icons.forEach((icon) => { icon.dataset.cellSize = HIT_SIZES[value].size; });
+    renderFootprintSize();
     renderStatus();
   }
 
@@ -259,6 +265,7 @@
 
   showLabels.addEventListener("change", () => {
     preferences = controller.setPreferences({ ...preferences, showLabels: showLabels.checked });
+    renderFootprintSize();
     renderStatus();
   });
 

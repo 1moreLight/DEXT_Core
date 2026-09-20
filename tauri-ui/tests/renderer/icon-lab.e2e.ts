@@ -104,6 +104,17 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
   const face = icon.locator(".icon-face");
   const visual = icon.locator(".icon-visual");
   await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(face).toHaveCSS("animation-duration", "0.28s");
+  const jiggleAngles = await face.evaluate((node) => {
+    const animation = node.getAnimations().find((item) => item instanceof CSSAnimation && item.animationName === "dext-icon-jiggle");
+    const frames = animation?.effect instanceof KeyframeEffect ? animation.effect.getKeyframes() : [];
+    return frames.map((frame) => {
+      const matrix = new DOMMatrixReadOnly(String(frame.transform));
+      return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+    });
+  });
+  expect(jiggleAngles[0]).toBeCloseTo(-1.5, 1);
+  expect(jiggleAngles.at(-1)).toBeCloseTo(1.5, 1);
   await page.getByRole("button", { name: "悬停", exact: true }).click();
   await expect(face).toHaveCSS("animation-name", "none");
   await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
@@ -268,13 +279,20 @@ test("keeps every layout footprint coincident with its hit target across size pr
 
   await page.getByLabel("显示桌面图标名称").uncheck();
   expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
-    [80, 84], [80, 84], [80, 84], [80, 84],
+    [72, 72], [72, 72], [72, 72], [72, 72],
   ]);
   (await geometry()).forEach(({ footprint, face }) => expect(face).toEqual(footprint));
-  await expect(page.locator("#footprint-size")).toHaveText("80 × 84 unified footprint");
+  await expect(page.locator("#footprint-size")).toHaveText("72 × 72 unified footprint");
 
   await page.getByRole("button", { name: "小图标框" }).click();
   await expect(root).toHaveAttribute("data-icon-hit-size", "small");
+  expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
+    [64, 64], [64, 64], [64, 64], [64, 64],
+  ]);
+  (await geometry()).forEach(({ footprint, face }) => expect(face).toEqual(footprint));
+  await expect(page.locator("#footprint-size")).toHaveText("64 × 64 unified footprint");
+
+  await page.getByLabel("显示桌面图标名称").check();
   expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
     [72, 80], [72, 80], [72, 80], [72, 80],
   ]);
