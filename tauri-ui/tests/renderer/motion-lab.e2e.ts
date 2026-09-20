@@ -406,12 +406,14 @@ test("enabling reduced motion during a preview preserves its cancel baseline", a
 
 test("system reduced-motion preference disables both FLIP and edit-mode jiggle", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator("body")).toHaveClass(/reduce-motion/);
   await enterAppleEditMode(page);
   const face = page.locator('[data-icon-id="alpha"] .motion-icon-face');
   await expect(face).toHaveCSS("animation-name", "none");
   await expect(page.locator("#demo-widget")).toHaveCSS("animation-name", "none");
 
   await page.evaluate(() => window.motionLab.runScenario("widget-single"));
+  await expect(page.locator('[data-icon-id="alpha"]')).toHaveCSS("top", "240px");
   expect(await page.locator(".motion-icon").evaluateAll(
     (nodes) => nodes.flatMap((node) => node.getAnimations()).length,
   )).toBe(0);
