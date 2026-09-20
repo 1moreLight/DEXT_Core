@@ -25,19 +25,19 @@ test("switches all feedback profiles without replacing icon nodes", async ({ pag
 
   await face.hover();
   await expect(root).toHaveAttribute("data-icon-feedback", "halo");
-  expect(await visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+  await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(face).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 
   await page.getByRole("button", { name: "紧凑内容框" }).click();
   await face.hover();
   await expect(root).toHaveAttribute("data-icon-feedback", "compact");
-  expect(await face.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+  await expect.poll(() => face.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
 
   await page.getByRole("button", { name: "纯净无边框" }).click();
   await face.hover();
   await expect(root).toHaveAttribute("data-icon-feedback", "bare");
-  await expect(face).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  await expect(visual).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect.poll(() => face.evaluate((node) => getComputedStyle(node).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+  await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
 
