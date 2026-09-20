@@ -8,6 +8,7 @@
     "dev:ui": "vite --port 1621 --open",
     "dev:room": "vite .. --open /wallpapers/dext-room/?room=../../rooms/test-dock-hud/ --port 5174",
     "dev:motion": "vite .. --host 127.0.0.1 --port 5174 --strictPort --open /wallpapers/dext-motion-lab/",
+    "dev:icons": "vite .. --host 127.0.0.1 --port 5174 --strictPort --open /wallpapers/dext-icon-lab/",
     "build": "tsc && vite build",
     "test": "vitest run",
     "test:renderer:e2e": "playwright test -c playwright.renderer.config.ts",

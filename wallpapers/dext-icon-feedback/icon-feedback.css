@@ -24,9 +24,13 @@
   width: fit-content;
   max-width: var(--dext-icon-face-max);
   gap: 7px;
+  padding: 0;
+  border: 0;
   border-radius: 15px;
   color: #fff;
   background: transparent;
+  font: inherit;
+  appearance: none;
   pointer-events: auto;
   cursor: default;
   transform-origin: 50% 50%;

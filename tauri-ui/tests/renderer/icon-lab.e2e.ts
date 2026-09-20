@@ -19,6 +19,7 @@ test("switches all feedback profiles without replacing icon nodes", async ({ pag
   const icon = page.locator('[data-icon-id="hermes"]');
   const face = icon.locator(".icon-face");
   const visual = icon.locator(".icon-visual");
+  await expect(face).toHaveCSS("border-top-width", "0px");
   await page.evaluate(() => {
     window.__iconLabNode = document.querySelector('[data-icon-id="hermes"]') ?? undefined;
   });
