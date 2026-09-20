@@ -4,6 +4,7 @@
   const showLabels = document.getElementById("show-labels");
   const showHitboxes = document.getElementById("show-hitboxes");
   const reduceMotion = document.getElementById("reduce-motion");
+  const visualSize = document.getElementById("visual-size");
   const footprintSize = document.getElementById("footprint-size");
   const gapSize = document.getElementById("gap-size");
   const status = document.getElementById("lab-status");
@@ -13,6 +14,7 @@
   const previewStateButtons = [...document.querySelectorAll("[data-preview-state]")];
   const spacingButtons = [...document.querySelectorAll("button[data-icon-spacing]")];
   const hitSizeButtons = [...document.querySelectorAll("button[data-icon-hit-size]")];
+  const visualSizeButtons = [...document.querySelectorAll("button[data-icon-visual-size]")];
   const backgroundButtons = [...document.querySelectorAll("[data-background]")].filter((node) => node.tagName === "BUTTON");
   const icons = [...document.querySelectorAll(".lab-icon")];
 
@@ -34,7 +36,18 @@
     large: { label: "LARGE", size: "84 × 88", hiddenSize: "80 × 80" },
   };
 
-  let preferences = { feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard" };
+  const VISUAL_SIZES = {
+    small: { label: "SMALL", pixels: 48 },
+    standard: { label: "STANDARD", pixels: 56 },
+    large: { label: "LARGE", pixels: 64 },
+  };
+
+  let preferences = {
+    feedbackStyle: "halo",
+    showLabels: true,
+    hitTargetSize: "standard",
+    visualSize: "standard",
+  };
   const LONG_PRESS_MS = 300;
   const PRESS_MOVE_THRESHOLD = 8;
   let previewState = "interactive";
@@ -51,14 +64,22 @@
   });
 
   function renderStatus() {
-    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · FRAME ${HIT_SIZES[preferences.hitTargetSize].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"} · TARGET ${activeIconLabel.toUpperCase()}`;
+    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · ICON ${VISUAL_SIZES[preferences.visualSize].label} · FRAME ${HIT_SIZES[preferences.hitTargetSize].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"} · TARGET ${activeIconLabel.toUpperCase()}`;
+  }
+
+  function renderProfileDetail() {
+    if (preferences.feedbackStyle === "halo") {
+      profileDetail.textContent = `反馈只包围 ${VISUAL_SIZES[preferences.visualSize].pixels}px 图标，名称保持干净。`;
+      return;
+    }
+    profileDetail.textContent = PROFILES[preferences.feedbackStyle][1];
   }
 
   function setFeedbackStyle(style) {
     preferences = controller.setPreferences({ ...preferences, feedbackStyle: style });
     feedbackButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.feedbackStyle === style)));
     profileName.textContent = PROFILES[style][0];
-    profileDetail.textContent = PROFILES[style][1];
+    renderProfileDetail();
     renderStatus();
   }
 
@@ -240,6 +261,17 @@
     renderStatus();
   }
 
+  function setVisualSize(value) {
+    if (!VISUAL_SIZES[value]) return;
+    preferences = controller.setPreferences({ ...preferences, visualSize: value });
+    visualSizeButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.iconVisualSize === value));
+    });
+    visualSize.textContent = `${VISUAL_SIZES[value].pixels}px icon visual`;
+    renderProfileDetail();
+    renderStatus();
+  }
+
   feedbackButtons.forEach((button) => {
     button.addEventListener("click", () => setFeedbackStyle(button.dataset.feedbackStyle));
   });
@@ -254,6 +286,10 @@
 
   hitSizeButtons.forEach((button) => {
     button.addEventListener("click", () => setHitTargetSize(button.dataset.iconHitSize));
+  });
+
+  visualSizeButtons.forEach((button) => {
+    button.addEventListener("click", () => setVisualSize(button.dataset.iconVisualSize));
   });
 
   backgroundButtons.forEach((button) => {
@@ -308,7 +344,8 @@
 
   setPreviewState("interactive");
   setSpacing("standard");
+  setVisualSize("standard");
   setHitTargetSize("standard");
   renderStatus();
-  window.iconLab = { ready: true, setPreviewState, setSpacing, setHitTargetSize };
+  window.iconLab = { ready: true, setPreviewState, setSpacing, setHitTargetSize, setVisualSize };
 })();

@@ -20,19 +20,22 @@
 ```ts
 type IconFeedbackStyle = "halo" | "compact" | "bare";
 type IconHitTargetSize = "small" | "standard" | "large";
+type IconVisualSize = "small" | "standard" | "large";
 
 type DesktopIconPreferences = {
   feedbackStyle: IconFeedbackStyle;
   showLabels: boolean;
   hitTargetSize: IconHitTargetSize;
+  visualSize: IconVisualSize;
 };
 ```
 
-- 默认值：`{ feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard" }`。
-- 非法风格回退 `halo`；非法命中框档位回退 `standard`；`showLabels` 仅接受布尔值，否则回退 `true`。
-- 页面根节点以 `data-icon-feedback`、`data-icon-labels` 和 `data-icon-hit-size` 表达偏好，不替换图标节点。
+- 默认值：`{ feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard", visualSize: "standard" }`。
+- 非法风格回退 `halo`；非法命中框或视觉大小档位回退 `standard`；`showLabels` 仅接受布尔值，否则回退 `true`。
+- 页面根节点以 `data-icon-feedback`、`data-icon-labels`、`data-icon-hit-size` 和 `data-icon-visual-size` 表达偏好，不替换图标节点。
 - `.icon` 只负责网格坐标和 FLIP；`.icon-face` 是收缩后的真实命中区并承载托起/抖动；`.icon-visual` 只承载光晕、紧凑框或无边框反馈。
 - 同档所有 `.lab-icon` 与 `.icon-face` 使用同一 footprint：显示名称时 small 72×80、standard 80×84、large 84×88；隐藏名称时 small 64×64、standard 72×72、large 80×80。布局、点击和拖动四边重合，图标保持居中，名称长度不得改变同一显示模式下的几何。
+- `.icon-visual` 独立提供 small 48px、standard 56px、large 64px 三档；它只改变图形/光晕，不改变 footprint 或 gap，最小 footprint 与大图标组合仍完整容纳单行名称。
 - 名称为单行省略；隐藏名称时稳定悬停 500ms 显示不接收指针的轻量浮层，编辑、按下和拖动时抑制。
 
 ## Initial profiles
@@ -51,9 +54,9 @@ type DesktopIconPreferences = {
 - 三种反馈模式即时切换；
 - 显示/隐藏名称；
 - 显示实际命中区；
-- 三档 footprint 大小与三档框间 gap 独立切换；
+- 三档图标视觉大小、三档 footprint 大小与三档框间 gap 独立切换；
 - 编辑模式和拖动托起模拟；
 - reduced-motion 模拟；
 - 状态说明与当前偏好输出。
 
-阶段 A 的自动测试锁定偏好规范化、节点不替换、空白格不命中、名称省略、500ms 浮层与抑制条件。阶段 B 的全局设置、Player 消息和真实桌面接入只有在浏览器人工验收后才能开始。
+阶段 A 的自动测试锁定偏好规范化、节点不替换、48/56/64px 真实视觉尺寸与居中、空白格不命中、名称省略、500ms 浮层与抑制条件。阶段 B 的全局设置、Player 消息和真实桌面接入只有在浏览器人工验收后才能开始。

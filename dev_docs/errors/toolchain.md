@@ -177,3 +177,15 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 
 防再犯：验证几十毫秒级 debounce/dwell 边界时必须控制页面时钟；真实时间只适合等待最终条件，不能
 用来证明短窗口内的否定状态。
+# #94 renderer Playwright 前必须停掉手工 5174 预览
+
+现象：先运行 `npm run dev:icons` 后，再执行 `npm run test:renderer:e2e -- --grep ...`，Playwright 在收集/执行
+测试前报 `http://127.0.0.1:5174/... is already used`，无法形成有效 RED 或 GREEN 证据。
+
+原因：renderer 配置使用 `strictPort` 并由 Playwright 自己管理 Vite webServer，不复用外部已启动的预览服务。
+
+修复：运行 renderer Playwright 前先停止手工 `dev:icons` / `dev:motion` 会话；测试结束后再重启预览供人工验收。
+不能把端口冲突或 `No tests found` 当成 TDD 的有效红测，必须看到断言因目标行为缺失而失败。
+
+防再犯：定向测试也统一通过 `npm run test:renderer:e2e -- --grep "..."` 调用项目配置；开始前先确认 5174
+未被占用，结束交付时才恢复人工预览。

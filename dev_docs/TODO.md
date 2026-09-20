@@ -869,6 +869,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Playwright 锁定 visual 关键帧、face/label 无动画、拖动与 reduced-motion；RED→GREEN（2026-09-20）
 - [x] 同步验收口径与错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，提交后继续停在阶段 A 人工验收（2026-09-20）
 
+### 阶段 A 补充：独立图标视觉大小（2026-09-20）
+
+- [x] 在共享图标偏好中增加小 48px / 标准 56px / 大 64px 三档视觉大小，默认标准；与 footprint 和 gap 独立（2026-09-20）
+- [x] 实验台增加图标大小控制和实时尺寸标尺；切换时不替换图标节点，图形保持水平居中，文字仍静止（2026-09-20）
+- [x] Playwright/Node 先锁定默认值、非法回退、三档真实尺寸、节点复用和任意 footprint 组合，再完成 RED→GREEN（2026-09-20）
+- [x] 更新验收口径与说明；Vitest 50/50、Node 25/25、图标实验台 12/12、renderer Playwright 51/51、build、语法、Schema、生产边界与 diff check 全绿，提交后继续停在阶段 A 人工验收（2026-09-20）
+
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）

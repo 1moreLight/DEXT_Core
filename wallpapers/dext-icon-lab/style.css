@@ -127,7 +127,7 @@ button, input { font: inherit; }
 #icon-lab[data-interactive-editing="true"] .icon-face { cursor: grab; }
 #icon-lab[data-interactive-editing="true"] .lab-icon.is-dragging .icon-face { cursor: grabbing; }
 
-.spacing-switch, .hit-size-switch { width: max-content; }
+.spacing-switch, .hit-size-switch, .visual-size-switch { width: max-content; }
 
 .text-button {
   width: max-content;

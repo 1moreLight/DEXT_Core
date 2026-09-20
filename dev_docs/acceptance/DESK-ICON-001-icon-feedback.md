@@ -11,7 +11,7 @@
 ## 阶段 A 自动检查
 
 - [x] Node：图标偏好 3/3；连同既有 layout/motion/controller/bridge 共 25/25。
-- [x] Playwright：图标实验台 11/11；连同真实桌面与 motion 实验台共 50/50。
+- [x] Playwright：图标实验台 12/12；连同真实桌面与 motion 实验台共 51/51。
 - [x] Vitest 50/50、前端 build、语法、Room Schema 与 diff check。
 - [x] 独立代码审查无 Critical；两项 Important 已修复并由先失败后转绿的回归覆盖。
 
@@ -27,6 +27,7 @@
 8. [ ] 开启 reduced-motion，确认缩放、过渡和抖动关闭，但 hover、命中区和名称规则仍有效。
 9. [ ] 切换紧凑、标准、宽松三档间距；确认只改变 footprint 之间的 4×12 / 20×28 / 40×40 gap，图标框自身尺寸不变。
 10. [ ] 显示名称时独立切换小 72×80、标准 80×84、大 84×88 三档；隐藏名称时确认对应收为 64×64、72×72、80×80。两种模式下布局格与命中区始终重合、图标保持居中，名称长度不改变同一模式的框体。
+11. [ ] 独立切换小 48px、标准 56px、大 64px 图标视觉大小；确认只改变图标图形与光晕，不改变当前 footprint 或 gap，不替换图标节点，名称保持静止且图标始终居中。
 
 > 硬门槛：用户明确回复阶段 A 通过前，不开始真实桌面、设置页或 Core 集成。
 
@@ -54,3 +55,5 @@
 - 2026-09-20：整体抖动修正最终复验为 Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Room Schema、生产边界与 diff check 全绿；`codegraph sync` 因独立 worktree 未初始化而记录后跳过。继续停在阶段 A 浏览器人工验收。
 - 2026-09-20：用户澄清“图标文字不抖”是要求文字保持静止，不是反馈文字没有跟随。撤销基于误解加入的整体平移，把 jiggle 从 `.icon-face` 移到 `.icon-visual`；最终仅 56px 图形执行 ±3° / 150ms，名称和 footprint 静止。目标 Playwright 先在旧 face 动画上 RED 后 GREEN。
 - 2026-09-20：仅图形抖动修正最终复验为 Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Room Schema、生产边界与 diff check 全绿；`codegraph sync` 因独立 worktree 未初始化而记录后跳过。继续停在阶段 A 浏览器人工验收，未接入真实桌面、设置页或 Core。
+- 2026-09-20：用户确认现有三档只是 footprint，并批准增加独立图标视觉大小。共享偏好与实验台增加 small 48px / standard 56px / large 64px，默认标准；切换不改变 footprint、gap 或节点身份，最小 footprint + 大图标仍完整容纳名称。Node 与 Playwright 均先在缺失字段/控件上 RED 后 GREEN。
+- 2026-09-20：独立图标视觉大小最终复验为 Vitest 50/50、Node 25/25、图标实验台 12/12、renderer Playwright 51/51、build、语法、Room Schema、生产边界与 diff check 全绿；`codegraph sync` 因独立 worktree 未初始化而记录后跳过。继续停在阶段 A 浏览器人工验收，未接入真实桌面、设置页或 Core。

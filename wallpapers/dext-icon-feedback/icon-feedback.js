@@ -5,10 +5,12 @@
 })(globalThis, function () {
   const ICON_FEEDBACK_STYLES = Object.freeze(["halo", "compact", "bare"]);
   const ICON_HIT_TARGET_SIZES = Object.freeze(["small", "standard", "large"]);
+  const ICON_VISUAL_SIZES = Object.freeze(["small", "standard", "large"]);
   const DEFAULT_DESKTOP_ICON_PREFERENCES = Object.freeze({
     feedbackStyle: "halo",
     showLabels: true,
     hitTargetSize: "standard",
+    visualSize: "standard",
   });
 
   function normalizeDesktopIconPreferences(value) {
@@ -23,6 +25,9 @@
       hitTargetSize: ICON_HIT_TARGET_SIZES.includes(input.hitTargetSize)
         ? input.hitTargetSize
         : DEFAULT_DESKTOP_ICON_PREFERENCES.hitTargetSize,
+      visualSize: ICON_VISUAL_SIZES.includes(input.visualSize)
+        ? input.visualSize
+        : DEFAULT_DESKTOP_ICON_PREFERENCES.visualSize,
     };
   }
 
@@ -34,6 +39,7 @@
     rootElement.dataset.iconFeedback = preferences.feedbackStyle;
     rootElement.dataset.iconLabels = preferences.showLabels ? "shown" : "hidden";
     rootElement.dataset.iconHitSize = preferences.hitTargetSize;
+    rootElement.dataset.iconVisualSize = preferences.visualSize;
     return preferences;
   }
 
@@ -175,6 +181,7 @@
   return {
     ICON_FEEDBACK_STYLES,
     ICON_HIT_TARGET_SIZES,
+    ICON_VISUAL_SIZES,
     DEFAULT_DESKTOP_ICON_PREFERENCES,
     normalizeDesktopIconPreferences,
     applyDesktopIconPreferences,

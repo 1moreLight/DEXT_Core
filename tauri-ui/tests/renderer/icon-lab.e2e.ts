@@ -328,6 +328,57 @@ test("keeps every layout footprint coincident with its hit target across size pr
   expect(await icons.count()).toBe(4);
 });
 
+test("changes visual icon size independently while preserving footprint center and nodes", async ({ page }) => {
+  const root = page.locator("#icon-lab");
+  const icon = page.locator('[data-icon-id="hermes"]');
+  const face = icon.locator(".icon-face");
+  const visual = icon.locator(".icon-visual");
+  const artwork = icon.locator(".icon-image");
+  const label = icon.locator(".icon-label");
+  await page.evaluate(() => {
+    window.__iconLabNode = document.querySelector('[data-icon-id="hermes"]') ?? undefined;
+  });
+
+  const geometry = async () => {
+    const faceBox = await face.boundingBox();
+    const visualBox = await visual.boundingBox();
+    const artworkBox = await artwork.boundingBox();
+    const labelBox = await label.boundingBox();
+    if (!faceBox || !visualBox || !artworkBox || !labelBox) throw new Error("visual size geometry unavailable");
+    return { faceBox, visualBox, artworkBox, labelBox };
+  };
+  const expectCentered = (faceBox: { x: number; width: number }, visualBox: { x: number; width: number }) => {
+    expect(visualBox.x + visualBox.width / 2).toBeCloseTo(faceBox.x + faceBox.width / 2, 1);
+  };
+
+  await expect(root).toHaveAttribute("data-icon-visual-size", "standard");
+  let boxes = await geometry();
+  expect([boxes.visualBox.width, boxes.visualBox.height]).toEqual([56, 56]);
+  expect([boxes.artworkBox.width, boxes.artworkBox.height]).toEqual([48, 48]);
+  expectCentered(boxes.faceBox, boxes.visualBox);
+  await expect(page.locator("#visual-size")).toHaveText("56px icon visual");
+
+  await page.getByRole("button", { name: "小图标尺寸" }).click();
+  await expect(root).toHaveAttribute("data-icon-visual-size", "small");
+  boxes = await geometry();
+  expect([boxes.visualBox.width, boxes.visualBox.height]).toEqual([48, 48]);
+  expect([boxes.artworkBox.width, boxes.artworkBox.height]).toEqual([40, 40]);
+  expect([boxes.faceBox.width, boxes.faceBox.height]).toEqual([80, 84]);
+  expectCentered(boxes.faceBox, boxes.visualBox);
+
+  await page.getByRole("button", { name: "大图标尺寸" }).click();
+  await page.getByRole("button", { name: "小图标框" }).click();
+  await expect(root).toHaveAttribute("data-icon-visual-size", "large");
+  boxes = await geometry();
+  expect([boxes.visualBox.width, boxes.visualBox.height]).toEqual([64, 64]);
+  expect([boxes.artworkBox.width, boxes.artworkBox.height]).toEqual([56, 56]);
+  expect([boxes.faceBox.width, boxes.faceBox.height]).toEqual([72, 80]);
+  expectCentered(boxes.faceBox, boxes.visualBox);
+  expect(boxes.labelBox.y + boxes.labelBox.height).toBeLessThanOrEqual(boxes.faceBox.y + boxes.faceBox.height + 0.5);
+  await expect(page.locator("#visual-size")).toHaveText("64px icon visual");
+  expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
+});
+
 test("interactive mode routes real hover press and selection through the visible hit target", async ({ page }) => {
   const root = page.locator("#icon-lab");
   const firstIcon = page.locator('[data-icon-id="hermes"]');

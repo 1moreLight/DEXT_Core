@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const {
   ICON_FEEDBACK_STYLES,
   ICON_HIT_TARGET_SIZES,
+  ICON_VISUAL_SIZES,
   DEFAULT_DESKTOP_ICON_PREFERENCES,
   normalizeDesktopIconPreferences,
   applyDesktopIconPreferences,
@@ -13,10 +14,12 @@ const {
 test("normalizes desktop icon preferences to the halo and visible-label defaults", () => {
   assert.deepEqual(ICON_FEEDBACK_STYLES, ["halo", "compact", "bare"]);
   assert.deepEqual(ICON_HIT_TARGET_SIZES, ["small", "standard", "large"]);
+  assert.deepEqual(ICON_VISUAL_SIZES, ["small", "standard", "large"]);
   assert.deepEqual(DEFAULT_DESKTOP_ICON_PREFERENCES, {
     feedbackStyle: "halo",
     showLabels: true,
     hitTargetSize: "standard",
+    visualSize: "standard",
   });
   assert.deepEqual(normalizeDesktopIconPreferences(), DEFAULT_DESKTOP_ICON_PREFERENCES);
   assert.deepEqual(
@@ -27,12 +30,15 @@ test("normalizes desktop icon preferences to the halo and visible-label defaults
     feedbackStyle: "bare",
     showLabels: false,
     hitTargetSize: "standard",
+    visualSize: "standard",
   });
-  assert.deepEqual(normalizeDesktopIconPreferences({ hitTargetSize: "large" }), {
+  assert.deepEqual(normalizeDesktopIconPreferences({ hitTargetSize: "large", visualSize: "large" }), {
     feedbackStyle: "halo",
     showLabels: true,
     hitTargetSize: "large",
+    visualSize: "large",
   });
+  assert.equal(normalizeDesktopIconPreferences({ visualSize: "huge" }).visualSize, "standard");
 });
 
 test("applies preference datasets without replacing existing icon nodes", () => {
@@ -46,12 +52,19 @@ test("applies preference datasets without replacing existing icon nodes", () => 
     feedbackStyle: "compact",
     showLabels: false,
     hitTargetSize: "small",
+    visualSize: "large",
   });
 
-  assert.deepEqual(applied, { feedbackStyle: "compact", showLabels: false, hitTargetSize: "small" });
+  assert.deepEqual(applied, {
+    feedbackStyle: "compact",
+    showLabels: false,
+    hitTargetSize: "small",
+    visualSize: "large",
+  });
   assert.equal(root.dataset.iconFeedback, "compact");
   assert.equal(root.dataset.iconLabels, "hidden");
   assert.equal(root.dataset.iconHitSize, "small");
+  assert.equal(root.dataset.iconVisualSize, "large");
   assert.equal(root.firstElementChild, iconNode);
 });
 

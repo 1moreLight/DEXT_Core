@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div id="icon-lab" data-dext-icon-feedback-root data-icon-feedback="halo" data-icon-labels="shown" data-icon-hit-size="standard" data-icon-spacing="standard" data-icon-editing="false" data-icon-dragging="false" data-interactive-editing="false" data-reduced-motion="false" data-debug-hitboxes="false">
+  <div id="icon-lab" data-dext-icon-feedback-root data-icon-feedback="halo" data-icon-labels="shown" data-icon-hit-size="standard" data-icon-visual-size="standard" data-icon-spacing="standard" data-icon-editing="false" data-icon-dragging="false" data-interactive-editing="false" data-reduced-motion="false" data-debug-hitboxes="false">
     <header class="lab-header">
       <div class="lab-title">
         <span class="eyebrow">DESK-ICON-001 · STAGE A</span>
@@ -49,6 +49,14 @@
         </div>
       </section>
       <section>
+        <span class="control-label">图标大小</span>
+        <div class="choice-switch visual-size-switch" role="group" aria-label="图标大小">
+          <button type="button" data-icon-visual-size="small" aria-label="小图标尺寸" aria-pressed="false">小</button>
+          <button type="button" data-icon-visual-size="standard" aria-label="标准图标尺寸" aria-pressed="true">标准</button>
+          <button type="button" data-icon-visual-size="large" aria-label="大图标尺寸" aria-pressed="false">大</button>
+        </div>
+      </section>
+      <section>
         <span class="control-label">统一图标框大小</span>
         <div class="choice-switch hit-size-switch" role="group" aria-label="统一图标框大小">
           <button type="button" data-icon-hit-size="small" aria-label="小图标框" aria-pressed="false">小</button>
@@ -68,7 +76,7 @@
 
     <main class="stage-shell">
       <div class="stage-meta">
-        <span><span id="footprint-size">80 × 84 unified footprint</span> · <span id="gap-size">20 × 28 gap</span></span>
+        <span><span id="visual-size">56px icon visual</span> · <span id="footprint-size">80 × 84 unified footprint</span> · <span id="gap-size">20 × 28 gap</span></span>
         <span><i class="legend-face"></i><i class="legend-cell"></i> 布局格 = 实际命中</span>
       </div>
       <section id="icon-stage" class="icon-stage" data-background="dark" aria-label="桌面图标实验画布">
