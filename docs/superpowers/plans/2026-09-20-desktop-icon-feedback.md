@@ -65,3 +65,4 @@ Expected: 阶段 A 提交存在，工作树干净；真实桌面、设置页和 
 - [x] 两条 Playwright 场景先证明旧版缺少直接交互，再覆盖真实命中路由和完整长按/拖动/退出生命周期。
 - [x] 验收补充：隐藏名称时三档 footprint 收为 64×64 / 72×72 / 80×80，显示名称仍为 72×80 / 80×84 / 84×88；gap 不变。
 - [x] 验收补充：图标 jiggle 调整为 ±1.5° / 280ms；500ms 长按、Widget 与 reduced-motion 规则不变，并以真实 CSSAnimation 关键帧回归锁定。
+- [x] 后续验收反馈取代上一条实验参数：长按改为 300ms，图标 jiggle 改为 ±5° / 150ms；名称浮层仍为 500ms，Widget 与 reduced-motion 规则不变。

@@ -35,7 +35,7 @@
   };
 
   let preferences = { feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard" };
-  const LONG_PRESS_MS = 500;
+  const LONG_PRESS_MS = 300;
   const PRESS_MOVE_THRESHOLD = 8;
   let previewState = "interactive";
   let spacing = "standard";

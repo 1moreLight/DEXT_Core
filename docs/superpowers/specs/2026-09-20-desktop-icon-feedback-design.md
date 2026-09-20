@@ -41,12 +41,12 @@ type DesktopIconPreferences = {
 - `compact`：图标与单行名称形成最大约 88px 的紧凑表面。
 - `bare`：不绘制表面，只增加亮度、阴影和轻微缩放。
 - footprint 之间的 gap 可在 4×12、20×28、40×40 三档之间比较；gap 不接收指针，间距切换不改变 footprint，只有 `.icon-face` 命中。
-- 图标编辑抖动为 ±1.5° / 280ms；长按仍为 500ms，Widget 抖动参数不在本阶段修改。
+- 图标编辑抖动为 ±5° / 150ms；长按为 300ms，Widget 抖动参数不在本阶段修改。
 - reduced-motion 下关闭缩放、过渡和抖动，保留 hover 状态、名称省略和命中区。
 
 ## Browser lab
 
-实验台覆盖 PNG、Glyph、短名称、长名称、明亮/深色/复杂背景，以及普通、hover、pressed、editing、dragging 状态。默认采用真实交互：hover/pointerdown 直接反馈，短按切换当前目标，长按 500ms 进入编辑抖动；编辑中拖动托起并跟手，松手恢复原单元，双击真正画布空白退出。阶段 A 不执行排序或保存。固定五状态仍作为诊断入口。提供：
+实验台覆盖 PNG、Glyph、短名称、长名称、明亮/深色/复杂背景，以及普通、hover、pressed、editing、dragging 状态。默认采用真实交互：hover/pointerdown 直接反馈，短按切换当前目标，长按 300ms 进入编辑抖动；编辑中拖动托起并跟手，松手恢复原单元，双击真正画布空白退出。阶段 A 不执行排序或保存。固定五状态仍作为诊断入口。提供：
 
 - 三种反馈模式即时切换；
 - 显示/隐藏名称；

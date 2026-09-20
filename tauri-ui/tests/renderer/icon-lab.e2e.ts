@@ -104,7 +104,7 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
   const face = icon.locator(".icon-face");
   const visual = icon.locator(".icon-visual");
   await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
-  await expect(face).toHaveCSS("animation-duration", "0.28s");
+  await expect(face).toHaveCSS("animation-duration", "0.15s");
   const jiggleAngles = await face.evaluate((node) => {
     const animation = node.getAnimations().find((item) => item instanceof CSSAnimation && item.animationName === "dext-icon-jiggle");
     const frames = animation?.effect instanceof KeyframeEffect ? animation.effect.getKeyframes() : [];
@@ -113,8 +113,8 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
       return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
     });
   });
-  expect(jiggleAngles[0]).toBeCloseTo(-1.5, 1);
-  expect(jiggleAngles.at(-1)).toBeCloseTo(1.5, 1);
+  expect(jiggleAngles[0]).toBeCloseTo(-5, 1);
+  expect(jiggleAngles.at(-1)).toBeCloseTo(5, 1);
   await page.getByRole("button", { name: "悬停", exact: true }).click();
   await expect(face).toHaveCSS("animation-name", "none");
   await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
@@ -360,11 +360,16 @@ test("interactive long press enters edit mode and drag returns before blank doub
   if (!faceBox || !stageBox) throw new Error("interactive geometry unavailable");
   const start = { x: faceBox.x + faceBox.width / 2, y: faceBox.y + faceBox.height / 2 };
 
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 60_000));
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
-  await page.waitForTimeout(540);
-  await expect(root).toHaveAttribute("data-icon-editing", "true");
+  await page.clock.runFor(299);
+  expect(await root.getAttribute("data-icon-editing")).toBe("false");
+  await page.clock.runFor(1);
+  expect(await root.getAttribute("data-icon-editing")).toBe("true");
   await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(page.locator("footer")).toContainText("长按 300ms 编辑");
   await page.mouse.up();
 
   await page.mouse.move(start.x, start.y);

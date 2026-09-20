@@ -177,7 +177,7 @@
 }
 
 [data-dext-icon-feedback-root][data-icon-editing="true"] .icon-face {
-  animation: dext-icon-jiggle 280ms ease-in-out infinite alternate;
+  animation: dext-icon-jiggle 150ms ease-in-out infinite alternate;
 }
 
 [data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
@@ -204,8 +204,8 @@
 }
 
 @keyframes dext-icon-jiggle {
-  from { transform: rotate(-1.5deg); }
-  to { transform: rotate(1.5deg); }
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
 }
 
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,
