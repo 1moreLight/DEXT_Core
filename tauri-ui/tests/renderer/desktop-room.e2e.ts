@@ -130,6 +130,8 @@ test("a live add/remove reuses survivors and the Widget iframe while animating t
 
 test("an icon target must stay stable for 80ms before the placeholder and path preview move", async ({ page }) => {
   await longPressAlpha(page);
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 60_000));
   const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
   const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
   if (!alpha || !bravo) throw new Error("icon geometry unavailable");
@@ -138,9 +140,10 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
   await page.mouse.down();
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
   await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(40);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
-  await page.waitForTimeout(60);
+  await page.clock.runFor(79);
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
+  await page.clock.runFor(1);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "96px");
   await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
