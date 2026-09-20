@@ -105,16 +105,21 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
   const visual = icon.locator(".icon-visual");
   await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
   await expect(face).toHaveCSS("animation-duration", "0.15s");
-  const jiggleAngles = await face.evaluate((node) => {
+  const jiggleFrames = await face.evaluate((node) => {
     const animation = node.getAnimations().find((item) => item instanceof CSSAnimation && item.animationName === "dext-icon-jiggle");
     const frames = animation?.effect instanceof KeyframeEffect ? animation.effect.getKeyframes() : [];
     return frames.map((frame) => {
       const matrix = new DOMMatrixReadOnly(String(frame.transform));
-      return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+      return {
+        angle: Math.atan2(matrix.b, matrix.a) * 180 / Math.PI,
+        x: matrix.e,
+      };
     });
   });
-  expect(jiggleAngles[0]).toBeCloseTo(-3, 1);
-  expect(jiggleAngles.at(-1)).toBeCloseTo(3, 1);
+  expect(jiggleFrames[0]?.angle).toBeCloseTo(-3, 1);
+  expect(jiggleFrames.at(-1)?.angle).toBeCloseTo(3, 1);
+  expect(jiggleFrames[0]?.x).toBeCloseTo(-1.5, 1);
+  expect(jiggleFrames.at(-1)?.x).toBeCloseTo(1.5, 1);
   await page.getByRole("button", { name: "悬停", exact: true }).click();
   await expect(face).toHaveCSS("animation-name", "none");
   await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");

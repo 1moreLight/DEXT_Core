@@ -851,6 +851,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Playwright 读取真实 CSSAnimation 关键帧验证 RED→GREEN（2026-09-20）
 - [x] 同步验收口径；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
 
+### 阶段 A 补充：图标与文字整体抖动（2026-09-20）
+
+- [x] 修复纯旋转使文字基线视觉位移过小的问题；同一 face 增加 ±1.5px 水平位移，图标、文字和命中边框保持刚性整体（2026-09-20）
+- [x] Playwright 从真实 CSSAnimation 矩阵同时锁定 ±3° 角度与 ±1.5px 位移；RED→GREEN（2026-09-20）
+- [x] 同步验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）
