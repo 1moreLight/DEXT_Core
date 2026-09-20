@@ -8,12 +8,12 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div id="icon-lab" data-dext-icon-feedback-root data-icon-feedback="halo" data-icon-labels="shown" data-icon-hit-size="standard" data-icon-preview-state="normal" data-icon-spacing="standard" data-icon-editing="false" data-icon-dragging="false" data-reduced-motion="false" data-debug-hitboxes="false">
+  <div id="icon-lab" data-dext-icon-feedback-root data-icon-feedback="halo" data-icon-labels="shown" data-icon-hit-size="standard" data-icon-spacing="standard" data-icon-editing="false" data-icon-dragging="false" data-interactive-editing="false" data-reduced-motion="false" data-debug-hitboxes="false">
     <header class="lab-header">
       <div class="lab-title">
         <span class="eyebrow">DESK-ICON-001 · STAGE A</span>
         <h1>图标反馈实验台</h1>
-        <p>固定锚点比较风格、状态与密度；网格只负责布局。</p>
+        <p>直接操作图标检验命中与反馈；固定状态用于诊断比较。</p>
       </div>
       <div class="mode-switch" aria-label="图标反馈风格">
         <button type="button" data-feedback-style="halo" aria-pressed="true">图标光晕</button>
@@ -29,9 +29,10 @@
         <label><input id="show-hitboxes" type="checkbox"> 显示实际命中区</label>
       </section>
       <section>
-        <span class="control-label">固定预览状态</span>
-        <div class="choice-switch state-switch" role="group" aria-label="固定预览状态">
-          <button type="button" data-preview-state="normal" aria-pressed="true">正常</button>
+        <span class="control-label">预览状态</span>
+        <div class="choice-switch state-switch" role="group" aria-label="预览状态">
+          <button type="button" data-preview-state="interactive" aria-pressed="true">交互</button>
+          <button type="button" data-preview-state="normal" aria-pressed="false">正常</button>
           <button type="button" data-preview-state="hover" aria-pressed="false">悬停</button>
           <button type="button" data-preview-state="pressed" aria-pressed="false">按下</button>
           <button type="button" data-preview-state="editing" aria-pressed="false">编辑</button>
@@ -111,7 +112,7 @@
 
     <footer class="lab-footer">
       <span id="lab-status">HALO · LABELS ON</span>
-      <p>浏览器只验证共享属性与命中规则；真实桌面外观保持独立。</p>
+      <p>短按选择 · 长按 500ms 编辑 · 编辑中拖起后回位 · 双击空白退出。</p>
     </footer>
   </div>
 

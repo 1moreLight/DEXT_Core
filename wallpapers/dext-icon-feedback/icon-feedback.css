@@ -50,6 +50,7 @@
   appearance: none;
   pointer-events: auto;
   cursor: default;
+  touch-action: none;
   transform-origin: 50% 50%;
   transition: transform 180ms var(--dext-icon-feedback-ease), background-color 150ms ease, box-shadow 150ms ease;
   -webkit-tap-highlight-color: transparent;

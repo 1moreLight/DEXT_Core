@@ -45,7 +45,7 @@ type DesktopIconPreferences = {
 
 ## Browser lab
 
-实验台覆盖 PNG、Glyph、短名称、长名称、明亮/深色/复杂背景，以及普通、hover、pressed、editing、dragging 状态。提供：
+实验台覆盖 PNG、Glyph、短名称、长名称、明亮/深色/复杂背景，以及普通、hover、pressed、editing、dragging 状态。默认采用真实交互：hover/pointerdown 直接反馈，短按切换当前目标，长按 500ms 进入编辑抖动；编辑中拖动托起并跟手，松手恢复原单元，双击真正画布空白退出。阶段 A 不执行排序或保存。固定五状态仍作为诊断入口。提供：
 
 - 三种反馈模式即时切换；
 - 显示/隐藏名称；

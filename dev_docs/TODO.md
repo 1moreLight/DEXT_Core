@@ -815,7 +815,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 > 目标：先用未来生产共用的视觉层，在浏览器中验证“图标光晕 / 紧凑内容框 / 纯净无边框”、收缩命中区和名称显示规则。
 > 范围外：浏览器验收前不修改真实桌面、设置页、Core、proto、Widget、Dock 或 Room Schema；不先于 DESK-MOTION-001 合并 master。
-> 人工验收：按 `dev_docs/acceptance/DESK-ICON-001-icon-feedback.md` 的阶段 A 九步在浏览器确认；明确通过后才进入生产集成。
+> 人工验收：按 `dev_docs/acceptance/DESK-ICON-001-icon-feedback.md` 的阶段 A 十步在浏览器确认；明确通过后才进入生产集成。
+
+### 阶段 A 补充：直接交互实验（2026-09-20）
+
+- [x] 实验台默认进入“交互”状态，真实响应 hover、pointerdown 和短按选择，同时保留固定状态诊断按钮（2026-09-20）
+- [x] 长按图标 500ms 进入苹果式编辑抖动；编辑中图标可托起跟手，松手回到原网格，不排序、不保存（2026-09-20）
+- [x] 双击画布空白退出编辑，透明网格边缘保持不命中；两条 Playwright 回归均先 RED 后 GREEN（2026-09-20）
+- [x] 更新验收卡、前端说明和问题记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，停在浏览器人工验收（2026-09-20）
 
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡

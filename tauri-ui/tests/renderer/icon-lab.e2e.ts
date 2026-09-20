@@ -55,7 +55,7 @@ test("only the visible face is pointer-active inside the layout cell", async ({ 
 
   await page.mouse.click(faceBox.x + faceBox.width / 2, faceBox.y + faceBox.height / 2);
   await expect(icon).toHaveAttribute("data-selected", "true");
-  await page.waitForTimeout(200);
+  await page.mouse.move(blankPoint.x, blankPoint.y);
   await expect(icon.locator(".icon-visual")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });
 
@@ -276,4 +276,70 @@ test("keeps every hit target uniform and centered while switching independent si
   expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(4);
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
   expect(await icons.count()).toBe(4);
+});
+
+test("interactive mode routes real hover press and selection through the visible hit target", async ({ page }) => {
+  const root = page.locator("#icon-lab");
+  const firstIcon = page.locator('[data-icon-id="hermes"]');
+  const firstFace = firstIcon.locator(".icon-face");
+  const firstVisual = firstIcon.locator(".icon-visual");
+  const secondIcon = page.locator('[data-icon-id="creative-suite"]');
+  const secondFace = secondIcon.locator(".icon-face");
+  const firstCellBox = await firstIcon.boundingBox();
+  if (!firstCellBox) throw new Error("icon cell geometry unavailable");
+
+  await expect(page.getByRole("button", { name: "交互", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(root).not.toHaveAttribute("data-icon-preview-state");
+
+  await page.mouse.click(firstCellBox.x + firstCellBox.width - 2, firstCellBox.y + 2);
+  await expect(firstIcon).not.toHaveAttribute("data-selected", "true");
+
+  await firstFace.hover();
+  await expect.poll(() => firstVisual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
+  await page.mouse.down();
+  await expect(root).toHaveAttribute("data-icon-pressed", "true");
+  expect(await firstVisual.evaluate((node) => getComputedStyle(node).transform)).toContain("matrix");
+  await page.mouse.up();
+  await expect(root).toHaveAttribute("data-icon-pressed", "false");
+
+  await secondFace.click();
+  await expect(secondIcon).toHaveAttribute("data-selected", "true");
+  await expect(firstIcon).toHaveAttribute("data-selected", "false");
+  await expect(page.locator("#lab-status")).toContainText("TARGET DEXT CREATIVE STUDIO EXTENDED EDITION");
+});
+
+test("interactive long press enters edit mode and drag returns before blank double click exits", async ({ page }) => {
+  const root = page.locator("#icon-lab");
+  const stage = page.locator("#icon-stage");
+  const icon = page.locator('[data-icon-id="hermes"]');
+  const face = icon.locator(".icon-face");
+  const faceBox = await face.boundingBox();
+  const stageBox = await stage.boundingBox();
+  if (!faceBox || !stageBox) throw new Error("interactive geometry unavailable");
+  const start = { x: faceBox.x + faceBox.width / 2, y: faceBox.y + faceBox.height / 2 };
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.waitForTimeout(540);
+  await expect(root).toHaveAttribute("data-icon-editing", "true");
+  await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await page.mouse.up();
+
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 34, start.y + 22, { steps: 3 });
+  await expect(icon).toHaveClass(/is-dragging/);
+  await expect(root).toHaveAttribute("data-icon-dragging", "true");
+  expect(await face.getAttribute("style")).toContain("translate(");
+  await page.mouse.up();
+
+  await expect(icon).not.toHaveClass(/is-dragging/);
+  await expect(root).toHaveAttribute("data-icon-dragging", "false");
+  expect((await face.getAttribute("style")) ?? "").not.toContain("translate(");
+  await expect(root).toHaveAttribute("data-icon-editing", "true");
+
+  await page.mouse.dblclick(start.x, start.y);
+  await expect(root).toHaveAttribute("data-icon-editing", "true");
+  await page.mouse.dblclick(stageBox.x + stageBox.width - 24, stageBox.y + stageBox.height - 24);
+  await expect(root).toHaveAttribute("data-icon-editing", "false");
 });
