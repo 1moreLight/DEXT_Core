@@ -194,18 +194,18 @@ button, input { font: inherit; }
 }
 
 #icon-lab[data-icon-spacing="compact"] {
-  --dext-icon-cell-width: 88px;
-  --dext-icon-cell-height: 100px;
+  --dext-icon-column-gap: 4px;
+  --dext-icon-row-gap: 12px;
 }
 
 #icon-lab[data-icon-spacing="standard"] {
-  --dext-icon-cell-width: 100px;
-  --dext-icon-cell-height: 112px;
+  --dext-icon-column-gap: 20px;
+  --dext-icon-row-gap: 28px;
 }
 
 #icon-lab[data-icon-spacing="spacious"] {
-  --dext-icon-cell-width: 120px;
-  --dext-icon-cell-height: 124px;
+  --dext-icon-column-gap: 40px;
+  --dext-icon-row-gap: 40px;
 }
 
 .icon-grid {
@@ -213,8 +213,10 @@ button, input { font: inherit; }
   left: 58px;
   top: 58px;
   display: grid;
-  grid-template-columns: repeat(4, var(--dext-icon-cell-width));
-  grid-auto-rows: var(--dext-icon-cell-height);
+  grid-template-columns: repeat(4, var(--dext-icon-footprint-width));
+  grid-auto-rows: var(--dext-icon-footprint-height);
+  column-gap: var(--dext-icon-column-gap);
+  row-gap: var(--dext-icon-row-gap);
 }
 
 #icon-lab .icon-stage .lab-icon {

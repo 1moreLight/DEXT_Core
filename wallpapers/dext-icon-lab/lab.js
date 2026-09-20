@@ -4,8 +4,8 @@
   const showLabels = document.getElementById("show-labels");
   const showHitboxes = document.getElementById("show-hitboxes");
   const reduceMotion = document.getElementById("reduce-motion");
-  const cellSize = document.getElementById("cell-size");
-  const hitSize = document.getElementById("hit-size");
+  const footprintSize = document.getElementById("footprint-size");
+  const gapSize = document.getElementById("gap-size");
   const status = document.getElementById("lab-status");
   const profileName = document.getElementById("profile-name");
   const profileDetail = document.getElementById("profile-detail");
@@ -23,9 +23,9 @@
   };
 
   const SPACING = {
-    compact: { label: "COMPACT", cell: "88 × 100" },
-    standard: { label: "STANDARD", cell: "100 × 112" },
-    spacious: { label: "SPACIOUS", cell: "120 × 124" },
+    compact: { label: "COMPACT", gap: "4 × 12" },
+    standard: { label: "STANDARD", gap: "20 × 28" },
+    spacious: { label: "SPACIOUS", gap: "40 × 40" },
   };
 
   const HIT_SIZES = {
@@ -51,7 +51,7 @@
   });
 
   function renderStatus() {
-    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · HIT ${HIT_SIZES[preferences.hitTargetSize].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"} · TARGET ${activeIconLabel.toUpperCase()}`;
+    status.textContent = `${preferences.feedbackStyle.toUpperCase()} · ${previewState.toUpperCase()} · ${SPACING[spacing].label} · FRAME ${HIT_SIZES[preferences.hitTargetSize].label} · LABELS ${preferences.showLabels ? "ON" : "OFF"} · TARGET ${activeIconLabel.toUpperCase()}`;
   }
 
   function setFeedbackStyle(style) {
@@ -219,9 +219,7 @@
     spacingButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.iconSpacing === value));
     });
-    const label = SPACING[value].cell;
-    cellSize.textContent = `${label} layout cell`;
-    icons.forEach((icon) => { icon.dataset.cellSize = label; });
+    gapSize.textContent = `${SPACING[value].gap} gap`;
     renderStatus();
   }
 
@@ -231,7 +229,8 @@
     hitSizeButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.iconHitSize === value));
     });
-    hitSize.textContent = `${HIT_SIZES[value].size} hit target`;
+    footprintSize.textContent = `${HIT_SIZES[value].size} unified footprint`;
+    icons.forEach((icon) => { icon.dataset.cellSize = HIT_SIZES[value].size; });
     renderStatus();
   }
 

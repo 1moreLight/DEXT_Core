@@ -32,7 +32,7 @@ type DesktopIconPreferences = {
 - 非法风格回退 `halo`；非法命中框档位回退 `standard`；`showLabels` 仅接受布尔值，否则回退 `true`。
 - 页面根节点以 `data-icon-feedback`、`data-icon-labels` 和 `data-icon-hit-size` 表达偏好，不替换图标节点。
 - `.icon` 只负责网格坐标和 FLIP；`.icon-face` 是收缩后的真实命中区并承载托起/抖动；`.icon-visual` 只承载光晕、紧凑框或无边框反馈。
-- 同档所有 `.icon-face` 使用统一固定尺寸并与图标水平中心对齐：small 72×80、standard 80×84、large 84×88；名称长度与显示状态不得改变命中框几何。
+- 同档所有 `.lab-icon` 与 `.icon-face` 使用同一固定 footprint：small 72×80、standard 80×84、large 84×88；布局、点击和拖动四边重合，名称长度与显示状态不得改变几何。
 - 名称为单行省略；隐藏名称时稳定悬停 500ms 显示不接收指针的轻量浮层，编辑、按下和拖动时抑制。
 
 ## Initial profiles
@@ -40,7 +40,7 @@ type DesktopIconPreferences = {
 - `halo`：仅 `.icon-visual` 出现约 6px 外扩的柔和表面，名称不带背景。
 - `compact`：图标与单行名称形成最大约 88px 的紧凑表面。
 - `bare`：不绘制表面，只增加亮度、阴影和轻微缩放。
-- 网格单元可在 88×100、100×112、120×124 三档之间比较，但不接收指针；命中框档位与网格间距解耦，仅 `.icon-face` 命中。
+- footprint 之间的 gap 可在 4×12、20×28、40×40 三档之间比较；gap 不接收指针，间距切换不改变 footprint，只有 `.icon-face` 命中。
 - reduced-motion 下关闭缩放、过渡和抖动，保留 hover 状态、名称省略和命中区。
 
 ## Browser lab
@@ -50,7 +50,7 @@ type DesktopIconPreferences = {
 - 三种反馈模式即时切换；
 - 显示/隐藏名称；
 - 显示实际命中区；
-- 三档网格间距与三档命中框大小独立切换；
+- 三档 footprint 大小与三档框间 gap 独立切换；
 - 编辑模式和拖动托起模拟；
 - reduced-motion 模拟；
 - 状态说明与当前偏好输出。

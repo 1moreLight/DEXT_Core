@@ -49,11 +49,11 @@
         </div>
       </section>
       <section>
-        <span class="control-label">命中框大小</span>
-        <div class="choice-switch hit-size-switch" role="group" aria-label="命中框大小">
-          <button type="button" data-icon-hit-size="small" aria-label="小命中框" aria-pressed="false">小</button>
-          <button type="button" data-icon-hit-size="standard" aria-label="标准命中框" aria-pressed="true">标准</button>
-          <button type="button" data-icon-hit-size="large" aria-label="大命中框" aria-pressed="false">大</button>
+        <span class="control-label">统一图标框大小</span>
+        <div class="choice-switch hit-size-switch" role="group" aria-label="统一图标框大小">
+          <button type="button" data-icon-hit-size="small" aria-label="小图标框" aria-pressed="false">小</button>
+          <button type="button" data-icon-hit-size="standard" aria-label="标准图标框" aria-pressed="true">标准</button>
+          <button type="button" data-icon-hit-size="large" aria-label="大图标框" aria-pressed="false">大</button>
         </div>
       </section>
       <section>
@@ -68,33 +68,33 @@
 
     <main class="stage-shell">
       <div class="stage-meta">
-        <span><span id="cell-size">100 × 112 layout cell</span> · <span id="hit-size">80 × 84 hit target</span></span>
-        <span><i class="legend-face"></i> 实际命中 <i class="legend-cell"></i> 布局网格</span>
+        <span><span id="footprint-size">80 × 84 unified footprint</span> · <span id="gap-size">20 × 28 gap</span></span>
+        <span><i class="legend-face"></i><i class="legend-cell"></i> 布局格 = 实际命中</span>
       </div>
       <section id="icon-stage" class="icon-stage" data-background="dark" aria-label="桌面图标实验画布">
         <div id="icon-grid" class="icon-grid">
-        <article class="lab-icon" data-icon-id="hermes" data-preview-active="true" data-cell-size="100 × 112">
+        <article class="lab-icon" data-icon-id="hermes" data-preview-active="true" data-cell-size="80 × 84">
           <button class="icon-face" type="button" data-dext-icon-face aria-label="Hermes Studio">
             <span class="icon-visual"><img class="icon-image" src="../../tauri-ui/src-tauri/icons/128x128.png" alt=""></span>
             <span class="icon-label">Hermes Studio</span>
             <span class="icon-label-tooltip" data-visible="false">Hermes Studio</span>
           </button>
         </article>
-        <article class="lab-icon" data-icon-id="creative-suite" data-preview-active="false" data-cell-size="100 × 112">
+        <article class="lab-icon" data-icon-id="creative-suite" data-preview-active="false" data-cell-size="80 × 84">
           <button class="icon-face" type="button" data-dext-icon-face aria-label="Dext Creative Studio Extended Edition">
             <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#8d73ff">✦</span></span>
             <span class="icon-label">Dext Creative Studio Extended Edition</span>
             <span class="icon-label-tooltip" data-visible="false">Dext Creative Studio Extended Edition</span>
           </button>
         </article>
-        <article class="lab-icon" data-icon-id="cockpit" data-preview-active="false" data-cell-size="100 × 112">
+        <article class="lab-icon" data-icon-id="cockpit" data-preview-active="false" data-cell-size="80 × 84">
           <button class="icon-face" type="button" data-dext-icon-face aria-label="Cockpit">
             <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#4cc9a4">⌁</span></span>
             <span class="icon-label">Cockpit</span>
             <span class="icon-label-tooltip" data-visible="false">Cockpit</span>
           </button>
         </article>
-        <article class="lab-icon" data-icon-id="notes" data-preview-active="false" data-cell-size="100 × 112">
+        <article class="lab-icon" data-icon-id="notes" data-preview-active="false" data-cell-size="80 × 84">
           <button class="icon-face" type="button" data-dext-icon-face aria-label="Notes">
             <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#f1b964">N</span></span>
             <span class="icon-label">Notes</span>

@@ -824,6 +824,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 双击画布空白退出编辑，透明网格边缘保持不命中；两条 Playwright 回归均先 RED 后 GREEN（2026-09-20）
 - [x] 更新验收卡、前端说明和问题记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，停在浏览器人工验收（2026-09-20）
 
+### 阶段 A 补充：统一布局格与命中框（2026-09-20）
+
+- [x] 将布局定位格与实际命中区收成同一个 footprint，小/标准/大同时控制两者并完全重合（2026-09-20）
+- [x] 将紧凑/标准/宽松改为 footprint 之间独立 gap，不再通过第二套 cell 尺寸表达间距（2026-09-20）
+- [x] Playwright 先以真实 bounding box 复现两框不重合，再锁定四边重合、三档 gap 与空隙不命中；RED→GREEN（2026-09-20）
+- [x] 更新说明、验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，继续停在阶段 A 人工验收（2026-09-20）
+
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）

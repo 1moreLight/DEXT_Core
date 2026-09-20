@@ -40,15 +40,20 @@ test("switches all feedback profiles without replacing icon nodes", async ({ pag
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
 
-test("only the visible face is pointer-active inside the layout cell", async ({ page }) => {
+test("only the unified footprint is pointer-active while its surrounding gap stays blank", async ({ page }) => {
   await page.getByLabel("显示实际命中区").check();
   const icon = page.locator('[data-icon-id="hermes"]');
+  const nextIcon = page.locator('[data-icon-id="creative-suite"]');
   const face = icon.locator(".icon-face");
   const cellBox = await icon.boundingBox();
+  const nextCellBox = await nextIcon.boundingBox();
   const faceBox = await face.boundingBox();
-  if (!cellBox || !faceBox) throw new Error("icon geometry unavailable");
+  if (!cellBox || !nextCellBox || !faceBox) throw new Error("icon geometry unavailable");
 
-  const blankPoint = { x: cellBox.x + cellBox.width - 2, y: cellBox.y + 2 };
+  const blankPoint = {
+    x: (cellBox.x + cellBox.width + nextCellBox.x) / 2,
+    y: cellBox.y + cellBox.height / 2,
+  };
   expect(await page.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest(".lab-icon")), blankPoint)).toBe(false);
   await page.mouse.click(blankPoint.x, blankPoint.y);
   await expect(icon).not.toHaveAttribute("data-selected", "true");
@@ -193,7 +198,7 @@ test("pins preview states without replacing nodes or moving the icon anchor", as
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
 
-test("switches compact standard and spacious density without overlapping hit targets", async ({ page }) => {
+test("switches compact standard and spacious gaps between unified footprints", async ({ page }) => {
   const root = page.locator("#icon-lab");
   const icons = page.locator(".lab-icon");
   await page.evaluate(() => {
@@ -208,23 +213,25 @@ test("switches compact standard and spacious density without overlapping hit tar
 
   await expect(root).toHaveAttribute("data-icon-spacing", "standard");
   expect(await horizontalPitch()).toBe(100);
+  await expect(page.locator("#gap-size")).toHaveText("20 × 28 gap");
 
   await page.getByRole("button", { name: "紧凑间距" }).click();
   await expect(root).toHaveAttribute("data-icon-spacing", "compact");
-  expect(await horizontalPitch()).toBe(88);
+  expect(await horizontalPitch()).toBe(84);
   const firstFace = await icons.nth(0).locator(".icon-face").boundingBox();
   const secondFace = await icons.nth(1).locator(".icon-face").boundingBox();
   if (!firstFace || !secondFace) throw new Error("icon face geometry unavailable");
-  expect(firstFace.x + firstFace.width).toBeLessThanOrEqual(secondFace.x);
-  await expect(page.locator("#cell-size")).toHaveText("88 × 100 layout cell");
+  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(4);
+  await expect(page.locator("#gap-size")).toHaveText("4 × 12 gap");
 
   await page.getByRole("button", { name: "宽松间距" }).click();
   await expect(root).toHaveAttribute("data-icon-spacing", "spacious");
   expect(await horizontalPitch()).toBe(120);
+  await expect(page.locator("#gap-size")).toHaveText("40 × 40 gap");
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
 
-test("keeps every hit target uniform and centered while switching independent size presets", async ({ page }) => {
+test("keeps every layout footprint coincident with its hit target across size presets", async ({ page }) => {
   const root = page.locator("#icon-lab");
   const icons = page.locator(".lab-icon");
   const faces = page.locator(".icon-face");
@@ -234,10 +241,13 @@ test("keeps every hit target uniform and centered while switching independent si
   });
 
   const geometry = async () => Promise.all([0, 1, 2, 3].map(async (index) => {
+    const footprint = await icons.nth(index).boundingBox();
     const face = await faces.nth(index).boundingBox();
     const visual = await visuals.nth(index).boundingBox();
-    if (!face || !visual) throw new Error("icon hit geometry unavailable");
+    if (!footprint || !face || !visual) throw new Error("icon hit geometry unavailable");
     return {
+      footprint: [footprint.x, footprint.y, footprint.width, footprint.height],
+      face: [face.x, face.y, face.width, face.height],
       width: face.width,
       height: face.height,
       faceCenterX: face.x + face.width / 2,
@@ -250,24 +260,34 @@ test("keeps every hit target uniform and centered while switching independent si
   expect(boxes.map(({ width, height }) => [width, height])).toEqual([
     [80, 84], [80, 84], [80, 84], [80, 84],
   ]);
-  boxes.forEach(({ faceCenterX, visualCenterX }) => expect(faceCenterX).toBeCloseTo(visualCenterX, 1));
+  boxes.forEach(({ footprint, face, faceCenterX, visualCenterX }) => {
+    expect(face).toEqual(footprint);
+    expect(faceCenterX).toBeCloseTo(visualCenterX, 1);
+  });
+  await expect(page.locator("#footprint-size")).toHaveText("80 × 84 unified footprint");
 
   await page.getByLabel("显示桌面图标名称").uncheck();
   expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
     [80, 84], [80, 84], [80, 84], [80, 84],
   ]);
+  (await geometry()).forEach(({ footprint, face }) => expect(face).toEqual(footprint));
+  await expect(page.locator("#footprint-size")).toHaveText("80 × 84 unified footprint");
 
-  await page.getByRole("button", { name: "小命中框" }).click();
+  await page.getByRole("button", { name: "小图标框" }).click();
   await expect(root).toHaveAttribute("data-icon-hit-size", "small");
   expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
     [72, 80], [72, 80], [72, 80], [72, 80],
   ]);
+  (await geometry()).forEach(({ footprint, face }) => expect(face).toEqual(footprint));
+  await expect(page.locator("#footprint-size")).toHaveText("72 × 80 unified footprint");
 
-  await page.getByRole("button", { name: "大命中框" }).click();
+  await page.getByRole("button", { name: "大图标框" }).click();
   await expect(root).toHaveAttribute("data-icon-hit-size", "large");
   expect((await geometry()).map(({ width, height }) => [width, height])).toEqual([
     [84, 88], [84, 88], [84, 88], [84, 88],
   ]);
+  (await geometry()).forEach(({ footprint, face }) => expect(face).toEqual(footprint));
+  await expect(page.locator("#footprint-size")).toHaveText("84 × 88 unified footprint");
 
   await page.getByRole("button", { name: "紧凑间距" }).click();
   const firstFace = await faces.nth(0).boundingBox();
@@ -286,12 +306,16 @@ test("interactive mode routes real hover press and selection through the visible
   const secondIcon = page.locator('[data-icon-id="creative-suite"]');
   const secondFace = secondIcon.locator(".icon-face");
   const firstCellBox = await firstIcon.boundingBox();
-  if (!firstCellBox) throw new Error("icon cell geometry unavailable");
+  const secondCellBox = await secondIcon.boundingBox();
+  if (!firstCellBox || !secondCellBox) throw new Error("icon cell geometry unavailable");
 
   await expect(page.getByRole("button", { name: "交互", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(root).not.toHaveAttribute("data-icon-preview-state");
 
-  await page.mouse.click(firstCellBox.x + firstCellBox.width - 2, firstCellBox.y + 2);
+  await page.mouse.click(
+    (firstCellBox.x + firstCellBox.width + secondCellBox.x) / 2,
+    firstCellBox.y + firstCellBox.height / 2,
+  );
   await expect(firstIcon).not.toHaveAttribute("data-selected", "true");
 
   await firstFace.hover();

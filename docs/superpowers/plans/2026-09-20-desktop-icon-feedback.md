@@ -58,8 +58,8 @@ Expected: 阶段 A 提交存在，工作树干净；真实桌面、设置页和 
 
 ## Stage A acceptance amendment (2026-09-20)
 
-- [x] 用 RED→GREEN 覆盖统一命中框、图标中心对齐、名称切换几何不变和紧凑间距不重叠。
+- [x] 用 RED→GREEN 覆盖统一 footprint、布局格/命中框四边重合、名称切换几何不变和框间 gap 不命中。
 - [x] `DesktopIconPreferences` 增加 `hitTargetSize`，提供 small 72×80、standard 80×84、large 84×88 三档。
-- [x] 实验台将命中框档位与网格间距独立控制；阶段 A 不接入真实桌面或设置页。
+- [x] 实验台以同一 footprint 承担布局与命中，框大小与纯 gap 间距独立控制；阶段 A 不接入真实桌面或设置页。
 - [x] 验收补充：默认增加真实 hover/press/短按选择、500ms 长按编辑、编辑中跟手托起/回位及双击空白退出；固定五状态保留为诊断工具。
 - [x] 两条 Playwright 场景先证明旧版缺少直接交互，再覆盖真实命中路由和完整长按/拖动/退出生命周期。
