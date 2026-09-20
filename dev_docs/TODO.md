@@ -822,5 +822,5 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）
 - [x] TDD：三种模式、收缩命中区、单行省略、500ms 名称浮层及编辑/拖动抑制（Playwright 5/5；2026-09-20）
 - [x] 建立浏览器图标实验台与 `npm run dev:icons`；直接加载共享模块/CSS，不修改生产 `dext-room`（2026-09-20）
-- [ ] 阶段 A 全量自动检查和独立审查
-- [ ] 提交阶段 A，停在浏览器人工验收硬门槛
+- [x] 阶段 A 全量自动检查和独立审查：独立复核无 Critical；两项 Important 均以先失败后转绿的 Playwright 回归修复；全量 Vitest 50/50、Node 18/18、Playwright 45/45、build、语法、Schema 与 diff check 通过（2026-09-20）
+- [x] 提交阶段 A，停在浏览器人工验收硬门槛；真实桌面、设置页、Core 与 Room Schema 保持相对基线零差异（2026-09-20）

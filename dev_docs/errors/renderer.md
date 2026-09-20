@@ -293,3 +293,28 @@ press transaction 只有计时器和指针信息，并没有 `baseIcons`。
 
 防再犯：状态机共享清理入口时，恢复字段必须按状态或字段存在性判断；不能用一个“最大事务结构”假定
 所有状态都拥有相同快照。
+
+# #85 reduced-motion 必须同时清除静态 transform 规则
+
+现象：实验台开启减少动态效果后，transition 与 jiggle 虽然关闭，hover 仍保持 `scale(1.035)`，模拟拖动仍
+保持 `translateY(-8px) scale(1.06)`；视觉不再过渡，但对象依然瞬间位移。
+
+原因：reduced-motion 规则只覆盖 `animation` 和 `transition-duration`，没有覆盖由 hover/drag 选择器直接写入
+的 `transform`。停止“动画过程”不等于消除“运动结果”。
+
+修复：在页面显式开关和系统 `prefers-reduced-motion` 两条路径下，均将 icon face/visual 的装饰性 transform
+置为 none，同时保留背景、阴影、命中区和名称规则。Playwright 分别覆盖 hover 与托起。
+
+防再犯：减少动态效果测试必须读取最终 computed transform，不能只断言 transition/animation 名称为 none。
+
+# #86 window blur 不能在捕获阶段复用指针结束处理器
+
+现象：图标 pointerdown 后 pressed 会立刻恢复 false；隐藏名称浮层甚至在鼠标仍按住时重新出现。
+
+原因：为处理鼠标在页面外松手，把同一个结束处理器以 capture 方式挂到 window 的 `blur`。点击图标会让
+先前聚焦的设置控件失焦；该元素 blur 虽不冒泡，却会经过 window 捕获阶段，于是被误判为整个窗口失焦。
+
+修复：pointerup/pointercancel 继续在 owning window 捕获阶段监听并按 pointerId 过滤；window blur 使用非捕获
+监听，只在窗口自身失焦时结束 pressed。Playwright 覆盖按下后移出视口、松手、返回并恢复 500ms 浮层。
+
+防再犯：窗口级 blur 与元素 blur 必须区分；若使用捕获监听，要显式验证 `event.target === window`。

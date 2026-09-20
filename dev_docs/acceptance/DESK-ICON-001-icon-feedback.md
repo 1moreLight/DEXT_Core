@@ -11,9 +11,9 @@
 ## 阶段 A 自动检查
 
 - [x] Node：图标偏好 3/3；连同既有 motion/controller/bridge 共 18/18。
-- [x] Playwright：新增图标实验台 5/5；连同真实桌面与 motion 实验台共 44/44。
+- [x] Playwright：新增图标实验台 6/6；连同真实桌面与 motion 实验台共 45/45。
 - [x] Vitest 50/50、前端 build、语法、Room Schema 与 diff check。
-- [ ] 独立代码审查无 Critical/Important。
+- [x] 独立代码审查无 Critical；两项 Important 已修复并由先失败后转绿的回归覆盖。
 
 ## 阶段 A 浏览器人工验收
 
@@ -30,4 +30,5 @@
 
 - 2026-09-20：用户批准 DESK-ICON-001 计划并要求先做浏览器实验；独立 worktree 从 DESK-MOTION-001 `5d91bb2` 建立。
 - 2026-09-20：阶段 A 共享模块与实验台实现完成；真实浏览器截图发现并通过先失败的 Playwright 回归移除 button 默认 2px 白边框。生产 `wallpapers/dext-room`、设置页和 Core 保持零差异。
-- 2026-09-20：自动检查为 Node 18/18、Vitest 50/50、renderer Playwright 44/44、前端 build、语法与 Room Schema 全绿；等待独立审查后提交阶段 A。
+- 2026-09-20：独立审查指出 reduced-motion 仍保留缩放、页面外松手会残留 pressed；两项均以 Playwright 红测复现并修复，图标实验台更新为 6/6。
+- 2026-09-20：最终自动检查为 Node 18/18、Vitest 50/50、renderer Playwright 45/45、前端 build、语法、Room Schema 与 diff check 全绿；`codegraph sync` 按规范尝试，但本 worktree 索引为 Not initialized，未擅自初始化。

@@ -89,6 +89,8 @@
 | #82 | 拖拽回归未先断言进入 dragging，缺失手势实现也可能得到取消/未保存的假绿终态 | [renderer](errors/renderer.md) |
 | #83 | Dock 安全余量混用 Room 逻辑像素与屏幕像素，旋转外接框仍可能侵入禁区 | [renderer](errors/renderer.md) |
 | #84 | 通用 abort 假定 pressing 也有 baseIcons，restore 会误清已发布图标快照 | [renderer](errors/renderer.md) |
+| #85 | reduced-motion 只关 transition/animation，hover 与托起 transform 仍然位移 | [renderer](errors/renderer.md) |
+| #86 | 在 window capture 阶段监听 blur，会把控件失焦误判成窗口失焦 | [renderer](errors/renderer.md) |
 
 ## 分册
 
