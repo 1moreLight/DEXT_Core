@@ -176,12 +176,16 @@
   transform: scale(.97);
 }
 
-[data-dext-icon-feedback-root][data-icon-editing="true"] .icon-face {
+[data-dext-icon-feedback-root][data-icon-editing="true"] .icon-visual {
   animation: dext-icon-jiggle 150ms ease-in-out infinite alternate;
 }
 
-[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
+[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face,
+[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-visual {
   animation: none;
+}
+
+[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
   transform: translateY(-8px) scale(1.06);
   cursor: grabbing;
 }
@@ -204,8 +208,8 @@
 }
 
 @keyframes dext-icon-jiggle {
-  from { transform: translateX(-1.5px) rotate(-3deg); }
-  to { transform: translateX(1.5px) rotate(3deg); }
+  from { transform: rotate(-3deg); }
+  to { transform: rotate(3deg); }
 }
 
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,

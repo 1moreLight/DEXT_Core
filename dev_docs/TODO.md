@@ -856,6 +856,18 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 修复纯旋转使文字基线视觉位移过小的问题；同一 face 增加 ±1.5px 水平位移，图标、文字和命中边框保持刚性整体（2026-09-20）
 - [x] Playwright 从真实 CSSAnimation 矩阵同时锁定 ±3° 角度与 ±1.5px 位移；RED→GREEN（2026-09-20）
 - [x] 同步验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+- [x] 已取消（2026-09-20）：用户澄清文字应保持静止，本节由“仅图形抖动、文字静止”取代
+
+### 阶段 A 补充：文字显式抖动（2026-09-20，已取消）
+
+- [x] 已取消（2026-09-20）：用户原意是文字保持静止，不是让文字获得独立 jiggle；本节未修改生产实现
+
+### 阶段 A 补充：仅图形抖动、文字静止（2026-09-20）
+
+- [x] 将编辑 jiggle 从 `.icon-face` 移到 `.icon-visual`；文字和 footprint 保持静止（2026-09-20）
+- [x] 保留 300ms 长按、±3° / 150ms；撤销基于误解加入的 ±1.5px 整体平移（2026-09-20）
+- [x] Playwright 锁定 visual 关键帧、face/label 无动画、拖动与 reduced-motion；RED→GREEN（2026-09-20）
+- [x] 同步验收口径与错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，提交后继续停在阶段 A 人工验收（2026-09-20）
 
 - [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
 - [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡

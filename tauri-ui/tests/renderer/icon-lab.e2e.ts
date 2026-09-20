@@ -98,14 +98,17 @@ test("long labels ellipsize and hidden labels show a delayed tooltip", async ({ 
   await page.mouse.up();
 });
 
-test("editing and dragging keep face motion separate from visual feedback", async ({ page }) => {
+test("editing jiggles only the icon visual while its label and footprint stay still", async ({ page }) => {
   await page.getByRole("button", { name: "编辑", exact: true }).click();
   const icon = page.locator('[data-icon-id="hermes"]');
   const face = icon.locator(".icon-face");
   const visual = icon.locator(".icon-visual");
-  await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
-  await expect(face).toHaveCSS("animation-duration", "0.15s");
-  const jiggleFrames = await face.evaluate((node) => {
+  const label = icon.locator(".icon-label");
+  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(label).toHaveCSS("animation-name", "none");
+  await expect(visual).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(visual).toHaveCSS("animation-duration", "0.15s");
+  const jiggleFrames = await visual.evaluate((node) => {
     const animation = node.getAnimations().find((item) => item instanceof CSSAnimation && item.animationName === "dext-icon-jiggle");
     const frames = animation?.effect instanceof KeyframeEffect ? animation.effect.getKeyframes() : [];
     return frames.map((frame) => {
@@ -118,18 +121,20 @@ test("editing and dragging keep face motion separate from visual feedback", asyn
   });
   expect(jiggleFrames[0]?.angle).toBeCloseTo(-3, 1);
   expect(jiggleFrames.at(-1)?.angle).toBeCloseTo(3, 1);
-  expect(jiggleFrames[0]?.x).toBeCloseTo(-1.5, 1);
-  expect(jiggleFrames.at(-1)?.x).toBeCloseTo(1.5, 1);
+  expect(jiggleFrames[0]?.x).toBeCloseTo(0, 1);
+  expect(jiggleFrames.at(-1)?.x).toBeCloseTo(0, 1);
   await page.getByRole("button", { name: "悬停", exact: true }).click();
-  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(visual).toHaveCSS("animation-name", "none");
   await expect.poll(() => visual.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe("rgba(0, 0, 0, 0)");
 
   await page.getByRole("button", { name: "拖动", exact: true }).click();
   await expect(icon).toHaveClass(/is-dragging/);
-  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(visual).toHaveCSS("animation-name", "none");
+  await expect(label).toHaveCSS("animation-name", "none");
   expect(await face.evaluate((node) => getComputedStyle(node).transform)).toContain("matrix");
   await page.getByRole("button", { name: "编辑", exact: true }).click();
-  await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(visual).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(label).toHaveCSS("animation-name", "none");
 });
 
 test("reduced motion removes transitions and jiggle while keeping feedback", async ({ page }) => {
@@ -208,7 +213,9 @@ test("pins preview states without replacing nodes or moving the icon anchor", as
   await expectCenter(initialCenter);
 
   await page.getByRole("button", { name: "编辑", exact: true }).click();
-  await expect(icon.locator(".icon-face")).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(visual).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(icon.locator(".icon-face")).toHaveCSS("animation-name", "none");
+  await expect(icon.locator(".icon-label")).toHaveCSS("animation-name", "none");
   await page.getByRole("button", { name: "拖动", exact: true }).click();
   await expect(icon).toHaveClass(/is-dragging/);
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
@@ -360,6 +367,8 @@ test("interactive long press enters edit mode and drag returns before blank doub
   const stage = page.locator("#icon-stage");
   const icon = page.locator('[data-icon-id="hermes"]');
   const face = icon.locator(".icon-face");
+  const visual = icon.locator(".icon-visual");
+  const label = icon.locator(".icon-label");
   const faceBox = await face.boundingBox();
   const stageBox = await stage.boundingBox();
   if (!faceBox || !stageBox) throw new Error("interactive geometry unavailable");
@@ -373,7 +382,9 @@ test("interactive long press enters edit mode and drag returns before blank doub
   expect(await root.getAttribute("data-icon-editing")).toBe("false");
   await page.clock.runFor(1);
   expect(await root.getAttribute("data-icon-editing")).toBe("true");
-  await expect(face).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(visual).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(face).toHaveCSS("animation-name", "none");
+  await expect(label).toHaveCSS("animation-name", "none");
   await expect(page.locator("footer")).toContainText("长按 300ms 编辑");
   await page.mouse.up();
 
