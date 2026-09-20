@@ -1,6 +1,6 @@
 # DESK-ICON-001 桌面图标反馈与命中区优化验收
 
-- 状态：开发中（阶段 A：浏览器实验）
+- 状态：待验收（阶段 A：浏览器实验，未接入生产）
 - 分支：`feat/DESK-ICON-001-icon-feedback`
 - 基线：DESK-MOTION-001 `5d91bb2`
 - 设计：`docs/superpowers/specs/2026-09-20-desktop-icon-feedback-design.md`
@@ -10,9 +10,9 @@
 
 ## 阶段 A 自动检查
 
-- [ ] Node：默认偏好、非法值回退、dataset 应用和状态判定。
-- [ ] Playwright：三种模式、空白格不命中、face 命中、名称省略、500ms 浮层、编辑/拖动抑制和 reduced-motion。
-- [ ] Vitest、前端 build、完整 renderer Playwright、语法、Room Schema 与 diff check。
+- [x] Node：图标偏好 3/3；连同既有 motion/controller/bridge 共 18/18。
+- [x] Playwright：新增图标实验台 5/5；连同真实桌面与 motion 实验台共 44/44。
+- [x] Vitest 50/50、前端 build、语法、Room Schema 与 diff check。
 - [ ] 独立代码审查无 Critical/Important。
 
 ## 阶段 A 浏览器人工验收
@@ -29,3 +29,5 @@
 ## 验收记录
 
 - 2026-09-20：用户批准 DESK-ICON-001 计划并要求先做浏览器实验；独立 worktree 从 DESK-MOTION-001 `5d91bb2` 建立。
+- 2026-09-20：阶段 A 共享模块与实验台实现完成；真实浏览器截图发现并通过先失败的 Playwright 回归移除 button 默认 2px 白边框。生产 `wallpapers/dext-room`、设置页和 Core 保持零差异。
+- 2026-09-20：自动检查为 Node 18/18、Vitest 50/50、renderer Playwright 44/44、前端 build、语法与 Room Schema 全绿；等待独立审查后提交阶段 A。

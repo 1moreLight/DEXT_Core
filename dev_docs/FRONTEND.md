@@ -84,6 +84,17 @@ Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图�
 
 实验台只验证运动规则与默认参数，不代表生产外观。阶段 B 已把同一求解器和动画引擎接入真实桌面；生产仍使用现有图标、Widget iframe、主题、编辑边框与 Dock，不复用实验台示例卡片。
 
+### 图标反馈实验台（DESK-ICON-001）
+
+```powershell
+cd tauri-ui
+npm run dev:icons
+```
+
+地址为 `http://127.0.0.1:5174/wallpapers/dext-icon-lab/`。实验台直接加载 `wallpapers/dext-icon-feedback/icon-feedback.js` 与 `.css`，提供“图标光晕 / 紧凑内容框 / 纯净无边框”、名称显示、真实命中区、编辑、拖动、reduced-motion 和多背景检查。打开“显示实际命中区”后，橙色虚线是仍用于布局的 96×120 单元，绿色实线才是接收点击和拖动的可见 face。
+
+阶段 A 只验证未来生产共用的视觉属性与指针范围；在独立验收卡明确通过前，真实 `dext-room`、设置页和 Core 均不得接入。长名称固定单行省略；关闭名称后稳定悬停 500ms 才显示名称浮层，编辑、按下或拖动期间抑制。
+
 ## 二、验证到真桌面
 
 预览满意后：配置器「重新应用」或重启 Lively（渲染器文件就是壁纸包内文件，重载即生效）。

@@ -234,6 +234,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 日常启动（核心+配置器） | 双击 `scripts\start-dext.cmd`，或终端运行 `scripts\start.ps1`；输出缺失或仍是 Lively 产品元数据时自动执行完整构建 |
 | 渲染器外观迭代（无需 Lively） | `scripts\room-preview.ps1`（端口 5174 热刷新） |
 | 自动重排动画实验台（无需 Lively） | `npm run dev:motion`（`127.0.0.1:5174/wallpapers/dext-motion-lab/`） |
+| 图标反馈实验台（无需 Lively） | `cd tauri-ui; npm run dev:icons`（`127.0.0.1:5174/wallpapers/dext-icon-lab/`） |
 | 渲染器浏览器自动测试 | 首次 `cd tauri-ui; npx playwright install chromium`，之后 `npm run test:renderer:e2e` |
 | 强制重铺壁纸（活体测试，会改变桌面与恢复布局） | `cargo test --lib applies_room_wallpaper -- --ignored`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
