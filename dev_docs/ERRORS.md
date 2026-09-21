@@ -106,6 +106,8 @@
 
 ## 分册
 
+- 2026-09-21 拖动反馈修正：图标 face 的 180ms transform 过渡叠加预览时外层坐标重排，会导致跟手滞后、跳动；拖起对象外层需固定，只对其他对象执行 FLIP。空白退出需监听整个 document，并排除指针捕获重定向到的 `.icon` 和其他交互对象。连续 12 次真实指针拖放已验证。
+
 - [git.md](errors/git.md) —— 仓库/分支/worktree/并行会话协作
 - [backend.md](errors/backend.md) —— C# / Rust / RPC / 运行时
 - [frontend.md](errors/frontend.md) —— 配置器 Tauri/React

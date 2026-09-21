@@ -37,6 +37,7 @@
       this.transaction = null;
       this.publishedIcons = [];
       this.itemsByKey = new Map();
+      this.pointerSurface = container.ownerDocument?.defaultView ?? container;
       this._handlers = {
         pointerdown: (event) => this._onPointerDown(event),
         pointermove: (event) => this._onPointerMove(event),
@@ -53,7 +54,8 @@
         updateNode: (node, item) => this._updateNode(node, item),
       });
       for (const [type, handler] of Object.entries(this._handlers)) {
-        this.container.addEventListener?.(type, handler);
+        const surface = ["pointermove", "pointerup", "pointercancel"].includes(type) ? this.pointerSurface : this.container;
+        surface.addEventListener?.(type, handler);
       }
     }
 
@@ -142,7 +144,8 @@
     dispose() {
       this.abort({ restore: false });
       for (const [type, handler] of Object.entries(this._handlers)) {
-        this.container.removeEventListener?.(type, handler);
+        const surface = ["pointermove", "pointerup", "pointercancel"].includes(type) ? this.pointerSurface : this.container;
+        surface.removeEventListener?.(type, handler);
       }
       this.motion.dispose();
       this.itemsByKey.clear();
@@ -150,7 +153,12 @@
 
     _motionItems(icons) {
       const positionOf = this.options.positionOf ?? ((icon) => ({ left: icon.left ?? icon.x, top: icon.top ?? icon.y }));
-      return motionApi.createMotionItems(icons, positionOf);
+      const items = motionApi.createMotionItems(icons, positionOf);
+      if (this.state === "draggingIcon" && this.transaction?.anchor) {
+        const item = items.find((entry) => entry.key === this.transaction.key);
+        if (item) Object.assign(item, this.transaction.anchor);
+      }
+      return items;
     }
 
     _createNode(item) {
@@ -264,6 +272,8 @@
         sourceIndex,
         node,
         face,
+        anchor: { left: items[sourceIndex].left, top: items[sourceIndex].top },
+        startPointer: { x: event.clientX, y: event.clientY },
         baseIcons: cloneIcons(this.publishedIcons),
         previewIcons: null,
         valid: false,
@@ -369,12 +379,11 @@
 
     _updateIconLift(drag, event) {
       if (!drag?.face?.style || !event) return;
-      const rect = drag.node.getBoundingClientRect();
       const reducedMotion = typeof this.options.reducedMotion === "function"
         ? Boolean(this.options.reducedMotion())
         : Boolean(this.options.reducedMotion);
-      const dx = event.clientX - rect.left - rect.width / 2;
-      const dy = event.clientY - rect.top - rect.height / 2 + (reducedMotion ? 0 : this.profile.iconLift.y);
+      const dx = event.clientX - drag.startPointer.x;
+      const dy = event.clientY - drag.startPointer.y + (reducedMotion ? 0 : this.profile.iconLift.y);
       const scale = reducedMotion ? 1 : this.profile.iconLift.scale;
       drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
     }

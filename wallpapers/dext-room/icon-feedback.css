@@ -242,6 +242,7 @@ body.editing [data-dext-icon-feedback-root].icon-layer .icon:nth-child(even) .ic
 }
 
 [data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
+  transition: none;
   transform: translateY(-8px) scale(1.06);
   cursor: grabbing;
 }

@@ -190,7 +190,7 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
   await page.clock.runFor(1);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "100px");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "0px");
   await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
 
   await page.mouse.up();
@@ -212,11 +212,36 @@ test("one continuous long press can enter edit and drag the icon without lifting
   await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
   await page.waitForTimeout(100);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("transition-duration", "0s");
+  const lifted = await page.locator('[data-launch-target="alpha.exe"] .icon-face').boundingBox();
+  expect(lifted).not.toBeNull();
+  expect(Math.abs(lifted!.x + lifted!.width / 2 - (bravo.x + bravo.width / 2))).toBeLessThan(15);
   await page.mouse.up();
 
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "100px");
   await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
   await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
+});
+
+test("repeated drags keep the lifted face stationary while its target preview changes", async ({ page }) => {
+  await longPressAlpha(page);
+  const face = page.locator('[data-launch-target="alpha.exe"] .icon-face');
+  for (let turn = 0; turn < 12; turn++) {
+    const start = await face.boundingBox();
+    if (!start) throw new Error("missing face");
+    await page.mouse.move(start.x + 20, start.y + 20);
+    await page.mouse.down();
+    const targetX = turn % 2 === 0 ? 190 : 90;
+    await page.mouse.move(targetX, start.y + 20);
+    await page.waitForTimeout(110);
+    const before = await face.boundingBox();
+    await page.waitForTimeout(100);
+    const after = await face.boundingBox();
+    expect(Math.abs(after!.x - before!.x)).toBeLessThan(1);
+    await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
+    await page.mouse.up();
+  }
+  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(12);
 });
 
 test("Dock and pointercancel restore an icon gesture without persisting", async ({ page }) => {
@@ -274,7 +299,7 @@ test("double-clicking true desktop blank exits edit while interactive children d
   await longPressAlpha(page);
   await page.locator('[data-launch-target="alpha.exe"]').dblclick({ force: true });
   await expect(page.locator("body")).toHaveClass(/editing/);
-  await page.locator(".icon-layer").dblclick({ position: { x: 1050, y: 560 }, force: true });
+  await page.mouse.dblclick(5, 5);
   await expect(page.locator("body")).not.toHaveClass(/editing/);
 });
 
