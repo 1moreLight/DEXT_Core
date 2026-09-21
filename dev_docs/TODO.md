@@ -817,6 +817,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 > 范围外：浏览器验收前不修改真实桌面、设置页、Core、proto、Widget、Dock 或 Room Schema；不先于 DESK-MOTION-001 合并 master。
 > 人工验收：按 `dev_docs/acceptance/DESK-ICON-001-icon-feedback.md` 的阶段 A 十步在浏览器确认；明确通过后才进入生产集成。
 
+### 阶段 B：真实桌面与全局偏好集成（2026-09-21 开工）
+
+- [x] 用户回复“感觉差不多了，可以尝试合并进去了”，确认阶段 A 可进入真实桌面集成（2026-09-21）
+- [x] 裁定：当前分支已建立在 DESK-MOTION-001 之上，可继续完成阶段 B；最终仍严格先合入 Motion、再合入 Icon，不直接修改 master（2026-09-21）
+- [ ] 真实 `dext-room` 接入共享 visual/face/tooltip 和偏好消息，不替换稳定图标节点或 Widget iframe
+- [ ] Core Settings、Rust patch/投递、设置页五项偏好和 Player 启动快照端到端接通
+- [ ] 完整自动检查、全分支审查、文档收口并提交，停在真实桌面人工验收
+
 ### 阶段 A 补充：直接交互实验（2026-09-20）
 
 - [x] 实验台默认进入“交互”状态，真实响应 hover、pointerdown 和短按选择，同时保留固定状态诊断按钮（2026-09-20）

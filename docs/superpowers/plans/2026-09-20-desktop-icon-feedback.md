@@ -56,6 +56,41 @@ Expected: 阶段 A 提交存在，工作树干净；真实桌面、设置页和 
 
 只有用户明确回复浏览器实验通过后，才新增真实 `.icon-visual`、全局设置字段、`dext:desktop-preferences` 消息和启动偏好快照。阶段 B 仍在同一 DESK-ICON-001 分支完成，但必须等待 DESK-MOTION-001 先合入 master。
 
+## Task 5: Stage B gate and records
+
+- [x] 记录 2026-09-21 用户通过阶段 A 并授权真实桌面集成。
+- [x] 更新 ROADMAP、TODO、PROJECT 与验收卡，冻结阶段 B 范围和真实桌面人工验收。
+- [x] 记录叠加分支裁定：允许在 DESK-MOTION-001 之上继续开发，但最终仍按 Motion → Icon 顺序合并 master。
+
+Expected: 工作树只包含文档变化，`git diff --check` 通过。
+
+## Task 6: Real desktop visual integration (TDD)
+
+- [ ] 先写真实 `dext-room` Playwright 失败测试：共享 `.icon-visual` 分层、footprint/实际命中一致、节点与 Widget iframe 不替换、标签隐藏/浮层、视觉大小和 reduced-motion。
+- [ ] 真实桌面加载共享偏好模块/CSS；稳定图标节点补齐 visual/label/tooltip 分层，外层继续只负责坐标和 FLIP。
+- [ ] 新增 `dext:desktop-preferences` 消息并用同一 controller 原地应用偏好；编辑、拖动和热布局更新不重建节点。
+- [ ] 保持 Dock、Widget、Scene、应用启动和 Room Schema 不变。
+
+Expected: Node 与真实桌面定向 Playwright RED→GREEN；运动层与视觉层 transform 互不覆盖。
+
+## Task 7: Global settings and live delivery (TDD)
+
+- [ ] proto 增加反馈风格、名称显示、footprint、视觉大小和间距字段；历史设置的零值映射到 halo + shown + standard。
+- [ ] Rust 设置视图/patch 保留未修改字段，并返回 `not_needed / applied / deferred` 投递状态。
+- [ ] 设置页增加五项偏好控制；保存成功立即投递当前官方 Dext Room，失败保留设置并提示下次加载生效。
+- [ ] Player/Core 在官方可信宿主加载完成后下发完整偏好快照；重启、切 Desk 和重铺壁纸保持一致。
+
+Expected: Vitest、Rust、C# 与 Player/renderer 回归 RED→GREEN；旧设置无需迁移文件即可得到默认值。
+
+## Task 8: Stage B verification and handoff
+
+- [ ] 运行 Vitest、build、Rust、C# Release、Node、完整 renderer Playwright、语法、Schema、生产边界与 diff check。
+- [ ] 更新 README/FRONTEND/PROJECT/ROADMAP/TODO/验收卡和错误记录。
+- [ ] 完成全分支自审；Critical/Important 用 RED→GREEN 修复，Minor 记录后交付。
+- [ ] 具名暂存并提交，启动真实桌面供人工验收；不合并 master。
+
+Expected: 分支干净、阶段 B 提交存在；Motion 仍是 Icon 合并 master 的前置。
+
 ## Stage A acceptance amendment (2026-09-20)
 
 - [x] 用 RED→GREEN 覆盖统一 footprint、布局格/命中框四边重合、名称切换几何不变和框间 gap 不命中。
