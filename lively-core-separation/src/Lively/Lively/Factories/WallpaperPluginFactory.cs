@@ -5,6 +5,7 @@ using Lively.Core.Display;
 using Lively.Core.Wallpapers;
 using Lively.Models;
 using Lively.Models.Enums;
+using Lively.Models.Message;
 using System;
 using System.Drawing;
 using System.IO;
@@ -71,7 +72,8 @@ namespace Lively.Factories
                                 userSettings.Settings.AudioVolumeGlobal,
                                 GetWebView2Scale(display, isWindowed),
                                 userSettings.Settings.VisualizerAudioDeviceId,
-                                isScreensaver);
+                                isScreensaver,
+                                CreateDesktopIconPreferences());
                     }
                     break;
                 case WallpaperType.video:
@@ -202,7 +204,8 @@ namespace Lively.Factories
                                                     userSettings.Settings.ApplicationTheme,
                                                     userSettings.Settings.AudioVolumeGlobal,
                                                     GetWebView2Scale(display, isWindowed),
-                                                    isScreensaver: isScreensaver),
+                                                    isScreensaver: isScreensaver,
+                                                    desktopIconPreferences: CreateDesktopIconPreferences()),
                         };
                     }
             }
@@ -213,6 +216,18 @@ namespace Lively.Factories
         {
             return userSettings.Settings.CefDiskCache && !isWindowed ? 
                 webView2UserDataFactory.GetUserDataFolder(arrangement, display) : webView2UserDataFactory.GetTempUserDataFolder();
+        }
+
+        private LivelyMessageDesktopIconPreferencesCmd CreateDesktopIconPreferences()
+        {
+            return new LivelyMessageDesktopIconPreferencesCmd
+            {
+                FeedbackStyle = userSettings.Settings.DesktopIconFeedbackStyle.ToString().ToLowerInvariant(),
+                ShowLabels = userSettings.Settings.ShowDesktopIconLabels,
+                HitTargetSize = userSettings.Settings.DesktopIconHitTargetSize.ToString().ToLowerInvariant(),
+                VisualSize = userSettings.Settings.DesktopIconVisualSize.ToString().ToLowerInvariant(),
+                Spacing = userSettings.Settings.DesktopIconSpacing.ToString().ToLowerInvariant(),
+            };
         }
 
         private double? GetWebView2Scale(DisplayMonitor display, bool isWindowed)

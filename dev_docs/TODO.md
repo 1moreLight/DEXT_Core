@@ -822,7 +822,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 用户回复“感觉差不多了，可以尝试合并进去了”，确认阶段 A 可进入真实桌面集成（2026-09-21）
 - [x] 裁定：当前分支已建立在 DESK-MOTION-001 之上，可继续完成阶段 B；最终仍严格先合入 Motion、再合入 Icon，不直接修改 master（2026-09-21）
 - [x] 真实 `dext-room` 接入共享 visual/face/tooltip 和偏好消息，不替换稳定图标节点或 Widget iframe；Node 19/19、真实 Room 15/15、图标实验台 12/12（2026-09-21）
-- [ ] Core Settings、Rust patch/投递、设置页五项偏好和 Player 启动快照端到端接通
+- [x] Core Settings、Rust patch/投递、设置页五项偏好和 Player 可信宿主启动快照端到端接通；Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过（2026-09-21）
 - [ ] 完整自动检查、全分支审查、文档收口并提交，停在真实桌面人工验收
 
 ### 阶段 A 补充：直接交互实验（2026-09-20）

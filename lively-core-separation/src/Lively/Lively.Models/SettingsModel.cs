@@ -139,6 +139,11 @@ namespace Lively.Models
         public DisplayAudioMode DisplayAudioOutput { get; set; }
         public DisplayMonitor SelectedAudioOutputDisplay { get; set; }
         public bool IsRestartAfterLockscreen { get; set; }
+        public DesktopIconFeedbackStyle DesktopIconFeedbackStyle { get; set; }
+        public bool ShowDesktopIconLabels { get; set; }
+        public DesktopIconSize DesktopIconHitTargetSize { get; set; }
+        public DesktopIconSize DesktopIconVisualSize { get; set; }
+        public DesktopIconSpacing DesktopIconSpacing { get; set; }
 
         public SettingsModel()
         {
@@ -228,6 +233,11 @@ namespace Lively.Models
             VisualizerAudioDeviceId = string.Empty;
             DisplayAudioOutput = DisplayAudioMode.all;
             IsRestartAfterLockscreen = false;
+            DesktopIconFeedbackStyle = DesktopIconFeedbackStyle.Halo;
+            ShowDesktopIconLabels = true;
+            DesktopIconHitTargetSize = DesktopIconSize.Standard;
+            DesktopIconVisualSize = DesktopIconSize.Standard;
+            DesktopIconSpacing = DesktopIconSpacing.Standard;
         }
     }
 }

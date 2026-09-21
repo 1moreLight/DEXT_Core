@@ -75,10 +75,10 @@ Expected: Node 与真实桌面定向 Playwright RED→GREEN；运动层与视觉
 
 ## Task 7: Global settings and live delivery (TDD)
 
-- [ ] proto 增加反馈风格、名称显示、footprint、视觉大小和间距字段；历史设置的零值映射到 halo + shown + standard。
-- [ ] Rust 设置视图/patch 保留未修改字段，并返回 `not_needed / applied / deferred` 投递状态。
-- [ ] 设置页增加五项偏好控制；保存成功立即投递当前官方 Dext Room，失败保留设置并提示下次加载生效。
-- [ ] Player/Core 在官方可信宿主加载完成后下发完整偏好快照；重启、切 Desk 和重铺壁纸保持一致。
+- [x] proto 增加反馈风格、名称显示、footprint、视觉大小和间距字段；历史设置的零值映射到 halo + shown + standard。
+- [x] Rust 设置视图/patch 保留未修改字段，并返回 `not_needed / applied / deferred` 投递状态。
+- [x] 设置页增加五项偏好控制；保存成功立即投递当前官方 Dext Room，失败保留设置并提示下次加载生效。
+- [x] Player/Core 在官方可信宿主加载完成后下发完整偏好快照；重启、切 Desk 和重铺壁纸保持一致。
 
 Expected: Vitest、Rust、C# 与 Player/renderer 回归 RED→GREEN；旧设置无需迁移文件即可得到默认值。
 

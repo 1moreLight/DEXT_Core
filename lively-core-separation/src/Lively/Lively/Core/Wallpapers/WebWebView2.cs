@@ -36,6 +36,7 @@ namespace Lively.Core.Wallpapers
         private readonly CancellationTokenSource appMonitorCts = new();
         private readonly object appMonitorLock = new();
         private readonly object sendLock = new();
+        private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private readonly Lively.Services.SystemControlService systemControlService = new();
         private int currentVolume = 0;
@@ -73,7 +74,8 @@ namespace Lively.Core.Wallpapers
             int volume,
             double? scale = null,
             string audioVisualizerId = null,
-            bool isScreensaver = false)
+            bool isScreensaver = false,
+            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -97,6 +99,9 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(model.LivelyInfo.Type.IsOnlineWallpaper() ? " --wallpaper-type online" : " --wallpaper-type local");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);
+            this.desktopIconPreferences = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0
+                ? desktopIconPreferences
+                : null;
 
             this.process = new Process
             {
@@ -318,6 +323,8 @@ namespace Lively.Core.Wallpapers
                         {
                             IsLoaded = true;
                             Loaded?.Invoke(this, EventArgs.Empty);
+                            if (desktopIconPreferences is not null)
+                                SendMessage(desktopIconPreferences);
 
                             // Wait before pausing or other internal fn since some pages can have transition.
                             await Task.Delay(1000);

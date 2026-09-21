@@ -793,6 +793,24 @@ namespace Lively.Player.WebView2
                         // Reject malformed payloads before they cross into the page.
                     }
                     break;
+                case MessageType.cmd_desktop_icon_preferences:
+                    if (!startArgs.DextTrustedHost)
+                        break;
+                    var desktopIcons = (LivelyMessageDesktopIconPreferencesCmd)obj;
+                    var desktopIconPayload = new
+                    {
+                        type = "dext:desktop-preferences",
+                        preferences = new
+                        {
+                            feedbackStyle = desktopIcons.FeedbackStyle ?? "halo",
+                            showLabels = desktopIcons.ShowLabels,
+                            hitTargetSize = desktopIcons.HitTargetSize ?? "standard",
+                            visualSize = desktopIcons.VisualSize ?? "standard",
+                            spacing = desktopIcons.Spacing ?? "standard",
+                        },
+                    };
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(desktopIconPayload));
+                    break;
                 case MessageType.cmd_system_control_response:
                     var response = (LivelyMessageSystemControlResponse)obj;
                     var systemPayload = new

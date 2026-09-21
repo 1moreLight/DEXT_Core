@@ -73,6 +73,7 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 // survives repo relocation; recompile after moving the repo.
 const WALLPAPER_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room");
 const CMD_ROOM_LAYOUT_SYNC: i32 = 26;
+const CMD_DESKTOP_ICON_PREFERENCES: i32 = 27;
 static DESK_LAYOUT_SYNC_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 #[derive(serde::Serialize)]
@@ -122,9 +123,14 @@ struct DextSettings {
     battery_pause: bool,
     power_save_pause: bool,
     audio_only_on_desktop: bool,
+    desktop_icon_feedback_style: String,
+    show_desktop_icon_labels: bool,
+    desktop_icon_hit_target_size: String,
+    desktop_icon_visual_size: String,
+    desktop_icon_spacing: String,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Default, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DextSettingsPatch {
     startup: Option<bool>,
@@ -132,6 +138,28 @@ struct DextSettingsPatch {
     battery_pause: Option<bool>,
     power_save_pause: Option<bool>,
     audio_only_on_desktop: Option<bool>,
+    desktop_icon_feedback_style: Option<String>,
+    show_desktop_icon_labels: Option<bool>,
+    desktop_icon_hit_target_size: Option<String>,
+    desktop_icon_visual_size: Option<String>,
+    desktop_icon_spacing: Option<String>,
+}
+
+impl DextSettingsPatch {
+    fn changes_desktop_icons(&self) -> bool {
+        self.desktop_icon_feedback_style.is_some()
+            || self.show_desktop_icon_labels.is_some()
+            || self.desktop_icon_hit_target_size.is_some()
+            || self.desktop_icon_visual_size.is_some()
+            || self.desktop_icon_spacing.is_some()
+    }
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DextSettingsUpdate {
+    settings: DextSettings,
+    delivery_status: String,
 }
 
 #[derive(serde::Serialize)]
@@ -2325,6 +2353,71 @@ async fn stop_wallpapers() -> Result<(), String> {
     grpc::close_all_wallpapers().await
 }
 
+fn desktop_icon_feedback_name(value: i32) -> &'static str {
+    match value {
+        1 => "compact",
+        2 => "bare",
+        _ => "halo",
+    }
+}
+
+fn desktop_icon_size_name(value: i32) -> &'static str {
+    match value {
+        1 => "small",
+        2 => "large",
+        _ => "standard",
+    }
+}
+
+fn desktop_icon_spacing_name(value: i32) -> &'static str {
+    match value {
+        1 => "compact",
+        2 => "spacious",
+        _ => "standard",
+    }
+}
+
+fn parse_desktop_icon_feedback(value: &str) -> Result<i32, String> {
+    match value {
+        "halo" => Ok(0),
+        "compact" => Ok(1),
+        "bare" => Ok(2),
+        _ => Err(format!("unsupported desktop icon feedback style: {value}")),
+    }
+}
+
+fn parse_desktop_icon_size(value: &str, label: &str) -> Result<i32, String> {
+    match value {
+        "standard" => Ok(0),
+        "small" => Ok(1),
+        "large" => Ok(2),
+        _ => Err(format!("unsupported desktop icon {label}: {value}")),
+    }
+}
+
+fn parse_desktop_icon_spacing(value: &str) -> Result<i32, String> {
+    match value {
+        "standard" => Ok(0),
+        "compact" => Ok(1),
+        "spacious" => Ok(2),
+        _ => Err(format!("unsupported desktop icon spacing: {value}")),
+    }
+}
+
+fn desktop_icon_preferences_message(
+    settings: &crate::proto::settings::SettingsDataModel,
+) -> Result<String, String> {
+    serde_json::to_string(&serde_json::json!({
+        "Type": CMD_DESKTOP_ICON_PREFERENCES,
+        "FeedbackStyle": desktop_icon_feedback_name(settings.desktop_icon_feedback_style),
+        "ShowLabels": settings.show_desktop_icon_labels.unwrap_or(true),
+        "HitTargetSize": desktop_icon_size_name(settings.desktop_icon_hit_target_size),
+        "VisualSize": desktop_icon_size_name(settings.desktop_icon_visual_size),
+        "Spacing": desktop_icon_spacing_name(settings.desktop_icon_spacing),
+    }))
+    .map_err(|error| format!("serialize desktop icon preferences failed: {error}"))
+}
+
 fn settings_view(settings: &crate::proto::settings::SettingsDataModel) -> DextSettings {
     DextSettings {
         startup: settings.startup,
@@ -2332,6 +2425,15 @@ fn settings_view(settings: &crate::proto::settings::SettingsDataModel) -> DextSe
         battery_pause: settings.battery_pause == 0,
         power_save_pause: settings.power_save_mode_pause == 0,
         audio_only_on_desktop: settings.audio_only_on_desktop,
+        desktop_icon_feedback_style: desktop_icon_feedback_name(
+            settings.desktop_icon_feedback_style,
+        )
+        .into(),
+        show_desktop_icon_labels: settings.show_desktop_icon_labels.unwrap_or(true),
+        desktop_icon_hit_target_size: desktop_icon_size_name(settings.desktop_icon_hit_target_size)
+            .into(),
+        desktop_icon_visual_size: desktop_icon_size_name(settings.desktop_icon_visual_size).into(),
+        desktop_icon_spacing: desktop_icon_spacing_name(settings.desktop_icon_spacing).into(),
     }
 }
 
@@ -2361,15 +2463,52 @@ fn apply_settings_patch(
     if let Some(value) = patch.audio_only_on_desktop {
         settings.audio_only_on_desktop = value;
     }
+    if let Some(value) = patch.desktop_icon_feedback_style {
+        settings.desktop_icon_feedback_style = parse_desktop_icon_feedback(&value)?;
+    }
+    if let Some(value) = patch.show_desktop_icon_labels {
+        settings.show_desktop_icon_labels = Some(value);
+    }
+    if let Some(value) = patch.desktop_icon_hit_target_size {
+        settings.desktop_icon_hit_target_size = parse_desktop_icon_size(&value, "hit target size")?;
+    }
+    if let Some(value) = patch.desktop_icon_visual_size {
+        settings.desktop_icon_visual_size = parse_desktop_icon_size(&value, "visual size")?;
+    }
+    if let Some(value) = patch.desktop_icon_spacing {
+        settings.desktop_icon_spacing = parse_desktop_icon_spacing(&value)?;
+    }
     Ok(())
 }
 
 #[tauri::command]
-async fn patch_dext_settings(patch: DextSettingsPatch) -> Result<DextSettings, String> {
+async fn patch_dext_settings(patch: DextSettingsPatch) -> Result<DextSettingsUpdate, String> {
+    let changes_desktop_icons = patch.changes_desktop_icons();
     let mut settings = grpc::get_settings().await?;
     apply_settings_patch(&mut settings, patch)?;
     grpc::set_settings(&settings).await?;
-    Ok(settings_view(&settings))
+    let delivery_status = if !changes_desktop_icons {
+        "not_needed"
+    } else {
+        let message = desktop_icon_preferences_message(&settings);
+        match (active_wallpaper_value().await, message) {
+            (Ok(Some(active)), Ok(message)) => {
+                if grpc::send_message_wallpaper(&active.lively_info_path, &message)
+                    .await
+                    .is_ok()
+                {
+                    "applied"
+                } else {
+                    "deferred"
+                }
+            }
+            _ => "deferred",
+        }
+    };
+    Ok(DextSettingsUpdate {
+        settings: settings_view(&settings),
+        delivery_status: delivery_status.into(),
+    })
 }
 
 async fn diagnostic_value() -> Result<serde_json::Value, String> {
@@ -2882,13 +3021,13 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_settings_patch, create_room_dir, direct_room_entry_in_library, duplicate_room_dir,
-        direct_room_in_library, display_path, export_room_zip_file, import_room_content_file,
-        import_widget_dir,
-        import_room_zip_file, rename_room_dir, replace_desk_icons, room_layout_message, save_room_as_dir,
-        sync_room_to_package, update_desk_layout_source, validate_room_contract, validate_room_library_path,
-        validate_room_v2, write_room_file, write_runtime_desk_layout, DextSettingsPatch,
-        ROOM_ASSET_DIRS,
+        apply_settings_patch, create_room_dir, desktop_icon_preferences_message,
+        direct_room_entry_in_library, direct_room_in_library, display_path, duplicate_room_dir,
+        export_room_zip_file, import_room_content_file, import_room_zip_file, import_widget_dir,
+        rename_room_dir, replace_desk_icons, room_layout_message, save_room_as_dir, settings_view,
+        sync_room_to_package, update_desk_layout_source, validate_room_contract,
+        validate_room_library_path, validate_room_v2, write_room_file, write_runtime_desk_layout,
+        DextSettingsPatch, ROOM_ASSET_DIRS,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -3757,6 +3896,11 @@ mod tests {
 
     #[test]
     fn settings_patch_preserves_unedited_fields() {
+        assert!(!DextSettingsPatch {
+            startup: Some(true),
+            ..Default::default()
+        }
+        .changes_desktop_icons());
         let mut settings = crate::proto::settings::SettingsDataModel {
             startup: false,
             app_version: "keep-me".into(),
@@ -3772,6 +3916,11 @@ mod tests {
                 battery_pause: Some(true),
                 power_save_pause: Some(true),
                 audio_only_on_desktop: None,
+                desktop_icon_feedback_style: Some("bare".into()),
+                show_desktop_icon_labels: Some(false),
+                desktop_icon_hit_target_size: Some("small".into()),
+                desktop_icon_visual_size: Some("large".into()),
+                desktop_icon_spacing: Some("compact".into()),
             },
         )
         .unwrap();
@@ -3781,5 +3930,30 @@ mod tests {
         assert_eq!(settings.power_save_mode_pause, 0);
         assert_eq!(settings.audio_volume_global, 35);
         assert_eq!(settings.app_version, "keep-me");
+        assert_eq!(settings.desktop_icon_feedback_style, 2);
+        assert_eq!(settings.show_desktop_icon_labels, Some(false));
+        assert_eq!(settings.desktop_icon_hit_target_size, 1);
+        assert_eq!(settings.desktop_icon_visual_size, 2);
+        assert_eq!(settings.desktop_icon_spacing, 1);
+    }
+
+    #[test]
+    fn desktop_icon_settings_use_backward_compatible_defaults_and_message_contract() {
+        let settings = crate::proto::settings::SettingsDataModel::default();
+        let view = settings_view(&settings);
+        assert_eq!(view.desktop_icon_feedback_style, "halo");
+        assert!(view.show_desktop_icon_labels);
+        assert_eq!(view.desktop_icon_hit_target_size, "standard");
+        assert_eq!(view.desktop_icon_visual_size, "standard");
+        assert_eq!(view.desktop_icon_spacing, "standard");
+
+        let message: serde_json::Value =
+            serde_json::from_str(&desktop_icon_preferences_message(&settings).unwrap()).unwrap();
+        assert_eq!(message["Type"], 27);
+        assert_eq!(message["FeedbackStyle"], "halo");
+        assert_eq!(message["ShowLabels"], true);
+        assert_eq!(message["HitTargetSize"], "standard");
+        assert_eq!(message["VisualSize"], "standard");
+        assert_eq!(message["Spacing"], "standard");
     }
 }
