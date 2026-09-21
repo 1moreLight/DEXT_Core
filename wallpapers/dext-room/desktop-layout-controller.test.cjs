@@ -203,7 +203,7 @@ test("aborting a pending long press never clears the published icon snapshot", (
   assert.equal(controller.publishedIcons[0].label, "Alpha");
 });
 
-test("a desktop can provide its own long-press threshold", async () => {
+test("a desktop long press keeps the same pointer and hands it directly into icon dragging", async () => {
   const layer = new FakeContainer();
   let editRequests = 0;
   const controller = new DextDesktopLayoutController(layer, {
@@ -219,6 +219,8 @@ test("a desktop can provide its own long-press threshold", async () => {
   await new Promise((resolve) => setTimeout(resolve, 20));
 
   assert.equal(editRequests, 1);
+  assert.equal(controller.state, "draggingIcon");
+  layer.dispatch("pointerup", layer.children[0], { clientX: 36, clientY: 42 });
   assert.equal(controller.state, "idle");
 });
 

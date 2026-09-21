@@ -198,6 +198,27 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
   await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
 });
 
+test("one continuous long press can enter edit and drag the icon without lifting first", async ({ page }) => {
+  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
+  const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
+  if (!alpha || !bravo) throw new Error("icon geometry unavailable");
+
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(330);
+  await expect(page.locator("body")).toHaveClass(/editing/);
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
+
+  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
+  await page.waitForTimeout(100);
+  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
+  await page.mouse.up();
+
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "100px");
+  await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
+  await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
+});
+
 test("Dock and pointercancel restore an icon gesture without persisting", async ({ page }) => {
   await longPressAlpha(page);
   const alphaFace = page.locator('[data-launch-target="alpha.exe"] .icon-face');

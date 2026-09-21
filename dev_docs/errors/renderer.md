@@ -442,3 +442,20 @@ DOM 分层和几何，还要覆盖至少一个来自真实数据的主题色值�
 
 防再犯：官方 Room 的 boot-critical HTML、JS、CSS 必须自包含于 Player 映射目录。浏览器实验台可引用
 生产资源，但生产页面不得依赖实验台或仓库兄弟目录；Vite 全仓库服务不能替代虚拟主机边界回归。
+
+# #98 长按进入编辑必须把同一 pointer 交接给拖动事务
+
+现象：真实桌面长按图标后会进入编辑并出现托起感，但继续移动无法排序；松手后图标立即回到原位。
+只有先松手、再第二次按住图标才能拖动。
+
+原因：长按计时到点时，控制器先把 `pressing` 状态和 transaction 清成 `idle`，再请求进入编辑。
+仍按住的原始 pointer 因此失去归属；后续 `pointermove` 在 idle 状态被忽略，`pointerup` 也没有可提交事务。
+既有测试先长按并松手，再启动第二段拖动，恰好绕过了这条连续手势路径。
+
+修复：长按回调先同步进入编辑，再把原 transaction 的 pointerId、起点和节点直接交给
+`_startIconDrag()`，状态从 pressing 连续变成 draggingIcon。若进入编辑期间事务已被权威更新或 abort
+撤销，则守卫阻止旧回调复活。Node 和真实 Room Playwright 均覆盖同一 pointer 长按、跨格、80ms
+占位和单次保存。
+
+防再犯：长按不是一个需要结束的独立点击，而是拖动手势的前半段；测试必须至少保留一条
+pointerdown → dwell → pointermove → pointerup 全程不松手的真实序列，不能只覆盖“先进入编辑再拖”。

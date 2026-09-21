@@ -102,6 +102,7 @@
 | #95 | 共享 Glyph 渐变读取 `--icon-color`，真实桌面只写 backgroundColor 会让图标退回默认蓝色 | [renderer](errors/renderer.md) |
 | #96 | reduced-motion 若清除整个 face transform，会连拖动所需 pointer translate 一并抹掉 | [renderer](errors/renderer.md) |
 | #97 | 浏览器实验台可跨目录加载共享资源，但 WebView2 本地虚拟主机只映射生产 Room 目录，兄弟路径会令真实桌面黑屏 | [renderer](errors/renderer.md) |
+| #98 | 长按进入编辑时先清空 pressing 事务，同一 pointer 无法继续拖动，只能松手回原位 | [renderer](errors/renderer.md) |
 
 ## 分册
 

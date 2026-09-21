@@ -209,9 +209,14 @@
       };
       transaction.timer = setTimeout(() => {
         if (this.state !== "pressing" || this.transaction !== transaction) return;
-        this.state = "idle";
-        this.transaction = null;
         this.options.onRequestEdit?.();
+        if (this.state !== "pressing" || this.transaction !== transaction) return;
+        this._startIconDrag({
+          pointerId: transaction.pointerId,
+          clientX: transaction.startX,
+          clientY: transaction.startY,
+          preventDefault() {},
+        }, node);
       }, this.longPressMs);
       this.state = "pressing";
       this.transaction = transaction;

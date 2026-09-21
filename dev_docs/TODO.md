@@ -826,6 +826,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 完整自动检查、全分支审查与文档收口：Vitest 52/52、Rust 40/40（3 ignored）、Node 20/20、renderer 52/52、前端 build、C# Release、Schema、proto 文本一致与 diff check 全绿（2026-09-21）
 - [x] 用户关闭旧 Dext 后启动本 worktree；Core PID 65292、Watchdog、Player、配置器及真实壁纸路径均核对来自 `DEXT_Core-desk-icon-001`，强制重铺活体测试 1/1 通过（2026-09-21）
 - [x] 真实桌面黑屏修复：确认 WebView2 只映射 `dext-room`，浏览器阶段的兄弟目录共享资源无法加载；边界 Playwright 先 RED 后 GREEN，共享 JS/CSS 收进生产目录，实验台反向引用（2026-09-21）
+- [x] 连续长按拖动修复：长按不再清空 pressing 事务，而是把同一 pointer 直接交给 draggingIcon；Node 与真实 Room 连续 pointer 回归均先 RED 后 GREEN（2026-09-21）
 - [ ] 按独立验收卡完成真实桌面人工验收；用户明确回复通过前不合并 master
 
 ### 阶段 A 补充：直接交互实验（2026-09-20）

@@ -135,7 +135,7 @@ wallpapers/dext-room/
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
 | `renderIcons(layer, desk, s)` | 主层按规范化 launch 身份复用真实节点并提交给 `DextDesktopLayoutController`；staging 静态即时渲染 |
-| `DextDesktopLayoutController` | 300ms 长按、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
+| `DextDesktopLayoutController` | 300ms 长按后把同一 pointer 直接交给拖动、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
 | `startWidgetDrag` | Widget placement 与 icons 双快照事务；预览只动真实节点，有效松手后原子更新内存并持久化一次 |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `dext:room-layout` | Core/Player 定向布局消息：替换目标 Desk 图标；当前 Desk 保留已挂载 Widget/Scene，新增时可直接进入编辑并高亮 |
