@@ -44,6 +44,8 @@
 
 排序手势以已验收的 DESK-MOTION 浏览器实验提交 `2694f0d` 为准：第一次长按只进入编辑，松手后在编辑态按住图标即可立即拖动；跨入目标格立即留位并让路径图标让位，被拖图标全程保持在指针下，松手才提交。不得再把进入编辑和开始排序强行串成同一次 pointer 事务。
 
+2026-09-21 回退门槛：上述两轮生产手势修正和此前同 pointer 修正均只在 Chromium 自动化中通过，真实 WebView2 仍无法拖动。阶段 B 的生产 Room 接入暂时整体回退到 `64af642`；浏览器实验台和全局偏好实现保留，但在重新完成真实宿主事件诊断前不作为已交付的生产效果。
+
 1. [ ] 设置页切换光晕/紧凑/无边框，当前真实桌面立即生效；重启后保持。
 2. [ ] 开关名称；隐藏时悬停约 500ms 出现名称浮层，编辑/按下/拖动时不出现。
 3. [ ] 独立切换图标视觉 48/56/64px、footprint 三档和 gap 三档，确认节点不闪烁、图标居中且命中区与布局格一致。
@@ -88,3 +90,4 @@
 - 2026-09-21：首次真实桌面验收发现全黑。根因是 Vite 可跨目录加载 `../dext-icon-feedback`，正式 WebView2 虚拟主机却只映射 `dext-room`；共享模块缺失使主脚本在渲染前中止。新增“仅暴露生产映射目录”Playwright 回归并先 RED，再把唯一共享 JS/CSS 收进 `dext-room`、让实验台反向引用。最终 Vitest 52/52、Node 20/20、renderer Playwright 53/53、前端 build、Schema 与 diff check 全绿；真实桌面已重铺。
 - 2026-09-21：真实桌面验收发现长按托起后继续移动无效、松手回原位。根因是计时到点先清空 pressing，仍按住的 pointer 未交接给拖动。Node 与真实 Room 新增连续 pointerdown→dwell→move→up 回归并先 RED；修复后同一 pointer 直接进入 draggingIcon，跨格预览和单次保存均转绿。最终 Vitest 52/52、Node 20/20、renderer Playwright 54/54、前端 build、Schema 与 diff check 全绿；真实桌面已重铺。
 - 2026-09-21：用户复验否决同一 pointer 续拖与原格锚定。回溯最早人工验收的 `2694f0d` 后确认生产已偏离实验台输入模型；恢复长按只进编辑、编辑态再次按下拖动、跨格立即占位、外层落目标格/face 跟手补偿，并把空白双击提升到捕获阶段。三条真实 Room 回归均先 RED 后 GREEN，连续 12 次往返和完整 renderer 55/55 通过；等待重新铺到真实桌面复验。
+- 2026-09-21：真实 WebView2 复验仍无法可靠拖动。按连续三轮修正失败的回退门槛，生产 `dext-room` 的 HTML、主脚本、控制器和真实 Room 回归整体恢复到 DESK-MOTION 稳定提交 `64af642`；浏览器图标实验台、共享视觉模块及全局偏好保存/投递代码继续保留，但真实桌面暂不消费这些新偏好。回退后定向 Node 21/21、真实 Room 15/15、Vitest 52/52、renderer Playwright 52/52、前端 build、语法和 diff check 全绿；强制重铺活体测试 1/1，通过运行身份检查确认新 Player PID 65008 加载当前 worktree 的 `wallpapers/dext-room/index.html`，等待真实桌面手工复验。

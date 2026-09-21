@@ -29,15 +29,11 @@
       this.container = container;
       this.options = options;
       this.profile = options.profile ?? motionApi.DEFAULT_MOTION_PROFILE;
-      this.longPressMs = Number.isFinite(options.longPressMs)
-        ? Math.max(0, options.longPressMs)
-        : 500;
       this.state = "idle";
       this.editing = false;
       this.transaction = null;
       this.publishedIcons = [];
       this.itemsByKey = new Map();
-      this.pointerSurface = container.ownerDocument?.defaultView ?? container;
       this._handlers = {
         pointerdown: (event) => this._onPointerDown(event),
         pointermove: (event) => this._onPointerMove(event),
@@ -54,8 +50,7 @@
         updateNode: (node, item) => this._updateNode(node, item),
       });
       for (const [type, handler] of Object.entries(this._handlers)) {
-        const surface = ["pointermove", "pointerup", "pointercancel"].includes(type) ? this.pointerSurface : this.container;
-        surface.addEventListener?.(type, handler);
+        this.container.addEventListener?.(type, handler);
       }
     }
 
@@ -144,8 +139,7 @@
     dispose() {
       this.abort({ restore: false });
       for (const [type, handler] of Object.entries(this._handlers)) {
-        const surface = ["pointermove", "pointerup", "pointercancel"].includes(type) ? this.pointerSurface : this.container;
-        surface.removeEventListener?.(type, handler);
+        this.container.removeEventListener?.(type, handler);
       }
       this.motion.dispose();
       this.itemsByKey.clear();
@@ -215,8 +209,7 @@
         this.state = "idle";
         this.transaction = null;
         this.options.onRequestEdit?.();
-        try { node.releasePointerCapture?.(transaction.pointerId); } catch (_error) { /* capture is best effort */ }
-      }, this.longPressMs);
+      }, 500);
       this.state = "pressing";
       this.transaction = transaction;
       try { node.setPointerCapture?.(event.pointerId); } catch (_error) { /* capture is best effort */ }
@@ -267,6 +260,8 @@
         previewIcons: null,
         valid: false,
         targetKey: null,
+        candidateKey: null,
+        candidateTimer: null,
         lastEvent: { clientX: event.clientX, clientY: event.clientY },
       };
       node.classList?.add?.("dragging");
@@ -281,32 +276,47 @@
       this._updateIconLift(drag, event);
       const cell = this.options.pointToCell?.(event) ?? null;
       if (!cell || this.options.isBlockedPoint?.(event)) {
+        this._clearCandidate(drag);
         this._restoreIconPreview(drag);
         this.options.hidePlaceholder?.();
         this.options.setDropState?.("blocked");
         return;
       }
       const candidateKey = `${cell.x}:${cell.y}`;
-      if (drag.targetKey === candidateKey) return;
-      const solved = this.options.solveIconReorder?.(drag.baseIcons, drag.sourceIndex, cell);
-      if (!solved?.committed) {
-        drag.valid = false;
-        drag.targetKey = null;
-        this._restoreIconPreview(drag);
-        this.options.hidePlaceholder?.();
-        this.options.setDropState?.("blocked");
-        return;
+      if (drag.candidateKey === candidateKey || drag.targetKey === candidateKey) return;
+      this._clearCandidate(drag);
+      drag.candidateKey = candidateKey;
+      drag.candidateTimer = setTimeout(() => {
+        if (this.state !== "draggingIcon" || this.transaction !== drag || drag.candidateKey !== candidateKey) return;
+        drag.candidateTimer = null;
+        const solved = this.options.solveIconReorder?.(drag.baseIcons, drag.sourceIndex, cell);
+        if (!solved?.committed) {
+          drag.valid = false;
+          drag.targetKey = null;
+          this._restoreIconPreview(drag);
+          this.options.hidePlaceholder?.();
+          this.options.setDropState?.("blocked");
+          return;
+        }
+        drag.valid = true;
+        drag.targetKey = candidateKey;
+        drag.previewIcons = cloneIcons(solved.icons);
+        this.options.showPlaceholder?.(cell);
+        this.options.setDropState?.("valid");
+        this.motion.apply(this._motionItems(drag.previewIcons), {
+          mode: "preview",
+          excludeKeys: [drag.key],
+        });
+        this._updateIconLift(drag, drag.lastEvent);
+      }, this.profile.targetDwell);
+    }
+
+    _clearCandidate(drag) {
+      clearTimeout(drag?.candidateTimer);
+      if (drag) {
+        drag.candidateTimer = null;
+        drag.candidateKey = null;
       }
-      drag.valid = true;
-      drag.targetKey = candidateKey;
-      drag.previewIcons = cloneIcons(solved.icons);
-      this.options.showPlaceholder?.(cell);
-      this.options.setDropState?.("valid");
-      this.motion.apply(this._motionItems(drag.previewIcons), {
-        mode: "preview",
-        excludeKeys: [drag.key],
-      });
-      this._updateIconLift(drag, drag.lastEvent);
     }
 
     _restoreIconPreview(drag) {
@@ -323,6 +333,7 @@
 
     _finishIconDrag(commit) {
       const drag = this.transaction;
+      this._clearCandidate(drag);
       this.state = "idle";
       this.transaction = null;
       if (commit && drag.valid && drag.previewIcons) {
@@ -340,6 +351,7 @@
     }
 
     _finishIconVisual(drag) {
+      this._clearCandidate(drag);
       drag?.node?.classList?.remove?.("dragging");
       if (drag?.face?.style) drag.face.style.transform = "";
       try { drag?.node?.releasePointerCapture?.(drag.pointerId); } catch (_error) { /* already released */ }
@@ -349,14 +361,10 @@
 
     _updateIconLift(drag, event) {
       if (!drag?.face?.style || !event) return;
-      const reducedMotion = typeof this.options.reducedMotion === "function"
-        ? Boolean(this.options.reducedMotion())
-        : Boolean(this.options.reducedMotion);
       const rect = drag.node.getBoundingClientRect();
       const dx = event.clientX - rect.left - rect.width / 2;
-      const dy = event.clientY - rect.top - rect.height / 2 + (reducedMotion ? 0 : this.profile.iconLift.y);
-      const scale = reducedMotion ? 1 : this.profile.iconLift.scale;
-      drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
+      const dy = event.clientY - rect.top - rect.height / 2 + this.profile.iconLift.y;
+      drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${this.profile.iconLift.scale})`;
     }
   }
 
