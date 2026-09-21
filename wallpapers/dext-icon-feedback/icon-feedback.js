@@ -6,11 +6,34 @@
   const ICON_FEEDBACK_STYLES = Object.freeze(["halo", "compact", "bare"]);
   const ICON_HIT_TARGET_SIZES = Object.freeze(["small", "standard", "large"]);
   const ICON_VISUAL_SIZES = Object.freeze(["small", "standard", "large"]);
+  const ICON_SPACING_PRESETS = Object.freeze(["compact", "standard", "spacious"]);
   const DEFAULT_DESKTOP_ICON_PREFERENCES = Object.freeze({
     feedbackStyle: "halo",
     showLabels: true,
     hitTargetSize: "standard",
     visualSize: "standard",
+    spacing: "standard",
+  });
+
+  const VISUAL_GEOMETRY = Object.freeze({
+    small: Object.freeze({ icon: 48, art: 40 }),
+    standard: Object.freeze({ icon: 56, art: 48 }),
+    large: Object.freeze({ icon: 64, art: 56 }),
+  });
+  const SHOWN_FOOTPRINTS = Object.freeze({
+    small: Object.freeze({ width: 72, height: 80 }),
+    standard: Object.freeze({ width: 80, height: 84 }),
+    large: Object.freeze({ width: 84, height: 88 }),
+  });
+  const HIDDEN_FOOTPRINTS = Object.freeze({
+    small: Object.freeze({ width: 64, height: 64 }),
+    standard: Object.freeze({ width: 72, height: 72 }),
+    large: Object.freeze({ width: 80, height: 80 }),
+  });
+  const SPACING_GEOMETRY = Object.freeze({
+    compact: Object.freeze({ x: 4, y: 12 }),
+    standard: Object.freeze({ x: 20, y: 28 }),
+    spacious: Object.freeze({ x: 40, y: 40 }),
   });
 
   function normalizeDesktopIconPreferences(value) {
@@ -28,6 +51,26 @@
       visualSize: ICON_VISUAL_SIZES.includes(input.visualSize)
         ? input.visualSize
         : DEFAULT_DESKTOP_ICON_PREFERENCES.visualSize,
+      spacing: ICON_SPACING_PRESETS.includes(input.spacing)
+        ? input.spacing
+        : DEFAULT_DESKTOP_ICON_PREFERENCES.spacing,
+    };
+  }
+
+  function resolveDesktopIconGeometry(value) {
+    const preferences = normalizeDesktopIconPreferences(value);
+    const visual = VISUAL_GEOMETRY[preferences.visualSize];
+    const footprint = (preferences.showLabels ? SHOWN_FOOTPRINTS : HIDDEN_FOOTPRINTS)[preferences.hitTargetSize];
+    const spacing = SPACING_GEOMETRY[preferences.spacing];
+    return {
+      icon: visual.icon,
+      art: visual.art,
+      footprintWidth: footprint.width,
+      footprintHeight: footprint.height,
+      gapX: spacing.x,
+      gapY: spacing.y,
+      cellW: footprint.width + spacing.x,
+      cellH: footprint.height + spacing.y,
     };
   }
 
@@ -40,6 +83,7 @@
     rootElement.dataset.iconLabels = preferences.showLabels ? "shown" : "hidden";
     rootElement.dataset.iconHitSize = preferences.hitTargetSize;
     rootElement.dataset.iconVisualSize = preferences.visualSize;
+    rootElement.dataset.iconSpacing = preferences.spacing;
     return preferences;
   }
 
@@ -182,8 +226,10 @@
     ICON_FEEDBACK_STYLES,
     ICON_HIT_TARGET_SIZES,
     ICON_VISUAL_SIZES,
+    ICON_SPACING_PRESETS,
     DEFAULT_DESKTOP_ICON_PREFERENCES,
     normalizeDesktopIconPreferences,
+    resolveDesktopIconGeometry,
     applyDesktopIconPreferences,
     isHiddenLabelTooltipEligible,
     createDesktopIconFeedbackController,

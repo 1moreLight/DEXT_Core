@@ -66,10 +66,10 @@ Expected: 工作树只包含文档变化，`git diff --check` 通过。
 
 ## Task 6: Real desktop visual integration (TDD)
 
-- [ ] 先写真实 `dext-room` Playwright 失败测试：共享 `.icon-visual` 分层、footprint/实际命中一致、节点与 Widget iframe 不替换、标签隐藏/浮层、视觉大小和 reduced-motion。
-- [ ] 真实桌面加载共享偏好模块/CSS；稳定图标节点补齐 visual/label/tooltip 分层，外层继续只负责坐标和 FLIP。
-- [ ] 新增 `dext:desktop-preferences` 消息并用同一 controller 原地应用偏好；编辑、拖动和热布局更新不重建节点。
-- [ ] 保持 Dock、Widget、Scene、应用启动和 Room Schema 不变。
+- [x] 先写真实 `dext-room` Playwright 失败测试：共享 `.icon-visual` 分层、footprint/实际命中一致、节点与 Widget iframe 不替换、标签隐藏/浮层、视觉大小和 reduced-motion。
+- [x] 真实桌面加载共享偏好模块/CSS；稳定图标节点补齐 visual/label/tooltip 分层，外层继续只负责坐标和 FLIP。
+- [x] 新增 `dext:desktop-preferences` 消息并用同一 controller 原地应用偏好；编辑、拖动和热布局更新不重建节点。
+- [x] 保持 Dock、Widget、Scene、应用启动和 Room Schema 不变。
 
 Expected: Node 与真实桌面定向 Playwright RED→GREEN；运动层与视觉层 transform 互不覆盖。
 

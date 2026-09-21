@@ -3,7 +3,24 @@
   --dext-icon-art-size: 48px;
   --dext-icon-footprint-width: 80px;
   --dext-icon-footprint-height: 84px;
+  --dext-icon-column-gap: 20px;
+  --dext-icon-row-gap: 28px;
   --dext-icon-feedback-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+[data-dext-icon-feedback-root][data-icon-spacing="compact"] {
+  --dext-icon-column-gap: 4px;
+  --dext-icon-row-gap: 12px;
+}
+
+[data-dext-icon-feedback-root][data-icon-spacing="standard"] {
+  --dext-icon-column-gap: 20px;
+  --dext-icon-row-gap: 28px;
+}
+
+[data-dext-icon-feedback-root][data-icon-spacing="spacious"] {
+  --dext-icon-column-gap: 40px;
+  --dext-icon-row-gap: 40px;
 }
 
 [data-dext-icon-feedback-root][data-icon-visual-size="small"] {
@@ -61,6 +78,26 @@
   pointer-events: none;
 }
 
+[data-dext-icon-feedback-root].icon-layer .icon {
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  pointer-events: none;
+}
+
+[data-dext-icon-feedback-root].icon-layer .icon:hover .icon-face,
+[data-dext-icon-feedback-root].icon-layer .icon:active .icon-face {
+  background-color: transparent;
+  backdrop-filter: none;
+  transform: none;
+}
+
+body.editing [data-dext-icon-feedback-root].icon-layer .icon-face,
+body.editing [data-dext-icon-feedback-root].icon-layer .icon:nth-child(even) .icon-face {
+  animation: none;
+  cursor: grab;
+}
+
 [data-dext-icon-feedback-root] .icon-face {
   position: relative;
   display: inline-flex;
@@ -99,6 +136,7 @@
 }
 
 [data-dext-icon-feedback-root] .icon-image,
+[data-dext-icon-feedback-root] .icon-img,
 [data-dext-icon-feedback-root] .icon-glyph {
   width: var(--dext-icon-art-size);
   height: var(--dext-icon-art-size);
@@ -109,7 +147,8 @@
   -webkit-user-drag: none;
 }
 
-[data-dext-icon-feedback-root] .icon-image {
+[data-dext-icon-feedback-root] .icon-image,
+[data-dext-icon-feedback-root] .icon-img {
   object-fit: contain;
   filter: drop-shadow(0 8px 13px rgba(0, 0, 0, .3));
 }
@@ -196,12 +235,12 @@
   animation: dext-icon-jiggle 150ms ease-in-out infinite alternate;
 }
 
-[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face,
-[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-visual {
+[data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face,
+[data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-visual {
   animation: none;
 }
 
-[data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
+[data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
   transform: translateY(-8px) scale(1.06);
   cursor: grabbing;
 }
@@ -237,7 +276,7 @@
 
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-visual,
-[data-dext-icon-feedback-root][data-reduced-motion="true"] .lab-icon.is-dragging .icon-face {
+[data-dext-icon-feedback-root][data-reduced-motion="true"] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
   transform: none !important;
 }
 
@@ -251,7 +290,7 @@
 
   [data-dext-icon-feedback-root] .icon-face,
   [data-dext-icon-feedback-root] .icon-visual,
-  [data-dext-icon-feedback-root] .lab-icon.is-dragging .icon-face {
+  [data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
     transform: none !important;
   }
 }

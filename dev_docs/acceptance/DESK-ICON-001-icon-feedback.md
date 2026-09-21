@@ -33,7 +33,7 @@
 
 ## 阶段 B 自动检查
 
-- [ ] 真实桌面 Playwright：节点/iframe 复用、命中几何、五项偏好、编辑/拖动/热更新、tooltip 与 reduced-motion。
+- [x] 真实桌面 Playwright：节点/iframe 复用、命中几何、五项偏好、编辑/拖动/热更新、tooltip 与 reduced-motion（15/15）。
 - [ ] Rust：旧设置默认、patch 未修改字段保留、applied/deferred 投递状态。
 - [ ] C# / proto：设置往返与官方宿主 loaded 后启动快照。
 - [ ] Vitest、build、Node、完整 renderer Playwright、C# Release、Room Schema 与 diff check。
@@ -76,3 +76,4 @@
 - 2026-09-20：用户确认现有三档只是 footprint，并批准增加独立图标视觉大小。共享偏好与实验台增加 small 48px / standard 56px / large 64px，默认标准；切换不改变 footprint、gap 或节点身份，最小 footprint + 大图标仍完整容纳名称。Node 与 Playwright 均先在缺失字段/控件上 RED 后 GREEN。
 - 2026-09-20：独立图标视觉大小最终复验为 Vitest 50/50、Node 25/25、图标实验台 12/12、renderer Playwright 51/51、build、语法、Room Schema、生产边界与 diff check 全绿；`codegraph sync` 因独立 worktree 未初始化而记录后跳过。继续停在阶段 A 浏览器人工验收，未接入真实桌面、设置页或 Core。
 - 2026-09-21：用户回复“感觉差不多了，可以尝试合并进去了”，确认阶段 A 浏览器方向可进入阶段 B。当前分支已叠加 DESK-MOTION-001，允许继续实现但不改变最终合并顺序：Motion 真实桌面验收并合入 master 后，Icon 才能最终合入。
+- 2026-09-21：阶段 B 真实 renderer 分层与偏好消息完成。共享 Node 19/19、真实 Room Playwright 15/15、图标实验台 12/12；真实图标和 Widget iframe 原地复用，长按 300ms，仅 `.icon-visual` 以 ±3° / 150ms 抖动。

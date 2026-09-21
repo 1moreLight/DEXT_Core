@@ -47,6 +47,7 @@
     showLabels: true,
     hitTargetSize: "standard",
     visualSize: "standard",
+    spacing: "standard",
   };
   const LONG_PRESS_MS = 300;
   const PRESS_MOVE_THRESHOLD = 8;
@@ -236,7 +237,7 @@
   function setSpacing(value) {
     if (!SPACING[value]) return;
     spacing = value;
-    root.dataset.iconSpacing = value;
+    preferences = controller.setPreferences({ ...preferences, spacing: value });
     spacingButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.iconSpacing === value));
     });

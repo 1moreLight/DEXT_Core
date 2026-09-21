@@ -29,6 +29,9 @@
       this.container = container;
       this.options = options;
       this.profile = options.profile ?? motionApi.DEFAULT_MOTION_PROFILE;
+      this.longPressMs = Number.isFinite(options.longPressMs)
+        ? Math.max(0, options.longPressMs)
+        : 500;
       this.state = "idle";
       this.editing = false;
       this.transaction = null;
@@ -209,7 +212,7 @@
         this.state = "idle";
         this.transaction = null;
         this.options.onRequestEdit?.();
-      }, 500);
+      }, this.longPressMs);
       this.state = "pressing";
       this.transaction = transaction;
       try { node.setPointerCapture?.(event.pointerId); } catch (_error) { /* capture is best effort */ }

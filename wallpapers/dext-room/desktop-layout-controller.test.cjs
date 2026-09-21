@@ -202,3 +202,22 @@ test("aborting a pending long press never clears the published icon snapshot", (
   assert.equal(controller.publishedIcons.length, 1);
   assert.equal(controller.publishedIcons[0].label, "Alpha");
 });
+
+test("a desktop can provide its own long-press threshold", async () => {
+  const layer = new FakeContainer();
+  let editRequests = 0;
+  const controller = new DextDesktopLayoutController(layer, {
+    createIconNode: () => new FakeNode(layer),
+    positionOf: ({ x, y }) => ({ left: x * 100, top: y * 120 }),
+    longPressMs: 5,
+    onRequestEdit: () => { editRequests += 1; },
+    reducedMotion: true,
+  });
+  controller.render([icon("Alpha", 0, 0)], { mode: "initial" });
+
+  layer.dispatch("pointerdown", layer.children[0], { clientX: 36, clientY: 42 });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  assert.equal(editRequests, 1);
+  assert.equal(controller.state, "idle");
+});

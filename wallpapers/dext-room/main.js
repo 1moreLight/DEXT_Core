@@ -350,6 +350,8 @@ if (window.chrome?.webview) {
       updateAppRuntimeStatus(data.target, data.running);
     } else if (data?.type === "dext:room-layout") {
       applyRoomLayoutUpdate(data);
+    } else if (data?.type === "dext:desktop-preferences") {
+      applyDesktopIconPreferenceUpdate(data.preferences);
     } else if (data?.type === "dext:system-control-result" && data.success) {
       if (data.volume) capabilityHost.updateVolume(data.volume);
       if (data.permissions) updateRuntimeGrants(data.permissions);
@@ -359,15 +361,12 @@ if (window.chrome?.webview) {
   });
 }
 
-// Windows-style icon size presets; desk.iconSize picks one (default medium)
-const ICON_SIZES = {
-  large: { icon: 72, cellW: 124, cellH: 152, label: 14 },
-  medium: { icon: 56, cellW: 96, cellH: 120, label: 13 },
-  small: { icon: 32, cellW: 64, cellH: 84, label: 11 },
-};
+const iconFeedbackApi = globalThis.DextIconFeedback;
+if (!iconFeedbackApi) throw new Error("Dext desktop icon feedback runtime is unavailable");
+let desktopIconPreferences = iconFeedbackApi.normalizeDesktopIconPreferences();
 
-function sizeOf(desk) {
-  return ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
+function sizeOf(_desk) {
+  return { ...iconFeedbackApi.resolveDesktopIconGeometry(desktopIconPreferences), label: 12 };
 }
 
 function validRoomLayoutUpdate(data) {
@@ -399,6 +398,16 @@ function applyRoomLayoutUpdate(data) {
   if (data.enterEdit === true) enterEdit();
 }
 
+function applyDesktopIconPreferenceUpdate(value) {
+  desktopIconPreferences = iconFeedbackApi.normalizeDesktopIconPreferences(value);
+  iconFeedbackController.setPreferences(desktopIconPreferences);
+  if (!SCREENSAVER_MODE && ROOM?.desks?.[currentDesk]) {
+    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]), {
+      mode: "resize",
+    });
+  }
+}
+
 const deskMain = document.getElementById("desk-main");
 const stageEl = document.getElementById("desk-staging");
 const bgEl = deskMain.querySelector(".desk-bg");
@@ -412,6 +421,11 @@ const toastEl = document.getElementById("toast");
 const doneBtn = document.getElementById("edit-done");
 const dockEl = document.getElementById("dock");
 const dockAppsEl = document.getElementById("dock-apps");
+iconLayer.setAttribute("data-dext-icon-feedback-root", "");
+const iconFeedbackController = iconFeedbackApi.createDesktopIconFeedbackController(iconLayer, {
+  preferences: desktopIconPreferences,
+  tooltipDelay: 500,
+});
 
 let currentDesk = 0;
 let switching = false;
@@ -1128,9 +1142,16 @@ function createDesktopIconNode() {
   el.className = "icon";
   const face = document.createElement("div");
   face.className = "icon-face";
+  face.dataset.dextIconFace = "";
+  const visual = document.createElement("div");
+  visual.className = "icon-visual";
   const label = document.createElement("div");
   label.className = "icon-label";
-  face.appendChild(label);
+  const tooltip = document.createElement("div");
+  tooltip.className = "icon-label-tooltip";
+  tooltip.dataset.visible = "false";
+  tooltip.setAttribute("role", "tooltip");
+  face.append(visual, label, tooltip);
   el.appendChild(face);
   return el;
 }
@@ -1138,14 +1159,16 @@ function createDesktopIconNode() {
 function updateDesktopIconNode(el, motionItem) {
   const item = motionItem.data;
   const face = el.querySelector(".icon-face");
+  const visualHost = face.querySelector(".icon-visual");
   const label = face.querySelector(".icon-label");
+  const tooltip = face.querySelector(".icon-label-tooltip");
   const wantsImage = typeof item?.icon_png === "string" && item.icon_png;
-  let visual = face.querySelector(".icon-img, .icon-glyph");
+  let visual = visualHost.querySelector(".icon-img, .icon-glyph");
   if (!visual || (wantsImage && !visual.classList.contains("icon-img")) ||
       (!wantsImage && !visual.classList.contains("icon-glyph"))) {
     visual?.remove();
     visual = iconVisual(item);
-    face.insertBefore(visual, label);
+    visualHost.replaceChildren(visual);
   } else if (wantsImage) {
     const nextSrc = `data:image/png;base64,${item.icon_png}`;
     if (visual.getAttribute("src") !== nextSrc) visual.setAttribute("src", nextSrc);
@@ -1156,12 +1179,15 @@ function updateDesktopIconNode(el, motionItem) {
       : "#3b82f6";
   }
   label.textContent = item.label ?? "";
+  tooltip.textContent = item.label ?? "";
+  face.setAttribute("aria-label", item.label ?? "");
   el.dataset.launchTarget = item.launch?.target ?? "";
   el.dataset.motionKey = motionItem.key;
 }
 
 const desktopLayoutController = new globalThis.DextDesktopLayoutController(iconLayer, {
   profile: motionProfile,
+  longPressMs: 300,
   reducedMotion: () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   createIconNode: () => createDesktopIconNode(),
   updateIconNode: updateDesktopIconNode,
@@ -1276,6 +1302,8 @@ function renderStaticIcons(layer, desk, s) {
 function renderIcons(layer, desk, s, { mode = "auto", highlightTarget = "" } = {}) {
   const W = layer.clientWidth || window.innerWidth - 80;
   const cols = Math.max(4, Math.floor(W / s.cellW));
+  layer.setAttribute("data-dext-icon-feedback-root", "");
+  iconFeedbackApi.applyDesktopIconPreferences(layer, desktopIconPreferences);
   layer.style.setProperty("--icon-size", `${s.icon}px`);
   layer.style.setProperty("--label-size", `${s.label}px`);
 
@@ -1325,6 +1353,7 @@ function enterEdit() {
   editMode = true;
   document.body.classList.add("editing");
   desktopLayoutController.setEditing(true);
+  iconFeedbackController.setEditing(true);
   dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动图标 / Widget 排列，Esc 或「完成」退出");
 }
@@ -1334,6 +1363,7 @@ function exitEdit() {
   editMode = false;
   document.body.classList.remove("editing");
   desktopLayoutController.setEditing(false);
+  iconFeedbackController.setEditing(false);
   dextEmit("editchange", { editing: false });
   persistRoom();
 }
@@ -1516,7 +1546,7 @@ iconLayer.addEventListener("pointerdown", (e) => {
   deskPressTimer = setTimeout(() => {
     deskPressTimer = null;
     enterEdit();
-  }, 500);
+  }, 300);
 });
 ["pointermove", "pointerup", "pointercancel"].forEach((type) =>
   iconLayer.addEventListener(type, (e) => {

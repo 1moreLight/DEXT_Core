@@ -70,7 +70,7 @@ async function longPressAlpha(page: import("@playwright/test").Page) {
   if (!box) throw new Error("Alpha geometry unavailable");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(530);
+  await page.waitForTimeout(330);
   await page.mouse.up();
   await expect(page.locator("body")).toHaveClass(/editing/);
 }
@@ -85,8 +85,52 @@ test("edit mode keeps the real icon node and Widget iframe while only inner face
 
   expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
   expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
-  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-visual')).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("animation-name", "none");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveCSS("animation-name", "none");
   await expect(page.locator('.dext-widget[data-widget-id="motion-widget"]')).toHaveCSS("animation-name", "dext-widget-jiggle");
+});
+
+test("desktop preferences update real hit geometry and visuals without replacing icons or Widget frames", async ({ page }) => {
+  await page.evaluate(() => {
+    window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
+    window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
+  });
+
+  await page.evaluate(() => window.__dextDispatch({
+    type: "dext:desktop-preferences",
+    preferences: {
+      feedbackStyle: "bare",
+      showLabels: false,
+      hitTargetSize: "small",
+      visualSize: "large",
+      spacing: "compact",
+    },
+  }));
+
+  const root = page.locator(".icon-layer");
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  const bravo = page.locator('[data-launch-target="bravo.exe"]');
+  await expect(root).toHaveAttribute("data-icon-feedback", "bare");
+  await expect(root).toHaveAttribute("data-icon-labels", "hidden");
+  await expect(root).toHaveAttribute("data-icon-hit-size", "small");
+  await expect(root).toHaveAttribute("data-icon-visual-size", "large");
+  await expect(root).toHaveAttribute("data-icon-spacing", "compact");
+  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
+  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
+
+  const alphaFace = await alpha.locator(".icon-face").boundingBox();
+  const alphaVisual = await alpha.locator(".icon-visual").boundingBox();
+  const bravoFace = await bravo.locator(".icon-face").boundingBox();
+  if (!alphaFace || !alphaVisual || !bravoFace) throw new Error("desktop preference geometry unavailable");
+  expect([alphaFace.width, alphaFace.height]).toEqual([64, 64]);
+  expect([alphaVisual.width, alphaVisual.height]).toEqual([64, 64]);
+  expect(bravoFace.x - (alphaFace.x + alphaFace.width)).toBe(4);
+  await expect(alpha.locator(".icon-label")).toBeHidden();
+
+  await alpha.locator(".icon-face").hover();
+  await page.waitForTimeout(550);
+  await expect(alpha.locator(".icon-label-tooltip")).toHaveAttribute("data-visible", "true");
 });
 
 test("a room-layout hot update reuses the icon and Widget nodes while animating the real icon positioner", async ({ page }) => {
@@ -145,7 +189,7 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
   await page.clock.runFor(1);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "96px");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "100px");
   await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
 
   await page.mouse.up();
@@ -155,7 +199,8 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
 
 test("Dock and pointercancel restore an icon gesture without persisting", async ({ page }) => {
   await longPressAlpha(page);
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
+  const alphaFace = page.locator('[data-launch-target="alpha.exe"] .icon-face');
+  const alpha = await alphaFace.boundingBox();
   const dock = await page.locator("#dock").boundingBox();
   if (!alpha || !dock) throw new Error("drag geometry unavailable");
 
@@ -170,14 +215,14 @@ test("Dock and pointercancel restore an icon gesture without persisting", async 
 
   const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
   if (!bravo) throw new Error("Bravo geometry unavailable");
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await alphaFace.hover();
   await page.mouse.down();
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
   await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
   await page.waitForTimeout(100);
   await page.locator('[data-launch-target="alpha.exe"]').dispatchEvent("pointercancel", { pointerId: 1 });
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "0px");
-  await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "96px");
+  await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "100px");
   await page.mouse.up();
   expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
 });
@@ -198,7 +243,7 @@ test("an authoritative room update aborts a drag and stale pointerup cannot over
   await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), authoritative);
   await page.mouse.up();
 
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "288px");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "300px");
   await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Server Alpha");
   expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
 });
@@ -312,7 +357,7 @@ test("authoritative layout during Widget drag wins over its stale release", asyn
   await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), authoritative);
   await page.mouse.up();
 
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "288px");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "300px");
   await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Server Alpha");
   expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
 });
@@ -335,7 +380,7 @@ test.describe("with reduced motion", () => {
 
   test("keeps editing semantics but disables WAAPI and both jiggles", async ({ page }) => {
     await longPressAlpha(page);
-    await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("animation-name", "none");
+    await expect(page.locator('[data-launch-target="alpha.exe"] .icon-visual')).toHaveCSS("animation-name", "none");
     await expect(page.locator('.dext-widget[data-widget-id="motion-widget"]')).toHaveCSS("animation-name", "none");
     await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("transition-duration", "0s");
     await expect(page.locator("#reorder-placeholder")).toHaveCSS("transition-duration", "0s");
@@ -343,7 +388,7 @@ test.describe("with reduced motion", () => {
     const updated = structuredClone(baseRoom);
     updated.desks[0].icons[0] = { ...updated.desks[0].icons[0], x: 2 };
     await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), updated);
-    await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "192px");
+    await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "200px");
     expect(await page.locator('[data-launch-target="alpha.exe"]').evaluate((node) => node.getAnimations().length)).toBe(0);
   });
 });
