@@ -5,15 +5,6 @@ const baseRoom = {
   startDesk: 0,
   switch: "none",
   switches: {},
-  dock: {
-    enabled: true,
-    position: "bottom",
-    indicator: "text",
-    autoHide: false,
-    icons: [
-      { label: "Dock App", glyph: "D", color: "#567", launch: { target: "dock.exe", args: "--dock", workdir: "" } },
-    ],
-  },
   desks: [{
     name: "Motion desk",
     background: null,
@@ -37,21 +28,19 @@ declare global {
     __dextDispatch(message: unknown): void;
     __alphaNode?: Element;
     __widgetFrame?: Element;
-    __dextPosts: unknown[];
   }
 }
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const listeners: Array<(event: { data: unknown }) => void> = [];
-    window.__dextPosts = [];
     Object.defineProperty(window, "chrome", {
       value: {
         webview: {
           addEventListener(type: string, listener: (event: { data: unknown }) => void) {
             if (type === "message") listeners.push(listener);
           },
-          postMessage(message: unknown) { window.__dextPosts.push(message); },
+          postMessage() {},
         },
       },
       configurable: true,
@@ -75,7 +64,7 @@ async function longPressAlpha(page: import("@playwright/test").Page) {
   await expect(page.locator("body")).toHaveClass(/editing/);
 }
 
-test("edit mode keeps the real icon node and Widget iframe while only inner faces jiggle", async ({ page }) => {
+test("edit mode remounts the pre-motion desktop and rebinds direct icon listeners", async ({ page }) => {
   await page.evaluate(() => {
     window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
     window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
@@ -83,13 +72,31 @@ test("edit mode keeps the real icon node and Widget iframe while only inner face
 
   await longPressAlpha(page);
 
-  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
-  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
-  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("animation-name", "dext-icon-jiggle");
-  await expect(page.locator('.dext-widget[data-widget-id="motion-widget"]')).toHaveCSS("animation-name", "dext-widget-jiggle");
+  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(false);
+  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(false);
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("animation-name", "jiggle");
 });
 
-test("a room-layout hot update reuses the icon and Widget nodes while animating the real icon positioner", async ({ page }) => {
+test("the pre-motion direct icon drag follows the pointer and swaps on release", async ({ page }) => {
+  await longPressAlpha(page);
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  const bravo = page.locator('[data-launch-target="bravo.exe"]');
+  const alphaStart = await alpha.boundingBox();
+  const bravoStart = await bravo.boundingBox();
+  if (!alphaStart || !bravoStart) throw new Error("Icon geometry unavailable");
+
+  await page.mouse.move(alphaStart.x + alphaStart.width / 2, alphaStart.y + alphaStart.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bravoStart.x + bravoStart.width / 2, bravoStart.y + bravoStart.height / 2, { steps: 4 });
+  const alphaDuringDrag = await alpha.boundingBox();
+  expect(alphaDuringDrag?.x).toBeGreaterThan(alphaStart.x + 40);
+  await page.mouse.up();
+
+  await expect.poll(async () => (await alpha.boundingBox())?.x).toBeCloseTo(bravoStart.x, 0);
+  await expect.poll(async () => (await bravo.boundingBox())?.x).toBeCloseTo(alphaStart.x, 0);
+});
+
+test("a room-layout hot update rebinds icons without replacing the Widget iframe", async ({ page }) => {
   await page.evaluate(() => {
     window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
     window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
@@ -99,248 +106,7 @@ test("a room-layout hot update reuses the icon and Widget nodes while animating 
 
   await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), updated);
 
-  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
+  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(false);
   expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
   await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Alpha updated");
-  await expect.poll(() => page.locator('[data-launch-target="alpha.exe"]').evaluate((node) => node.getAnimations().length)).toBeGreaterThan(0);
-});
-
-test("a live add/remove reuses survivors and the Widget iframe while animating the new real icon", async ({ page }) => {
-  await page.evaluate(() => {
-    window.__alphaNode = document.querySelector('[data-launch-target="bravo.exe"]') ?? undefined;
-    window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
-  });
-  const updated = structuredClone(baseRoom);
-  updated.desks[0].icons = [
-    updated.desks[0].icons[1],
-    { label: "Charlie", glyph: "C", color: "#678", x: 2, y: 0, launch: { target: "charlie.exe", args: "", workdir: "" } },
-  ];
-
-  const enterDurations = await page.evaluate((room) => {
-    window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 });
-    const node = document.querySelector('[data-launch-target="charlie.exe"]');
-    return node?.getAnimations().map((animation) => animation.effect?.getTiming().duration) ?? [];
-  }, updated);
-
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCount(0);
-  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="bravo.exe"]'))).toBe(true);
-  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
-  expect(enterDurations).toContain(180);
-});
-
-test("an icon target must stay stable for 80ms before the placeholder and path preview move", async ({ page }) => {
-  await longPressAlpha(page);
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
-  const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
-  if (!alpha || !bravo) throw new Error("icon geometry unavailable");
-
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-  await page.mouse.down();
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
-  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(40);
-  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
-  await page.waitForTimeout(60);
-  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "96px");
-  await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
-
-  await page.mouse.up();
-  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
-  await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
-});
-
-test("Dock and pointercancel restore an icon gesture without persisting", async ({ page }) => {
-  await longPressAlpha(page);
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
-  const dock = await page.locator("#dock").boundingBox();
-  if (!alpha || !dock) throw new Error("drag geometry unavailable");
-
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-  await page.mouse.down();
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
-  await page.mouse.move(dock.x + dock.width / 2, dock.y + dock.height / 2);
-  await page.waitForTimeout(100);
-  await page.mouse.up();
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "0px");
-  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
-
-  const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
-  if (!bravo) throw new Error("Bravo geometry unavailable");
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-  await page.mouse.down();
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
-  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(100);
-  await page.locator('[data-launch-target="alpha.exe"]').dispatchEvent("pointercancel", { pointerId: 1 });
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "0px");
-  await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "96px");
-  await page.mouse.up();
-  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
-});
-
-test("an authoritative room update aborts a drag and stale pointerup cannot overwrite it", async ({ page }) => {
-  await longPressAlpha(page);
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
-  const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
-  if (!alpha || !bravo) throw new Error("icon geometry unavailable");
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-  await page.mouse.down();
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
-  await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(100);
-
-  const authoritative = structuredClone(baseRoom);
-  authoritative.desks[0].icons[0] = { ...authoritative.desks[0].icons[0], label: "Server Alpha", x: 3 };
-  await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), authoritative);
-  await page.mouse.up();
-
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "288px");
-  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Server Alpha");
-  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
-});
-
-test("double-clicking true desktop blank exits edit while interactive children do not", async ({ page }) => {
-  await longPressAlpha(page);
-  await page.locator('[data-launch-target="alpha.exe"]').dblclick({ force: true });
-  await expect(page.locator("body")).toHaveClass(/editing/);
-  await page.locator(".icon-layer").dblclick({ position: { x: 1050, y: 560 }, force: true });
-  await expect(page.locator("body")).not.toHaveClass(/editing/);
-});
-
-test("Widget drag keeps its iframe, animates conflicting icons, and commits both once", async ({ page }) => {
-  await longPressAlpha(page);
-  await page.evaluate(() => {
-    window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
-    window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
-  });
-  const widget = page.locator('.dext-widget[data-widget-id="motion-widget"]');
-  const before = await widget.boundingBox();
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
-  if (!before || !alpha) throw new Error("Widget drag geometry unavailable");
-
-  await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
-  await page.mouse.down();
-  await expect(widget).toHaveClass(/widget-dragging/);
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-  await expect.poll(() => page.locator('[data-launch-target="alpha.exe"]').evaluate((node) => node.getAnimations().length)).toBeGreaterThan(0);
-  await page.mouse.up();
-
-  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
-  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
-  await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
-});
-
-test("Widget resize keeps its iframe and commits the resized placement once", async ({ page }) => {
-  await longPressAlpha(page);
-  await page.evaluate(() => {
-    window.__widgetFrame = document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe') ?? undefined;
-  });
-  const widget = page.locator('.dext-widget[data-widget-id="motion-widget"]');
-  const handle = widget.locator(".widget-edit-resize");
-  const before = await widget.boundingBox();
-  const handleBox = await handle.boundingBox();
-  if (!before || !handleBox) throw new Error("Widget resize geometry unavailable");
-
-  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(handleBox.x + handleBox.width / 2 + 80, handleBox.y + handleBox.height / 2 + 50);
-  await page.mouse.up();
-
-  const after = await widget.boundingBox();
-  expect(after?.width).toBeGreaterThan(before.width + 60);
-  expect(after?.height).toBeGreaterThan(before.height + 35);
-  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
-  await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
-});
-
-test("pressing a Widget without a valid movement does not create a no-op save", async ({ page }) => {
-  await longPressAlpha(page);
-  const widget = page.locator('.dext-widget[data-widget-id="motion-widget"]');
-  const box = await widget.boundingBox();
-  if (!box) throw new Error("Widget geometry unavailable");
-
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.up();
-
-  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
-});
-
-test("Widget cannot enter Dock and lost pointer capture restores the complete gesture baseline", async ({ page }) => {
-  await longPressAlpha(page);
-  const widget = page.locator('.dext-widget[data-widget-id="motion-widget"]');
-  const before = await widget.boundingBox();
-  const dock = await page.locator("#dock").boundingBox();
-  if (!before || !dock) throw new Error("Widget/Dock geometry unavailable");
-
-  await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(dock.x + dock.width / 2, dock.y + dock.height / 2);
-  await page.mouse.up();
-  const clamped = await widget.boundingBox();
-  if (!clamped) throw new Error("Widget geometry unavailable after Dock clamp");
-  expect(clamped.y + clamped.height).toBeLessThanOrEqual(dock.y - 2);
-
-  const start = await widget.boundingBox();
-  if (!start) throw new Error("Widget restart geometry unavailable");
-  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(start.x - 180, start.y - 120);
-  await widget.dispatchEvent("lostpointercapture", { pointerId: 1 });
-  const restored = await widget.boundingBox();
-  expect(restored?.x).toBeCloseTo(start.x, 0);
-  expect(restored?.y).toBeCloseTo(start.y, 0);
-  await page.mouse.up();
-});
-
-test("authoritative layout during Widget drag wins over its stale release", async ({ page }) => {
-  await longPressAlpha(page);
-  const widget = page.locator('.dext-widget[data-widget-id="motion-widget"]');
-  const before = await widget.boundingBox();
-  const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
-  if (!before || !alpha) throw new Error("Widget drag geometry unavailable");
-  await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
-
-  const authoritative = structuredClone(baseRoom);
-  authoritative.desks[0].icons[0] = { ...authoritative.desks[0].icons[0], label: "Server Alpha", x: 3 };
-  await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), authoritative);
-  await page.mouse.up();
-
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "288px");
-  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Server Alpha");
-  expect(await page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(0);
-});
-
-test("desktop and Dock launch interactions still dispatch their current launch payloads", async ({ page }) => {
-  await page.locator('[data-launch-target="alpha.exe"]').dblclick({ force: true });
-  await page.locator(".dock-icon").dblclick({ force: true });
-
-  await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => {
-    try { return Boolean(JSON.parse(String(item)).target); } catch { return false; }
-  }).length)).toBe(2);
-  const targets = await page.evaluate(() => window.__dextPosts.flatMap((item) => {
-    try { return [JSON.parse(String(item)).target]; } catch { return []; }
-  }));
-  expect(targets).toEqual(["alpha.exe", "dock.exe"]);
-});
-
-test.describe("with reduced motion", () => {
-  test.use({ reducedMotion: "reduce" });
-
-  test("keeps editing semantics but disables WAAPI and both jiggles", async ({ page }) => {
-    await longPressAlpha(page);
-    await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("animation-name", "none");
-    await expect(page.locator('.dext-widget[data-widget-id="motion-widget"]')).toHaveCSS("animation-name", "none");
-    await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("transition-duration", "0s");
-    await expect(page.locator("#reorder-placeholder")).toHaveCSS("transition-duration", "0s");
-
-    const updated = structuredClone(baseRoom);
-    updated.desks[0].icons[0] = { ...updated.desks[0].icons[0], x: 2 };
-    await page.evaluate((room) => window.__dextDispatch({ type: "dext:room-layout", room, deskIndex: 0 }), updated);
-    await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "192px");
-    expect(await page.locator('[data-launch-target="alpha.exe"]').evaluate((node) => node.getAnimations().length)).toBe(0);
-  });
 });
