@@ -87,9 +87,9 @@ Expected: Vitest、Rust、C# 与 Player/renderer 回归 RED→GREEN；旧设置�
 - [x] 运行 Vitest、build、Rust、C# Release、Node、完整 renderer Playwright、语法、Schema、生产边界与 diff check。
 - [x] 更新 README/FRONTEND/PROJECT/ROADMAP/TODO/验收卡和错误记录。
 - [x] 完成全分支自审；Critical/Important 用 RED→GREEN 修复，Minor 记录后交付。
-- [ ] 具名暂存并提交，启动真实桌面供人工验收；不合并 master。
+- [x] 具名暂存并提交，启动真实桌面供人工验收；不合并 master。
 
-运行态阻塞（2026-09-21）：`scripts/start.ps1` 检测到主 worktree Core PID 29524 已占用 Dext mutex/pipe，按安全规则拒绝停止或复用；关闭当前 Dext 后从本 worktree 重试即可。
+运行态记录（2026-09-21）：`scripts/start.ps1` 初次检测到主 worktree Core PID 29524 占用 Dext mutex/pipe并按安全规则拒绝复用；用户关闭旧实例后，本 worktree Core/Watchdog/Player/配置器全部启动。强制重铺活体测试通过，Player 壁纸路径也已核对为本 worktree。
 
 Expected: 分支干净、阶段 B 提交存在；Motion 仍是 Icon 合并 master 的前置。
 

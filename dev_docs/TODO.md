@@ -824,7 +824,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 真实 `dext-room` 接入共享 visual/face/tooltip 和偏好消息，不替换稳定图标节点或 Widget iframe；Node 19/19、真实 Room 15/15、图标实验台 12/12（2026-09-21）
 - [x] Core Settings、Rust patch/投递、设置页五项偏好和 Player 可信宿主启动快照端到端接通；Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过（2026-09-21）
 - [x] 完整自动检查、全分支审查与文档收口：Vitest 52/52、Rust 40/40（3 ignored）、Node 20/20、renderer 52/52、前端 build、C# Release、Schema、proto 文本一致与 diff check 全绿（2026-09-21）
-- [ ] 启动本 worktree 并进行真实桌面人工验收；当前被主 worktree Core PID 29524 占用同一 Dext mutex/pipe，`start.ps1` 按安全规则拒绝停止或复用，恢复条件是先关闭当前 Dext
+- [x] 用户关闭旧 Dext 后启动本 worktree；Core PID 65292、Watchdog、Player、配置器及真实壁纸路径均核对来自 `DEXT_Core-desk-icon-001`，强制重铺活体测试 1/1 通过（2026-09-21）
+- [ ] 按独立验收卡完成真实桌面人工验收；用户明确回复通过前不合并 master
 
 ### 阶段 A 补充：直接交互实验（2026-09-20）
 

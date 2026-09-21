@@ -1,6 +1,6 @@
 # DESK-ICON-001 桌面图标反馈与命中区优化验收
 
-- 状态：待验收（阶段 B；待关闭当前主 worktree Core 后启动本分支）
+- 状态：待验收（阶段 B；本 worktree 真实桌面已启动）
 - 分支：`feat/DESK-ICON-001-icon-feedback`
 - 基线：DESK-MOTION-001 `5d91bb2`
 - 设计：`docs/superpowers/specs/2026-09-20-desktop-icon-feedback-design.md`
@@ -80,3 +80,4 @@
 - 2026-09-21：全局偏好链路完成：Settings proto 使用向后兼容零值与 optional 名称开关，Rust patch 返回实时投递状态，设置页提供反馈/名称/命中框/视觉大小/间距五项控制，可信 WebView2 宿主 loaded 后收到完整快照。Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过。
 - 2026-09-21：全分支审查发现并修复两项真实环境问题：Glyph 未写共享 `--icon-color` 导致渐变颜色丢失，以及 reduced-motion 把拖动位移一并清除。两项均先新增失败回归再修复；完整 renderer Playwright 52/52、相关 Node 20/20。
 - 2026-09-21：阶段 B 最终自动验证全绿：Vitest 52/52、Rust 40/40（3 个活体测试 ignored）、Node 20/20、renderer Playwright 52/52、前端生产 build、C# Release、Room Schema、proto 文本一致与 diff check。`scripts/start.ps1` 正确拒绝复用/停止主 worktree PID 29524 的 Core；需先由用户关闭当前 Dext，再启动本 worktree 做真实桌面人工验收。
+- 2026-09-21：用户关闭旧 Dext 后，本 worktree Core PID 65292、Watchdog、Player 与配置器均成功启动；强制重铺活体测试 1/1 通过，Player 当前壁纸路径已核对为 `DEXT_Core-desk-icon-001/wallpapers/dext-room/index.html`，运行态阻塞解除。
