@@ -173,10 +173,8 @@ test("a live add/remove reuses survivors and the Widget iframe while animating t
   expect(enterDurations).toContain(180);
 });
 
-test("an icon target must stay stable for 80ms before the placeholder and path preview move", async ({ page }) => {
+test("crossing into an icon cell immediately leaves a placeholder and yields the path", async ({ page }) => {
   await longPressAlpha(page);
-  await page.clock.install();
-  await page.clock.pauseAt(new Date(Date.now() + 60_000));
   const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
   const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
   if (!alpha || !bravo) throw new Error("icon geometry unavailable");
@@ -185,20 +183,19 @@ test("an icon target must stay stable for 80ms before the placeholder and path p
   await page.mouse.down();
   await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
   await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
-  await page.clock.runFor(79);
-  await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
-  await page.clock.runFor(1);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "0px");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("left", "100px");
   await expect(page.locator('[data-launch-target="bravo.exe"]')).toHaveCSS("left", "0px");
+  const lifted = await page.locator('[data-launch-target="alpha.exe"] .icon-face').boundingBox();
+  expect(lifted).not.toBeNull();
+  expect(Math.abs(lifted!.x + lifted!.width / 2 - (bravo.x + bravo.width / 2))).toBeLessThan(15);
 
   await page.mouse.up();
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "false");
   await expect.poll(() => page.evaluate(() => window.__dextPosts.filter((item) => String(item).includes('"type":"saveRoom"')).length)).toBe(1);
 });
 
-test("one continuous long press can enter edit and drag the icon without lifting first", async ({ page }) => {
+test("long press enters edit cleanly and the next press starts a sortable drag", async ({ page }) => {
   const alpha = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
   const bravo = await page.locator('[data-launch-target="bravo.exe"]').boundingBox();
   if (!alpha || !bravo) throw new Error("icon geometry unavailable");
@@ -207,10 +204,13 @@ test("one continuous long press can enter edit and drag the icon without lifting
   await page.mouse.down();
   await page.waitForTimeout(330);
   await expect(page.locator("body")).toHaveClass(/editing/);
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).not.toHaveClass(/dragging/);
+  await page.mouse.up();
 
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveClass(/dragging/);
   await page.mouse.move(bravo.x + bravo.width / 2, bravo.y + bravo.height / 2);
-  await page.waitForTimeout(100);
   await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
   await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("transition-duration", "0s");
   const lifted = await page.locator('[data-launch-target="alpha.exe"] .icon-face').boundingBox();
@@ -226,18 +226,19 @@ test("one continuous long press can enter edit and drag the icon without lifting
 test("repeated drags keep the lifted face stationary while its target preview changes", async ({ page }) => {
   await longPressAlpha(page);
   const face = page.locator('[data-launch-target="alpha.exe"] .icon-face');
+  const otherFace = page.locator('[data-launch-target="bravo.exe"] .icon-face');
   for (let turn = 0; turn < 12; turn++) {
     const start = await face.boundingBox();
-    if (!start) throw new Error("missing face");
-    await page.mouse.move(start.x + 20, start.y + 20);
+    const target = await otherFace.boundingBox();
+    if (!start || !target) throw new Error("missing face");
+    await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
     await page.mouse.down();
-    const targetX = turn % 2 === 0 ? 190 : 90;
-    await page.mouse.move(targetX, start.y + 20);
-    await page.waitForTimeout(110);
+    await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
     const before = await face.boundingBox();
     await page.waitForTimeout(100);
     const after = await face.boundingBox();
     expect(Math.abs(after!.x - before!.x)).toBeLessThan(1);
+    expect(Math.abs(after!.y - before!.y)).toBeLessThan(1);
     await expect(page.locator("#reorder-placeholder")).toHaveAttribute("data-active", "true");
     await page.mouse.up();
   }
@@ -299,7 +300,8 @@ test("double-clicking true desktop blank exits edit while interactive children d
   await longPressAlpha(page);
   await page.locator('[data-launch-target="alpha.exe"]').dblclick({ force: true });
   await expect(page.locator("body")).toHaveClass(/editing/);
-  await page.mouse.dblclick(5, 5);
+  await page.evaluate(() => document.body.addEventListener("dblclick", (event) => event.stopPropagation()));
+  await page.locator(".desk-bg").dblclick({ position: { x: 8, y: 8 }, force: true });
   await expect(page.locator("body")).not.toHaveClass(/editing/);
 });
 

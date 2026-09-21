@@ -1564,7 +1564,7 @@ document.addEventListener("dblclick", (e) => {
   if (!editMode || !(e.target instanceof Element)) return;
   if (e.target.closest(".icon, .icon-face, .dext-widget, iframe, #dock, button, input, select, textarea, a, [role='button'], .dext-trusted-hotspot")) return;
   exitEdit();
-});
+}, true);
 
 window.addEventListener("keydown", (e) => {
   if (SCREENSAVER_MODE) return;

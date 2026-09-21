@@ -135,7 +135,7 @@ wallpapers/dext-room/
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
 | `renderIcons(layer, desk, s)` | 主层按规范化 launch 身份复用真实节点并提交给 `DextDesktopLayoutController`；staging 静态即时渲染 |
-| `DextDesktopLayoutController` | 300ms 长按后把同一 pointer 直接交给拖动、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
+| `DextDesktopLayoutController` | 300ms 长按只进入编辑；编辑态下一次按下开始 Sortable，跨格立即占位，外层落目标格、内层补偿到指针下；同时负责路径让位、external Widget 预览、取消与权威状态中断 |
 | `startWidgetDrag` | Widget placement 与 icons 双快照事务；预览只动真实节点，有效松手后原子更新内存并持久化一次 |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `dext:room-layout` | Core/Player 定向布局消息：替换目标 Desk 图标；当前 Desk 保留已挂载 Widget/Scene，新增时可直接进入编辑并高亮 |
@@ -159,7 +159,7 @@ wallpapers/dext-room/
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
 | `new DextDesktopLayoutController(container, options)` | 真实桌面节点协调器；公开 `render/setEditing/beginExternalGesture/previewExternal/commitExternal/cancelExternal/abort/dispose` |
 
-时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；300ms 长按进入编辑后，只有图标 `.icon-visual` 以 ±3°/150ms jiggle，名称与 footprint 静止；Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；热布局、Desk 切换、resize 和退出编辑会撤销旧手势提交权。`initial`、`staging` 与 `resize` 立即落位。reduced-motion 关闭 FLIP、托起缩放、过渡和 jiggle，但保留拖动指针位移、placeholder、冲突提示与最终布局。
+时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；300ms 长按只进入编辑，松手后下一次按下才开始排序。编辑中只有图标 `.icon-visual` 以 ±3°/150ms jiggle，名称与 footprint 静止；Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标跨过新格时立即更新 placeholder 和路径让位；被拖图标的外层同步落到目标格，face 用 `scale(1.06)` 与反向位移持续贴住指针，松手才提交。图标重排不移动 Widget，Dock 禁止放入。双击桌面真正空白处在捕获阶段退出；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；热布局、Desk 切换、resize 和退出编辑会撤销旧手势提交权。`initial`、`staging` 与 `resize` 立即落位。reduced-motion 关闭 FLIP、托起缩放、过渡和 jiggle，但保留拖动指针位移、placeholder、冲突提示与最终布局。
 
 ## 四、room.json v2 示例
 

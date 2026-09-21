@@ -153,12 +153,7 @@
 
     _motionItems(icons) {
       const positionOf = this.options.positionOf ?? ((icon) => ({ left: icon.left ?? icon.x, top: icon.top ?? icon.y }));
-      const items = motionApi.createMotionItems(icons, positionOf);
-      if (this.state === "draggingIcon" && this.transaction?.anchor) {
-        const item = items.find((entry) => entry.key === this.transaction.key);
-        if (item) Object.assign(item, this.transaction.anchor);
-      }
-      return items;
+      return motionApi.createMotionItems(icons, positionOf);
     }
 
     _createNode(item) {
@@ -217,14 +212,10 @@
       };
       transaction.timer = setTimeout(() => {
         if (this.state !== "pressing" || this.transaction !== transaction) return;
+        this.state = "idle";
+        this.transaction = null;
         this.options.onRequestEdit?.();
-        if (this.state !== "pressing" || this.transaction !== transaction) return;
-        this._startIconDrag({
-          pointerId: transaction.pointerId,
-          clientX: transaction.startX,
-          clientY: transaction.startY,
-          preventDefault() {},
-        }, node);
+        try { node.releasePointerCapture?.(transaction.pointerId); } catch (_error) { /* capture is best effort */ }
       }, this.longPressMs);
       this.state = "pressing";
       this.transaction = transaction;
@@ -272,14 +263,10 @@
         sourceIndex,
         node,
         face,
-        anchor: { left: items[sourceIndex].left, top: items[sourceIndex].top },
-        startPointer: { x: event.clientX, y: event.clientY },
         baseIcons: cloneIcons(this.publishedIcons),
         previewIcons: null,
         valid: false,
         targetKey: null,
-        candidateKey: null,
-        candidateTimer: null,
         lastEvent: { clientX: event.clientX, clientY: event.clientY },
       };
       node.classList?.add?.("dragging");
@@ -294,47 +281,32 @@
       this._updateIconLift(drag, event);
       const cell = this.options.pointToCell?.(event) ?? null;
       if (!cell || this.options.isBlockedPoint?.(event)) {
-        this._clearCandidate(drag);
         this._restoreIconPreview(drag);
         this.options.hidePlaceholder?.();
         this.options.setDropState?.("blocked");
         return;
       }
       const candidateKey = `${cell.x}:${cell.y}`;
-      if (drag.candidateKey === candidateKey || drag.targetKey === candidateKey) return;
-      this._clearCandidate(drag);
-      drag.candidateKey = candidateKey;
-      drag.candidateTimer = setTimeout(() => {
-        if (this.state !== "draggingIcon" || this.transaction !== drag || drag.candidateKey !== candidateKey) return;
-        drag.candidateTimer = null;
-        const solved = this.options.solveIconReorder?.(drag.baseIcons, drag.sourceIndex, cell);
-        if (!solved?.committed) {
-          drag.valid = false;
-          drag.targetKey = null;
-          this._restoreIconPreview(drag);
-          this.options.hidePlaceholder?.();
-          this.options.setDropState?.("blocked");
-          return;
-        }
-        drag.valid = true;
-        drag.targetKey = candidateKey;
-        drag.previewIcons = cloneIcons(solved.icons);
-        this.options.showPlaceholder?.(cell);
-        this.options.setDropState?.("valid");
-        this.motion.apply(this._motionItems(drag.previewIcons), {
-          mode: "preview",
-          excludeKeys: [drag.key],
-        });
-        this._updateIconLift(drag, drag.lastEvent);
-      }, this.profile.targetDwell);
-    }
-
-    _clearCandidate(drag) {
-      clearTimeout(drag?.candidateTimer);
-      if (drag) {
-        drag.candidateTimer = null;
-        drag.candidateKey = null;
+      if (drag.targetKey === candidateKey) return;
+      const solved = this.options.solveIconReorder?.(drag.baseIcons, drag.sourceIndex, cell);
+      if (!solved?.committed) {
+        drag.valid = false;
+        drag.targetKey = null;
+        this._restoreIconPreview(drag);
+        this.options.hidePlaceholder?.();
+        this.options.setDropState?.("blocked");
+        return;
       }
+      drag.valid = true;
+      drag.targetKey = candidateKey;
+      drag.previewIcons = cloneIcons(solved.icons);
+      this.options.showPlaceholder?.(cell);
+      this.options.setDropState?.("valid");
+      this.motion.apply(this._motionItems(drag.previewIcons), {
+        mode: "preview",
+        excludeKeys: [drag.key],
+      });
+      this._updateIconLift(drag, drag.lastEvent);
     }
 
     _restoreIconPreview(drag) {
@@ -351,7 +323,6 @@
 
     _finishIconDrag(commit) {
       const drag = this.transaction;
-      this._clearCandidate(drag);
       this.state = "idle";
       this.transaction = null;
       if (commit && drag.valid && drag.previewIcons) {
@@ -369,7 +340,6 @@
     }
 
     _finishIconVisual(drag) {
-      this._clearCandidate(drag);
       drag?.node?.classList?.remove?.("dragging");
       if (drag?.face?.style) drag.face.style.transform = "";
       try { drag?.node?.releasePointerCapture?.(drag.pointerId); } catch (_error) { /* already released */ }
@@ -382,8 +352,9 @@
       const reducedMotion = typeof this.options.reducedMotion === "function"
         ? Boolean(this.options.reducedMotion())
         : Boolean(this.options.reducedMotion);
-      const dx = event.clientX - drag.startPointer.x;
-      const dy = event.clientY - drag.startPointer.y + (reducedMotion ? 0 : this.profile.iconLift.y);
+      const rect = drag.node.getBoundingClientRect();
+      const dx = event.clientX - rect.left - rect.width / 2;
+      const dy = event.clientY - rect.top - rect.height / 2 + (reducedMotion ? 0 : this.profile.iconLift.y);
       const scale = reducedMotion ? 1 : this.profile.iconLift.scale;
       drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
     }

@@ -103,10 +103,12 @@
 | #96 | reduced-motion 若清除整个 face transform，会连拖动所需 pointer translate 一并抹掉 | [renderer](errors/renderer.md) |
 | #97 | 浏览器实验台可跨目录加载共享资源，但 WebView2 本地虚拟主机只映射生产 Room 目录，兄弟路径会令真实桌面黑屏 | [renderer](errors/renderer.md) |
 | #98 | 长按进入编辑时先清空 pressing 事务，同一 pointer 无法继续拖动，只能松手回原位 | [renderer](errors/renderer.md) |
+| #99 | 把长按续拖、原格锚定和 80ms 候选延迟叠在一起，会偏离已验收 Sortable 并造成难触发/跳动 | [renderer](errors/renderer.md) |
 
 ## 分册
 
 - 2026-09-21 拖动反馈修正：图标 face 的 180ms transform 过渡叠加预览时外层坐标重排，会导致跟手滞后、跳动；拖起对象外层需固定，只对其他对象执行 FLIP。空白退出需监听整个 document，并排除指针捕获重定向到的 `.icon` 和其他交互对象。连续 12 次真实指针拖放已验证。
+- 2026-09-21 排序模型纠正：真实图标改回最早验收的两段式 Sortable；长按只进编辑，编辑态再次按下拖动，跨格立即占位，拖起对象外层落目标格、内层补偿到指针下。上一条“同一 pointer 续拖 + 外层固定 + 80ms 延迟”结论已由 #99 取代。空白双击在 document 捕获阶段处理。
 
 - [git.md](errors/git.md) —— 仓库/分支/worktree/并行会话协作
 - [backend.md](errors/backend.md) —— C# / Rust / RPC / 运行时

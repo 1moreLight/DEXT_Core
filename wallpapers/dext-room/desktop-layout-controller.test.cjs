@@ -116,7 +116,7 @@ test("an authoritative render invalidates an external preview instead of restori
   assert.equal(controller.state, "idle");
 });
 
-test("an icon target must remain stable for the default 80ms before preview and commits only once", async () => {
+test("crossing into an icon cell previews the accepted reorder immediately and commits only once", () => {
   const layer = new FakeContainer();
   let placeholderCount = 0;
   let commits = 0;
@@ -141,10 +141,9 @@ test("an icon target must remain stable for the default 80ms before preview and 
 
   layer.dispatch("pointerdown", alpha, { clientX: 36, clientY: 42 });
   layer.dispatch("pointermove", alpha, { clientX: 136, clientY: 42, cell: { x: 1, y: 0 } });
-  await new Promise((resolve) => setTimeout(resolve, 45));
-  assert.equal(placeholderCount, 0);
-  await new Promise((resolve) => setTimeout(resolve, 50));
   assert.equal(placeholderCount, 1);
+  assert.equal(layer.children[0].style.left, "100px");
+  assert.equal(layer.children[1].style.left, "0px");
 
   layer.dispatch("pointerup", alpha, { clientX: 136, clientY: 42 });
   layer.dispatch("pointerup", alpha, { clientX: 136, clientY: 42 });
@@ -203,7 +202,7 @@ test("aborting a pending long press never clears the published icon snapshot", (
   assert.equal(controller.publishedIcons[0].label, "Alpha");
 });
 
-test("a desktop long press keeps the same pointer and hands it directly into icon dragging", async () => {
+test("a desktop long press only enters edit and the next press starts icon dragging", async () => {
   const layer = new FakeContainer();
   let editRequests = 0;
   const controller = new DextDesktopLayoutController(layer, {
@@ -219,6 +218,10 @@ test("a desktop long press keeps the same pointer and hands it directly into ico
   await new Promise((resolve) => setTimeout(resolve, 20));
 
   assert.equal(editRequests, 1);
+  assert.equal(controller.state, "idle");
+  layer.dispatch("pointerup", layer.children[0], { clientX: 36, clientY: 42 });
+  controller.setEditing(true);
+  layer.dispatch("pointerdown", layer.children[0], { clientX: 36, clientY: 42 });
   assert.equal(controller.state, "draggingIcon");
   layer.dispatch("pointerup", layer.children[0], { clientX: 36, clientY: 42 });
   assert.equal(controller.state, "idle");
