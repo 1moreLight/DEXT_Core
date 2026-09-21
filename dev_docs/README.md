@@ -166,11 +166,13 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
 | `renderIcons(layer, desk, s)` | 函数 | 主层由稳定节点协调器增量更新，staging 使用静态即时渲染；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息不重挂 Scene/Widget |
+| `DextIconFeedback` | 共享图标偏好模块 | 规范化反馈风格、名称、统一 footprint、视觉大小与 gap；实验台和真实桌面共用，切换时只更新根节点 dataset/CSS 变量 |
 | `DextLayoutMotion` | 动画控制器 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；稳定身份、FLIP/WAAPI、revision 中断和 reduced-motion；实验台与真实桌面共用 |
 | `DextDesktopLayoutController` | 真实桌面布局控制器 | 协调图标节点、编辑状态、图标 Sortable 手势和 Widget external gesture；预览不写 Room，有效松手后单次提交 |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |
+| `dext:desktop-preferences` 消息 | Player → 官方宿主 | 可信官方宿主消费完整全局图标偏好快照；原地更新图标，不重建图标节点、Widget iframe 或 Scene |
 | `room.js` / `room.css` | 旧 Room 扩展 | 宿主不加载；用户代码只能放入 Scene/Widget 受控目录 |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
 | `--wallpaper-screensaver` / `?screensaver=1` | Core→Player→页面 | Lively 屏保实例标记；Dext 只渲染 `room.idle`，普通关闭立即完成 |
@@ -208,7 +210,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
 | `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
-| `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段 |
+| `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段；patch 返回保存后的设置和 `not_needed / applied / deferred` 实时投递状态 |
 | `validate_room_library` | `(path) → canonical_path` | 创建并实际读写探测 Room 库，成功后前端才持久化路径 |
 | `diagnostics_json` / `export_diagnostics` | `→ JSON` / `(path)` | 汇总配置器/Core 版本、身份、进程、pipe、目录、运行包与源 Room |
 | `about_info` / `open_about_document` / `open_dext_directory` | 固定枚举 | 只打开仓库内许可/来源文档或已验证的 Dext data/log 目录，不向 WebView 开放任意路径 |

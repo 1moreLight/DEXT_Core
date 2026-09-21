@@ -1,12 +1,12 @@
 # DESK-ICON-001 桌面图标反馈与命中区优化验收
 
-- 状态：开发中（阶段 B：真实桌面集成）
+- 状态：待验收（阶段 B；待关闭当前主 worktree Core 后启动本分支）
 - 分支：`feat/DESK-ICON-001-icon-feedback`
 - 基线：DESK-MOTION-001 `5d91bb2`
 - 设计：`docs/superpowers/specs/2026-09-20-desktop-icon-feedback-design.md`
 - 计划：`docs/superpowers/plans/2026-09-20-desktop-icon-feedback.md`
-- 目标：用未来生产共用的视觉层，在浏览器中确认三种图标反馈、布局与命中统一的图标 footprint、独立间距、名称规则和 Widget 实验台式直接指针交互。
-- 范围外：阶段 A 不修改真实桌面、设置页、Core、proto、Widget、Dock 或 Room Schema。
+- 目标：在浏览器实验通过的共享视觉层基础上，让真实桌面支持三种图标反馈、统一 footprint/命中、独立视觉大小与间距、名称规则和全局偏好实时投递。
+- 范围外：不修改 Room Schema、Widget 契约、Dock 管理入口或应用启动协议；不先于 DESK-MOTION-001 合入 master。
 
 ## 阶段 A 自动检查
 
@@ -36,7 +36,7 @@
 - [x] 真实桌面 Playwright：节点/iframe 复用、命中几何、五项偏好、编辑/拖动/热更新、tooltip 与 reduced-motion（15/15）。
 - [x] Rust：旧设置默认、patch 未修改字段保留、applied/deferred 投递状态。
 - [x] C# / proto：设置往返与官方宿主 loaded 后启动快照；Release 构建通过。
-- [ ] Vitest、build、Node、完整 renderer Playwright、C# Release、Room Schema 与 diff check。
+- [x] Vitest 52/52、Rust 40/40（3 ignored）、Node 20/20、renderer Playwright 52/52、前端 build、C# Release、Room Schema、proto 文本一致与 diff check。
 
 ## 阶段 B 真实桌面人工验收
 
@@ -79,3 +79,4 @@
 - 2026-09-21：阶段 B 真实 renderer 分层与偏好消息完成。共享 Node 19/19、真实 Room Playwright 15/15、图标实验台 12/12；真实图标和 Widget iframe 原地复用，长按 300ms，仅 `.icon-visual` 以 ±3° / 150ms 抖动。
 - 2026-09-21：全局偏好链路完成：Settings proto 使用向后兼容零值与 optional 名称开关，Rust patch 返回实时投递状态，设置页提供反馈/名称/命中框/视觉大小/间距五项控制，可信 WebView2 宿主 loaded 后收到完整快照。Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过。
 - 2026-09-21：全分支审查发现并修复两项真实环境问题：Glyph 未写共享 `--icon-color` 导致渐变颜色丢失，以及 reduced-motion 把拖动位移一并清除。两项均先新增失败回归再修复；完整 renderer Playwright 52/52、相关 Node 20/20。
+- 2026-09-21：阶段 B 最终自动验证全绿：Vitest 52/52、Rust 40/40（3 个活体测试 ignored）、Node 20/20、renderer Playwright 52/52、前端生产 build、C# Release、Room Schema、proto 文本一致与 diff check。`scripts/start.ps1` 正确拒绝复用/停止主 worktree PID 29524 的 Core；需先由用户关闭当前 Dext，再启动本 worktree 做真实桌面人工验收。

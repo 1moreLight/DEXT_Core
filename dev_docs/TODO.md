@@ -823,7 +823,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 裁定：当前分支已建立在 DESK-MOTION-001 之上，可继续完成阶段 B；最终仍严格先合入 Motion、再合入 Icon，不直接修改 master（2026-09-21）
 - [x] 真实 `dext-room` 接入共享 visual/face/tooltip 和偏好消息，不替换稳定图标节点或 Widget iframe；Node 19/19、真实 Room 15/15、图标实验台 12/12（2026-09-21）
 - [x] Core Settings、Rust patch/投递、设置页五项偏好和 Player 可信宿主启动快照端到端接通；Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过（2026-09-21）
-- [ ] 完整自动检查、全分支审查、文档收口并提交，停在真实桌面人工验收
+- [x] 完整自动检查、全分支审查与文档收口：Vitest 52/52、Rust 40/40（3 ignored）、Node 20/20、renderer 52/52、前端 build、C# Release、Schema、proto 文本一致与 diff check 全绿（2026-09-21）
+- [ ] 启动本 worktree 并进行真实桌面人工验收；当前被主 worktree Core PID 29524 占用同一 Dext mutex/pipe，`start.ps1` 按安全规则拒绝停止或复用，恢复条件是先关闭当前 Dext
 
 ### 阶段 A 补充：直接交互实验（2026-09-20）
 

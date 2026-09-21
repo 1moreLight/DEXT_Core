@@ -84,10 +84,12 @@ Expected: Vitest、Rust、C# 与 Player/renderer 回归 RED→GREEN；旧设置�
 
 ## Task 8: Stage B verification and handoff
 
-- [ ] 运行 Vitest、build、Rust、C# Release、Node、完整 renderer Playwright、语法、Schema、生产边界与 diff check。
-- [ ] 更新 README/FRONTEND/PROJECT/ROADMAP/TODO/验收卡和错误记录。
-- [ ] 完成全分支自审；Critical/Important 用 RED→GREEN 修复，Minor 记录后交付。
+- [x] 运行 Vitest、build、Rust、C# Release、Node、完整 renderer Playwright、语法、Schema、生产边界与 diff check。
+- [x] 更新 README/FRONTEND/PROJECT/ROADMAP/TODO/验收卡和错误记录。
+- [x] 完成全分支自审；Critical/Important 用 RED→GREEN 修复，Minor 记录后交付。
 - [ ] 具名暂存并提交，启动真实桌面供人工验收；不合并 master。
+
+运行态阻塞（2026-09-21）：`scripts/start.ps1` 检测到主 worktree Core PID 29524 已占用 Dext mutex/pipe，按安全规则拒绝停止或复用；关闭当前 Dext 后从本 worktree 重试即可。
 
 Expected: 分支干净、阶段 B 提交存在；Motion 仍是 Icon 合并 master 的前置。
 

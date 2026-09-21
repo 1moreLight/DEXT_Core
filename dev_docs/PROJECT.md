@@ -102,6 +102,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 | 2026-09-19 | **拖动取消与 Reset 以单次输入事务为边界**：每次真实图标/Widget 拖动开始前，以当前已发布布局建立独立恢复基线，不继承旧场景的 preview；Reset/场景切换必须终止 drag/press、500ms 长按 timer 和 pointer capture，旧 pointer 序列不得跨重置继续提交。 |
 | 2026-09-20 | **图标外观与命中区采用共享视觉层并继续浏览器先行**：网格外层继续负责坐标和 FLIP，收缩后的 face 负责真实指针命中与托起，独立 visual 层负责“光晕 / 紧凑内容框 / 无边框”反馈和编辑抖动，避免 transform 相互覆盖。浏览器实验将布局格与命中框统一为同一个 footprint；显示名称时为 72×80 / 80×84 / 84×88，隐藏名称时收紧为 64×64 / 72×72 / 80×80，密度仅由框间 gap 表达。图标视觉大小另设 48/56/64px 三档，与 footprint 和 gap 独立，切换不替换节点。默认光晕并显示单行省略名称；隐藏名称时稳定悬停 500ms 才显示浮层。阶段 A 图标长按采用 300ms，仅当前 `.icon-visual` 以 ±3° / 150ms 抖动，名称与 footprint 保持静止；Widget、拖动托起与 reduced-motion 规则不变。实验台默认像 Widget 实验台一样直接响应 hover/press/长按编辑与拖起回位，固定状态只作诊断；此阶段不排序或保存。用户验收前禁止修改真实桌面、设置页或 Core，全局设置不进入 Room Schema。 |
 | 2026-09-21 | **桌面图标偏好属于全局 Core 设置，不进入 Room**：阶段 B 把反馈风格、名称显示、统一 footprint、图标视觉大小和 gap 五项偏好保存到 Settings protobuf；真实 `dext-room` 只消费规范化快照并原地更新 dataset，不替换稳定图标节点、Widget iframe 或 Scene。设置保存成功后尽力热投递当前官方宿主，未运行或投递失败则保留设置并在下一次可信宿主加载时应用。DESK-ICON-001 继续叠加在 DESK-MOTION-001 分支之上开发，但 master 合并顺序固定为 Motion → Icon。 |
+| 2026-09-21 | **reduced-motion 只关闭装饰运动，不得切断输入几何**：系统减少动画时关闭 FLIP、托起缩放、过渡和 jiggle，但拖动对象仍必须跟随指针，并保留 placeholder、冲突提示和最终布局；视觉 CSS 不得用笼统的 `transform: none` 覆盖控制器写入的拖动位移。 |
 
 ## 工作流
 

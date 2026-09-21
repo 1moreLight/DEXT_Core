@@ -95,9 +95,11 @@ npm run dev:icons
 
 默认“交互”状态像 Widget 实验台一样直接操作真实命中框：hover 和 pointerdown 使用真实指针状态，短按选择当前 TARGET；长按 300ms 进入苹果式编辑抖动，编辑中拖动会托起并跟手，松手恢复原网格。此阶段不重排、不保存，双击真正画布空白退出编辑；透明网格边缘始终不响应。固定五状态只用于逐帧诊断对比。
 
-布局定位格与实际命中区现统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap，图标始终以框中心定位。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。打开“显示实际命中区”后，橙色虚线布局格与绿色实线命中框应四边重合，只有框间 gap 不响应。这些档位目前只属于阶段 A 实验参数，尚未成为生产设置。
+布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap，图标始终以框中心定位。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。打开“显示实际命中区”后，橙色虚线布局格与绿色实线命中框应四边重合，只有框间 gap 不响应。阶段 B 已把五项参数作为全局 Core 设置接入真实桌面，不写入 Room Schema。
 
-阶段 A 只验证未来生产共用的视觉属性与指针范围；在独立验收卡明确通过前，真实 `dext-room`、设置页和 Core 均不得接入。长名称固定单行省略；关闭名称后稳定悬停 500ms 才显示名称浮层，编辑、按下或拖动期间抑制。实验台长按为 300ms，只有当前 48/56/64px `.icon-visual` 以 ±3° / 150ms jiggle；名称和 footprint/命中边框保持静止。Widget 的生产抖动、拖动托起和 reduced-motion 规则不变。
+阶段 A 用于浏览器调参与运动诊断，不代表真实壁纸外观；阶段 B 的真实 `dext-room` 只复用共享属性、命中和动画层。长名称固定单行省略；关闭名称后稳定悬停 500ms 才显示名称浮层，编辑、按下或拖动期间抑制。实验台与真实桌面均为长按 300ms，只有当前 48/56/64px `.icon-visual` 以 ±3° / 150ms jiggle；名称和 footprint/命中边框保持静止。Widget 的生产抖动、拖动托起和 reduced-motion 规则不变。
+
+设置页“偏好设置”提供反馈风格、显示名称、命中框、图标视觉大小和间距五项全局控制。保存成功后尽力向当前可信官方 Room 热投递完整 `dext:desktop-preferences` 快照；桌面未运行或投递失败时设置仍保存，并在下次可信 Player loaded 后应用。偏好切换不得替换稳定图标节点、Widget iframe 或 Scene。
 
 ## 二、验证到真桌面
 
@@ -133,10 +135,11 @@ wallpapers/dext-room/
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
 | `renderIcons(layer, desk, s)` | 主层按规范化 launch 身份复用真实节点并提交给 `DextDesktopLayoutController`；staging 静态即时渲染 |
-| `DextDesktopLayoutController` | 500ms 长按、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
+| `DextDesktopLayoutController` | 300ms 长按、80ms 目标稳定、图标托起/占位/路径让位、external Widget 预览、取消与权威状态中断 |
 | `startWidgetDrag` | Widget placement 与 icons 双快照事务；预览只动真实节点，有效松手后原子更新内存并持久化一次 |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `dext:room-layout` | Core/Player 定向布局消息：替换目标 Desk 图标；当前 Desk 保留已挂载 Widget/Scene，新增时可直接进入编辑并高亮 |
+| `dext:desktop-preferences` | Player 定向偏好消息：规范化完整快照并原地更新根节点属性和现有图标几何；不重挂 Widget/Scene |
 | `resolveTransition / switchDesk` | 有向 edge → 房间默认 → slide；Content 完成后换 Desk，预设走原动画注册表 |
 | `playSlot()` | start/switch 按完成语义播放；idle persistent 模式使图片常驻、视频循环、HTML持续运行 |
 | `playVideoTransition()` | 保留原函数名的薄适配层，内部统一调用 playSlot，不再中点换页 |
@@ -156,7 +159,7 @@ wallpapers/dext-room/
 | `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
 | `new DextDesktopLayoutController(container, options)` | 真实桌面节点协调器；公开 `render/setEditing/beginExternalGesture/previewExternal/commitExternal/cancelExternal/abort/dispose` |
 
-时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；500ms 长按进入编辑后，图标 face 以 ±1.35°/350ms jiggle，Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；热布局、Desk 切换、resize 和退出编辑会撤销旧手势提交权。`initial`、`staging`、`resize` 与 reduced-motion 立即落位并关闭 jiggle。
+时序：move/reorder 280ms `cubic-bezier(.22,1,.36,1)`；enter 180ms；exit 140ms；rollback 300ms。FLIP 只动画图标外层 positioner 的 transform/opacity；300ms 长按进入编辑后，只有图标 `.icon-visual` 以 ±3°/150ms jiggle，名称与 footprint 静止；Widget 整张外框以 CSS `rotate` ±0.38°/420ms jiggle，拖动当前对象时暂停。拖起图标的 face 以 `scale(1.06)` 跟随指针，placeholder 留在目标格，沿途图标按顺序 FLIP 让位；图标重排不移动 Widget，Dock 禁止放入。双击桌面真正空白处退出编辑；双击图标、Widget 或 Dock 不退出。每次真实拖动从 pointerdown 时的已发布布局建立独立恢复基线；热布局、Desk 切换、resize 和退出编辑会撤销旧手势提交权。`initial`、`staging` 与 `resize` 立即落位。reduced-motion 关闭 FLIP、托起缩放、过渡和 jiggle，但保留拖动指针位移、placeholder、冲突提示与最终布局。
 
 ## 四、room.json v2 示例
 
