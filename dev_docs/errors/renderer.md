@@ -396,3 +396,32 @@ size 共同决定。虽然外层网格居中，但每个可点击对象自身的
 “整体运动”修复基于语义误解，已由最终方案取代：编辑 jiggle 只放在 `.icon-visual`，使用 ±3° / 150ms
 纯旋转；`.icon-face` 和 `.icon-label` 的 animation-name 均为 none。拖动仍由 face 整体托起，reduced-motion
 继续关闭 visual 动画。防再犯时应先把“没有抖”与“不要抖”复述成肯定句，再决定运动节点。
+
+# #95 共享 Glyph 渐变必须读取真实桌面的颜色变量
+
+现象：图标实验台中的 Glyph 保持各自颜色，接入真实桌面后，无 PNG 的应用图标却可能全部变成共享 CSS
+默认的蓝色渐变；节点、尺寸和交互测试仍会通过。
+
+原因：共享 `.icon-glyph` 用 `--icon-color` 生成渐变，实验台直接写该变量；真实桌面的旧实现只更新
+`backgroundColor`。CSS `background` 渐变继续使用默认变量，内联背景色不会替换渐变图层。
+
+修复：创建和热更新真实 Glyph 时同时写入 `--icon-color`，并由真实 Room Playwright 断言自定义属性保持
+Room 图标颜色。
+
+防再犯：共享视觉模块引入 CSS 自定义属性后，生产节点构造器必须显式映射同一契约；视觉回归不能只验证
+DOM 分层和几何，还要覆盖至少一个来自真实数据的主题色值。
+
+# #96 reduced-motion 不能清除拖动所需的指针位移
+
+现象：Windows 开启减少动态效果后，图标仍能提交排序，但拖动中的真实图标停在原位，仅占位与其他图标
+变化，手势反馈像“隔空拖动”。
+
+原因：共享 reduced-motion 规则把 `.icon-face` 的所有 transform 强制为 none；该层不仅承载装饰性的托起
+和缩放，也承载控制器计算的实时 pointer translate，导致必要位移被一并清除。
+
+修复：控制器在 reduced-motion 下仍输出 pointer translate，但将托起偏移归零、scale 固定为 1；共享 CSS
+只清除 `.icon-visual` 的装饰 transform，并仅对实验台模拟卡片清除 face transform。Node 与真实 Room 测试
+分别验证内联 `scale(1)` 和 computed transform 仍有位移。
+
+防再犯：减少动态效果应区分“交互所需的位置反馈”和“装饰性运动”；不能用一个宽泛的
+`transform: none !important` 同时覆盖两类职责。

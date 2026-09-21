@@ -99,6 +99,8 @@
 | #92 | 隐藏图标名称后仍保留标签高度，产生无意义空白命中区且尺寸读数易失真 | [renderer](errors/renderer.md) |
 | #93 | 把编辑 jiggle 放在 `.icon-face` 会连带文字；“图标文字不抖”需求澄清后应只动画 `.icon-visual` | [renderer](errors/renderer.md) |
 | #94 | renderer Playwright 使用 strictPort，自行启动的 5174 预览会阻止测试 webServer 启动 | [toolchain](errors/toolchain.md) |
+| #95 | 共享 Glyph 渐变读取 `--icon-color`，真实桌面只写 backgroundColor 会让图标退回默认蓝色 | [renderer](errors/renderer.md) |
+| #96 | reduced-motion 若清除整个 face transform，会连拖动所需 pointer translate 一并抹掉 | [renderer](errors/renderer.md) |
 
 ## 分册
 

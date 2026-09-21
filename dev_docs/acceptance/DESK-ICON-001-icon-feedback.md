@@ -78,3 +78,4 @@
 - 2026-09-21：用户回复“感觉差不多了，可以尝试合并进去了”，确认阶段 A 浏览器方向可进入阶段 B。当前分支已叠加 DESK-MOTION-001，允许继续实现但不改变最终合并顺序：Motion 真实桌面验收并合入 master 后，Icon 才能最终合入。
 - 2026-09-21：阶段 B 真实 renderer 分层与偏好消息完成。共享 Node 19/19、真实 Room Playwright 15/15、图标实验台 12/12；真实图标和 Widget iframe 原地复用，长按 300ms，仅 `.icon-visual` 以 ±3° / 150ms 抖动。
 - 2026-09-21：全局偏好链路完成：Settings proto 使用向后兼容零值与 optional 名称开关，Rust patch 返回实时投递状态，设置页提供反馈/名称/命中框/视觉大小/间距五项控制，可信 WebView2 宿主 loaded 后收到完整快照。Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过。
+- 2026-09-21：全分支审查发现并修复两项真实环境问题：Glyph 未写共享 `--icon-color` 导致渐变颜色丢失，以及 reduced-motion 把拖动位移一并清除。两项均先新增失败回归再修复；完整 renderer Playwright 52/52、相关 Node 20/20。

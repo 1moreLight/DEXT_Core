@@ -365,9 +365,13 @@
     _updateIconLift(drag, event) {
       if (!drag?.face?.style || !event) return;
       const rect = drag.node.getBoundingClientRect();
+      const reducedMotion = typeof this.options.reducedMotion === "function"
+        ? Boolean(this.options.reducedMotion())
+        : Boolean(this.options.reducedMotion);
       const dx = event.clientX - rect.left - rect.width / 2;
-      const dy = event.clientY - rect.top - rect.height / 2 + this.profile.iconLift.y;
-      drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${this.profile.iconLift.scale})`;
+      const dy = event.clientY - rect.top - rect.height / 2 + (reducedMotion ? 0 : this.profile.iconLift.y);
+      const scale = reducedMotion ? 1 : this.profile.iconLift.scale;
+      drag.face.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
     }
   }
 

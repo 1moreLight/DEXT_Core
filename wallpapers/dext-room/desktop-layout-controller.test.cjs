@@ -221,3 +221,19 @@ test("a desktop can provide its own long-press threshold", async () => {
   assert.equal(editRequests, 1);
   assert.equal(controller.state, "idle");
 });
+
+test("reduced motion keeps pointer tracking while removing icon lift and scale", () => {
+  const layer = new FakeContainer();
+  const controller = new DextDesktopLayoutController(layer, {
+    createIconNode: () => new FakeNode(layer),
+    positionOf: ({ x, y }) => ({ left: x * 100, top: y * 120 }),
+    pointToCell: () => null,
+    reducedMotion: () => true,
+  });
+  controller.render([icon("Alpha", 0, 0)], { mode: "initial" });
+  controller.setEditing(true);
+
+  layer.dispatch("pointerdown", layer.children[0], { clientX: 36, clientY: 42 });
+
+  assert.equal(layer.children[0].style.transform, "translate3d(0px, 0px, 0) scale(1)");
+});

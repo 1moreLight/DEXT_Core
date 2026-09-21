@@ -116,6 +116,7 @@ test("desktop preferences update real hit geometry and visuals without replacing
   await expect(root).toHaveAttribute("data-icon-hit-size", "small");
   await expect(root).toHaveAttribute("data-icon-visual-size", "large");
   await expect(root).toHaveAttribute("data-icon-spacing", "compact");
+  await expect(alpha.locator(".icon-glyph")).toHaveCSS("--icon-color", "#345");
   expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
   expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
 
@@ -384,6 +385,16 @@ test.describe("with reduced motion", () => {
     await expect(page.locator('.dext-widget[data-widget-id="motion-widget"]')).toHaveCSS("animation-name", "none");
     await expect(page.locator('[data-launch-target="alpha.exe"] .icon-face')).toHaveCSS("transition-duration", "0s");
     await expect(page.locator("#reorder-placeholder")).toHaveCSS("transition-duration", "0s");
+
+    const alphaFace = page.locator('[data-launch-target="alpha.exe"] .icon-face');
+    const alphaBox = await alphaFace.boundingBox();
+    if (!alphaBox) throw new Error("reduced-motion drag geometry unavailable");
+    await page.mouse.move(alphaBox.x + alphaBox.width / 2, alphaBox.y + alphaBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(alphaBox.x + alphaBox.width / 2 + 24, alphaBox.y + alphaBox.height / 2 + 12);
+    expect(await alphaFace.evaluate((node) => (node as HTMLElement).style.transform)).toContain("scale(1)");
+    expect(await alphaFace.evaluate((node) => getComputedStyle(node).transform)).not.toBe("none");
+    await page.mouse.up();
 
     const updated = structuredClone(baseRoom);
     updated.desks[0].icons[0] = { ...updated.desks[0].icons[0], x: 2 };

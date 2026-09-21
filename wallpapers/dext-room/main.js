@@ -1055,6 +1055,7 @@ function iconVisual(item) {
   const color = typeof item?.color === "string" && CSS.supports("color", item.color)
     ? item.color
     : "#3b82f6";
+  glyph.style.setProperty("--icon-color", color);
   glyph.style.backgroundColor = color;
   return glyph;
 }
@@ -1174,9 +1175,11 @@ function updateDesktopIconNode(el, motionItem) {
     if (visual.getAttribute("src") !== nextSrc) visual.setAttribute("src", nextSrc);
   } else {
     visual.textContent = typeof item?.glyph === "string" && item.glyph ? item.glyph : "?";
-    visual.style.backgroundColor = typeof item?.color === "string" && CSS.supports("color", item.color)
+    const color = typeof item?.color === "string" && CSS.supports("color", item.color)
       ? item.color
       : "#3b82f6";
+    visual.style.setProperty("--icon-color", color);
+    visual.style.backgroundColor = color;
   }
   label.textContent = item.label ?? "";
   tooltip.textContent = item.label ?? "";

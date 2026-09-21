@@ -274,9 +274,8 @@ body.editing [data-dext-icon-feedback-root].icon-layer .icon:nth-child(even) .ic
   transition-duration: 0s !important;
 }
 
-[data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-face,
 [data-dext-icon-feedback-root][data-reduced-motion="true"] .icon-visual,
-[data-dext-icon-feedback-root][data-reduced-motion="true"] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
+[data-dext-icon-feedback-root][data-reduced-motion="true"] .lab-icon .icon-face {
   transform: none !important;
 }
 
@@ -288,9 +287,8 @@ body.editing [data-dext-icon-feedback-root].icon-layer .icon:nth-child(even) .ic
     transition-duration: 0s !important;
   }
 
-  [data-dext-icon-feedback-root] .icon-face,
   [data-dext-icon-feedback-root] .icon-visual,
-  [data-dext-icon-feedback-root] :is(.lab-icon.is-dragging, .icon.dragging) .icon-face {
+  [data-dext-icon-feedback-root] .lab-icon .icon-face {
     transform: none !important;
   }
 }
