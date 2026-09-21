@@ -81,3 +81,4 @@
 - 2026-09-21：全分支审查发现并修复两项真实环境问题：Glyph 未写共享 `--icon-color` 导致渐变颜色丢失，以及 reduced-motion 把拖动位移一并清除。两项均先新增失败回归再修复；完整 renderer Playwright 52/52、相关 Node 20/20。
 - 2026-09-21：阶段 B 最终自动验证全绿：Vitest 52/52、Rust 40/40（3 个活体测试 ignored）、Node 20/20、renderer Playwright 52/52、前端生产 build、C# Release、Room Schema、proto 文本一致与 diff check。`scripts/start.ps1` 正确拒绝复用/停止主 worktree PID 29524 的 Core；需先由用户关闭当前 Dext，再启动本 worktree 做真实桌面人工验收。
 - 2026-09-21：用户关闭旧 Dext 后，本 worktree Core PID 65292、Watchdog、Player 与配置器均成功启动；强制重铺活体测试 1/1 通过，Player 当前壁纸路径已核对为 `DEXT_Core-desk-icon-001/wallpapers/dext-room/index.html`，运行态阻塞解除。
+- 2026-09-21：首次真实桌面验收发现全黑。根因是 Vite 可跨目录加载 `../dext-icon-feedback`，正式 WebView2 虚拟主机却只映射 `dext-room`；共享模块缺失使主脚本在渲染前中止。新增“仅暴露生产映射目录”Playwright 回归并先 RED，再把唯一共享 JS/CSS 收进 `dext-room`、让实验台反向引用。最终 Vitest 52/52、Node 20/20、renderer Playwright 53/53、前端 build、Schema 与 diff check 全绿；真实桌面已重铺。

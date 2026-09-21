@@ -11,7 +11,7 @@ const {
   applyDesktopIconPreferences,
   resolveDesktopIconGeometry,
   isHiddenLabelTooltipEligible,
-} = require("./icon-feedback.js");
+} = require("../dext-room/icon-feedback.js");
 
 test("normalizes desktop icon preferences to the halo and visible-label defaults", () => {
   assert.deepEqual(ICON_FEEDBACK_STYLES, ["halo", "compact", "bare"]);

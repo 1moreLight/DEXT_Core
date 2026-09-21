@@ -425,3 +425,20 @@ DOM 分层和几何，还要覆盖至少一个来自真实数据的主题色值�
 
 防再犯：减少动态效果应区分“交互所需的位置反馈”和“装饰性运动”；不能用一个宽泛的
 `transform: none !important` 同时覆盖两类职责。
+
+# #97 生产 Room 的启动资源必须位于 WebView2 映射目录内
+
+现象：图标实验台和 Vite 下的真实 Room 测试全部通过，但正式 Player 里桌面只剩黑底与静态 Dock 箭头；
+背景、图标、Widget 和 Desk 指示器都没有初始化。
+
+原因：WebView2 Player 会把 `index.html` 所在的 `wallpapers/dext-room` 单独映射为本地虚拟主机根目录。
+生产页面使用 `../dext-icon-feedback/icon-feedback.js` 和 `.css` 时，Vite 能访问仓库兄弟目录，但虚拟主机
+只会在映射根目录内解析该 URL，资源不存在。随后 `main.js` 检测不到 `DextIconFeedback` 并在首次
+`renderDesk()` 前中止，形成“骨架存在、内容全黑”的假象。
+
+修复：把唯一共享 `icon-feedback.js/.css` 收进生产 `dext-room`，生产页面使用同目录相对路径；浏览器
+实验台和 Node 测试反向引用生产文件，继续保持单一实现。新增 Playwright 边界场景，阻断
+`/wallpapers/dext-room/` 之外的全部请求，确认仅暴露生产映射目录时仍能完成启动和图标渲染。
+
+防再犯：官方 Room 的 boot-critical HTML、JS、CSS 必须自包含于 Player 映射目录。浏览器实验台可引用
+生产资源，但生产页面不得依赖实验台或仓库兄弟目录；Vite 全仓库服务不能替代虚拟主机边界回归。

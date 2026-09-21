@@ -91,7 +91,7 @@ cd tauri-ui
 npm run dev:icons
 ```
 
-地址为 `http://127.0.0.1:5174/wallpapers/dext-icon-lab/`。实验台直接加载 `wallpapers/dext-icon-feedback/icon-feedback.js` 与 `.css`，提供“图标光晕 / 紧凑内容框 / 纯净无边框”、默认直接交互、固定正常/悬停/按下/编辑/拖动诊断状态、名称显示、真实命中区、reduced-motion 和多背景检查。图标中心与名称基线固定；只有编辑和拖动产生运动。
+地址为 `http://127.0.0.1:5174/wallpapers/dext-icon-lab/`。实验台直接加载生产目录中的 `wallpapers/dext-room/icon-feedback.js` 与 `.css`，提供“图标光晕 / 紧凑内容框 / 纯净无边框”、默认直接交互、固定正常/悬停/按下/编辑/拖动诊断状态、名称显示、真实命中区、reduced-motion 和多背景检查。图标中心与名称基线固定；只有编辑和拖动产生运动。共享文件必须留在 `dext-room` 内，因为正式 WebView2 虚拟主机只映射该目录。
 
 默认“交互”状态像 Widget 实验台一样直接操作真实命中框：hover 和 pointerdown 使用真实指针状态，短按选择当前 TARGET；长按 300ms 进入苹果式编辑抖动，编辑中拖动会托起并跟手，松手恢复原网格。此阶段不重排、不保存，双击真正画布空白退出编辑；透明网格边缘始终不响应。固定五状态只用于逐帧诊断对比。
 

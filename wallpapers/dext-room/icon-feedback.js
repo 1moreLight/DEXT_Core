@@ -1,3 +1,4 @@
+// Production-owned shared icon feedback runtime; the browser lab imports this same file.
 (function (root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
