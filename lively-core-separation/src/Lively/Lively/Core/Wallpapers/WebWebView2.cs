@@ -370,10 +370,14 @@ namespace Lively.Core.Wallpapers
                                     ?? throw new InvalidDataException("Room payload must be an object.");
                                 SaveTrustedRoomCopies(roomPath, incoming);
                                 Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
+                                if (!string.IsNullOrWhiteSpace(saveMsg.RequestId))
+                                    SendMessage(new LivelyMessageRoomSaveResultCmd { RequestId = saveMsg.RequestId, Success = true });
                             }
                             catch (Exception se)
                             {
                                 Logger.Error($"Wv2{uniqueId}: SaveRoom failed: {se.Message}");
+                                if (!string.IsNullOrWhiteSpace(saveMsg.RequestId))
+                                    SendMessage(new LivelyMessageRoomSaveResultCmd { RequestId = saveMsg.RequestId, Success = false, Error = "Room 保存失败" });
                             }
                         });
                         break;
@@ -617,8 +621,17 @@ namespace Lively.Core.Wallpapers
                 AtomicWriteJson(packageRoomPath, package);
                 if (sourcePath != null)
                 {
-                    AtomicWriteJson(sourcePath, clean);
-                    Logger.Info($"Wv2{uniqueId}: Room source sync: {sourcePath}");
+                    try
+                    {
+                        AtomicWriteJson(sourcePath, clean);
+                        Logger.Info($"Wv2{uniqueId}: Room source sync: {sourcePath}");
+                    }
+                    catch
+                    {
+                        // A failed source write must not leave the deployed package claiming success.
+                        AtomicWriteJson(packageRoomPath, existing);
+                        throw;
+                    }
                 }
             }
         }

@@ -10,6 +10,7 @@ namespace Lively.Models.Message
         public string HitTargetSize { get; set; }
         public string VisualSize { get; set; }
         public string Spacing { get; set; }
+        public long Revision { get; set; }
 
         public LivelyMessageDesktopIconPreferencesCmd() : base(MessageType.cmd_desktop_icon_preferences)
         {

@@ -2404,8 +2404,27 @@ fn parse_desktop_icon_spacing(value: &str) -> Result<i32, String> {
     }
 }
 
+static DESKTOP_ICON_REVISION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn next_desktop_icon_revision() -> u64 {
+    use std::sync::atomic::Ordering;
+    let millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+    let mut previous = DESKTOP_ICON_REVISION.load(Ordering::Relaxed);
+    loop {
+        let next = millis.max(previous + 1);
+        match DESKTOP_ICON_REVISION.compare_exchange_weak(previous, next, Ordering::SeqCst, Ordering::Relaxed) {
+            Ok(_) => return next,
+            Err(current) => previous = current,
+        }
+    }
+}
+
 fn desktop_icon_preferences_message(
     settings: &crate::proto::settings::SettingsDataModel,
+    revision: u64,
 ) -> Result<String, String> {
     serde_json::to_string(&serde_json::json!({
         "Type": CMD_DESKTOP_ICON_PREFERENCES,
@@ -2414,6 +2433,7 @@ fn desktop_icon_preferences_message(
         "HitTargetSize": desktop_icon_size_name(settings.desktop_icon_hit_target_size),
         "VisualSize": desktop_icon_size_name(settings.desktop_icon_visual_size),
         "Spacing": desktop_icon_spacing_name(settings.desktop_icon_spacing),
+        "Revision": revision,
     }))
     .map_err(|error| format!("serialize desktop icon preferences failed: {error}"))
 }
@@ -2490,7 +2510,7 @@ async fn patch_dext_settings(patch: DextSettingsPatch) -> Result<DextSettingsUpd
     let delivery_status = if !changes_desktop_icons {
         "not_needed"
     } else {
-        let message = desktop_icon_preferences_message(&settings);
+        let message = desktop_icon_preferences_message(&settings, next_desktop_icon_revision());
         match (active_wallpaper_value().await, message) {
             (Ok(Some(active)), Ok(message)) => {
                 if grpc::send_message_wallpaper(&active.lively_info_path, &message)
@@ -3948,12 +3968,14 @@ mod tests {
         assert_eq!(view.desktop_icon_spacing, "standard");
 
         let message: serde_json::Value =
-            serde_json::from_str(&desktop_icon_preferences_message(&settings).unwrap()).unwrap();
+            serde_json::from_str(&desktop_icon_preferences_message(&settings, 0).unwrap()).unwrap();
         assert_eq!(message["Type"], 27);
         assert_eq!(message["FeedbackStyle"], "halo");
         assert_eq!(message["ShowLabels"], true);
         assert_eq!(message["HitTargetSize"], "standard");
         assert_eq!(message["VisualSize"], "standard");
         assert_eq!(message["Spacing"], "standard");
+        assert_eq!(message["Revision"], 0);
+        assert!(super::next_desktop_icon_revision() < super::next_desktop_icon_revision());
     }
 }
