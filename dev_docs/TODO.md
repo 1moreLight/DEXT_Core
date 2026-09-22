@@ -951,4 +951,5 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 收紧间距后的 Vitest 55/55、构建、Node 8/8、Playwright 50/50 通过；仍不等于真实 Player 拖动通过（2026-09-22）。
 - [x] 实机轨迹确认三次图标按下均获得 pointer capture，约 0.3–0.4 秒后直接收到 `lostpointercapture`，没有记录到 pointermove/up 或重绘；该截图尚不足以判定捕获为何丢失（2026-09-22）。
 - [x] 只读核对当前 `rooms/v2/room.json` 两图标位于第 0、2 列；截图中的大间隔主要包含一个空网格列，不是三档额外间距数值未生效（2026-09-22）。
-- [ ] 临时补采 `mousemove/mouseup/dragstart/focus` 和指针坐标，区分 WebView2 单独丢 pointer capture、原生 drag 与整个宿主输入离开；取得实机轨迹后移除探针。
+- [x] 临时补采 `mousemove/mouseup/dragstart/focus` 和指针坐标，诊断提交 `ee62c49`；`node --check`、`git diff --check` 通过，忽略测试重铺成功，运行身份核对 Core/Player/配置器均为当前 worktree（2026-09-22）。
+- [ ] 用户在真实桌面再做一次从左图标向右图标的连续拖动，读取扩展事件轨迹；定位后写失败回归、修复并移除探针。
