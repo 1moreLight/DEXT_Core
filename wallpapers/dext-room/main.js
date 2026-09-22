@@ -457,10 +457,19 @@ function preferenceViews(geometry) {
       width: widget.placement.width * widgetScaleX + 80,
       height: widget.placement.height * widgetScaleY + 80,
     }));
-    const dockEnabled = { ...ROOM.dock, ...desk.dock }.enabled !== false;
+    const deskDock = { ...ROOM.dock, ...desk.dock };
+    const dockEnabled = deskDock.enabled !== false;
+    const viewport = deskMain.getBoundingClientRect();
+    const dockPosition = deskDock.position ?? 'bottom';
+    const dockLeft = dockPosition === 'left' ? viewport.left + 24
+      : dockPosition === 'right' ? viewport.right - 24 - dockRect.width
+      : viewport.left + (viewport.width - dockRect.width) / 2;
+    const dockTop = dockPosition === 'top' ? viewport.top + 24
+      : dockPosition === 'bottom' ? viewport.bottom - 24 - dockRect.height
+      : viewport.top + (viewport.height - dockRect.height) / 2;
     if (dockEnabled && dockRect.width && dockRect.height) blocked.push({
-      x: dockRect.left - layer.left - 24,
-      y: dockRect.top - layer.top - 24,
+      x: dockLeft - layer.left - 24,
+      y: dockTop - layer.top - 24,
       width: dockRect.width + 48,
       height: dockRect.height + 48,
     });
@@ -977,6 +986,10 @@ function syncWidgetHotspots(instance) {
 }
 
 function startWidgetDrag(e, instance, resizing) {
+  if (pendingPreferenceSave) {
+    showToast('图标布局保存中，请稍候');
+    return;
+  }
   e.preventDefault();
   e.stopPropagation();
   const wrap = instance.wrap;
@@ -1359,6 +1372,10 @@ function attachPress(el, index) {
 }
 
 function startDrag(e, el, index) {
+  if (pendingPreferenceSave) {
+    showToast('图标布局保存中，请稍候');
+    return;
+  }
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
   el.classList.add("dragging");
@@ -1634,10 +1651,7 @@ doneBtn.addEventListener("click", exitEdit);
 let deskPressTimer = null;
 let deskPressX = 0, deskPressY = 0;
 iconLayer.addEventListener("pointerdown", (e) => {
-  if (editMode) {
-    if (e.target === iconLayer) exitEdit();
-    return;
-  }
+  if (editMode) return;
   if (e.button !== 0 || e.target !== iconLayer) return;
   deskPressX = e.clientX;
   deskPressY = e.clientY;
@@ -1667,6 +1681,11 @@ window.addEventListener("resize", () => {
   activeWidgetGesture?.abort?.(false);
   if (!SCREENSAVER_MODE) renderDesk(currentDesk);
   drainPendingIconPreferences();
+});
+deskMain.addEventListener('dblclick', (event) => {
+  if (!editMode || !(event.target instanceof Element)) return;
+  if (event.target.closest('.icon, .dext-widget, .dext-trusted-hotspot')) return;
+  exitEdit();
 });
 
 window.addEventListener("message", (e) => {

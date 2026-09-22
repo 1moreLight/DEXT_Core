@@ -95,11 +95,11 @@ npm run dev:icons
 
 默认“交互”状态像 Widget 实验台一样直接操作真实命中框：hover 和 pointerdown 使用真实指针状态，短按选择当前 TARGET；长按 300ms 进入苹果式编辑抖动，编辑中拖动会托起并跟手，松手恢复原网格。此阶段不重排、不保存，双击真正画布空白退出编辑；透明网格边缘始终不响应。固定五状态只用于逐帧诊断对比。
 
-布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap，图标始终以框中心定位。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。打开“显示实际命中区”后，橙色虚线布局格与绿色实线命中框应四边重合，只有框间 gap 不响应。五项参数已进入全局 Core 设置，但 2026-09-21 生产 Room 接入回退后暂不由真实桌面消费，也不写入 Room Schema。
+布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。五项参数由全局 Core 设置保存，不写入 Room Schema。DESK-PREFS-001 分支把共享视觉层接入真实 Room；原 `.icon` 仍拥有 pointer capture，内部 face/visual 仅装饰，偏好热切换不重挂 Widget iframe。浏览器实验台的命中区调试标记不进入生产外观。
 
-阶段 A 用于浏览器调参与运动诊断，不代表真实壁纸外观。实验台中的长名称固定单行省略；关闭名称后稳定悬停 500ms 才显示名称浮层，编辑、按下或拖动期间抑制；长按 300ms 后只有当前 48/56/64px `.icon-visual` 以 ±3° / 150ms jiggle。生产 `dext-room` 已暂时恢复到 DESK-MOTION 接入前的 `15147f2`：长按阈值为 500ms，整张旧图标执行原有 jiggle；不应拿实验台参数判断当前真实桌面。
+阶段 A 用于浏览器调参与运动诊断，不代表真实壁纸外观。生产 DESK-PREFS-001 保持旧 500ms 长按进入编辑、松手后再次按下直接拖动；仅 `.icon-visual` 以 ±3° / 150ms 抖动，名称静止。关闭名称后稳定悬停 500ms 显示浮层，编辑、按下或拖动期间抑制。双击真正桌面空白才退出编辑。
 
-设置页“偏好设置”仍提供反馈风格、显示名称、命中框、图标视觉大小和间距五项全局控制，Core 也会保存并投递 `dext:desktop-preferences` 快照。当前生产 Room 回退后不会消费该消息；这些值会保留，待真实宿主输入诊断和稳定重新集成后再生效。
+设置页“偏好设置”的五项全局控制通过 Rust→Core→Player 投递带 revision 的 `dext:desktop-preferences`；Player loaded 快照 revision 0 不覆盖较新修改。桌面以 footprint 和 gap 重算列行；只搬冲突/越界图标，Widget/Dock 为障碍，移动时以 requestId 保存 Room 并等待 `dext:room-save-result`，失败回滚，结果未知只提示未确认。配置器新增应用读取同一五项设置计算网格；投递成功 UI 只说“已发送”，不等于渲染或保存成功。Windows 测试：`cd tauri-ui; npm test; npm run build; npm run test:renderer:e2e`，在仓库根运行 `node --test wallpapers/dext-room/icon-preferences-layout.test.cjs`。
 
 ## 二、验证到真桌面
 

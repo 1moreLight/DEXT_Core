@@ -213,3 +213,36 @@ test("hot layout aborts a held direct drag before its old pointerup", async ({ p
   expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons[0].x)).toBe(2);
   expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
 });
+
+test("only a double click on true desktop blank exits edit", async ({ page }) => {
+  await longPressAlpha(page);
+  await page.mouse.click(500, 650);
+  await expect(page.locator('body')).toHaveClass(/editing/);
+  await page.mouse.dblclick(500, 650);
+  await expect(page.locator('body')).not.toHaveClass(/editing/);
+});
+
+test("hidden real icon labels show a delayed tooltip outside edit only", async ({ page }) => {
+  await page.evaluate(() => window.__dextDispatch({ type: 'dext:desktop-preferences', revision: 1, preferences: {
+    feedbackStyle: 'halo', showLabels: false, hitTargetSize: 'standard', visualSize: 'standard', spacing: 'standard',
+  } }));
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  await alpha.hover();
+  await expect(alpha.locator('.icon-label-tooltip')).toHaveAttribute('data-visible', 'true');
+  await longPressAlpha(page);
+  await expect(alpha.locator('.icon-label-tooltip')).toHaveAttribute('data-visible', 'false');
+});
+
+test("reduced motion removes jiggle while direct drag still follows pointer", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await longPressAlpha(page);
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  await expect(alpha.locator('.icon-visual')).toHaveCSS('animation-name', 'none');
+  const box = await alpha.boundingBox();
+  if (!box) throw new Error('Icon geometry unavailable');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 75, box.y + box.height / 2);
+  expect((await alpha.boundingBox())!.x).toBeGreaterThan(box.x + 40);
+  await page.mouse.up();
+});

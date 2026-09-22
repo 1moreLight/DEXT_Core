@@ -20,6 +20,7 @@ const icon = (label: string, x: number, y: number): RoomIcon => ({
 
 describe("widget layout", () => {
   it("projects the shared desktop footprint grid to Room logical coordinates", () => {
+    expect(desktopIconGridForPreferences({ feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard", visualSize: "standard", spacing: "standard" }, { width: 1840, height: 940 })).toMatchObject({ columns: 18, rows: 8 });
     expect(desktopIconGridForPreferences({ feedbackStyle: "halo", showLabels: false, hitTargetSize: "small", visualSize: "large", spacing: "compact" }, { width: 1840, height: 940 })).toEqual({
       cellWidth: 1920 / 1840 * 68,
       cellHeight: 1080 / 940 * 76,

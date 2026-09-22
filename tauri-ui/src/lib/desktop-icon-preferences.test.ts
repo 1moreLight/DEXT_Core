@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { createRequire } from "node:module";
 import {
   DEFAULT_DESKTOP_ICON_PREFERENCES,
   desktopPreferenceDeliveryMessage,
   normalizeDesktopIconPreferences,
   resolveDesktopIconGeometry,
 } from "./desktop-icon-preferences";
+
+const rendererGeometry = createRequire(import.meta.url)("../../../wallpapers/dext-room/icon-feedback.js").resolveDesktopIconGeometry;
 
 describe("desktop icon preferences", () => {
   it("uses the production defaults for missing or invalid Core values", () => {
@@ -31,6 +34,7 @@ describe("desktop icon preferences", () => {
           for (const spacing of ["compact", "standard", "spacious"] as const) {
             const input = { feedbackStyle: "halo" as const, showLabels, hitTargetSize, visualSize, spacing };
             const geometry = resolveDesktopIconGeometry(input);
+            expect(geometry).toEqual(rendererGeometry(input));
             expect(geometry.cellW).toBe(geometry.footprintWidth + geometry.gapX);
             expect(geometry.cellH).toBe(geometry.footprintHeight + geometry.gapY);
             expect(geometry.icon).toBe({ small: 48, standard: 56, large: 64 }[visualSize]);

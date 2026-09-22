@@ -117,8 +117,8 @@
   height: 100%;
 }
 
-#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:hover .icon-visual,
-#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:focus-visible .icon-visual {
+#desk-main .icon-layer[data-dext-icon-feedback-root][data-icon-feedback="halo"] .icon:hover .icon-visual,
+#desk-main .icon-layer[data-dext-icon-feedback-root][data-icon-feedback="halo"] .icon:focus-visible .icon-visual {
   background-color: rgba(255,255,255,.12);
 }
 
@@ -331,6 +331,9 @@ body.editing [data-dext-icon-feedback-root].icon-layer .icon:nth-child(even) .ic
 }
 
 @media (prefers-reduced-motion: reduce) {
+  #desk-main .icon-layer[data-dext-icon-feedback-root] .icon {
+    transition: none !important;
+  }
   [data-dext-icon-feedback-root] .icon-face,
   [data-dext-icon-feedback-root] .icon-visual,
   [data-dext-icon-feedback-root] .icon-label-tooltip {

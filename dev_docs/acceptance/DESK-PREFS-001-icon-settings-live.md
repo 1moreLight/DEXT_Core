@@ -1,20 +1,20 @@
 # DESK-PREFS-001 五项桌面图标偏好真实生效验收
 
-- 状态：书面规格已确认，实施计划待确认；未修改产品代码
+- 状态：代码已提交到工作分支、自动检查通过；待切换到本分支 Core/Player 后做真实桌面人工验收，不合并 master
 - 分支：`feat/DESK-PREFS-001-icon-settings-live`，基线 `6eca2db`
-- 实现提交：待实施
+- 实现提交：`6501d72`、`c4fd22c`、`0e5024c`、`95d9b5c`、`358bcd9`；后续文档/补测提交见分支 HEAD
 - 目标：设置里的五项图标偏好在真实 Dext 桌面生效，并与新应用放置一致，不破坏已验证的旧直接拖动。
 - 范围外：路径 Sortable 重排、另一个桌面布局控制器、Widget/Dock 管理、Room Schema 和其它设置项。
-- 设计规格：`docs/superpowers/specs/2026-09-22-desktop-icon-preferences-live-design.md`；先确认规格与后续实施计划，再开始产品代码。
-- 实施计划：`docs/superpowers/plans/2026-09-22-desktop-icon-preferences-live.md`；计划待用户确认。
+- 设计规格：`docs/superpowers/specs/2026-09-22-desktop-icon-preferences-live-design.md`。
+- 实施计划：`docs/superpowers/plans/2026-09-22-desktop-icon-preferences-live.md`；用户回复“实施啊”后执行。
 
 ## 自动检查（实施阶段）
 
-- [ ] 五项默认/非法回退、统一几何、设置投递和重载快照、最小搬格/无解回滚/保存次数的定向测试。
-- [ ] 真实 Room 浏览器指针序列：第二次按下后松手前实际跟手；图标/Widget iframe 不因偏好切换替换；空白不命中，reduced-motion 不阻断位移。
-- [ ] `npm test`、`npm run build`、`npm run test:renderer:e2e`、渲染器 Node 测试和 `node --check`。
-- [ ] Rust 定向测试、`cargo check`；若触及 C# 或 proto，执行 `scripts/build.ps1` 后 `scripts/start.ps1`。
-- [ ] Room Schema、`git diff --check`、当前 Core/Player/壁纸运行路径核对；仅明确人工验收时才执行会重铺壁纸的测试。
+- [x] 五项默认/非法回退、跨 TS/渲染器 54 组几何、revision、最小搬格/无解回滚/保存次数的定向测试。
+- [x] 真实 Room 浏览器指针序列：第二次按下后松手前实际跟手；图标/Widget iframe 不因偏好切换替换；空白不命中，reduced-motion 不阻断位移。
+- [x] `npm test`（54/54）、`npm run build`、`npm run test:renderer:e2e`（50/50）、渲染器 Node 测试、`node --check`。
+- [x] Rust `cargo test desktop_icon --lib`、`cargo check`、`scripts/build.ps1` Release 构建。
+- [x] Room Schema、`git diff --check`、当前运行路径只读核对。2026-09-22 检查结果：Core/Player/配置器仍来自 `DEXT_Core-desk-reorder-001`，不是本分支。尝试本分支 `scripts/start.ps1` 被现有 Dext mutex/pipe 正确拒绝；未停止旧进程、未强制重铺，不把旧桌面表现记为本分支验收。
 
 ## 人工验收（代码提交后，在真实 WebView2 桌面）
 
@@ -31,4 +31,4 @@
 
 八项人工检查和必选自动检查均通过，特别是旧直接拖动在真实 WebView2 连续十次可用；没有阻断问题，才可请用户回复“通过”并准备合并。本分支提交不等于验收通过；禁止在用户确认前合并 master。
 
-当前仅请用户阅读并确认实施计划；人工操作清单须等代码提交后执行。书面规格已由用户在 2026-09-22 回复“ok”确认，之后仅对 `x/y` 单位作事实更正。产品验收记录：待用户确认。
+书面规格已由用户在 2026-09-22 回复“ok”确认，实施以“实施啊”启动。产品验收记录：待切换运行路径及用户真实桌面验证；连续十次拖动尚未证明，不能仅凭 Chromium 通过就合并。

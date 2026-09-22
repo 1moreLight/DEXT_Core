@@ -3976,6 +3976,12 @@ mod tests {
         assert_eq!(message["VisualSize"], "standard");
         assert_eq!(message["Spacing"], "standard");
         assert_eq!(message["Revision"], 0);
-        assert!(super::next_desktop_icon_revision() < super::next_desktop_icon_revision());
+        let first = super::next_desktop_icon_revision();
+        let second = super::next_desktop_icon_revision();
+        assert!(first > 0 && second > first);
+        let patch: serde_json::Value =
+            serde_json::from_str(&desktop_icon_preferences_message(&settings, second).unwrap()).unwrap();
+        assert_eq!(patch["Revision"], second);
+        assert_eq!(patch["FeedbackStyle"], "halo");
     }
 }

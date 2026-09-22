@@ -165,14 +165,15 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ICON_SIZES` / `sizeOf` | 常量表 | 继续按 `desk.iconSize` 兼容读取大/中/小三档；真桌面编辑态不再提供尺寸切换入口 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
-| `renderIcons(layer, desk, s)` | 函数 | 主层由稳定节点协调器增量更新，staging 使用静态即时渲染；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息不重挂 Scene/Widget |
+| `renderIcons(layer, desk, s)` | 函数 | DESK-PREFS-001 保留旧 `attachPress → startDrag` 直接指针链；常规重绘仍会重建图标，偏好热切换则原地更新外观/坐标而不重挂 Widget iframe；旧稳定节点协调器仅属未合并历史分支 |
 | `DextIconFeedback` | 共享图标偏好模块 | 规范化反馈风格、名称、统一 footprint、视觉大小与 gap；实验台和真实桌面共用，切换时只更新根节点 dataset/CSS 变量 |
-| `DextLayoutMotion` | 动画控制器 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；稳定身份、FLIP/WAAPI、revision 中断和 reduced-motion；实验台与真实桌面共用 |
-| `DextDesktopLayoutController` | 真实桌面布局控制器 | 协调图标节点、编辑状态、图标 Sortable 手势和 Widget external gesture；预览不写 Room，有效松手后单次提交 |
+| `DextLayoutMotion` | 历史待验收动画模块 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；当前 DESK-PREFS-001 生产桌面不依赖它，实验台仍可单独运行 |
+| `DextIconPlacement` | 纯布局规划器 | `planDeskReflow` / `planRoomReflow`：按 footprint 和实际障碍保留合法格、只搬冲突图标，任一 Desk 无解则整 Room 回滚 |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |
-| `dext:desktop-preferences` 消息 | Player → 官方宿主 | 可信官方宿主消费完整全局图标偏好快照；原地更新图标，不重建图标节点、Widget iframe 或 Scene |
+| `dext:desktop-preferences` 消息 | Player → 官方宿主 | 五项完整快照加 revision；loaded 快照为 0，旧消息不得覆盖新设置；原地更新当前图标，不重挂 Widget iframe 或 Scene |
+| `dext:room-save-result` 消息 | Player → 官方宿主 | 带 requestId 的 Room 几何搬格保存回执；明确失败恢复坐标，结果未知不报告成功；旧无 ID 保存继续兼容 |
 | `room.js` / `room.css` | 旧 Room 扩展 | 宿主不加载；用户代码只能放入 Scene/Widget 受控目录 |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
 | `--wallpaper-screensaver` / `?screensaver=1` | Core→Player→页面 | Lively 屏保实例标记；Dext 只渲染 `room.idle`，普通关闭立即完成 |
