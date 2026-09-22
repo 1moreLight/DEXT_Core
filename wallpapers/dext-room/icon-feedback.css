@@ -86,6 +86,55 @@
   pointer-events: none;
 }
 
+/* The production Room keeps the verified direct-drag pointer target on .icon. */
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon {
+  display: block;
+  box-sizing: border-box;
+  padding: 0;
+  gap: 0;
+  background: transparent;
+  backdrop-filter: none;
+  pointer-events: auto;
+  touch-action: none;
+  transform: none;
+  animation: none;
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:hover,
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:active {
+  background: transparent;
+  backdrop-filter: none;
+  transform: none;
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon-face,
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon-face * {
+  pointer-events: none;
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon-face {
+  width: 100%;
+  height: 100%;
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:hover .icon-visual,
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon:focus-visible .icon-visual {
+  background-color: rgba(255,255,255,.12);
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root][data-icon-feedback="bare"] .icon:hover .icon-visual {
+  background-color: transparent;
+  filter: brightness(1.14);
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root][data-icon-feedback="compact"] .icon:hover .icon-face {
+  background-color: rgba(255,255,255,.15);
+}
+
+#desk-main .icon-layer[data-dext-icon-feedback-root] .icon.dragging .icon-label {
+  visibility: hidden;
+}
+
 [data-dext-icon-feedback-root].icon-layer .icon:hover .icon-face,
 [data-dext-icon-feedback-root].icon-layer .icon:active .icon-face {
   background-color: transparent;

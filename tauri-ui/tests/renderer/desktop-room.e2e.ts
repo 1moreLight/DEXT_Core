@@ -74,7 +74,9 @@ test("edit mode remounts the pre-motion desktop and rebinds direct icon listener
 
   expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(false);
   expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(false);
-  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("animation-name", "jiggle");
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS("animation-name", "none");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-visual')).toHaveCSS("animation-name", "dext-icon-jiggle");
+  await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveCSS("animation-name", "none");
 });
 
 test("the pre-motion direct icon drag follows the pointer and swaps on release", async ({ page }) => {
@@ -109,4 +111,27 @@ test("a room-layout hot update rebinds icons without replacing the Widget iframe
   expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(false);
   expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget[data-widget-id="motion-widget"] iframe'))).toBe(true);
   await expect(page.locator('[data-launch-target="alpha.exe"] .icon-label')).toHaveText("Alpha updated");
+});
+
+test("desktop preference message changes the real icon footprint without replacing icons or Widget", async ({ page }) => {
+  await page.evaluate(() => {
+    window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
+    window.__widgetFrame = document.querySelector('.dext-widget iframe') ?? undefined;
+    window.__dextDispatch({ type: "dext:desktop-preferences", revision: 1, preferences: {
+      feedbackStyle: "bare", showLabels: false, hitTargetSize: "small", visualSize: "large", spacing: "compact",
+    } });
+  });
+  await expect(page.locator('.icon-layer')).toHaveAttribute('data-icon-feedback', 'bare');
+  await expect(page.locator('.icon-layer')).toHaveAttribute('data-icon-labels', 'hidden');
+  await expect(page.locator('[data-launch-target="alpha.exe"]')).toHaveCSS('pointer-events', 'auto');
+  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
+  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget iframe'))).toBe(true);
+  const box = await page.locator('[data-launch-target="alpha.exe"]').boundingBox();
+  expect(box?.width).toBe(64);
+  const edgeTarget = await page.evaluate(() => {
+    const icon = document.querySelector('[data-launch-target="alpha.exe"]')!;
+    const bounds = icon.getBoundingClientRect();
+    return document.elementFromPoint(bounds.right + 2, bounds.top + bounds.height / 2)?.closest('.icon') !== null;
+  });
+  expect(edgeTarget).toBe(false);
 });

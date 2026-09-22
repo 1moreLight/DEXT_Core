@@ -350,6 +350,8 @@ if (window.chrome?.webview) {
       updateAppRuntimeStatus(data.target, data.running);
     } else if (data?.type === "dext:room-layout") {
       applyRoomLayoutUpdate(data);
+    } else if (data?.type === "dext:desktop-preferences") {
+      receiveDesktopPreferences(data);
     } else if (data?.type === "dext:system-control-result" && data.success) {
       if (data.volume) capabilityHost.updateVolume(data.volume);
       if (data.permissions) updateRuntimeGrants(data.permissions);
@@ -367,7 +369,9 @@ const ICON_SIZES = {
 };
 
 function sizeOf(desk) {
-  return ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
+  return effectiveIconPreferences
+    ? { ...globalThis.DextIconFeedback.resolveDesktopIconGeometry(effectiveIconPreferences), label: 12 }
+    : ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
 }
 
 function validRoomLayoutUpdate(data) {
@@ -404,6 +408,7 @@ const stageEl = document.getElementById("desk-staging");
 const bgEl = deskMain.querySelector(".desk-bg");
 const bgVideo = deskMain.querySelector(".desk-video");
 const iconLayer = deskMain.querySelector(".icon-layer");
+iconLayer.dataset.dextIconFeedbackRoot = "";
 const widgetLayer = deskMain.querySelector(".widget-layer");
 const indicatorEl = document.getElementById("desk-indicator");
 const transitionEl = document.getElementById("transition");
@@ -412,6 +417,39 @@ const toastEl = document.getElementById("toast");
 const doneBtn = document.getElementById("edit-done");
 const dockEl = document.getElementById("dock");
 const dockAppsEl = document.getElementById("dock-apps");
+
+let effectiveIconPreferences = null;
+let lastIconPreferenceRevision = -1;
+const iconFeedbackController = globalThis.DextIconFeedback.createDesktopIconFeedbackController(iconLayer);
+
+function applyIconAppearance(preferences) {
+  effectiveIconPreferences = iconFeedbackController.setPreferences(preferences);
+  const desk = ROOM.desks[currentDesk];
+  if (!desk) return;
+  const s = sizeOf(desk);
+  const W = iconLayer.clientWidth || window.innerWidth - 80;
+  const H = iconLayer.clientHeight || window.innerHeight - 140;
+  const cols = Math.max(1, Math.floor(W / s.cellW));
+  const rows = Math.max(1, Math.floor(H / s.cellH));
+  iconLayer.querySelectorAll('.icon').forEach((el, index) => {
+    const item = desk.icons?.[index];
+    if (!item) return;
+    el.style.width = `${s.footprintWidth}px`;
+    el.style.height = `${s.footprintHeight}px`;
+    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW + s.gapX / 2}px`;
+    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH + s.gapY / 2}px`;
+  });
+}
+
+function receiveDesktopPreferences(message) {
+  const revision = Number.isSafeInteger(message.revision) ? message.revision : 0;
+  if (revision < lastIconPreferenceRevision) return;
+  const preferences = globalThis.DextIconFeedback.normalizeDesktopIconPreferences(message.preferences);
+  if (revision === lastIconPreferenceRevision &&
+      JSON.stringify(preferences) === JSON.stringify(effectiveIconPreferences)) return;
+  lastIconPreferenceRevision = revision;
+  applyIconAppearance(preferences);
+}
 
 let currentDesk = 0;
 let switching = false;
@@ -1097,7 +1135,7 @@ function mountBackground(bgTarget, videoTarget, desk, deskIndex) {
 function renderIcons(layer, desk, s) {
   const W = layer.clientWidth || window.innerWidth - 80;
   const H = layer.clientHeight || window.innerHeight - 140;
-  const cols = Math.max(4, Math.floor(W / s.cellW));
+  const cols = Math.max(1, Math.floor(W / s.cellW));
   const rows = Math.max(1, Math.floor(H / s.cellH));
   layer.style.setProperty("--icon-size", `${s.icon}px`);
   layer.style.setProperty("--label-size", `${s.label}px`);
@@ -1109,16 +1147,31 @@ function renderIcons(layer, desk, s) {
   desk.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "icon";
+    el.dataset.dextIconFace = "";
+    el.setAttribute('aria-label', item.label ?? '');
     el.dataset.launchTarget = item.launch?.target ?? "";
-    el.style.width = `${s.cellW}px`;
+    el.style.width = `${s.footprintWidth ?? s.cellW}px`;
+    if (s.footprintHeight) el.style.height = `${s.footprintHeight}px`;
     // clamp into view for the current size without rewriting stored coords
-    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW}px`;
-    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH}px`;
-    el.appendChild(iconVisual(item));
+    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW + (s.gapX ?? 0) / 2}px`;
+    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH + (s.gapY ?? 0) / 2}px`;
+    const face = document.createElement('div');
+    face.className = 'icon-face';
+    const visual = document.createElement('div');
+    visual.className = 'icon-visual';
+    if (item.color) el.style.setProperty('--icon-color', item.color);
+    visual.appendChild(iconVisual(item));
+    face.appendChild(visual);
     const label = document.createElement("div");
     label.className = "icon-label";
     label.textContent = item.label ?? "";
-    el.appendChild(label);
+    face.appendChild(label);
+    const tooltip = document.createElement('div');
+    tooltip.className = 'icon-label-tooltip';
+    tooltip.textContent = item.label ?? '';
+    tooltip.dataset.visible = 'false';
+    face.appendChild(tooltip);
+    el.appendChild(face);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -1207,6 +1260,7 @@ function startDrag(e, el, index) {
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
   el.classList.add("dragging");
+  iconFeedbackController.setDragging(true);
   el.style.transition = "none";
   const sx = e.clientX;
   const sy = e.clientY;
@@ -1221,6 +1275,7 @@ function startDrag(e, el, index) {
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
     el.classList.remove("dragging");
+    iconFeedbackController.setDragging(false);
     el.style.transition = "";
     const desk = ROOM.desks[currentDesk];
     const dragged = desk.icons[index];
@@ -1253,6 +1308,7 @@ function enterEdit({ rerender = true } = {}) {
   if (editMode || switching) return;
   editMode = true;
   document.body.classList.add("editing");
+  iconFeedbackController.setEditing(true);
   if (rerender) renderDesk(currentDesk);
   dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动图标 / Widget 排列，Esc 或「完成」退出");
@@ -1262,6 +1318,7 @@ function exitEdit() {
   if (!editMode) return;
   editMode = false;
   document.body.classList.remove("editing");
+  iconFeedbackController.setEditing(false);
   renderDesk(currentDesk);
   dextEmit("editchange", { editing: false });
   persistRoom();
