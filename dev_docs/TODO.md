@@ -993,3 +993,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 完整自动检查、差异复核、提交工作分支并停在人工待验收：Vitest 57/57、Rust 43 通过/3 个真实环境测试按设计忽略、前端 build 与 diff check 通过（2026-09-23）
 - [x] 从本 worktree 启动真实 Core 与配置器并核对路径：Core PID 85864、配置器 PID 79972 均来自 `config-edit-001`；持久化桌面 Player 仍加载旧 PREFS 壁纸，未强制重铺（2026-09-23）
 - [x] 用户于 2026-09-23 回复“ok验收通过下一步”，确认 CONFIG-EDIT-001 通过并进入 master 合并；reorder 在合并后同步
+
+### DESK-REORDER-002 稳定输入上的路径重排（2026-09-22，仅规划）
+
+目标：在 master 已修复输入的旧直接拖动上追加路径排序，不再更换输入入口。范围外：Core 重写、Widget 手势、Room Schema、新偏好。人工步骤见本包独立验收卡七项。
+
+- [x] 从已合并 master 建立独立 worktree / 分支，回溯 15147f2、b8b00f0、9f8d569、cf318ad 与 3c42552。
+- [x] 固化输入根因证据及不确定边界，明确动画 excludeKeys 仍写坐标、dispose 删除节点的集成风险。
+- [x] 编写 `docs/superpowers/plans/2026-09-22-stable-desktop-reorder.md` 及独立验收卡，自检接口与任务覆盖。
+- [ ] 用户确认计划后实施 Task 1–5；当前没有排序产品代码改动。
+- [ ] 实施后自动检查、提交并停在真实桌面待验收；用户通过后才合并。
