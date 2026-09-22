@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { ExternalLink, FileJson, FolderOpen, Info, Moon, Settings2, Sun } from "lucide-react";
@@ -8,9 +8,7 @@ import {
   DEFAULT_DESKTOP_ICON_PREFERENCES,
   desktopPreferenceDeliveryMessage,
   type DesktopPreferenceDeliveryStatus,
-  type IconFeedbackStyle,
-  type IconSizePreset,
-  type IconSpacingPreset,
+  type DextSettingsView,
 } from "@/lib/desktop-icon-preferences";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -27,18 +25,7 @@ type CoreIdentity = {
   assembly_version: string;
 };
 
-type DextSettings = {
-  startup: boolean;
-  fullscreenPause: boolean;
-  batteryPause: boolean;
-  powerSavePause: boolean;
-  audioOnlyOnDesktop: boolean;
-  desktopIconFeedbackStyle: IconFeedbackStyle;
-  showDesktopIconLabels: boolean;
-  desktopIconHitTargetSize: IconSizePreset;
-  desktopIconVisualSize: IconSizePreset;
-  desktopIconSpacing: IconSpacingPreset;
-};
+type DextSettings = DextSettingsView;
 
 type DextSettingsUpdate = {
   settings: DextSettings;
@@ -146,6 +133,7 @@ export function SettingsPage(props: SettingsPageProps) {
         }
   );
   const [saving, setSaving] = useState(false);
+  const patchBusy = useRef(false);
   const [libraryBusy, setLibraryBusy] = useState(false);
   const [about, setAbout] = useState<AboutInfo | null>(
     IS_TAURI ? null : { configuratorVersion: "0.1.0", documents: [] }
@@ -168,11 +156,12 @@ export function SettingsPage(props: SettingsPageProps) {
   }, []);
 
   async function patch(next: Partial<DextSettings>) {
-    if (!settings) return;
+    if (!settings || patchBusy.current) return;
     if (!IS_TAURI) {
       setSettings({ ...settings, ...next });
       return;
     }
+    patchBusy.current = true;
     setSaving(true);
     try {
       const updated = await invoke<DextSettingsUpdate>("patch_dext_settings", { patch: next });
@@ -181,6 +170,7 @@ export function SettingsPage(props: SettingsPageProps) {
     } catch (error) {
       props.setStatus(`设置保存失败：${String(error)}`);
     } finally {
+      patchBusy.current = false;
       setSaving(false);
     }
   }

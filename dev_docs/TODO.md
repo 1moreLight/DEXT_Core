@@ -926,6 +926,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 2：真实 Room 原节点接入共享视觉层、收缩命中区与消息外观切换；保留旧 .icon 指针捕获，Room/边界/实验台 Playwright 17/17（2026-09-22）
 - [x] Task 3：偏好消息递增 revision 与 loaded revision 0；可选 requestId 保存回执经 Player/Core 转发，源 Room 写入失败回滚运行包；Rust 定向测试和 Core Release 构建通过（2026-09-22）
 - [x] Task 4：生产 Room 搬格事务接通回执与失败回滚；图标/Widget 手势期间延后偏好，热更新中断旧 pointer，Dock/Widget 拒绝落位；定向 Playwright 与 Node 回归通过（2026-09-22）
+- [x] Task 5：配置器新增应用读取最新五项设置并投影网格；离线兼容放置明确告知，设置页防并发且文案改“已发送”；Vitest 29/29、前端 build 通过（2026-09-22）
 - [ ] 测试先行接通生产偏好、旧指针边界和共享几何，完成布局事务及配置器新增应用同网格
 - [ ] 自动检查、独立代码复核和真实运行路径核对；提交工作分支进入人工待验收
 - [ ] 用户按独立验收卡在真实桌面确认通过；通过之前不合并 master

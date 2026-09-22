@@ -15,6 +15,19 @@ export type DesktopIconPreferences = {
   spacing: IconSpacingPreset;
 };
 
+export type DextSettingsView = {
+  startup: boolean;
+  fullscreenPause: boolean;
+  batteryPause: boolean;
+  powerSavePause: boolean;
+  audioOnlyOnDesktop: boolean;
+  desktopIconFeedbackStyle: IconFeedbackStyle;
+  showDesktopIconLabels: boolean;
+  desktopIconHitTargetSize: IconSizePreset;
+  desktopIconVisualSize: IconSizePreset;
+  desktopIconSpacing: IconSpacingPreset;
+};
+
 export const DEFAULT_DESKTOP_ICON_PREFERENCES: DesktopIconPreferences = Object.freeze({
   feedbackStyle: "halo",
   showLabels: true,
@@ -63,7 +76,7 @@ export function normalizeDesktopIconPreferences(value?: Record<string, unknown>)
 }
 
 export function desktopPreferenceDeliveryMessage(status: DesktopPreferenceDeliveryStatus) {
-  if (status === "applied") return "Dext 设置已保存，当前桌面已更新";
+  if (status === "applied") return "Dext 设置已保存，已发送至当前桌面";
   if (status === "deferred") return "Dext 设置已保存，将在下次桌面加载时生效";
   return "Dext 设置已保存";
 }

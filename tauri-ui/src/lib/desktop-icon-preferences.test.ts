@@ -20,7 +20,7 @@ describe("desktop icon preferences", () => {
 
   it("distinguishes an applied update from a deferred next-load update", () => {
     expect(desktopPreferenceDeliveryMessage("not_needed")).toBe("Dext 设置已保存");
-    expect(desktopPreferenceDeliveryMessage("applied")).toBe("Dext 设置已保存，当前桌面已更新");
+    expect(desktopPreferenceDeliveryMessage("applied")).toBe("Dext 设置已保存，已发送至当前桌面");
     expect(desktopPreferenceDeliveryMessage("deferred")).toBe("Dext 设置已保存，将在下次桌面加载时生效");
   });
 
