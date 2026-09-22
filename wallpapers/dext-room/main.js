@@ -445,11 +445,14 @@ function traceIconDrag(stage, event, element) {
     iconDragTraceElement.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9999;max-width:680px;padding:10px;background:#101820ee;color:#bfffd7;font:12px/1.4 Consolas,monospace;pointer-events:none;white-space:pre-wrap;border:1px solid #69c49b;';
     document.body.appendChild(iconDragTraceElement);
   }
-  const pointer = event && Number.isFinite(event.pointerId) ? ` id=${event.pointerId} buttons=${event.buttons}` : '';
-  const captured = event && element?.hasPointerCapture ? ` captured=${element.hasPointerCapture(event.pointerId)}` : '';
+  const pointer = event && Number.isFinite(event.pointerId) ? ` id=${event.pointerId} buttons=${event.buttons} type=${event.pointerType}` :
+    event && Number.isFinite(event.buttons) ? ` buttons=${event.buttons}` : '';
+  const captured = event && Number.isFinite(event.pointerId) && element?.hasPointerCapture
+    ? ` captured=${element.hasPointerCapture(event.pointerId)}` : '';
   const target = event?.target?.className && typeof event.target.className === 'string' ? ` target=${event.target.className}` : '';
-  iconDragTrace.push(`${Math.round(performance.now())} ${stage}${pointer}${captured}${target}`);
-  iconDragTraceElement.textContent = `DESK-PREFS-001 pointer trace (screenshot after failed drag)\n${iconDragTrace.slice(-12).join('\n')}`;
+  const coords = event && Number.isFinite(event.clientX) ? ` xy=${Math.round(event.clientX)},${Math.round(event.clientY)}` : '';
+  iconDragTrace.push(`${Math.round(performance.now())} ${stage}${pointer}${captured}${coords}${target}`);
+  iconDragTraceElement.textContent = `DESK-PREFS-001 pointer trace (screenshot after failed drag)\n${iconDragTrace.slice(-18).join('\n')}`;
 }
 
 function drainPendingIconPreferences() {
@@ -1365,6 +1368,7 @@ function attachPress(el, index) {
     sx = e.clientX;
     sy = e.clientY;
     if (editMode) {
+      iconDragTrace.length = 0;
       traceIconDrag('edit pointerdown', e, el);
       startDrag(e, el, index);
       return;
@@ -1408,6 +1412,7 @@ function startDrag(e, el, index) {
   const origTop = parseFloat(el.style.top);
   let moveCount = 0;
   let windowMoveCount = 0;
+  let mouseMoveCount = 0;
   const onWindowMove = (ev) => {
     if (ev.pointerId !== e.pointerId || ++windowMoveCount > 3) return;
     traceIconDrag('window move', ev, el);
@@ -1415,6 +1420,13 @@ function startDrag(e, el, index) {
   const onWindowUp = (ev) => {
     if (ev.pointerId === e.pointerId) traceIconDrag('window pointerup', ev, el);
   };
+  const onMouseMove = (ev) => {
+    if (++mouseMoveCount <= 3) traceIconDrag('window mousemove', ev, el);
+  };
+  const onMouseUp = (ev) => traceIconDrag('window mouseup', ev, el);
+  const onDragStart = (ev) => traceIconDrag('document dragstart', ev, el);
+  const onBlur = () => traceIconDrag('window blur');
+  const onVisibilityChange = () => traceIconDrag(`visibility ${document.visibilityState}`);
 
   const onMove = (ev) => {
     if (++moveCount <= 3) traceIconDrag('icon move', ev, el);
@@ -1431,6 +1443,11 @@ function startDrag(e, el, index) {
     el.removeEventListener("lostpointercapture", onCancel);
     window.removeEventListener("pointermove", onWindowMove, true);
     window.removeEventListener("pointerup", onWindowUp, true);
+    window.removeEventListener("mousemove", onMouseMove, true);
+    window.removeEventListener("mouseup", onMouseUp, true);
+    document.removeEventListener("dragstart", onDragStart, true);
+    window.removeEventListener("blur", onBlur);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
     el.classList.remove("dragging");
     el.style.transition = "";
     iconFeedbackController.setDragging(false);
@@ -1438,7 +1455,7 @@ function startDrag(e, el, index) {
     return true;
   };
   const onCancel = (ev) => {
-    traceIconDrag(ev.type, ev, el);
+    traceIconDrag(`${ev.type} connected=${el.isConnected} focused=${document.hasFocus()}`, ev, el);
     if (!clearDrag()) return;
     renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
     drainPendingIconPreferences();
@@ -1493,6 +1510,11 @@ function startDrag(e, el, index) {
   el.addEventListener("gotpointercapture", (ev) => traceIconDrag('got capture', ev, el), { once: true });
   window.addEventListener("pointermove", onWindowMove, true);
   window.addEventListener("pointerup", onWindowUp, true);
+  window.addEventListener("mousemove", onMouseMove, true);
+  window.addEventListener("mouseup", onMouseUp, true);
+  document.addEventListener("dragstart", onDragStart, true);
+  window.addEventListener("blur", onBlur);
+  document.addEventListener("visibilitychange", onVisibilityChange);
 }
 
 function enterEdit({ rerender = true } = {}) {
