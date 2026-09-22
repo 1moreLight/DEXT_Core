@@ -105,6 +105,21 @@ test("resolveIconReorder rejects Widget obstacles and Dock reserved cells withou
   assert.deepEqual(dock, { committed: false, icons: source, moved: [], reason: "blocked" });
 });
 
+test("resolveIconReorder uses the icon footprint and rejects invalid source layouts", () => {
+  const grid = { cellWidth: 100, cellHeight: 100, columns: 4, rows: 1,
+    offsetX: 10, offsetY: 10, footprintWidth: 70, footprintHeight: 70 };
+  const source = [icon("alpha", 0, 0), icon("bravo", 1, 0), icon("charlie", 2, 0)];
+  const insideGap = resolveIconReorder(source, 0, { x: 3, y: 0 }, grid,
+    [{ x: 390, y: 0, width: 10, height: 100 }]);
+  assert.equal(insideGap.committed, true);
+  assert.deepEqual(insideGap.moved, [0]);
+  const invalidSource = resolveIconReorder([icon("alpha", 5, 0), icon("bravo", 1, 0)],
+    0, { x: 2, y: 0 }, grid);
+  assert.equal(invalidSource.committed, false);
+  assert.equal(invalidSource.reason, "invalid-source");
+  assert.equal(invalidSource.icons[0].x, 5);
+});
+
 test("clampRectOutsideReserved keeps a Widget outside Dock reserves on every edge", () => {
   const bounds = { width: 1000, height: 600 };
   assert.deepEqual(

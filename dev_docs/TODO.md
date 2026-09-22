@@ -1001,5 +1001,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 从已合并 master 建立独立 worktree / 分支，回溯 15147f2、b8b00f0、9f8d569、cf318ad 与 3c42552。
 - [x] 固化输入根因证据及不确定边界，明确动画 excludeKeys 仍写坐标、dispose 删除节点的集成风险。
 - [x] 编写 `docs/superpowers/plans/2026-09-22-stable-desktop-reorder.md` 及独立验收卡，自检接口与任务覆盖。
-- [ ] 用户确认计划后实施 Task 1–5；当前没有排序产品代码改动。
+- [x] 用户明确要求“按照上面的计划执行一次”，开始实施 Task 1–5（2026-09-22）。
+- [x] Task 1：原生 Windows 消息回归与真实 Room 浏览器旧直接拖动基线通过；Core 输入相对 master 零改动。
+- [x] Task 2：纯排序事务、几何与障碍测试先红后绿，Node 11/11。
+- [ ] Task 3：在旧 startDrag 上接预览与一次提交，仍可靠跟手。
+- [ ] Task 4：仅同伴图标动画、移除图标位置提示，reduced-motion 和文字静止。
+- [ ] Task 5：Release Player 与全量回归，提交待实机验收。
 - [ ] 实施后自动检查、提交并停在真实桌面待验收；用户通过后才合并。

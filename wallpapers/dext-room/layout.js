@@ -49,7 +49,12 @@
   }
 
   function iconRect(x, y, grid) {
-    return { x: x * grid.cellWidth, y: y * grid.cellHeight, width: grid.cellWidth, height: grid.cellHeight };
+    return {
+      x: x * grid.cellWidth + (grid.offsetX ?? 0),
+      y: y * grid.cellHeight + (grid.offsetY ?? 0),
+      width: grid.footprintWidth ?? grid.cellWidth,
+      height: grid.footprintHeight ?? grid.cellHeight,
+    };
   }
 
   function cloneIcons(icons) {
@@ -125,19 +130,28 @@
     if (!Number.isInteger(draggedIndex) || draggedIndex < 0 || draggedIndex >= sourceIcons.length) {
       return reject("invalid-dragged-index");
     }
+    const blocked = [...obstacles, ...reserved];
     const targetX = Number(target?.x);
     const targetY = Number(target?.y);
     if (!Number.isInteger(targetX) || !Number.isInteger(targetY)
       || targetX < 0 || targetX >= grid.columns || targetY < 0 || targetY >= grid.rows) {
       return reject("outside-grid");
     }
-    const blocked = [...obstacles, ...reserved];
     if (blocked.some((rect) => overlaps(iconRect(targetX, targetY, grid), rect))) return reject("blocked");
-
+    const sourceCells = new Set();
+    for (const item of originalIcons) {
+      if (!Number.isInteger(item.x) || !Number.isInteger(item.y)
+        || item.x < 0 || item.x >= grid.columns || item.y < 0 || item.y >= grid.rows
+        || sourceCells.has(cellKey(item.x, item.y))
+        || blocked.some(rect => overlaps(iconRect(item.x, item.y, grid), rect))) {
+        return reject("invalid-source");
+      }
+      sourceCells.add(cellKey(item.x, item.y));
+    }
     const coordinates = originalIcons.map((item, index) => ({
       index,
-      x: Math.min(Math.max(Math.round(item.x ?? index % grid.columns), 0), grid.columns - 1),
-      y: Math.min(Math.max(Math.round(item.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1),
+      x: item.x,
+      y: item.y,
     }));
     const draggedCell = coordinates[draggedIndex];
     const targetKey = cellKey(targetX, targetY);
@@ -162,6 +176,9 @@
       icons[iconIndex].x = slots[slotIndex].x;
       icons[iconIndex].y = slots[slotIndex].y;
     });
+    if (icons.some(item => blocked.some(rect => overlaps(iconRect(item.x, item.y, grid), rect)))) {
+      return reject("blocked-path");
+    }
     const moved = icons.flatMap((item, index) =>
       item.x !== originalIcons[index].x || item.y !== originalIcons[index].y ? [index] : []
     );
