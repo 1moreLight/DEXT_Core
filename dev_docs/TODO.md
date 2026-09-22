@@ -953,3 +953,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 只读核对当前 `rooms/v2/room.json` 两图标位于第 0、2 列；截图中的大间隔主要包含一个空网格列，不是三档额外间距数值未生效（2026-09-22）。
 - [x] 临时补采 `mousemove/mouseup/dragstart/focus` 和指针坐标，诊断提交 `ee62c49`；`node --check`、`git diff --check` 通过，忽略测试重铺成功，运行身份核对 Core/Player/配置器均为当前 worktree（2026-09-22）。
 - [ ] 用户在真实桌面再做一次从左图标向右图标的连续拖动，读取扩展事件轨迹；定位后写失败回归、修复并移除探针。
+
+### DESK-PREFS-001 Core 输入边界修复（2026-09-22）
+
+目标：修正 master 继承的错误鼠标状态转发，以连续可靠的原生输入恢复当前图标拖动。当前生产只绑定旧直接拖动，保留五项偏好，不重做桌面或引入新排序控制器。
+
+- [x] 对比 master 与当前分支：主要增量是实验台、测试、偏好链路；Core InputUtil 从基线起把 WM_MOUSEMOVE 的 wParam 固定为 0x20（X1），UP 仍携带按下位；当前新增 lostpointercapture 回滚使错误立即可见。
+- [x] 新增 Windows 消息边界回归，旧代码 expected 0 / actual 0x20 失败；修复后通过。
+- [x] 抽出按下到释放的转发会话：正确按钮状态、固定起始接收窗口及坐标原点，释放不受前台变化过滤；处理 RawInput 组合标志与负坐标。
+- [x] 移除临时前端日志；Vitest 55/55、Node 24/24、Playwright 50/50、前端 build、Core/Player 全量构建通过；当前 Core PID 30236 / Player PID 8716 路径核对通过。
+- [x] 隔离生产 Release WebView2 Player 验证旧值确实产生 buttons=8；正确会话连续十次获得 capture、MOVE=1、UP=0、无提前取消。测试通过原生消息而非 Playwright 注入；物理 RawInput/WorkerW 仍需人工验收。
+- [x] 代码、测试和独立验收卡已收尾，进入工作分支提交；用户 Cargo.toml 原有工作区变化保持未暂存。
+- [ ] 待实机验收：长按松手后二次拖动十次、跨窗口释放、取消、Widget、五项偏好；验收前不合并。

@@ -107,6 +107,7 @@
 | #100 | Chromium 回归全绿不能证明 WorkerW/WebView2 的真实指针链可靠；连续修补失败后应整体回退生产交互边界 | [renderer](errors/renderer.md) |
 | #101 | 保留旧拖动函数却删除唯一绑定调用，会形成看似可回退、实际永远不执行的死代码 | [renderer](errors/renderer.md) |
 | #102 | 图标实验台重定义共享间距 CSS，造成真实桌面和实验台使用不同档位几何 | [renderer](errors/renderer.md) |
+| #103 | Core 把鼠标移动的按键状态写成 0x20（侧键），破坏 WebView2 pointer capture；前端取消会放大旧输入错误 | [backend](errors/backend.md) |
 
 ## 分册
 

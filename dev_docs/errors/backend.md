@@ -181,3 +181,20 @@
 防再犯：给 Player 增删启动参数前先看 `wallpapers/dext-room/LivelyInfo.json` 的 `Arguments`
 与 `TryParseUserCommandArgs` 的命名空间归一化，同一开关只允许一个来源；遇到退出码 87 直接查
 Core 日志里的 CommandLine 错误类型（Repeated/Unknown）。
+
+# #103 WM_MOUSEMOVE 没有 MK_MOVE：0x20 是侧键状态
+
+现象：真实图标按下获得 capture，随后 lostpointercapture 的 buttons=8，图标恢复原位；浏览器测试正常。
+
+原因：master 继承的 InputUtil 用自定义 MK_MOVE=0x20 转发每次 WM_MOUSEMOVE。该位实际是 MK_XBUTTON1，
+在 WebView2 中变成 buttons=8，同时丢掉左键位。UP 又错误地保留按住位。新图标代码在捕获丢失时立即
+回滚和移除事件监听，Widget/早期图标没有该处理，所以表现不同；“移动日志缺失”也可能是监听已清理，
+不能据此断言宿主未发送消息。
+
+修复：MouseForwardingSession 统一持有 DOWN 接收 HWND 和坐标原点；MOVE 保留左键，UP 清除左键并只发一次。
+已开始的手势不再按当前前台/显示器重新选择释放目标；未属于转发会话的物理按住不注入 hover=0。
+RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打包。移除临时 Renderer 日志，保留取消回滚。
+
+验证：原生隐藏窗口测试先得到 expected 0 / actual 0x20；修复后通过。隔离 Release Player 实验准确复现
+旧 buttons=8，再验证十轮原生转发得到 capture、MOVE buttons=1、UP buttons=0 且无提前取消。
+这个自动检查不替代真实 WorkerW/物理鼠标验收。命令见 tests/Dext.Input.Tests/README.md。

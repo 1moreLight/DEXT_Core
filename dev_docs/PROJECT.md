@@ -55,6 +55,8 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 
 ## 决策记录
 
+- **2026-09-22｜DESK-PREFS-001 输入修复边界**：用户授权比较 master 后自主决定修复或重写。审查确认生产仍是单套旧直接拖动，分支大部分增量为实验/测试/偏好；保留这些功能，只将 Core 按下→移动→释放转发收口到 `MouseForwardingSession`。状态和起始接收 HWND/坐标原点由会话统一持有；不靠 Renderer 忽略取消来容忍错误输入。增加原生 Win32 和生产 Release WebView2 回归；最终 WorkerW 体验仍以人工验收为准。
+
 | 日期 | 决策 |
 |---|---|
 | 2026-08-25 | 不用 Lively 自带 UI，配置器是唯一入口 |

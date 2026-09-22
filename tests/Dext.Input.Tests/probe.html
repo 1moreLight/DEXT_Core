@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Dext input regression</title>
+<style>body{margin:0}#icon{position:absolute;left:40px;top:40px;width:180px;height:180px;background:#468;touch-action:none;user-select:none}</style>
+<div id="icon">Input regression fixture</div>
+<script>
+const icon = document.getElementById('icon');
+let active = false, completed = 0, canceled = 0;
+const events = [];
+function report(stage) {
+  // This isolated Player is owned by the test, with no Core connected to its stdout.
+  chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:{stage,completed,canceled,events}}));
+}
+for (const type of ['pointerdown','pointermove','pointerup','gotpointercapture','lostpointercapture','pointercancel']) {
+  icon.addEventListener(type, event => {
+    events.push({type,buttons:event.buttons});
+    if (type === 'pointerdown') { event.preventDefault(); active = true; icon.setPointerCapture(event.pointerId); }
+    if (type === 'pointerup' && active) { active = false; completed++; setTimeout(()=>report('settled'),0); }
+    if ((type === 'lostpointercapture' || type === 'pointercancel') && active) { active = false; canceled++; report('canceled'); }
+    if (type === 'pointermove' && event.buttons === 8) report('bad-buttons');
+  });
+}
+report('ready');
+window.livelyPropertyListener = () => {
+  active = false; completed = 0; canceled = 0; events.length = 0; report('ready');
+};
+</script>

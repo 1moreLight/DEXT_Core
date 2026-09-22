@@ -7,7 +7,7 @@
 
 | 角色 | 工作包 | 状态 | 分支 | 结果 |
 |---|---|---|---|---|
-| 当前工作包 | **DESK-PREFS-001 五项桌面图标偏好真实生效** | 实机验收不通过，原分支修正中 | `feat/DESK-PREFS-001-icon-settings-live`（基于 `6eca2db`） | 本分支 Core/Player/配置器与真实 Room 路径已核对，设置有视觉变化；三档间距已收紧，但实机图标拖动刚开始就丢命中，正在采集 WebView2 事件轨迹；验收前不合并 master |
+| 当前工作包 | **DESK-PREFS-001 五项桌面图标偏好真实生效** | Core 输入修复已实现，待实机复验 | `feat/DESK-PREFS-001-icon-settings-live`（基于 `6eca2db`） | 已修正 master 继承的错误鼠标按钮状态和释放路由；原生 Windows 回归及隔离 Release WebView2 连续十轮通过，Core/Player 已构建启动重铺；五项偏好与紧凑间距保留，待物理鼠标验收后再合并 |
 | 历史待验收 | **DESK-MOTION-001 桌面自动重排动画** | 阶段 B 未合并，真实手势另行裁定 | `feat/DESK-MOTION-001-layout-motion` | 实验和集成提交保留；DESK-PREFS-001 从更早的可拖动基线独立开展，不以前述控制器为依赖 |
 | 历史待验收 | **DESK-ICON-001 桌面图标反馈与命中区优化** | 真桌面手势未通过，未合并 | `feat/DESK-ICON-001-icon-feedback` | 浏览器实验和设置投递保留；生产消费偏好并不在最后可拖动基线生效。本轮 DESK-PREFS-001 重新集成，不把原待验收描述视作当前真实功能 |
 | 最近完成 | **DESK-LIVE-001 实时应用放置与 Widget 优先避让** | 已完成（2026-09-19 用户验收通过） | merge `64ab03f`（实现 `9867516`） | 当前 Room 放入应用后热同步并可自动进入桌面编辑；Widget 优先占位，冲突图标自动让位 |
