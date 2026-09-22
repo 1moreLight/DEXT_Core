@@ -4,24 +4,24 @@
   --dext-icon-art-size: 48px;
   --dext-icon-footprint-width: 80px;
   --dext-icon-footprint-height: 84px;
-  --dext-icon-column-gap: 20px;
-  --dext-icon-row-gap: 28px;
+  --dext-icon-column-gap: 8px;
+  --dext-icon-row-gap: 12px;
   --dext-icon-feedback-ease: cubic-bezier(.22, 1, .36, 1);
 }
 
 [data-dext-icon-feedback-root][data-icon-spacing="compact"] {
-  --dext-icon-column-gap: 4px;
-  --dext-icon-row-gap: 12px;
+  --dext-icon-column-gap: 2px;
+  --dext-icon-row-gap: 4px;
 }
 
 [data-dext-icon-feedback-root][data-icon-spacing="standard"] {
-  --dext-icon-column-gap: 20px;
-  --dext-icon-row-gap: 28px;
+  --dext-icon-column-gap: 8px;
+  --dext-icon-row-gap: 12px;
 }
 
 [data-dext-icon-feedback-root][data-icon-spacing="spacious"] {
-  --dext-icon-column-gap: 40px;
-  --dext-icon-row-gap: 40px;
+  --dext-icon-column-gap: 20px;
+  --dext-icon-row-gap: 24px;
 }
 
 [data-dext-icon-feedback-root][data-icon-visual-size="small"] {

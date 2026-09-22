@@ -84,10 +84,10 @@ test("resolves one production grid geometry from independent visual footprint an
     art: 48,
     footprintWidth: 80,
     footprintHeight: 84,
-    gapX: 20,
-    gapY: 28,
-    cellW: 100,
-    cellH: 112,
+    gapX: 8,
+    gapY: 12,
+    cellW: 88,
+    cellH: 96,
   });
   assert.deepEqual(resolveDesktopIconGeometry({
     showLabels: false,
@@ -99,10 +99,10 @@ test("resolves one production grid geometry from independent visual footprint an
     art: 56,
     footprintWidth: 64,
     footprintHeight: 64,
-    gapX: 4,
-    gapY: 12,
-    cellW: 68,
-    cellH: 76,
+    gapX: 2,
+    gapY: 4,
+    cellW: 66,
+    cellH: 68,
   });
 });
 

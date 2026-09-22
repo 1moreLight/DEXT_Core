@@ -39,7 +39,7 @@ export const DEFAULT_DESKTOP_ICON_PREFERENCES: DesktopIconPreferences = Object.f
 const VISUAL = { small: { icon: 48, art: 40 }, standard: { icon: 56, art: 48 }, large: { icon: 64, art: 56 } };
 const SHOWN = { small: { width: 72, height: 80 }, standard: { width: 80, height: 84 }, large: { width: 84, height: 88 } };
 const HIDDEN = { small: { width: 64, height: 64 }, standard: { width: 72, height: 72 }, large: { width: 80, height: 80 } };
-const GAPS = { compact: { x: 4, y: 12 }, standard: { x: 20, y: 28 }, spacious: { x: 40, y: 40 } };
+const GAPS = { compact: { x: 2, y: 4 }, standard: { x: 8, y: 12 }, spacious: { x: 20, y: 24 } };
 
 export function resolveDesktopIconGeometry(value: DesktopIconPreferences) {
   const preferences = normalizeDesktopIconPreferences(value);

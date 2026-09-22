@@ -106,6 +106,7 @@
 | #99 | 把长按续拖、原格锚定和 80ms 候选延迟叠在一起，会偏离已验收 Sortable 并造成难触发/跳动 | [renderer](errors/renderer.md) |
 | #100 | Chromium 回归全绿不能证明 WorkerW/WebView2 的真实指针链可靠；连续修补失败后应整体回退生产交互边界 | [renderer](errors/renderer.md) |
 | #101 | 保留旧拖动函数却删除唯一绑定调用，会形成看似可回退、实际永远不执行的死代码 | [renderer](errors/renderer.md) |
+| #102 | 图标实验台重定义共享间距 CSS，造成真实桌面和实验台使用不同档位几何 | [renderer](errors/renderer.md) |
 
 ## 分册
 

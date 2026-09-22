@@ -235,22 +235,22 @@ test("switches compact standard and spacious gaps between unified footprints", a
   };
 
   await expect(root).toHaveAttribute("data-icon-spacing", "standard");
-  expect(await horizontalPitch()).toBe(100);
-  await expect(page.locator("#gap-size")).toHaveText("20 × 28 gap");
+  expect(await horizontalPitch()).toBe(88);
+  await expect(page.locator("#gap-size")).toHaveText("8 × 12 gap");
 
   await page.getByRole("button", { name: "紧凑间距" }).click();
   await expect(root).toHaveAttribute("data-icon-spacing", "compact");
-  expect(await horizontalPitch()).toBe(84);
+  expect(await horizontalPitch()).toBe(82);
   const firstFace = await icons.nth(0).locator(".icon-face").boundingBox();
   const secondFace = await icons.nth(1).locator(".icon-face").boundingBox();
   if (!firstFace || !secondFace) throw new Error("icon face geometry unavailable");
-  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(4);
-  await expect(page.locator("#gap-size")).toHaveText("4 × 12 gap");
+  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(2);
+  await expect(page.locator("#gap-size")).toHaveText("2 × 4 gap");
 
   await page.getByRole("button", { name: "宽松间距" }).click();
   await expect(root).toHaveAttribute("data-icon-spacing", "spacious");
-  expect(await horizontalPitch()).toBe(120);
-  await expect(page.locator("#gap-size")).toHaveText("40 × 40 gap");
+  expect(await horizontalPitch()).toBe(100);
+  await expect(page.locator("#gap-size")).toHaveText("20 × 24 gap");
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
 });
 
@@ -323,7 +323,7 @@ test("keeps every layout footprint coincident with its hit target across size pr
   const firstFace = await faces.nth(0).boundingBox();
   const secondFace = await faces.nth(1).boundingBox();
   if (!firstFace || !secondFace) throw new Error("compact hit geometry unavailable");
-  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(4);
+  expect(secondFace.x - (firstFace.x + firstFace.width)).toBe(2);
   expect(await page.evaluate(() => window.__iconLabNode === document.querySelector('[data-icon-id="hermes"]'))).toBe(true);
   expect(await icons.count()).toBe(4);
 });

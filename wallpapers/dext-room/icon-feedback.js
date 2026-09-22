@@ -32,9 +32,9 @@
     large: Object.freeze({ width: 80, height: 80 }),
   });
   const SPACING_GEOMETRY = Object.freeze({
-    compact: Object.freeze({ x: 4, y: 12 }),
-    standard: Object.freeze({ x: 20, y: 28 }),
-    spacious: Object.freeze({ x: 40, y: 40 }),
+    compact: Object.freeze({ x: 2, y: 4 }),
+    standard: Object.freeze({ x: 8, y: 12 }),
+    spacious: Object.freeze({ x: 20, y: 24 }),
   });
 
   function normalizeDesktopIconPreferences(value) {

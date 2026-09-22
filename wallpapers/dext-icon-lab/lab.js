@@ -25,9 +25,9 @@
   };
 
   const SPACING = {
-    compact: { label: "COMPACT", gap: "4 × 12" },
-    standard: { label: "STANDARD", gap: "20 × 28" },
-    spacious: { label: "SPACIOUS", gap: "40 × 40" },
+    compact: { label: "COMPACT" },
+    standard: { label: "STANDARD" },
+    spacious: { label: "SPACIOUS" },
   };
 
   const HIT_SIZES = {
@@ -241,7 +241,8 @@
     spacingButtons.forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.iconSpacing === value));
     });
-    gapSize.textContent = `${SPACING[value].gap} gap`;
+    const geometry = DextIconFeedback.resolveDesktopIconGeometry(preferences);
+    gapSize.textContent = `${geometry.gapX} × ${geometry.gapY} gap`;
     renderStatus();
   }
 

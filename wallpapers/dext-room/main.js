@@ -435,6 +435,23 @@ let pendingIconPreferences = null;
 let pendingPreferenceSave = null;
 const iconFeedbackController = globalThis.DextIconFeedback.createDesktopIconFeedbackController(iconLayer);
 
+// Temporary WorkerW/WebView2 gesture probe for DESK-PREFS-001 acceptance.
+// Remove after the real pointer event sequence is captured.
+const iconDragTrace = [];
+let iconDragTraceElement = null;
+function traceIconDrag(stage, event, element) {
+  if (!iconDragTraceElement) {
+    iconDragTraceElement = document.createElement('pre');
+    iconDragTraceElement.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9999;max-width:680px;padding:10px;background:#101820ee;color:#bfffd7;font:12px/1.4 Consolas,monospace;pointer-events:none;white-space:pre-wrap;border:1px solid #69c49b;';
+    document.body.appendChild(iconDragTraceElement);
+  }
+  const pointer = event && Number.isFinite(event.pointerId) ? ` id=${event.pointerId} buttons=${event.buttons}` : '';
+  const captured = event && element?.hasPointerCapture ? ` captured=${element.hasPointerCapture(event.pointerId)}` : '';
+  const target = event?.target?.className && typeof event.target.className === 'string' ? ` target=${event.target.className}` : '';
+  iconDragTrace.push(`${Math.round(performance.now())} ${stage}${pointer}${captured}${target}`);
+  iconDragTraceElement.textContent = `DESK-PREFS-001 pointer trace (screenshot after failed drag)\n${iconDragTrace.slice(-12).join('\n')}`;
+}
+
 function drainPendingIconPreferences() {
   if (activeIconDrag || activeWidgetGesture || pendingPreferenceSave || !pendingIconPreferences) return;
   const next = pendingIconPreferences;
@@ -1248,6 +1265,7 @@ function mountBackground(bgTarget, videoTarget, desk, deskIndex) {
 }
 
 function renderIcons(layer, desk, s) {
+  if (activeIconDrag && layer === iconLayer) traceIconDrag('renderIcons during drag');
   const W = layer.clientWidth || window.innerWidth - 80;
   const H = layer.clientHeight || window.innerHeight - 140;
   const cols = Math.max(1, Math.floor(W / s.cellW));
@@ -1347,6 +1365,7 @@ function attachPress(el, index) {
     sx = e.clientX;
     sy = e.clientY;
     if (editMode) {
+      traceIconDrag('edit pointerdown', e, el);
       startDrag(e, el, index);
       return;
     }
@@ -1373,11 +1392,13 @@ function attachPress(el, index) {
 
 function startDrag(e, el, index) {
   if (pendingPreferenceSave) {
+    traceIconDrag('blocked: preference save pending', e, el);
     showToast('图标布局保存中，请稍候');
     return;
   }
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
+  traceIconDrag('capture requested', e, el);
   el.classList.add("dragging");
   iconFeedbackController.setDragging(true);
   el.style.transition = "none";
@@ -1385,8 +1406,18 @@ function startDrag(e, el, index) {
   const sy = e.clientY;
   const origLeft = parseFloat(el.style.left);
   const origTop = parseFloat(el.style.top);
+  let moveCount = 0;
+  let windowMoveCount = 0;
+  const onWindowMove = (ev) => {
+    if (ev.pointerId !== e.pointerId || ++windowMoveCount > 3) return;
+    traceIconDrag('window move', ev, el);
+  };
+  const onWindowUp = (ev) => {
+    if (ev.pointerId === e.pointerId) traceIconDrag('window pointerup', ev, el);
+  };
 
   const onMove = (ev) => {
+    if (++moveCount <= 3) traceIconDrag('icon move', ev, el);
     el.style.left = `${origLeft + ev.clientX - sx}px`;
     el.style.top = `${origTop + ev.clientY - sy}px`;
   };
@@ -1398,18 +1429,22 @@ function startDrag(e, el, index) {
     el.removeEventListener("pointerup", onUp);
     el.removeEventListener("pointercancel", onCancel);
     el.removeEventListener("lostpointercapture", onCancel);
+    window.removeEventListener("pointermove", onWindowMove, true);
+    window.removeEventListener("pointerup", onWindowUp, true);
     el.classList.remove("dragging");
     el.style.transition = "";
     iconFeedbackController.setDragging(false);
     activeIconDrag = null;
     return true;
   };
-  const onCancel = () => {
+  const onCancel = (ev) => {
+    traceIconDrag(ev.type, ev, el);
     if (!clearDrag()) return;
     renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
     drainPendingIconPreferences();
   };
   const onUp = (ev) => {
+    traceIconDrag('icon pointerup', ev, el);
     if (!clearDrag()) return;
     const desk = ROOM.desks[currentDesk];
     const dragged = desk.icons[index];
@@ -1447,6 +1482,7 @@ function startDrag(e, el, index) {
     drainPendingIconPreferences();
   };
   activeIconDrag = { abort(restore) {
+    traceIconDrag(`authoritative abort restore=${restore}`);
     if (!clearDrag()) return;
     if (restore) renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
   } };
@@ -1454,6 +1490,9 @@ function startDrag(e, el, index) {
   el.addEventListener("pointerup", onUp);
   el.addEventListener("pointercancel", onCancel);
   el.addEventListener("lostpointercapture", onCancel);
+  el.addEventListener("gotpointercapture", (ev) => traceIconDrag('got capture', ev, el), { once: true });
+  window.addEventListener("pointermove", onWindowMove, true);
+  window.addEventListener("pointerup", onWindowUp, true);
 }
 
 function enterEdit({ rerender = true } = {}) {
@@ -1677,6 +1716,7 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => {
+  if (activeIconDrag) traceIconDrag('window resize');
   activeIconDrag?.abort?.(false);
   activeWidgetGesture?.abort?.(false);
   if (!SCREENSAVER_MODE) renderDesk(currentDesk);

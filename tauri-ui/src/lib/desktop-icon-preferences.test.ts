@@ -27,6 +27,19 @@ describe("desktop icon preferences", () => {
     expect(desktopPreferenceDeliveryMessage("deferred")).toBe("Dext 设置已保存，将在下次桌面加载时生效");
   });
 
+  it("keeps the three grid gaps compact while preserving independent hit footprints", () => {
+    const base = { ...DEFAULT_DESKTOP_ICON_PREFERENCES, hitTargetSize: "standard" as const };
+    expect(resolveDesktopIconGeometry({ ...base, spacing: "compact" })).toMatchObject({
+      footprintWidth: 80, footprintHeight: 84, gapX: 2, gapY: 4, cellW: 82, cellH: 88,
+    });
+    expect(resolveDesktopIconGeometry({ ...base, spacing: "standard" })).toMatchObject({
+      footprintWidth: 80, footprintHeight: 84, gapX: 8, gapY: 12, cellW: 88, cellH: 96,
+    });
+    expect(resolveDesktopIconGeometry({ ...base, spacing: "spacious" })).toMatchObject({
+      footprintWidth: 80, footprintHeight: 84, gapX: 20, gapY: 24, cellW: 100, cellH: 108,
+    });
+  });
+
   it("matches the shared renderer geometry for all 54 preference combinations", () => {
     for (const showLabels of [true, false]) {
       for (const hitTargetSize of ["small", "standard", "large"] as const) {
