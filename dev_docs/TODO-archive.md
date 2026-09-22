@@ -327,3 +327,7 @@
 - [x] 自动检查通过：`npm test` 39/39、`npm run build`、`node --check`、Room Schema、`git diff --check`，并完成真实页面交互检查
 - [x] 用户于 2026-09-11 回复“验收通过”
 - [x] 合并到 master：`355bc79`；实现提交 `d8655a9`
+
+## DESK-PREFS-001（2026-09-22 合并归档摘要）
+
+五项图标偏好真实投递/消费、共享紧凑几何与原生鼠标会话修复已由用户明确授权合入 master `4fd2986`（核心输入修复 `3c42552`）。历史逐项物理验收未补填；详细记录见 `acceptance/DESK-PREFS-001-icon-settings-live.md`。合并前原生 Windows 回归通过，合并后 Vitest 55/55、布局/动画 Node 20/20、JS 语法检查通过，用户 Room/资源哈希未变。原工作区仍运行且含未提交布局，清理延后。TODO 旧条目追加保留，当前计划以 ROADMAP 为准。
