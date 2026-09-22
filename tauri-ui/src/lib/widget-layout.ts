@@ -6,6 +6,7 @@ import {
   type WidgetPlacement,
 } from "@/lib/room-v2";
 import type { DockConfig } from "@/lib/dock";
+import { resolveDesktopIconGeometry, type DesktopIconPreferences } from "@/lib/desktop-icon-preferences";
 
 export interface Rect {
   x: number;
@@ -36,6 +37,16 @@ export const DESKTOP_ICON_GRIDS = {
 
 export function desktopIconGrid(iconSize: Desk["iconSize"]): IconGrid {
   return DESKTOP_ICON_GRIDS[iconSize === "large" || iconSize === "small" ? iconSize : "medium"];
+}
+
+export function desktopIconGridForPreferences(preferences: DesktopIconPreferences, viewport: { width: number; height: number }): IconGrid {
+  const geometry = resolveDesktopIconGeometry(preferences);
+  return {
+    cellWidth: ROOM_CANVAS.width / viewport.width * geometry.cellW,
+    cellHeight: ROOM_CANVAS.height / viewport.height * geometry.cellH,
+    columns: Math.floor(viewport.width / geometry.cellW),
+    rows: Math.floor(viewport.height / geometry.cellH),
+  };
 }
 
 export type WidgetAlignment = "left" | "center-x" | "right" | "top" | "center-y" | "bottom";

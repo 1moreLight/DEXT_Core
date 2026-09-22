@@ -23,6 +23,24 @@ export const DEFAULT_DESKTOP_ICON_PREFERENCES: DesktopIconPreferences = Object.f
   spacing: "standard",
 });
 
+const VISUAL = { small: { icon: 48, art: 40 }, standard: { icon: 56, art: 48 }, large: { icon: 64, art: 56 } };
+const SHOWN = { small: { width: 72, height: 80 }, standard: { width: 80, height: 84 }, large: { width: 84, height: 88 } };
+const HIDDEN = { small: { width: 64, height: 64 }, standard: { width: 72, height: 72 }, large: { width: 80, height: 80 } };
+const GAPS = { compact: { x: 4, y: 12 }, standard: { x: 20, y: 28 }, spacious: { x: 40, y: 40 } };
+
+export function resolveDesktopIconGeometry(value: DesktopIconPreferences) {
+  const preferences = normalizeDesktopIconPreferences(value);
+  const visual = VISUAL[preferences.visualSize];
+  const footprint = (preferences.showLabels ? SHOWN : HIDDEN)[preferences.hitTargetSize];
+  const gap = GAPS[preferences.spacing];
+  return {
+    icon: visual.icon, art: visual.art,
+    footprintWidth: footprint.width, footprintHeight: footprint.height,
+    gapX: gap.x, gapY: gap.y,
+    cellW: footprint.width + gap.x, cellH: footprint.height + gap.y,
+  };
+}
+
 export function normalizeDesktopIconPreferences(value?: Record<string, unknown>): DesktopIconPreferences {
   const input = value ?? {};
   return {
