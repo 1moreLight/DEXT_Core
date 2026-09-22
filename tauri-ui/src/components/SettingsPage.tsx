@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { ExternalLink, FileJson, FolderOpen, Info, Moon, Settings2, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DEFAULT_DESKTOP_ICON_PREFERENCES,
+  desktopPreferenceDeliveryMessage,
+  type DesktopPreferenceDeliveryStatus,
+  type DextSettingsView,
+} from "@/lib/desktop-icon-preferences";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -19,13 +25,14 @@ type CoreIdentity = {
   assembly_version: string;
 };
 
-type DextSettings = {
-  startup: boolean;
-  fullscreenPause: boolean;
-  batteryPause: boolean;
-  powerSavePause: boolean;
-  audioOnlyOnDesktop: boolean;
+type DextSettings = DextSettingsView;
+
+type DextSettingsUpdate = {
+  settings: DextSettings;
+  deliveryStatus: DesktopPreferenceDeliveryStatus;
 };
+
+type BooleanSettingKey = "startup" | "fullscreenPause" | "batteryPause" | "powerSavePause" | "audioOnlyOnDesktop";
 
 type AboutInfo = {
   configuratorVersion: string;
@@ -75,6 +82,39 @@ function Toggle({
   );
 }
 
+function ChoiceGroup<T extends string>({
+  label,
+  value,
+  options,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: ReadonlyArray<{ value: T; label: string }>;
+  disabled?: boolean;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="flex rounded-md border border-border bg-muted/30 p-0.5" role="group" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          disabled={disabled}
+          onClick={() => onChange(option.value)}
+          className={`h-8 rounded px-3 text-xs transition-colors disabled:opacity-40 ${
+            value === option.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SettingsPage(props: SettingsPageProps) {
   const [settings, setSettings] = useState<DextSettings | null>(
     IS_TAURI
@@ -85,9 +125,15 @@ export function SettingsPage(props: SettingsPageProps) {
           batteryPause: false,
           powerSavePause: true,
           audioOnlyOnDesktop: true,
+          desktopIconFeedbackStyle: DEFAULT_DESKTOP_ICON_PREFERENCES.feedbackStyle,
+          showDesktopIconLabels: DEFAULT_DESKTOP_ICON_PREFERENCES.showLabels,
+          desktopIconHitTargetSize: DEFAULT_DESKTOP_ICON_PREFERENCES.hitTargetSize,
+          desktopIconVisualSize: DEFAULT_DESKTOP_ICON_PREFERENCES.visualSize,
+          desktopIconSpacing: DEFAULT_DESKTOP_ICON_PREFERENCES.spacing,
         }
   );
   const [saving, setSaving] = useState(false);
+  const patchBusy = useRef(false);
   const [libraryBusy, setLibraryBusy] = useState(false);
   const [about, setAbout] = useState<AboutInfo | null>(
     IS_TAURI ? null : { configuratorVersion: "0.1.0", documents: [] }
@@ -110,19 +156,21 @@ export function SettingsPage(props: SettingsPageProps) {
   }, []);
 
   async function patch(next: Partial<DextSettings>) {
-    if (!settings) return;
+    if (!settings || patchBusy.current) return;
     if (!IS_TAURI) {
       setSettings({ ...settings, ...next });
       return;
     }
+    patchBusy.current = true;
     setSaving(true);
     try {
-      const updated = await invoke<DextSettings>("patch_dext_settings", { patch: next });
-      setSettings(updated);
-      props.setStatus("Dext 设置已保存");
+      const updated = await invoke<DextSettingsUpdate>("patch_dext_settings", { patch: next });
+      setSettings(updated.settings);
+      props.setStatus(desktopPreferenceDeliveryMessage(updated.deliveryStatus));
     } catch (error) {
       props.setStatus(`设置保存失败：${String(error)}`);
     } finally {
+      patchBusy.current = false;
       setSaving(false);
     }
   }
@@ -191,7 +239,7 @@ export function SettingsPage(props: SettingsPageProps) {
   }
 
   const disabled = saving || (IS_TAURI && !props.coreIdentity);
-  const rows: Array<[keyof DextSettings, string, string]> = [
+  const rows: Array<[BooleanSettingKey, string, string]> = [
     ["startup", "开机启动", "使用 Dext 自有 Windows 启动项"],
     ["fullscreenPause", "全屏应用时暂停", "减少游戏或演示期间的资源占用"],
     ["batteryPause", "电池供电时暂停", "仅在接通电源时保持壁纸运行"],
@@ -270,6 +318,86 @@ export function SettingsPage(props: SettingsPageProps) {
                   label="放入应用后前往桌面编辑"
                   checked={props.minimizeAfterDeskAppAdd}
                   onChange={props.onMinimizeAfterDeskAppAddChange}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">桌面图标反馈</div>
+                  <div className="text-xs text-muted-foreground">只改变真实图标的悬停与按下反馈</div>
+                </div>
+                <ChoiceGroup
+                  label="桌面图标反馈"
+                  value={settings?.desktopIconFeedbackStyle ?? DEFAULT_DESKTOP_ICON_PREFERENCES.feedbackStyle}
+                  disabled={disabled || !settings}
+                  options={[
+                    { value: "halo", label: "光晕" },
+                    { value: "compact", label: "紧凑框" },
+                    { value: "bare", label: "无边框" },
+                  ]}
+                  onChange={(value) => void patch({ desktopIconFeedbackStyle: value })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">显示桌面图标名称</div>
+                  <div className="text-xs text-muted-foreground">隐藏后稳定悬停约 500ms 显示名称</div>
+                </div>
+                <Toggle
+                  label="显示桌面图标名称"
+                  checked={settings?.showDesktopIconLabels ?? DEFAULT_DESKTOP_ICON_PREFERENCES.showLabels}
+                  disabled={disabled || !settings}
+                  onChange={(value) => void patch({ showDesktopIconLabels: value })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">图标命中框</div>
+                  <div className="text-xs text-muted-foreground">控制可点击和可拖动的统一中心区域</div>
+                </div>
+                <ChoiceGroup
+                  label="图标命中框"
+                  value={settings?.desktopIconHitTargetSize ?? DEFAULT_DESKTOP_ICON_PREFERENCES.hitTargetSize}
+                  disabled={disabled || !settings}
+                  options={[
+                    { value: "small", label: "小" },
+                    { value: "standard", label: "标准" },
+                    { value: "large", label: "大" },
+                  ]}
+                  onChange={(value) => void patch({ desktopIconHitTargetSize: value })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">图标视觉大小</div>
+                  <div className="text-xs text-muted-foreground">独立于命中框调整图标图形尺寸</div>
+                </div>
+                <ChoiceGroup
+                  label="图标视觉大小"
+                  value={settings?.desktopIconVisualSize ?? DEFAULT_DESKTOP_ICON_PREFERENCES.visualSize}
+                  disabled={disabled || !settings}
+                  options={[
+                    { value: "small", label: "48" },
+                    { value: "standard", label: "56" },
+                    { value: "large", label: "64" },
+                  ]}
+                  onChange={(value) => void patch({ desktopIconVisualSize: value })}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-6 py-4">
+                <div>
+                  <div className="text-sm font-medium">图标间距</div>
+                  <div className="text-xs text-muted-foreground">紧凑档接近 Windows 桌面密度</div>
+                </div>
+                <ChoiceGroup
+                  label="图标间距"
+                  value={settings?.desktopIconSpacing ?? DEFAULT_DESKTOP_ICON_PREFERENCES.spacing}
+                  disabled={disabled || !settings}
+                  options={[
+                    { value: "compact", label: "紧凑" },
+                    { value: "standard", label: "标准" },
+                    { value: "spacious", label: "宽松" },
+                  ]}
+                  onChange={(value) => void patch({ desktopIconSpacing: value })}
                 />
               </div>
             </div>

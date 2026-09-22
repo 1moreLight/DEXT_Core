@@ -5,6 +5,7 @@ import {
   avoidIconObstacles,
   canvasTransform,
   clampPlacement,
+  desktopIconGridForPreferences,
   findOpenDeskIconCell,
   snapPlacement,
 } from "./widget-layout";
@@ -18,6 +19,15 @@ const icon = (label: string, x: number, y: number): RoomIcon => ({
 });
 
 describe("widget layout", () => {
+  it("projects the shared desktop footprint grid to Room logical coordinates", () => {
+    expect(desktopIconGridForPreferences({ feedbackStyle: "halo", showLabels: true, hitTargetSize: "standard", visualSize: "standard", spacing: "standard" }, { width: 1840, height: 940 })).toMatchObject({ columns: 20, rows: 9 });
+    expect(desktopIconGridForPreferences({ feedbackStyle: "halo", showLabels: false, hitTargetSize: "small", visualSize: "large", spacing: "compact" }, { width: 1840, height: 940 })).toEqual({
+      cellWidth: 1920 / 1840 * 66,
+      cellHeight: 1080 / 940 * 68,
+      columns: 27,
+      rows: 13,
+    });
+  });
   it("maps a logical canvas into wide and tall viewports with contain", () => {
     expect(canvasTransform(960, 540)).toEqual({ scale: 0.5, width: 960, height: 540, offsetX: 0, offsetY: 0 });
     expect(canvasTransform(1000, 1000)).toEqual({

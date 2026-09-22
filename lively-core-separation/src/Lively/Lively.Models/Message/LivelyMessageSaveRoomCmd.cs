@@ -8,6 +8,7 @@ namespace Lively.Models.Message
     public class LivelyMessageSaveRoomCmd : IpcMessage
     {
         public string RoomJson { get; set; }
+        public string RequestId { get; set; }
 
         public LivelyMessageSaveRoomCmd() : base(MessageType.msg_save_room)
         {

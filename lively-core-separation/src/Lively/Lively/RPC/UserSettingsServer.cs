@@ -204,6 +204,12 @@ namespace Lively.RPC
             userSettings.Settings.DisplayAudioOutput = (Models.Enums.DisplayAudioMode)req.DisplayAudioOutput;
             userSettings.Settings.SelectedAudioOutputDisplay = displayManager.DisplayMonitors.FirstOrDefault(x => req.SelectedAudioOutputDisplay.DeviceId == x.DeviceId) ?? displayManager.PrimaryDisplayMonitor;
             userSettings.Settings.IsRestartAfterLockscreen = req.RestartAfterLockscreen;
+            userSettings.Settings.DesktopIconFeedbackStyle = (Models.Enums.DesktopIconFeedbackStyle)((int)req.DesktopIconFeedbackStyle);
+            if (req.HasShowDesktopIconLabels)
+                userSettings.Settings.ShowDesktopIconLabels = req.ShowDesktopIconLabels;
+            userSettings.Settings.DesktopIconHitTargetSize = (Models.Enums.DesktopIconSize)((int)req.DesktopIconHitTargetSize);
+            userSettings.Settings.DesktopIconVisualSize = (Models.Enums.DesktopIconSize)((int)req.DesktopIconVisualSize);
+            userSettings.Settings.DesktopIconSpacing = (Models.Enums.DesktopIconSpacing)((int)req.DesktopIconSpacing);
 
             try
             {
@@ -344,6 +350,11 @@ namespace Lively.RPC
                     }
                 },
                 RestartAfterLockscreen = settings.IsRestartAfterLockscreen,
+                DesktopIconFeedbackStyle = (Grpc.Common.Proto.Settings.DesktopIconFeedbackStyle)((int)settings.DesktopIconFeedbackStyle),
+                ShowDesktopIconLabels = settings.ShowDesktopIconLabels,
+                DesktopIconHitTargetSize = (Grpc.Common.Proto.Settings.DesktopIconHitTargetSize)((int)settings.DesktopIconHitTargetSize),
+                DesktopIconVisualSize = (Grpc.Common.Proto.Settings.DesktopIconVisualSize)((int)settings.DesktopIconVisualSize),
+                DesktopIconSpacing = (Grpc.Common.Proto.Settings.DesktopIconSpacing)((int)settings.DesktopIconSpacing),
             };
             return Task.FromResult(resp);
         }

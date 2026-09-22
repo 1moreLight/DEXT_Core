@@ -165,10 +165,15 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ICON_SIZES` / `sizeOf` | 常量表 | 继续按 `desk.iconSize` 兼容读取大/中/小三档；真桌面编辑态不再提供尺寸切换入口 |
 | `resolveTransition(from,to)` | 读取器 | `switches["from>to"] → switch → slide`；只认官方预设或 Content |
 | `mountBackground(bg, video, desk)` | 函数 | v2 image/video/html/null；HTML sandbox 长驻在官方图标层下方 |
-| `renderIcons(layer, desk, s)` | 函数 | 图标渲染（坐标钳制/真图标/长按移动），主层与 staging 共用；真桌面不提供删除或拖入 Dock；当前 Desk 的受控布局消息只重绘图标层，不重挂 Scene/Widget |
+| `renderIcons(layer, desk, s)` | 函数 | DESK-PREFS-001 保留旧 `attachPress → startDrag` 直接指针链；常规重绘仍会重建图标，偏好热切换则原地更新外观/坐标而不重挂 Widget iframe；旧稳定节点协调器仅属未合并历史分支 |
+| `DextIconFeedback` | 共享图标偏好模块 | 规范化反馈风格、名称、统一 footprint、视觉大小与 gap；实验台和真实桌面共用，切换时只更新根节点 dataset/CSS 变量 |
+| `DextLayoutMotion` | 历史待验收动画模块 | `apply(items,{mode,excludeKeys})` / `cancel({restore})` / `dispose()`；当前 DESK-PREFS-001 生产桌面不依赖它，实验台仍可单独运行 |
+| `DextIconPlacement` | 纯布局规划器 | `planDeskReflow` / `planRoomReflow`：按 footprint 和实际障碍保留合法格、只搬冲突图标，任一 Desk 无解则整 Room 回滚 |
 | 主题令牌 | style.css `:root` `--dext-*` | 外观迭代第一入口（accent/success/danger/dock 等 8 个） |
 | `dext:room` 消息 | window message | 仅 preview 模式接受固定配置器父窗口；载荷为完整 v2、deskIndex、临时 assetBase |
 | `dext:room-layout` 消息 | Player → 官方宿主 | 仅当前受控 Room 接受；替换指定 Desk 的 `icons`，可切入编辑并高亮新增图标；Widget/Dock/Scene 不随消息重挂 |
+| `dext:desktop-preferences` 消息 | Player → 官方宿主 | 五项完整快照加 revision；loaded 快照为 0，旧消息不得覆盖新设置；原地更新当前图标，不重挂 Widget iframe 或 Scene |
+| `dext:room-save-result` 消息 | Player → 官方宿主 | 带 requestId 的 Room 几何搬格保存回执；明确失败恢复坐标，结果未知不报告成功；旧无 ID 保存继续兼容 |
 | `room.js` / `room.css` | 旧 Room 扩展 | 宿主不加载；用户代码只能放入 Scene/Widget 受控目录 |
 | `dockCfg()` / `renderDock()` | 函数 | Dock 自定义：合并全局+桌级配置、位置/样式/autoHide/dots、常驻图标（DOCK.md） |
 | `--wallpaper-screensaver` / `?screensaver=1` | Core→Player→页面 | Lively 屏保实例标记；Dext 只渲染 `room.idle`，普通关闭立即完成 |
@@ -206,7 +211,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
 | `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
-| `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段 |
+| `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段；patch 返回保存后的设置和 `not_needed / applied / deferred` 实时投递状态 |
 | `validate_room_library` | `(path) → canonical_path` | 创建并实际读写探测 Room 库，成功后前端才持久化路径 |
 | `diagnostics_json` / `export_diagnostics` | `→ JSON` / `(path)` | 汇总配置器/Core 版本、身份、进程、pipe、目录、运行包与源 Room |
 | `about_info` / `open_about_document` / `open_dext_directory` | 固定枚举 | 只打开仓库内许可/来源文档或已验证的 Dext data/log 目录，不向 WebView 开放任意路径 |
@@ -231,6 +236,9 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | 全量构建（改 C#/.proto 后必跑） | `scripts\build.ps1`（Player 必须 Release） |
 | 日常启动（核心+配置器） | 双击 `scripts\start-dext.cmd`，或终端运行 `scripts\start.ps1`；输出缺失或仍是 Lively 产品元数据时自动执行完整构建 |
 | 渲染器外观迭代（无需 Lively） | `scripts\room-preview.ps1`（端口 5174 热刷新） |
+| 自动重排动画实验台（无需 Lively） | `npm run dev:motion`（`127.0.0.1:5174/wallpapers/dext-motion-lab/`） |
+| 图标反馈实验台（无需 Lively） | `cd tauri-ui; npm run dev:icons`（`127.0.0.1:5174/wallpapers/dext-icon-lab/`） |
+| 渲染器浏览器自动测试 | 首次 `cd tauri-ui; npx playwright install chromium`，之后 `npm run test:renderer:e2e` |
 | 强制重铺壁纸（活体测试，会改变桌面与恢复布局） | `cargo test --lib applies_room_wallpaper -- --ignored`（tauri-ui/src-tauri 下） |
 | 配置器自测 | `npm run build`（tauri-ui）；Rust 侧 `cargo check` |
 | 渲染器语法自检 | `node --check wallpapers/dext-room/main.js` |

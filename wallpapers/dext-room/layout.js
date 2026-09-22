@@ -22,6 +22,32 @@
     return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   }
 
+  function clampRectOutsideReserved(value, bounds, reserved = [], padding = 0) {
+    const width = Math.min(Math.max(Number(value?.width) || 0, 0), bounds.width);
+    const height = Math.min(Math.max(Number(value?.height) || 0, 0), bounds.height);
+    const requested = {
+      x: Math.min(Math.max(Number(value?.x) || 0, 0), bounds.width - width),
+      y: Math.min(Math.max(Number(value?.y) || 0, 0), bounds.height - height),
+      width,
+      height,
+    };
+    if (!reserved.some((rect) => overlaps(requested, rect))) return requested;
+    const candidates = reserved.flatMap((rect) => [
+      { ...requested, x: rect.x - width - padding },
+      { ...requested, x: rect.x + rect.width + padding },
+      { ...requested, y: rect.y - height - padding },
+      { ...requested, y: rect.y + rect.height + padding },
+    ]).map((candidate) => ({
+      ...candidate,
+      x: Math.min(Math.max(candidate.x, 0), bounds.width - width),
+      y: Math.min(Math.max(candidate.y, 0), bounds.height - height),
+    })).filter((candidate) => !reserved.some((rect) => overlaps(candidate, rect)));
+    candidates.sort((a, b) =>
+      Math.hypot(a.x - requested.x, a.y - requested.y) - Math.hypot(b.x - requested.x, b.y - requested.y)
+    );
+    return candidates[0] ?? null;
+  }
+
   function iconRect(x, y, grid) {
     return { x: x * grid.cellWidth, y: y * grid.cellHeight, width: grid.cellWidth, height: grid.cellHeight };
   }
@@ -90,5 +116,57 @@
     return { committed: true, icons, moved, unresolved: [] };
   }
 
-  return { logicalIconGrid, resolveWidgetIconAvoidance };
+  function resolveIconReorder(sourceIcons, draggedIndex, target, grid, obstacles = [], reserved = []) {
+    if (!grid || grid.cellWidth <= 0 || grid.cellHeight <= 0 || grid.columns <= 0 || grid.rows <= 0) {
+      throw new Error("icon grid dimensions must be positive");
+    }
+    const originalIcons = cloneIcons(sourceIcons);
+    const reject = (reason) => ({ committed: false, icons: originalIcons, moved: [], reason });
+    if (!Number.isInteger(draggedIndex) || draggedIndex < 0 || draggedIndex >= sourceIcons.length) {
+      return reject("invalid-dragged-index");
+    }
+    const targetX = Number(target?.x);
+    const targetY = Number(target?.y);
+    if (!Number.isInteger(targetX) || !Number.isInteger(targetY)
+      || targetX < 0 || targetX >= grid.columns || targetY < 0 || targetY >= grid.rows) {
+      return reject("outside-grid");
+    }
+    const blocked = [...obstacles, ...reserved];
+    if (blocked.some((rect) => overlaps(iconRect(targetX, targetY, grid), rect))) return reject("blocked");
+
+    const coordinates = originalIcons.map((item, index) => ({
+      index,
+      x: Math.min(Math.max(Math.round(item.x ?? index % grid.columns), 0), grid.columns - 1),
+      y: Math.min(Math.max(Math.round(item.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1),
+    }));
+    const draggedCell = coordinates[draggedIndex];
+    const targetKey = cellKey(targetX, targetY);
+    const slotsByKey = new Map(coordinates.map(({ x, y }) => [cellKey(x, y), { x, y }]));
+    if (slotsByKey.size !== originalIcons.length) return reject("duplicate-cell");
+    if (!slotsByKey.has(targetKey)) {
+      slotsByKey.delete(cellKey(draggedCell.x, draggedCell.y));
+      slotsByKey.set(targetKey, { x: targetX, y: targetY });
+    }
+
+    const slots = [...slotsByKey.values()].sort((a, b) => a.y - b.y || a.x - b.x);
+    const targetSlotIndex = slots.findIndex(({ x, y }) => x === targetX && y === targetY);
+    const ordered = coordinates
+      .slice()
+      .sort((a, b) => a.y - b.y || a.x - b.x || a.index - b.index)
+      .map(({ index }) => index)
+      .filter((index) => index !== draggedIndex);
+    ordered.splice(targetSlotIndex, 0, draggedIndex);
+
+    const icons = cloneIcons(originalIcons);
+    ordered.forEach((iconIndex, slotIndex) => {
+      icons[iconIndex].x = slots[slotIndex].x;
+      icons[iconIndex].y = slots[slotIndex].y;
+    });
+    const moved = icons.flatMap((item, index) =>
+      item.x !== originalIcons[index].x || item.y !== originalIcons[index].y ? [index] : []
+    );
+    return { committed: true, icons, moved, reason: null };
+  }
+
+  return { clampRectOutsideReserved, logicalIconGrid, resolveIconReorder, resolveWidgetIconAvoidance };
 });

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dext Motion Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%239ef0c5'/%3E%3Cpath d='M9 8h7c5 0 8 3 8 8s-3 8-8 8H9V8zm6 4h-2v8h2c3 0 5-1 5-4s-2-4-5-4z' fill='%23090b0e'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <span class="eyebrow">DEXT / RENDERER STUDY</span>
+        <h1>Motion Lab</h1>
+      </div>
+      <div class="runtime-state" aria-live="polite">
+        <span class="state-dot"></span>
+        <span id="motion-status">initializing</span>
+      </div>
+      <button id="edit-done" type="button" aria-label="Done editing" hidden>Done</button>
+      <label class="motion-toggle">
+        <input id="reduce-motion" type="checkbox" />
+        <span>Reduce motion</span>
+      </label>
+    </header>
+
+    <nav class="scenario-strip" aria-label="Motion scenarios">
+      <button type="button" data-scenario="widget-single">Widget · one</button>
+      <button type="button" data-scenario="widget-multi">Widget · group</button>
+      <button type="button" data-scenario="zigzag">Stress · rapid</button>
+      <button type="button" data-scenario="icon-reorder">Reorder · path</button>
+      <button type="button" data-scenario="add">Add</button>
+      <button type="button" data-scenario="remove">Remove</button>
+      <button type="button" data-scenario="remove-reenter">Exit interrupt</button>
+      <button type="button" data-scenario="no-space">No space</button>
+      <button type="button" data-scenario="cancel">Cancel + restore</button>
+      <button type="button" data-scenario="stress">100 icons</button>
+      <button type="button" data-scenario="reset" class="quiet">Reset</button>
+    </nav>
+
+    <main>
+      <section class="stage-frame" aria-label="Interactive desktop motion stage">
+        <div class="stage-caption">
+          <span>1920 × 1080 logical field</span>
+          <span>Long-press 500ms · double-click blank space to finish</span>
+        </div>
+        <div id="motion-stage" data-conflict="false" data-drop-zone="idle">
+          <div id="reorder-placeholder" data-active="false" aria-hidden="true"></div>
+          <div id="demo-widget" class="demo-widget" tabindex="0" aria-label="Draggable widget">
+            <div class="demo-widget-face">
+              <span class="widget-kicker">FOCUS</span>
+              <strong>09:41</strong>
+              <small>Drag to reserve space</small>
+            </div>
+          </div>
+          <div id="demo-dock" aria-label="Dock drop exclusion zone">
+            <span></span><span></span><span></span><small>DOCK · NO DROP</small>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="diagnostics">
+      <div><span>ENGINE</span><strong>FLIP / WAAPI</strong></div>
+      <div><span>MOVE</span><strong>280ms</strong></div>
+      <div><span>ENTER / EXIT</span><strong>180 / 140ms</strong></div>
+      <div><span>ROLLBACK</span><strong>300ms</strong></div>
+      <p id="motion-detail">Stable nodes. Final coordinates land before motion begins.</p>
+    </footer>
+  </div>
+
+  <script src="../dext-room/layout.js"></script>
+  <script src="../dext-room/layout-motion.js"></script>
+  <script src="./lab.js"></script>
+</body>
+</html>

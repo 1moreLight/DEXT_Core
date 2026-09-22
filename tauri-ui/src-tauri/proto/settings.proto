@@ -84,6 +84,11 @@ message SettingsDataModel {
     GetScreensResponse selected_audio_output_display = 72;
     string visualizer_audio_device_id = 73;
     bool restart_after_lockscreen = 74;
+    DesktopIconFeedbackStyle desktop_icon_feedback_style = 75;
+    optional bool show_desktop_icon_labels = 76;
+    DesktopIconHitTargetSize desktop_icon_hit_target_size = 77;
+    DesktopIconVisualSize desktop_icon_visual_size = 78;
+    DesktopIconSpacing desktop_icon_spacing = 79;
 }
 
 message AppRulesSettings {
@@ -257,4 +262,32 @@ enum DisplayAudioMode
 {
     selection = 0;
     all_ = 1;
+}
+
+enum DesktopIconFeedbackStyle
+{
+    DESKTOP_ICON_FEEDBACK_HALO = 0;
+    DESKTOP_ICON_FEEDBACK_COMPACT = 1;
+    DESKTOP_ICON_FEEDBACK_BARE = 2;
+}
+
+enum DesktopIconHitTargetSize
+{
+    DESKTOP_ICON_HIT_TARGET_STANDARD = 0;
+    DESKTOP_ICON_HIT_TARGET_SMALL = 1;
+    DESKTOP_ICON_HIT_TARGET_LARGE = 2;
+}
+
+enum DesktopIconVisualSize
+{
+    DESKTOP_ICON_VISUAL_STANDARD = 0;
+    DESKTOP_ICON_VISUAL_SMALL = 1;
+    DESKTOP_ICON_VISUAL_LARGE = 2;
+}
+
+enum DesktopIconSpacing
+{
+    DESKTOP_ICON_SPACING_STANDARD = 0;
+    DESKTOP_ICON_SPACING_COMPACT = 1;
+    DESKTOP_ICON_SPACING_SPACIOUS = 2;
 }

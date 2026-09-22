@@ -58,6 +58,7 @@ namespace Lively.Core
         private readonly WndProcMsgWindow WndProc;
         private readonly IDisplayManager displayManager;
         private readonly WindowEventHook workerWHook;
+        private readonly MouseForwardingSession forwardedMouse;
 
         public WinDesktopCore(IUserSettingsService userSettings,
             IDisplayManager displayManager,
@@ -77,6 +78,12 @@ namespace Lively.Core
             this.rawInput = rawInput;
             this.WndProc = wndProc;
             this.wallpaperFactory = wallpaperFactory;
+            forwardedMouse = new MouseForwardingSession((handle, x, y, message, buttons) =>
+            {
+                // A wallpaper may have been replaced while the physical button was held.
+                if (wallpapers.Any(w => !w.IsExited && w.InputHandle == handle))
+                    InputUtil.ForwardMessageMouse(handle, x, y, message, buttons);
+            });
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
 
             if (App.IsExclusiveScreensaverMode)
@@ -1131,12 +1138,22 @@ namespace Lively.Core
 
         private void RawInput_MouseMoveRaw(object sender, MouseRawArgs e)
         {
-            // Don't forward when not on desktop unless configured.
-            if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop() && !userSettings.Settings.MouseInputMovAlways)
-                return;
-
             try
             {
+                if (forwardedMouse.IsActive)
+                {
+                    if (userSettings.Settings.InputForward == InputForwardMode.off)
+                        forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                    else
+                        forwardedMouse.Move(e.X, e.Y, InputUtil.MouseModifiers);
+                    return;
+                }
+                // A press that started in another app (or native Player input) is not our gesture.
+                // Injecting hover buttons=0 there would corrupt its real capture state.
+                if (InputUtil.IsPrimaryMouseButtonDown ||
+                    userSettings.Settings.InputForward == InputForwardMode.off ||
+                    !IsDesktop() && !userSettings.Settings.MouseInputMovAlways)
+                    return;
                 ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseMove);
             }
             catch (Exception ex)
@@ -1152,17 +1169,8 @@ namespace Lively.Core
 
             try
             {
-                switch (e.Button)
-                {
-                    case RawInputMouseBtn.left:
-                        if (!InputUtil.IsMouseButtonsSwapped)
-                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonDown);
-                        break;
-                    case RawInputMouseBtn.right:
-                        if (InputUtil.IsMouseButtonsSwapped)
-                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonDown);
-                        break;
-                }
+                if (IsPrimaryMouseButton(e.Button))
+                    forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y), e.X, e.Y, InputUtil.MouseModifiers);
             }
             catch (Exception ex)
             {
@@ -1172,22 +1180,11 @@ namespace Lively.Core
 
         private void RawInput_MouseUpRaw(object sender, MouseClickRawArgs e)
         {
-            if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
-                return;
-
             try
             {
-                switch (e.Button)
-                {
-                    case RawInputMouseBtn.left:
-                        if (!InputUtil.IsMouseButtonsSwapped)
-                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonUp);
-                        break;
-                    case RawInputMouseBtn.right:
-                        if (InputUtil.IsMouseButtonsSwapped)
-                            ForwardMouseToWallpapers(e.X, e.Y, InputUtil.MouseLeftButtonUp);
-                        break;
-                }
+                // Finish the DOWN recipient even if foreground or pointer display changed.
+                if (IsPrimaryMouseButton(e.Button))
+                    forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
             }
             catch (Exception ex)
             {
@@ -1225,21 +1222,25 @@ namespace Lively.Core
 
         private void ForwardMouseToWallpapers(int x, int y, Action<IntPtr, int, int> forwardAction)
         {
+            foreach (var target in MouseTargetsAt(x, y))
+                forwardAction(target.Handle, x - target.OriginX, y - target.OriginY);
+        }
+
+        private static bool IsPrimaryMouseButton(RawInputMouseBtn button) =>
+            button == (InputUtil.IsMouseButtonsSwapped ? RawInputMouseBtn.right : RawInputMouseBtn.left);
+
+        private IEnumerable<MouseForwardingSession.Target> MouseTargetsAt(int x, int y)
+        {
             var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(x, y));
-            var pos = userSettings.Settings.WallpaperArrangement switch
-            {
-                WallpaperArrangement.per => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
-                WallpaperArrangement.span => InputUtil.ToMouseSpanLocal(x, y, displayManager.VirtualScreenBounds),
-                WallpaperArrangement.duplicate => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
-                _ => InputUtil.ToMouseDisplayLocal(x, y, display.Bounds),
-            };
+            var bounds = userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span
+                ? displayManager.VirtualScreenBounds : display.Bounds;
 
             foreach (var wallpaper in Wallpapers)
             {
                 if (wallpaper.Category.IsDeviceInputAllowed() &&
                     (wallpaper.Screen.Equals(display) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
                 {
-                    forwardAction(wallpaper.InputHandle, pos.X, pos.Y);
+                    yield return new MouseForwardingSession.Target(wallpaper.InputHandle, bounds.X, bounds.Y);
                 }
             }
         }

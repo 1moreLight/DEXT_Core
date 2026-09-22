@@ -29,5 +29,7 @@
         msg_system_control_request,
         cmd_system_control_response,
         cmd_room_layout_sync,
+        cmd_desktop_icon_preferences,
+        cmd_save_room_result,
     }
 }

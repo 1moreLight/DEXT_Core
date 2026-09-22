@@ -74,8 +74,45 @@
 | #67 | dev 端口 1420/1423 落入 Windows 保留端口区，vite EACCES；dev 迁至 1620/1621 | [toolchain](errors/toolchain.md) |
 | #68 | Lively 注入负载是 JSON 字符串未 parse，能力桥硬件/媒体/频谱静默全空 | [renderer](errors/renderer.md) |
 | #69 | P1 能力"自动允许"未落地，授权 store 缺失时全部只读能力被静默丢弃 | [renderer](errors/renderer.md) |
+| #70 | Playwright 测试放在 npm 包目录外时无法从测试文件位置解析 `@playwright/test` | [toolchain](errors/toolchain.md) |
+| #71 | Playwright `*.spec.ts` 被同包 Vitest 一并发现，导致生命周期 API 冲突 | [toolchain](errors/toolchain.md) |
+| #72 | 拖拽预览未清理稳定计时器/取消事件/过期异步回调，导致离开后仍交换或取消时提交 | [renderer](errors/renderer.md) |
+| #73 | 布局 FLIP 与长按 jiggle 未分层展示，浏览器实验台看起来替换了苹果式编辑模式 | [renderer](errors/renderer.md) |
+| #74 | reduced-motion 只在下一次布局生效，动画中途切换和系统偏好仍保留 FLIP/jiggle | [renderer](errors/renderer.md) |
+| #75 | 把图标重排理解成两两交换，无法形成托起、占位和路径让位的 Sortable 语义 | [renderer](errors/renderer.md) |
+| #76 | 拖入非法目标或 Reset 时只隐藏占位，旧路径布局/托起样式可能残留 | [renderer](errors/renderer.md) |
+| #77 | Reset 只重置画面却未终止 pointer capture 与长按计时，后续事件会再次改写布局 | [renderer](errors/renderer.md) |
+| #78 | 多段预览共用旧 `previewBase`，新手势取消会跳回更早的场景布局 | [renderer](errors/renderer.md) |
+| #79 | 非 Reset 场景切换未取消真实拖拽，旧 pointerup 会覆盖新场景结果 | [renderer](errors/renderer.md) |
+| #80 | Widget jiggle 只挂内容层，造成文字动而边框静止的割裂效果 | [renderer](errors/renderer.md) |
+| #81 | Playwright 对持续旋转元素执行双击会因“元素不稳定”超时 | [toolchain](errors/toolchain.md) |
+| #82 | 拖拽回归未先断言进入 dragging，缺失手势实现也可能得到取消/未保存的假绿终态 | [renderer](errors/renderer.md) |
+| #83 | Dock 安全余量混用 Room 逻辑像素与屏幕像素，旋转外接框仍可能侵入禁区 | [renderer](errors/renderer.md) |
+| #84 | 通用 abort 假定 pressing 也有 baseIcons，restore 会误清已发布图标快照 | [renderer](errors/renderer.md) |
+| #85 | reduced-motion 只关 transition/animation，hover 与托起 transform 仍然位移 | [renderer](errors/renderer.md) |
+| #86 | 在 window capture 阶段监听 blur，会把控件失焦误判成窗口失焦 | [renderer](errors/renderer.md) |
+| #87 | 异步场景未等待实际发布，reduced-motion 测试可能假绿或偶发读到动画 | [toolchain](errors/toolchain.md) |
+| #88 | Playwright 用真实时间验证 80ms 短窗口，跨进程断言可能在窗口结束后才开始 | [toolchain](errors/toolchain.md) |
+| #89 | 图标命中区由内容自适应撑开，长短名称造成框体宽度和中心不一致 | [renderer](errors/renderer.md) |
+| #90 | 固定预览属性常驻会屏蔽真实 hover/press，使实验台看似不能点击 | [renderer](errors/renderer.md) |
+| #91 | 布局 cell 与命中框分设尺寸，调试边界永远无法重合且难以管理 | [renderer](errors/renderer.md) |
+| #92 | 隐藏图标名称后仍保留标签高度，产生无意义空白命中区且尺寸读数易失真 | [renderer](errors/renderer.md) |
+| #93 | 把编辑 jiggle 放在 `.icon-face` 会连带文字；“图标文字不抖”需求澄清后应只动画 `.icon-visual` | [renderer](errors/renderer.md) |
+| #94 | renderer Playwright 使用 strictPort，自行启动的 5174 预览会阻止测试 webServer 启动 | [toolchain](errors/toolchain.md) |
+| #95 | 共享 Glyph 渐变读取 `--icon-color`，真实桌面只写 backgroundColor 会让图标退回默认蓝色 | [renderer](errors/renderer.md) |
+| #96 | reduced-motion 若清除整个 face transform，会连拖动所需 pointer translate 一并抹掉 | [renderer](errors/renderer.md) |
+| #97 | 浏览器实验台可跨目录加载共享资源，但 WebView2 本地虚拟主机只映射生产 Room 目录，兄弟路径会令真实桌面黑屏 | [renderer](errors/renderer.md) |
+| #98 | 长按进入编辑时先清空 pressing 事务，同一 pointer 无法继续拖动，只能松手回原位 | [renderer](errors/renderer.md) |
+| #99 | 把长按续拖、原格锚定和 80ms 候选延迟叠在一起，会偏离已验收 Sortable 并造成难触发/跳动 | [renderer](errors/renderer.md) |
+| #100 | Chromium 回归全绿不能证明 WorkerW/WebView2 的真实指针链可靠；连续修补失败后应整体回退生产交互边界 | [renderer](errors/renderer.md) |
+| #101 | 保留旧拖动函数却删除唯一绑定调用，会形成看似可回退、实际永远不执行的死代码 | [renderer](errors/renderer.md) |
+| #102 | 图标实验台重定义共享间距 CSS，造成真实桌面和实验台使用不同档位几何 | [renderer](errors/renderer.md) |
+| #103 | Core 把鼠标移动的按键状态写成 0x20（侧键），破坏 WebView2 pointer capture；前端取消会放大旧输入错误 | [backend](errors/backend.md) |
 
 ## 分册
+
+- 2026-09-21 拖动反馈修正：图标 face 的 180ms transform 过渡叠加预览时外层坐标重排，会导致跟手滞后、跳动；拖起对象外层需固定，只对其他对象执行 FLIP。空白退出需监听整个 document，并排除指针捕获重定向到的 `.icon` 和其他交互对象。连续 12 次真实指针拖放已验证。
+- 2026-09-21 排序模型纠正：真实图标改回最早验收的两段式 Sortable；长按只进编辑，编辑态再次按下拖动，跨格立即占位，拖起对象外层落目标格、内层补偿到指针下。上一条“同一 pointer 续拖 + 外层固定 + 80ms 延迟”结论已由 #99 取代。空白双击在 document 捕获阶段处理。
 
 - [git.md](errors/git.md) —— 仓库/分支/worktree/并行会话协作
 - [backend.md](errors/backend.md) —— C# / Rust / RPC / 运行时

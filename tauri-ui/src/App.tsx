@@ -46,6 +46,8 @@ import {
   serializeRoomV2,
 } from "@/features/room-editor/room-draft";
 import { deleteDeskGraph, moveDeskGraph, toggleDeskApplication } from "@/lib/desk";
+import { desktopIconGridForPreferences } from "@/lib/widget-layout";
+import { type DextSettingsView } from "@/lib/desktop-icon-preferences";
 import {
   loadMinimizeAfterDeskAppAdd,
   saveMinimizeAfterDeskAppAdd,
@@ -1026,10 +1028,26 @@ export default function App() {
     });
   }
 
-  function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
+  async function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
     const targetDesk = desks[deskIndex];
     if (!targetDesk) return;
-    const result = toggleDeskApplication(targetDesk, app, undefined, dock);
+    let grid;
+    let fallback = false;
+    if (!targetDesk.icons.some((icon) => icon.launch.target === app.target) && IS_TAURI) {
+      try {
+        const saved = await invoke<DextSettingsView>("get_dext_settings");
+        grid = desktopIconGridForPreferences({
+          feedbackStyle: saved.desktopIconFeedbackStyle,
+          showLabels: saved.showDesktopIconLabels,
+          hitTargetSize: saved.desktopIconHitTargetSize,
+          visualSize: saved.desktopIconVisualSize,
+          spacing: saved.desktopIconSpacing,
+        }, { width: window.screen.width - 80, height: window.screen.height - 140 });
+      } catch {
+        fallback = true;
+      }
+    }
+    const result = toggleDeskApplication(targetDesk, app, grid, dock);
     if (result.action === "full") {
       setStatus(`${targetDesk.name} 没有可用的图标位置`);
       return;
@@ -1041,7 +1059,9 @@ export default function App() {
     setStatus(
       result.action === "removed"
         ? `已从 ${targetDesk.name} 移除 ${app.name}`
-        : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
+        : fallback
+          ? `无法读取当前图标设置，已按兼容网格将 ${app.name} 放入 ${targetDesk.name}`
+          : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
     );
     void syncDeskIcons(nextDesks, deskIndex, result.action, app.target);
   }

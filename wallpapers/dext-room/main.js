@@ -350,6 +350,10 @@ if (window.chrome?.webview) {
       updateAppRuntimeStatus(data.target, data.running);
     } else if (data?.type === "dext:room-layout") {
       applyRoomLayoutUpdate(data);
+    } else if (data?.type === "dext:desktop-preferences") {
+      receiveDesktopPreferences(data);
+    } else if (data?.type === "dext:room-save-result") {
+      receiveRoomSaveResult(data);
     } else if (data?.type === "dext:system-control-result" && data.success) {
       if (data.volume) capabilityHost.updateVolume(data.volume);
       if (data.permissions) updateRuntimeGrants(data.permissions);
@@ -367,7 +371,9 @@ const ICON_SIZES = {
 };
 
 function sizeOf(desk) {
-  return ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
+  return effectiveIconPreferences
+    ? { ...globalThis.DextIconFeedback.resolveDesktopIconGeometry(effectiveIconPreferences), label: 12 }
+    : ICON_SIZES[desk.iconSize] ?? ICON_SIZES.medium;
 }
 
 function validRoomLayoutUpdate(data) {
@@ -384,6 +390,12 @@ function cloneIcons(icons) {
 
 function applyRoomLayoutUpdate(data) {
   if (!validRoomLayoutUpdate(data) || !ROOM.desks[data.deskIndex]) return;
+  activeIconDrag?.abort?.(false);
+  activeWidgetGesture?.abort?.(false);
+  if (pendingPreferenceSave) {
+    clearTimeout(pendingPreferenceSave.timer);
+    pendingPreferenceSave = null;
+  }
   const target = data.deskIndex;
   ROOM.desks[target].icons = cloneIcons(data.room.desks[target].icons);
   const moveToTarget = data.enterEdit === true && target !== currentDesk;
@@ -397,6 +409,7 @@ function applyRoomLayoutUpdate(data) {
   if (target === currentDesk && typeof data.highlightTarget === "string" && data.highlightTarget) {
     highlightIcon(data.highlightTarget);
   }
+  drainPendingIconPreferences();
 }
 
 const deskMain = document.getElementById("desk-main");
@@ -404,6 +417,7 @@ const stageEl = document.getElementById("desk-staging");
 const bgEl = deskMain.querySelector(".desk-bg");
 const bgVideo = deskMain.querySelector(".desk-video");
 const iconLayer = deskMain.querySelector(".icon-layer");
+iconLayer.dataset.dextIconFeedbackRoot = "";
 const widgetLayer = deskMain.querySelector(".widget-layer");
 const indicatorEl = document.getElementById("desk-indicator");
 const transitionEl = document.getElementById("transition");
@@ -412,6 +426,128 @@ const toastEl = document.getElementById("toast");
 const doneBtn = document.getElementById("edit-done");
 const dockEl = document.getElementById("dock");
 const dockAppsEl = document.getElementById("dock-apps");
+
+let effectiveIconPreferences = null;
+let lastIconPreferenceRevision = -1;
+let activeIconDrag = null;
+let activeWidgetGesture = null;
+let pendingIconPreferences = null;
+let pendingPreferenceSave = null;
+const iconFeedbackController = globalThis.DextIconFeedback.createDesktopIconFeedbackController(iconLayer);
+
+
+function drainPendingIconPreferences() {
+  if (activeIconDrag || activeWidgetGesture || pendingPreferenceSave || !pendingIconPreferences) return;
+  const next = pendingIconPreferences;
+  pendingIconPreferences = null;
+  receiveDesktopPreferences(next);
+}
+
+function preferenceViews(geometry) {
+  const layer = iconLayer.getBoundingClientRect();
+  const widgets = widgetLayer.getBoundingClientRect();
+  const width = layer.width || iconLayer.clientWidth || window.innerWidth - 80;
+  const height = layer.height || iconLayer.clientHeight || window.innerHeight - 140;
+  const widgetScaleX = (widgets.width || window.innerWidth) / ROOM_CANVAS.width;
+  const widgetScaleY = (widgets.height || window.innerHeight) / ROOM_CANVAS.height;
+  const dockRect = dockEl.getBoundingClientRect();
+  return ROOM.desks.map((desk) => {
+    const blocked = (desk.widgets || []).map((widget) => ({
+      x: widget.placement.x * widgetScaleX + widgets.left - layer.left - 40,
+      y: widget.placement.y * widgetScaleY + widgets.top - layer.top - 40,
+      width: widget.placement.width * widgetScaleX + 80,
+      height: widget.placement.height * widgetScaleY + 80,
+    }));
+    const deskDock = { ...ROOM.dock, ...desk.dock };
+    const dockEnabled = deskDock.enabled !== false;
+    const viewport = deskMain.getBoundingClientRect();
+    const dockPosition = deskDock.position ?? 'bottom';
+    const dockLeft = dockPosition === 'left' ? viewport.left + 24
+      : dockPosition === 'right' ? viewport.right - 24 - dockRect.width
+      : viewport.left + (viewport.width - dockRect.width) / 2;
+    const dockTop = dockPosition === 'top' ? viewport.top + 24
+      : dockPosition === 'bottom' ? viewport.bottom - 24 - dockRect.height
+      : viewport.top + (viewport.height - dockRect.height) / 2;
+    if (dockEnabled && dockRect.width && dockRect.height) blocked.push({
+      x: dockLeft - layer.left - 24,
+      y: dockTop - layer.top - 24,
+      width: dockRect.width + 48,
+      height: dockRect.height + 48,
+    });
+    return { width, height, blocked };
+  });
+}
+
+function receiveRoomSaveResult(message) {
+  const pending = pendingPreferenceSave;
+  if (!pending || message.requestId !== pending.requestId) return;
+  clearTimeout(pending.timer);
+  pendingPreferenceSave = null;
+  if (message.success !== true) {
+    ROOM.desks.forEach((desk, index) => { desk.icons = pending.icons[index]; });
+    if (pending.preferences) applyIconAppearance(pending.preferences);
+    else {
+      effectiveIconPreferences = null;
+      iconLayer.removeAttribute('data-dext-icon-feedback-root');
+      renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
+    }
+    showToast('图标布局保存失败，已恢复原位置');
+  }
+  drainPendingIconPreferences();
+}
+
+function applyIconAppearance(preferences) {
+  iconLayer.dataset.dextIconFeedbackRoot = '';
+  effectiveIconPreferences = iconFeedbackController.setPreferences(preferences);
+  const desk = ROOM.desks[currentDesk];
+  if (!desk) return;
+  const s = sizeOf(desk);
+  const W = iconLayer.clientWidth || window.innerWidth - 80;
+  const H = iconLayer.clientHeight || window.innerHeight - 140;
+  const cols = Math.max(1, Math.floor(W / s.cellW));
+  const rows = Math.max(1, Math.floor(H / s.cellH));
+  iconLayer.querySelectorAll('.icon').forEach((el, index) => {
+    const item = desk.icons?.[index];
+    if (!item) return;
+    el.style.width = `${s.footprintWidth}px`;
+    el.style.height = `${s.footprintHeight}px`;
+    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW + s.gapX / 2}px`;
+    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH + s.gapY / 2}px`;
+  });
+}
+
+function receiveDesktopPreferences(message) {
+  const revision = Number.isSafeInteger(message.revision) ? message.revision : 0;
+  if (revision < lastIconPreferenceRevision) return;
+  const preferences = globalThis.DextIconFeedback.normalizeDesktopIconPreferences(message.preferences);
+  if (revision === lastIconPreferenceRevision &&
+      JSON.stringify(preferences) === JSON.stringify(effectiveIconPreferences)) return;
+  if (activeIconDrag || activeWidgetGesture || pendingPreferenceSave) {
+    if (!pendingIconPreferences || revision >= (pendingIconPreferences.revision ?? 0)) pendingIconPreferences = message;
+    return;
+  }
+  const geometry = globalThis.DextIconFeedback.resolveDesktopIconGeometry(preferences);
+  const plan = globalThis.DextIconPlacement.planRoomReflow(ROOM, geometry, preferenceViews(geometry));
+  if (!plan.committed) {
+    showToast('空间不足，当前 Room 未应用布局偏好');
+    return;
+  }
+  const previousPreferences = effectiveIconPreferences;
+  const oldIcons = ROOM.desks.map((desk) => cloneIcons(desk.icons || []));
+  lastIconPreferenceRevision = revision;
+  ROOM.desks.forEach((desk, index) => { desk.icons = plan.room.desks[index].icons; });
+  applyIconAppearance(preferences);
+  if (plan.moved.length) {
+    const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+    pendingPreferenceSave = {
+      requestId, icons: oldIcons, preferences: previousPreferences,
+      timer: setTimeout(() => showToast('图标布局保存结果未确认'), 10000),
+    };
+    const room = JSON.parse(JSON.stringify(ROOM));
+    delete room.__source;
+    window.chrome?.webview?.postMessage?.(JSON.stringify({ type: 'saveRoom', room, requestId }));
+  }
+}
 
 let currentDesk = 0;
 let switching = false;
@@ -851,6 +987,10 @@ function syncWidgetHotspots(instance) {
 }
 
 function startWidgetDrag(e, instance, resizing) {
+  if (pendingPreferenceSave) {
+    showToast('图标布局保存中，请稍候');
+    return;
+  }
   e.preventDefault();
   e.stopPropagation();
   const wrap = instance.wrap;
@@ -907,8 +1047,8 @@ function startWidgetDrag(e, instance, resizing) {
       if (!next.moved.includes(index)) return;
       const target = next.icons[index];
       icon.classList.add("widget-avoid-preview");
-      icon.style.left = `${target.x * size.cellW}px`;
-      icon.style.top = `${target.y * size.cellH}px`;
+      icon.style.left = `${target.x * size.cellW + (size.gapX ?? 0) / 2}px`;
+      icon.style.top = `${target.y * size.cellH + (size.gapY ?? 0) / 2}px`;
       icon.style.opacity = "0.55";
     });
   };
@@ -936,6 +1076,8 @@ function startWidgetDrag(e, instance, resizing) {
       clearPreview();
       renderIcons(iconLayer, desk, sizeOf(desk));
       showToast("空间不足，Widget 已恢复原位");
+      activeWidgetGesture = null;
+      drainPendingIconPreferences();
       return;
     }
     desk.icons = preview.icons;
@@ -943,6 +1085,8 @@ function startWidgetDrag(e, instance, resizing) {
     renderIcons(iconLayer, desk, sizeOf(desk));
     if (resizing) syncWidgetHotspots(instance);
     persistRoom();
+    activeWidgetGesture = null;
+    drainPendingIconPreferences();
   };
   const cancel = () => {
     removeListeners();
@@ -951,6 +1095,8 @@ function startWidgetDrag(e, instance, resizing) {
     applyWidgetPlacement(instance, origin);
     clearPreview();
     renderIcons(iconLayer, desk, sizeOf(desk));
+    activeWidgetGesture = null;
+    drainPendingIconPreferences();
   };
   const onMove = (ev) => {
     const dx = (ev.clientX - sx) / scale;
@@ -964,6 +1110,14 @@ function startWidgetDrag(e, instance, resizing) {
     }
     updatePlacement();
   };
+  activeWidgetGesture = { abort(restore) {
+    removeListeners();
+    Object.assign(placement, origin);
+    applyWidgetPlacement(instance, origin);
+    clearPreview();
+    if (restore) renderIcons(iconLayer, desk, sizeOf(desk));
+    activeWidgetGesture = null;
+  } };
   wrap.addEventListener("pointermove", onMove);
   wrap.addEventListener("pointerup", finish);
   wrap.addEventListener("pointercancel", cancel);
@@ -1097,7 +1251,7 @@ function mountBackground(bgTarget, videoTarget, desk, deskIndex) {
 function renderIcons(layer, desk, s) {
   const W = layer.clientWidth || window.innerWidth - 80;
   const H = layer.clientHeight || window.innerHeight - 140;
-  const cols = Math.max(4, Math.floor(W / s.cellW));
+  const cols = Math.max(1, Math.floor(W / s.cellW));
   const rows = Math.max(1, Math.floor(H / s.cellH));
   layer.style.setProperty("--icon-size", `${s.icon}px`);
   layer.style.setProperty("--label-size", `${s.label}px`);
@@ -1109,16 +1263,31 @@ function renderIcons(layer, desk, s) {
   desk.icons.forEach((item, i) => {
     const el = document.createElement("div");
     el.className = "icon";
+    el.dataset.dextIconFace = "";
+    el.setAttribute('aria-label', item.label ?? '');
     el.dataset.launchTarget = item.launch?.target ?? "";
-    el.style.width = `${s.cellW}px`;
+    el.style.width = `${s.footprintWidth ?? s.cellW}px`;
+    if (s.footprintHeight) el.style.height = `${s.footprintHeight}px`;
     // clamp into view for the current size without rewriting stored coords
-    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW}px`;
-    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH}px`;
-    el.appendChild(iconVisual(item));
+    el.style.left = `${Math.min(item.x ?? 0, cols - 1) * s.cellW + (s.gapX ?? 0) / 2}px`;
+    el.style.top = `${Math.min(item.y ?? 0, rows - 1) * s.cellH + (s.gapY ?? 0) / 2}px`;
+    const face = document.createElement('div');
+    face.className = 'icon-face';
+    const visual = document.createElement('div');
+    visual.className = 'icon-visual';
+    if (item.color) el.style.setProperty('--icon-color', item.color);
+    visual.appendChild(iconVisual(item));
+    face.appendChild(visual);
     const label = document.createElement("div");
     label.className = "icon-label";
     label.textContent = item.label ?? "";
-    el.appendChild(label);
+    face.appendChild(label);
+    const tooltip = document.createElement('div');
+    tooltip.className = 'icon-label-tooltip';
+    tooltip.textContent = item.label ?? '';
+    tooltip.dataset.visible = 'false';
+    face.appendChild(tooltip);
+    el.appendChild(face);
     el.addEventListener("dblclick", () => {
       if (editMode) return;
       if (item.launch) {
@@ -1204,35 +1373,66 @@ function attachPress(el, index) {
 }
 
 function startDrag(e, el, index) {
+  if (pendingPreferenceSave) {
+    showToast('图标布局保存中，请稍候');
+    return;
+  }
   e.preventDefault();
   el.setPointerCapture(e.pointerId);
   el.classList.add("dragging");
+  iconFeedbackController.setDragging(true);
   el.style.transition = "none";
   const sx = e.clientX;
   const sy = e.clientY;
   const origLeft = parseFloat(el.style.left);
   const origTop = parseFloat(el.style.top);
-
   const onMove = (ev) => {
     el.style.left = `${origLeft + ev.clientX - sx}px`;
     el.style.top = `${origTop + ev.clientY - sy}px`;
   };
-  const onUp = (ev) => {
+  let settled = false;
+  const clearDrag = () => {
+    if (settled) return false;
+    settled = true;
     el.removeEventListener("pointermove", onMove);
     el.removeEventListener("pointerup", onUp);
+    el.removeEventListener("pointercancel", onCancel);
+    el.removeEventListener("lostpointercapture", onCancel);
     el.classList.remove("dragging");
     el.style.transition = "";
+    iconFeedbackController.setDragging(false);
+    activeIconDrag = null;
+    return true;
+  };
+  const onCancel = (ev) => {
+    if (!clearDrag()) return;
+    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
+    drainPendingIconPreferences();
+  };
+  const onUp = (ev) => {
+    if (!clearDrag()) return;
     const desk = ROOM.desks[currentDesk];
     const dragged = desk.icons[index];
     // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
     const rect = iconLayer.getBoundingClientRect();
     const s = sizeOf(ROOM.desks[currentDesk]);
-    const cols = Math.max(4, Math.floor(rect.width / s.cellW));
+    const cols = Math.max(1, Math.floor(rect.width / s.cellW));
     const rows = Math.max(1, Math.floor(rect.height / s.cellH));
+    const blockedAt = (box) => ev.clientX >= box.left && ev.clientX < box.right &&
+      ev.clientY >= box.top && ev.clientY < box.bottom;
+    const outside = !blockedAt(rect);
+    const onDock = dockEl.style.display !== 'none' && blockedAt(dockEl.getBoundingClientRect());
+    const onWidget = [...widgetLayer.querySelectorAll('.dext-widget')].some((widget) => blockedAt(widget.getBoundingClientRect()));
+    if (outside || onDock || onWidget) {
+      renderIcons(iconLayer, desk, s);
+      drainPendingIconPreferences();
+      return;
+    }
     const col = Math.max(0, Math.min(cols - 1, Math.floor((ev.clientX - rect.left) / s.cellW)));
     const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / s.cellH)));
     if (dragged.x === col && dragged.y === row) {
       renderDesk(currentDesk);
+      drainPendingIconPreferences();
       return;
     }
     const occupant = desk.icons.find((ic) => ic !== dragged && ic.x === col && ic.y === row);
@@ -1244,15 +1444,23 @@ function startDrag(e, el, index) {
     }
     persistRoom();
     renderDesk(currentDesk);
+    drainPendingIconPreferences();
   };
+  activeIconDrag = { abort(restore) {
+    if (!clearDrag()) return;
+    if (restore) renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
+  } };
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointercancel", onCancel);
+  el.addEventListener("lostpointercapture", onCancel);
 }
 
 function enterEdit({ rerender = true } = {}) {
   if (editMode || switching) return;
   editMode = true;
   document.body.classList.add("editing");
+  iconFeedbackController.setEditing(true);
   if (rerender) renderDesk(currentDesk);
   dextEmit("editchange", { editing: true });
   showToast("编辑模式：拖动图标 / Widget 排列，Esc 或「完成」退出");
@@ -1260,11 +1468,15 @@ function enterEdit({ rerender = true } = {}) {
 
 function exitEdit() {
   if (!editMode) return;
+  activeIconDrag?.abort?.(true);
+  activeWidgetGesture?.abort?.(true);
   editMode = false;
   document.body.classList.remove("editing");
+  iconFeedbackController.setEditing(false);
   renderDesk(currentDesk);
   dextEmit("editchange", { editing: false });
-  persistRoom();
+  if (!pendingPreferenceSave) persistRoom();
+  drainPendingIconPreferences();
 }
 
 // ---- transition registry (the extension point) ----
@@ -1357,6 +1569,9 @@ function mountStaging(index) {
     <div class="desk-bg"></div>
     <div class="widget-layer"></div>
     <div class="icon-layer"></div>`;
+  const stagingIcons = stageEl.querySelector('.icon-layer');
+  stagingIcons.dataset.dextIconFeedbackRoot = '';
+  if (effectiveIconPreferences) globalThis.DextIconFeedback.applyDesktopIconPreferences(stagingIcons, effectiveIconPreferences);
   mountBackground(stageEl.querySelector(".desk-bg"), stageEl.querySelector(".desk-video"), desk, index);
   mountWidgets(stageEl.querySelector(".widget-layer"), desk, index);
   renderIcons(stageEl.querySelector(".icon-layer"), desk, sizeOf(desk));
@@ -1436,10 +1651,7 @@ doneBtn.addEventListener("click", exitEdit);
 let deskPressTimer = null;
 let deskPressX = 0, deskPressY = 0;
 iconLayer.addEventListener("pointerdown", (e) => {
-  if (editMode) {
-    if (e.target === iconLayer) exitEdit();
-    return;
-  }
+  if (editMode) return;
   if (e.button !== 0 || e.target !== iconLayer) return;
   deskPressX = e.clientX;
   deskPressY = e.clientY;
@@ -1465,7 +1677,15 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => {
+  activeIconDrag?.abort?.(false);
+  activeWidgetGesture?.abort?.(false);
   if (!SCREENSAVER_MODE) renderDesk(currentDesk);
+  drainPendingIconPreferences();
+});
+deskMain.addEventListener('dblclick', (event) => {
+  if (!editMode || !(event.target instanceof Element)) return;
+  if (event.target.closest('.icon, .dext-widget, .dext-trusted-hotspot')) return;
+  exitEdit();
 });
 
 window.addEventListener("message", (e) => {

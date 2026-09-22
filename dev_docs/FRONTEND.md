@@ -64,6 +64,43 @@ scripts\room-preview.ps1
   - 待机节点预览使用 `?preview=1&screensaver=1`，隐藏 Desk/Dock 并只显示 idle；缺少 idle 时为黑屏
   - 单独用 Vite 检查 sandbox HTML 时需开启 CORS；否则 Vite 注入的 `@vite/client` 会被 opaque origin 拒绝，生产运行不受影响
 
+### 自动重排动画实验台与真实桌面（DESK-MOTION-001）
+
+```powershell
+# 仓库根；启动 127.0.0.1:5174 并打开独立实验台
+npm run dev:motion
+
+# 首次安装 Chromium（Windows 直接使用 npx，不依赖 Bash/WSL）
+cd tauri-ui
+npx playwright install chromium
+
+# 自动启动 Vite，运行 renderer e2e
+npm run test:renderer:e2e
+```
+
+实验台地址为 `http://127.0.0.1:5174/wallpapers/dext-motion-lab/`，提供 Widget 单/多图标让位、连续 revision、Sortable 图标路径重排、Dock 禁放、新增、移除、无解回弹、取消、reduced-motion 和 100 图标压力场景。它直接加载 `wallpapers/dext-room/layout.js` 与 `layout-motion.js`，不是演示副本。
+
+Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图和视频（Git 忽略）。测试文件必须留在 `tauri-ui/tests/renderer/`，否则 Node 不会从仓库级 `wallpapers/` 目录向下解析 `tauri-ui/node_modules`（ERRORS #70）。
+
+实验台只验证运动规则与默认参数，不代表生产外观。阶段 B 已把同一求解器和动画引擎接入真实桌面；生产仍使用现有图标、Widget iframe、主题、编辑边框与 Dock，不复用实验台示例卡片。
+
+### 图标反馈实验台（DESK-ICON-001）
+
+```powershell
+cd tauri-ui
+npm run dev:icons
+```
+
+地址为 `http://127.0.0.1:5174/wallpapers/dext-icon-lab/`。实验台直接加载生产目录中的 `wallpapers/dext-room/icon-feedback.js` 与 `.css`，提供“图标光晕 / 紧凑内容框 / 纯净无边框”、默认直接交互、固定正常/悬停/按下/编辑/拖动诊断状态、名称显示、真实命中区、reduced-motion 和多背景检查。图标中心与名称基线固定；只有编辑和拖动产生运动。共享文件必须留在 `dext-room` 内，因为正式 WebView2 虚拟主机只映射该目录。
+
+默认“交互”状态像 Widget 实验台一样直接操作真实命中框：hover 和 pointerdown 使用真实指针状态，短按选择当前 TARGET；长按 300ms 进入苹果式编辑抖动，编辑中拖动会托起并跟手，松手恢复原网格。此阶段不重排、不保存，双击真正画布空白退出编辑；透明网格边缘始终不响应。固定五状态只用于逐帧诊断对比。
+
+布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。五项参数由全局 Core 设置保存，不写入 Room Schema。DESK-PREFS-001 分支把共享视觉层接入真实 Room；原 `.icon` 仍拥有 pointer capture，内部 face/visual 仅装饰，偏好热切换不重挂 Widget iframe。浏览器实验台的命中区调试标记不进入生产外观。
+
+阶段 A 用于浏览器调参与运动诊断，不代表真实壁纸外观。生产 DESK-PREFS-001 保持旧 500ms 长按进入编辑、松手后再次按下直接拖动；仅 `.icon-visual` 以 ±3° / 150ms 抖动，名称静止。关闭名称后稳定悬停 500ms 显示浮层，编辑、按下或拖动期间抑制。双击真正桌面空白才退出编辑。
+
+设置页“偏好设置”的五项全局控制通过 Rust→Core→Player 投递带 revision 的 `dext:desktop-preferences`；Player loaded 快照 revision 0 不覆盖较新修改。桌面以 footprint 和 gap 重算列行；只搬冲突/越界图标，Widget/Dock 为障碍，移动时以 requestId 保存 Room 并等待 `dext:room-save-result`，失败回滚，结果未知只提示未确认。配置器新增应用读取同一五项设置计算网格；投递成功 UI 只说“已发送”，不等于渲染或保存成功。Windows 测试：`cd tauri-ui; npm test; npm run build; npm run test:renderer:e2e`，在仓库根运行 `node --test wallpapers/dext-room/icon-preferences-layout.test.cjs`。
+
 ## 二、验证到真桌面
 
 预览满意后：配置器「重新应用」或重启 Lively（渲染器文件就是壁纸包内文件，重载即生效）。
@@ -84,6 +121,9 @@ wallpapers/dext-room/
 │    ├─ #transition             预设动画兼容层
 │    └─ #toast
 ├─ style.css    顶部 :root 主题变量（--dext-*），改外观优先动这里
+├─ layout.js    纯布局求解（Widget 优先避让 + 图标路径重排）
+├─ layout-motion.js  稳定身份、diff、默认 MotionProfile 与 FLIP/WAAPI 控制器
+├─ desktop-layout-controller.js  真实桌面稳定节点、输入事务、预览与提交协调器
 └─ main.js      全部逻辑（无框架、无构建，保持这样）
 ```
 
@@ -94,15 +134,31 @@ wallpapers/dext-room/
 | `loadRoom()` | 正常模式只读取 v2 并进入 startDesk；screensaver 模式只显示 idle；preview 模式等待 v2 内存草稿 |
 | `renderDesk(index)` | 主层渲染入口 = mountBackground + renderIcons + Dock/指示器 |
 | `mountBackground(bgEl, videoEl, desk)` | v2 Content/null：图片静态、视频循环、HTML sandbox 长驻 |
-| `renderIcons(layer, desk, s)` | 图标循环：坐标钳制、真图标/emoji 兜底、双击启动、长按进入移动编辑；当前 Desk 布局热更新时只重绘本层 |
-| `attachPress / startDrag` | 长按 500ms 进编辑；编辑态拖拽（稀疏格子，占用格交换） |
+| `renderIcons(layer, desk, s)` | 当前生产按 `15147f2` 逐次重建图标，并为每个节点调用 `attachPress(el, i)`；热布局只重建图标层 |
+| `attachPress / startDrag` | 500ms 长按进入编辑；编辑态第二次按下后直接按 pointer 更新 left/top，松手交换/落位并保存 |
+| `startWidgetDrag` | Widget placement 与 icons 双快照事务；预览只动真实节点，有效松手后原子更新内存并持久化一次 |
 | `enterEdit / exitEdit` | 编辑模式开关（body.editing 类驱动 CSS） |
 | `dext:room-layout` | Core/Player 定向布局消息：替换目标 Desk 图标；当前 Desk 保留已挂载 Widget/Scene，新增时可直接进入编辑并高亮 |
+| `dext:desktop-preferences` | Core/Player 仍可投递全局图标偏好快照；当前回退后的生产 Room 暂不消费，待后续稳定重新集成 |
 | `resolveTransition / switchDesk` | 有向 edge → 房间默认 → slide；Content 完成后换 Desk，预设走原动画注册表 |
 | `playSlot()` | start/switch 按完成语义播放；idle persistent 模式使图片常驻、视频循环、HTML持续运行 |
 | `playVideoTransition()` | 保留原函数名的薄适配层，内部统一调用 playSlot，不再中点换页 |
 | `persistRoom()` | 删除页面副本的 `__source` 后上行；preview 自动跳过，Core 使用包内可信戳双写 |
 | `ICON_SIZES` | 大/中/小三档（图标、格子、字号联动） |
+
+### layout.js / layout-motion.js / desktop-layout-controller.js 接口
+
+| 接口 | 职责 |
+|---|---|
+| `createMotionItems(icons, positionOf)` | 规范化 launch 身份；兼容 action/label/glyph 并为重复签名追加序号 |
+| `resolveIconReorder(icons, draggedIndex, target, grid, obstacles, reserved)` | 将拖起图标插入目标占位，沿路径顺移其他图标；Widget/Dock 障碍拒绝且不改输入 |
+| `diffMotionItems(previous, next, excludeKeys)` | 计算 move/enter/exit/stay；被拖动节点仍落最终坐标但不做 FLIP move |
+| `new DextLayoutMotion(container, options)` | 建立稳定 key→DOM 映射；调用方提供节点创建/更新和 reduced-motion 来源 |
+| `apply(items, {mode, excludeKeys})` | 立即写最终 left/top，再执行 move/enter/exit；revision 中断从当前视觉位置续接 |
+| `cancel({restore})` | 取消当前 revision；预览模式可按 300ms 回到进入预览前的完整布局 |
+| `dispose()` | 取消动画并释放控制器拥有的节点与状态 |
+
+当前生产时序恢复为 `15147f2` 的直接拖动：长按 500ms 进入编辑并按旧行为重建当前 Desk；松手后再次按住图标立即开始拖动，`pointermove` 直接写节点 left/top，不等待候选格，也没有 placeholder/FLIP 让位。`pointerup` 按指针所在格提交：空格直接落位，占用格两两交换，然后保存并重绘。图标层真正空白处双击退出；Widget 继续使用原有独立拖动/缩放逻辑。进入/退出编辑会重建图标与 Widget iframe，当前生产不消费五项新图标偏好，也没有新的 reduced-motion 装饰动画规则；这些能力只保留在两个浏览器实验台和后续重新集成代码中。
 
 ## 四、room.json v2 示例
 

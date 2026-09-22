@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dext Icon Feedback Lab</title>
+  <link rel="stylesheet" href="../dext-room/icon-feedback.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="icon-lab" data-dext-icon-feedback-root data-icon-feedback="halo" data-icon-labels="shown" data-icon-hit-size="standard" data-icon-visual-size="standard" data-icon-spacing="standard" data-icon-editing="false" data-icon-dragging="false" data-interactive-editing="false" data-reduced-motion="false" data-debug-hitboxes="false">
+    <header class="lab-header">
+      <div class="lab-title">
+        <span class="eyebrow">DESK-ICON-001 · STAGE A</span>
+        <h1>图标反馈实验台</h1>
+        <p>直接操作图标检验命中与反馈；固定状态用于诊断比较。</p>
+      </div>
+      <div class="mode-switch" aria-label="图标反馈风格">
+        <button type="button" data-feedback-style="halo" aria-pressed="true">图标光晕</button>
+        <button type="button" data-feedback-style="compact" aria-pressed="false">紧凑内容框</button>
+        <button type="button" data-feedback-style="bare" aria-pressed="false">纯净无边框</button>
+      </div>
+    </header>
+
+    <aside class="lab-controls" aria-label="实验控制">
+      <section>
+        <span class="control-label">显示</span>
+        <label><input id="show-labels" type="checkbox" checked> 显示桌面图标名称</label>
+        <label><input id="show-hitboxes" type="checkbox"> 显示实际命中区</label>
+      </section>
+      <section>
+        <span class="control-label">预览状态</span>
+        <div class="choice-switch state-switch" role="group" aria-label="预览状态">
+          <button type="button" data-preview-state="interactive" aria-pressed="true">交互</button>
+          <button type="button" data-preview-state="normal" aria-pressed="false">正常</button>
+          <button type="button" data-preview-state="hover" aria-pressed="false">悬停</button>
+          <button type="button" data-preview-state="pressed" aria-pressed="false">按下</button>
+          <button type="button" data-preview-state="editing" aria-pressed="false">编辑</button>
+          <button type="button" data-preview-state="dragging" aria-pressed="false">拖动</button>
+        </div>
+        <label><input id="reduce-motion" type="checkbox"> 减少动态效果</label>
+      </section>
+      <section>
+        <span class="control-label">图标间距</span>
+        <div class="choice-switch spacing-switch" role="group" aria-label="图标间距">
+          <button type="button" data-icon-spacing="compact" aria-label="紧凑间距" aria-pressed="false">紧凑</button>
+          <button type="button" data-icon-spacing="standard" aria-label="标准间距" aria-pressed="true">标准</button>
+          <button type="button" data-icon-spacing="spacious" aria-label="宽松间距" aria-pressed="false">宽松</button>
+        </div>
+      </section>
+      <section>
+        <span class="control-label">图标大小</span>
+        <div class="choice-switch visual-size-switch" role="group" aria-label="图标大小">
+          <button type="button" data-icon-visual-size="small" aria-label="小图标尺寸" aria-pressed="false">小</button>
+          <button type="button" data-icon-visual-size="standard" aria-label="标准图标尺寸" aria-pressed="true">标准</button>
+          <button type="button" data-icon-visual-size="large" aria-label="大图标尺寸" aria-pressed="false">大</button>
+        </div>
+      </section>
+      <section>
+        <span class="control-label">统一图标框大小</span>
+        <div class="choice-switch hit-size-switch" role="group" aria-label="统一图标框大小">
+          <button type="button" data-icon-hit-size="small" aria-label="小图标框" aria-pressed="false">小</button>
+          <button type="button" data-icon-hit-size="standard" aria-label="标准图标框" aria-pressed="true">标准</button>
+          <button type="button" data-icon-hit-size="large" aria-label="大图标框" aria-pressed="false">大</button>
+        </div>
+      </section>
+      <section>
+        <span class="control-label">背景</span>
+        <div class="background-switch" role="group" aria-label="背景样式">
+          <button type="button" data-background="dark" aria-pressed="true">深色</button>
+          <button type="button" data-background="light" aria-pressed="false">明亮</button>
+          <button type="button" data-background="photo" aria-pressed="false">复杂</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="stage-shell">
+      <div class="stage-meta">
+        <span><span id="visual-size">56px icon visual</span> · <span id="footprint-size">80 × 84 unified footprint</span> · <span id="gap-size">8 × 12 gap</span></span>
+        <span><i class="legend-face"></i><i class="legend-cell"></i> 布局格 = 实际命中</span>
+      </div>
+      <section id="icon-stage" class="icon-stage" data-background="dark" aria-label="桌面图标实验画布">
+        <div id="icon-grid" class="icon-grid">
+        <article class="lab-icon" data-icon-id="hermes" data-preview-active="true" data-cell-size="80 × 84">
+          <button class="icon-face" type="button" data-dext-icon-face aria-label="Hermes Studio">
+            <span class="icon-visual"><img class="icon-image" src="../../tauri-ui/src-tauri/icons/128x128.png" alt=""></span>
+            <span class="icon-label">Hermes Studio</span>
+            <span class="icon-label-tooltip" data-visible="false">Hermes Studio</span>
+          </button>
+        </article>
+        <article class="lab-icon" data-icon-id="creative-suite" data-preview-active="false" data-cell-size="80 × 84">
+          <button class="icon-face" type="button" data-dext-icon-face aria-label="Dext Creative Studio Extended Edition">
+            <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#8d73ff">✦</span></span>
+            <span class="icon-label">Dext Creative Studio Extended Edition</span>
+            <span class="icon-label-tooltip" data-visible="false">Dext Creative Studio Extended Edition</span>
+          </button>
+        </article>
+        <article class="lab-icon" data-icon-id="cockpit" data-preview-active="false" data-cell-size="80 × 84">
+          <button class="icon-face" type="button" data-dext-icon-face aria-label="Cockpit">
+            <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#4cc9a4">⌁</span></span>
+            <span class="icon-label">Cockpit</span>
+            <span class="icon-label-tooltip" data-visible="false">Cockpit</span>
+          </button>
+        </article>
+        <article class="lab-icon" data-icon-id="notes" data-preview-active="false" data-cell-size="80 × 84">
+          <button class="icon-face" type="button" data-dext-icon-face aria-label="Notes">
+            <span class="icon-visual"><span class="icon-glyph" style="--icon-color:#f1b964">N</span></span>
+            <span class="icon-label">Notes</span>
+            <span class="icon-label-tooltip" data-visible="false">Notes</span>
+          </button>
+        </article>
+        </div>
+
+        <div class="stage-note">
+          <strong id="profile-name">图标光晕</strong>
+          <span id="profile-detail">反馈只包围 56px 图标，名称保持干净。</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="lab-footer">
+      <span id="lab-status">HALO · LABELS ON</span>
+      <p>短按选择 · 长按 300ms 编辑 · 编辑中拖起后回位 · 双击空白退出。</p>
+    </footer>
+  </div>
+
+  <script src="../dext-room/icon-feedback.js"></script>
+  <script src="./lab.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 ﻿using Lively.Common.Helpers.Pinvoke;
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Lively.Common.Helpers
 {
@@ -8,7 +9,6 @@ namespace Lively.Common.Helpers
     {
         static readonly IntPtr MK_LBUTTON = (IntPtr)0x0001;
         static readonly IntPtr MK_RBUTTON = (IntPtr)0x0002;
-        static readonly IntPtr MK_MOVE = (IntPtr)0x0020;
 
         public static bool IsMouseButtonsSwapped { get; } =
             NativeMethods.GetSystemMetrics((int)NativeMethods.SystemMetric.SM_SWAPBUTTON) != 0;
@@ -17,16 +17,27 @@ namespace Lively.Common.Helpers
             ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.LBUTTONDOWN, MK_LBUTTON);
 
         public static void MouseLeftButtonUp(IntPtr hwnd, int x, int y) =>
-            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.LBUTTONUP, MK_LBUTTON);
+            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.LBUTTONUP, IntPtr.Zero);
 
         public static void MouseRightButtonDown(IntPtr hwnd, int x, int y) =>
             ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.RBUTTONDOWN, MK_RBUTTON);
 
         public static void MouseRightButtonUp(IntPtr hwnd, int x, int y) =>
-            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.RBUTTONUP, MK_RBUTTON);
+            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.RBUTTONUP, IntPtr.Zero);
 
         public static void MouseMove(IntPtr hwnd, int x, int y) =>
-            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.MOUSEMOVE, MK_MOVE);
+            ForwardMessageMouse(hwnd, x, y, (int)NativeMethods.WM.MOUSEMOVE, (IntPtr)MouseModifiers);
+
+        // RawInput owns the forwarded button state; only sample keyboard modifiers here.
+        public static int MouseModifiers =>
+            ((GetAsyncKeyState(0x10) & 0x8000) != 0 ? 0x0004 : 0) |
+            ((GetAsyncKeyState(0x11) & 0x8000) != 0 ? 0x0008 : 0);
+
+        public static bool IsPrimaryMouseButtonDown =>
+            (GetAsyncKeyState(IsMouseButtonsSwapped ? 0x02 : 0x01) & 0x8000) != 0;
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int virtualKey);
 
         /// <summary>
         /// Forward mouse input to the active/inactive window.
@@ -40,9 +51,8 @@ namespace Lively.Common.Helpers
         {
             // The low-order word specifies the x-coordinate of the cursor, the high-order word specifies the y-coordinate of the cursor.
             // Ref: https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-mousemove
-            uint lParam = Convert.ToUInt32(y);
-            lParam <<= 16;
-            lParam |= Convert.ToUInt32(x);
+            // Client coordinates may be negative while a captured drag crosses a display edge.
+            uint lParam = ((uint)unchecked((ushort)y) << 16) | unchecked((ushort)x);
             NativeMethods.PostMessageW(hwnd, msg, wParam, (UIntPtr)lParam);
         }
 

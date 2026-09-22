@@ -123,3 +123,69 @@
 修复：配置器 dev 端口整体迁出保留区——tauri dev 用 1620（`tauri.conf.json` beforeDevCommand/devUrl + `vite.config.ts` server.port），浏览器设计模式 1621（`dev:ui`、hmr.port 与文档同步）；渲染器 `PREVIEW_PARENT_ORIGINS` 增加 `http://localhost:1620`。
 
 防再犯：换 dev 端口或遇到 EACCES 时先对照 `netsh interface ipv4/ipv6 show excludedportrange protocol=tcp` 的排除区间，别去杀进程。
+
+## 70. Playwright 测试放在 npm 包目录外无法解析测试依赖
+
+- 现象：`tauri-ui` 已安装 `@playwright/test`，CLI 也能启动，但测试文件放在仓库级 `wallpapers/.../tests` 时仍报 `Cannot find module '@playwright/test'`，随后显示 `No tests found`。
+- 根因：Node 从测试文件所在目录向父目录解析模块；测试位于 `tauri-ui` 之外，不会向下查找 `tauri-ui/node_modules`。Playwright 配置的 `testDir` 能发现文件，但不改变模块解析起点。
+- 解决：把 renderer e2e 规格放到 `tauri-ui/tests/renderer/`，配置仍可通过 Vite 访问仓库级实验台页面；依赖、配置和测试文件处于同一个 npm 包边界。
+- 防再犯：新增包级测试依赖时，测试文件应位于该 `package.json` 的目录树内；若必须跨包，先建立正式 workspace/module resolution，而不是依赖启动命令的当前目录。
+
+## 71. Playwright spec 被 Vitest 一并发现
+
+- 现象：独立 `npm run test:renderer:e2e` 7/7 通过，但常规 `npm test` 会加载 `tests/renderer/motion-lab.spec.ts`，随后报 `Playwright Test did not expect test.beforeEach() to be called here`。
+- 根因：Vitest 和 Playwright 的默认发现模式都包含 `*.spec.ts`；两个 runner 在同一 npm 包内时，仅分开放目录不足以避免交叉收集。
+- 解决：renderer Playwright 文件使用专用 `*.e2e.ts` 后缀，并在 `playwright.renderer.config.ts` 显式设置 `testMatch: "**/*.e2e.ts"`；Vitest 默认不再发现，Playwright 仍精确收集。
+- 防再犯：同包引入第二个测试 runner 时必须为每个 runner 设置互斥的文件命名或 include/exclude，不依赖默认 glob 碰巧不重叠。
+# #81 Playwright 会等待持续抖动的目标稳定，普通 dblclick 因而超时
+
+现象：Widget 正在无限 rotate jiggle 时，`locator.dblclick()` 一直等待 element stable，直到 20 秒测试
+超时；产品事件本身没有失败。
+
+原因：Playwright 的 actionability 检查要求点击目标位置稳定，持续动画的外框永远无法满足该条件。
+
+修复：只在验证“抖动中的交互对象收到双击但不得退出编辑”这一目标路由用例中使用
+`dblclick({ force: true })`；空白舞台仍使用普通双击，拖动几何和命中由其他真实指针用例覆盖。
+
+防再犯：对设计上持续运动的元素测试事件路由时显式处理 actionability；不要通过关闭动画让测试通过，
+也不要把 force 扩散到本应验证可点击性或几何命中的用例。
+
+# #87 异步场景测试必须先等待场景结果实际发布
+
+现象：系统 reduced-motion 用例通常通过，但全量 Playwright 偶发读到 1 个 FLIP 动画；单独重复运行又可能
+连续通过，形成看似环境负载导致的随机失败。
+
+原因：`runScenario("widget-single")` 通过两个 `requestAnimationFrame` 延迟发布布局，测试调用后立即读取
+`getAnimations()`。读得快时场景尚未执行，0 动画是假绿；恰好等到场景执行时才真正验证 reduced-motion。
+
+修复：先等待 Alpha 的最终 `top: 240px`，证明延迟场景已经发布，再断言所有外层图标 0 动画；同时等待
+body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重复 5/5 后再跑 renderer 全量。
+
+防再犯：异步场景测试必须先等待一个只有场景完成后才成立的产品条件；不能把“当前没有动画”当成
+“即将执行的场景不会动画”。
+
+# #88 短时序边界不能用真实等待加跨进程轮询验证
+
+现象：图标目标稳定时间明确为 80ms，但 Playwright 用例在 `waitForTimeout(40)` 后检查占位仍偶发看到
+已激活；单独重复 10 次也会随机失败，生产计时器本身没有提前触发。
+
+原因：`waitForTimeout(40)` 只保证至少等待 40ms，随后 locator 断言还要跨进程调度；机器繁忙时第一次
+读取 DOM 已超过 80ms。`toHaveAttribute` 的自动轮询也无法证明一个已经错过的瞬时“未激活”状态。
+
+修复：在进入拖动后安装并暂停 Playwright Clock，先推进 79ms 断言仍未激活，再推进 1ms 断言激活。
+曾临时把生产稳定时间改为 79ms，确认新断言会在 79ms 处失败；恢复 80ms 后定向重复 10/10。
+
+防再犯：验证几十毫秒级 debounce/dwell 边界时必须控制页面时钟；真实时间只适合等待最终条件，不能
+用来证明短窗口内的否定状态。
+# #94 renderer Playwright 前必须停掉手工 5174 预览
+
+现象：先运行 `npm run dev:icons` 后，再执行 `npm run test:renderer:e2e -- --grep ...`，Playwright 在收集/执行
+测试前报 `http://127.0.0.1:5174/... is already used`，无法形成有效 RED 或 GREEN 证据。
+
+原因：renderer 配置使用 `strictPort` 并由 Playwright 自己管理 Vite webServer，不复用外部已启动的预览服务。
+
+修复：运行 renderer Playwright 前先停止手工 `dev:icons` / `dev:motion` 会话；测试结束后再重启预览供人工验收。
+不能把端口冲突或 `No tests found` 当成 TDD 的有效红测，必须看到断言因目标行为缺失而失败。
+
+防再犯：定向测试也统一通过 `npm run test:renderer:e2e -- --grep "..."` 调用项目配置；开始前先确认 5174
+未被占用，结束交付时才恢复人工预览。

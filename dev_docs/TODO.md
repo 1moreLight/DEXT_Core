@@ -772,5 +772,204 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 7：配置器实时同步、默认自动前往桌面编辑、关闭偏好连续添加、撤销/重做复用队列与焦点回读合并；补充“新增后立刻撤销不触发过期最小化/高亮”回归，定向 Vitest 7/7 与前端 build 通过（2026-09-12）
 - [x] Task 8：全链验证、文档收口并进入待验收
 - [x] 全量自动检查通过：Vitest 50/50、前端生产构建、Rust 39/39（3 项改动系统桌面的活体测试按约定忽略）、cargo check、渲染器 Node 3/3 与语法检查、Room Schema、`git diff --check`（2026-09-12）
-- [ ] 提交实现并转待验收
-- [ ] 用户按独立验收卡确认
+- [x] 提交实现并转待验收（实现提交 `9867516`）
+- [x] 2026-09-19 用户回复“验收通过”；合并到 master `64ab03f`，原分支/worktree 已清理
+
+## DESK-MOTION-001 桌面自动重排动画（2026-09-19 开工）
+
+> 目标：为已有 Desk 自动布局变化提供统一、可中断、稳定节点复用的 FLIP/WAAPI 动画；先在浏览器实验台验收运动质感，再接入真实桌面。
+> 范围外：不引入 Muuri、dnd-kit、React Grid Layout 等运行时依赖；不改变 room.json；不实现按名称/频率一键整理；浏览器验收前不修改真实桌面 `main.js` 的交互。
+> 人工验收：先运行 `npm run dev:motion`，逐项检查 Widget 单/多图标让位、连续折返、图标路径重排、新增、移除、无解回弹、取消、reduced-motion 与 100 图标压力场景；浏览器阶段明确通过后才进入真桌面集成。
+
+- [x] DESK-LIVE-001 于 2026-09-19 用户验收通过并合入 master `64ab03f`
+- [x] 从最新 master 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-motion-001` 和分支 `feat/DESK-MOTION-001-layout-motion`
+- [x] 固化设计、实施计划、结构决策和独立验收卡
+- [x] TDD：稳定身份、路径重排、Widget/Dock 障碍、move/enter/exit diff、revision/cancel/restore/reduced-motion（Node 14/14；Playwright 25/25）
+- [x] 实现独立 `DextLayoutMotion`，保持 `apply/cancel/dispose` 固定接口
+- [x] 建立浏览器实验台与全部交互场景，实验台直接使用产品动画引擎
+- [x] 增加 Playwright、`dev:motion`、`test:renderer:e2e` 与 Windows 运行说明
+- [x] 浏览器阶段自动检查通过并完成阶段 A 提交，停在“浏览器视觉验收”硬门槛
+- [x] 独立代码审查：修复离开格仍交换、pointercancel 错误提交、旧场景覆盖 Reset；新增真实指针回归 3 项
+- [x] 2026-09-19 浏览器验收反馈：确认真实桌面旧长按/jiggle 未被本分支修改；实验台改为外层 FLIP + 内层苹果式抖动，补 500ms 长按与 Done，move/rollback 放缓为 280/300ms，极限折返明确标为压力测试
+- [x] 复审修复：运行中启用或系统级 reduced-motion 均立即结束 FLIP、落最终坐标并关闭 jiggle，且预览取消基线不丢失；新增浏览器回归 3 项
+- [x] 2026-09-19 用户明确重排语义：图标托起、目标占位、路径图标依次让位、松手保存；Widget 自身可拖但图标排序不得移动 Widget；Dock 禁止放入
+- [x] TDD：新增纯 `resolveIconReorder`，覆盖前移/后移、Widget 障碍、Dock 禁区与输入不变
+- [x] 将实验台两两交换改为真实 Sortable 拖拽：托起层、占位、连续让位、提交/取消与非法目标
+- [x] 补 Widget 可拖且始终优先、Dock 禁止图标/Widget 放入的真实指针回归
+- [x] 复核修复：Reset 终止全部 drag/press、timer 与 pointer capture；每个真实手势结清旧预览并建立独立取消基线；4 条浏览器回归覆盖图标/Widget 取消、拖动中 Reset 与长按中 Reset
+- [x] 二次复核修复：非 Reset 场景切换也先取消真实拖拽并恢复本手势基线，旧 pointerup 不再覆盖新场景；新增 1 条回归
+- [x] 浏览器验收补充：Widget 在编辑模式下轻微抖动，拖动期间暂停、松手/取消后恢复，reduced-motion 下关闭；定向 Playwright 先失败后转绿
+- [x] 浏览器验收修正：Widget 边框/背景/文字整体抖动；双击桌面空白退出编辑，双击交互对象不退出；Dock 钳制增加整卡旋转安全余量
+- [x] 更新设计、验收、错误记录并完成全量验证与独立复核：Vitest 50/50、Node 14/14、Playwright 25/25、构建、语法、Room Schema、diff check 全绿；最终复核无 Critical/Important
+- [x] 2026-09-19 用户确认实验台只用于验证运动规则和默认参数，并明确要求实施真实桌面阶段 B；生产环境不复制实验台外观
+- [x] 2026-09-20 导出默认 MotionProfile，新增独立 DextDesktopLayoutController，按稳定身份协调真实图标节点；真实编辑切换与热布局更新均复用图标节点和 Widget iframe
+- [x] 真实图标 Sortable：外层 FLIP、内层托起/抖动、80ms 候选稳定、路径让位、单次提交和完整取消（2026-09-20）
+- [x] Widget 事务式拖动/缩放：真实整卡抖动、Widget 优先、图标避让、Dock 禁区与原子提交/回滚（2026-09-20）
+- [x] 权威更新中断：热布局、Desk 切换、resize、退出编辑统一终止旧手势，旧回调不得覆盖新状态（2026-09-20）
+- [x] 真实 renderer Playwright：节点/iframe 复用、热更新、双击空白、reduced-motion、启动/Dock 回归（14/14；2026-09-20）
+- [x] 全量自动回归：Vitest 50/50、Node 21/21、Playwright 39/39、build、语法、Schema 与 diff check（2026-09-20）
+- [x] `codegraph sync` 按规范尝试；独立 worktree 的 `.codegraph` 仅有 ignore 文件且 `status` 为 Not initialized，未擅自初始化（2026-09-20）
+- [x] 阶段 B 实现提交 `64af642`；已停在真实桌面人工验收，禁止合并 master（2026-09-20）
+
+## DESK-ICON-001 桌面图标反馈与命中区优化（2026-09-20 开工）
+
+> 目标：先用未来生产共用的视觉层，在浏览器中验证“图标光晕 / 紧凑内容框 / 纯净无边框”、收缩命中区和名称显示规则。
+> 范围外：浏览器验收前不修改真实桌面、设置页、Core、proto、Widget、Dock 或 Room Schema；不先于 DESK-MOTION-001 合并 master。
+> 人工验收：按 `dev_docs/acceptance/DESK-ICON-001-icon-feedback.md` 的阶段 A 十步在浏览器确认；明确通过后才进入生产集成。
+
+### 阶段 B：真实桌面与全局偏好集成（2026-09-21 开工）
+
+- [x] 修正拖动抖跳：冻结托起对象外层坐标，以按下点计算位移，关闭 face 跟手过渡，窗口接收移动/松手；扩展全桌面空白双击退出。真实 Room 16 项及新增连续 12 次拖放检查通过；Vitest 52/52、控制器 Node 7/7、build 通过，已重铺（2026-09-21）。
+
+- [x] 用户回复“感觉差不多了，可以尝试合并进去了”，确认阶段 A 可进入真实桌面集成（2026-09-21）
+- [x] 裁定：当前分支已建立在 DESK-MOTION-001 之上，可继续完成阶段 B；最终仍严格先合入 Motion、再合入 Icon，不直接修改 master（2026-09-21）
+- [x] 真实 `dext-room` 接入共享 visual/face/tooltip 和偏好消息，不替换稳定图标节点或 Widget iframe；Node 19/19、真实 Room 15/15、图标实验台 12/12（2026-09-21）
+- [x] Core Settings、Rust patch/投递、设置页五项偏好和 Player 可信宿主启动快照端到端接通；Vitest 52/52、Rust 40/40（3 ignored）、前端 build 与 C# Release 通过（2026-09-21）
+- [x] 完整自动检查、全分支审查与文档收口：Vitest 52/52、Rust 40/40（3 ignored）、Node 20/20、renderer 52/52、前端 build、C# Release、Schema、proto 文本一致与 diff check 全绿（2026-09-21）
+- [x] 用户关闭旧 Dext 后启动本 worktree；Core PID 65292、Watchdog、Player、配置器及真实壁纸路径均核对来自 `DEXT_Core-desk-icon-001`，强制重铺活体测试 1/1 通过（2026-09-21）
+- [x] 真实桌面黑屏修复：确认 WebView2 只映射 `dext-room`，浏览器阶段的兄弟目录共享资源无法加载；边界 Playwright 先 RED 后 GREEN，共享 JS/CSS 收进生产目录，实验台反向引用（2026-09-21）
+- [x] 已取消（2026-09-21）：连续长按把同一 pointer 直接交给 draggingIcon；真实复验发现该方案偏离已验收实验台并导致难触发/跳动，改由下一项取代
+- [x] 真实桌面排序手势回溯修正：以最早验收的 `2694f0d` 浏览器排序为基线，恢复“长按只进编辑、编辑态按下拖动、外层落目标格/内层跟手补偿、跨格立即占位”，并让捕获阶段的桌面空白双击可靠退出（2026-09-21）
+- [x] 真实桌面生产交互回退：连续三轮 Chromium 全绿修正均未恢复 WebView2 真桌面拖动，停止继续叠补丁；生产 Room 的图标 DOM、事件控制器与真实 Room 回归已恢复到 DESK-MOTION 稳定提交 `64af642`，浏览器图标实验台和偏好代码保留供后续重新集成（2026-09-21）
+- [x] 已取消（2026-09-21）：`b8b00f0` 虽保留 `attachPress/startDrag` 函数，却在节点协调重构中删除唯一的 `attachPress(el, i)` 调用；新增真实指针回归复现编辑态第二次按下后图标仍完全不动，不能作为旧拖动基线
+- [x] 真实桌面回退到最后一个实际绑定旧拖动的提交 `15147f2`：恢复每个图标自己的 `pointerdown/move/up`、按指针实时写 left/top、松手交换/落位和保存；移除生产对桌面布局控制器的依赖，保留浏览器实验台与全局偏好代码（2026-09-21）
+- [ ] 按独立验收卡完成真实桌面人工验收；用户明确回复通过前不合并 master
+
+### 阶段 A 补充：直接交互实验（2026-09-20）
+
+- [x] 实验台默认进入“交互”状态，真实响应 hover、pointerdown 和短按选择，同时保留固定状态诊断按钮（2026-09-20）
+- [x] 长按图标 500ms 进入苹果式编辑抖动；编辑中图标可托起跟手，松手回到原网格，不排序、不保存（2026-09-20）
+- [x] 双击画布空白退出编辑，透明网格边缘保持不命中；两条 Playwright 回归均先 RED 后 GREEN（2026-09-20）
+- [x] 更新验收卡、前端说明和问题记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，停在浏览器人工验收（2026-09-20）
+
+### 阶段 A 补充：统一布局格与命中框（2026-09-20）
+
+- [x] 将布局定位格与实际命中区收成同一个 footprint，小/标准/大同时控制两者并完全重合（2026-09-20）
+- [x] 将紧凑/标准/宽松改为 footprint 之间独立 gap，不再通过第二套 cell 尺寸表达间距（2026-09-20）
+- [x] Playwright 先以真实 bounding box 复现两框不重合，再锁定四边重合、三档 gap 与空隙不命中；RED→GREEN（2026-09-20）
+- [x] 更新说明、验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全部通过，继续停在阶段 A 人工验收（2026-09-20）
+
+### 阶段 A 补充：隐藏名称紧凑框与抖动节奏（2026-09-20）
+
+- [x] 隐藏名称时三档 footprint 收为 64×64 / 72×72 / 80×80，布局与命中继续完全重合，gap 不变（2026-09-20）
+- [x] 图标编辑抖动由 ±1.35°/350ms 调整为 ±1.5°/280ms；长按阈值、Widget 和 reduced-motion 不变（2026-09-20）
+- [x] 先以真实 bounding box、动态标尺和 CSS 动画关键帧建立 Playwright RED，再修改共享视觉实现（2026-09-20）
+- [x] 更新说明与验收卡；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
+### 阶段 A 补充：更快长按与明显抖动（2026-09-20）
+
+- [x] 实验台图标长按由 500ms 改为 300ms；名称浮层仍保持 500ms（2026-09-20）
+- [x] 图标编辑抖动由 ±1.5° / 280ms 改为 ±5° / 150ms；Widget、拖动和 reduced-motion 不变（2026-09-20）
+- [x] Playwright 以受控页面时钟锁定 299ms/300ms 编辑边界，并读取真实 CSSAnimation 时长与关键帧；RED→GREEN（2026-09-20）
+- [x] 更新说明与验收卡；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
+### 阶段 A 补充：抖动幅度收敛到 3°（2026-09-20）
+
+- [x] 图标 jiggle 幅度由 ±5° 收敛为 ±3°；300ms 长按、150ms 周期及其他交互不变（2026-09-20）
+- [x] Playwright 读取真实 CSSAnimation 关键帧验证 RED→GREEN（2026-09-20）
+- [x] 同步验收口径；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+
+### 阶段 A 补充：图标与文字整体抖动（2026-09-20）
+
+- [x] 修复纯旋转使文字基线视觉位移过小的问题；同一 face 增加 ±1.5px 水平位移，图标、文字和命中边框保持刚性整体（2026-09-20）
+- [x] Playwright 从真实 CSSAnimation 矩阵同时锁定 ±3° 角度与 ±1.5px 位移；RED→GREEN（2026-09-20）
+- [x] 同步验收卡和错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，继续停在阶段 A 人工验收（2026-09-20）
+- [x] 已取消（2026-09-20）：用户澄清文字应保持静止，本节由“仅图形抖动、文字静止”取代
+
+### 阶段 A 补充：文字显式抖动（2026-09-20，已取消）
+
+- [x] 已取消（2026-09-20）：用户原意是文字保持静止，不是让文字获得独立 jiggle；本节未修改生产实现
+
+### 阶段 A 补充：仅图形抖动、文字静止（2026-09-20）
+
+- [x] 将编辑 jiggle 从 `.icon-face` 移到 `.icon-visual`；文字和 footprint 保持静止（2026-09-20）
+- [x] 保留 300ms 长按、±3° / 150ms；撤销基于误解加入的 ±1.5px 整体平移（2026-09-20）
+- [x] Playwright 锁定 visual 关键帧、face/label 无动画、拖动与 reduced-motion；RED→GREEN（2026-09-20）
+- [x] 同步验收口径与错误记录；Vitest 50/50、Node 25/25、图标实验台 11/11、renderer Playwright 50/50、build、语法、Schema、生产边界与 diff check 全绿，提交后继续停在阶段 A 人工验收（2026-09-20）
+
+### 阶段 A 补充：独立图标视觉大小（2026-09-20）
+
+- [x] 在共享图标偏好中增加小 48px / 标准 56px / 大 64px 三档视觉大小，默认标准；与 footprint 和 gap 独立（2026-09-20）
+- [x] 实验台增加图标大小控制和实时尺寸标尺；切换时不替换图标节点，图形保持水平居中，文字仍静止（2026-09-20）
+- [x] Playwright/Node 先锁定默认值、非法回退、三档真实尺寸、节点复用和任意 footprint 组合，再完成 RED→GREEN（2026-09-20）
+- [x] 更新验收口径与说明；Vitest 50/50、Node 25/25、图标实验台 12/12、renderer Playwright 51/51、build、语法、Schema、生产边界与 diff check 全绿，提交后继续停在阶段 A 人工验收（2026-09-20）
+
+- [x] 从 DESK-MOTION-001 `5d91bb2` 建立独立 worktree `D:\use\Orca\DEXT\DEXT_Core-desk-icon-001` 和分支 `feat/DESK-ICON-001-icon-feedback`
+- [x] 固化设计、实施计划、视觉论点、共享接口和独立验收卡
+- [x] TDD：默认偏好、非法回退、dataset 应用、状态判定和节点不替换（Node 3/3；2026-09-20）
+- [x] TDD：三种模式、收缩命中区、单行省略、500ms 名称浮层及编辑/拖动抑制（Playwright 5/5；2026-09-20）
+- [x] 建立浏览器图标实验台与 `npm run dev:icons`；直接加载共享模块/CSS，不修改生产 `dext-room`（2026-09-20）
+- [x] 阶段 A 全量自动检查和独立审查：独立复核无 Critical；两项 Important 均以先失败后转绿的 Playwright 回归修复；全量 Vitest 50/50、Node 18/18、Playwright 45/45、build、语法、Schema 与 diff check 通过（2026-09-20）
+- [x] 提交阶段 A，停在浏览器人工验收硬门槛；真实桌面、设置页、Core 与 Room Schema 保持相对基线零差异（2026-09-20）
+- [x] 阶段 A 验收修正：把实验台改为固定“正常 / 悬停 / 按下 / 编辑 / 拖动”状态，背景仅负责背景；普通比较不再由鼠标触发位移（2026-09-20）
+- [x] 阶段 A 验收修正：新增紧凑 / 标准 / 宽松三档间距预览（88×100 / 100×112 / 120×124），默认标准；本轮不写入生产设置（2026-09-20）
+- [x] TDD 验证固定状态不替换节点、切换反馈不移动图标中心、紧凑档命中区不重叠及显式编辑/拖动运动；按下中心偏移回归先失败后转绿（2026-09-20）
+- [x] 更新浏览器验收卡、完成全量回归并提交：Vitest 50/50、Node 25/25、Playwright 47/47、build、语法、Schema 与 diff check 通过；继续停在阶段 A 人工验收，真实桌面、设置页和 Core 仍保持零差异（2026-09-20）
+- [x] 阶段 A 验收修正：实际命中区不再由名称内容撑开；同档所有图标使用统一固定框并与图标水平中心对齐（2026-09-20）
+- [x] 增加独立命中框“小 72×80 / 标准 80×84 / 大 84×88”三档，默认标准；与 88/100/120px 图标间距解耦且任意组合不重叠（2026-09-20）
+- [x] TDD 验证三档精确尺寸、四个图标统一、中心对齐、名称显示切换不改变几何、紧凑间距与大命中框仍留 4px 缝；RED→GREEN（2026-09-20）
+- [x] 更新实验台与验收卡，浏览器检查标准档与“紧凑间距 + 大命中框”通过；Vitest 50/50、Node 25/25、renderer Playwright 48/48、build、语法、Schema、生产边界与 diff check 通过，继续停在阶段 A 人工验收（2026-09-20）
+
+## DESK-PREFS-001 五项桌面图标偏好真实生效（2026-09-22 设计中）
+
+> 目标：让现有五项图标偏好通过已保存/投递链路在真实桌面和配置器新增应用网格生效，同时保住 `6eca2db` 的旧直接拖动。
+> 范围外：重做 Sortable、Widget/Dock 管理、Room Schema、其它 Core 设置；未获人工验收不合并 master。
+> 人工验收：详见 `dev_docs/acceptance/DESK-PREFS-001-icon-settings-live.md`；五项逐项观察、重启/切 Desk、密集网格新增、十次真实桌面拖放与 reduced-motion。
+
+- [x] 从 `6eca2db` 创建独立 worktree 和分支，保留主 worktree 与其他待验收分支未提交文件（2026-09-22）
+- [x] 读取文档地图/路线/台账/错误和流程；本 worktree CodeGraph 未初始化，不擅自建立索引；核对设置投递链、真实宿主断点和旧拖动绑定（2026-09-22）
+- [x] 写书面设计规格、独立验收卡和工作包记录；未改产品代码（2026-09-22）
+- [x] 用户确认书面设计规格（2026-09-22，回复“ok”）；计划前核对代码发现 Room `x/y` 是格索引而非像素，已对规格作事实修正并明示
+- [x] 按确认的规格写六任务实施计划、接口、先失败后转绿测试与真实宿主门槛（2026-09-22）；文档 `docs/superpowers/plans/2026-09-22-desktop-icon-preferences-live.md`
+- [x] 用户回复“实施啊”，按确认的实施计划进入产品代码（2026-09-22）
+- [x] Task 1：Node 先红后绿锁定最小搬格、Widget/Dock 矩形和无解整 Room 回滚；TS 54 组合几何与逻辑网格（2026-09-22）
+- [x] Task 2：真实 Room 原节点接入共享视觉层、收缩命中区与消息外观切换；保留旧 .icon 指针捕获，Room/边界/实验台 Playwright 17/17（2026-09-22）
+- [x] Task 3：偏好消息递增 revision 与 loaded revision 0；可选 requestId 保存回执经 Player/Core 转发，源 Room 写入失败回滚运行包；Rust 定向测试和 Core Release 构建通过（2026-09-22）
+- [x] Task 4：生产 Room 搬格事务接通回执与失败回滚；图标/Widget 手势期间延后偏好，热更新中断旧 pointer，Dock/Widget 拒绝落位；定向 Playwright 与 Node 回归通过（2026-09-22）
+- [x] Task 5：配置器新增应用读取最新五项设置并投影网格；离线兼容放置明确告知，设置页防并发且文案改“已发送”；Vitest 29/29、前端 build 通过（2026-09-22）
+- [x] Task 6 自动部分：Vitest 54/54、renderer Playwright 50/50、Node、Rust、C# Release、Schema 与差异检查；更新文档和验收卡（2026-09-22）
+- [ ] Task 6 真实宿主门槛：运行身份仍是 `DEXT_Core-desk-reorder-001`；本分支 `scripts/start.ps1` 被相同 mutex/pipe 正确拒绝。恢复条件：先退出旧 Core/Player/配置器，再从本 worktree 启动与重铺，核对路径并连续做至少十次拖放；旧运行结果不能计本分支通过
+- [ ] 测试先行接通生产偏好、旧指针边界和共享几何，完成布局事务及配置器新增应用同网格
+- [ ] 自动检查、独立代码复核和真实运行路径核对；提交工作分支进入人工待验收
+- [ ] 用户按独立验收卡在真实桌面确认通过；通过之前不合并 master
+- [x] Task 6 运行路径恢复（2026-09-22）：旧实例由用户退出；本 worktree `scripts/start.ps1` 启动 Core/配置器，忽略测试 `applies_room_wallpaper` 重铺通过；运行身份脚本核对 Core、Player、配置器及 wallpaper URL 全部来自 `DEXT_Core-desk-prefs-001`。上一条“旧实例占用”仅保留为历史阻塞记录。
+- [x] 当前配置器内“显示桌面图标名称”往返切换并恢复原值，两次均反馈保存且已发送当前桌面；这不证明实际渲染已变。
+- [ ] Task 6 真实桌面产品门槛：按独立验收卡逐项目视验证五项偏好、密集网格、重载和 reduced-motion；旧直接拖动连续至少十次。未验收前停在工作分支，不合并 master。
+
+### DESK-PREFS-001 真实桌面验收修正（2026-09-22）
+
+> 目标：保留已生效的五项偏好，同时缩窄三档图标间距，并修复“拖动一开始就失去命中”的真实 WebView2 回归。
+> 范围外：路径重排、Widget/Dock 新交互、Room Schema 和 master 合并。
+> 人工验收：沿用本包验收卡八项，重点核对三档间距与连续十次真实图标拖放。
+
+- [x] 用户实机确认设置确实改变图标，但间距偏宽、图标拖动刚开始即丢命中；本包验收不通过，继续原分支（2026-09-22）。
+- [ ] 采集真实 Player 的 pointerdown/move/up/cancel/lostpointercapture 与重绘/resize 事件顺序，定位中断来源；对照旧可拖动绑定和 Widget 手势。
+- [ ] 先写失败回归，再分别修复拖动中断与间距档位；保持命中框独立尺寸和偏好跨端一致。
+- [ ] 运行渲染器、前端及必要的 Core 回归；重铺当前分支桌面，提交后停在人工待验收。
+- [x] 间距三档按真实 footprint 额外空隙收紧为 `2×4 / 8×12 / 20×24px`；配置器、生产 Room、实验台使用同一几何；TS 与 Playwright 断言先红后绿（2026-09-22）。
+- [x] 真实 WorkerW 事件探针已临时装入当前 Room 并重铺，右上角保留 pointer 轨迹；待实机截图确定中断事件后移除，不将诊断叠层带入最终验收（2026-09-22）。
+- [x] 收紧间距后的 Vitest 55/55、构建、Node 8/8、Playwright 50/50 通过；仍不等于真实 Player 拖动通过（2026-09-22）。
+- [x] 实机轨迹确认三次图标按下均获得 pointer capture，约 0.3–0.4 秒后直接收到 `lostpointercapture`，没有记录到 pointermove/up 或重绘；该截图尚不足以判定捕获为何丢失（2026-09-22）。
+- [x] 只读核对当前 `rooms/v2/room.json` 两图标位于第 0、2 列；截图中的大间隔主要包含一个空网格列，不是三档额外间距数值未生效（2026-09-22）。
+- [x] 临时补采 `mousemove/mouseup/dragstart/focus` 和指针坐标，诊断提交 `ee62c49`；`node --check`、`git diff --check` 通过，忽略测试重铺成功，运行身份核对 Core/Player/配置器均为当前 worktree（2026-09-22）。
+- [ ] 用户在真实桌面再做一次从左图标向右图标的连续拖动，读取扩展事件轨迹；定位后写失败回归、修复并移除探针。
+
+### DESK-PREFS-001 Core 输入边界修复（2026-09-22）
+
+目标：修正 master 继承的错误鼠标状态转发，以连续可靠的原生输入恢复当前图标拖动。当前生产只绑定旧直接拖动，保留五项偏好，不重做桌面或引入新排序控制器。
+
+- [x] 对比 master 与当前分支：主要增量是实验台、测试、偏好链路；Core InputUtil 从基线起把 WM_MOUSEMOVE 的 wParam 固定为 0x20（X1），UP 仍携带按下位；当前新增 lostpointercapture 回滚使错误立即可见。
+- [x] 新增 Windows 消息边界回归，旧代码 expected 0 / actual 0x20 失败；修复后通过。
+- [x] 抽出按下到释放的转发会话：正确按钮状态、固定起始接收窗口及坐标原点，释放不受前台变化过滤；处理 RawInput 组合标志与负坐标。
+- [x] 移除临时前端日志；Vitest 55/55、Node 24/24、Playwright 50/50、前端 build、Core/Player 全量构建通过；当前 Core PID 30236 / Player PID 8716 路径核对通过。
+- [x] 隔离生产 Release WebView2 Player 验证旧值确实产生 buttons=8；正确会话连续十次获得 capture、MOVE=1、UP=0、无提前取消。测试通过原生消息而非 Playwright 注入；物理 RawInput/WorkerW 仍需人工验收。
+- [x] 代码、测试和独立验收卡已收尾，进入工作分支提交；用户 Cargo.toml 原有工作区变化保持未暂存。
+- [ ] 待实机验收：长按松手后二次拖动十次、跨窗口释放、取消、Widget、五项偏好；验收前不合并。
+
+### DESK-PREFS-001 合并收尾（2026-09-22）
+
+- [x] 用户明确授权当前版本先合并 master；此前未勾选的物理测试保留为历史记录，不代填结果。
+- [x] 合并前复跑 Vitest 55/55 与原生 Windows 输入回归，均通过。
+- [x] 核对主工作区用户 Room/资源改动与分支源码增量不重叠；仅合并提交，不暂存用户布局。
+- [ ] 合并 master 并核对用户数据哈希；运行中的 prefs worktree 及其未提交布局保留，待退出运行并安置数据后清理。
+- [ ] 合并后独立编写 DESK-REORDER-002 历史回溯及实施计划；本轮不实现 reorder。

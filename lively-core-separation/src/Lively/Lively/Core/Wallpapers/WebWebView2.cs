@@ -36,6 +36,7 @@ namespace Lively.Core.Wallpapers
         private readonly CancellationTokenSource appMonitorCts = new();
         private readonly object appMonitorLock = new();
         private readonly object sendLock = new();
+        private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private readonly Lively.Services.SystemControlService systemControlService = new();
         private int currentVolume = 0;
@@ -73,7 +74,8 @@ namespace Lively.Core.Wallpapers
             int volume,
             double? scale = null,
             string audioVisualizerId = null,
-            bool isScreensaver = false)
+            bool isScreensaver = false,
+            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null)
         {
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
@@ -97,6 +99,9 @@ namespace Lively.Core.Wallpapers
             cmdArgs.Append(model.LivelyInfo.Type.IsOnlineWallpaper() ? " --wallpaper-type online" : " --wallpaper-type local");
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);
+            this.desktopIconPreferences = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0
+                ? desktopIconPreferences
+                : null;
 
             this.process = new Process
             {
@@ -318,6 +323,8 @@ namespace Lively.Core.Wallpapers
                         {
                             IsLoaded = true;
                             Loaded?.Invoke(this, EventArgs.Empty);
+                            if (desktopIconPreferences is not null)
+                                SendMessage(desktopIconPreferences);
 
                             // Wait before pausing or other internal fn since some pages can have transition.
                             await Task.Delay(1000);
@@ -363,10 +370,14 @@ namespace Lively.Core.Wallpapers
                                     ?? throw new InvalidDataException("Room payload must be an object.");
                                 SaveTrustedRoomCopies(roomPath, incoming);
                                 Logger.Info($"Wv2{uniqueId}: SaveRoom: {roomPath}");
+                                if (!string.IsNullOrWhiteSpace(saveMsg.RequestId))
+                                    SendMessage(new LivelyMessageRoomSaveResultCmd { RequestId = saveMsg.RequestId, Success = true });
                             }
                             catch (Exception se)
                             {
                                 Logger.Error($"Wv2{uniqueId}: SaveRoom failed: {se.Message}");
+                                if (!string.IsNullOrWhiteSpace(saveMsg.RequestId))
+                                    SendMessage(new LivelyMessageRoomSaveResultCmd { RequestId = saveMsg.RequestId, Success = false, Error = "Room 保存失败" });
                             }
                         });
                         break;
@@ -610,8 +621,17 @@ namespace Lively.Core.Wallpapers
                 AtomicWriteJson(packageRoomPath, package);
                 if (sourcePath != null)
                 {
-                    AtomicWriteJson(sourcePath, clean);
-                    Logger.Info($"Wv2{uniqueId}: Room source sync: {sourcePath}");
+                    try
+                    {
+                        AtomicWriteJson(sourcePath, clean);
+                        Logger.Info($"Wv2{uniqueId}: Room source sync: {sourcePath}");
+                    }
+                    catch
+                    {
+                        // A failed source write must not leave the deployed package claiming success.
+                        AtomicWriteJson(packageRoomPath, existing);
+                        throw;
+                    }
                 }
             }
         }

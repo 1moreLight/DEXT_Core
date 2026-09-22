@@ -3,6 +3,8 @@ dext-room-demo/
 # vite dev cache
 .vite/
 .claude/
+.playwright-cli/
+output/playwright/
 
 # media assets: videos are runtime/test data, keep out of git
 *.mp4

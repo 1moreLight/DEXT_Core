@@ -43,6 +43,8 @@ namespace Lively.Common.JsonConverters
                 MessageType.msg_system_control_request => jo.ToObject<LivelyMessageSystemControlRequest>(serializer),
                 MessageType.cmd_system_control_response => jo.ToObject<LivelyMessageSystemControlResponse>(serializer),
                 MessageType.cmd_room_layout_sync => jo.ToObject<LivelyMessageRoomLayoutSyncCmd>(serializer),
+                MessageType.cmd_desktop_icon_preferences => jo.ToObject<LivelyMessageDesktopIconPreferencesCmd>(serializer),
+                MessageType.cmd_save_room_result => jo.ToObject<LivelyMessageRoomSaveResultCmd>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

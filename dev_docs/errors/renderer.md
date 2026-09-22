@@ -115,3 +115,419 @@ P4（action.invoke）仍必须来自 store 显式授权。
 
 防再犯："自动允许"是运行时行为，不是文档形容词；加能力分级时同步实现对应授权路径，
 并用空 store 场景验证 P1 可用、P2/P4 仍被拒。
+
+# #72 拖拽预览的计时器、取消与异步 revision 必须共同失效
+
+现象：图标在占用格停留不足 80ms 后移到空白，旧计时器仍会触发交换；`pointercancel` 会像
+`pointerup` 一样提交已发布预览；实验台 Reset 后，旧 Zigzag/回弹/压力场景的延时回调还会覆盖
+新布局。
+
+原因：稳定格计时器只在进入另一个有效目标时清理，没有覆盖空白/源格；完成函数没有区分提交
+与浏览器/OS 取消；场景 token 只在部分回调入口检查，没有在每次 `await` 后重新验证。
+
+修复：离开候选格立即清理 timer 并恢复已发布预览；只有 `pointerup` 可提交，`pointercancel` 与
+`lostpointercapture` 一律恢复拖拽基线；每个延时点返回后、任何 `apply/cancel/describe` 前都核对
+当前 token。Playwright 使用真实 pointer 路径覆盖“30ms 后移开”“已交换后 pointercancel”和
+“Zigzag 中 Reset”。
+
+防再犯：带停留阈值的拖拽必须测试进入、停留、离开、换目标、取消和 capture 丢失；异步 revision
+的有效性检查应放在每个异步边界之后，而不是只在任务开始时检查。
+
+# #73 布局位移与苹果式编辑抖动必须分层拥有动画属性
+
+现象：浏览器动画实验台能展示自动让位，但没有 500ms 长按进入编辑和图标抖动，用户看到后合理地
+认为新重排会吃掉原有苹果式编辑模式；极限折返又以约 52ms 连续触发，看起来像日常动画过快。
+
+原因：实验台把整个图标按钮直接作为 FLIP 节点，只展示布局技术场景，没有复现产品的编辑状态；
+正常运动和压力测试也没有在命名与视觉上分开。真实桌面代码虽然未改，实验台却没有证明两类动画
+能够共存。
+
+修复：稳定 DOM 改为外层 positioner + 内层 icon face；FLIP/WAAPI 只写外层 transform/opacity，
+500ms 长按后的 0.35s jiggle 只写内层 rotate。默认 move/rollback 放缓到 280/300ms，52ms 连续
+revision 明确标为 `Stress · rapid`。Playwright 同时断言外层 FLIP animation 和内层 jiggle 存在。
+
+防再犯：动画实验台必须包含被新机制影响的既有产品状态，不能只证明新动画自身；多个动画语义不要
+共同拥有同一 DOM 层的 transform，压力场景必须与用户日常时序明确区分。
+
+# #74 reduced-motion 必须处理运行中切换和系统偏好
+
+现象：在 280ms FLIP 运行途中勾选 Reduce motion，外层 WAAPI 仍继续；系统设置
+`prefers-reduced-motion: reduce` 时，内层编辑 jiggle 仍在播放。
+
+原因：动画控制器只在下一次 `apply()` 查询实验台复选框，开关事件只切 CSS class；同时该 class
+没有合并系统媒体查询，媒体规则也只压缩 transition，没有停止新加入的 keyframe animation。
+
+修复：统一以“复选框或系统媒体查询命中”作为 reduced-motion 来源；任一来源变为 reduce 时立即
+发布无动画 revision 并保持已写入的最终坐标，同时在 class 和媒体规则两层禁止内层 jiggle。若当前
+是拖拽预览，则继续使用 preview mode 以保留 `previewBase`，后续取消仍能恢复。Playwright 覆盖运行中
+切换、系统偏好以及降速后取消预览；生产 CSS 同时移除 icon face 与 placeholder 的 transition，避免托起
+和占位仍缓动。
+
+防再犯：reduced-motion 不只是创建动画前的分支；所有运行时偏好都要测试初始命中和中途切换，
+并分别验证脚本动画与 CSS 动画。
+
+# #75 图标 Reorder 不是占用格两两交换
+
+现象：实验台把图标拖动实现为“进入占用格后交换两枚图标”，用户要求的却是卡片排序：当前图标
+托起、目标位置留位、路径中的其他图标依次让开，松手后保留新顺序。
+
+原因：把旧桌面的 sparse-grid swap 当成了运动语言本身，没有先区分“交换坐标”和“插入排序”两种
+数据语义。即使 FLIP 平滑，两两交换也不会产生连续队列让位的视觉。
+
+修复：`resolveIconReorder` 按当前有序槽位移除 dragged item 并插入目标槽，再把沿途图标映射回槽位；
+拖动 face 独立跟随指针并 `scale(1.06)`，placeholder 占目标格，其他图标由外层 FLIP 让位。Widget
+作为不可移动障碍传入，Dock 作为 reserved/指针禁区。
+
+防再犯：涉及 reorder/sort 的需求先写出序列变化示例（如 `A B C → B C A`），不能用“换位”一词
+代替数据语义；测试至少跨过两个相邻项，避免两项样本让 swap 与 insert 看起来相同。
+
+# #76 非法拖放和场景中断必须同时恢复布局与视觉状态
+
+现象：图标先发布路径重排预览、再进入 Dock/Widget 等非法区时，只隐藏 placeholder 会留下已经让位
+的其他图标；脚本 Reorder 场景在抬起状态被 Reset，中断 token 虽阻止旧回调改布局，却会残留
+`is-dragging` 与 face transform。
+
+原因：把临时状态分散为布局 preview、placeholder、drop-zone、lift class 和 inline transform，却只在
+各自主流程清理，没有为非法目标和外部中断定义完整恢复边界。
+
+修复：非法目标立即以 preview mode 发布拖拽基线，保留控制器 `previewBase` 供最终取消，同时清空
+目标占位；Reset 或切换场景时统一扫描并清理全部 lift 状态，旧异步回调仍由 scenario token 拦截。
+Playwright 覆盖“先合法让位再进入 Dock”“脚本托起途中 Reset”和“托起途中切换场景”。
+
+防再犯：拖拽临时状态测试必须覆盖 valid→invalid→release 和 active→external reset 两条路径；清理
+不能只依赖 pointerup。
+
+# #77 Reset 必须同时终止画面状态、指针所有权和长按计时
+
+现象：Widget 拖动中点击 Reset 后，画面先回到初始位置，但同一指针后续 move/up 仍会再次移动 Widget
+并提交避让布局；图标或 Widget 的 500ms 长按尚未到时点击 Reset，计时器随后仍会重新进入编辑模式。
+
+原因：Reset 只清了图标拖动样式和布局，没有清空 `widgetDrag/widgetPress/iconPress`，也没有取消 timer
+和释放 pointer capture。重置后的旧输入序列仍被事件处理器视为活跃手势。
+
+修复：统一 `abortActiveInput`，先令全部 press/drag 状态失效，再清计时器、托起样式和 pointer capture；
+之后才发布 Reset 的最终布局。Playwright 覆盖拖动中 Reset 后继续 move/up，以及长按计时中 Reset。
+
+防再犯：任何外部 Reset/切换都要按一个输入事务的 abort 处理，不能只清视觉；测试必须在 Reset 后继续
+投递原指针事件，并等待超过长按阈值。
+
+# #78 每个真实拖动手势必须建立自己的取消基线
+
+现象：先运行 Widget 推开场景，再开始图标或 Widget 拖动并取消，DOM 会跳回运行场景前的初始布局，
+但实验台内存仍保存手势开始时的布局；下一次交互因此从与画面不一致的数据继续。
+
+原因：控制器的 `previewBase` 只在首个 preview 建立。脚本场景留下的基线跨进了后续真实手势，
+`cancel({restore:true})` 恢复的是更早场景，而不是本次 pointerdown 时用户看到的布局。
+
+修复：真实图标或 Widget 拖动开始前先无恢复地结清当前动画/预览并清空旧基线，再以当前已发布布局
+创建本次 drag.base；本手势首次 preview 随后建立独立基线。Playwright 分别覆盖图标和 Widget 取消。
+
+防再犯：取消基线属于手势事务，不属于页面全局；测试“预览 A → 手势 B → 取消 B”而不只测从初始态取消。
+
+# #79 任意外部场景切换都必须先取消真实拖拽
+
+现象：拖着 Alpha 已发布路径让位时切换到 Add，India 会先出现；随后旧指针松手仍进入
+`finishIconDrag`，用不含 India 的旧 `drag.preview` 提交，导致新场景结果被删除。
+
+原因：场景切换只在没有 `iconDrag` 时清理视觉，Reset 虽已 abort 输入，其他场景入口却保留了真实
+drag 对象和 pointer capture。旧 pointerup 因此仍有提交权。
+
+修复：所有非 Reset 场景也先调用统一输入 abort；若存在真实 drag，先恢复该手势基线，再释放 capture
+和执行新场景 revision。Playwright 覆盖“真实路径预览 → Add → 旧 pointerup”，最终保持 9 个节点。
+
+防再犯：任何能从手势外部发布布局的入口都必须先撤销当前手势的提交权；不能只处理 Reset 特例。
+
+# #80 Widget 的编辑抖动必须包含整张卡片
+
+现象：编辑模式下 Widget 只有时间和说明文字在抖，边框、背景与阴影保持静止，看起来像内容从卡片里
+脱开，不符合苹果式“整个可编辑对象在抖动”的视觉语义。
+
+原因：为了分离坐标与动画，把 `motion-widget-jiggle` 错挂在 `.demo-widget-face` 内容层；Widget 外框
+仍是静态 positioner，因此只有内部子树旋转。
+
+修复：Widget 继续用 `left/top` 承担坐标，但把 CSS individual `rotate` 动画挂到 `.demo-widget` 整体；
+边框、背景、阴影和内容共同运动。拖动以 `is-dragging` 暂停，reduced-motion 仍关闭；Dock 钳制额外保留
+2px，覆盖 rotate 后外接框比静态 `offsetHeight` 增大的部分。
+
+防再犯：视觉对象的 jiggle 所有权应落在用户认知中的完整对象，而不是为了技术分层任意选内层；
+浏览器测试同时断言外框有 animation、内容层没有独立 animation。
+
+# #82 拖拽回归必须先证明手势真的进入 dragging
+
+现象：最初的真实桌面 Playwright 只检查“拖到 Dock 后未保存”和“热更新后旧松手未覆盖”，在图标/Widget
+根本没有开始拖动时也会得到相同终态，导致缺失手势实现仍可能假绿。
+
+原因：测试只断言负向结果，没有在 pointerdown 后验证 `.dragging` / `.widget-dragging`、placeholder 或预览
+动画等中间态；“什么都没发生”和“正确取消”无法区分。
+
+修复：每条取消/权威中断回归先断言手势状态已经建立，再投递 move、cancel、lost capture 或热更新；Widget
+让位额外断言真实图标节点存在 WAAPI animation，避免旧的直接改 left/top 实现蒙混通过。
+
+防再犯：涉及 cancel、rollback、stale callback 的测试必须采用“三段式”断言：进入事务 → 出现临时状态 →
+恢复或权威终态。只检查最后没有保存不构成有效拖拽测试。
+
+# #83 Dock 安全余量必须在 Room 坐标与屏幕像素之间换算
+
+现象：Widget 在 Room 逻辑坐标中与 Dock 保留 2px 后，1440×960 实际画面仍有约 0.9px 外接框侵入 Dock；
+Playwright 的真实 bounding box 检查失败。
+
+原因：Widget placement 使用 1920×1080 Room 坐标，Dock 命中来自屏幕像素；2 个逻辑像素缩放后不足
+2 个屏幕像素，整卡 ±0.38° rotate 的外接框又会额外增大。
+
+修复：Dock rect 先统一映射到 Room 坐标，生产 Widget 钳制使用 8 个逻辑像素的安全缝，再由真实 DOM
+bounding box 验证旋转暂停前后的卡片均不进入 Dock。图标避让仍对 Dock reserve 额外扩张 40 逻辑像素。
+
+防再犯：跨坐标系的安全距离必须注明单位；布局纯函数测试覆盖四个 Dock 方向，浏览器测试再用实际
+`getBoundingClientRect()` 验证最终视觉边界，不能把逻辑 px 直接当 CSS px。
+
+# #84 通用 abort 不能假定每种输入事务都有布局快照
+
+现象：对仍处于 500ms `pressing` 的控制器调用 `abort({restore:true})`，会把已发布图标快照清成空数组；
+press transaction 只有计时器和指针信息，并没有 `baseIcons`。
+
+原因：外部 Widget 和图标拖动都带布局基线，通用 abort 因而无条件执行 `cloneIcons(transaction.baseIcons)`，
+把不同状态的事务误当成同一结构。
+
+修复：只有事务显式携带 `baseIcons` 数组时才恢复 published icons；pressing 仅清 timer 和状态。Node 回归
+先进入 pressing，再 restore abort，验证原图标快照保持不变。
+
+防再犯：状态机共享清理入口时，恢复字段必须按状态或字段存在性判断；不能用一个“最大事务结构”假定
+所有状态都拥有相同快照。
+
+# #85 reduced-motion 必须同时清除静态 transform 规则
+
+现象：实验台开启减少动态效果后，transition 与 jiggle 虽然关闭，hover 仍保持 `scale(1.035)`，模拟拖动仍
+保持 `translateY(-8px) scale(1.06)`；视觉不再过渡，但对象依然瞬间位移。
+
+原因：reduced-motion 规则只覆盖 `animation` 和 `transition-duration`，没有覆盖由 hover/drag 选择器直接写入
+的 `transform`。停止“动画过程”不等于消除“运动结果”。
+
+修复：在页面显式开关和系统 `prefers-reduced-motion` 两条路径下，均将 icon face/visual 的装饰性 transform
+置为 none，同时保留背景、阴影、命中区和名称规则。Playwright 分别覆盖 hover 与托起。
+
+防再犯：减少动态效果测试必须读取最终 computed transform，不能只断言 transition/animation 名称为 none。
+
+# #86 window blur 不能在捕获阶段复用指针结束处理器
+
+现象：图标 pointerdown 后 pressed 会立刻恢复 false；隐藏名称浮层甚至在鼠标仍按住时重新出现。
+
+原因：为处理鼠标在页面外松手，把同一个结束处理器以 capture 方式挂到 window 的 `blur`。点击图标会让
+先前聚焦的设置控件失焦；该元素 blur 虽不冒泡，却会经过 window 捕获阶段，于是被误判为整个窗口失焦。
+
+修复：pointerup/pointercancel 继续在 owning window 捕获阶段监听并按 pointerId 过滤；window blur 使用非捕获
+监听，只在窗口自身失焦时结束 pressed。Playwright 覆盖按下后移出视口、松手、返回并恢复 500ms 浮层。
+
+防再犯：窗口级 blur 与元素 blur 必须区分；若使用捕获监听，要显式验证 `event.target === window`。
+
+# #89 图标命中区不能由名称内容决定几何
+
+现象：打开命中区调试后，不同名称长度会产生不同宽度的绿色框；短名称框偏窄，长名称框接近上限，
+命中范围看起来向文字一侧偏移，无法作为统一可管理的桌面交互规格。
+
+原因：`.icon-face` 使用 `width: fit-content` 和 `max-width`，实际尺寸由图标、gap 和单行名称的 intrinsic
+size 共同决定。虽然外层网格居中，但每个可点击对象自身的宽高并不统一。
+
+修复：以共享 CSS 变量固定 `.icon-face` 宽高，并通过 `data-icon-hit-size` 提供 small 72×80、standard
+80×84、large 84×88 三档；名称在固定框内省略，显示/隐藏不改变几何。命中框与网格间距独立，最紧凑
+88px 步距搭配最大 84px 命中框仍保留 4px 间隙。
+
+防再犯：命中区属于交互规格，不能从内容 intrinsic size 反推。测试必须逐个比较真实 bounding box、
+图标与框的中心线，并覆盖最长名称、隐藏名称和最密间距组合。
+
+# #90 固定预览属性不能常驻并冒充直接交互模式
+
+现象：实验台虽然有“悬停 / 按下 / 编辑 / 拖动”按钮，但用户直接点击图标时像静态截图；真实 hover
+和 press 没有视觉反馈，无法像 Widget 实验台那样验证手感。
+
+原因：共享 CSS 为避免固定状态受鼠标干扰，用 `:not([data-icon-preview-state])` 保护真实 hover/press；
+实验台却始终保留 `data-icon-preview-state="normal"`，等于永久关闭真实指针分支。
+
+修复：新增默认“交互”状态并在该状态删除固定预览属性；真实 pointer 生命周期负责短按选择、500ms
+长按编辑、编辑中托起/跟手/回位和双击空白退出。固定五状态仍显式写属性，仅用于诊断。
+
+防再犯：交互实验台必须同时覆盖“真实输入路径”和“固定视觉快照”，不能让用于快照隔离的属性成为
+页面默认态。Playwright 必须从真实 pointerdown/move/up 验证中间态，不只点击状态按钮。
+
+# #91 图标布局格与命中框不应维护两套独立矩形
+
+现象：命中框已经统一尺寸并水平居中，但打开调试后，橙色布局 cell 仍是 88×100 / 100×112 /
+120×124，绿色命中框则是 72×80 / 80×84 / 84×88；两者只能局部居中，边界永远无法重合。
+
+原因：把“图标密度”直接建模为 cell 宽高，又单独增加命中框尺寸。一个图标因此同时拥有两套可配置
+占位矩形，排序定位、点击范围和调试表达互相脱节。
+
+修复：以单一 footprint 同时作为 `.lab-icon` 布局格和 `.icon-face` 命中边界；小/标准/大控制该矩形。
+紧凑/标准/宽松仅改 footprint 之间的 column/row gap，gap 不接收指针。调试时橙绿边界四边重合。
+
+防再犯：桌面对象只有一个占位契约，密度应表达为对象之间的间隙，而不是再造第二套对象尺寸。
+浏览器测试必须直接比较布局节点与 face 的真实 x/y/width/height，并点击 gap 验证其为空白。
+
+# #92 隐藏图标名称时 footprint 也要切换到无标签规格
+
+现象：关闭桌面图标名称后，文字虽然消失，但 unified footprint 仍保留显示标签时的高度和宽度；视觉上只剩
+56px 图标，实际可点区域却还包含一圈无意义空白，实验台尺寸读数也可能继续显示旧值。
+
+原因：最初把 `hitTargetSize` 直接映射成唯一尺寸，`showLabels` 只控制文字可见性，没有参与 footprint 几何和
+读数计算。统一布局/命中矩形后，这会把“布局稳定”误解成“隐藏内容也必须保留其空间”。
+
+修复：每个大小档同时定义显示名称和隐藏名称两套规格：72×80 / 80×84 / 84×88 与 64×64 / 72×72 /
+80×80。CSS 以 `data-icon-labels="hidden"` 切换，实验台读数由 `showLabels + hitTargetSize` 共同计算；布局格
+与 face 仍共享同一矩形，gap 不变。Playwright 同时验证三档切换、真实 bounding box 和读数。
+
+防再犯：隐藏内容时必须重新审视它占用的交互空间；若几何受两个偏好共同决定，视觉 CSS、状态读数和测试
+断言必须引用同一套离散规格，不能各自缓存旧尺寸。
+
+# #93 纯旋转 jiggle 不足以表达图标与文字的整体位移
+
+现象：图标进入编辑模式后图形的倾斜很明显，但下方名称看起来像停在原地，用户无法确认文字是否属于同一
+抖动对象。
+
+原因：DOM 上图形和名称都在 `.icon-face` 内，浏览器双时点采样也证明文字坐标随父层变化；但关键帧只有
+绕 footprint 中心的 ±3° 旋转，矩阵平移分量始终为 0，文字基线的视觉位移不够明确。
+
+修复：仍只动画同一个 `.icon-face`，在 ±3° / 150ms 旋转两端加入 -1.5px / +1.5px 水平位移。图形、文字
+和命中边框继续是刚性整体，不给子节点叠加第二套动画。Playwright 直接读取 CSSAnimation 关键帧矩阵，
+同时断言角度和水平位移。
+
+防再犯：整体动画不能只检查父节点是否存在 animation-name；需要验证最终视觉矩阵包含设计所需的旋转和
+位移分量，并确认所有可见内容仍由同一运动节点承载。
+
+纠正（2026-09-20）：用户后续明确“图标文字不抖”是要求名称保持静止，并不是反馈名称没有跟随。上述
+“整体运动”修复基于语义误解，已由最终方案取代：编辑 jiggle 只放在 `.icon-visual`，使用 ±3° / 150ms
+纯旋转；`.icon-face` 和 `.icon-label` 的 animation-name 均为 none。拖动仍由 face 整体托起，reduced-motion
+继续关闭 visual 动画。防再犯时应先把“没有抖”与“不要抖”复述成肯定句，再决定运动节点。
+
+# #95 共享 Glyph 渐变必须读取真实桌面的颜色变量
+
+现象：图标实验台中的 Glyph 保持各自颜色，接入真实桌面后，无 PNG 的应用图标却可能全部变成共享 CSS
+默认的蓝色渐变；节点、尺寸和交互测试仍会通过。
+
+原因：共享 `.icon-glyph` 用 `--icon-color` 生成渐变，实验台直接写该变量；真实桌面的旧实现只更新
+`backgroundColor`。CSS `background` 渐变继续使用默认变量，内联背景色不会替换渐变图层。
+
+修复：创建和热更新真实 Glyph 时同时写入 `--icon-color`，并由真实 Room Playwright 断言自定义属性保持
+Room 图标颜色。
+
+防再犯：共享视觉模块引入 CSS 自定义属性后，生产节点构造器必须显式映射同一契约；视觉回归不能只验证
+DOM 分层和几何，还要覆盖至少一个来自真实数据的主题色值。
+
+# #96 reduced-motion 不能清除拖动所需的指针位移
+
+现象：Windows 开启减少动态效果后，图标仍能提交排序，但拖动中的真实图标停在原位，仅占位与其他图标
+变化，手势反馈像“隔空拖动”。
+
+原因：共享 reduced-motion 规则把 `.icon-face` 的所有 transform 强制为 none；该层不仅承载装饰性的托起
+和缩放，也承载控制器计算的实时 pointer translate，导致必要位移被一并清除。
+
+修复：控制器在 reduced-motion 下仍输出 pointer translate，但将托起偏移归零、scale 固定为 1；共享 CSS
+只清除 `.icon-visual` 的装饰 transform，并仅对实验台模拟卡片清除 face transform。Node 与真实 Room 测试
+分别验证内联 `scale(1)` 和 computed transform 仍有位移。
+
+防再犯：减少动态效果应区分“交互所需的位置反馈”和“装饰性运动”；不能用一个宽泛的
+`transform: none !important` 同时覆盖两类职责。
+
+# #97 生产 Room 的启动资源必须位于 WebView2 映射目录内
+
+现象：图标实验台和 Vite 下的真实 Room 测试全部通过，但正式 Player 里桌面只剩黑底与静态 Dock 箭头；
+背景、图标、Widget 和 Desk 指示器都没有初始化。
+
+原因：WebView2 Player 会把 `index.html` 所在的 `wallpapers/dext-room` 单独映射为本地虚拟主机根目录。
+生产页面使用 `../dext-icon-feedback/icon-feedback.js` 和 `.css` 时，Vite 能访问仓库兄弟目录，但虚拟主机
+只会在映射根目录内解析该 URL，资源不存在。随后 `main.js` 检测不到 `DextIconFeedback` 并在首次
+`renderDesk()` 前中止，形成“骨架存在、内容全黑”的假象。
+
+修复：把唯一共享 `icon-feedback.js/.css` 收进生产 `dext-room`，生产页面使用同目录相对路径；浏览器
+实验台和 Node 测试反向引用生产文件，继续保持单一实现。新增 Playwright 边界场景，阻断
+`/wallpapers/dext-room/` 之外的全部请求，确认仅暴露生产映射目录时仍能完成启动和图标渲染。
+
+防再犯：官方 Room 的 boot-critical HTML、JS、CSS 必须自包含于 Player 映射目录。浏览器实验台可引用
+生产资源，但生产页面不得依赖实验台或仓库兄弟目录；Vite 全仓库服务不能替代虚拟主机边界回归。
+
+# #98 长按进入编辑必须把同一 pointer 交接给拖动事务
+
+现象：真实桌面长按图标后会进入编辑并出现托起感，但继续移动无法排序；松手后图标立即回到原位。
+只有先松手、再第二次按住图标才能拖动。
+
+原因：长按计时到点时，控制器先把 `pressing` 状态和 transaction 清成 `idle`，再请求进入编辑。
+仍按住的原始 pointer 因此失去归属；后续 `pointermove` 在 idle 状态被忽略，`pointerup` 也没有可提交事务。
+既有测试先长按并松手，再启动第二段拖动，恰好绕过了这条连续手势路径。
+
+修复：长按回调先同步进入编辑，再把原 transaction 的 pointerId、起点和节点直接交给
+`_startIconDrag()`，状态从 pressing 连续变成 draggingIcon。若进入编辑期间事务已被权威更新或 abort
+撤销，则守卫阻止旧回调复活。Node 和真实 Room Playwright 均覆盖同一 pointer 长按、跨格、80ms
+占位和单次保存。
+
+防再犯：长按不是一个需要结束的独立点击，而是拖动手势的前半段；测试必须至少保留一条
+pointerdown → dwell → pointermove → pointerup 全程不松手的真实序列，不能只覆盖“先进入编辑再拖”。
+
+纠正（2026-09-21）：真实桌面连续操作表明这条修复本身引入了更差的手势模型。用户要求回到最早已验收的
+Sortable：长按只进入编辑，松手后再次按下拖动。#99 记录最终根因与替代方案，本节保留为历史错误路径。
+
+# #99 不要把长按续拖、原格锚定和候选延迟叠加到已验收 Sortable
+
+现象：真实桌面十余次尝试只有少数能拖起；拖到其他位置尚未松手时，被拖图标与让位预览会跳；双击某些
+空白层也无法退出编辑。浏览器自动测试仍然全绿。
+
+原因：生产控制器后来同时引入了三项实验台没有的行为：长按计时到点把同一 pointer 强行交给拖动、把被拖
+图标外层固定在源格、目标格再等待 80ms 才更新。最早通过人工验收的 `2694f0d` 实际是两段式手势，跨格
+立即求解，并让被拖外层落目标格、face 根据当前外层矩形反向补偿到指针下。后续测试断言了新实现本身，
+因此无法发现运动模型已经偏离验收基线；空白退出又只在冒泡阶段监听 document，可能被中间桌面层截断。
+
+修复：按历史提交逐段恢复已验收模型：300ms 长按只进入编辑并结束 pressing；编辑态下一次 pointerdown
+开始拖动；跨格同步求解并展示 placeholder；motion 立即写被拖外层最终 left/top，排除其 FLIP，face 用
+当前 node rect 计算补偿保持在指针下。document 的空白双击改为捕获阶段，仍排除图标、Widget、iframe、
+Dock 和控件。Node 与真实 Room Playwright 先分别在“仍等待 80ms / 仍续接长按 / 冒泡被拦截”处失败，
+再转绿；连续 12 次往返拖动使用每轮真实目标图标中心，不再用会跑出网格的固定屏幕坐标。
+
+防再犯：用户已经验收过交互实验台时，真实集成应保持它的输入事务和坐标职责，不要只复用视觉参数。
+自动测试必须断言用户可观察的基线（长按后未 dragging、跨格立即占位、外层目标格、face 指针中心），
+不能把后来新增的实现细节当成需求。
+
+# #100 Chromium 自动化不能替代 WorkerW/WebView2 真实指针验收
+
+现象：生产图标拖动先后经历同 pointer 续拖、恢复两段式 Sortable 和立即跨格占位等三轮修正；每轮 Node 与
+Playwright 都全绿，但真实 WorkerW/WebView2 中仍表现为几乎无法拖动或拖动中乱跳，而同页面的 Widget
+拖动正常。
+
+原因边界：自动化运行在 Chromium 页面环境，没有覆盖 WorkerW 承载、WebView2 指针捕获和实际桌面输入链。
+现有证据只能确认 DOM/控制器在测试环境中的行为，不能据此认定真实宿主事件流正常；本轮没有采到足以
+定位具体丢失环节的 WebView2 事件轨迹，因此不得把某个 timer、阈值或坐标换算继续宣称为根因。
+
+处理：停止在失败集成上继续叠加局部补丁，把生产 `dext-room` 的 HTML、主脚本、控制器和真实 Room 回归
+作为一个边界整体恢复到已验收的 DESK-MOTION 提交 `64af642`。浏览器图标实验台、共享视觉模块以及全局
+偏好保存/投递代码保留，但生产 Room 暂不消费这些偏好，待另开真实宿主输入诊断后再重新集成。
+
+防再犯：涉及桌面 pointer capture、WorkerW 或 WebView2 的手势，Chromium 自动测试只能作为回归门槛之一；
+必须在真实桌面重复拖放通过后才能宣布生产交互完成。连续三次“自动化绿、实机红”时应回退完整交互边界，
+下一轮先记录真实 `pointerdown/move/up/cancel/lostpointercapture` 序列，再决定修改位置。
+
+# #101 回退旧手势时必须验证绑定点，不只检查函数是否还在
+
+现象：把生产 Room 回退到 `64af642` 的父提交 `b8b00f0` 后，源码中仍能找到完整的
+`attachPress()` 和 `startDrag()`，但编辑态第二次按下时图标仍完全不跟随，表现与真实桌面一致。
+
+原因：`b8b00f0` 用节点协调器重写 `renderIcons()` 时删除了旧实现中的 `attachPress(el, i)` 调用，却没有
+同步删除两个旧函数。它们因此成为外观完整但没有任何调用方的死代码；只按函数名或提交位置判断“旧逻辑
+仍在”会选错回退点。最后一个真正绑定旧手势的提交是 `15147f2`。
+
+处理：新增真实 pointer Playwright 回归，要求进入编辑后第二次按下能让图标在 pointerup 前实时移动，松手
+后交换两个格子。该回归在 `b8b00f0` 上先失败，生产 `index.html/main.js/style.css` 恢复到 `15147f2` 并移除
+未使用的桌面控制器后转绿；布局/动画引擎和两个浏览器实验台继续保留当前实现。
+
+防再犯：回退交互不能只比较定义，必须同时检查 DOM 创建处的绑定调用，并用真实指针序列验证
+`pointerdown → pointermove（对象已移动）→ pointerup（数据已提交）`。若旧函数没有调用方，应继续向前
+查找最后一个实际可执行提交。
+
+# #102 图标实验台不可覆盖生产共享间距变量
+
+现象：收紧生产共享模块的三档间距后，配置器与真实 Room 的格距变化，但浏览器实验台的图标 pitch 仍是旧
+`100px`；实验台读数也继续显示旧的 `20×28px`。
+
+原因：实验台 `style.css` 按 `data-icon-spacing` 再定义一套 `--dext-icon-column-gap/row-gap`，比共享 CSS
+选择器更具体；`lab.js` 也硬编码了第二套文本。跨端几何一致性单元测试没有覆盖实验台自己的 CSS 覆盖。
+
+修复：删除实验台的间距变量覆盖，读数由生产 `resolveDesktopIconGeometry()` 生成；三档实际 pitch 和
+读数的 Playwright 用手算尺寸先红后绿。配置器与生产 Room 的几何常量仍按同一值维护并交叉验证。
+
+防再犯：实验台可以定义容器排布，但不能重新定义要预览的生产参数；修改档位时同时检验真实 DOM pitch、
+共享几何和配置器投影，而不只看 dataset 是否切换。

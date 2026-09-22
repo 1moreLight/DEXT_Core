@@ -287,6 +287,11 @@ namespace Lively.Grpc.Client
                     }
                 },
                 RestartAfterLockscreen = settings.IsRestartAfterLockscreen,
+                DesktopIconFeedbackStyle = (Grpc.Common.Proto.Settings.DesktopIconFeedbackStyle)((int)settings.DesktopIconFeedbackStyle),
+                ShowDesktopIconLabels = settings.ShowDesktopIconLabels,
+                DesktopIconHitTargetSize = (Grpc.Common.Proto.Settings.DesktopIconHitTargetSize)((int)settings.DesktopIconHitTargetSize),
+                DesktopIconVisualSize = (Grpc.Common.Proto.Settings.DesktopIconVisualSize)((int)settings.DesktopIconVisualSize),
+                DesktopIconSpacing = (Grpc.Common.Proto.Settings.DesktopIconSpacing)((int)settings.DesktopIconSpacing),
             };
         }
 
@@ -403,6 +408,11 @@ namespace Lively.Grpc.Client
                         settings.SelectedAudioOutputDisplay.WorkingArea.Height),
                 },
                 IsRestartAfterLockscreen = settings.RestartAfterLockscreen,
+                DesktopIconFeedbackStyle = (Models.Enums.DesktopIconFeedbackStyle)((int)settings.DesktopIconFeedbackStyle),
+                ShowDesktopIconLabels = !settings.HasShowDesktopIconLabels || settings.ShowDesktopIconLabels,
+                DesktopIconHitTargetSize = (Models.Enums.DesktopIconSize)((int)settings.DesktopIconHitTargetSize),
+                DesktopIconVisualSize = (Models.Enums.DesktopIconSize)((int)settings.DesktopIconVisualSize),
+                DesktopIconSpacing = (Models.Enums.DesktopIconSpacing)((int)settings.DesktopIconSpacing),
             };
         }
 
