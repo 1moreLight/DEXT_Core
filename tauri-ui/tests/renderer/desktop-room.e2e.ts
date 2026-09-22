@@ -28,6 +28,7 @@ declare global {
     __dextDispatch(message: unknown): void;
     __alphaNode?: Element;
     __widgetFrame?: Element;
+    __roomSavePosts: Array<{ type: string; requestId?: string; room?: unknown }>;
   }
 }
 
@@ -40,11 +41,15 @@ test.beforeEach(async ({ page }) => {
           addEventListener(type: string, listener: (event: { data: unknown }) => void) {
             if (type === "message") listeners.push(listener);
           },
-          postMessage() {},
+          postMessage(value: string) {
+            const message = JSON.parse(value);
+            if (message.type === 'saveRoom') window.__roomSavePosts.push(message);
+          },
         },
       },
       configurable: true,
     });
+    window.__roomSavePosts = [];
     window.__dextDispatch = (message: unknown) => listeners.forEach((listener) => listener({ data: message }));
   });
   await page.route("**/wallpapers/dext-room/room.json", (route) => route.fulfill({ json: baseRoom }));
@@ -134,4 +139,77 @@ test("desktop preference message changes the real icon footprint without replaci
     return document.elementFromPoint(bounds.right + 2, bounds.top + bounds.height / 2)?.closest('.icon') !== null;
   });
   expect(edgeTarget).toBe(false);
+});
+
+test("geometry reflow persists once and ignores stale preference snapshots", async ({ page }) => {
+  const overlapping = structuredClone(baseRoom);
+  overlapping.desks[0].icons[1].x = 0;
+  await page.evaluate((room) => window.__dextDispatch({ type: 'dext:room-layout', room, deskIndex: 0 }), overlapping);
+  await page.evaluate(() => window.__dextDispatch({ type: 'dext:desktop-preferences', revision: 7, preferences: {
+    feedbackStyle: 'compact', showLabels: false, hitTargetSize: 'large', visualSize: 'standard', spacing: 'spacious',
+  } }));
+  await expect(page.locator('.icon-layer')).toHaveAttribute('data-icon-spacing', 'spacious');
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(1);
+  await page.evaluate(() => window.__dextDispatch({ type: 'dext:desktop-preferences', revision: 0, preferences: {
+    feedbackStyle: 'bare', showLabels: true, hitTargetSize: 'small', visualSize: 'small', spacing: 'compact',
+  } }));
+  await expect(page.locator('.icon-layer')).toHaveAttribute('data-icon-spacing', 'spacious');
+});
+
+test("failed Room save restores the previous icon coordinates", async ({ page }) => {
+  const overlapping = structuredClone(baseRoom);
+  overlapping.desks[0].icons[1].x = 0;
+  await page.evaluate((room) => window.__dextDispatch({ type: 'dext:room-layout', room, deskIndex: 0 }), overlapping);
+  await page.evaluate(() => window.__dextDispatch({ type: 'dext:desktop-preferences', revision: 4, preferences: {
+    feedbackStyle: 'halo', showLabels: true, hitTargetSize: 'standard', visualSize: 'standard', spacing: 'standard',
+  } }));
+  const requestId = await page.evaluate(() => window.__roomSavePosts[0]?.requestId);
+  expect(requestId).toBeTruthy();
+  await page.evaluate((id) => window.__dextDispatch({ type: 'dext:room-save-result', requestId: id, success: false }), requestId);
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([0, 0]);
+});
+
+test("preference changes wait for the old direct drag to finish", async ({ page }) => {
+  await longPressAlpha(page);
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  const box = await alpha.boundingBox();
+  if (!box) throw new Error('Icon geometry unavailable');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.evaluate(() => window.__dextDispatch({ type: 'dext:desktop-preferences', revision: 8, preferences: {
+    feedbackStyle: 'bare', showLabels: false, hitTargetSize: 'small', visualSize: 'large', spacing: 'compact',
+  } }));
+  await expect(page.locator('.icon-layer')).not.toHaveAttribute('data-icon-feedback', 'bare');
+  await page.mouse.up();
+  await expect(page.locator('.icon-layer')).toHaveAttribute('data-icon-feedback', 'bare');
+});
+
+test("the direct drag refuses to commit inside Dock or Widget", async ({ page }) => {
+  await longPressAlpha(page);
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  const start = await alpha.boundingBox();
+  const dock = await page.locator('#dock').boundingBox();
+  if (!start || !dock) throw new Error('Drag geometry unavailable');
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dock.x + dock.width / 2, dock.y + dock.height / 2, { steps: 5 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons[0].x)).toBe(0);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
+});
+
+test("hot layout aborts a held direct drag before its old pointerup", async ({ page }) => {
+  await longPressAlpha(page);
+  const alpha = page.locator('[data-launch-target="alpha.exe"]');
+  const start = await alpha.boundingBox();
+  if (!start) throw new Error('Icon geometry unavailable');
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(start.x + start.width / 2 + 90, start.y + start.height / 2);
+  const updated = structuredClone(baseRoom);
+  updated.desks[0].icons[0].x = 2;
+  await page.evaluate((room) => window.__dextDispatch({ type: 'dext:room-layout', room, deskIndex: 0 }), updated);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons[0].x)).toBe(2);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
 });
