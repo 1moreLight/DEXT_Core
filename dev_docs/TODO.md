@@ -992,4 +992,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] TDD：前端原子打开、可见错误/警告、修复按钮与预览/应用/保存/导出守卫（2026-09-23）
 - [x] 完整自动检查、差异复核、提交工作分支并停在人工待验收：Vitest 57/57、Rust 43 通过/3 个真实环境测试按设计忽略、前端 build 与 diff check 通过（2026-09-23）
 - [x] 从本 worktree 启动真实 Core 与配置器并核对路径：Core PID 85864、配置器 PID 79972 均来自 `config-edit-001`；持久化桌面 Player 仍加载旧 PREFS 壁纸，未强制重铺（2026-09-23）
-- [ ] 用户按独立验收卡确认；通过前不合并 master，也不开始 reorder 的 master 同步
+- [x] 用户于 2026-09-23 回复“ok验收通过下一步”，确认 CONFIG-EDIT-001 通过并进入 master 合并；reorder 在合并后同步

@@ -1,14 +1,14 @@
 # Dext 开发路线图
 
-> 更新：2026-09-23（CONFIG-EDIT-001 配置器 Room 打开与可恢复修复待验收）。本文是**唯一全景计划**。
+> 更新：2026-09-23（CONFIG-EDIT-001 已验收；下一项 DESK-REORDER-002）。本文是**唯一全景计划**。
 > 每个工作包必须能在一个独立分支完成和验收；执行方法见 `WORKFLOW.md`，分支内步骤见 `TODO.md`。
 
 ## 一、当前控制台
 
 | 角色 | 工作包 | 状态 | 分支 | 结果 |
 |---|---|---|---|---|
-| 待验收 | **CONFIG-EDIT-001 配置器 Room 打开与可恢复修复** | 自动检查通过，待真实配置器人工验收 | `fix/CONFIG-EDIT-001-room-open-recovery` | 修复“编辑”静默无响应；允许带未声明 Widget 孤儿资源的 Room 进入受限编辑，并提供移入恢复目录的显式修复；发布链继续严格 |
-| 下一项 | **DESK-REORDER-002 稳定输入上的路径重排** | 已有实现分支，等待前置修复验收合并后同步 | `feat/DESK-REORDER-002-stable-sortable` | 当前运行环境仍是旧 PREFS worktree，因此看不到该分支排序；本包不抢先合并，待 CONFIG-EDIT-001 合入后重放并做真实 WorkerW 验收 |
+| 最近完成 | **CONFIG-EDIT-001 配置器 Room 打开与可恢复修复** | 用户于 2026-09-23 验收通过；随本分支合入 master | `fix/CONFIG-EDIT-001-room-open-recovery` | “编辑”不再静默无响应；孤儿 Widget 资源可进入受限编辑并安全移入恢复目录；发布链继续严格 |
+| 唯一下一项 | **DESK-REORDER-002 稳定输入上的路径重排** | 已有实现分支，待同步最新 master 并重做真实 WorkerW 验收 | `feat/DESK-REORDER-002-stable-sortable` | 锁定已修复原生输入，只追加路径插入、同伴 FLIP 与一次提交；必须从该 worktree 重铺并核对 Player 路径 |
 | 最近合入 | **DESK-PREFS-001 五项桌面图标偏好真实生效** | 用户授权合入，清理延后 | master merge `4fd2986`，输入修复 `3c42552` | 用户要求当前版本先合并；不补填未报告的逐项物理测试。合并后 Vitest 55/55、布局/动画 Node 20/20 通过；用户数据哈希未变。prefs worktree 仍运行且有未提交布局，暂不删除 |
 | 历史 | **DESK-MOTION-001 桌面自动重排动画** | 保留成果随偏好分支合入，旧生产控制器已回退 | 原分支保留，不再次整体合并 | 浏览器实验与动画模块保留；生产仍为 attachPress → startDrag，不能恢复失败控制器冒充排序修复 |
 | 历史 | **DESK-ICON-001 桌面图标反馈与命中区优化** | 保留成果由 DESK-PREFS-001 收口 | 原分支保留，不再次整体合并 | 五项偏好已由 PREFS 接入真实桌面；旧验收卡仅作历史记录 |
