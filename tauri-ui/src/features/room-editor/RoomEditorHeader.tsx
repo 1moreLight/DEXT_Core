@@ -8,7 +8,10 @@ interface RoomEditorHeaderProps {
   editorView: EditorView;
   canUndo: boolean;
   canRedo: boolean;
+  canSave: boolean;
+  saveDisabledReason?: string;
   canApply: boolean;
+  applyDisabledReason?: string;
   canDeleteDesk: boolean;
   onBack: () => void;
   onView: (view: "canvas" | "flow") => void;
@@ -29,7 +32,10 @@ export function RoomEditorHeader({
   editorView,
   canUndo,
   canRedo,
+  canSave,
+  saveDisabledReason,
   canApply,
+  applyDisabledReason,
   canDeleteDesk,
   onBack,
   onView,
@@ -58,9 +64,9 @@ export function RoomEditorHeader({
         <Button size="sm" className="font-semibold shadow-sm" onClick={onAddDesk}><Plus className="h-3.5 w-3.5" /> 新增 Desk</Button>
         <Button variant="outline" size="sm" disabled={!canUndo} onClick={onUndo}><Undo2 className="h-3.5 w-3.5" /> 撤回</Button>
         <Button variant="outline" size="sm" disabled={!canRedo} onClick={onRedo}><Redo2 className="h-3.5 w-3.5" /> 重做</Button>
-        <Button variant="outline" size="sm" onClick={onSave}><Save className="h-3.5 w-3.5" /> 保存</Button>
-        <Button variant="outline" size="sm" onClick={onSaveAs}>另存为</Button>
-        <Button variant="outline" size="sm" disabled={!canApply} title={!canApply ? "Dext Core 未连接" : undefined} onClick={onApply}><Play className="h-3.5 w-3.5" /> 应用</Button>
+        <Button variant="outline" size="sm" disabled={!canSave} title={!canSave ? saveDisabledReason : undefined} onClick={onSave}><Save className="h-3.5 w-3.5" /> 保存</Button>
+        <Button variant="outline" size="sm" disabled={!canSave} title={!canSave ? saveDisabledReason : undefined} onClick={onSaveAs}>另存为</Button>
+        <Button variant="outline" size="sm" disabled={!canApply} title={!canApply ? applyDisabledReason : undefined} onClick={onApply}><Play className="h-3.5 w-3.5" /> 应用</Button>
         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" disabled={!canDeleteDesk} onClick={onDeleteDesk}><Trash2 className="h-3.5 w-3.5" /> 删除 Desk</Button>
       </div>
     </div>

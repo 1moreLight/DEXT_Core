@@ -71,6 +71,12 @@ import {
   roomContractPolicy,
 } from "@/lib/room-contract";
 import {
+  roomIntegrityBlockReason,
+  roomOpenStatus,
+  type RoomEditAudit,
+  type RoomOrphanRecovery,
+} from "@/lib/room-integrity";
+import {
   type DockConfig,
   type DockPresetInfo,
   DEFAULT_DOCK,
@@ -328,6 +334,9 @@ export default function App() {
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [showCreatorImport, setShowCreatorImport] = useState(false);
   const [permissionReviews, setPermissionReviews] = useState<PermissionReview[]>([]);
+  const [roomOrphanResources, setRoomOrphanResources] = useState<string[]>([]);
+  const [roomRecoveryDir, setRoomRecoveryDir] = useState<string | null>(null);
+  const [roomRepairBusy, setRoomRepairBusy] = useState(false);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
@@ -372,6 +381,11 @@ export default function App() {
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const activeRoomPolicy = roomContractPolicy(roomVersion);
+  const activeRoomAudit: RoomEditAudit = {
+    permissionReviews,
+    orphanWidgetResources: roomOrphanResources,
+  };
+  const roomIntegrityReason = roomIntegrityBlockReason(activeRoomAudit);
 
   function buildRoomV2(sourceDesks: Desk[] = desks) {
     return serializeRoomV2({
@@ -450,8 +464,8 @@ export default function App() {
   }
 
   async function openRoom(path: string, checkDirty = true) {
-    historyReadyRef.current = false;
     if (!IS_TAURI) {
+      historyReadyRef.current = false;
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
       setRoomPath(path);
@@ -463,6 +477,8 @@ export default function App() {
       setEdges(seedEdges(MOCK_DESKS, true, 0));
       setDirty(false);
       setPermissionReviews([]);
+      setRoomOrphanResources([]);
+      setRoomRecoveryDir(null);
       setPast([]);
       setFuture([]);
       roomBaselineRef.current = "mock-v2";
@@ -479,6 +495,7 @@ export default function App() {
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
+      const audit = await invoke<RoomEditAudit>("inspect_room_for_edit", { path });
       const baseline = normalizeRoomJson(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
         ? room.desks.map(cleanDesk)
@@ -495,6 +512,8 @@ export default function App() {
           return parsed ? [[key, parsed]] : [];
         })
       );
+      const restored = await loadEditorHistory(path, baseline).catch(() => null);
+      historyReadyRef.current = false;
       setDesks(nextDesks);
       setDock(room.dock ? { ...DEFAULT_DOCK, ...room.dock } : DEFAULT_DOCK);
       setTransition(cleanTransition(room.switch) ?? "slide");
@@ -506,13 +525,14 @@ export default function App() {
       setStartDesk(nextStartDesk);
       setEdges(seedEdges(nextDesks, true, nextStartDesk, nextSwitches));
       setRoomVersion(typeof room.version === "number" ? room.version : null);
-      if (room.version !== 2) setShowPreview(false);
+      if (room.version !== 2 || audit.orphanWidgetResources.length) setShowPreview(false);
       setActiveDesk(nextStartDesk);
       setRoomPath(path);
       setDirty(false);
-      setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path }));
+      setPermissionReviews(audit.permissionReviews);
+      setRoomOrphanResources(audit.orphanWidgetResources);
+      setRoomRecoveryDir(null);
       roomBaselineRef.current = baseline;
-      const restored = await loadEditorHistory(path, baseline).catch(() => null);
       if (restored) {
         applySnapshot(restored.current);
         setPast(restored.past.map(cloneEditorSnapshot));
@@ -526,9 +546,7 @@ export default function App() {
       localStorage.setItem("dext.roomPath", path);
       setStatus(
         room.version === 2
-          ? restored?.dirty
-            ? `已恢复 ${path.split("\\").pop()} 的未保存草稿和撤销历史`
-            : `已打开 ${path.split("\\").pop()}`
+          ? roomOpenStatus(path.split(/[\\/]/).filter(Boolean).pop() ?? "Room", audit, Boolean(restored?.dirty))
           : readOnlyRoomMessage(room.version)
       );
       return true;
@@ -544,6 +562,10 @@ export default function App() {
 
   async function saveRoom(): Promise<boolean> {
     if (!roomPath) return false;
+    if (roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return false;
+    }
     if (!activeRoomPolicy.save) {
       setStatus(readOnlyRoomMessage(roomVersion));
       return false;
@@ -564,8 +586,31 @@ export default function App() {
     }
   }
 
+  async function recoverRoomOrphans() {
+    if (!IS_TAURI || !roomPath || roomRepairBusy || !roomOrphanResources.length) return;
+    setRoomRepairBusy(true);
+    try {
+      const recovery = await invoke<RoomOrphanRecovery>("quarantine_room_orphan_resources", {
+        path: roomPath,
+      });
+      const audit = await invoke<RoomEditAudit>("inspect_room_for_edit", { path: roomPath });
+      setPermissionReviews(audit.permissionReviews);
+      setRoomOrphanResources(audit.orphanWidgetResources);
+      setRoomRecoveryDir(recovery.recoveryDir);
+      setStatus(`已把 ${recovery.moved.length} 个未声明资源移至恢复目录；当前编辑内容已保留`);
+    } catch (error) {
+      setStatus(`Room 资源恢复失败：${String(error)}`);
+    } finally {
+      setRoomRepairBusy(false);
+    }
+  }
+
   async function applyRoomDir(dir: string) {
     if (roomOperationRef.current || roomBusy) return;
+    if (dir === roomPath && roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return;
+    }
     const target = rooms.find((room) => room.path === dir);
     if (target && !roomContractPolicy(target.version).apply) {
       setStatus(readOnlyRoomMessage(target.version));
@@ -613,6 +658,10 @@ export default function App() {
       setStatus(readOnlyRoomMessage(roomVersion));
       return;
     }
+    if (roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return;
+    }
     setStatus("saving...");
     if (dirty && !(await saveRoom())) return;
     await applyRoomDir(roomPath);
@@ -643,6 +692,10 @@ export default function App() {
 
   async function setSubjectPermission(subjectId: string, approved: boolean) {
     if (!roomPath || !IS_TAURI) return;
+    if (roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return;
+    }
     if (dirty && !(await saveRoom())) return;
     try {
       const reviews = await invoke<PermissionReview[]>("set_subject_permission", {
@@ -740,6 +793,10 @@ export default function App() {
       setStatus(readOnlyRoomMessage(roomVersion));
       return;
     }
+    if (roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return;
+    }
     const name = prompt("另存为（建议英文）");
     if (!name) return;
     try {
@@ -765,7 +822,7 @@ export default function App() {
   }
 
   function postRoom() {
-    if (!roomPath || !activeRoomPolicy.preview) return;
+    if (!roomPath || !activeRoomPolicy.preview || roomIntegrityReason) return;
     const roomName = roomPath.split(/[\\/]/).filter(Boolean).pop();
     if (!roomName) return;
     for (const frame of [previewRef.current, fullscreenPreviewRef.current]) {
@@ -1251,6 +1308,10 @@ export default function App() {
   }
   async function exportRooms(paths: string[]) {
     if (!IS_TAURI || !paths.length) return;
+    if (roomPath && paths.includes(roomPath) && roomIntegrityReason) {
+      setStatus(roomIntegrityReason);
+      return;
+    }
     const items = paths.map((path) => rooms.find((room) => room.path === path)).filter(Boolean) as RoomInfo[];
     if (!items.length) return;
     const readOnly = items.find((room) => !roomContractPolicy(room.version).zip);
@@ -1565,8 +1626,8 @@ export default function App() {
         coreIdentityError={coreIdentityError}
         status={status}
         showPreview={showPreview}
-        canPreview={activeRoomPolicy.preview}
-        previewDisabledReason={!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined}
+        canPreview={activeRoomPolicy.preview && !roomIntegrityReason}
+        previewDisabledReason={roomIntegrityReason ?? (!activeRoomPolicy.preview ? readOnlyRoomMessage(roomVersion) : undefined)}
         onTogglePreview={() => {
           setShowPreview((value) => !value);
           if (!showPreview) setEditNav("room");
@@ -1633,7 +1694,7 @@ export default function App() {
           />
           {/* content: library / room(preview) */}
           <section className="flex min-h-0 min-w-0 flex-1 flex-col p-4">
-            {showPreview && activeRoomPolicy.preview ? (
+            {showPreview && activeRoomPolicy.preview && !roomIntegrityReason ? (
               <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto">
                 <iframe
                   ref={previewRef}
@@ -1692,7 +1753,10 @@ export default function App() {
                   editorView={editorView}
                   canUndo={past.length > 0}
                   canRedo={future.length > 0}
-                  canApply={!IS_TAURI || Boolean(coreIdentity)}
+                  canSave={!roomIntegrityReason}
+                  saveDisabledReason={roomIntegrityReason ?? undefined}
+                  canApply={(!IS_TAURI || Boolean(coreIdentity)) && !roomIntegrityReason}
+                  applyDisabledReason={roomIntegrityReason ?? (IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined)}
                   canDeleteDesk={desks.length > 1 && Boolean(desks[activeDesk])}
                   onBack={() => setRoomEntered(false)}
                   onView={setEditorView}
@@ -1718,6 +1782,34 @@ export default function App() {
                     if (current && confirm(`删除「${current.name}」？此操作可用撤销恢复。`)) removeDesk(activeDesk);
                   }}
                 />
+                {roomOrphanResources.length > 0 && (
+                  <div role="alert" className="rounded-lg border border-amber-500/45 bg-amber-500/10 px-4 py-3 text-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-amber-700 dark:text-amber-300">Room 中有未声明的 Widget 资源</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          你可以继续查看和编辑；保存、预览、应用和导出会被阻止，直到这些文件移至恢复目录。
+                        </p>
+                        <ul className="mt-2 max-h-24 list-inside list-disc overflow-auto font-mono text-xs">
+                          {roomOrphanResources.map((resource) => <li key={resource}>{resource}</li>)}
+                        </ul>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={roomRepairBusy}
+                        onClick={() => void recoverRoomOrphans()}
+                      >
+                        {roomRepairBusy ? "正在移至恢复目录…" : "移至恢复目录并继续"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {!roomOrphanResources.length && roomRecoveryDir && (
+                  <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+                    未声明资源已安全移出；恢复副本：<span className="font-mono">{roomRecoveryDir}</span>
+                  </div>
+                )}
                 <div className="flex min-h-0 flex-1 gap-3">
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 {editorView === "dock" ? (
