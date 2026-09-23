@@ -3370,6 +3370,23 @@ mod tests {
     }
 
     #[test]
+    fn orphan_recovery_failure_keeps_room_resources_untouched() {
+        let root = test_dir("room-edit-orphan-recovery-failure");
+        let room_dir = root.join("room");
+        let blocked_recovery_root = root.join("recovery-file");
+        write_valid_v2_room(&room_dir);
+        let orphan = room_dir.join("widgets/system-meter/orphan.js");
+        std::fs::write(&orphan, b"keep me").unwrap();
+        std::fs::write(&blocked_recovery_root, b"not a directory").unwrap();
+
+        assert!(quarantine_room_orphan_resources_at(&room_dir, &blocked_recovery_root).is_err());
+        assert_eq!(std::fs::read(&orphan).unwrap(), b"keep me");
+        assert!(room_dir.join("widgets/system-meter/index.html").is_file());
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn accepts_only_native_v2_rooms() {
         let v1 = serde_json::json!({
             "version":1,"startDesk":0,"switches":{},

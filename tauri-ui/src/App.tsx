@@ -551,7 +551,7 @@ export default function App() {
       );
       return true;
     } catch (e) {
-      setStatus(`error: ${e}`);
+      setStatus(`无法打开 Room：${String(e)}`);
       return false;
     }
   }
