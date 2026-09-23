@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-09-11。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-09-23。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -194,6 +194,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_installed_apps` | `→ AppInfo[]`（含 48px 图标 base64） | 开始菜单枚举 |
 | `launch_app` | `(target, arguments, working_dir)` | 走 RPC 启动 |
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
+| `core_identity` / `start_core` / `exit_core` | `→ CoreIdentity` / `→ CoreIdentity` / `→ ()` | 轮询当前配置器所属 Core 的验证身份；从同一构建启动并等待就绪，或经 RPC 正常退出 Core，配置器保留 |
 | `list_rooms` | `(dir) → {name,path,desks,icons,version,widgets}[]` | 扫房间库；识别版本并统计 Widget，不执行 Widget |
 | `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
 | `sync_active_desk_icons` | `(library_dir, room_dir, desk_index, icons, enter_edit, highlight_target?) → {active,saved,liveUpdated,roomJson?,liveError?}` | 仅库内、来源戳匹配的当前 Room 可写；原子更新源 Room 与运行包并发送布局消息，运行时失败仍保留源文件保存结果 |

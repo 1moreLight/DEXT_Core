@@ -1,8 +1,8 @@
 # CORE-006 配置器 Core 启动与退出验收
 
-- 状态：待用户验收
+- 状态：已通过（2026-09-23）
 - 分支：`feat/CORE-006-core-runtime-control`
-- 提交：见本工作分支 HEAD
+- 实现提交：`b2dfc65`；快进合入 master
 - 目标：配置器保留运行时，可以在连接状态旁正常退出并重新启动所属 Dext Core。
 - 范围外：壁纸暂停按钮、自动重启、安装器重构、Room 和桌面交互改动。
 
@@ -15,10 +15,10 @@
 
 ## 人工验收
 
-1. [ ] 从本 worktree 启动配置器和 Core，确认顶栏显示“Dext Core 已连接”和“退出 Core”，使用页的已应用 Room 正常显示。
-2. [ ] 点击“退出 Core”，确认 Core、Player、Watchdog 退出，配置器不关闭；顶栏变为“Dext Core 未运行”和“启动 Core”，依赖 Core 的应用入口不可用。
-3. [ ] 点击“启动 Core”，确认按钮显示启动中且不可重复点击；最终连接的是同一 worktree 的 Dext Core，顶栏恢复“已连接/退出 Core”，上次壁纸布局恢复。
-4. [ ] 再做一次退出→启动循环，并在 Core 已运行时重新打开配置器，确认没有重复 Core 进程或卡住的按钮。
+1. [x] 从本 worktree 启动配置器和 Core，确认顶栏显示“Dext Core 已连接”和“退出 Core”，使用页的已应用 Room 正常显示。
+2. [x] 点击“退出 Core”，确认 Core、Player、Watchdog 退出，配置器不关闭；顶栏变为“Dext Core 未运行”和“启动 Core”，依赖 Core 的应用入口不可用。
+3. [x] 点击“启动 Core”，确认按钮显示启动中且不可重复点击；最终连接的是同一 worktree 的 Dext Core，顶栏恢复“已连接/退出 Core”，上次壁纸布局恢复。
+4. [x] 再做一次退出→启动循环，并在 Core 已运行时重新打开配置器，确认没有重复 Core 进程或卡住的按钮。
 
 ## 通过标准
 
@@ -29,4 +29,5 @@
 - 本轮自测已完成两轮退出→启动，配置器始终保留；Core/Watchdog/Player 退出与恢复均经 `scripts/verify-runtime-identity.ps1` 核对，最终 Core PID 78316、配置器 PID 87656，均属 CORE-006 worktree。
 - Core 按既有持久化布局恢复了指向 `desk-reorder-002` worktree 的壁纸 URL；没有强制重铺或修改用户 Room/布局数据。
 - 跨 worktree 身份拒绝由 Rust 回归覆盖，未在真实桌面启动另一工作区 Core。
-- 待用户按四项步骤确认；确认前不合并 master。
+- 用户于 2026-09-23 回复“验收通过 合并进去吧”，明确确认本工作包通过并授权合并。
+- master 快进合入实现提交 `b2dfc65`；合并后 Vitest 62/62、Rust 48 通过/3 忽略、前端 build 与 cargo check 均通过。

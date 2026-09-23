@@ -339,3 +339,7 @@
 ## DESK-REORDER-002（2026-09-23 验收归档摘要）
 
 在已修复的旧直接拖动输入上增加路径插入和同伴 FLIP，让拖起图标继续原生跟手、沿途图标实时让位、无效区域整体回滚，并保留 Widget/Dock 障碍、五项图标偏好与 reduced-motion。用户在真实 WorkerW 验收后回复“好样的 合并上去”；实现与验收记录快进合入 master `23aa845`。合并后 Vitest 57/57、Rust 43/43、Node 27/27、前端构建、Room Schema 与 Renderer Playwright 55/55 通过，用户 Room/背景/Widget 数据哈希未变。详细步骤见 `acceptance/DESK-REORDER-002-stable-sortable.md`。
+
+## CORE-006（2026-09-23 验收归档摘要）
+
+配置器连接状态旁加入“启动 Core / 退出 Core”；后端限定当前配置器所属 Dext 可执行文件，验证产品身份和进程路径，等待桌面就绪并正常退出 Core，配置器继续可用。真实桌面完成两轮退出→启动；缺失 Core 文件时保留重试入口，恢复文件后可重新启动。用户回复“验收通过 合并进去吧”；实现 `b2dfc65` 快进合入 master。合并后 Vitest 62/62、Rust 48 通过/3 忽略、前端构建及 cargo check 通过。详细步骤见 `acceptance/CORE-006-core-runtime-control.md`；UI-008 仍为唯一下一项。
