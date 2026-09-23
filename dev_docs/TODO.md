@@ -977,3 +977,18 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] master 已合并 `4fd2986`；合并后 Vitest 55/55、布局/动画 Node 20/20、语法检查通过，既有用户数据哈希一致。
 - [x] DESK-PREFS-001 当前轮归档摘要见 `TODO-archive.md`；上述旧未勾选项仅保留历史，不作为下一工作包任务。
 - [ ] 清理延后：prefs 工作区仍运行且有用户未提交 Room 布局。不得强制删除；退出运行、安置数据后再清理。
+
+## CONFIG-EDIT-001 配置器 Room 打开与可恢复修复（2026-09-23）
+
+> 目标：配置器点击“编辑”时原子地完成 Room 检查；对未声明 Widget 孤儿资源给出可见说明和可恢复清理入口，不再静默停留在使用页。
+> 范围外：不放宽预览/应用/导出安全校验，不修改 Room Schema，不实现桌面 reorder，不操作正在运行的旧 PREFS worktree。
+> 人工验收：见 `dev_docs/acceptance/CONFIG-EDIT-001-room-open-recovery.md`。
+
+- [x] 从 master 创建独立 worktree 与 `fix/CONFIG-EDIT-001-room-open-recovery` 分支；基线 Vitest 55/55（2026-09-23）
+- [x] 根因确认：当前 Room 声明 0 个 Widget，但磁盘残留 `widgets/clock-hardware/*`；严格权限检查拒绝，前端又在 await 前写部分状态并吞掉错误，形成“编辑无反应”（2026-09-23）
+- [x] 固化设计、实施计划和独立验收卡；DESK-REORDER-002 排到本包验收合并之后同步（2026-09-23）
+- [ ] TDD：后端拆分“声明资源安全校验”和“孤儿资源审计”，编辑检查返回结构化结果，发布链仍严格
+- [ ] TDD：显式修复把孤儿资源复制到 Dext 恢复目录并从 Room 移除；失败时不声称完成，不永久删除
+- [ ] TDD：前端原子打开、可见错误/警告、修复按钮与预览/应用/保存守卫
+- [ ] 完整自动检查、差异复核、提交工作分支并停在人工待验收
+- [ ] 用户按独立验收卡确认；通过前不合并 master，也不开始 reorder 的 master 同步
