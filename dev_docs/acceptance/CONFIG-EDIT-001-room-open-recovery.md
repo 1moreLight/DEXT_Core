@@ -1,16 +1,16 @@
 # CONFIG-EDIT-001 配置器 Room 打开与可恢复修复验收
 
-状态：开发中，未合并 master。
+状态：自动检查通过，待真实配置器人工验收；未合并 master。
 
 ## 自动检查
 
-- [ ] Rust：编辑审计区分可修复孤儿与致命资源错误。
-- [ ] Rust：恢复操作保留相对路径、只处理孤儿且不永久删除。
-- [ ] Vitest：原子打开、守卫文案与恢复状态。
-- [ ] `npm test`
-- [ ] `npm run build`
-- [ ] `cargo test`
-- [ ] `git diff --check`
+- [x] Rust：编辑审计区分可修复孤儿与致命资源错误。
+- [x] Rust：恢复操作保留相对路径、只处理孤儿且不永久删除。
+- [x] Vitest：审计状态、守卫文案与恢复状态。
+- [x] `npm test`（57/57）
+- [x] `npm run build`
+- [x] `cargo test --lib`（43 通过、3 个真实环境测试按设计忽略）
+- [x] `git diff --check`
 
 ## 人工验收
 

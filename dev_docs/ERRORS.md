@@ -108,6 +108,7 @@
 | #101 | 保留旧拖动函数却删除唯一绑定调用，会形成看似可回退、实际永远不执行的死代码 | [renderer](errors/renderer.md) |
 | #102 | 图标实验台重定义共享间距 CSS，造成真实桌面和实验台使用不同档位几何 | [renderer](errors/renderer.md) |
 | #103 | Core 把鼠标移动的按键状态写成 0x20（侧键），破坏 WebView2 pointer capture；前端取消会放大旧输入错误 | [backend](errors/backend.md) |
+| #104 | 配置器在异步 Room 审计完成前写编辑状态，严格校验失败后表现为“编辑无反应” | [frontend](errors/frontend.md) |
 
 ## 分册
 
