@@ -1,6 +1,6 @@
 # DESK-REORDER-002 稳定输入上的路径重排验收
 
-- 状态：用户于 2026-09-23 明确验收通过并要求合并 master。
+- 状态：用户于 2026-09-23 明确验收通过；已合入 master `23aa845`。
 - 基线：最新 master `436080e`（含已验收的 CONFIG-EDIT-001）；本分支已完成 rebase。
 - 分支：`feat/DESK-REORDER-002-stable-sortable`。
 - 目标：不替换旧直接拖动，追加实时路径插入和同伴让位动画。
@@ -36,3 +36,5 @@
 2026-09-23 真实桌面已就绪：忽略测试 `applies_room_wallpaper` 通过并完成强制重铺；运行身份核对为 Core PID 74152、Player PID 27812、配置器 PID 86844，三个可执行文件及 Player 的 `wallpaper-url` 全部来自 `D:\use\Orca\DEXT\DEXT_Core-desk-reorder-002`。当前只剩上述七项人工验收，用户确认前不合并 master。
 
 2026-09-23 用户回复“好样的 合并上去”，确认本验收卡通过并授权合入 master。
+
+2026-09-23 快进合入 master `23aa845`；合并前后用户 Room、背景和 Widget 文件哈希一致。合并后 Vitest 57/57、Rust 43/43（3 个真实环境测试按设计忽略）、Node 27/27、前端构建、Room Schema 与 Renderer Playwright 55/55 全部通过。主工作区缺少 Playwright 本地依赖时曾由全局旧 CLI 返回 `unknown command 'test'`；执行锁文件一致的 `npm ci` 后恢复，未产生源码改动。

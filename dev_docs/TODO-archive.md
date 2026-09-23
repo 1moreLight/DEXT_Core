@@ -335,3 +335,7 @@
 ## CONFIG-EDIT-001（2026-09-23 验收归档摘要）
 
 配置器 Room 打开改为异步审计完成后原子提交状态；未声明 Widget 文件以受限编辑和可恢复隔离处理，缺失声明资源与保存/预览/应用/导出仍保持严格。Vitest 57/57、Rust 43 项通过（3 个真实环境测试按设计忽略）、前端构建与真实运行身份核对通过。用户于 2026-09-23 回复“ok验收通过下一步”；详细步骤与结果见 `acceptance/CONFIG-EDIT-001-room-open-recovery.md`。
+
+## DESK-REORDER-002（2026-09-23 验收归档摘要）
+
+在已修复的旧直接拖动输入上增加路径插入和同伴 FLIP，让拖起图标继续原生跟手、沿途图标实时让位、无效区域整体回滚，并保留 Widget/Dock 障碍、五项图标偏好与 reduced-motion。用户在真实 WorkerW 验收后回复“好样的 合并上去”；实现与验收记录快进合入 master `23aa845`。合并后 Vitest 57/57、Rust 43/43、Node 27/27、前端构建、Room Schema 与 Renderer Playwright 55/55 通过，用户 Room/背景/Widget 数据哈希未变。详细步骤见 `acceptance/DESK-REORDER-002-stable-sortable.md`。

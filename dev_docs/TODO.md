@@ -1014,3 +1014,5 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 重放后复跑：Vitest 57/57、Rust 43 通过/3 个真实环境测试忽略、前端 build、Renderer Playwright 55/55、Node 27/27、Room Schema 与 `git diff --check` 全部通过（2026-09-23）。
 - [x] 从本 worktree 启动 Core/配置器并强制重铺真实桌面；身份核对通过：Core PID 74152、Player PID 27812、配置器 PID 86844 均来自 `DEXT_Core-desk-reorder-002`，Player URL 指向本 worktree 的真实 `dext-room/index.html`（2026-09-23）。
 - [x] 用户按验收卡实测并明确回复通过（2026-09-23）；进入 master 合并与合并后回归。
+- [x] 快进合入 master `23aa845`；合并前后用户 Room/背景/Widget 数据哈希一致，合并后 Vitest 57/57、Rust 43/43、Node 27/27、构建、Room Schema 与 Renderer Playwright 55/55 通过（2026-09-23）。
+- [x] 当前轮摘要归档到 `TODO-archive.md`；UI-008 提升为唯一下一项。验收 worktree 因仍运行且含未提交桌面数据而保留，不强制清理。
