@@ -994,7 +994,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 从本 worktree 启动真实 Core 与配置器并核对路径：Core PID 85864、配置器 PID 79972 均来自 `config-edit-001`；持久化桌面 Player 仍加载旧 PREFS 壁纸，未强制重铺（2026-09-23）
 - [x] 用户于 2026-09-23 回复“ok验收通过下一步”，确认 CONFIG-EDIT-001 通过并进入 master 合并；reorder 在合并后同步
 
-### DESK-REORDER-002 稳定输入上的路径重排（2026-09-22，仅规划）
+### DESK-REORDER-002 稳定输入上的路径重排（2026-09-22，待真实桌面验收）
 
 目标：在 master 已修复输入的旧直接拖动上追加路径排序，不再更换输入入口。范围外：Core 重写、Widget 手势、Room Schema、新偏好。人工步骤见本包独立验收卡七项。
 
@@ -1010,3 +1010,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] Task 5 真实 WorkerW 人工验收：先退出旧 prefs worktree 运行实例，再从本 worktree 启动、强制重铺与核对绝对路径；按验收卡七项实测，通过前不合并 master。
 - [x] 最终复核修复旧 Glyph 图标被补入空 `launch` 的 Schema 风险；Node 27/27、Renderer Playwright 55/55、隔离 Player 十轮 Room 拖动和保存形状检查均通过（2026-09-23）。
 - [x] 实施后自动检查完成，提交并停在真实桌面待验收；用户通过后才合并。
+- [x] CONFIG-EDIT-001 验收合入 master `436080e` 后，将本分支 rebase 到最新主线；保留配置器原子打开修复与本包 `highlightTarget: null`（2026-09-23）。
+- [x] 重放后复跑：Vitest 57/57、Rust 43 通过/3 个真实环境测试忽略、前端 build、Renderer Playwright 55/55、Node 27/27、Room Schema 与 `git diff --check` 全部通过（2026-09-23）。
+- [ ] 从本 worktree 启动 Core/配置器、强制重铺真实桌面并核对 Core/Player/配置器绝对路径后，交用户按验收卡七项实测。

@@ -7,8 +7,8 @@
 
 | 角色 | 工作包 | 状态 | 分支 | 结果 |
 |---|---|---|---|---|
-| 最近完成 | **CONFIG-EDIT-001 配置器 Room 打开与可恢复修复** | 用户于 2026-09-23 验收通过；随本分支合入 master | `fix/CONFIG-EDIT-001-room-open-recovery` | “编辑”不再静默无响应；孤儿 Widget 资源可进入受限编辑并安全移入恢复目录；发布链继续严格 |
-| 当前工作包 | **DESK-REORDER-002 稳定输入上的路径重排** | 代码与隔离 Player 回归通过；正在同步最新 master 并重做真实 WorkerW 验收 | `feat/DESK-REORDER-002-stable-sortable` | 旧直接拖动接纯排序事务和同伴 FLIP；必须从该 worktree 重铺并核对 Player 路径，用户确认前不合并 |
+| 最近完成 | **CONFIG-EDIT-001 配置器 Room 打开与可恢复修复** | 用户于 2026-09-23 验收通过；已合入 master `436080e` | master | “编辑”不再静默无响应；孤儿 Widget 资源可进入受限编辑并安全移入恢复目录；发布链继续严格 |
+| 当前工作包 | **DESK-REORDER-002 稳定输入上的路径重排** | 已同步最新 master，自动回归通过；正在重做真实 WorkerW 验收 | `feat/DESK-REORDER-002-stable-sortable` | 旧直接拖动接纯排序事务和同伴 FLIP；必须从该 worktree 重铺并核对 Player 路径，用户确认前不合并 |
 | 最近合入 | **DESK-PREFS-001 五项桌面图标偏好真实生效** | 用户授权合入，清理延后 | master merge `4fd2986`，输入修复 `3c42552` | 用户要求当前版本先合并；不补填未报告的逐项物理测试。合并后 Vitest 55/55、布局/动画 Node 20/20 通过；用户数据哈希未变。prefs worktree 仍运行且有未提交布局，暂不删除 |
 | 历史 | **DESK-MOTION-001 桌面自动重排动画** | 保留成果随偏好分支合入，旧生产控制器已回退 | 原分支保留，不再次整体合并 | 浏览器实验与动画模块保留；生产仍为 attachPress → startDrag，不能恢复失败控制器冒充排序修复 |
 | 历史 | **DESK-ICON-001 桌面图标反馈与命中区优化** | 保留成果由 DESK-PREFS-001 收口 | 原分支保留，不再次整体合并 | 五项偏好已由 PREFS 接入真实桌面；旧验收卡仅作历史记录 |

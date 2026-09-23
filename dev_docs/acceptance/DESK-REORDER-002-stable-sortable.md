@@ -1,7 +1,7 @@
 # DESK-REORDER-002 稳定输入上的路径重排验收
 
 - 状态：自动检查通过，分支待真实桌面人工验收；用户确认前不合并 master。
-- 基线：master 产品合并 `4fd2986`，输入修复 `3c42552`，收尾文档 `23da621`。
+- 基线：最新 master `436080e`（含已验收的 CONFIG-EDIT-001）；本分支已完成 rebase。
 - 分支：`feat/DESK-REORDER-002-stable-sortable`。
 - 目标：不替换旧直接拖动，追加实时路径插入和同伴让位动画。
 - 范围外：Core 输入重写、Widget 手势重做、Room Schema、新设置、整体恢复旧排序分支。
@@ -30,3 +30,5 @@
 本轮只确认计划，不把 master 当前版本的合并授权视为本包验收。七项人工检查及必选自动检查通过后，由用户明确回复通过才合并；不清理仍运行或有未提交用户数据的工作区。
 
 2026-09-23 自动验证：`scripts/build.ps1` 已在此 worktree 构建 Release Player；`dotnet run --project tests/Dext.Input.Tests -- <本分支 Release Player>` 完整通过，含十次实际 Room 两段式拖动，并验证旧 Glyph 图标排序保存后不会被补入非法空 `launch`。Vitest 55/55、前端 build、Renderer Playwright 全量 55/55；Node 27/27。`scripts/validate-room-schema.py` 全部 fixture 通过。`verify-runtime-identity.ps1` 报告实际 Core/Player/配置器仍来自 `DEXT_Core-desk-prefs-001`（返回码 1 表示非本 worktree），所以尚未进行本包 WorkerW 实机验收。
+
+2026-09-23 最新主线重放验证：CONFIG-EDIT-001 合入 master 后，本分支 rebase 到 `436080e`；Vitest 57/57、Rust 43 通过/3 个真实环境测试按设计忽略、前端 build、Renderer Playwright 55/55、Node 27/27、Room Schema 与 `git diff --check` 全部通过。下一步只从本 worktree 启动并重铺真实 WorkerW，不使用旧 worktree 进程冒充验收。
