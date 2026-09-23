@@ -32,3 +32,5 @@
 2026-09-23 自动验证：`scripts/build.ps1` 已在此 worktree 构建 Release Player；`dotnet run --project tests/Dext.Input.Tests -- <本分支 Release Player>` 完整通过，含十次实际 Room 两段式拖动，并验证旧 Glyph 图标排序保存后不会被补入非法空 `launch`。Vitest 55/55、前端 build、Renderer Playwright 全量 55/55；Node 27/27。`scripts/validate-room-schema.py` 全部 fixture 通过。`verify-runtime-identity.ps1` 报告实际 Core/Player/配置器仍来自 `DEXT_Core-desk-prefs-001`（返回码 1 表示非本 worktree），所以尚未进行本包 WorkerW 实机验收。
 
 2026-09-23 最新主线重放验证：CONFIG-EDIT-001 合入 master 后，本分支 rebase 到 `436080e`；Vitest 57/57、Rust 43 通过/3 个真实环境测试按设计忽略、前端 build、Renderer Playwright 55/55、Node 27/27、Room Schema 与 `git diff --check` 全部通过。下一步只从本 worktree 启动并重铺真实 WorkerW，不使用旧 worktree 进程冒充验收。
+
+2026-09-23 真实桌面已就绪：忽略测试 `applies_room_wallpaper` 通过并完成强制重铺；运行身份核对为 Core PID 74152、Player PID 27812、配置器 PID 86844，三个可执行文件及 Player 的 `wallpaper-url` 全部来自 `D:\use\Orca\DEXT\DEXT_Core-desk-reorder-002`。当前只剩上述七项人工验收，用户确认前不合并 master。

@@ -1007,9 +1007,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task 3：旧 startDrag 保留 pointer capture 与逐帧跟手，事务预览从手势基线计算；跨格路径插入、无效释放、热更新和一次保存经真实 Room Playwright 验证。
 - [x] Task 4：同伴节点 WAAPI 280ms，让拖动节点不归动画层管理；快速折返与 reduced-motion 测试通过。新增位置高亮已移除，名称仍静止。
 - [x] Task 5 自动部分：新 worktree Release Player 构建通过；原生消息十轮和真实 Room 原生拖动十轮通过，Vitest 55/55、前端 build、Renderer Playwright、Node、语法与 diff 检查通过。未重铺运行桌面。
-- [ ] Task 5 真实 WorkerW 人工验收：先退出旧 prefs worktree 运行实例，再从本 worktree 启动、强制重铺与核对绝对路径；按验收卡七项实测，通过前不合并 master。
+- [ ] Task 5 真实 WorkerW 人工验收：已从本 worktree 启动、强制重铺并核对绝对路径；等待用户按验收卡七项实测，通过前不合并 master。
 - [x] 最终复核修复旧 Glyph 图标被补入空 `launch` 的 Schema 风险；Node 27/27、Renderer Playwright 55/55、隔离 Player 十轮 Room 拖动和保存形状检查均通过（2026-09-23）。
 - [x] 实施后自动检查完成，提交并停在真实桌面待验收；用户通过后才合并。
 - [x] CONFIG-EDIT-001 验收合入 master `436080e` 后，将本分支 rebase 到最新主线；保留配置器原子打开修复与本包 `highlightTarget: null`（2026-09-23）。
 - [x] 重放后复跑：Vitest 57/57、Rust 43 通过/3 个真实环境测试忽略、前端 build、Renderer Playwright 55/55、Node 27/27、Room Schema 与 `git diff --check` 全部通过（2026-09-23）。
-- [ ] 从本 worktree 启动 Core/配置器、强制重铺真实桌面并核对 Core/Player/配置器绝对路径后，交用户按验收卡七项实测。
+- [x] 从本 worktree 启动 Core/配置器并强制重铺真实桌面；身份核对通过：Core PID 74152、Player PID 27812、配置器 PID 86844 均来自 `DEXT_Core-desk-reorder-002`，Player URL 指向本 worktree 的真实 `dext-room/index.html`（2026-09-23）。
+- [ ] 用户按验收卡七项实测并明确回复通过。
