@@ -1,5 +1,5 @@
-mod grpc;
 mod creator;
+mod grpc;
 
 use tauri::Manager;
 
@@ -199,7 +199,7 @@ struct RoomPermissionGrant {
     subjects: std::collections::BTreeMap<String, Vec<String>>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct PermissionReview {
     id: String,
@@ -209,30 +209,57 @@ struct PermissionReview {
     current: bool,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RoomEditAudit {
+    permission_reviews: Vec<PermissionReview>,
+    orphan_widget_resources: Vec<String>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RoomOrphanRecovery {
+    recovery_dir: String,
+    moved: Vec<String>,
+}
+
 fn permission_store_path() -> std::path::PathBuf {
     grpc::local_app_data_path().join("permissions-v1.json")
 }
 
 fn normalized_room_path(path: &std::path::Path) -> Result<(std::path::PathBuf, String), String> {
-    let candidate = if path.is_dir() { path.join("room.json") } else { path.to_path_buf() };
-    if candidate.file_name().and_then(|name| name.to_str()) != Some("room.json") || !candidate.is_file() {
+    let candidate = if path.is_dir() {
+        path.join("room.json")
+    } else {
+        path.to_path_buf()
+    };
+    if candidate.file_name().and_then(|name| name.to_str()) != Some("room.json")
+        || !candidate.is_file()
+    {
         return Err("permission target must be an existing room.json".into());
     }
     let canonical = candidate
         .canonicalize()
         .map_err(|error| format!("resolve permission target failed: {error}"))?;
-    let normalized = canonical.to_string_lossy().replace('\\', "/").to_lowercase();
+    let normalized = canonical
+        .to_string_lossy()
+        .replace('\\', "/")
+        .to_lowercase();
     Ok((canonical, normalized))
 }
 
 fn room_fingerprint(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
-    Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 fn permission_subjects(room: &serde_json::Value) -> Vec<(String, String, Vec<String>)> {
     let permissions = |value: &serde_json::Value| {
-        value.get("permissions")
+        value
+            .get("permissions")
             .and_then(|item| item.as_array())
             .into_iter()
             .flatten()
@@ -242,25 +269,41 @@ fn permission_subjects(room: &serde_json::Value) -> Vec<(String, String, Vec<Str
     let mut subjects = Vec::new();
     for key in ["start", "idle"] {
         if let Some(content) = room.get(key).filter(|item| item.is_object()) {
-            subjects.push((format!("scene:{key}"), format!("{} Scene", if key == "start" { "启动" } else { "待机" }), permissions(content)));
+            subjects.push((
+                format!("scene:{key}"),
+                format!("{} Scene", if key == "start" { "启动" } else { "待机" }),
+                permissions(content),
+            ));
         }
     }
     if let Some(switches) = room.get("switches").and_then(|item| item.as_object()) {
         for (route, content) in switches.iter().filter(|(_, item)| item.is_object()) {
-            subjects.push((format!("scene:switch:{route}"), format!("切换 {route} Scene"), permissions(content)));
+            subjects.push((
+                format!("scene:switch:{route}"),
+                format!("切换 {route} Scene"),
+                permissions(content),
+            ));
         }
     }
     if let Some(desks) = room.get("desks").and_then(|item| item.as_array()) {
         for (desk_index, desk) in desks.iter().enumerate() {
             if let Some(content) = desk.get("background").filter(|item| item.is_object()) {
-                subjects.push((format!("scene:desk:{desk_index}"), format!("Desk {} Scene", desk_index + 1), permissions(content)));
+                subjects.push((
+                    format!("scene:desk:{desk_index}"),
+                    format!("Desk {} Scene", desk_index + 1),
+                    permissions(content),
+                ));
             }
             if let Some(widgets) = desk.get("widgets").and_then(|item| item.as_array()) {
                 for widget in widgets {
                     if let Some(id) = widget.get("id").and_then(|item| item.as_str()) {
                         subjects.push((
                             format!("widget:{id}"),
-                            widget.get("name").and_then(|item| item.as_str()).unwrap_or(id).to_string(),
+                            widget
+                                .get("name")
+                                .and_then(|item| item.as_str())
+                                .unwrap_or(id)
+                                .to_string(),
                             permissions(widget),
                         ));
                     }
@@ -274,9 +317,13 @@ fn permission_subjects(room: &serde_json::Value) -> Vec<(String, String, Vec<Str
 fn read_permission_store() -> Result<PermissionStore, String> {
     let path = permission_store_path();
     if !path.is_file() {
-        return Ok(PermissionStore { version: 1, ..Default::default() });
+        return Ok(PermissionStore {
+            version: 1,
+            ..Default::default()
+        });
     }
-    let bytes = std::fs::read(&path).map_err(|error| format!("read permission store failed: {error}"))?;
+    let bytes =
+        std::fs::read(&path).map_err(|error| format!("read permission store failed: {error}"))?;
     let store: PermissionStore = serde_json::from_slice(&bytes)
         .map_err(|error| format!("parse permission store failed: {error}"))?;
     if store.version != 1 {
@@ -291,33 +338,88 @@ fn write_permission_store(store: &PermissionStore) -> Result<(), String> {
     atomic_write(&permission_store_path(), &bytes)
 }
 
+fn permission_reviews_for_room(
+    key: &str,
+    bytes: &[u8],
+    room: &serde_json::Value,
+) -> Result<Vec<PermissionReview>, String> {
+    let fingerprint = room_fingerprint(bytes);
+    let store = read_permission_store()?;
+    let grant = store
+        .rooms
+        .get(key)
+        .filter(|item| item.fingerprint == fingerprint);
+    Ok(permission_subjects(room)
+        .into_iter()
+        .map(|(id, label, declared)| {
+            let granted = grant
+                .and_then(|item| item.subjects.get(&id))
+                .cloned()
+                .unwrap_or_default();
+            PermissionReview {
+                id,
+                label,
+                declared,
+                granted,
+                current: grant.is_some(),
+            }
+        })
+        .collect())
+}
+
+fn inspect_room_for_edit_file(path: &std::path::Path) -> Result<RoomEditAudit, String> {
+    let (room_path, key) = normalized_room_path(path)?;
+    let bytes = std::fs::read(&room_path)
+        .map_err(|error| format!("read Room for editing failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse Room for editing failed: {error}"))?;
+    validate_room_contract(&room)?;
+    let room_dir = room_path
+        .parent()
+        .ok_or_else(|| "Room path has no parent directory".to_string())?;
+    validate_declared_room_asset_references(room_dir, &room)?;
+    let orphan_widget_resources = find_undeclared_widget_resources(room_dir, &room)?;
+    let permission_reviews = permission_reviews_for_room(&key, &bytes, &room)?;
+    Ok(RoomEditAudit {
+        permission_reviews,
+        orphan_widget_resources,
+    })
+}
+
+#[tauri::command]
+async fn inspect_room_for_edit(path: String) -> Result<RoomEditAudit, String> {
+    inspect_room_for_edit_file(std::path::Path::new(&path))
+}
+
 #[tauri::command]
 async fn get_permission_review(path: String) -> Result<Vec<PermissionReview>, String> {
     let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
-    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let bytes = std::fs::read(&room_path)
+        .map_err(|error| format!("read room permissions failed: {error}"))?;
     let room: serde_json::Value = serde_json::from_slice(&bytes)
         .map_err(|error| format!("parse room permissions failed: {error}"))?;
     validate_room_contract(&room)?;
     validate_room_asset_references(room_path.parent().unwrap(), &room)?;
-    let fingerprint = room_fingerprint(&bytes);
-    let store = read_permission_store()?;
-    let grant = store.rooms.get(&key).filter(|item| item.fingerprint == fingerprint);
-    Ok(permission_subjects(&room).into_iter().map(|(id, label, declared)| {
-        let granted = grant.and_then(|item| item.subjects.get(&id)).cloned().unwrap_or_default();
-        PermissionReview { id, label, declared, granted, current: grant.is_some() }
-    }).collect())
+    permission_reviews_for_room(&key, &bytes, &room)
 }
 
 #[tauri::command]
-async fn set_subject_permission(path: String, subject_id: String, approved: bool) -> Result<Vec<PermissionReview>, String> {
+async fn set_subject_permission(
+    path: String,
+    subject_id: String,
+    approved: bool,
+) -> Result<Vec<PermissionReview>, String> {
     let (room_path, key) = normalized_room_path(std::path::Path::new(&path))?;
-    let bytes = std::fs::read(&room_path).map_err(|error| format!("read room permissions failed: {error}"))?;
+    let bytes = std::fs::read(&room_path)
+        .map_err(|error| format!("read room permissions failed: {error}"))?;
     let room: serde_json::Value = serde_json::from_slice(&bytes)
         .map_err(|error| format!("parse room permissions failed: {error}"))?;
     validate_room_contract(&room)?;
     validate_room_asset_references(room_path.parent().unwrap(), &room)?;
     let subjects = permission_subjects(&room);
-    let declared = subjects.iter().find(|(id, _, _)| id == &subject_id)
+    let declared = subjects
+        .iter()
+        .find(|(id, _, _)| id == &subject_id)
         .map(|(_, _, permissions)| permissions.clone())
         .ok_or_else(|| "permission subject is not part of this Room".to_string())?;
     let fingerprint = room_fingerprint(&bytes);
@@ -535,7 +637,7 @@ fn direct_room_in_library(
     Ok(room)
 }
 
-fn validate_room_asset_references(
+fn validate_declared_room_asset_references(
     room_dir: &std::path::Path,
     room: &serde_json::Value,
 ) -> Result<(), String> {
@@ -596,14 +698,10 @@ fn validate_room_asset_references(
             ));
         }
     }
-    validate_room_contract(room)?;
-    validate_widget_resource_inventory(room_dir, room)
+    validate_room_contract(room)
 }
 
-fn validate_widget_resource_inventory(
-    room_dir: &std::path::Path,
-    room: &serde_json::Value,
-) -> Result<(), String> {
+fn declared_widget_resources(room: &serde_json::Value) -> std::collections::HashSet<String> {
     let mut declared = std::collections::HashSet::new();
     for desk in room
         .get("desks")
@@ -629,11 +727,19 @@ fn validate_widget_resource_inventory(
             }
         }
     }
+    declared
+}
+
+fn find_undeclared_widget_resources(
+    room_dir: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<Vec<String>, String> {
+    let declared = declared_widget_resources(room);
 
     let root = room_dir.join("widgets");
     if !root.exists() {
         return if declared.is_empty() {
-            Ok(())
+            Ok(Vec::new())
         } else {
             Err("Room v2 declares Widget resources but widgets/ is missing".into())
         };
@@ -642,6 +748,7 @@ fn validate_widget_resource_inventory(
         return Err("widgets/ must be a regular directory".into());
     }
     let mut pending = vec![root];
+    let mut undeclared = Vec::new();
     while let Some(current) = pending.pop() {
         for entry in
             std::fs::read_dir(&current).map_err(|error| format!("read widgets/ failed: {error}"))?
@@ -661,10 +768,9 @@ fn validate_widget_resource_inventory(
                     .strip_prefix(room_dir)
                     .map_err(|_| "Widget resource escaped Room root".to_string())?
                     .to_string_lossy()
-                    .replace('\\', "/")
-                    .to_ascii_lowercase();
-                if !declared.contains(&relative) {
-                    return Err(format!("undeclared Widget resource {relative:?}"));
+                    .replace('\\', "/");
+                if !declared.contains(&relative.to_ascii_lowercase()) {
+                    undeclared.push(relative);
                 }
             } else {
                 return Err(format!(
@@ -674,7 +780,138 @@ fn validate_widget_resource_inventory(
             }
         }
     }
+    undeclared.sort_by_key(|item| item.to_ascii_lowercase());
+    Ok(undeclared)
+}
+
+fn validate_widget_resource_inventory(
+    room_dir: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<(), String> {
+    if let Some(resource) = find_undeclared_widget_resources(room_dir, room)?
+        .into_iter()
+        .next()
+    {
+        return Err(format!("undeclared Widget resource {resource:?}"));
+    }
     Ok(())
+}
+
+fn validate_room_asset_references(
+    room_dir: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<(), String> {
+    validate_declared_room_asset_references(room_dir, room)?;
+    validate_widget_resource_inventory(room_dir, room)
+}
+
+fn create_unique_recovery_dir(root: &std::path::Path) -> Result<std::path::PathBuf, String> {
+    std::fs::create_dir_all(root)
+        .map_err(|error| format!("create Room recovery root failed: {error}"))?;
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    for suffix in 0..1000_u16 {
+        let candidate = root.join(format!("{stamp}-{}-{suffix}", std::process::id()));
+        match std::fs::create_dir(&candidate) {
+            Ok(()) => return Ok(candidate),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => {
+                return Err(format!("create Room recovery directory failed: {error}"));
+            }
+        }
+    }
+    Err("could not allocate a unique Room recovery directory".into())
+}
+
+fn prune_empty_widget_directories(room_dir: &std::path::Path, source: &std::path::Path) {
+    let widgets_root = room_dir.join("widgets");
+    let mut current = source.parent().map(std::path::Path::to_path_buf);
+    while let Some(directory) = current {
+        if !directory.starts_with(&widgets_root) {
+            break;
+        }
+        let parent = directory.parent().map(std::path::Path::to_path_buf);
+        let empty = std::fs::read_dir(&directory)
+            .map(|mut entries| entries.next().is_none())
+            .unwrap_or(false);
+        if !empty || std::fs::remove_dir(&directory).is_err() {
+            break;
+        }
+        current = parent;
+    }
+}
+
+fn quarantine_room_orphan_resources_at(
+    path: &std::path::Path,
+    recovery_root: &std::path::Path,
+) -> Result<RoomOrphanRecovery, String> {
+    let (room_path, _) = normalized_room_path(path)?;
+    let bytes = std::fs::read(&room_path)
+        .map_err(|error| format!("read Room for recovery failed: {error}"))?;
+    let room: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse Room for recovery failed: {error}"))?;
+    validate_room_contract(&room)?;
+    let room_dir = room_path
+        .parent()
+        .ok_or_else(|| "Room path has no parent directory".to_string())?;
+    validate_declared_room_asset_references(room_dir, &room)?;
+    let moved = find_undeclared_widget_resources(room_dir, &room)?;
+    if moved.is_empty() {
+        return Err("Room has no undeclared Widget resources to recover".into());
+    }
+
+    let recovery_dir = create_unique_recovery_dir(recovery_root)?;
+    let mut sources = Vec::with_capacity(moved.len());
+    for relative in &moved {
+        let source = room_dir.join(relative.replace('/', std::path::MAIN_SEPARATOR_STR));
+        let destination = recovery_dir.join(relative.replace('/', std::path::MAIN_SEPARATOR_STR));
+        let parent = destination
+            .parent()
+            .ok_or_else(|| "recovery destination has no parent".to_string())?;
+        std::fs::create_dir_all(parent).map_err(|error| {
+            format!("create recovery directory failed for {relative:?}: {error}")
+        })?;
+        let expected = std::fs::metadata(&source)
+            .map_err(|error| {
+                format!("read orphan resource metadata failed for {relative:?}: {error}")
+            })?
+            .len();
+        let copied = std::fs::copy(&source, &destination)
+            .map_err(|error| format!("copy orphan resource failed for {relative:?}: {error}"))?;
+        let recovered = std::fs::metadata(&destination)
+            .map_err(|error| format!("verify recovered resource failed for {relative:?}: {error}"))?
+            .len();
+        if copied != expected || recovered != expected {
+            return Err(format!(
+                "recovered resource length mismatch for {relative:?}"
+            ));
+        }
+        sources.push(source);
+    }
+
+    for (relative, source) in moved.iter().zip(&sources) {
+        std::fs::remove_file(source).map_err(|error| {
+            format!(
+                "recovery copy was created, but removing Room orphan failed for {relative:?}: {error}"
+            )
+        })?;
+        prune_empty_widget_directories(room_dir, source);
+    }
+
+    Ok(RoomOrphanRecovery {
+        recovery_dir: recovery_dir.to_string_lossy().into_owned(),
+        moved,
+    })
+}
+
+#[tauri::command]
+async fn quarantine_room_orphan_resources(path: String) -> Result<RoomOrphanRecovery, String> {
+    let root = grpc::local_app_data_path()
+        .join("recovery")
+        .join("room-orphans");
+    quarantine_room_orphan_resources_at(std::path::Path::new(&path), &root)
 }
 
 fn push_cover(covers: &mut Vec<CoverRef>, bg: &serde_json::Value) {
@@ -767,10 +1004,14 @@ fn validate_permissions(
             .as_str()
             .ok_or_else(|| format!("{label}[{index}] must be a string"))?;
         if !CONTENT_PERMISSIONS.contains(&permission) {
-            return Err(format!("{label} contains unknown permission {permission:?}"));
+            return Err(format!(
+                "{label} contains unknown permission {permission:?}"
+            ));
         }
         if !permission_set.insert(permission.to_string()) {
-            return Err(format!("{label} contains duplicate permission {permission:?}"));
+            return Err(format!(
+                "{label} contains duplicate permission {permission:?}"
+            ));
         }
     }
     Ok(permission_set)
@@ -783,7 +1024,9 @@ fn validate_hotspots(
     permissions: &std::collections::HashSet<String>,
     label: &str,
 ) -> Result<(), String> {
-    let Some(value) = value else { return Ok(()); };
+    let Some(value) = value else {
+        return Ok(());
+    };
     let hotspots = value
         .as_array()
         .filter(|items| items.len() <= 64)
@@ -800,7 +1043,9 @@ fn validate_hotspots(
         reject_unknown_keys(object, &["id", "label", "placement", "action"], &item_label)?;
         let id = required_string(object, "id", &item_label)?;
         if !widget_id_is_valid(id) || !ids.insert(id.to_string()) {
-            return Err(format!("{item_label}.id must be a unique lowercase ASCII slug"));
+            return Err(format!(
+                "{item_label}.id must be a unique lowercase ASCII slug"
+            ));
         }
         ensure_string_limit(
             required_string(object, "label", &item_label)?,
@@ -820,15 +1065,24 @@ fn validate_hotspots(
             placement
                 .get(key)
                 .and_then(|item| item.as_u64())
-                .ok_or_else(|| format!("{item_label}.placement.{key} must be a non-negative integer"))
+                .ok_or_else(|| {
+                    format!("{item_label}.placement.{key} must be a non-negative integer")
+                })
         };
         let x = integer("x")?;
         let y = integer("y")?;
         let width = integer("width")?;
         let height = integer("height")?;
         let z = integer("z")?;
-        if width < 16 || height < 16 || x + width > bounds_width || y + height > bounds_height || z > 255 {
-            return Err(format!("{item_label}.placement must stay inside its content bounds"));
+        if width < 16
+            || height < 16
+            || x + width > bounds_width
+            || y + height > bounds_height
+            || z > 255
+        {
+            return Err(format!(
+                "{item_label}.placement must stay inside its content bounds"
+            ));
         }
         let action = object
             .get("action")
@@ -843,12 +1097,18 @@ fn validate_hotspots(
             | "system.media.toggle-play-pause"
             | "system.media.next"
             | "system.media.previous"
-            | "system.volume.toggle-mute" if value.is_none() => {}
-            "system.volume.set" if value
-                .and_then(|item| item.as_f64())
-                .is_some_and(|item| item.is_finite() && (0.0..=1.0).contains(&item)) => {}
+            | "system.volume.toggle-mute"
+                if value.is_none() => {}
+            "system.volume.set"
+                if value
+                    .and_then(|item| item.as_f64())
+                    .is_some_and(|item| item.is_finite() && (0.0..=1.0).contains(&item)) => {}
             "system.volume.mute" if value.is_some_and(|item| item.is_boolean()) => {}
-            _ => return Err(format!("{item_label}.action has an unsupported id or value")),
+            _ => {
+                return Err(format!(
+                    "{item_label}.action has an unsupported id or value"
+                ))
+            }
         }
     }
     Ok(())
@@ -858,7 +1118,11 @@ fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> 
     let object = value
         .as_object()
         .ok_or_else(|| format!("{label} must be a Content object"))?;
-    reject_unknown_keys(object, &["name", "type", "src", "permissions", "hotspots"], label)?;
+    reject_unknown_keys(
+        object,
+        &["name", "type", "src", "permissions", "hotspots"],
+        label,
+    )?;
     ensure_string_limit(
         required_string(object, "name", label)?,
         120,
@@ -904,10 +1168,18 @@ fn validate_content(value: &serde_json::Value, directory: &str, label: &str) -> 
             "{label}.src extension does not match {content_type}"
         ));
     }
-    if content_type != "html" && (object.contains_key("permissions") || object.contains_key("hotspots")) {
-        return Err(format!("{label} capabilities are only valid for HTML content"));
+    if content_type != "html"
+        && (object.contains_key("permissions") || object.contains_key("hotspots"))
+    {
+        return Err(format!(
+            "{label} capabilities are only valid for HTML content"
+        ));
     }
-    let permissions = validate_permissions(object.get("permissions"), false, &format!("{label}.permissions"))?;
+    let permissions = validate_permissions(
+        object.get("permissions"),
+        false,
+        &format!("{label}.permissions"),
+    )?;
     validate_hotspots(
         object.get("hotspots"),
         1920,
@@ -1541,7 +1813,8 @@ fn update_desk_layout_source(
 ) -> Result<String, String> {
     let path = source.join("room.json");
     let mut room: serde_json::Value = serde_json::from_str(
-        &std::fs::read_to_string(&path).map_err(|error| format!("read room.json failed: {error}"))?,
+        &std::fs::read_to_string(&path)
+            .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
     replace_desk_icons(&mut room, desk_index, icons)?;
@@ -1807,8 +2080,7 @@ fn rename_room_dir(
     if target.exists() {
         return Err(format!("room already exists: {name}"));
     }
-    std::fs::rename(&source, &target)
-        .map_err(|error| format!("rename Room failed: {error}"))?;
+    std::fs::rename(&source, &target).map_err(|error| format!("rename Room failed: {error}"))?;
     Ok(target)
 }
 
@@ -2234,7 +2506,9 @@ async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
         let candidate = normalized_path(&path);
         candidate == runtime_norm || candidate.starts_with(&(runtime_norm.clone() + "\\"))
     });
-    let Some(running) = running else { return Ok(None); };
+    let Some(running) = running else {
+        return Ok(None);
+    };
     let room: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(runtime.join("room.json"))
             .map_err(|error| format!("read active room.json failed: {error}"))?,
@@ -2255,7 +2529,9 @@ async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
 }
 
 async fn active_room_value() -> Result<Option<ActiveRoom>, String> {
-    active_wallpaper_value().await.map(|active| active.map(|value| value.room))
+    active_wallpaper_value()
+        .await
+        .map(|active| active.map(|value| value.room))
 }
 
 #[tauri::command]
@@ -2300,20 +2576,19 @@ async fn sync_active_desk_icons(
     }
 
     let room_json = update_desk_layout_source(&source, desk_index, icons)?;
-    let runtime_result = write_runtime_desk_layout(
-        std::path::Path::new(WALLPAPER_DIR),
-        &room_json,
-        &source,
-    );
+    let runtime_result =
+        write_runtime_desk_layout(std::path::Path::new(WALLPAPER_DIR), &room_json, &source);
     let runtime_json = match runtime_result {
         Ok(value) => value,
-        Err(error) => return Ok(DeskLayoutSyncResult {
-            active: true,
-            saved: true,
-            live_updated: false,
-            room_json: Some(room_json),
-            live_error: Some(error),
-        }),
+        Err(error) => {
+            return Ok(DeskLayoutSyncResult {
+                active: true,
+                saved: true,
+                live_updated: false,
+                room_json: Some(room_json),
+                live_error: Some(error),
+            })
+        }
     };
     let message = match room_layout_message(
         &runtime_json,
@@ -2322,13 +2597,15 @@ async fn sync_active_desk_icons(
         highlight_target.as_deref(),
     ) {
         Ok(value) => value,
-        Err(error) => return Ok(DeskLayoutSyncResult {
-            active: true,
-            saved: true,
-            live_updated: false,
-            room_json: Some(room_json),
-            live_error: Some(error),
-        }),
+        Err(error) => {
+            return Ok(DeskLayoutSyncResult {
+                active: true,
+                saved: true,
+                live_updated: false,
+                room_json: Some(room_json),
+                live_error: Some(error),
+            })
+        }
     };
     match grpc::send_message_wallpaper(&active.lively_info_path, &message).await {
         Ok(()) => Ok(DeskLayoutSyncResult {
@@ -2415,7 +2692,12 @@ fn next_desktop_icon_revision() -> u64 {
     let mut previous = DESKTOP_ICON_REVISION.load(Ordering::Relaxed);
     loop {
         let next = millis.max(previous + 1);
-        match DESKTOP_ICON_REVISION.compare_exchange_weak(previous, next, Ordering::SeqCst, Ordering::Relaxed) {
+        match DESKTOP_ICON_REVISION.compare_exchange_weak(
+            previous,
+            next,
+            Ordering::SeqCst,
+            Ordering::Relaxed,
+        ) {
             Ok(_) => return next,
             Err(current) => previous = current,
         }
@@ -2656,8 +2938,8 @@ fn copy_widget_source(
     if is_reparse_point(current)? {
         return Err("Widget source cannot contain symlinks or reparse points".into());
     }
-    for entry in std::fs::read_dir(current)
-        .map_err(|error| format!("read Widget source failed: {error}"))?
+    for entry in
+        std::fs::read_dir(current).map_err(|error| format!("read Widget source failed: {error}"))?
     {
         let entry = entry.map_err(|error| format!("read Widget entry failed: {error}"))?;
         let path = entry.path();
@@ -2671,16 +2953,28 @@ fn copy_widget_source(
         if path.is_dir() {
             std::fs::create_dir_all(&target)
                 .map_err(|error| format!("create Widget directory failed: {error}"))?;
-            copy_widget_source(source_root, &path, target_root, widget_id, resources, total_bytes)?;
+            copy_widget_source(
+                source_root,
+                &path,
+                target_root,
+                widget_id,
+                resources,
+                total_bytes,
+            )?;
             continue;
         }
         if !path.is_file() {
-            return Err(format!("Widget resource is not a regular file: {}", path.display()));
+            return Err(format!(
+                "Widget resource is not a regular file: {}",
+                path.display()
+            ));
         }
         let relative_text = relative.to_string_lossy().replace('\\', "/");
         let room_path = format!("widgets/{widget_id}/{relative_text}");
         if !widget_path_is_valid(&room_path, widget_id, false) {
-            return Err(format!("unsupported Widget resource path {relative_text:?}"));
+            return Err(format!(
+                "unsupported Widget resource path {relative_text:?}"
+            ));
         }
         if resources.len() >= MAX_WIDGET_RESOURCES {
             return Err(format!("Widget exceeds {MAX_WIDGET_RESOURCES} resources"));
@@ -2784,7 +3078,14 @@ fn import_widget_dir(
     let result = (|| {
         let mut resources = Vec::new();
         let mut total_bytes = 0;
-        copy_widget_source(&source, &source, &staging, widget_id, &mut resources, &mut total_bytes)?;
+        copy_widget_source(
+            &source,
+            &source,
+            &staging,
+            widget_id,
+            &mut resources,
+            &mut total_bytes,
+        )?;
         resources.sort();
         let src = format!("widgets/{widget_id}/index.html");
         if !resources.iter().any(|resource| resource == &src) {
@@ -2811,7 +3112,10 @@ fn import_widget_dir(
             let _ = std::fs::remove_dir_all(&target);
             return Err(error);
         }
-        if let Err(error) = write_room_file(&room_root.join("room.json"), &serde_json::to_string_pretty(&room).unwrap()) {
+        if let Err(error) = write_room_file(
+            &room_root.join("room.json"),
+            &serde_json::to_string_pretty(&room).unwrap(),
+        ) {
             let _ = std::fs::remove_dir_all(&target);
             return Err(error);
         }
@@ -2986,7 +3290,10 @@ pub fn run() {
         .register_uri_scheme_protocol("creator", |ctx, request| {
             match ctx.app_handle().try_state::<creator::CreatorImports>() {
                 Some(imports) => creator::serve_creator_file(request.uri().path(), &imports),
-                None => tauri::http::Response::builder().status(500).body(Vec::new()).unwrap(),
+                None => tauri::http::Response::builder()
+                    .status(500)
+                    .body(Vec::new())
+                    .unwrap(),
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -3031,6 +3338,8 @@ pub fn run() {
             control_system_media,
             get_system_volume,
             set_system_volume,
+            inspect_room_for_edit,
+            quarantine_room_orphan_resources,
             get_permission_review,
             set_subject_permission
         ])
@@ -3043,11 +3352,14 @@ mod tests {
     use super::{
         apply_settings_patch, create_room_dir, desktop_icon_preferences_message,
         direct_room_entry_in_library, direct_room_in_library, display_path, duplicate_room_dir,
-        export_room_zip_file, import_room_content_file, import_room_zip_file, import_widget_dir,
-        rename_room_dir, replace_desk_icons, room_layout_message, save_room_as_dir, settings_view,
-        sync_room_to_package, update_desk_layout_source, validate_room_contract,
-        validate_room_library_path, validate_room_v2, write_room_file, write_runtime_desk_layout,
-        DextSettingsPatch, ROOM_ASSET_DIRS,
+        export_room_zip_file, find_undeclared_widget_resources, import_room_content_file,
+        import_room_zip_file, import_widget_dir, inspect_room_for_edit_file,
+        quarantine_room_orphan_resources_at, rename_room_dir, replace_desk_icons,
+        room_layout_message, save_room_as_dir, settings_view, sync_room_to_package,
+        update_desk_layout_source, validate_declared_room_asset_references,
+        validate_room_asset_references, validate_room_contract, validate_room_library_path,
+        validate_room_v2, write_room_file, write_runtime_desk_layout, DextSettingsPatch,
+        ROOM_ASSET_DIRS,
     };
 
     fn test_dir(label: &str) -> std::path::PathBuf {
@@ -3136,6 +3448,66 @@ mod tests {
     }
 
     #[test]
+    fn editor_asset_audit_reports_orphans_without_relaxing_strict_validation() {
+        let root = test_dir("room-edit-orphan-audit");
+        let room_dir = root.join("room");
+        write_valid_v2_room(&room_dir);
+        std::fs::write(
+            room_dir.join("widgets/system-meter/orphan.js"),
+            b"console.log('orphan')",
+        )
+        .unwrap();
+        let room: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(room_dir.join("room.json")).unwrap())
+                .unwrap();
+
+        validate_declared_room_asset_references(&room_dir, &room).unwrap();
+        assert_eq!(
+            find_undeclared_widget_resources(&room_dir, &room).unwrap(),
+            vec!["widgets/system-meter/orphan.js"]
+        );
+        let audit = inspect_room_for_edit_file(&room_dir).unwrap();
+        assert_eq!(
+            audit.orphan_widget_resources,
+            vec!["widgets/system-meter/orphan.js"]
+        );
+        assert!(validate_room_asset_references(&room_dir, &room)
+            .unwrap_err()
+            .contains("undeclared Widget resource"));
+
+        std::fs::remove_file(room_dir.join("widgets/system-meter/index.html")).unwrap();
+        assert!(validate_declared_room_asset_references(&room_dir, &room)
+            .unwrap_err()
+            .contains("missing asset"));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn orphan_recovery_moves_only_undeclared_resources_and_preserves_paths() {
+        let root = test_dir("room-edit-orphan-recovery");
+        let room_dir = root.join("room");
+        let recovery_root = root.join("recovery");
+        write_valid_v2_room(&room_dir);
+        std::fs::create_dir_all(room_dir.join("widgets/unused/nested")).unwrap();
+        std::fs::write(room_dir.join("widgets/unused/nested/main.js"), b"orphan").unwrap();
+
+        let result = quarantine_room_orphan_resources_at(&room_dir, &recovery_root).unwrap();
+
+        assert_eq!(result.moved, vec!["widgets/unused/nested/main.js"]);
+        let recovered =
+            std::path::Path::new(&result.recovery_dir).join("widgets/unused/nested/main.js");
+        assert_eq!(std::fs::read(recovered).unwrap(), b"orphan");
+        assert!(!room_dir.join("widgets/unused/nested/main.js").exists());
+        assert!(room_dir.join("widgets/system-meter/index.html").is_file());
+        let room: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(room_dir.join("room.json")).unwrap())
+                .unwrap();
+        validate_room_asset_references(&room_dir, &room).unwrap();
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn accepts_only_native_v2_rooms() {
         let v1 = serde_json::json!({
             "version":1,"startDesk":0,"switches":{},
@@ -3160,26 +3532,36 @@ mod tests {
         let broken = root.join("broken");
         write_valid_room(&room, false);
         std::fs::create_dir_all(source.join("assets")).unwrap();
-        std::fs::write(source.join("index.html"), b"<!doctype html><title>Widget</title>").unwrap();
+        std::fs::write(
+            source.join("index.html"),
+            b"<!doctype html><title>Widget</title>",
+        )
+        .unwrap();
         std::fs::write(source.join("assets/style.css"), b"body{color:white}").unwrap();
         std::fs::create_dir_all(&broken).unwrap();
         std::fs::write(broken.join("main.js"), b"console.log('missing entry')").unwrap();
         let draft = std::fs::read_to_string(room.join("room.json")).unwrap();
 
-        let widget = import_widget_dir(&room, &source, "status-panel", "Status panel", 0, &draft).unwrap();
+        let widget =
+            import_widget_dir(&room, &source, "status-panel", "Status panel", 0, &draft).unwrap();
         assert_eq!(widget["id"], "status-panel");
         assert!(room.join("widgets/status-panel/index.html").is_file());
-        let saved: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(room.join("room.json")).unwrap()
-        ).unwrap();
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(room.join("room.json")).unwrap())
+                .unwrap();
         assert_eq!(saved["desks"][0]["widgets"][0]["id"], "status-panel");
 
         let saved_text = serde_json::to_string_pretty(&saved).unwrap();
-        let error = import_widget_dir(&room, &broken, "broken-widget", "Broken", 0, &saved_text).unwrap_err();
+        let error = import_widget_dir(&room, &broken, "broken-widget", "Broken", 0, &saved_text)
+            .unwrap_err();
         assert!(error.contains("index.html"));
         assert!(!room.join("widgets/broken-widget").exists());
         assert!(!room.join("widgets").read_dir().unwrap().any(|entry| {
-            entry.unwrap().file_name().to_string_lossy().starts_with(".dext-import-broken-widget")
+            entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".dext-import-broken-widget")
         }));
 
         std::fs::remove_dir_all(root).unwrap();
@@ -3243,8 +3625,7 @@ mod tests {
         assert!(validate_room_v2(&hotspot)
             .unwrap_err()
             .contains("requires action.invoke"));
-        hotspot["desks"][0]["widgets"][0]["permissions"] =
-            serde_json::json!(["action.invoke"]);
+        hotspot["desks"][0]["widgets"][0]["permissions"] = serde_json::json!(["action.invoke"]);
         assert!(validate_room_v2(&hotspot).is_ok());
         hotspot["desks"][0]["widgets"][0]["hotspots"][0]["action"] =
             serde_json::json!({"id":"system.volume.set","value":1.5});
@@ -3635,7 +4016,8 @@ mod tests {
 
         let message: serde_json::Value = serde_json::from_str(
             &room_layout_message(&room_json, 0, true, Some("new.exe")).unwrap(),
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(message["Type"], 26);
         assert_eq!(message["DeskIndex"], 0);
         assert_eq!(message["EnterEdit"], true);
@@ -3665,9 +4047,9 @@ mod tests {
         let error = write_runtime_desk_layout(&runtime_file, &room_json, &room).unwrap_err();
 
         assert!(error.contains("write active room.json"));
-        let saved: serde_json::Value = serde_json::from_str(
-            &std::fs::read_to_string(room.join("room.json")).unwrap(),
-        ).unwrap();
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(room.join("room.json")).unwrap())
+                .unwrap();
         assert_eq!(saved["desks"][0]["icons"][0]["label"], "Saved");
 
         std::fs::remove_dir_all(root).unwrap();
@@ -3783,7 +4165,9 @@ mod tests {
         let renamed = rename_room_dir(&library, &duplicate, "renamed").unwrap();
         assert!(!duplicate.exists());
         assert!(renamed.join("background/scene.png").is_file());
-        assert!(rename_room_dir(&library, &renamed, "source").unwrap_err().contains("already exists"));
+        assert!(rename_room_dir(&library, &renamed, "source")
+            .unwrap_err()
+            .contains("already exists"));
         assert!(duplicate_room_dir(&library, &source, "../escape").is_err());
 
         std::fs::remove_dir_all(root).unwrap();
@@ -3980,7 +4364,8 @@ mod tests {
         let second = super::next_desktop_icon_revision();
         assert!(first > 0 && second > first);
         let patch: serde_json::Value =
-            serde_json::from_str(&desktop_icon_preferences_message(&settings, second).unwrap()).unwrap();
+            serde_json::from_str(&desktop_icon_preferences_message(&settings, second).unwrap())
+                .unwrap();
         assert_eq!(patch["Revision"], second);
         assert_eq!(patch["FeedbackStyle"], "halo");
     }
