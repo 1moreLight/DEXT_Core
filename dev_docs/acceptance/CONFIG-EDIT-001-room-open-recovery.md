@@ -11,6 +11,7 @@
 - [x] `npm run build`
 - [x] `cargo test --lib`（43 通过、3 个真实环境测试按设计忽略）
 - [x] `git diff --check`
+- [x] 真实运行身份：Core 与配置器均来自 `config-edit-001` worktree；未把旧 PREFS Player 路径冒充为本包桌面验收。
 
 ## 人工验收
 
