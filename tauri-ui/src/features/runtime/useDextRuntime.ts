@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { ActiveRoom, CoreIdentity } from "@/features/runtime/types";
 
@@ -6,39 +6,37 @@ export function useDextRuntime(isTauri: boolean) {
   const [coreIdentity, setCoreIdentity] = useState<CoreIdentity | null>(null);
   const [coreIdentityError, setCoreIdentityError] = useState<string | null>(null);
   const [appliedRoom, setAppliedRoom] = useState<string | null>(null);
+  const identityRequest = useRef(0);
 
-  useEffect(() => {
+  const refreshCore = useCallback(async () => {
     if (!isTauri) return;
-    let disposed = false;
-    let checking = false;
-    const refresh = async () => {
-      if (checking) return;
-      checking = true;
-      try {
-        const identity = await invoke<CoreIdentity>("core_identity");
-        if (!disposed) {
-          setCoreIdentity(identity);
-          setCoreIdentityError(null);
-        }
-      } catch (error) {
-        if (!disposed) {
-          setCoreIdentity(null);
-          setCoreIdentityError(String(error));
-        }
-      } finally {
-        checking = false;
+    const request = ++identityRequest.current;
+    try {
+      const identity = await invoke<CoreIdentity>("core_identity");
+      if (request === identityRequest.current) {
+        setCoreIdentity(identity);
+        setCoreIdentityError(null);
       }
-    };
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 2000);
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-    };
+    } catch (error) {
+      if (request === identityRequest.current) {
+        setCoreIdentity(null);
+        setCoreIdentityError(String(error));
+      }
+    }
   }, [isTauri]);
 
   useEffect(() => {
-    if (!isTauri || !coreIdentity) {
+    if (!isTauri) return;
+    void refreshCore();
+    const timer = window.setInterval(() => void refreshCore(), 2000);
+    return () => {
+      identityRequest.current++;
+      window.clearInterval(timer);
+    };
+  }, [isTauri, refreshCore]);
+
+  useEffect(() => {
+    if (!isTauri || !coreIdentity?.is_core_initialized) {
       setAppliedRoom(null);
       return;
     }
@@ -65,10 +63,11 @@ export function useDextRuntime(isTauri: boolean) {
   }, [coreIdentity, isTauri]);
 
   const markCoreDisconnected = (error: string) => {
+    identityRequest.current++;
     setCoreIdentity(null);
     setCoreIdentityError(error);
     setAppliedRoom(null);
   };
 
-  return { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected };
+  return { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore };
 }

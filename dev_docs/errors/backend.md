@@ -198,3 +198,11 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 验证：原生隐藏窗口测试先得到 expected 0 / actual 0x20；修复后通过。隔离 Release Player 实验准确复现
 旧 buttons=8，再验证十轮原生转发得到 capture、MOVE buttons=1、UP buttons=0 且无提前取消。
 这个自动检查不替代真实 WorkerW/物理鼠标验收。命令见 tests/Dext.Input.Tests/README.md。
+
+# #110 缺失 Core 文件不能先于运行身份探测而隐藏重试入口
+
+现象：配置器仍在、Core 已退出时，临时移走当前 worktree 的 `Lively.exe` 后，顶栏变成“连接异常”且没有“启动 Core”按钮；用户无法点击以获得明确错误，也无法重试。
+
+原因：轮询身份的包装函数先解析并要求 Core 文件存在，才去查询 Pipe。文件缺失错误因此覆盖了“Core 未运行”状态。
+
+修复：轮询先查询 Core；仅在有响应时检查其是否为配置器所属的可执行文件。启动动作自身继续检查文件存在及 Dext 产品元数据，并给出“缺少启动文件，请重新构建或修复安装”的可见错误。文件恢复后同一按钮可重试。测试时已将临时移走的二进制原样恢复。

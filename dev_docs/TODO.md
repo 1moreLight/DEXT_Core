@@ -1016,3 +1016,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 用户按验收卡实测并明确回复通过（2026-09-23）；进入 master 合并与合并后回归。
 - [x] 快进合入 master `23aa845`；合并前后用户 Room/背景/Widget 数据哈希一致，合并后 Vitest 57/57、Rust 43/43、Node 27/27、构建、Room Schema 与 Renderer Playwright 55/55 通过（2026-09-23）。
 - [x] 当前轮摘要归档到 `TODO-archive.md`；UI-008 提升为唯一下一项。验收 worktree 因仍运行且含未提交桌面数据而保留，不强制清理。
+
+## CORE-006 配置器 Core 启动与退出（2026-09-23）
+
+> 目标：配置器连接状态旁提供“启动 Core / 退出 Core”，从配置器所属的 Dext 构建启动并验证 Core，正常退出后保留配置器。范围外：壁纸暂停按钮、自动重启、安装器重构、Room 和桌面交互改动。人工步骤见 `dev_docs/acceptance/CORE-006-core-runtime-control.md`。
+
+- [x] 用户确认按钮控制 Core 而非壁纸；先于 UI-008 开工；退出旧 `desk-reorder-002` 的配置器及 Tauri/Vite 开发进程，Core/Player/Watchdog 原已停止。
+- [x] 从 master `d7286b9` 创建独立 worktree 和 `feat/CORE-006-core-runtime-control` 分支。
+- [x] 冻结设计、实现计划和独立验收卡；基线 Vitest 57/57、Rust 43 通过/3 忽略（2026-09-23）。
+- [x] 后端测试先红后绿：受信任路径、单次启动、身份/就绪验证、正常退出及失败反馈；真实 Core/Player/Watchdog 两轮退出→启动成功（2026-09-23）。
+- [x] 前端测试先红后绿：状态文案、动作可用性、启动/退出期间反馈及轮询刷新；缺失二进制实测发现启动入口被隐藏，调整探测顺序后恢复可重试（2026-09-23）。
+- [x] 自动检查与真实进程循环通过：Vitest 62/62、Rust 48 通过/3 忽略、前端 build、cargo check 和 diff check；提交工作分支并停在待验收（2026-09-23）。
+- [ ] 用户按独立验收卡确认；通过前不合并 master。

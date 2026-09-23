@@ -32,6 +32,10 @@ fn runtime_identity() -> &'static RuntimeIdentityConfig {
     })
 }
 
+pub(crate) fn runtime_identity_name() -> &'static str {
+    &runtime_identity().runtime_identity
+}
+
 pub fn local_app_data_path() -> std::path::PathBuf {
     std::env::var("LOCALAPPDATA")
         .map(std::path::PathBuf::from)
@@ -50,6 +54,17 @@ fn grpc_pipe_server_name() -> String {
 
 pub fn pipe_name() -> String {
     format!(r"\\.\pipe\{}", grpc_pipe_server_name())
+}
+
+pub(crate) fn pipe_is_absent() -> Result<bool, String> {
+    match ClientOptions::new().open(pipe_name()) {
+        Ok(pipe) => {
+            drop(pipe);
+            Ok(false)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(true),
+        Err(error) => Err(format!("cannot inspect Dext Core pipe: {error}")),
+    }
 }
 
 // ponytail: one pipe connection per call, same as the C# NamedPipeChannel does
@@ -125,7 +140,7 @@ fn normalize_windows_path(value: &str) -> String {
         .to_ascii_lowercase()
 }
 
-fn verify_core_identity_response(response: &GetCoreStatsResponse) -> Result<(), String> {
+pub(crate) fn verify_core_identity_response(response: &GetCoreStatsResponse) -> Result<(), String> {
     let expected = runtime_identity();
     if response.product_name != expected.product_name {
         return Err(format!(
@@ -181,12 +196,16 @@ fn verify_core_identity_response(response: &GetCoreStatsResponse) -> Result<(), 
     Ok(())
 }
 
-async fn raw_core_identity() -> Result<GetCoreStatsResponse, String> {
-    let payloads = raw_call(
-        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetCoreStats",
-        &[],
+pub(crate) async fn raw_core_identity() -> Result<GetCoreStatsResponse, String> {
+    let payloads = tokio::time::timeout(
+        std::time::Duration::from_secs(3),
+        raw_call(
+            "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetCoreStats",
+            &[],
+        ),
     )
-    .await?;
+    .await
+    .map_err(|_| "Dext Core identity request timed out".to_string())??;
     payloads
         .iter()
         .find_map(|payload| GetCoreStatsResponse::decode(&payload[..]).ok())
@@ -314,6 +333,15 @@ pub async fn get_wallpapers() -> Result<Vec<WallpaperInfo>, String> {
 
 pub async fn core_identity() -> Result<CoreIdentity, String> {
     verified_core_identity().await.map(Into::into)
+}
+
+pub(crate) async fn shutdown_core() -> Result<(), String> {
+    raw_call(
+        "/Lively.Grpc.Common.Proto.Commands.CommandsService/ShutDown",
+        &[],
+    )
+    .await
+    .map(|_| ())
 }
 
 pub async fn core_stats() -> Result<String, String> {

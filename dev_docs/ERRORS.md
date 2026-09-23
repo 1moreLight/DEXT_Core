@@ -114,6 +114,7 @@
 | #107 | 两个 Playwright 进程共用 renderer 测试端口和产物目录，可能出现端口拒绝与视频 ENOENT | [toolchain](errors/toolchain.md) |
 | #108 | 图标深拷贝无条件展开可选 `launch`，会把旧 Glyph 图标保存成不符合 Schema 的空启动对象 | [renderer](errors/renderer.md) |
 | #109 | WebView2 Player 退出后临时 user-data 仍可能短暂锁定，夹具清理需受限重试 | [toolchain](errors/toolchain.md) |
+| #110 | 配置器先检查 Core 文件再探测运行身份，文件缺失时反而隐藏“启动 Core”重试入口 | [backend](errors/backend.md) |
 
 ## 分册
 

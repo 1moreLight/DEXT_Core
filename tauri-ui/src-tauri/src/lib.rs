@@ -1,5 +1,6 @@
 mod grpc;
 mod creator;
+mod core_runtime;
 
 use tauri::Manager;
 
@@ -3131,7 +3132,17 @@ async fn set_system_volume(
 
 #[tauri::command]
 async fn core_identity() -> Result<grpc::CoreIdentity, String> {
-    grpc::core_identity().await
+    core_runtime::managed_core_identity().await
+}
+
+#[tauri::command]
+async fn start_core() -> Result<grpc::CoreIdentity, String> {
+    core_runtime::start_core().await
+}
+
+#[tauri::command]
+async fn exit_core() -> Result<(), String> {
+    core_runtime::exit_core().await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -3194,6 +3205,8 @@ pub fn run() {
             set_wallpaper,
             core_stats,
             core_identity,
+            start_core,
+            exit_core,
             get_system_media,
             control_system_media,
             get_system_volume,

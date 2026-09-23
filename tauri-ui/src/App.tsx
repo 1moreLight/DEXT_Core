@@ -30,7 +30,7 @@ import { ContentInspector } from "@/features/room-library/previews";
 import type { EditorView } from "@/features/room-editor/view";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
-import { isCoreUnavailable } from "@/features/runtime/core-status";
+import { isCoreUnavailable, type CoreLifecycleBusy } from "@/features/runtime/core-status";
 import {
   graphSwitchPosition,
   reconcileGraphEdges,
@@ -305,7 +305,9 @@ export default function App() {
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected } = useDextRuntime(IS_TAURI);
+  const { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore } = useDextRuntime(IS_TAURI);
+  const [coreBusy, setCoreBusy] = useState<CoreLifecycleBusy>(null);
+  const coreActionRef = useRef(false);
   const [roomMultiMode, setRoomMultiMode] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
   const [roomBusy, setRoomBusy] = useState<string | null>(null);
@@ -380,6 +382,7 @@ export default function App() {
   } = useGraphGeometry(roomEntered && editorView === "flow", desks, edges.length);
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
+  const readyCoreIdentity = coreIdentity?.is_core_initialized ? coreIdentity : null;
   const activeRoomPolicy = roomContractPolicy(roomVersion);
   const activeRoomAudit: RoomEditAudit = {
     permissionReviews,
@@ -621,10 +624,10 @@ export default function App() {
       setStatus(`已应用 ${dir.split("\\").pop()}（UI 设计模式）`);
       return;
     }
-    if (IS_TAURI && !coreIdentity) {
+    if (IS_TAURI && !readyCoreIdentity) {
       setStatus(
         coreUnavailable
-          ? "Dext Core 已退出；请重新运行 scripts/start.ps1 后再应用 Room"
+          ? "Dext Core 已退出；请点击顶部“启动 Core”后再应用 Room"
           : "Dext Core 身份尚未通过验证，不能应用 Room"
       );
       return;
@@ -646,6 +649,28 @@ export default function App() {
     } finally {
       roomOperationRef.current = false;
       setRoomBusy(null);
+    }
+  }
+
+  async function handleCoreAction(action: "start" | "exit") {
+    if (!IS_TAURI || coreActionRef.current) return;
+    coreActionRef.current = true;
+    setCoreBusy(action === "start" ? "starting" : "exiting");
+    try {
+      if (action === "start") {
+        await invoke("start_core");
+        setStatus("Dext Core 已启动");
+      } else {
+        await invoke("exit_core");
+        markCoreDisconnected("Dext Core not running");
+        setStatus("Dext Core 已退出，配置器仍可使用");
+      }
+    } catch (error) {
+      setStatus(`${action === "start" ? "启动" : "退出"} Dext Core 失败：${String(error)}`);
+    } finally {
+      await refreshCore();
+      setCoreBusy(null);
+      coreActionRef.current = false;
     }
   }
 
@@ -1031,7 +1056,7 @@ export default function App() {
     action: "added" | "removed",
   ) {
     const isActiveRoom = roomPath !== null && roomPath === appliedRoom;
-    const coreConnected = Boolean(coreIdentity);
+    const coreConnected = Boolean(readyCoreIdentity);
     const targetDesk = nextDesks[deskIndex];
     if (!targetDesk) return;
     if (!isActiveRoom || !coreConnected) {
@@ -1244,7 +1269,7 @@ export default function App() {
       setStatus("壁纸已停止（UI 设计模式）");
       return;
     }
-    if (!coreIdentity) return;
+    if (!readyCoreIdentity) return;
     roomOperationRef.current = true;
     setRoomBusy("正在停止壁纸…");
     try {
@@ -1623,6 +1648,8 @@ export default function App() {
         isTauri={IS_TAURI}
         coreIdentity={coreIdentity}
         coreIdentityError={coreIdentityError}
+        coreBusy={coreBusy}
+        onCoreAction={(action) => void handleCoreAction(action)}
         status={status}
         showPreview={showPreview}
         canPreview={activeRoomPolicy.preview && !roomIntegrityReason}
@@ -1648,7 +1675,7 @@ export default function App() {
           selectedRooms={selectedRooms}
           selectedCount={roomActionPaths.length}
           busy={roomBusy}
-          coreIdentity={coreIdentity}
+          coreIdentity={readyCoreIdentity}
           isTauri={IS_TAURI}
           onQuery={(value) => { setRoomQuery(value); setRoomPage(1); }}
           onSort={(value) => { setRoomSort(value); setRoomPage(1); }}
@@ -1734,7 +1761,7 @@ export default function App() {
                 selectedRoom={pickedRoom}
                 appliedRoom={appliedRoom}
                 busy={roomBusy}
-                coreIdentity={coreIdentity}
+                coreIdentity={readyCoreIdentity}
                 isTauri={IS_TAURI}
                 onSelect={(room) => setRoomPickPath(room.path)}
                 onNew={() => void addRoomFromList()}
@@ -1754,8 +1781,8 @@ export default function App() {
                   canRedo={future.length > 0}
                   canSave={!roomIntegrityReason}
                   saveDisabledReason={roomIntegrityReason ?? undefined}
-                  canApply={(!IS_TAURI || Boolean(coreIdentity)) && !roomIntegrityReason}
-                  applyDisabledReason={roomIntegrityReason ?? (IS_TAURI && !coreIdentity ? "Dext Core 未连接" : undefined)}
+                  canApply={(!IS_TAURI || Boolean(readyCoreIdentity)) && !roomIntegrityReason}
+                  applyDisabledReason={roomIntegrityReason ?? (IS_TAURI && !readyCoreIdentity ? "Dext Core 未连接" : undefined)}
                   canDeleteDesk={desks.length > 1 && Boolean(desks[activeDesk])}
                   onBack={() => setRoomEntered(false)}
                   onView={setEditorView}
@@ -2259,7 +2286,7 @@ export default function App() {
           setTheme={setTheme}
           libDir={libDir}
           onChangeLib={(path) => void changeLib(path)}
-          coreIdentity={coreIdentity}
+          coreIdentity={readyCoreIdentity}
           setStatus={setStatus}
           minimizeAfterDeskAppAdd={minimizeAfterDeskAppAdd}
           onMinimizeAfterDeskAppAddChange={updateMinimizeAfterDeskAppAdd}
