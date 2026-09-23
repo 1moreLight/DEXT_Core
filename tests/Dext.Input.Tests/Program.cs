@@ -51,7 +51,10 @@ try
 }
 finally { Native.DestroyWindow(window); }
 
-if (args.Length == 1) await WebViewProbe.Run(args[0]);
+if (args.Length == 1) {
+    await WebViewProbe.Run(args[0]);
+    await RoomReorderProbe.Run(args[0]);
+}
 
 void CheckMessage(uint expectedMessage, uint flags, short x, short y)
 {

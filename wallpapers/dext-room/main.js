@@ -390,6 +390,7 @@ function cloneIcons(icons) {
 
 function applyRoomLayoutUpdate(data) {
   if (!validRoomLayoutUpdate(data) || !ROOM.desks[data.deskIndex]) return;
+  cancelSettlingPeerMotion();
   activeIconDrag?.abort?.(false);
   activeWidgetGesture?.abort?.(false);
   if (pendingPreferenceSave) {
@@ -406,9 +407,6 @@ function applyRoomLayoutUpdate(data) {
     renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
   }
   if (data.enterEdit === true) enterEdit({ rerender: false });
-  if (target === currentDesk && typeof data.highlightTarget === "string" && data.highlightTarget) {
-    highlightIcon(data.highlightTarget);
-  }
   drainPendingIconPreferences();
 }
 
@@ -430,6 +428,14 @@ const dockAppsEl = document.getElementById("dock-apps");
 let effectiveIconPreferences = null;
 let lastIconPreferenceRevision = -1;
 let activeIconDrag = null;
+let settlingPeerMotion = null;
+let settlingPeerTimer = null;
+function cancelSettlingPeerMotion() {
+  if (settlingPeerTimer) clearTimeout(settlingPeerTimer);
+  settlingPeerTimer = null;
+  settlingPeerMotion?.dispose();
+  settlingPeerMotion = null;
+}
 let activeWidgetGesture = null;
 let pendingIconPreferences = null;
 let pendingPreferenceSave = null;
@@ -437,7 +443,7 @@ const iconFeedbackController = globalThis.DextIconFeedback.createDesktopIconFeed
 
 
 function drainPendingIconPreferences() {
-  if (activeIconDrag || activeWidgetGesture || pendingPreferenceSave || !pendingIconPreferences) return;
+  if (activeIconDrag || activeWidgetGesture || settlingPeerMotion || pendingPreferenceSave || !pendingIconPreferences) return;
   const next = pendingIconPreferences;
   pendingIconPreferences = null;
   receiveDesktopPreferences(next);
@@ -522,7 +528,7 @@ function receiveDesktopPreferences(message) {
   const preferences = globalThis.DextIconFeedback.normalizeDesktopIconPreferences(message.preferences);
   if (revision === lastIconPreferenceRevision &&
       JSON.stringify(preferences) === JSON.stringify(effectiveIconPreferences)) return;
-  if (activeIconDrag || activeWidgetGesture || pendingPreferenceSave) {
+  if (activeIconDrag || activeWidgetGesture || settlingPeerMotion || pendingPreferenceSave) {
     if (!pendingIconPreferences || revision >= (pendingIconPreferences.revision ?? 0)) pendingIconPreferences = message;
     return;
   }
@@ -991,6 +997,8 @@ function startWidgetDrag(e, instance, resizing) {
     showToast('图标布局保存中，请稍候');
     return;
   }
+  activeIconDrag?.abort?.(true);
+  cancelSettlingPeerMotion();
   e.preventDefault();
   e.stopPropagation();
   const wrap = instance.wrap;
@@ -1302,15 +1310,8 @@ function renderIcons(layer, desk, s) {
   });
 }
 
-function highlightIcon(target) {
-  const icon = [...iconLayer.querySelectorAll(".icon")]
-    .find((element) => element.dataset.launchTarget === target);
-  if (!icon) return;
-  icon.classList.add("live-layout-highlight");
-  setTimeout(() => icon.classList.remove("live-layout-highlight"), 1800);
-}
-
 function renderDesk(index) {
+  cancelSettlingPeerMotion();
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk, index);
   mountWidgets(widgetLayer, desk, index);
@@ -1373,11 +1374,13 @@ function attachPress(el, index) {
 }
 
 function startDrag(e, el, index) {
+  if (activeIconDrag || activeWidgetGesture) return;
   if (pendingPreferenceSave) {
     showToast('图标布局保存中，请稍候');
     return;
   }
   e.preventDefault();
+  cancelSettlingPeerMotion();
   el.setPointerCapture(e.pointerId);
   el.classList.add("dragging");
   iconFeedbackController.setDragging(true);
@@ -1386,9 +1389,98 @@ function startDrag(e, el, index) {
   const sy = e.clientY;
   const origLeft = parseFloat(el.style.left);
   const origTop = parseFloat(el.style.top);
+  const desk = ROOM.desks[currentDesk];
+  const size = sizeOf(desk);
+  const layerRect = iconLayer.getBoundingClientRect();
+  const grid = {
+    cellWidth: size.cellW, cellHeight: size.cellH,
+    columns: Math.max(1, Math.floor(layerRect.width / size.cellW)),
+    rows: Math.max(1, Math.floor(layerRect.height / size.cellH)),
+    offsetX: (size.gapX ?? 0) / 2, offsetY: (size.gapY ?? 0) / 2,
+    footprintWidth: size.footprintWidth ?? size.cellW,
+    footprintHeight: size.footprintHeight ?? size.cellH,
+  };
+  const nodes = [...iconLayer.querySelectorAll('.icon')];
+  const peerMotion = globalThis.DextLayoutMotionApi.createPeerMotion();
+  const localRect = (box, padding = 0) => ({
+    x: box.left - layerRect.left - padding,
+    y: box.top - layerRect.top - padding,
+    width: box.width + 2 * padding,
+    height: box.height + 2 * padding,
+  });
+  const widgetRect = widgetLayer.getBoundingClientRect();
+  const widgetScaleX = widgetRect.width / ROOM_CANVAS.width;
+  const widgetScaleY = widgetRect.height / ROOM_CANVAS.height;
+  const obstacles = (desk.widgets ?? []).map(widget => ({
+    x: widgetRect.left - layerRect.left + widget.placement.x * widgetScaleX - 4,
+    y: widgetRect.top - layerRect.top + widget.placement.y * widgetScaleY - 4,
+    width: widget.placement.width * widgetScaleX + 8,
+    height: widget.placement.height * widgetScaleY + 8,
+  }));
+  const reserved = dockEl.style.display === 'none' ? []
+    : [localRect(dockEl.getBoundingClientRect(), 4)];
+  const transaction = globalThis.DextIconReorderSession.createIconReorderSession({
+    icons: desk.icons, draggedIndex: index, grid, obstacles, reserved,
+  });
+  const position = (item) => ({
+    left: item.x * size.cellW + grid.offsetX,
+    top: item.y * size.cellH + grid.offsetY,
+  });
+  const paintPeers = (icons) => {
+    const entries = nodes.flatMap((node, peerIndex) => {
+      if (peerIndex === index || !icons[peerIndex]) return [];
+      return [{ key: String(peerIndex), node, ...position(icons[peerIndex]) }];
+    });
+    try { peerMotion.apply(entries); }
+    catch (_error) {
+      peerMotion.cancel();
+      entries.forEach(({ node, left, top }) => {
+        node.style.transition = 'none';
+        node.style.left = `${left}px`;
+        node.style.top = `${top}px`;
+      });
+    }
+  };
+  const settlePeers = () => {
+    if (pendingIconPreferences) {
+      peerMotion.dispose();
+      drainPendingIconPreferences();
+      return;
+    }
+    settlingPeerMotion = peerMotion;
+    settlingPeerTimer = setTimeout(() => {
+      if (settlingPeerMotion === peerMotion) settlingPeerMotion = null;
+      peerMotion.dispose();
+      settlingPeerTimer = null;
+      drainPendingIconPreferences();
+    }, 300);
+  };
+  const targetAt = (ev) => {
+    if (ev.clientX < layerRect.left || ev.clientX >= layerRect.right ||
+        ev.clientY < layerRect.top || ev.clientY >= layerRect.bottom) return null;
+    const blockedPoint = box => ev.clientX >= box.x + layerRect.left &&
+      ev.clientX < box.x + box.width + layerRect.left &&
+      ev.clientY >= box.y + layerRect.top && ev.clientY < box.y + box.height + layerRect.top;
+    if ([...obstacles, ...reserved].some(blockedPoint)) return null;
+    return {
+      x: Math.floor((ev.clientX - layerRect.left) / size.cellW),
+      y: Math.floor((ev.clientY - layerRect.top) / size.cellH),
+    };
+  };
+  let lastCell = null;
+  const previewAt = (ev) => {
+    const target = targetAt(ev);
+    const cell = target ? `${target.x}:${target.y}` : null;
+    if (cell !== null && cell === lastCell) return;
+    lastCell = cell;
+    const next = transaction.preview(target);
+    if (next) paintPeers(next.icons);
+  };
   const onMove = (ev) => {
+    if (ev.pointerId !== e.pointerId) return;
     el.style.left = `${origLeft + ev.clientX - sx}px`;
     el.style.top = `${origTop + ev.clientY - sy}px`;
+    previewAt(ev);
   };
   let settled = false;
   const clearDrag = () => {
@@ -1405,50 +1497,45 @@ function startDrag(e, el, index) {
     return true;
   };
   const onCancel = (ev) => {
+    if (ev?.pointerId !== undefined && ev.pointerId !== e.pointerId) return;
     if (!clearDrag()) return;
-    renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
-    drainPendingIconPreferences();
+    transaction.abort();
+    const source = desk.icons[index];
+    if (source) {
+      const original = position(source);
+      el.style.left = `${original.left}px`;
+      el.style.top = `${original.top}px`;
+    }
+    paintPeers(desk.icons);
+    settlePeers();
   };
   const onUp = (ev) => {
+    if (ev.pointerId !== e.pointerId) return;
+    previewAt(ev);
     if (!clearDrag()) return;
-    const desk = ROOM.desks[currentDesk];
-    const dragged = desk.icons[index];
-    // sparse grid: drop cell from pointer; occupied -> swap, empty -> place
-    const rect = iconLayer.getBoundingClientRect();
-    const s = sizeOf(ROOM.desks[currentDesk]);
-    const cols = Math.max(1, Math.floor(rect.width / s.cellW));
-    const rows = Math.max(1, Math.floor(rect.height / s.cellH));
-    const blockedAt = (box) => ev.clientX >= box.left && ev.clientX < box.right &&
-      ev.clientY >= box.top && ev.clientY < box.bottom;
-    const outside = !blockedAt(rect);
-    const onDock = dockEl.style.display !== 'none' && blockedAt(dockEl.getBoundingClientRect());
-    const onWidget = [...widgetLayer.querySelectorAll('.dext-widget')].some((widget) => blockedAt(widget.getBoundingClientRect()));
-    if (outside || onDock || onWidget) {
-      renderIcons(iconLayer, desk, s);
-      drainPendingIconPreferences();
-      return;
+    const result = transaction.finish({ commit: Boolean(targetAt(ev)) });
+    if (result?.committed && result.moved.length) {
+      desk.icons = result.icons;
+      persistRoom();
     }
-    const col = Math.max(0, Math.min(cols - 1, Math.floor((ev.clientX - rect.left) / s.cellW)));
-    const row = Math.max(0, Math.min(rows - 1, Math.floor((ev.clientY - rect.top) / s.cellH)));
-    if (dragged.x === col && dragged.y === row) {
-      renderDesk(currentDesk);
-      drainPendingIconPreferences();
-      return;
-    }
-    const occupant = desk.icons.find((ic) => ic !== dragged && ic.x === col && ic.y === row);
-    if (occupant) {
-      [occupant.x, occupant.y, dragged.x, dragged.y] = [dragged.x, dragged.y, occupant.x, occupant.y];
-    } else {
-      dragged.x = col;
-      dragged.y = row;
-    }
-    persistRoom();
-    renderDesk(currentDesk);
-    drainPendingIconPreferences();
+    paintPeers(desk.icons);
+    const final = position(desk.icons[index]);
+    el.style.left = `${final.left}px`;
+    el.style.top = `${final.top}px`;
+    settlePeers();
   };
   activeIconDrag = { abort(restore) {
     if (!clearDrag()) return;
-    if (restore) renderIcons(iconLayer, ROOM.desks[currentDesk], sizeOf(ROOM.desks[currentDesk]));
+    transaction.abort();
+    if (restore) {
+      paintPeers(desk.icons);
+      const original = position(desk.icons[index]);
+      el.style.left = `${original.left}px`;
+      el.style.top = `${original.top}px`;
+      settlePeers();
+    } else {
+      peerMotion.dispose();
+    }
   } };
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerup", onUp);
@@ -1677,6 +1764,7 @@ window.addEventListener("keydown", (e) => {
 });
 
 window.addEventListener("resize", () => {
+  cancelSettlingPeerMotion();
   activeIconDrag?.abort?.(false);
   activeWidgetGesture?.abort?.(false);
   if (!SCREENSAVER_MODE) renderDesk(currentDesk);

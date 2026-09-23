@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Update="probe.html" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="room-reorder-observer.js" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common/Lively.Common.csproj" />
   </ItemGroup>
 </Project>

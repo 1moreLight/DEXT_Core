@@ -319,11 +319,71 @@
     }
   }
 
+  function createPeerMotion({ reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches } = {}) {
+    const animations = new Map();
+    const transitions = new Map();
+    let revision = 0;
+    let disposed = false;
+    const cancelAnimations = () => {
+      for (const animation of animations.values()) {
+        try { animation.cancel(); } catch (_error) { /* final coordinates remain set */ }
+      }
+      animations.clear();
+    };
+    return {
+      apply(entries) {
+        if (disposed) return;
+        const current = ++revision;
+        const before = entries.map(entry => entry.node.getBoundingClientRect());
+        cancelAnimations();
+        entries.forEach(entry => {
+          if (!transitions.has(entry.node)) transitions.set(entry.node, entry.node.style.transition);
+          entry.node.style.transition = 'none';
+          entry.node.style.left = `${entry.left}px`;
+          entry.node.style.top = `${entry.top}px`;
+        });
+        const after = entries.map(entry => entry.node.getBoundingClientRect());
+        const immediate = typeof reducedMotion === 'function' ? reducedMotion() : reducedMotion;
+        if (immediate) return;
+        entries.forEach((entry, index) => {
+          const dx = before[index].left - after[index].left;
+          const dy = before[index].top - after[index].top;
+          if (!dx && !dy) return;
+          try {
+            const animation = entry.node.animate([
+              { transform: `translate3d(${dx}px, ${dy}px, 0)` },
+              { transform: 'translate3d(0, 0, 0)' },
+            ], { duration: DEFAULT_DURATIONS.move, easing: DEFAULT_EASING, fill: 'both' });
+            animations.set(entry.key, animation);
+            Promise.resolve(animation.finished).then(() => {
+              if (revision === current && animations.get(entry.key) === animation) {
+                animations.delete(entry.key);
+                animation.cancel();
+              }
+            }).catch(() => {});
+          } catch (_error) {
+            // Coordinates were already written. Animation failure is cosmetic.
+          }
+        });
+      },
+      cancel() { ++revision; cancelAnimations(); },
+      dispose() {
+        if (disposed) return;
+        disposed = true;
+        ++revision;
+        cancelAnimations();
+        for (const [node, transition] of transitions) node.style.transition = transition;
+        transitions.clear();
+      },
+    };
+  }
+
   return {
     DEFAULT_DURATIONS,
     DEFAULT_EASING,
     DEFAULT_MOTION_PROFILE,
     DextLayoutMotion,
+    createPeerMotion,
     createMotionItems,
     diffMotionItems,
     iconIdentitySignature,

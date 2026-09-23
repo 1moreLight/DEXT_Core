@@ -531,3 +531,13 @@ Playwright 都全绿，但真实 WorkerW/WebView2 中仍表现为几乎无法拖
 
 防再犯：实验台可以定义容器排布，但不能重新定义要预览的生产参数；修改档位时同时检验真实 DOM pitch、
 共享几何和配置器投影，而不只看 dataset 是否切换。
+
+# #108 深拷贝不能把可选 launch 变成空对象
+
+现象：路径排序对旧 Glyph/action 图标提交后，内存中的图标被补上 `launch: {}`；Room v2 Schema 要求一旦存在 `launch` 就必须有 target、args 和 workdir，后续保存会产生非法 Room。
+
+原因：通用 `cloneIcons()` 无条件执行 `{ launch: { ...icon.launch } }`。JavaScript 展开 `undefined` 不报错，却创建了一个原数据不存在的空对象。
+
+修复：只在 `launch` 确实是对象时深拷贝它，否则保持字段原始缺失形态；纯事务 Node 测试和隔离 Player 保存探针都验证 Glyph 图标仍不含 `launch`。
+
+防再犯：复制带可选嵌套字段的 Schema 对象时必须同时保留“字段缺失”语义；测试不仅比较值，也用 `Object.hasOwn` 和最终序列化消息检查字段形状。

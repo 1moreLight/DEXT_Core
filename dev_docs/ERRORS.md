@@ -109,6 +109,11 @@
 | #102 | 图标实验台重定义共享间距 CSS，造成真实桌面和实验台使用不同档位几何 | [renderer](errors/renderer.md) |
 | #103 | Core 把鼠标移动的按键状态写成 0x20（侧键），破坏 WebView2 pointer capture；前端取消会放大旧输入错误 | [backend](errors/backend.md) |
 | #104 | 配置器在异步 Room 审计完成前写编辑状态，严格校验失败后表现为“编辑无反应” | [frontend](errors/frontend.md) |
+| #105 | 隔离 Player 的 geometry 缩放不一定反映在 devicePixelRatio，原生消息测试需用实收事件校准坐标 | [toolchain](errors/toolchain.md) |
+| #106 | 浏览器 releasePointerCapture 后 lostpointercapture 需下一次指针事件才派发，测试不能立即断言回滚 | [toolchain](errors/toolchain.md) |
+| #107 | 两个 Playwright 进程共用 renderer 测试端口和产物目录，可能出现端口拒绝与视频 ENOENT | [toolchain](errors/toolchain.md) |
+| #108 | 图标深拷贝无条件展开可选 `launch`，会把旧 Glyph 图标保存成不符合 Schema 的空启动对象 | [renderer](errors/renderer.md) |
+| #109 | WebView2 Player 退出后临时 user-data 仍可能短暂锁定，夹具清理需受限重试 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

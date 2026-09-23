@@ -1,6 +1,6 @@
 # DESK-REORDER-002 稳定输入上的路径重排验收
 
-- 状态：2026-09-22 用户已要求执行计划；开发中，完成后待实机验收。
+- 状态：自动检查通过，分支待真实桌面人工验收；用户确认前不合并 master。
 - 基线：master 产品合并 `4fd2986`，输入修复 `3c42552`，收尾文档 `23da621`。
 - 分支：`feat/DESK-REORDER-002-stable-sortable`。
 - 目标：不替换旧直接拖动，追加实时路径插入和同伴让位动画。
@@ -9,11 +9,11 @@
 
 ## 自动检查（实施时执行）
 
-- [ ] 原生消息和真实 Release Player 连续十轮；不以浏览器代替。
-- [ ] 路径、空格、非法源布局、footprint、Dock/Widget 障碍、反向预览、一次性结算。
-- [ ] 实际 Room 拖动中节点身份、跟手、同伴 transform、松手保存次数、取消和权威更新。
-- [ ] reduced-motion、偏好排队、名称静止、无框提示、Widget iframe 不重挂、应用启动。
-- [ ] Vitest/build/Playwright/Node/语法/Room Schema/diff 检查，运行路径核对。
+- [x] 原生消息十轮及隔离 Release Player 真 Room 原生拖动十轮。旧 flags=8 对照复现，正确路径无提前取消。
+- [x] Node 路径、空格、非法源布局、footprint、Widget/Dock 障碍、反向预览、一次性结算。
+- [x] 真实 Room 浏览器交互：拖动时节点身份、跟手、路径让位、无效释放、快速折返、热布局中止和一次保存；Widget iframe 不重挂。
+- [x] reduced-motion 同伴无 WAAPI，路径预览及提交仍可用；已有测试覆盖名称静止、偏好排队、空白退出与应用启动。
+- [x] Vitest 55/55、前端 build、Renderer Playwright 55/55、Node 27/27、语法、Room Schema、`git diff --check`；Core/Player Release 构建通过。当前运行路径只读核对显示实际桌面仍由旧 prefs worktree 运行，未当作本包实机通过。
 
 ## 真实桌面人工验收
 
@@ -28,3 +28,5 @@
 ## 记录
 
 本轮只确认计划，不把 master 当前版本的合并授权视为本包验收。七项人工检查及必选自动检查通过后，由用户明确回复通过才合并；不清理仍运行或有未提交用户数据的工作区。
+
+2026-09-23 自动验证：`scripts/build.ps1` 已在此 worktree 构建 Release Player；`dotnet run --project tests/Dext.Input.Tests -- <本分支 Release Player>` 完整通过，含十次实际 Room 两段式拖动，并验证旧 Glyph 图标排序保存后不会被补入非法空 `launch`。Vitest 55/55、前端 build、Renderer Playwright 全量 55/55；Node 27/27。`scripts/validate-room-schema.py` 全部 fixture 通过。`verify-runtime-identity.ps1` 报告实际 Core/Player/配置器仍来自 `DEXT_Core-desk-prefs-001`（返回码 1 表示非本 worktree），所以尚未进行本包 WorkerW 实机验收。

@@ -4,7 +4,12 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.DextIconReorderSession = api;
 })(globalThis, function (layout) {
-  function copy(icons) { return icons.map(icon => ({ ...icon, launch: icon.launch && { ...icon.launch } })); }
+  function copy(icons) {
+    return icons.map(icon => ({
+      ...icon,
+      ...(icon.launch && typeof icon.launch === 'object' ? { launch: { ...icon.launch } } : {}),
+    }));
+  }
   function createIconReorderSession({ icons, draggedIndex, grid, obstacles = [], reserved = [] }) {
     const baseline = copy(icons);
     let current = { valid: true, icons: copy(baseline), moved: [] };

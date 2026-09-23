@@ -82,7 +82,7 @@ npm run test:renderer:e2e
 
 Playwright 失败时在 `tauri-ui/test-results/renderer/` 保留 trace、截图和视频（Git 忽略）。测试文件必须留在 `tauri-ui/tests/renderer/`，否则 Node 不会从仓库级 `wallpapers/` 目录向下解析 `tauri-ui/node_modules`（ERRORS #70）。
 
-实验台只验证运动规则与默认参数，不代表生产外观。阶段 B 已把同一求解器和动画引擎接入真实桌面；生产仍使用现有图标、Widget iframe、主题、编辑边框与 Dock，不复用实验台示例卡片。
+实验台只验证运动规则与默认参数，不代表生产外观。旧阶段 B 的整套桌面控制器已回退；当前生产输入走 `attachPress → startDrag`，DESK-REORDER-002 在其上接入纯排序事务与只管理其他图标的移动动画。真实图标、Widget iframe、主题和 Dock 仍由正式 Room 页面绘制。
 
 ### 图标反馈实验台（DESK-ICON-001）
 
@@ -95,7 +95,7 @@ npm run dev:icons
 
 默认“交互”状态像 Widget 实验台一样直接操作真实命中框：hover 和 pointerdown 使用真实指针状态，短按选择当前 TARGET；长按 300ms 进入苹果式编辑抖动，编辑中拖动会托起并跟手，松手恢复原网格。此阶段不重排、不保存，双击真正画布空白退出编辑；透明网格边缘始终不响应。固定五状态只用于逐帧诊断对比。
 
-布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap。紧凑、标准、宽松只控制 footprint 之间的 4×12、20×28、40×40 gap。五项参数由全局 Core 设置保存，不写入 Room Schema。DESK-PREFS-001 分支把共享视觉层接入真实 Room；原 `.icon` 仍拥有 pointer capture，内部 face/visual 仅装饰，偏好热切换不重挂 Widget iframe。浏览器实验台的命中区调试标记不进入生产外观。
+布局定位格与实际命中区统一为同一个 footprint。显示名称时，小 72×80、标准 80×84、大 84×88；隐藏名称时收紧为 64×64、72×72、80×80。另有独立的小 48px、标准 56px、大 64px 图标视觉大小，切换只缩放图形/光晕，不改变 footprint 或 gap。紧凑、标准、宽松的额外空隙为 2×4、8×12、20×24px。五项参数由全局 Core 设置保存，不写入 Room Schema。DESK-PREFS-001 把共享视觉层接入真实 Room；原 `.icon` 仍拥有 pointer capture，内部 face/visual 仅装饰，偏好热切换不重挂 Widget iframe。浏览器实验台的命中区调试标记不进入生产外观。
 
 阶段 A 用于浏览器调参与运动诊断，不代表真实壁纸外观。生产 DESK-PREFS-001 保持旧 500ms 长按进入编辑、松手后再次按下直接拖动；仅 `.icon-visual` 以 ±3° / 150ms 抖动，名称静止。关闭名称后稳定悬停 500ms 显示浮层，编辑、按下或拖动期间抑制。双击真正桌面空白才退出编辑。
 

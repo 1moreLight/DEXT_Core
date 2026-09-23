@@ -58,7 +58,10 @@
   }
 
   function cloneIcons(icons) {
-    return icons.map((icon) => ({ ...icon, launch: { ...icon.launch } }));
+    return icons.map((icon) => ({
+      ...icon,
+      ...(icon.launch && typeof icon.launch === 'object' ? { launch: { ...icon.launch } } : {}),
+    }));
   }
 
   function candidates(originX, originY, grid) {

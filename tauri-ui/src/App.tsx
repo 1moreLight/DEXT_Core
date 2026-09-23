@@ -1029,7 +1029,6 @@ export default function App() {
     nextDesks: Desk[],
     deskIndex: number,
     action: "added" | "removed",
-    target: string,
   ) {
     const isActiveRoom = roomPath !== null && roomPath === appliedRoom;
     const coreConnected = Boolean(coreIdentity);
@@ -1049,7 +1048,7 @@ export default function App() {
       deskIndex,
       icons: targetDesk.icons,
       enterEdit: action === "added" && minimizeAfterDeskAppAdd,
-      highlightTarget: action === "added" ? target : null,
+      highlightTarget: null,
     };
     try {
       const completion = await deskLayoutSyncQueueRef.current.submit(request);
@@ -1080,7 +1079,7 @@ export default function App() {
   function syncHistoryDeskLayouts(before: Desk[], after: Desk[]) {
     after.forEach((desk, index) => {
       if (JSON.stringify(before[index]?.icons ?? []) !== JSON.stringify(desk.icons)) {
-        void syncDeskIcons(after, index, "removed", "");
+        void syncDeskIcons(after, index, "removed");
       }
     });
   }
@@ -1120,7 +1119,7 @@ export default function App() {
           ? `无法读取当前图标设置，已按兼容网格将 ${app.name} 放入 ${targetDesk.name}`
           : `已将 ${app.name} 放入 ${targetDesk.name}；可在桌面长按图标拖动位置`
     );
-    void syncDeskIcons(nextDesks, deskIndex, result.action, app.target);
+    void syncDeskIcons(nextDesks, deskIndex, result.action);
   }
 
   function addDesk() {

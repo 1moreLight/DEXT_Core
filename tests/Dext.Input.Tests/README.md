@@ -20,3 +20,13 @@ Player initially minimizes itself. It closes at test completion; the real deskto
 
 This covers the actual Player/WebView2 and Win32 message boundary, but not physical mouse RawInput
 or WorkerW focus/Explorer routing. Those still require the real desktop acceptance card.
+
+The Player command also creates a temporary fixture from this worktree's actual
+`wallpapers/dext-room` resources (source files are SHA256 checked after copying).
+Only the temporary `index.html` receives a test observer. It runs ten native
+two-stage drags against the production renderer, checking pointer-following,
+preview without Room mutation and exactly one save per valid release. The
+fixture and isolated Player are cleaned up without touching the running desktop.
+The test calibrates native-message to CSS coordinates from an observed pointer
+event because `--wallpaper-geometry` can scale the Player while
+`devicePixelRatio` still reports 1.

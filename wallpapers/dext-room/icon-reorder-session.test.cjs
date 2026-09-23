@@ -35,3 +35,12 @@ test('blocked target keeps last valid preview until cancel', () => {
   assert.equal(tx.finish({ commit: false }).committed, false);
   assert.deepEqual(base.map(i => i.x), [0, 1, 2, 3]);
 });
+
+test('legacy glyph icons retain their optional launch field shape after commit', () => {
+  const icons = [{ label: 'A', glyph: 'A', x: 0, y: 0 }, { label: 'B', glyph: 'B', x: 1, y: 0 }];
+  const tx = createIconReorderSession({ icons, draggedIndex: 0, grid, obstacles: [], reserved: [] });
+  tx.preview({ x: 1, y: 0 });
+  const committed = tx.finish({ commit: true });
+  assert.equal(Object.hasOwn(committed.icons[0], 'launch'), false);
+  assert.equal(Object.hasOwn(committed.icons[1], 'launch'), false);
+});

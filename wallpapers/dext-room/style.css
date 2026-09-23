@@ -267,12 +267,6 @@ html[data-mode="screensaver"] #toast {
   outline-offset: -4px;
 }
 
-.icon.live-layout-highlight {
-  outline: 3px solid var(--dext-accent);
-  outline-offset: -3px;
-  background: color-mix(in srgb, var(--dext-accent) 28%, transparent);
-}
-
 @keyframes jiggle {
   0% { rotate: -1.4deg; }
   50% { rotate: 1.4deg; }
@@ -280,7 +274,6 @@ html[data-mode="screensaver"] #toast {
 }
 
 body.editing .icon {
-  animation: jiggle 0.35s ease-in-out infinite;
   cursor: grab;
 }
 

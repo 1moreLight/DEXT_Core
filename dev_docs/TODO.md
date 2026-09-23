@@ -1004,7 +1004,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 用户明确要求“按照上面的计划执行一次”，开始实施 Task 1–5（2026-09-22）。
 - [x] Task 1：原生 Windows 消息回归与真实 Room 浏览器旧直接拖动基线通过；Core 输入相对 master 零改动。
 - [x] Task 2：纯排序事务、几何与障碍测试先红后绿，Node 11/11。
-- [ ] Task 3：在旧 startDrag 上接预览与一次提交，仍可靠跟手。
-- [ ] Task 4：仅同伴图标动画、移除图标位置提示，reduced-motion 和文字静止。
-- [ ] Task 5：Release Player 与全量回归，提交待实机验收。
-- [ ] 实施后自动检查、提交并停在真实桌面待验收；用户通过后才合并。
+- [x] Task 3：旧 startDrag 保留 pointer capture 与逐帧跟手，事务预览从手势基线计算；跨格路径插入、无效释放、热更新和一次保存经真实 Room Playwright 验证。
+- [x] Task 4：同伴节点 WAAPI 280ms，让拖动节点不归动画层管理；快速折返与 reduced-motion 测试通过。新增位置高亮已移除，名称仍静止。
+- [x] Task 5 自动部分：新 worktree Release Player 构建通过；原生消息十轮和真实 Room 原生拖动十轮通过，Vitest 55/55、前端 build、Renderer Playwright、Node、语法与 diff 检查通过。未重铺运行桌面。
+- [ ] Task 5 真实 WorkerW 人工验收：先退出旧 prefs worktree 运行实例，再从本 worktree 启动、强制重铺与核对绝对路径；按验收卡七项实测，通过前不合并 master。
+- [x] 最终复核修复旧 Glyph 图标被补入空 `launch` 的 Schema 风险；Node 27/27、Renderer Playwright 55/55、隔离 Player 十轮 Room 拖动和保存形状检查均通过（2026-09-23）。
+- [x] 实施后自动检查完成，提交并停在真实桌面待验收；用户通过后才合并。

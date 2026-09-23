@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   DEFAULT_MOTION_PROFILE,
+  createPeerMotion,
   DextLayoutMotion,
   createMotionItems,
   diffMotionItems,
@@ -208,4 +209,46 @@ test("the default motion profile drives the production move timing", () => {
   assert.equal(container.children[0].animations.at(-1).options.easing, "cubic-bezier(.22,1,.36,1)");
   assert.equal(DEFAULT_MOTION_PROFILE.targetDwell, 80);
   assert.deepEqual(DEFAULT_MOTION_PROFILE.iconLift, { y: -8, scale: 1.06 });
+});
+
+test("peer motion animates existing nodes without taking ownership of the drag node", async () => {
+  const container = new FakeContainer();
+  const peer = new FakeNode(container);
+  const drag = new FakeNode(container);
+  container.appendChild(peer);
+  container.appendChild(drag);
+  peer.style.left = '100px';
+  drag.style.left = '0px';
+  const motion = createPeerMotion({ reducedMotion: false });
+  motion.apply([{ key: 'peer', node: peer, left: 0, top: 0 }]);
+  assert.equal(peer.style.left, '0px');
+  assert.equal(peer.animations.at(-1).options.duration, 280);
+  assert.equal(drag.style.left, '0px');
+  assert.equal(drag.animations.length, 0);
+  const previous = peer.animations.at(-1);
+  motion.apply([{ key: 'peer', node: peer, left: 100, top: 0 }]);
+  previous.finish();
+  await Promise.resolve();
+  assert.equal(peer.style.left, '100px');
+  assert.equal(container.children.includes(peer), true);
+  motion.dispose();
+  assert.equal(container.children.includes(peer), true);
+  assert.equal(container.children.includes(drag), true);
+});
+
+test("peer motion handles reduced-motion and animation errors with final positions", () => {
+  const container = new FakeContainer();
+  const peer = new FakeNode(container);
+  container.appendChild(peer);
+  peer.style.left = '100px';
+  const reduced = createPeerMotion({ reducedMotion: true });
+  reduced.apply([{ key: 'peer', node: peer, left: 0, top: 0 }]);
+  assert.equal(peer.style.left, '0px');
+  assert.equal(peer.animations.length, 0);
+  reduced.dispose();
+  peer.animate = () => { throw new Error('WebView animation unavailable'); };
+  const fallback = createPeerMotion({ reducedMotion: false });
+  fallback.apply([{ key: 'peer', node: peer, left: 200, top: 0 }]);
+  assert.equal(peer.style.left, '200px');
+  fallback.dispose();
 });

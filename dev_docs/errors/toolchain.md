@@ -189,3 +189,44 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 
 防再犯：定向测试也统一通过 `npm run test:renderer:e2e -- --grep "..."` 调用项目配置；开始前先确认 5174
 未被占用，结束交付时才恢复人工预览。
+
+# #105 隔离 Player 的 native/CSS 坐标缩放与 devicePixelRatio 不一致
+
+现象：真实 Room 的 Release WebView2 回归中，向图标中心发送 native x=88，页面收到 pointerdown.clientX=110；向目标中心发送 x=280，页面收到 350，排序落入隔壁格。页面 `devicePixelRatio` 仍是 1，直接用它换算仍失败。
+
+原因：独立 Player 的 `--wallpaper-geometry 800x600` 与实际承载窗口之间存在 1.25 倍几何缩放；这一缩放不等于页面报告的 devicePixelRatio。旧 `probe.html` 命中区宽，未暴露目标格错位。
+
+修复：测试先对已知图标中心发送一次按下，读取真实 `pointerdown.clientX`，用「实收 CSS x / 发出 native x」校准本次 Player 的坐标，再发送十轮拖动。结果每轮都在 pointerup 前跟手、预览时 Room 未变、松手仅一次保存；测试资源从产品 Room 复制并核对 SHA256。
+
+防再犯：测试 WebView2 输入时同时记录发出的 Win32 client 坐标和页面实收 pointer 坐标；不把 `devicePixelRatio` 当作 Player 窗口几何缩放的唯一来源。隔离 Player 测试仍不替代 WorkerW 物理鼠标验收。
+
+# #106 releasePointerCapture 的失捕事件不一定同步派发
+
+现象：Playwright 在图标拖动中调用 `releasePointerCapture(1)` 后立即等待回滚，图标仍保持 dragging 和预览位置；误以为失捕监听没有工作。
+
+原因：浏览器把失捕变更暂存到待处理 pointer capture 队列；下一次指针事件到来时才派发 `lostpointercapture`。只有调用 release 并不等于已经投递失捕事件。
+
+修复：测试先确认持有 pointer capture，调用 release，再发送一次 mouse.move；此时 `lostpointercapture` 到达，图标和同伴回滚，随后旧 pointerup 不保存。真实自动化可模拟浏览器事件顺序，不合成一个跳过 pointer 队列的假事件。
+
+防再犯：对 capture 生命周期的测试要区分「请求释放」与「失捕事件已派发」；对用户可见状态断言应等下一次真实指针事件。
+
+# #107 Renderer Playwright 不能并行启动两次
+
+现象：全量 renderer 测试尚未退出时，另起定向测试立即报 5174 端口被占；原进程随后在旧 motion-lab 用例收尾时保存视频报 `ENOENT`，虽其交互断言已通过。
+
+原因：两进程争用同一 Vite strictPort 和 `tauri-ui/test-results/renderer` 产物目录，定向进程可能清理全量进程仍需写入的失败文件。
+
+修复：停止并行调用，待全量进程完全退出后单独复验失败用例与新增断言（2/2 通过），再单独重跑完整套件。
+
+防再犯：同一 worktree 的 `npm run test:renderer:e2e` 串行执行；只可与不会触碰 5174 或 renderer 产物目录的测试并行。
+
+# #109 WebView2 Player 退出后临时用户目录可能短暂保持锁定
+
+现象：隔离 Player 的十次真实 Room 拖动全部通过，但测试在 `finally` 递归删除临时夹具时偶发
+`UnauthorizedAccessException`，把已通过的产品行为误报为测试失败。
+
+原因：Player 主进程退出后，WebView2 子进程或文件句柄仍可能短暂占用 user-data 下的 `.tmp`；一次立即删除没有覆盖 Windows 的释放延迟。
+
+修复：夹具仍严格限制在系统 Temp 下，退出后对 `IOException` / `UnauthorizedAccessException` 做有上限的短重试；最终仍锁定只报告残留路径，不把产品交互断言改写为通过。
+
+防再犯：带 WebView2 user-data 的隔离测试必须等待文件句柄收敛；递归删除前继续校验目标绝对路径位于 Temp，不扩大删除范围。

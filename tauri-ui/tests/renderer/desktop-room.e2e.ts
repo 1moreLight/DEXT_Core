@@ -103,6 +103,129 @@ test("the pre-motion direct icon drag follows the pointer and swaps on release",
   await expect.poll(async () => (await bravo.boundingBox())?.x).toBeCloseTo(alphaStart.x, 0);
 });
 
+test("held direct drag previews path insertion before one save without remounting Widget", async ({ page }) => {
+  const room = structuredClone(baseRoom);
+  room.desks[0].icons.push(
+    { label: 'Charlie', glyph: 'C', color: '#567', x: 2, y: 0, launch: { target: 'charlie.exe', args: '', workdir: '' } },
+    { label: 'Delta', glyph: 'D', color: '#678', x: 3, y: 0, launch: { target: 'delta.exe', args: '', workdir: '' } },
+  );
+  await page.evaluate(next => window.__dextDispatch({ type: 'dext:room-layout', room: next, deskIndex: 0 }), room);
+  await longPressAlpha(page);
+  await page.evaluate(() => {
+    window.__widgetFrame = document.querySelector('.dext-widget iframe') ?? undefined;
+    window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
+  });
+  const icons = page.locator('.icon-layer .icon');
+  const boxes = await Promise.all([0, 1, 2, 3].map(async i => icons.nth(i).boundingBox()));
+  if (boxes.some(box => !box)) throw new Error('Missing icon box');
+  const center = (i: number) => ({ x: boxes[i]!.x + boxes[i]!.width / 2, y: boxes[i]!.y + boxes[i]!.height / 2 });
+  await page.mouse.move(center(0).x, center(0).y);
+  await page.mouse.down();
+  await page.mouse.move(center(2).x, center(2).y, { steps: 5 });
+  expect((await icons.nth(0).boundingBox())!.x).toBeGreaterThan(boxes[0]!.x + 100);
+  expect(await icons.nth(1).evaluate(node => node.getAnimations().length)).toBeGreaterThan(0);
+  await expect.poll(async () => (await icons.nth(1).boundingBox())?.x).toBeCloseTo(boxes[0]!.x, 0);
+  await expect.poll(async () => (await icons.nth(2).boundingBox())?.x).toBeCloseTo(boxes[1]!.x, 0);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([2, 0, 1, 3]);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(1);
+  expect(await page.evaluate(() => window.__widgetFrame === document.querySelector('.dext-widget iframe'))).toBe(true);
+  expect(await page.evaluate(() => window.__alphaNode === document.querySelector('[data-launch-target="alpha.exe"]'))).toBe(true);
+});
+
+test("fast reversal retargets peers while the held icon follows the pointer", async ({ page }) => {
+  const room = structuredClone(baseRoom);
+  room.desks[0].icons.push(
+    { label: 'Charlie', glyph: 'C', color: '#567', x: 2, y: 0, launch: { target: 'charlie.exe', args: '', workdir: '' } },
+  );
+  await page.evaluate(next => window.__dextDispatch({ type: 'dext:room-layout', room: next, deskIndex: 0 }), room);
+  await longPressAlpha(page);
+  const icons = page.locator('.icon-layer .icon');
+  const first = await icons.nth(0).boundingBox();
+  if (!first) throw new Error('Missing first icon');
+  const source = { x: first.x + first.width / 2, y: first.y + first.height / 2 };
+  await page.mouse.move(source.x, source.y);
+  await page.mouse.down();
+  await page.mouse.move(source.x + 192, source.y);
+  await page.mouse.move(source.x + 96, source.y);
+  await page.mouse.move(source.x + 192, source.y);
+  expect((await icons.nth(0).boundingBox())!.x).toBeGreaterThan(first.x + 180);
+  await expect.poll(async () => (await icons.nth(1).boundingBox())!.x).toBeCloseTo(first.x, 0);
+  await expect.poll(async () => (await icons.nth(2).boundingBox())!.x).toBeCloseTo(first.x + 96, 0);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([2, 0, 1]);
+});
+
+test("invalid Dock release after path preview restores all peers and does not save", async ({ page }) => {
+  const room = structuredClone(baseRoom);
+  room.desks[0].icons.push(
+    { label: 'Charlie', glyph: 'C', color: '#567', x: 2, y: 0, launch: { target: 'charlie.exe', args: '', workdir: '' } },
+  );
+  await page.evaluate(next => window.__dextDispatch({ type: 'dext:room-layout', room: next, deskIndex: 0 }), room);
+  await longPressAlpha(page);
+  const icons = page.locator('.icon-layer .icon');
+  const first = await icons.nth(0).boundingBox();
+  const dock = await page.locator('#dock').boundingBox();
+  if (!first || !dock) throw new Error('Missing drag geometry');
+  const source = { x: first.x + first.width / 2, y: first.y + first.height / 2 };
+  await page.mouse.move(source.x, source.y);
+  await page.mouse.down();
+  await page.mouse.move(source.x + 192, source.y);
+  await expect.poll(async () => (await icons.nth(1).boundingBox())!.x).toBeCloseTo(first.x, 0);
+  await page.mouse.move(dock.x + dock.width / 2, dock.y + dock.height / 2);
+  await page.mouse.up();
+  await expect.poll(async () => (await icons.nth(1).boundingBox())!.x).toBeCloseTo(first.x + 96, 0);
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([0, 1, 2]);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
+});
+
+test("reduced motion keeps the path preview and save without peer WAAPI", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const room = structuredClone(baseRoom);
+  room.desks[0].icons.push(
+    { label: 'Charlie', glyph: 'C', color: '#567', x: 2, y: 0, launch: { target: 'charlie.exe', args: '', workdir: '' } },
+  );
+  await page.evaluate(next => window.__dextDispatch({ type: 'dext:room-layout', room: next, deskIndex: 0 }), room);
+  await longPressAlpha(page);
+  const icons = page.locator('.icon-layer .icon');
+  const first = await icons.nth(0).boundingBox();
+  if (!first) throw new Error('Missing icon');
+  await page.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(first.x + first.width / 2 + 192, first.y + first.height / 2);
+  expect((await icons.nth(0).boundingBox())!.x).toBeGreaterThan(first.x + 180);
+  expect(await icons.nth(1).evaluate(node => node.getAnimations().length)).toBe(0);
+  await expect.poll(async () => (await icons.nth(1).boundingBox())!.x).toBeCloseTo(first.x, 0);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([2, 0, 1]);
+});
+
+test("lost pointer capture rolls back a path preview and old release cannot save", async ({ page }) => {
+  const room = structuredClone(baseRoom);
+  room.desks[0].icons.push(
+    { label: 'Charlie', glyph: 'C', color: '#567', x: 2, y: 0, launch: { target: 'charlie.exe', args: '', workdir: '' } },
+  );
+  await page.evaluate(next => window.__dextDispatch({ type: 'dext:room-layout', room: next, deskIndex: 0 }), room);
+  await longPressAlpha(page);
+  const icons = page.locator('.icon-layer .icon');
+  const first = await icons.nth(0).boundingBox();
+  if (!first) throw new Error('Missing icon');
+  await page.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(first.x + first.width / 2 + 192, first.y + first.height / 2);
+  await expect.poll(async () => (await icons.nth(1).boundingBox())!.x).toBeCloseTo(first.x, 0);
+  expect(await icons.nth(0).evaluate(node => node.hasPointerCapture(1))).toBe(true);
+  await icons.nth(0).evaluate(node => node.releasePointerCapture(1));
+  await page.mouse.move(first.x + first.width / 2 + 193, first.y + first.height / 2);
+  await expect(icons.nth(0)).not.toHaveClass(/dragging/);
+  await expect.poll(async () => (await icons.nth(0).boundingBox())!.x).toBeCloseTo(first.x, 0);
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.dext.getRoom().desks[0].icons.map((icon: { x: number }) => icon.x))).toEqual([0, 1, 2]);
+  expect(await page.evaluate(() => window.__roomSavePosts.length)).toBe(0);
+});
+
 test("a room-layout hot update rebinds icons without replacing the Widget iframe", async ({ page }) => {
   await page.evaluate(() => {
     window.__alphaNode = document.querySelector('[data-launch-target="alpha.exe"]') ?? undefined;
