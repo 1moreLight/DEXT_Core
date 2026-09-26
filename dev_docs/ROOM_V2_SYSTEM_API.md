@@ -55,19 +55,19 @@ Core RPC：
 
 ## 三、Capability Bridge
 
-作者侧只看到版本化、结构化 API，例如：
+作者侧使用当前 Creator Pack protocol 1 的版本化、结构化 API。例如，SDK 初始化后读取最近一次快照或订阅后续变化：
 
 ```js
-const media = await dext.request("system.media.read");
-const volume = await dext.request("system.volume.read");
+const media = dext.get("now-playing.read"); // 尚无快照时为 undefined
+const volume = dext.get("system.volume.read");
 
-dext.subscribe("system.media.changed", renderMedia);
-dext.subscribe("system.volume.changed", renderVolume);
+dext.subscribe("now-playing.read", renderMedia);
+dext.subscribe("system.volume.read", renderVolume);
 ```
 
 当前 iframe 通过 `dext:scene:init` / `dext:widget:init` 建立实例，之后只接收 `dext:capability` 结构化消息。桥接层已经：
 
-- 按 Room、Widget/Scene、内容哈希保存授权；内容变化后重新询问。
+- 按源 Room 路径、Widget/Scene 身份和源 `room.json` 字节摘要查授权。当前摘要不包含 HTML/JS/CSS 文件；未来作品版本需要另外设计整体内容身份。
 - 对数据做裁剪，默认不泄露设备 id、进程路径或其他会话列表。
 - 媒体/音量订阅使用宿主缓存和限频，不允许每个 Widget 自己高频轮询 Core。
 - 页面销毁或切 Desk 后立即撤销订阅，旧 instanceId 消息无效。

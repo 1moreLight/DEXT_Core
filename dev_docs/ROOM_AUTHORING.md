@@ -98,7 +98,7 @@ parent.postMessage({
 - config 会随 Room 分享；不要放秘密、设备信息或用户数据。
 - permissions 只声明需求。宿主未实现或用户未授权时，Widget 必须能显示安全空状态。
 
-WidgetHost 尚未实现视觉运行；DXT-003 只保证 manifest、素材、保存/另存/应用/zip 和后端能力边界。不要在当前作者代码里自造替代桥。
+当前 Room v2 已有 WidgetHost 视觉运行、实例能力桥和可信热点。作者应使用随 Creator Pack 提供的 `dext-sdk.js`，不要自造绕过宿主的桥。
 
 ## 六、安全规则
 

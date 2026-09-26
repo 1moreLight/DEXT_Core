@@ -27,41 +27,12 @@
             "target": "D:\\TOOLs\\Cockpit Tools\\cockpit-tools.exe",
             "workdir": "D:\\TOOLs\\Cockpit Tools"
           },
-          "x": 4,
-          "y": 4
+          "x": 1,
+          "y": 0
         }
       ],
       "name": "Desk 1",
-      "widgets": [
-        {
-          "config": {},
-          "hotspots": [],
-          "id": "clock-hardware",
-          "name": "时钟 · 硬件参数",
-          "permissions": [
-            "time.read",
-            "locale.read",
-            "hardware.cpu.read",
-            "hardware.gpu.read",
-            "hardware.memory.read",
-            "hardware.network.read"
-          ],
-          "placement": {
-            "height": 271,
-            "width": 528,
-            "x": 660,
-            "y": 111,
-            "z": 0
-          },
-          "resources": [
-            "widgets/clock-hardware/dext-sdk.js",
-            "widgets/clock-hardware/index.html",
-            "widgets/clock-hardware/main.js",
-            "widgets/clock-hardware/style.css"
-          ],
-          "src": "widgets/clock-hardware/index.html"
-        }
-      ]
+      "widgets": []
     },
     {
       "background": {

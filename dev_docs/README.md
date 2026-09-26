@@ -62,6 +62,11 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_FRONTEND_CHECKLIST.md` | WidgetHost、Scene 数据绑定、可信热点、拖拽/层叠与图标避让实施清单 | 开发 v2 前端宿主时 |
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
+| `V3_IDEAS.md` | **Room v3 设计想法与候选实现路径**；记录 HTML 创作、常驻层、占用区和 Dock 窗口模式 | 讨论 v3 方向时；非正式运行契约 |
+| `V3_RUNTIME_MODEL.md` | **Room v3 运行逻辑讨论稿**；持续网页、Desk 切换状态机、图标随画布运动与共享元素生命周期 | 讨论 v3 作品结构和作者切页契约时；非正式运行契约 |
+| `V2_TO_V3_TODO.md` | **v2→v3 设计阶段待办草案**；按依赖整理验证、契约、运行时和创作闭环 | 规划 v3 工作包时；不替代 ROADMAP/TODO |
+| `V3_FEASIBILITY.md` | **v3 可行性复核、构建难度与预计问题**；代码证据、系统接口限制、估算与验证门槛 | 判断技术路线和拆分工作包前 |
+| `V3_API_NOTES.md` | **v3 作者 API 核查笔记**；v2 实际 SDK、文档差异和 v3 待定义的接口面 | 讨论 v3 API 或准备给 AI 的作者契约时 |
 | `../creator-kit/` | Creator Pack v1 Schema、版本化 SDK、Scene/Widget 模板与安全正反 fixtures | 导出 AI 上下文、制作或审查 `.dext-content.zip` 时 |
 | `CONFIGURATOR_V2_PLAN.md` | **UI-V2-001 单工作包总计划**：配置器、Scene、WidgetHost、系统能力、安全分享与 AI 创作端到端范围 | 开发或验收配置器 v2 时 |
 | `CONFIGURATOR_V2_LUNA_PROMPT.md` | 可直接交给 `gpt-5.6-luna` 的 UI-V2-001 执行指令 | 将整个 v2 工作包交接给执行模型时 |
