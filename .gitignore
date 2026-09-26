@@ -10,3 +10,30 @@ output/playwright/
 *.mp4
 *.webm
 *.mov
+
+# Local environment variables and machine-specific credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+.npmrc
+.pypirc
+.netrc
+.git-credentials
+credentials.json
+secrets.json
+*.secrets.json
+appsettings.*.local.json
+
+# Private keys and signing material
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Generated runtime data and temporary writes
+rooms/library.json
+*.tmp
