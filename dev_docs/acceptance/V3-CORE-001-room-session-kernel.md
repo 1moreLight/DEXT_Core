@@ -1,8 +1,8 @@
 # V3-CORE-001 Room/Desk 会话内核验收
 
-- 状态：开发中
+- 状态：待验收
 - 分支：`feat/V3-CORE-001-room-session-kernel`
-- 提交：待提交
+- 提交：实现 `5398679`
 - 目标：让 Dext Core 拥有 v3 Room/Desk 权威状态、版本化快照、切页仲裁和安全恢复。
 - 范围外：v2 壁纸运行链改造、Player/配置器正式 RPC、Room v3 Schema、个人绑定/权限、顶层 Dock 和游戏宿主。
 
@@ -16,7 +16,7 @@
 
 1. [ ] 在本工作分支运行 `dotnet run --project tests/Dext.RoomSession.KernelTests -- --demo`；两份模拟视图读取同一会话与修订号，切页完成后都显示同一最终 Desk。
 2. [ ] 在演示输出中核对：切换动画期间连续提出两个目标，只保留最后一个；失焦或超时会立即提交目标，恢复操作前不开始新切页。
-3. [ ] 在演示输出中核对：切换到另一 Room 后，旧 Room 的完成消息被拒绝；重启读取 checkpoint 后，只有提供匹配的 Room/Desk 列表才能恢复已提交 Desk。
+3. [ ] 在演示输出中核对：切换到另一 Room 后，旧 Room 的完成消息被拒绝；重启读取 checkpoint 后，只有提供匹配的 Room/Desk 列表才能恢复已提交 Desk，停止后 checkpoint 清空。
 4. [ ] 按验收卡记录的 Core 启动方式与 `scripts/verify-runtime-identity.ps1` 核对当前进程来自本 worktree；旧 v2 Room 仍可按原方式运行，未被新会话自动接管。
 
 ## 通过标准

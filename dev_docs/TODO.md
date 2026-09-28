@@ -1044,5 +1044,5 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 仅持久化已提交 Desk 的格式化原子 checkpoint；恢复需匹配 Room/Desk 身份并生成新会话 ID，运行中不允许恢复覆盖现会话（2026-09-28）。
 - [x] 新内核以独立单例注册并在真实 Dext Core 启动；启动日志可见 protocol=1；当前 v2 Player 仍按旧恢复路径运行，v3 不自动接管（2026-09-28）。
 - [x] 内核 8/8、配置器 Vitest 62/62、完整 `scripts/build.ps1` → `scripts/start.ps1` 通过；身份脚本确认 Core/Player/配置器来自本 worktree，`git diff --check` 通过（2026-09-28）。
-- [ ] 只提交本包具名文件，ROADMAP/验收卡转待验收；用户验收前不合并 master。
+- [x] 仅暂存本包 12 个具名文件并提交实现 `5398679`；ROADMAP/验收卡转待验收，用户验收前不合并 master（2026-09-28）。
 - [ ] 用户按独立验收卡确认。
