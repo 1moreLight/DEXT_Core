@@ -180,6 +180,23 @@ Check("an unresponsive view is committed by the kernel timer", () =>
     Equal(null, kernel.Snapshot?.TargetDeskId, "timed-out transition cleared");
 });
 
+Check("timer retries when the wall clock moves backward", () =>
+{
+    var start = new DateTimeOffset(2026, 9, 28, 10, 0, 0, TimeSpan.Zero);
+    long clockTicks = start.Ticks;
+    using var kernel = new RoomSessionKernel(
+        clock: () => new DateTimeOffset(Interlocked.Read(ref clockTicks), TimeSpan.Zero),
+        transitionTimeout: TimeSpan.FromMilliseconds(40));
+    var started = kernel.Start("room-one", ["a", "b"], "a");
+    kernel.Request(started.SessionId, "b");
+    Interlocked.Exchange(ref clockTicks, start.AddMilliseconds(-40).Ticks);
+    Thread.Sleep(200);
+    Equal("a", kernel.Snapshot?.CurrentDeskId, "early timer callback must not commit");
+    Interlocked.Exchange(ref clockTicks, start.AddSeconds(1).Ticks);
+    True(SpinWait.SpinUntil(() => kernel.Snapshot?.CurrentDeskId == "b", TimeSpan.FromSeconds(2)),
+        "timer must retry and commit after the shifted deadline");
+});
+
 Check("restore cannot replace a live session", () =>
 {
     var folder = Path.Combine(Path.GetTempPath(), "dext-session-live-" + Guid.NewGuid().ToString("N"));

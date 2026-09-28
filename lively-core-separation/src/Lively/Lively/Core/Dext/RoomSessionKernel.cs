@@ -268,7 +268,13 @@ public sealed class RoomSessionKernel : IDisposable
         {
             if (disposed) return false;
             var current = snapshot;
-            if (current is null || !current.IsActive || current.TargetDeskId is null || current.DeadlineUtc > clock()) return false;
+            if (current is null || !current.IsActive || current.TargetDeskId is null) return false;
+            if (current.DeadlineUtc > clock())
+            {
+                // A wall-clock adjustment can make a one-shot timer fire before the deadline.
+                ScheduleTimeout(current);
+                return false;
+            }
             result = CommitTarget(current, current.IsOperable);
             snapshot = result;
             ScheduleTimeout(result);

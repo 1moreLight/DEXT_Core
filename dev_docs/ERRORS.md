@@ -116,6 +116,7 @@
 | #109 | WebView2 Player 退出后临时 user-data 仍可能短暂锁定，夹具清理需受限重试 | [toolchain](errors/toolchain.md) |
 | #110 | 配置器先检查 Core 文件再探测运行身份，文件缺失时反而隐藏“启动 Core”重试入口 | [backend](errors/backend.md) |
 | #111 | 用 Core 可执行文件发送 shutdown 时遇到单实例退出竞态，辅助进程反成新 Core 并锁住构建输出 | [backend](errors/backend.md) |
+| #112 | 一次性过渡计时器遇系统时钟回拨会提前触发，若不重排将永久保留目标过渡 | [backend](errors/backend.md) |
 
 ## 分册
 

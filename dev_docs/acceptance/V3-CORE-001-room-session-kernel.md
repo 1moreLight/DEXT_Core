@@ -2,14 +2,14 @@
 
 - 状态：待验收
 - 分支：`feat/V3-CORE-001-room-session-kernel`
-- 提交：实现 `5398679`
+- 提交：实现 `5398679`；待验收复核的时钟回拨修复在本分支后续提交
 - 目标：让 Dext Core 拥有 v3 Room/Desk 权威状态、版本化快照、切页仲裁和安全恢复。
 - 范围外：v2 壁纸运行链改造、Player/配置器正式 RPC、Room v3 Schema、个人绑定/权限、顶层 Dock 和游戏宿主。
 
 ## 自动检查
 
-- [x] 内核回归 8/8：双视图、最后输入、超时/失焦、旧结果、checkpoint 恢复与停止清理；配置器 Vitest 62/62。
-- [x] `scripts/build.ps1` 成功；随后 `scripts/start.ps1` 启动本 worktree Core PID 99180、Player PID 112284、配置器 PID 78912；日志出现 `Dext Room session kernel ready | protocol=1`。
+- [x] 内核回归 8/8：双视图、最后输入、超时/失焦、时钟回拨后自动重试、旧结果、checkpoint 恢复与停止清理；配置器 Vitest 62/62。
+- [x] 修复后 `scripts/build.ps1` 成功；随后 `scripts/start.ps1` 启动本 worktree Core PID 58172、Player PID 104568、配置器 PID 110124；日志出现 `Dext Room session kernel ready | protocol=1`。
 - [x] `git diff --check` 通过；具名文件提交信息见下方状态。
 
 ## 人工验收
