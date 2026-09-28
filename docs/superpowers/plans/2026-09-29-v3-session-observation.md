@@ -20,5 +20,5 @@
 
 ## Task 3: Running Core proof
 
-- [ ] Build with `scripts/build.ps1`, start with `scripts/start.ps1`, verify Core/Player/Configurator paths and gateway log.
-- [ ] Record automatic checks and manual steps in the acceptance file; commit the runtime evidence step.
+- [x] Build with `scripts/build.ps1`, start with `scripts/start.ps1`, verify Core/Player/Configurator paths and gateway log.
+- [x] Record automatic checks and manual steps in the acceptance file; commit the runtime evidence step.
