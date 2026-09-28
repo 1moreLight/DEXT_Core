@@ -34,10 +34,10 @@
 
 **Interfaces:** `RoomSessionHello(int ProtocolVersion, RoomClientRole Role, string RoomId)`, `RoomSessionPeer(string TransportId)`, `VerifiedRoomInstallation(RoomId, InstallationStamp, DeskIds, StartDeskId)`, `IRoomSessionAdmissionAuthority.Admit(peer, hello)`, `RoomSessionProtocolGateway.Open(peer, hello)`.
 
-- [ ] Write tests for wrong version, denied source, unknown Room and valid coordinator admission; verify denied results have no connection or snapshot.
-- [ ] Run protocol tests and observe failure.
-- [ ] Implement verified admission and a closed production authority; validate supplied descriptor and issue an opaque, peer-bound connection.
-- [ ] Run protocol tests until green, then commit only the files of this task.
+- [x] Write tests for wrong version, denied source, unknown Room and valid coordinator admission; verify denied results have no connection or snapshot.
+- [x] Run protocol tests and observe failure.
+- [x] Implement verified admission and a closed production authority; validate supplied descriptor and issue an opaque, peer-bound connection.
+- [x] Run protocol tests until green, then commit only the files of this task.
 
 ### Task 2: Session commands, roles and reconnect
 
