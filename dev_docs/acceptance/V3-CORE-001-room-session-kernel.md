@@ -9,7 +9,7 @@
 ## 自动检查
 
 - [x] 内核回归 8/8：双视图、最后输入、超时/失焦、时钟回拨后自动重试、旧结果、checkpoint 恢复与停止清理；配置器 Vitest 62/62。
-- [x] 修复后 `scripts/build.ps1` 成功；随后 `scripts/start.ps1` 启动本 worktree Core PID 58172、Player PID 104568、配置器 PID 110124；日志出现 `Dext Room session kernel ready | protocol=1`。
+- [x] 修复后 `scripts/build.ps1` 成功；随后 `scripts/start.ps1` 启动本 worktree Core PID 58172、Player PID 104568；最终身份脚本确认配置器 PID 112192 也来自本 worktree（Tauri 开发热重载会更换 PID）；日志出现 `Dext Room session kernel ready | protocol=1`。
 - [x] `git diff --check` 通过；具名文件提交信息见下方状态。
 
 ## 人工验收
