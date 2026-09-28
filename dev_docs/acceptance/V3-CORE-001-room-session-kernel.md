@@ -1,8 +1,8 @@
 # V3-CORE-001 Room/Desk 会话内核验收
 
-- 状态：已通过（2026-09-28，待合并与清理）
-- 分支：`feat/V3-CORE-001-room-session-kernel`
-- 提交：实现 `5398679`；待验收复核的时钟回拨修复 `774d4f9`
+- 状态：已完成（2026-09-28）
+- 分支：`feat/V3-CORE-001-room-session-kernel`（已合并并删除）
+- 提交：实现 `5398679`；待验收复核的时钟回拨修复 `774d4f9`；master 合并点 `a81788a`
 - 目标：让 Dext Core 拥有 v3 Room/Desk 权威状态、版本化快照、切页仲裁和安全恢复。
 - 范围外：v2 壁纸运行链改造、Player/配置器正式 RPC、Room v3 Schema、个人绑定/权限、顶层 Dock 和游戏宿主。
 
@@ -11,6 +11,7 @@
 - [x] 内核回归 8/8：双视图、最后输入、超时/失焦、时钟回拨后自动重试、旧结果、checkpoint 恢复与停止清理；配置器 Vitest 62/62。
 - [x] 修复后 `scripts/build.ps1` 成功；随后 `scripts/start.ps1` 启动本 worktree Core PID 58172、Player PID 104568；最终身份脚本确认配置器 PID 112192 也来自本 worktree（Tauri 开发热重载会更换 PID）；日志出现 `Dext Room session kernel ready | protocol=1`。
 - [x] `git diff --check` 通过；具名文件提交信息见下方状态。
+- [x] master 合并后内核回归 8/8、完整 `scripts/build.ps1`、`scripts/verify-runtime-identity.ps1` 通过；Core PID 104692、Player PID 110400、配置器 PID 68776 均来自 master 工作区。
 
 ## 人工验收
 
@@ -25,9 +26,9 @@
 
 ## 当前边界
 
-- Core 已实例化新会话内核，但尚未有正式 v3 Room 安装入口或 Player/配置器协议接线；当前桌面仍由 v2 Player 恢复。身份脚本显示 Player 二进制来自本 worktree，壁纸 URL 仍指向用户先前的 `DEXT_Core-desk-reorder-002` Room。后续工作包须先校验安装内容，再向内核提供 Room/Desk 身份。
+- Core 已实例化新会话内核，但尚未有正式 v3 Room 安装入口或 Player/配置器协议接线；当前桌面仍由 v2 Player 恢复。合并后 Player 二进制来自 master 工作区，壁纸 URL 仍指向用户先前的 `DEXT_Core-desk-reorder-002` Room。后续工作包须先校验安装内容，再向内核提供 Room/Desk 身份。
 
 ## 验收记录
 
 - 用户于 2026-09-28 明确回复“我的错确实正常工作了 这次验收通过”。此前反馈 Dock 消失、无法切页，复核时当前 v2 Room 数据仍启用 Dock，Core/Player 均在运行；用户确认实际正常。
-- master 合并与 worktree 清理待记录。
+- `a81788a` 于 2026-09-28 快进合入 master；运行进程切换到 master 构建并核对路径；旧 worktree 归档、已合并分支删除。

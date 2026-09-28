@@ -343,3 +343,7 @@
 ## CORE-006（2026-09-23 验收归档摘要）
 
 配置器连接状态旁加入“启动 Core / 退出 Core”；后端限定当前配置器所属 Dext 可执行文件，验证产品身份和进程路径，等待桌面就绪并正常退出 Core，配置器继续可用。真实桌面完成两轮退出→启动；缺失 Core 文件时保留重试入口，恢复文件后可重新启动。用户回复“验收通过 合并进去吧”；实现 `b2dfc65` 快进合入 master。合并后 Vitest 62/62、Rust 48 通过/3 忽略、前端构建及 cargo check 通过。详细步骤见 `acceptance/CORE-006-core-runtime-control.md`；UI-008 仍为唯一下一项。
+
+## V3-CORE-001（2026-09-28 验收归档摘要）
+
+在 Dext Core 中新增 Room/Desk 权威会话内核，提供版本化快照、切页排队和超时/失焦提交、旧会话结果拒绝与经 Room/Desk 身份校验的 checkpoint 恢复。待验收复核修复时钟回拨导致一次性计时器不再触发的问题。用户于 2026-09-28 明确验收通过；`a81788a` 快进合入 master。合并后内核回归 8/8、完整构建与 master Core/Player/配置器运行身份核对通过。旧 worktree 已归档、已合并分支已删除；详细记录见 `acceptance/V3-CORE-001-room-session-kernel.md`。v3 Player/配置器协议接线仍属后续独立工作包。
