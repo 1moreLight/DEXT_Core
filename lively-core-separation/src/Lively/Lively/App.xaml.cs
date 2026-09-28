@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using GrpcDotNetNamedPipes;
+using Dext.Core.Rooms;
 using Lively.Commandline;
 using Lively.Common;
 using Lively.Common.Factories;
@@ -116,6 +117,8 @@ namespace Lively
             {
                 // Run startup tasks.
                 Services.GetRequiredService<AppInitializer>().Run();
+                Services.GetRequiredService<RoomSessionKernel>();
+                Logger.Info($"Dext Room session kernel ready | protocol={RoomSessionKernel.ProtocolVersion} | v2 wallpaper session remains separate");
                 // Set application language.
                 Services.GetRequiredService<IResourceService>().SetCulture(userSettings.Settings.Language);
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
@@ -216,6 +219,8 @@ namespace Lively
                 // Singleton
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IDesktopCore, WinDesktopCore>()
+                .AddSingleton(_ => new RoomSessionKernel(new FileRoomSessionCheckpointStore(
+                    Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "room-session.json"))))
                 .AddSingleton<IWatchdogService, WatchdogProcess>()
                 .AddSingleton<IDisplayManager, DisplayManager>()
                 .AddSingleton<IScreensaverService, ScreensaverService>()

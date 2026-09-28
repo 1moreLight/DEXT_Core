@@ -5,6 +5,8 @@ dext-room-demo/
 .claude/
 .playwright-cli/
 output/playwright/
+tests/**/bin/
+tests/**/obj/
 
 # media assets: videos are runtime/test data, keep out of git
 *.mp4

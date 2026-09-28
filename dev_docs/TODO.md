@@ -1029,3 +1029,20 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 自动检查与真实进程循环通过：Vitest 62/62、Rust 48 通过/3 忽略、前端 build、cargo check 和 diff check；提交工作分支并停在待验收（2026-09-23）。
 - [x] 用户于 2026-09-23 回复“验收通过 合并进去吧”，确认 CORE-006 通过并授权合并。
 - [x] 实现 `b2dfc65` 快进合入 master；合并后 Vitest 62/62、Rust 48 通过/3 忽略、前端 build 和 cargo check 通过，用户 Room/壁纸未纳入提交（2026-09-23）。
+
+## V3-CORE-001 Room/Desk 会话内核（2026-09-28）
+
+> 目标：让 Dext Core 持有 v3 Room/Desk 的唯一权威状态，提供版本化快照与切页仲裁，拒绝旧会话/迟到结果，并从经校验的 Room 身份安全恢复。
+> 范围外：不重写 WorkerW、v2 Room 运行链、Player/配置器 RPC、作品 Schema、个人绑定/权限、原生 Dock 与游戏宿主。它们在后续独立工作包接入，不由浏览器原型代替 Core。
+> 人工验收：见 `dev_docs/acceptance/V3-CORE-001-room-session-kernel.md`；运行内核演示检查双视图、排队、失焦、超时、旧结果和恢复。
+
+- [x] 按协作顺序读取文档及相关后端/Git 坑；用户明确更改目标为直接写内核，上一 P2a 草案 worktree 已归档而未触碰生产代码（2026-09-28）。
+- [x] 从 master `e6e4109` 建独立 worktree 与 `feat/V3-CORE-001-room-session-kernel`，登记本包并保存所依据的 V3_PLAN 快照（2026-09-28）。
+- [x] 动产品代码前冻结目标、范围外与验收卡；以真实 C# 内核行为做先失败后通过的回归（2026-09-28）。
+- [x] 测试先行实现稳定 Room/Desk 身份、会话更换、单一过渡与最后一次等待输入；演示输出的修订号连续，旧会话 ID 被拒绝（2026-09-28）。
+- [x] 测试先行实现动画完成、自动超时、失焦/恢复和迟到结果拒绝；两个订阅视图收敛到同一快照，Stop 清除恢复状态（2026-09-28）。
+- [x] 仅持久化已提交 Desk 的格式化原子 checkpoint；恢复需匹配 Room/Desk 身份并生成新会话 ID，运行中不允许恢复覆盖现会话（2026-09-28）。
+- [x] 新内核以独立单例注册并在真实 Dext Core 启动；启动日志可见 protocol=1；当前 v2 Player 仍按旧恢复路径运行，v3 不自动接管（2026-09-28）。
+- [x] 内核 8/8、配置器 Vitest 62/62、完整 `scripts/build.ps1` → `scripts/start.ps1` 通过；身份脚本确认 Core/Player/配置器来自本 worktree，`git diff --check` 通过（2026-09-28）。
+- [ ] 只提交本包具名文件，ROADMAP/验收卡转待验收；用户验收前不合并 master。
+- [ ] 用户按独立验收卡确认。

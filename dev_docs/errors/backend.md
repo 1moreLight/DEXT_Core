@@ -206,3 +206,11 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 原因：轮询身份的包装函数先解析并要求 Core 文件存在，才去查询 Pipe。文件缺失错误因此覆盖了“Core 未运行”状态。
 
 修复：轮询先查询 Core；仅在有响应时检查其是否为配置器所属的可执行文件。启动动作自身继续检查文件存在及 Dext 产品元数据，并给出“缺少启动文件，请重新构建或修复安装”的可见错误。文件恢复后同一按钮可重试。测试时已将临时移走的二进制原样恢复。
+
+# #111 Core shutdown 辅助进程遇到单实例退出竞态
+
+现象：V3-CORE-001 重建前用同一 `Lively.exe app --shutdown` 请求现有 Core 退出，原 PID 退出后仍出现一个来自本 worktree、命令行带 `app --shutdown` 的新 `Lively.exe`。它锁住 `Lively.exe` 输出，`scripts/build.ps1` 的 Core 步骤报 MSB3027/MSB3021。
+
+原因：本次观察到 shutdown 辅助进程与原单实例退出交错；辅助进程在原 Core 消失后取得单实例身份并走了正常 Core 启动路径。仅等待原 PID 结束不足以证明输出文件已解锁。
+
+修复：枚举并核对新 PID 的可执行绝对路径和 `app --shutdown` 命令行，确认是本轮辅助进程后停止它，再重跑构建。后续优先用配置器受控 `exit_core`/RPC 正常退出；重建前核对所有同路径 Core 进程已退出，不仅核对原 PID。不得按进程名盲停其他 worktree 或用户安装的实例。
