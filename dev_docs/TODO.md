@@ -1079,6 +1079,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 从 V3-CORE-003 的 `959af6e` 建立独立 managed worktree 与 `feat/V3-CORE-004-storage-faults`；前置包仍待用户复核、未合并 master（2026-09-29）。
 - [x] 动产品代码前登记目标、范围外、独立验收卡和实现步骤（2026-09-29）。
-- [ ] 先写失败回归：Start、Restore、Complete、SetOperable、Stop 的存储故障返回值与内核快照/订阅不变性。
-- [ ] 把预期的 checkpoint IO/权限故障映射为结构化协议状态；重试验证通过后具名提交。
+- [x] 先写失败回归：Start、Restore、Complete、SetOperable、Stop 的存储故障状态与内核快照/订阅不变性；新增状态前编译失败，故障夹具另验证意外编程错误仍传播（2026-09-29）。
+- [x] 预期 checkpoint IO/权限故障映射 `StorageUnavailable`，旧会话与订阅保留、存储恢复后重试成功；真实文件读取区分缺失/损坏与不可读，演示显示故障未提交 Desk、重试后双视图收敛；协议 27/27、内核 10/10（2026-09-29）。
 - [ ] `scripts/build.ps1` → `scripts/start.ps1` 与运行身份核对通过，记录自动验收证据并按大步提交。

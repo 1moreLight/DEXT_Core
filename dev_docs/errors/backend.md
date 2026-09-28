@@ -254,3 +254,11 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 原因：返回值捕获了注册前的 `current`，未在初始通知完成后重新核对连接与内核快照。
 
 修复：初始通知返回后再次验证准入和当前会话，并以最新快照作为结果；若回调已关闭连接或更换会话则不发有效句柄。回归先失败（20/21），修复后协议 21/21、内核 8/8。
+
+# #117 checkpoint 不可读被误报为无恢复点
+
+现象：FileRoomSessionCheckpointStore 先用 `File.Exists` 判断，读取的 IO/权限异常也一律吞掉返回 `null`；上层无法区分“从未保存”与“磁盘或权限暂时不可用”，恢复命令只得到笼统拒绝。
+
+原因：`File.Exists` 在部分无法访问的情形返回 `false`，泛化的异常捕获又丢失了存储故障类别。
+
+修复：直接读取 checkpoint；文件/目录确实不存在和 JSON 损坏仍返回无恢复点，其他 `IOException` 或 `UnauthorizedAccessException` 向受控协议传播并映射为 `StorageUnavailable`。文件路径指向目录的实际读取回归通过；协议 27/27、内核 10/10。

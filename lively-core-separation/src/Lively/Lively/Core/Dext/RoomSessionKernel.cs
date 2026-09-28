@@ -50,7 +50,6 @@ public sealed class FileRoomSessionCheckpointStore : IRoomSessionCheckpointStore
     {
         try
         {
-            if (!File.Exists(path)) return null;
             var checkpoint = JsonSerializer.Deserialize<RoomSessionCheckpoint>(File.ReadAllText(path));
             return checkpoint is { FormatVersion: 1 } &&
                    !string.IsNullOrWhiteSpace(checkpoint.RoomId) &&
@@ -58,7 +57,7 @@ public sealed class FileRoomSessionCheckpointStore : IRoomSessionCheckpointStore
                 ? checkpoint
                 : null;
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception error) when (error is FileNotFoundException or DirectoryNotFoundException or JsonException)
         {
             Trace.TraceWarning($"Dext Room checkpoint could not be read: {error.Message}");
             return null;

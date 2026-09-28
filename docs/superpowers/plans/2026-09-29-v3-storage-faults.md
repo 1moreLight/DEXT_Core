@@ -8,14 +8,14 @@
 
 ## Task 1: Failing regressions
 
-- [ ] Inject read/write/clear faults and assert structured failures for every affected command.
-- [ ] Assert old snapshot and observer stream remain valid; after fault removal the command succeeds.
-- [ ] Confirm the new tests fail against the current gateway.
+- [x] Inject read/write/clear faults and assert structured failures for every affected command.
+- [x] Assert old snapshot and observer stream remain valid; after fault removal the command succeeds.
+- [x] Confirm the new tests fail against the current gateway (missing status at compile time).
 
 ## Task 2: Protocol containment
 
-- [ ] Add `StorageUnavailable` and catch only expected persistence exceptions at affected gateway boundaries.
-- [ ] Run protocol and kernel harnesses; add a user-readable fault/retry demo and commit named files.
+- [x] Add `StorageUnavailable` and catch only expected persistence exceptions at affected gateway boundaries.
+- [x] Run protocol and kernel harnesses (27/27, 10/10); add a user-readable fault/retry demo and commit named files.
 
 ## Task 3: Running Core proof
 

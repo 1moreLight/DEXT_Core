@@ -230,3 +230,11 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 修复：夹具仍严格限制在系统 Temp 下，退出后对 `IOException` / `UnauthorizedAccessException` 做有上限的短重试；最终仍锁定只报告残留路径，不把产品交互断言改写为通过。
 
 防再犯：带 WebView2 user-data 的隔离测试必须等待文件句柄收敛；递归删除前继续校验目标绝对路径位于 Temp，不扩大删除范围。
+
+# #118 内核测试汇总写死用例数量
+
+现象：新增 checkpoint 读取回归后控制台列出 10 条 PASS，末行却仍显示 `8/8 session checks passed`。
+
+原因：测试夹具把总数写死为 8，新增用例时未同步改汇总。
+
+修复：`Check` 每调用一次递增总数，最终由动态总数和失败数计算汇总；本轮输出已正确显示 `10/10`。

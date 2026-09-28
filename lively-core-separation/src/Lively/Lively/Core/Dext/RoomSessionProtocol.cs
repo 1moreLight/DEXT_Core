@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 
@@ -62,7 +64,8 @@ internal enum RoomProtocolStatus
     StaleSession,
     Forbidden,
     InvalidDesk,
-    Rejected
+    Rejected,
+    StorageUnavailable
 }
 
 internal sealed record RoomProtocolReply(RoomProtocolStatus Status, Guid? ConnectionId,
@@ -118,11 +121,15 @@ internal sealed class RoomSessionProtocolGateway
         {
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
-            var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId);
-            activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
-            connections[connectionId] = connection with { SessionId = result.SessionId };
-            ReleaseAllObservations();
-            return Accept(result);
+            try
+            {
+                var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId);
+                activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
+                connections[connectionId] = connection with { SessionId = result.SessionId };
+                ReleaseAllObservations();
+                return Accept(result);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }
     }
 
@@ -132,12 +139,16 @@ internal sealed class RoomSessionProtocolGateway
         {
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
-            if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result) || result is null)
-                return Reject(RoomProtocolStatus.Rejected);
-            activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
-            connections[connectionId] = connection with { SessionId = result.SessionId };
-            ReleaseAllObservations();
-            return Accept(result);
+            try
+            {
+                if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result) || result is null)
+                    return Reject(RoomProtocolStatus.Rejected);
+                activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
+                connections[connectionId] = connection with { SessionId = result.SessionId };
+                ReleaseAllObservations();
+                return Accept(result);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }
     }
 
@@ -208,9 +219,13 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return Reject(RoomProtocolStatus.Forbidden);
             if (!TryCurrentSession(connection, out var current, out error)) return error;
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
-            return kernel.Complete(sessionId, transitionId)
-                ? Accept(kernel.Snapshot!)
-                : Reject(RoomProtocolStatus.Rejected);
+            try
+            {
+                return kernel.Complete(sessionId, transitionId)
+                    ? Accept(kernel.Snapshot!)
+                    : Reject(RoomProtocolStatus.Rejected);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }
     }
 
@@ -222,9 +237,13 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             if (!TryCurrentSession(connection, out var current, out error)) return error;
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
-            return kernel.SetOperable(sessionId, operable)
-                ? Accept(kernel.Snapshot!)
-                : Reject(RoomProtocolStatus.StaleSession);
+            try
+            {
+                return kernel.SetOperable(sessionId, operable)
+                    ? Accept(kernel.Snapshot!)
+                    : Reject(RoomProtocolStatus.StaleSession);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }
     }
 
@@ -236,10 +255,14 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             if (!TryCurrentSession(connection, out var current, out error)) return error;
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
-            if (!kernel.Stop(sessionId)) return Reject(RoomProtocolStatus.StaleSession);
-            activeBinding = null;
-            ReleaseAllObservations();
-            return Accept(kernel.Snapshot!);
+            try
+            {
+                if (!kernel.Stop(sessionId)) return Reject(RoomProtocolStatus.StaleSession);
+                activeBinding = null;
+                ReleaseAllObservations();
+                return Accept(kernel.Snapshot!);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }
     }
 
@@ -357,6 +380,15 @@ internal sealed class RoomSessionProtocolGateway
         installation.InstallationStamp == activeBinding.InstallationStamp;
 
     private static RoomProtocolReply Reject(RoomProtocolStatus status) => new(status, null, null);
+
+    private static bool IsStorageFailure(Exception failure) =>
+        failure is IOException or UnauthorizedAccessException;
+
+    private static RoomProtocolReply StorageFailure(Exception failure)
+    {
+        Trace.TraceError($"Dext Room checkpoint operation failed: {failure}");
+        return Reject(RoomProtocolStatus.StorageUnavailable);
+    }
 
     private static RoomProtocolReply Accept(RoomSessionSnapshot snapshot) =>
         new(RoomProtocolStatus.Accepted, null, snapshot);

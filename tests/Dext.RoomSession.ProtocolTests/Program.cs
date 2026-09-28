@@ -1,5 +1,6 @@
 using Dext.Core.Rooms;
 using System.Collections;
+using System.IO;
 using System.Reflection;
 
 var failures = 0;
@@ -553,6 +554,164 @@ Check("closing an observer cannot deadlock a concurrent kernel notification", ()
     handle!.Dispose();
 });
 
+Check("failed checkpoint write preserves the old session and observers until Start retries", () =>
+{
+    var store = new FaultingCheckpointStore();
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var original = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view.ConnectionId!.Value, desktop, events.Add, out var handle);
+    store.WriteFailure = new IOException("disk unavailable");
+    var failed = gateway.Start(control.ConnectionId.Value, coordinator);
+    Equal(RoomProtocolStatus.StorageUnavailable, failed.Status, "failed Start returns storage status");
+    Equal(null, failed.Snapshot, "failed Start does not publish a replacement");
+    Equal(original, kernel.Snapshot, "old authority remains");
+    Equal(1, events.Count, "old subscription remains attached");
+    Equal(original, gateway.Read(view.ConnectionId.Value, desktop).Snapshot, "old view still reads original");
+    store.WriteFailure = null;
+    var retry = gateway.Start(control.ConnectionId.Value, coordinator);
+    Equal(RoomProtocolStatus.Accepted, retry.Status, "Start retry accepted");
+    True(retry.Snapshot!.SessionId != original.SessionId, "retry created fresh session");
+    Equal(1, events.Count, "old subscription did not follow new session");
+    handle!.Dispose();
+});
+
+Check("failed checkpoint read leaves Restore idle and can retry", () =>
+{
+    var store = new FaultingCheckpointStore
+    {
+        Current = new RoomSessionCheckpoint(1, "install-a", "work"),
+        ReadFailure = new IOException("read failed")
+    };
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    Equal(RoomProtocolStatus.StorageUnavailable,
+        gateway.Restore(control.ConnectionId!.Value, coordinator).Status,
+        "failed Restore returns storage status");
+    Equal(null, kernel.Snapshot, "Restore failure leaves kernel idle");
+    store.ReadFailure = null;
+    var retry = gateway.Restore(control.ConnectionId.Value, coordinator);
+    Equal(RoomProtocolStatus.Accepted, retry.Status, "Restore retry accepted");
+    Equal("work", retry.Snapshot?.CurrentDeskId, "committed Desk restored");
+});
+
+Check("failed commit does not publish a Desk until persistence recovers", () =>
+{
+    var store = new FaultingCheckpointStore();
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var dock = new RoomSessionPeer("dock-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var dockView = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var desktopEvents = new List<RoomSessionSnapshot>();
+    var dockEvents = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view.ConnectionId!.Value, desktop, desktopEvents.Add, out var desktopHandle);
+    gateway.Subscribe(dockView.ConnectionId!.Value, dock, dockEvents.Add, out var dockHandle);
+    var moving = gateway.Request(dockView.ConnectionId.Value, dock, active.SessionId, "work").Snapshot!;
+    store.WriteFailure = new IOException("write failed");
+    Equal(RoomProtocolStatus.StorageUnavailable,
+        gateway.Complete(view.ConnectionId.Value, desktop, active.SessionId, moving.TransitionId!.Value).Status,
+        "failed completion returns storage status");
+    Equal(moving, kernel.Snapshot, "target stays pending");
+    Equal(2, desktopEvents.Count, "failed commit publishes no revision");
+    Equal(2, dockEvents.Count, "Dock sees no false commit");
+    store.WriteFailure = null;
+    Equal(RoomProtocolStatus.Accepted,
+        gateway.Complete(view.ConnectionId.Value, desktop, active.SessionId, moving.TransitionId.Value).Status,
+        "completion retry accepted");
+    Equal("work", desktopEvents[^1].CurrentDeskId, "desktop sees committed Desk");
+    Equal(desktopEvents[^1], dockEvents[^1], "Dock converges to identical snapshot");
+    desktopHandle!.Dispose();
+    dockHandle!.Dispose();
+});
+
+Check("failed focus-loss commit preserves transition and can retry", () =>
+{
+    var store = new FaultingCheckpointStore();
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var dock = new RoomSessionPeer("dock-1");
+    var view = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var moving = gateway.Request(view.ConnectionId!.Value, dock, active.SessionId, "work").Snapshot!;
+    store.WriteFailure = new UnauthorizedAccessException("checkpoint locked");
+    Equal(RoomProtocolStatus.StorageUnavailable,
+        gateway.SetOperable(control.ConnectionId.Value, coordinator, active.SessionId, false).Status,
+        "failed focus-loss commit returns storage status");
+    Equal(moving, kernel.Snapshot, "failed focus-loss leaves transition intact");
+    store.WriteFailure = null;
+    var retry = gateway.SetOperable(control.ConnectionId.Value, coordinator, active.SessionId, false);
+    Equal(RoomProtocolStatus.Accepted, retry.Status, "focus-loss retry accepted");
+    Equal("work", retry.Snapshot?.CurrentDeskId, "target committed on retry");
+    Equal(false, retry.Snapshot?.IsOperable, "new transitions paused");
+});
+
+Check("failed clear preserves live session and checkpoint until Stop retries", () =>
+{
+    var store = new FaultingCheckpointStore();
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var dock = new RoomSessionPeer("dock-1");
+    var view = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view.ConnectionId!.Value, dock, events.Add, out var handle);
+    store.ClearFailure = new UnauthorizedAccessException("cannot delete checkpoint");
+    Equal(RoomProtocolStatus.StorageUnavailable,
+        gateway.Stop(control.ConnectionId.Value, coordinator, active.SessionId).Status,
+        "failed Stop returns storage status");
+    Equal(active, kernel.Snapshot, "failed Stop preserves active authority");
+    Equal("home", store.Current?.DeskId, "checkpoint remains intact");
+    gateway.Request(view.ConnectionId.Value, dock, active.SessionId, "work");
+    Equal(2, events.Count, "old subscription still receives updates");
+    store.ClearFailure = null;
+    Equal(RoomProtocolStatus.Accepted,
+        gateway.Stop(control.ConnectionId.Value, coordinator, active.SessionId).Status,
+        "Stop retry accepted");
+    Equal(null, store.Current, "checkpoint removed after retry");
+    Equal(false, kernel.Snapshot?.IsActive, "session stopped after retry");
+    handle!.Dispose();
+});
+
+Check("unexpected programming errors are not disguised as storage failures", () =>
+{
+    var store = new FaultingCheckpointStore { WriteFailure = new InvalidOperationException("bug") };
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var propagated = false;
+    try { gateway.Start(control.ConnectionId!.Value, coordinator); }
+    catch (InvalidOperationException) { propagated = true; }
+    True(propagated, "unanticipated failure remains visible for diagnosis");
+});
+
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);
 
@@ -604,6 +763,34 @@ if (args.Contains("--demo"))
     Console.WriteLine($"old Dock events after session replacement: {dockEvents.Count}");
     desktopSubscription!.Dispose();
     dockSubscription!.Dispose();
+
+    var faultStore = new FaultingCheckpointStore();
+    using var faultKernel = new RoomSessionKernel(faultStore);
+    var faultGateway = new RoomSessionProtocolGateway(faultKernel, new TestAdmissionAuthority());
+    var faultControl = faultGateway.Open(coordinator, hello);
+    var faultSession = faultGateway.Start(faultControl.ConnectionId!.Value, coordinator).Snapshot!;
+    var faultDesktop = faultGateway.Open(desktop, desktopHello);
+    var faultDock = faultGateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var desktopUpdates = new List<RoomSessionSnapshot>();
+    var dockUpdates = new List<RoomSessionSnapshot>();
+    faultGateway.Subscribe(faultDesktop.ConnectionId!.Value, desktop, desktopUpdates.Add, out var faultDesktopHandle);
+    faultGateway.Subscribe(faultDock.ConnectionId!.Value, dock, dockUpdates.Add, out var faultDockHandle);
+    faultStore.WriteFailure = new IOException("simulated storage outage");
+    var failedStart = faultGateway.Start(faultControl.ConnectionId.Value, coordinator);
+    Console.WriteLine($"storage failed Start: {failedStart.Status}, old session kept={faultKernel.Snapshot?.SessionId == faultSession.SessionId}, old observers={desktopUpdates.Count}/{dockUpdates.Count}");
+    faultStore.WriteFailure = null;
+    var faultMoving = faultGateway.Request(faultDock.ConnectionId.Value, dock, faultSession.SessionId, "work").Snapshot!;
+    faultStore.WriteFailure = new IOException("simulated storage outage");
+    var failedCommit = faultGateway.Complete(faultDesktop.ConnectionId.Value, desktop,
+        faultSession.SessionId, faultMoving.TransitionId!.Value);
+    Console.WriteLine($"storage failed commit: {failedCommit.Status}, Desk={faultKernel.Snapshot?.CurrentDeskId}, revision={faultKernel.Snapshot?.Revision}");
+    faultStore.WriteFailure = null;
+    var committed = faultGateway.Complete(faultDesktop.ConnectionId.Value, desktop,
+        faultSession.SessionId, faultMoving.TransitionId.Value);
+    Console.WriteLine($"storage retry: {committed.Status}, Desk={committed.Snapshot?.CurrentDeskId}, observers converge={desktopUpdates[^1] == dockUpdates[^1]}");
+    faultDesktopHandle!.Dispose();
+    faultDockHandle!.Dispose();
 }
 
 internal sealed class TestAdmissionAuthority : IRoomSessionAdmissionAuthority
@@ -635,4 +822,30 @@ internal sealed class MemoryCheckpointStore : IRoomSessionCheckpointStore
     public RoomSessionCheckpoint? Read() => Current;
     public void Write(RoomSessionCheckpoint checkpoint) => Current = checkpoint;
     public void Clear() => Current = null;
+}
+
+internal sealed class FaultingCheckpointStore : IRoomSessionCheckpointStore
+{
+    public RoomSessionCheckpoint? Current { get; set; }
+    public Exception? ReadFailure { get; set; }
+    public Exception? WriteFailure { get; set; }
+    public Exception? ClearFailure { get; set; }
+
+    public RoomSessionCheckpoint? Read()
+    {
+        if (ReadFailure is { } failure) throw failure;
+        return Current;
+    }
+
+    public void Write(RoomSessionCheckpoint checkpoint)
+    {
+        if (WriteFailure is { } failure) throw failure;
+        Current = checkpoint;
+    }
+
+    public void Clear()
+    {
+        if (ClearFailure is { } failure) throw failure;
+        Current = null;
+    }
 }
