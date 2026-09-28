@@ -119,6 +119,8 @@ namespace Lively
                 Services.GetRequiredService<AppInitializer>().Run();
                 Services.GetRequiredService<RoomSessionKernel>();
                 Logger.Info($"Dext Room session kernel ready | protocol={RoomSessionKernel.ProtocolVersion} | v2 wallpaper session remains separate");
+                Services.GetRequiredService<RoomSessionProtocolGateway>();
+                Logger.Info("Dext Room session protocol gateway ready | admission=closed | v2 wallpaper session remains separate");
                 // Set application language.
                 Services.GetRequiredService<IResourceService>().SetCulture(userSettings.Settings.Language);
                 Services.GetRequiredService<WndProcMsgWindow>().Show();
@@ -221,6 +223,8 @@ namespace Lively
                 .AddSingleton<IDesktopCore, WinDesktopCore>()
                 .AddSingleton(_ => new RoomSessionKernel(new FileRoomSessionCheckpointStore(
                     Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "room-session.json"))))
+                .AddSingleton<IRoomSessionAdmissionAuthority, ClosedRoomSessionAdmissionAuthority>()
+                .AddSingleton<RoomSessionProtocolGateway>()
                 .AddSingleton<IWatchdogService, WatchdogProcess>()
                 .AddSingleton<IDisplayManager, DisplayManager>()
                 .AddSingleton<IScreensaverService, ScreensaverService>()

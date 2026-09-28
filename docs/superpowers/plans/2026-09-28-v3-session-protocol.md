@@ -54,6 +54,6 @@
 
 **Files:** Modify `lively-core-separation/src/Lively/Lively/App.xaml.cs`; update `dev_docs/{TODO.md,acceptance/V3-CORE-002-session-protocol.md}`.
 
-- [ ] Register the closed admission authority and gateway in Core DI, and resolve them at startup without opening a v3 session.
-- [ ] Run both .NET harnesses, `scripts/build.ps1`, then `scripts/start.ps1` from this worktree and verify process paths and startup logs.
-- [ ] Run `git diff --check`, review the named-file status, and commit the runtime/doc step.
+- [x] Register the closed admission authority and gateway in Core DI, and resolve them at startup without opening a v3 session.
+- [x] Run both .NET harnesses (14/14, 8/8), `scripts/build.ps1`, then `scripts/start.ps1` from this worktree and verify Core, Player and Configurator paths and startup logs.
+- [x] Run `git diff --check`, review the named-file status, and commit the runtime/doc step.

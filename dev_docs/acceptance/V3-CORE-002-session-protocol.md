@@ -1,16 +1,16 @@
 # V3-CORE-002 版本化会话协议与受控入口验收
 
-- 状态：开发中
+- 状态：自动检查通过，待用户复核；按用户指示继续后续开发
 - 分支：`feat/V3-CORE-002-session-protocol`
 - 目标：Core 只接受版本匹配、来源授权且指向已校验安装 Room 的 v3 会话连接和命令。
 - 范围外：真实 Player/配置器 RPC、Room v3 作品 Schema/安装签名、个人绑定与权限、v2 播放链改造。
 
 ## 自动检查
 
-- [ ] 协议模拟客户端回归：版本不匹配、来源伪装、未知/撤销安装均拒绝且无快照泄露。
-- [ ] 已授权的桌面与 Dock 客户端共享 Core 快照；角色权限、旧会话、错来源令牌被拒绝；断线重连取得完整最新快照。
-- [ ] `scripts/build.ps1` 后执行 `scripts/start.ps1`，身份脚本确认本 worktree Core/Player/配置器和 v3 入口注册；旧 v2 Room 仍可使用。
-- [ ] `git diff --check` 通过；每大步已独立提交。
+- [x] 协议模拟客户端回归 14/14：版本不匹配、来源伪装、未知/撤销安装均拒绝且无快照泄露；旧安装快照和绕过入口的内核会话不可冒充协议会话。
+- [x] 已授权的桌面与 Dock 客户端共享 Core 快照；角色权限、旧会话、错来源令牌被拒绝；断线重连取得完整最新快照。原内核回归 8/8。
+- [x] 最后一次 C# 改动后执行 `scripts/build.ps1` → `scripts/start.ps1`，身份脚本全项 OK：Core PID 106640、Player PID 111488、配置器 PID 111228 均来自本 worktree；日志显示 `protocol=1` 与 `gateway admission=closed`。旧 v2 Player 仍按既有 Room URL 运行，未被 v3 接管。
+- [x] `git diff --check` 通过；准入、会话命令、运行注册各按大步具名提交。
 
 ## 人工验收
 
@@ -26,3 +26,4 @@
 ## 验收记录
 
 - 用户已授权继续开发并按大步提交，不等待本包人工验收后才推进下一步；运行与代码证据仍如实记录。
+- 2026-09-28：执行 `dotnet run --project tests/Dext.RoomSession.ProtocolTests -c Release -- --demo`，演示显示错误版本 `UnsupportedVersion`，伪装/未知安装 `Denied`，桌面与 Dock 同 SessionId/修订号/Desk，Dock 完成动画 `Forbidden`，重连 Desk=`work`；关闭、撤销、重装后旧连接失效。用户可按上面四步复核；真实 v3 传输尚未开放。

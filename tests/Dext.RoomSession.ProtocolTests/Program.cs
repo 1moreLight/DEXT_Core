@@ -105,8 +105,14 @@ Check("coordinator starts from verified installation rather than client Desk dat
     Equal(RoomProtocolStatus.Accepted, started.Status, "start accepted");
     Equal("install-a", started.Snapshot?.RoomId, "installed copy identity");
     Equal("home", started.Snapshot?.CurrentDeskId, "trusted start Desk");
+    Equal(RoomProtocolStatus.Forbidden,
+        gateway.Request(opened.ConnectionId.Value, peer, started.Snapshot!.SessionId, "work").Status,
+        "coordinator cannot request navigation");
+    var desktop = new RoomSessionPeer("player-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
     Equal(RoomProtocolStatus.InvalidDesk,
-        gateway.Request(opened.ConnectionId.Value, peer, started.Snapshot!.SessionId, "injected").Status,
+        gateway.Request(view.ConnectionId!.Value, desktop, started.Snapshot.SessionId, "injected").Status,
         "unverified Desk rejected");
 });
 
@@ -181,7 +187,7 @@ Check("reconnect receives complete latest snapshot after missed changes", () =>
     var livePeer = new RoomSessionPeer("player-2");
     var live = gateway.Open(livePeer,
         new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
-    var requested = gateway.Request(control.ConnectionId.Value, coordinator, session.SessionId, "work");
+    var requested = gateway.Request(live.ConnectionId!.Value, livePeer, session.SessionId, "work");
     gateway.Complete(live.ConnectionId!.Value, livePeer, session.SessionId,
         requested.Snapshot!.TransitionId!.Value);
     var fresh = gateway.Open(oldPeer,
@@ -328,7 +334,8 @@ if (failures != 0) Environment.Exit(1);
 if (args.Contains("--demo"))
 {
     using var kernel = new RoomSessionKernel();
-    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var authority = new TestAdmissionAuthority();
+    var gateway = new RoomSessionProtocolGateway(kernel, authority);
     var coordinator = new RoomSessionPeer("core-1");
     var hello = new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a");
     Console.WriteLine($"wrong version: {gateway.Open(coordinator, hello with { ProtocolVersion = 99 }).Status}");
@@ -342,12 +349,24 @@ if (args.Contains("--demo"))
         new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
     var dockLease = gateway.Open(dock,
         new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
-    Console.WriteLine($"desktop and Dock: {desktopLease.Snapshot?.SessionId} / {dockLease.Snapshot?.SessionId}");
+    Console.WriteLine($"desktop and Dock: session={desktopLease.Snapshot?.SessionId}/{dockLease.Snapshot?.SessionId}, revision={desktopLease.Snapshot?.Revision}/{dockLease.Snapshot?.Revision}, Desk={desktopLease.Snapshot?.CurrentDeskId}/{dockLease.Snapshot?.CurrentDeskId}");
     var moving = gateway.Request(dockLease.ConnectionId!.Value, dock, active.SessionId, "work");
     Console.WriteLine($"Dock completion: {gateway.Complete(dockLease.ConnectionId.Value, dock, active.SessionId, moving.Snapshot!.TransitionId!.Value).Status}");
     gateway.Complete(desktopLease.ConnectionId!.Value, desktop, active.SessionId, moving.Snapshot.TransitionId!.Value);
-    Console.WriteLine($"reconnected Desk: {gateway.Open(desktop,
-        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a")).Snapshot?.CurrentDeskId}");
+    var desktopHello = new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a");
+    var reconnected = gateway.Open(desktop, desktopHello);
+    Console.WriteLine($"reconnected snapshot: session={reconnected.Snapshot?.SessionId}, revision={reconnected.Snapshot?.Revision}, Desk={reconnected.Snapshot?.CurrentDeskId}");
+    gateway.Close(desktopLease.ConnectionId.Value, desktop);
+    Console.WriteLine($"closed connection write: {gateway.Request(desktopLease.ConnectionId.Value, desktop, active.SessionId, "home").Status}");
+    authority.InstallAEnabled = false;
+    Console.WriteLine($"revoked installation: {gateway.Open(desktop, desktopHello).Status}");
+    authority.InstallAEnabled = true;
+    authority.StampA = "reinstalled-a";
+    Console.WriteLine($"old connection after replacement: {gateway.Read(reconnected.ConnectionId!.Value, desktop).Status}");
+    Console.WriteLine($"new view before restart: {gateway.Open(desktop, desktopHello).Status}");
+    var newControl = gateway.Open(coordinator, hello);
+    var restarted = gateway.Start(newControl.ConnectionId!.Value, coordinator).Snapshot!;
+    Console.WriteLine($"new installation session: {gateway.Open(desktop, desktopHello).Snapshot?.SessionId} (expected {restarted.SessionId})");
 }
 
 internal sealed class TestAdmissionAuthority : IRoomSessionAdmissionAuthority

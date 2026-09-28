@@ -152,6 +152,7 @@ internal sealed class RoomSessionProtocolGateway
         lock (gate)
         {
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role == RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             if (!TryCurrentSession(connection, out var current, out error)) return error;
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
             if (!installation.DeskIds.Contains(deskId, StringComparer.Ordinal))
