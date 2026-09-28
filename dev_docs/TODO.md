@@ -1062,7 +1062,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 将关闭准入的入口注册到真实 Dext Core；协议演示 14/14、内核 8/8，最终 C# 改动后重跑 `scripts/build.ps1` → `scripts/start.ps1`，身份脚本全项 OK：Core PID 106640、Player PID 111488、配置器 PID 111228 均来自本 worktree；日志显示 protocol=1、gateway admission=closed（2026-09-28）。
 - [x] 准入基础 `3c3c3da`、会话命令与绑定 `d8b884c` 已各自具名提交；角色缺口先红后绿并纳入最终运行提交，真实 Player/配置器传输与 P3 安装权威仍留后续独立包（2026-09-28）。
 
-## V3-CORE-003 受控会话快照订阅（2026-09-29，开发中）
+## V3-CORE-003 受控会话快照订阅（2026-09-29，待用户复核）
 
 > 目标：让已授权桌面与 Dock 连接收到同一内核会话的完整修订快照，并在关闭、撤销安装或更换会话后停止旧订阅。范围外：真实传输/RPC、P3 安装校验、v2 播放链、启动/待机生命周期。人工步骤见 `dev_docs/acceptance/V3-CORE-003-session-observation.md`。
 
@@ -1072,3 +1072,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实现绑定连接与安装身份的订阅生命周期；双视图演示修订序列均为 1,2,3，关闭旧桌面后其计数维持 3，Dock 继续到 5，更换会话后旧 Dock 维持 5；协议 21/21、内核 8/8（2026-09-29）。
 - [x] 完整 `scripts/build.ps1` → `scripts/start.ps1`，身份脚本全项 OK：Core PID 88456、Player PID 107984、配置器 PID 110820 均来自本 worktree；日志显示 protocol=1 与 gateway admission=closed，v2 Player 继续运行既有 Room（2026-09-29）。
 - [x] 计划 `45f97cb` 与订阅行为 `5e59fb1` 已按大步具名提交；自动验收与运行证据单独提交，后续真实传输与安装权威仍按独立包推进（2026-09-29）。
+
+## V3-CORE-004 会话存储故障收敛（2026-09-29，开发中）
+
+> 目标：checkpoint 读、写或清除失败时，v3 协议返回可识别的存储错误，不提交半途会话，也不撤销仍有效的旧视图订阅；存储恢复后可重试。范围外：更换 checkpoint 格式、自动备份/同步、P3 安装内容、真实 RPC 与 v2 播放链。人工步骤见 `dev_docs/acceptance/V3-CORE-004-storage-faults.md`。
+
+- [x] 从 V3-CORE-003 的 `959af6e` 建立独立 managed worktree 与 `feat/V3-CORE-004-storage-faults`；前置包仍待用户复核、未合并 master（2026-09-29）。
+- [x] 动产品代码前登记目标、范围外、独立验收卡和实现步骤（2026-09-29）。
+- [ ] 先写失败回归：Start、Restore、Complete、SetOperable、Stop 的存储故障返回值与内核快照/订阅不变性。
+- [ ] 把预期的 checkpoint IO/权限故障映射为结构化协议状态；重试验证通过后具名提交。
+- [ ] `scripts/build.ps1` → `scripts/start.ps1` 与运行身份核对通过，记录自动验收证据并按大步提交。
