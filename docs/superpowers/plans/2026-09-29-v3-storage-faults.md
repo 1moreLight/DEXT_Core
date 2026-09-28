@@ -19,5 +19,5 @@
 
 ## Task 3: Running Core proof
 
-- [ ] Build, start and verify this worktree's Core, Player, Configurator and closed gateway log.
-- [ ] Update acceptance/TODO/ROADMAP and commit the runtime evidence step.
+- [x] Build, start and verify this worktree's Core, Player, Configurator and closed gateway log.
+- [x] Update acceptance/TODO/ROADMAP and commit the runtime evidence step.
