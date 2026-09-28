@@ -1,6 +1,6 @@
 # V3-CORE-001 Room/Desk 会话内核验收
 
-- 状态：待验收
+- 状态：已通过（2026-09-28，待合并与清理）
 - 分支：`feat/V3-CORE-001-room-session-kernel`
 - 提交：实现 `5398679`；待验收复核的时钟回拨修复 `774d4f9`
 - 目标：让 Dext Core 拥有 v3 Room/Desk 权威状态、版本化快照、切页仲裁和安全恢复。
@@ -14,10 +14,10 @@
 
 ## 人工验收
 
-1. [ ] 在本工作分支运行 `dotnet run --project tests/Dext.RoomSession.KernelTests -- --demo`；两份模拟视图读取同一会话与修订号，切页完成后都显示同一最终 Desk。
-2. [ ] 在演示输出中核对：切换动画期间连续提出两个目标，只保留最后一个；失焦或超时会立即提交目标，恢复操作前不开始新切页。
-3. [ ] 在演示输出中核对：切换到另一 Room 后，旧 Room 的完成消息被拒绝；重启读取 checkpoint 后，只有提供匹配的 Room/Desk 列表才能恢复已提交 Desk，停止后 checkpoint 清空。
-4. [ ] 按验收卡记录的 Core 启动方式与 `scripts/verify-runtime-identity.ps1` 核对当前进程来自本 worktree；旧 v2 Room 仍可按原方式运行，未被新会话自动接管。
+1. [x] 在本工作分支运行 `dotnet run --project tests/Dext.RoomSession.KernelTests -- --demo`；两份模拟视图读取同一会话与修订号，切页完成后都显示同一最终 Desk。
+2. [x] 在演示输出中核对：切换动画期间连续提出两个目标，只保留最后一个；失焦或超时会立即提交目标，恢复操作前不开始新切页。
+3. [x] 在演示输出中核对：切换到另一 Room 后，旧 Room 的完成消息被拒绝；重启读取 checkpoint 后，只有提供匹配的 Room/Desk 列表才能恢复已提交 Desk，停止后 checkpoint 清空。
+4. [x] 按验收卡记录的 Core 启动方式与 `scripts/verify-runtime-identity.ps1` 核对当前进程来自本 worktree；旧 v2 Room 仍可按原方式运行，未被新会话自动接管。
 
 ## 通过标准
 
@@ -29,4 +29,5 @@
 
 ## 验收记录
 
-- 待用户确认。
+- 用户于 2026-09-28 明确回复“我的错确实正常工作了 这次验收通过”。此前反馈 Dock 消失、无法切页，复核时当前 v2 Room 数据仍启用 Dock，Core/Player 均在运行；用户确认实际正常。
+- master 合并与 worktree 清理待记录。
