@@ -8,15 +8,15 @@
 
 ## Task 1: Failing observation regressions
 
-- [ ] Add cases for initial snapshot, monotonically increasing revisions and same sequence in Desktop/Dock.
-- [ ] Add cases for wrong peer, close, installation revocation/replacement, new session and failing observer.
-- [ ] Confirm the new cases fail against the current gateway.
+- [x] Add cases for initial snapshot, monotonically increasing revisions and same sequence in Desktop/Dock.
+- [x] Add cases for wrong peer, close, installation revocation/replacement, new session and failing observer.
+- [x] Confirm the new cases fail against the current gateway; targeted lock-order and callback-reentrancy regressions also failed before repair.
 
 ## Task 2: Gateway subscription lifecycle
 
-- [ ] Add a structured `Subscribe` result with an opaque disposable handle. Reject unauthorized registration without a snapshot.
-- [ ] Recheck current admission and session binding on every kernel delivery. Release handles when leases end, without breaking other observers.
-- [ ] Run protocol and kernel regressions, demonstrate two views, review diffs and commit named files.
+- [x] Add a structured `Subscribe` result with an opaque disposable handle. Reject unauthorized registration without a snapshot.
+- [x] Recheck current admission and session binding on every kernel delivery. Release handles when leases end, without breaking other observers.
+- [x] Run protocol and kernel regressions (21/21, 8/8), demonstrate two views, review diffs and commit named files.
 
 ## Task 3: Running Core proof
 

@@ -1,4 +1,6 @@
 using Dext.Core.Rooms;
+using System.Collections;
+using System.Reflection;
 
 var failures = 0;
 var total = 0;
@@ -328,6 +330,229 @@ Check("restart restores only a currently admitted installed Room", () =>
     True(restored.Snapshot?.SessionId != oldSession, "restored session gets a fresh token");
 });
 
+Check("desktop and Dock subscriptions receive the same ordered full snapshots", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var dock = new RoomSessionPeer("dock-1");
+    var desktopLease = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var dockLease = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var desktopEvents = new List<RoomSessionSnapshot>();
+    var dockEvents = new List<RoomSessionSnapshot>();
+    Equal(RoomProtocolStatus.Accepted,
+        gateway.Subscribe(desktopLease.ConnectionId!.Value, desktop, desktopEvents.Add, out var desktopSubscription).Status,
+        "desktop subscribes");
+    Equal(RoomProtocolStatus.Accepted,
+        gateway.Subscribe(dockLease.ConnectionId!.Value, dock, dockEvents.Add, out var dockSubscription).Status,
+        "Dock subscribes");
+    True(desktopSubscription is not null && dockSubscription is not null, "subscription handles issued");
+    Equal(1, desktopEvents.Count, "initial complete desktop snapshot");
+    Equal(active, desktopEvents[0], "initial snapshot is current Core state");
+    var moving = gateway.Request(dockLease.ConnectionId.Value, dock, active.SessionId, "work");
+    gateway.Complete(desktopLease.ConnectionId.Value, desktop, active.SessionId,
+        moving.Snapshot!.TransitionId!.Value);
+    Equal(3, desktopEvents.Count, "desktop receives transition and commit");
+    Equal(3, dockEvents.Count, "Dock receives transition and commit");
+    for (var i = 0; i < 3; i++)
+    {
+        Equal(desktopEvents[i], dockEvents[i], $"same full snapshot {i}");
+        Equal(active.Revision + i, desktopEvents[i].Revision, $"ordered revision {i}");
+    }
+    Equal("work", desktopEvents[^1].CurrentDeskId, "committed Desk delivered");
+    desktopSubscription!.Dispose();
+    dockSubscription!.Dispose();
+});
+
+Check("wrong peer cannot subscribe and disposing a handle stops delivery", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var dock = new RoomSessionPeer("dock-1");
+    var lease = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    var denied = gateway.Subscribe(lease.ConnectionId!.Value, new RoomSessionPeer("intruder"),
+        events.Add, out var stolenHandle);
+    Equal(RoomProtocolStatus.Denied, denied.Status, "stolen peer denied");
+    Equal(null, denied.Snapshot, "stolen peer sees no snapshot");
+    Equal(null, stolenHandle, "stolen peer gets no handle");
+    var accepted = gateway.Subscribe(lease.ConnectionId.Value, dock, events.Add, out var handle);
+    Equal(RoomProtocolStatus.Accepted, accepted.Status, "trusted Dock subscribes");
+    Equal(1, events.Count, "initial notification");
+    handle!.Dispose();
+    gateway.Request(lease.ConnectionId.Value, dock, active.SessionId, "work");
+    Equal(1, events.Count, "disposed handle receives no event");
+});
+
+Check("subscription reply reflects changes made during the initial callback", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var dock = new RoomSessionPeer("dock-1");
+    var view = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var seen = new List<long>();
+    var reply = gateway.Subscribe(view.ConnectionId!.Value, dock, snapshot =>
+    {
+        seen.Add(snapshot.Revision);
+        if (snapshot.Revision == active.Revision)
+            gateway.Request(view.ConnectionId.Value, dock, active.SessionId, "work");
+    }, out var handle);
+    Equal(RoomProtocolStatus.Accepted, reply.Status, "subscription accepted");
+    Equal(kernel.Snapshot?.Revision, reply.Snapshot?.Revision, "reply uses latest full snapshot");
+    Equal(2, seen.Count, "nested transition delivered once");
+    handle!.Dispose();
+});
+
+Check("closing a connection stops its subscription while reconnect gets latest state", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var dock = new RoomSessionPeer("dock-1");
+    var old = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var live = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(old.ConnectionId!.Value, desktop, events.Add, out var handle);
+    True(gateway.Close(old.ConnectionId.Value, desktop), "old connection closed");
+    var moving = gateway.Request(live.ConnectionId!.Value, dock, active.SessionId, "work");
+    Equal(1, events.Count, "closed view does not see transition");
+    var fresh = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    Equal(moving.Snapshot, fresh.Snapshot, "reconnect gets current full snapshot");
+    handle!.Dispose();
+});
+
+Check("revocation and installation replacement stop old subscriptions", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var authority = new TestAdmissionAuthority();
+    var gateway = new RoomSessionProtocolGateway(kernel, authority);
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view.ConnectionId!.Value, desktop, events.Add, out var handle);
+    authority.InstallAEnabled = false;
+    kernel.Request(active.SessionId, "work");
+    Equal(1, events.Count, "revoked installation receives no update");
+    authority.InstallAEnabled = true;
+    Equal(RoomProtocolStatus.StaleSession, gateway.Read(view.ConnectionId.Value, desktop).Status,
+        "revoked connection stays invalid");
+    var newView = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var replacementEvents = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(newView.ConnectionId!.Value, desktop, replacementEvents.Add, out var replacementHandle);
+    authority.StampA = "replacement";
+    kernel.Complete(active.SessionId, kernel.Snapshot!.TransitionId!.Value);
+    Equal(1, replacementEvents.Count, "replaced installation receives no update");
+    handle!.Dispose();
+    replacementHandle!.Dispose();
+});
+
+Check("new session and stop invalidate old subscriptions; observer failures are isolated", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var first = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var dock = new RoomSessionPeer("dock-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    var dockView = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view.ConnectionId!.Value, desktop, _ => throw new InvalidOperationException("observer fails"), out var badHandle);
+    gateway.Subscribe(dockView.ConnectionId!.Value, dock, events.Add, out var oldHandle);
+    gateway.Request(dockView.ConnectionId.Value, dock, first.SessionId, "work");
+    Equal(2, events.Count, "healthy observer survives another observer failure");
+    var second = gateway.Start(control.ConnectionId.Value, coordinator).Snapshot!;
+    Equal(2, events.Count, "old subscription does not see new session");
+    var replacement = gateway.Open(dock,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
+    var newEvents = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(replacement.ConnectionId!.Value, dock, newEvents.Add, out var newHandle);
+    Equal(second, newEvents[0], "new subscription sees replacement session");
+    gateway.Stop(control.ConnectionId.Value, coordinator, second.SessionId);
+    Equal(1, newEvents.Count, "stopped session no longer pushes active snapshots");
+    badHandle!.Dispose();
+    oldHandle!.Dispose();
+    newHandle!.Dispose();
+});
+
+Check("closing an observer cannot deadlock a concurrent kernel notification", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var desktop = new RoomSessionPeer("player-1");
+    var view = gateway.Open(desktop,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a"));
+    gateway.Subscribe(view.ConnectionId!.Value, desktop, _ => { }, out var handle);
+
+    // Hold the gateway gate while a notification holds the kernel observer's
+    // notify gate. Close must not synchronously wait for that observer gate.
+    var gatewayGate = typeof(RoomSessionProtocolGateway)
+        .GetField("gate", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(gateway)!;
+    var listeners = (IDictionary)typeof(RoomSessionKernel)
+        .GetField("subscriptions", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(kernel)!;
+    var listener = listeners.Values.Cast<object>().Single();
+    var notifyGate = listener.GetType()
+        .GetField("notifyGate", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(listener)!;
+    Task? publish = null;
+    var close = Task.Run(() =>
+    {
+        Monitor.Enter(gatewayGate);
+        try
+        {
+            publish = Task.Run(() => kernel.Request(active.SessionId, "work"));
+            True(SpinWait.SpinUntil(() =>
+            {
+                if (!Monitor.TryEnter(notifyGate)) return true;
+                Monitor.Exit(notifyGate);
+                return false;
+            }, TimeSpan.FromSeconds(3)), "kernel observer reached delivery");
+            return gateway.Close(view.ConnectionId.Value, desktop);
+        }
+        finally { Monitor.Exit(gatewayGate); }
+    });
+    True(close.Wait(TimeSpan.FromSeconds(3)), "Close completed without lock inversion");
+    True(close.Result, "view closed");
+    True(publish!.Wait(TimeSpan.FromSeconds(3)), "kernel notification completed");
+    handle!.Dispose();
+});
+
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);
 
@@ -350,14 +575,23 @@ if (args.Contains("--demo"))
     var dockLease = gateway.Open(dock,
         new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Dock, "install-a"));
     Console.WriteLine($"desktop and Dock: session={desktopLease.Snapshot?.SessionId}/{dockLease.Snapshot?.SessionId}, revision={desktopLease.Snapshot?.Revision}/{dockLease.Snapshot?.Revision}, Desk={desktopLease.Snapshot?.CurrentDeskId}/{dockLease.Snapshot?.CurrentDeskId}");
+    var desktopEvents = new List<RoomSessionSnapshot>();
+    var dockEvents = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(desktopLease.ConnectionId!.Value, desktop, desktopEvents.Add, out var desktopSubscription);
+    gateway.Subscribe(dockLease.ConnectionId!.Value, dock, dockEvents.Add, out var dockSubscription);
     var moving = gateway.Request(dockLease.ConnectionId!.Value, dock, active.SessionId, "work");
     Console.WriteLine($"Dock completion: {gateway.Complete(dockLease.ConnectionId.Value, dock, active.SessionId, moving.Snapshot!.TransitionId!.Value).Status}");
     gateway.Complete(desktopLease.ConnectionId!.Value, desktop, active.SessionId, moving.Snapshot.TransitionId!.Value);
+    Console.WriteLine($"observation revisions: desktop={string.Join(',', desktopEvents.Select(x => x.Revision))}, Dock={string.Join(',', dockEvents.Select(x => x.Revision))}");
     var desktopHello = new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.DesktopPlayer, "install-a");
     var reconnected = gateway.Open(desktop, desktopHello);
     Console.WriteLine($"reconnected snapshot: session={reconnected.Snapshot?.SessionId}, revision={reconnected.Snapshot?.Revision}, Desk={reconnected.Snapshot?.CurrentDeskId}");
     gateway.Close(desktopLease.ConnectionId.Value, desktop);
     Console.WriteLine($"closed connection write: {gateway.Request(desktopLease.ConnectionId.Value, desktop, active.SessionId, "home").Status}");
+    var afterClose = gateway.Request(dockLease.ConnectionId.Value, dock, active.SessionId, "home");
+    gateway.Complete(reconnected.ConnectionId!.Value, desktop, active.SessionId,
+        afterClose.Snapshot!.TransitionId!.Value);
+    Console.WriteLine($"after desktop closes: old desktop events={desktopEvents.Count}, live Dock events={dockEvents.Count}");
     authority.InstallAEnabled = false;
     Console.WriteLine($"revoked installation: {gateway.Open(desktop, desktopHello).Status}");
     authority.InstallAEnabled = true;
@@ -367,6 +601,9 @@ if (args.Contains("--demo"))
     var newControl = gateway.Open(coordinator, hello);
     var restarted = gateway.Start(newControl.ConnectionId!.Value, coordinator).Snapshot!;
     Console.WriteLine($"new installation session: {gateway.Open(desktop, desktopHello).Snapshot?.SessionId} (expected {restarted.SessionId})");
+    Console.WriteLine($"old Dock events after session replacement: {dockEvents.Count}");
+    desktopSubscription!.Dispose();
+    dockSubscription!.Dispose();
 }
 
 internal sealed class TestAdmissionAuthority : IRoomSessionAdmissionAuthority

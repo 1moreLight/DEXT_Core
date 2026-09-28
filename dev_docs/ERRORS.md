@@ -119,6 +119,8 @@
 | #112 | 一次性过渡计时器遇系统时钟回拨会提前触发，若不重排将永久保留目标过渡 | [backend](errors/backend.md) |
 | #113 | 会话入口只核对 RoomId 会让旧安装快照或绕过入口启动的内核会话被新视图读取 | [backend](errors/backend.md) |
 | #114 | 协调者连接可调用视图切页请求，角色权限少了一道拒绝检查 | [backend](errors/backend.md) |
+| #115 | 关闭订阅时在网关锁内同步等待内核观察者锁，可与并发推送形成锁顺序死锁 | [backend](errors/backend.md) |
+| #116 | 订阅的初始回调可同步改变会话，返回值若仍用订阅前快照会落后于已推送修订 | [backend](errors/backend.md) |
 
 ## 分册
 

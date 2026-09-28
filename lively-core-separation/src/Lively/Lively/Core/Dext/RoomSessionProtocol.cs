@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Dext.Core.Rooms;
 
@@ -73,6 +74,7 @@ internal sealed class RoomSessionProtocolGateway
     private readonly RoomSessionKernel kernel;
     private readonly IRoomSessionAdmissionAuthority authority;
     private readonly Dictionary<Guid, Connection> connections = new();
+    private readonly Dictionary<Guid, List<Observation>> observations = new();
     private SessionBinding? activeBinding;
 
     public RoomSessionProtocolGateway(RoomSessionKernel kernel, IRoomSessionAdmissionAuthority authority)
@@ -119,6 +121,7 @@ internal sealed class RoomSessionProtocolGateway
             var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId);
             activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
             connections[connectionId] = connection with { SessionId = result.SessionId };
+            ReleaseAllObservations();
             return Accept(result);
         }
     }
@@ -133,6 +136,7 @@ internal sealed class RoomSessionProtocolGateway
                 return Reject(RoomProtocolStatus.Rejected);
             activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
             connections[connectionId] = connection with { SessionId = result.SessionId };
+            ReleaseAllObservations();
             return Accept(result);
         }
     }
@@ -143,6 +147,35 @@ internal sealed class RoomSessionProtocolGateway
         {
             if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
             if (!TryCurrentSession(connection, out var current, out error)) return error;
+            return Accept(current);
+        }
+    }
+
+    public RoomProtocolReply Subscribe(Guid connectionId, RoomSessionPeer peer,
+        Action<RoomSessionSnapshot> observer, out IDisposable? subscription)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+        lock (gate)
+        {
+            subscription = null;
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+
+            var observation = new Observation(this, connectionId);
+            if (!observations.TryGetValue(connectionId, out var list))
+                observations.Add(connectionId, list = new List<Observation>());
+            list.Add(observation);
+            // Subscribe immediately sends the current full snapshot. A callback
+            // may close its own connection before the kernel handle is attached.
+            observation.Attach(kernel.Subscribe(snapshot => Deliver(observation, peer, observer, snapshot)));
+            if (observation.IsDisposed) return Reject(RoomProtocolStatus.StaleSession);
+            if (!TryAuthorize(connectionId, peer, out connection, out _, out error)) return error;
+            if (!TryCurrentSession(connection, out current, out error))
+            {
+                Unsubscribe(observation);
+                return error;
+            }
+            subscription = observation;
             return Accept(current);
         }
     }
@@ -205,6 +238,7 @@ internal sealed class RoomSessionProtocolGateway
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
             if (!kernel.Stop(sessionId)) return Reject(RoomProtocolStatus.StaleSession);
             activeBinding = null;
+            ReleaseAllObservations();
             return Accept(kernel.Snapshot!);
         }
     }
@@ -214,9 +248,54 @@ internal sealed class RoomSessionProtocolGateway
         ArgumentNullException.ThrowIfNull(peer);
         lock (gate)
         {
-            return connections.TryGetValue(connectionId, out var connection) &&
-                   connection.TransportId == peer.TransportId && connections.Remove(connectionId);
+            if (!connections.TryGetValue(connectionId, out var connection) ||
+                connection.TransportId != peer.TransportId) return false;
+            connections.Remove(connectionId);
+            ReleaseObservations(connectionId);
+            return true;
         }
+    }
+
+    private void Deliver(Observation observation, RoomSessionPeer peer,
+        Action<RoomSessionSnapshot> observer, RoomSessionSnapshot snapshot)
+    {
+        lock (gate)
+        {
+            if (observation.IsDisposed) return;
+            if (!TryAuthorize(observation.ConnectionId, peer, out var connection, out _, out _)) return;
+            if (!TryCurrentSession(connection, out var current, out _) ||
+                snapshot.SessionId != current.SessionId || !snapshot.IsActive)
+            {
+                Unsubscribe(observation);
+                return;
+            }
+            observer(snapshot);
+        }
+    }
+
+    private void Unsubscribe(Observation observation)
+    {
+        lock (gate)
+        {
+            if (observation.IsDisposed) return;
+            observation.Deactivate();
+            if (observations.TryGetValue(observation.ConnectionId, out var list))
+            {
+                list.Remove(observation);
+                if (list.Count == 0) observations.Remove(observation.ConnectionId);
+            }
+        }
+    }
+
+    private void ReleaseObservations(Guid connectionId)
+    {
+        if (!observations.Remove(connectionId, out var list)) return;
+        foreach (var observation in list) observation.Deactivate();
+    }
+
+    private void ReleaseAllObservations()
+    {
+        foreach (var connectionId in observations.Keys.ToArray()) ReleaseObservations(connectionId);
     }
 
     private bool TryAuthorize(Guid connectionId, RoomSessionPeer peer, out Connection connection,
@@ -241,6 +320,7 @@ internal sealed class RoomSessionProtocolGateway
             !admission.Installation.DeskIds.SequenceEqual(stored.Installation.DeskIds, StringComparer.Ordinal))
         {
             connections.Remove(connectionId);
+            ReleaseObservations(connectionId);
             error = Reject(RoomProtocolStatus.Denied);
             return false;
         }
@@ -285,4 +365,33 @@ internal sealed class RoomSessionProtocolGateway
         VerifiedRoomInstallation Installation, Guid? SessionId);
 
     private sealed record SessionBinding(Guid SessionId, string RoomId, string InstallationStamp);
+
+    private sealed class Observation(RoomSessionProtocolGateway owner, Guid connectionId) : IDisposable
+    {
+        private IDisposable? kernelSubscription;
+        public Guid ConnectionId { get; } = connectionId;
+        public bool IsDisposed { get; private set; }
+
+        public void Attach(IDisposable subscription)
+        {
+            if (IsDisposed) DisposeOutsideGateway(subscription);
+            else kernelSubscription = subscription;
+        }
+
+        public void Deactivate()
+        {
+            IsDisposed = true;
+            if (kernelSubscription is { } subscription) DisposeOutsideGateway(subscription);
+            kernelSubscription = null;
+        }
+
+        private static void DisposeOutsideGateway(IDisposable subscription)
+        {
+            // A kernel notification holds its own observer lock before calling
+            // back into the gateway. Waiting for that lock under gate deadlocks.
+            ThreadPool.QueueUserWorkItem(static state => ((IDisposable)state!).Dispose(), subscription);
+        }
+
+        public void Dispose() => owner.Unsubscribe(this);
+    }
 }
