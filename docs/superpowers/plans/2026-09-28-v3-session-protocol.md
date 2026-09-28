@@ -45,10 +45,10 @@
 
 **Interfaces:** `Start`, `Restore`, `Read`, `Request`, `Complete`, `SetOperable`, `Stop`, `Close` accept connection ID and trusted peer; use the same structured status/snapshot reply.
 
-- [ ] Write tests for trusted Desk IDs, desktop/Dock shared snapshot, last queued input, role restrictions, wrong peer, revocation, stale session and reconnect.
-- [ ] Run protocol tests and observe failure.
-- [ ] Delegate state changes to `RoomSessionKernel` while validating the lease and current admission on every operation.
-- [ ] Run protocol and existing kernel tests until green, then commit this behavior step.
+- [x] Write tests for trusted Desk IDs, desktop/Dock shared snapshot, last queued input, role restrictions, wrong peer, revocation, stale session and reconnect.
+- [x] Run protocol tests and observe failure, including two binding regressions at 12/14.
+- [x] Delegate state changes to `RoomSessionKernel` while validating the lease and current admission on every operation.
+- [x] Run protocol and existing kernel tests until green (14/14 and 8/8), then commit this behavior step.
 
 ### Task 3: Core registration and runtime proof
 

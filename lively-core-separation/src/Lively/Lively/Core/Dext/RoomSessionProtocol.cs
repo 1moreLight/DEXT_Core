@@ -60,7 +60,8 @@ internal enum RoomProtocolStatus
     NoActiveSession,
     StaleSession,
     Forbidden,
-    InvalidDesk
+    InvalidDesk,
+    Rejected
 }
 
 internal sealed record RoomProtocolReply(RoomProtocolStatus Status, Guid? ConnectionId,
@@ -72,6 +73,7 @@ internal sealed class RoomSessionProtocolGateway
     private readonly RoomSessionKernel kernel;
     private readonly IRoomSessionAdmissionAuthority authority;
     private readonly Dictionary<Guid, Connection> connections = new();
+    private SessionBinding? activeBinding;
 
     public RoomSessionProtocolGateway(RoomSessionKernel kernel, IRoomSessionAdmissionAuthority authority)
     {
@@ -98,19 +100,188 @@ internal sealed class RoomSessionProtocolGateway
         lock (gate)
         {
             var current = kernel.Snapshot;
-            if (hello.Role != RoomClientRole.Coordinator &&
-                (current is null || !current.IsActive || current.RoomId != hello.RoomId))
+            var snapshot = IsBound(current, admission.Installation) ? current : null;
+            if (hello.Role != RoomClientRole.Coordinator && snapshot is null)
                 return Reject(RoomProtocolStatus.NoActiveSession);
-            var snapshot = current is { IsActive: true } && current.RoomId == hello.RoomId ? current : null;
             var id = Guid.NewGuid();
             connections.Add(id, new Connection(peer.TransportId, hello,
-                admission.Installation.InstallationStamp, snapshot?.SessionId));
+                admission.Installation, snapshot?.SessionId));
             return new RoomProtocolReply(RoomProtocolStatus.Accepted, id, snapshot);
         }
     }
 
+    public RoomProtocolReply Start(Guid connectionId, RoomSessionPeer peer)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId);
+            activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
+            connections[connectionId] = connection with { SessionId = result.SessionId };
+            return Accept(result);
+        }
+    }
+
+    public RoomProtocolReply Restore(Guid connectionId, RoomSessionPeer peer)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result) || result is null)
+                return Reject(RoomProtocolStatus.Rejected);
+            activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
+            connections[connectionId] = connection with { SessionId = result.SessionId };
+            return Accept(result);
+        }
+    }
+
+    public RoomProtocolReply Read(Guid connectionId, RoomSessionPeer peer)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            return Accept(current);
+        }
+    }
+
+    public RoomProtocolReply Request(Guid connectionId, RoomSessionPeer peer, Guid sessionId, string deskId)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            if (!installation.DeskIds.Contains(deskId, StringComparer.Ordinal))
+                return Reject(RoomProtocolStatus.InvalidDesk);
+            var result = kernel.Request(sessionId, deskId);
+            return result.Status switch
+            {
+                RoomCommandStatus.Accepted => Accept(result.Snapshot!),
+                RoomCommandStatus.Queued => new RoomProtocolReply(RoomProtocolStatus.Queued, null, result.Snapshot),
+                _ => Reject(RoomProtocolStatus.Rejected)
+            };
+        }
+    }
+
+    public RoomProtocolReply Complete(Guid connectionId, RoomSessionPeer peer, Guid sessionId, Guid transitionId)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            return kernel.Complete(sessionId, transitionId)
+                ? Accept(kernel.Snapshot!)
+                : Reject(RoomProtocolStatus.Rejected);
+        }
+    }
+
+    public RoomProtocolReply SetOperable(Guid connectionId, RoomSessionPeer peer, Guid sessionId, bool operable)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            return kernel.SetOperable(sessionId, operable)
+                ? Accept(kernel.Snapshot!)
+                : Reject(RoomProtocolStatus.StaleSession);
+        }
+    }
+
+    public RoomProtocolReply Stop(Guid connectionId, RoomSessionPeer peer, Guid sessionId)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            if (!kernel.Stop(sessionId)) return Reject(RoomProtocolStatus.StaleSession);
+            activeBinding = null;
+            return Accept(kernel.Snapshot!);
+        }
+    }
+
+    public bool Close(Guid connectionId, RoomSessionPeer peer)
+    {
+        ArgumentNullException.ThrowIfNull(peer);
+        lock (gate)
+        {
+            return connections.TryGetValue(connectionId, out var connection) &&
+                   connection.TransportId == peer.TransportId && connections.Remove(connectionId);
+        }
+    }
+
+    private bool TryAuthorize(Guid connectionId, RoomSessionPeer peer, out Connection connection,
+        out VerifiedRoomInstallation installation, out RoomProtocolReply error)
+    {
+        ArgumentNullException.ThrowIfNull(peer);
+        connection = null!;
+        installation = null!;
+        error = Reject(RoomProtocolStatus.StaleSession);
+        if (!connections.TryGetValue(connectionId, out var stored)) return false;
+        if (stored.TransportId != peer.TransportId || string.IsNullOrWhiteSpace(peer.TransportId))
+        {
+            error = Reject(RoomProtocolStatus.Denied);
+            return false;
+        }
+        var admission = authority.Admit(peer, stored.Hello);
+        if (admission is null || admission.TransportId != stored.TransportId ||
+            admission.Role != stored.Hello.Role || admission.Installation is null ||
+            admission.Installation.RoomId != stored.Installation.RoomId ||
+            admission.Installation.InstallationStamp != stored.Installation.InstallationStamp ||
+            admission.Installation.StartDeskId != stored.Installation.StartDeskId ||
+            !admission.Installation.DeskIds.SequenceEqual(stored.Installation.DeskIds, StringComparer.Ordinal))
+        {
+            connections.Remove(connectionId);
+            error = Reject(RoomProtocolStatus.Denied);
+            return false;
+        }
+        connection = stored;
+        installation = admission.Installation;
+        return true;
+    }
+
+    private bool TryCurrentSession(Connection connection, out RoomSessionSnapshot current,
+        out RoomProtocolReply error)
+    {
+        var snapshot = kernel.Snapshot;
+        current = null!;
+        if (connection.SessionId is null)
+        {
+            error = Reject(RoomProtocolStatus.NoActiveSession);
+            return false;
+        }
+        if (!IsBound(snapshot, connection.Installation) || snapshot!.SessionId != connection.SessionId)
+        {
+            error = Reject(RoomProtocolStatus.StaleSession);
+            return false;
+        }
+        current = snapshot;
+        error = Accept(snapshot);
+        return true;
+    }
+
+    private bool IsBound(RoomSessionSnapshot? snapshot, VerifiedRoomInstallation installation) =>
+        snapshot is { IsActive: true } && activeBinding is not null &&
+        snapshot.SessionId == activeBinding.SessionId &&
+        snapshot.RoomId == activeBinding.RoomId &&
+        installation.RoomId == activeBinding.RoomId &&
+        installation.InstallationStamp == activeBinding.InstallationStamp;
+
     private static RoomProtocolReply Reject(RoomProtocolStatus status) => new(status, null, null);
 
+    private static RoomProtocolReply Accept(RoomSessionSnapshot snapshot) =>
+        new(RoomProtocolStatus.Accepted, null, snapshot);
+
     private sealed record Connection(string TransportId, RoomSessionHello Hello,
-        string InstallationStamp, Guid? SessionId);
+        VerifiedRoomInstallation Installation, Guid? SessionId);
+
+    private sealed record SessionBinding(Guid SessionId, string RoomId, string InstallationStamp);
 }
