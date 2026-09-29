@@ -248,3 +248,11 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 修复：先停相关 Cargo/配置器进程，核对每个 target 的 worktree 归属，再用 `cargo clean --manifest-path` 清掉 9 个 target；D 盘重定向的 `CARGO_TARGET_DIR` 也用 `cargo clean` 清除。合计约 65 GiB，随后重新核对受影响源码、重建并复测。Core/Player 从现有 C# 输出恢复运行，配置器暂不重建以保留清理成果。
 
 防再犯：开新 worktree 前盘点 C/D 空间；Rust 构建可明确设置 D 盘 `CARGO_TARGET_DIR`。清理只针对确认的项目 target，不删除共享 Cargo registry；遇磁盘写入失败要检查改动文件长度与内容。
+
+# #122 WorkerW Player 输入窗口不在普通顶层枚举里
+
+现象：真实 Core/Player 已激活，实机鼠标探针用 `EnumWindows` 取 Player PID 却找不到 WebView2 输入 HWND；误用 `FindWindowExW(IntPtr.Zero, ...)` 还可能命中别的 Chromium 窗口，坐标尺寸不符。
+
+原因：Player Form 被 Core 重新挂到 WorkerW，已不是普通顶层窗口。Win32 的空父句柄搜索会扩大到全桌面。
+
+修复：探针从 Core 日志中读取该 Player 上报的 `Hwnd`，再核对 HWND 所属 PID，沿 `Chrome_WidgetWin_0/1` 找输入句柄；原生鼠标点击使真实 Core 修订 1→3，Desk A→B。

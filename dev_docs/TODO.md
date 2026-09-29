@@ -1107,5 +1107,16 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Gateway Player 适配器以 Core 拥有的进程 PID 构造 peer，订阅全量快照，退出时关闭连接；关闭/撤销/重连回归通过。
 - [x] 官方页面收到授权快照后按修订收敛，Desk 操作发请求，过渡完成回告；旧 v2 自主切页测试仍通过。
 - [x] 协议 29/29、Release Player 隔离原生 IPC 往返、旧 Room 原生拖动 10/10、`scripts/build.ps1`、JS 语法及 diff 检查通过。原生验证使用测试安装权威，不能冒充生产 P3 安装准入。
-- [ ] `scripts/start.ps1` 已尝试：准确识别 P2a Core PID 115948 与 Dext mutex/pipe，拒绝误复用；P2a 配置器 PID 122760 按用户要求保持运行。切换运行 worktree 后复核本分支身份。
+- [x] `scripts/start.ps1` 起初准确识别 P2a Core 占用；本轮平滑切换后，本分支 Core/Player/配置器绝对路径与 mutex/pipe 全项 OK（2026-09-30）。
 - [x] 产品代码、测试和验收记录已按具名文件准备提交；用户人工验收前不合并 master。
+
+### 2026-09-30 目标修正：真实接入与配置器恢复
+
+> 用户明确要求先把内核真正接入运行链、修复配置器连接异常，由开发侧自行验证；不能以隔离 Player 测试代替真实 Core/Player/配置器联动。本节继续沿用 V3-CORE-005 分支与验收卡。
+
+- [x] 复核现状：P2a Core/Player 仍占 Dext mutex；D 盘构建的配置器只有 24×24 空窗口，当前分支的 `AttachRoomSession` 没有生产调用方；此前 29/29 与隔离 Player 证据不足以证明接入。
+- [x] 修复外置 `CARGO_TARGET_DIR` 的 worktree Core 定位与身份脚本；配置器从 24×24 空窗口恢复为正常窗口，界面显示“Dext Core 已连接”，三进程路径/pipe/mutex 全项 OK。
+- [x] Core 在官方页面 ready 后校验本地 v3 会话清单和 v2 视觉 Room，绑定实际 Player PID 并 Start/Restore；桌面点击切页经 Player IPC → Gateway → Core 修订 → Player 完成消息。
+- [x] 配置器可识别并应用仓库的最小 `v3-core-probe` 样包；临时拷入当前 Room 库的测试副本已在恢复 MSIroom 后移除。正式 v3 创作者格式和通用新建入口仍属于 P3。
+- [x] 真实 Player 原生鼠标：`probe-a → probe-b`，修订 `1 → 3`；Core/Player/配置器重启后恢复 `probe-b`；应用 MSIroom 后 v3 状态 inactive、清单已撤销。协议 30/30、Rust 50/50（3 ignored）、完整 Core 构建/前端构建与隔离 Release Player 回归通过。
+- [ ] 具名提交本工作包代码和验收记录；按用户要求开发侧完成验证，用户决定合入 master 前保持分支隔离。

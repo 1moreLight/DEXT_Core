@@ -15,6 +15,7 @@ service DesktopService {
   rpc SubscribeUpdateWallpaper (google.protobuf.Empty) returns (stream UpdateWallpaperResponse) { option deprecated = true; }
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
+  rpc GetRoomSession (google.protobuf.Empty) returns (RoomSessionStatusResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
   rpc EditWallpaper(EditWallpaperRequest) returns (EditWallpaperResponse);
   rpc CreateWallpaper(CreateWallpaperRequest) returns (CreateWallpaperResponse);
@@ -153,6 +154,20 @@ message GetCoreStatsResponse {
 	int32 process_id = 6;
 	string app_data_directory = 7;
 	string grpc_pipe_name = 8;
+}
+
+message RoomSessionStatusResponse {
+  bool active = 1;
+  int32 protocol_version = 2;
+  string room_id = 3;
+  string session_id = 4;
+  int64 revision = 5;
+  string current_desk_id = 6;
+  string target_desk_id = 7;
+  string queued_desk_id = 8;
+  string transition_id = 9;
+  bool operable = 10;
+  int32 player_pid = 11;
 }
 
 message PreviewWallpaperRequest {

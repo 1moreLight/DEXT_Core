@@ -71,7 +71,12 @@ if (Test-Path -LiteralPath $coreExe) {
 $coreOk = (Show-ProcessGroup "Core" @("Lively.exe") $coreExe) -and $coreBinaryOk
 $watchdogOk = Show-ProcessGroup "Watchdog" @("Lively.Watchdog.exe", "Lively.Utility.Watchdog.exe") $coreOut
 $playerOk = Show-ProcessGroup "Player" @("Lively.Player.WebView2.exe") $coreOut
-$configuratorExe = Join-Path $root "tauri-ui\src-tauri\target\debug\dext-configurator.exe"
+$configuratorTarget = if ([string]::IsNullOrWhiteSpace($env:CARGO_TARGET_DIR)) {
+    Join-Path $root "tauri-ui\src-tauri\target"
+} else {
+    [IO.Path]::GetFullPath($env:CARGO_TARGET_DIR)
+}
+$configuratorExe = Join-Path $configuratorTarget "debug\dext-configurator.exe"
 $configuratorOk = Show-ProcessGroup "Configurator" @("dext-configurator.exe") $configuratorExe
 
 $mutexOk = Test-DextMutex

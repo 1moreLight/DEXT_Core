@@ -8,7 +8,9 @@ using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Helpers.Shell;
 using Lively.Common.Services;
 using Lively.Core.Display;
+using Dext.Core.Rooms;
 using Lively.Core.Suspend;
+using Lively.Core.Wallpapers;
 using Lively.Core.Watchdog;
 using Lively.Factories;
 using Lively.Models;
@@ -59,6 +61,7 @@ namespace Lively.Core
         private readonly IDisplayManager displayManager;
         private readonly WindowEventHook workerWHook;
         private readonly MouseForwardingSession forwardedMouse;
+        private readonly IRoomSessionRuntimeCoordinator roomSessionRuntime;
 
         public WinDesktopCore(IUserSettingsService userSettings,
             IDisplayManager displayManager,
@@ -68,7 +71,8 @@ namespace Lively.Core
             RawInputMsgWindow rawInput,
             WndProcMsgWindow wndProc,
             IWallpaperPluginFactory wallpaperFactory,
-            IWallpaperLibraryFactory wallpaperLibraryFactory)
+            IWallpaperLibraryFactory wallpaperLibraryFactory,
+            IRoomSessionRuntimeCoordinator roomSessionRuntime)
         {
             this.userSettings = userSettings;
             this.displayManager = displayManager;
@@ -78,6 +82,7 @@ namespace Lively.Core
             this.rawInput = rawInput;
             this.WndProc = wndProc;
             this.wallpaperFactory = wallpaperFactory;
+            this.roomSessionRuntime = roomSessionRuntime;
             forwardedMouse = new MouseForwardingSession((handle, x, y, message, buttons) =>
             {
                 // A wallpaper may have been replaced while the physical button was held.
@@ -301,6 +306,8 @@ namespace Lively.Core
                                 currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement);
                                 currentWallpaper.Exited += Wallpaper_Exited;
                                 currentWallpaper.Loaded += Wallpaper_Loaded;
+                                if (currentWallpaper is WebWebView2 webWallpaper)
+                                    webWallpaper.RoomPageReady += RoomPageReady;
                                 await currentWallpaper.ShowAsync();
 
                                 if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
@@ -323,6 +330,8 @@ namespace Lively.Core
                                 currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, display, userSettings.Settings.WallpaperArrangement);
                                 currentWallpaper.Exited += Wallpaper_Exited;
                                 currentWallpaper.Loaded += Wallpaper_Loaded;
+                                if (currentWallpaper is WebWebView2 webWallpaper)
+                                    webWallpaper.RoomPageReady += RoomPageReady;
                                 await currentWallpaper.ShowAsync();
 
                                 if (!TrySetWallpaperSpanScreen(currentWallpaper.Handle))
@@ -346,6 +355,8 @@ namespace Lively.Core
                                     currentWallpaper = wallpaperFactory.CreateWallpaper(wallpaper, item, userSettings.Settings.WallpaperArrangement);
                                     currentWallpaper.Exited += Wallpaper_Exited;
                                     currentWallpaper.Loaded += Wallpaper_Loaded;
+                                    if (currentWallpaper is WebWebView2 webWallpaper)
+                                        webWallpaper.RoomPageReady += RoomPageReady;
                                     await currentWallpaper.ShowAsync();
 
                                     if (!TrySetWallpaperPerScreen(currentWallpaper.Handle, currentWallpaper.Screen))
@@ -416,7 +427,15 @@ namespace Lively.Core
 
         private void Wallpaper_Exited(object sender, EventArgs e)
         {
+            if (sender is WebWebView2 webWallpaper)
+                roomSessionRuntime.OnPlayerExited(webWallpaper.Pid);
             RefreshDesktop();
+        }
+
+        private void RoomPageReady(object sender, EventArgs e)
+        {
+            if (sender is WebWebView2 webWallpaper)
+                roomSessionRuntime.OnPageReady(webWallpaper);
         }
 
         private async Task SetDesktopPictureOrLockscreen(IWallpaper wallpaper)

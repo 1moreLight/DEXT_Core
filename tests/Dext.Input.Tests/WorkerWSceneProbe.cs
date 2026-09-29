@@ -45,6 +45,7 @@ static class WorkerWSceneProbe
                 File.Copy(Path.Combine(renderer, name), Path.Combine(fixture, name));
             var room = Path.Combine(repo, "rooms", "v3-p2a-probe");
             File.Copy(Path.Combine(room, "room.json"), Path.Combine(fixture, "room.json"));
+            File.Copy(Path.Combine(room, "session.v3.json"), Path.Combine(fixture, "session.v3.json"));
             File.Copy(Path.Combine(room, "scene", "index.html"), Path.Combine(fixture, "scene", "index.html"));
 
             await client.SetWallpaperAsync(new SetWallpaperRequest {

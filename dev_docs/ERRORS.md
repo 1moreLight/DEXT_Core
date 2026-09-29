@@ -124,6 +124,9 @@
 | #117 | checkpoint 读取先用 File.Exists 并吞掉 IO/权限异常，会把不可读存储误报成无恢复点 | [backend](errors/backend.md) |
 | #118 | 内核测试汇总把总数写死为 8，新用例通过时仍显示 8/8，掩盖实际覆盖数量 | [toolchain](errors/toolchain.md) |
 | #119 | 多 worktree 各自保留数 GB Rust `target`，新配置器首次编译耗尽 C 盘并可能中断文件写入 | [toolchain](errors/toolchain.md) |
+| #120 | 外置 `CARGO_TARGET_DIR` 让配置器只认内置 target 路径，误判同分支 Core 不可连接 | [backend](errors/backend.md) |
+| #121 | WebView2 的 `msg_wploaded` 可早于异步 `room.json` 加载，过早发送会话快照会被页面重置 | [renderer](errors/renderer.md) |
+| #122 | WorkerW 内的 Player 窗口不是普通顶层窗口，实机探针不能只用 `EnumWindows` 找输入 HWND | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

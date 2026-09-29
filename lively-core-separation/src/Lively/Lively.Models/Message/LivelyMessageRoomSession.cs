@@ -32,4 +32,9 @@ namespace Lively.Models.Message
 
         public LivelyMessageRoomTransitionComplete() : base(MessageType.msg_room_transition_complete) { }
     }
+
+    public sealed class LivelyMessageRoomSessionReady : IpcMessage
+    {
+        public LivelyMessageRoomSessionReady() : base(MessageType.msg_room_session_ready) { }
+    }
 }

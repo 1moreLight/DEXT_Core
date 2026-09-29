@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { coreControlState, type CoreLifecycleBusy } from "@/features/runtime/core-status";
-import type { CoreIdentity } from "@/features/runtime/types";
+import type { CoreIdentity, V3SessionStatus } from "@/features/runtime/types";
 
 export type AppMode = "use" | "edit" | "settings";
 export type AppTheme = "light" | "dark";
@@ -13,6 +13,7 @@ export function AppHeader({
   onTheme,
   isTauri,
   coreIdentity,
+  v3Session,
   coreIdentityError,
   coreBusy,
   onCoreAction,
@@ -28,6 +29,7 @@ export function AppHeader({
   onTheme: (theme: AppTheme) => void;
   isTauri: boolean;
   coreIdentity: CoreIdentity | null;
+  v3Session: V3SessionStatus | null;
   coreIdentityError: string | null;
   coreBusy: CoreLifecycleBusy;
   onCoreAction: (action: "start" | "exit") => void;
@@ -59,6 +61,12 @@ export function AppHeader({
         >
           {!isTauri ? "Dext Core · mock" : coreControl.status}
         </span>
+        {v3Session?.active && (
+          <span className="rounded-full border border-sky-500/50 bg-sky-500/10 px-2 py-1 text-xs text-sky-700 dark:text-sky-300"
+            title={`Room ${v3Session.room_id}\nSession ${v3Session.session_id}\nPlayer PID ${v3Session.player_pid}\nRevision ${v3Session.revision}`}>
+            v3 · {v3Session.target_desk_id || v3Session.current_desk_id} · #{v3Session.revision}
+          </span>
+        )}
         {isTauri && coreControl.label && (
           <Button
             variant="outline"

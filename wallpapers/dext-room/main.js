@@ -324,6 +324,7 @@ async function loadRoom() {
   renderDesk(currentDesk);
   playStart();
   dextEmit("ready", { deskCount: ROOM.desks.length });
+  window.chrome?.webview?.postMessage(JSON.stringify({ type: "dext:v3-page-ready" }));
 }
 
 // Runtime telemetry is deliberately kept outside ROOM so it can never be saved.

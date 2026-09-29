@@ -770,6 +770,38 @@ Check("Player bridge never bypasses closed or revoked admission", () =>
     bridge.Dispose();
 });
 
+Check("installed Room admission binds the spawned Player and revokes changed content", () =>
+{
+    var directory = Directory.CreateTempSubdirectory("dext-v3-admission-");
+    try
+    {
+        var roomId = Guid.NewGuid().ToString("D");
+        File.WriteAllText(Path.Combine(directory.FullName, "session.v3.json"),
+            $"{{\"protocolVersion\":1,\"roomId\":\"{roomId}\",\"deskIds\":[\"home\",\"work\"],\"startDeskId\":\"home\"}}");
+        var roomPath = Path.Combine(directory.FullName, "room.json");
+        File.WriteAllText(roomPath, "{\"version\":2,\"startDesk\":0,\"desks\":[{},{}]}");
+        var authority = new InstalledRoomSessionAuthority();
+        var installed = authority.Bind(directory.FullName, 1234);
+        True(installed is not null, "well-formed installation binds");
+        Equal(roomId, installed!.RoomId, "installed Room identity");
+        var coordinator = new RoomSessionHello(1, RoomClientRole.Coordinator, roomId);
+        var player = new RoomSessionHello(1, RoomClientRole.DesktopPlayer, roomId);
+        True(authority.Admit(new RoomSessionPeer("core-runtime"), coordinator) is not null,
+            "Core coordinator admitted");
+        True(authority.Admit(new RoomSessionPeer("player-process:1234"), player) is not null,
+            "spawned Player admitted");
+        Equal(null, authority.Admit(new RoomSessionPeer("player-process:4321"), player),
+            "different process denied");
+        File.WriteAllText(roomPath, "{\"version\":2,\"startDesk\":1,\"desks\":[{},{}]}");
+        Equal(null, authority.Admit(new RoomSessionPeer("player-process:1234"), player),
+            "changed installation is invalid until revalidated");
+        authority.Unbind(1234);
+        Equal(null, authority.Admit(new RoomSessionPeer("core-runtime"), coordinator),
+            "exited Player revokes coordinator");
+    }
+    finally { directory.Delete(recursive: true); }
+});
+
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);
 

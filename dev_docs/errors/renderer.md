@@ -541,3 +541,10 @@ Playwright 都全绿，但真实 WorkerW/WebView2 中仍表现为几乎无法拖
 修复：只在 `launch` 确实是对象时深拷贝它，否则保持字段原始缺失形态；纯事务 Node 测试和隔离 Player 保存探针都验证 Glyph 图标仍不含 `launch`。
 
 防再犯：复制带可选嵌套字段的 Schema 对象时必须同时保留“字段缺失”语义；测试不仅比较值，也用 `Object.hasOwn` 和最终序列化消息检查字段形状。
+# #121 页面视觉 Room 未加载完就附加 v3 会话
+
+现象：Player 已发 `msg_wploaded`，Core 立即送初始 v3 快照，但页面的异步 `room.json` 读取随后把当前 Desk 重新设为 v2 起始 Desk；表面上 Core 已激活，实际画面可能回退。
+
+原因：`msg_wploaded` 表示 WebView 导航完成，不表示 `loadRoom()` 的异步数据和节点已构建。
+
+修复：官方页面在 `loadRoom()` 结束后再发 `dext:v3-page-ready`；Core 只在这个消息与 `msg_wploaded` 均到达后附加 Player 并发送完整快照。真实样包切页和重启恢复已验证。

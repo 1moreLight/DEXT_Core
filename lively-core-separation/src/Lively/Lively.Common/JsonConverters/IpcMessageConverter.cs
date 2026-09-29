@@ -48,6 +48,7 @@ namespace Lively.Common.JsonConverters
                 MessageType.cmd_room_session_snapshot => jo.ToObject<LivelyMessageRoomSessionSnapshot>(serializer),
                 MessageType.msg_room_session_request => jo.ToObject<LivelyMessageRoomSessionRequest>(serializer),
                 MessageType.msg_room_transition_complete => jo.ToObject<LivelyMessageRoomTransitionComplete>(serializer),
+                MessageType.msg_room_session_ready => jo.ToObject<LivelyMessageRoomSessionReady>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

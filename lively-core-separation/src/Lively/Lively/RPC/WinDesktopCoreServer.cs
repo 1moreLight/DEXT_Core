@@ -8,6 +8,7 @@ using Lively.Common.JsonConverters;
 using Lively.Common.Services;
 using Lively.Core;
 using Lively.Core.Display;
+using Dext.Core.Rooms;
 using Lively.Extensions;
 using Lively.Factories;
 using Lively.Grpc.Common.Proto.Desktop;
@@ -42,6 +43,7 @@ namespace Lively.RPC
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly IWallpaperPluginFactory wallpaperFactory;
         private readonly ISystemControlService systemControlService;
+        private readonly IRoomSessionRuntimeCoordinator roomSessionRuntime;
 
         public WinDesktopCoreServer(IDesktopCore desktopCore,
             IRunnerService runner,
@@ -51,7 +53,8 @@ namespace Lively.RPC
             IWindowService windowService,
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory,
-            ISystemControlService systemControlService)
+            ISystemControlService systemControlService,
+            IRoomSessionRuntimeCoordinator roomSessionRuntime)
         {
             this.runner = runner;
             this.desktopCore = desktopCore;
@@ -62,6 +65,7 @@ namespace Lively.RPC
             this.wallpaperFactory = wallpaperFactory;
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
             this.systemControlService = systemControlService;
+            this.roomSessionRuntime = roomSessionRuntime;
         }
 
         public override Task<GetCoreStatsResponse> GetCoreStats(Empty _, ServerCallContext context)
@@ -77,6 +81,27 @@ namespace Lively.RPC
                 AppDataDirectory = Constants.CommonPaths.AppDataDir,
                 GrpcPipeName = Constants.SingleInstance.GrpcPipeServerName,
             });
+        }
+
+        public override Task<RoomSessionStatusResponse> GetRoomSession(Empty _, ServerCallContext context)
+        {
+            var snapshot = roomSessionRuntime.CurrentSnapshot;
+            return Task.FromResult(snapshot is null
+                ? new RoomSessionStatusResponse { Active = false }
+                : new RoomSessionStatusResponse
+                {
+                    Active = true,
+                    ProtocolVersion = snapshot.ProtocolVersion,
+                    RoomId = snapshot.RoomId,
+                    SessionId = snapshot.SessionId.ToString("D"),
+                    Revision = snapshot.Revision,
+                    CurrentDeskId = snapshot.CurrentDeskId,
+                    TargetDeskId = snapshot.TargetDeskId ?? string.Empty,
+                    QueuedDeskId = snapshot.QueuedDeskId ?? string.Empty,
+                    TransitionId = snapshot.TransitionId?.ToString("D") ?? string.Empty,
+                    Operable = snapshot.IsOperable,
+                    PlayerPid = roomSessionRuntime.ActivePlayerPid,
+                });
         }
 
         public override Task<SystemMediaSnapshot> GetSystemMedia(Empty _, ServerCallContext context)

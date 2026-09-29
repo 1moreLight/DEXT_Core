@@ -266,6 +266,11 @@ namespace Lively.Player.WebView2
                                 TransitionId = transitionId,
                             });
                     }
+                    else if ((string)o.type == "dext:v3-page-ready")
+                    {
+                        if (startArgs.DextTrustedHost)
+                            SendToParent(new LivelyMessageRoomSessionReady());
+                    }
                     else
                     {
                         SendToParent(new LivelyMessageLaunchCmd()

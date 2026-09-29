@@ -6,7 +6,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{
-    CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, SetSystemVolumeRequest,
+    CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, RoomSessionStatusResponse,
+    SetSystemVolumeRequest,
     SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
     SystemVolumeSnapshot, WallpaperMessageRequest,
 };
@@ -333,6 +334,46 @@ pub async fn get_wallpapers() -> Result<Vec<WallpaperInfo>, String> {
 
 pub async fn core_identity() -> Result<CoreIdentity, String> {
     verified_core_identity().await.map(Into::into)
+}
+
+#[derive(Clone, serde::Serialize)]
+pub struct RoomSessionStatus {
+    pub active: bool,
+    pub protocol_version: i32,
+    pub room_id: String,
+    pub session_id: String,
+    pub revision: i64,
+    pub current_desk_id: String,
+    pub target_desk_id: String,
+    pub queued_desk_id: String,
+    pub transition_id: String,
+    pub operable: bool,
+    pub player_pid: i32,
+}
+
+pub async fn room_session_status() -> Result<RoomSessionStatus, String> {
+    let payloads = verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/GetRoomSession",
+        &[],
+    )
+    .await?;
+    let response = payloads
+        .iter()
+        .find_map(|payload| RoomSessionStatusResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no v3 session status".to_string())?;
+    Ok(RoomSessionStatus {
+        active: response.active,
+        protocol_version: response.protocol_version,
+        room_id: response.room_id,
+        session_id: response.session_id,
+        revision: response.revision,
+        current_desk_id: response.current_desk_id,
+        target_desk_id: response.target_desk_id,
+        queued_desk_id: response.queued_desk_id,
+        transition_id: response.transition_id,
+        operable: response.operable,
+        player_pid: response.player_pid,
+    })
 }
 
 pub(crate) async fn shutdown_core() -> Result<(), String> {

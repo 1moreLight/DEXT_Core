@@ -40,6 +40,8 @@ namespace Lively.Core.Wallpapers
         private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly bool trustedDextHost;
         private RoomSessionPlayerBridge roomSessionBridge;
+        private string[] roomSessionDeskIds;
+        private bool roomPageReadyReceived;
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private readonly Lively.Services.SystemControlService systemControlService = new();
         private int currentVolume = 0;
@@ -48,6 +50,12 @@ namespace Lively.Core.Wallpapers
 
         public event EventHandler Exited;
         public event EventHandler Loaded;
+        internal event EventHandler RoomPageReady;
+
+        internal bool IsTrustedDextHost => trustedDextHost;
+        internal string RoomPackageDirectory => File.Exists(wallpaperPath)
+            ? Path.GetDirectoryName(wallpaperPath)
+            : wallpaperPath;
 
         public bool IsLoaded { get; private set; } = false;
 
@@ -189,26 +197,49 @@ namespace Lively.Core.Wallpapers
                 deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
                 return RoomProtocolStatus.Denied;
             var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
+            var installedDeskIds = deskIds.ToArray();
             var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId, snapshot =>
             {
-                if (!IsExited)
-                    SendMessage(new LivelyMessageRoomSessionSnapshot
-                    {
-                        ProtocolVersion = snapshot.ProtocolVersion,
-                        SessionId = snapshot.SessionId,
-                        RoomId = snapshot.RoomId,
-                        DeskIds = deskIds.ToArray(),
-                        CurrentDeskId = snapshot.CurrentDeskId,
-                        TargetDeskId = snapshot.TargetDeskId,
-                        TransitionId = snapshot.TransitionId,
-                        Revision = snapshot.Revision,
-                        IsOperable = snapshot.IsOperable,
-                    });
+                if (!IsExited) SendRoomSessionSnapshot(snapshot, installedDeskIds);
             }, out var bridge);
             if (status == RoomProtocolStatus.Accepted)
+            {
                 roomSessionBridge = bridge;
+                roomSessionDeskIds = installedDeskIds;
+            }
             return status;
         }
+
+        internal RoomProtocolStatus RefreshRoomSession()
+        {
+            if (roomSessionBridge is null || roomSessionDeskIds is null)
+                return RoomProtocolStatus.StaleSession;
+            var reply = roomSessionBridge.Read();
+            if (reply.Status == RoomProtocolStatus.Accepted && reply.Snapshot is not null)
+                SendRoomSessionSnapshot(reply.Snapshot, roomSessionDeskIds);
+            return reply.Status;
+        }
+
+        internal void DetachRoomSession()
+        {
+            roomSessionBridge?.Dispose();
+            roomSessionBridge = null;
+            roomSessionDeskIds = null;
+        }
+
+        private void SendRoomSessionSnapshot(RoomSessionSnapshot snapshot, string[] deskIds) =>
+            SendMessage(new LivelyMessageRoomSessionSnapshot
+            {
+                ProtocolVersion = snapshot.ProtocolVersion,
+                SessionId = snapshot.SessionId,
+                RoomId = snapshot.RoomId,
+                DeskIds = deskIds,
+                CurrentDeskId = snapshot.CurrentDeskId,
+                TargetDeskId = snapshot.TargetDeskId,
+                TransitionId = snapshot.TransitionId,
+                Revision = snapshot.Revision,
+                IsOperable = snapshot.IsOperable,
+            });
 
         public void SetVolume(int volume)
         {
@@ -270,8 +301,7 @@ namespace Lively.Core.Wallpapers
                     tcsProcessWait.TrySetResult(new InvalidOperationException(Properties.Resources.LivelyExceptionGeneral));
             }
             process.OutputDataReceived -= Proc_OutputDataReceived;
-            roomSessionBridge?.Dispose();
-            roomSessionBridge = null;
+            DetachRoomSession();
             appMonitorCts.Cancel();
             process?.Dispose();
             IsExited = true;
@@ -360,6 +390,7 @@ namespace Lively.Core.Wallpapers
                         {
                             IsLoaded = true;
                             Loaded?.Invoke(this, EventArgs.Empty);
+                            if (roomPageReadyReceived) RoomPageReady?.Invoke(this, EventArgs.Empty);
                             if (desktopIconPreferences is not null)
                                 SendMessage(desktopIconPreferences);
 
@@ -441,6 +472,13 @@ namespace Lively.Core.Wallpapers
                             var reply = completionBridge.Complete(completion.SessionId, completion.TransitionId);
                             if (reply.Status != RoomProtocolStatus.Accepted)
                                 Logger.Warn($"Wv2{uniqueId}: v3 transition completion rejected: {reply.Status}");
+                        }
+                        break;
+                    case MessageType.msg_room_session_ready:
+                        if (trustedDextHost)
+                        {
+                            roomPageReadyReceived = true;
+                            if (IsLoaded) RoomPageReady?.Invoke(this, EventArgs.Empty);
                         }
                         break;
                 }

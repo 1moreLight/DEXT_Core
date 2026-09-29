@@ -34,5 +34,6 @@
         cmd_room_session_snapshot,
         msg_room_session_request,
         msg_room_transition_complete,
+        msg_room_session_ready,
     }
 }

@@ -46,6 +46,10 @@ internal sealed class RoomSessionPlayerBridge : IDisposable
         ? new(RoomProtocolStatus.StaleSession, null, null)
         : gateway.Request(connectionId, peer, sessionId, deskId);
 
+    public RoomProtocolReply Read() => disposed
+        ? new(RoomProtocolStatus.StaleSession, null, null)
+        : gateway.Read(connectionId, peer);
+
     public RoomProtocolReply Complete(Guid sessionId, Guid transitionId) => disposed
         ? new(RoomProtocolStatus.StaleSession, null, null)
         : gateway.Complete(connectionId, peer, sessionId, transitionId);

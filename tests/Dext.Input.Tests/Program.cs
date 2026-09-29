@@ -5,6 +5,14 @@ if (args.Length == 1 && args[0] == "--workerw-p2a") {
     await WorkerWSceneProbe.Run();
     return;
 }
+if (args.Length == 1 && args[0] == "--v3-live") {
+    await V3LiveProbe.Run();
+    return;
+}
+if (args.Length == 2 && args[0] == "--v3-status") {
+    await V3LiveProbe.CheckStatus(args[1]);
+    return;
+}
 
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.

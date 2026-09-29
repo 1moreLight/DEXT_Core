@@ -262,3 +262,11 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 原因：`File.Exists` 在部分无法访问的情形返回 `false`，泛化的异常捕获又丢失了存储故障类别。
 
 修复：直接读取 checkpoint；文件/目录确实不存在和 JSON 损坏仍返回无恢复点，其他 `IOException` 或 `UnauthorizedAccessException` 向受控协议传播并映射为 `StorageUnavailable`。文件路径指向目录的实际读取回归通过；协议 27/27、内核 10/10。
+
+# #120 外置 Cargo target 导致同分支 Core 身份误拒
+
+现象：配置器从 D 盘共享构建缓存启动时只出现空小窗口或无法连接；Core 已从本 worktree 启动，配置器仍无法解析其对应的 Core 路径。身份脚本把配置器显示为 OTHER。
+
+原因：`core_path_for_configurator` 和身份脚本仅接受 `tauri-ui/src-tauri/target/debug`，未考虑编译时的 `CARGO_TARGET_DIR`。此前为节省 C 盘空间把 Rust target 重定向到 D 盘。
+
+修复：配置器以编译时 `CARGO_TARGET_DIR` 或标准 target 识别自身，始终从编译时 manifest 所在 worktree 定位 Core；身份脚本支持当前环境的 target 目录。Rust 定向回归和真实三进程路径/pipe 核对通过。

@@ -86,15 +86,32 @@ fn validate_core_binary_identity(path: &Path) -> Result<(), String> {
 }
 
 fn core_path_for_configurator(configurator: &Path, manifest: &Path) -> Result<PathBuf, String> {
+    core_path_for_configurator_with_target(
+        configurator,
+        manifest,
+        option_env!("CARGO_TARGET_DIR").map(Path::new),
+    )
+}
+
+fn core_path_for_configurator_with_target(
+    configurator: &Path,
+    manifest: &Path,
+    external_target: Option<&Path>,
+) -> Result<PathBuf, String> {
     let config_path = std::fs::canonicalize(configurator)
         .map_err(|error| format!("cannot locate configurator executable: {error}"))?;
     let manifest_path = std::fs::canonicalize(manifest).unwrap_or_else(|_| manifest.to_path_buf());
-    let target = manifest_path.join("target");
+    let mut targets = vec![manifest_path.join("target")];
+    if let Some(external) = external_target {
+        targets.push(std::fs::canonicalize(external).unwrap_or_else(|_| external.to_path_buf()));
+    }
     let development_binary = config_path
         .file_name()
         .is_some_and(|name| name == "dext-configurator.exe")
-        && ["debug", "release"].iter().any(|configuration| {
-            config_path.parent() == Some(target.join(configuration).as_path())
+        && targets.iter().any(|target| {
+            ["debug", "release"].iter().any(|configuration| {
+                config_path.parent() == Some(target.join(configuration).as_path())
+            })
         });
 
     let core = if development_binary {
@@ -363,7 +380,8 @@ pub async fn exit_core() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        core_path_for_configurator, identity_matches_expected_core, valid_core_binary_identity,
+        core_path_for_configurator, core_path_for_configurator_with_target,
+        identity_matches_expected_core, valid_core_binary_identity,
     };
     use crate::grpc::CoreIdentity;
     use std::path::Path;
@@ -396,6 +414,27 @@ mod tests {
         std::fs::write(&other, b"config").unwrap();
 
         assert!(core_path_for_configurator(&other, &manifest)
+            .unwrap_err()
+            .contains("worktree"));
+    }
+
+    #[test]
+    fn redirected_cargo_target_still_uses_its_compiled_worktree_core() {
+        let root = tempfile::tempdir().unwrap();
+        let manifest = root.path().join("checkout/tauri-ui/src-tauri");
+        let target = root.path().join("build-cache");
+        let configurator = target.join("debug/dext-configurator.exe");
+        let core = root.path().join("checkout/lively-core-separation/src/Lively/Lively/bin/x64/Debug/net9.0-windows10.0.18362.0/Lively.exe");
+        std::fs::create_dir_all(configurator.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(core.parent().unwrap()).unwrap();
+        std::fs::write(&configurator, b"config").unwrap();
+        std::fs::write(&core, b"core").unwrap();
+
+        assert_eq!(
+            core_path_for_configurator_with_target(&configurator, &manifest, Some(&target)).unwrap(),
+            core
+        );
+        assert!(core_path_for_configurator_with_target(&configurator, &manifest, None)
             .unwrap_err()
             .contains("worktree"));
     }
