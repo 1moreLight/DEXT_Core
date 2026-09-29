@@ -244,6 +244,28 @@ namespace Lively.Player.WebView2
                         if (request != null)
                             SendToParent(request);
                     }
+                    else if ((string)o.type == "dext:v3-request-desk")
+                    {
+                        if (startArgs.DextTrustedHost &&
+                            Guid.TryParse((string)o.sessionId, out var sessionId) &&
+                            !string.IsNullOrWhiteSpace((string)o.deskId))
+                            SendToParent(new LivelyMessageRoomSessionRequest
+                            {
+                                SessionId = sessionId,
+                                DeskId = (string)o.deskId,
+                            });
+                    }
+                    else if ((string)o.type == "dext:v3-transition-complete")
+                    {
+                        if (startArgs.DextTrustedHost &&
+                            Guid.TryParse((string)o.sessionId, out var sessionId) &&
+                            Guid.TryParse((string)o.transitionId, out var transitionId))
+                            SendToParent(new LivelyMessageRoomTransitionComplete
+                            {
+                                SessionId = sessionId,
+                                TransitionId = transitionId,
+                            });
+                    }
                     else
                     {
                         SendToParent(new LivelyMessageLaunchCmd()
@@ -793,6 +815,27 @@ namespace Lively.Player.WebView2
                     {
                         // Reject malformed payloads before they cross into the page.
                     }
+                    break;
+                case MessageType.cmd_room_session_snapshot:
+                    if (!startArgs.DextTrustedHost)
+                        break;
+                    var session = (LivelyMessageRoomSessionSnapshot)obj;
+                    if (session.ProtocolVersion != 1 || session.SessionId == Guid.Empty ||
+                        session.DeskIds == null || session.DeskIds.Length == 0)
+                        break;
+                    webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(new
+                    {
+                        type = "dext:v3-session",
+                        protocolVersion = session.ProtocolVersion,
+                        sessionId = session.SessionId,
+                        roomId = session.RoomId,
+                        deskIds = session.DeskIds,
+                        currentDeskId = session.CurrentDeskId,
+                        targetDeskId = session.TargetDeskId,
+                        transitionId = session.TransitionId,
+                        revision = session.Revision,
+                        operable = session.IsOperable,
+                    }));
                     break;
                 case MessageType.cmd_desktop_icon_preferences:
                     if (!startArgs.DextTrustedHost)

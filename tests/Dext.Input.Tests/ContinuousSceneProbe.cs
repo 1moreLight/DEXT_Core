@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Lively.Models.Message;
+using Dext.Core.Rooms;
 
 static class ContinuousSceneProbe
 {
@@ -40,16 +42,35 @@ static class ContinuousSceneProbe
             };
             foreach (var arg in new[] { "--wallpaper-url", index, "--wallpaper-type", "local",
                 "--wallpaper-geometry", "1280x800", "--wallpaper-scale", "1.25",
-                "--wallpaper-user-data", Path.Combine(fixture, "user-data") }) start.ArgumentList.Add(arg);
+                "--wallpaper-user-data", Path.Combine(fixture, "user-data"),
+                "--dext-trusted-host" }) start.ArgumentList.Add(arg);
             using var process = Process.Start(start) ?? throw new Exception("P2a Player did not start");
             var messages = new ConcurrentQueue<JsonElement>();
+            var protocolMessages = new ConcurrentQueue<JsonElement>();
             var reader = Task.Run(async () => {
                 while (await process.StandardOutput.ReadLineAsync() is { } line) {
-                    try { messages.Enqueue(JsonDocument.Parse(line).RootElement.Clone()); }
+                    try {
+                        var message = JsonDocument.Parse(line).RootElement.Clone();
+                        if (message.TryGetProperty("Type", out var kind) &&
+                            kind.ValueKind == JsonValueKind.Number &&
+                            (kind.GetInt32() == (int)MessageType.msg_room_session_request ||
+                             kind.GetInt32() == (int)MessageType.msg_room_transition_complete))
+                            protocolMessages.Enqueue(message);
+                        else messages.Enqueue(message);
+                    }
                     catch (JsonException) { }
                 }
             });
             var errors = process.StandardError.ReadToEndAsync();
+            using var kernel = new RoomSessionKernel(new ProbeCheckpointStore());
+            var gateway = new RoomSessionProtocolGateway(kernel, new ProbeAdmissionAuthority(process.Id));
+            var coordinator = new RoomSessionPeer("core-probe");
+            var control = gateway.Open(coordinator, new RoomSessionHello(RoomSessionKernel.ProtocolVersion,
+                RoomClientRole.Coordinator, "install-a"));
+            if (control.ConnectionId is null) throw new Exception("Probe coordinator denied");
+            var session = gateway.Start(control.ConnectionId.Value, coordinator).Snapshot
+                ?? throw new Exception("Probe session did not start");
+            RoomSessionPlayerBridge? bridge = null;
             try
             {
                 var first = await Wait(state =>
@@ -80,9 +101,53 @@ static class ContinuousSceneProbe
                     child.GetProperty("desk").GetInt32() == 0);
                 Check(third, id, "Official A");
                 Console.WriteLine("PASS Release WebView2 Player P2a: same sandbox document across desks, one frame, geometry and official icons");
+
+                var status = RoomSessionPlayerBridge.Connect(gateway,
+                    new RoomSessionPeer($"player-process:{process.Id}"), "install-a", snapshot => {
+                        lock (process.StandardInput)
+                        {
+                            process.StandardInput.WriteLine(JsonSerializer.Serialize(new LivelyMessageRoomSessionSnapshot {
+                                ProtocolVersion = snapshot.ProtocolVersion,
+                                SessionId = snapshot.SessionId,
+                                RoomId = snapshot.RoomId,
+                                DeskIds = ["home", "work"],
+                                CurrentDeskId = snapshot.CurrentDeskId,
+                                TargetDeskId = snapshot.TargetDeskId,
+                                TransitionId = snapshot.TransitionId,
+                                Revision = snapshot.Revision,
+                                IsOperable = snapshot.IsOperable,
+                            }));
+                            process.StandardInput.Flush();
+                        }
+                    }, out bridge);
+                if (status != RoomProtocolStatus.Accepted || bridge is null)
+                    throw new Exception("Probe Player bridge denied: " + status);
+                await Send("p2a-next", "next");
+                var requested = await WaitProtocol(MessageType.msg_room_session_request);
+                if (requested.GetProperty("SessionId").GetGuid() != session.SessionId ||
+                    requested.GetProperty("DeskId").GetString() != "work")
+                    throw new Exception("Player did not request the Core-owned next Desk");
+                var moving = bridge.Request(requested.GetProperty("SessionId").GetGuid(),
+                    requested.GetProperty("DeskId").GetString()!);
+                if (moving.Status != RoomProtocolStatus.Accepted || moving.Snapshot?.TransitionId is null)
+                    throw new Exception("Core rejected the Player Desk request: " + moving.Status);
+                var completed = await WaitProtocol(MessageType.msg_room_transition_complete);
+                if (completed.GetProperty("SessionId").GetGuid() != session.SessionId ||
+                    completed.GetProperty("TransitionId").GetGuid() != moving.Snapshot.TransitionId)
+                    throw new Exception("Player did not acknowledge the Core transition");
+                var committed = bridge.Complete(completed.GetProperty("SessionId").GetGuid(),
+                    completed.GetProperty("TransitionId").GetGuid());
+                if (committed.Status != RoomProtocolStatus.Accepted ||
+                    committed.Snapshot?.CurrentDeskId != "work")
+                    throw new Exception("Core did not commit Player completion: " + committed.Status);
+                var coreDriven = await Wait(state => state.GetProperty("desk").GetInt32() == 1 &&
+                    state.GetProperty("childState").GetProperty("desk").GetInt32() == 1);
+                Check(coreDriven, id, "Official B");
+                Console.WriteLine("PASS Gateway-to-Release Player v3 IPC: request, authoritative snapshots and completion; persistent scene unchanged");
             }
             finally
             {
+                bridge?.Dispose();
                 if (!process.HasExited) {
                     await process.StandardInput.WriteLineAsync("{\"Type\":7}");
                     process.StandardInput.Close();
@@ -95,6 +160,20 @@ static class ContinuousSceneProbe
             {
                 await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { Type = 15, Name = name, Value = value }));
                 await process.StandardInput.FlushAsync();
+            }
+            async Task<JsonElement> WaitProtocol(MessageType type)
+            {
+                var deadline = DateTime.UtcNow.AddSeconds(20);
+                while (DateTime.UtcNow < deadline)
+                {
+                    while (protocolMessages.TryDequeue(out var message))
+                    {
+                        if (message.GetProperty("Type").GetInt32() == (int)type) return message;
+                    }
+                    if (process.HasExited) throw new Exception("P2a Player exited: " + await errors);
+                    await Task.Delay(20);
+                }
+                throw new TimeoutException("v3 Player IPC message missing: " + type);
             }
             async Task<JsonElement> Wait(Func<JsonElement, bool> accept)
             {
@@ -143,4 +222,29 @@ static class ContinuousSceneProbe
         if (Math.Abs(actual - expected) > 2)
             throw new Exception($"P2a Player geometry differs: actual={actual}, expected={expected}");
     }
+}
+
+internal sealed class ProbeAdmissionAuthority(int playerPid) : IRoomSessionAdmissionAuthority
+{
+    public RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello)
+    {
+        if (hello.RoomId != "install-a") return null;
+        var allowed = peer.TransportId switch
+        {
+            "core-probe" => RoomClientRole.Coordinator,
+            var id when id == $"player-process:{playerPid}" => RoomClientRole.DesktopPlayer,
+            _ => (RoomClientRole?)null,
+        };
+        return allowed != hello.Role ? null : new RoomSessionAdmission(peer.TransportId,
+            allowed.Value, new VerifiedRoomInstallation("install-a", "probe-installation",
+                ["home", "work"], "home"));
+    }
+}
+
+internal sealed class ProbeCheckpointStore : IRoomSessionCheckpointStore
+{
+    private RoomSessionCheckpoint? current;
+    public RoomSessionCheckpoint? Read() => current;
+    public void Write(RoomSessionCheckpoint checkpoint) => current = checkpoint;
+    public void Clear() => current = null;
 }

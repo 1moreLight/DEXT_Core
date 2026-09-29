@@ -31,5 +31,8 @@
         cmd_room_layout_sync,
         cmd_desktop_icon_preferences,
         cmd_save_room_result,
+        cmd_room_session_snapshot,
+        msg_room_session_request,
+        msg_room_transition_complete,
     }
 }

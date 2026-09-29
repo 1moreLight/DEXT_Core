@@ -8,5 +8,6 @@
   <ItemGroup>
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
   </ItemGroup>
 </Project>

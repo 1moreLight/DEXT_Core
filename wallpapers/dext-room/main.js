@@ -340,6 +340,35 @@ function updateAppRuntimeStatus(target, running) {
   renderDockApps(dockCfg());
 }
 
+let coreRoomSession = null;
+function applyCoreRoomSession(data) {
+  if (data?.protocolVersion !== 1 || typeof data.sessionId !== "string" ||
+      !Array.isArray(data.deskIds) || data.deskIds.length !== ROOM.desks.length ||
+      new Set(data.deskIds).size !== data.deskIds.length ||
+      !Number.isSafeInteger(data.revision) || data.revision < 0) return;
+  const wantedId = data.targetDeskId || data.currentDeskId;
+  const target = data.deskIds.indexOf(wantedId);
+  if (target < 0 || !data.deskIds.includes(data.currentDeskId)) return;
+  if (coreRoomSession?.id === data.sessionId && data.revision <= coreRoomSession.revision) return;
+  coreRoomSession = { id: data.sessionId, revision: data.revision, deskIds: data.deskIds,
+    operable: data.operable === true };
+  if (currentDesk !== target) {
+    const from = currentDesk;
+    dextEmit("deskchange", { from, to: target, dir: target > from ? 1 : -1, phase: "before" });
+    if (continuousSceneSpec()) notifyContinuousScene("before", from, target);
+    currentDesk = target;
+    renderDesk(currentDesk);
+    if (continuousSceneSpec()) notifyContinuousScene("after", from, target);
+    dextEmit("deskchange", { from, to: target, dir: target > from ? 1 : -1, phase: "after" });
+  }
+  if (data.transitionId && data.targetDeskId && window.chrome?.webview) {
+    window.chrome.webview.postMessage(JSON.stringify({
+      type: "dext:v3-transition-complete", sessionId: data.sessionId,
+      transitionId: data.transitionId,
+    }));
+  }
+}
+
 if (window.chrome?.webview) {
   window.chrome.webview.addEventListener("message", (e) => {
     let data = e.data;
@@ -348,6 +377,8 @@ if (window.chrome?.webview) {
     }
     if (data?.type === "dext:app-status") {
       updateAppRuntimeStatus(data.target, data.running);
+    } else if (data?.type === "dext:v3-session") {
+      applyCoreRoomSession(data);
     } else if (data?.type === "dext:room-layout") {
       applyRoomLayoutUpdate(data);
     } else if (data?.type === "dext:desktop-preferences") {
@@ -1813,6 +1844,15 @@ function playVideoTransition(next, slot, from, delta) {
 }
 
 function switchDesk(delta) {
+  if (coreRoomSession) {
+    if (switching || editMode || !coreRoomSession.operable || ROOM.desks.length < 2) return;
+    const next = (currentDesk + delta + ROOM.desks.length) % ROOM.desks.length;
+    window.chrome?.webview?.postMessage(JSON.stringify({
+      type: "dext:v3-request-desk", sessionId: coreRoomSession.id,
+      deskId: coreRoomSession.deskIds[next],
+    }));
+    return;
+  }
   if (switching || editMode || ROOM.desks.length < 2) return;
   switching = true;
 

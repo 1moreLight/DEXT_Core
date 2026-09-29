@@ -712,6 +712,64 @@ Check("unexpected programming errors are not disguised as storage failures", () 
     True(propagated, "unanticipated failure remains visible for diagnosis");
 });
 
+Check("Player bridge sends full snapshots and converges after reconnect", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var first = new List<RoomSessionSnapshot>();
+    Equal(RoomProtocolStatus.Accepted,
+        RoomSessionPlayerBridge.Connect(gateway, new RoomSessionPeer("player-1"),
+            "install-a", first.Add, out var bridge), "bridge connected");
+    True(bridge is not null, "bridge handle");
+    Equal(1, first.Count, "initial full snapshot");
+    Equal(active, first[0], "initial snapshot equals Core");
+    Equal(RoomProtocolStatus.InvalidDesk,
+        bridge!.Request(active.SessionId, "injected").Status, "unverified Desk rejected");
+    var moving = bridge.Request(active.SessionId, "work").Snapshot!;
+    Equal(2, first.Count, "transition snapshot sent");
+    Equal("work", first[^1].TargetDeskId, "target forwarded");
+    Equal(RoomProtocolStatus.Accepted,
+        bridge.Complete(active.SessionId, moving.TransitionId!.Value).Status, "completion accepted");
+    Equal("work", first[^1].CurrentDeskId, "committed snapshot forwarded");
+    bridge.Dispose();
+    Equal(RoomProtocolStatus.StaleSession,
+        bridge.Request(active.SessionId, "home").Status, "closed Player cannot navigate");
+    var second = new List<RoomSessionSnapshot>();
+    Equal(RoomProtocolStatus.Accepted,
+        RoomSessionPlayerBridge.Connect(gateway, new RoomSessionPeer("player-2"),
+            "install-a", second.Add, out var replacement), "reconnect accepted");
+    Equal(kernel.Snapshot, second[0], "reconnected Player receives current full snapshot");
+    replacement!.Dispose();
+});
+
+Check("Player bridge never bypasses closed or revoked admission", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var closed = new RoomSessionProtocolGateway(kernel, new ClosedRoomSessionAdmissionAuthority());
+    Equal(RoomProtocolStatus.Denied,
+        RoomSessionPlayerBridge.Connect(closed, new RoomSessionPeer("player-1"),
+            "install-a", _ => { }, out var denied), "closed policy");
+    Equal(null, denied, "no bridge without admission");
+    var authority = new TestAdmissionAuthority();
+    var gateway = new RoomSessionProtocolGateway(kernel, authority);
+    var coordinator = new RoomSessionPeer("core-1");
+    var control = gateway.Open(coordinator,
+        new RoomSessionHello(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, "install-a"));
+    var active = gateway.Start(control.ConnectionId!.Value, coordinator).Snapshot!;
+    var events = new List<RoomSessionSnapshot>();
+    RoomSessionPlayerBridge.Connect(gateway, new RoomSessionPeer("player-1"),
+        "install-a", events.Add, out var bridge);
+    authority.InstallAEnabled = false;
+    Equal(RoomProtocolStatus.Denied,
+        bridge!.Request(active.SessionId, "work").Status, "revoked installation");
+    Equal(1, events.Count, "revoked view receives no later snapshot");
+    bridge.Dispose();
+});
+
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);
 
