@@ -238,3 +238,13 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 原因：测试夹具把总数写死为 8，新增用例时未同步改汇总。
 
 修复：`Check` 每调用一次递增总数，最终由动态总数和失败数计算汇总；本轮输出已正确显示 `10/10`。
+
+# #119 多 worktree Rust 编译产物耗尽 C 盘
+
+现象：V3-P2A-001 新 worktree 首次运行 `scripts/start.ps1` 时，配置器 Rust 构建报 `os error 112` 磁盘空间不足；同一阶段文件补丁曾写入失败并留下零字节文件。
+
+原因：多个 DEXT worktree 的 `tauri-ui/src-tauri/target` 各占约 5–15 GiB，C 盘剩余不足 1 GiB。编译失败后的文件不能假定仍保持原内容。
+
+修复：先停相关 Cargo/配置器进程，核对每个 target 的 worktree 归属，再用 `cargo clean --manifest-path` 清掉 9 个 target；D 盘重定向的 `CARGO_TARGET_DIR` 也用 `cargo clean` 清除。合计约 65 GiB，随后重新核对受影响源码、重建并复测。Core/Player 从现有 C# 输出恢复运行，配置器暂不重建以保留清理成果。
+
+防再犯：开新 worktree 前盘点 C/D 空间；Rust 构建可明确设置 D 盘 `CARGO_TARGET_DIR`。清理只针对确认的项目 target，不删除共享 Cargo registry；遇磁盘写入失败要检查改动文件长度与内容。

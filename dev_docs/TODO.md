@@ -1084,13 +1084,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] `scripts/build.ps1` → `scripts/start.ps1` 通过，身份脚本全项 OK：Core PID 109820、Player PID 70460、配置器 PID 86232 均来自本 worktree；日志显示 protocol=1 与 gateway admission=closed，v2 Player 继续运行既有 Room（2026-09-29）。
 - [x] 计划 `eba12cf` 和实现 `8c3e9d7` 已按大步具名提交；自动验收与真实运行证据单独提交。生产 v3 准入仍等 P2/P3 的真实宿主与安装校验（2026-09-29）。
 
-## V3-P2A-001 连续场景宿主验证（2026-09-29，开发中）
+## V3-P2A-001 连续场景宿主验证（2026-09-29，待人工验收）
 
 > 目标：在真实桌面 Player 使用的页面里挂载一次持续 HTML 场景，切 Desk 不重建它；官方图标仍可点击/拖动，并用同一画布坐标描述作者占用区。
 > 范围外：P3 正式作品格式、生产 v3 会话准入、Core 到 Player 的正式传输、顶层原生 Dock/AppBar。
 > 人工验收：见 `dev_docs/acceptance/V3-P2A-001-continuous-scene-host.md`。
 
 - [x] 从 V3-CORE-004 建立独立 managed worktree 与 `feat/V3-P2A-001-continuous-scene-host`；先登记计划和验收卡。
-- [ ] 实现仅用于 P2a 验证的持续场景挂载和 Desk 阶段通知，保持 iframe 与能力身份不变。
-- [ ] 用官方图标/Widget/作者占用区样例验证输入与坐标边界，补必要回归。
-- [ ] 完成浏览器与真实 Player/WorkerW 验证，记录证据并具名提交。
+- [x] 实现仅用于 P2a 验证的持续场景挂载和 Desk 阶段通知，保持 iframe 与能力身份不变；该字段不纳入 v2 发布 Schema。
+- [x] 用官方图标/作者占用区样例验证输入与坐标边界；图标拖放、偏好重排和 Widget 移动使用同一占用矩形。
+- [x] Playwright 2/2、配置器 Vitest 62/62 与 build、Release WebView2 隔离 Player、旧 Room 原生拖动 10/10 通过；`scripts/build.ps1` 通过，Core/Player 运行身份正确。Rust `target` 按用户指示清理后，配置器未重建。
+- [x] 真实 WorkerW 临时样包入口已编译，修改桌面仅在人工验收命令运行时发生并在结束时恢复；实现与回归具名提交 `14a612d`。
+- [?] 真实 WorkerW 物理鼠标和不同系统 DPI：运行验收卡中的临时包命令，结束自动恢复原壁纸；用户通过前不合并 master。

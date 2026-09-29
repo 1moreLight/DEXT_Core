@@ -123,6 +123,7 @@
 | #116 | 订阅的初始回调可同步改变会话，返回值若仍用订阅前快照会落后于已推送修订 | [backend](errors/backend.md) |
 | #117 | checkpoint 读取先用 File.Exists 并吞掉 IO/权限异常，会把不可读存储误报成无恢复点 | [backend](errors/backend.md) |
 | #118 | 内核测试汇总把总数写死为 8，新用例通过时仍显示 8/8，掩盖实际覆盖数量 | [toolchain](errors/toolchain.md) |
+| #119 | 多 worktree 各自保留数 GB Rust `target`，新配置器首次编译耗尽 C 盘并可能中断文件写入 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 
