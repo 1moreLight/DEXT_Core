@@ -2,7 +2,7 @@
 
 - 状态：开发侧验收通过，待用户决定合入
 - 分支：`feat/V3-CORE-005-player-bridge`（基于 V3-P2A-001）
-- 提交：待提交
+- 提交：`2e2c290`（真实接入与开发侧验收）
 - 目标：配置器从本 worktree 连接真实 Core，并可应用一个经 Core 验证的最小 v3 Room；Core 的会话快照驱动真实 Player 切页和恢复。
 - 范围外：完整 P3 创作者格式、原生 Dock/AppBar、游戏宿主。
 
