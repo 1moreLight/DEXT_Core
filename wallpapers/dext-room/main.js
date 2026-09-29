@@ -464,6 +464,7 @@ function preferenceViews(geometry) {
       width: widget.placement.width * widgetScaleX + 80,
       height: widget.placement.height * widgetScaleY + 80,
     }));
+    blocked.push(...continuousSceneObstacle(iconLayer, 8));
     const deskDock = { ...ROOM.dock, ...desk.dock };
     const dockEnabled = deskDock.enabled !== false;
     const viewport = deskMain.getBoundingClientRect();
@@ -693,6 +694,104 @@ const permissionPollTimer = setInterval(() => {
 const widgetInstancesBySource = new Map();
 const widgetInstancesByLayer = new WeakMap();
 const sceneInstancesByContainer = new WeakMap();
+const continuousSceneLayer = deskMain.querySelector(".continuous-scene-layer");
+let continuousSceneInstance = null;
+
+// P2a probe only: the Room v3 format and author API are deliberately not frozen.
+// A bounded iframe keeps its own DOM alive while official icons remain above it.
+function continuousSceneSpec() {
+  const spec = ROOM.experimentalContinuousScene;
+  const p = spec?.placement;
+  if (spec?.type !== "html" || !assetUrl(spec.src) || !p ||
+      ![p.x, p.y, p.width, p.height].every(Number.isInteger) ||
+      p.x < 0 || p.y < 0 || p.width < 64 || p.height < 64 ||
+      p.x + p.width > ROOM_CANVAS.width || p.y + p.height > ROOM_CANVAS.height) return null;
+  return spec;
+}
+
+function continuousSceneOccupied() {
+  return continuousSceneSpec()?.placement ?? null;
+}
+
+function continuousSceneObstacle(layer, padding = 0) {
+  const box = continuousSceneInstance?.wrap.getBoundingClientRect();
+  const origin = layer.getBoundingClientRect();
+  return box ? [{
+    x: box.left - origin.left - padding,
+    y: box.top - origin.top - padding,
+    width: box.width + 2 * padding,
+    height: box.height + 2 * padding,
+  }] : [];
+}
+
+function disposeContinuousScene() {
+  const instance = continuousSceneInstance;
+  if (!instance) return;
+  instance.disposed = true;
+  instance.unregisterCapabilities?.();
+  capabilityInstances.delete(instance);
+  instance.frame.src = "about:blank";
+  instance.wrap.remove();
+  continuousSceneInstance = null;
+  document.body.classList.remove("has-continuous-scene");
+}
+
+function notifyContinuousScene(phase, from, to) {
+  const instance = continuousSceneInstance;
+  if (!instance || instance.disposed || !instance.frame.contentWindow) return;
+  instance.frame.contentWindow.postMessage({
+    type: "dext:scene:desk", protocol: WIDGET_PROTOCOL,
+    instanceId: instance.instanceId, token: instance.token,
+    phase, from, to,
+  }, "*");
+}
+
+function mountContinuousScene() {
+  const spec = continuousSceneSpec();
+  const src = spec && assetUrl(spec.src);
+  if (!src) { disposeContinuousScene(); return; }
+  const key = `${src}:${JSON.stringify(spec.placement)}`;
+  if (continuousSceneInstance?.key === key) return;
+  disposeContinuousScene();
+  const p = spec.placement;
+  const wrap = document.createElement("div");
+  wrap.className = "continuous-scene-frame";
+  wrap.style.left = `${p.x / ROOM_CANVAS.width * 100}%`;
+  wrap.style.top = `${p.y / ROOM_CANVAS.height * 100}%`;
+  wrap.style.width = `${p.width / ROOM_CANVAS.width * 100}%`;
+  wrap.style.height = `${p.height / ROOM_CANVAS.height * 100}%`;
+  const frame = document.createElement("iframe");
+  const instanceId = newInstanceId();
+  const token = newInstanceId();
+  const url = new URL(src);
+  url.searchParams.set("dextInstanceId", instanceId);
+  url.searchParams.set("dextKind", "continuous");
+  frame.src = url.href;
+  frame.title = spec.name ?? "Continuous scene";
+  frame.sandbox = "allow-scripts";
+  frame.allow = "autoplay";
+  frame.referrerPolicy = "no-referrer";
+  wrap.appendChild(frame);
+  continuousSceneLayer.appendChild(wrap);
+  document.body.classList.add("has-continuous-scene");
+  const instance = {
+    key, wrap, frame, instanceId, token, disposed: false,
+    permissions: spec.permissions, subject: "scene:continuous",
+    unregisterCapabilities: null,
+  };
+  continuousSceneInstance = instance;
+  frame.addEventListener("load", () => {
+    if (instance.disposed || !frame.contentWindow) return;
+    frame.contentWindow.postMessage({
+      type: "dext:scene:init", protocol: WIDGET_PROTOCOL,
+      instanceId, token, kind: "continuous",
+      permissions: capabilityApi.cleanPermissions(spec.permissions),
+      viewport: { ...ROOM_CANVAS },
+    }, "*");
+    registerCapabilityFrame(instance);
+    notifyContinuousScene("after", currentDesk, currentDesk);
+  });
+}
 
 function newInstanceId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -819,6 +918,7 @@ function disposeRuntime() {
   clearInterval(volumePollTimer);
   clearInterval(permissionPollTimer);
   activeSlot?.cancel();
+  disposeContinuousScene();
   disposeWidgets(widgetLayer);
   disposeSceneContainer(bgEl);
   bgVideo.pause();
@@ -1024,7 +1124,12 @@ function startWidgetDrag(e, instance, resizing) {
     y: widget.placement.y - 40,
     width: widget.placement.width + 80,
     height: widget.placement.height + 80,
-  }));
+  })).concat(continuousSceneOccupied() ? [{
+    x: continuousSceneOccupied().x - 40,
+    y: continuousSceneOccupied().y - 40,
+    width: continuousSceneOccupied().width + 80,
+    height: continuousSceneOccupied().height + 80,
+  }] : []);
   const dockReserve = () => {
     if (dockEl.style.display === "none") return [];
     const dockRect = dockEl.getBoundingClientRect();
@@ -1063,6 +1168,15 @@ function startWidgetDrag(e, instance, resizing) {
   const updatePlacement = () => {
     Object.assign(placement, safePlacement(placement));
     applyWidgetPlacement(instance, placement);
+    const occupied = continuousSceneOccupied();
+    if (occupied && placement.x < occupied.x + occupied.width &&
+        placement.x + placement.width > occupied.x &&
+        placement.y < occupied.y + occupied.height &&
+        placement.y + placement.height > occupied.y) {
+      preview = { committed: false };
+      showPreview(preview);
+      return;
+    }
     preview = globalThis.DextLayout.resolveWidgetIconAvoidance(
       desk.icons ?? [], widgetObstacles(), iconGrid(), dockReserve(),
     );
@@ -1314,6 +1428,7 @@ function renderDesk(index) {
   cancelSettlingPeerMotion();
   const desk = ROOM.desks[index];
   mountBackground(bgEl, bgVideo, desk, index);
+  mountContinuousScene();
   mountWidgets(widgetLayer, desk, index);
   // The active desk is part of the read-only capability snapshot.  Rendering
   // a new desk must notify already-registered Scene/Widget instances as well
@@ -1416,7 +1531,7 @@ function startDrag(e, el, index) {
     y: widgetRect.top - layerRect.top + widget.placement.y * widgetScaleY - 4,
     width: widget.placement.width * widgetScaleX + 8,
     height: widget.placement.height * widgetScaleY + 8,
-  }));
+  })).concat(continuousSceneObstacle(iconLayer, 4));
   const reserved = dockEl.style.display === 'none' ? []
     : [localRect(dockEl.getBoundingClientRect(), 4)];
   const transaction = globalThis.DextIconReorderSession.createIconReorderSession({
@@ -1707,6 +1822,16 @@ function switchDesk(delta) {
   const after = () => dextEmit("deskchange", { from, to: next, dir: delta, phase: "after" });
 
   dextEmit("deskchange", { from, to: next, dir: delta, phase: "before" });
+
+  if (continuousSceneSpec()) {
+    notifyContinuousScene("before", from, next);
+    currentDesk = next;
+    renderDesk(currentDesk);
+    notifyContinuousScene("after", from, next);
+    after();
+    switching = false;
+    return;
+  }
 
   if (spec && typeof spec === "object") {
     playVideoTransition(next, spec, from, delta);

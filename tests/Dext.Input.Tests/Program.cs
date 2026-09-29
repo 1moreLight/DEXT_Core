@@ -1,6 +1,11 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length == 1 && args[0] == "--workerw-p2a") {
+    await WorkerWSceneProbe.Run();
+    return;
+}
+
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.
 var window = Native.CreateWindowExW(0, "STATIC", "Dext input regression", 0,
@@ -54,6 +59,7 @@ finally { Native.DestroyWindow(window); }
 if (args.Length == 1) {
     await WebViewProbe.Run(args[0]);
     await RoomReorderProbe.Run(args[0]);
+    await ContinuousSceneProbe.Run(args[0]);
 }
 
 void CheckMessage(uint expectedMessage, uint flags, short x, short y)

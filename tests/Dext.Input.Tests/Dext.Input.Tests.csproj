@@ -7,6 +7,9 @@
   <ItemGroup>
     <None Update="probe.html" CopyToOutputDirectory="PreserveNewest" />
     <None Update="room-reorder-observer.js" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="continuous-scene-observer.js" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common/Lively.Common.csproj" />
+    <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj" />
+    <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
   </ItemGroup>
 </Project>

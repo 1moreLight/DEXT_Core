@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { height: 100%; margin: 0; font: 20px Segoe UI, sans-serif; color: white; }
+  body { display: grid; place-content: center; gap: 18px; text-align: center;
+    background: linear-gradient(145deg, #18233b, #243c67); border: 2px solid #4fe1cf;
+    box-sizing: border-box; border-radius: 28px; }
+  button { padding: 12px 28px; border: 0; border-radius: 12px; font: inherit; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div>Persistent document: <strong id="document-id"></strong></div>
+  <div>Button clicks: <strong id="clicks">0</strong></div>
+  <div>Desk: <strong id="desk">waiting</strong></div>
+  <button id="action">Author button</button>
+<script>
+  const documentId = crypto.randomUUID();
+  document.getElementById("document-id").textContent = documentId;
+  let clicks = 0;
+  let desk = null;
+  const report = () => window.parent.postMessage({
+    type: "p2a:scene-state", documentId, clicks, desk,
+  }, "*");
+  report();
+  document.getElementById("action").addEventListener("click", () => {
+    document.getElementById("clicks").textContent = String(++clicks);
+    report();
+  });
+  window.addEventListener("message", ({ data }) => {
+    if (data?.type === "dext:scene:desk" && data.phase === "after") {
+      desk = data.to;
+      document.getElementById("desk").textContent = String(desk);
+      report();
+    }
+  });
+</script>
+</body>
+</html>

@@ -78,6 +78,30 @@ html, body {
   pointer-events: none;
 }
 
+.continuous-scene-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.continuous-scene-frame {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: auto;
+  contain: layout paint style;
+}
+
+.continuous-scene-frame > iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}
+
+body.has-continuous-scene .icon-layer { pointer-events: none; }
+body.has-continuous-scene .icon-layer .icon { pointer-events: auto; }
+
 .dext-trusted-hotspot {
   position: absolute;
   display: block;
