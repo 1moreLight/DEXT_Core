@@ -1096,3 +1096,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Playwright 2/2、配置器 Vitest 62/62 与 build、Release WebView2 隔离 Player、旧 Room 原生拖动 10/10 通过；`scripts/build.ps1` 通过，Core/Player 运行身份正确。Rust `target` 按用户指示清理后，配置器未重建。
 - [x] 真实 WorkerW 临时样包入口已编译，修改桌面仅在人工验收命令运行时发生并在结束时恢复；实现与回归具名提交 `14a612d`。
 - [?] 真实 WorkerW 物理鼠标和不同系统 DPI：运行验收卡中的临时包命令，结束自动恢复原壁纸；用户通过前不合并 master。
+
+## V3-CORE-005 Core/Player 会话消息接线（2026-09-29，开发中）
+
+> 目标：在真实 Core 启动的受信 Player 标准输入/输出链上承载 v3 全量快照、Desk 请求和过渡完成消息，并让官方页面只在收到已授权会话快照后转向 Core 仲裁。范围外：P3 正式安装格式、开放生产会话准入、顶层原生 Dock/AppBar。人工步骤见 `dev_docs/acceptance/V3-CORE-005-player-bridge.md`。
+
+- [x] 基于 V3-P2A-001 建立独立 worktree 与 `feat/V3-CORE-005-player-bridge`；P2a 尚未合入 master，用户表示“好像都没问题”，物理鼠标与 DPI 细节未被代填。
+- [x] 动产品代码前登记本包目标、范围外和验收卡。
+- [ ] 为 Core↔Player 增加明确的会话消息类型和版本字段，未知/失效消息不执行旧启动应用兜底。
+- [ ] 接入 Gateway 的 Player 传输适配器，绑定真实进程身份并在退出时释放连接与订阅。
+- [ ] 官方页面在授权快照模式下按修订收敛，Desk 操作发请求，过渡完成回告；v2 模式保持原样。
+- [ ] 自动检查、完整构建与运行身份核对，具名文件提交；用户人工验收前不合并 master。
