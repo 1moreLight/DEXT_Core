@@ -305,7 +305,7 @@ export default function App() {
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const { coreIdentity, coreIdentityError, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore } = useDextRuntime(IS_TAURI);
+  const { coreIdentity, coreIdentityError, v3Session, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore } = useDextRuntime(IS_TAURI);
   const [coreBusy, setCoreBusy] = useState<CoreLifecycleBusy>(null);
   const coreActionRef = useRef(false);
   const [roomMultiMode, setRoomMultiMode] = useState(false);
@@ -1647,6 +1647,7 @@ export default function App() {
         onTheme={setTheme}
         isTauri={IS_TAURI}
         coreIdentity={coreIdentity}
+        v3Session={v3Session}
         coreIdentityError={coreIdentityError}
         coreBusy={coreBusy}
         onCoreAction={(action) => void handleCoreAction(action)}

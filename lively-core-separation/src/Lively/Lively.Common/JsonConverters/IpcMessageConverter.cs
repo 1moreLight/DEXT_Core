@@ -45,6 +45,10 @@ namespace Lively.Common.JsonConverters
                 MessageType.cmd_room_layout_sync => jo.ToObject<LivelyMessageRoomLayoutSyncCmd>(serializer),
                 MessageType.cmd_desktop_icon_preferences => jo.ToObject<LivelyMessageDesktopIconPreferencesCmd>(serializer),
                 MessageType.cmd_save_room_result => jo.ToObject<LivelyMessageRoomSaveResultCmd>(serializer),
+                MessageType.cmd_room_session_snapshot => jo.ToObject<LivelyMessageRoomSessionSnapshot>(serializer),
+                MessageType.msg_room_session_request => jo.ToObject<LivelyMessageRoomSessionRequest>(serializer),
+                MessageType.msg_room_transition_complete => jo.ToObject<LivelyMessageRoomTransitionComplete>(serializer),
+                MessageType.msg_room_session_ready => jo.ToObject<LivelyMessageRoomSessionReady>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

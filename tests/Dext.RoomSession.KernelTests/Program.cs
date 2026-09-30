@@ -1,9 +1,11 @@
 using Dext.Core.Rooms;
 
 var failures = 0;
+var total = 0;
 
 void Check(string name, Action test)
 {
+    total++;
     try
     {
         test();
@@ -170,6 +172,31 @@ Check("checkpoint contains only committed Desk and needs validated Room identity
     }
 });
 
+Check("missing or malformed checkpoint is ignored but unreadable storage surfaces", () =>
+{
+    var folder = Path.Combine(Path.GetTempPath(), "dext-checkpoint-read-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(folder);
+    var file = Path.Combine(folder, "session.json");
+    try
+    {
+        var store = new FileRoomSessionCheckpointStore(file);
+        Equal(null, store.Read(), "missing checkpoint is not a storage fault");
+        File.WriteAllText(file, "{malformed");
+        Equal(null, store.Read(), "malformed checkpoint is not restored");
+        File.Delete(file);
+        var directoryAsFile = new FileRoomSessionCheckpointStore(folder);
+        var surfaced = false;
+        try { directoryAsFile.Read(); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { surfaced = true; }
+        True(surfaced, "unreadable checkpoint path surfaces a storage error");
+    }
+    finally
+    {
+        if (File.Exists(file)) File.Delete(file);
+        Directory.Delete(folder);
+    }
+});
+
 Check("an unresponsive view is committed by the kernel timer", () =>
 {
     using var kernel = new RoomSessionKernel(transitionTimeout: TimeSpan.FromMilliseconds(60));
@@ -241,4 +268,4 @@ Check("stopping a Room invalidates commands, notifies views and clears recovery"
 });
 
 Environment.ExitCode = failures == 0 ? 0 : 1;
-Console.WriteLine($"{8 - failures}/8 session checks passed");
+Console.WriteLine($"{total - failures}/{total} session checks passed");

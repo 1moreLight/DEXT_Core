@@ -18,6 +18,20 @@ export interface CoreIdentity {
   is_core_initialized: boolean;
 }
 
+export interface V3SessionStatus {
+  active: boolean;
+  protocol_version: number;
+  room_id: string;
+  session_id: string;
+  revision: number;
+  current_desk_id: string;
+  target_desk_id: string;
+  queued_desk_id: string;
+  transition_id: string;
+  operable: boolean;
+  player_pid: number;
+}
+
 export interface ActiveRoom {
   sourcePath: string;
   runtimePath: string;

@@ -1048,3 +1048,75 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 待验收复核发现系统时钟回拨可让一次性超时回调提前触发后永久停在过渡态；新增先失败的回归并重新排程，内核 8/8、完整构建与重启、运行身份核对通过（2026-09-28）。
 - [x] 用户于 2026-09-28 明确确认本包验收通过；此前 Dock/切页异常反馈已由用户撤回并确认实际正常，进入 master 合并与清理。
 - [x] `a81788a` 快进合入 master；合并后内核回归 8/8、完整 `scripts/build.ps1`、master 运行身份核对通过；旧 worktree 已归档、已合并分支已删除，当前项归档摘要见 `TODO-archive.md`（2026-09-28）。
+
+## V3-CORE-002 版本化会话协议与受控入口（2026-09-28，待用户复核）
+
+> 目标：让 v3 Room 会话只能经版本匹配、来源授权及已安装 Room 身份校验的入口启动、恢复和接受视图命令；模拟桌面与 Dock 客户端可重连并收敛到 Core 快照。
+> 范围外：本包不开放真实 Player/配置器 RPC，不定义 v3 作品 Schema 或安装内容签名，也不改变 v2 壁纸运行链；生产准入默认关闭，直到已校验安装链接入。
+> 人工验收：见 `dev_docs/acceptance/V3-CORE-002-session-protocol.md`，运行模拟客户端演示验证版本、来源、安装身份、权限和断线恢复。
+
+- [x] 从 master `6203ccb` 建立独立 managed worktree 和 `feat/V3-CORE-002-session-protocol`；用户已明确授权持续推进、不等待逐包人工验收且每大步提交。
+- [x] 冻结本包目标、范围外与独立验收卡；设计以 D04/D05/D14、V3-CORE-001 内核和 ROADMAP P2/P3 门槛为依据。
+- [x] 测试先行实现协议版本与可信来源/安装身份准入；生产默认拒绝，模拟客户端准入 4/4 通过（2026-09-28）。
+- [x] 测试先行实现会话绑定的连接、角色权限、过期连接拒绝和完整快照重连；安装快照更换及绕过入口启动的会话先失败后修复，协议 14/14、内核 8/8（2026-09-28）。
+- [x] 将关闭准入的入口注册到真实 Dext Core；协议演示 14/14、内核 8/8，最终 C# 改动后重跑 `scripts/build.ps1` → `scripts/start.ps1`，身份脚本全项 OK：Core PID 106640、Player PID 111488、配置器 PID 111228 均来自本 worktree；日志显示 protocol=1、gateway admission=closed（2026-09-28）。
+- [x] 准入基础 `3c3c3da`、会话命令与绑定 `d8b884c` 已各自具名提交；角色缺口先红后绿并纳入最终运行提交，真实 Player/配置器传输与 P3 安装权威仍留后续独立包（2026-09-28）。
+
+## V3-CORE-003 受控会话快照订阅（2026-09-29，待用户复核）
+
+> 目标：让已授权桌面与 Dock 连接收到同一内核会话的完整修订快照，并在关闭、撤销安装或更换会话后停止旧订阅。范围外：真实传输/RPC、P3 安装校验、v2 播放链、启动/待机生命周期。人工步骤见 `dev_docs/acceptance/V3-CORE-003-session-observation.md`。
+
+- [x] 从 V3-CORE-002 的 `f1764c5` 建立独立 managed worktree 和 `feat/V3-CORE-003-session-observation`；前置包仍待用户复核、未合并 master（2026-09-29）。
+- [x] 动产品代码前登记目标、范围外、独立验收卡与实现步骤（2026-09-29）。
+- [x] 先写失败回归：初始完整快照、按修订推送、错误 peer、关闭连接、撤销安装、更换会话和观察者异常；新增接口前编译失败，锁顺序与初始回调旧修订分别在 19/20、20/21 失败（2026-09-29）。
+- [x] 实现绑定连接与安装身份的订阅生命周期；双视图演示修订序列均为 1,2,3，关闭旧桌面后其计数维持 3，Dock 继续到 5，更换会话后旧 Dock 维持 5；协议 21/21、内核 8/8（2026-09-29）。
+- [x] 完整 `scripts/build.ps1` → `scripts/start.ps1`，身份脚本全项 OK：Core PID 88456、Player PID 107984、配置器 PID 110820 均来自本 worktree；日志显示 protocol=1 与 gateway admission=closed，v2 Player 继续运行既有 Room（2026-09-29）。
+- [x] 计划 `45f97cb` 与订阅行为 `5e59fb1` 已按大步具名提交；自动验收与运行证据单独提交，后续真实传输与安装权威仍按独立包推进（2026-09-29）。
+
+## V3-CORE-004 会话存储故障收敛（2026-09-29，开发中）
+
+> 目标：checkpoint 读、写或清除失败时，v3 协议返回可识别的存储错误，不提交半途会话，也不撤销仍有效的旧视图订阅；存储恢复后可重试。范围外：更换 checkpoint 格式、自动备份/同步、P3 安装内容、真实 RPC 与 v2 播放链。人工步骤见 `dev_docs/acceptance/V3-CORE-004-storage-faults.md`。
+
+- [x] 从 V3-CORE-003 的 `959af6e` 建立独立 managed worktree 与 `feat/V3-CORE-004-storage-faults`；前置包仍待用户复核、未合并 master（2026-09-29）。
+- [x] 动产品代码前登记目标、范围外、独立验收卡和实现步骤（2026-09-29）。
+- [x] 先写失败回归：Start、Restore、Complete、SetOperable、Stop 的存储故障状态与内核快照/订阅不变性；新增状态前编译失败，故障夹具另验证意外编程错误仍传播（2026-09-29）。
+- [x] 预期 checkpoint IO/权限故障映射 `StorageUnavailable`，旧会话与订阅保留、存储恢复后重试成功；真实文件读取区分缺失/损坏与不可读，演示显示故障未提交 Desk、重试后双视图收敛；协议 27/27、内核 10/10（2026-09-29）。
+- [x] `scripts/build.ps1` → `scripts/start.ps1` 通过，身份脚本全项 OK：Core PID 109820、Player PID 70460、配置器 PID 86232 均来自本 worktree；日志显示 protocol=1 与 gateway admission=closed，v2 Player 继续运行既有 Room（2026-09-29）。
+- [x] 计划 `eba12cf` 和实现 `8c3e9d7` 已按大步具名提交；自动验收与真实运行证据单独提交。生产 v3 准入仍等 P2/P3 的真实宿主与安装校验（2026-09-29）。
+
+## V3-P2A-001 连续场景宿主验证（2026-09-29，待人工验收）
+
+> 目标：在真实桌面 Player 使用的页面里挂载一次持续 HTML 场景，切 Desk 不重建它；官方图标仍可点击/拖动，并用同一画布坐标描述作者占用区。
+> 范围外：P3 正式作品格式、生产 v3 会话准入、Core 到 Player 的正式传输、顶层原生 Dock/AppBar。
+> 人工验收：见 `dev_docs/acceptance/V3-P2A-001-continuous-scene-host.md`。
+
+- [x] 从 V3-CORE-004 建立独立 managed worktree 与 `feat/V3-P2A-001-continuous-scene-host`；先登记计划和验收卡。
+- [x] 实现仅用于 P2a 验证的持续场景挂载和 Desk 阶段通知，保持 iframe 与能力身份不变；该字段不纳入 v2 发布 Schema。
+- [x] 用官方图标/作者占用区样例验证输入与坐标边界；图标拖放、偏好重排和 Widget 移动使用同一占用矩形。
+- [x] Playwright 2/2、配置器 Vitest 62/62 与 build、Release WebView2 隔离 Player、旧 Room 原生拖动 10/10 通过；`scripts/build.ps1` 通过，Core/Player 运行身份正确。Rust `target` 按用户指示清理后，配置器未重建。
+- [x] 真实 WorkerW 临时样包入口已编译，修改桌面仅在人工验收命令运行时发生并在结束时恢复；实现与回归具名提交 `14a612d`。
+- [?] 真实 WorkerW 物理鼠标和不同系统 DPI：运行验收卡中的临时包命令，结束自动恢复原壁纸；用户通过前不合并 master。
+
+## V3-CORE-005 Core/Player 会话消息接线（2026-09-29，开发中）
+
+> 目标：在真实 Core 启动的受信 Player 标准输入/输出链上承载 v3 全量快照、Desk 请求和过渡完成消息，并让官方页面只在收到已授权会话快照后转向 Core 仲裁。范围外：P3 正式安装格式、开放生产会话准入、顶层原生 Dock/AppBar。人工步骤见 `dev_docs/acceptance/V3-CORE-005-player-bridge.md`。
+
+- [x] 基于 V3-P2A-001 建立独立 worktree 与 `feat/V3-CORE-005-player-bridge`；P2a 尚未合入 master，用户表示“好像都没问题”，物理鼠标与 DPI 细节未被代填。
+- [x] 动产品代码前登记本包目标、范围外和验收卡。
+- [x] 增加版本化 Core↔Player 消息；v3 请求与完成消息有明确处理分支，不会落入旧启动应用兜底。
+- [x] Gateway Player 适配器以 Core 拥有的进程 PID 构造 peer，订阅全量快照，退出时关闭连接；关闭/撤销/重连回归通过。
+- [x] 官方页面收到授权快照后按修订收敛，Desk 操作发请求，过渡完成回告；旧 v2 自主切页测试仍通过。
+- [x] 协议 29/29、Release Player 隔离原生 IPC 往返、旧 Room 原生拖动 10/10、`scripts/build.ps1`、JS 语法及 diff 检查通过。原生验证使用测试安装权威，不能冒充生产 P3 安装准入。
+- [x] `scripts/start.ps1` 起初准确识别 P2a Core 占用；本轮平滑切换后，本分支 Core/Player/配置器绝对路径与 mutex/pipe 全项 OK（2026-09-30）。
+- [x] 产品代码、测试和验收记录已按具名文件准备提交；用户人工验收前不合并 master。
+
+### 2026-09-30 目标修正：真实接入与配置器恢复
+
+> 用户明确要求先把内核真正接入运行链、修复配置器连接异常，由开发侧自行验证；不能以隔离 Player 测试代替真实 Core/Player/配置器联动。本节继续沿用 V3-CORE-005 分支与验收卡。
+
+- [x] 复核现状：P2a Core/Player 仍占 Dext mutex；D 盘构建的配置器只有 24×24 空窗口，当前分支的 `AttachRoomSession` 没有生产调用方；此前 29/29 与隔离 Player 证据不足以证明接入。
+- [x] 修复外置 `CARGO_TARGET_DIR` 的 worktree Core 定位与身份脚本；配置器从 24×24 空窗口恢复为正常窗口，界面显示“Dext Core 已连接”，三进程路径/pipe/mutex 全项 OK。
+- [x] Core 在官方页面 ready 后校验本地 v3 会话清单和 v2 视觉 Room，绑定实际 Player PID 并 Start/Restore；桌面点击切页经 Player IPC → Gateway → Core 修订 → Player 完成消息。
+- [x] 配置器可识别并应用仓库的最小 `v3-core-probe` 样包；临时拷入当前 Room 库的测试副本已在恢复 MSIroom 后移除。正式 v3 创作者格式和通用新建入口仍属于 P3。
+- [x] 真实 Player 原生鼠标：`probe-a → probe-b`，修订 `1 → 3`；Core/Player/配置器重启后恢复 `probe-b`；应用 MSIroom 后 v3 状态 inactive、清单已撤销。协议 30/30、Rust 50/50（3 ignored）、完整 Core 构建/前端构建与隔离 Release Player 回归通过。
+- [x] 具名提交 `2e2c290`；按用户要求开发侧完成验证，用户决定合入 master 前保持分支隔离。

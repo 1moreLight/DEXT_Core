@@ -230,3 +230,29 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 修复：夹具仍严格限制在系统 Temp 下，退出后对 `IOException` / `UnauthorizedAccessException` 做有上限的短重试；最终仍锁定只报告残留路径，不把产品交互断言改写为通过。
 
 防再犯：带 WebView2 user-data 的隔离测试必须等待文件句柄收敛；递归删除前继续校验目标绝对路径位于 Temp，不扩大删除范围。
+
+# #118 内核测试汇总写死用例数量
+
+现象：新增 checkpoint 读取回归后控制台列出 10 条 PASS，末行却仍显示 `8/8 session checks passed`。
+
+原因：测试夹具把总数写死为 8，新增用例时未同步改汇总。
+
+修复：`Check` 每调用一次递增总数，最终由动态总数和失败数计算汇总；本轮输出已正确显示 `10/10`。
+
+# #119 多 worktree Rust 编译产物耗尽 C 盘
+
+现象：V3-P2A-001 新 worktree 首次运行 `scripts/start.ps1` 时，配置器 Rust 构建报 `os error 112` 磁盘空间不足；同一阶段文件补丁曾写入失败并留下零字节文件。
+
+原因：多个 DEXT worktree 的 `tauri-ui/src-tauri/target` 各占约 5–15 GiB，C 盘剩余不足 1 GiB。编译失败后的文件不能假定仍保持原内容。
+
+修复：先停相关 Cargo/配置器进程，核对每个 target 的 worktree 归属，再用 `cargo clean --manifest-path` 清掉 9 个 target；D 盘重定向的 `CARGO_TARGET_DIR` 也用 `cargo clean` 清除。合计约 65 GiB，随后重新核对受影响源码、重建并复测。Core/Player 从现有 C# 输出恢复运行，配置器暂不重建以保留清理成果。
+
+防再犯：开新 worktree 前盘点 C/D 空间；Rust 构建可明确设置 D 盘 `CARGO_TARGET_DIR`。清理只针对确认的项目 target，不删除共享 Cargo registry；遇磁盘写入失败要检查改动文件长度与内容。
+
+# #122 WorkerW Player 输入窗口不在普通顶层枚举里
+
+现象：真实 Core/Player 已激活，实机鼠标探针用 `EnumWindows` 取 Player PID 却找不到 WebView2 输入 HWND；误用 `FindWindowExW(IntPtr.Zero, ...)` 还可能命中别的 Chromium 窗口，坐标尺寸不符。
+
+原因：Player Form 被 Core 重新挂到 WorkerW，已不是普通顶层窗口。Win32 的空父句柄搜索会扩大到全桌面。
+
+修复：探针从 Core 日志中读取该 Player 上报的 `Hwnd`，再核对 HWND 所属 PID，沿 `Chrome_WidgetWin_0/1` 找输入句柄；原生鼠标点击使真实 Core 修订 1→3，Desk A→B。

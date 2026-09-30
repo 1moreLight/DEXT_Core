@@ -2329,6 +2329,7 @@ fn sync_room_to_package(
     .map_err(|e| format!("parse room.json failed: {e}"))?;
     validate_room_contract(&room)?;
     validate_room_asset_references(src, &room)?;
+    let session_manifest = read_v3_session_overlay(src, &room)?;
     let object = room
         .as_object_mut()
         .ok_or_else(|| "parse room.json failed: root must be an object".to_string())?;
@@ -2351,8 +2352,62 @@ fn sync_room_to_package(
     for name in ROOM_LEGACY_PATHS {
         remove_room_owned_path(&pkg.join(name), name)?;
     }
+    // Remove the previous session before swapping the visual Room. A normal v2
+    // apply must never inherit v3 admission from an earlier installation.
+    remove_room_owned_path(&pkg.join("session.v3.json"), "v3 session")?;
     atomic_write(&pkg.join("room.json"), &room_json)
-        .map_err(|e| format!("copy room.json failed: {e}"))
+        .map_err(|e| format!("copy room.json failed: {e}"))?;
+    if let Some(bytes) = session_manifest {
+        atomic_write(&pkg.join("session.v3.json"), &bytes)
+            .map_err(|e| format!("copy v3 session failed: {e}"))?;
+    }
+    Ok(())
+}
+
+fn read_v3_session_overlay(
+    source: &std::path::Path,
+    room: &serde_json::Value,
+) -> Result<Option<Vec<u8>>, String> {
+    let path = source.join("session.v3.json");
+    let metadata = match std::fs::symlink_metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(format!("read v3 session metadata failed: {error}")),
+    };
+    if !metadata.file_type().is_file() || metadata.len() == 0 || metadata.len() > 65536 {
+        return Err("session.v3.json must be a regular file of at most 64 KiB".into());
+    }
+    let bytes = std::fs::read(&path).map_err(|error| format!("read v3 session failed: {error}"))?;
+    let value: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|error| format!("parse v3 session failed: {error}"))?;
+    let object = value.as_object().ok_or("v3 session root must be an object")?;
+    reject_unknown_keys(object, &["protocolVersion", "roomId", "deskIds", "startDeskId"], "v3 session")?;
+    if object.get("protocolVersion").and_then(serde_json::Value::as_u64) != Some(1) {
+        return Err("v3 session protocolVersion must be 1".into());
+    }
+    let room_id = object.get("roomId").and_then(serde_json::Value::as_str).unwrap_or("");
+    if room_id.is_empty() || room_id.len() > 64 {
+        return Err("v3 session roomId is invalid".into());
+    }
+    let desk_ids = object.get("deskIds").and_then(serde_json::Value::as_array)
+        .ok_or("v3 session deskIds must be an array")?;
+    if desk_ids.len() != room["desks"].as_array().map_or(0, Vec::len) {
+        return Err("v3 session deskIds must match visual desks".into());
+    }
+    let mut seen = std::collections::HashSet::new();
+    for id in desk_ids {
+        let id = id.as_str().ok_or("v3 session deskId must be a string")?;
+        if id.is_empty() || id.len() > 120 || !seen.insert(id) {
+            return Err("v3 session deskIds must be nonempty and unique".into());
+        }
+    }
+    let start = object.get("startDeskId").and_then(serde_json::Value::as_str)
+        .ok_or("v3 session startDeskId must be a string")?;
+    let visual_start = room["startDesk"].as_u64().unwrap_or(0) as usize;
+    if desk_ids.get(visual_start).and_then(serde_json::Value::as_str) != Some(start) {
+        return Err("v3 session startDeskId must match visual startDesk".into());
+    }
+    Ok(Some(bytes))
 }
 
 // Mirror Room-owned data into the wallpaper package, then reload it.
@@ -3136,6 +3191,11 @@ async fn core_identity() -> Result<grpc::CoreIdentity, String> {
 }
 
 #[tauri::command]
+async fn v3_session_status() -> Result<grpc::RoomSessionStatus, String> {
+    grpc::room_session_status().await
+}
+
+#[tauri::command]
 async fn start_core() -> Result<grpc::CoreIdentity, String> {
     core_runtime::start_core().await
 }
@@ -3205,6 +3265,7 @@ pub fn run() {
             set_wallpaper,
             core_stats,
             core_identity,
+            v3_session_status,
             start_core,
             exit_core,
             get_system_media,
@@ -3774,6 +3835,37 @@ mod tests {
         assert_eq!(applied["desks"][0]["name"], "Clean");
         assert_eq!(applied["__source"], "C:/rooms/clean-room");
 
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn v3_probe_overlay_applies_and_v2_apply_revokes_it() {
+        let root = test_dir("v3-overlay-apply");
+        let package = root.join("package");
+        let v2_room = root.join("v2-room");
+        let probe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../rooms/v3-core-probe");
+        write_valid_room(&v2_room, false);
+
+        sync_room_to_package(&probe, &package, "C:/rooms/v3-core-probe").unwrap();
+        assert_eq!(
+            std::fs::read(package.join("session.v3.json")).unwrap(),
+            std::fs::read(probe.join("session.v3.json")).unwrap()
+        );
+
+        let mut invalid: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(probe.join("session.v3.json")).unwrap()
+        ).unwrap();
+        invalid["deskIds"] = serde_json::json!(["only-one"]);
+        let malformed = root.join("malformed");
+        std::fs::create_dir_all(&malformed).unwrap();
+        std::fs::copy(probe.join("room.json"), malformed.join("room.json")).unwrap();
+        std::fs::write(malformed.join("session.v3.json"), invalid.to_string()).unwrap();
+        assert!(sync_room_to_package(&malformed, &package, "C:/rooms/bad").is_err());
+        assert!(package.join("session.v3.json").exists());
+
+        sync_room_to_package(&v2_room, &package, "C:/rooms/v2").unwrap();
+        assert!(!package.join("session.v3.json").exists());
         std::fs::remove_dir_all(root).unwrap();
     }
 

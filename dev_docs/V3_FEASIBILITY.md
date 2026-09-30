@@ -64,6 +64,8 @@ v3 需要明确安装内容版本、能力集合与用户授权的关联。建�
 
 建议把装饰层、需要真实交互的组件和官方图标层分清；稀疏按钮用受控命中层，富交互区域使用有明确边界的组件 iframe。只有验证输入映射可靠后再扩大任意全屏交互能力。占用区、交互区、原生窗绘制区、Windows 工作区是四份不同语义的数据。
 
+**P2a 2026-09-29 原型结果：**`experimentalContinuousScene` 仅作为测试 Room 字段，在现有 Player 页面挂一个有边界的沙箱 iframe；Desk 切换时保持文档和实例身份，官方图标层只让图标自身接收指针。浏览器 2/2 和 Release WebView2 隔离 Player 验证了跨两次切页不重载、官方图标更新、1280×800 且 Player scale 1.25 下按 1920×1080 画布比例映射矩形；原生输入旧 Room 拖动回归 10/10。占用矩形已用于图标偏好重排、图标拖放和 Widget 移动冲突回退。该测试字段不属于 v2 发布 Schema，不能走配置器普通 Room 导入；真实 WorkerW 物理鼠标和不同系统 DPI 仍需验收卡中的临时包测试，不以隔离 Player 结果代替。
+
 `sandbox="allow-scripts"` 不带 `allow-same-origin` 时是特殊 origin，不能依赖普通 localStorage/IndexedDB 作为待办存储；同源父子同时放开 scripts 与 same-origin 又会削弱隔离。[iframe 文档](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe)。建议提供按作品/组件命名空间隔离的宿主存储能力，限制键值大小、写入频率并定义备份/卸载语义；包导出不携带用户数据。
 
 ### 2.7 “键盘可用”与“系统全局快捷键”不同

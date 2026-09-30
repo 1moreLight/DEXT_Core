@@ -1,0 +1,64 @@
+using System;
+
+namespace Dext.Core.Rooms;
+
+// The caller supplies a peer derived from the Core-owned Player process, never
+// from page data. Admission and installation verification stay in the gateway.
+internal sealed class RoomSessionPlayerBridge : IDisposable
+{
+    private readonly RoomSessionProtocolGateway gateway;
+    private readonly RoomSessionPeer peer;
+    private readonly Guid connectionId;
+    private readonly IDisposable subscription;
+    private bool disposed;
+
+    private RoomSessionPlayerBridge(RoomSessionProtocolGateway gateway, RoomSessionPeer peer,
+        Guid connectionId, IDisposable subscription)
+    {
+        this.gateway = gateway;
+        this.peer = peer;
+        this.connectionId = connectionId;
+        this.subscription = subscription;
+    }
+
+    public static RoomProtocolStatus Connect(RoomSessionProtocolGateway gateway, RoomSessionPeer peer,
+        string roomId, Action<RoomSessionSnapshot> sendSnapshot, out RoomSessionPlayerBridge? bridge)
+    {
+        ArgumentNullException.ThrowIfNull(gateway);
+        ArgumentNullException.ThrowIfNull(peer);
+        ArgumentNullException.ThrowIfNull(sendSnapshot);
+        bridge = null;
+        var opened = gateway.Open(peer, new RoomSessionHello(RoomSessionKernel.ProtocolVersion,
+            RoomClientRole.DesktopPlayer, roomId));
+        if (opened.Status != RoomProtocolStatus.Accepted || opened.ConnectionId is not { } id)
+            return opened.Status;
+        var subscribed = gateway.Subscribe(id, peer, sendSnapshot, out var subscription);
+        if (subscribed.Status != RoomProtocolStatus.Accepted || subscription is null)
+        {
+            gateway.Close(id, peer);
+            return subscribed.Status;
+        }
+        bridge = new RoomSessionPlayerBridge(gateway, peer, id, subscription);
+        return RoomProtocolStatus.Accepted;
+    }
+
+    public RoomProtocolReply Request(Guid sessionId, string deskId) => disposed
+        ? new(RoomProtocolStatus.StaleSession, null, null)
+        : gateway.Request(connectionId, peer, sessionId, deskId);
+
+    public RoomProtocolReply Read() => disposed
+        ? new(RoomProtocolStatus.StaleSession, null, null)
+        : gateway.Read(connectionId, peer);
+
+    public RoomProtocolReply Complete(Guid sessionId, Guid transitionId) => disposed
+        ? new(RoomProtocolStatus.StaleSession, null, null)
+        : gateway.Complete(connectionId, peer, sessionId, transitionId);
+
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        subscription.Dispose();
+        gateway.Close(connectionId, peer);
+    }
+}

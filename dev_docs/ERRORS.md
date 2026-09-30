@@ -117,6 +117,16 @@
 | #110 | 配置器先检查 Core 文件再探测运行身份，文件缺失时反而隐藏“启动 Core”重试入口 | [backend](errors/backend.md) |
 | #111 | 用 Core 可执行文件发送 shutdown 时遇到单实例退出竞态，辅助进程反成新 Core 并锁住构建输出 | [backend](errors/backend.md) |
 | #112 | 一次性过渡计时器遇系统时钟回拨会提前触发，若不重排将永久保留目标过渡 | [backend](errors/backend.md) |
+| #113 | 会话入口只核对 RoomId 会让旧安装快照或绕过入口启动的内核会话被新视图读取 | [backend](errors/backend.md) |
+| #114 | 协调者连接可调用视图切页请求，角色权限少了一道拒绝检查 | [backend](errors/backend.md) |
+| #115 | 关闭订阅时在网关锁内同步等待内核观察者锁，可与并发推送形成锁顺序死锁 | [backend](errors/backend.md) |
+| #116 | 订阅的初始回调可同步改变会话，返回值若仍用订阅前快照会落后于已推送修订 | [backend](errors/backend.md) |
+| #117 | checkpoint 读取先用 File.Exists 并吞掉 IO/权限异常，会把不可读存储误报成无恢复点 | [backend](errors/backend.md) |
+| #118 | 内核测试汇总把总数写死为 8，新用例通过时仍显示 8/8，掩盖实际覆盖数量 | [toolchain](errors/toolchain.md) |
+| #119 | 多 worktree 各自保留数 GB Rust `target`，新配置器首次编译耗尽 C 盘并可能中断文件写入 | [toolchain](errors/toolchain.md) |
+| #120 | 外置 `CARGO_TARGET_DIR` 让配置器只认内置 target 路径，误判同分支 Core 不可连接 | [backend](errors/backend.md) |
+| #121 | WebView2 的 `msg_wploaded` 可早于异步 `room.json` 加载，过早发送会话快照会被页面重置 | [renderer](errors/renderer.md) |
+| #122 | WorkerW 内的 Player 窗口不是普通顶层窗口，实机探针不能只用 `EnumWindows` 找输入 HWND | [toolchain](errors/toolchain.md) |
 
 ## 分册
 
