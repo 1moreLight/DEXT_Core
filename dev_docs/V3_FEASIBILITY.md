@@ -26,6 +26,10 @@
 
 自动隐藏模式的“铺满”应解释为 **Dext 不额外占用工作区**；Windows 自己的常驻任务栏和其他 AppBar 仍可能扣除屏幕空间，不能承诺自动隐藏 Dext 就会隐藏系统任务栏。
 
+**2026-09-28 产品要求更新：**用户希望 Dext 的任务栏替代模式主动隐藏 Windows 原任务栏，并在 Dext 正常退出或异常恢复时还原。上句只说明 AppBar 的自动隐藏不会替我们完成这件事；Dext 需另做受控任务栏状态管理并实机验证 Windows 版本、Explorer 重启、崩溃和用户自己更改任务栏设置时的恢复。未经验证前不能把“隐藏原任务栏”当作现有能力。
+
+**2026-09-28 D09 底部与高度约束：**用户决定 v3 首轮单个原生 Dock 默认在底部，由 Dext 统一限制最大高度，具体值经原型确定。Dext 顶层窗口宿主决定底边和窗口/工作区占位厚度，再把确定的可绘制视口交给作者 HTML；不能让作品 CSS 自行决定 AppBar 的占位。Windows 的 [AppBar 查询与设置流程](https://learn.microsoft.com/en-us/windows/win32/shell/application-desktop-toolbars)允许提出底边矩形，并由系统针对现有任务栏/其他 AppBar 调整；因此限制的是 Dext 自身申请的高度，AppBar 本身不负责隐藏原任务栏。过高作品在试验台需要明确预览与诊断，不能静默裁掉关键按钮。
+
 ### 2.3 透明外观、点击穿透、毛玻璃是三项不同能力
 
 目前只需验证符合作品的透明外观与可用的按钮；下表保留点击穿透的技术解释，供将来确实需要时使用。HTML 作品在桌面内部留出的“透明空隙可放图标”与顶层 Dock 把鼠标交给其他软件，是两种不同的输入边界。
@@ -76,6 +80,8 @@ v3 需要明确安装内容版本、能力集合与用户授权的关联。建�
 
 ## 3. 构建与集成成本
 
+**Core v3 改写范围提醒（2026-09-27 设计补充）：**Dext 当前已经有独立运行身份与数据目录（`DextRuntimeIdentity`），因此“从 Lively 变成 Dext”首先是状态所有权和产品模块的改写。现有 `WinDesktopCore.SetWallpaperAsync` 仍通过 `WallpaperPluginFactory` 选择壁纸 Player，并将 WebView2 窗口挂入 WorkerW；`wallpapers/dext-room/main.js` 的 `currentDesk`/`switchDesk`/`renderDesk` 掌握页状态，配置器 `apply_room` 镜像资源后调用 `grpc::set_wallpaper`。这些路径说明 v3 多视图状态同步需要新的 Dext Room/Desk 会话边界，不能仅通过改程序集名完成。建议在 fork 内逐步建立状态核心和桌面/Dock/游戏三个宿主适配，再依据用户对旧壁纸类型的保留要求收口播放器与 RPC。详细分阶段草案见 [V2_TO_V3_TODO.md](V2_TO_V3_TODO.md)。
+
 当前 Core 是 `net9.0-windows10.0.18362.0` WPF；[Player 项目](../lively-core-separation/src/Lively/Lively.Player.WebView2/Lively.Player.WebView2.csproj)是 .NET Framework 4.7.2 WinForms，WebView2 SDK `1.0.3595.46`。所以“增加原生窗口”可先保持现有 WinForms/IPC 结构做实验；选择 WPF 组合控件或 C++ DirectComposition 后，项目引用、目标框架、发布目录、运行身份及启动脚本都要对应处理。不能因为 Core 是 .NET 9 就把 Player 当成同一框架。
 
 SDK 版本与本机 WebView2 Runtime 版本也不同；本轮没有检测运行时版本。候选 API 要确认项目 SDK 中存在、目标 Runtime 支持，并记录失败回退。[Runtime 部署模型](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/evergreen-vs-fixed-version)
@@ -91,7 +97,7 @@ SDK 版本与本机 WebView2 Runtime 版本也不同；本轮没有检测运行�
 | AI 创作试验台与诊断 | 中高 | 预览/Creator | 同源协议模拟、错误定位、多尺寸、刷新 | 4–7 |
 | 全链集成与真实使用回归 | 高 | 现有测试工具 | 系统事件交错、构建发布、性能/输入回归 | 5–9 |
 
-以上假设单人熟悉仓库、AI 辅助编码、以主屏和两份样板作品为首轮范围，**不要求跨窗口点击穿透**，约 **32–58 个有效开发日**；不含反复设计、等待验收、任意第三方作品兼容、多屏完整支持、游戏 HUD 或云服务。不同项有交叉，区间只用于判断规模；关键实验之后应重新估算。若只做可展示的汽车仪表盘原型，所需明显少于完整 v3，不能用演示原型工时推算可长期使用的产品。
+以上假设单人熟悉仓库、AI 辅助编码、以主屏和两份样板作品为首轮范围，**不要求跨窗口点击穿透**，约 **32–58 个有效开发日**；不含反复设计、等待验收、任意第三方作品兼容、多屏完整支持、游戏内只读 Dock 覆盖或云服务。用户于 2026-09-27 提出在游戏里显示完整 Dock 外观但不交互，这是新增的独立呈现通道，现有估算不能直接涵盖；需先做一款游戏的画面保真与兼容原型再估算。不同项有交叉，区间只用于判断规模；关键实验之后应重新估算。若只做可展示的汽车仪表盘原型，所需明显少于完整 v3，不能用演示原型工时推算可长期使用的产品。
 
 ## 4. 最可能遇到的问题与控制办法
 

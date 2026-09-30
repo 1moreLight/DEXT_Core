@@ -60,7 +60,7 @@
             "target": "D:\\TOOLs\\maxivision\\MaixVision\\MaixVision.exe",
             "workdir": "D:\\TOOLs\\maxivision\\MaixVision"
           },
-          "x": 2,
+          "x": 1,
           "y": 5
         },
         {
@@ -71,7 +71,7 @@
             "target": "D:\\TOOLs\\Obsidian\\Obsidian.exe",
             "workdir": "D:\\TOOLs\\Obsidian"
           },
-          "x": 1,
+          "x": 0,
           "y": 5
         },
         {
@@ -82,8 +82,8 @@
             "target": "C:\\Users\\JAN\\AppData\\Local\\Programs\\orca\\Orca.exe",
             "workdir": "C:\\Users\\JAN\\AppData\\Local\\Programs\\orca"
           },
-          "x": 1,
-          "y": 4
+          "x": 2,
+          "y": 5
         },
         {
           "icon_png": "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",
@@ -104,8 +104,8 @@
             "target": "C:\\Users\\JAN\\AppData\\Roaming\\baidu\\BaiduNetdisk\\BaiduNetdisk.exe",
             "workdir": "C:\\Users\\JAN\\AppData\\Roaming\\baidu\\BaiduNetdisk"
           },
-          "x": 0,
-          "y": 5
+          "x": 1,
+          "y": 4
         }
       ],
       "name": "work",
@@ -126,8 +126,8 @@
           "placement": {
             "height": 226,
             "width": 532,
-            "x": 853,
-            "y": 248,
+            "x": 465,
+            "y": 301,
             "z": 0
           },
           "resources": [
