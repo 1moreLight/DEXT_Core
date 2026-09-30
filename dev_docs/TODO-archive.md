@@ -347,3 +347,7 @@
 ## V3-CORE-001（2026-09-28 验收归档摘要）
 
 在 Dext Core 中新增 Room/Desk 权威会话内核，提供版本化快照、切页排队和超时/失焦提交、旧会话结果拒绝与经 Room/Desk 身份校验的 checkpoint 恢复。待验收复核修复时钟回拨导致一次性计时器不再触发的问题。用户于 2026-09-28 明确验收通过；`a81788a` 快进合入 master。合并后内核回归 8/8、完整构建与 master Core/Player/配置器运行身份核对通过。旧 worktree 已归档、已合并分支已删除；详细记录见 `acceptance/V3-CORE-001-room-session-kernel.md`。v3 Player/配置器协议接线仍属后续独立工作包。
+
+## V3-CORE-005（2026-09-30 验收归档摘要）
+
+最小 v3 Room 由配置器应用后，Core 校验已安装样包及真实 Player PID，向 Player 下发权威快照；真实桌面切页、重启恢复和回退 v2 均由开发侧验证。用户回复“验收通过 git合并 名字就叫v3FirstTest”；合并提交 `24ac47c`，旧工作分支和 worktree 已清理。合并后协议 30/30、完整 Core/Player 构建及 master 三进程身份核对通过，MSIroom 重新应用后 Player 页面指向 master。V3-CORE-002/003/004 与 V3-P2A-001 的代码因堆叠历史随本次合并入库；尚未完成的独立人工项目仍保留在各自验收卡，不补填为已通过。详细记录见 `acceptance/V3-CORE-005-player-bridge.md`。

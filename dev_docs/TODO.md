@@ -1120,3 +1120,4 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 配置器可识别并应用仓库的最小 `v3-core-probe` 样包；临时拷入当前 Room 库的测试副本已在恢复 MSIroom 后移除。正式 v3 创作者格式和通用新建入口仍属于 P3。
 - [x] 真实 Player 原生鼠标：`probe-a → probe-b`，修订 `1 → 3`；Core/Player/配置器重启后恢复 `probe-b`；应用 MSIroom 后 v3 状态 inactive、清单已撤销。协议 30/30、Rust 50/50（3 ignored）、完整 Core 构建/前端构建与隔离 Release Player 回归通过。
 - [x] 具名提交 `2e2c290`；按用户要求开发侧完成验证，用户决定合入 master 前保持分支隔离。
+- [x] 用户于 2026-09-30 回复“验收通过 git合并 名字就叫v3FirstTest”；合并提交 `24ac47c` 已入 master。合并后协议 30/30、完整 Core/Player 构建和三进程主 worktree 运行身份检查通过；重新应用 MSIroom 后 Player 页面指向 master。旧 worktree 已归档、工作分支已删除；详见 `TODO-archive.md`。依赖包的专项人工验收状态仍以各自验收卡为准。
