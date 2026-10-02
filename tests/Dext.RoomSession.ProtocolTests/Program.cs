@@ -860,6 +860,7 @@ Check("lifecycle facts require the current Core coordinator and publish atomic f
     }
 });
 
+RuntimeFactsChecks.Run(Check);
 NativeInstallationChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);

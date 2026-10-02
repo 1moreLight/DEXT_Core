@@ -78,3 +78,5 @@ RoomV3Installation在同一清单与资源摘要校验完成后冻结公开Manif
 Core.lifecycle变化同时增加全局revision和生命周期revision。暂停/锁屏/idle使桌面不可操作时，先提交已有动画目标；持久化失败不发布半个生命周期，恢复后沿用已提交Desk和最终队列。安装决定watchdog=max(3000,durationMs+2000)，作者请求不可缩改。原生恢复同时检查Room ID与installationStamp，新会话startup不覆盖恢复的已提交Desk。
 
 媒体槽使用独立消费者：slot.start仅starting、slot.idle仅idle、slot.background.<DeskID>仅当前目标/已提交Desk的desktop阶段。每个槽需要自己的声明和安装戳授权。Core拒绝暂停、锁屏或非桌面前台Player的能力消费与激活；start/idle不用桌面切页IsOperable作为唯一判据。恢复前台会改变全局revision，之前的输入凭证失效；Dock的桌面暂停例外不能越过锁屏。
+
+Windows适配以一次完整事实值传入内核：实际各显示器暂停结果、全局锁屏和独立桌面前台。未知采样按暂停/锁屏/非前台处理；Start/Restore首个快照即带事实，不能先发布可操作状态再补锁屏。锁屏与前台恢复在同一修订内变化，持久化失败保留原状态并由后续采样重试。真实闲置展示及暂停后Player最终快照重放仍在P5接线中。

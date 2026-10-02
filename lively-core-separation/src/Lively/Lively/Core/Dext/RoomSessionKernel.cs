@@ -9,6 +9,10 @@ using System.Threading;
 namespace Dext.Core.Rooms;
 
 public enum RoomCommandStatus { Accepted, Queued, Rejected }
+public sealed record RoomSessionFacts(bool PlaybackPaused, bool Locked, bool DesktopForeground)
+{
+    internal bool AllowsDesktop => !PlaybackPaused && !Locked && DesktopForeground;
+}
 public enum RoomLifecycleStage { Starting, Desktop, Idle }
 public sealed record RoomSessionLifecycle(RoomLifecycleStage Stage, bool PlaybackPaused, bool Locked, long Revision);
 // Only the trusted installation adapter supplies this policy, never page input.
@@ -152,10 +156,11 @@ public sealed class RoomSessionKernel : IDisposable
     }
 
     public RoomSessionSnapshot Start(string roomId, IReadOnlyList<string> deskIds, string startDeskId,
-        RoomSessionRuntimePolicy? policy = null)
+        RoomSessionRuntimePolicy? policy = null, RoomSessionFacts? initialFacts = null)
     {
         var validIds = ValidateRoom(roomId, deskIds, startDeskId);
         ValidateRuntimePolicy(policy);
+        var facts = initialFacts ?? new RoomSessionFacts(false, false, true);
         RoomSessionSnapshot result;
         Subscription[] listeners;
         lock (gate)
@@ -166,10 +171,11 @@ public sealed class RoomSessionKernel : IDisposable
             this.deskIds = validIds;
             runtimePolicy = policy;
             result = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
-                startDeskId, null, null, null, ++revision, policy?.HasStart != true, null)
+                startDeskId, null, null, null, ++revision, policy?.HasStart != true && facts.AllowsDesktop, null)
             {
                 InstallationStamp = policy?.InstallationStamp ?? string.Empty,
-                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, false, false, 1)
+                IsDesktopForeground = facts.DesktopForeground,
+                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, facts.PlaybackPaused, facts.Locked, 1)
             };
             snapshot = result;
             ScheduleTimeout(result);
@@ -260,6 +266,12 @@ public sealed class RoomSessionKernel : IDisposable
     public bool SetLifecycle(Guid sessionId, RoomLifecycleStage stage, bool playbackPaused, bool locked) =>
         UpdateLifecycle(sessionId, stage, playbackPaused, locked, null);
 
+    public bool SetRuntimeFacts(Guid sessionId, RoomSessionFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+        return UpdateLifecycle(sessionId, null, facts.PlaybackPaused, facts.Locked, facts.DesktopForeground);
+    }
+
     private bool UpdateLifecycle(Guid sessionId, RoomLifecycleStage? stage, bool? playbackPaused, bool? locked, bool? foreground)
     {
         RoomSessionSnapshot result;
@@ -324,9 +336,10 @@ public sealed class RoomSessionKernel : IDisposable
     }
 
     public bool TryRestore(string roomId, IReadOnlyList<string> deskIds, out RoomSessionSnapshot? restored,
-        RoomSessionRuntimePolicy? policy = null)
+        RoomSessionRuntimePolicy? policy = null, RoomSessionFacts? initialFacts = null)
     {
         ValidateRuntimePolicy(policy);
+        var facts = initialFacts ?? new RoomSessionFacts(false, false, true);
         restored = null;
         Subscription[] listeners;
         lock (gate)
@@ -344,10 +357,11 @@ public sealed class RoomSessionKernel : IDisposable
             this.deskIds = validIds;
             runtimePolicy = policy;
             restored = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
-                checkpoint.DeskId, null, null, null, ++revision, policy?.HasStart != true, null)
+                checkpoint.DeskId, null, null, null, ++revision, policy?.HasStart != true && facts.AllowsDesktop, null)
             {
                 InstallationStamp = policy?.InstallationStamp ?? string.Empty,
-                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, false, false, 1)
+                IsDesktopForeground = facts.DesktopForeground,
+                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, facts.PlaybackPaused, facts.Locked, 1)
             };
             snapshot = restored;
             listeners = subscriptions.Values.ToArray();

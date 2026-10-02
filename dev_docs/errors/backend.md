@@ -330,3 +330,9 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 新增回归实际36/44失败：slot消费者未建立，个人130项上限不足196项，统一IsOperable又使starting/idle全部拒绝。若只放开IsOperable，还会使暂停/锁屏或后台消费；原先非桌面阶段的前台变化也不递增revision，旧票据可能恢复可用。
 
 从已验证清单建立独立媒体消费者；结构活动检查stage/Desk/role，实际消费再检查暂停/锁屏/前台，Dock仅保留桌面暂停例外。Core前台事实进入同一内部快照，每次变化推进全局revision；个人最大196、background稳定ID后缀80字符。新阶段/锁屏/前台/等待竞态与最大数量回归44/44通过。原生Windows事实和物理输入仍必须后续实接，单元票据不代替实机验收。
+
+## #141 Windows事实必须进入首个快照并原子更新（2026-10-03）
+
+旧协调者Start/Restore未传Windows状态，内核默认未锁屏/桌面前台；即使随后补发SetLifecycle再SetOperable，解锁与前台变化也可能分成两帧。播放策略又不等于实际每显示器暂停结果。
+
+独立RoomRuntimeFactsSource记录实际Pause/Play、锁屏和独立前台，未知状态限制操作。Start/Restore直接构造完整初始状态；SetRuntimeFacts一次提交三事实，存储失败保留原快照并允许相同采样重试。协议72/72包含首次订阅无宽松中间态、后台解锁从不出现可操作修订、权限边界及显示器范围。完整构建/真实v2恢复启动通过；真实原生v3锁屏与唤醒验收仍须后续执行。

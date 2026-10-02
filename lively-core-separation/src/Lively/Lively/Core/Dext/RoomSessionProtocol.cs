@@ -127,7 +127,7 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
-    public RoomProtocolReply Start(Guid connectionId, RoomSessionPeer peer)
+    public RoomProtocolReply Start(Guid connectionId, RoomSessionPeer peer, RoomSessionFacts? initialFacts = null)
     {
         lock (gate)
         {
@@ -135,7 +135,7 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             try
             {
-                var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId, installation.RuntimeContext?.Policy);
+                var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId, installation.RuntimeContext?.Policy, initialFacts);
                 activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
                 connections[connectionId] = connection with { SessionId = result.SessionId };
                 ReleaseAllObservations();
@@ -145,7 +145,7 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
-    public RoomProtocolReply Restore(Guid connectionId, RoomSessionPeer peer)
+    public RoomProtocolReply Restore(Guid connectionId, RoomSessionPeer peer, RoomSessionFacts? initialFacts = null)
     {
         lock (gate)
         {
@@ -153,7 +153,7 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             try
             {
-                if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result, installation.RuntimeContext?.Policy) || result is null)
+                if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result, installation.RuntimeContext?.Policy, initialFacts) || result is null)
                     return Reject(RoomProtocolStatus.Rejected);
                 activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
                 connections[connectionId] = connection with { SessionId = result.SessionId };
@@ -333,6 +333,24 @@ internal sealed class RoomSessionProtocolGateway
             try
             {
                 return kernel.SetLifecycle(sessionId, stage, playbackPaused, locked)
+                    ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
+    public RoomProtocolReply SetRuntimeFacts(Guid connectionId, RoomSessionPeer peer, Guid sessionId, RoomSessionFacts facts)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            try
+            {
+                return kernel.SetRuntimeFacts(sessionId, facts)
                     ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected);
             }
             catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }

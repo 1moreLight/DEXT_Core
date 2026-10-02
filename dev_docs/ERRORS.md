@@ -170,3 +170,5 @@
 | #139 | ReleasePlayer已退出但WebView暂存锁延迟释放，探针清理掩盖原始失败 | [toolchain](errors/toolchain.md) |
 
 | #140 | 媒体槽缺少阶段消费者且前台变化不推进修订，启动/待机输入可能失效后复活 | [backend](errors/backend.md) |
+
+| #141 | 会话首帧默认可操作，事后分别补锁屏和前台会暴露短暂错误状态 | [backend](errors/backend.md) |

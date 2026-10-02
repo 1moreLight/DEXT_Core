@@ -1,4 +1,5 @@
-﻿using Lively.Common.Helpers;
+using Dext.Core.Rooms;
+using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Common.Services;
 using Lively.Core.Display;
@@ -35,6 +36,8 @@ namespace Lively.Core.Suspend
         public event EventHandler<WallpaperControlEventArgs> WallpaperControlChanged;
 
         private readonly DispatcherTimer dispatcherTimer;
+        private readonly object runtimeFactsGate = new();
+        private readonly RoomRuntimeFactsSource runtimeFacts;
         private bool isLockScreen, isRemoteSession;
         private bool disposedValue;
 
@@ -44,11 +47,13 @@ namespace Lively.Core.Suspend
 
         public Playback(IUserSettingsService userSettings,
             IDisplayManager displayManager,
-            IScreensaverService screenSaver)
+            IScreensaverService screenSaver,
+            RoomRuntimeFactsSource runtimeFacts)
         {
             this.userSettings = userSettings;
             this.displayManager = displayManager;
             this.screenSaver = screenSaver;
+            this.runtimeFacts = runtimeFacts;
 
             // We are using timer instead of WinEventHook:
             // EVENT_OBJECT_LOCATIONCHANGE has too much noise even with filtering.
@@ -62,48 +67,55 @@ namespace Lively.Core.Suspend
                 Logger.Info("Lockscreen Session already started!");
 
             SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+            PublishRuntimeFacts(null, null);
         }
 
         private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
         {
-            switch (e.Reason)
+            lock (runtimeFactsGate)
             {
-                case SessionSwitchReason.SessionLock:
-                    {
-                        isLockScreen = true;
-                        Logger.Info("Lockscreen Session started!");
-                    }
-                    break;
-                case SessionSwitchReason.SessionUnlock:
-                    {
-                        isLockScreen = false;
-                        Logger.Info("Lockscreen Session ended!");
-                    }
-                    break;
-                case SessionSwitchReason.RemoteConnect:
-                    {
-                        isRemoteSession = true;
-                        Logger.Info("Remote Desktop Session started!");
-                    }
-                    break;
-                case SessionSwitchReason.RemoteDisconnect:
-                    {
-                        isRemoteSession = false;
-                        Logger.Info("Remote Desktop Session ended!");
-                    }
-                    break;
-                case SessionSwitchReason.SessionLogon:
-                case SessionSwitchReason.SessionLogoff:
-                case SessionSwitchReason.SessionRemoteControl:
-                case SessionSwitchReason.ConsoleConnect:
-                case SessionSwitchReason.ConsoleDisconnect:
-                default:
-                    break;
+                switch (e.Reason)
+                {
+                    case SessionSwitchReason.SessionLock:
+                        {
+                            isLockScreen = true;
+                            Logger.Info("Lockscreen Session started!");
+                        }
+                        break;
+                    case SessionSwitchReason.SessionUnlock:
+                        {
+                            isLockScreen = false;
+                            Logger.Info("Lockscreen Session ended!");
+                        }
+                        break;
+                    case SessionSwitchReason.RemoteConnect:
+                        {
+                            isRemoteSession = true;
+                            Logger.Info("Remote Desktop Session started!");
+                        }
+                        break;
+                    case SessionSwitchReason.RemoteDisconnect:
+                        {
+                            isRemoteSession = false;
+                            Logger.Info("Remote Desktop Session ended!");
+                        }
+                        break;
+                    case SessionSwitchReason.SessionLogon:
+                    case SessionSwitchReason.SessionLogoff:
+                    case SessionSwitchReason.SessionRemoteControl:
+                    case SessionSwitchReason.ConsoleConnect:
+                    case SessionSwitchReason.ConsoleDisconnect:
+                    default:
+                        break;
+                }
+                PublishRuntimeFacts(null, null);
             }
         }
 
         public void Start()
         {
+            // Prime actual display decisions before any restored Player subscribes.
+            Timer_Tick(this, EventArgs.Empty);
             dispatcherTimer.Start();
         }
 
@@ -369,21 +381,25 @@ namespace Lively.Core.Suspend
 
         private void PauseWallpapers()
         {
+            PublishRuntimeFacts(null, true);
             WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Pause));
         }
 
         private void PlayWallpapers()
         {
+            PublishRuntimeFacts(null, false);
             WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Play));
         }
 
         private void PauseWallpaper(DisplayMonitor display)
         {
+            PublishRuntimeFacts(display.DeviceId, true);
             WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Pause, display));
         }
 
         private void PlayWallpaper(DisplayMonitor display)
         {
+            PublishRuntimeFacts(display.DeviceId, false);
             WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.Play, display));
         }
 
@@ -395,6 +411,19 @@ namespace Lively.Core.Suspend
         private void SetWallpaperVolume(int volume, DisplayMonitor display)
         {
             WallpaperControlChanged?.Invoke(this, new WallpaperControlEventArgs(WallpaperControlAction.SetVolume, display, volume));
+        }
+
+        private void PublishRuntimeFacts(string? displayId, bool? paused)
+        {
+            // Serialize lock/unlock capture with playback samples. No Dispatcher
+            // invocation here: SessionSwitch can arrive from a non-UI thread.
+            lock (runtimeFactsGate)
+            {
+                var hwnd = NativeMethods.GetForegroundWindow();
+                var desktop = hwnd != IntPtr.Zero && (hwnd == NativeMethods.GetDesktopWindow() ||
+                    hwnd == NativeMethods.GetShellWindow() || WindowUtil.IsExcludedDesktopWindowClass(hwnd));
+                runtimeFacts.Update(displayId, paused, isLockScreen, desktop);
+            }
         }
 
         private bool IsPauseDueToSystemState()
