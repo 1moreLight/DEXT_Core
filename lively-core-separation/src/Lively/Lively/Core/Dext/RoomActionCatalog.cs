@@ -19,17 +19,28 @@ internal sealed class RoomActionCatalog
         private readonly HashSet<string>? buttons;
         private readonly HashSet<string>? desks;
         private readonly bool desktop, dock;
-        public Consumer(IEnumerable<string> capabilities, IEnumerable<string>? buttons, IEnumerable<string>? desks, bool desktop, bool dock)
+        private readonly RoomLifecycleStage stage;
+        public Consumer(IEnumerable<string> capabilities, IEnumerable<string>? buttons, IEnumerable<string>? desks, bool desktop, bool dock,
+            RoomLifecycleStage stage = RoomLifecycleStage.Desktop)
         {
             this.capabilities = new(capabilities, StringComparer.Ordinal);
             this.buttons = buttons is null ? null : new(buttons, StringComparer.Ordinal);
             this.desks = desks is null ? null : new(desks, StringComparer.Ordinal);
-            this.desktop = desktop; this.dock = dock;
+            this.desktop = desktop; this.dock = dock; this.stage = stage;
         }
         public bool HasCapability(string capability) => capabilities.Contains(capability);
         public bool HasButton(string button) => buttons is null || buttons.Contains(button);
-        public bool IsActive(RoomClientRole role, string desk) =>
-            ((role == RoomClientRole.DesktopPlayer && desktop) || (role == RoomClientRole.Dock && dock)) && (desks is null || desks.Contains(desk));
+        public bool IsActive(RoomClientRole role, RoomSessionSnapshot snapshot) =>
+            snapshot.IsActive && snapshot.Lifecycle.Stage == stage &&
+            ((role == RoomClientRole.DesktopPlayer && desktop) || (role == RoomClientRole.Dock && dock)) &&
+            (desks is null || desks.Contains(snapshot.TargetDeskId ?? snapshot.CurrentDeskId));
+
+        public bool CanConsume(RoomClientRole role, RoomSessionSnapshot snapshot) =>
+            IsActive(role, snapshot) && !snapshot.Lifecycle.Locked &&
+            // A separate visible Dock can remain usable when desktop playback
+            // is paused. Start/idle belong to the Player's current visible stage.
+            (role == RoomClientRole.Dock || (!snapshot.Lifecycle.PlaybackPaused && snapshot.IsDesktopForeground &&
+                (stage != RoomLifecycleStage.Desktop || snapshot.IsOperable)));
     }
     public IReadOnlyDictionary<string, AuthoredRoomButton> Buttons { get; }
     public IReadOnlyDictionary<string, Consumer> Consumers { get; }
@@ -63,6 +74,16 @@ internal sealed class RoomActionCatalog
             consumers.Add("component." + id, new(Strings(component, "capabilities"), Strings(component, "buttonIds"), desks,
                 true, component.GetProperty("role").GetString() == "dock"));
         }
+        void Slot(string id, JsonElement content, RoomLifecycleStage stage, string[]? desks = null) =>
+            consumers.Add(id, new(Strings(content, "capabilities"), Strings(content, "buttonIds"), desks, true, false, stage));
+        if (room.TryGetProperty("start", out var start)) Slot("slot.start", start, RoomLifecycleStage.Starting);
+        if (room.TryGetProperty("idle", out var idle)) Slot("slot.idle", idle, RoomLifecycleStage.Idle);
+        foreach (var desk in room.GetProperty("desks").EnumerateArray())
+            if (desk.TryGetProperty("background", out var background))
+            {
+                var id = desk.GetProperty("id").GetString()!;
+                Slot("slot.background." + id, background, RoomLifecycleStage.Desktop, new[] { id });
+            }
         return new(buttons, consumers);
     }
 }

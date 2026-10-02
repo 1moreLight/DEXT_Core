@@ -122,9 +122,19 @@ Check("maximum native consumer IDs and counts fit private grants", () =>
         var room = new RoomPersonalData(); s.Rooms[Room] = room;
         room.Grants["official"] = new("stamp", Array.Empty<string>());
         room.Grants["scene"] = new("stamp", Array.Empty<string>());
+        room.Grants["slot.start"] = new("stamp", Array.Empty<string>());
+        room.Grants["slot.idle"] = new("stamp", Array.Empty<string>());
+        for (var i = 0; i < 64; i++) room.Grants["slot.background." + new string('b', 77) + i.ToString("D3")] = new("stamp", Array.Empty<string>());
         for (var i = 0; i < 128; i++) room.Grants["component." + new string('a', 77) + i.ToString("D3")] = new("stamp", Array.Empty<string>());
     });
-    Equal(130, store.Read().Rooms[Room].Grants.Count, "all consumers preserved");
+    Equal(196, store.Read().Rooms[Room].Grants.Count, "all consumers preserved");
+    Refuses(() => store.Update(state => state.Rooms[Room].Grants["extra"] = new("stamp", Array.Empty<string>())));
+    Equal(196, store.Read().Rooms[Room].Grants.Count, "overflow preserves current grants");
+    Refuses(() => store.Update(state => {
+        state.Rooms[Room].Grants.Clear();
+        state.Rooms[Room].Grants["slot.background." + new string('c', 81)] = new("stamp", Array.Empty<string>());
+    }));
+    Equal(196, store.Read().Rooms[Room].Grants.Count, "overlong suffix preserves current grants");
 });
 
 RoomActionChecks.Run(Check);

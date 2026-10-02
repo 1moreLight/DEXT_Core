@@ -57,3 +57,9 @@ Core持有`%LOCALAPPDATA%/Dext/v3/personal/personal.json`，格式版本1、递�
 作者v1公开接口见`ROOM_V3_RUNTIME_API.md`和`creator-kit/v3/sdk`，生产纯模型在`wallpapers/dext-room-v3/runtime-model.js`。当前仅Task1自动验证，原生Core/Player边界及DOM适配仍待Task2–4；声明格式/授权基础不算完整运行交付。
 
 共享配置递归按字段继承；数组整体覆盖、null显式值、删除差异恢复共享字段。生命周期stage与暂停/锁屏正交；媒体启动阈值和实例规则见作者API。几何订阅提供当前版本/viewport，重复相同报告不递增版本，避免跨消费者通知环。
+
+### 媒体消费者与活动条件（P5）
+
+消费者目录还包含`slot.start`、`slot.idle`和`slot.background.<DeskID>`，分别只在starting、idle及该Desk桌面阶段活动；采用各Content自己的capabilities/buttonIds，不继承scene或official授权。个人授权最多196消费者，background的Desk ID仍限80字符。
+
+Core只允许未暂停、未锁屏且处于桌面前台的当前Player消费者实际读取能力或激活动作。starting/idle媒体不受仅描述桌面切页的IsOperable字段误拒；桌面阶段仍需IsOperable。独立可见Dock保留桌面暂停例外，锁屏无例外。公开按钮元数据可在结构上活动时读取，不代表可以消费能力。前台事实即使未改变IsOperable也递增全局revision，旧输入不能在恢复后复活。真实Windows/可见性/物理输入适配仍按P5验收卡推进。

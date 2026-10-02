@@ -168,3 +168,5 @@
 
 | #138 | Core快照完整但Player两次投影丢queue/deadline/安装/生命周期字段 | [backend](errors/backend.md) |
 | #139 | ReleasePlayer已退出但WebView暂存锁延迟释放，探针清理掩盖原始失败 | [toolchain](errors/toolchain.md) |
+
+| #140 | 媒体槽缺少阶段消费者且前台变化不推进修订，启动/待机输入可能失效后复活 | [backend](errors/backend.md) |

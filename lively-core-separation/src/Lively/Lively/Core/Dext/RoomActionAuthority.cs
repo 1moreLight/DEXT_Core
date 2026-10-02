@@ -60,7 +60,8 @@ internal sealed class RoomActionAuthority
     public RoomActionStatus AuthorizeCapability(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string capability)
     {
         try { return Prepare(connection, peer, session, consumer, status => status,
-            (state, context, owner) => Permission(state, context.Installation, owner, consumer, capability)); }
+            (state, context, owner) => owner.CanConsume(context.Role, context.Snapshot)
+                ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable); }
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
     }
 
@@ -73,7 +74,7 @@ internal sealed class RoomActionAuthority
             {
                 var status = Button(context, owner, button, out _);
                 if (status != RoomActionStatus.Accepted) return new(status);
-                if (context.Role == RoomClientRole.DesktopPlayer && !context.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
+                if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
                 lock (gate)
                 {
                     foreach (var expired in tickets.Where(t => Expired(t.Value.IssuedAt, issuedAt)).Select(t => t.Key).ToArray()) tickets.Remove(expired);
@@ -100,7 +101,7 @@ internal sealed class RoomActionAuthority
             {
                 var status = Button(context, owner, button, out var authored);
                 if (status != RoomActionStatus.Accepted) return new(status);
-                if (context.Role == RoomClientRole.DesktopPlayer && !context.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
+                if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
                 var action = Resolve(state, context.Installation.RoomId, authored!, out var target);
                 if (action is null) return new(RoomActionStatus.MissingBinding);
                 var capability = action.Type.StartsWith("desk.", StringComparison.Ordinal) ? "desk.navigate" : action.Type;
@@ -179,7 +180,7 @@ internal sealed class RoomActionAuthority
         owner = null;
         if (context.Installation.ActionCatalog is not { } catalog) return RoomActionStatus.Denied;
         if (consumer is null || !catalog.Consumers.TryGetValue(consumer, out owner)) return RoomActionStatus.UnknownConsumer;
-        return owner.IsActive(context.Role, context.Snapshot.TargetDeskId ?? context.Snapshot.CurrentDeskId) ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
+        return owner.IsActive(context.Role, context.Snapshot) ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
     }
     private static bool InScope(AuthoredRoomButton button, RoomActionCatalog.Consumer owner, RoomSessionSnapshot snapshot) =>
         owner.HasButton(button.Id) && (button.Scope == "room" || button.Scope == (snapshot.TargetDeskId ?? snapshot.CurrentDeskId));

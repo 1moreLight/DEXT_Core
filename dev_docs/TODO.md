@@ -1170,3 +1170,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] C#/proto完整build、Rust cargo check、配置器build、start/identity全项OK；真实gRPC确认当前v2为inactive。验证后正常退出，进程与1620端口归零（2026-10-03）。
 - [ ] 下一步仍属Task2：Windows前台/暂停/锁屏/闲置真实事件接协调者、启动完成仲裁；stage-aware媒体消费者/196授权配额；RuntimeContext原生IPC、资源清单与物理输入边界。完整v3原生桌面未交付。
+
+- [x] Task2媒体权限阶段：从验证清单建立独立slot消费者；按stage/Desk判断活动，锁屏/暂停/前台拒绝实际消费和激活；Dock桌面暂停例外不跨锁屏；个人196消费者和80字符Desk后缀；阶段/前台/私有等待使旧输入失效。
+
+- [x] 媒体权限实际RED36/44→GREEN44/44；内核17/17、协议65/65、完整build与同分支start/identity成功。验证后Core、Player、Watchdog、配置器和1620监听全部为0（2026-10-03）。
+- [ ] Task2继续：Windows完整事实原子接入并在初次Player订阅前同步；启动/闲置控制、上下文IPC、资源边界与物理输入仍待完成。

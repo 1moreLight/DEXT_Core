@@ -47,3 +47,9 @@ Rust31/31、Core51/51及Schema正反例通过；此前合法声明实际被拒�
 内核17/17、协议65/65、动作35/35；隔离ReleasePlayer实测旧快照遗漏字段，修复后queue/deadline/install/active/lifecycle及空字段完整到页。完整Core/ReleasePlayer构建、Rust检查与前端构建成功；前端仍有共享依赖环境的Geist字体URL警告，不能计发布资源验收完成。
 
 当前分支start/identity全OK：Core103408、Player89868、Watchdog79488、配置器70980；真实命名管道v3-status=inactive符合现有v2恢复。验证后正常退出，进程/端口0。上方7项最终人工步骤仍待执行：Windows事件尚未接生命周期协调者，RuntimeContext尚未传入原生宿主，媒体/物理输入/布局/DPI/安全门槛未代填通过。
+
+## Task2媒体权限阶段（2026-10-03）
+
+动作回归实际36/44失败后修复为44/44，内核17/17、协议65/65；覆盖独立媒体消费者、阶段/Desk/授权隔离、锁屏/暂停/前台、旧票据与196消费者上限。完整build→start/identity通过：Core57164、Player60216、Watchdog116664、配置器72136；随后正常退出并核实进程/1620监听0。
+
+这轮启动仍是原有v2作品。Windows真实事实尚未连接协调者，原生v3媒体/DOM/资源/输入仍未完成；上方7步最终人工验收保持待执行，未申请中途人工确认。

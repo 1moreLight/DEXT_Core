@@ -29,6 +29,8 @@ public sealed record RoomSessionSnapshot(
 {
     public bool IsActive { get; init; } = true;
     public string InstallationStamp { get; init; } = string.Empty;
+    // Core-only input fact. The public author snapshot exposes effective operability.
+    internal bool IsDesktopForeground { get; init; } = true;
     public RoomSessionLifecycle Lifecycle { get; init; } = new(RoomLifecycleStage.Desktop, false, false, 0);
 }
 
@@ -110,7 +112,6 @@ public sealed class RoomSessionKernel : IDisposable
     private RoomSessionSnapshot? snapshot;
     private long revision;
     private RoomSessionRuntimePolicy? runtimePolicy;
-    private bool desktopForeground = true;
     private long nextSubscriptionId;
     private bool disposed;
 
@@ -164,7 +165,6 @@ public sealed class RoomSessionKernel : IDisposable
             store.Write(new RoomSessionCheckpoint(1, roomId, startDeskId, policy?.InstallationStamp));
             this.deskIds = validIds;
             runtimePolicy = policy;
-            desktopForeground = true;
             result = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
                 startDeskId, null, null, null, ++revision, policy?.HasStart != true, null)
             {
@@ -275,15 +275,12 @@ public sealed class RoomSessionKernel : IDisposable
                 (nextStage == RoomLifecycleStage.Starting && previous.Stage != RoomLifecycleStage.Starting)) return false;
             var paused = playbackPaused ?? previous.PlaybackPaused;
             var isLocked = locked ?? previous.Locked;
-            var nextForeground = foreground ?? desktopForeground;
+            var nextForeground = foreground ?? current.IsDesktopForeground;
             var operable = nextForeground && nextStage == RoomLifecycleStage.Desktop && !paused && !isLocked;
             var lifecycleChanged = nextStage != previous.Stage || paused != previous.PlaybackPaused || isLocked != previous.Locked;
-            if (!lifecycleChanged && current.IsOperable == operable)
-            {
-                desktopForeground = nextForeground;
+            if (!lifecycleChanged && current.IsOperable == operable && current.IsDesktopForeground == nextForeground)
                 return true;
-            }
-            var updated = current with { Lifecycle = lifecycleChanged
+            var updated = current with { IsDesktopForeground = nextForeground, Lifecycle = lifecycleChanged
                 ? new(nextStage, paused, isLocked, previous.Revision + 1) : previous };
             if (!operable && updated.TargetDeskId is not null)
                 result = CommitTarget(updated, false);
@@ -294,7 +291,6 @@ public sealed class RoomSessionKernel : IDisposable
                     QueuedDeskId = operable ? null : updated.QueuedDeskId };
             // A failed target checkpoint leaves all lifecycle/foreground facts
             // and revisions intact, so the trusted adapter can retry atomically.
-            desktopForeground = nextForeground;
             snapshot = result;
             ScheduleTimeout(result);
             listeners = subscriptions.Values.ToArray();
@@ -347,7 +343,6 @@ public sealed class RoomSessionKernel : IDisposable
             var validIds = ValidateRoom(roomId, deskIds, checkpoint.DeskId);
             this.deskIds = validIds;
             runtimePolicy = policy;
-            desktopForeground = true;
             restored = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
                 checkpoint.DeskId, null, null, null, ++revision, policy?.HasStart != true, null)
             {

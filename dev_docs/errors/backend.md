@@ -324,3 +324,9 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 ## #138 快照跨进程投影漏字段（2026-10-03）
 
 内核快照新增信息不会自动穿过WebWebView2的DTO映射与Player Form1匿名JS投影。隔离ReleasePlayer实际只收到旧字段，测试失败。新增唯一RoomSessionPlayerMessage投影并由生产与探针共用；消息DTO和Form1显式传递queue/deadline/active/installationStamp/lifecycle，实际页面正反两组状态通过。gRPC/Rust/TS也同步字段，后续变化须验证实际接收端，不能以内核测试代替IPC。
+
+## #140 媒体槽权限必须独立检查阶段和前台修订（2026-10-03）
+
+新增回归实际36/44失败：slot消费者未建立，个人130项上限不足196项，统一IsOperable又使starting/idle全部拒绝。若只放开IsOperable，还会使暂停/锁屏或后台消费；原先非桌面阶段的前台变化也不递增revision，旧票据可能恢复可用。
+
+从已验证清单建立独立媒体消费者；结构活动检查stage/Desk/role，实际消费再检查暂停/锁屏/前台，Dock仅保留桌面暂停例外。Core前台事实进入同一内部快照，每次变化推进全局revision；个人最大196、background稳定ID后缀80字符。新阶段/锁屏/前台/等待竞态与最大数量回归44/44通过。原生Windows事实和物理输入仍必须后续实接，单元票据不代替实机验收。

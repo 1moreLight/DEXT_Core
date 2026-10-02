@@ -1,5 +1,6 @@
 using Dext.Core.Rooms;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 
 static class RoomActionChecks
@@ -9,6 +10,82 @@ static class RoomActionChecks
     static void Eq<T>(T expected, T actual) { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}"); }
     public static void Run(Action<string, Action> check)
     {
+        check("each media phase activates only its own consumer and declared buttons", () => {
+            using var f = new ActionFixture(mediaSlots: true);
+            Eq(RoomLifecycleStage.Starting, f.Kernel.Snapshot!.Lifecycle.Stage);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", null, "scene").Status);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", null, "slot.background.home").Status);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("icon", null, "slot.start").Status);
+            var start = f.Input("open", "slot.start"); Eq(RoomActionStatus.Accepted, start.Status);
+            Eq(RoomActionStatus.Accepted, f.Invoke("open", start.Ticket, "slot.start").Status);
+            f.Lifecycle(RoomLifecycleStage.Desktop);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", null, "slot.start").Status);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", null, "slot.idle").Status);
+            var background = f.Input("open", "slot.background.home"); Eq(RoomActionStatus.Accepted, background.Status);
+            Eq(RoomActionStatus.Accepted, f.Invoke("open", background.Ticket, "slot.background.home").Status);
+            f.Lifecycle(RoomLifecycleStage.Idle);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", null, "slot.background.home").Status);
+            var idle = f.Input("open", "slot.idle"); Eq(RoomActionStatus.Accepted, idle.Status);
+            Eq(RoomActionStatus.Accepted, f.Invoke("open", idle.Ticket, "slot.idle").Status);
+            Eq(3, f.Launched.Count);
+        });
+        check("media slots neither inherit scene declarations nor installation grants", () => {
+            using var f = new ActionFixture(mediaSlots: true);
+            var buttons = f.Actions.ReadButtons(f.View, f.Peer, f.Session, "slot.start");
+            Eq(RoomActionStatus.Accepted, buttons.Status); Eq(1, buttons.Buttons!.Length); Eq("open", buttons.Buttons[0].Id);
+            Eq(RoomActionStatus.Forbidden, f.Actions.AuthorizeCapability(f.View, f.Peer, f.Session, "slot.start", "hardware.read"));
+            f.Store.Update(state => state.Rooms[Room].Grants.Remove("slot.start"));
+            Eq(RoomActionStatus.MissingPermission, f.Invoke("open", f.Input("open", "slot.start").Ticket, "slot.start").Status);
+            f.Store.Update(state => state.Rooms[Room].Grants["slot.start"] = new("another-installation", new[] { "binding.launch" }));
+            Eq(RoomActionStatus.MissingPermission, f.Actions.AuthorizeCapability(f.View, f.Peer, f.Session, "slot.start", "binding.launch"));
+            Eq(0, f.Launched.Count);
+        });
+        foreach (var phase in new[] { RoomLifecycleStage.Starting, RoomLifecycleStage.Desktop, RoomLifecycleStage.Idle })
+            check("media activation and capability consumption suspend with native facts: " + phase, () => {
+                using var f = new ActionFixture(mediaSlots: true);
+                var consumer = phase == RoomLifecycleStage.Starting ? "slot.start" : phase == RoomLifecycleStage.Idle ? "slot.idle" : "slot.background.home";
+                f.Lifecycle(phase);
+                Eq(RoomActionStatus.InputRequired, f.Invoke("open", null, consumer).Status);
+                foreach (var (paused, locked) in new[] { (true, false), (false, true), (true, true) })
+                {
+                    f.Lifecycle(phase, paused, locked);
+                    Eq(RoomActionStatus.NotOperable, f.Input("open", consumer).Status);
+                    Eq(RoomActionStatus.NotOperable, f.Invoke("open", null, consumer).Status);
+                    Eq(RoomActionStatus.NotOperable, f.Actions.AuthorizeCapability(f.View, f.Peer, f.Session, consumer, "binding.launch"));
+                }
+                f.Lifecycle(phase);
+                var input = f.Input("open", consumer); Eq(RoomActionStatus.Accepted, input.Status);
+                var revision = f.Kernel.Snapshot!.Revision;
+                f.Gateway.SetOperable(f.Coordinator, f.CorePeer, f.Session, false);
+                if (f.Kernel.Snapshot!.Revision <= revision) throw new Exception("foreground loss did not invalidate current activation revision");
+                Eq(RoomActionStatus.NotOperable, f.Input("open", consumer).Status);
+                f.Gateway.SetOperable(f.Coordinator, f.CorePeer, f.Session, true);
+                Eq(RoomActionStatus.StaleInput, f.Invoke("open", input.Ticket, consumer).Status);
+                Eq(0, f.Launched.Count);
+            });
+        check("Dock cannot activate while locked or impersonate a media consumer", () => {
+            using var f = new ActionFixture(mediaSlots: true); f.Lifecycle(RoomLifecycleStage.Desktop);
+            var peer = new RoomSessionPeer("dock");
+            var lease = f.Gateway.Open(peer, new(1, RoomClientRole.Dock, Room)).ConnectionId!.Value;
+            Eq(RoomActionStatus.Forbidden, f.Actions.IssueHostInput(lease, peer, f.Session, "slot.background.home", "open").Status);
+            var input = f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open"); Eq(RoomActionStatus.Accepted, input.Status);
+            f.Lifecycle(RoomLifecycleStage.Desktop, false, true);
+            Eq(RoomActionStatus.NotOperable, f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open").Status);
+            Eq(RoomActionStatus.NotOperable, f.Actions.InvokeButton(lease, peer, f.Session, "official", "open", input.Ticket).Status);
+            Eq(0, f.Launched.Count);
+        });
+        check("outgoing background and prior idle visits cannot reuse activation", () => {
+            using var f = new ActionFixture(mediaSlots: true); f.Lifecycle(RoomLifecycleStage.Desktop);
+            var input = f.Input("open", "slot.background.home"); Eq(RoomActionStatus.Accepted, input.Status);
+            var moving = f.Gateway.Request(f.View, f.Peer, f.Session, "focus"); Eq(RoomProtocolStatus.Accepted, moving.Status);
+            Eq(RoomActionStatus.Forbidden, f.Invoke("open", input.Ticket, "slot.background.home").Status);
+            Eq(RoomActionStatus.Forbidden, f.Actions.AuthorizeCapability(f.View, f.Peer, f.Session, "slot.background.home", "binding.launch"));
+            Eq(RoomActionStatus.InputRequired, f.Invoke("open", null, "slot.background.focus").Status);
+            f.Lifecycle(RoomLifecycleStage.Idle);
+            input = f.Input("open", "slot.idle"); Eq(RoomActionStatus.Accepted, input.Status);
+            f.Lifecycle(RoomLifecycleStage.Desktop); f.Lifecycle(RoomLifecycleStage.Idle);
+            Eq(RoomActionStatus.StaleInput, f.Invoke("open", input.Ticket, "slot.idle").Status); Eq(0, f.Launched.Count);
+        });
         check("same private target can serve authored button and ordinary icon", () => {
             using var f = new ActionFixture();
             foreach (var id in new[] { "open", "icon" }) Eq(RoomActionStatus.Accepted, f.Invoke(id, f.Input(id).Ticket).Status);
@@ -89,7 +166,7 @@ static class RoomActionChecks
             input = f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open");
             Eq(RoomActionStatus.MissingPermission, f.Actions.InvokeButton(lease, peer, f.Session, "official", "open", input.Ticket).Status); Eq(1, f.Launched.Count);
         });
-        foreach (var change in new[] { "close", "stop", "pause", "unbind", "replace" })
+        foreach (var change in new[] { "close", "stop", "pause", "idle", "lock", "unbind", "replace" })
         {
             var invalidation = change;
             check("pending private read rechecks " + invalidation + " before dispatch", () => {
@@ -112,6 +189,8 @@ static class RoomActionChecks
                         case "close": f.Gateway.Close(f.View, f.Peer); break;
                         case "stop": f.Gateway.Stop(f.Coordinator, f.CorePeer, f.Session); break;
                         case "pause": f.Gateway.SetOperable(f.Coordinator, f.CorePeer, f.Session, false); break;
+                        case "idle": f.Lifecycle(RoomLifecycleStage.Idle); break;
+                        case "lock": f.Lifecycle(RoomLifecycleStage.Desktop, false, true); break;
                         case "unbind": f.Admission.Enabled = false; break;
                         case "replace": f.Admission.ReplaceInstallation(); break;
                     }
@@ -245,7 +324,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture()
+        public ActionFixture(bool mediaSlots = false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -261,6 +340,15 @@ static class RoomActionChecks
              "desks":[{"id":"home","name":"Home","icons":[{"id":"icon-1","buttonId":"icon","x":0,"y":0}],"components":["widget"]},
                       {"id":"focus","name":"Focus","icons":[],"components":[]}]}
             """;
+            if (mediaSlots)
+            {
+                var document = JsonNode.Parse(manifest)!;
+                var content = new JsonObject { ["type"] = "html", ["src"] = "scene.html",
+                    ["capabilities"] = new JsonArray("binding.launch"), ["buttonIds"] = new JsonArray("open") };
+                document["start"] = content.DeepClone(); document["idle"] = content.DeepClone();
+                foreach (var desk in document["desks"]!.AsArray()) desk!["background"] = content.DeepClone();
+                manifest = document.ToJsonString();
+            }
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);
@@ -276,13 +364,17 @@ static class RoomActionChecks
                 s.Targets[Target] = new PersonalTarget("Notes", "application", @"C:\Windows\System32\notepad.exe", "/a", @"C:\Windows");
                 var room = new RoomPersonalData(); s.Rooms[Room] = room;
                 foreach (var button in new[] { "open", "icon", "focus-only" }) room.Buttons[button] = new PersonalButtonOverride(TargetId: Target);
+                if (mediaSlots) foreach (var owner in new[] { "slot.start", "slot.idle", "slot.background.home", "slot.background.focus" })
+                    room.Grants[owner] = new(installed.InstallationStamp, new[] { "binding.launch" });
                 foreach (var owner in new[] { "official", "scene", "component.widget" }) room.Grants[owner] = new(installed.InstallationStamp,
                     owner == "component.widget" ? new[] { "binding.launch" } : new[] { "binding.launch", "desk.navigate", "dext.exit" });
             });
             Actions = new(Gateway, Store, target => Launched.Add(target), Clock);
         }
-        public RoomInputReply Input(string button) => Actions.IssueHostInput(View, Peer, Session, "scene", button);
-        public RoomActionReply Invoke(string button, Guid? ticket) => Actions.InvokeButton(View, Peer, Session, "scene", button, ticket);
+        public RoomInputReply Input(string button, string consumer = "scene") => Actions.IssueHostInput(View, Peer, Session, consumer, button);
+        public RoomActionReply Invoke(string button, Guid? ticket, string consumer = "scene") => Actions.InvokeButton(View, Peer, Session, consumer, button, ticket);
+        public void Lifecycle(RoomLifecycleStage stage, bool paused = false, bool locked = false) =>
+            Eq(RoomProtocolStatus.Accepted, Gateway.SetLifecycle(Coordinator, CorePeer, Session, stage, paused, locked).Status);
         public void Dispose() { Kernel.Dispose(); fixture.Dispose(); }
     }
 }

@@ -76,3 +76,5 @@ addEventListener('pagehide', () => { releases.forEach(release => release()); Dex
 RoomV3Installation在同一清单与资源摘要校验完成后冻结公开Manifest和资源path/sha256/size；不携带绝对安装目录或个人绑定目标。RoomSessionPlayerBridge.ReadRuntimeContext只允许当前原生DesktopPlayer私有连接，重新核对进程、安装戳和session；旧连接、已撤销安装、篡改或旧版开发覆盖层不返回上下文。该对象供官方宿主使用，不能整体当作iframe授权；后续宿主仍必须按消费者裁剪并核验每次能力/动作请求。
 
 Core.lifecycle变化同时增加全局revision和生命周期revision。暂停/锁屏/idle使桌面不可操作时，先提交已有动画目标；持久化失败不发布半个生命周期，恢复后沿用已提交Desk和最终队列。安装决定watchdog=max(3000,durationMs+2000)，作者请求不可缩改。原生恢复同时检查Room ID与installationStamp，新会话startup不覆盖恢复的已提交Desk。
+
+媒体槽使用独立消费者：slot.start仅starting、slot.idle仅idle、slot.background.<DeskID>仅当前目标/已提交Desk的desktop阶段。每个槽需要自己的声明和安装戳授权。Core拒绝暂停、锁屏或非桌面前台Player的能力消费与激活；start/idle不用桌面切页IsOperable作为唯一判据。恢复前台会改变全局revision，之前的输入凭证失效；Dock的桌面暂停例外不能越过锁屏。
