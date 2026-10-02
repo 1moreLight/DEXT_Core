@@ -154,3 +154,10 @@
 | #132 | 桌面暂停状态错误阻止仍可见Dock的绑定动作 | [backend](errors/backend.md) |
 
 | #133 | 动作缓存授权后等待个人读取，关闭/撤权/修改已生效却仍派发旧应用 | [backend](errors/backend.md) |
+
+## P5新增错误索引
+
+| 编号 | 现象 | 分册 |
+|---|---|---|
+| #134 | 消费者重报同一几何仍递增版本，会形成全实例通知/重报循环 | [renderer](errors/renderer.md) |
+| #135 | SDK初始化回调中销毁后仍发ready，已销毁ready返回旧身份 | [renderer](errors/renderer.md) |

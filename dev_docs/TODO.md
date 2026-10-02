@@ -1152,7 +1152,7 @@ pm run tauri build 并气泡提示，完成后重试即可。
 > 目标：原生v3直接进入Core/ReleasePlayer，持续实例、同步动画/几何与完整生命周期可独立验收。范围外及人工步骤见acceptance/V3-P5-001-native-runtime.md；用户授权连续推进后最终集中验收。
 
 - [x] 基于CORE-006已审查修复0acaa3d创建独立managed worktree/分支，先写计划、ledger及独立验收卡。
-- [ ] Task1：共享运行模型与v1作者SDK，测试先RED后GREEN，深继承/正交生命周期/几何来源验证，具名提交。
+- [x] Task1：共享模型14/14、作者SDK14/14先RED后GREEN；类型/JS/Schema与Rust28/28通过，连续样包已打包SDK，提交具名实现。原生边界仍Task2–4（2026-10-03）。
 - [ ] Task2：Core/Player原生上下文/生命周期/资源/真实输入、媒体槽能力声明，跨语言/协议/动作与完整构建门槛。
 - [ ] Task3：真实DOM宿主持续实例、同步默认/作者过渡、四类媒体、生产浏览器与ReleasePlayer安全验证。
 - [ ] Task4：个人布局、版本化命中与占用、DPI/缩屏恢复、WorkerW真实闭环及一次独立审查。

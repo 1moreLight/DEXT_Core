@@ -33,8 +33,8 @@
 
 **SDK：**固定parent事件源，经v1握手给每实例token；ready、desk.get/subscribe/navigate、lifecycle.subscribe、capabilities.get、data.subscribe/bindReadout、actions.list/activate、scene.publishGeometry/completeTransition/done。消息包含apiVersion/instanceId/token/requestId/sessionId，大小/字段有界，pending请求有超时，dispose失效并释放订阅。token不代表特权输入。
 
-- [ ] 先写模型/SDK行为测试并运行RED：current与target分离、排队修订不重播动画、完成不自行提交、迟到完成拒绝、换session释放旧实例、共享ID不重建、覆盖继承、生命周期和几何版本；父源/token/版本/会话验证、请求超时和销毁。
-- [ ] 实现生产共享模型/SDK，运行`node --test wallpapers/dext-room-v3/runtime-model.test.js creator-kit/v3/sdk/sdk.test.js`与JS语法、原生Schema验证；Expected GREEN，具名提交。
+- [x] 先写模型/SDK行为测试并运行RED：current与target分离、排队修订不重播动画、完成不自行提交、迟到完成拒绝、换session释放旧实例、共享ID不重建、覆盖继承、生命周期和几何版本；父源/token/版本/会话验证、请求超时和销毁。
+- [x] 实现生产共享模型/SDK，运行`node --test wallpapers/dext-room-v3/runtime-model.test.js creator-kit/v3/sdk/sdk.test.js`与JS语法、原生Schema验证；Expected GREEN，具名提交。
 
 ### Task 2：Core/Player原生上下文、生命周期、资源和可信输入
 

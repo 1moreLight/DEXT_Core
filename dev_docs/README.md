@@ -63,6 +63,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
 | `V3_IDEAS.md` | **Room v3 设计想法与候选实现路径**；记录 HTML 创作、常驻层、占用区和 Dock 窗口模式 | 讨论 v3 方向时；非正式运行契约 |
+| `ROOM_V3.md` / `ROOM_V3_RUNTIME_API.md` | 原生v3清单、个人数据边界与版本化作者SDK；完整交付证据见V3_DELIVERY | 实现或创作v3 Room时 |
 | `V3_PLAN.md` | **v3 总体设计方案入口**；概念、待确认细节、Core 改写、UI 调整、阶段依赖和验收样例 | v3 工作包开工或讨论前；实际状态只认 ROADMAP |
 | `V3_RUNTIME_MODEL.md` | **Room v3 运行逻辑讨论稿**；持续网页、Desk 切换状态机、图标随画布运动与共享元素生命周期 | 讨论 v3 作品结构和作者切页契约时；非正式运行契约 |
 | `V2_TO_V3_TODO.md` | **v2→v3 设计阶段待办草案**；按依赖整理验证、契约、运行时和创作闭环 | 规划 v3 工作包时；不替代 ROADMAP/TODO |

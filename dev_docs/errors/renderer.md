@@ -548,3 +548,11 @@ Playwright 都全绿，但真实 WorkerW/WebView2 中仍表现为几乎无法拖
 原因：`msg_wploaded` 表示 WebView 导航完成，不表示 `loadRoom()` 的异步数据和节点已构建。
 
 修复：官方页面在 `loadRoom()` 结束后再发 `dext:v3-page-ready`；Core 只在这个消息与 `msg_wploaded` 均到达后附加 Player 并发送完整快照。真实样包切页和重启恢复已验证。
+
+## #134 消费者重报同一几何触发循环（2026-10-03）
+
+P5每次接受按钮几何都会通知全部消费者新版本；若监听者重报同一矩形，旧实现再次递增版本并重新通知，可能形成跨组件消息环。新增生产模型回归实际RED（重复报告产生invalidateInput/applyGeometry/notifyGeometry）后，规范化几何并比较有效值；不变报告返回accepted、无effects、版本不动。28/28模型与SDK通过，真实DOM适配随后验证。resize仍先失效旧输入，变化报告正常更新。
+
+## #135 SDK就绪与销毁重入（2026-10-03）
+
+初始化期间作者监听可立即dispose，旧代码继续回放并发ready；已resolve的ready Promise又让销毁后的ready()返回旧实例。生产SDK回归初始回放11/13与销毁ready13/14实际失败后，所有回放/事件分支检查disposed，ready()再次调用明确拒绝，移除监听并释放所有pending/订阅。最终SDK14/14、模型14/14通过。token不公开，旧session不能重新初始化。
