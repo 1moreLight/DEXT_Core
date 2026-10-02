@@ -6,6 +6,32 @@ internal static class NativeInstallationChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("verified native manifest controls startup stage stamp and animation watchdog", () => WithCopy(root =>
+        {
+            PrepareHtmlSlots(root);
+            var roomPath = Path.Combine(root, "room.json");
+            var room = JsonNode.Parse(File.ReadAllText(roomPath))!;
+            room["transition"]!["durationMs"] = 10000;
+            File.WriteAllText(roomPath, room.ToJsonString());
+            RefreshSnapshot(root);
+            var authority = new InstalledRoomSessionAuthority();
+            var installation = authority.Bind(root, 7123)!;
+            var now = DateTimeOffset.UtcNow;
+            using var kernel = new RoomSessionKernel(clock: () => now);
+            var gateway = new RoomSessionProtocolGateway(kernel, authority);
+            var control = new RoomSessionPeer("core-runtime");
+            var coordinator = gateway.Open(control, new RoomSessionHello(1, RoomClientRole.Coordinator, installation.RoomId)).ConnectionId!.Value;
+            var first = gateway.Start(coordinator, control).Snapshot!;
+            if (first.Lifecycle.Stage != RoomLifecycleStage.Starting || first.IsOperable || first.InstallationStamp != installation.InstallationStamp)
+                throw new Exception("verified native policy did not reach initial snapshot");
+            var peer = new RoomSessionPeer("player-process:7123");
+            var connection = gateway.Open(peer, new RoomSessionHello(1, RoomClientRole.DesktopPlayer, installation.RoomId)).ConnectionId!.Value;
+            if (gateway.Request(connection, peer, first.SessionId, "focus").Status != RoomProtocolStatus.Queued)
+                throw new Exception("navigation started before start content finished");
+            gateway.SetLifecycle(coordinator, control, first.SessionId, RoomLifecycleStage.Desktop, false, false);
+            if (kernel.Snapshot!.DeadlineUtc != now.AddSeconds(12) || kernel.Snapshot.TargetDeskId != "focus")
+                throw new Exception("trusted ten-second animation watchdog was truncated");
+        }));
         check("native runtime context survives source replacement without rereading the manifest", () => WithCopy(root =>
         {
             PrepareHtmlSlots(root);

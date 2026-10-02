@@ -156,6 +156,13 @@ message GetCoreStatsResponse {
 	string grpc_pipe_name = 8;
 }
 
+message RoomSessionLifecycleStatus {
+  string stage = 1;
+  bool playback_paused = 2;
+  bool locked = 3;
+  int64 revision = 4;
+}
+
 message RoomSessionStatusResponse {
   bool active = 1;
   int32 protocol_version = 2;
@@ -168,6 +175,9 @@ message RoomSessionStatusResponse {
   string transition_id = 9;
   bool operable = 10;
   int32 player_pid = 11;
+  string deadline_utc = 12;
+  string installation_stamp = 13;
+  RoomSessionLifecycleStatus lifecycle = 14;
 }
 
 message PreviewWallpaperRequest {

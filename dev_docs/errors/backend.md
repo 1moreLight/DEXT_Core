@@ -320,3 +320,7 @@ V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允�
 ## #136 输入探针显式源码依赖未同步（2026-10-03）
 
 Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCatalog/RoomActionContext后，探针未同步Compile Include，还原依赖后真实编译出现4项CS0246。本轮补RoomActionCatalog与RuntimeContext源文件引用。新增协议依赖时检查所有链接该源文件的csproj，不能只验证主Core和协议测试项目。
+
+## #138 快照跨进程投影漏字段（2026-10-03）
+
+内核快照新增信息不会自动穿过WebWebView2的DTO映射与Player Form1匿名JS投影。隔离ReleasePlayer实际只收到旧字段，测试失败。新增唯一RoomSessionPlayerMessage投影并由生产与探针共用；消息DTO和Form1显式传递queue/deadline/active/installationStamp/lifecycle，实际页面正反两组状态通过。gRPC/Rust/TS也同步字段，后续变化须验证实际接收端，不能以内核测试代替IPC。

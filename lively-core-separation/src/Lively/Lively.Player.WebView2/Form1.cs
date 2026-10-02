@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using Lively.Common;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
@@ -826,7 +826,9 @@ namespace Lively.Player.WebView2
                         break;
                     var session = (LivelyMessageRoomSessionSnapshot)obj;
                     if (session.ProtocolVersion != 1 || session.SessionId == Guid.Empty ||
-                        session.DeskIds == null || session.DeskIds.Length == 0)
+                        session.DeskIds == null || session.DeskIds.Length == 0 ||
+                        session.Lifecycle == null || session.Lifecycle.Revision < 0 ||
+                        (session.Lifecycle.Stage != "starting" && session.Lifecycle.Stage != "desktop" && session.Lifecycle.Stage != "idle"))
                         break;
                     webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(new
                     {
@@ -840,6 +842,17 @@ namespace Lively.Player.WebView2
                         transitionId = session.TransitionId,
                         revision = session.Revision,
                         operable = session.IsOperable,
+                        active = session.IsActive,
+                        queuedDeskId = session.QueuedDeskId,
+                        deadlineUtc = session.DeadlineUtc?.ToUniversalTime().ToString("O"),
+                        installationStamp = session.InstallationStamp,
+                        lifecycle = new
+                        {
+                            stage = session.Lifecycle.Stage,
+                            playbackPaused = session.Lifecycle.PlaybackPaused,
+                            locked = session.Lifecycle.Locked,
+                            revision = session.Lifecycle.Revision,
+                        },
                     }));
                     break;
                 case MessageType.cmd_desktop_icon_preferences:

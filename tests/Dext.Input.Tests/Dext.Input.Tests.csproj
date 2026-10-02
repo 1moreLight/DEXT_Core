@@ -16,6 +16,7 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomRuntimeContext.cs" Link="RoomRuntimeContext.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionCatalog.cs" Link="RoomActionCatalog.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerMessage.cs" Link="RoomSessionPlayerMessage.cs" />
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
   </ItemGroup>
 </Project>

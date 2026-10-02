@@ -821,6 +821,45 @@ Check("native runtime context excludes Dock and legacy overlay sessions", () =>
     }
 });
 
+Check("lifecycle facts require the current Core coordinator and publish atomic full snapshots", () =>
+{
+    var store = new FaultingCheckpointStore();
+    using var kernel = new RoomSessionKernel(store);
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var core = new RoomSessionPeer("core-1");
+    var coordinator = gateway.Open(core, new RoomSessionHello(1, RoomClientRole.Coordinator, "install-a")).ConnectionId!.Value;
+    var first = gateway.Start(coordinator, core).Snapshot!;
+    var player = new RoomSessionPeer("player-1");
+    var view = gateway.Open(player, new RoomSessionHello(1, RoomClientRole.DesktopPlayer, "install-a")).ConnectionId!.Value;
+    var events = new List<RoomSessionSnapshot>();
+    gateway.Subscribe(view, player, events.Add, out var handle);
+    using (handle)
+    {
+        Equal(RoomProtocolStatus.Forbidden, gateway.SetLifecycle(view, player, first.SessionId,
+            RoomLifecycleStage.Desktop, false, false).Status, "Player cannot claim lifecycle facts");
+        Equal(RoomProtocolStatus.Denied, gateway.SetLifecycle(coordinator, player, first.SessionId,
+            RoomLifecycleStage.Idle, true, true).Status, "spoofed coordinator");
+        Equal(RoomProtocolStatus.StaleSession, gateway.SetLifecycle(coordinator, core, Guid.NewGuid(),
+            RoomLifecycleStage.Idle, true, true).Status, "wrong session");
+        var moving = gateway.Request(view, player, first.SessionId, "work").Snapshot!;
+        store.WriteFailure = new IOException("checkpoint unavailable");
+        Equal(RoomProtocolStatus.StorageUnavailable, gateway.SetLifecycle(coordinator, core, first.SessionId,
+            RoomLifecycleStage.Idle, true, true).Status, "storage failure is surfaced");
+        Equal(moving, events[^1], "failure publishes no partial facts");
+        Equal(moving, kernel.Snapshot, "failure leaves exact snapshot intact");
+        store.WriteFailure = null;
+        var reply = gateway.SetLifecycle(coordinator, core, first.SessionId, RoomLifecycleStage.Idle, true, true);
+        Equal(RoomProtocolStatus.Accepted, reply.Status, "trusted retry accepted");
+        Equal(reply.Snapshot, events[^1], "subscribers receive the full lifecycle and Desk together");
+        Equal("work", reply.Snapshot?.CurrentDeskId, "target committed before idle");
+        Equal(RoomLifecycleStage.Idle, reply.Snapshot?.Lifecycle.Stage, "idle survives pause and lock");
+        Equal(3, events.Count, "initial, transition, lifecycle exactly once each");
+        gateway.Close(coordinator, core);
+        Equal(RoomProtocolStatus.StaleSession, gateway.SetLifecycle(coordinator, core, first.SessionId,
+            RoomLifecycleStage.Desktop, false, false).Status, "closed authority cannot change lifecycle");
+    }
+});
+
 NativeInstallationChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);

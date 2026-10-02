@@ -270,3 +270,7 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 ## #137 共享Rust目标目录需在每个新命令显式传递（2026-10-03）
 
 PowerShell工具调用的进程环境不跨调用继承。本轮start未设置CARGO_TARGET_DIR，误在worktree生成约1.72GiB临时target；随后identity独立命令未设置同值，会把实际共享目录配置器标OTHER。停止本轮进程后改为每次start与identity都显式设置D:\use\Orca\DEXT\build-cache\v3-player-bridge，重跑全项OK；确认临时target绝对路径位于本worktree且非reparse point后删除重复缓存，保留共享缓存。
+
+## #139 WebView子进程延迟释放临时目录（2026-10-03）
+
+隔离ReleasePlayer正常退出后，WebView lockfile可继续短暂占用；finally递归删除立即抛错会掩盖原始字段缺失错误。CIM后续确认该探针子进程已结束。探针改为有界20次/500ms清理重试，仍锁定则报告精确目录并保留原始断言；旧失败夹具在确认temp边界/非链接/进程退出后定点删除。不得通过杀全体WebView进程处理。

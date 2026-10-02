@@ -337,6 +337,14 @@ pub async fn core_identity() -> Result<CoreIdentity, String> {
 }
 
 #[derive(Clone, serde::Serialize)]
+pub struct RoomLifecycleStatus {
+    pub stage: String,
+    pub playback_paused: bool,
+    pub locked: bool,
+    pub revision: i64,
+}
+
+#[derive(Clone, serde::Serialize)]
 pub struct RoomSessionStatus {
     pub active: bool,
     pub protocol_version: i32,
@@ -349,6 +357,9 @@ pub struct RoomSessionStatus {
     pub transition_id: String,
     pub operable: bool,
     pub player_pid: i32,
+    pub deadline_utc: String,
+    pub installation_stamp: String,
+    pub lifecycle: Option<RoomLifecycleStatus>,
 }
 
 pub async fn room_session_status() -> Result<RoomSessionStatus, String> {
@@ -373,6 +384,14 @@ pub async fn room_session_status() -> Result<RoomSessionStatus, String> {
         transition_id: response.transition_id,
         operable: response.operable,
         player_pid: response.player_pid,
+        deadline_utc: response.deadline_utc,
+        installation_stamp: response.installation_stamp,
+        lifecycle: response.lifecycle.map(|value| RoomLifecycleStatus {
+            stage: value.stage,
+            playback_paused: value.playback_paused,
+            locked: value.locked,
+            revision: value.revision,
+        }),
     })
 }
 

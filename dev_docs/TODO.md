@@ -1165,3 +1165,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task2阶段：同一已验证清单生成不可变RuntimeContext，私有Player连接读取时复核进程/安装/会话；协议63/63、动作35/35、输入探针编译、完整build→start/identity通过。尚未接到Player IPC/DOM。
 
 - [ ] Task2下一步：生命周期及全局revision、安装动画watchdog、stage-aware媒体消费者与196授权配额；把完整上下文/快照接入原生IPC，再接资源与物理输入边界。
+
+- [x] Task2生命周期/快照阶段：内核stage/paused/locked与双revision原子更新，foreground不得绕过锁屏；可信安装给watchdog/checkpoint戳；Core专属状态入口与生产Player快照投影接通。内核17/17、协议65/65、动作35/35；真实ReleasePlayer字段丢失RED→GREEN。
+
+- [x] C#/proto完整build、Rust cargo check、配置器build、start/identity全项OK；真实gRPC确认当前v2为inactive。验证后正常退出，进程与1620端口归零（2026-10-03）。
+- [ ] 下一步仍属Task2：Windows前台/暂停/锁屏/闲置真实事件接协调者、启动完成仲裁；stage-aware媒体消费者/196授权配额；RuntimeContext原生IPC、资源清单与物理输入边界。完整v3原生桌面未交付。

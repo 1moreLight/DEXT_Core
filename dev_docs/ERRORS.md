@@ -165,3 +165,6 @@
 | #136 | 输入探针显式链接Protocol源码但遗漏新增依赖，独立编译出现CS0246 | [backend](errors/backend.md) |
 
 | #137 | 新命令未重设CARGO_TARGET_DIR，重复生成本地target且identity误报配置器OTHER | [toolchain](errors/toolchain.md) |
+
+| #138 | Core快照完整但Player两次投影丢queue/deadline/安装/生命周期字段 | [backend](errors/backend.md) |
+| #139 | ReleasePlayer已退出但WebView暂存锁延迟释放，探针清理掩盖原始失败 | [toolchain](errors/toolchain.md) |

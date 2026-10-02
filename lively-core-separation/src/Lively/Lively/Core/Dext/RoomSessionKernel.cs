@@ -9,6 +9,10 @@ using System.Threading;
 namespace Dext.Core.Rooms;
 
 public enum RoomCommandStatus { Accepted, Queued, Rejected }
+public enum RoomLifecycleStage { Starting, Desktop, Idle }
+public sealed record RoomSessionLifecycle(RoomLifecycleStage Stage, bool PlaybackPaused, bool Locked, long Revision);
+// Only the trusted installation adapter supplies this policy, never page input.
+public sealed record RoomSessionRuntimePolicy(string InstallationStamp, bool HasStart, TimeSpan TransitionTimeout);
 
 // Complete snapshots allow a reconnected view to catch up without replaying events.
 public sealed record RoomSessionSnapshot(
@@ -24,10 +28,12 @@ public sealed record RoomSessionSnapshot(
     DateTimeOffset? DeadlineUtc)
 {
     public bool IsActive { get; init; } = true;
+    public string InstallationStamp { get; init; } = string.Empty;
+    public RoomSessionLifecycle Lifecycle { get; init; } = new(RoomLifecycleStage.Desktop, false, false, 0);
 }
 
 public sealed record RoomCommandResult(RoomCommandStatus Status, RoomSessionSnapshot? Snapshot);
-public sealed record RoomSessionCheckpoint(int FormatVersion, string RoomId, string DeskId);
+public sealed record RoomSessionCheckpoint(int FormatVersion, string RoomId, string DeskId, string? InstallationStamp = null);
 
 public interface IRoomSessionCheckpointStore
 {
@@ -103,6 +109,8 @@ public sealed class RoomSessionKernel : IDisposable
     private HashSet<string>? deskIds;
     private RoomSessionSnapshot? snapshot;
     private long revision;
+    private RoomSessionRuntimePolicy? runtimePolicy;
+    private bool desktopForeground = true;
     private long nextSubscriptionId;
     private bool disposed;
 
@@ -142,19 +150,27 @@ public sealed class RoomSessionKernel : IDisposable
         return subscription;
     }
 
-    public RoomSessionSnapshot Start(string roomId, IReadOnlyList<string> deskIds, string startDeskId)
+    public RoomSessionSnapshot Start(string roomId, IReadOnlyList<string> deskIds, string startDeskId,
+        RoomSessionRuntimePolicy? policy = null)
     {
         var validIds = ValidateRoom(roomId, deskIds, startDeskId);
+        ValidateRuntimePolicy(policy);
         RoomSessionSnapshot result;
         Subscription[] listeners;
         lock (gate)
         {
             ThrowIfDisposed();
             // A failed checkpoint write must leave the old authority intact.
-            store.Write(new RoomSessionCheckpoint(1, roomId, startDeskId));
+            store.Write(new RoomSessionCheckpoint(1, roomId, startDeskId, policy?.InstallationStamp));
             this.deskIds = validIds;
+            runtimePolicy = policy;
+            desktopForeground = true;
             result = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
-                startDeskId, null, null, null, ++revision, true, null);
+                startDeskId, null, null, null, ++revision, policy?.HasStart != true, null)
+            {
+                InstallationStamp = policy?.InstallationStamp ?? string.Empty,
+                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, false, false, 1)
+            };
             snapshot = result;
             ScheduleTimeout(result);
             listeners = subscriptions.Values.ToArray();
@@ -227,7 +243,7 @@ public sealed class RoomSessionKernel : IDisposable
             var current = snapshot;
             if (current is null || !current.IsActive || current.SessionId != sessionId) return false;
             store.Clear();
-            result = current with { IsActive = false, TargetDeskId = null, QueuedDeskId = null,
+            result = current with { IsActive = false, IsOperable = false, TargetDeskId = null, QueuedDeskId = null,
                 TransitionId = null, DeadlineUtc = null, Revision = ++revision };
             snapshot = result;
             ScheduleTimeout(result);
@@ -237,7 +253,14 @@ public sealed class RoomSessionKernel : IDisposable
         return true;
     }
 
-    public bool SetOperable(Guid sessionId, bool operable)
+    // This is the foreground fact; it cannot override pause/lock/start/idle.
+    public bool SetOperable(Guid sessionId, bool operable) =>
+        UpdateLifecycle(sessionId, null, null, null, operable);
+
+    public bool SetLifecycle(Guid sessionId, RoomLifecycleStage stage, bool playbackPaused, bool locked) =>
+        UpdateLifecycle(sessionId, stage, playbackPaused, locked, null);
+
+    private bool UpdateLifecycle(Guid sessionId, RoomLifecycleStage? stage, bool? playbackPaused, bool? locked, bool? foreground)
     {
         RoomSessionSnapshot result;
         Subscription[] listeners;
@@ -246,15 +269,32 @@ public sealed class RoomSessionKernel : IDisposable
             ThrowIfDisposed();
             var current = snapshot;
             if (current is null || !current.IsActive || current.SessionId != sessionId) return false;
-            if (current.IsOperable == operable) return true;
-            if (!operable && current.TargetDeskId is not null)
-                result = CommitTarget(current, false);
-            else if (operable && current.QueuedDeskId is not null &&
-                     current.QueuedDeskId != current.CurrentDeskId)
-                result = BeginTransition(current with { IsOperable = true, QueuedDeskId = null }, current.QueuedDeskId);
+            var previous = current.Lifecycle;
+            var nextStage = stage ?? previous.Stage;
+            if (!Enum.IsDefined(typeof(RoomLifecycleStage), nextStage) ||
+                (nextStage == RoomLifecycleStage.Starting && previous.Stage != RoomLifecycleStage.Starting)) return false;
+            var paused = playbackPaused ?? previous.PlaybackPaused;
+            var isLocked = locked ?? previous.Locked;
+            var nextForeground = foreground ?? desktopForeground;
+            var operable = nextForeground && nextStage == RoomLifecycleStage.Desktop && !paused && !isLocked;
+            var lifecycleChanged = nextStage != previous.Stage || paused != previous.PlaybackPaused || isLocked != previous.Locked;
+            if (!lifecycleChanged && current.IsOperable == operable)
+            {
+                desktopForeground = nextForeground;
+                return true;
+            }
+            var updated = current with { Lifecycle = lifecycleChanged
+                ? new(nextStage, paused, isLocked, previous.Revision + 1) : previous };
+            if (!operable && updated.TargetDeskId is not null)
+                result = CommitTarget(updated, false);
+            else if (operable && updated.QueuedDeskId is not null && updated.QueuedDeskId != updated.CurrentDeskId)
+                result = BeginTransition(updated with { IsOperable = true, QueuedDeskId = null }, updated.QueuedDeskId);
             else
-                result = current with { IsOperable = operable, Revision = ++revision,
-                    QueuedDeskId = operable ? null : current.QueuedDeskId };
+                result = updated with { IsOperable = operable, Revision = ++revision,
+                    QueuedDeskId = operable ? null : updated.QueuedDeskId };
+            // A failed target checkpoint leaves all lifecycle/foreground facts
+            // and revisions intact, so the trusted adapter can retry atomically.
+            desktopForeground = nextForeground;
             snapshot = result;
             ScheduleTimeout(result);
             listeners = subscriptions.Values.ToArray();
@@ -287,8 +327,10 @@ public sealed class RoomSessionKernel : IDisposable
         return true;
     }
 
-    public bool TryRestore(string roomId, IReadOnlyList<string> deskIds, out RoomSessionSnapshot? restored)
+    public bool TryRestore(string roomId, IReadOnlyList<string> deskIds, out RoomSessionSnapshot? restored,
+        RoomSessionRuntimePolicy? policy = null)
     {
+        ValidateRuntimePolicy(policy);
         restored = null;
         Subscription[] listeners;
         lock (gate)
@@ -297,14 +339,21 @@ public sealed class RoomSessionKernel : IDisposable
             if (snapshot is not null) return false;
             var checkpoint = store.Read();
             if (checkpoint is null || !StringComparer.Ordinal.Equals(checkpoint.RoomId, roomId) ||
+                !StringComparer.Ordinal.Equals(checkpoint.InstallationStamp, policy?.InstallationStamp) ||
                 deskIds is null || !deskIds.Contains(checkpoint.DeskId, StringComparer.Ordinal))
                 return false;
             // Only a caller holding a validated installed Room may restore. Disk state
             // never restores a former session token, transition or queued input.
             var validIds = ValidateRoom(roomId, deskIds, checkpoint.DeskId);
             this.deskIds = validIds;
+            runtimePolicy = policy;
+            desktopForeground = true;
             restored = new RoomSessionSnapshot(ProtocolVersion, Guid.NewGuid(), roomId,
-                checkpoint.DeskId, null, null, null, ++revision, true, null);
+                checkpoint.DeskId, null, null, null, ++revision, policy?.HasStart != true, null)
+            {
+                InstallationStamp = policy?.InstallationStamp ?? string.Empty,
+                Lifecycle = new(policy?.HasStart == true ? RoomLifecycleStage.Starting : RoomLifecycleStage.Desktop, false, false, 1)
+            };
             snapshot = restored;
             listeners = subscriptions.Values.ToArray();
         }
@@ -318,14 +367,15 @@ public sealed class RoomSessionKernel : IDisposable
             TargetDeskId = targetDeskId,
             QueuedDeskId = null,
             TransitionId = Guid.NewGuid(),
-            DeadlineUtc = clock() + transitionTimeout,
+            DeadlineUtc = clock() + (runtimePolicy?.TransitionTimeout ?? transitionTimeout),
             Revision = ++revision
         };
 
     private RoomSessionSnapshot CommitTarget(RoomSessionSnapshot current, bool operable)
     {
         var target = current.TargetDeskId!;
-        store.Write(new RoomSessionCheckpoint(1, current.RoomId, target));
+        store.Write(new RoomSessionCheckpoint(1, current.RoomId, target,
+            current.InstallationStamp.Length == 0 ? null : current.InstallationStamp));
         var committed = current with
         {
             CurrentDeskId = target,
@@ -338,6 +388,13 @@ public sealed class RoomSessionKernel : IDisposable
             return BeginTransition(committed with { QueuedDeskId = null }, committed.QueuedDeskId);
         return committed with { QueuedDeskId = operable ? null : committed.QueuedDeskId,
             Revision = ++revision };
+    }
+
+    private static void ValidateRuntimePolicy(RoomSessionRuntimePolicy? policy)
+    {
+        if (policy is not null && (string.IsNullOrWhiteSpace(policy.InstallationStamp) || policy.InstallationStamp.Length > 128 ||
+            policy.TransitionTimeout < TimeSpan.FromSeconds(3) || policy.TransitionTimeout > TimeSpan.FromSeconds(12)))
+            throw new ArgumentException("Invalid native runtime policy", nameof(policy));
     }
 
     private RoomSessionSnapshot RequireSession() =>

@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Lively.Common;
 using Lively.Common.Exceptions;
@@ -90,7 +90,7 @@ namespace Lively.RPC
                 ? new RoomSessionStatusResponse { Active = false }
                 : new RoomSessionStatusResponse
                 {
-                    Active = true,
+                    Active = snapshot.IsActive,
                     ProtocolVersion = snapshot.ProtocolVersion,
                     RoomId = snapshot.RoomId,
                     SessionId = snapshot.SessionId.ToString("D"),
@@ -101,6 +101,15 @@ namespace Lively.RPC
                     TransitionId = snapshot.TransitionId?.ToString("D") ?? string.Empty,
                     Operable = snapshot.IsOperable,
                     PlayerPid = roomSessionRuntime.ActivePlayerPid,
+                    DeadlineUtc = snapshot.DeadlineUtc?.ToUniversalTime().ToString("O") ?? string.Empty,
+                    InstallationStamp = snapshot.InstallationStamp,
+                    Lifecycle = new RoomSessionLifecycleStatus
+                    {
+                        Stage = snapshot.Lifecycle.Stage.ToString().ToLowerInvariant(),
+                        PlaybackPaused = snapshot.Lifecycle.PlaybackPaused,
+                        Locked = snapshot.Lifecycle.Locked,
+                        Revision = snapshot.Lifecycle.Revision,
+                    },
                 });
         }
 

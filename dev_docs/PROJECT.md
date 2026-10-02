@@ -177,3 +177,7 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 V3-P5-001采用同一纯运行模型供生产DOM、预览和测试使用，不投影为v2。Core仍是Desk提交权威；作者以公开有界source/target/shared几何控制呈现，不操作官方DOM。组件按session+稳定ID持续，嵌套配置按字段继承；视口变化不覆写个人保存布局。生命周期使用stage加正交播放暂停/锁屏/可操作状态，避免组合恢复丢失。
 
 媒体Content补独立capabilities/buttonIds及消费者，不继承Room场景授权，保持背景/Dock/Widget相同动作同样核验。image/GIF start初始500ms；视频正常到ended，进度停滞30s降级；HTML done或60s。以上为本包明确裁定，实际交付仍以TODO/验收卡证据为准，最终集中验收可调整数值。
+
+### 2026-10-03 原生会话生命周期与恢复隔离
+
+Core快照新增安装戳与stage/paused/locked生命周期；前台可操作事实独立保存，实际operable要求desktop且未暂停/未锁屏。改变生命周期和提交动画目标在同一原子状态变更中完成，持久化失败保留全部旧状态。原生checkpoint以可选installationStamp扩展现有本机格式，旧版仅恢复无戳记录，原生仅恢复当前已验证安装戳；无匹配时按startDesk启动。重启新主Player可重播start，同一会话的切页/恢复不可重播。合法动画watchdog采用duration+2000ms且最少3000ms。

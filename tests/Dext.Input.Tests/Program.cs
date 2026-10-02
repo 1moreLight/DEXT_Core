@@ -14,6 +14,11 @@ if (args.Length == 2 && args[0] == "--v3-status") {
     return;
 }
 
+if (args.Length == 2 && args[0] == "--v3-wire") {
+    await RoomSessionWireProbe.Run(args[1]);
+    return;
+}
+
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.
 var window = Native.CreateWindowExW(0, "STATIC", "Dext input regression", 0,

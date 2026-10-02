@@ -135,7 +135,7 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             try
             {
-                var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId);
+                var result = kernel.Start(installation.RoomId, installation.DeskIds, installation.StartDeskId, installation.RuntimeContext?.Policy);
                 activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
                 connections[connectionId] = connection with { SessionId = result.SessionId };
                 ReleaseAllObservations();
@@ -153,7 +153,7 @@ internal sealed class RoomSessionProtocolGateway
             if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
             try
             {
-                if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result) || result is null)
+                if (!kernel.TryRestore(installation.RoomId, installation.DeskIds, out var result, installation.RuntimeContext?.Policy) || result is null)
                     return Reject(RoomProtocolStatus.Rejected);
                 activeBinding = new SessionBinding(result.SessionId, installation.RoomId, installation.InstallationStamp);
                 connections[connectionId] = connection with { SessionId = result.SessionId };
@@ -316,6 +316,24 @@ internal sealed class RoomSessionProtocolGateway
                 return kernel.SetOperable(sessionId, operable)
                     ? Accept(kernel.Snapshot!)
                     : Reject(RoomProtocolStatus.StaleSession);
+            }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
+    public RoomProtocolReply SetLifecycle(Guid connectionId, RoomSessionPeer peer, Guid sessionId,
+        RoomLifecycleStage stage, bool playbackPaused, bool locked)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            try
+            {
+                return kernel.SetLifecycle(sessionId, stage, playbackPaused, locked)
+                    ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected);
             }
             catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
         }

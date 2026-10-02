@@ -30,6 +30,14 @@ export interface V3SessionStatus {
   transition_id: string;
   operable: boolean;
   player_pid: number;
+  deadline_utc: string;
+  installation_stamp: string;
+  lifecycle: {
+    stage: "starting" | "desktop" | "idle";
+    playback_paused: boolean;
+    locked: boolean;
+    revision: number;
+  } | null;
 }
 
 export interface ActiveRoom {

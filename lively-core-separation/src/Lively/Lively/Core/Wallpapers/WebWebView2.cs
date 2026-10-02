@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
@@ -228,18 +228,7 @@ namespace Lively.Core.Wallpapers
         }
 
         private void SendRoomSessionSnapshot(RoomSessionSnapshot snapshot, string[] deskIds) =>
-            SendMessage(new LivelyMessageRoomSessionSnapshot
-            {
-                ProtocolVersion = snapshot.ProtocolVersion,
-                SessionId = snapshot.SessionId,
-                RoomId = snapshot.RoomId,
-                DeskIds = deskIds,
-                CurrentDeskId = snapshot.CurrentDeskId,
-                TargetDeskId = snapshot.TargetDeskId,
-                TransitionId = snapshot.TransitionId,
-                Revision = snapshot.Revision,
-                IsOperable = snapshot.IsOperable,
-            });
+            SendMessage(RoomSessionPlayerMessage.Create(snapshot, deskIds));
 
         public void SetVolume(int volume)
         {

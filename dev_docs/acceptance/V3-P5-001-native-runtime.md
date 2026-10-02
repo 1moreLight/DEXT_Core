@@ -41,3 +41,9 @@ Rust31/31、Core51/51及Schema正反例通过；此前合法声明实际被拒�
 当前私有Player桥可读取同一次安装校验冻结的公开清单/资源摘要；源替换、篡改、错误进程/角色、换安装/会话、关闭/撤销/销毁与旧版隔离回归通过。协议63/63、动作35/35，输入探针编译成功（两项已有nullable警告）。完整build→start/identity全OK：Core115664、Player125508、Watchdog122228、配置器29228；验证后全部正常退出，开发端口释放。
 
 当前启动仍恢复原用户v2作品；原生上下文尚未传入实际Player IPC/DOM。上方7步最终人工验收保持待执行；本次没有改写MSIroom或标记物理输入/DPI/生命周期已通过。
+
+## Task2生命周期与快照传输阶段（2026-10-03）
+
+内核17/17、协议65/65、动作35/35；隔离ReleasePlayer实测旧快照遗漏字段，修复后queue/deadline/install/active/lifecycle及空字段完整到页。完整Core/ReleasePlayer构建、Rust检查与前端构建成功；前端仍有共享依赖环境的Geist字体URL警告，不能计发布资源验收完成。
+
+当前分支start/identity全OK：Core103408、Player89868、Watchdog79488、配置器70980；真实命名管道v3-status=inactive符合现有v2恢复。验证后正常退出，进程/端口0。上方7项最终人工步骤仍待执行：Windows事件尚未接生命周期协调者，RuntimeContext尚未传入原生宿主，媒体/物理输入/布局/DPI/安全门槛未代填通过。

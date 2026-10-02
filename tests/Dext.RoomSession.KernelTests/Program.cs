@@ -267,5 +267,7 @@ Check("stopping a Room invalidates commands, notifies views and clears recovery"
     }
 });
 
+LifecycleChecks.Run(Check);
+
 Environment.ExitCode = failures == 0 ? 0 : 1;
 Console.WriteLine($"{total - failures}/{total} session checks passed");

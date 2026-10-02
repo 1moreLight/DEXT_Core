@@ -15,6 +15,7 @@ internal sealed class RoomRuntimeContext
     public string InstallationStamp { get; }
     public JsonElement Manifest { get; }
     public IReadOnlyList<RoomRuntimeResource> Resources { get; }
+    internal RoomSessionRuntimePolicy Policy { get; }
 
     private RoomRuntimeContext(JsonElement manifest, JsonElement inventory, string installationStamp)
     {
@@ -23,6 +24,10 @@ internal sealed class RoomRuntimeContext
         // The verifier owns and disposes both JsonDocuments. Keep our own frozen
         // value, never a filename which a later caller could read without hashing.
         Manifest = manifest.Clone();
+        var duration = manifest.TryGetProperty("transition", out var transition)
+            ? transition.GetProperty("durationMs").GetInt32() : 450;
+        Policy = new(installationStamp, manifest.TryGetProperty("start", out _),
+            TimeSpan.FromMilliseconds(Math.Max(3000, duration + 2000)));
         Resources = Array.AsReadOnly(inventory.EnumerateArray().Select(item => new RoomRuntimeResource(
             item.GetProperty("path").GetString()!, item.GetProperty("sha256").GetString()!,
             item.GetProperty("size").GetInt64())).ToArray());
