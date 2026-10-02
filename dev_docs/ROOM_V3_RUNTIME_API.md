@@ -120,3 +120,9 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 官方顶层宿主使用私有 `dext:v3-native-request` 的 `method: "capabilities"` 查询；字段仅为 type/protocolVersion/requestId/method/runtimeGeneration/sessionId/revision/consumer，不接受作者自报能力清单、授权、输入票据或本机路径。Player严格核对当前代次与修订，Core在同一个个人存储/安装/会话授权边界裁剪当前消费者的声明集；返回字段 `capabilities` 的每项为 Core 状态（accepted、missingPermission、notOperable等），整体失败不带能力集合。原生桥将查询修订传入权威，等待期间修订改变返回 staleInput。
 
 元数据是不可变副本，不是后续数据或动作的许可。暂停、锁屏、非前台使消费状态不可用；媒体槽仍按当前phase/Desk独立授权，Dock暂停例外保留且不绕锁屏。没有目标路径、参数、安装授权戳或个人修订。iframe的available/denied/unsupported视图必须从该Core结果与宿主实际实现能力合成；已授权但尚未实现只能unsupported。每次读取数据/动作仍要Core再次核验，宿主不可凭缓存元数据放行。生产DOM/消费者数据桥和真实人工步骤继续属于P5待办，本节不声称它们已完成。
+
+## 生产媒体适配器（2026-10-03，接线阶段）
+
+`media-host.js`以已验证资源解析器、当前Core快照读取器和启动完成回告为依赖，按模型instanceId保留节点；HTML挂载/状态/销毁交给iframe宿主。image/GIF start500ms、HTML done或60s、video ended或30s未加载/未进展降级；暂停/锁屏/非活动阶段不消耗计时，background/idle视频静音循环，idle持续至宿主唤醒。启动完成只携当前session、global/lifecycle修订回告，不自行提交Desk；失败每1s活动时间重试且仅一个进行中请求。旧播放Promise按当前意图收敛，不能停掉后来恢复的播放。
+
+当前生产模块已在隔离ReleasePlayer实际解码、计时和持续节点检查通过；该夹具的生命周期和完成回调仍是模拟Core。官方页面、作者SDK、原生挂起投递和生产Core的完整闭环仍待接线，不能把这些模块检查当作完整Room可用或人工验收通过。

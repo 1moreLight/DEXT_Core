@@ -7,6 +7,11 @@ if (args.Length == 2 && args[0] == "--v3-input-wire") { await NativeInputWirePro
 
 if (args.Length == 1 && args[0] == "--v3-input-messages") { NativeInputMessageChecks.Run(); return; }
 
+if (args.Length == 4 && args[0] == "--v3-media-host-wire") {
+    await ResourceWireProbe.Run(args[1], args[2], mediaHostFile: args[3]);
+    return;
+}
+
 if (args.Length >= 3 && args[0] == "--v3-resources-reject")
 {
     await ResourceWireProbe.Run(args[1], args[2], policyUnavailable: true);
@@ -49,6 +54,9 @@ if (args.Length == 3 && args[0] == "--v3-resources-wire") {
     await ResourceWireProbe.Run(args[1],args[2]);
     return;
 }
+
+if (args.Length > 1 || (args.Length == 1 && args[0].StartsWith("--", StringComparison.Ordinal)))
+    throw new ArgumentException("Unknown input probe mode or invalid argument count");
 
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.

@@ -1212,3 +1212,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 消费者能力元数据验证：动作77/77、原生输入消息27/27、内核22/22、协议86/86；完整Core/ReleasePlayer构建通过。实际ReleasePlayer新增能力查询/原生回包和伪声明/旧修订拒绝通过，原有同HWND闲置两分支及五组输入/启动/重载边界保持通过。
 - [x] 同分支start/identity全OK：Core123928/Player79032/Watchdog73352/配置器19264，日志20261003_063928.txt；恢复已有v2为inactive。正常退出Core与配置器，开发监听已停；生产DOM/逐次数据授权/几何握手及最终7项仍待继续，16项就绪仍1/16。
+
+- [x] Task3媒体宿主模块：按冻结D11时序测试先行，实现image/GIF/video/HTML槽的持续节点、暂停计时、结束/停滞降级和idle持续；HTML执行委托iframe宿主，完成只通知当前Core阶段。
+
+- [x] Task3媒体模块验证：生产共享模型/SDK/媒体合计40/40（14+14+12）；实际ReleasePlayer加载同一media-host.js，GIF500ms、3sMP4 ended、HTML done一次、同WebM节点暂停后继续前进/静音循环和idle HTML done拒绝通过。原生资源/撤销/重载四组保持通过；完成回调和阶段在该夹具中是模拟Core，生产DOM/iframe/Core联动未据此完成。
+- [x] 最新完整build→start/identity通过：Core54504/Player60004/Watchdog89832/配置器98692，日志20261003_070458.txt；已有v2恢复inactive。验证后正常退出Core/配置器并停止开发监听。
+- [ ] Task3继续：官方index/main/style/LivelyInfo、逐实例iframe/SDK路由、Core逐次数据/动作、默认/作者过渡与几何握手；原生挂起消息的媒体计时暂停及生产Core启动/闲置仍要实际整体验证。Task4/最终7项和16项全景保持未完成。

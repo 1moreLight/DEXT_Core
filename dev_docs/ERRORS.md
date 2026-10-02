@@ -200,3 +200,6 @@
 
 | #158 | SetParent自动加入WS_CLIPSIBLINGS，原始样式须在重挂后再恢复 | [backend](errors/backend.md) |
 | #159 | GetParent返回popup owner；重挂置顶回执成功但实际TOPMOST缺失 | [backend](errors/backend.md) |
+
+| #160 | 迟到的旧play Promise按旧epoch暂停了新播放意图 | [renderer](errors/renderer.md) |
+| #161 | 非行锚插入失败后仍运行未知探针模式，默认输入PASS冒充媒体 | [toolchain](errors/toolchain.md) |

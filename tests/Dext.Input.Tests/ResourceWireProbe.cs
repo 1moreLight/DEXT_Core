@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 internal static class ResourceWireProbe
 {
-    public static async Task Run(string player,string mediaDirectory,bool policyUnavailable=false)
+    public static async Task Run(string player,string mediaDirectory,bool policyUnavailable=false,string? mediaHostFile=null)
     {
         var root=Directory.CreateTempSubdirectory("Dext-v3-resource-wire-");
         try
@@ -57,6 +57,41 @@ internal static class ResourceWireProbe
                 });
                 send({ready:true});
                 """);
+            if(mediaHostFile!=null) {
+                File.Copy(Path.GetFullPath(mediaHostFile),Path.Combine(root.FullName,"media-host.js"));
+                File.WriteAllText(Path.Combine(root.FullName,"index.html"),"<!doctype html><title>native media host probe</title><script src=media-host.js defer></script><script src=main.js defer></script>");
+                var script=Path.Combine(root.FullName,"main.js");
+                File.WriteAllText(script,File.ReadAllText(script).Replace("send({resources:report});","report.mediaHost=await mediaHostChecks(runtime);send({resources:report});")+"\n"+"""
+                async function mediaHostChecks(runtime){
+                  const base=runtime.resourceBasePath,report={},frames=new Map();
+                  const snapshot={sessionId:runtime.sessionId,revision:1,active:true,lifecycle:{stage:'starting',playbackPaused:false,locked:false,revision:1}};
+                  const root=document.createElement('section');document.body.append(root);
+                  const waitFor=test=>guard(new Promise(resolve=>{const poll=()=>test()?resolve():setTimeout(poll,20);poll();}));
+                  let completed=[];
+                  const host=DextMediaHost.createMediaHost({document,getSnapshot:()=>snapshot,
+                    resolveResource:path=>{if(!runtime.resources.some(resource=>resource.path===path))throw Error('not declared');return base+path;},
+                    onStartupComplete:value=>{completed.push(value);return {status:'accepted'};},
+                    mountHTML:(definition,parent)=>{const frame=document.createElement('iframe');frame.sandbox='allow-scripts';frame.src=definition.resourceUrl;frames.set(definition.instanceId,frame);parent.append(frame);return frame;},
+                    setHTMLState:(id,state)=>{frames.get(id).inert=state!=='active';},disposeHTML:id=>{frames.get(id).remove();frames.delete(id);}});
+                  const mount=(id,type,path,consumerId='slot.start')=>host.mount({instanceId:id,consumerId,state:'active',content:{type,src:path}},root);
+                  try{
+                    const start=performance.now(),gif=mount('gif','gif','scene/animation.gif');await waitFor(()=>completed.length===1);
+                    report.gif={width:gif.naturalWidth,elapsed:performance.now()-start,reason:completed[0].reason};host.disposeInstance('gif');
+                    completed=[];const video=mount('video','video','scene/clip.mp4');await waitFor(()=>completed.length===1);
+                    report.video={ended:video.ended,duration:video.duration,time:video.currentTime,reason:completed[0].reason};host.disposeInstance('video');
+                    completed=[];const frame=mount('html','html','scene/media.html');await guard(new Promise(resolve=>frame.addEventListener('load',resolve,{once:true})));
+                    report.html=host.completeHTML('html');await waitFor(()=>completed.length===1);report.htmlOnce=host.completeHTML('html')===false;report.snapshotUntouched=snapshot.lifecycle.stage==='starting';host.disposeInstance('html');
+                    snapshot.lifecycle.stage='desktop';const background=mount('background','video','scene/clip.webm','slot.background.home');await waitFor(()=>background.currentTime>.1);
+                    host.setState('background','suspended');report.paused=background.paused;const stoppedAt=background.currentTime;host.setState('background','active');await waitFor(()=>background.currentTime>stoppedAt+.1);report.resumed=true;
+                    report.retained=mount('background','video','scene/clip.webm','slot.background.home')===background;report.loop=background.loop&&background.muted;
+                    snapshot.lifecycle.stage='idle';host.refresh();const idle=mount('idle','html','scene/media.html','slot.idle');report.idleDone=host.completeHTML('idle');report.idleRetained=idle===mount('idle','html','scene/media.html','slot.idle');
+                    return report;
+                  }finally{host.dispose();root.remove();}
+                }
+                """);
+                File.WriteAllText(Path.Combine(content.FullName,"media.html"),"<!doctype html><p>Static media host frame</p>");
+            }
+
             if(policyUnavailable) {
                 var script=Path.Combine(root.FullName,"main.js");
                 File.WriteAllText(script,"globalThis.ReportingObserver=undefined;\n"+File.ReadAllText(script));
@@ -111,6 +146,14 @@ internal static class ResourceWireProbe
                 if((int?)report["long"]?["status"]!=200||(string?)report["long"]?["text"]!="长路径"||(string?)report["unicode"]?["text"]!="中文内容")throw new Exception("path encoding: "+report);
                 var frame=report["frame"]!;if((string?)frame["allowed"]!="0123456789"||new[]{"external","worker","shared","service","webrtc"}.Any(key=>(bool?)frame[key]!=true))throw new Exception("frame boundary: "+report);
                 if((int?)report["gif"]!=320||new[]{"mp4","webm"}.Any(key=>report[key]?["time"]?.Type!=JTokenType.Float || (double)report[key]!["time"]!<1.6 || (double?)report[key]?["duration"]!=3)||(string?)report["font"]!="loaded")throw new Exception("media: "+report);
+                if(mediaHostFile!=null) {
+                    var adapter=report["mediaHost"]??throw new Exception("missing production media adapter report");
+                    if((int?)adapter["gif"]?["width"]!=320 || (double?)adapter["gif"]?["elapsed"]<450 || (string?)adapter["gif"]?["reason"]!="gifElapsed" ||
+                        (bool?)adapter["video"]?["ended"]!=true || (double?)adapter["video"]?["duration"]!=3 || (double?)adapter["video"]?["time"]<2.9 || (string?)adapter["video"]?["reason"]!="videoEnded" ||
+                        new[]{"html","htmlOnce","paused","retained","loop","idleRetained","snapshotUntouched","resumed"}.Any(key=>(bool?)adapter[key]!=true) || (bool?)adapter["idleDone"]!=false)
+                        throw new Exception("production media adapter: "+adapter);
+                    Console.WriteLine("PASS production media-host.js in actual ReleasePlayer: GIF500ms, real3s MP4 ended, delegated HTML done once, retained muted-loop WebM suspend/resume, idle HTML done denied; completion callback does not commit Core");
+                }
                 Console.WriteLine("PASS native ReleasePlayer declared fetch/Range/GIF/font and MP4/WebM playback+seek; undeclared/tampered/private/external/worker/frame-native access rejected; browser-enforced WebRTC policy in top and sandbox frame");
                 await Send(new LivelyMessageRoomRuntimeRevoke{RuntimeGeneration=1,SessionId=context.SessionId,RoomId=context.RoomId,InstallationStamp=context.InstallationStamp});
                 await Send(new LivelyMessageSystemControlResponse{RequestId="revoked",PermissionsJson="{\"command\":\"revoked\"}"});var revoked=await Next();if((int?)revoked["revoked"]?["status"]!=403)throw new Exception("revoked read: "+revoked);
