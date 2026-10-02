@@ -802,6 +802,25 @@ Check("installed Room admission binds the spawned Player and revokes changed con
     finally { directory.Delete(recursive: true); }
 });
 
+Check("native runtime context excludes Dock and legacy overlay sessions", () =>
+{
+    using var kernel = new RoomSessionKernel();
+    var gateway = new RoomSessionProtocolGateway(kernel, new TestAdmissionAuthority());
+    var control = new RoomSessionPeer("core-1");
+    var coordinator = gateway.Open(control, new RoomSessionHello(1, RoomClientRole.Coordinator, "install-a"));
+    var session = gateway.Start(coordinator.ConnectionId!.Value, control).Snapshot!;
+    foreach (var (transport, role, expected) in new[] {
+        ("dock-1", RoomClientRole.Dock, RoomProtocolStatus.Forbidden),
+        ("player-1", RoomClientRole.DesktopPlayer, RoomProtocolStatus.Rejected) })
+    {
+        var peer = new RoomSessionPeer(transport);
+        var connection = gateway.Open(peer, new RoomSessionHello(1, role, "install-a"));
+        Equal(expected, gateway.ReadRuntimeContext(connection.ConnectionId!.Value, peer, session.SessionId, out var context),
+            "only native desktop sessions receive runtime manifests");
+        Equal(null, context, "denied context is empty");
+    }
+});
+
 NativeInstallationChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);

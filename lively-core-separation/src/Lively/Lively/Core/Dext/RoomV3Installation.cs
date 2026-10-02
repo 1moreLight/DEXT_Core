@@ -53,7 +53,8 @@ internal static class RoomV3Installation
         Require(actual.SetEquals(paths), "undeclared or missing resources");
         var stamp = Hash(Encoding.UTF8.GetBytes(directory.TrimEnd(Path.DirectorySeparatorChar).ToUpperInvariant() + "|" + Hash(snapshotBytes)));
         return new VerifiedRoomInstallation(Text(room, "id"), stamp,
-            Array(room, "desks", 64).Select(d => Text(d, "id")).ToArray(), Text(room, "startDesk"), RoomActionCatalog.FromVerifiedManifest(room));
+            Array(room, "desks", 64).Select(d => Text(d, "id")).ToArray(), Text(room, "startDesk"), RoomActionCatalog.FromVerifiedManifest(room),
+            RoomRuntimeContext.FromVerifiedManifest(room, installed.GetProperty("resources"), stamp));
     }
 
     private static HashSet<string> ValidateManifest(JsonElement room)

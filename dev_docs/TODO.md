@@ -1159,4 +1159,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 集中人工确认前保持未合并；全16项按实际完整证据记就绪。
 
 - [x] Task2阶段：Content媒体槽声明在Rust/Core/Schema同步校验，实际RED→GREEN31/31、51/51及Schema通过；完整Core/ReleasePlayer构建通过（2026-10-03）。
-- [ ] Task2运行门槛：启动脚本识别绑定分支Core67720占用并拒绝连错；原生上下文/生命周期/slot消费者接通后再切换运行并验证，不代填成功。
+- [x] Task2媒体槽声明阶段运行门槛：用户授权退出旧绑定分支后，P5实际启动/identity通过；此前Core67720占用已解除。原生v3生命周期/slot/真实输入仍按Task2待办推进。
+
+- 2026-10-03运行补证：用户明确授权退出；正常关闭绑定分支旧实例后，P5启动成功，Core104084/ReleasePlayer68604/Watchdog116972/配置器102068及mutex/pipe/data/log身份全OK。随后正常退出Core并停止本轮开发监听，进程与1620端口均已释放。此证据为已有v2恢复链，原生v3完整人工门槛仍待执行。
+- [x] Task2阶段：同一已验证清单生成不可变RuntimeContext，私有Player连接读取时复核进程/安装/会话；协议63/63、动作35/35、输入探针编译、完整build→start/identity通过。尚未接到Player IPC/DOM。
+
+- [ ] Task2下一步：生命周期及全局revision、安装动画watchdog、stage-aware媒体消费者与196授权配额；把完整上下文/快照接入原生IPC，再接资源与物理输入边界。

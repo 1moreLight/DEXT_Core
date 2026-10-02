@@ -1,6 +1,6 @@
 # Room v3 作者 API v1
 
-> V3-P5-001 Task1：SDK和纯运行模型已实现；真实Core/Player上下文、资源/输入边界与DOM适配仍在本包后续Task2–4。SDK测试不代表原生宿主已经交付。状态见V3_DELIVERY。
+> V3-P5-001开发中：SDK、纯运行模型及Core已验证不可变RuntimeContext/私有Player读取已实现；Player IPC、资源/输入边界与DOM适配仍在Task2–4。自动测试不代表原生宿主已经交付。状态见V3_DELIVERY。
 
 ## 作者接入
 
@@ -70,3 +70,7 @@ addEventListener('pagehide', () => { releases.forEach(release => release()); Dex
 新Room以startDesk开始；同安装重启恢复已提交Desk。start仅新主Player文档建立时播放，切页/idle/暂停/锁屏恢复不重播。image/GIF start初始缺省500ms；video播放至ended，30s加载/停滞无进展降级；HTML done或60s超时进入已确定Desk。background持续（video静音循环），idle持续至宿主唤醒；无idle保留桌面。共享场景/组件暂停而不重建，恢复与Core状态一致。
 
 这些缺省写入P5 ledger和PROJECT，最终集中验收可调整。合法长视频没有总时长60s截断。
+
+## Core运行上下文边界
+
+RoomV3Installation在同一清单与资源摘要校验完成后冻结公开Manifest和资源path/sha256/size；不携带绝对安装目录或个人绑定目标。RoomSessionPlayerBridge.ReadRuntimeContext只允许当前原生DesktopPlayer私有连接，重新核对进程、安装戳和session；旧连接、已撤销安装、篡改或旧版开发覆盖层不返回上下文。该对象供官方宿主使用，不能整体当作iframe授权；后续宿主仍必须按消费者裁剪并核验每次能力/动作请求。

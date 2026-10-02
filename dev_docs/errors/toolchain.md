@@ -266,3 +266,7 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 - 现象：工作区测试通过；`git cat-file --filters HEAD:...`显示Windows新检出转CRLF，清单和SVG摘要都变。
 - 修复：`.gitattributes`将room-v3安装夹具标为`-text`，按原始字节保存。
 - 检查：测试实际Gitcheckout filter结果SHA256，不只对现有工作文件求摘要；新共享Unicode夹具同样遵守该规则。
+
+## #137 共享Rust目标目录需在每个新命令显式传递（2026-10-03）
+
+PowerShell工具调用的进程环境不跨调用继承。本轮start未设置CARGO_TARGET_DIR，误在worktree生成约1.72GiB临时target；随后identity独立命令未设置同值，会把实际共享目录配置器标OTHER。停止本轮进程后改为每次start与identity都显式设置D:\use\Orca\DEXT\build-cache\v3-player-bridge，重跑全项OK；确认临时target绝对路径位于本worktree且非reparse point后删除重复缓存，保留共享缓存。

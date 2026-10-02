@@ -316,3 +316,7 @@ V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允�
 ## #133 缓存上下文跨过撤销的动作派发（2026-10-03）
 
 现象：35项最终回归前，关闭/停止/暂停/安装解绑替换及个人grant/target/revision修改8项实际失败（25/33）。原因：Context和个人Read分别释放锁后，旧上下文仍用于后续启动。修复：在短同步准备边界保护私有快照、gateway、安装权威和kernel当前状态，消耗票据返回不可变计划；原生launch/gateway.Request在所有锁外执行。gateway竞争时不持私有锁阻塞，释放后重试，防观察者反向读个人数据死锁。单调过期在等待后再次核验。35/35、协议46/46、内核10/10及Explorer实际启动通过。规则：撤销在准备提交前生效则拒绝；已提交动作可能完成，后续撤销影响未来动作。以后不能只补一次快照重读，必须保留线性准备边界及共享锁外副作用。
+
+## #136 输入探针显式源码依赖未同步（2026-10-03）
+
+Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCatalog/RoomActionContext后，探针未同步Compile Include，还原依赖后真实编译出现4项CS0246。本轮补RoomActionCatalog与RuntimeContext源文件引用。新增协议依赖时检查所有链接该源文件的csproj，不能只验证主Core和协议测试项目。

@@ -22,9 +22,11 @@ internal sealed class VerifiedRoomInstallation
     public IReadOnlyList<string> DeskIds { get; }
     public string StartDeskId { get; }
     public RoomActionCatalog? ActionCatalog { get; }
+    public RoomRuntimeContext? RuntimeContext { get; }
 
     public VerifiedRoomInstallation(string roomId, string installationStamp,
-        IReadOnlyList<string> deskIds, string startDeskId, RoomActionCatalog? actionCatalog = null)
+        IReadOnlyList<string> deskIds, string startDeskId, RoomActionCatalog? actionCatalog = null,
+        RoomRuntimeContext? runtimeContext = null)
     {
         if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("Installed Room ID is required", nameof(roomId));
         if (string.IsNullOrWhiteSpace(installationStamp))
@@ -38,6 +40,7 @@ internal sealed class VerifiedRoomInstallation
         DeskIds = Array.AsReadOnly(deskIds.ToArray());
         StartDeskId = startDeskId;
         ActionCatalog = actionCatalog;
+        RuntimeContext = runtimeContext;
     }
 }
 
@@ -204,6 +207,23 @@ internal sealed class RoomSessionProtocolGateway
             return true;
         }
         finally { Monitor.Exit(gate); }
+    }
+
+    internal RoomProtocolStatus ReadRuntimeContext(Guid connectionId, RoomSessionPeer peer,
+        Guid sessionId, out RoomRuntimeContext? context)
+    {
+        lock (gate)
+        {
+            context = null;
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error.Status;
+            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return RoomProtocolStatus.Forbidden;
+            if (!TryCurrentSession(connection, out var current, out error)) return error.Status;
+            if (current.SessionId != sessionId) return RoomProtocolStatus.StaleSession;
+            // Legacy development overlays have no native verified manifest.
+            if (installation.RuntimeContext is null) return RoomProtocolStatus.Rejected;
+            context = installation.RuntimeContext;
+            return RoomProtocolStatus.Accepted;
+        }
     }
 
     public RoomProtocolReply Read(Guid connectionId, RoomSessionPeer peer)

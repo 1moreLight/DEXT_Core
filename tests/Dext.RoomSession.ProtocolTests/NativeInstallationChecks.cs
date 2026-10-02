@@ -6,6 +6,75 @@ internal static class NativeInstallationChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("native runtime context survives source replacement without rereading the manifest", () => WithCopy(root =>
+        {
+            PrepareHtmlSlots(root);
+            var installation = new InstalledRoomSessionAuthority().Bind(root, 7123)!;
+            var context = installation.RuntimeContext ?? throw new Exception("no verified runtime context");
+            File.WriteAllText(Path.Combine(root, "room.json"), "{}");
+            if (context.RoomId != installation.RoomId || context.InstallationStamp != installation.InstallationStamp ||
+                context.Manifest.GetProperty("startDesk").GetString() != "home" ||
+                context.Manifest.GetProperty("start").GetProperty("buttonIds")[0].GetString() != "next")
+                throw new Exception("runtime lost the exact verified public declarations");
+            if (context.Resources.Count != 2 || !context.Resources.Any(item => item.Path == "scene/index.html" &&
+                item.Sha256 == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(root, item.Path)))).ToLowerInvariant() &&
+                item.Size == new FileInfo(Path.Combine(root, item.Path)).Length))
+                throw new Exception("verified resource inventory was lost");
+            if (System.Text.Json.JsonSerializer.Serialize(context).Contains(System.Text.Json.JsonSerializer.Serialize(root).Trim('"'), StringComparison.OrdinalIgnoreCase))
+                throw new Exception("runtime context exposes the private installation path");
+        }));
+        check("current Player receives verified runtime context through its private bridge", () => WithCopy(root =>
+        {
+            var authority = new InstalledRoomSessionAuthority();
+            var installation = authority.Bind(root, 7123)!;
+            using var kernel = new RoomSessionKernel();
+            var gateway = new RoomSessionProtocolGateway(kernel, authority);
+            var control = new RoomSessionPeer("core-runtime");
+            var connection = gateway.Open(control, new RoomSessionHello(1, RoomClientRole.Coordinator, installation.RoomId));
+            var session = gateway.Start(connection.ConnectionId!.Value, control).Snapshot!;
+            if (RoomSessionPlayerBridge.Connect(gateway, new RoomSessionPeer("player-process:7123"),
+                installation.RoomId, _ => { }, out var bridge) != RoomProtocolStatus.Accepted || bridge is null)
+                throw new Exception("Player did not connect");
+            using (bridge)
+            {
+                if (bridge.ReadRuntimeContext(session.SessionId, out var context) != RoomProtocolStatus.Accepted ||
+                    context?.InstallationStamp != installation.InstallationStamp || context.Manifest.GetProperty("desks").GetArrayLength() != 2)
+                    throw new Exception("Player received no matching runtime context");
+                if (bridge.ReadRuntimeContext(Guid.NewGuid(), out context) != RoomProtocolStatus.StaleSession || context is not null)
+                    throw new Exception("wrong session received runtime context");
+            }
+            if (bridge.ReadRuntimeContext(session.SessionId, out var afterClose) != RoomProtocolStatus.StaleSession || afterClose is not null)
+                throw new Exception("disposed bridge retained runtime access");
+        }));
+        foreach (var change in new[] { "peer", "role", "session", "manifest", "resource", "replacement", "player", "unbind", "close" })
+            check("runtime context denies stale or unauthorized access: " + change, () => WithCopy(root =>
+            {
+                var authority = new InstalledRoomSessionAuthority();
+                var installation = authority.Bind(root, 7123)!;
+                using var kernel = new RoomSessionKernel();
+                var gateway = new RoomSessionProtocolGateway(kernel, authority);
+                var control = new RoomSessionPeer("core-runtime");
+                var coordinator = gateway.Open(control, new RoomSessionHello(1, RoomClientRole.Coordinator, installation.RoomId)).ConnectionId!.Value;
+                var session = gateway.Start(coordinator, control).Snapshot!;
+                var peer = new RoomSessionPeer("player-process:7123");
+                var connection = gateway.Open(peer, new RoomSessionHello(1, RoomClientRole.DesktopPlayer, installation.RoomId)).ConnectionId!.Value;
+                switch (change)
+                {
+                    case "peer": peer = new RoomSessionPeer("player-process:7124"); break;
+                    case "role": connection = coordinator; peer = control; break;
+                    case "session": gateway.Start(coordinator, control); break;
+                    case "manifest": File.AppendAllText(Path.Combine(root, "room.json"), " "); break;
+                    case "resource": File.AppendAllText(Path.Combine(root, "assets/background.svg"), " "); break;
+                    case "replacement": PrepareHtmlSlots(root); break;
+                    case "player": authority.Bind(root, 7124); break;
+                    case "unbind": authority.Unbind(7123); break;
+                    case "close": gateway.Close(connection, peer); break;
+                }
+                var expected = change switch { "role" => RoomProtocolStatus.Forbidden,
+                    "session" or "close" => RoomProtocolStatus.StaleSession, _ => RoomProtocolStatus.Denied };
+                if (gateway.ReadRuntimeContext(connection, peer, session.SessionId, out var context) != expected || context is not null)
+                    throw new Exception("unauthorized or stale read exposed runtime context");
+            }));
         check("Core accepts declared HTML slot capabilities and button references", () => WithCopy(root =>
         {
             PrepareHtmlSlots(root);

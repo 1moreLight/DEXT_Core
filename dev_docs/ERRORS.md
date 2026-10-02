@@ -161,3 +161,7 @@
 |---|---|---|
 | #134 | 消费者重报同一几何仍递增版本，会形成全实例通知/重报循环 | [renderer](errors/renderer.md) |
 | #135 | SDK初始化回调中销毁后仍发ready，已销毁ready返回旧身份 | [renderer](errors/renderer.md) |
+
+| #136 | 输入探针显式链接Protocol源码但遗漏新增依赖，独立编译出现CS0246 | [backend](errors/backend.md) |
+
+| #137 | 新命令未重设CARGO_TARGET_DIR，重复生成本地target且identity误报配置器OTHER | [toolchain](errors/toolchain.md) |
