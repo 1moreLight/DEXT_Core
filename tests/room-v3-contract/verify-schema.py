@@ -17,3 +17,18 @@ for name in ("v3-basic", "v3-continuous"):
         mutation(invalid)
         assert list(validator.iter_errors(invalid)), "schema accepted invalid manifest"
 print("PASS v3 schema: both native samples; version, private-field and identity negatives")
+
+room = json.loads((root / "rooms/v3-continuous/room.json").read_text(encoding="utf-8"))
+for key in ("start", "idle", "background"):
+    candidate = copy.deepcopy(room)
+    content = {"type": "html", "src": "scene/index.html", "capabilities": ["desk.read", "binding.launch"], "buttonIds": ["navigate"]}
+    parent = candidate["desks"][0] if key == "background" else candidate
+    parent[key] = content
+    validator.validate(candidate)
+    for field, value in (("capabilities", ["file.read"]), ("capabilities", ["desk.read", "desk.read"]),
+                         ("buttonIds", ["navigate", "navigate"]), ("buttonIds", None)):
+        changed = copy.deepcopy(candidate)
+        target = changed["desks"][0] if key == "background" else changed
+        target[key][field] = value
+        assert list(validator.iter_errors(changed)), f"schema accepted invalid {key}.{field}"
+print("PASS v3 schema: start/idle/background declarations and 12 invalid-shape cases")

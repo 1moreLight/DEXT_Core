@@ -10,7 +10,7 @@
 
 ## 画面与组件
 
-`roomScene`可选，`entry`指向持续运行的本地HTML；无此字段时官方模板直接渲染Desk背景。`background`、可选`start`和`idle`采用`{type,src}`，支持image/video/gif/html。默认`transition`为slide/fade/none，时长0..10000毫秒；author要求共享Room场景，完成与超时仲裁仍由Core决定。
+`roomScene`可选，`entry`指向持续运行的本地HTML；无此字段时官方模板直接渲染Desk背景。`background`、可选`start`和`idle`采用`{type,src,capabilities?,buttonIds?}`，支持image/video/gif/html。capabilities与buttonIds缺省为空，按钮引用必须存在且不重复；声明不自动授予权限。默认`transition`为slide/fade/none，时长0..10000毫秒；author要求共享Room场景，完成与超时仲裁仍由Core决定。
 
 组件在顶层声明`id/role/entry/placement/capabilities`，role为widget或dock；可公开config和buttonIds。placement使用1920×1080设计画布。Desk按ID选择组件；componentOverrides只保存该Desk更改的公开配置字段，其他字段继承共享值。原生Dock引用`dockComponentId`，Windows显示模式是独立本机偏好。
 

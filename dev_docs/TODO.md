@@ -1157,3 +1157,6 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] Task3：真实DOM宿主持续实例、同步默认/作者过渡、四类媒体、生产浏览器与ReleasePlayer安全验证。
 - [ ] Task4：个人布局、版本化命中与占用、DPI/缩屏恢复、WorkerW真实闭环及一次独立审查。
 - [ ] 集中人工确认前保持未合并；全16项按实际完整证据记就绪。
+
+- [x] Task2阶段：Content媒体槽声明在Rust/Core/Schema同步校验，实际RED→GREEN31/31、51/51及Schema通过；完整Core/ReleasePlayer构建通过（2026-10-03）。
+- [ ] Task2运行门槛：启动脚本识别绑定分支Core67720占用并拒绝连错；原生上下文/生命周期/slot消费者接通后再切换运行并验证，不代填成功。

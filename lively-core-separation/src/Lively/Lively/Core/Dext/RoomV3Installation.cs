@@ -73,7 +73,8 @@ internal static class RoomV3Installation
             (!html || path.EndsWith(".html", StringComparison.Ordinal)), "undeclared entry");
         void Content(JsonElement value)
         {
-            Fields(value, "type src"); var src = Text(value, "src"); Entry(src);
+            Fields(value, "type src capabilities buttonIds"); var src = Text(value, "src"); Entry(src);
+            ValidateCapabilities(value);
             var ext = Path.GetExtension(src).ToLowerInvariant();
             Require(Text(value, "type") switch {
                 "html" => ext == ".html", "gif" => ext == ".gif", "video" => ext is ".mp4" or ".webm",
@@ -116,6 +117,10 @@ internal static class RoomV3Installation
                     : !Optional(action, "deskId", out _), "action Desk");
             }
         }
+        foreach (var name in new[] { "start", "idle" })
+            if (Optional(room, name, out var content)) References(Array(content, "buttonIds", 1024, true), buttons.Keys);
+        foreach (var desk in desks)
+            if (Optional(desk, "background", out var content)) References(Array(content, "buttonIds", 1024, true), buttons.Keys);
         var components = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var component in Array(room, "components", 128, true))
         {

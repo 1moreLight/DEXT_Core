@@ -24,7 +24,9 @@
     "path": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\\\:*?\"<>|%#\\u0000-\\u001f]+$"},
     "capabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["desk.read", "desk.navigate", "time.read", "hardware.read", "media.read", "media.control", "audio.read", "audio.control", "storage.read", "storage.write", "binding.launch", "dext.exit"]}},
     "content": {"type": "object", "additionalProperties": false, "required": ["type", "src"], "properties": {
-      "type": {"enum": ["image", "video", "gif", "html"]}, "src": {"$ref": "#/$defs/path"}}},
+      "type": {"enum": ["image", "video", "gif", "html"]}, "src": {"$ref": "#/$defs/path"},
+      "capabilities": {"$ref": "#/$defs/capabilities"},
+      "buttonIds": {"type": "array", "maxItems": 1024, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}}},
     "scene": {"type": "object", "additionalProperties": false, "required": ["entry"], "properties": {
       "entry": {"$ref": "#/$defs/path"}, "capabilities": {"$ref": "#/$defs/capabilities"}, "config": {"type": "object"}}},
     "placement": {"type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"], "properties": {

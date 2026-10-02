@@ -6,6 +6,35 @@ internal static class NativeInstallationChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("Core accepts declared HTML slot capabilities and button references", () => WithCopy(root =>
+        {
+            PrepareHtmlSlots(root);
+            if (new InstalledRoomSessionAuthority().Bind(root, 7123) is null)
+                throw new Exception("valid start/idle/background declarations rejected");
+        }));
+        foreach (var mutation in new[] { "unknownCapability", "duplicateCapability", "missingButton", "duplicateButton" })
+            check("Core rejects invalid HTML slot declarations: " + mutation, () => WithCopy(root =>
+            {
+                PrepareHtmlSlots(root);
+                if (new InstalledRoomSessionAuthority().Bind(root, 7123) is null)
+                    throw new Exception("valid slot baseline rejected");
+                var path = Path.Combine(root, "room.json");
+                var room = JsonNode.Parse(File.ReadAllText(path))!;
+                var button = room["buttons"]![0]!["id"]!.GetValue<string>();
+                foreach (var content in new[] { room["start"]!, room["idle"]!, room["desks"]![0]!["background"]! })
+                {
+                    var key = mutation.Contains("Capability") ? "capabilities" : "buttonIds";
+                    content[key] = mutation switch {
+                        "unknownCapability" => new JsonArray("file.read"),
+                        "duplicateCapability" => new JsonArray("desk.read", "desk.read"),
+                        "missingButton" => new JsonArray("missing"), _ => new JsonArray(button, button)
+                    };
+                }
+                File.WriteAllText(path, room.ToJsonString());
+                RefreshSnapshot(root);
+                if (new InstalledRoomSessionAuthority().Bind(root, 7123) is not null)
+                    throw new Exception("invalid slot declaration admitted");
+            }));
         check("Core reader retains directories and rejects concurrent byte replacement", () => WithCopy(root =>
         {
             using var reader = RoomV3Installation.OpenResource(root, "assets/background.svg");
@@ -100,6 +129,36 @@ internal static class NativeInstallationChecks
                 if (new InstalledRoomSessionAuthority().Bind(root, 7123) is not null)
                     throw new Exception("structurally invalid manifest admitted despite matching hash");
             }));
+    }
+
+    private static void PrepareHtmlSlots(string root)
+    {
+        var path = Path.Combine(root, "room.json");
+        var room = JsonNode.Parse(File.ReadAllText(path))!;
+        Directory.CreateDirectory(Path.Combine(root, "scene"));
+        File.WriteAllText(Path.Combine(root, "scene/index.html"), "<!doctype html><title>slot</title>");
+        room["resources"]!.AsArray().Add("scene/index.html");
+        var content = new JsonObject { ["type"] = "html", ["src"] = "scene/index.html",
+            ["capabilities"] = new JsonArray("desk.read", "binding.launch"),
+            ["buttonIds"] = new JsonArray(room["buttons"]![0]!["id"]!.GetValue<string>()) };
+        room["start"] = content.DeepClone(); room["idle"] = content.DeepClone();
+        room["desks"]![0]!["background"] = content.DeepClone();
+        File.WriteAllText(path, room.ToJsonString());
+        RefreshSnapshot(root);
+    }
+    private static void RefreshSnapshot(string root)
+    {
+        var room = JsonNode.Parse(File.ReadAllText(Path.Combine(root, "room.json")))!;
+        var records = new JsonArray();
+        foreach (var item in room["resources"]!.AsArray().Select(item => item!.GetValue<string>()).OrderBy(value => value, StringComparer.Ordinal))
+        {
+            var path = Path.Combine(root, item);
+            records.Add(new JsonObject { ["path"] = item,
+                ["sha256"] = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant(), ["size"] = new FileInfo(path).Length });
+        }
+        File.WriteAllText(Path.Combine(root, "installation.json"), new JsonObject { ["formatVersion"] = 1,
+            ["roomId"] = room["id"]!.GetValue<string>(), ["manifestSha256"] = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(root, "room.json")))).ToLowerInvariant(),
+            ["resources"] = records }.ToJsonString());
     }
 
     private static void WithCopy(Action<string> test, string fixture = "installed-basic")

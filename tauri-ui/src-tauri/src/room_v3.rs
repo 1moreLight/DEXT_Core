@@ -749,6 +749,10 @@ pub struct Content {
     #[serde(rename = "type")]
     pub kind: String,
     pub src: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub capabilities: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub button_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1064,6 +1068,7 @@ pub fn validate_manifest(value: &Value) -> Result<Manifest, String> {
             "video" => ["mp4", "webm"].contains(&ext.as_str()),
             _ => ["png", "jpg", "jpeg", "webp", "svg", "avif", "gif"].contains(&ext.as_str()),
         };
+        capabilities(&value.capabilities)?;
         require(valid, "content type does not match resource extension")
     };
     let mut ids = HashSet::new();
@@ -1142,6 +1147,15 @@ pub fn validate_manifest(value: &Value) -> Result<Manifest, String> {
                 },
                 "invalid action Desk reference",
             )?;
+        }
+    }
+    for content in [&room.start, &room.idle].into_iter().flatten()
+        .chain(room.desks.iter().filter_map(|desk| desk.background.as_ref())) {
+        require(content.button_ids.len() <= 1024, "too many content button references")?;
+        let mut refs = HashSet::new();
+        for id in &content.button_ids {
+            require(buttons.contains_key(id.as_str()) && refs.insert(id),
+                "content has duplicate or missing button reference")?;
         }
     }
     let mut components = BTreeMap::new();

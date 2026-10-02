@@ -402,6 +402,50 @@ mod tests {
                      {"id":"desk-b","name":"Second","icons":[],"components":[]}]})
     }
 
+    fn slot_room() -> Value {
+        let mut room = minimal();
+        room["resources"] = json!(["scene/index.html"]);
+        room["buttons"] = json!([{"id":"open","name":"Open","scope":"room","action":{"type":"binding.launch"}}]);
+        let content = json!({"type":"html","src":"scene/index.html","capabilities":["desk.read","binding.launch"],"buttonIds":["open"]});
+        room["start"] = content.clone();
+        room["idle"] = content.clone();
+        room["desks"][0]["background"] = content;
+        room
+    }
+
+    #[test]
+    fn html_content_slots_have_independent_declared_capabilities_and_buttons() {
+        let room = slot_room();
+        let parsed = validate_manifest(&room).expect("valid HTML slot declarations rejected");
+        let saved = serde_json::to_value(parsed.document).unwrap();
+        assert_eq!(saved["start"]["capabilities"], json!(["desk.read","binding.launch"]));
+        assert_eq!(saved["idle"]["buttonIds"], json!(["open"]));
+        assert_eq!(saved["desks"][0]["background"]["buttonIds"], json!(["open"]));
+    }
+
+    #[test]
+    fn slot_capabilities_and_button_references_reject_unknown_duplicate_or_missing_values() {
+        validate_manifest(&slot_room()).expect("valid baseline rejected");
+        for slot in ["start", "idle", "background"] {
+            for (field, value) in [("capabilities",json!(["file.read"])), ("capabilities",json!(["desk.read","desk.read"])),
+                                  ("buttonIds",json!(["missing"])), ("buttonIds",json!(["open","open"]))] {
+                let mut room = slot_room();
+                let content = if slot == "background" { &mut room["desks"][0]["background"] } else { &mut room[slot] };
+                content[field] = value;
+                assert!(validate_manifest(&room).is_err(), "accepted invalid {slot}.{field}");
+            }
+        }
+    }
+
+    #[test]
+    fn content_with_omitted_declarations_roundtrips_without_added_fields() {
+        let mut room = minimal();
+        room["resources"] = json!(["scene/index.html"]);
+        room["start"] = json!({"type":"html","src":"scene/index.html"});
+        let saved = serde_json::to_value(validate_manifest(&room).unwrap().document).unwrap();
+        assert_eq!(saved["start"], room["start"]);
+    }
+
     #[test]
     fn native_two_desk_manifest_uses_stable_identity() {
         let parsed = validate_manifest(&minimal()).unwrap();
