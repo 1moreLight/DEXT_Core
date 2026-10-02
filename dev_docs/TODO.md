@@ -1202,3 +1202,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 启动仲裁验证：内核21/21、协议83/83、输入消息26/26、动作62/62、运行消息20/20；实际ReleasePlayer五组通过（完成消息、同文档ready去重、重载新ready等）。完整build→start/identity通过：Core102804/Player41456/Watchdog115704/配置器73840，日志20261003_051414.txt；当前v2恢复inactive。正常退出后Dext进程与1620/1621监听0。
 - [ ] Task2继续同Player闲置展示与宿主唤醒；Task3实现生产媒体完成/超时与DOM，Task4补物理输入/DPI/安全恢复。16项就绪仍1/16，最终集中验收前不合并。
+
+- [x] Task2同Player闲置：可信宿主仅切stage并保留Windows事实；原Player临时脱离WorkerW展示idle，唤醒还原父窗/样式/坐标且第一次输入不转发。播放策略保留手动暂停/锁屏/电源规则；还原失败隐藏并关闭本Player。先验证实际原生窗口与权限边界，再完整build/start，生产DOM和最终物理验收后补。
+
+- [x] 同Player闲置阶段验证：内核22/22、协议86/86、动作65/65；真实Win32三组通过。实际ReleasePlayer同HWND/PID的child/popup两分支往返、DPI120、原有五组原生输入/启动/导航验证通过。完整build→start/identity全OK：Core72912/Player63172/Watchdog39464/配置器93232，日志20261003_060229.txt；v2恢复inactive。正常退出后Dext进程、1620/1621监听、资源缓存均0。
+- [ ] Task2/3继续：原生v3生产DOM、start/idle媒体与完成/超时，消费者级数据/动作、几何失效握手；Task4实际Core原生Room闲置/物理输入/DPI/布局/故障恢复与一次完整审查。7项集中人工验收不变，16项就绪仍1/16。

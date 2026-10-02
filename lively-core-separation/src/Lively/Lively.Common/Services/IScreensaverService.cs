@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace Lively.Common.Services
@@ -7,6 +7,8 @@ namespace Lively.Common.Services
     {
         ScreensaverApplyMode Mode { get; }
         bool IsRunning { get; }
+        string NativeIdleDisplayId { get; }
+        bool IsNativeIdlePresented { get; }
 
         void CreatePreview(IntPtr hwnd);
         Task StartAsync(bool isFadeIn);
@@ -14,6 +16,7 @@ namespace Lively.Common.Services
         Task StopAsync();
         void StopIdleTimer();
 
+        event EventHandler Started;
         event EventHandler Stopped;
     }
 
@@ -29,5 +32,6 @@ namespace Lively.Common.Services
         /// Does not work in Windows Screensaver mode.</br>
         /// </summary>
         dwmThumbnail,
+        nativeRuntime,
     }
 }

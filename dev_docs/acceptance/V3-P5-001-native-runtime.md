@@ -87,3 +87,9 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 内核21/21、协议83/83、输入消息26/26、动作62/62、运行消息20/20；实际ReleasePlayer五组输入/启动协议验证通过。覆盖当前阶段完成、旧阶段拒绝、保留Windows事实/Desk/队列、同文档ready去重与重载新ready。实际生产start媒体播放/超时和闲置窗口尚未接通，不能代填最终第6步。
 
 完整build→start/identity通过：Core102804/Player41456/Watchdog115704/配置器73840；日志20261003_051414.txt，v2恢复inactive。正常退出后Dext进程与1620/1621监听0。日志已有WorkerW纠正和D3D查找错误，物理层级仍待Task4。上方7步最终人工验收保持待执行。
+
+## Task2同Player闲置接线阶段（2026-10-03）
+
+可信idle/desktop阶段入口、同Player窗口租期、屏保/播放事实、第一次唤醒与长按保护已接。内核22/22、协议86/86、动作65/65通过；真实Win32三组覆盖精确还原、传统popup/child两种挂接和丢失父窗隐藏。隔离ReleasePlayer同一HWND/PID实测两种挂接、原始父窗/样式/坐标及DPI120还原，随后五组原生IPC回归通过。
+
+完整build→start/identity全OK：Core72912/Player63172/Watchdog39464/配置器93232；日志20261003_060229.txt，已有v2恢复inactive。正常退出后Dext进程/开发端口/资源缓存0。现有WorkerW纠正/D3D查找日志不计物理层级通过。当前证据没有生产Core原生Room的idle DOM或实际物理唤醒、多DPI、故障重建；第6步及其余7项仍待最终集中执行。

@@ -108,3 +108,9 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 ### 启动完成仲裁（P5阶段实现）
 
 私有原生协议增加startupComplete：带当前runtimeGeneration/sessionId/revision及正整数lifecycleRevision，只允许结束当前starting阶段。Core保留暂停、锁屏、前台事实、已提交Desk与最终队列；旧阶段、旧文档或重复完成拒绝。只有可信Core新文档事件能重新进入starting，普通暂停/锁屏/闲置恢复不能重播start。闲置中重载可先播放新文档start，再回idle。同一实际文档ready只发送一次。生产媒体须在展示完成或规定超时后调用此入口，其DOM实现仍待Task3。
+
+### 同Player闲置与宿主唤醒（P5阶段接线）
+
+原生Room进入闲置时Core只改变stage，保留当前Desk、最终队列和Windows暂停/锁屏事实。屏保服务临时将当前Player置于对应显示器，保留同一文档；唤醒还原父窗、样式、坐标与层叠顺序，不另起原生屏保Player。Windows事实中的前台判断包含当前显示器上经核对的闲置展示，原桌面前台采样仍独立；退出展示后先移除此覆盖，再恢复desktop阶段。
+
+原生闲置不因底层应用遮挡而暂停，手动暂停、锁屏、远程和电源规则继续生效。第一次RawInput仅唤醒，按住的鼠标/Enter/Space在松开前不得形成新激活。父窗已失效或还原不可确认时隐藏并关闭本Player，故障重建由后续恢复流程补齐。生产DOM需按idle阶段持续展示idle素材；没有idle时保持桌面画面，作者done不能唤醒。真实Core原生Room闲置、实际物理输入及多DPI门槛仍待最终集中验证。

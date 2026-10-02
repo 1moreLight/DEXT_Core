@@ -22,6 +22,17 @@ static class RoomActionChecks
             return input.GetProof(1,1,"scene","open")??throw new Exception("native pair missing");
         }
         RoomInputReply Ticket(ActionFixture f,RoomNativeInputProof proof)=>f.Actions.IssueHostInput(f.View,f.Peer,f.Session,"scene","open",proof);
+        foreach(var wake in new[]{0,13,32})check("wake input held edge cannot become activation on repeat "+wake,()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);n.CheckNativeViewport(viewport,false);
+            if(wake==0)n.MouseDown(viewport,300,400,false);else n.Key(viewport,wake,true,false,false);
+            Geometry(f,n,2);n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
+            if(wake==0){n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);}
+            else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,2,"scene","open"));
+            if(wake==0){n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);}
+            else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
+            Eq(true,n.GetProof(1,2,"scene","open")!=null);
+        });
         check("private Player bridge authorizes only declared current geometry and its native pair",()=>{
             using var f=new ActionFixture();var n=f.Actions.CreateNativeInput();long generation=0;
             Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,n.ObserveSnapshot,out var bridge,

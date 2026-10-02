@@ -327,6 +327,20 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
+    internal RoomProtocolReply SetHostStage(Guid connectionId, RoomSessionPeer peer, Guid sessionId, RoomLifecycleStage stage)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            if (installation.RuntimeContext is null) return Reject(RoomProtocolStatus.Rejected);
+            try { return kernel.SetHostStage(sessionId, stage) ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected); }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
     internal RoomProtocolReply BeginDocument(Guid connectionId, RoomSessionPeer peer, Guid sessionId)
     {
         lock (gate)

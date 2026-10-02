@@ -197,3 +197,6 @@
 | #156 | PowerShell成功流重定向不保留Write-Host信息流 | [toolchain](errors/toolchain.md) |
 
 | #157 | Python默认GBK读取UTF8失败及多行成员插入点错误，编辑脚本可部分执行 | [toolchain](errors/toolchain.md) |
+
+| #158 | SetParent自动加入WS_CLIPSIBLINGS，原始样式须在重挂后再恢复 | [backend](errors/backend.md) |
+| #159 | GetParent返回popup owner；重挂置顶回执成功但实际TOPMOST缺失 | [backend](errors/backend.md) |

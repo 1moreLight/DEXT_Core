@@ -64,6 +64,7 @@ internal static class NativeInputWireProbe
             {
                 Require((bool?)(await Next())["ready"]==true,"ready");
                 var playerWindow=process.GetProcessWindow(true);NativeMethods.ShowWindow(playerWindow,4);NativeMethods.SetWindowPos(playerWindow,0,120,120,640,480,0x14);await Task.Delay(300);
+                NativeIdleWindowChecks.RunPlayer(playerWindow,process.Id);
                 var f=RuntimeMessageChecks.Fixture();var context=RuntimeMessageChecks.ContextMessage(f.Context,f.Snapshot,1);
                 var bytes=File.ReadAllBytes(Path.Combine(root.FullName,"content","scene","index.html"));context.Resources=[new(){Path="scene/index.html",Size=bytes.Length,Sha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()}];
                 await Send(context);Require((long?)(await Next())["context"]==1,"context");await Snapshot();Require((long?)(await Next())["snapshot"]==1,"snapshot");

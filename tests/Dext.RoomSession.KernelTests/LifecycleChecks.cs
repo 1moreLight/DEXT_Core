@@ -4,6 +4,17 @@ internal static class LifecycleChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("host idle and wake cannot overwrite Windows restrictions or committed Desk",()=>{
+            using var kernel=new RoomSessionKernel();var first=kernel.Start("room",["home","work","media"],"home",Policy());
+            kernel.Request(first.SessionId,"work");kernel.Request(first.SessionId,"media");
+            kernel.SetRuntimeFacts(first.SessionId,new(true,true,false));var before=kernel.Snapshot!;
+            Require(kernel.SetHostStage(first.SessionId,RoomLifecycleStage.Idle),"idle entry");var idle=kernel.Snapshot!;
+            Require(idle.Lifecycle is{Stage:RoomLifecycleStage.Idle,PlaybackPaused:true,Locked:true} && !idle.IsDesktopForeground && idle.CurrentDeskId=="work" && idle.QueuedDeskId=="media","idle facts retained");
+            Require(kernel.SetHostStage(first.SessionId,RoomLifecycleStage.Desktop),"wake");var wake=kernel.Snapshot!;
+            Require(wake.Lifecycle is{Stage:RoomLifecycleStage.Desktop,PlaybackPaused:true,Locked:true} && !wake.IsOperable && wake.QueuedDeskId=="media","wake cannot unlock or reset queue");
+            Require(!kernel.SetHostStage(first.SessionId,RoomLifecycleStage.Starting) && !kernel.SetHostStage(Guid.NewGuid(),RoomLifecycleStage.Idle),"invalid host stage/session rejected");
+            kernel.SetRuntimeFacts(first.SessionId,new(false,false,true));Require(kernel.Snapshot!.TargetDeskId=="media","actual recovery resumes final queue");
+        });
         check("startup completion is current-phase only and preserves trusted restrictions",()=>{
             using var kernel=new RoomSessionKernel();var first=kernel.Start("room",["home","work"],"home",Policy(true),new(true,true,false));
             Require(!kernel.CompleteStartup(Guid.NewGuid(),first.Lifecycle.Revision),"wrong session");

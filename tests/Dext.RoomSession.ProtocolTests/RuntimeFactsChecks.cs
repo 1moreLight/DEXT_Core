@@ -4,6 +4,20 @@ internal static class RuntimeFactsChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("Windows lock and native presentation withdrawal publish one complete sample",()=>{
+            var source=new RoomRuntimeFactsSource();source.Update("a",false,false,false);source.SetNativePresentation("a",true);
+            var seen=new List<RoomSessionFacts>();source.Sampled+=()=>seen.Add(source.Read("a"));
+            source.Update("a",true,true,false,null,false);
+            Equal(1,seen.Count,"one notification");Equal(new RoomSessionFacts(true,true,false),seen[0],"no intermediate permissive sample");
+        });
+        check("native idle visibility is display-scoped and cannot overwrite pause or lock",()=>{
+            var source=new RoomRuntimeFactsSource();source.Update("a",true,true,false);source.Update("b",false,true,false);
+            source.SetNativePresentation("a",true);
+            Equal(new RoomSessionFacts(true,true,true),source.Read("a"),"visible idle retains restrictions");
+            Equal(new RoomSessionFacts(false,true,false),source.Read("b"),"another display is not foreground");
+            source.Update("a",false,false,false);Equal(new RoomSessionFacts(false,false,true),source.Read("a"),"Windows samples retain actual presented view");
+            source.SetNativePresentation(null,false,false);Equal(new RoomSessionFacts(false,false,false),source.Read("a"),"wake withdraws visibility before desktop stage");
+        });
         check("unsampled Windows facts deny operation and actual pause is per display", () =>
         {
             var source = new RoomRuntimeFactsSource();

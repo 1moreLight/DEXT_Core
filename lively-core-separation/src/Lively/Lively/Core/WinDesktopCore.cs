@@ -55,6 +55,7 @@ namespace Lively.Core
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly ITransparentTbService ttbService;
         private readonly IWatchdogService watchdog;
+        private readonly IScreensaverService screenSaver;
         private readonly IPlayback playback;
         private readonly RawInputMsgWindow rawInput;
         private readonly WndProcMsgWindow WndProc;
@@ -72,8 +73,10 @@ namespace Lively.Core
             WndProcMsgWindow wndProc,
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory,
-            IRoomSessionRuntimeCoordinator roomSessionRuntime)
+            IRoomSessionRuntimeCoordinator roomSessionRuntime,
+            IScreensaverService screenSaver)
         {
+            this.screenSaver = screenSaver;
             this.userSettings = userSettings;
             this.displayManager = displayManager;
             this.ttbService = ttbService;
@@ -1160,6 +1163,14 @@ namespace Lively.Core
 
         private void RawInput_MouseMoveRaw(object sender, MouseRawArgs e)
         {
+            // Record held edges with foreground=false so wake auto-repeat
+            // cannot create a new DOWN after the desktop returns.
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseMove(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             try
             {
                 var nativeForeground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
@@ -1188,6 +1199,13 @@ namespace Lively.Core
 
         private void RawInput_MouseDownRaw(object sender, MouseClickRawArgs e)
         {
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                if (IsPrimaryMouseButton(e.Button))
+                    foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseDown(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
                 return;
 
@@ -1207,6 +1225,13 @@ namespace Lively.Core
 
         private void RawInput_MouseUpRaw(object sender, MouseClickRawArgs e)
         {
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                if (IsPrimaryMouseButton(e.Button))
+                    foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseUp(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             try
             {
                 // Finish the DOWN recipient even if foreground or pointer display changed.
@@ -1225,6 +1250,12 @@ namespace Lively.Core
 
         private void RawInput_KeyboardClickRaw(object sender, KeyboardClickRawArgs e)
         {
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                foreach (var player in Wallpapers.OfType<WebWebView2>())
+                    player.NativeKey((int)e.VirtualKey, e.IsKeyDown, false, false);
+                return;
+            }
             try
             {
                 // Controlled v3 Tab/Enter/Space use Core focus even in mouse

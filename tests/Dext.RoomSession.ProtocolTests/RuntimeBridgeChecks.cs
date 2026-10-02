@@ -4,6 +4,15 @@ internal static class RuntimeBridgeChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("native host stage is coordinator-only and preserves current sampled facts",()=>NativeInstallationChecks.WithCopy(root=>{
+            NativeInstallationChecks.PrepareHtmlSlots(root);using var f=new Fixture(root);var view=f.Gateway.Open(f.Player,new(1,RoomClientRole.DesktopPlayer,f.RoomId)).ConnectionId!.Value;
+            f.Gateway.SetRuntimeFacts(f.Control,f.Core,f.Session,new(true,true,false));
+            Require(f.Gateway.SetHostStage(view,f.Player,f.Session,RoomLifecycleStage.Idle).Status==RoomProtocolStatus.Forbidden,"view cannot enter idle");
+            Require(f.Gateway.SetHostStage(f.Control,f.Core,Guid.NewGuid(),RoomLifecycleStage.Idle).Status==RoomProtocolStatus.StaleSession,"old session");
+            Require(f.Gateway.SetHostStage(f.Control,f.Core,f.Session,RoomLifecycleStage.Idle).Status==RoomProtocolStatus.Accepted,"host idle");
+            Require(f.Gateway.SetHostStage(f.Control,f.Core,f.Session,RoomLifecycleStage.Desktop).Status==RoomProtocolStatus.Accepted && f.Kernel.Snapshot!.Lifecycle is{PlaybackPaused:true,Locked:true} && !f.Kernel.Snapshot.IsDesktopForeground,"wake retains facts");
+            Require(f.Gateway.SetHostStage(f.Control,f.Core,f.Session,RoomLifecycleStage.Starting).Status==RoomProtocolStatus.Rejected,"host cannot replay start");
+        }));
         check("private native bridge completes only current startup and preserves Windows restrictions",()=>NativeInstallationChecks.WithCopy(root=>{
             NativeInstallationChecks.PrepareHtmlSlots(root);using var f=new Fixture(root);
             f.Gateway.SetRuntimeFacts(f.Control,f.Core,f.Session,new(true,true,false));var first=f.Kernel.Snapshot!;

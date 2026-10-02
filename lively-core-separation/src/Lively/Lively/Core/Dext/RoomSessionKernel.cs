@@ -276,6 +276,9 @@ public sealed class RoomSessionKernel : IDisposable
 
     // New document construction is a trusted Core event. Ordinary lifecycle
     // changes (wake, pause, unlock) cannot request a replay of start content.
+    internal bool SetHostStage(Guid sessionId, RoomLifecycleStage stage) =>
+        stage is RoomLifecycleStage.Idle or RoomLifecycleStage.Desktop && UpdateLifecycle(sessionId, stage, null, null, null);
+
     internal bool BeginDocument(Guid sessionId) =>
         UpdateLifecycle(sessionId, RoomLifecycleStage.Starting, null, null, null, newDocument: true);
 

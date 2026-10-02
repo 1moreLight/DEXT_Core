@@ -374,3 +374,13 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 ## #153 原始键盘BREAK/E0是独立位（2026-10-03）
 
 RawInputMsgWindow旧Flags!=Up会把E0|Up误当Down，InputUtil又把所有按键设置extended位。改为BREAK位1判断松开、E0位2判断扩展；向Core事件保留扩展事实，普通Enter不加bit24，真正扩展键才加；keyUp的previous/transition位为1。隐藏原生接收窗口验证实收lParam和Raw flags，不能只用JS键盘测试代填。
+
+## #158 SetParent后再次恢复原始样式（2026-10-03）
+
+原生闲置还原的父窗和矩形正确，但STYLE多出WS_CLIPSIBLINGS，严格测试失败。SetParent会改变相关窗口状态；先规范为child、重挂后再写回完整原始style/exstyle并刷新frame，随后核验实际状态，负坐标夹具精确还原通过。不要只以SetParent返回值代替还原成功。
+
+## #159 原生popup祖先与实际置顶（2026-10-03）
+
+实际WinForms Player脱离后带隐藏owner，GetParent非零并不代表仍在WorkerW。以GA_ROOT确认独立根窗口、GA_PARENT保存/恢复真实父窗；参见[GetParent](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getparent)、[GetAncestor](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getancestor)。传统WorkerW保留popup样式，不能只接受WS_CHILD。
+
+传统parented-popup重挂后SetWindowPos(TOPMOST)返回true，但实际WS_EX_TOPMOST未设置；重复样式/布局刷新均未解决。显式NOTOPMOST→TOPMOST后真实根窗口、可见性、矩形和TOPMOST位全部符合。普通child与实际ReleasePlayer两种样式往返及DPI120还原通过；多系统DPI/实际WorkerW和故障重建仍未代填。

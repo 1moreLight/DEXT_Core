@@ -9,9 +9,13 @@ public interface IRoomSessionRuntimeCoordinator
     int ActivePlayerPid { get; }
     void OnPageReady(WebWebView2 player);
     void OnPlayerExited(int? pid);
+    RoomNativeIdleResult EnterNativeIdle();
+    void ExitNativeIdle();
+    bool IsNativeIdlePresented { get; }
+    string? NativeIdleDisplayId { get; }
 }
 
-internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordinator, IDisposable
+internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordinator, IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly object gate = new();
@@ -20,6 +24,8 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
     private readonly RoomSessionKernel kernel;
     private readonly RoomRuntimeFactsSource runtimeFacts;
     private readonly RoomActionAuthority actions;
+    private WebWebView2? activePlayer;
+    private bool activeNativeRoom;
     private string? activeDisplayId;
     private int activePlayerPid;
     private Guid activeSessionId;
@@ -60,6 +66,7 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
     public void OnPageReady(WebWebView2 player)
     {
         if (!player.IsTrustedDextHost || player.Pid is not { } pid) return;
+        QueueIdleRestoreIfChanged(pid);
         lock (gate)
         {
             if (activePlayerPid == pid)
@@ -82,6 +89,8 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
             player.DetachRoomSession();
             if (activePlayerPid != 0) authority.Unbind(activePlayerPid);
             activePlayerPid = 0;
+            activePlayer = null;
+            activeNativeRoom = false;
             activeDisplayId = null;
             activeInstallationStamp = null;
 
@@ -119,6 +128,8 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
                     return;
                 }
                 activePlayerPid = pid;
+                activePlayer = player;
+                activeNativeRoom = installation.RuntimeContext is not null;
                 activeDisplayId = player.Screen.DeviceId;
                 activeSessionId = session.Snapshot.SessionId;
                 activeInstallationStamp = installation.InstallationStamp;
@@ -160,7 +171,11 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
         catch (Exception error) { Logger.Error(error, "v3 Windows facts update failed; next sample will retry"); }
     }
 
-    public void Dispose() => runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+    public void Dispose()
+    {
+        runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+        ExitNativeIdle();
+    }
 
     public void OnPlayerExited(int? pid)
     {
@@ -171,9 +186,12 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
             if (activePlayerPid == exitedPid)
             {
                 activePlayerPid = 0;
+                activePlayer = null;
+                activeNativeRoom = false;
                 activeDisplayId = null;
                 activeInstallationStamp = null;
             }
         }
+        ClearExitedNativeIdle(exitedPid);
     }
 }
