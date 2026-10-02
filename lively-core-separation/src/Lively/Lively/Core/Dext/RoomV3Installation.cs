@@ -5,6 +5,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace Dext.Core.Rooms;
 
@@ -24,6 +26,7 @@ internal static class RoomV3Installation
         using var manifest = JsonDocument.Parse(manifestBytes);
         using var snapshot = JsonDocument.Parse(snapshotBytes);
         var room = manifest.RootElement;
+        UniqueProperties(room);
         var paths = ValidateManifest(room);
         var installed = snapshot.RootElement;
         Fields(installed, "formatVersion roomId manifestSha256 resources");
@@ -31,14 +34,15 @@ internal static class RoomV3Installation
         Require(Text(installed, "manifestSha256") == Hash(manifestBytes), "manifest digest");
         var records = Array(installed, "resources", 4096);
         Require(records.Length == paths.Count, "resource count");
-        var sortedPaths = paths.OrderBy(p => p, StringComparer.Ordinal).ToArray();
+        var sortedPaths = paths.OrderBy(p => p, Comparer<string>.Create((a,b) =>
+            Encoding.UTF8.GetBytes(a).AsSpan().SequenceCompareTo(Encoding.UTF8.GetBytes(b)))).ToArray();
         long total = 0;
         for (var i = 0; i < records.Length; i++)
         {
             Fields(records[i], "path sha256 size");
             var path = Text(records[i], "path");
             Require(path == sortedPaths[i], "resource order");
-            var (hash, size) = HashFile(CheckedFile(directory, path));
+            var (hash, size) = HashFile(directory, path);
             Require(hash == Text(records[i], "sha256") && size == Integer(records[i], "size"), "resource digest");
             total += size; Require(total <= 2 * ResourceLimit, "installation size");
         }
@@ -147,7 +151,8 @@ internal static class RoomV3Installation
                 Require(buttons.TryGetValue(Text(icon, "buttonId"), out var scope) && (scope == "room" || scope == Text(desk, "id")), "icon button scope");
                 Require(Integer(icon, "x") is >= 0 and <= 63 && Integer(icon, "y") is >= 0 and <= 63, "icon coordinates");
                 foreach (var (key, limit) in new[] { ("label", 160), ("glyph", 8) })
-                    if (Optional(icon, key, out var text)) Require(Characters(text.GetString()!) <= limit, "icon text");
+                    if (Optional(icon, key, out var text)) Require(text.ValueKind == JsonValueKind.String &&
+                        text.GetString() is { } label && Characters(label) <= limit, "icon text");
             }
         }
         return paths;
@@ -177,7 +182,7 @@ internal static class RoomV3Installation
         {
             var text = value.GetString()!;
             Require(Encoding.UTF8.GetByteCount(text) <= 8192 && !text.StartsWith("\\\\", StringComparison.Ordinal) &&
-                !text.StartsWith("file:", StringComparison.Ordinal) && !(text.Length > 2 && text[1] == ':' && char.IsAsciiLetter(text[0])), "private path");
+                !text.StartsWith("file:", StringComparison.OrdinalIgnoreCase) && !(text.Length > 2 && text[1] == ':' && char.IsAsciiLetter(text[0])), "private path");
         }
     }
     private static void ResourcePath(string path)
@@ -199,7 +204,16 @@ internal static class RoomV3Installation
     private static void Name(string name) => Require(!string.IsNullOrWhiteSpace(name) && Characters(name) <= 160, "name");
     private static string Text(JsonElement value, string key) => value.GetProperty(key).GetString() ?? throw Invalid(key);
     private static long Integer(JsonElement value, string key) => value.GetProperty(key).GetInt64();
-    private static bool Optional(JsonElement value, string key, out JsonElement item) => value.TryGetProperty(key, out item) && item.ValueKind != JsonValueKind.Null;
+    private static bool Optional(JsonElement value, string key, out JsonElement item) => value.TryGetProperty(key, out item);
+    private static void UniqueProperties(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var prop in value.EnumerateObject()) { Require(seen.Add(prop.Name), "duplicate JSON property"); UniqueProperties(prop.Value); }
+        }
+        else if (value.ValueKind == JsonValueKind.Array) foreach (var item in value.EnumerateArray()) UniqueProperties(item);
+    }
     private static JsonElement[] Array(JsonElement value, string key, int limit, bool optional = false)
     {
         if (!value.TryGetProperty(key, out var item) && optional) return System.Array.Empty<JsonElement>();
@@ -214,26 +228,92 @@ internal static class RoomV3Installation
     {
         var attrs = File.GetAttributes(path); Require((attrs & FileAttributes.ReparsePoint) == 0 && ((attrs & FileAttributes.Directory) != 0) == directory, "nonlocal path");
     }
-    private static string CheckedFile(string root, string relative)
+    internal sealed class ResourceReader : IDisposable
     {
-        var parts = relative.Split('/'); var path = root;
-        for (var i = 0; i < parts.Length; i++) { path = Path.Combine(path, parts[i]); Inspect(path, i < parts.Length - 1); } return path;
+        public FileStream Stream { get; }
+        private readonly List<SafeFileHandle> directories;
+        public ResourceReader(FileStream stream, List<SafeFileHandle> directories) { Stream = stream; this.directories = directories; }
+        public void Dispose() { Stream.Dispose(); foreach (var directory in directories) directory.Dispose(); }
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileInformation
+    {
+        public uint Attributes;
+        public System.Runtime.InteropServices.ComTypes.FILETIME Created, Accessed, Written;
+        public uint Volume, SizeHigh, SizeLow, Links, IndexHigh, IndexLow;
+    }
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetFileInformationByHandle(SafeFileHandle handle, out FileInformation information);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetFinalPathNameByHandleW(SafeFileHandle handle, StringBuilder path, uint length, uint flags);
+    private static string Normalize(string path)
+    {
+        if (path.StartsWith("\\\\?\\UNC\\", StringComparison.OrdinalIgnoreCase)) path = "\\\\" + path.Substring(8);
+        else if (path.StartsWith("\\\\?\\", StringComparison.Ordinal)) path = path.Substring(4);
+        return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar);
+    }
+    private static SafeFileHandle OpenHandle(string path, bool directory, string root)
+    {
+        // No delete sharing retains this exact name; read-only sharing also
+        // prevents resource writes for the lifetime of its reader.
+        var handle = CreateFileW(path, 0x80000000, directory ? 3u : 1u, IntPtr.Zero, 3, 0x00200000 | (directory ? 0x02000000u : 0), IntPtr.Zero);
+        try
+        {
+            if (handle.IsInvalid) throw new IOException("Cannot lock installed path", new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()));
+            Require(GetFileInformationByHandle(handle, out var info) && (info.Attributes & 0x400) == 0 &&
+                ((info.Attributes & 0x10) != 0) == directory, "opened path type/reparse point");
+            var final = new StringBuilder(32768);
+            var count = GetFinalPathNameByHandleW(handle, final, (uint)final.Capacity, 0);
+            Require(count > 0 && count < final.Capacity, "opened path identity");
+            var resolved = Normalize(final.ToString());
+            root = Normalize(root);
+            Require(resolved.Equals(root, StringComparison.OrdinalIgnoreCase) ||
+                resolved.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "opened path escaped root");
+            return handle;
+        }
+        catch { handle.Dispose(); throw; }
+    }
+    internal static ResourceReader OpenResource(string root, string relative)
+    {
+        ResourcePath(relative);
+        return OpenLocal(root, relative);
+    }
+    private static ResourceReader OpenLocal(string root, string relative)
+    {
+        root = Path.GetFullPath(root);
+        if (!OperatingSystem.IsWindows()) throw Invalid("native installation requires Windows handle verification");
+        var directories = new List<SafeFileHandle>();
+        try
+        {
+            directories.Add(OpenHandle(root, true, root));
+            var parts = relative.Split('/'); var path = root;
+            for (var i = 0; i < parts.Length - 1; i++) { path = Path.Combine(path, parts[i]); directories.Add(OpenHandle(path, true, root)); }
+            var handle = OpenHandle(Path.Combine(path, parts[^1]), false, root);
+            try { return new ResourceReader(new FileStream(handle, FileAccess.Read), directories); }
+            catch { handle.Dispose(); throw; }
+        }
+        catch { foreach (var directory in directories) directory.Dispose(); throw; }
     }
     private static byte[] ReadBounded(string root, string relative, int limit)
     {
-        using var file = File.OpenRead(CheckedFile(root, relative)); Require(file.Length is > 0 && file.Length <= limit, "document size");
+        using var reader = OpenLocal(root, relative);
+        var file = reader.Stream; Require(file.Length is > 0 && file.Length <= limit, "document size");
         using var buffer = new MemoryStream(); var chunk = new byte[65536]; int count;
         while ((count = file.Read(chunk)) != 0) { Require(buffer.Length + count <= limit, "document grew"); buffer.Write(chunk, 0, count); } return buffer.ToArray();
     }
-    private static (string Hash, long Size) HashFile(string path)
+    private static (string Hash, long Size) HashFile(string root, string relative)
     {
-        using var file = File.OpenRead(path); using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        using var reader = OpenLocal(root, relative);
+        var file = reader.Stream; using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var chunk = new byte[65536]; long size = 0; int count;
         while ((count = file.Read(chunk)) != 0) { size += count; Require(size <= ResourceLimit, "resource size"); hash.AppendData(chunk, 0, count); }
         return (Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant(), size);
     }
     private static void Inventory(string root, string directory, HashSet<string> files, ref int entries, int depth)
     {
+        using var directoryGuard = OpenHandle(directory, true, root);
         Require(depth <= 32, "resource nesting"); foreach (var path in Directory.EnumerateFileSystemEntries(directory))
         {
             Require(++entries <= 16384, "inventory entries"); var isDirectory = (File.GetAttributes(path) & FileAttributes.Directory) != 0; Inspect(path, isDirectory);

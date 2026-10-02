@@ -261,3 +261,8 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 - 现象：新worktree运行sync/index提示未初始化；node的start-line/end-line参数不存在。
 - 原因：`.codegraph`是忽略的本地快照，不随Git worktree创建；CLI v1.5.0使用`--offset`/`--limit`。
 - 处理：先查已索引主工作区定位符号；新代码不在索引时读实际工作区文件。没有索引不替用户决定初始化。CLI不确定先看`--help`；主索引结果须与工作分支当前源码核对。
+# #128 内容摘要夹具需要冻结Git检出字节（2026-10-02）
+
+- 现象：工作区测试通过；`git cat-file --filters HEAD:...`显示Windows新检出转CRLF，清单和SVG摘要都变。
+- 修复：`.gitattributes`将room-v3安装夹具标为`-text`，按原始字节保存。
+- 检查：测试实际Gitcheckout filter结果SHA256，不只对现有工作文件求摘要；新共享Unicode夹具同样遵守该规则。

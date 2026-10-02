@@ -183,6 +183,88 @@ mod tests {
     }
 
     #[test]
+    fn installation_rejects_duplicate_raw_json_keys() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let text = std::fs::read_to_string(source.join("room.json")).unwrap();
+        let duplicated = text.replacen("{", "{\"version\":2,", 1);
+        std::fs::write(source.join("room.json"), duplicated).unwrap();
+        assert!(install(&source, &temp.path().join("installed")).is_err());
+    }
+
+    #[test]
+    fn explicit_null_public_config_is_rejected() {
+        let mut room = minimal();
+        room["resources"] = json!(["scene/index.html"]);
+        room["roomScene"] = json!({"entry":"scene/index.html","config":null});
+        assert!(validate_manifest(&room).is_err());
+    }
+
+    #[test]
+    fn file_uri_schemes_are_case_insensitive_when_rejecting_private_config() {
+        for scheme in ["file:", "FILE:", "FiLe:"] {
+            let mut room = minimal();
+            room["resources"] = json!(["scene/index.html"]);
+            room["roomScene"] = json!({"entry":"scene/index.html","config":{"value":format!("{scheme}///C:/private.txt")}});
+            assert!(validate_manifest(&room).is_err(), "accepted {scheme}");
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn held_resource_prevents_ancestor_swap_and_byte_replacement() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let file = crate::room_v3::open_resource(&source, "assets/bg.svg").unwrap();
+        assert!(std::fs::rename(source.join("assets"), source.join("changed")).is_err());
+        assert!(std::fs::write(source.join("assets/bg.svg"), b"changed").is_err());
+        drop(file);
+        std::fs::rename(source.join("assets"), source.join("changed")).unwrap();
+    }
+
+    #[test]
+    fn publication_refuses_a_destination_changed_during_staging() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        install(&source, &dest).unwrap();
+        let result = crate::room_v3::install_with_publish_observer(&source, &dest, || {
+            std::fs::write(dest.join("keep.txt"), b"intervening user data").unwrap();
+        });
+        assert!(result.is_err());
+        assert_eq!(
+            std::fs::read(dest.join("keep.txt")).unwrap(),
+            b"intervening user data"
+        );
+    }
+
+    #[test]
+    fn shared_fixture_bytes_survive_git_checkout_filters() {
+        use sha2::{Digest, Sha256};
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let fixture = "dev_docs/fixtures/room-v3/installed-basic/";
+        let record: crate::room_v3::Installation = serde_json::from_slice(
+            &std::fs::read(root.join(fixture).join("installation.json")).unwrap(),
+        )
+        .unwrap();
+        for (path, hash) in std::iter::once(("room.json".to_string(), record.manifest_sha256))
+            .chain(record.resources.into_iter().map(|r| (r.path, r.sha256)))
+        {
+            let result = std::process::Command::new("git")
+                .current_dir(&root)
+                .args(["cat-file", "--filters", &format!("HEAD:{fixture}{path}")])
+                .output()
+                .unwrap();
+            assert!(result.status.success());
+            assert_eq!(
+                format!("{:x}", Sha256::digest(&result.stdout)),
+                hash,
+                "checkout changed {path}"
+            );
+        }
+    }
+
+    #[test]
     fn configs_require_objects_and_exclude_nested_private_bindings() {
         let mut room = minimal();
         room["resources"] = json!(["scene/index.html"]);

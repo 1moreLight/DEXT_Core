@@ -130,6 +130,9 @@
 | #123 | JSON Schema 将公开 config 限为对象，但原生递归校验接受数组/字符串，会造成跨入口契约分歧 | [backend](errors/backend.md) |
 | #124 | 原生v3校验抛InvalidDataException而准入边界未捕获，篡改包变成未处理异常 | [backend](errors/backend.md) |
 | #125 | 新worktree不带忽略的CodeGraph索引；CLI文件分页参数是offset/limit | [toolchain](errors/toolchain.md) |
+| #126 | Rust与Core对Unicode资源顺序、重复JSON键和null配置处理不同，安装成功后准入失败 | [backend](errors/backend.md) |
+| #127 | file URI scheme大小写敏感检查漏掉FILE:，公开配置可能携带私人路径 | [backend](errors/backend.md) |
+| #128 | 已安装样包摘要与Git换行过滤冲突，新Windows检出后摘要失效 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 

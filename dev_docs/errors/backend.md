@@ -280,3 +280,13 @@ V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允�
 - 原因：独立校验器使用InvalidDataException；原准入catch只含IOException等，未覆盖它。
 - 修复：准入明确捕获无效数据异常并返回拒绝；保持未知程序错误可见。同一反例回归全部通过。
 - 检查：同时跑正例与重新摘要后仍非法的结构反例，避免“所有包都拒绝”造成假绿。
+# #126 原生v3双语言边界必须校验原始JSON并采用同一排序（2026-10-02）
+
+- 现象：Rust能安装Core拒绝的作品；U+E000/U+1F600资源顺序相反，重复JSON键被Value抹掉，config:null被Option当缺省。
+- 修复：原始字节通过递归唯一键解析器再转Value；显式null结构拒绝；Core按UTF8字节排序。公共config内部nullable值仍保留。
+- 检查：共享Unicode安装样包，重复原始键/空config的先红后绿回归，不能只检查解析后的对象。
+
+# #127 私人file URI检查须忽略scheme大小写（2026-10-02）
+
+- 现象：file:被拒但FILE:/FiLe:进入公开config。
+- 修复：Rust前缀eq_ignore_ascii_case、CoreOrdinalIgnoreCase；合法HTML入口配匹配资源摘要后回归，避免另一个入口错误掩盖漏洞。

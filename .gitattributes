@@ -1,0 +1,2 @@
+# Installation digests describe exact bytes on every platform.
+dev_docs/fixtures/room-v3/** -text

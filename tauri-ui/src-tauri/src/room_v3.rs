@@ -9,6 +9,76 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+// Preserve decoded property uniqueness before converting raw author JSON to Value.
+struct UniqueJson(Value);
+impl<'de> Deserialize<'de> for UniqueJson {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = UniqueJson;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("JSON with unique property names")
+            }
+            fn visit_bool<E: serde::de::Error>(self, v: bool) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(v.into()))
+            }
+            fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(v.into()))
+            }
+            fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(v.into()))
+            }
+            fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<UniqueJson, E> {
+                serde_json::Number::from_f64(v)
+                    .map(|n| UniqueJson(Value::Number(n)))
+                    .ok_or_else(|| E::custom("invalid number"))
+            }
+            fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(v.into()))
+            }
+            fn visit_string<E: serde::de::Error>(self, v: String) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(v.into()))
+            }
+            fn visit_unit<E: serde::de::Error>(self) -> Result<UniqueJson, E> {
+                Ok(UniqueJson(Value::Null))
+            }
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut seq: A,
+            ) -> Result<UniqueJson, A::Error> {
+                let mut values = Vec::new();
+                while let Some(v) = seq.next_element::<UniqueJson>()? {
+                    values.push(v.0);
+                }
+                Ok(UniqueJson(Value::Array(values)))
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<UniqueJson, A::Error> {
+                let mut values = serde_json::Map::new();
+                while let Some(key) = map.next_key::<String>()? {
+                    if values.contains_key(&key) {
+                        return Err(serde::de::Error::custom(format!(
+                            "duplicate JSON field {key:?}"
+                        )));
+                    }
+                    values.insert(key, map.next_value::<UniqueJson>()?.0);
+                }
+                Ok(UniqueJson(Value::Object(values)))
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+pub fn parse_document(bytes: &[u8]) -> Result<Value, String> {
+    require(bytes.len() <= MAX_MANIFEST_BYTES, "manifest exceeds 1 MiB")?;
+    serde_json::from_slice::<UniqueJson>(bytes)
+        .map(|v| v.0)
+        .map_err(|e| format!("parse Room: {e}"))
+}
+
 pub const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 pub const MAX_RESOURCES: usize = 4096;
 const MAX_RESOURCE_BYTES: u64 = 1024 * 1024 * 1024;
@@ -56,24 +126,34 @@ fn reject_link(path: &Path) -> Result<std::fs::Metadata, String> {
     Ok(meta)
 }
 
-fn checked_file(root: &Path, relative: &str) -> Result<PathBuf, String> {
-    let mut path = root.to_path_buf();
-    for segment in relative.split('/') {
-        path.push(segment);
-        reject_link(&path)?;
+#[cfg(windows)]
+fn handle_path(file: &File) -> Result<PathBuf, String> {
+    use std::os::windows::{ffi::OsStringExt, io::AsRawHandle};
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetFinalPathNameByHandleW(
+            handle: *mut std::ffi::c_void,
+            path: *mut u16,
+            size: u32,
+            flags: u32,
+        ) -> u32;
     }
+    let mut path = vec![0u16; 32768];
+    let length = unsafe {
+        GetFinalPathNameByHandleW(
+            file.as_raw_handle(),
+            path.as_mut_ptr(),
+            path.len() as u32,
+            0,
+        )
+    } as usize;
     require(
-        path.is_file(),
-        format!("declared resource is not a file: {relative}"),
+        length > 0 && length < path.len(),
+        "cannot resolve opened path identity",
     )?;
-    let canonical = path
-        .canonicalize()
-        .map_err(|e| io_error("resolve resource", e))?;
-    require(
-        canonical.starts_with(root),
-        "resource escaped installed root",
-    )?;
-    Ok(path)
+    Ok(PathBuf::from(std::ffi::OsString::from_wide(
+        &path[..length],
+    )))
 }
 
 fn open_local(path: &Path) -> Result<File, String> {
@@ -84,6 +164,7 @@ fn open_local(path: &Path) -> Result<File, String> {
         use std::os::windows::fs::OpenOptionsExt;
         // Do not follow a final reparse point replaced after path inspection.
         options.custom_flags(0x00200000);
+        options.share_mode(1);
     }
     let file = options
         .open(path)
@@ -103,9 +184,82 @@ fn open_local(path: &Path) -> Result<File, String> {
     Ok(file)
 }
 
+pub struct ResourceReader {
+    file: File,
+    _directories: Vec<File>,
+}
+impl Read for ResourceReader {
+    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+        self.file.read(buffer)
+    }
+}
+
+fn lock_directory(path: &Path) -> Result<File, String> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .share_mode(3)
+            .custom_flags(0x02200000)
+            .open(path)
+            .map_err(|e| io_error("lock local directory", e))?;
+        let meta = file
+            .metadata()
+            .map_err(|e| io_error("inspect directory handle", e))?;
+        require(
+            meta.is_dir() && meta.file_attributes() & 0x400 == 0,
+            "directory handle is a reparse point or not a directory",
+        )?;
+        require(
+            handle_path(&file)?.to_string_lossy().to_lowercase()
+                == path.to_string_lossy().to_lowercase(),
+            "directory namespace redirected before open",
+        )?;
+        Ok(file)
+    }
+    #[cfg(not(windows))]
+    {
+        File::open(path).map_err(|e| io_error("open directory", e))
+    }
+}
+
+fn open_checked(root: &Path, relative: &str) -> Result<ResourceReader, String> {
+    let mut directories = vec![lock_directory(root)?];
+    let parts: Vec<_> = relative.split('/').collect();
+    let mut path = root.to_path_buf();
+    for part in &parts[..parts.len() - 1] {
+        path.push(part);
+        directories.push(lock_directory(&path)?);
+    }
+    path.push(parts.last().ok_or("empty resource path")?);
+    let file = open_local(&path)?;
+    #[cfg(windows)]
+    require(
+        handle_path(&file)?.starts_with(root),
+        "opened resource handle escaped root",
+    )?;
+    // The directory handles retain the inspected hierarchy until the reader closes.
+    require(
+        path.canonicalize()
+            .map_err(|e| io_error("resolve opened resource", e))?
+            .starts_with(root),
+        "resource escaped root",
+    )?;
+    Ok(ResourceReader {
+        file,
+        _directories: directories,
+    })
+}
+
+pub fn open_resource(root: &Path, relative: &str) -> Result<ResourceReader, String> {
+    validate_resource_path(relative)?;
+    open_checked(&root_directory(root)?, relative)
+}
+
 fn bounded_bytes(root: &Path, name: &str, limit: usize) -> Result<Vec<u8>, String> {
     let mut bytes = Vec::new();
-    open_local(&checked_file(root, name)?)?
+    open_checked(root, name)?
         .take(limit as u64 + 1)
         .read_to_end(&mut bytes)
         .map_err(|e| io_error("read installation document", e))?;
@@ -117,7 +271,7 @@ fn bounded_bytes(root: &Path, name: &str, limit: usize) -> Result<Vec<u8>, Strin
 }
 
 fn hash_resource(root: &Path, path: &str) -> Result<ResourceDigest, String> {
-    let mut file = open_local(&checked_file(root, path)?)?;
+    let mut file = open_checked(root, path)?;
     let mut hash = Sha256::new();
     let mut size = 0u64;
     let mut buffer = [0u8; 65536];
@@ -148,6 +302,7 @@ fn inventory(root: &Path) -> Result<HashSet<String>, String> {
         depth: usize,
     ) -> Result<(), String> {
         require(depth <= 32, "resource directory nesting exceeds 32")?;
+        let _guard = lock_directory(path)?;
         for item in fs::read_dir(path).map_err(|e| io_error("read resource directory", e))? {
             let path = item.map_err(|e| io_error("read resource entry", e))?.path();
             *entries += 1;
@@ -189,7 +344,7 @@ fn root_directory(directory: &Path) -> Result<PathBuf, String> {
 fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, String> {
     let root = root_directory(directory)?;
     let bytes = bounded_bytes(&root, "room.json", MAX_MANIFEST_BYTES)?;
-    let value: Value = serde_json::from_slice(&bytes).map_err(|e| format!("parse Room: {e}"))?;
+    let value = parse_document(&bytes)?;
     let manifest = validate_manifest(&value)?;
     let mut expected: HashSet<String> = manifest.resource_paths.iter().cloned().collect();
     expected.insert("room.json".into());
@@ -248,15 +403,34 @@ impl Drop for Staging {
 }
 
 pub fn install(source: &Path, destination: &Path) -> Result<Installation, String> {
+    install_inner(source, destination, || {})
+}
+
+#[cfg(test)]
+pub fn install_with_publish_observer(
+    source: &Path,
+    destination: &Path,
+    observer: impl FnOnce(),
+) -> Result<Installation, String> {
+    install_inner(source, destination, observer)
+}
+
+fn install_inner(
+    source: &Path,
+    destination: &Path,
+    before_publish: impl FnOnce(),
+) -> Result<Installation, String> {
     let _lock = INSTALL_LOCK
         .lock()
         .map_err(|_| "installation lock poisoned".to_string())?;
     let source = root_directory(source)?;
+    let _source_guard = lock_directory(&source)?;
     let parent = root_directory(
         destination
             .parent()
             .ok_or("installation requires a parent directory")?,
     )?;
+    let _parent_guard = lock_directory(&parent)?;
     let name = destination
         .file_name()
         .and_then(|s| s.to_str())
@@ -274,10 +448,14 @@ pub fn install(source: &Path, destination: &Path) -> Result<Installation, String
         !destination.starts_with(&source) && !source.starts_with(&destination),
         "source and installed directories must not overlap",
     )?;
-    if destination.exists() {
-        verify_installation(&destination)
-            .map_err(|e| format!("destination is not a verified owned installation: {e}"))?;
-    }
+    let previous = if destination.exists() {
+        Some(
+            verify_installation(&destination)
+                .map_err(|e| format!("destination is not a verified owned installation: {e}"))?,
+        )
+    } else {
+        None
+    };
     let snapshot = make_snapshot(&source, false)?;
     let suffix = format!(
         "{}-{}-{}",
@@ -291,14 +469,14 @@ pub fn install(source: &Path, destination: &Path) -> Result<Installation, String
     let stage = Staging(parent.join(format!(".dext-install-{suffix}")));
     fs::create_dir(&stage.0).map_err(|e| io_error("create installation staging", e))?;
     let root = root_directory(&stage.0)?;
+    let stage_guard = lock_directory(&root)?;
     for relative in
         std::iter::once("room.json").chain(snapshot.resources.iter().map(|r| r.path.as_str()))
     {
-        let path = checked_file(&source, relative)?;
         let target = root.join(relative);
         fs::create_dir_all(target.parent().unwrap())
             .map_err(|e| io_error("create resource directory", e))?;
-        let mut input = open_local(&path)?.take(MAX_RESOURCE_BYTES + 1);
+        let mut input = open_checked(&source, relative)?.take(MAX_RESOURCE_BYTES + 1);
         let mut output =
             File::create(&target).map_err(|e| io_error("create installed resource", e))?;
         let size =
@@ -330,7 +508,20 @@ pub fn install(source: &Path, destination: &Path) -> Result<Installation, String
     drop(file);
     verify_installation(&root)?;
     let backup = parent.join(format!(".dext-previous-{suffix}"));
+    before_publish();
     let replacing = destination.exists();
+    // Ownership can change during a long copy; reject altered data before publication.
+    require(
+        replacing == previous.is_some(),
+        "destination ownership changed during staging",
+    )?;
+    if replacing {
+        require(
+            Some(verify_installation(&destination)?) == previous,
+            "destination content changed during staging",
+        )?;
+    }
+    drop(stage_guard);
     if replacing {
         fs::rename(&destination, &backup)
             .map_err(|e| io_error("retain previous installation", e))?;
@@ -603,7 +794,9 @@ fn public_config(value: &Value, depth: usize) -> Result<(), String> {
         Value::String(text) => {
             require(text.len() <= 8192, "config text exceeds 8192 bytes")?;
             let private_path = text.starts_with("\\\\")
-                || text.starts_with("file:")
+                || text
+                    .get(..5)
+                    .is_some_and(|prefix| prefix.eq_ignore_ascii_case("file:"))
                 || (text.len() > 2
                     && text.as_bytes()[1] == b':'
                     && text.as_bytes()[0].is_ascii_alphabetic());
@@ -615,6 +808,36 @@ fn public_config(value: &Value, depth: usize) -> Result<(), String> {
 }
 
 pub fn validate_manifest(value: &Value) -> Result<Manifest, String> {
+    fn shape(value: &Value) -> Result<(), String> {
+        match value {
+            Value::Object(fields) => {
+                for (key, value) in fields {
+                    // Public config has its own recursive nullable value grammar.
+                    if key == "config" {
+                        require(value.is_object(), "public config must be an object")?;
+                    } else if key == "componentOverrides" {
+                        let values = value
+                            .as_object()
+                            .ok_or("componentOverrides must be an object")?;
+                        for config in values.values() {
+                            public_config(config, 0)?;
+                        }
+                    } else {
+                        require(!value.is_null(), format!("{key} cannot be null"))?;
+                        shape(value)?;
+                    }
+                }
+            }
+            Value::Array(values) => {
+                for value in values {
+                    shape(value)?;
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+    shape(value)?;
     require(
         serde_json::to_vec(value).map_err(|e| e.to_string())?.len() <= MAX_MANIFEST_BYTES,
         "manifest exceeds 1 MiB",
