@@ -10,5 +10,6 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/InstalledRoomSessionAuthority.cs" Link="InstalledRoomSessionAuthority.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomV3Installation.cs" Link="RoomV3Installation.cs" />
   </ItemGroup>
 </Project>

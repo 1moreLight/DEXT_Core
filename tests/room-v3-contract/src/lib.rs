@@ -175,6 +175,14 @@ mod tests {
     }
 
     #[test]
+    fn shared_installed_fixture_is_verified_by_the_production_rust_boundary() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../dev_docs/fixtures/room-v3/installed-basic");
+        let installation = verify_installation(&root).unwrap();
+        assert_eq!(installation.resources.len(), 1);
+    }
+
+    #[test]
     fn configs_require_objects_and_exclude_nested_private_bindings() {
         let mut room = minimal();
         room["resources"] = json!(["scene/index.html"]);

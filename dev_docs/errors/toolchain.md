@@ -256,3 +256,8 @@ body 的 `reduce-motion` 类，确认 MediaQueryList 事件已同步。定向重
 原因：Player Form 被 Core 重新挂到 WorkerW，已不是普通顶层窗口。Win32 的空父句柄搜索会扩大到全桌面。
 
 修复：探针从 Core 日志中读取该 Player 上报的 `Hwnd`，再核对 HWND 所属 PID，沿 `Chrome_WidgetWin_0/1` 找输入句柄；原生鼠标点击使真实 Core 修订 1→3，Desk A→B。
+# #125 worktree的CodeGraph索引不是共享状态（2026-10-02）
+
+- 现象：新worktree运行sync/index提示未初始化；node的start-line/end-line参数不存在。
+- 原因：`.codegraph`是忽略的本地快照，不随Git worktree创建；CLI v1.5.0使用`--offset`/`--limit`。
+- 处理：先查已索引主工作区定位符号；新代码不在索引时读实际工作区文件。没有索引不替用户决定初始化。CLI不确定先看`--help`；主索引结果须与工作分支当前源码核对。

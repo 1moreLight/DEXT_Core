@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "231db51a-19db-4a3a-9c06-dbb9b3db86f9",
+  "name": "v3 Basic",
+  "startDesk": "home",
+  "resources": ["assets/background.svg"],
+  "transition": {"type": "slide", "durationMs": 450},
+  "buttons": [
+    {"id": "next", "name": "下一页", "scope": "room", "action": {"type": "desk.next"}},
+    {"id": "app", "name": "我的应用", "scope": "home", "action": {"type": "binding.launch"}}
+  ],
+  "desks": [
+    {"id": "home", "name": "Home", "background": {"type": "image", "src": "assets/background.svg"},
+     "icons": [{"id": "app-icon", "buttonId": "app", "label": "我的应用", "glyph": "◇", "x": 0, "y": 0}], "components": []},
+    {"id": "focus", "name": "Focus", "icons": [], "components": []}
+  ]
+}

@@ -1,6 +1,7 @@
 mod grpc;
 mod creator;
 mod core_runtime;
+mod room_v3;
 
 use tauri::Manager;
 
@@ -73,6 +74,7 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 // 2026-08-27: derive from CARGO_MANIFEST_DIR (tauri-ui/src-tauri) so the path
 // survives repo relocation; recompile after moving the repo.
 const WALLPAPER_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room");
+const WALLPAPER_V3_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room-v3");
 const CMD_ROOM_LAYOUT_SYNC: i32 = 26;
 const CMD_DESKTOP_ICON_PREFERENCES: i32 = 27;
 static DESK_LAYOUT_SYNC_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
@@ -2418,6 +2420,17 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
         .canonicalize()
         .map_err(|error| format!("Room directory not found: {error}"))?;
     let src = canonical.as_path();
+    let room: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(src.join("room.json")).map_err(|e| format!("read Room failed: {e}"))?
+    ).map_err(|e| format!("parse Room failed: {e}"))?;
+    if room_version(&room)? == 3 {
+        let host = std::path::Path::new(WALLPAPER_V3_DIR);
+        if !host.join("index.html").is_file() || !host.join("LivelyInfo.json").is_file() {
+            return Err("native v3 official renderer is not installed".into());
+        }
+        room_v3::install(src, &host.join("content"))?;
+        return grpc::set_wallpaper(WALLPAPER_V3_DIR).await;
+    }
     let pkg = std::path::Path::new(WALLPAPER_DIR);
     sync_room_to_package(src, pkg, &display_path(&canonical))?;
     grpc::set_wallpaper(WALLPAPER_DIR).await

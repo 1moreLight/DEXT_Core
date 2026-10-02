@@ -802,6 +802,7 @@ Check("installed Room admission binds the spawned Player and revokes changed con
     finally { directory.Delete(recursive: true); }
 });
 
+NativeInstallationChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} protocol checks passed");
 if (failures != 0) Environment.Exit(1);
 

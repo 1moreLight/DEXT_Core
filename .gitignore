@@ -39,3 +39,5 @@ appsettings.*.local.json
 # Generated runtime data and temporary writes
 rooms/library.json
 *.tmp
+# Host-owned native v3 installation; authored samples remain tracked in rooms/.
+/wallpapers/dext-room-v3/content/

@@ -148,6 +148,10 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 
 ## 工作流
 
+### 2026-10-02：原生 v3 安装边界
+
+正式 v3 官方宿主使用 `wallpapers/dext-room-v3`，作品安装在其 `content/` 子目录；官方脚本与作品资源分离，`content` 仅含原生清单、完整声明资源和宿主摘要。Core 对 `content` 独立复核后绑定 Player。原生数据不转换为 v2 或注入本机来源；现有 v2 开发宿主暂存，待完整 v3 链路验收后收口。
+
 - `scripts/build.ps1`：全量构建+部署插件（改 C#/.proto 必跑）
 - `scripts/start.ps1`：部署检查+起 Core+起配置器 dev（纯前端改动只跑这个）
 - `cargo test --lib applies_room_wallpaper -- --ignored`（在 tauri-ui/src-tauri）：显式运行会改变桌面和 Core 恢复布局的活体测试；普通 `cargo test --lib` 不运行

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -7,8 +8,8 @@ using System.Text.Json;
 
 namespace Dext.Core.Rooms;
 
-// Temporary v3 session manifest for the existing official visual host. It is
-// deliberately separate from the later, full v3 authoring format.
+// Native v3 admission, retaining the accepted v2 development overlay until
+// the complete native runtime replaces its visual host.
 internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAuthority
 {
     private readonly object gate = new();
@@ -59,6 +60,13 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
     {
         try
         {
+            if (Directory.Exists(Path.Combine(directory, "content")))
+            {
+                if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return null;
+                return RoomV3Installation.Verify(Path.Combine(directory, "content"));
+            }
+            if (File.Exists(Path.Combine(directory, "installation.json")))
+                return RoomV3Installation.Verify(directory);
             var manifestPath = Path.Combine(directory, "session.v3.json");
             var roomPath = Path.Combine(directory, "room.json");
             if (!File.Exists(manifestPath) || !File.Exists(roomPath) ||
@@ -97,8 +105,8 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
             return new VerifiedRoomInstallation(roomGuid.ToString("D"), stamp,
                 deskIds!, startDeskId!);
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or
-            JsonException or InvalidOperationException or ArgumentException or FormatException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or
+            JsonException or InvalidOperationException or ArgumentException or FormatException or KeyNotFoundException or OverflowException)
         {
             return null;
         }
