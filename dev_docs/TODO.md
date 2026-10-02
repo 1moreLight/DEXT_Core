@@ -1121,3 +1121,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 真实 Player 原生鼠标：`probe-a → probe-b`，修订 `1 → 3`；Core/Player/配置器重启后恢复 `probe-b`；应用 MSIroom 后 v3 状态 inactive、清单已撤销。协议 30/30、Rust 50/50（3 ignored）、完整 Core 构建/前端构建与隔离 Release Player 回归通过。
 - [x] 具名提交 `2e2c290`；按用户要求开发侧完成验证，用户决定合入 master 前保持分支隔离。
 - [x] 用户于 2026-09-30 回复“验收通过 git合并 名字就叫v3FirstTest”；合并提交 `24ac47c` 已入 master。合并后协议 30/30、完整 Core/Player 构建和三进程主 worktree 运行身份检查通过；重新应用 MSIroom 后 Player 页面指向 master。旧 worktree 已归档、工作分支已删除；详见 `TODO-archive.md`。依赖包的专项人工验收状态仍以各自验收卡为准。
+
+## V3-P3-001 正式作品契约与安装校验（2026-10-02，开发中）
+
+> 目标：原生v3 Room可校验、安装和复核全部内容，Core绑定真实Player。范围外：其他v3包按V3_DELIVERY顺序接入，不把最小样例冒充全链。人工验收见acceptance/V3-P3-001-room-contract.md。用户要求连续推进后集中验收，本包提交后继续依赖包，不中途等待。
+
+- [x] 按顺序读取开发入口、路线、台账、错误；确认master=e67cd03且干净。
+- [x] 创建独立worktree/工作分支，冻结16项完整基础版覆盖台账、计划与验收卡。
+- [ ] 测试先行实现正式v3清单/稳定身份/资源和安全声明校验。
+- [ ] 测试先行实现完整资源摘要、事务安装与篡改复核。
+- [ ] Core独立复核并绑定真实Player，Rust接安装链，提交具名文件。
+- [ ] 后续原生v3渲染器就绪后补真实三进程切页/恢复证据；集中验收前不合并master。
