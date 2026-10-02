@@ -3,10 +3,349 @@
 //! host-owned data; they never belong in this authored document.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
+use std::fs::{self, File};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
 
 pub const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 pub const MAX_RESOURCES: usize = 4096;
+const MAX_RESOURCE_BYTES: u64 = 1024 * 1024 * 1024;
+const MAX_INSTALL_BYTES: u64 = 2 * MAX_RESOURCE_BYTES;
+const MAX_SNAPSHOT_BYTES: usize = 2 * 1024 * 1024;
+static INSTALL_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+static TEMP_SEQUENCE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Installation {
+    pub format_version: u32,
+    pub room_id: String,
+    pub manifest_sha256: String,
+    pub resources: Vec<ResourceDigest>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceDigest {
+    pub path: String,
+    pub sha256: String,
+    pub size: u64,
+}
+
+fn io_error(context: &str, error: std::io::Error) -> String {
+    format!("{context}: {error}")
+}
+
+fn reject_link(path: &Path) -> Result<std::fs::Metadata, String> {
+    let meta = fs::symlink_metadata(path).map_err(|e| io_error("inspect installation path", e))?;
+    let mut link = meta.file_type().is_symlink();
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        link |= meta.file_attributes() & 0x400 != 0;
+    }
+    require(
+        !link,
+        format!(
+            "installation path cannot be a link/reparse point: {}",
+            path.display()
+        ),
+    )?;
+    Ok(meta)
+}
+
+fn checked_file(root: &Path, relative: &str) -> Result<PathBuf, String> {
+    let mut path = root.to_path_buf();
+    for segment in relative.split('/') {
+        path.push(segment);
+        reject_link(&path)?;
+    }
+    require(
+        path.is_file(),
+        format!("declared resource is not a file: {relative}"),
+    )?;
+    let canonical = path
+        .canonicalize()
+        .map_err(|e| io_error("resolve resource", e))?;
+    require(
+        canonical.starts_with(root),
+        "resource escaped installed root",
+    )?;
+    Ok(path)
+}
+
+fn open_local(path: &Path) -> Result<File, String> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // Do not follow a final reparse point replaced after path inspection.
+        options.custom_flags(0x00200000);
+    }
+    let file = options
+        .open(path)
+        .map_err(|e| io_error("open declared resource", e))?;
+    let meta = file
+        .metadata()
+        .map_err(|e| io_error("inspect opened resource", e))?;
+    require(meta.is_file(), "opened resource is not a regular file")?;
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        require(
+            meta.file_attributes() & 0x400 == 0,
+            "opened resource is a reparse point",
+        )?;
+    }
+    Ok(file)
+}
+
+fn bounded_bytes(root: &Path, name: &str, limit: usize) -> Result<Vec<u8>, String> {
+    let mut bytes = Vec::new();
+    open_local(&checked_file(root, name)?)?
+        .take(limit as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| io_error("read installation document", e))?;
+    require(
+        !bytes.is_empty() && bytes.len() <= limit,
+        format!("{name} exceeds size limit or is empty"),
+    )?;
+    Ok(bytes)
+}
+
+fn hash_resource(root: &Path, path: &str) -> Result<ResourceDigest, String> {
+    let mut file = open_local(&checked_file(root, path)?)?;
+    let mut hash = Sha256::new();
+    let mut size = 0u64;
+    let mut buffer = [0u8; 65536];
+    loop {
+        let count = file
+            .read(&mut buffer)
+            .map_err(|e| io_error("hash resource", e))?;
+        if count == 0 {
+            break;
+        }
+        size += count as u64;
+        require(size <= MAX_RESOURCE_BYTES, "resource exceeds 1 GiB")?;
+        hash.update(&buffer[..count]);
+    }
+    Ok(ResourceDigest {
+        path: path.into(),
+        sha256: format!("{:x}", hash.finalize()),
+        size,
+    })
+}
+
+fn inventory(root: &Path) -> Result<HashSet<String>, String> {
+    fn walk(
+        root: &Path,
+        path: &Path,
+        found: &mut HashSet<String>,
+        entries: &mut usize,
+        depth: usize,
+    ) -> Result<(), String> {
+        require(depth <= 32, "resource directory nesting exceeds 32")?;
+        for item in fs::read_dir(path).map_err(|e| io_error("read resource directory", e))? {
+            let path = item.map_err(|e| io_error("read resource entry", e))?.path();
+            *entries += 1;
+            require(
+                *entries <= MAX_RESOURCES * 4,
+                "installation has too many entries",
+            )?;
+            let meta = reject_link(&path)?;
+            if meta.is_dir() {
+                walk(root, &path, found, entries, depth + 1)?;
+            } else {
+                require(meta.is_file(), "non-file resource")?;
+                let relative = path
+                    .strip_prefix(root)
+                    .map_err(|_| "resource escaped root".to_string())?
+                    .to_str()
+                    .ok_or("resource name is not UTF-8")?
+                    .replace('\\', "/");
+                require(found.insert(relative), "duplicate installed resource")?;
+            }
+        }
+        Ok(())
+    }
+    let mut found = HashSet::new();
+    walk(root, root, &mut found, &mut 0, 0)?;
+    Ok(found)
+}
+
+fn root_directory(directory: &Path) -> Result<PathBuf, String> {
+    require(
+        reject_link(directory)?.is_dir(),
+        "installation root must be a directory",
+    )?;
+    directory
+        .canonicalize()
+        .map_err(|e| io_error("resolve installation root", e))
+}
+
+fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, String> {
+    let root = root_directory(directory)?;
+    let bytes = bounded_bytes(&root, "room.json", MAX_MANIFEST_BYTES)?;
+    let value: Value = serde_json::from_slice(&bytes).map_err(|e| format!("parse Room: {e}"))?;
+    let manifest = validate_manifest(&value)?;
+    let mut expected: HashSet<String> = manifest.resource_paths.iter().cloned().collect();
+    expected.insert("room.json".into());
+    if installed {
+        expected.insert("installation.json".into());
+    }
+    require(
+        inventory(&root)? == expected,
+        "resource inventory differs from declared Room resources",
+    )?;
+    let mut paths = manifest.resource_paths;
+    paths.sort();
+    let mut resources = Vec::new();
+    let mut total = 0u64;
+    for path in paths {
+        let digest = hash_resource(&root, &path)?;
+        total += digest.size;
+        require(total <= MAX_INSTALL_BYTES, "Room resources exceed 2 GiB")?;
+        resources.push(digest);
+    }
+    Ok(Installation {
+        format_version: 1,
+        room_id: manifest.room_id,
+        manifest_sha256: format!("{:x}", Sha256::digest(&bytes)),
+        resources,
+    })
+}
+
+pub fn verify_installation(directory: &Path) -> Result<Installation, String> {
+    let root = root_directory(directory)?;
+    let expected: Installation = serde_json::from_slice(&bounded_bytes(
+        &root,
+        "installation.json",
+        MAX_SNAPSHOT_BYTES,
+    )?)
+    .map_err(|e| format!("parse installed snapshot: {e}"))?;
+    require(
+        expected.format_version == 1,
+        "unsupported installation format",
+    )?;
+    let actual = make_snapshot(&root, true)?;
+    require(
+        expected == actual,
+        "installed Room manifest or resource content changed",
+    )?;
+    Ok(actual)
+}
+
+struct Staging(PathBuf);
+impl Drop for Staging {
+    fn drop(&mut self) {
+        if self.0.exists() && reject_link(&self.0).is_ok() {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+}
+
+pub fn install(source: &Path, destination: &Path) -> Result<Installation, String> {
+    let _lock = INSTALL_LOCK
+        .lock()
+        .map_err(|_| "installation lock poisoned".to_string())?;
+    let source = root_directory(source)?;
+    let parent = root_directory(
+        destination
+            .parent()
+            .ok_or("installation requires a parent directory")?,
+    )?;
+    let name = destination
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or("invalid installation directory name")?;
+    require(
+        !name.is_empty()
+            && !matches!(name, "." | "..")
+            && !name
+                .chars()
+                .any(|c| c.is_control() || "\\/:*?\"<>|".contains(c)),
+        "invalid installation directory name",
+    )?;
+    let destination = parent.join(name);
+    require(
+        !destination.starts_with(&source) && !source.starts_with(&destination),
+        "source and installed directories must not overlap",
+    )?;
+    if destination.exists() {
+        verify_installation(&destination)
+            .map_err(|e| format!("destination is not a verified owned installation: {e}"))?;
+    }
+    let snapshot = make_snapshot(&source, false)?;
+    let suffix = format!(
+        "{}-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_nanos(),
+        TEMP_SEQUENCE.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    );
+    let stage = Staging(parent.join(format!(".dext-install-{suffix}")));
+    fs::create_dir(&stage.0).map_err(|e| io_error("create installation staging", e))?;
+    let root = root_directory(&stage.0)?;
+    for relative in
+        std::iter::once("room.json").chain(snapshot.resources.iter().map(|r| r.path.as_str()))
+    {
+        let path = checked_file(&source, relative)?;
+        let target = root.join(relative);
+        fs::create_dir_all(target.parent().unwrap())
+            .map_err(|e| io_error("create resource directory", e))?;
+        let mut input = open_local(&path)?.take(MAX_RESOURCE_BYTES + 1);
+        let mut output =
+            File::create(&target).map_err(|e| io_error("create installed resource", e))?;
+        let size =
+            std::io::copy(&mut input, &mut output).map_err(|e| io_error("copy resource", e))?;
+        require(
+            size <= MAX_RESOURCE_BYTES,
+            "resource grew beyond limit during copy",
+        )?;
+        output.flush().map_err(|e| io_error("flush resource", e))?;
+        output
+            .sync_all()
+            .map_err(|e| io_error("sync resource", e))?;
+    }
+    require(
+        make_snapshot(&root, false)? == snapshot,
+        "source content changed during installation",
+    )?;
+    let record = serde_json::to_vec_pretty(&snapshot).map_err(|e| e.to_string())?;
+    require(
+        record.len() <= MAX_SNAPSHOT_BYTES,
+        "installation snapshot exceeds 2 MiB",
+    )?;
+    let mut file = File::create(root.join("installation.json"))
+        .map_err(|e| io_error("create installed snapshot", e))?;
+    file.write_all(&record)
+        .map_err(|e| io_error("write installed snapshot", e))?;
+    file.sync_all()
+        .map_err(|e| io_error("sync installed snapshot", e))?;
+    drop(file);
+    verify_installation(&root)?;
+    let backup = parent.join(format!(".dext-previous-{suffix}"));
+    let replacing = destination.exists();
+    if replacing {
+        fs::rename(&destination, &backup)
+            .map_err(|e| io_error("retain previous installation", e))?;
+    }
+    if let Err(error) = fs::rename(&root, &destination) {
+        if replacing {
+            fs::rename(&backup,&destination).map_err(|restore|format!("installation swap failed ({error}); rollback failed ({restore}); previous retained at {}",backup.display()))?;
+        }
+        return Err(io_error("publish installed Room", error));
+    }
+    if replacing {
+        let _ = fs::remove_dir_all(&backup);
+    }
+    Ok(snapshot)
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

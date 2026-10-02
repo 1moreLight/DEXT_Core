@@ -3,8 +3,161 @@ pub mod room_v3;
 
 #[cfg(test)]
 mod tests {
-    use super::room_v3::validate_manifest;
+    use super::room_v3::{install, validate_manifest, verify_installation};
     use serde_json::{json, Value};
+
+    fn authored_source(root: &std::path::Path) -> std::path::PathBuf {
+        let source = root.join("source");
+        std::fs::create_dir_all(source.join("assets")).unwrap();
+        let mut room = minimal();
+        room["resources"] = json!(["assets/bg.svg"]);
+        room["desks"][0]["background"] = json!({"type":"image","src":"assets/bg.svg"});
+        std::fs::write(
+            source.join("room.json"),
+            serde_json::to_vec_pretty(&room).unwrap(),
+        )
+        .unwrap();
+        std::fs::write(
+            source.join("assets/bg.svg"),
+            b"<svg xmlns=\"http://www.w3.org/2000/svg\"/>",
+        )
+        .unwrap();
+        source
+    }
+
+    #[test]
+    fn installation_roundtrip_verifies_every_declared_byte() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        let snapshot = install(&source, &dest).unwrap();
+        assert_eq!(snapshot, verify_installation(&dest).unwrap());
+        assert_eq!(snapshot.resources.len(), 1);
+        assert_eq!(snapshot.resources[0].sha256.len(), 64);
+        assert_eq!(
+            std::fs::read(source.join("assets/bg.svg")).unwrap(),
+            std::fs::read(dest.join("assets/bg.svg")).unwrap()
+        );
+        let encoded = std::fs::read_to_string(dest.join("installation.json")).unwrap();
+        assert!(!encoded.contains(&source.to_string_lossy().to_string()));
+    }
+
+    #[test]
+    fn changed_manifest_asset_or_added_file_invalidates_installation() {
+        for target in ["room.json", "assets/bg.svg", "assets/extra.js"] {
+            let temp = tempfile::tempdir().unwrap();
+            let source = authored_source(temp.path());
+            let dest = temp.path().join("installed");
+            install(&source, &dest).unwrap();
+            if target == "room.json" {
+                let mut room: Value =
+                    serde_json::from_slice(&std::fs::read(dest.join(target)).unwrap()).unwrap();
+                room["name"] = json!("Changed");
+                std::fs::write(dest.join(target), serde_json::to_vec(&room).unwrap()).unwrap();
+            } else {
+                std::fs::write(dest.join(target), b"tampered").unwrap();
+            }
+            assert!(
+                verify_installation(&dest).is_err(),
+                "accepted modified {target}"
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_source_keeps_previous_installation_intact() {
+        for mutation in ["missing", "extra", "invalid"] {
+            let temp = tempfile::tempdir().unwrap();
+            let source = authored_source(temp.path());
+            let dest = temp.path().join("installed");
+            let old = install(&source, &dest).unwrap();
+            match mutation {
+                "missing" => std::fs::remove_file(source.join("assets/bg.svg")).unwrap(),
+                "extra" => std::fs::write(source.join("assets/unlisted.js"), b"code").unwrap(),
+                _ => std::fs::write(source.join("room.json"), b"{}").unwrap(),
+            }
+            assert!(install(&source, &dest).is_err());
+            assert_eq!(old, verify_installation(&dest).unwrap());
+        }
+    }
+
+    #[test]
+    fn install_refuses_overlapping_paths_and_unowned_destination() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        assert!(install(&source, &source).is_err());
+        assert!(install(&source, &source.join("child")).is_err());
+        assert!(install(&source, temp.path()).is_err());
+        let dest = temp.path().join("personal");
+        std::fs::create_dir(&dest).unwrap();
+        std::fs::write(dest.join("keep.txt"), b"user data").unwrap();
+        assert!(install(&source, &dest).is_err());
+        assert_eq!(std::fs::read(dest.join("keep.txt")).unwrap(), b"user data");
+    }
+
+    #[test]
+    fn reinstall_replaces_owned_snapshot_and_removes_old_resources() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        let old = install(&source, &dest).unwrap();
+        std::fs::remove_file(source.join("assets/bg.svg")).unwrap();
+        std::fs::write(
+            source.join("room.json"),
+            serde_json::to_vec(&minimal()).unwrap(),
+        )
+        .unwrap();
+        let new = install(&source, &dest).unwrap();
+        assert_ne!(old.manifest_sha256, new.manifest_sha256);
+        assert_eq!(new, verify_installation(&dest).unwrap());
+        assert!(!dest.join("assets/bg.svg").exists());
+        assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 2);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn locked_previous_installation_survives_failed_replacement() {
+        use std::os::windows::fs::OpenOptionsExt;
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        let old = install(&source, &dest).unwrap();
+        let lock = std::fs::OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(dest.join("assets/bg.svg"))
+            .unwrap();
+        std::fs::write(source.join("assets/bg.svg"), b"new bytes").unwrap();
+        assert!(install(&source, &dest).is_err());
+        drop(lock);
+        assert_eq!(old, verify_installation(&dest).unwrap());
+        assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 2);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn resource_parent_junction_is_rejected_without_reading_external_content() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let outside = temp.path().join("outside");
+        std::fs::create_dir(&outside).unwrap();
+        std::fs::write(outside.join("bg.svg"), b"external").unwrap();
+        std::fs::remove_file(source.join("assets/bg.svg")).unwrap();
+        std::fs::remove_dir(source.join("assets")).unwrap();
+        let output = std::process::Command::new("cmd")
+            .args(["/c", "mklink", "/J"])
+            .arg(source.join("assets"))
+            .arg(&outside)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "junction fixture failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(install(&source, &temp.path().join("installed")).is_err());
+        assert_eq!(std::fs::read(outside.join("bg.svg")).unwrap(), b"external");
+    }
 
     #[test]
     fn checked_in_native_samples_follow_the_production_contract() {
