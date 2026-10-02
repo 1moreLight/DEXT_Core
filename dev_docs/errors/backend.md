@@ -270,3 +270,7 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 原因：`core_path_for_configurator` 和身份脚本仅接受 `tauri-ui/src-tauri/target/debug`，未考虑编译时的 `CARGO_TARGET_DIR`。此前为节省 C 盘空间把 Rust target 重定向到 D 盘。
 
 修复：配置器以编译时 `CARGO_TARGET_DIR` 或标准 target 识别自身，始终从编译时 manifest 所在 worktree 定位 Core；身份脚本支持当前环境的 target 目录。Rust 定向回归和真实三进程路径/pipe 核对通过。
+
+## #123 公开 config 的 Schema 与原生校验必须一致（2026-10-02）
+
+V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允许顶层数组/字符串。新增真实行为回归先失败；递归入口在 depth=0 检查 object 后通过。嵌套 target/secret/绝对路径仍拒绝。以后新增 Value 类型配置时同时验证形状、引用与隐私限制，不把递归遍历通过等同于完整契约通过。

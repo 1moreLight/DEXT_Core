@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dext.local/schemas/room-v3.schema.json",
+  "title": "Dext Room v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "apiVersion", "id", "name", "startDesk", "desks", "resources"],
+  "properties": {
+    "version": {"const": 3}, "apiVersion": {"const": 1},
+    "id": {"type": "string", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"},
+    "name": {"$ref": "#/$defs/name"}, "startDesk": {"$ref": "#/$defs/id"},
+    "resources": {"type": "array", "maxItems": 4096, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "desks": {"type": "array", "minItems": 1, "maxItems": 64, "items": {"$ref": "#/$defs/desk"}},
+    "roomScene": {"$ref": "#/$defs/scene"}, "start": {"$ref": "#/$defs/content"}, "idle": {"$ref": "#/$defs/content"},
+    "transition": {"type": "object", "additionalProperties": false, "required": ["type", "durationMs"], "properties": {
+      "type": {"enum": ["slide", "fade", "none", "author"]}, "durationMs": {"type": "integer", "minimum": 0, "maximum": 10000}}},
+    "buttons": {"type": "array", "maxItems": 1024, "items": {"$ref": "#/$defs/button"}},
+    "components": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/component"}},
+    "dockComponentId": {"$ref": "#/$defs/id"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[A-Za-z0-9_.-]+$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 160, "pattern": "\\S"},
+    "path": {"type": "string", "minLength": 1, "maxLength": 240, "pattern": "^[^\\\\:*?\"<>|%#\\u0000-\\u001f]+$"},
+    "capabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["desk.read", "desk.navigate", "time.read", "hardware.read", "media.read", "media.control", "audio.read", "audio.control", "storage.read", "storage.write", "binding.launch", "dext.exit"]}},
+    "content": {"type": "object", "additionalProperties": false, "required": ["type", "src"], "properties": {
+      "type": {"enum": ["image", "video", "gif", "html"]}, "src": {"$ref": "#/$defs/path"}}},
+    "scene": {"type": "object", "additionalProperties": false, "required": ["entry"], "properties": {
+      "entry": {"$ref": "#/$defs/path"}, "capabilities": {"$ref": "#/$defs/capabilities"}, "config": {"type": "object"}}},
+    "placement": {"type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"], "properties": {
+      "x": {"type": "number", "minimum": 0, "maximum": 1920}, "y": {"type": "number", "minimum": 0, "maximum": 1080},
+      "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1920}, "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1080}}},
+    "component": {"type": "object", "additionalProperties": false, "required": ["id", "role", "entry", "placement"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "role": {"enum": ["widget", "dock"]}, "entry": {"$ref": "#/$defs/path"},
+      "placement": {"$ref": "#/$defs/placement"}, "capabilities": {"$ref": "#/$defs/capabilities"},
+      "buttonIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}, "config": {"type": "object"}}},
+    "action": {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {
+      "type": {"enum": ["desk.next", "desk.previous", "desk.go", "binding.launch", "dext.exit"]}, "deskId": {"$ref": "#/$defs/id"}},
+      "allOf": [{"if": {"properties": {"type": {"const": "desk.go"}}}, "then": {"required": ["deskId"]}, "else": {"not": {"required": ["deskId"]}}}]},
+    "button": {"type": "object", "additionalProperties": false, "required": ["id", "name", "scope"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "name": {"$ref": "#/$defs/name"}, "scope": {"$ref": "#/$defs/id"}, "action": {"$ref": "#/$defs/action"}}},
+    "icon": {"type": "object", "additionalProperties": false, "required": ["id", "buttonId", "x", "y"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "buttonId": {"$ref": "#/$defs/id"}, "x": {"type": "integer", "minimum": 0, "maximum": 63},
+      "y": {"type": "integer", "minimum": 0, "maximum": 63}, "label": {"type": "string", "maxLength": 160}, "glyph": {"type": "string", "maxLength": 8}}},
+    "desk": {"type": "object", "additionalProperties": false, "required": ["id", "name", "icons", "components"], "properties": {
+      "id": {"$ref": "#/$defs/id"}, "name": {"$ref": "#/$defs/name"}, "background": {"$ref": "#/$defs/content"},
+      "icons": {"type": "array", "maxItems": 512, "items": {"$ref": "#/$defs/icon"}},
+      "components": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+      "componentOverrides": {"type": "object", "additionalProperties": {"type": "object"}}}}
+  }
+}

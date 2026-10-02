@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "fb129f01-e2b5-42c6-a495-3650f1a2a3ac",
+  "name": "v3 Continuous",
+  "startDesk": "overview",
+  "resources": ["scene/index.html", "scene/main.js", "scene/style.css"],
+  "roomScene": {"entry": "scene/index.html", "capabilities": ["desk.read", "desk.navigate", "time.read"]},
+  "transition": {"type": "author", "durationMs": 700},
+  "buttons": [{"id": "navigate", "name": "切换视图", "scope": "room", "action": {"type": "desk.next"}}],
+  "desks": [
+    {"id": "overview", "name": "Overview", "icons": [], "components": []},
+    {"id": "detail", "name": "Detail", "icons": [], "components": []}
+  ]
+}

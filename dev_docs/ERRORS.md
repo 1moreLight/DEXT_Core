@@ -127,6 +127,7 @@
 | #120 | 外置 `CARGO_TARGET_DIR` 让配置器只认内置 target 路径，误判同分支 Core 不可连接 | [backend](errors/backend.md) |
 | #121 | WebView2 的 `msg_wploaded` 可早于异步 `room.json` 加载，过早发送会话快照会被页面重置 | [renderer](errors/renderer.md) |
 | #122 | WorkerW 内的 Player 窗口不是普通顶层窗口，实机探针不能只用 `EnumWindows` 找输入 HWND | [toolchain](errors/toolchain.md) |
+| #123 | JSON Schema 将公开 config 限为对象，但原生递归校验接受数组/字符串，会造成跨入口契约分歧 | [backend](errors/backend.md) |
 
 ## 分册
 
