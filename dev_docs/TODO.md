@@ -1180,3 +1180,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] Windows事实接口初始缺失CS0246→协议72/72；内核17/17、动作44/44、完整build→start/identity通过。正常退出后Dext进程/1620监听0。真实锁屏/闲置、原生v3页面首帧、物理输入仍按7步最终验收待执行（2026-10-03）。
 - [ ] Task2继续：上下文/撤销IPC、实际资源清单读取边界与物理输入；start完成/idle同Player及暂停恢复最后快照仍待完成。
+
+- [x] Task2上下文传输：已验证context先于首个snapshot；显式撤销覆盖Stop/换会话/失效/Detach，按Player递增代次拒绝迟到消息，生产Json.NET到ReleasePlayer实测并重放暂停期间最后状态。
+
+- [x] 上下文传输实际验证：协议80/80、消息19/19、内核17/17、动作44/44；ReleasePlayer五组原生IPC及旧完整快照探针通过。中文stdout乱码、重复异步恢复丢重放、非对象Desk拒绝三项实际失败后修复。
+- [x] 完整build→start/identity通过，Core123128/Player71384/Watchdog116472/配置器76656；v3-status=inactive符合恢复原有v2。正常退出后进程/1620监听均0。启动时一次WorkerW层级日志有现有纠正调用，最终物理层级仍留Task4验证。
+- [ ] Task2继续：首航前隔离v3资源服务，同句柄验证后提供清单内字节与Range；物理输入、start完成和同Player闲置仍未接通。

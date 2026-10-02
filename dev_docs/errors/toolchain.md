@@ -274,3 +274,7 @@ PowerShell工具调用的进程环境不跨调用继承。本轮start未设置CA
 ## #139 WebView子进程延迟释放临时目录（2026-10-03）
 
 隔离ReleasePlayer正常退出后，WebView lockfile可继续短暂占用；finally递归删除立即抛错会掩盖原始字段缺失错误。CIM后续确认该探针子进程已结束。探针改为有界20次/500ms清理重试，仍锁定则报告精确目录并保留原始断言；旧失败夹具在确认temp边界/非链接/进程退出后定点删除。不得通过杀全体WebView进程处理。
+
+## #145 Player IPC探针须使用真实入口与真实重载（2026-10-03）
+
+build.ps1把Release Player部署到Core的bin/x64/Debug/net9.0-windows10.0.18362.0/Plugins/WebView2；不能猜单独Player项目bin路径。Form1现有cmd_reload分支被注释，向stdin发该命令不会重载；探针等待新ready超时。改用页面受控测试指令执行location.reload，确认真实新文档ready后再断言墓碑与新代次。未顺带改变既有cmd_reload产品行为。

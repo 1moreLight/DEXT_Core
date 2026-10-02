@@ -256,7 +256,7 @@ internal static class NativeInstallationChecks
             ["resources"] = records }.ToJsonString());
     }
 
-    private static void WithCopy(Action<string> test, string fixture = "installed-basic")
+    internal static void WithCopy(Action<string> test, string fixture = "installed-basic")
     {
         var temp = Directory.CreateTempSubdirectory("dext-native-admission-");
         try

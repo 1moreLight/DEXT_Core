@@ -237,30 +237,54 @@ internal sealed class RoomSessionProtocolGateway
     }
 
     public RoomProtocolReply Subscribe(Guid connectionId, RoomSessionPeer peer,
-        Action<RoomSessionSnapshot> observer, out IDisposable? subscription)
+        Action<RoomSessionSnapshot> observer, out IDisposable? subscription,
+        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize = null, Action? revoked = null)
     {
         ArgumentNullException.ThrowIfNull(observer);
         lock (gate)
         {
             subscription = null;
-            if (!TryAuthorize(connectionId, peer, out var connection, out _, out var error)) return error;
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
             if (!TryCurrentSession(connection, out var current, out error)) return error;
-
-            var observation = new Observation(this, connectionId);
+            if (initialize is not null && connection.Hello.Role != RoomClientRole.DesktopPlayer)
+                return Reject(RoomProtocolStatus.Forbidden);
+            var observation = new Observation(this, connectionId, revoked);
             if (!observations.TryGetValue(connectionId, out var list))
                 observations.Add(connectionId, list = new List<Observation>());
             list.Add(observation);
-            // Subscribe immediately sends the current full snapshot. A callback
-            // may close its own connection before the kernel handle is attached.
-            observation.Attach(kernel.Subscribe(snapshot => Deliver(observation, peer, observer, snapshot)));
-            if (observation.IsDisposed) return Reject(RoomProtocolStatus.StaleSession);
-            if (!TryAuthorize(connectionId, peer, out connection, out _, out error)) return error;
-            if (!TryCurrentSession(connection, out current, out error))
+            try
             {
-                Unsubscribe(observation);
-                return error;
+                // Register invalidation before publishing any context. A synchronous
+                // initializer may close/stop/replace this session before Subscribe.
+                initialize?.Invoke(installation.RuntimeContext, current);
+                if (observation.IsDisposed) return Reject(RoomProtocolStatus.StaleSession);
+                if (!TryAuthorize(connectionId, peer, out connection, out _, out error) ||
+                    !TryCurrentSession(connection, out current, out error))
+                { Unsubscribe(observation); return error; }
+                observation.Attach(kernel.Subscribe(snapshot => Deliver(observation, peer, observer, snapshot)));
+                if (observation.IsDisposed) return Reject(RoomProtocolStatus.StaleSession);
+                if (!TryAuthorize(connectionId, peer, out connection, out _, out error)) return error;
+                if (!TryCurrentSession(connection, out current, out error))
+                { Unsubscribe(observation); return error; }
+                subscription = observation;
+                return Accept(current);
             }
-            subscription = observation;
+            catch { Unsubscribe(observation); throw; }
+        }
+    }
+
+    internal RoomProtocolReply Replay(Guid connectionId, RoomSessionPeer peer,
+        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize, Action<RoomSessionSnapshot> observer)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            initialize?.Invoke(installation.RuntimeContext, current);
+            if (!TryAuthorize(connectionId, peer, out connection, out _, out error) ||
+                !TryCurrentSession(connection, out current, out error)) return error;
+            observer(current);
             return Accept(current);
         }
     }
@@ -509,7 +533,7 @@ internal sealed class RoomSessionProtocolGateway
 
     private sealed record SessionBinding(Guid SessionId, string RoomId, string InstallationStamp);
 
-    private sealed class Observation(RoomSessionProtocolGateway owner, Guid connectionId) : IDisposable
+    private sealed class Observation(RoomSessionProtocolGateway owner, Guid connectionId, Action? revoked) : IDisposable
     {
         private IDisposable? kernelSubscription;
         public Guid ConnectionId { get; } = connectionId;
@@ -523,9 +547,12 @@ internal sealed class RoomSessionProtocolGateway
 
         public void Deactivate()
         {
+            if (IsDisposed) return;
             IsDisposed = true;
             if (kernelSubscription is { } subscription) DisposeOutsideGateway(subscription);
             kernelSubscription = null;
+            try { revoked?.Invoke(); }
+            catch (Exception error) { Trace.TraceError($"Dext Player revocation delivery failed: {error}"); }
         }
 
         private static void DisposeOutsideGateway(IDisposable subscription)

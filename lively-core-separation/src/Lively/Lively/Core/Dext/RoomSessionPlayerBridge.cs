@@ -10,19 +10,25 @@ internal sealed class RoomSessionPlayerBridge : IDisposable
     private readonly RoomSessionPeer peer;
     private readonly Guid connectionId;
     private readonly IDisposable subscription;
-    private bool disposed;
+    private volatile bool disposed;
+    private readonly Action<RoomSessionSnapshot> sendSnapshot;
+    private readonly Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize;
 
     private RoomSessionPlayerBridge(RoomSessionProtocolGateway gateway, RoomSessionPeer peer,
-        Guid connectionId, IDisposable subscription)
+        Guid connectionId, IDisposable subscription, Action<RoomSessionSnapshot> sendSnapshot,
+        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize, Action? revoked)
     {
         this.gateway = gateway;
         this.peer = peer;
         this.connectionId = connectionId;
         this.subscription = subscription;
+        this.sendSnapshot = sendSnapshot;
+        this.initialize = initialize;
     }
 
     public static RoomProtocolStatus Connect(RoomSessionProtocolGateway gateway, RoomSessionPeer peer,
-        string roomId, Action<RoomSessionSnapshot> sendSnapshot, out RoomSessionPlayerBridge? bridge)
+        string roomId, Action<RoomSessionSnapshot> sendSnapshot, out RoomSessionPlayerBridge? bridge,
+        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize = null, Action? revoked = null)
     {
         ArgumentNullException.ThrowIfNull(gateway);
         ArgumentNullException.ThrowIfNull(peer);
@@ -32,14 +38,30 @@ internal sealed class RoomSessionPlayerBridge : IDisposable
             RoomClientRole.DesktopPlayer, roomId));
         if (opened.Status != RoomProtocolStatus.Accepted || opened.ConnectionId is not { } id)
             return opened.Status;
-        var subscribed = gateway.Subscribe(id, peer, sendSnapshot, out var subscription);
-        if (subscribed.Status != RoomProtocolStatus.Accepted || subscription is null)
+        try
         {
-            gateway.Close(id, peer);
-            return subscribed.Status;
+            var subscribed = gateway.Subscribe(id, peer, sendSnapshot, out var subscription, initialize, revoked);
+            if (subscribed.Status != RoomProtocolStatus.Accepted || subscription is null)
+            {
+                gateway.Close(id, peer);
+                return subscribed.Status;
+            }
+            bridge = new RoomSessionPlayerBridge(gateway, peer, id, subscription, sendSnapshot, initialize, revoked);
+            return RoomProtocolStatus.Accepted;
         }
-        bridge = new RoomSessionPlayerBridge(gateway, peer, id, subscription);
-        return RoomProtocolStatus.Accepted;
+        catch { gateway.Close(id, peer); throw; }
+    }
+
+    public RoomProtocolStatus Refresh()
+    {
+        if (disposed) return RoomProtocolStatus.StaleSession;
+        try
+        {
+            var result = gateway.Replay(connectionId, peer, initialize, sendSnapshot);
+            if (result.Status != RoomProtocolStatus.Accepted) Dispose();
+            return result.Status;
+        }
+        catch { Dispose(); throw; }
     }
 
     public RoomProtocolReply Request(Guid sessionId, string deskId) => disposed

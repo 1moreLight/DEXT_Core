@@ -13,6 +13,7 @@ namespace Lively.Models.Message
     public sealed class LivelyMessageRoomSessionSnapshot : IpcMessage
     {
         public int ProtocolVersion { get; set; }
+        public long RuntimeGeneration { get; set; }
         public Guid SessionId { get; set; }
         public string RoomId { get; set; }
         public string[] DeskIds { get; set; }

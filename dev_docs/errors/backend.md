@@ -336,3 +336,19 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 旧协调者Start/Restore未传Windows状态，内核默认未锁屏/桌面前台；即使随后补发SetLifecycle再SetOperable，解锁与前台变化也可能分成两帧。播放策略又不等于实际每显示器暂停结果。
 
 独立RoomRuntimeFactsSource记录实际Pause/Play、锁屏和独立前台，未知状态限制操作。Start/Restore直接构造完整初始状态；SetRuntimeFacts一次提交三事实，存储失败保留原快照并允许相同采样重试。协议72/72包含首次订阅无宽松中间态、后台解锁从不出现可操作修订、权限边界及显示器范围。完整构建/真实v2恢复启动通过；真实原生v3锁屏与唤醒验收仍须后续执行。
+
+## #142 Framework Player标准输出编码破坏Unicode（2026-10-03）
+
+真实IPC探针发送中文清单并回读，名字变成替换字符；纯Json.NET内存测试未发现。Player使用Framework控制台默认编码，Core/.NET9按UTF-8读管道。统一SendToParent使用StringEscapeHandling.EscapeNonAscii输出ASCII JSON，实际中文精确匹配通过；探针stdin明确UTF-8，与Core一致。不能仅用同进程序列化测试宣称跨进程Unicode正确。
+
+## #143 重复异步Resume取消首次重放（2026-10-03）
+
+真实WebView测试将media JS延迟120ms，暂停后连续发送两次Resume，第一组快照成功但恢复重放超时。重复Resume递增修订后直接返回，首次await完成已不匹配，最后缓存状态从未发布。现在仅实际暂停→恢复增加playbackRevision，重复Resume不改它；runtimeDeliverySuspended独立跨异步恢复保持，完成后依次重放context/最后快照或revoke。实际五组探针通过，不以同步模型代替UI异步时序。
+
+## #144 非对象Desk导致上下文接收抛异常（2026-10-03）
+
+接收器直接读取declaredDesks中的id，标量/null消息触发Cannot access child value on JValue，回归17/19。先核验每项JObject和id字符串、资源字符串数组，再投影；19/19通过，非法新上下文不破坏上一份有效状态。
+
+## #146 WorkerW层级日志与物理验收的区别（2026-10-03，待Task4复核）
+
+真实启动日志20261003_032422出现一次Unexpected WorkerW Z-order。现有EnsureWorkerWZOrder检测最后子窗不符后调用SetWindowPos到HWND_BOTTOM，随后Player loaded/ready成功；代码没有检查该原生调用返回值。本轮仅证明进程/管道身份、恢复和正常退出，未量测纠正后的物理层级。不把身份成功写成层级测试通过；最终WorkerW/DPI门槛须验证实际呈现。

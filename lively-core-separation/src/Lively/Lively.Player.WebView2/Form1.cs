@@ -30,6 +30,10 @@ namespace Lively.Player.WebView2
         private WebView webView;
         private StartArgs startArgs;
         private bool isPaused = false;
+        private long playbackRevision;
+        private bool runtimeDeliverySuspended;
+        private readonly DextRoomRuntimeState roomRuntime = new DextRoomRuntimeState();
+        private bool nativeRuntimeSeen;
         private bool isVideoStream = false;
         private int cefD3DRenderingSubProcessId;
 
@@ -271,6 +275,11 @@ namespace Lively.Player.WebView2
                         if (startArgs.DextTrustedHost)
                             SendToParent(new LivelyMessageRoomSessionReady());
                     }
+                    else if (((string)o.type)?.StartsWith("dext:v3-", StringComparison.Ordinal) == true)
+                    {
+                        // Unknown v3 envelopes never inherit legacy launch behavior.
+                        return;
+                    }
                     else
                     {
                         SendToParent(new LivelyMessageLaunchCmd()
@@ -350,6 +359,7 @@ namespace Lively.Player.WebView2
         private bool IsTopLevelWebMessage(CoreWebView2WebMessageReceivedEventArgs e)
         {
             var current = webView?.CoreWebView2?.Source;
+            if (nativeRuntimeSeen && !IsOfficialDextDocument(current)) return false;
             if (string.IsNullOrWhiteSpace(current) || string.IsNullOrWhiteSpace(e?.Source))
                 return false;
             if (!Uri.TryCreate(current, UriKind.Absolute, out var currentUri) ||
@@ -376,8 +386,9 @@ namespace Lively.Player.WebView2
             };
             webView.CoreWebView2.NavigationStarting += (sender, args) =>
             {
-                if (!IsAllowedDextResource(args.Uri))
+                if (!IsAllowedDextResource(args.Uri) || nativeRuntimeSeen && !IsOfficialDextDocument(args.Uri))
                     args.Cancel = true;
+                if (roomRuntime.Invalidate("navigation")) PostRuntimeLastMessage();
             };
             webView.CoreWebView2.FrameNavigationStarting += (sender, args) =>
             {
@@ -484,11 +495,14 @@ namespace Lively.Player.WebView2
             if (isPaused && e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
                 return;
 
+            roomRuntime.Invalidate("processFailed");
             e.Reason.ToString().SendError(SendToParent, "CoreWebView2 process failed");
         }
 
         private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
         {
+            // Native v3 author content cannot open an external browser through this path.
+            if (nativeRuntimeSeen) { e.Handled = true; return; }
             // Avoid popups.
             if (e.IsUserInitiated)
             {
@@ -821,39 +835,21 @@ namespace Lively.Player.WebView2
                         // Reject malformed payloads before they cross into the page.
                     }
                     break;
-                case MessageType.cmd_room_session_snapshot:
-                    if (!startArgs.DextTrustedHost)
-                        break;
-                    var session = (LivelyMessageRoomSessionSnapshot)obj;
-                    if (session.ProtocolVersion != 1 || session.SessionId == Guid.Empty ||
-                        session.DeskIds == null || session.DeskIds.Length == 0 ||
-                        session.Lifecycle == null || session.Lifecycle.Revision < 0 ||
-                        (session.Lifecycle.Stage != "starting" && session.Lifecycle.Stage != "desktop" && session.Lifecycle.Stage != "idle"))
-                        break;
-                    webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(new
+                case MessageType.cmd_room_runtime:
+                    if (startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source) &&
+                        roomRuntime.Initialize((LivelyMessageRoomRuntime)obj))
                     {
-                        type = "dext:v3-session",
-                        protocolVersion = session.ProtocolVersion,
-                        sessionId = session.SessionId,
-                        roomId = session.RoomId,
-                        deskIds = session.DeskIds,
-                        currentDeskId = session.CurrentDeskId,
-                        targetDeskId = session.TargetDeskId,
-                        transitionId = session.TransitionId,
-                        revision = session.Revision,
-                        operable = session.IsOperable,
-                        active = session.IsActive,
-                        queuedDeskId = session.QueuedDeskId,
-                        deadlineUtc = session.DeadlineUtc?.ToUniversalTime().ToString("O"),
-                        installationStamp = session.InstallationStamp,
-                        lifecycle = new
-                        {
-                            stage = session.Lifecycle.Stage,
-                            playbackPaused = session.Lifecycle.PlaybackPaused,
-                            locked = session.Lifecycle.Locked,
-                            revision = session.Lifecycle.Revision,
-                        },
-                    }));
+                        nativeRuntimeSeen = true;
+                        PostRuntimeLastMessage();
+                    }
+                    break;
+                case MessageType.cmd_room_runtime_revoke:
+                    if (startArgs.DextTrustedHost && roomRuntime.Revoke((LivelyMessageRoomRuntimeRevoke)obj))
+                        PostRuntimeLastMessage();
+                    break;
+                case MessageType.cmd_room_session_snapshot:
+                    if (startArgs.DextTrustedHost && roomRuntime.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)obj))
+                        PostRuntimeLastMessage();
                     break;
                 case MessageType.cmd_desktop_icon_preferences:
                     if (!startArgs.DextTrustedHost)
@@ -910,39 +906,71 @@ namespace Lively.Player.WebView2
             }
         }
 
+        private bool IsOfficialDextDocument(string address)
+        {
+            if (startArgs.Type != WebPageType.local || !Uri.TryCreate(address, UriKind.Absolute, out var candidate)) return false;
+            var query = startArgs.Screensaver ? "?screensaver=1" : string.Empty;
+            var official = new Uri($"https://{LinkUtil.GetStableHostName(startArgs.Url)}.localhost/{Path.GetFileName(startArgs.Url)}{query}");
+            return Uri.Compare(candidate, official, UriComponents.SchemeAndServer | UriComponents.PathAndQuery,
+                UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) == 0;
+        }
+
+        private void PostRuntimeLastMessage()
+        {
+            var messages = roomRuntime.Replay();
+            if (messages.Count > 0) PostRuntimeMessage(messages[messages.Count - 1]);
+        }
+
+        private void PostRuntimeMessage(JObject message)
+        {
+            if (!runtimeDeliverySuspended && startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source))
+                webView.CoreWebView2.PostWebMessageAsJson(message.ToString(Formatting.None));
+        }
+
         private async Task HandleSuspend()
         {
-            SuspendRenderingSubProcess();
-            if (!isPaused)
+            if (isPaused) return;
+            isPaused = true;
+            runtimeDeliverySuspended = true;
+            var revision = ++playbackRevision;
+            try
             {
-                if (startArgs.PauseWebMedia || isVideoStream)
-                    await webView.TryPauseMedia();
-
+                if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPauseMedia();
                 if (startArgs.PauseEvent)
                     await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
-                        JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = true }),
-                        Formatting.Indented);
+                        JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = true }), Formatting.Indented);
             }
-            isPaused = true;
+            finally
+            {
+                if (isPaused && revision == playbackRevision) SuspendRenderingSubProcess();
+            }
         }
 
         private async Task HandleResume()
         {
             ResumeRenderingSubProcess();
-            if (isPaused)
+            // Playback polls can repeat resume while the first async media call
+            // is pending. Keep its revision and completion responsible for replay.
+            if (!isPaused) return;
+            isPaused = false;
+            var revision = ++playbackRevision;
+            try
             {
-                if (startArgs.PauseWebMedia || isVideoStream)
-                    await webView.TryPlayMedia();
-
+                if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPlayMedia();
                 if (startArgs.PauseEvent)
                     await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
-                            JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = false }),
-                            Formatting.Indented);
-
+                        JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = false }), Formatting.Indented);
                 if (startArgs.NowPlaying)
                     await webView.ExecuteScriptFunctionAsync("livelyCurrentTrack", JsonConvert.SerializeObject(nowPlayingService?.CurrentTrack, Formatting.Indented));
             }
-            isPaused = false;
+            finally
+            {
+                if (!isPaused && revision == playbackRevision)
+                {
+                    runtimeDeliverySuspended = false;
+                    foreach (var message in roomRuntime.Replay()) PostRuntimeMessage(message);
+                }
+            }
         }
 
         private async Task RestoreLivelyProperties(string propertyPath)
@@ -962,18 +990,23 @@ namespace Lively.Player.WebView2
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            roomRuntime.Invalidate("closed");
             visualizerService?.Dispose();
             hardwareUsageService?.Stop();
             nowPlayingService?.Stop();
             webView?.Dispose();
         }
 
+        private static readonly JsonSerializerSettings ParentJsonSettings = new JsonSerializerSettings
+        { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
+
         private void SendToParent(IpcMessage obj)
         {
-            if (!IsDebugging)
-                Console.WriteLine(JsonConvert.SerializeObject(obj));
-
-            Debug.WriteLine(JsonConvert.SerializeObject(obj));
+            // Framework console encoding can differ from the Core pipe reader.
+            // ASCII JSON escapes preserve all Unicode independently of code page.
+            var json = JsonConvert.SerializeObject(obj, ParentJsonSettings);
+            if (!IsDebugging) Console.WriteLine(json);
+            Debug.WriteLine(json);
         }
 
         private sealed class WallpaperPlaybackState

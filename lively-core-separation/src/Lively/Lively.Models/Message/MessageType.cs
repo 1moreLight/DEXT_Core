@@ -1,4 +1,4 @@
-﻿namespace Lively.Models.Message
+namespace Lively.Models.Message
 {
     public enum MessageType
     {
@@ -35,5 +35,7 @@
         msg_room_session_request,
         msg_room_transition_complete,
         msg_room_session_ready,
+        cmd_room_runtime,
+        cmd_room_runtime_revoke,
     }
 }

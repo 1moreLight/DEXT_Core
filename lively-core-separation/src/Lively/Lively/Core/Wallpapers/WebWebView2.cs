@@ -40,7 +40,8 @@ namespace Lively.Core.Wallpapers
         private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly bool trustedDextHost;
         private RoomSessionPlayerBridge roomSessionBridge;
-        private string[] roomSessionDeskIds;
+        private readonly object roomSessionLock = new();
+        private long roomRuntimeGeneration;
         private bool roomPageReadyReceived;
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private readonly Lively.Services.SystemControlService systemControlService = new();
@@ -193,42 +194,37 @@ namespace Lively.Core.Wallpapers
         internal RoomProtocolStatus AttachRoomSession(RoomSessionProtocolGateway gateway,
             string roomId, IReadOnlyList<string> deskIds)
         {
-            if (!trustedDextHost || !IsLoaded || IsExited || Pid is null ||
-                deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
-                return RoomProtocolStatus.Denied;
-            var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
-            var installedDeskIds = deskIds.ToArray();
-            var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId, snapshot =>
+            lock (roomSessionLock)
             {
-                if (!IsExited) SendRoomSessionSnapshot(snapshot, installedDeskIds);
-            }, out var bridge);
-            if (status == RoomProtocolStatus.Accepted)
-            {
-                roomSessionBridge = bridge;
-                roomSessionDeskIds = installedDeskIds;
+                if (!trustedDextHost || !IsLoaded || IsExited || Pid is null ||
+                    deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
+                    return RoomProtocolStatus.Denied;
+                var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
+                var messages = new RoomSessionPlayerMessages(SendMessage,
+                    () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray());
+                // Callbacks use this stream directly. Subscribe sends its first
+                // context/snapshot before Connect assigns the bridge field.
+                var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId,
+                    messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke);
+                if (status == RoomProtocolStatus.Accepted) roomSessionBridge = bridge;
+                return status;
             }
-            return status;
         }
 
         internal RoomProtocolStatus RefreshRoomSession()
         {
-            if (roomSessionBridge is null || roomSessionDeskIds is null)
-                return RoomProtocolStatus.StaleSession;
-            var reply = roomSessionBridge.Read();
-            if (reply.Status == RoomProtocolStatus.Accepted && reply.Snapshot is not null)
-                SendRoomSessionSnapshot(reply.Snapshot, roomSessionDeskIds);
-            return reply.Status;
+            lock (roomSessionLock)
+                return roomSessionBridge?.Refresh() ?? RoomProtocolStatus.StaleSession;
         }
 
         internal void DetachRoomSession()
         {
-            roomSessionBridge?.Dispose();
-            roomSessionBridge = null;
-            roomSessionDeskIds = null;
+            lock (roomSessionLock)
+            {
+                roomSessionBridge?.Dispose();
+                roomSessionBridge = null;
+            }
         }
-
-        private void SendRoomSessionSnapshot(RoomSessionSnapshot snapshot, string[] deskIds) =>
-            SendMessage(RoomSessionPlayerMessage.Create(snapshot, deskIds));
 
         public void SetVolume(int volume)
         {

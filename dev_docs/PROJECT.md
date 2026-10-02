@@ -189,3 +189,7 @@ slot.start/idle/background按自己的生命周期、Desk、声明及个人授�
 ### 2026-10-03 Windows事实采样与初始会话
 
 实际播放决策按显示器记录，播放策略本身不代表暂停状态；前台独立于前台/全窗口/网格/游戏模式算法采样。线程安全事实源为独立叶子依赖，避免Playback/Screensaver/协调者循环引用。未采样默认限制操作，Core首个Start/Restore快照已包含完整事实；后续暂停/锁屏/前台一次原子提交，不在解锁间隙使用旧前台。观察回调在事实存储锁外，重复采样可重试失败持久化；未变化不增加内核修订。
+
+### 2026-10-03 运行上下文代次和显式撤销
+
+原生Player的context和snapshot通过同一已授权订阅按序送达。Core为每次绑定/刷新分配单调runtimeGeneration，关闭/换会话/撤权发送显式revoke；Player保留墓碑拒绝迟到旧消息，并固定官方顶层文档身份。暂停期间缓存最后完整快照，异步恢复完成后按context→snapshot重放；已撤销时只重放撤销。公开Manifest通过原始JSON传输，避免JsonElement实现字段；Player标准输出采用ASCII JSON转义，保证Framework与Core编码不同仍保留Unicode。

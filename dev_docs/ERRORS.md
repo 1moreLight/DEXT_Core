@@ -172,3 +172,13 @@
 | #140 | 媒体槽缺少阶段消费者且前台变化不推进修订，启动/待机输入可能失效后复活 | [backend](errors/backend.md) |
 
 | #141 | 会话首帧默认可操作，事后分别补锁屏和前台会暴露短暂错误状态 | [backend](errors/backend.md) |
+
+| #142 | Framework Player标准输出编码不同，Unicode跨Core管道变成替换字符 | [backend](errors/backend.md) |
+
+| #143 | 重复Resume推进异步修订，首次恢复完成时不再重放最后快照 | [backend](errors/backend.md) |
+
+| #144 | JSON Desk标量/null未先验形状，读取id时抛JValue异常 | [backend](errors/backend.md) |
+
+| #145 | 隔离Player探针误用无效reload命令及未部署的构建路径 | [toolchain](errors/toolchain.md) |
+
+| #146 | 启动时WorkerW层级不符进入现有纠正分支，身份成功不能替代物理验收 | [backend](errors/backend.md) |

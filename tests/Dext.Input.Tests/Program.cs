@@ -19,6 +19,16 @@ if (args.Length == 2 && args[0] == "--v3-wire") {
     return;
 }
 
+if (args.Length == 2 && args[0] == "--v3-runtime-wire") {
+    await RuntimeWireProbe.Run(args[1]);
+    return;
+}
+
+if (args.Length == 1 && args[0] == "--v3-runtime-messages") {
+    RuntimeMessageChecks.Run();
+    return;
+}
+
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.
 var window = Native.CreateWindowExW(0, "STATIC", "Dext input regression", 0,

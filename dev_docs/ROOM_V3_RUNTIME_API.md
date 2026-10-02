@@ -80,3 +80,11 @@ Core.lifecycle变化同时增加全局revision和生命周期revision。暂停/�
 媒体槽使用独立消费者：slot.start仅starting、slot.idle仅idle、slot.background.<DeskID>仅当前目标/已提交Desk的desktop阶段。每个槽需要自己的声明和安装戳授权。Core拒绝暂停、锁屏或非桌面前台Player的能力消费与激活；start/idle不用桌面切页IsOperable作为唯一判据。恢复前台会改变全局revision，之前的输入凭证失效；Dock的桌面暂停例外不能越过锁屏。
 
 Windows适配以一次完整事实值传入内核：实际各显示器暂停结果、全局锁屏和独立桌面前台。未知采样按暂停/锁屏/非前台处理；Start/Restore首个快照即带事实，不能先发布可操作状态再补锁屏。锁屏与前台恢复在同一修订内变化，持久化失败保留原状态并由后续采样重试。真实闲置展示及暂停后Player最终快照重放仍在P5接线中。
+
+### 官方宿主私有运行时传输
+
+Core先发cmd_room_runtime，再发同代次完整快照；RuntimeGeneration由该Player的Core适配器单调递增，绑定session/room/installation。公开清单以原始JSON字符串跨Json.NET传输，资源仅含path/sha256/size。私有连接初始化与首次订阅在同一授权边界内，失效/Stop/换会话/Detach有显式cmd_room_runtime_revoke。
+
+Player投影为dext:v3-runtime、dext:v3-session和dext:v3-runtime-revoked，固定官方顶层文档才可收取。导航/撤销保留旧代次墓碑，原context不能复活；重载后Core重新授权并发送新代次。暂停期间只缓存最新完整状态，异步恢复完成后先context后最后snapshot，撤销则只重放revoke；重复恢复命令不取消尚未完成的首次重放。
+
+上述传输仅建立运行身份和公开数据。作者iframe不会因此取得授权；资源字节边界、真实输入和消费者级投影继续由后续P5实现验证。
