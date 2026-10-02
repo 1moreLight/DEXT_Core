@@ -304,3 +304,11 @@ V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允�
 - 原因：按FileNameLength仅分配UTF16内容，遗漏FileName要求的NUL终止符；原生调用读取了非本次数据。
 - 修复：缓冲区多分配并清零2字节，长度仍写入内容字节数。现有真实保存/重开/旧文件锁定回归6/9→9/9。
 - 检查：不能只检查Win32返回成功，必须重读固定目标名并验证旧文件被锁时发布失败且原字节不变。
+
+## #131 Explorer代启成功分支丢失应用参数（2026-10-03）
+
+现象：受控WinExe捕获参数回归失败，Explorer path=True，未生成捕获文件。原因：AppCatalogService.Launch把arguments留给fallback，ExplorerShellLaunchService.ShellExecute固定空参数。修复：TryOpen显式接收arguments并传ShellExecute；已有调用保留可选参数。真实受控目标验证带空格参数和工作目录均正确，测试先RED后GREEN。以后须验证实际Explorer路径，不能以替代delegate断言代表原生启动。
+
+## #132 桌面暂停错误拒绝可见Dock绑定（2026-10-03）
+
+现象：Dock launch keeps equal permission while desktop is paused回归23/24，返回NotOperable。原因：动作权威对所有视图应用桌面IsOperable。修复：只有Desktop签发/激活受该状态限制；Dock仍查安装、消费者、授权、绑定与一次性输入，导航继续由会话内核仲裁。24/24 GREEN。真实宿主仍须核验当前可见Dock及物理输入，票据单元测试不能代填该门槛。

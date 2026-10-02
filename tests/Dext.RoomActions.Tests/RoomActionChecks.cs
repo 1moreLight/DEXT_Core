@@ -78,6 +78,17 @@ static class RoomActionChecks
             var json = JsonSerializer.Serialize(state) + JsonSerializer.Serialize(result);
             if (json.Contains("C:") || json.Contains("notepad.exe") || json.Contains("/a") || json.Contains("private-args")) throw new Exception("Private data leaked");
         });
+        check("Dock launch keeps equal permission while desktop is paused", () => {
+            using var f = new ActionFixture(); var peer = new RoomSessionPeer("dock");
+            var lease = f.Gateway.Open(peer, new(1, RoomClientRole.Dock, Room)).ConnectionId!.Value;
+            f.Gateway.SetOperable(f.Coordinator, f.CorePeer, f.Session, false);
+            var input = f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open");
+            Eq(RoomActionStatus.Accepted, input.Status);
+            Eq(RoomActionStatus.Accepted, f.Actions.InvokeButton(lease, peer, f.Session, "official", "open", input.Ticket).Status);
+            f.Store.Update(s => s.Rooms[Room].Grants.Remove("official"));
+            input = f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open");
+            Eq(RoomActionStatus.MissingPermission, f.Actions.InvokeButton(lease, peer, f.Session, "official", "open", input.Ticket).Status); Eq(1, f.Launched.Count);
+        });
         check("authored exit requests require Dext-owned confirmation", () => {
             using var f = new ActionFixture(); Eq(RoomActionStatus.RequiresConfirmation, f.Invoke("exit", f.Input("exit").Ticket).Status); Eq(0, f.Launched.Count);
         });
@@ -94,7 +105,8 @@ static class RoomActionChecks
         public bool Enabled = true;
         public RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello) => Enabled && hello.RoomId == installed.RoomId &&
             ((peer.TransportId == "runtime" && hello.Role == RoomClientRole.Coordinator) ||
-             (peer.TransportId == "player" && hello.Role == RoomClientRole.DesktopPlayer)) ? new(peer.TransportId, hello.Role, installed) : null;
+             (peer.TransportId == "player" && hello.Role == RoomClientRole.DesktopPlayer) ||
+             (peer.TransportId == "dock" && hello.Role == RoomClientRole.Dock)) ? new(peer.TransportId, hello.Role, installed) : null;
     }
     sealed class ActionFixture : IDisposable
     {

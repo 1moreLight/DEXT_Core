@@ -35,3 +35,13 @@ Windows发布使用已验证目录句柄完成改名，资源读取和暂存写�
 - `rooms/v3-basic`：无共享HTML的简单Room，有待绑定应用入口。
 - `rooms/v3-continuous`：同一共享场景跨两个Desk，实例ID可观察；SDK调用需后续正式宿主接入。
 - `cargo test --manifest-path tests/room-v3-contract/Cargo.toml`：独立测试实际生产契约模块，不依赖Tauri或改桌面。
+
+## Core个人数据与动作边界（V3-CORE-006）
+
+Core持有`%LOCALAPPDATA%/Dext/v3/personal/personal.json`，格式版本1、递增revision，限1MiB。全局目标以UUID引用，Room副本分别保存按钮动作/目标/皮肤覆盖和消费者授权。独立另存复制覆盖、清空授权；删除Room覆盖保留全局目标。缺文件可初始化，不可读/损坏/未知字段不能静默清空。
+
+安装复核同一清单字节生成消费者目录：`official`、`scene`、`component.<稳定ID>`；组件名不能冒充官方或场景。授权绑定消费者与当前installation stamp，声明不是授权。公开动作结果仅有安全状态、稳定ID、公开名称/动作及是否已绑定，不返回目标、参数、工作目录或私有异常。
+
+原生输入核验后，Core内部宿主适配器才可签发一次性票据；作者IPC不提供签发方法。票据绑定connection/peer/session/consumer/button/安装戳/会话及个人revision，使用单调时钟1500ms过期，每次执行重查权限，编辑个人数据即使旧票据失效。实际RawInput适配器与作者SDK仍须在原生宿主包接通。
+
+桌面暂停限制桌面入口。仍可见的Dock入口可启动绑定，但必须经过相同安装、授权与真实输入核验；导航仍由会话内核仲裁。`dext.exit`只返回需Dext确认状态，正式确认界面接通前不执行退出。

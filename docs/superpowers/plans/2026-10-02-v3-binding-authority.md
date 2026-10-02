@@ -28,26 +28,26 @@
 **Files:** Create Core/Dext/RoomPersonalStore.cs and tests/Dext.RoomActions.Tests/{csproj,Program.cs}; use RoomV3Installation native handle helpers.
 **Interfaces:** RoomPersonalStore(directory).Read()->RoomPersonalState, Update(Action<RoomPersonalState>), CopyRoom(sourceId,newId), DeleteRoom(id). State contains formatVersion1/revision/global targets and Room button overrides/consumer grants. Targets have id/name/kind/target/arguments/workingDirectory; overrides have action/deskId/targetId/skin; grants contain installationStamp/capabilities.
 
-- [ ] Write named tests: reopen target+binding; copy independent override/skin and empty grants; delete Room keeps global target; locked store replacement preserves old bytes; malformed/oversized/reparse store refuses and does not reset. Run `dotnet run --project tests/Dext.RoomActions.Tests -c Release`; expected RED for missing production API.
-- [ ] Implement bounded 1MiB unique-key JSON state, known fields/enums and stable IDs; detached reads, copy-on-write Update, native retained-root+file handle atomic replacement. Missing file means empty state; unreadable/malformed means explicit error.
-- [ ] Run all tests and commit named files with ledger/TODO updates.
+- [x] Write named tests: reopen target+binding; copy independent override/skin and empty grants; delete Room keeps global target; locked store replacement preserves old bytes; malformed/oversized/reparse store refuses and does not reset. Run `dotnet run --project tests/Dext.RoomActions.Tests -c Release`; expected RED for missing production API.
+- [x] Implement bounded 1MiB unique-key JSON state, known fields/enums and stable IDs; detached reads, copy-on-write Update, native retained-root+file handle atomic replacement. Missing file means empty state; unreadable/malformed means explicit error.
+- [x] Run all tests and commit named files with ledger/TODO updates.
 
 ### Task 2: Catalog and action authority
 
 **Files:** Create Core/Dext/RoomActionCatalog.cs, RoomActionAuthority.cs; modify RoomV3Installation.cs and RoomSessionProtocol.cs; tests/Dext.RoomActions.Tests.
 **Interfaces:** VerifiedRoomInstallation.ActionCatalog; gateway.ReadActionContext(connectionId,peer,sessionId,out RoomActionContext)->RoomProtocolStatus; context owns verified installation/current snapshot/view role. RoomActionAuthority(gateway,store,Action<PersonalTarget>,TimeProvider?) exposes ReadButtons, AuthorizeCapability, IssueHostInput and InvokeButton. Replies contain status and safe authored IDs only.
 
-- [ ] Add failing behaviors: two button IDs resolve same global target; absent grant/target, forged peer, wrong consumer, stale/closed/revoked session, wrong Desk scope; scripted request has no ticket; ticket is single-use, bound to peer/owner/button/revision, expires and fails after personal data edit; public JSON contains no private path/args/cwd. Expected RED, then implement.
-- [ ] Native catalog must derive from already verified room bytes, not an additional unverified file read; explicit official/scene/component consumers and Desk assignments.
-- [ ] Recheck current admission and grants before every action; only binding.launch reaches private launcher; nav goes through gateway; dext.exit returns RequiresConfirmation for later Dext-owned UI. Errors return safe status, not private exception strings.
-- [ ] Run action tests plus existing protocol46 and kernel suites; commit.
+- [x] Add failing behaviors: two button IDs resolve same global target; absent grant/target, forged peer, wrong consumer, stale/closed/revoked session, wrong Desk scope; scripted request has no ticket; ticket is single-use, bound to peer/owner/button/revision, expires and fails after personal data edit; public JSON contains no private path/args/cwd. Expected RED, then implement.
+- [x] Native catalog must derive from already verified room bytes, not an additional unverified file read; explicit official/scene/component consumers and Desk assignments.
+- [x] Recheck current admission and grants before every action; only binding.launch reaches private launcher; nav goes through gateway; dext.exit returns RequiresConfirmation for later Dext-owned UI. Errors return safe status, not private exception strings.
+- [x] Run action tests plus existing protocol46 and kernel suites; commit.
 
 ### Task 3: Production service registration and gate recording
 
 **Files:** App.xaml.cs; acceptance/V3-CORE-006-binding-authority.md, ROOM_V3.md, V3_DELIVERY.md, ROADMAP/TODO/ledger.
 **Interfaces:** DI registers RoomPersonalStore under Dext local data/v3/personal and RoomActionAuthority using existing AppCatalogService.Launch. The future Player native activation adapter calls IssueHostInput; authored requests can call only InvokeButton with an existing ticket. Configurator personal edits are privileged Core entrypoints, implemented with the native authoring UI package.
 
-- [ ] Register the real services. Run all action/protocol/kernel suites and full `scripts/build.ps1` → `scripts/start.ps1`; expected Release Player and matching-worktree Core/pipe/configurator identity.
+- [x] Register the real services. Run all action/protocol/kernel suites and full `scripts/build.ps1` → `scripts/start.ps1`; expected Release Player and matching-worktree Core/pipe/configurator identity.
 - [ ] One fresh whole-branch read-only reviewer per executing-plans; fix Important/Critical in one RED→GREEN pass, no repeat review.
 - [ ] Commit and keep unmerged. Full item remains not-ready until real native input/SDK/UI evidence in dependent packages; no claim of whole-route80% from unit checks.
 

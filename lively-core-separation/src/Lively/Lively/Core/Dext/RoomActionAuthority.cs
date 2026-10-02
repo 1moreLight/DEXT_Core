@@ -69,7 +69,7 @@ internal sealed class RoomActionAuthority
             if (status != RoomActionStatus.Accepted) return new(status);
             status = Button(context!, owner!, button, out _);
             if (status != RoomActionStatus.Accepted) return new(status);
-            if (!context!.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
+            if (context!.Role == RoomClientRole.DesktopPlayer && !context.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
             try
             {
                 var state = store.Read();
@@ -92,7 +92,7 @@ internal sealed class RoomActionAuthority
             if (status != RoomActionStatus.Accepted) return new(status);
             status = Button(context!, owner!, button, out var authored);
             if (status != RoomActionStatus.Accepted) return new(status);
-            if (!context!.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
+            if (context!.Role == RoomClientRole.DesktopPlayer && !context.Snapshot.IsOperable) return new(RoomActionStatus.NotOperable);
             try
             {
                 var state = store.Read(); var action = Resolve(state, context.Installation.RoomId, authored!, out var target);

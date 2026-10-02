@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using GrpcDotNetNamedPipes;
 using Dext.Core.Rooms;
 using Lively.Commandline;
@@ -227,6 +227,10 @@ namespace Lively
                 .AddSingleton<IRoomSessionAdmissionAuthority>(services =>
                     services.GetRequiredService<InstalledRoomSessionAuthority>())
                 .AddSingleton<RoomSessionProtocolGateway>()
+                .AddSingleton(_ => new RoomPersonalStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "personal")))
+                .AddSingleton(services => new RoomActionAuthority(
+                    services.GetRequiredService<RoomSessionProtocolGateway>(), services.GetRequiredService<RoomPersonalStore>(),
+                    target => { new Lively.Services.AppCatalogService().Launch(target.Target, target.Arguments, target.WorkingDirectory); }))
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())

@@ -149,3 +149,6 @@
 
 | #129 | 暂存写入和最终发布先检查路径后操作，链接/目录替换可越过校验 | [backend](errors/backend.md) |
 | #130 | FILE_RENAME_INFO长度不含NUL，但FileName缓冲区必须提供终止符 | [backend](errors/backend.md) |
+
+| #131 | Explorer代启成功分支未传应用arguments，私有绑定启动丢失参数 | [backend](errors/backend.md) |
+| #132 | 桌面暂停状态错误阻止仍可见Dock的绑定动作 | [backend](errors/backend.md) |
