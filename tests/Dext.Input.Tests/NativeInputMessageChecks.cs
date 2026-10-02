@@ -36,6 +36,12 @@ internal static class NativeInputMessageChecks
             foreach(var invalid in new JToken[]{3,4.2,"4"}){r["lifecycleRevision"]=invalid;Require(Parse(r,starting)==null);}r["lifecycleRevision"]=4;
             r["locked"]=false;Require(Parse(r,starting)==null);r.Remove("locked");starting.Invalidate("navigation");Require(Parse(r,starting)==null);
         });
+        Check("capability query is an exact current-identity consumer request",()=>{
+            var r=Request();r["method"]="capabilities";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["consumer"]="slot.start";
+            Require(Parse(r)?.Consumer=="slot.start");
+            foreach(var bad in new[]{"capabilities","target","ticket"}){r[bad]="pretend";Require(Parse(r)==null);r.Remove(bad);}
+            r["consumer"]=7;Require(Parse(r)==null);r["consumer"]="scene";r["revision"]=2;Require(Parse(r)==null);
+        });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }
 }

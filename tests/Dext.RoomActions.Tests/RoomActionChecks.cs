@@ -33,6 +33,84 @@ static class RoomActionChecks
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
             Eq(true,n.GetProof(1,2,"scene","open")!=null);
         });
+        check("capability metadata reports only verified declarations and current personal consent",()=>{
+            using var f=new ActionFixture();var reply=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");
+            Eq(RoomActionStatus.Accepted,reply.Status);Eq(4,reply.Capabilities!.Count);
+            Eq(RoomActionStatus.Accepted,reply.Capabilities["binding.launch"]);
+            Eq(RoomActionStatus.MissingPermission,reply.Capabilities["hardware.read"]);
+            Eq(false,reply.Capabilities.ContainsKey("storage.read"));
+            var json=JsonSerializer.Serialize(reply);Eq(false,json.Contains(Target));Eq(false,json.Contains("notepad"));
+            Eq(false,json.Contains("InstallationStamp"));Eq(false,json.Contains("PrivateRevision"));
+            f.Store.Update(s=>s.Rooms[Room].Grants.Clear());
+            Eq(RoomActionStatus.Accepted,reply.Capabilities["binding.launch"]);
+            Eq(RoomActionStatus.MissingPermission,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Capabilities!["binding.launch"]);
+        });
+        check("capability metadata is immutable and stable in declared-key order",()=>{
+            using var f=new ActionFixture();var reply=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");
+            Eq("binding.launch,desk.navigate,dext.exit,hardware.read",string.Join(",",reply.Capabilities!.Keys));
+            if(reply.Capabilities is IDictionary<string,RoomActionStatus> writable){
+                try{writable["binding.launch"]=RoomActionStatus.Denied;throw new Exception("metadata was mutable");}catch(NotSupportedException){}
+            }
+        });
+        check("old installation grants do not authorize capability metadata",()=>{
+            using var f=new ActionFixture();f.Store.Update(s=>s.Rooms[Room].Grants["scene"]=new("wrong-installation",new[]{"hardware.read","binding.launch"}));
+            var reply=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");Eq(RoomActionStatus.Accepted,reply.Status);
+            Eq(true,reply.Capabilities!.Values.All(v=>v==RoomActionStatus.MissingPermission));
+        });
+        check("capability query rejects unknown consumer, peer, session and coordinator",()=>{
+            using var f=new ActionFixture();
+            Eq(RoomActionStatus.UnknownConsumer,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"invented").Status);
+            Eq(RoomActionStatus.Denied,f.Actions.ReadCapabilities(f.View,new("another-player"),f.Session,"scene").Status);
+            Eq(RoomActionStatus.StaleSession,f.Actions.ReadCapabilities(f.View,f.Peer,Guid.NewGuid(),"scene").Status);
+            Eq(RoomActionStatus.Forbidden,f.Actions.ReadCapabilities(f.Coordinator,f.CorePeer,f.Session,"scene").Status);
+            f.Admission.Enabled=false;Eq< IReadOnlyDictionary<string,RoomActionStatus>? >(null,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Capabilities);
+        });
+        foreach(var fact in new[]{"pause","lock","foreground"})check("capability metadata suspends current consumption on "+fact,()=>{
+            using var f=new ActionFixture();
+            if(fact=="foreground")Eq(RoomProtocolStatus.Accepted,f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false)).Status);
+            else f.Lifecycle(RoomLifecycleStage.Desktop,fact=="pause",fact=="lock");
+            var reply=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");Eq(RoomActionStatus.Accepted,reply.Status);
+            Eq(true,reply.Capabilities!.Values.All(v=>v==RoomActionStatus.NotOperable));
+        });
+        check("capability metadata follows the current media phase without scene inheritance",()=>{
+            using var f=new ActionFixture(mediaSlots:true);
+            Eq(RoomActionStatus.Forbidden,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Status);
+            var start=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"slot.start");Eq(RoomActionStatus.Accepted,start.Status);Eq(1,start.Capabilities!.Count);
+            Eq(RoomActionStatus.Accepted,start.Capabilities["binding.launch"]);
+            f.Lifecycle(RoomLifecycleStage.Idle);Eq(RoomActionStatus.Forbidden,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"slot.start").Status);
+            Eq(RoomActionStatus.Accepted,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"slot.idle").Capabilities!["binding.launch"]);
+        });
+        check("capability query rechecks the complete grant after waiting for a private edit",()=>{
+            using var f=new ActionFixture();using var editing=new ManualResetEventSlim();using var release=new ManualResetEventSlim();using var admitted=new ManualResetEventSlim();
+            var edit=Task.Run(()=>f.Store.Update(s=>{editing.Set();if(!release.Wait(TimeSpan.FromSeconds(5)))throw new Exception("edit timeout");
+                var grant=s.Rooms[Room].Grants["scene"];s.Rooms[Room].Grants["scene"]=new(grant.InstallationStamp,new[]{"hardware.read"});}));
+            Task<RoomCapabilitiesReply>? query=null;
+            try{if(!editing.Wait(TimeSpan.FromSeconds(5)))throw new Exception("edit missing");f.Admission.OnAdmit=()=>admitted.Set();
+                query=Task.Run(()=>f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene"));if(!admitted.Wait(TimeSpan.FromSeconds(5)))throw new Exception("query missing");
+            }finally{release.Set();edit.GetAwaiter().GetResult();}
+            if(query==null||!query.Wait(TimeSpan.FromSeconds(5)))throw new Exception("capability query deadlock");
+            Eq(RoomActionStatus.Accepted,query.Result.Capabilities!["hardware.read"]);Eq(RoomActionStatus.MissingPermission,query.Result.Capabilities["binding.launch"]);
+        });
+        check("native capability query binds to the exact Core revision",()=>{
+            using var f=new ActionFixture();var revision=f.Kernel.Snapshot!.Revision;
+            Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,_=>{},out var bridge));
+            using(bridge){f.Lifecycle(RoomLifecycleStage.Desktop,true);
+                var old=bridge!.NativeCapabilities(f.Actions,f.Session,revision,"scene");Eq(RoomActionStatus.StaleInput,old.Status);Eq(true,old.Capabilities==null);
+                Eq(RoomActionStatus.NotOperable,bridge.NativeCapabilities(f.Actions,f.Session,f.Kernel.Snapshot!.Revision,"scene").Capabilities!["binding.launch"]);}
+        });
+        check("visible Dock capability metadata keeps pause exception without bypassing lock",()=>{
+            using var f=new ActionFixture();var peer=new RoomSessionPeer("dock");var lease=f.Gateway.Open(peer,new(1,RoomClientRole.Dock,Room)).ConnectionId!.Value;
+            f.Lifecycle(RoomLifecycleStage.Desktop,true);
+            Eq(RoomActionStatus.Accepted,f.Actions.ReadCapabilities(lease,peer,f.Session,"official").Capabilities!["binding.launch"]);
+            f.Lifecycle(RoomLifecycleStage.Desktop,true,true);
+            Eq(RoomActionStatus.NotOperable,f.Actions.ReadCapabilities(lease,peer,f.Session,"official").Capabilities!["binding.launch"]);
+        });
+        check("private capability bridge rejects disposal and observes grant revocation",()=>{
+            using var f=new ActionFixture();Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,_=>{},out var bridge));
+            using(bridge){Eq(RoomActionStatus.Accepted,bridge!.NativeCapabilities(f.Actions,f.Session,f.Kernel.Snapshot!.Revision,"scene").Capabilities!["binding.launch"]);
+                f.Store.Update(s=>s.Rooms[Room].Grants.Clear());Eq(RoomActionStatus.MissingPermission,bridge.NativeCapabilities(f.Actions,f.Session,f.Kernel.Snapshot!.Revision,"scene").Capabilities!["binding.launch"]);}
+            Eq(RoomActionStatus.StaleSession,bridge!.NativeCapabilities(f.Actions,f.Session,f.Kernel.Snapshot!.Revision,"scene").Status);
+        });
         check("private Player bridge authorizes only declared current geometry and its native pair",()=>{
             using var f=new ActionFixture();var n=f.Actions.CreateNativeInput();long generation=0;
             Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,n.ObserveSnapshot,out var bridge,

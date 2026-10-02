@@ -33,12 +33,14 @@ internal static class NativeInputWireProbe
                   const d=event.data;
                   if(d.type==='dext:v3-runtime'){context=d;send({context:d.runtimeGeneration});}
                   if(d.type==='dext:v3-session'){snapshot=d;send({snapshot:d.revision});}
-                  if(d.type==='dext:v3-native-response')send({reply:d.requestId});
+                  if(d.type==='dext:v3-native-response')send({reply:d.requestId,capabilities:d.capabilities});
                   if(d.type==='dext:system-control-result'){
                     const command=d.permissions?.command;
                     if(command==='geometry')send({metrics:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio}});
                     if(command==='geometry')native(request({method:'geometry',geometryVersion:1,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},buttons:[{consumer:'scene',button:'open',x:.1,y:.1,width:.2,height:.2,tabIndex:0}]}));
                     if(command==='startupComplete')native(request({method:'startupComplete',lifecycleRevision:snapshot.lifecycle.revision}));
+                    if(command==='capabilities')native(request({method:'capabilities',consumer:'slot.start'}));
+                    if(command==='invalidCapabilities')for(const extra of [{capabilities:['binding.launch']},{consumer:4},{consumer:'scene',revision:snapshot.revision+1}])native({...request({method:'capabilities',consumer:'slot.start'}),...extra});
                     if(command==='pageReady'){native({type:'dext:v3-page-ready'});native({type:'dext:v3-page-ready'});}
                     if(command==='activate')native(request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}));
                     if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}),...extra});
@@ -77,6 +79,12 @@ internal static class NativeInputWireProbe
                 await Command("pageReady");Require((bool?)(await Next())["pageReady"]==true,"ready once per document");await Barrier("pageReady");
                 await Command("startupComplete");Require((long?)(await Next())["native"]?["LifecycleRevision"]==1,"exact startup completion phase reaches Core");await Barrier("startupComplete");
                 Console.WriteLine("PASS native ReleasePlayer forwards current-phase startup completion and deduplicates document ready");
+                await Command("capabilities");var capQuery=(await Next())["native"];
+                Require((string?)capQuery?["Method"]=="capabilities" && (string?)capQuery?["Consumer"]=="slot.start","declared consumer query reaches Core");await Barrier("capabilities");
+                await Command("invalidCapabilities");await Barrier("invalidCapabilities");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId="capabilities",capabilities=new Dictionary<string,string>{{"binding.launch","missingPermission"}}})});
+                var capReply=await Next();Require((string?)capReply["reply"]=="capabilities" && (string?)capReply["capabilities"]?["binding.launch"]=="missingPermission","Core capability state reaches official host");
+                Console.WriteLine("PASS native ReleasePlayer forwards exact consumer capability query and Core reply; rejects forged capability lists and stale identities");
                 await Command("activate");Require((string?)(await Next())["native"]?["Method"]=="activate","public activation request");await Barrier("activate");
                 await Command("invalid");await Barrier("invalid");await Command("frame");await Barrier("frame");Require((bool?)(await Next())["frame"]==true,"sandbox frame loaded");
                 await Reply(1,"current");Require((string?)(await Next())["reply"]=="current","authorized reply");

@@ -28,6 +28,7 @@ internal sealed class RoomActionCatalog
             this.desks = desks is null ? null : new(desks, StringComparer.Ordinal);
             this.desktop = desktop; this.dock = dock; this.stage = stage;
         }
+        public IReadOnlyList<string> DeclaredCapabilities => Array.AsReadOnly(capabilities.OrderBy(value => value, StringComparer.Ordinal).ToArray());
         public bool HasCapability(string capability) => capabilities.Contains(capability);
         public bool HasButton(string button) => buttons is null || buttons.Contains(button);
         public bool IsActive(RoomClientRole role, RoomSessionSnapshot snapshot) =>

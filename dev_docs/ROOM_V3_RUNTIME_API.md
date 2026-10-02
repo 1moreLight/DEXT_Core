@@ -114,3 +114,9 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 原生Room进入闲置时Core只改变stage，保留当前Desk、最终队列和Windows暂停/锁屏事实。屏保服务临时将当前Player置于对应显示器，保留同一文档；唤醒还原父窗、样式、坐标与层叠顺序，不另起原生屏保Player。Windows事实中的前台判断包含当前显示器上经核对的闲置展示，原桌面前台采样仍独立；退出展示后先移除此覆盖，再恢复desktop阶段。
 
 原生闲置不因底层应用遮挡而暂停，手动暂停、锁屏、远程和电源规则继续生效。第一次RawInput仅唤醒，按住的鼠标/Enter/Space在松开前不得形成新激活。父窗已失效或还原不可确认时隐藏并关闭本Player，故障重建由后续恢复流程补齐。生产DOM需按idle阶段持续展示idle素材；没有idle时保持桌面画面，作者done不能唤醒。真实Core原生Room闲置、实际物理输入及多DPI门槛仍待最终集中验证。
+
+## 原生宿主消费者能力元数据（2026-10-03，接线阶段）
+
+官方顶层宿主使用私有 `dext:v3-native-request` 的 `method: "capabilities"` 查询；字段仅为 type/protocolVersion/requestId/method/runtimeGeneration/sessionId/revision/consumer，不接受作者自报能力清单、授权、输入票据或本机路径。Player严格核对当前代次与修订，Core在同一个个人存储/安装/会话授权边界裁剪当前消费者的声明集；返回字段 `capabilities` 的每项为 Core 状态（accepted、missingPermission、notOperable等），整体失败不带能力集合。原生桥将查询修订传入权威，等待期间修订改变返回 staleInput。
+
+元数据是不可变副本，不是后续数据或动作的许可。暂停、锁屏、非前台使消费状态不可用；媒体槽仍按当前phase/Desk独立授权，Dock暂停例外保留且不绕锁屏。没有目标路径、参数、安装授权戳或个人修订。iframe的available/denied/unsupported视图必须从该Core结果与宿主实际实现能力合成；已授权但尚未实现只能unsupported。每次读取数据/动作仍要Core再次核验，宿主不可凭缓存元数据放行。生产DOM/消费者数据桥和真实人工步骤继续属于P5待办，本节不声称它们已完成。

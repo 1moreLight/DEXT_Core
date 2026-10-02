@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,7 @@ internal enum RoomActionStatus
 }
 internal sealed record PublicRoomButton(string Id, string Name, string Scope, string? Action, bool IsBound);
 internal sealed record RoomButtonsReply(RoomActionStatus Status, PublicRoomButton[]? Buttons = null);
+internal sealed record RoomCapabilitiesReply(RoomActionStatus Status, IReadOnlyDictionary<string, RoomActionStatus>? Capabilities = null);
 internal sealed record RoomInputReply(RoomActionStatus Status, Guid? Ticket = null);
 internal sealed record RoomActionReply(RoomActionStatus Status);
 
@@ -53,6 +55,25 @@ internal sealed class RoomActionAuthority
                 new(RoomActionStatus.Accepted, context.Installation.ActionCatalog!.Buttons.Values.Where(b => InScope(b, owner, context.Snapshot))
                     .Select(b => { var action = Resolve(state, context.Installation.RoomId, b, out var target);
                         return new PublicRoomButton(b.Id, b.Name, b.Scope, action?.Type, target is not null); }).ToArray()));
+        }
+        catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
+    }
+
+    // Metadata is copied at one authorization boundary. It is not a permit for
+    // a later data read/action; those operations must independently reauthorize.
+    public RoomCapabilitiesReply ReadCapabilities(Guid connection, RoomSessionPeer peer, Guid session, string consumer, long? revision = null)
+    {
+        try
+        {
+            return Prepare(connection, peer, session, consumer, status => new RoomCapabilitiesReply(status), (state, context, owner) =>
+            {
+                if (revision is { } expected && context.Snapshot.Revision != expected) return new(RoomActionStatus.StaleInput);
+                var canConsume = owner.CanConsume(context.Role, context.Snapshot);
+                var result = owner.DeclaredCapabilities.ToDictionary(capability => capability,
+                    capability => canConsume ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable,
+                    StringComparer.Ordinal);
+                return new(RoomActionStatus.Accepted, new ReadOnlyDictionary<string, RoomActionStatus>(result));
+            });
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
     }

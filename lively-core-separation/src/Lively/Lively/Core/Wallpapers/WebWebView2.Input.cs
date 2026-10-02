@@ -28,7 +28,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -48,6 +48,9 @@ namespace Lively.Core.Wallpapers
                 case "buttons":
                     var list=a.Bridge.NativeButtons(a.Actions,state.Session,request.Consumer);status=list.Status;
                     buttons=list.Buttons?.Select(b=>new{id=b.Id,name=b.Name,scope=b.Scope,action=b.Action,isBound=b.IsBound}).ToArray();break;
+                case "capabilities":
+                    var declared=a.Bridge.NativeCapabilities(a.Actions,state.Session,state.Revision,request.Consumer);status=declared.Status;
+                    capabilities=declared.Capabilities?.ToDictionary(entry=>entry.Key,entry=>WireStatus(entry.Value),StringComparer.Ordinal);break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
                     status=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button).Status;break;
@@ -55,8 +58,9 @@ namespace Lively.Core.Wallpapers
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=char.ToLowerInvariant(status.ToString()[0])+status.ToString().Substring(1),buttons});
+                status=WireStatus(status),buttons,capabilities});
         }
+        private static string WireStatus(RoomActionStatus status) => char.ToLowerInvariant(status.ToString()[0])+status.ToString().Substring(1);
         private void SendNative(NativeAttachment a,RoomNativeInputState state,object payload)
         {
             if(!ReferenceEquals(Volatile.Read(ref roomNativeAttachment),a))return;
