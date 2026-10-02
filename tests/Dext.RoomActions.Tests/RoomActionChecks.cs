@@ -10,6 +10,105 @@ static class RoomActionChecks
     static void Eq<T>(T expected, T actual) { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}"); }
     public static void Run(Action<string, Action> check)
     {
+        RoomNativeInputAuthority Native(ActionFixture f) {
+            var input=f.Actions.CreateNativeInput();input.Initialize(1,f.Kernel.Snapshot!);return input;
+        }
+        var viewport=new RoomNativeViewport((nint)10,100,200,1000,1000,8);
+        RoomNativeButton[] Entries()=>new[]{new RoomNativeButton("scene","open",.1,.1,.2,.2,0)};
+        void Geometry(ActionFixture f,RoomNativeInputAuthority input,long version=1,long generation=1) =>
+            Eq(true,input.PublishGeometry(generation,f.Session,f.Kernel.Snapshot!.Revision,version,viewport,Entries()));
+        RoomNativeInputProof Pair(ActionFixture f,RoomNativeInputAuthority input) {
+            input.MouseDown(viewport,300,400,true);input.MouseUp(viewport,300,400,true);
+            return input.GetProof(1,1,"scene","open")??throw new Exception("native pair missing");
+        }
+        RoomInputReply Ticket(ActionFixture f,RoomNativeInputProof proof)=>f.Actions.IssueHostInput(f.View,f.Peer,f.Session,"scene","open",proof);
+        check("private Player bridge authorizes only declared current geometry and its native pair",()=>{
+            using var f=new ActionFixture();var n=f.Actions.CreateNativeInput();long generation=0;
+            Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,n.ObserveSnapshot,out var bridge,
+                (_,snapshot)=>n.Initialize(++generation,snapshot),n.Revoke));using(bridge){
+                Eq(false,bridge!.PublishNativeGeometry(n,1,f.Session,1,1,viewport,[Entries()[0] with{Consumer="invented"}]));
+                Eq(false,bridge.PublishNativeGeometry(n,1,f.Session,1,1,viewport,[Entries()[0] with{Button="focus-only"}]));
+                Eq(true,bridge.PublishNativeGeometry(n,1,f.Session,1,1,viewport,Entries()));
+                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
+                Pair(f,n);Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,2,"scene","open").Status);
+                Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
+                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);Eq(1,f.Launched.Count);
+                Eq(RoomProtocolStatus.Accepted,bridge.Refresh());Eq(2L,n.State!.Generation);
+                Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
+            }
+            Eq(RoomActionStatus.StaleSession,bridge!.ActivateNative(f.Actions,n,2,f.Session,1,1,"scene","open").Status);
+        });
+        check("private Player geometry publish never waits while gateway observer owns its gate",()=>{
+            using var f=new ActionFixture();var n=Native(f);
+            Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,_=>{},out var bridge));using(bridge){
+                using var entered=new ManualResetEventSlim();using var release=new ManualResetEventSlim();
+                var holder=Task.Run(()=>f.Gateway.TryWithActionContext(f.View,f.Peer,f.Session,(status,context)=>{entered.Set();if(!release.Wait(TimeSpan.FromSeconds(5)))throw new Exception("barrier");return true;},out bool result));
+                try{if(!entered.Wait(TimeSpan.FromSeconds(5)))throw new Exception("missing gate");var publish=Task.Run(()=>bridge!.PublishNativeGeometry(n,1,f.Session,1,1,viewport,Entries()));
+                    if(!publish.Wait(TimeSpan.FromSeconds(2)))throw new Exception("geometry blocked on gateway");Eq(false,publish.Result);
+                }finally{release.Set();holder.Wait();}
+            }
+        });
+        check("native input requires matching completed down/up and consumes only once",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            n.MouseUp(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            n.MouseDown(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            n.MouseUp(viewport,300,400,true);var proof=n.GetProof(1,1,"scene","open")!;
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"component.widget","open"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","icon"));
+            var ticket=Ticket(f,proof);Eq(RoomActionStatus.Accepted,ticket.Status);Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);
+            Eq(RoomActionStatus.StaleInput,Ticket(f,proof).Status);Eq(1,f.Launched.Count);
+        });
+        foreach(var change in new[]{"outside","drag","viewport","dpi","foreground","geometry","generation","revoke"})
+        check("native old down is rejected after "+change,()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);n.MouseDown(viewport,300,400,true);
+            if(change=="drag")n.MouseMove(viewport,340,400,true);
+            if(change=="geometry")Geometry(f,n,2);
+            if(change=="generation")n.Initialize(2,f.Kernel.Snapshot!);
+            if(change=="revoke")n.Revoke();
+            n.MouseUp(change=="viewport"?viewport with{Width=900}:change=="dpi"?viewport with{Dpi=120}:viewport,change=="outside"?600:300,400,change!="foreground");
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+        });
+        check("native geometry is copied and topmost entry owns overlap",()=>{
+            using var f=new ActionFixture();var n=Native(f);var entries=new[]{new RoomNativeButton("official","icon",.1,.1,.2,.2,1),Entries()[0]};
+            Eq(true,n.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,entries));entries[0]=Entries()[0];
+            n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            if(n.GetProof(1,1,"official","icon")==null)throw new Exception("frontmost entry missing");
+            Eq(false,n.PublishGeometry(1,f.Session,f.Kernel.Snapshot.Revision,2,viewport,new[]{Entries()[0] with{Width=double.NaN}}));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"official","icon"));
+        });
+        check("native Enter Space and Tab use controlled focus and ignore repeat downs",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);
+            n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);Eq("open",n.FocusedButton?.Button);
+            foreach(var key in new[]{13,32}){
+                n.Key(viewport,key,true,false,true);n.Key(viewport,key,true,false,true);n.Key(viewport,key,false,false,true);
+                var proof=n.GetProof(1,1,"scene","open")!;var ticket=Ticket(f,proof);Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);
+                n.Key(viewport,key,false,false,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            }Eq(2,f.Launched.Count);
+        });
+        check("native proof expiry starts at physical down instead of authored request",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var proof=Pair(f,n);
+            f.Clock.Advance(TimeSpan.FromSeconds(2));Eq(RoomActionStatus.ExpiredInput,Ticket(f,proof).Status);Eq(0,f.Launched.Count);
+        });
+        foreach(var change in new[]{"geometry","generation","revoke"})
+        check("native proof rechecks "+change+" after ticket issuance",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var ticket=Ticket(f,Pair(f,n));
+            if(change=="geometry")Geometry(f,n,2);else if(change=="generation")n.Initialize(2,f.Kernel.Snapshot!);else n.Revoke();
+            Eq(RoomActionStatus.StaleInput,f.Invoke("open",ticket.Ticket).Status);Eq(0,f.Launched.Count);
+        });
+        check("native geometry change during private-state wait prevents dispatch without deadlock",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var ticket=Ticket(f,Pair(f,n));
+            using var editing=new ManualResetEventSlim();using var release=new ManualResetEventSlim();using var admitted=new ManualResetEventSlim();
+            var edit=Task.Run(()=>{try{f.Store.Update(_=>{editing.Set();if(!release.Wait(TimeSpan.FromSeconds(5)))throw new Exception("barrier timeout");throw new OperationCanceledException();});}catch(OperationCanceledException){}});
+            Task<RoomActionReply>? action=null;
+            try {if(!editing.Wait(TimeSpan.FromSeconds(5)))throw new Exception("edit missing");f.Admission.OnAdmit=()=>admitted.Set();action=Task.Run(()=>f.Invoke("open",ticket.Ticket));
+                if(!admitted.Wait(TimeSpan.FromSeconds(5)))throw new Exception("admission missing");Geometry(f,n,2);
+            }finally{release.Set();edit.GetAwaiter().GetResult();}
+            if(action==null||!action.Wait(TimeSpan.FromSeconds(5)))throw new Exception("native lock inversion");Eq(RoomActionStatus.StaleInput,action.Result.Status);Eq(0,f.Launched.Count);
+        });
         check("each media phase activates only its own consumer and declared buttons", () => {
             using var f = new ActionFixture(mediaSlots: true);
             Eq(RoomLifecycleStage.Starting, f.Kernel.Snapshot!.Lifecycle.Stage);

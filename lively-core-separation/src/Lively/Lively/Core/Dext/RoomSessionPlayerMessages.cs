@@ -6,7 +6,8 @@ namespace Dext.Core.Rooms;
 
 // One stream per attached bridge; generation allocation belongs to the Player
 // lifetime, so messages from an older attachment cannot revive a new document.
-internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<long> nextGeneration, string[] deskIds)
+internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<long> nextGeneration, string[] deskIds,
+    Action<long,RoomSessionSnapshot>? nativeInitialize=null, Action<RoomSessionSnapshot>? nativeSnapshot=null, Action? nativeRevoke=null)
 {
     private readonly object gate = new();
     private bool active;
@@ -20,9 +21,10 @@ internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<lo
         {
             active = true; session = snapshot.SessionId; room = snapshot.RoomId; stamp = snapshot.InstallationStamp;
             generation = context is null ? 0 : nextGeneration();
-            if (context is null) return;
+            if (context is null) { nativeRevoke?.Invoke(); return; }
             if (context.RoomId != room || context.InstallationStamp != stamp)
                 throw new InvalidOperationException("Runtime context does not match session");
+            nativeInitialize?.Invoke(generation,snapshot);
             send(new LivelyMessageRoomRuntime
             {
                 RuntimeGeneration = generation, SessionId = session, RoomId = room, InstallationStamp = stamp,
@@ -37,6 +39,7 @@ internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<lo
         lock (gate)
         {
             if (!active || snapshot.SessionId != session || snapshot.RoomId != room || snapshot.InstallationStamp != stamp) return;
+            nativeSnapshot?.Invoke(snapshot);
             var message = RoomSessionPlayerMessage.Create(snapshot, deskIds);
             message.RuntimeGeneration = generation;
             send(message);
@@ -48,6 +51,7 @@ internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<lo
         {
             if (!active) return;
             active = false;
+            nativeRevoke?.Invoke();
             if (generation > 0) send(new LivelyMessageRoomRuntimeRevoke
             { RuntimeGeneration = generation, SessionId = session, RoomId = room, InstallationStamp = stamp });
         }

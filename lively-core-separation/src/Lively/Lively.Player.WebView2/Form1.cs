@@ -228,7 +228,9 @@ namespace Lively.Player.WebView2
                     // background/start/switch/idle frames are intentionally rejected.
                     if (!IsTopLevelWebMessage(e))
                         return;
-                    var o = JsonConvert.DeserializeObject<dynamic>(e.TryGetWebMessageAsString());
+                    var webMessage = e.TryGetWebMessageAsString();
+                    if (nativeResources != null && Encoding.UTF8.GetByteCount(webMessage) > 1024 * 1024) return;
+                    var o = JsonConvert.DeserializeObject<dynamic>(webMessage);
                     if ((string)o.type == "saveRoom")
                     {
                         SendToParent(new LivelyMessageSaveRoomCmd()
@@ -259,6 +261,15 @@ namespace Lively.Player.WebView2
                         var request = BuildSystemControlRequest(o);
                         if (request != null)
                             SendToParent(request);
+                    }
+                    else if ((string)o.type == "dext:v3-native-request")
+                    {
+                        if (nativeResources != null && nativeNetworkReady && !runtimeDeliverySuspended &&
+                            NativeMethods.GetClientRect(webView.Handle, out var client))
+                        {
+                            var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
+                            if (request != null) SendToParent(request);
+                        }
                     }
                     else if ((string)o.type == "dext:v3-request-desk")
                     {
@@ -409,6 +420,8 @@ namespace Lively.Player.WebView2
             {
                 if (!IsAllowedDextResource(args.Uri) || nativeRuntimeSeen && !IsOfficialDextDocument(args.Uri))
                     args.Cancel = true;
+                if (nativeResources != null && roomRuntime.Generation > 0)
+                    SendToParent(new LivelyMessageRoomNativeInvalidated { RuntimeGeneration = roomRuntime.Generation });
                 nativeNetworkReady = false;
                 nativeNavigationId = args.NavigationId;
                 nativeResources?.Revoke();
@@ -568,6 +581,8 @@ namespace Lively.Player.WebView2
             if (isPaused && e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
                 return;
 
+            if (nativeResources != null && roomRuntime.Generation > 0)
+                SendToParent(new LivelyMessageRoomNativeInvalidated { RuntimeGeneration = roomRuntime.Generation });
             nativeResources?.Revoke();
             nativeNetworkReady = false;
             nativePolicySupported = false;
@@ -953,6 +968,14 @@ namespace Lively.Player.WebView2
                     {
                         // Reject malformed payloads before they cross into the page.
                     }
+                    break;
+                case MessageType.cmd_room_native_response:
+                    var nativeReply = (LivelyMessageRoomNativeResponse)obj;
+                    if (nativeResources != null && nativeNetworkReady && !runtimeDeliverySuspended &&
+                        roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
+                        nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= 1024*1024 &&
+                        IsOfficialDextDocument(webView.CoreWebView2.Source))
+                        webView.CoreWebView2.PostWebMessageAsJson(nativeReply.PayloadJson);
                     break;
                 case MessageType.cmd_room_runtime:
                     if (startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source) &&

@@ -1192,3 +1192,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 完整build→start/identity通过，Core31152/Player81948/Watchdog89212/配置器2860；现有v2恢复为inactive。Core正常shutdown，开发监听停止，最终Dext进程/1620监听/资源临时缓存均0。
 - [ ] 资源阶段限制：WebView2 153在禁RTC策略下重复初始化RTC会触发mDNS binder杀renderer（#150）；官方能力自检按WebView实例一次已避开本次重载路径，作者恶意重复构造的稳定恢复仍属Task4安全门槛。不得把当前证据写成全网络/全恶意内容验收完成。
 - [ ] Task2继续：物理输入与当前几何绑定、start完成仲裁、同Player闲置展示；再做Task3生产DOM和Task4个人布局/真实DPI/安全恢复，集中验收前不合并。
+
+- [x] Task2原生输入接线阶段：每attachment的不可变几何、Down-Up/Tab/Enter/Space和一次消费已接实际RawInput与私有动作桥；几何/代次/快照/窗口/DPI改变撤销旧证明，导航通知Core失效。动作62/62、消息25/25、运行消息20/20、协议80/80、内核17/17及隐藏Win32窗口5组通过；隔离ReleasePlayer原生输入IPC4组通过（显式scale1.5、实际DPI120）。最终真实物理/DPI验收未代填。
+
+- [x] 原生输入阶段完整build→start/identity通过：Core69160/Player80360/Watchdog95932/配置器124352，日志20261003_045140.txt；当前v2恢复为inactive。已正常退出Core，停止本轮开发监听，Dext进程及1620/1621监听0。
+- [ ] Task2继续：启动完成仲裁和同Player闲置；Task3生产宿主还须落实invalidate→ack→布局→publish→ack的几何协议，随后Task4个人布局/物理输入/DPI/安全故障恢复与包末审查。完整16项准备度仍1/16，最终集中验收前不合并。

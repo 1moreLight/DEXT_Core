@@ -1,5 +1,6 @@
-﻿using Linearstar.Windows.RawInput;
+using Linearstar.Windows.RawInput;
 using Lively.Common.Helpers.Pinvoke;
+using Lively.Common.Helpers;
 using Lively.Models.Enums;
 using System;
 using System.Windows;
@@ -112,7 +113,8 @@ namespace Lively.Views.WindowMsg
                                 new KeyboardClickRawArgs((int)keyboard.Keyboard.WindowMessage,
                                     (IntPtr)keyboard.Keyboard.VirutalKey,
                                     keyboard.Keyboard.ScanCode,
-                                    (keyboard.Keyboard.Flags != Linearstar.Windows.RawInput.Native.RawKeyboardFlags.Up)));
+                                    InputUtil.RawKeyIsDown((int)keyboard.Keyboard.Flags),
+                                    InputUtil.RawKeyIsExtended((int)keyboard.Keyboard.Flags)));
                         }
                         break;
                 }
@@ -169,12 +171,15 @@ namespace Lively.Views.WindowMsg
         /// </summary>
         public bool IsKeyDown { get; }
 
-        public KeyboardClickRawArgs(int windowMessage, IntPtr virtualKey, int scanCode, bool isKeyDown)
+        public bool IsExtended { get; }
+
+        public KeyboardClickRawArgs(int windowMessage, IntPtr virtualKey, int scanCode, bool isKeyDown, bool isExtended = false)
         {
             WindowMessage = windowMessage;
             VirtualKey = virtualKey;
             ScanCode = scanCode;
             IsKeyDown = isKeyDown;
+            IsExtended = isExtended;
         }
     }
 }

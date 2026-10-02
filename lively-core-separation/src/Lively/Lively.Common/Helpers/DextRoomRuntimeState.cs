@@ -19,6 +19,11 @@ namespace Lively.Common.Helpers
         private string[] desks;
         private JObject contextPayload, snapshotPayload, revokePayload;
 
+        public long Generation => generation;
+        public bool HasContext(long document, Guid sessionId) => contextPayload != null && generation == document && session == sessionId;
+        public bool CanUseInput(long document, Guid sessionId, long snapshotRevision) => HasContext(document,sessionId) &&
+            snapshotPayload != null && revision == snapshotRevision;
+
         public bool Initialize(LivelyMessageRoomRuntime value)
         {
             if (value == null || value.ProtocolVersion != 1 || value.RuntimeGeneration <= generation || value.SessionId == Guid.Empty ||

@@ -1,6 +1,6 @@
 # Room v3 作者 API v1
 
-> V3-P5-001开发中：SDK、纯运行模型及Core已验证不可变RuntimeContext/私有Player读取已实现；版本化生命周期与完整Player快照IPC已接通；Windows事件、RuntimeContext传入Player、资源/输入边界与DOM适配仍在Task2–4。自动测试不代表原生宿主已经交付。状态见V3_DELIVERY。
+> V3-P5-001开发中：SDK、纯运行模型、Core生命周期、Player上下文/资源边界及原生输入私有接线已实现；启动完成、同Player闲置、生产DOM/消费者投影、个人布局和最终物理/安全验收仍在Task2–4。自动测试不代表原生宿主已经交付。状态见V3_DELIVERY。
 
 ## 作者接入
 
@@ -96,3 +96,11 @@ Player投影为dext:v3-runtime、dext:v3-session和dext:v3-runtime-revoked，固
 响应同时携带CSP和强制Connection-Allowlist，作者脚本/媒体/字体/fetch/frame限当前清单来源，worker不开放，RTC/重定向禁止。沙箱页不能升为官方顶层或直接调用原生桥。Player每WebView实例一次验证浏览器强制策略报告；不能验证则拒绝native启动。每个新文档仍经过正常导航和当前代次检查，策略随每份响应附加。
 
 Runtime153的禁RTC/mDNS接口冲突可能在作者重复构造RTC时终止渲染进程；当前实现撤销状态与资源，不宣称恶意内容恢复完成（ERRORS #150）。原生资源服务目前由隔离ReleasePlayer验证；生产DOM接线、物理输入和消费者级投影继续按P5推进。
+
+### 官方宿主私有原生输入协议（P5阶段实现）
+
+固定官方顶层页通过dext:v3-native-request请求invalidateGeometry、geometry、buttons或activate。身份为protocolVersion=1、requestId、runtimeGeneration、sessionId和当前revision；activate另带当前geometryVersion/consumer/button，永不接受票据、目标路径、PID或HWND。返回dext:v3-native-response只含公开状态/按钮元数据；键盘受控焦点与激活由Core发送dext:v3-native-event。作者SDK继续走父宿主，不能直接使用此私有协议。
+
+geometry是已经裁剪的前到后按钮列表，含consumer/button、归一化x/y/width/height和tabIndex。官方宿主在任何布局变更前请求invalidateGeometry并等待确认，变更后以递增版本发布完整几何并等待确认再接收激活。Player核对CSS viewport与自身原生客户区，Core复核实际Player窗口归属/客户区/屏幕原点/DPI以及当前消费者和按钮scope；窗口或快照改变必须重新发布。几何发布遇授权网关忙返回staleInput，宿主按当前身份重试，旧证明不能保留。
+
+Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快照/代次/几何/DPI变化取消；到期从物理DOWN计时。真实Tab/点击选择声明按钮的Core焦点，Enter/Space配对由官方宿主转成同一activate请求。合成DOM点击、请求重放、错误消费者和无配对请求不能出票。新协议已由隔离ReleasePlayer验证，生产DOM接入和最终物理输入门槛仍待P5后续步骤。

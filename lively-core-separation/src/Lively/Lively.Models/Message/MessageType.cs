@@ -37,5 +37,8 @@ namespace Lively.Models.Message
         msg_room_session_ready,
         cmd_room_runtime,
         cmd_room_runtime_revoke,
+        msg_room_native_request,
+        cmd_room_native_response,
+        msg_room_native_invalidated,
     }
 }

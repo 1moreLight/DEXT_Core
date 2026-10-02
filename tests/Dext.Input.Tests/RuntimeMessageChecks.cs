@@ -25,7 +25,7 @@ internal static class RuntimeMessageChecks
             Require(state.Initialize(context), "receiver accepts valid context");
             Require(state.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)Roundtrip(messages[1])), "snapshot same generation");
             var replay = state.Replay();
-            Require((string?)replay[0]["manifest"]?["name"] == "日期2026-10-03T01:02:03Z" &&
+            Require((string?)replay[0]["manifest"]?["name"] == "鏃ユ湡2026-10-03T01:02:03Z" &&
                 (string?)replay[0]["manifest"]?["components"]?[0]?["config"]?["date"] == "2026-10-03T01:02:03Z", "JSON values, Unicode and dates preserved");
             Require(!replay[0].ToString().Contains("ValueKind"), "JsonElement was not serialized as CLR metadata");
             Require((long?)replay[0]["runtimeGeneration"] == 1 && (long?)replay[1]["runtimeGeneration"] == 1, "same runtime generation");
@@ -88,6 +88,14 @@ internal static class RuntimeMessageChecks
             var legacy=new DextRoomRuntimeState();snap.RuntimeGeneration=0;Require(legacy.AcceptSnapshot(snap),"legacy full snapshot unaffected");
             Require((string?)legacy.Replay()[0]["type"]=="dext:v3-session","legacy snapshot kind");
         });
+        Check("native input callbacks invalidate before each public transport delivery",()=>{
+            var f=Fixture();var order=new List<string>();long generation=0;
+            var sender=new RoomSessionPlayerMessages(_=>order.Add("send"),()=>++generation,["home","focus"],
+                (g,s)=>order.Add("initialize:"+g),s=>order.Add("snapshot"),()=>order.Add("revoke"));
+            sender.Initialize(f.Context,f.Snapshot);sender.Snapshot(f.Snapshot);sender.Revoke();
+            Require(order.SequenceEqual(new[]{"initialize:1","send","snapshot","send","revoke","send"}),"leaf facts must precede page delivery");
+            order.Clear();sender.Initialize(null,f.Snapshot);Require(order.FirstOrDefault()=="revoke","legacy context revokes native input");
+        });
         Console.WriteLine($"{passed}/{total} runtime message checks passed");if(passed!=total)throw new Exception("runtime message checks failed");
     }
     internal static IpcMessage Roundtrip(IpcMessage value)=>JsonConvert.DeserializeObject<IpcMessage>(JsonConvert.SerializeObject(value),new IpcMessageConverter())!;
@@ -95,7 +103,7 @@ internal static class RuntimeMessageChecks
     {
         var room="231db51a-19db-4a3a-9c06-dbb9b3db86f9";
         using var manifest=JsonDocument.Parse("""
-            {"version":3,"apiVersion":1,"id":"231db51a-19db-4a3a-9c06-dbb9b3db86f9","name":"日期2026-10-03T01:02:03Z","startDesk":"home",
+            {"version":3,"apiVersion":1,"id":"231db51a-19db-4a3a-9c06-dbb9b3db86f9","name":"鏃ユ湡2026-10-03T01:02:03Z","startDesk":"home",
              "resources":["scene/index.html"],"desks":[{"id":"home"},{"id":"focus"}],
              "components":[{"id":"clock","config":{"date":"2026-10-03T01:02:03Z","empty":null}}]}
             """);

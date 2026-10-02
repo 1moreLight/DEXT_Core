@@ -4,7 +4,7 @@ namespace Dext.Core.Rooms;
 
 // The caller supplies a peer derived from the Core-owned Player process, never
 // from page data. Admission and installation verification stay in the gateway.
-internal sealed class RoomSessionPlayerBridge : IDisposable
+internal sealed partial class RoomSessionPlayerBridge : IDisposable
 {
     private readonly RoomSessionProtocolGateway gateway;
     private readonly RoomSessionPeer peer;

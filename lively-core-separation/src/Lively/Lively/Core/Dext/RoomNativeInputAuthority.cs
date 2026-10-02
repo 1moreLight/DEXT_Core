@@ -1,0 +1,181 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Dext.Core.Rooms;
+
+// Bounds are normalized to the actual native input HWND client viewport. The
+// official host supplies clipped front-to-back regions; Core owns the mapping.
+internal sealed record RoomNativeViewport(nint Handle, int X, int Y, int Width, int Height, int DragTolerance, int Dpi=96);
+internal sealed record RoomNativeButton(string Consumer, string Button, double X, double Y,
+    double Width, double Height, int TabIndex);
+
+internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed);
+
+internal sealed class RoomNativeInputProof
+{
+    private readonly RoomNativeInputAuthority owner;
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; }
+    internal RoomNativeButton Button { get; }
+    internal long IssuedAt { get; }
+    internal bool Validate(RoomSessionSnapshot snapshot,string consumer,string button,bool consume=false) =>
+        owner.Validate(this,snapshot,consumer,button,consume);
+}
+
+// Leaf lock only: never call gateway, personal storage, IPC, JS or native APIs
+// while holding gate. Snapshot observers and dispatch may enter in that order.
+internal sealed class RoomNativeInputAuthority(TimeProvider clock)
+{
+    private readonly object gate=new();
+    private long generation, geometryVersion;
+    private RoomSessionSnapshot? snapshot;
+    private RoomNativeViewport? viewport;
+    private RoomNativeButton[] buttons=Array.Empty<RoomNativeButton>();
+    private RoomNativeButton? focused;
+    private RoomNativeInputProof? completed;
+    private Press? mouse, keyboard;
+    private bool mouseHeld;
+    private readonly HashSet<int> keysHeld=new();
+    private sealed record Press(RoomNativeButton Button,long IssuedAt,int X=0,int Y=0,int Key=0);
+    internal RoomNativeInputState? State { get {lock(gate)return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused,completed);} }
+    internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
+    internal void CheckNativeViewport(RoomNativeViewport? current,bool foreground)
+    {lock(gate){if(!foreground || current==null || viewport!=null && current!=viewport)ClearGeometry();}}
+    internal RoomNativeButton? FocusedButton { get {lock(gate)return focused;} }
+
+    internal void Initialize(long nextGeneration,RoomSessionSnapshot next)
+    {
+        lock(gate)
+        {
+            if(nextGeneration<=generation || nextGeneration<=0)return;
+            generation=nextGeneration;geometryVersion=0;snapshot=next;ClearGeometry();
+        }
+    }
+    internal void ObserveSnapshot(RoomSessionSnapshot next)
+    {
+        lock(gate)
+        {
+            if(snapshot==null)return;
+            if(next.SessionId!=snapshot.SessionId || next.InstallationStamp!=snapshot.InstallationStamp){Revoke();return;}
+            if(next.Revision<=snapshot.Revision)return;
+            snapshot=next;ClearGeometry();
+        }
+    }
+    internal void Revoke(){lock(gate){snapshot=null;ClearGeometry();}}
+    internal bool InvalidateGeometry(long document,Guid session,long revision)
+    {lock(gate){if(!Identity(document,session,revision))return false;ClearGeometry();return true;}}
+
+    internal bool PublishGeometry(long document,Guid session,long revision,long version,
+        RoomNativeViewport nativeViewport,IReadOnlyList<RoomNativeButton> entries)
+    {
+        lock(gate)
+        {
+            if(!Identity(document,session,revision)||version<=geometryVersion)return false;
+            geometryVersion=version;ClearGeometry();
+            if(nativeViewport==null || nativeViewport.Handle==0 || nativeViewport.Width<=0 || nativeViewport.Height<=0 ||
+                nativeViewport.Dpi<=0 || nativeViewport.DragTolerance<1 || nativeViewport.DragTolerance>256 || entries==null || entries.Count>4096)return false;
+            var copy=entries.ToArray();var identities=new HashSet<(string,string)>();
+            foreach(var entry in copy)
+            {
+                if(entry==null || string.IsNullOrEmpty(entry.Consumer) || entry.Consumer.Length>128 || string.IsNullOrEmpty(entry.Button) || entry.Button.Length>80 ||
+                    !identities.Add((entry.Consumer,entry.Button)) || !double.IsFinite(entry.X) || !double.IsFinite(entry.Y) ||
+                    !double.IsFinite(entry.Width) || !double.IsFinite(entry.Height) || entry.X<0 || entry.Y<0 || entry.Width<=0 || entry.Height<=0 ||
+                    entry.X+entry.Width>1 || entry.Y+entry.Height>1 || entry.TabIndex < -1 || entry.TabIndex>4095)return false;
+            }
+            viewport=nativeViewport;buttons=copy;return true;
+        }
+    }
+    internal void MouseDown(RoomNativeViewport current,int x,int y,bool foreground)
+    {
+        var now=clock.GetTimestamp();
+        lock(gate)
+        {
+            if(mouseHeld)return;
+            mouseHeld=true;completed=null;mouse=null;keyboard=null;
+            if(!Available(current,foreground)){focused=null;return;}
+            focused=Hit(x,y);
+            if(focused!=null)mouse=new(focused,now,x,y);
+        }
+    }
+    internal void MouseMove(RoomNativeViewport current,int x,int y,bool foreground)
+    {
+        lock(gate)
+        {
+            if(!foreground || viewport!=null && viewport!=current){ClearGeometry();return;}
+            if(mouse==null)return;
+            if(!Available(current,foreground) || Math.Abs((double)x-mouse.X)>current.DragTolerance || Math.Abs((double)y-mouse.Y)>current.DragTolerance)mouse=null;
+        }
+    }
+    internal void MouseUp(RoomNativeViewport current,int x,int y,bool foreground)
+    {
+        lock(gate)
+        {
+            if(!mouseHeld)return;
+            mouseHeld=false;var down=mouse;mouse=null;
+            if(down==null || !Available(current,foreground) || Hit(x,y)!=down.Button ||
+                Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)return;
+            completed=new(this,down.Button,down.IssuedAt);
+        }
+    }
+    internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground)
+    {
+        if(key!=9 && key!=13 && key!=32)return;
+        var now=clock.GetTimestamp();
+        lock(gate)
+        {
+            if(down)
+            {
+                if(!keysHeld.Add(key))return;
+                completed=null;keyboard=null;
+                if(!Available(current,foreground))return;
+                if(key==9)
+                {
+                    mouse=null;var order=buttons.Where(b=>b.TabIndex>=0).OrderBy(b=>b.TabIndex).ToArray();
+                    if(order.Length==0){focused=null;return;}
+                    var index=Array.IndexOf(order,focused);
+                    var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
+                    focused=order[next];return;
+                }
+                if(focused!=null)keyboard=new(focused,now,Key:key);
+            }
+            else
+            {
+                if(!keysHeld.Remove(key))return;
+                var press=keyboard;if(press==null || press.Key!=key)return;
+                keyboard=null;
+                if(Available(current,foreground) && focused==press.Button)completed=new(this,press.Button,press.IssuedAt);
+            }
+        }
+    }
+    internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button)
+    {
+        lock(gate)return generation==document && geometryVersion==version && completed is{} proof &&
+            proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
+    }
+    internal bool Validate(RoomNativeInputProof proof,RoomSessionSnapshot current,string consumer,string button,bool consume)
+    {
+        lock(gate)
+        {
+            if(completed!=proof || viewport==null || snapshot==null || !CanInput() ||
+                current.SessionId!=snapshot.SessionId || current.RoomId!=snapshot.RoomId || current.InstallationStamp!=snapshot.InstallationStamp || current.Revision!=snapshot.Revision ||
+                proof.Button.Consumer!=consumer || proof.Button.Button!=button)return false;
+            if(consume)completed=null;
+            return true;
+        }
+    }
+    private bool Identity(long document,Guid session,long revision) => generation==document && snapshot is{IsActive:true} && snapshot.SessionId==session && snapshot.Revision==revision;
+    private bool CanInput()=>snapshot is{IsActive:true,IsDesktopForeground:true} && !snapshot.Lifecycle.PlaybackPaused && !snapshot.Lifecycle.Locked;
+    private bool Available(RoomNativeViewport current,bool foreground)=>foreground && CanInput() && viewport!=null && current==viewport;
+    private RoomNativeButton? Hit(int x,int y)
+    {
+        var px=((double)x-viewport!.X)/viewport.Width;var py=((double)y-viewport.Y)/viewport.Height;
+        return buttons.FirstOrDefault(b=>px>=b.X && py>=b.Y && px<b.X+b.Width && py<b.Y+b.Height);
+    }
+    private void ClearGeometry()
+    {
+        viewport=null;buttons=Array.Empty<RoomNativeButton>();focused=null;completed=null;mouse=null;keyboard=null;
+        // Preserve held edges until UP. Auto-repeat after refresh/geometry change
+        // must not turn into a new physical DOWN.
+    }
+}

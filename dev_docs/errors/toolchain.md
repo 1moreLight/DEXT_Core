@@ -286,3 +286,15 @@ new Worker返回对象后立刻terminate并判为“执行成功”会误判CSP�
 ## #151 新文件需要暂存检查（2026-10-03）
 
 git diff --check只覆盖已跟踪差异，本轮新ResourceWireProbe.cs末尾空格直到git diff --cached --check才发现。已删除空格并重新检查；保持具名暂存后的格式门槛，不因工作区diff通过就省略它。
+
+## #154 原生窗口探针先正常布局并匹配Core DPI（2026-10-03）
+
+独立Player默认最小化，webView客户区0x0时网页仍有旧controller viewport，几何正确拒绝。探针先ShowWindow不抢焦点并SetWindowPos完成正常布局。Console默认DPI不感知时同一客户区读640x480，Player读800x600；原生探针先SetProcessDpiAwarenessContext(PerMonitorV2)，与Core一致，实际640x480/dpi120、CSS427x320/dpr1.5通过。另默认重叠STATIC窗口可能有8/31px非客户区偏移；隐藏坐标夹具使用明确无边框负坐标窗口。不要放宽生产校验来修夹具。
+
+## #155 先读状态探针参数（2026-10-03）
+
+--v3-status的第二参数是期望Desk名或inactive，不是仓库路径。本轮误传路径导致Expected live <path>，而真实状态active=False符合已恢复v2；改用--v3-status inactive通过。参数与RuntimeIdentity核验路径分开。
+
+## #156 保存PowerShell所有输出流（2026-10-03）
+
+scripts/build.ps1和identity使用Write-Host，普通>只保存成功流，文件可能为空而工具里构建实际通过。需要原始归档时用*>捕获全部流。该阶段构建和完整identity以实际工具返回为证据，测试成功流日志有内容；不得宣称空文件保留了原始构建输出。

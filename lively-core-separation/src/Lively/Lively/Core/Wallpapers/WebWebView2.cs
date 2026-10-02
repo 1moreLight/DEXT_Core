@@ -23,7 +23,7 @@ using Dext.Core.Rooms;
 
 namespace Lively.Core.Wallpapers
 {
-    public class WebWebView2 : IWallpaper
+    public partial class WebWebView2 : IWallpaper
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly TaskCompletionSource<Exception> tcsProcessWait = new();
@@ -192,7 +192,7 @@ namespace Lively.Core.Wallpapers
         // Room and started/restored its session. No page-provided field is used as
         // a transport identity or as installation evidence.
         internal RoomProtocolStatus AttachRoomSession(RoomSessionProtocolGateway gateway,
-            string roomId, IReadOnlyList<string> deskIds)
+            string roomId, IReadOnlyList<string> deskIds, RoomActionAuthority actions)
         {
             lock (roomSessionLock)
             {
@@ -200,13 +200,18 @@ namespace Lively.Core.Wallpapers
                     deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
                     return RoomProtocolStatus.Denied;
                 var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
+                var native=actions.CreateNativeInput();
                 var messages = new RoomSessionPlayerMessages(SendMessage,
-                    () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray());
+                    () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray(),
+                    native.Initialize,native.ObserveSnapshot,native.Revoke);
                 // Callbacks use this stream directly. Subscribe sends its first
                 // context/snapshot before Connect assigns the bridge field.
                 var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId,
                     messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke);
-                if (status == RoomProtocolStatus.Accepted) roomSessionBridge = bridge;
+                if (status == RoomProtocolStatus.Accepted) {
+                    roomSessionBridge = bridge;
+                    roomNativeAttachment = new(bridge,native,actions);
+                } else native.Revoke();
                 return status;
             }
         }
@@ -221,6 +226,7 @@ namespace Lively.Core.Wallpapers
         {
             lock (roomSessionLock)
             {
+                Interlocked.Exchange(ref roomNativeAttachment,null)?.Input.Revoke();
                 roomSessionBridge?.Dispose();
                 roomSessionBridge = null;
             }
@@ -345,6 +351,7 @@ namespace Lively.Core.Wallpapers
                             {
                                 //CefBrowserWindow
                                 var handle = new IntPtr(((LivelyMessageHwnd)obj).Hwnd);
+                                nativeBrowserHandle = handle;
                                 //WindowsForms10.Window.8.app.0.141b42a_r9_ad1
                                 var chrome_WidgetWin_0 = NativeMethods.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_0", null);
                                 if (!chrome_WidgetWin_0.Equals(IntPtr.Zero))
@@ -440,6 +447,12 @@ namespace Lively.Core.Wallpapers
                         break;
                     case MessageType.msg_system_control_request:
                         _ = HandleSystemControlRequestAsync((LivelyMessageSystemControlRequest)obj);
+                        break;
+                    case MessageType.msg_room_native_request:
+                        HandleNativeRequest((LivelyMessageRoomNativeRequest)obj);
+                        break;
+                    case MessageType.msg_room_native_invalidated:
+                        roomNativeAttachment?.Input.InvalidateDocument(((LivelyMessageRoomNativeInvalidated)obj).RuntimeGeneration);
                         break;
                     case MessageType.msg_room_session_request:
                         if (roomSessionBridge is { } requestBridge)

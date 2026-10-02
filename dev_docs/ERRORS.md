@@ -189,3 +189,9 @@
 | #150 | 禁RTC策略不注册mDNS接口而RTC工厂仍请求，WebView2可因bad Mojo终止renderer | [backend](errors/backend.md) |
 
 | #151 | 未跟踪新文件不在git diff --check中，须暂存后再次检查 | [toolchain](errors/toolchain.md) |
+
+| #152 | Json.NET强制转换会接受小数整数、数字字符串及缺省几何字段 | [backend](errors/backend.md) |
+| #153 | RawKeyboardFlags为位集，E0与UP组合误判DOWN，转发不能一律加extended | [backend](errors/backend.md) |
+| #154 | 隔离Player默认最小化且探针DPI模式不同，客户区0或虚拟化尺寸误判输入几何 | [toolchain](errors/toolchain.md) |
+| #155 | 状态探针参数是期望Desk/inactive，工作树路径不能当状态 | [toolchain](errors/toolchain.md) |
+| #156 | PowerShell成功流重定向不保留Write-Host信息流 | [toolchain](errors/toolchain.md) |

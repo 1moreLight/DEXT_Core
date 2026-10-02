@@ -366,3 +366,11 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 实测WebView2 153.0.4234.32：inherited about:blank中RTC构造，以及同一官方页reload后再次构造，可使renderer退出，kind=RenderProcessExited/reason=Crashed/exit3。Chromium日志明确No binder found for interface network.mojom.MdnsResponder及bad IPC123。当前Chromium源码在强制webrtc=block时不注册该binder，但RTC工厂仍可创建MdnsResponderAdapter并请求它；与现场吻合，不能归咎于opaque origin或资源摘要。
 
 官方能力自检改为每个WebView实例一次，每次文档仍有相同强制响应策略，实际资源/撤销/reload回归通过。ProcessFailed撤销资源、清就绪状态，并报告类型/原因/退出码。该规避不保证恶意作者反复构造RTC时的稳定性；P5 Task4保留真实故障恢复门槛。被移除的about:blank诊断用例不计通过；不靠放开RTC、关闭策略、JS覆盖API或不受支持的flag伪造边界。详见resource-research的官方源码链接。
+
+## #152 原生JSON字段须先验类型和形状（2026-10-03）
+
+输入协议初版用JToken强制转换/ToObject，测试14/25：1.2可转整数，数字字符串可转double，缺x/tabIndex取0，未知几何字段被忽略。改为严格Integer/Float/String token、必需且唯一的字段形状、有界安全整数、重复consumer/button拒绝；25/25通过。入口大小/深度/重复JSON键/尾部JSON和当前代次身份共同校验，不以DTO反序列化成功代替边界。
+
+## #153 原始键盘BREAK/E0是独立位（2026-10-03）
+
+RawInputMsgWindow旧Flags!=Up会把E0|Up误当Down，InputUtil又把所有按键设置extended位。改为BREAK位1判断松开、E0位2判断扩展；向Core事件保留扩展事实，普通Enter不加bit24，真正扩展键才加；keyUp的previous/transition位为1。隐藏原生接收窗口验证实收lParam和Raw flags，不能只用JS键盘测试代填。

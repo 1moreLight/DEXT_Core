@@ -19,18 +19,20 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
     private readonly RoomSessionProtocolGateway gateway;
     private readonly RoomSessionKernel kernel;
     private readonly RoomRuntimeFactsSource runtimeFacts;
+    private readonly RoomActionAuthority actions;
     private string? activeDisplayId;
     private int activePlayerPid;
     private Guid activeSessionId;
     private string? activeInstallationStamp;
 
     public RoomSessionRuntimeCoordinator(InstalledRoomSessionAuthority authority,
-        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts)
+        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions)
     {
         this.authority = authority;
         this.gateway = gateway;
         this.kernel = kernel;
         this.runtimeFacts = runtimeFacts;
+        this.actions = actions;
         runtimeFacts.Sampled += OnRuntimeFactsSampled;
     }
 
@@ -93,7 +95,7 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
                     return;
                 }
                 var attached = player.AttachRoomSession(gateway, installation.RoomId,
-                    installation.DeskIds);
+                    installation.DeskIds, actions);
                 if (attached != RoomProtocolStatus.Accepted)
                 {
                     gateway.Stop(connectionId, coordinator, session.Snapshot.SessionId);

@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Com;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
@@ -435,7 +435,10 @@ namespace Lively.Core
         private void RoomPageReady(object sender, EventArgs e)
         {
             if (sender is WebWebView2 webWallpaper)
+            {
+                webWallpaper.NativeInputIsForeground = () => userSettings.Settings.InputForward != InputForwardMode.off && IsDesktop();
                 roomSessionRuntime.OnPageReady(webWallpaper);
+            }
         }
 
         private async Task SetDesktopPictureOrLockscreen(IWallpaper wallpaper)
@@ -1159,6 +1162,8 @@ namespace Lively.Core
         {
             try
             {
+                var nativeForeground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseMove(e.X,e.Y,nativeForeground);
                 if (forwardedMouse.IsActive)
                 {
                     if (userSettings.Settings.InputForward == InputForwardMode.off)
@@ -1189,7 +1194,10 @@ namespace Lively.Core
             try
             {
                 if (IsPrimaryMouseButton(e.Button))
+                {
+                    foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseDown(e.X,e.Y,true);
                     forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y), e.X, e.Y, InputUtil.MouseModifiers);
+                }
             }
             catch (Exception ex)
             {
@@ -1203,7 +1211,11 @@ namespace Lively.Core
             {
                 // Finish the DOWN recipient even if foreground or pointer display changed.
                 if (IsPrimaryMouseButton(e.Button))
+                {
+                    var foreground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                    foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseUp(e.X,e.Y,foreground);
                     forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                }
             }
             catch (Exception ex)
             {
@@ -1215,22 +1227,17 @@ namespace Lively.Core
         {
             try
             {
-                // Don't forward when not on desktop.
-                if (userSettings.Settings.InputForward != InputForwardMode.mousekeyboard || !IsDesktop())
-                    return;
-
-                // Detect active wallpaper based on cursor.
-                if (!NativeMethods.GetCursorPos(out NativeMethods.POINT P))
-                    return;
-
-                var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(P.X, P.Y));
-                foreach (var wallpaper in Wallpapers)
+                // Controlled v3 Tab/Enter/Space use Core focus even in mouse
+                // mode. Ordinary keyboard forwarding retains its opt-in setting.
+                var foreground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                var hasCursor=NativeMethods.GetCursorPos(out NativeMethods.POINT p);
+                var display=hasCursor?displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(p.X,p.Y)):null;
+                foreach(var wallpaper in Wallpapers)
                 {
-                    if (wallpaper.Category.IsDeviceInputAllowed() &&
-                        (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
-                    {
-                        InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle, e.WindowMessage, e.VirtualKey, e.ScanCode, e.IsKeyDown);
-                    }
+                    var selected=hasCursor && (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement==WallpaperArrangement.span);
+                    if(wallpaper is WebWebView2 player && player.NativeKey((int)e.VirtualKey,e.IsKeyDown,(InputUtil.MouseModifiers&4)!=0,foreground&&selected))continue;
+                    if(foreground && selected && userSettings.Settings.InputForward==InputForwardMode.mousekeyboard && wallpaper.Category.IsDeviceInputAllowed())
+                        InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle,e.WindowMessage,e.VirtualKey,e.ScanCode,e.IsKeyDown,e.IsExtended);
                 }
             }
             catch (Exception ex)
@@ -1259,7 +1266,12 @@ namespace Lively.Core
                 if (wallpaper.Category.IsDeviceInputAllowed() &&
                     (wallpaper.Screen.Equals(display) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
                 {
-                    yield return new MouseForwardingSession.Target(wallpaper.InputHandle, bounds.X, bounds.Y);
+                    if(wallpaper is WebWebView2 player && player.HasNativeInput)
+                    {
+                        var viewport=player.ReadNativeViewport();
+                        if(viewport!=null)yield return new MouseForwardingSession.Target(viewport.Handle,viewport.X,viewport.Y);
+                    }
+                    else yield return new MouseForwardingSession.Target(wallpaper.InputHandle, bounds.X, bounds.Y);
                 }
             }
         }

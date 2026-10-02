@@ -33,7 +33,7 @@ internal sealed class RoomActionAuthority
     private readonly Dictionary<Guid, InputTicket> tickets = new();
     private static readonly TimeSpan InputLifetime = TimeSpan.FromMilliseconds(1500);
     private sealed record InputTicket(Guid Connection, string Peer, Guid Session, string Consumer, string Button,
-        string Stamp, long SessionRevision, long PrivateRevision, long IssuedAt);
+        string Stamp, long SessionRevision, long PrivateRevision, long IssuedAt, RoomNativeInputProof? NativeInput);
     private sealed record PreparedAction(RoomActionStatus Status, string? Type = null, PersonalTarget? Target = null,
         string? DeskId = null, long IssuedAt = 0);
 
@@ -65,7 +65,9 @@ internal sealed class RoomActionAuthority
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
     }
 
-    public RoomInputReply IssueHostInput(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string button)
+    internal RoomNativeInputAuthority CreateNativeInput() => new(clock);
+
+    public RoomInputReply IssueHostInput(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string button, RoomNativeInputProof? nativeInput = null)
     {
         var issuedAt = clock.GetTimestamp();
         try
@@ -75,6 +77,9 @@ internal sealed class RoomActionAuthority
                 var status = Button(context, owner, button, out _);
                 if (status != RoomActionStatus.Accepted) return new(status);
                 if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
+                if (nativeInput != null && !nativeInput.Validate(context.Snapshot, consumer, button)) return new(RoomActionStatus.StaleInput);
+                var physicalTime = nativeInput?.IssuedAt ?? issuedAt;
+                if (Expired(physicalTime, issuedAt)) return new(RoomActionStatus.ExpiredInput);
                 lock (gate)
                 {
                     foreach (var expired in tickets.Where(t => Expired(t.Value.IssuedAt, issuedAt)).Select(t => t.Key).ToArray()) tickets.Remove(expired);
@@ -82,7 +87,7 @@ internal sealed class RoomActionAuthority
                     if (tickets.Count >= 128) return new(RoomActionStatus.Denied);
                     var id = Guid.NewGuid();
                     tickets.Add(id, new(connection, peer.TransportId, session, consumer, button,
-                        context.Installation.InstallationStamp, context.Snapshot.Revision, state.Revision, issuedAt));
+                        context.Installation.InstallationStamp, context.Snapshot.Revision, state.Revision, physicalTime, nativeInput));
                     return new(RoomActionStatus.Accepted, id);
                 }
             });
@@ -118,6 +123,10 @@ internal sealed class RoomActionAuthority
                     input.SessionRevision != context.Snapshot.Revision || input.PrivateRevision != state.Revision)
                     return new(RoomActionStatus.StaleInput);
                 if (Expired(input.IssuedAt, requestedAt)) return new(RoomActionStatus.ExpiredInput);
+                // The leaf's one-time consume is the geometry/input commit point.
+                // All authority and personal state is still protected here.
+                if (input.NativeInput != null && !input.NativeInput.Validate(context.Snapshot, consumer, button, consume: true))
+                    return new(RoomActionStatus.StaleInput);
                 if (action.Type == "binding.launch")
                     return target is null ? new(RoomActionStatus.MissingBinding) : new(RoomActionStatus.Accepted, action.Type, target, IssuedAt: input.IssuedAt);
                 if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: input.IssuedAt);
