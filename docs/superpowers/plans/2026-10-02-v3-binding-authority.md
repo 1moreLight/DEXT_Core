@@ -48,8 +48,8 @@
 **Interfaces:** DI registers RoomPersonalStore under Dext local data/v3/personal and RoomActionAuthority using existing AppCatalogService.Launch. The future Player native activation adapter calls IssueHostInput; authored requests can call only InvokeButton with an existing ticket. Configurator personal edits are privileged Core entrypoints, implemented with the native authoring UI package.
 
 - [x] Register the real services. Run all action/protocol/kernel suites and full `scripts/build.ps1` → `scripts/start.ps1`; expected Release Player and matching-worktree Core/pipe/configurator identity.
-- [ ] One fresh whole-branch read-only reviewer per executing-plans; fix Important/Critical in one RED→GREEN pass, no repeat review.
-- [ ] Commit and keep unmerged. Full item remains not-ready until real native input/SDK/UI evidence in dependent packages; no claim of whole-route80% from unit checks.
+- [x] One fresh whole-branch read-only reviewer per executing-plans; fix Important/Critical in one RED→GREEN pass, no repeat review.
+- [x] Commit and keep unmerged. Full item remains not-ready until real native input/SDK/UI evidence in dependent packages; no claim of whole-route80% from unit checks.
 
 ## Ledger
 

@@ -89,6 +89,112 @@ static class RoomActionChecks
             input = f.Actions.IssueHostInput(lease, peer, f.Session, "official", "open");
             Eq(RoomActionStatus.MissingPermission, f.Actions.InvokeButton(lease, peer, f.Session, "official", "open", input.Ticket).Status); Eq(1, f.Launched.Count);
         });
+        foreach (var change in new[] { "close", "stop", "pause", "unbind", "replace" })
+        {
+            var invalidation = change;
+            check("pending private read rechecks " + invalidation + " before dispatch", () => {
+                using var f = new ActionFixture(); var input = f.Input("open");
+                using var editing = new ManualResetEventSlim(); using var release = new ManualResetEventSlim();
+                using var admitted = new ManualResetEventSlim();
+                var edit = Task.Run(() => { try { f.Store.Update(_ => {
+                    editing.Set(); if (!release.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Edit barrier timeout");
+                    throw new OperationCanceledException("fixture abort, no private revision change");
+                }); } catch (OperationCanceledException) { } });
+                Task<RoomActionReply>? invoke = null;
+                try
+                {
+                    if (!editing.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Private edit did not begin");
+                    f.Admission.OnAdmit = () => admitted.Set();
+                    invoke = Task.Run(() => f.Invoke("open", input.Ticket));
+                    if (!admitted.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not read context");
+                    switch (invalidation)
+                    {
+                        case "close": f.Gateway.Close(f.View, f.Peer); break;
+                        case "stop": f.Gateway.Stop(f.Coordinator, f.CorePeer, f.Session); break;
+                        case "pause": f.Gateway.SetOperable(f.Coordinator, f.CorePeer, f.Session, false); break;
+                        case "unbind": f.Admission.Enabled = false; break;
+                        case "replace": f.Admission.ReplaceInstallation(); break;
+                    }
+                }
+                finally { release.Set(); edit.GetAwaiter().GetResult(); }
+                if (invoke is null || !invoke.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not finish");
+                if (invoke.Result.Status == RoomActionStatus.Accepted) throw new Exception("Revoked pending action was accepted");
+                Eq(0, f.Launched.Count);
+            });
+        }
+        foreach (var change in new[] { "grant", "target", "revision" })
+        {
+            var editKind = change;
+            check("private " + editKind + " change before commit prevents old dispatch", () => {
+                using var f = new ActionFixture(); var input = f.Input("open");
+                using var clockEntered = new ManualResetEventSlim(); using var release = new ManualResetEventSlim();
+                f.Clock.BeforeTimestamp = () => { clockEntered.Set(); if (!release.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Clock barrier timeout"); };
+                var invoke = Task.Run(() => f.Invoke("open", input.Ticket));
+                try
+                {
+                    if (!clockEntered.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not check time");
+                    f.Store.Update(s => {
+                        if (editKind == "grant") s.Rooms[Room].Grants.Clear();
+                        if (editKind == "target") s.Targets[Target] = new PersonalTarget("Changed", "application", @"C:\Windows\System32\calc.exe");
+                    });
+                }
+                finally { release.Set(); }
+                if (!invoke.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not finish");
+                if (invoke.Result.Status == RoomActionStatus.Accepted) throw new Exception("Private edit was ignored by pending action");
+                Eq(0, f.Launched.Count);
+            });
+        }
+        check("dispatch callback runs outside action and shared authorization locks", () => {
+            using var f = new ActionFixture();
+            var actions = new RoomActionAuthority(f.Gateway, f.Store, _ => {
+                var concurrent = Task.Run(() => {
+                    Eq(RoomActionStatus.Accepted, f.Actions.ReadButtons(f.View, f.Peer, f.Session, "scene").Status);
+                    f.Store.Update(s => s.Rooms[Room].Grants.Clear());
+                    f.Gateway.Close(f.View, f.Peer);
+                });
+                if (!concurrent.Wait(TimeSpan.FromSeconds(3))) throw new Exception("Dispatch retained an authorization lock");
+            }, f.Clock);
+            var input = actions.IssueHostInput(f.View, f.Peer, f.Session, "scene", "open");
+            Eq(RoomActionStatus.Accepted, actions.InvokeButton(f.View, f.Peer, f.Session, "scene", "open", input.Ticket).Status);
+        });
+        check("waiting for private state cannot extend the native input lifetime", () => {
+            using var f = new ActionFixture(); var input = f.Input("open");
+            using var editing = new ManualResetEventSlim(); using var admitted = new ManualResetEventSlim(); using var release = new ManualResetEventSlim();
+            var edit = Task.Run(() => { try { f.Store.Update(_ => { editing.Set(); release.Wait(); throw new OperationCanceledException(); }); } catch (OperationCanceledException) { } });
+            Task<RoomActionReply>? invoke = null;
+            try
+            {
+                if (!editing.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Edit did not begin");
+                f.Admission.OnAdmit = () => admitted.Set(); invoke = Task.Run(() => f.Invoke("open", input.Ticket));
+                if (!admitted.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not begin");
+                f.Clock.Advance(TimeSpan.FromSeconds(2));
+            }
+            finally { release.Set(); edit.GetAwaiter().GetResult(); }
+            Eq(RoomActionStatus.ExpiredInput, invoke!.GetAwaiter().GetResult().Status); Eq(0, f.Launched.Count);
+        });
+        check("snapshot observer may read actions while a private wait is released", () => {
+            using var f = new ActionFixture(); var input = f.Input("open");
+            using var editing = new ManualResetEventSlim(); using var admitted = new ManualResetEventSlim();
+            using var observing = new ManualResetEventSlim(); using var release = new ManualResetEventSlim();
+            var edit = Task.Run(() => { try { f.Store.Update(_ => { editing.Set(); release.Wait(); throw new OperationCanceledException(); }); } catch (OperationCanceledException) { } });
+            Task<RoomActionReply>? invoke = null; Task? observer = null;
+            try
+            {
+                if (!editing.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Edit did not begin");
+                f.Admission.OnAdmit = () => admitted.Set(); invoke = Task.Run(() => f.Invoke("open", input.Ticket));
+                if (!admitted.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Invocation did not begin");
+                observer = Task.Run(() => {
+                    var result = f.Gateway.Subscribe(f.View, f.Peer, _ => {
+                        observing.Set(); Eq(RoomActionStatus.Accepted, f.Actions.ReadButtons(f.View, f.Peer, f.Session, "scene").Status);
+                    }, out var subscription);
+                    Eq(RoomProtocolStatus.Accepted, result.Status); subscription!.Dispose();
+                });
+                if (!observing.Wait(TimeSpan.FromSeconds(5))) throw new Exception("Observer did not begin");
+            }
+            finally { release.Set(); edit.GetAwaiter().GetResult(); }
+            if (!Task.WaitAll(new Task[] { invoke!, observer! }, TimeSpan.FromSeconds(5))) throw new Exception("Observer/private state lock order deadlocked");
+            Eq(RoomActionStatus.Accepted, invoke!.Result.Status); Eq(1, f.Launched.Count);
+        });
         check("authored exit requests require Dext-owned confirmation", () => {
             using var f = new ActionFixture(); Eq(RoomActionStatus.RequiresConfirmation, f.Invoke("exit", f.Input("exit").Ticket).Status); Eq(0, f.Launched.Count);
         });
@@ -97,16 +203,32 @@ static class RoomActionChecks
     {
         private long ticks;
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
-        public override long GetTimestamp() => ticks;
+        public Action? BeforeTimestamp;
+        public override long GetTimestamp() { Interlocked.Exchange(ref BeforeTimestamp, null)?.Invoke(); return Interlocked.Read(ref ticks); }
         public void Advance(TimeSpan duration) => ticks += duration.Ticks;
     }
-    sealed class Admission(VerifiedRoomInstallation installed) : IRoomSessionAdmissionAuthority
+    sealed class Admission : IRoomSessionActionAdmissionAuthority
     {
-        public bool Enabled = true;
-        public RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello) => Enabled && hello.RoomId == installed.RoomId &&
-            ((peer.TransportId == "runtime" && hello.Role == RoomClientRole.Coordinator) ||
-             (peer.TransportId == "player" && hello.Role == RoomClientRole.DesktopPlayer) ||
-             (peer.TransportId == "dock" && hello.Role == RoomClientRole.Dock)) ? new(peer.TransportId, hello.Role, installed) : null;
+        private readonly object gate = new();
+        private VerifiedRoomInstallation installed;
+        private bool enabled = true;
+        public Action? OnAdmit;
+        public Admission(VerifiedRoomInstallation installed) { this.installed = installed; }
+        public bool Enabled { get { lock (gate) return enabled; } set { lock (gate) enabled = value; } }
+        public T WithAdmission<T>(RoomSessionPeer peer, RoomSessionHello hello, Func<RoomSessionAdmission?, T> prepare)
+        { lock (gate) return prepare(Admit(peer, hello)); }
+        public void ReplaceInstallation() { lock (gate) installed = new(installed.RoomId, "replacement-stamp", installed.DeskIds, installed.StartDeskId, installed.ActionCatalog); }
+        public RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello)
+        {
+            lock (gate)
+            {
+                Interlocked.Exchange(ref OnAdmit, null)?.Invoke();
+                return enabled && hello.RoomId == installed.RoomId &&
+                    ((peer.TransportId == "runtime" && hello.Role == RoomClientRole.Coordinator) ||
+                     (peer.TransportId == "player" && hello.Role == RoomClientRole.DesktopPlayer) ||
+                     (peer.TransportId == "dock" && hello.Role == RoomClientRole.Dock)) ? new(peer.TransportId, hello.Role, installed) : null;
+            }
+        }
     }
     sealed class ActionFixture : IDisposable
     {

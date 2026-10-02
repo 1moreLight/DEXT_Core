@@ -10,7 +10,7 @@ namespace Dext.Core.Rooms;
 
 // Native v3 admission, retaining the accepted v2 development overlay until
 // the complete native runtime replaces its visual host.
-internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAuthority
+internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissionAuthority
 {
     private readonly object gate = new();
     private string? packageDirectory;
@@ -55,6 +55,9 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
                 : new RoomSessionAdmission(peer.TransportId, hello.Role, installation);
         }
     }
+
+    public T WithAdmission<T>(RoomSessionPeer peer, RoomSessionHello hello, Func<RoomSessionAdmission?, T> prepare)
+    { lock (gate) return prepare(Admit(peer, hello)); }
 
     private static VerifiedRoomInstallation? ReadInstallation(string directory)
     {

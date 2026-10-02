@@ -50,6 +50,10 @@ internal sealed class RoomPersonalStore
         using var retained = RoomV3Installation.RetainDirectory(this.directory);
     }
     public RoomPersonalState Read() { lock (gate) return ReadState(); }
+    // Callback only validates detached state and prepares an immutable action.
+    // It must not launch, publish observations or edit personal data.
+    internal T ReadForDispatch<T>(Func<RoomPersonalState, T> prepare)
+    { lock (gate) return prepare(ReadState()); }
     public void Update(Action<RoomPersonalState> edit)
     {
         ArgumentNullException.ThrowIfNull(edit);

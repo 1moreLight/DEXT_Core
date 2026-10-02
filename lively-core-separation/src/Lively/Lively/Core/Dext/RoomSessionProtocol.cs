@@ -51,6 +51,13 @@ internal interface IRoomSessionAdmissionAuthority
     RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello);
 }
 
+// Side-effect preparation requires an authority which serializes this read
+// with installation binding, replacement and revocation. No unsafe default.
+internal interface IRoomSessionActionAdmissionAuthority : IRoomSessionAdmissionAuthority
+{
+    T WithAdmission<T>(RoomSessionPeer peer, RoomSessionHello hello, Func<RoomSessionAdmission?, T> prepare);
+}
+
 internal sealed class ClosedRoomSessionAdmissionAuthority : IRoomSessionAdmissionAuthority
 {
     public RoomSessionAdmission? Admit(RoomSessionPeer peer, RoomSessionHello hello) => null;
@@ -166,6 +173,37 @@ internal sealed class RoomSessionProtocolGateway
             context = new RoomActionContext(installation, current, connection.Hello.Role);
             return RoomProtocolStatus.Accepted;
         }
+    }
+
+    // Caller owns its private snapshot lock. Do not wait for gate here: a
+    // snapshot observer under gate can itself need that private lock. Retrying
+    // after releasing it avoids reversing the existing observation lock order.
+    internal bool TryWithActionContext<T>(Guid connectionId, RoomSessionPeer peer, Guid sessionId,
+        Func<RoomProtocolStatus, RoomActionContext?, T> prepare, out T result)
+    {
+        result = default!;
+        if (!Monitor.TryEnter(gate)) return false;
+        try
+        {
+            if (!connections.TryGetValue(connectionId, out var stored))
+            { result = prepare(RoomProtocolStatus.StaleSession, null); return true; }
+            if (authority is not IRoomSessionActionAdmissionAuthority synchronized)
+            { result = prepare(RoomProtocolStatus.Denied, null); return true; }
+            result = synchronized.WithAdmission(peer, stored.Hello, admission =>
+            {
+                if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error, (_, _) => admission))
+                    return prepare(error.Status, null);
+                if (connection.Hello.Role == RoomClientRole.Coordinator) return prepare(RoomProtocolStatus.Forbidden, null);
+                return kernel.WithSnapshot(current =>
+                {
+                    if (!IsBound(current, installation) || current!.SessionId != sessionId || connection.SessionId != sessionId)
+                        return prepare(RoomProtocolStatus.StaleSession, null);
+                    return prepare(RoomProtocolStatus.Accepted, new RoomActionContext(installation, current, connection.Hello.Role));
+                });
+            });
+            return true;
+        }
+        finally { Monitor.Exit(gate); }
     }
 
     public RoomProtocolReply Read(Guid connectionId, RoomSessionPeer peer)
@@ -338,7 +376,8 @@ internal sealed class RoomSessionProtocolGateway
     }
 
     private bool TryAuthorize(Guid connectionId, RoomSessionPeer peer, out Connection connection,
-        out VerifiedRoomInstallation installation, out RoomProtocolReply error)
+        out VerifiedRoomInstallation installation, out RoomProtocolReply error,
+        Func<RoomSessionPeer, RoomSessionHello, RoomSessionAdmission?>? readAdmission = null)
     {
         ArgumentNullException.ThrowIfNull(peer);
         connection = null!;
@@ -350,7 +389,7 @@ internal sealed class RoomSessionProtocolGateway
             error = Reject(RoomProtocolStatus.Denied);
             return false;
         }
-        var admission = authority.Admit(peer, stored.Hello);
+        var admission = readAdmission is null ? authority.Admit(peer, stored.Hello) : readAdmission(peer, stored.Hello);
         if (admission is null || admission.TransportId != stored.TransportId ||
             admission.Role != stored.Hello.Role || admission.Installation is null ||
             admission.Installation.RoomId != stored.Installation.RoomId ||

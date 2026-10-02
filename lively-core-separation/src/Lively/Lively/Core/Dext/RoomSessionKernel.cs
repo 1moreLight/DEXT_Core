@@ -122,6 +122,10 @@ public sealed class RoomSessionKernel : IDisposable
         get { lock (gate) return snapshot; }
     }
 
+    // Short read boundary: callback must not mutate or publish notifications.
+    internal T WithSnapshot<T>(Func<RoomSessionSnapshot?, T> prepare)
+    { lock (gate) return prepare(disposed ? null : snapshot); }
+
     public IDisposable Subscribe(Action<RoomSessionSnapshot> observer)
     {
         ArgumentNullException.ThrowIfNull(observer);
