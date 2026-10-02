@@ -278,3 +278,11 @@ PowerShell工具调用的进程环境不跨调用继承。本轮start未设置CA
 ## #145 Player IPC探针须使用真实入口与真实重载（2026-10-03）
 
 build.ps1把Release Player部署到Core的bin/x64/Debug/net9.0-windows10.0.18362.0/Plugins/WebView2；不能猜单独Player项目bin路径。Form1现有cmd_reload分支被注释，向stdin发该命令不会重载；探针等待新ready超时。改用页面受控测试指令执行location.reload，确认真实新文档ready后再断言墓碑与新代次。未顺带改变既有cmd_reload产品行为。
+
+## #148 Worker安全探针必须等待异步结果（2026-10-03）
+
+new Worker返回对象后立刻terminate并判为“执行成功”会误判CSP：浏览器可能在后续error事件拒绝脚本。探针应等待实际message或error，设置有界超时，并在finally释放Worker。此处修正前主文档worker结果false，修正后真实ReleasePlayer的worker拒绝证据通过；不能用constructor是否抛错单独证明所有Worker边界。
+
+## #151 新文件需要暂存检查（2026-10-03）
+
+git diff --check只覆盖已跟踪差异，本轮新ResourceWireProbe.cs末尾空格直到git diff --cached --check才发现。已删除空格并重新检查；保持具名暂存后的格式门槛，不因工作区diff通过就省略它。

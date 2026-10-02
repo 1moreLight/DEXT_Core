@@ -352,3 +352,17 @@ Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCat
 ## #146 WorkerW层级日志与物理验收的区别（2026-10-03，待Task4复核）
 
 真实启动日志20261003_032422出现一次Unexpected WorkerW Z-order。现有EnsureWorkerWZOrder检测最后子窗不符后调用SetWindowPos到HWND_BOTTOM，随后Player loaded/ready成功；代码没有检查该原生调用返回值。本轮仅证明进程/管道身份、恢复和正常退出，未量测纠正后的物理层级。不把身份成功写成层级测试通过；最终WorkerW/DPI门槛须验证实际呈现。
+
+## #147 合法资源路径超过完整Windows MAX_PATH（2026-10-03）
+
+现象：资源31项阶段新增最大240字节相对路径后原生服务返回403，实际Framework Player也读取失败。原因：安装目录前缀使完整路径超过传统Win32限制。修复：CreateFileW使用已规范化、已验证根下的扩展绝对路径（本地与UNC分别处理）；句柄最终路径仍做真实根边界检查。最长资源与Unicode路径在纯测试和ReleasePlayer实测通过，未放宽240字节清单上限。
+
+## #149 RTC构造异常不是Connection-Allowlist生效判据（2026-10-03）
+
+现象：响应有webrtc=block，new RTCPeerConnection仍成功，旧自检错误退出。原因：策略拒绝ICE候选/连接，不要求构造抛SecurityError。修复：带report-to token但不配置外部报告端点；新ReportingObserver监听connection-allowlist，构造无ICE server的peer后takeRecords，核对当前URL、单一响应origin、connection=webrtc及disposition=enforce。close/disconnect清理；无有效强制报告则诊断退出。官方/沙箱页真实报告和缺API反例通过。
+
+## #150 Runtime禁RTC与mDNS接口初始化冲突（2026-10-03，仍有最终恢复门槛）
+
+实测WebView2 153.0.4234.32：inherited about:blank中RTC构造，以及同一官方页reload后再次构造，可使renderer退出，kind=RenderProcessExited/reason=Crashed/exit3。Chromium日志明确No binder found for interface network.mojom.MdnsResponder及bad IPC123。当前Chromium源码在强制webrtc=block时不注册该binder，但RTC工厂仍可创建MdnsResponderAdapter并请求它；与现场吻合，不能归咎于opaque origin或资源摘要。
+
+官方能力自检改为每个WebView实例一次，每次文档仍有相同强制响应策略，实际资源/撤销/reload回归通过。ProcessFailed撤销资源、清就绪状态，并报告类型/原因/退出码。该规避不保证恶意作者反复构造RTC时的稳定性；P5 Task4保留真实故障恢复门槛。被移除的about:blank诊断用例不计通过；不靠放开RTC、关闭策略、JS覆盖API或不受支持的flag伪造边界。详见resource-research的官方源码链接。

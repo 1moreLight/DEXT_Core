@@ -88,3 +88,11 @@ Core先发cmd_room_runtime，再发同代次完整快照；RuntimeGeneration由�
 Player投影为dext:v3-runtime、dext:v3-session和dext:v3-runtime-revoked，固定官方顶层文档才可收取。导航/撤销保留旧代次墓碑，原context不能复活；重载后Core重新授权并发送新代次。暂停期间只缓存最新完整状态，异步恢复完成后先context后最后snapshot，撤销则只重放revoke；重复恢复命令不取消尚未完成的首次重放。
 
 上述传输仅建立运行身份和公开数据。作者iframe不会因此取得授权；资源字节边界、真实输入和消费者级投影继续由后续P5实现验证。
+
+### 原生资源字节边界（P5阶段实现）
+
+私有dext:v3-runtime增加resourceBasePath=/content/<runtimeGeneration>/，相对作品路径必须拼接这一前缀。Player在首航前选择native模式；官方有限文件与清单内容分开服务，不映射整个目录。内容完整大小/SHA256校验后从私有临时缓存返回，源安装句柄随复制完成释放；同代次只读已验证字节，撤销/导航关闭缓存及旧响应。支持GET/HEAD和单区间Range，多区间返回完整200，越界416。
+
+响应同时携带CSP和强制Connection-Allowlist，作者脚本/媒体/字体/fetch/frame限当前清单来源，worker不开放，RTC/重定向禁止。沙箱页不能升为官方顶层或直接调用原生桥。Player每WebView实例一次验证浏览器强制策略报告；不能验证则拒绝native启动。每个新文档仍经过正常导航和当前代次检查，策略随每份响应附加。
+
+Runtime153的禁RTC/mDNS接口冲突可能在作者重复构造RTC时终止渲染进程；当前实现撤销状态与资源，不宣称恶意内容恢复完成（ERRORS #150）。原生资源服务目前由隔离ReleasePlayer验证；生产DOM接线、物理输入和消费者级投影继续按P5推进。

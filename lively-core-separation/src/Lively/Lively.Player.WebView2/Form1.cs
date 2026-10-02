@@ -34,6 +34,11 @@ namespace Lively.Player.WebView2
         private bool runtimeDeliverySuspended;
         private readonly DextRoomRuntimeState roomRuntime = new DextRoomRuntimeState();
         private bool nativeRuntimeSeen;
+        private DextNativeResourceServer nativeResources;
+        private int resourceRequests;
+        private bool nativeNetworkReady;
+        private bool nativePolicySupported;
+        private ulong nativeNavigationId;
         private bool isVideoStream = false;
         private int cefD3DRenderingSubProcessId;
 
@@ -137,6 +142,13 @@ namespace Lively.Player.WebView2
 
         public async Task InitializeWebView2Async()
         {
+            if (startArgs.DextNativeRuntime)
+            {
+                if (!startArgs.DextTrustedHost || startArgs.Type != WebPageType.local || startArgs.Screensaver)
+                    throw new InvalidOperationException("Native v3 requires the trusted local desktop host");
+                nativeResources = new DextNativeResourceServer(startArgs.Url);
+                nativeRuntimeSeen = true;
+            }
             webView = new WebView() {
                 DefaultBackgroundColor = Color.Transparent
             };
@@ -343,7 +355,8 @@ namespace Lively.Player.WebView2
                 case WebPageType.local:
                     {
                         $"Opening local project: {startArgs.Url}".SendLog(SendToParent);
-                        webView.NavigateToLocalPath(startArgs.Url, startArgs.Screensaver);
+                        if (nativeResources != null) webView.CoreWebView2.Navigate(nativeResources.EntryUrl);
+                        else webView.NavigateToLocalPath(startArgs.Url, startArgs.Screensaver);
                     }
                     break;
             }
@@ -377,22 +390,33 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
             webView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
             webView.CoreWebView2.Settings.AreHostObjectsAllowed = false;
-            webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
-            webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+            if (nativeResources != null)
             {
-                if (!IsAllowedDextResource(args.Request.Uri))
-                    args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
-                        null, 403, "Dext Offline Boundary", "Content-Type: text/plain");
-            };
+                webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
+                webView.CoreWebView2.WebResourceRequested += NativeResourceRequested;
+            }
+            else
+            {
+                webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+                webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+                {
+                    if (!IsAllowedDextResource(args.Request.Uri))
+                        args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
+                            null, 403, "Dext Offline Boundary", "Content-Type: text/plain");
+                };
+            }
             webView.CoreWebView2.NavigationStarting += (sender, args) =>
             {
                 if (!IsAllowedDextResource(args.Uri) || nativeRuntimeSeen && !IsOfficialDextDocument(args.Uri))
                     args.Cancel = true;
+                nativeNetworkReady = false;
+                nativeNavigationId = args.NavigationId;
+                nativeResources?.Revoke();
                 if (roomRuntime.Invalidate("navigation")) PostRuntimeLastMessage();
             };
             webView.CoreWebView2.FrameNavigationStarting += (sender, args) =>
             {
-                if (!IsAllowedDextResource(args.Uri))
+                if (nativeResources != null ? !nativeResources.CanNavigateFrame(args.Uri) : !IsAllowedDextResource(args.Uri))
                     args.Cancel = true;
             };
             webView.CoreWebView2.PermissionRequested += (sender, args) =>
@@ -400,6 +424,55 @@ namespace Lively.Player.WebView2
                 args.State = CoreWebView2PermissionState.Deny;
                 args.Handled = true;
             };
+        }
+
+        private async void NativeResourceRequested(object sender, CoreWebView2WebResourceRequestedEventArgs args)
+        {
+            // Do not keep UI/COM objects on the hashing thread. Deferral completes
+            // on every path; WebView owns reading the response stream afterward.
+            var server = nativeResources;
+            if (server == null) return;
+            if (!nativeNetworkReady && !server.IsOfficialResource(args.Request.Uri))
+            {
+                args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 403, "Runtime Policy Not Ready", "Cache-Control: no-store");
+                return;
+            }
+            if (resourceRequests >= 64)
+            {
+                args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 429, "Too Many Requests", "Cache-Control: no-store");
+                return;
+            }
+            var address = args.Request.Uri;
+            var method = args.Request.Method;
+            var range = args.Request.Headers.Contains("Range") ? args.Request.Headers.GetHeader("Range") : null;
+            var deferral = args.GetDeferral();
+            DextResourceResponse response = null;
+            resourceRequests++;
+            try
+            {
+                response = await Task.Run(() => server.Prepare(address, method, range));
+                if (webView.IsDisposed) return;
+                if (server.IsCurrent(response))
+                {
+                    args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(response.Content, response.StatusCode, response.ReasonPhrase, response.Headers);
+                    // The immutable cache stays owned by the runtime generation;
+                    // the response slice closes on EOF, errors or context revoke.
+                    response = null;
+                }
+                else args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 403, "Retired Runtime", "Cache-Control: no-store");
+            }
+            catch (Exception error)
+            {
+                if (!webView.IsDisposed)
+                    args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 403, "Resource Rejected", "Cache-Control: no-store");
+                Debug.WriteLine(error.GetType().Name);
+            }
+            finally
+            {
+                response?.Dispose();
+                resourceRequests--;
+                deferral.Complete();
+            }
         }
 
         private bool IsAllowedDextResource(string uri)
@@ -495,8 +568,11 @@ namespace Lively.Player.WebView2
             if (isPaused && e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
                 return;
 
+            nativeResources?.Revoke();
+            nativeNetworkReady = false;
+            nativePolicySupported = false;
             roomRuntime.Invalidate("processFailed");
-            e.Reason.ToString().SendError(SendToParent, "CoreWebView2 process failed");
+            ($"{e.ProcessFailedKind}: {e.Reason}, exit={e.ExitCode}").SendError(SendToParent, "CoreWebView2 process failed");
         }
 
         private void CoreWebView2_NewWindowRequested(object sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -527,6 +603,49 @@ namespace Lively.Player.WebView2
             {
                 e.WebErrorStatus.ToString().SendError(SendToParent, "WebView navigation failed");
                 return;
+            }
+
+            if (nativeResources != null)
+            {
+                // Version numbers do not prove that this Runtime enforces the
+                // response policy. No authored bytes or runtime projection leave
+                // the native boundary until the actual official document passes.
+                var navigation = e.NavigationId;
+                var enforced = nativePolicySupported ? "true" : "false";
+                try
+                {
+                    // Feature support belongs to this WebView instance. Every response
+                    // still carries the same enforced policy. Repeating RTC construction
+                    // after reload triggers an Edge 153 mDNS binder failure.
+                    if (!nativePolicySupported) enforced = await webView.CoreWebView2.ExecuteScriptAsync(
+                        @"(() => {
+                            let observer, peer;
+                            try {
+                                observer = new ReportingObserver(() => {}, {types: ['connection-allowlist'], buffered: false});
+                                observer.observe();
+                                peer = new RTCPeerConnection({iceServers: []});
+                                return observer.takeRecords().some(r => r.type === 'connection-allowlist' &&
+                                    r.url === location.href && r.body.url === location.href &&
+                                    r.body.connection === 'webrtc' && r.body.disposition === 'enforce' &&
+                                    r.body.allowlist.length === 1 && r.body.allowlist[0] === location.origin);
+                            } catch { return false; }
+                            finally { peer?.close(); observer?.disconnect(); }
+                        })()");
+                }
+                catch (Exception) { }
+                if (webView.IsDisposed || navigation != nativeNavigationId) return;
+                if (enforced != "true" || !IsOfficialDextDocument(webView.CoreWebView2.Source))
+                {
+                    nativeResources.Revoke();
+                    roomRuntime.Invalidate("invalidated");
+                    "Native v3 requires a WebView2 Runtime enforcing Connection-Allowlist; update the Runtime.".SendError(SendToParent);
+                    SendToParent(new LivelyMessageWallpaperLoaded { Success = false });
+                    Close();
+                    return;
+                }
+                nativePolicySupported = true;
+                nativeNetworkReady = true;
+                foreach (var message in roomRuntime.Replay()) PostRuntimeMessage(message);
             }
 
             if (!webView.TryGetCefD3DRenderingSubProcessId(out cefD3DRenderingSubProcessId))
@@ -840,16 +959,28 @@ namespace Lively.Player.WebView2
                         roomRuntime.Initialize((LivelyMessageRoomRuntime)obj))
                     {
                         nativeRuntimeSeen = true;
+                        var runtime = (LivelyMessageRoomRuntime)obj;
+                        if (nativeResources != null && !nativeResources.Activate(runtime.RuntimeGeneration, runtime.Resources))
+                        {
+                            nativeResources.Revoke();
+                            roomRuntime.Invalidate("invalidated");
+                        }
                         PostRuntimeLastMessage();
                     }
                     break;
                 case MessageType.cmd_room_runtime_revoke:
                     if (startArgs.DextTrustedHost && roomRuntime.Revoke((LivelyMessageRoomRuntimeRevoke)obj))
+                    {
+                        nativeResources?.Revoke();
                         PostRuntimeLastMessage();
+                    }
                     break;
                 case MessageType.cmd_room_session_snapshot:
                     if (startArgs.DextTrustedHost && roomRuntime.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)obj))
+                    {
+                        if (!((LivelyMessageRoomSessionSnapshot)obj).IsActive) nativeResources?.Revoke();
                         PostRuntimeLastMessage();
+                    }
                     break;
                 case MessageType.cmd_desktop_icon_preferences:
                     if (!startArgs.DextTrustedHost)
@@ -923,7 +1054,8 @@ namespace Lively.Player.WebView2
 
         private void PostRuntimeMessage(JObject message)
         {
-            if (!runtimeDeliverySuspended && startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source))
+            if (!runtimeDeliverySuspended && (nativeResources == null || nativeNetworkReady) &&
+                startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source))
                 webView.CoreWebView2.PostWebMessageAsJson(message.ToString(Formatting.None));
         }
 
@@ -990,6 +1122,7 @@ namespace Lively.Player.WebView2
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            nativeResources?.Dispose();
             roomRuntime.Invalidate("closed");
             visualizerService?.Dispose();
             hardwareUsageService?.Stop();

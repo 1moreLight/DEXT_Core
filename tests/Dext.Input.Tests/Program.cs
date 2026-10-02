@@ -1,6 +1,11 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length >= 3 && args[0] == "--v3-resources-reject")
+{
+    await ResourceWireProbe.Run(args[1], args[2], policyUnavailable: true);
+    return;
+}
 if (args.Length == 1 && args[0] == "--workerw-p2a") {
     await WorkerWSceneProbe.Run();
     return;
@@ -26,6 +31,16 @@ if (args.Length == 2 && args[0] == "--v3-runtime-wire") {
 
 if (args.Length == 1 && args[0] == "--v3-runtime-messages") {
     RuntimeMessageChecks.Run();
+    return;
+}
+
+if (args.Length == 1 && args[0] == "--v3-resources") {
+    ResourceBoundaryChecks.Run();
+    return;
+}
+
+if (args.Length == 3 && args[0] == "--v3-resources-wire") {
+    await ResourceWireProbe.Run(args[1],args[2]);
     return;
 }
 

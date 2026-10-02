@@ -100,6 +100,10 @@ namespace Lively.Player.WebView2
         HelpText = "Enable the offline Dext Room host boundary.")]
         public bool DextTrustedHost { get; set; }
 
+        [Option("dext-native-runtime", Required = false, Default = false,
+            HelpText = "Use the verified native v3 resource service before first navigation.")]
+        public bool DextNativeRuntime { get; set; }
+
         [Option("wallpaper-color-scheme",
         Required = false,
         HelpText = "Set PreferredColorScheme.")]

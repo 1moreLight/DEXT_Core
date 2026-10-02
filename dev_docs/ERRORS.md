@@ -182,3 +182,10 @@
 | #145 | 隔离Player探针误用无效reload命令及未部署的构建路径 | [toolchain](errors/toolchain.md) |
 
 | #146 | 启动时WorkerW层级不符进入现有纠正分支，身份成功不能替代物理验收 | [backend](errors/backend.md) |
+
+| #147 | 合法240字节资源相对路径叠加安装目录超过MAX_PATH，原生CreateFileW需扩展绝对路径 | [backend](errors/backend.md) |
+| #148 | Worker构造成功不代表执行成功，CSP可通过异步error拒绝 | [toolchain](errors/toolchain.md) |
+| #149 | Connection-Allowlist禁止ICE但仍允许RTC构造，SecurityError自检误判Runtime | [backend](errors/backend.md) |
+| #150 | 禁RTC策略不注册mDNS接口而RTC工厂仍请求，WebView2可因bad Mojo终止renderer | [backend](errors/backend.md) |
+
+| #151 | 未跟踪新文件不在git diff --check中，须暂存后再次检查 | [toolchain](errors/toolchain.md) |

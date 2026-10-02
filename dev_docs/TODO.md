@@ -1186,3 +1186,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 上下文传输实际验证：协议80/80、消息19/19、内核17/17、动作44/44；ReleasePlayer五组原生IPC及旧完整快照探针通过。中文stdout乱码、重复异步恢复丢重放、非对象Desk拒绝三项实际失败后修复。
 - [x] 完整build→start/identity通过，Core123128/Player71384/Watchdog116472/配置器76656；v3-status=inactive符合恢复原有v2。正常退出后进程/1620监听均0。启动时一次WorkerW层级日志有现有纠正调用，最终物理层级仍留Task4验证。
 - [ ] Task2继续：首航前隔离v3资源服务，同句柄验证后提供清单内字节与Range；物理输入、start完成和同Player闲置仍未接通。
+
+- [x] Task2资源服务阶段：独立native首航、官方白名单、代次资源清单、句柄校验与不可变临时缓存；31/31边界检查、真实ReleasePlayer媒体/Range/撤销/重载及策略拒绝启动通过（2026-10-03）。
+
+- [x] 完整build→start/identity通过，Core31152/Player81948/Watchdog89212/配置器2860；现有v2恢复为inactive。Core正常shutdown，开发监听停止，最终Dext进程/1620监听/资源临时缓存均0。
+- [ ] 资源阶段限制：WebView2 153在禁RTC策略下重复初始化RTC会触发mDNS binder杀renderer（#150）；官方能力自检按WebView实例一次已避开本次重载路径，作者恶意重复构造的稳定恢复仍属Task4安全门槛。不得把当前证据写成全网络/全恶意内容验收完成。
+- [ ] Task2继续：物理输入与当前几何绑定、start完成仲裁、同Player闲置展示；再做Task3生产DOM和Task4个人布局/真实DPI/安全恢复，集中验收前不合并。

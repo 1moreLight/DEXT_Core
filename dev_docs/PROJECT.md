@@ -193,3 +193,9 @@ slot.start/idle/background按自己的生命周期、Desk、声明及个人授�
 ### 2026-10-03 运行上下文代次和显式撤销
 
 原生Player的context和snapshot通过同一已授权订阅按序送达。Core为每次绑定/刷新分配单调runtimeGeneration，关闭/换会话/撤权发送显式revoke；Player保留墓碑拒绝迟到旧消息，并固定官方顶层文档身份。暂停期间缓存最后完整快照，异步恢复完成后按context→snapshot重放；已撤销时只重放撤销。公开Manifest通过原始JSON传输，避免JsonElement实现字段；Player标准输出采用ASCII JSON转义，保证Framework与Core编码不同仍保留Unicode。
+
+### 2026-10-03 原生资源服务与浏览器策略
+
+v3首航明确选择独立资源服务，不沿用整目录虚拟映射。官方宿主有限白名单与当前代次作品清单分开；文件在祖先/文件句柄保护下完整校验后复制到有界私有临时缓存，释放源锁再流式响应。代次撤销关闭缓存，Range只对完整校验后的内容切片。
+
+默认离线同时依赖原生URL/资源清单边界、CSP和浏览器Connection-Allowlist（RTC/重定向禁止）。Runtime能力由每WebView实例一次真实强制报告验证，不用版本号推断；每份文档仍附策略。WebView2 153重复RTC初始化的mDNS binder冲突已复现，官方重复自检路径已规避，恶意内容触发时的恢复仍列P5最终门槛，不降低范围或记为已完成。

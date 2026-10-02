@@ -55,6 +55,7 @@ namespace Lively.Common.Helpers
                     ["type"] = "dext:v3-runtime", ["protocolVersion"] = 1, ["runtimeGeneration"] = value.RuntimeGeneration,
                     ["sessionId"] = value.SessionId.ToString(), ["roomId"] = value.RoomId, ["installationStamp"] = value.InstallationStamp,
                     ["manifest"] = manifest,
+                    ["resourceBasePath"] = "/content/" + value.RuntimeGeneration.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/",
                     ["resources"] = new JArray(value.Resources.Select(p => new JObject { ["path"] = p.Path, ["sha256"] = p.Sha256, ["size"] = p.Size }))
                 };
                 generation = value.RuntimeGeneration; revision = 0; session = value.SessionId; room = value.RoomId; stamp = value.InstallationStamp;
