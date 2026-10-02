@@ -280,6 +280,8 @@ internal static class RoomV3Installation
         ResourcePath(relative);
         return OpenLocal(root, relative);
     }
+    internal static SafeFileHandle RetainDirectory(string root) => OpenHandle(Path.GetFullPath(root), true, Path.GetFullPath(root));
+    internal static void CheckUniqueJson(JsonElement value) => UniqueProperties(value);
     private static ResourceReader OpenLocal(string root, string relative)
     {
         root = Path.GetFullPath(root);

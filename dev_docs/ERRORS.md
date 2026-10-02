@@ -148,3 +148,4 @@
 > 排障时：先想这个坑属于哪一层 → 直接翻对应分册 → 没有再看索引找邻近主题。
 
 | #129 | 暂存写入和最终发布先检查路径后操作，链接/目录替换可越过校验 | [backend](errors/backend.md) |
+| #130 | FILE_RENAME_INFO长度不含NUL，但FileName缓冲区必须提供终止符 | [backend](errors/backend.md) |
