@@ -14,6 +14,7 @@ namespace Lively.Core.Wallpapers
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
         internal Func<bool> NativeInputIsForeground { private get; set; }
+        internal bool RoomDocumentInvalidated => Volatile.Read(ref roomNativeAttachment) is{} a && a.Input.State==null;
         internal bool HasNativeInput => Volatile.Read(ref roomNativeAttachment)?.Input.State!=null;
         private static readonly RoomNativeViewport MissingViewport=new(IntPtr.Zero,0,0,0,0,1);
         internal RoomNativeViewport ReadNativeViewport()
@@ -30,6 +31,10 @@ namespace Lively.Core.Wallpapers
             var status=RoomActionStatus.Denied;object buttons=null;
             switch(request.Method)
             {
+                case "startupComplete":
+                    var completion=a.Bridge.CompleteStartup(state.Session,request.LifecycleRevision);
+                    status=completion.Status switch {RoomProtocolStatus.Accepted=>RoomActionStatus.Accepted,RoomProtocolStatus.StorageUnavailable=>RoomActionStatus.StorageUnavailable,
+                        RoomProtocolStatus.Forbidden=>RoomActionStatus.Forbidden,_=>RoomActionStatus.StaleInput};break;
                 case "invalidateGeometry":
                     status=a.Input.InvalidateGeometry(state.Generation,state.Session,state.Revision)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;break;
                 case "geometry":

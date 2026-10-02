@@ -83,6 +83,10 @@ internal sealed partial class RoomSessionPlayerBridge : IDisposable
         ? new(RoomProtocolStatus.StaleSession, null, null)
         : gateway.Complete(connectionId, peer, sessionId, transitionId);
 
+    internal RoomProtocolReply CompleteStartup(Guid sessionId, long lifecycleRevision) => disposed
+        ? new(RoomProtocolStatus.StaleSession, null, null)
+        : gateway.CompleteStartup(connectionId, peer, sessionId, lifecycleRevision);
+
     public void Dispose()
     {
         if (disposed) return;

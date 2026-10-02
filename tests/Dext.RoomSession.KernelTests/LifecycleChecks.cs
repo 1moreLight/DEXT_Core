@@ -4,7 +4,44 @@ internal static class LifecycleChecks
 {
     public static void Run(Action<string, Action> check)
     {
-        check("native start gates navigation and only runs once per session", () =>
+        check("startup completion is current-phase only and preserves trusted restrictions",()=>{
+            using var kernel=new RoomSessionKernel();var first=kernel.Start("room",["home","work"],"home",Policy(true),new(true,true,false));
+            Require(!kernel.CompleteStartup(Guid.NewGuid(),first.Lifecycle.Revision),"wrong session");
+            Require(!kernel.CompleteStartup(first.SessionId,first.Lifecycle.Revision+1),"wrong phase revision");
+            Require(kernel.CompleteStartup(first.SessionId,first.Lifecycle.Revision),"current completion");
+            var completed=kernel.Snapshot!;Require(completed.Lifecycle is{Stage:RoomLifecycleStage.Desktop,PlaybackPaused:true,Locked:true} && !completed.IsDesktopForeground && !completed.IsOperable,"facts preserved");
+            Require(!kernel.CompleteStartup(first.SessionId,completed.Lifecycle.Revision),"completion cannot repeat outside starting");
+            Require(kernel.Snapshot==completed,"replay changed state");
+        });
+        check("new document replays start once with committed Desk and cancels old completion",()=>{
+            using var kernel=new RoomSessionKernel();var first=kernel.Start("room",["home","work"],"home",Policy(true));
+            Require(kernel.BeginDocument(first.SessionId),"reload starting document");var reload=kernel.Snapshot!;
+            Require(reload.Lifecycle.Revision==first.Lifecycle.Revision+1 && !kernel.CompleteStartup(first.SessionId,first.Lifecycle.Revision),"old document completion rejected");
+            Require(kernel.CompleteStartup(first.SessionId,reload.Lifecycle.Revision),"new completion");
+            var moving=kernel.Request(first.SessionId,"work").Snapshot!;Require(kernel.BeginDocument(first.SessionId),"reload while moving");
+            var latest=kernel.Snapshot!;Require(latest.CurrentDeskId=="work" && latest.TargetDeskId==null && latest.Lifecycle.Stage==RoomLifecycleStage.Starting,"settled current target before start");
+            Require(!kernel.Complete(first.SessionId,moving.TransitionId!.Value),"old transition rejected");
+            Require(kernel.CompleteStartup(first.SessionId,latest.Lifecycle.Revision),"start completion");Require(kernel.Snapshot!.CurrentDeskId=="work","never reset to startDesk");
+            Require(!kernel.SetLifecycle(first.SessionId,RoomLifecycleStage.Starting,false,false),"ordinary lifecycle cannot replay start");
+        });
+        check("new document during idle returns to idle without replay on ordinary wake",()=>{
+            using var kernel=new RoomSessionKernel();var first=kernel.Start("room",["home","work"],"home",Policy(true));
+            kernel.CompleteStartup(first.SessionId,first.Lifecycle.Revision);kernel.SetLifecycle(first.SessionId,RoomLifecycleStage.Idle,true,true);
+            Require(kernel.BeginDocument(first.SessionId),"new idle document");var startup=kernel.Snapshot!;
+            Require(kernel.CompleteStartup(first.SessionId,startup.Lifecycle.Revision),"finish idle document start");
+            Require(kernel.Snapshot!.Lifecycle is{Stage:RoomLifecycleStage.Idle,PlaybackPaused:true,Locked:true},"return to idle preserves restrictions");
+            kernel.SetLifecycle(first.SessionId,RoomLifecycleStage.Desktop,false,false);Require(kernel.Snapshot!.Lifecycle.Stage==RoomLifecycleStage.Desktop,"ordinary wake desktop");
+        });
+        check("new document failure does not publish a partial lifecycle or lose pending Desk",()=>{
+            var store=new LifecycleStore();using var kernel=new RoomSessionKernel(store);var first=kernel.Start("room",["home","work"],"home",Policy(true));
+            kernel.CompleteStartup(first.SessionId,first.Lifecycle.Revision);kernel.Request(first.SessionId,"work");var before=kernel.Snapshot!;
+            var seen=new List<RoomSessionSnapshot>();using var watch=kernel.Subscribe(seen.Add);store.Fail=true;
+            var failed=false;try{kernel.BeginDocument(first.SessionId);}catch(IOException){failed=true;}
+            Require(failed && kernel.Snapshot==before && seen.Count==1,"failed checkpoint leaves exact state");store.Fail=false;
+            Require(kernel.BeginDocument(first.SessionId) && kernel.Snapshot!.CurrentDeskId=="work","retry commits new document");
+            using var noStart=new RoomSessionKernel();var plain=noStart.Start("plain",["a"],"a",Policy());Require(!noStart.BeginDocument(plain.SessionId)&&noStart.Snapshot==plain,"no invented start");
+        });
+        check("native start gates navigation and ordinary lifecycle cannot replay it", () =>
         {
             using var kernel = new RoomSessionKernel();
             var first = kernel.Start("room", ["home", "work"], "home", Policy(true));

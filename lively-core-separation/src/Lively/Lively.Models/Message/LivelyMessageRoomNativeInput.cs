@@ -20,6 +20,7 @@ namespace Lively.Models.Message
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
         public long GeometryVersion { get; set; }
+        public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
         public string Button { get; set; }
         public int PixelWidth { get; set; }

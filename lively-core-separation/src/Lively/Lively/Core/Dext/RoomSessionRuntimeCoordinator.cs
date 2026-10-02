@@ -62,8 +62,23 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
         if (!player.IsTrustedDextHost || player.Pid is not { } pid) return;
         lock (gate)
         {
-            if (activePlayerPid == pid && player.RefreshRoomSession() == RoomProtocolStatus.Accepted)
-                return;
+            if (activePlayerPid == pid)
+            {
+                if (player.RoomDocumentInvalidated && kernel.Snapshot is { IsActive: true } current)
+                {
+                    var peer = new RoomSessionPeer("core-runtime");
+                    var document = gateway.Open(peer, new(1, RoomClientRole.Coordinator, current.RoomId));
+                    if (document.ConnectionId is not { } connection) return;
+                    try
+                    {
+                        var begun = gateway.BeginDocument(connection, peer, current.SessionId);
+                        if (begun.Status != RoomProtocolStatus.Accepted)
+                        { Logger.Warn($"v3 document restart rejected: {begun.Status}"); return; }
+                    }
+                    finally { gateway.Close(connection, peer); }
+                }
+                if (player.RefreshRoomSession() == RoomProtocolStatus.Accepted) return;
+            }
             player.DetachRoomSession();
             if (activePlayerPid != 0) authority.Unbind(activePlayerPid);
             activePlayerPid = 0;

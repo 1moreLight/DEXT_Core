@@ -4,6 +4,36 @@ internal static class RuntimeBridgeChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("private native bridge completes only current startup and preserves Windows restrictions",()=>NativeInstallationChecks.WithCopy(root=>{
+            NativeInstallationChecks.PrepareHtmlSlots(root);using var f=new Fixture(root);
+            f.Gateway.SetRuntimeFacts(f.Control,f.Core,f.Session,new(true,true,false));var first=f.Kernel.Snapshot!;
+            Require(RoomSessionPlayerBridge.Connect(f.Gateway,f.Player,f.RoomId,_=>{},out var bridge)==RoomProtocolStatus.Accepted,"connected");using(bridge){
+                Require(bridge!.CompleteStartup(f.Session,first.Lifecycle.Revision+1).Status==RoomProtocolStatus.Rejected,"wrong phase");
+                Require(bridge.CompleteStartup(f.Session,first.Lifecycle.Revision).Status==RoomProtocolStatus.Accepted,"current completion");
+                Require(f.Kernel.Snapshot!.Lifecycle is{Stage:RoomLifecycleStage.Desktop,PlaybackPaused:true,Locked:true} && !f.Kernel.Snapshot.IsDesktopForeground,"facts retained");
+                Require(bridge.CompleteStartup(f.Session,f.Kernel.Snapshot.Lifecycle.Revision).Status==RoomProtocolStatus.Rejected,"outside starting");
+            }
+            Require(bridge!.CompleteStartup(f.Session,first.Lifecycle.Revision).Status==RoomProtocolStatus.StaleSession,"disposed transport");
+        }));
+        check("new document and startup completion enforce separate trusted roles",()=>NativeInstallationChecks.WithCopy(root=>{
+            NativeInstallationChecks.PrepareHtmlSlots(root);using var f=new Fixture(root);var first=f.Kernel.Snapshot!;
+            var view=f.Gateway.Open(f.Player,new(1,RoomClientRole.DesktopPlayer,f.RoomId)).ConnectionId!.Value;
+            Require(f.Gateway.BeginDocument(view,f.Player,f.Session).Status==RoomProtocolStatus.Forbidden,"Player cannot replay start");
+            Require(f.Gateway.CompleteStartup(f.Control,f.Core,f.Session,first.Lifecycle.Revision).Status==RoomProtocolStatus.Forbidden,"coordinator cannot impersonate media completion");
+            Require(f.Gateway.CompleteStartup(view,f.Core,f.Session,first.Lifecycle.Revision).Status==RoomProtocolStatus.Denied,"spoofed peer");
+            Require(f.Gateway.CompleteStartup(view,f.Player,Guid.NewGuid(),first.Lifecycle.Revision).Status==RoomProtocolStatus.StaleSession,"wrong session");
+            Require(f.Kernel.Snapshot==first,"denied operations preserve exact state");
+            Require(f.Gateway.BeginDocument(f.Control,f.Core,f.Session).Status==RoomProtocolStatus.Accepted,"trusted new document");
+            Require(f.Gateway.CompleteStartup(view,f.Player,f.Session,first.Lifecycle.Revision).Status==RoomProtocolStatus.Rejected,"old document completion");
+            f.Authority.Unbind(7123);Require(f.Gateway.CompleteStartup(view,f.Player,f.Session,f.Kernel.Snapshot!.Lifecycle.Revision).Status!=RoomProtocolStatus.Accepted,"revoked installation");
+        }));
+        check("legacy new-document refresh invents no native start",()=>{
+            using var kernel=new RoomSessionKernel();var g=new RoomSessionProtocolGateway(kernel,new TestAdmissionAuthority());var core=new RoomSessionPeer("core-1");
+            var control=g.Open(core,new(1,RoomClientRole.Coordinator,"install-a")).ConnectionId!.Value;var first=g.Start(control,core).Snapshot!;
+            var peer=new RoomSessionPeer("player-1");var view=g.Open(peer,new(1,RoomClientRole.DesktopPlayer,"install-a")).ConnectionId!.Value;
+            Require(g.BeginDocument(control,core,first.SessionId).Status==RoomProtocolStatus.Accepted && kernel.Snapshot==first,"legacy remains unchanged");
+            Require(g.CompleteStartup(view,peer,first.SessionId,first.Lifecycle.Revision).Status==RoomProtocolStatus.Rejected,"no native completion");
+        });
         check("native bridge initializes verified context before every first or refresh snapshot", () => NativeInstallationChecks.WithCopy(root =>
         {
             using var f = new Fixture(root);

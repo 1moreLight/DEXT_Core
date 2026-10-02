@@ -226,7 +226,7 @@ internal static class NativeInstallationChecks
             }));
     }
 
-    private static void PrepareHtmlSlots(string root)
+    internal static void PrepareHtmlSlots(string root)
     {
         var path = Path.Combine(root, "room.json");
         var room = JsonNode.Parse(File.ReadAllText(path))!;

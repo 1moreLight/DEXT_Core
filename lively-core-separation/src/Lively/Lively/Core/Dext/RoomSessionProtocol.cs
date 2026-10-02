@@ -327,6 +327,34 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
+    internal RoomProtocolReply BeginDocument(Guid connectionId, RoomSessionPeer peer, Guid sessionId)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.Coordinator) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            if (installation.RuntimeContext?.Policy.HasStart != true) return Accept(current);
+            try { return kernel.BeginDocument(sessionId) ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected); }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
+    internal RoomProtocolReply CompleteStartup(Guid connectionId, RoomSessionPeer peer, Guid sessionId, long lifecycleRevision)
+    {
+        lock (gate)
+        {
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
+            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return Reject(RoomProtocolStatus.Forbidden);
+            if (!TryCurrentSession(connection, out var current, out error)) return error;
+            if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
+            if (installation.RuntimeContext?.Policy.HasStart != true) return Reject(RoomProtocolStatus.Rejected);
+            try { return kernel.CompleteStartup(sessionId, lifecycleRevision) ? Accept(kernel.Snapshot!) : Reject(RoomProtocolStatus.Rejected); }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
     public RoomProtocolReply SetOperable(Guid connectionId, RoomSessionPeer peer, Guid sessionId, bool operable)
     {
         lock (gate)

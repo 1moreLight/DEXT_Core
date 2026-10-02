@@ -298,3 +298,7 @@ git diff --check只覆盖已跟踪差异，本轮新ResourceWireProbe.cs末尾�
 ## #156 保存PowerShell所有输出流（2026-10-03）
 
 scripts/build.ps1和identity使用Write-Host，普通>只保存成功流，文件可能为空而工具里构建实际通过。需要原始归档时用*>捕获全部流。该阶段构建和完整identity以实际工具返回为证据，测试成功流日志有内容；不得宣称空文件保留了原始构建输出。
+
+## #157 编辑脚本明确编码并替换完整成员（2026-10-03）
+
+Windows Python Path.read_text()默认GBK，读Form1的UTF8内容失败时此前文件修改已经执行；恢复时先查git diff，明确encoding=utf-8-sig，避免重复应用已完成修改。按方法首行后的换行插入新成员会拆开表达式方法，导致CS1519；应匹配并替换整个成员块，再编译相关实际源文件测试。本轮两项均已修复，完整build通过。

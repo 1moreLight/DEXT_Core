@@ -195,3 +195,5 @@
 | #154 | 隔离Player默认最小化且探针DPI模式不同，客户区0或虚拟化尺寸误判输入几何 | [toolchain](errors/toolchain.md) |
 | #155 | 状态探针参数是期望Desk/inactive，工作树路径不能当状态 | [toolchain](errors/toolchain.md) |
 | #156 | PowerShell成功流重定向不保留Write-Host信息流 | [toolchain](errors/toolchain.md) |
+
+| #157 | Python默认GBK读取UTF8失败及多行成员插入点错误，编辑脚本可部分执行 | [toolchain](errors/toolchain.md) |

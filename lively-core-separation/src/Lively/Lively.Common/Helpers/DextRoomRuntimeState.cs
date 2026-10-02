@@ -23,6 +23,9 @@ namespace Lively.Common.Helpers
         public bool HasContext(long document, Guid sessionId) => contextPayload != null && generation == document && session == sessionId;
         public bool CanUseInput(long document, Guid sessionId, long snapshotRevision) => HasContext(document,sessionId) &&
             snapshotPayload != null && revision == snapshotRevision;
+        public bool CanFinishStartup(long document, Guid sessionId, long snapshotRevision, long lifecycleRevision) =>
+            CanUseInput(document, sessionId, snapshotRevision) && (string)snapshotPayload["lifecycle"]?["stage"] == "starting" &&
+            (long?)snapshotPayload["lifecycle"]?["revision"] == lifecycleRevision;
 
         public bool Initialize(LivelyMessageRoomRuntime value)
         {

@@ -38,6 +38,8 @@ internal static class NativeInputWireProbe
                     const command=d.permissions?.command;
                     if(command==='geometry')send({metrics:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio}});
                     if(command==='geometry')native(request({method:'geometry',geometryVersion:1,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},buttons:[{consumer:'scene',button:'open',x:.1,y:.1,width:.2,height:.2,tabIndex:0}]}));
+                    if(command==='startupComplete')native(request({method:'startupComplete',lifecycleRevision:snapshot.lifecycle.revision}));
+                    if(command==='pageReady'){native({type:'dext:v3-page-ready'});native({type:'dext:v3-page-ready'});}
                     if(command==='activate')native(request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}));
                     if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}),...extra});
                     if(command==='frame'){const frame=document.createElement('iframe');frame.sandbox='allow-scripts';frame.src=context.resourceBasePath+'scene/index.html';frame.onload=()=>send({frame:true});document.body.append(frame);}
@@ -54,6 +56,7 @@ internal static class NativeInputWireProbe
             var reader=Task.Run(async()=>{while(await process.StandardOutput.ReadLineAsync() is{} line){try{log.Enqueue(line);var value=JObject.Parse(line);var type=(int?)value["Type"];
                 if(type==(int)MessageType.msg_hwnd)anchor=new IntPtr((long)value["Hwnd"]!);
                 if(value["RoomJson"] is{} room)queue.Enqueue(JObject.Parse((string)room!));
+                if(type==(int)MessageType.msg_room_session_ready)queue.Enqueue(new JObject{["pageReady"]=true});
                 if(type==(int)MessageType.msg_room_native_request)queue.Enqueue(new JObject{["native"]=value});
                 if(type==(int)MessageType.msg_room_native_invalidated)queue.Enqueue(new JObject{["invalidated"]=value["RuntimeGeneration"]});
             }catch(JsonException){}}});var errors=process.StandardError.ReadToEndAsync();
@@ -70,6 +73,9 @@ internal static class NativeInputWireProbe
                 Require(DextNativeInputWindow.TryMeasure(process.GetProcessWindow(true),anchor,input,process.Id,out var bounds,out var dpi),"actual Player window mapping");
                 Require((int?)geometry!["PixelWidth"]==bounds.Width && (int?)geometry["PixelHeight"]==bounds.Height,"Player and Core native viewport agree");
                 Console.WriteLine($"PASS native ReleasePlayer geometry IPC and actual HWND mapping at explicit scale 1.5 ({bounds.Width}x{bounds.Height}, dpi {dpi})");
+                await Command("pageReady");Require((bool?)(await Next())["pageReady"]==true,"ready once per document");await Barrier("pageReady");
+                await Command("startupComplete");Require((long?)(await Next())["native"]?["LifecycleRevision"]==1,"exact startup completion phase reaches Core");await Barrier("startupComplete");
+                Console.WriteLine("PASS native ReleasePlayer forwards current-phase startup completion and deduplicates document ready");
                 await Command("activate");Require((string?)(await Next())["native"]?["Method"]=="activate","public activation request");await Barrier("activate");
                 await Command("invalid");await Barrier("invalid");await Command("frame");await Barrier("frame");Require((bool?)(await Next())["frame"]==true,"sandbox frame loaded");
                 await Reply(1,"current");Require((string?)(await Next())["reply"]=="current","authorized reply");
@@ -82,8 +88,8 @@ internal static class NativeInputWireProbe
                 Console.WriteLine("PASS native ReleasePlayer suspension/revoke suppress stale input responses and revoked activation requests");
                 context.RuntimeGeneration=2;await Send(context);Require((long?)(await Next())["context"]==2,"new context");await Snapshot();Require((long?)(await Next())["snapshot"]==1,"new snapshot");
                 await Command("reload");Require((long?)(await Next())["invalidated"]==2,"navigation revokes Core candidate");Require((bool?)(await Next())["ready"]==true,"reload ready");
-                await Reply(2,"old-document");await Command("barrier");await Barrier("barrier");Console.WriteLine("PASS actual native navigation emits input invalidation and rejects old-document replies");
-                async Task Snapshot(){var s=RoomSessionPlayerMessage.Create(f.Snapshot,["home","focus"]);s.RuntimeGeneration=context.RuntimeGeneration;await Send(s);}
+                await Reply(2,"old-document");await Command("barrier");await Barrier("barrier");await Command("pageReady");Require((bool?)(await Next())["pageReady"]==true,"reload permits one fresh ready");await Barrier("pageReady");Console.WriteLine("PASS actual native navigation emits input invalidation and rejects old-document replies");
+                async Task Snapshot(){var s=RoomSessionPlayerMessage.Create(f.Snapshot with{Lifecycle=new(RoomLifecycleStage.Starting,false,false,1)},["home","focus"]);s.RuntimeGeneration=context.RuntimeGeneration;await Send(s);}
                 async Task Reply(long generation,string id)=>await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=generation,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=id})});
             }
             finally{if(!process.HasExited){await Send(new LivelyCloseCmd());process.StandardInput.Close();try{await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));}catch(TimeoutException){process.Kill(true);await process.WaitForExitAsync();}}await reader;}

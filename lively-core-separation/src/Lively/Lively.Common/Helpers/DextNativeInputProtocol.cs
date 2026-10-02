@@ -30,6 +30,10 @@ namespace Lively.Common.Helpers
                 if(!state.CanUseInput(request.RuntimeGeneration,request.SessionId,request.Revision))return null;
                 switch(request.Method)
                 {
+                    case "startupComplete":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"lifecycleRevision"}).ToArray()) || !Integer(o["lifecycleRevision"],1) ||
+                            !state.CanFinishStartup(request.RuntimeGeneration,request.SessionId,request.Revision,(long)o["lifecycleRevision"]))return null;
+                        request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
                     case "invalidateGeometry": return Shape(o,IdentityFields)?request:null;
                     case "activate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion"}).ToArray()) ||

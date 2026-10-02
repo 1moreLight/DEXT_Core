@@ -37,6 +37,7 @@ namespace Lively.Player.WebView2
         private DextNativeResourceServer nativeResources;
         private int resourceRequests;
         private bool nativeNetworkReady;
+        private bool roomPageReadySent;
         private bool nativePolicySupported;
         private ulong nativeNavigationId;
         private bool isVideoStream = false;
@@ -295,8 +296,8 @@ namespace Lively.Player.WebView2
                     }
                     else if ((string)o.type == "dext:v3-page-ready")
                     {
-                        if (startArgs.DextTrustedHost)
-                            SendToParent(new LivelyMessageRoomSessionReady());
+                        if (startArgs.DextTrustedHost && !roomPageReadySent)
+                        { roomPageReadySent = true; SendToParent(new LivelyMessageRoomSessionReady()); }
                     }
                     else if (((string)o.type)?.StartsWith("dext:v3-", StringComparison.Ordinal) == true)
                     {
@@ -424,6 +425,7 @@ namespace Lively.Player.WebView2
                     SendToParent(new LivelyMessageRoomNativeInvalidated { RuntimeGeneration = roomRuntime.Generation });
                 nativeNetworkReady = false;
                 nativeNavigationId = args.NavigationId;
+                roomPageReadySent = false;
                 nativeResources?.Revoke();
                 if (roomRuntime.Invalidate("navigation")) PostRuntimeLastMessage();
             };

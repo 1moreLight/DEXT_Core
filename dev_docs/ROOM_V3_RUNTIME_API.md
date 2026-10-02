@@ -104,3 +104,7 @@ Runtime153的禁RTC/mDNS接口冲突可能在作者重复构造RTC时终止渲�
 geometry是已经裁剪的前到后按钮列表，含consumer/button、归一化x/y/width/height和tabIndex。官方宿主在任何布局变更前请求invalidateGeometry并等待确认，变更后以递增版本发布完整几何并等待确认再接收激活。Player核对CSS viewport与自身原生客户区，Core复核实际Player窗口归属/客户区/屏幕原点/DPI以及当前消费者和按钮scope；窗口或快照改变必须重新发布。几何发布遇授权网关忙返回staleInput，宿主按当前身份重试，旧证明不能保留。
 
 Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快照/代次/几何/DPI变化取消；到期从物理DOWN计时。真实Tab/点击选择声明按钮的Core焦点，Enter/Space配对由官方宿主转成同一activate请求。合成DOM点击、请求重放、错误消费者和无配对请求不能出票。新协议已由隔离ReleasePlayer验证，生产DOM接入和最终物理输入门槛仍待P5后续步骤。
+
+### 启动完成仲裁（P5阶段实现）
+
+私有原生协议增加startupComplete：带当前runtimeGeneration/sessionId/revision及正整数lifecycleRevision，只允许结束当前starting阶段。Core保留暂停、锁屏、前台事实、已提交Desk与最终队列；旧阶段、旧文档或重复完成拒绝。只有可信Core新文档事件能重新进入starting，普通暂停/锁屏/闲置恢复不能重播start。闲置中重载可先播放新文档start，再回idle。同一实际文档ready只发送一次。生产媒体须在展示完成或规定超时后调用此入口，其DOM实现仍待Task3。

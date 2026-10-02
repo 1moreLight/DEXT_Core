@@ -1197,3 +1197,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 原生输入阶段完整build→start/identity通过：Core69160/Player80360/Watchdog95932/配置器124352，日志20261003_045140.txt；当前v2恢复为inactive。已正常退出Core，停止本轮开发监听，Dext进程及1620/1621监听0。
 - [ ] Task2继续：启动完成仲裁和同Player闲置；Task3生产宿主还须落实invalidate→ack→布局→publish→ack的几何协议，随后Task4个人布局/物理输入/DPI/安全故障恢复与包末审查。完整16项准备度仍1/16，最终集中验收前不合并。
+
+- [x] Task2启动仲裁：Core提供当前starting阶段一次性完成和可信新文档重启；保留暂停/锁屏/前台、已提交Desk与最终队列，旧阶段完成不得结束重载后的start。Player私有消息包含当前代次/全局修订/生命周期修订，ready按真实文档去重。之后接同Player闲置及生产DOM的媒体完成/超时。
+
+- [x] 启动仲裁验证：内核21/21、协议83/83、输入消息26/26、动作62/62、运行消息20/20；实际ReleasePlayer五组通过（完成消息、同文档ready去重、重载新ready等）。完整build→start/identity通过：Core102804/Player41456/Watchdog115704/配置器73840，日志20261003_051414.txt；当前v2恢复inactive。正常退出后Dext进程与1620/1621监听0。
+- [ ] Task2继续同Player闲置展示与宿主唤醒；Task3实现生产媒体完成/超时与DOM，Task4补物理输入/DPI/安全恢复。16项就绪仍1/16，最终集中验收前不合并。

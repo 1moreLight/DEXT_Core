@@ -28,6 +28,14 @@ internal static class NativeInputMessageChecks
                 Require(DextNativeInputProtocol.Parse(raw??r.ToString(),s,1200,900)==null);
             });
         Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
+        Check("startup completion accepts only exact starting phase and has no Windows fact fields",()=>{
+            var starting=new DextRoomRuntimeState();starting.Initialize(RuntimeMessageChecks.ContextMessage(f.Context,f.Snapshot,1));
+            var snap=RoomSessionPlayerMessage.Create(f.Snapshot with{Lifecycle=new(RoomLifecycleStage.Starting,true,true,4)},["home","focus"]);snap.RuntimeGeneration=1;starting.AcceptSnapshot(snap);
+            var r=new JObject{["type"]="dext:v3-native-request",["protocolVersion"]=1,["requestId"]="startup",["method"]="startupComplete",["runtimeGeneration"]=1,["sessionId"]=f.Snapshot.SessionId.ToString(),["revision"]=1,["lifecycleRevision"]=4};
+            Require(Parse(r,starting)?.LifecycleRevision==4);Require(Parse(r)==null);
+            foreach(var invalid in new JToken[]{3,4.2,"4"}){r["lifecycleRevision"]=invalid;Require(Parse(r,starting)==null);}r["lifecycleRevision"]=4;
+            r["locked"]=false;Require(Parse(r,starting)==null);r.Remove("locked");starting.Invalidate("navigation");Require(Parse(r,starting)==null);
+        });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }
 }
