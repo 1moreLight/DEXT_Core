@@ -171,3 +171,9 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 - `wallpapers/dext-room/`：运行时渲染器 + 当前激活的 room.json + assets/
 - `dext-room-demo/`：最早的独立 demo（gitignore，仅存档）
 - `D:\midDOW\DeskBox\`：外部参考仓库（快捷方式/图标/Explorer 启动的移植来源，GPL-3）
+
+### 2026-10-03 原生v3持续宿主工作包的技术裁定
+
+V3-P5-001采用同一纯运行模型供生产DOM、预览和测试使用，不投影为v2。Core仍是Desk提交权威；作者以公开有界source/target/shared几何控制呈现，不操作官方DOM。组件按session+稳定ID持续，嵌套配置按字段继承；视口变化不覆写个人保存布局。生命周期使用stage加正交播放暂停/锁屏/可操作状态，避免组合恢复丢失。
+
+媒体Content补独立capabilities/buttonIds及消费者，不继承Room场景授权，保持背景/Dock/Widget相同动作同样核验。image/GIF start初始500ms；视频正常到ended，进度停滞30s降级；HTML done或60s。以上为本包明确裁定，实际交付仍以TODO/验收卡证据为准，最终集中验收可调整数值。
