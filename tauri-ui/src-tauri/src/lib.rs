@@ -2420,9 +2420,7 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
         .canonicalize()
         .map_err(|error| format!("Room directory not found: {error}"))?;
     let src = canonical.as_path();
-    let room: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(src.join("room.json")).map_err(|e| format!("read Room failed: {e}"))?
-    ).map_err(|e| format!("parse Room failed: {e}"))?;
+    let room = room_v3::read_document(src)?;
     if room_version(&room)? == 3 {
         let host = std::path::Path::new(WALLPAPER_V3_DIR);
         if !host.join("index.html").is_file() || !host.join("LivelyInfo.json").is_file() {

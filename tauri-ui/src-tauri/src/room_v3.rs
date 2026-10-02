@@ -195,11 +195,15 @@ impl Read for ResourceReader {
 }
 
 fn lock_directory(path: &Path) -> Result<File, String> {
+    lock_directory_access(path, false)
+}
+
+fn lock_directory_access(path: &Path, rename: bool) -> Result<File, String> {
     #[cfg(windows)]
     {
         use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
         let file = fs::OpenOptions::new()
-            .read(true)
+            .access_mode(if rename { 0x80010000 } else { 0x80000000 })
             .share_mode(3)
             .custom_flags(0x02200000)
             .open(path)
@@ -224,8 +228,74 @@ fn lock_directory(path: &Path) -> Result<File, String> {
     }
 }
 
+fn rename_directory(handle: &File, source: &Path, destination: &Path) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::{ffi::OsStrExt, io::AsRawHandle};
+        #[repr(C)]
+        struct RenameInfo {
+            replace: u32,
+            root: *mut std::ffi::c_void,
+            length: u32,
+            name: [u16; 1],
+        }
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn SetFileInformationByHandle(
+                handle: *mut std::ffi::c_void,
+                class: u32,
+                data: *mut std::ffi::c_void,
+                size: u32,
+            ) -> i32;
+        }
+        let _ = source;
+        let name: Vec<u16> = destination.as_os_str().encode_wide().collect();
+        let size = std::mem::offset_of!(RenameInfo, name) + (name.len() + 1) * 2;
+        // u64 storage gives the native header its required alignment on x64.
+        let mut buffer = vec![0u64; size.div_ceil(8)];
+        let info = buffer.as_mut_ptr().cast::<RenameInfo>();
+        let result = unsafe {
+            (*info).replace = 0;
+            (*info).root = std::ptr::null_mut();
+            (*info).length = (name.len() * 2) as u32;
+            std::ptr::copy_nonoverlapping(
+                name.as_ptr(),
+                std::ptr::addr_of_mut!((*info).name).cast::<u16>(),
+                name.len(),
+            );
+            SetFileInformationByHandle(handle.as_raw_handle(), 3, info.cast(), size as u32)
+        };
+        require(
+            result != 0,
+            format!(
+                "rename retained directory: {}",
+                std::io::Error::last_os_error()
+            ),
+        )
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = handle;
+        fs::rename(source, destination).map_err(|e| io_error("rename retained directory", e))
+    }
+}
+
 fn open_checked(root: &Path, relative: &str) -> Result<ResourceReader, String> {
-    let mut directories = vec![lock_directory(root)?];
+    open_checked_under(root, relative, None)
+}
+
+fn open_checked_under(
+    root: &Path,
+    relative: &str,
+    retained: Option<&File>,
+) -> Result<ResourceReader, String> {
+    let root_handle = match retained {
+        Some(file) => file
+            .try_clone()
+            .map_err(|e| io_error("retain installation root", e))?,
+        None => lock_directory(root)?,
+    };
+    let mut directories = vec![root_handle];
     let parts: Vec<_> = relative.split('/').collect();
     let mut path = root.to_path_buf();
     for part in &parts[..parts.len() - 1] {
@@ -257,9 +327,56 @@ pub fn open_resource(root: &Path, relative: &str) -> Result<ResourceReader, Stri
     open_checked(&root_directory(root)?, relative)
 }
 
-fn bounded_bytes(root: &Path, name: &str, limit: usize) -> Result<Vec<u8>, String> {
+pub fn read_document(root: &Path) -> Result<Value, String> {
+    let root = root_directory(root)?;
+    parse_document(&bounded_bytes_under(
+        &root,
+        "room.json",
+        MAX_MANIFEST_BYTES,
+        None,
+    )?)
+}
+
+fn create_checked(root: &Path, relative: &str) -> Result<(File, Vec<File>), String> {
+    let mut directories = vec![lock_directory(root)?];
+    let parts: Vec<_> = relative.split('/').collect();
+    let mut path = root.to_path_buf();
+    for part in &parts[..parts.len() - 1] {
+        path.push(part);
+        match fs::create_dir(&path) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(io_error("create staging directory", error)),
+        }
+        directories.push(lock_directory(&path)?);
+    }
+    path.push(parts.last().ok_or("empty staging resource path")?);
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        options.custom_flags(0x00200000).share_mode(0);
+    }
+    let file = options
+        .open(&path)
+        .map_err(|e| io_error("create retained staging file", e))?;
+    #[cfg(windows)]
+    require(
+        handle_path(&file)?.starts_with(root),
+        "staging output escaped root",
+    )?;
+    Ok((file, directories))
+}
+
+fn bounded_bytes_under(
+    root: &Path,
+    name: &str,
+    limit: usize,
+    retained: Option<&File>,
+) -> Result<Vec<u8>, String> {
     let mut bytes = Vec::new();
-    open_checked(root, name)?
+    open_checked_under(root, name, retained)?
         .take(limit as u64 + 1)
         .read_to_end(&mut bytes)
         .map_err(|e| io_error("read installation document", e))?;
@@ -270,8 +387,12 @@ fn bounded_bytes(root: &Path, name: &str, limit: usize) -> Result<Vec<u8>, Strin
     Ok(bytes)
 }
 
-fn hash_resource(root: &Path, path: &str) -> Result<ResourceDigest, String> {
-    let mut file = open_checked(root, path)?;
+fn hash_resource(
+    root: &Path,
+    path: &str,
+    retained: Option<&File>,
+) -> Result<ResourceDigest, String> {
+    let mut file = open_checked_under(root, path, retained)?;
     let mut hash = Sha256::new();
     let mut size = 0u64;
     let mut buffer = [0u8; 65536];
@@ -293,16 +414,22 @@ fn hash_resource(root: &Path, path: &str) -> Result<ResourceDigest, String> {
     })
 }
 
-fn inventory(root: &Path) -> Result<HashSet<String>, String> {
+fn inventory(root: &Path, retained: Option<&File>) -> Result<HashSet<String>, String> {
     fn walk(
         root: &Path,
         path: &Path,
         found: &mut HashSet<String>,
         entries: &mut usize,
         depth: usize,
+        retained: Option<&File>,
     ) -> Result<(), String> {
         require(depth <= 32, "resource directory nesting exceeds 32")?;
-        let _guard = lock_directory(path)?;
+        let _guard = match retained {
+            Some(file) => file
+                .try_clone()
+                .map_err(|e| io_error("retain inventory root", e))?,
+            None => lock_directory(path)?,
+        };
         for item in fs::read_dir(path).map_err(|e| io_error("read resource directory", e))? {
             let path = item.map_err(|e| io_error("read resource entry", e))?.path();
             *entries += 1;
@@ -312,7 +439,7 @@ fn inventory(root: &Path) -> Result<HashSet<String>, String> {
             )?;
             let meta = reject_link(&path)?;
             if meta.is_dir() {
-                walk(root, &path, found, entries, depth + 1)?;
+                walk(root, &path, found, entries, depth + 1, None)?;
             } else {
                 require(meta.is_file(), "non-file resource")?;
                 let relative = path
@@ -327,7 +454,7 @@ fn inventory(root: &Path) -> Result<HashSet<String>, String> {
         Ok(())
     }
     let mut found = HashSet::new();
-    walk(root, root, &mut found, &mut 0, 0)?;
+    walk(root, root, &mut found, &mut 0, 0, retained)?;
     Ok(found)
 }
 
@@ -342,8 +469,16 @@ fn root_directory(directory: &Path) -> Result<PathBuf, String> {
 }
 
 fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, String> {
+    make_snapshot_under(directory, installed, None)
+}
+
+fn make_snapshot_under(
+    directory: &Path,
+    installed: bool,
+    retained: Option<&File>,
+) -> Result<Installation, String> {
     let root = root_directory(directory)?;
-    let bytes = bounded_bytes(&root, "room.json", MAX_MANIFEST_BYTES)?;
+    let bytes = bounded_bytes_under(&root, "room.json", MAX_MANIFEST_BYTES, retained)?;
     let value = parse_document(&bytes)?;
     let manifest = validate_manifest(&value)?;
     let mut expected: HashSet<String> = manifest.resource_paths.iter().cloned().collect();
@@ -352,7 +487,7 @@ fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, Stri
         expected.insert("installation.json".into());
     }
     require(
-        inventory(&root)? == expected,
+        inventory(&root, retained)? == expected,
         "resource inventory differs from declared Room resources",
     )?;
     let mut paths = manifest.resource_paths;
@@ -360,7 +495,7 @@ fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, Stri
     let mut resources = Vec::new();
     let mut total = 0u64;
     for path in paths {
-        let digest = hash_resource(&root, &path)?;
+        let digest = hash_resource(&root, &path, retained)?;
         total += digest.size;
         require(total <= MAX_INSTALL_BYTES, "Room resources exceed 2 GiB")?;
         resources.push(digest);
@@ -374,18 +509,26 @@ fn make_snapshot(directory: &Path, installed: bool) -> Result<Installation, Stri
 }
 
 pub fn verify_installation(directory: &Path) -> Result<Installation, String> {
+    verify_installation_under(directory, None)
+}
+
+fn verify_installation_under(
+    directory: &Path,
+    retained: Option<&File>,
+) -> Result<Installation, String> {
     let root = root_directory(directory)?;
-    let expected: Installation = serde_json::from_slice(&bounded_bytes(
+    let expected: Installation = serde_json::from_slice(&bounded_bytes_under(
         &root,
         "installation.json",
         MAX_SNAPSHOT_BYTES,
+        retained,
     )?)
     .map_err(|e| format!("parse installed snapshot: {e}"))?;
     require(
         expected.format_version == 1,
         "unsupported installation format",
     )?;
-    let actual = make_snapshot(&root, true)?;
+    let actual = make_snapshot_under(&root, true, retained)?;
     require(
         expected == actual,
         "installed Room manifest or resource content changed",
@@ -394,16 +537,12 @@ pub fn verify_installation(directory: &Path) -> Result<Installation, String> {
 }
 
 struct Staging(PathBuf);
-impl Drop for Staging {
-    fn drop(&mut self) {
-        if self.0.exists() && reject_link(&self.0).is_ok() {
-            let _ = fs::remove_dir_all(&self.0);
-        }
-    }
-}
+// Failed stages remain under the host-owned recovery namespace. Cleanup must
+// authenticate ownership by retained handles; never recursively delete a name
+// from Drop after the protective handles have already closed.
 
 pub fn install(source: &Path, destination: &Path) -> Result<Installation, String> {
-    install_inner(source, destination, || {})
+    install_inner(source, destination, |_| {})
 }
 
 #[cfg(test)]
@@ -412,13 +551,27 @@ pub fn install_with_publish_observer(
     destination: &Path,
     observer: impl FnOnce(),
 ) -> Result<Installation, String> {
+    let mut observer = Some(observer);
+    install_inner(source, destination, |point| {
+        if point == "before-publish" {
+            observer.take().unwrap()();
+        }
+    })
+}
+
+#[cfg(test)]
+pub fn install_with_observer(
+    source: &Path,
+    destination: &Path,
+    observer: impl FnMut(&str),
+) -> Result<Installation, String> {
     install_inner(source, destination, observer)
 }
 
 fn install_inner(
     source: &Path,
     destination: &Path,
-    before_publish: impl FnOnce(),
+    mut observe: impl FnMut(&str),
 ) -> Result<Installation, String> {
     let _lock = INSTALL_LOCK
         .lock()
@@ -470,15 +623,12 @@ fn install_inner(
     fs::create_dir(&stage.0).map_err(|e| io_error("create installation staging", e))?;
     let root = root_directory(&stage.0)?;
     let stage_guard = lock_directory(&root)?;
+    observe("staging");
     for relative in
         std::iter::once("room.json").chain(snapshot.resources.iter().map(|r| r.path.as_str()))
     {
-        let target = root.join(relative);
-        fs::create_dir_all(target.parent().unwrap())
-            .map_err(|e| io_error("create resource directory", e))?;
         let mut input = open_checked(&source, relative)?.take(MAX_RESOURCE_BYTES + 1);
-        let mut output =
-            File::create(&target).map_err(|e| io_error("create installed resource", e))?;
+        let (mut output, _directories) = create_checked(&root, relative)?;
         let size =
             std::io::copy(&mut input, &mut output).map_err(|e| io_error("copy resource", e))?;
         require(
@@ -499,16 +649,16 @@ fn install_inner(
         record.len() <= MAX_SNAPSHOT_BYTES,
         "installation snapshot exceeds 2 MiB",
     )?;
-    let mut file = File::create(root.join("installation.json"))
-        .map_err(|e| io_error("create installed snapshot", e))?;
+    let (mut file, record_directories) = create_checked(&root, "installation.json")?;
     file.write_all(&record)
         .map_err(|e| io_error("write installed snapshot", e))?;
     file.sync_all()
         .map_err(|e| io_error("sync installed snapshot", e))?;
     drop(file);
+    drop(record_directories);
     verify_installation(&root)?;
     let backup = parent.join(format!(".dext-previous-{suffix}"));
-    before_publish();
+    observe("before-publish");
     let replacing = destination.exists();
     // Ownership can change during a long copy; reject altered data before publication.
     require(
@@ -522,19 +672,35 @@ fn install_inner(
         )?;
     }
     drop(stage_guard);
-    if replacing {
-        fs::rename(&destination, &backup)
-            .map_err(|e| io_error("retain previous installation", e))?;
+    let publish_guard = lock_directory_access(&root, true)?;
+    require(
+        verify_installation_under(&root, Some(&publish_guard))? == snapshot,
+        "staged installation changed before publish",
+    )?;
+    let previous_guard = if replacing {
+        Some(lock_directory_access(&destination, true)?)
+    } else {
+        None
+    };
+    if let Some(guard) = &previous_guard {
+        require(
+            Some(verify_installation_under(&destination, Some(guard))?) == previous,
+            "destination changed before retained rename",
+        )?;
     }
-    if let Err(error) = fs::rename(&root, &destination) {
-        if replacing {
-            fs::rename(&backup,&destination).map_err(|restore|format!("installation swap failed ({error}); rollback failed ({restore}); previous retained at {}",backup.display()))?;
+    observe("protected");
+    if let Some(guard) = &previous_guard {
+        rename_directory(guard, &destination, &backup)?;
+    }
+    observe("retained");
+    if let Err(error) = rename_directory(&publish_guard, &root, &destination) {
+        if let Some(guard) = &previous_guard {
+            rename_directory(guard,&backup,&destination).map_err(|restore|format!("installation swap failed ({error}); rollback failed ({restore}); previous retained at {}",backup.display()))?;
         }
-        return Err(io_error("publish installed Room", error));
+        return Err(format!("publish installed Room: {error}"));
     }
-    if replacing {
-        let _ = fs::remove_dir_all(&backup);
-    }
+    // Retain the verified previous generation for bounded recovery/cleanup in
+    // release closure; do not recursively delete a mutable pathname here.
     Ok(snapshot)
 }
 

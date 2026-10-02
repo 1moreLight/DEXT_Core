@@ -111,7 +111,22 @@ mod tests {
         assert_ne!(old.manifest_sha256, new.manifest_sha256);
         assert_eq!(new, verify_installation(&dest).unwrap());
         assert!(!dest.join("assets/bg.svg").exists());
-        assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 2);
+        let backup = std::fs::read_dir(temp.path())
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with(".dext-previous-")
+            })
+            .unwrap();
+        assert_eq!(verify_installation(&backup).unwrap(), old);
+        assert!(!std::fs::read_dir(temp.path()).unwrap().any(|e| e
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".dext-install-")));
     }
 
     #[cfg(windows)]
@@ -236,6 +251,107 @@ mod tests {
             std::fs::read(dest.join("keep.txt")).unwrap(),
             b"intervening user data"
         );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn publication_retains_exact_directory_names_until_handle_rename() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        install(&source, &dest).unwrap();
+        let mut attempts = Vec::new();
+        let result = crate::room_v3::install_with_observer(&source, &dest, |point| {
+            if point == "protected" {
+                attempts.push(std::fs::rename(&dest, temp.path().join("hijacked")).is_err());
+                let staging = std::fs::read_dir(temp.path())
+                    .unwrap()
+                    .map(|e| e.unwrap().path())
+                    .find(|p| {
+                        p.file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .starts_with(".dext-install-")
+                    })
+                    .unwrap();
+                attempts.push(std::fs::rename(staging, temp.path().join("stolen-stage")).is_err());
+            }
+        });
+        assert_eq!(attempts, [true, true]);
+        assert!(
+            result.is_ok(),
+            "legitimate handle rename failed: {result:?}"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn stage_writes_reject_reparse_parents_before_overwriting_external_bytes() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let outside = temp.path().join("outside");
+        std::fs::create_dir(&outside).unwrap();
+        std::fs::write(outside.join("bg.svg"), b"private external content").unwrap();
+        let result = crate::room_v3::install_with_observer(
+            &source,
+            &temp.path().join("installed"),
+            |point| {
+                if point == "staging" {
+                    let stage = std::fs::read_dir(temp.path())
+                        .unwrap()
+                        .map(|e| e.unwrap().path())
+                        .find(|p| {
+                            p.file_name()
+                                .unwrap()
+                                .to_string_lossy()
+                                .starts_with(".dext-install-")
+                        })
+                        .unwrap();
+                    let output = std::process::Command::new("cmd")
+                        .args(["/c", "mklink", "/J"])
+                        .arg(stage.join("assets"))
+                        .arg(&outside)
+                        .output()
+                        .unwrap();
+                    assert!(output.status.success());
+                }
+            },
+        );
+        assert!(result.is_err());
+        assert_eq!(
+            std::fs::read(outside.join("bg.svg")).unwrap(),
+            b"private external content"
+        );
+    }
+
+    #[test]
+    fn failed_publication_retains_old_installation_when_unowned_destination_appears() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = authored_source(temp.path());
+        let dest = temp.path().join("installed");
+        let previous = install(&source, &dest).unwrap();
+        let result = crate::room_v3::install_with_observer(&source, &dest, |point| {
+            if point == "retained" {
+                std::fs::create_dir(&dest).unwrap();
+                std::fs::write(dest.join("keep.txt"), b"concurrent user data").unwrap();
+            }
+        });
+        assert!(result.is_err());
+        assert_eq!(
+            std::fs::read(dest.join("keep.txt")).unwrap(),
+            b"concurrent user data"
+        );
+        let backup = std::fs::read_dir(temp.path())
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with(".dext-previous-")
+            })
+            .unwrap();
+        assert_eq!(verify_installation(&backup).unwrap(), previous);
     }
 
     #[test]
