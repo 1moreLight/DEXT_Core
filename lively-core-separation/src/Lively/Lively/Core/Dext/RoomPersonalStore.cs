@@ -120,7 +120,7 @@ internal sealed class RoomPersonalStore
         foreach (var (roomId, room) in state.Rooms)
         {
             Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null, "Room personal shape");
-            Require(room!.Buttons.Count <= 1024 && room.Grants.Count <= 129, "Room personal count");
+            Require(room!.Buttons.Count <= 1024 && room.Grants.Count <= 130, "Room personal count");
             foreach (var (id, button) in room.Buttons)
             {
                 Id(id); Require(button is not null, "button override");
@@ -133,7 +133,7 @@ internal sealed class RoomPersonalStore
             }
             foreach (var (id, grant) in room.Grants)
             {
-                Id(id); Require(grant is not null, "grant required"); Text(grant!.InstallationStamp, 128, true);
+                Id(id.StartsWith("component.", StringComparison.Ordinal) ? id.Substring(10) : id); Require(grant is not null, "grant required"); Text(grant!.InstallationStamp, 128, true);
                 Require(grant.Capabilities is not null && grant.Capabilities.Length <= 12 &&
                     grant.Capabilities.Distinct(StringComparer.Ordinal).Count() == grant.Capabilities.Length &&
                     grant.Capabilities.All(c => CapabilityNames.Contains(c, StringComparer.Ordinal)), "grant capabilities");

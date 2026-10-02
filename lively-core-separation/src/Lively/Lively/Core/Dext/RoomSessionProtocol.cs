@@ -21,9 +21,10 @@ internal sealed class VerifiedRoomInstallation
     public string InstallationStamp { get; }
     public IReadOnlyList<string> DeskIds { get; }
     public string StartDeskId { get; }
+    public RoomActionCatalog? ActionCatalog { get; }
 
     public VerifiedRoomInstallation(string roomId, string installationStamp,
-        IReadOnlyList<string> deskIds, string startDeskId)
+        IReadOnlyList<string> deskIds, string startDeskId, RoomActionCatalog? actionCatalog = null)
     {
         if (string.IsNullOrWhiteSpace(roomId)) throw new ArgumentException("Installed Room ID is required", nameof(roomId));
         if (string.IsNullOrWhiteSpace(installationStamp))
@@ -36,6 +37,7 @@ internal sealed class VerifiedRoomInstallation
         InstallationStamp = installationStamp;
         DeskIds = Array.AsReadOnly(deskIds.ToArray());
         StartDeskId = startDeskId;
+        ActionCatalog = actionCatalog;
     }
 }
 
@@ -149,6 +151,20 @@ internal sealed class RoomSessionProtocolGateway
                 return Accept(result);
             }
             catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
+        }
+    }
+
+    internal RoomProtocolStatus ReadActionContext(Guid connectionId, RoomSessionPeer peer, Guid sessionId, out RoomActionContext? context)
+    {
+        lock (gate)
+        {
+            context = null;
+            if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error.Status;
+            if (connection.Hello.Role == RoomClientRole.Coordinator) return RoomProtocolStatus.Forbidden;
+            if (!TryCurrentSession(connection, out var current, out error)) return error.Status;
+            if (current.SessionId != sessionId) return RoomProtocolStatus.StaleSession;
+            context = new RoomActionContext(installation, current, connection.Hello.Role);
+            return RoomProtocolStatus.Accepted;
         }
     }
 

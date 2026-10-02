@@ -115,6 +115,19 @@ Check("private store refuses a reparse root without touching outside data", () =
     finally { Directory.Delete(link); }
 });
 
+Check("maximum native consumer IDs and counts fit private grants", () =>
+{
+    using var f = new Fixture(); var store = new RoomPersonalStore(f.Path);
+    store.Update(s => {
+        var room = new RoomPersonalData(); s.Rooms[Room] = room;
+        room.Grants["official"] = new("stamp", Array.Empty<string>());
+        room.Grants["scene"] = new("stamp", Array.Empty<string>());
+        for (var i = 0; i < 128; i++) room.Grants["component." + new string('a', 77) + i.ToString("D3")] = new("stamp", Array.Empty<string>());
+    });
+    Equal(130, store.Read().Rooms[Room].Grants.Count, "all consumers preserved");
+});
+
+RoomActionChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} Room action checks passed");
 Environment.ExitCode = failures == 0 ? 0 : 1;
 
