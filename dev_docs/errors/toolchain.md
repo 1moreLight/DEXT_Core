@@ -310,3 +310,7 @@ Windows Python Path.read_text()默认GBK，读Form1的UTF8内容失败时此前�
 ## #166 同源Unicode样本与期望同时错误会掩盖夹具损坏（2026-10-03）
 
 旧HEAD的RuntimeMessageChecks中“日期”已经变成三个乱码字符，构造样本与同文件assert一起损坏，单位投影仍通过。独立RuntimeWireProbe保留原中文期望，实际Player正常传递乱码样本，因期望不一致失败；不是Json.NET本轮回归。修正样本JSON及C#assert为ASCII Unicode转义，保留真正Unicode值和独立wire期望。运行消息20/20、实际缓存/撤销/重载等五组通过。读取/编辑统一UTF8，并保留独立端到端Unicode断言，不能改期望去接受乱码。
+
+## #168 异步SDK数据回执与真实读数状态（2026-10-03）
+
+接入真正私有data IPC后，命令barrier回执先于异步来源到达，实际ReleasePlayer恢复检查timeHidden=true。该失败属于夹具旧同步假设，不是Core授予错误。改为最多5秒等待作者实际readout.hidden变false再报告，暂停仍检查即时拒绝；不使用固定sleep或修改期望接受隐藏值。最终SDK/private data IPC暂停恢复通过，模拟Core属性仍明确保留。

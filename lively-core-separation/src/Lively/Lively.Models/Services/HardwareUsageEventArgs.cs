@@ -1,9 +1,13 @@
-﻿using System;
+using System;
 
 namespace Lively.Models.Services
 {
     public class HardwareUsageEventArgs : EventArgs
     {
+        // False means sampling failed or no valid sample exists; native v3 must
+        // hide the readout rather than publish a fabricated available zero.
+        public bool IsAvailable { get; set; }
+
         /// <summary>
         /// Primary cpu name.
         /// </summary>

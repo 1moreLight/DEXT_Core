@@ -392,3 +392,11 @@ Player暂停期间缓存Core快照，媒体宿主仍读旧playbackPaused=false�
 ## #165 新官方模块仍须显式加入原生资源白名单（2026-10-03）
 
 新增playback-host.js并在隔离官方页引用，但DextNativeResourceServer有限白名单没有它。后续clockStart无法访问模块并超时；这一失败不计暂停逻辑RED。加入单个具名官方文件并重新部署ReleasePlayer后，实际暂停回归才测到#164。内容清单与官方模块白名单是两个范围，不能用放开目录映射修复。
+
+## #167 硬件来源健康状态与最低采样间隔（2026-10-03）
+
+源检查发现CPU/性能计数器失败后仍发布默认零读数，且跳过后续GPU等待可能使while循环忙跑。增加IsAvailable健康标记；失败missing，非有限数error；每轮按Stopwatch补足至少1秒周期。假来源验证失败不会伪造available，实际机器健康采集通过；没有把健康采集称为强制真实计数器失败验证。
+
+## #169 媒体来源标识可能含Windows路径（2026-10-03）
+
+实际Windows生产投影的回归以SourceAppId=C:\private\player.exe构造来源，97/98失败：GetMediaAsync返回的source ID并非总是公开AUMID。投影清空含冒号、斜线、反斜线、控制字符或超过160字符的ID，保留媒体元数据；audio只level/muted。修复后98/98，来源测试同时断言所有系统控制写入为0。

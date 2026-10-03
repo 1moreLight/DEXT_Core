@@ -30,6 +30,7 @@ internal static class FrameHostWireProbe
                 Dext.ready().then(()=>{Dext.data.bindReadout('time.read',document.getElementById('time'),value=>document.getElementById('time').textContent=value.tick);Dext.data.bindReadout('hardware.read',document.getElementById('hardware'),()=>{});report('ready');});
                 addEventListener('message',async e=>{if(e.source!==parent)return;const d=e.data;
                   if(d.command==='report')report('report');
+                  if(d.command==='reportAvailable'){const stop=performance.now()+5000;const poll=()=>document.getElementById('time').hidden&&performance.now()<stop?setTimeout(poll,20):report('report');poll();}
                   if(d.command==='activate')parent.postMessage({authorReport:true,phase:'activation',result:await Dext.actions.activate('open')},'*');
                   if(d.command==='forge'){parent.postMessage(d.packet,'*');try{chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:{nativeLeak:true}}));}catch{}report('forged');}
                   if(d.command==='reload')location.reload();
@@ -46,7 +47,9 @@ internal static class FrameHostWireProbe
                     resolveResource:path=>{if(!context.resources.some(r=>r.path===path))throw Error('not declared');return context.resourceBasePath+path;},
                     readCapabilities:value=>native('capabilities',{consumer:value.consumerId},value.identity),implementedCapabilities:['desk.read','binding.launch','time.read'],
                     invoke:async value=>{if(value.method==='desk.get')return snapshot;if(value.method!=='actions.activate')throw Object.assign(Error(),{code:'unsupported'});const reply=await native('activate',{consumer:value.consumerId,button:value.params.buttonId,geometryVersion:1},value.identity);return {status:reply.status};},
-                    subscribeData:(value,emit)=>{opened++;lastSourceRevision=value.identity.revision;emit({status:'available',value:{tick:opened}});return()=>closed++;},applyState:(frame,value)=>{frame.inert=value.state!=='active';}});
+                    subscribeData:(value,emit)=>{opened++;lastSourceRevision=value.identity.revision;let live=true;
+                      native('data',{consumer:value.consumerId,capability:value.capability},value.identity).then(reply=>{if(live)emit(reply.status==='accepted'?reply.data:{status:'denied'});});
+                      return()=>{live=false;closed++;};},applyState:(frame,value)=>{frame.inert=value.state!=='active';}});
                   if(typeof DextPlaybackHost==='object'){
                     media=DextMediaHost.createMediaHost({document,getSnapshot:()=>snapshot,resolveResource:path=>context.resourceBasePath+path,
                       onStartupComplete:value=>{completed++;send({clockComplete:true,completed,revision:value.revision,afterResume:performance.now()-resumeAt,opened,closed,lastSourceRevision});return {status:'accepted'};}});
@@ -68,7 +71,7 @@ internal static class FrameHostWireProbe
                     if(command==='clockStart'){clockStartedAt=performance.now();media.mount({instanceId:'clock',consumerId:'slot.start',state:'active',content:{type:'image',src:'scene/clock.svg'}},document.body);}
                     if(command==='pause')host.setState('start-frame','suspended');
                     if(command==='resume')host.setState('start-frame','active');
-                    if(command==='report'||command==='activate'||command==='reload')frame.contentWindow.postMessage({command},'*');
+                    if(command==='report'||command==='reportAvailable'||command==='activate'||command==='reload')frame.contentWindow.postMessage({command},'*');
                     if(command==='other')other=host.mount({instanceId:'other-frame',consumerId:'component.other',kind:'widget',state:'suspended',entry:'scene/index.html',capabilities:['desk.read','binding.launch','time.read','hardware.read'],buttonIds:['open'],config:{}},document.body);
                     if(command==='forge')other.contentWindow.postMessage({command,packet:{type:'dext:runtime:request',apiVersion:1,instanceId:'start-frame',sessionId:snapshot.sessionId,token:firstToken,requestId:'r100',method:'actions.activate',params:{buttonId:'open'}}},'*');
                     if(command==='oldToken')frame.contentWindow.postMessage({command:'forge',packet:{type:'dext:runtime:request',apiVersion:1,instanceId:'start-frame',sessionId:snapshot.sessionId,token:firstToken,requestId:'r100',method:'actions.activate',params:{buttonId:'open'}}},'*');
@@ -90,9 +93,9 @@ internal static class FrameHostWireProbe
                 await Send(context);var snapshot=RoomSessionPlayerMessage.Create(f.Snapshot with{Lifecycle=new(RoomLifecycleStage.Starting,false,false,1)},["home","focus"]);snapshot.RuntimeGeneration=1;await Send(snapshot);
                 var ready=await Next();Require((string?)ready["author"]?["phase"]=="ready"&&(int?)ready["author"]?["readyCount"]==1,"real SDK initializes once");
                 Require((string?)ready["author"]?["capabilities"]?["hardware.read"]=="denied"&&(bool?)ready["author"]?["hardwareHidden"]==true&&(bool?)ready["author"]?["staticFrame"]==true,"denied readout only");
-                await Command("report");await Barrier("report");var active=await Next();Require((bool?)active["author"]?["timeHidden"]==false&&(int?)active["opened"]==1,"one real SDK source");
+                await Command("reportAvailable");await Barrier("reportAvailable");var active=await Next();Require((bool?)active["author"]?["timeHidden"]==false&&(int?)active["opened"]==1,"one real SDK source");
                 await Command("pause");await Barrier("pause");await Command("report");await Barrier("report");var paused=await Next();Require((bool?)paused["author"]?["timeHidden"]==true&&(int?)paused["closed"]==1&&(bool?)paused["author"]?["staticFrame"]==true,"suspend without destroying static frame");
-                await Command("resume");await Barrier("resume");await Command("report");await Barrier("report");Require((bool?)(await Next())["author"]?["timeHidden"]==false,"new authorized scope resumes data");
+                await Command("resume");await Barrier("resume");await Command("reportAvailable");await Barrier("reportAvailable");Require((bool?)(await Next())["author"]?["timeHidden"]==false,"new authorized scope resumes data");
                 await Command("activate");await Barrier("activate");var activation=await Next();Require((string?)activation["author"]?["result"]?["status"]=="inputRequired"&&activations==1,"SDK activation routes owned consumer without native proof");
                 await Command("other");await Barrier("other");Require((string?)(await Next())["which"]=="other","second opaque source ready");await Command("forge");await Barrier("forge");Require((string?)(await Next())["author"]?["phase"]=="forged"&&activations==1,"foreign iframe and direct native access rejected");
                 await Command("reload");await Barrier("reload");var reloaded=await Next();Require((int?)reloaded["author"]?["readyCount"]==1&&(int?)reloaded["diagnostics"]?["count"]==2,"same retained frame reloads new SDK document");
@@ -110,14 +113,15 @@ internal static class FrameHostWireProbe
                     Require((long?)completion["lastSourceRevision"]==3&&(int?)completion["opened"]>=4&&(int?)completion["closed"]>=3,"iframe source resumes only after fresh current-scope private capability response");
                     Console.WriteLine("PASS production playback-host/media/frame in native ReleasePlayer: synchronous pause, cached Core facts untouched, last snapshot before resume, remaining500ms startup budget, fresh iframe authorization");
                 }
-                Console.WriteLine("PASS production frame-host.js + real SDK in ReleasePlayer: current private capability IPC, fixed opaque WindowProxy, readout-only denial, one source/suspend/resume, owned activation without proof, foreign/direct native rejection, retained iframe reload");
+                Console.WriteLine("PASS production frame-host.js + real SDK in ReleasePlayer: current private capability IPC, fixed opaque WindowProxy, readout-only denial, one source/suspend/resume, owned activation without proof, foreign/direct native rejection, retained iframe reload, SDK readout through current native data IPC");
                 async Task Command(string command)=>await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command})});
                 async Task Barrier(string command)=>Require((string?)(await Next())["barrier"]==command,"barrier "+command);
                 async Task<JObject> Next(){var stop=DateTime.UtcNow.AddSeconds(20);while(DateTime.UtcNow<stop){if(queue.TryDequeue(out var value)){
                     if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(consumer=="slot.start"||consumer=="component.other","fixed consumer query");
                         if(method=="activate"){Require(consumer=="slot.start"&&(string?)request["Button"]=="open","owned activation");activations++;}
-                        Require(method=="capabilities"||method=="activate","only declared native methods");
-                        await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status=method=="activate"?"inputRequired":consumer=="slot.start"?"accepted":"unknownConsumer",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"binding.launch","accepted"},{"time.read","accepted"},{"hardware.read","missingPermission"}}})});continue;}
+                        Require(method=="capabilities"||method=="activate"||method=="data","only declared native methods");
+                        if(method=="data")Require(consumer=="slot.start"&&(string?)request["Capability"]=="time.read","fixed native readout capability");
+                        await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status=method=="activate"?"inputRequired":consumer=="slot.start"?"accepted":"unknownConsumer",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"binding.launch","accepted"},{"time.read","accepted"},{"hardware.read","missingPermission"}},data=method=="data"?new{status="available",value=new{tick=1}}:null})});continue;}
                     if((bool?)value["nativeLeak"]==true)throw new Exception("sandbox reached native IPC");return value;
                 }if(process.HasExited)throw new Exception("Player exit: "+await errors);await Task.Delay(20);}throw new TimeoutException("frame wire: "+string.Join("\n",log.TakeLast(8)));}
             }

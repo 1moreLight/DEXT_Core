@@ -22,6 +22,7 @@ namespace Lively.Models.Message
         public long GeometryVersion { get; set; }
         public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
+        public string Capability { get; set; }
         public string Button { get; set; }
         public int PixelWidth { get; set; }
         public int PixelHeight { get; set; }

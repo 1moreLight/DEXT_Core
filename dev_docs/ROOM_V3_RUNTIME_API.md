@@ -142,3 +142,11 @@ Player仅对固定官方文档调用私有 `dextNativePlaybackChanged`；payload
 media-host和frame-host的setPlaybackSuspended仅控制本机投递暂停，不修改Core的生命周期、已提交Desk或输入事实。计时保留剩余活动时间，iframe保留当前文档但关闭旧来源/请求，恢复重新获得当前Core修订的能力状态。native恢复不使用旧全DOM play()，避免重启非活动阶段媒体。作者SDK没有此控制入口；来源/动作后续仍需Core重新授权。
 
 真实ReleasePlayer已验证同一生产模块的500ms期限在原生暂停中停止，恢复先观察最后revision3，再以该修订完成与恢复数据来源。夹具的Core回复仍为模拟；正式页面接入、真实Core生命周期和原生逐iframe音视频暂停继续验证。
+
+## Core消费者逐值数据桥（2026-10-03，接线阶段）
+
+私有请求增加method=data及capability，只有time.read/hardware.read/media.read/audio.read，仍带固定consumer和当前runtimeGeneration/sessionId/revision。请求不能传数据、来源、路径或票据。Core在采集前及返回不可变快照前分别核验当前私有连接、安装、会话、修订、消费者阶段/声明和个人授权；采集在个人存储/网关/内核锁外，撤权不依赖global revision改变。最多16个并行采集；available必须含JSON value，missing/unsupported/error没有value，限制UTF8 32KiB、深度24。失败不返回私人异常。
+
+实际Windows来源：time含UTC、Unix毫秒和本地偏移；hardware按attachment懒建一份来源，健康标记为false时missing，暂停/撤销停止来源，数据只含CPU/GPU名称、百分比、内存MB和网络字节速率；media只投影媒体元数据/位置/控制状态，源ID若为路径/URI/控制字符或过长则清空；audio只含level和muted，排除设备ID/名称。授权元数据不是读数许可，每个data请求重新校验。原生回复data是JSON本身，ISO日期不被Json.NET转型。
+
+Core真实源码98/98和实际Windows采集通过；真实ReleasePlayer验证SDK读数经过当前私有data IPC，但夹具仍模拟Core回复。正式官方页面的连续provider、权限改变后恢复及完整Core/DOM仍待接线；最终7项人工门槛未据此通过。

@@ -1232,3 +1232,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 剩余生产页面/DOM、逐次Core数据与动作、原生逐iframe音视频政策、几何握手、Task4实际Core原生Room和最终7项验收继续；暂停模块实测不代表完整页面已安装。
 
 - [x] 暂停阶段最终完整build→start/identity通过：Core91052/Player70888/Watchdog83660/配置器78452，日志20261003_082904.txt；真实状态inactive符合已有v2恢复。正常退出Core/配置器、自己的开发watcher结束，Dext进程/1620/1621监听/资源缓存0。最终7项验收仍保留，不合并。
+
+- [x] Task3 Core消费者数据基础桥：真实授权前后双检查，中间采集在所有授权锁外；严格原生data请求固定consumer/capability/当前revision，数据只保留32KiB/深度24的JSON快照与状态，撤权/换修订/阶段/代次后无旧结果。接入time/hardware/media/audio实际来源，SDK订阅逐值重新授权；独立源码测试和真实ReleasePlayer IPC验证后提交，生产页面/Task4和最终7项不缩减。
+
+- [x] Core数据基础桥验证（2026-10-03）：动作/来源98/98、严格原生消息28/28、内核22/22、协议86/86；实际Windows只读采集时间/硬件/音量通过，当前无媒体会话返回missing。真实ReleasePlayer通过SDK→私有data IPC读数与暂停恢复；该隔离夹具Core回复仍模拟。完整build→start/identity通过：Core60236/Player22844/Watchdog64436，配置器74088为本轮共享D缓存构建；日志20261003_091411.txt，v2恢复inactive。按PID/绝对路径正常退出后Dext进程/1620/1621监听/资源缓存0。
+- [ ] Task3继续正式index/main/style/LivelyInfo与DOM：生产逐值轮询、授权变化恢复、持续组件/默认与作者过渡、当前几何握手、原生逐iframe媒体。当前数据源基础桥不代表原生Room已安装；Task4、7项集中验收、16项范围保持。

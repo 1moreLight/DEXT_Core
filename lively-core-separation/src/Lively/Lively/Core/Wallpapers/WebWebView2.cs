@@ -201,17 +201,19 @@ namespace Lively.Core.Wallpapers
                     return RoomProtocolStatus.Denied;
                 var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
                 var native=actions.CreateNativeInput();
+                var data=CreateNativeDataSource();
                 var messages = new RoomSessionPlayerMessages(SendMessage,
                     () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray(),
-                    native.Initialize,native.ObserveSnapshot,native.Revoke);
+                    (generation,snapshot)=>{native.Initialize(generation,snapshot);data.ObserveSnapshot(snapshot);},
+                    snapshot=>{native.ObserveSnapshot(snapshot);data.ObserveSnapshot(snapshot);},()=>{native.Revoke();data.Suspend();});
                 // Callbacks use this stream directly. Subscribe sends its first
                 // context/snapshot before Connect assigns the bridge field.
                 var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId,
                     messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke);
                 if (status == RoomProtocolStatus.Accepted) {
                     roomSessionBridge = bridge;
-                    roomNativeAttachment = new(bridge,native,actions);
-                } else native.Revoke();
+                    roomNativeAttachment = new(bridge,native,actions,data);
+                } else {native.Revoke();data.Dispose();}
                 return status;
             }
         }
@@ -224,12 +226,13 @@ namespace Lively.Core.Wallpapers
 
         internal void DetachRoomSession()
         {
+            NativeAttachment retired;
             lock (roomSessionLock)
             {
-                Interlocked.Exchange(ref roomNativeAttachment,null)?.Input.Revoke();
-                roomSessionBridge?.Dispose();
-                roomSessionBridge = null;
+                retired=Interlocked.Exchange(ref roomNativeAttachment,null);retired?.Input.Revoke();
+                roomSessionBridge?.Dispose();roomSessionBridge = null;
             }
+            retired?.Data.Dispose();
         }
 
         public void SetVolume(int volume)
@@ -449,7 +452,7 @@ namespace Lively.Core.Wallpapers
                         _ = HandleSystemControlRequestAsync((LivelyMessageSystemControlRequest)obj);
                         break;
                     case MessageType.msg_room_native_request:
-                        HandleNativeRequest((LivelyMessageRoomNativeRequest)obj);
+                        await HandleNativeRequest((LivelyMessageRoomNativeRequest)obj);
                         break;
                     case MessageType.msg_room_native_invalidated:
                         roomNativeAttachment?.Input.InvalidateDocument(((LivelyMessageRoomNativeInvalidated)obj).RuntimeGeneration);

@@ -33,6 +33,69 @@ static class RoomActionChecks
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
             Eq(true,n.GetProof(1,2,"scene","open")!=null);
         });
+        RoomDataSample Sample(string json="{\"utc\":\"2026-10-03T00:00:00Z\"}") { using var d=JsonDocument.Parse(json);return new("available",d.RootElement.Clone()); }
+        RoomDataReply Data(ActionFixture f,Func<RoomDataSample> capture,string capability="time.read",string consumer="scene",long? revision=null) =>
+            f.Actions.ReadData(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,capability,capture);
+        check("consumer data returns detached JSON only after current declaration and consent",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);using var doc=JsonDocument.Parse("{\"utc\":\"2026-10-03T00:00:00Z\"}");
+            var reply=Data(f,()=>new("available",doc.RootElement));Eq(RoomActionStatus.Accepted,reply.Status);Eq("available",reply.Sample!.Status);
+            doc.Dispose();Eq("2026-10-03T00:00:00Z",reply.Sample.Value!.Value.GetProperty("utc").GetString());
+        });
+        check("capability metadata cannot authorize later data after a private grant edit",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);var metadata=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");var revision=f.Kernel.Snapshot!.Revision;
+            Eq(RoomActionStatus.Accepted,metadata.Capabilities!["time.read"]);f.Store.Update(state=>state.Rooms[Room].Grants.Clear());var read=false;
+            var reply=Data(f,()=>{read=true;return Sample();});Eq(RoomActionStatus.MissingPermission,reply.Status);Eq(false,read);Eq(revision,f.Kernel.Snapshot!.Revision);Eq<RoomDataSample?>(null,reply.Sample);
+        });
+        check("data sampling is outside authority locks and rechecks a reentrant grant revocation",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);var reply=Data(f,()=>{f.Store.Update(state=>state.Rooms[Room].Grants.Clear());return Sample();});
+            Eq(RoomActionStatus.MissingPermission,reply.Status);Eq<RoomDataSample?>(null,reply.Sample);
+        });
+        check("data from an old revision is dropped after lifecycle changes during capture",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);var reply=Data(f,()=>{f.Lifecycle(RoomLifecycleStage.Desktop,true);return Sample();});
+            Eq(RoomActionStatus.StaleInput,reply.Status);Eq<RoomDataSample?>(null,reply.Sample);
+        });
+        check("consumer data rejects wrong peer session role and owner before capture",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);var reads=0;RoomDataSample Capture(){reads++;return Sample();}var revision=f.Kernel.Snapshot!.Revision;
+            Eq(RoomActionStatus.Denied,f.Actions.ReadData(f.View,new("other"),f.Session,revision,"scene","time.read",Capture).Status);
+            Eq(RoomActionStatus.StaleSession,f.Actions.ReadData(f.View,f.Peer,Guid.NewGuid(),revision,"scene","time.read",Capture).Status);
+            Eq(RoomActionStatus.Forbidden,f.Actions.ReadData(f.Coordinator,f.CorePeer,f.Session,revision,"scene","time.read",Capture).Status);
+            Eq(RoomActionStatus.UnknownConsumer,Data(f,Capture,consumer:"invented").Status);Eq(RoomActionStatus.StaleInput,Data(f,Capture,revision:revision+1).Status);
+            Eq(RoomActionStatus.Forbidden,Data(f,Capture,capability:"binding.launch").Status);Eq(0,reads);
+        });
+        check("undeclared data and an old installation consent do not invoke the provider",()=>{
+            using var f=new ActionFixture();var reads=0;RoomDataSample Capture(){reads++;return Sample();}
+            Eq(RoomActionStatus.Forbidden,Data(f,Capture).Status);
+            f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new("old-installation",new[]{"hardware.read"}));
+            Eq(RoomActionStatus.MissingPermission,Data(f,Capture,"hardware.read").Status);Eq(0,reads);
+        });
+        foreach(var fact in new[]{"pause","lock","foreground"})check("consumer data does not capture during "+fact,()=>{
+            using var f=new ActionFixture(dataCapabilities:true);
+            if(fact=="foreground")f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false));else f.Lifecycle(RoomLifecycleStage.Desktop,fact=="pause",fact=="lock");
+            var reads=0;var reply=Data(f,()=>{reads++;return Sample();});Eq(RoomActionStatus.NotOperable,reply.Status);Eq(0,reads);Eq<RoomDataSample?>(null,reply.Sample);
+        });
+        check("failed unavailable and malformed sources expose only safe readout state",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);
+            var failed=Data(f,()=>throw new IOException("C:/private/secret"));Eq(RoomActionStatus.Accepted,failed.Status);Eq("error",failed.Sample!.Status);Eq(false,JsonSerializer.Serialize(failed).Contains("private"));
+            foreach(var status in new[]{"missing","unsupported","error"}) {var reply=Data(f,()=>new(status,Sample().Value));Eq(status,reply.Sample!.Status);Eq<JsonElement?>(null,reply.Sample.Value);}
+            Eq("error",Data(f,()=>new("invented",Sample().Value)).Sample!.Status);Eq("error",Data(f,()=>new("available")).Sample!.Status);
+            Eq("error",Data(f,()=>Sample(JsonSerializer.Serialize(new{pad=new string('x',33000)}))).Sample!.Status);
+            var nested="0";for(var i=0;i<26;i++)nested="["+nested+"]";Eq("error",Data(f,()=>Sample(nested)).Sample!.Status);
+        });
+        check("data cannot publish after admission withdrawal during capture",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);var reply=Data(f,()=>{f.Admission.Enabled=false;return Sample();});
+            Eq(false,reply.Status==RoomActionStatus.Accepted);Eq<RoomDataSample?>(null,reply.Sample);
+        });
+        check("private data bridge rejects disposed lease even while capture is pending",()=>{
+            using var f=new ActionFixture(dataCapabilities:true);Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,_=>{},out var bridge));
+            var revision=f.Kernel.Snapshot!.Revision;var reply=bridge!.NativeData(f.Actions,f.Session,revision,"scene","time.read",()=>{bridge.Dispose();return Sample();});
+            Eq(false,reply.Status==RoomActionStatus.Accepted);Eq<RoomDataSample?>(null,reply.Sample);
+            var reads=0;Eq(RoomActionStatus.StaleSession,bridge.NativeData(f.Actions,f.Session,revision,"scene","time.read",()=>{reads++;return Sample();}).Status);Eq(0,reads);
+        });
+        check("media data stays within current stage and exact declared consumer",()=>{
+            using var f=new ActionFixture(mediaSlots:true,dataCapabilities:true);var reads=0;RoomDataSample Capture(){reads++;return Sample();}
+            Eq(RoomActionStatus.Forbidden,Data(f,Capture).Status);Eq(RoomActionStatus.Accepted,Data(f,Capture,consumer:"slot.start").Status);
+            f.Lifecycle(RoomLifecycleStage.Idle);Eq(RoomActionStatus.Forbidden,Data(f,Capture,consumer:"slot.start").Status);Eq(RoomActionStatus.Accepted,Data(f,Capture,consumer:"slot.idle").Status);Eq(2,reads);
+        });
         check("capability metadata reports only verified declarations and current personal consent",()=>{
             using var f=new ActionFixture();var reply=f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene");
             Eq(RoomActionStatus.Accepted,reply.Status);Eq(4,reply.Capabilities!.Count);
@@ -512,7 +575,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -537,6 +600,10 @@ static class RoomActionChecks
                 foreach (var desk in document["desks"]!.AsArray()) desk!["background"] = content.DeepClone();
                 manifest = document.ToJsonString();
             }
+            var dataCaps=new[]{"time.read","hardware.read","media.read","audio.read"};
+            if(dataCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["start"],document["idle"]}.Where(owner=>owner!=null))
+                foreach(var capability in dataCaps)if(!owner!["capabilities"]!.AsArray().Any(value=>value!.GetValue<string>()==capability))owner["capabilities"]!.AsArray().Add(capability);
+                manifest=document.ToJsonString();}
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);
@@ -557,6 +624,8 @@ static class RoomActionChecks
                 foreach (var owner in new[] { "official", "scene", "component.widget" }) room.Grants[owner] = new(installed.InstallationStamp,
                     owner == "component.widget" ? new[] { "binding.launch" } : new[] { "binding.launch", "desk.navigate", "dext.exit" });
             });
+            if(dataCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","slot.start","slot.idle"})
+                if(room.Grants.TryGetValue(owner,out var grant))room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(dataCaps).Distinct().ToArray());});
             Actions = new(Gateway, Store, target => Launched.Add(target), Clock);
         }
         public RoomInputReply Input(string button, string consumer = "scene") => Actions.IssueHostInput(View, Peer, Session, consumer, button);

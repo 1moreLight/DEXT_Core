@@ -42,6 +42,12 @@ internal static class NativeInputMessageChecks
             foreach(var bad in new[]{"capabilities","target","ticket"}){r[bad]="pretend";Require(Parse(r)==null);r.Remove(bad);}
             r["consumer"]=7;Require(Parse(r)==null);r["consumer"]="scene";r["revision"]=2;Require(Parse(r)==null);
         });
+        Check("consumer data is a bounded current-identity query without an authored value",()=>{
+            var r=Request();r["method"]="data";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["consumer"]="scene";
+            foreach(var capability in new[]{"time.read","hardware.read","media.read","audio.read"}){r["capability"]=capability;var value=Parse(r);Require(value?.Capability==capability);Require(RuntimeMessageChecks.Roundtrip(value!) is LivelyMessageRoomNativeRequest);}
+            foreach(var capability in new JToken[]{"binding.launch","storage.read",4}){r["capability"]=capability;Require(Parse(r)==null);}r["capability"]="time.read";
+            r["value"]="pretend";Require(Parse(r)==null);r.Remove("value");r["revision"]=2;Require(Parse(r)==null);
+        });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }
 }

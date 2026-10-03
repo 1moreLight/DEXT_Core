@@ -2,6 +2,9 @@ using Dext.Core.Rooms;
 using System.Diagnostics;
 using System.Text.Json;
 
+if (args.Length==1 && args[0]=="--native-data-sources") { await NativeDataLiveProbe.Run(); return; }
+if (args.Length!=0) throw new ArgumentException("Unknown action probe mode");
+
 var failures = 0;
 var total = 0;
 const string Room = "d390f9c9-8136-4c56-a00b-afabbac4db2c";
@@ -138,6 +141,7 @@ Check("maximum native consumer IDs and counts fit private grants", () =>
 });
 
 RoomActionChecks.Run(Check);
+RoomNativeDataSourceChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} Room action checks passed");
 Environment.ExitCode = failures == 0 ? 0 : 1;
 

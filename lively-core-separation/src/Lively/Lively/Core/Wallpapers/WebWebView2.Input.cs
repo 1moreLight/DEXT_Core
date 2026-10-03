@@ -2,6 +2,9 @@ using Dext.Core.Rooms;
 using Lively.Common.Helpers;
 using Lively.Models.Message;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
+using System.Threading.Tasks;
 using System;
 using System.Linq;
 using System.Threading;
@@ -10,7 +13,7 @@ namespace Lively.Core.Wallpapers
 {
     public partial class WebWebView2
     {
-        private sealed record NativeAttachment(RoomSessionPlayerBridge Bridge,RoomNativeInputAuthority Input,RoomActionAuthority Actions);
+        private sealed record NativeAttachment(RoomSessionPlayerBridge Bridge,RoomNativeInputAuthority Input,RoomActionAuthority Actions,RoomNativeDataSource Data);
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
         internal Func<bool> NativeInputIsForeground { private get; set; }
@@ -23,12 +26,12 @@ namespace Lively.Core.Wallpapers
                 !DextNativeInputWindow.TryMeasure(Handle,nativeBrowserHandle,InputHandle,pid,out var bounds,out var dpi))return null;
             return new(InputHandle,bounds.X,bounds.Y,bounds.Width,bounds.Height,Math.Clamp((int)Math.Ceiling(4.0*dpi/96),4,256),dpi);
         }
-        private void HandleNativeRequest(LivelyMessageRoomNativeRequest request)
+        private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -51,6 +54,16 @@ namespace Lively.Core.Wallpapers
                 case "capabilities":
                     var declared=a.Bridge.NativeCapabilities(a.Actions,state.Session,state.Revision,request.Consumer);status=declared.Status;
                     capabilities=declared.Capabilities?.ToDictionary(entry=>entry.Key,entry=>WireStatus(entry.Value),StringComparer.Ordinal);break;
+                case "data":
+                    if(!a.Data.TryBeginRead())break;
+                    try {
+                        var read=await Task.Run(()=>a.Bridge.NativeData(a.Actions,state.Session,state.Revision,request.Consumer,request.Capability,()=>a.Data.Read(request.Capability)));
+                        status=read.Status;
+                        if(read.Sample is{} sample){var value=new JObject{["status"]=sample.Status};
+                            if(sample.Value is{} json){using(var reader=new JsonTextReader(new StringReader(json.GetRawText())){DateParseHandling=DateParseHandling.None})value["value"]=JToken.ReadFrom(reader);}
+                            data=value;
+                        }
+                    }finally{a.Data.EndRead();}break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
                     status=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button).Status;break;
@@ -58,8 +71,10 @@ namespace Lively.Core.Wallpapers
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=WireStatus(status),buttons,capabilities});
+                status=WireStatus(status),buttons,capabilities,data});
         }
+        private RoomNativeDataSource CreateNativeDataSource() => RoomNativeDataSource.ForWindows(systemControlService);
+
         private static string WireStatus(RoomActionStatus status) => char.ToLowerInvariant(status.ToString()[0])+status.ToString().Substring(1);
         private void SendNative(NativeAttachment a,RoomNativeInputState state,object payload)
         {

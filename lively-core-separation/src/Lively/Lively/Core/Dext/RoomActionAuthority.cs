@@ -17,6 +17,8 @@ internal enum RoomActionStatus
 }
 internal sealed record PublicRoomButton(string Id, string Name, string Scope, string? Action, bool IsBound);
 internal sealed record RoomButtonsReply(RoomActionStatus Status, PublicRoomButton[]? Buttons = null);
+internal sealed record RoomDataSample(string Status, JsonElement? Value = null);
+internal sealed record RoomDataReply(RoomActionStatus Status, RoomDataSample? Sample = null);
 internal sealed record RoomCapabilitiesReply(RoomActionStatus Status, IReadOnlyDictionary<string, RoomActionStatus>? Capabilities = null);
 internal sealed record RoomInputReply(RoomActionStatus Status, Guid? Ticket = null);
 internal sealed record RoomActionReply(RoomActionStatus Status);
@@ -84,6 +86,41 @@ internal sealed class RoomActionAuthority
             (state, context, owner) => owner.CanConsume(context.Role, context.Snapshot)
                 ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable); }
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
+    }
+
+    private static readonly HashSet<string> ReadableData = new(StringComparer.Ordinal) { "time.read", "hardware.read", "media.read", "audio.read" };
+
+    public RoomDataReply ReadData(Guid connection, RoomSessionPeer peer, Guid session, long revision,
+        string consumer, string capability, Func<RoomDataSample> capture)
+    {
+        if (capability is null || !ReadableData.Contains(capability)) return new(RoomActionStatus.Forbidden);
+        RoomActionStatus Authorize() => Prepare(connection, peer, session, consumer, status => status, (state, context, owner) =>
+            context.Snapshot.Revision != revision ? RoomActionStatus.StaleInput : !owner.CanConsume(context.Role, context.Snapshot)
+                ? RoomActionStatus.NotOperable : Permission(state, context.Installation, owner, consumer, capability));
+        try
+        {
+            var status = Authorize();
+            if (status != RoomActionStatus.Accepted) return new(status);
+            RoomDataSample sample;
+            // System/COM calls and injectable capture code never hold the private
+            // store, gateway, installation or kernel locks. The result is still
+            // private until the second current-consent boundary accepts it.
+            try { sample = NormalizeData(capture()); }
+            catch (Exception) { sample = new("error"); }
+            status = Authorize();
+            return status == RoomActionStatus.Accepted ? new(status, sample) : new(status);
+        }
+        catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
+    }
+
+    private static RoomDataSample NormalizeData(RoomDataSample? sample)
+    {
+        if (sample?.Status is "missing" or "unsupported" or "error") return new(sample.Status);
+        if (sample?.Status != "available" || sample.Value is not { } value) return new("error");
+        var json = value.GetRawText();
+        if (System.Text.Encoding.UTF8.GetByteCount(json) > 32768) return new("error");
+        using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 24 });
+        return new("available", document.RootElement.Clone());
     }
 
     internal RoomNativeInputAuthority CreateNativeInput() => new(clock);

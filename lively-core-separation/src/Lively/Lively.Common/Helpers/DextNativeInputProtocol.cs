@@ -39,6 +39,11 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion"}).ToArray()) ||
                             !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1))return null;
                         request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.GeometryVersion=(long)o["geometryVersion"];return request;
+                    case "data":
+                        var capability=Text(o["capability"]);
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","capability"}).ToArray()) || !Id(Text(o["consumer"]),128) ||
+                            capability!="time.read" && capability!="hardware.read" && capability!="media.read" && capability!="audio.read")return null;
+                        request.Consumer=Text(o["consumer"]);request.Capability=capability;return request;
                     case "capabilities":
                     case "buttons":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer"}).ToArray()) || !Id(Text(o["consumer"]),128))return null;

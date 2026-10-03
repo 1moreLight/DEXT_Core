@@ -1,4 +1,4 @@
-﻿using Lively.Helpers.Hardware;
+using Lively.Helpers.Hardware;
 using Lively.Models.Services;
 using System;
 using System.Collections.Generic;
@@ -98,6 +98,8 @@ namespace Lively.Common.Services
                 {
                     while (true)
                     {
+                        var iteration = Stopwatch.StartNew();
+                        perfData.IsAvailable = false;
                         try
                         {
                             ctsHwMonitor.Token.ThrowIfCancellationRequested();
@@ -111,6 +113,7 @@ namespace Lively.Common.Services
                             //min 1sec wait required since some timers use pervious value for calculation.
                             //ref: https://docs.microsoft.com/en-us/archive/blogs/bclteam/how-to-read-performance-counters-ryan-byington
                             perfData.CurrentGpu3D = await GetGPUUsage();
+                            perfData.IsAvailable = true;
                         }
                         catch (OperationCanceledException)
                         {
@@ -123,6 +126,11 @@ namespace Lively.Common.Services
                             //todo: log error.
                         }
                         HWMonitor?.Invoke(this, perfData);
+                        // Failed counters may skip the GPU wait. Always keep a
+                        // bounded cadence instead of a busy loop publishing zero.
+                        try { await Task.Delay((int)Math.Max(1, 1000 - iteration.ElapsedMilliseconds), ctsHwMonitor.Token); }
+                        catch (OperationCanceledException) { ctsHwMonitor.Dispose(); break; }
+
                     }
                 });
             }
