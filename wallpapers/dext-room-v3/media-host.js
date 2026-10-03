@@ -13,7 +13,7 @@
     const later = options.setTimeout || root.setTimeout.bind(root);
     const cancel = options.clearTimeout || root.clearTimeout.bind(root);
     const records = new Map();
-    let disposed = false, lastError = null;
+    let disposed = false, lastError = null, playbackSuspended = options.initialPlaybackSuspended === true;
     function diagnose(code) { lastError = { code }; }
     function current(record) {
       const snapshot = options.getSnapshot();
@@ -22,7 +22,7 @@
     }
     function playing(record) {
       const snapshot = current(record);
-      if (!snapshot || !snapshot.active || snapshot.lifecycle.playbackPaused || snapshot.lifecycle.locked || record.state !== 'active') return false;
+      if (playbackSuspended || !snapshot || !snapshot.active || snapshot.lifecycle.playbackPaused || snapshot.lifecycle.locked || record.state !== 'active') return false;
       const stage = record.consumerId === 'slot.start' ? 'starting' : record.consumerId === 'slot.idle' ? 'idle' : 'desktop';
       return snapshot.lifecycle.stage === stage;
     }
@@ -162,6 +162,10 @@
       setState(instanceId, state) {
         const record = records.get(instanceId); if (!record || !['active', 'suspended'].includes(state)) return false;
         record.state = state; sync(record); return true;
+      },
+      setPlaybackSuspended(value) {
+        if (disposed || typeof value !== 'boolean') return false;
+        playbackSuspended = value; for (const record of records.values()) sync(record); return true;
       },
       refresh() { for (const record of records.values()) sync(record); },
       completeHTML(instanceId) { const record = records.get(instanceId); return !!record && record.type === 'html' && complete(record, 'htmlDone'); },

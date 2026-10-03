@@ -1225,3 +1225,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 原生iframe媒体控制、Player挂起前计时暂停、官方页面/DOM与Core逐次数据/动作、几何握手仍继续；Task4与最终7项人工验收未完成。
 
 - [x] iframe阶段完整build→start/identity成功：Core65052/Player8564/Watchdog50436/配置器59448，日志20261003_080601.txt；实际恢复已有v2，v3-status inactive。用户明确允许退出后核对PID/绝对路径正常关闭Core和配置器，自己的watcher结束；Dext进程、1620/1621监听、资源缓存均0。
+
+- [x] Task3原生暂停计时模块：先建立生产media/frame/playback失败回归，在Player暂停前同步通知官方页，停止媒体期限/订阅；恢复时同步投递最后Core状态后释放播放。保留同文档实例与Core权威，不以夹具代填完整生产页面或物理验收。
+
+- [x] 原生暂停回归：模型15/SDK14/媒体14/iframe14/播放桥5=62/62；原生资源31/31、运行消息20/20。真实ReleasePlayer曾在暂停期间按旧revision完成500ms启动，接入同步播放桥后保持剩余活动计时，恢复先投递最后snapshot revision3，iframe新来源也带revision3。旧暂停缓存/撤销/重载/未知命令五组IPC回归通过；能力/数据/完成回复仍是夹具模拟Core。
+- [ ] 剩余生产页面/DOM、逐次Core数据与动作、原生逐iframe音视频政策、几何握手、Task4实际Core原生Room和最终7项验收继续；暂停模块实测不代表完整页面已安装。
+
+- [x] 暂停阶段最终完整build→start/identity通过：Core91052/Player70888/Watchdog83660/配置器78452，日志20261003_082904.txt；真实状态inactive符合已有v2恢复。正常退出Core/配置器、自己的开发watcher结束，Dext进程/1620/1621监听/资源缓存0。最终7项验收仍保留，不合并。

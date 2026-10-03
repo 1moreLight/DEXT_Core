@@ -25,7 +25,7 @@ internal static class RuntimeMessageChecks
             Require(state.Initialize(context), "receiver accepts valid context");
             Require(state.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)Roundtrip(messages[1])), "snapshot same generation");
             var replay = state.Replay();
-            Require((string?)replay[0]["manifest"]?["name"] == "鏃ユ湡2026-10-03T01:02:03Z" &&
+            Require((string?)replay[0]["manifest"]?["name"] == "\u65e5\u671f2026-10-03T01:02:03Z" &&
                 (string?)replay[0]["manifest"]?["components"]?[0]?["config"]?["date"] == "2026-10-03T01:02:03Z", "JSON values, Unicode and dates preserved");
             Require(!replay[0].ToString().Contains("ValueKind"), "JsonElement was not serialized as CLR metadata");
             Require((long?)replay[0]["runtimeGeneration"] == 1 && (long?)replay[1]["runtimeGeneration"] == 1, "same runtime generation");
@@ -103,7 +103,7 @@ internal static class RuntimeMessageChecks
     {
         var room="231db51a-19db-4a3a-9c06-dbb9b3db86f9";
         using var manifest=JsonDocument.Parse("""
-            {"version":3,"apiVersion":1,"id":"231db51a-19db-4a3a-9c06-dbb9b3db86f9","name":"鏃ユ湡2026-10-03T01:02:03Z","startDesk":"home",
+            {"version":3,"apiVersion":1,"id":"231db51a-19db-4a3a-9c06-dbb9b3db86f9","name":"\u65e5\u671f2026-10-03T01:02:03Z","startDesk":"home",
              "resources":["scene/index.html"],"desks":[{"id":"home"},{"id":"focus"}],
              "components":[{"id":"clock","config":{"date":"2026-10-03T01:02:03Z","empty":null}}]}
             """);

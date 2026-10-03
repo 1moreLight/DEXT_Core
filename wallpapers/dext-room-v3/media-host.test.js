@@ -89,3 +89,17 @@ test('late play promises do not pause a newer active playback intent',async()=>{
   f.host.setState('slot.start','suspended');f.host.setState('slot.start','active');const pauses=video.pauseCount;
   release[0]();await tick();assert.equal(video.pauseCount,pauses);release[1]();await tick();assert.equal(video.pauseCount,pauses);f.host.dispose();
 });
+
+test('private Player suspension pauses startup clocks without changing cached Core lifecycle',async()=>{
+  const f=fixture(),node=f.mount('image');f.advance(100);
+  assert.equal(f.host.setPlaybackSuspended(true),true);f.advance(120000);assert.equal(f.completed.length,0);
+  assert.equal(f.snapshot.lifecycle.playbackPaused,false);assert.equal(f.host.setPlaybackSuspended('false'),false);
+  assert.equal(f.host.setPlaybackSuspended(false),true);f.advance(399);assert.equal(f.completed.length,0);f.advance(1);await tick();
+  assert.equal(f.completed.length,1);assert.equal(f.root.children[0],node);f.host.dispose();
+});
+test('native pause stops video and prevents newly mounted instances starting until current snapshot resumes',async()=>{
+  const f=fixture();f.snapshot.lifecycle.stage='desktop';const video=f.mount('video','slot.background.home');await tick();
+  f.host.setPlaybackSuspended(true);assert.ok(video.pauseCount>0);const before=video.playCount;
+  f.host.refresh();assert.equal(video.playCount,before);f.snapshot.lifecycle.locked=true;f.host.setPlaybackSuspended(false);assert.equal(video.playCount,before);
+  f.snapshot.lifecycle.locked=false;f.host.refresh();await tick();assert.equal(video.playCount,before+1);f.host.dispose();
+});

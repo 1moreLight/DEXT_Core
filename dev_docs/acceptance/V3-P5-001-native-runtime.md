@@ -101,3 +101,7 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 2026-10-03生产iframe模块阶段：模型15/SDK14/媒体12/iframe13=54/54；真实ReleasePlayer加载生产frame-host和SDK，固定来源、Core状态映射、读数单独隐藏、单来源暂停恢复、所属消费者激活路由、沙箱原生拒绝、持续iframe重载/旧token拒绝通过。能力/数据/激活回复为模拟Core，未代填生产Core或物理动作通过。原生逐iframe媒体、官方页面/DOM/逐次Core授权/几何仍继续，7项最终人工步骤不变。
 
 - iframe阶段完整build→start/identity通过：Core65052/Player8564/Watchdog50436/配置器59448，日志20261003_080601.txt；当前v2恢复inactive。核对PID/路径后正常退出，自己的开发监听停止，Dext进程/开发端口/资源缓存0。WorkerW纠正与D3D查找日志不计最终物理验收通过。
+
+- 2026-10-03原生暂停模块阶段：模型15/SDK14/媒体14/iframe14/播放桥5=62/62，原生资源31/31、运行消息20/20和实际Player五组缓存/撤销/重载IPC通过。真实ReleasePlayer验证暂停前同步停止期限与来源，保持Core事实，恢复先revision3再剩余500ms活动预算，完成一次且数据新来源revision3。夹具Core回复为模拟；生产页面/实际Core与原生iframe媒体仍继续，7项人工步骤不据此通过。
+
+- 暂停阶段最终完整build→start/identity通过：Core91052/Player70888/Watchdog83660/配置器78452，日志20261003_082904.txt；v2恢复inactive。用户明确允许正常退出，核对PID/绝对路径后关闭全部验证进程，开发端口/资源缓存0。现有WorkerW纠正和D3D日志未计最终物理步骤通过。

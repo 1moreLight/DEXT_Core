@@ -1084,6 +1084,24 @@ namespace Lively.Player.WebView2
                 webView.CoreWebView2.PostWebMessageAsJson(message.ToString(Formatting.None));
         }
 
+        private async Task NotifyNativePlayback(bool paused, long sequence)
+        {
+            if (nativeResources == null || !nativeNetworkReady || !startArgs.DextTrustedHost ||
+                roomRuntime.Generation <= 0 || !IsOfficialDextDocument(webView.CoreWebView2.Source)) return;
+            // ExecuteScript completion is the pause barrier: the official host
+            // stops active-time timers before native rendering can be suspended.
+            // Resume applies the latest cached Core messages in this same call,
+            // before releasing retained media/consumer subscriptions.
+            var payload = new JObject {
+                ["type"] = "dext:v3-playback", ["protocolVersion"] = 1, ["sequence"] = sequence,
+                ["runtimeGeneration"] = roomRuntime.Generation, ["paused"] = paused,
+                ["messages"] = paused ? new JArray() : new JArray(roomRuntime.Replay())
+            };
+            var script = "typeof globalThis.dextNativePlaybackChanged === 'function' && globalThis.dextNativePlaybackChanged(" +
+                payload.ToString(Formatting.None) + ")";
+            await webView.ExecuteScriptAsync(script);
+        }
+
         private async Task HandleSuspend()
         {
             if (isPaused) return;
@@ -1092,6 +1110,7 @@ namespace Lively.Player.WebView2
             var revision = ++playbackRevision;
             try
             {
+                await NotifyNativePlayback(true, revision);
                 if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPauseMedia();
                 if (startArgs.PauseEvent)
                     await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
@@ -1113,7 +1132,9 @@ namespace Lively.Player.WebView2
             var revision = ++playbackRevision;
             try
             {
-                if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPlayMedia();
+                // Native v3 media belongs to the retained, phase-aware host;
+                // playing every DOM media node could revive an inactive phase.
+                if (nativeResources == null && (startArgs.PauseWebMedia || isVideoStream)) await webView.TryPlayMedia();
                 if (startArgs.PauseEvent)
                     await webView.ExecuteScriptFunctionAsync("livelyWallpaperPlaybackChanged",
                         JsonConvert.SerializeObject(new WallpaperPlaybackState() { IsPaused = false }), Formatting.Indented);
@@ -1126,6 +1147,7 @@ namespace Lively.Player.WebView2
                 {
                     runtimeDeliverySuspended = false;
                     foreach (var message in roomRuntime.Replay()) PostRuntimeMessage(message);
+                    await NotifyNativePlayback(false, revision);
                 }
             }
         }

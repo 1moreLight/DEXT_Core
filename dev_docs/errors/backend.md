@@ -384,3 +384,11 @@ RawInputMsgWindow旧Flags!=Up会把E0|Up误当Down，InputUtil又把所有按键
 实际WinForms Player脱离后带隐藏owner，GetParent非零并不代表仍在WorkerW。以GA_ROOT确认独立根窗口、GA_PARENT保存/恢复真实父窗；参见[GetParent](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getparent)、[GetAncestor](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getancestor)。传统WorkerW保留popup样式，不能只接受WS_CHILD。
 
 传统parented-popup重挂后SetWindowPos(TOPMOST)返回true，但实际WS_EX_TOPMOST未设置；重复样式/布局刷新均未解决。显式NOTOPMOST→TOPMOST后真实根窗口、可见性、矩形和TOPMOST位全部符合。普通child与实际ReleasePlayer两种样式往返及DPI120还原通过；多系统DPI/实际WorkerW和故障重建仍未代填。
+
+## #164 原生暂停必须先停止官方宿主的活动期限（2026-10-03）
+
+Player暂停期间缓存Core快照，媒体宿主仍读旧playbackPaused=false；直接挂起/恢复渲染不能保证JS活动期限停止。实际ReleasePlayer回归在收到暂停后产生revision1的500ms启动完成，没有暂停回执。新增私有ExecuteScript同步通知，await完成后才原生挂起；media/frame停止计时、媒体意图和来源。恢复同步处理最后缓存Core状态再释放，跳过旧TryPlayMedia的无差别全节点播放。当前revision3、剩余活动计时及新来源修订实测通过；Core生命周期事实不被此本地暂停门修改。原生逐iframe媒体与完整页面仍待接线。
+
+## #165 新官方模块仍须显式加入原生资源白名单（2026-10-03）
+
+新增playback-host.js并在隔离官方页引用，但DextNativeResourceServer有限白名单没有它。后续clockStart无法访问模块并超时；这一失败不计暂停逻辑RED。加入单个具名官方文件并重新部署ReleasePlayer后，实际暂停回归才测到#164。内容清单与官方模块白名单是两个范围，不能用放开目录映射修复。

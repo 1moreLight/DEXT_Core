@@ -45,7 +45,7 @@
     const later=options.setTimeout||root.setTimeout.bind(root),cancel=options.clearTimeout||root.clearTimeout.bind(root);
     const token=options.randomToken||(()=>root.crypto.randomUUID());
     const implemented=new Set((options.implementedCapabilities||[]).filter(capability=>CAPS.has(capability)));
-    let snapshot=wire(options.initialSnapshot),geometry=wire(options.initialGeometry),generation=options.runtimeGeneration,disposed=false,lastError=null;
+    let snapshot=wire(options.initialSnapshot),geometry=wire(options.initialGeometry),generation=options.runtimeGeneration,disposed=false,lastError=null,playbackSuspended=options.initialPlaybackSuspended===true;
     const records=new Map();
     const diagnose=code=>{lastError={code};};
     const alive=record=>!disposed&&!record.disposed&&records.get(record.instanceId)===record;
@@ -53,7 +53,7 @@
     const sameScope=scope=>scope.sessionId===snapshot.sessionId&&scope.revision===snapshot.revision&&scope.runtimeGeneration===generation;
     function active(record){
       const stage=record.consumerId==='slot.start'?'starting':record.consumerId==='slot.idle'?'idle':'desktop';
-      return alive(record)&&!record.docDisposed&&record.state==='active'&&snapshot.active&&snapshot.lifecycle.stage===stage&&!snapshot.lifecycle.playbackPaused&&!snapshot.lifecycle.locked;
+      return alive(record)&&!playbackSuspended&&!record.docDisposed&&record.state==='active'&&snapshot.active&&snapshot.lifecycle.stage===stage&&!snapshot.lifecycle.playbackPaused&&!snapshot.lifecycle.locked;
     }
     function envelope(record,type){return{type,apiVersion:1,instanceId:record.instanceId,sessionId:snapshot.sessionId,token:record.token};}
     function send(record,value){
@@ -120,6 +120,7 @@
         completed=true;cancel(record.permissionTimer);record.permissionTimer=null;
         setCapabilities(record,permissionView(record,reply));initialize(record);
       };
+      if(playbackSuspended){finish(null);return;}
       record.permissionTimer=later(()=>{diagnose('permissionsUnavailable');finish(null);},5000);
       try{Promise.resolve(options.readCapabilities({consumerId:record.consumerId,identity:scope})).then(finish,()=>{diagnose('permissionsUnavailable');finish(null);});}
       catch(_){diagnose('permissionsUnavailable');finish(null);}
@@ -230,6 +231,11 @@
     function disposeInstance(instanceId){const record=records.get(instanceId);if(!record)return;closeDocument(record,true);record.disposed=true;records.delete(instanceId);record.frame.removeEventListener('load',record.load);record.frame.remove();}
     return Object.freeze({mount,
       setState(instanceId,state){const record=records.get(instanceId);if(!record||!['active','suspended'].includes(state))return false;record.state=state;applyState(record);refreshPermissions(record);return true;},
+      setPlaybackSuspended(value){
+        if(disposed||typeof value!=='boolean')return false;
+        if(value===playbackSuspended)return true;playbackSuspended=value;
+        for(const record of records.values()){if(value)clearRequests(record,'notOperable');stopSources(record);applyState(record);refreshPermissions(record);}return true;
+      },
       updateConfig(instanceId,config){const record=records.get(instanceId);if(!record||!object(config))return false;try{record.config=wire(config);event(record,'config',record.config);return true;}catch(error){diagnose(error.code||'invalidPayload');return false;}},
       acceptSnapshot(next){
         if(disposed||!snapshotValid(next)||next.sessionId!==snapshot.sessionId||next.roomId!==snapshot.roomId||next.installationStamp!==snapshot.installationStamp||next.revision<=snapshot.revision||next.lifecycle.revision<snapshot.lifecycle.revision)return false;

@@ -206,3 +206,7 @@
 
 | #162 | 渲染活动与输入operable耦合，失焦关输入误暂停仍应播放的实例 | [renderer](errors/renderer.md) |
 | #163 | 数据订阅失败先关闭provider，错误回执被当前provider校验丢弃 | [renderer](errors/renderer.md) |
+
+| #164 | Player暂停只缓存Core快照，媒体活动期限未同步停止，恢复前可按旧修订完成 | [backend](errors/backend.md) |
+| #165 | 新官方JS未加入有限资源白名单，模块缺失导致后续测试命令超时 | [backend](errors/backend.md) |
+| #166 | Unicode夹具与同文件期望同时乱码仍通过，独立原生wire期望才能发现 | [toolchain](errors/toolchain.md) |

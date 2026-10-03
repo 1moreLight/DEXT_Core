@@ -11,7 +11,7 @@ internal static class FrameHostWireProbe
 {
     // Real production JS + SDK + WindowProxy/Player IPC. The private Core reply
     // and data provider are fixtures; this does not replace installed-Room gates.
-    public static async Task Run(string player,string frameHostFile,string sdkFile)
+    public static async Task Run(string player,string frameHostFile,string sdkFile,string? mediaHostFile=null,string? playbackHostFile=null)
     {
         var root=Directory.CreateTempSubdirectory("Dext-v3-frame-wire-");
         try
@@ -19,7 +19,10 @@ internal static class FrameHostWireProbe
             var content=Directory.CreateDirectory(Path.Combine(root.FullName,"content","scene"));
             File.Copy(Path.GetFullPath(frameHostFile),Path.Combine(root.FullName,"frame-host.js"));
             File.Copy(Path.GetFullPath(sdkFile),Path.Combine(content.FullName,"sdk.js"));
-            File.WriteAllText(Path.Combine(root.FullName,"index.html"),"<!doctype html><script src=frame-host.js defer></script><script src=main.js defer></script>");
+            var testPlayback=mediaHostFile!=null&&playbackHostFile!=null;
+            if(testPlayback){File.Copy(Path.GetFullPath(mediaHostFile!),Path.Combine(root.FullName,"media-host.js"));File.Copy(Path.GetFullPath(playbackHostFile!),Path.Combine(root.FullName,"playback-host.js"));
+                File.WriteAllText(Path.Combine(content.FullName,"clock.svg"),"<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><rect width='8' height='8' fill='blue'/></svg>");}
+            File.WriteAllText(Path.Combine(root.FullName,"index.html"),"<!doctype html><script src=frame-host.js defer></script>"+(testPlayback?"<script src=media-host.js defer></script><script src=playback-host.js defer></script>":"")+"<script src=main.js defer></script>");
             File.WriteAllText(Path.Combine(content.FullName,"index.html"),"""
                 <!doctype html><div id=static>Static frame</div><span id=time></span><span id=hardware></span>
                 <script>let readyCount=0;addEventListener('dext:ready',()=>readyCount++);</script><script src=sdk.js></script><script>
@@ -34,7 +37,7 @@ internal static class FrameHostWireProbe
                 </script>
                 """);
             File.WriteAllText(Path.Combine(root.FullName,"main.js"),"""
-                let context,snapshot,host,frame,other,requests=0,opened=0,closed=0,firstToken;const pending=new Map();
+                let context,snapshot,host,frame,other,media,playback,requests=0,opened=0,closed=0,firstToken,completed=0,resumeAt=0,clockStartedAt=0,lastSourceRevision=0;const pending=new Map();
                 const send=value=>chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:value}));
                 const native=(method,extra,identity)=>new Promise(resolve=>{const requestId='native-'+(++requests);pending.set(requestId,resolve);chrome.webview.postMessage(JSON.stringify({type:'dext:v3-native-request',protocolVersion:1,requestId,method,runtimeGeneration:identity.runtimeGeneration,sessionId:identity.sessionId,revision:identity.revision,...extra}));});
                 const mount=()=>{
@@ -43,7 +46,17 @@ internal static class FrameHostWireProbe
                     resolveResource:path=>{if(!context.resources.some(r=>r.path===path))throw Error('not declared');return context.resourceBasePath+path;},
                     readCapabilities:value=>native('capabilities',{consumer:value.consumerId},value.identity),implementedCapabilities:['desk.read','binding.launch','time.read'],
                     invoke:async value=>{if(value.method==='desk.get')return snapshot;if(value.method!=='actions.activate')throw Object.assign(Error(),{code:'unsupported'});const reply=await native('activate',{consumer:value.consumerId,button:value.params.buttonId,geometryVersion:1},value.identity);return {status:reply.status};},
-                    subscribeData:(value,emit)=>{opened++;emit({status:'available',value:{tick:opened}});return()=>closed++;},applyState:(frame,value)=>{frame.inert=value.state!=='active';}});
+                    subscribeData:(value,emit)=>{opened++;lastSourceRevision=value.identity.revision;emit({status:'available',value:{tick:opened}});return()=>closed++;},applyState:(frame,value)=>{frame.inert=value.state!=='active';}});
+                  if(typeof DextPlaybackHost==='object'){
+                    media=DextMediaHost.createMediaHost({document,getSnapshot:()=>snapshot,resolveResource:path=>context.resourceBasePath+path,
+                      onStartupComplete:value=>{completed++;send({clockComplete:true,completed,revision:value.revision,afterResume:performance.now()-resumeAt,opened,closed,lastSourceRevision});return {status:'accepted'};}});
+                    playback=DextPlaybackHost.createPlaybackHost({matchesRuntime:generation=>generation===context.runtimeGeneration,
+                      setSuspended:value=>{media.setPlaybackSuspended(value);host.setPlaybackSuspended(value);},
+                      onRuntimeMessage:value=>{if(value.type==='dext:v3-runtime')context=value;
+                        if(value.type==='dext:v3-session'){snapshot=value;host.acceptSnapshot(value);media.refresh();}
+                        if(value.type==='dext:v3-runtime-revoked'){host.dispose();media.dispose();}}});
+                    window.dextNativePlaybackChanged=value=>{const accepted=playback.handle(value);if(accepted){if(!value.paused)resumeAt=performance.now();send({playback:value.paused,sequence:value.sequence,revision:snapshot.revision,completed,corePaused:snapshot.lifecycle.playbackPaused,clockElapsed:performance.now()-clockStartedAt});}return accepted;};
+                  }
                   frame=host.mount({instanceId:'start-frame',consumerId:'slot.start',kind:'html',state:'active',entry:'scene/index.html',capabilities:['desk.read','binding.launch','time.read','hardware.read'],buttonIds:['open'],config:{style:'static'}},document.body);
                 };
                 addEventListener('message',e=>{if(e.data?.authorReport&&(e.source===frame?.contentWindow||e.source===other?.contentWindow))send({author:e.data,which:e.source===frame?.contentWindow?'start':'other',opened,closed,diagnostics:host.readDiagnostics()});});
@@ -52,6 +65,7 @@ internal static class FrameHostWireProbe
                   if(d.type==='dext:v3-native-response'){const resolve=pending.get(d.requestId);pending.delete(d.requestId);resolve?.(d);}
                   if(d.type==='dext:system-control-result'){
                     const command=d.permissions?.command;
+                    if(command==='clockStart'){clockStartedAt=performance.now();media.mount({instanceId:'clock',consumerId:'slot.start',state:'active',content:{type:'image',src:'scene/clock.svg'}},document.body);}
                     if(command==='pause')host.setState('start-frame','suspended');
                     if(command==='resume')host.setState('start-frame','active');
                     if(command==='report'||command==='activate'||command==='reload')frame.contentWindow.postMessage({command},'*');
@@ -83,6 +97,19 @@ internal static class FrameHostWireProbe
                 await Command("other");await Barrier("other");Require((string?)(await Next())["which"]=="other","second opaque source ready");await Command("forge");await Barrier("forge");Require((string?)(await Next())["author"]?["phase"]=="forged"&&activations==1,"foreign iframe and direct native access rejected");
                 await Command("reload");await Barrier("reload");var reloaded=await Next();Require((int?)reloaded["author"]?["readyCount"]==1&&(int?)reloaded["diagnostics"]?["count"]==2,"same retained frame reloads new SDK document");
                 await Command("oldToken");await Barrier("oldToken");Require((string?)(await Next())["author"]?["phase"]=="forged"&&activations==1,"old routing token rejected in new document");
+                if(testPlayback){
+                    await Command("clockStart");await Barrier("clockStart");await Task.Delay(100);await Send(new LivelySuspendCmd());
+                    var suspended=await Next();Require((bool?)suspended["playback"]==true&&(int?)suspended["completed"]==0&&(bool?)suspended["corePaused"]==false,"native pause synchronously cancels production clocks without inventing Core facts");
+                    var remaining=Math.Max(0,500-(double)suspended["clockElapsed"]!);
+                    await Task.Delay(1200);
+                    var pausedSnapshot=RoomSessionPlayerMessage.Create(f.Snapshot with{Revision=2,Lifecycle=new(RoomLifecycleStage.Starting,true,false,2)},["home","focus"]);pausedSnapshot.RuntimeGeneration=1;await Send(pausedSnapshot);
+                    var lastSnapshot=RoomSessionPlayerMessage.Create(f.Snapshot with{Revision=3,Lifecycle=new(RoomLifecycleStage.Starting,false,false,3)},["home","focus"]);lastSnapshot.RuntimeGeneration=1;await Send(lastSnapshot);
+                    await Send(new LivelyResumeCmd());await Send(new LivelyResumeCmd());
+                    var resumed=await Next();Require((bool?)resumed["playback"]==false&&(long?)resumed["revision"]==3&&(int?)resumed["completed"]==0,"last Core snapshot before releasing clocks");
+                    var completion=await Next();Require((bool?)completion["clockComplete"]==true&&(int?)completion["completed"]==1&&(long?)completion["revision"]==3&&(double?)completion["afterResume"]>=remaining-50,"startup preserves remaining active-time budget and current revision");
+                    Require((long?)completion["lastSourceRevision"]==3&&(int?)completion["opened"]>=4&&(int?)completion["closed"]>=3,"iframe source resumes only after fresh current-scope private capability response");
+                    Console.WriteLine("PASS production playback-host/media/frame in native ReleasePlayer: synchronous pause, cached Core facts untouched, last snapshot before resume, remaining500ms startup budget, fresh iframe authorization");
+                }
                 Console.WriteLine("PASS production frame-host.js + real SDK in ReleasePlayer: current private capability IPC, fixed opaque WindowProxy, readout-only denial, one source/suspend/resume, owned activation without proof, foreign/direct native rejection, retained iframe reload");
                 async Task Command(string command)=>await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command})});
                 async Task Barrier(string command)=>Require((string?)(await Next())["barrier"]==command,"barrier "+command);
@@ -90,7 +117,7 @@ internal static class FrameHostWireProbe
                     if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(consumer=="slot.start"||consumer=="component.other","fixed consumer query");
                         if(method=="activate"){Require(consumer=="slot.start"&&(string?)request["Button"]=="open","owned activation");activations++;}
                         Require(method=="capabilities"||method=="activate","only declared native methods");
-                        await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=1,status=method=="activate"?"inputRequired":consumer=="slot.start"?"accepted":"unknownConsumer",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"binding.launch","accepted"},{"time.read","accepted"},{"hardware.read","missingPermission"}}})});continue;}
+                        await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status=method=="activate"?"inputRequired":consumer=="slot.start"?"accepted":"unknownConsumer",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"binding.launch","accepted"},{"time.read","accepted"},{"hardware.read","missingPermission"}}})});continue;}
                     if((bool?)value["nativeLeak"]==true)throw new Exception("sandbox reached native IPC");return value;
                 }if(process.HasExited)throw new Exception("Player exit: "+await errors);await Task.Delay(20);}throw new TimeoutException("frame wire: "+string.Join("\n",log.TakeLast(8)));}
             }

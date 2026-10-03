@@ -306,3 +306,7 @@ Windows Python Path.read_text()默认GBK，读Form1的UTF8内容失败时此前�
 ## #161 非行锚插入和未知探针模式导致错误测试出口（2026-10-03）
 
 媒体探针编辑用12空格子串匹配policyUnavailable，亦匹配16空格的嵌套分支，count断言失败。后续PowerShell未检查Python退出码仍跑新模式；旧Program对未知多参数落入默认隐藏输入检查，输出PASS却并未运行媒体检查。该结果已明确排除出媒体证据。改为带换行的精确行锚、全部替换验证完才写文件、Python非零立即停止；Program对未知模式/无效参数数量显式拒绝，运行脚本同时要求目标媒体PASS标记。未知模式负例实际拒绝；修正后真实媒体探针执行通过。不要以命令退出0或任意PASS当作目标模式确实执行。
+
+## #166 同源Unicode样本与期望同时错误会掩盖夹具损坏（2026-10-03）
+
+旧HEAD的RuntimeMessageChecks中“日期”已经变成三个乱码字符，构造样本与同文件assert一起损坏，单位投影仍通过。独立RuntimeWireProbe保留原中文期望，实际Player正常传递乱码样本，因期望不一致失败；不是Json.NET本轮回归。修正样本JSON及C#assert为ASCII Unicode转义，保留真正Unicode值和独立wire期望。运行消息20/20、实际缓存/撤销/重载等五组通过。读取/编辑统一UTF8，并保留独立端到端Unicode断言，不能改期望去接受乱码。

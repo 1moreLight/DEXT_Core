@@ -134,3 +134,11 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 每帧最多64个5s请求，消息UTF8 32KiB、JSON深度24，方法/参数/按钮/阶段/几何范围有界；对外错误不含私有异常。数据按能力复用一个来源，暂停/修订/重载关闭旧源并拒绝迟到数据；来源失败仅回error供SDK隐藏读数。Core适配器必须对每个操作和每个数据值重新授权，不能把能力查询缓存当许可。rendering不受input operable直接控制，仍遵循Core播放和生命周期。
 
 模块现已通过完整SDK与真实ReleasePlayer的来源/令牌/订阅/重载回归；该隔离夹具的私有权限和数据回复是模拟Core。原生逐iframe媒体暂停、完整官方页/DOM、生产Core数据/动作和几何握手仍在P5接线，不把inert当成媒体暂停或完整可用证明。
+
+## 原生暂停的同步播放门（2026-10-03，接线阶段）
+
+Player仅对固定官方文档调用私有 `dextNativePlaybackChanged`；payload为dext:v3-playback/protocolVersion1/单调sequence/runtimeGeneration/paused/messages。暂停的messages为空，await JS完成后才原生挂起；恢复的messages是最新缓存context/snapshot或revoke，同一次同步调用先应用再释放播放。官方页通过playback-host约束代次、顺序和类型；旧序列、错误代次、重入更新与失败回放不能释放旧状态。
+
+media-host和frame-host的setPlaybackSuspended仅控制本机投递暂停，不修改Core的生命周期、已提交Desk或输入事实。计时保留剩余活动时间，iframe保留当前文档但关闭旧来源/请求，恢复重新获得当前Core修订的能力状态。native恢复不使用旧全DOM play()，避免重启非活动阶段媒体。作者SDK没有此控制入口；来源/动作后续仍需Core重新授权。
+
+真实ReleasePlayer已验证同一生产模块的500ms期限在原生暂停中停止，恢复先观察最后revision3，再以该修订完成与恢复数据来源。夹具的Core回复仍为模拟；正式页面接入、真实Core生命周期和原生逐iframe音视频暂停继续验证。

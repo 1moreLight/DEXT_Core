@@ -98,3 +98,14 @@ test('subscription adapter failure delivers error state and releases the source'
   const f=fixture({subscribeData:()=>Promise.reject(Error('C:/private'))}),{sdk}=await f.start();let status;
   sdk.data.subscribe('time.read',state=>{status=state.status;});await flush();assert.equal(status,'error');assert.equal(f.host.readDiagnostics().instances[0].dataSources,0);f.host.dispose();
 });
+
+test('private Player suspension preserves iframe but cancels old sources until fresh Core snapshot authorization',async()=>{
+  const f=fixture(),{frame,sdk}=await f.start();let delivered;
+  sdk.data.subscribe('time.read',value=>delivered=value);await flush();const source=f.opens[0];
+  assert.equal(f.host.setPlaybackSuspended(true),true);assert.equal(f.closes.length,1);assert.equal(frame.removed,false);
+  source.emit({status:'available',value:'old'});assert.notEqual(delivered?.value,'old');
+  f.host.acceptSnapshot(f.snapshot(2));await flush();assert.equal(f.opens.length,1);
+  assert.equal(f.host.setPlaybackSuspended('false'),false);assert.equal(f.host.setPlaybackSuspended(false),true);await flush();
+  assert.equal(f.opens.length,2);assert.equal(f.opens[1].identity.revision,2);assert.equal(frame.sent.filter(value=>value.type==='dext:runtime:init').length,1);
+  f.host.dispose();
+});
