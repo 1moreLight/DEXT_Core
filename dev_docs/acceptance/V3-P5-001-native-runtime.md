@@ -124,3 +124,9 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 导航是临时官方顶部的协议测试驱动，不计物理输入。finally重铺原壁纸、正常退出Core，布局/设置/checkpoint逐字节与原用户Room哈希恢复；临时目录已移除。完整build→start/identity核对后再次正常退出，最终进程/开发端口/资源暂存0。配置器使用本轮共享D缓存，identity显示OTHER并单独核对绝对路径。
 
 四类完整生命周期/实际idle与重启、WebAudio、作者控制/存储/确认、个人布局与精确移动命中、物理输入/DPI及故障恢复仍继续；上方7项最终人工步骤保持待执行，不合并master。
+
+## Task4实际Core正常重启恢复（2026-10-03）
+
+同一临时生产安装副本不重装、不改checkpoint、不发恢复导航：Player83528提交focus后正常退出Core，新Player102184/新session自动恢复focus，安装stamp不变、测试nav=0、SDK新文档。真实GIF start在每个新文档只观察到一次starting→desktop（559ms/558ms），视频实际解码播放恢复。原壁纸及布局/设置/checkpoint逐字节和用户Room哈希恢复。完整build→start/identity后正常退出，最终Dext进程/开发端口/资源暂存/临时目录0。
+
+这里只补正常Core重启门槛；独立Player故障重建、完整idle/锁屏组合、WebAudio、物理输入/DPI、个人布局和其余完整Task3/4仍未完成。上方7项最终人工步骤保持待执行。

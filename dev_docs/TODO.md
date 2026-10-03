@@ -1265,3 +1265,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际Core诊断双修复：旧查询/销毁后失败回调先核对当前scope；新快照必须先推进native identity再更新iframe。生产原生桥RED确实返回staleInput，修正后完整JS105/105。真实Core再次验证Player115676、session7d2d80d9、home revision2→focus revision4，两份SDK文档保持、frameError/error均null，MP4实际ready4/time0.576/静音循环播放。生产Rust安装/真实Core复核/WorkerW父窗均通过；该顶部测试导航仍只计协议回归。
 - [x] 本阶段完整build→start/identity通过：Core52976/Player90320/Watchdog95676，配置器54796为本轮共享D缓存构建（identity脚本显示OTHER，绝对路径已核对），日志20261003_115323.txt；原v2恢复inactive。真实探针保存并精确恢复布局/设置/checkpoint和用户Room哈希；正常退出Core/配置器及本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生Room目录均0。
 - [ ] 完整Task3/4继续：WebAudio/AudioContext、四媒体完整生命周期/实际idle与重启、作者导航/控制/存储/退出确认、个人布局/占用/移动与非矩形精确命中/焦点、实际物理输入/DPI/故障恢复。最终7项不申请中途验收，16项开发就绪仍1/16。
+
+- [x] Task4真实Core重启恢复门槛：在c14214f的临时生产安装副本上先由Core提交focus，再正常关闭/重新启动精确Core；不重新安装、不手动请求focus，验证新会话/新Player仍恢复已提交Desk、同安装摘要和两份新SDK文档，GIF start只在新文档播放。finally继续恢复原壁纸和布局/设置/checkpoint。此项只补重启门槛，不代填物理输入/DPI/idle组合或完整P5完成。WebAudio设计需即时输出闸门与异步suspend完成屏障，按实际Runtime验证后实施。
+
+- [x] 同安装副本实际Core正常重启通过：Player83528/session9333ca54先提交focus revision4；正常退出后新Player102184/session540fdca3自动恢复focus revision2，安装stamp不变、测试nav=0，两份SDK文档为新文档。真实GIF starting→desktop观察分别559ms/558ms且各仅一次，MP4恢复ready4/播放time0.253。finally原壁纸、布局/设置/checkpoint与用户Room哈希恢复，临时目录清除。
+- [x] 本阶段build→start/identity完成：Core67896/Player69960/Watchdog8564/config115068（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_121155.txt；原v2 inactive。核对PID/路径正常退出及结束本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生目录均0。完整P5/最终7项/全景16项仍继续，开发就绪1/16。
