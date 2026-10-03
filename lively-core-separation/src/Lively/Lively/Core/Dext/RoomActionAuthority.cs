@@ -206,7 +206,17 @@ internal sealed class RoomActionAuthority
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
     }
 
-    public RoomActionReply InvokeButton(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string button, Guid? ticket)
+    public RoomActionReply InvokeButton(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string button, Guid? ticket) =>
+        InvokeConfiguredButton(connection,peer,session,consumer,button,ticket,null);
+
+    public RoomActionReply InvokeNavigation(Guid connection,RoomSessionPeer peer,Guid session,string consumer,string button,Guid? ticket,RoomButtonAction requested)
+    {
+        if(requested==null || requested.Type is not ("desk.next" or "desk.previous" or "desk.go") ||
+            (requested.Type=="desk.go"?string.IsNullOrEmpty(requested.DeskId):requested.DeskId is not null))return new(RoomActionStatus.Denied);
+        return InvokeConfiguredButton(connection,peer,session,consumer,button,ticket,requested);
+    }
+
+    private RoomActionReply InvokeConfiguredButton(Guid connection,RoomSessionPeer peer,Guid session,string consumer,string button,Guid? ticket,RoomButtonAction? requested)
     {
         // TimeProvider is injectable; invoke it outside all authorization locks.
         var requestedAt = clock.GetTimestamp();
@@ -218,8 +228,17 @@ internal sealed class RoomActionAuthority
                 var status = Button(context, owner, button, out var authored);
                 if (status != RoomActionStatus.Accepted) return new(status);
                 if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
+                if (requested?.Type == "desk.go" && !context.Installation.DeskIds.Contains(requested.DeskId!, StringComparer.Ordinal))
+                    return new(RoomActionStatus.Denied);
                 var action = Resolve(state, context.Installation.RoomId, authored!, out var target);
+                // An otherwise unconfigured declared region can request dynamic
+                // navigation; configured defaults/private bindings keep priority.
+                action ??= requested;
                 if (action is null) return new(RoomActionStatus.MissingBinding);
+                // Read the current user override/default inside this same private
+                // preparation boundary. An author cannot replace a configured
+                // entry's action by requesting a different navigation operation.
+                if (requested is not null && action != requested) return new(RoomActionStatus.Denied);
                 var capability = action.Type.StartsWith("desk.", StringComparison.Ordinal) ? "desk.navigate" : action.Type;
                 status = Permission(state, context.Installation, owner, consumer, capability);
                 if (status != RoomActionStatus.Accepted) return new(status);
@@ -321,7 +340,8 @@ internal sealed class RoomActionAuthority
     {
         target = null; PersonalButtonOverride? local = null;
         if (state.Rooms.TryGetValue(roomId, out var room)) room.Buttons.TryGetValue(button.Id, out local);
-        var action = local?.Action is { } type ? new RoomButtonAction(type, local.DeskId) : button.Action;
+        var action = local?.Action is { } type ? new RoomButtonAction(type, local.DeskId) :
+            button.Action ?? (local?.TargetId is not null ? new RoomButtonAction("binding.launch") : null);
         if (action?.Type == "binding.launch" && local?.TargetId is { } id) state.Targets.TryGetValue(id, out target);
         return action;
     }

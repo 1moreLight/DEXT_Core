@@ -1292,3 +1292,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际日志隐私RED→GREEN：原Core通用IPC日志含ValueJson，marker检查失败；原生请求改为只记method/generation/revision，真实Core再次通过（#184）。夹具读取运行中的NLog须FileShare.ReadWrite（#186），首次原始字符串语法错误不计行为RED（#173追加）。finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态与用户Room哈希恢复。
 - [x] 最新完整build→start/identity：Core80748/Player113524/Watchdog111664/config88192（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_144755.txt；原v2 inactive。按用户授权精确PID/路径正常退出，自己的watcher自然结束；Dext进程/1620与1621监听/资源暂存/临时原生目录0，个人快照哈希/不存在状态未变。
 - [ ] Task3/4下一步：将原生输入证明与作者desk.navigate/系统控制合并为同一次受控动作，补退出确认；继续完整四媒体idle/锁屏组合、独立Player故障重建、个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。最终7项人工步骤不申请中途验收，完整16项开发就绪仍1/16，不合并master。
+
+- [ ] Task3作者导航Core适配（BASEdcb8c3d）：从当前原生完成证明取得所属consumer/button，作者仅请求有界desk.next/previous/go，逐次核对用户覆盖后的实际动作，复用当前授权/一次消费/锁外Core仲裁；请求不能改成另一个动作或覆盖个人绑定。先源码行为RED→GREEN，再接输入宿主统一一次性派发及严格消息/正式SDK/真实Core。默认入口与作者请求竞态未解决前不标整个导航接线完成；系统控制、退出确认与其余Task3/4保持。
+
+- [x] 导航Core适配第一组：缺失NavigateNative的源码RED→125/125；三个导航变体、无输入/错consumer、默认动作不匹配、个人应用覆盖、撤权/过期/几何/代次/关闭/暂停/锁屏/失焦通过。完整build和启动身份核验通过，Core创建时间晚于新DLL写入；原v2 inactive，已正常退出。
+- [x] 补无默认动作的动态按钮：已声明入口在真实输入和desk.navigate授权下可由作者选择合法目标；已有默认/个人动作必须匹配。仅TargetId的个人绑定在无作者默认动作时应解析为binding.launch，不能被作者导航越过。先行为失败，再同边界修复；完整原生SDK派发仍后续接通。
+
+- [x] 导航Core适配最终128/128（原110+18）：三个变体、current/target分离、匹配默认或个人动作、无动作入口动态go、TargetId-only个人应用绑定、错consumer/无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦均验证。动态入口三项125/128实际失败后修复；未知Desk拒绝不消费原生证明，默认/个人动作不匹配同样保留正常fallback。
+- [x] 最终完整build→start/identity：Core113280/Player67436/Watchdog4976/config25560（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_152025.txt；原v2 inactive。正常精确PID/路径退出Core/配置器，自己的watcher终止，用户个人快照哈希/不存在状态未变。
+- [ ] 导航仍为Core源码生产者：严格原生navigate消息、input-host的默认/SDK一次派发、正式DOM/SDK及真实Core已授权作者导航尚未接通；当前SDK仍诚实unsupported。继续系统控制/退出确认、完整四媒体idle/锁屏/独立Player故障、个人布局/精确移动命中/物理DPI。最终7项待集中执行，16项就绪1/16，不合并。

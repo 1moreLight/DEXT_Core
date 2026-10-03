@@ -239,3 +239,5 @@
 | #184 | Core通用原生IPC日志把消费者私有KV值写入诊断 | [backend](errors/backend.md) |
 | #185 | 只设置桌面前台不能解除grid算法对最大化可见窗口的暂停 | [toolchain](errors/toolchain.md) |
 | #186 | File.ReadAllText默认共享方式不能读取运行中的NLog写入文件 | [toolchain](errors/toolchain.md) |
+
+| #187 | 无作者默认动作的按钮只有个人TargetId时，解析为空动作且不显示绑定 | [backend](errors/backend.md) |

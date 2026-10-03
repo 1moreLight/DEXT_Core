@@ -33,6 +33,79 @@ static class RoomActionChecks
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
             Eq(true,n.GetProof(1,2,"scene","open")!=null);
         });
+        void NavigationPair(ActionFixture f,RoomNativeInputAuthority input,string consumer="scene",string button="next",long version=1) {
+            Eq(true,input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,version,viewport,new[]{new RoomNativeButton(consumer,button,.1,.1,.2,.2,0)}));
+            input.MouseDown(viewport,300,400,true);input.MouseUp(viewport,300,400,true);
+        }
+        RoomSessionPlayerBridge NavigationBridge(ActionFixture f,RoomNativeInputAuthority input) {
+            Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,input.ObserveSnapshot,out var bridge));return bridge!;
+        }
+        foreach(var type in new[]{"desk.next","desk.previous","desk.go"})check("native authored navigation matches current configured action "+type,()=>{
+            using var f=new ActionFixture();if(type!="desk.next")f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new(type,type=="desk.go"?"focus":null));
+            var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var action=new RoomButtonAction(type,type=="desk.go"?"focus":null);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
+            Eq("home",f.Kernel.Snapshot!.CurrentDeskId);Eq("focus",f.Kernel.Snapshot.TargetDeskId);Eq(0,f.Launched.Count);
+            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
+        });
+        check("authored navigation cannot create physical input or borrow another consumer",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+            NavigationPair(f,n);Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"component.widget",new("desk.next")).Status);
+            Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+        });
+        check("mismatched navigation leaves configured default for one legitimate fallback",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.previous")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);Eq("focus",f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+        });
+        check("authored navigation cannot override a user's bound application",()=>{
+            using var f=new ActionFixture();f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new("binding.launch",TargetId:Target));
+            var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(0,f.Launched.Count);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(1,f.Launched.Count);
+        });
+        foreach(var failure in new[]{"grant","expired","geometry","generation","disposed","paused","locked","foreground"})check("native authored navigation rejects changed admission "+failure,()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
+            var expected=RoomActionStatus.StaleInput;
+            switch(failure) {
+                case "grant":f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new(f.Kernel.Snapshot!.InstallationStamp,new[]{"binding.launch"}));expected=RoomActionStatus.MissingPermission;break;
+                case "expired":f.Clock.Advance(TimeSpan.FromSeconds(2));expected=RoomActionStatus.ExpiredInput;break;
+                case "geometry":n.InvalidateGeometry(1,f.Session,1);expected=RoomActionStatus.InputRequired;break;
+                case "generation":n.Initialize(2,f.Kernel.Snapshot!);break;
+                case "disposed":bridge.Dispose();expected=RoomActionStatus.StaleSession;break;
+                case "paused":f.Lifecycle(RoomLifecycleStage.Desktop,true);break;
+                case "locked":f.Lifecycle(RoomLifecycleStage.Desktop,false,true);break;
+                case "foreground":f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false));break;
+            }
+            Eq(expected,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);Eq(0,f.Launched.Count);
+        });
+        check("an unconfigured declared button can request granted dynamic navigation",()=>{
+            using var f=new ActionFixture(navigationDynamic:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);
+            Eq("home",f.Kernel.Snapshot!.CurrentDeskId);Eq("focus",f.Kernel.Snapshot.TargetDeskId);Eq(0,f.Launched.Count);
+        });
+        check("target-only private binding on an unconfigured button stays authoritative",()=>{
+            using var f=new ActionFixture(navigationDynamic:true);f.Store.Update(state=>state.Rooms[Room].Buttons["dynamic"]=new(TargetId:Target));
+            var metadata=f.Actions.ReadButtons(f.View,f.Peer,f.Session,"scene").Buttons!.Single(b=>b.Id=="dynamic");Eq("binding.launch",metadata.Action);Eq(true,metadata.IsBound);
+            var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","dynamic").Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(1,f.Launched.Count);
+        });
+        check("dynamic navigation rejects unknown targets without spending the native proof",()=>{
+            using var f=new ActionFixture(navigationDynamic:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","missing")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);
+        });
+        check("typed authored navigation rejects malformed variants without consuming default input",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
+            foreach(var action in new[]{new RoomButtonAction("binding.launch"),new("desk.next","focus"),new("desk.go"),new("desk.go","missing")})
+                Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+        });
         RoomStorageReply Read(ActionFixture f,string key="notes",string consumer="scene",long? revision=null)=>
             f.Actions.ReadStorage(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,key);
         RoomActionReply Write(ActionFixture f,string json="{\"items\":[1,true,null]}",string key="notes",string consumer="scene",long? revision=null) {
@@ -656,7 +729,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -687,6 +760,7 @@ static class RoomActionChecks
                 manifest=document.ToJsonString();}
             var storageCaps=new[]{"storage.read","storage.write"};
             if(storageCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["components"]![0]})foreach(var capability in storageCaps)owner!["capabilities"]!.AsArray().Add(capability);manifest=document.ToJsonString();}
+            if(navigationDynamic){var document=JsonNode.Parse(manifest)!;document["buttons"]!.AsArray().Add(new JsonObject{["id"]="dynamic",["name"]="Dynamic",["scope"]="room"});manifest=document.ToJsonString();}
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);

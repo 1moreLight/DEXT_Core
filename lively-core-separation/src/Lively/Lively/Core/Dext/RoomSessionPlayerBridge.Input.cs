@@ -16,6 +16,19 @@ internal sealed partial class RoomSessionPlayerBridge
         var issued=actions.IssueHostInput(connectionId,peer,session,consumer,button,proof);
         return issued.Status==RoomActionStatus.Accepted?actions.InvokeButton(connectionId,peer,session,consumer,button,issued.Ticket):new(issued.Status);
     }
+    internal RoomActionReply NavigateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action)
+    {
+        if(disposed)return new(RoomActionStatus.StaleSession);
+        var current=native.State;
+        if(current==null || current.Generation!=generation || current.Session!=session || current.Revision!=revision)return new(RoomActionStatus.StaleInput);
+        var completed=current.Completed;
+        var proof=completed==null?null:native.GetProof(generation,geometry,consumer,completed.Button.Button);
+        if(proof==null)return new(RoomActionStatus.InputRequired);
+        var issued=actions.IssueHostInput(connectionId,peer,session,consumer,proof.Button.Button,proof);
+        return issued.Status==RoomActionStatus.Accepted
+            ?actions.InvokeNavigation(connectionId,peer,session,consumer,proof.Button.Button,issued.Ticket,action):new(issued.Status);
+    }
     internal RoomButtonsReply NativeButtons(RoomActionAuthority actions,Guid session,string consumer) =>
         disposed?new(RoomActionStatus.StaleSession):actions.ReadButtons(connectionId,peer,session,consumer);
 

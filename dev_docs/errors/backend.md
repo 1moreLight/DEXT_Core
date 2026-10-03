@@ -417,3 +417,7 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 ## #184 私有KV不能复用通用IPC原文日志（2026-10-03）
 
 真实Core已授权SDK存储成功后，唯一私有marker在Core日志出现，实际检查失败。新增ValueJson通过现有通用Logger.Info(e.Data)被完整复制到诊断文件。原生请求独立日志分支只记录method/generation/revision，省略consumer/key/value/raw payload；实际Core同一夹具再次通过marker不出现、撤权与重启持久读取。传输JSON必须有界和当前授权，但这不会自动保护通用日志；新增含个人值的IPC须检查真实生产日志。
+
+## #187 TargetId-only个人绑定不能在空默认入口中丢失（2026-10-03）
+
+导航生产者回归125/128中，合法无作者默认动作的按钮配了个人TargetId，公开Action仍null/IsBound=false，正常激活也会MissingBinding。Resolve只在已有binding.launch动作时读取TargetId；空默认入口缺少动作推断。保留显式个人Action→作者默认Action原优先级，两者均不存在时才以TargetId推断binding.launch。实际源码128/128通过，公开元数据正确、作者动态导航不能绕过该个人绑定，普通activate仅启动一次。另补无任何配置入口的已授权真实输入动态导航与未知Desk提前拒绝；GUI/SDK原生接线与物理输入仍后续验证。

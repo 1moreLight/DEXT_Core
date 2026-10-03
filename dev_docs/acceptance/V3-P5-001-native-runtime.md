@@ -152,3 +152,9 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 同一生产安装副本正常Core重启，新Player/会话/SDK文档无需测试导航自动恢复focus并读回原KV，原值未被探针改写。测试管理员仅准备新临时Room的测试授权；权限UI未据此通过。首次用户grid规则正常暂停，探针临时采用真实前台算法并finally逐字节恢复原设置；不把该运行计为grid/idle/锁屏验收。
 
 finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态及用户Room哈希恢复。完整build→start/identity后正常退出，进程/开发端口/资源暂存/临时原生目录0，个人快照未变。上方7项最终人工步骤保持待执行；作者导航/控制/确认、完整生命周期/独立Player故障、个人布局与精确输入/物理DPI继续，完整16项就绪仍1/16，不合并。
+
+## Task3作者导航Core生产者（2026-10-03）
+
+缺失私有NavigateNative API先RED，第一组125/125；无默认动作的动态入口及TargetId-only个人绑定再实际失败125/128，修复后128/128。生产Core源码验证当前consumer/按钮/动作、三导航变体、current/target分离、未知目标拒绝、用户覆盖优先、一次消费、无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦。完整build→start/identity后正常退出，原v2 inactive，个人快照未变。
+
+这些正向输入通过生产native authority方法构造，非实际Windows物理事件；严格navigate消息、默认/SDK统一派发、已授权实际Core作者导航仍未接通，当前SDK诚实unsupported。上方7项集中人工步骤不打勾，整体Task3/4、系统控制/退出确认、布局/完整生命周期继续，16项就绪保持1/16，不合并。
