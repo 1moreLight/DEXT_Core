@@ -41,13 +41,13 @@ internal static class OfficialHostWireProbe
             File.AppendAllText(Path.Combine(root.FullName,"main.js"),"""
                 ;(() => {
                   const documents=new Map(),values=new Map();const send=v=>chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:v}));
-                  const report=command=>send({report:command,diagnostics:dextRuntimeDiagnostics(),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPieces:document.querySelectorAll('.dext-v3-focus>polygon').length,iframeCount:document.querySelectorAll('iframe').length,documents:[...documents.values()],values:[...values]});
+                  const report=command=>send({report:command,iconRects:[...document.querySelectorAll('.dext-v3-icon')].filter(n=>!n.hidden).map(n=>{const r=n.getBoundingClientRect();return{label:n.getAttribute('aria-label'),x:r.left/innerWidth,y:r.top/innerHeight,width:r.width/innerWidth,height:r.height/innerHeight};}),diagnostics:dextRuntimeDiagnostics(),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPieces:document.querySelectorAll('.dext-v3-focus>polygon').length,iframeCount:document.querySelectorAll('iframe').length,documents:[...documents.values()],values:[...values]});
                   addEventListener('message',e=>{const owned=[...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source);if(!owned)return;
                     if(e.data?.authorDocument)documents.set(e.data.consumer,e.data);if(e.data?.authorValue)values.set(e.data.consumer,e.data.tick);});
                   const original=dextNativePlaybackChanged;window.dextNativePlaybackChanged=value=>{const accepted=original(value);send({playback:value.paused,accepted,diagnostics:dextRuntimeDiagnostics()});return accepted;};
                   chrome.webview.addEventListener('message',e=>{const command=e.data?.permissions?.command,expectedRevision=e.data?.permissions?.revision;if(e.data.type!=='dext:system-control-result'||!command)return;
                     const stop=performance.now()+8000;const poll=()=>{const d=dextRuntimeDiagnostics(),ready=command==='revoked'?d.runtime===null:d.revision===expectedRevision&&d.runtime?.inputReady&&documents.size===2&&values.size===2;
-                      if(ready||performance.now()>stop)report(command);else setTimeout(poll,20);};poll();});
+                      if((ready&&(command!=='movingSource'||d.runtime.transition?.elapsed>=1000&&!d.runtime.transition.finished))||performance.now()>stop)report(command);else setTimeout(poll,20);};poll();});
                 })();
                 """);
             var info=new ProcessStartInfo(Path.GetFullPath(player)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardInputEncoding=Encoding.UTF8,WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(player))!};
@@ -68,10 +68,10 @@ internal static class OfficialHostWireProbe
                 var window=process.GetProcessWindow(true);NativeMethods.ShowWindow(window,4);NativeMethods.SetWindowPos(window,0,120,120,640,480,0x14);await Task.Delay(300);
                 context.Resources=Directory.GetFiles(content.FullName).Select(path=>{var bytes=File.ReadAllBytes(path);return new LivelyRoomRuntimeResource{Path=Path.GetFileName(path),Size=bytes.Length,Sha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()};}).ToArray();
                 var manifest=new {version=3,apiVersion=1,id=f.Snapshot.RoomId,name="Official host probe",startDesk="home",resources=context.Resources.Select(r=>r.Path).ToArray(),
-                    roomScene=new{entry="author.html",capabilities=new[]{"desk.read","time.read"}},transition=new{type="slide",durationMs=450},
+                    roomScene=new{entry="author.html",capabilities=new[]{"desk.read","time.read"}},transition=new{type="slide",durationMs=4500},
                     buttons=new[]{new{id="next",name="Next",scope="room",action=new{type="desk.next"}}},
                     components=new[]{new{id="shared",role="widget",entry="author.html",placement=new{x=400,y=50,width=200,height=100},capabilities=new[]{"desk.read","time.read"},buttonIds=new[]{"next"}}},
-                    desks=new[]{new{id="home",name="Home",icons=new object[]{new{id="first",buttonId="next",x=0,y=0},new{id="second",buttonId="next",x=1,y=0}},components=new[]{"shared"},background=new{type="image",src="bg.svg"}},new{id="focus",name="Focus",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="image",src="bg.svg"}}}};
+                    desks=new[]{new{id="home",name="Home",icons=new object[]{new{id="first",buttonId="next",x=8,y=0},new{id="second",buttonId="next",x=9,y=0}},components=new[]{"shared"},background=new{type="image",src="bg.svg"}},new{id="focus",name="Focus",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="image",src="bg.svg"}}}};
                 context.ManifestJson=JsonConvert.SerializeObject(manifest);await Send(context);await Snapshot(1,"home");await Command("initial");var initial=await NextReport("initial");
                 Require((int?)initial["iframeCount"]==2&&(int?)initial["diagnostics"]?["runtime"]?["frames"]?["count"]==2&&geometries>=1,"actual official DOM mounts scene and shared widget after geometry ack");
                 var documents=(JArray)initial["documents"]!;Require(documents.Count==2&&documents.All(d=>(int?)d["readyCount"]==1),"two SDK documents initialize once");
@@ -106,7 +106,34 @@ internal static class OfficialHostWireProbe
                 await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=1,geometryVersion=(long?)initial["diagnostics"]?["runtime"]?["inputVersion"],kind="focus",consumer="official",button="next",entryId="icon.home/second"})});
                 await Command("focusSecond");var focused=await NextReport("focusSecond");
                 Require((string?)focused["diagnostics"]?["runtime"]?["focus"]?["entryId"]=="icon.home/second"&&(bool?)focused["focusVisible"]==true&&(int?)focused["focusPieces"]==1,"actual official SVG focuses exact second icon without author DOM focus");
-                var transition=Guid.NewGuid();await Snapshot(2,"home","focus",transition);var completion=await Next();Require((string?)completion["complete"]?["TransitionId"]==transition.ToString(),"default DOM transition reports current completion");
+                var transition=Guid.NewGuid();await Snapshot(2,"home","focus",transition);
+                await Command("movingSource");var moving=await NextReport("movingSource");
+                Require((bool?)moving["diagnostics"]?["runtime"]?["transition"]?["finished"]==false,"source sample must occur during actual default animation");
+                var movingRect=((JArray)moving["iconRects"]!).Single(row=>(string?)row["label"]=="first");
+                var movingX=bounds.X+(int)(((double)movingRect["x"]!+(double)movingRect["width"]!/2)*bounds.Width);
+                var movingY=bounds.Y+(int)(((double)movingRect["y"]!+(double)movingRect["height"]!/2)*bounds.Height);
+                var movingVersion=(long)moving["diagnostics"]!["runtime"]!["inputVersion"]!;var movingIssued=Stopwatch.GetTimestamp();
+                LivelyMessageRoomNativePointer MovingPointer(string kind)=>new(){RuntimeGeneration=1,SessionId=context.SessionId,Revision=2,GeometryVersion=movingVersion,
+                    GestureId=8,IssuedAt=movingIssued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,
+                    PixelWidth=bounds.Width,PixelHeight=bounds.Height,Dpi=dpi,X=movingX,Y=movingY,SampleMouse=true};
+                await Send(MovingPointer("down"));var movingDown=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                await Send(MovingPointer("up"));var movingUp=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                Require(movingDown?.Input.Kind=="down"&&movingUp?.Input.Kind=="up"&&movingDown.Input.GestureId==8&&movingUp.Input.IssuedAt==movingIssued,
+                    "actual moving source dispatch receipts must release both edge samples");
+                Require(DextNativeGeometry.TryCreate(movingDown!.Buttons,out var downRegions),"actual moving DOWN sample remains exact convex regions");
+                Require(DextNativeGeometry.TryCreate(movingUp!.Buttons,out var upRegions),"actual moving UP sample remains exact convex regions");
+                var sourceDown=downRegions.Single(row=>row.EntryId=="icon.home/first");
+                var sourceUp=upRegions.Single(row=>row.EntryId=="icon.home/first");
+                Require(sourceDown.X!=sourceUp.X&&sourceDown.Contains(((double)movingX-bounds.X)/bounds.Width,((double)movingY-bounds.Y)/bounds.Height)&&
+                    sourceUp.Contains(((double)movingX-bounds.X)/bounds.Width,((double)movingY-bounds.Y)/bounds.Height),"both true moving polygons hit the same physical point at their painted positions");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"moving native input changed foreground");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                    type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=2,geometryVersion=movingVersion,
+                    kind="activate",consumer="official",button="next",entryId="icon.home/first",inputSequence=8})});
+                var movingActivated=(await Next())["activated"];
+                Require((long?)movingActivated?["InputSequence"]==8&&actions==2,"moving source releases one original sequence action");
+                Console.WriteLine("PASS actual production animated source icon: different painted DOWN/UP polygons contain same native point, two trusted receipts and one original sequence action; Core packets/replies are fixture");
+                var completion=await Next();Require((string?)completion["complete"]?["TransitionId"]==transition.ToString(),"default DOM transition reports current completion");
                 await Command("beforeCommit");var before=await NextReport("beforeCommit");Require((string?)before["diagnostics"]?["runtime"]?["currentDeskId"]=="home","host never commits Desk itself");
                 await Snapshot(3,"focus");await Command("committed");var committed=await NextReport("committed");Require((bool?)committed["focusVisible"]==false&&committed["diagnostics"]?["runtime"]?["focus"]?.Type==JTokenType.Null,"actual SVG focus cleared on input invalidation");Require((string?)committed["diagnostics"]?["runtime"]?["currentDeskId"]=="focus"&&JToken.DeepEquals(documents,committed["documents"]),"Core commit retains actual iframe documents");
                 var queuedTransition=Guid.NewGuid();await Snapshot(4,"focus","home",queuedTransition);await Snapshot(5,"focus","home",queuedTransition,"focus");await Task.Delay(100);await Send(new LivelySuspendCmd());var paused=await Next();
@@ -123,7 +150,7 @@ internal static class OfficialHostWireProbe
                         if(method=="capabilities"||method=="data")Require(consumer is "scene" or "component.shared","fixed actual consumer");
                         if(method=="activate")actions++;
                         if(method=="data"){Require((string?)request["Capability"]=="time.read","declared actual data");ticks++;}
-                        await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",inputSequence=method=="activate"?7:0,inputConsumed=method=="activate",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null,layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});if(method=="activate")return new JObject{["activated"]=request};continue;}
+                        await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",inputSequence=method=="activate"?(long?)request["InputSequence"]??0:0,inputConsumed=method=="activate",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null,layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});if(method=="activate")return new JObject{["activated"]=request};continue;}
                     return value;
                 }if(process.HasExited)throw new Exception("Player exit: "+await errors);await Task.Delay(20);}throw new TimeoutException("official wire: "+string.Join("\n",log.TakeLast(8)));}
             }

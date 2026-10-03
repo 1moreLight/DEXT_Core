@@ -245,7 +245,7 @@
 | #188 | 原生鼠标UP生成完成证明但NotifyNative传false，画布默认按钮不收到激活 | [backend](errors/backend.md) |
 | #189 | 导航先推进Core修订，私有宿主提前取消真实动作回执并误报staleInput | [backend](errors/backend.md) |
 | #190 | 输入探针误用未提供的operable诊断字段；COM Type与Protobuf.Type名称冲突 | [toolchain](errors/toolchain.md) |
-| #191 | 聚焦Progman不等于显示桌面，测试点击实际命中覆盖应用；重启初期前台仍是工具窗 | [toolchain](errors/toolchain.md) |
+| #191 | 聚焦Progman/应用列表缺项不等于桌面可点击，凭据宿主可覆盖真实命中；重启前台需复核 | [toolchain](errors/toolchain.md) |
 
 
 | #192 | 控制探针并发前置/计时接口/标题容量/参数和真实进程名核对 | [toolchain](errors/toolchain.md) |
@@ -282,3 +282,5 @@
 | #211 | WinForms.Focus未使非激活Player派发键；先原生controller再路由作者frame | [renderer](errors/renderer.md) |
 
 | #212 | 归一化多边形宽度的机器舍入不能用严格等于测试 | [renderer](errors/renderer.md) |
+
+| #213 | 源动作夹具需进入desktop并沿创建票据的bridge确认；短路out变量不能靠Require推断赋值 | [toolchain](errors/toolchain.md) |

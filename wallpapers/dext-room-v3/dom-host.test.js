@@ -397,3 +397,24 @@ test('visual sample holds are released by lifecycle invalidation and cannot revi
  assert.equal(f.host.endNativeInputSample('sample-1'),false);assert.equal(f.host.beginNativeInputSample(scope,version,'sample-2'),null);
  f.host.dispose();
 });
+
+test('event samples include clipped source icons while boundary geometry keeps target scope',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[{id:'source',buttonId:'next',x:8,y:0}],components:[]},{id:'focus',name:'Focus',icons:[],components:[]}]}});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(225);
+ const version=f.host.readDiagnostics().inputVersion,sample=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:2},version);
+ const source=sample.buttons.find(v=>v.entryId==='icon.home/source');assert.ok(source);assert.equal(source.x,0);assert.ok(source.width>0&&source.width<96/1920);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.entryId==='icon.home/source'),false);
+ f.host.dispose();
+});
+test('visible source widget publishes desk scoped region only for event sampling and retires on commit',async()=>{
+ const f=fixture({room:{buttons:[{id:'home',name:'Home',scope:'home'}],components:[{id:'source',role:'widget',entry:'widget.html',placement:{x:1200,y:200,width:200,height:100},capabilities:[],buttonIds:['home']}],
+  desks:[{id:'home',name:'Home',icons:[],components:['source']},{id:'focus',name:'Focus',icons:[],components:[]}]}});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(225);
+ assert.equal(await f.host.publishGeometry('component.source',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,
+  buttons:[{buttonId:'home',x:0,y:0,width:100,height:100}]}),true);
+ const scope={runtimeGeneration:1,sessionId:'session',revision:2};
+ const sample=f.host.readInputSample(scope,f.host.readDiagnostics().inputVersion);assert.equal(sample.buttons[0].consumer,'component.source');assert.equal(sample.buttons[0].x,240/1920);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.length,0);
+ await f.host.acceptSnapshot(f.snap(3,{currentDeskId:'focus'}));
+ const committed=f.host.readInputSample({...scope,revision:3},f.host.readDiagnostics().inputVersion);assert.equal(committed.buttons.length,0);f.host.dispose();
+});

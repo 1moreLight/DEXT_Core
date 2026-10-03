@@ -1460,3 +1460,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] event-barrier-enter-native-wire-final与event-barrier-space-native-wire-final均exit0：新bootstrap/队列下原真实trusted Enter/Space、同UP正数一次作者动作保持。
 - [x] event-barrier-frame-media-wire-final必要回归exit0；event-barrier-core-build-final完整四阶段后常规start Core25536/Player57252/Watchdog30248/config120196，日志20261004_043025.txt。identity共享D配置器OTHER/exit1且精确绝对路径独立核验；正常关闭Core/配置器与watcher73666 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official临时目录0。具名阶段提交后继续source与移动补证。
 - [ ] 接续source手势级准入与移动正式宿主/真实Core OS补证、Core零序号兼容收口；系统凭据窗未解除时不代填Core物理输入。拖动按用户暂缓，本地功能优先，不扩展网络专项、不中途验收/合并master；完整16项就绪1/16≈6%，最终卡第4/5项和全包7项/单次P5审查保持待执行。
+## P5 转场源入口的手势准入（2026-10-04，BASE e56ad2c）
+一句话目标：源Desk仍可见时，正式DOM的原生事件样本包含其按钮；Core只让同一真实sampled mouse完成证明通过源consumer/button scope，继续执行一次已配置应用/导航/控制/可信退出。
+范围：当前source/target声明几何、Core原生proof专用scope、只读按钮/动作能力元数据投影、既有权限/个人动作/一次消费与退出确认重查；来源扩展不授予data/storage或无输入动作。官方源图标和直接作者root仍走实际可信dispatch屏障，无逐帧IPC，后续真正移动/实际Core OS/DPI证据保持完整要求。桌面拖动暂缓，本地功能优先，无新网络专项。
+先Core源应用/导航/控制/退出行为与DOM源可见样本RED再实现，必要回归及正式Player移动图标证据；改C#后完整build→start/身份→正常退出、原四文件保持、具名阶段commit。最终卡第4/5项集中验收，不中途确认或合并master；完整16项就绪1/16≈6%。
+- [x] Core私有sampled mouse完成证明专用source scope已接应用/导航/媒体控制与原生退出确认；导航仍从已有target排最后意图。只读按钮与保护动作能力可投影source，data/storage继续target活动规则，普通无proof票据不能借source。纠正媒体夹具启动阶段与bridge连接后，对已提交生产基线重跑实质RED272/281（8新增+1旧元数据期望），当前GREEN281/281；不降低1500ms/修订/原生一次消费或授权。
+- [x] source声明矩形可进入可见几何，只有物理event sample包含可见source icon/widget；边界发布仍target范围，commit后source卸下。DOM RED48/50→与model合计65/65；source-moving-official-wire实际ReleasePlayer/生产正式宿主：4500ms动画进行中两个边沿多边形X不同、仍包含同一实际点，trusted dispatch后原gesture8只生成一次动作，原前台不变、切页/共享文档/暂停/撤销保持；Core输入包/回执仍fixture。
+- [x] source-action-core-build四阶段通过；实际source-action-native-core-live仍在空桌面点击前命中Credential Dialog Xaml Host而停止，finally原壁纸/四文件/Room哈希/窗口旗标恢复，不计OS输入通过。常规start Core43772/Player72276/Watchdog120536/config119928、日志20261004_050155.txt；identity共享D配置器OTHER/exit1且路径独立核验。正常关闭、watcher2576 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author、official、Core原生GUID目录0。保存具名阶段提交后继续。
+
+- [ ] 下一段：动态键盘焦点当前可见取样与Core零序号兼容收口、实际Core OS/物理DPI/锁屏/还原补证。系统窗仍覆盖真实命中，不能因应用列表漏报重试；拖动暂缓，整体16项就绪1/16≈6%，最终第4/5项和全包集中验收保持。

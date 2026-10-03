@@ -21,9 +21,10 @@ internal sealed class RoomNativeInputProof
 {
     private readonly RoomNativeInputAuthority owner;
     private int consumed;
-    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence)
-    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; }
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; }
     internal long Sequence { get; }
+    internal bool SampledMouse { get; }
     internal bool IsConsumed => Volatile.Read(ref consumed)!=0;
     internal void MarkConsumed() => Volatile.Write(ref consumed,1);
     internal RoomNativeButton Button { get; }
@@ -242,7 +243,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private void Complete(Press press,long now)
     {
         if(gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
-        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence);
+        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse);
     }
     private bool Expired(long issued,long now)
     {

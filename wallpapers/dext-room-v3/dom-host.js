@@ -52,6 +52,7 @@
       mountHTML:(definition,parent)=>frames.mount(definition,parent),setHTMLState:(id,state)=>frames.setState(id,state),disposeHTML:id=>frames.disposeInstance(id),
       onStartupComplete:value=>native.request('startupComplete',{lifecycleRevision:value.lifecycleRevision},{...scope(),sessionId:value.sessionId,revision:value.revision})});
     function activeDesk(){return snapshot.targetDeskId||snapshot.currentDeskId;}
+    function inputDesks(sampled){return sampled&&snapshot.targetDeskId?[snapshot.currentDeskId,snapshot.targetDeskId]:[activeDesk()];}
     function visible(definition){
       const stage=snapshot.lifecycle.stage;
       if(definition.consumerId==='slot.start')return stage==='starting';if(definition.consumerId==='slot.idle')return stage==='idle';
@@ -177,14 +178,16 @@
       for(const [consumer,regions]of Object.entries(state.buttonRegions)){
         const node=nodes.find(n=>n.record.definition?.consumerId===consumer);if(!node)continue;
         const record=node.record;
-        if(consumer.startsWith('component.')&&!desks.get(activeDesk()).components.includes(consumer.slice(10))||consumer.startsWith('slot.background.')&&consumer.slice(16)!==activeDesk())continue;
+        const allowedDesks=inputDesks(sampled);
+        if(consumer.startsWith('component.')&&!allowedDesks.some(id=>desks.get(id).components.includes(consumer.slice(10)))||consumer.startsWith('slot.background.')&&!allowedDesks.includes(consumer.slice(16)))continue;
         for(const region of regions){
+          const authored=room.buttons?.find(button=>button.id===region.buttonId);if(!authored||authored.scope!=='room'&&!allowedDesks.includes(authored.scope))continue;
           const local=localButtons.get(consumer)?.find(b=>b.buttonId===region.buttonId),placement=recordPlacement(record);
           const rect=local&&record.definition.placement?layoutModel.mapLocalRect({localRect:local,logicalSize:record.definition.placement,effectiveRect:placement}):region;
           add(preciseEntry(consumer,region.buttonId,'button.'+region.buttonId,rect,node,nodes,buttons.length,sampled));
         }
       }
-      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()){
+      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&inputDesks(sampled).includes(record.deskId)){
         const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
       }
       return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));

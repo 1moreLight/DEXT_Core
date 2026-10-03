@@ -13,6 +13,7 @@ static partial class RoomActionChecks
         LayoutChecks(check);
         PreciseInputChecks(check);
         GestureChecks(check);
+        SourceInputChecks(check);
 
         check("timed-out Windows control retains attachment admission until actual terminal",()=>{
             var queue=new RoomNativeControlQueue(TimeSpan.FromMilliseconds(50));var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new ManualResetEventSlim();
@@ -727,10 +728,11 @@ static partial class RoomActionChecks
             Eq(RoomActionStatus.Denied, f.Actions.InvokeButton(f.View, new("forged"), f.Session, "scene", "open", input.Ticket).Status);
             Eq(RoomActionStatus.StaleInput, f.Actions.InvokeButton(f.View, f.Peer, f.Session, "component.widget", "open", input.Ticket).Status); Eq(0, f.Launched.Count);
         });
-        check("Desk scope and component membership follow authorized target Desk", () => {
+        check("source metadata is visible while unsampled input still follows authorized target Desk", () => {
             using var f = new ActionFixture(); Eq(RoomActionStatus.Forbidden, f.Invoke("focus-only", null).Status);
             Eq(RoomActionStatus.Accepted, f.Invoke("next", f.Input("next").Ticket).Status); Eq("focus", f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Forbidden, f.Actions.ReadButtons(f.View, f.Peer, f.Session, "component.widget").Status);
+            Eq(RoomActionStatus.Accepted, f.Actions.ReadButtons(f.View, f.Peer, f.Session, "component.widget").Status);
+            Eq(RoomActionStatus.Forbidden,f.Input("open","component.widget").Status);
             Eq(RoomActionStatus.InputRequired, f.Invoke("focus-only", null).Status);
         });
         check("paused sessions and coordinator cannot activate view privileges", () => {
@@ -925,7 +927,7 @@ static partial class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false,bool controlCapabilities=false,bool layoutDock=false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false,bool controlCapabilities=false,bool layoutDock=false,bool sourceScoped=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -961,6 +963,9 @@ static partial class RoomActionChecks
             var controlCaps=new[]{"media.control","audio.control"};
             if(controlCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["components"]![0]})foreach(var cap in controlCaps)owner!["capabilities"]!.AsArray().Add(cap);
                 document["components"]![0]!["buttonIds"]!.AsArray().Add("dynamic");manifest=document.ToJsonString();}
+            if(sourceScoped){var document=JsonNode.Parse(manifest)!;
+                foreach(var button in document["buttons"]!.AsArray())if(new[]{"open","next","exit","dynamic"}.Contains(button!["id"]!.GetValue<string>()))button["scope"]="home";
+                manifest=document.ToJsonString();}
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);

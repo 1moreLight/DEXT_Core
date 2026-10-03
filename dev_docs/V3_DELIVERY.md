@@ -11,10 +11,10 @@
 |---|---|---|---|
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
-| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；source动作/移动采样、个人编辑UI待贯通 | 否 |
+| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；动态键盘/实际Core OS与个人编辑UI待贯通 | 否 |
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；完整连续仪表盘/输入/异常恢复待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
-| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；移动事件取样/实际DPI继续，桌面拖动按用户暂缓 | 否 |
+| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；动态键盘/实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
 | 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
@@ -177,3 +177,11 @@ Player私有采样通道与原生派发期间视觉保持/释放尚未接，生�
 event-barrier-sample-native-wire实际ReleasePlayer/正式SDK：可信DOWN/UP两份私有样本先于一次原r1→n1/gesture7作者动作；小official几何/路由及Core包/回执fixture。event-barrier-official-top-wire-final实际生产index/main/dom/native/frame/media/SDK：两个精确图标多边形采样、同入口一条官方动作、原前台不变；切页、同文档、受控SVG焦点/清除、暂停/最新修订和撤销通过。首轮顶层对象receipt被现有字符串receiver拒绝，按ERRORS #170补充修复后整轮exit0，未放宽来源/物理权限。实际wire图标静止；运动/遮挡为DOM行为证据，不据此填写移动或实际Core OS/DPI验收。
 event-barrier-enter-native-wire-final/space-native-wire-final与frame-media-wire-final必要回归均exit0。event-barrier-core-build-final完整四阶段成功后，常规start Core25536/Player57252/Watchdog30248/config120196，日志20261004_043025.txt。产品/插件/mutex/pipe/data/log正常，共享D配置器在identity脚本为OTHER/exit1且精确绝对路径独立核验；本次常规启动恢复原v2，不计原生v3物理输入。
 精确正常退出Core/配置器、watcher73666 exit0；原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/author与official GUID临时目录0。后续source手势级准入、真正移动正式宿主与Core OS输入、物理DPI/锁屏和故障还原保持完整范围；凭据窗限制不能用fixture代替。拖动按用户暂缓，本地功能优先、无新网络专项/中途验收/master合并，完整16项就绪仍1/16=6.25%（约6%）；最终第4/5项与七项/单次P5审查集中执行。
+## P5 转场source鼠标入口与真实移动Player验证（2026-10-04）
+Core原生完成增加内部SampledMouse，source scope只给当前同一两边视觉样本完成；普通无proof票据/旧静止键盘完成不扩大source。保护动作沿实际私有bridge票据查回原proof，在准备和消费处重核，原consumer声明/按钮Desk/授权/个人动作/1500ms/QPC/一次消费保留。导航仍以现有target排最后意图。只读按钮与已授权保护动作能力可显示source，源data/storage仍按target活动规则拒绝。源退出的Core原生确认冻结原source/target对，确认自身失焦提交同target后继续复核安装/会话/声明/授权/个人配置/锁屏。
+修正媒体夹具先desktop、退出确认沿同bridge后，对提交基线重跑实质source-action-core-corrected-red 272/281（8新增功能与1旧元数据预期变更），当前source-action-core-corrected-green281/281。四类consumer源应用一次启动、无输入源票据拒绝、动作元数据不授予storage、导航相对target排队、源媒体控制一次消费、可信退出自身pause后保持决定均通过；原失败历史与夹具原因见ERRORS #213。
+公开geometry允许仍挂载source消费者的声明Desk矩形，标准边界几何仍target有效区域；物理event sample按当前画布/遮挡裁剪source/target图标和Widget，commit后去掉source。DOM真实行为RED48/50；修复后DOM50+model15=65/65，无逐帧IPC。
+source-moving-official-wire actual ReleasePlayer/生产index/main/dom/native/frame/media/SDK整轮exit0：4500ms滑动进行中源图标两个采样X不同、各自精确凸区域都包含同一实际鼠标点；两个可信原生边沿回执后gesture8只释放一次原官方动作、前台不变。已有静止采样/图标区分/焦点/切页/同文档/暂停/最新修订/撤销保持。该wire的Core输入包/回复为fixture，不能代填实际Core OS证明。
+实际source-action-native-core-live已尝试生产安装/Core/WorkerW，但WindowsFromPoint仍命中Credential Dialog Xaml Host全屏；Orca可见应用列表未列出且process.MainWindowHandle=0是弱证据。点击前断言停止、没有点击/关闭系统凭据窗，finally恢复原壁纸、四文件原字节/缺失、Room哈希和临时窗口旗标；此轮不计实际Core输入通过（ERRORS #191补充），待系统窗真正解除才补。
+source-action-core-build完整四阶段后常规start Core43772/Player72276/Watchdog120536/config119928，日志20261004_050155.txt。identity共享D配置器OTHER/exit1且精确绝对路径独立核验。精确正常关闭Core/配置器，watcher2576 exit0，原四文件hash/缺失状态保持，Dext进程/开发监听/author、official、Core原生GUID目录0。
+此阶段完成转场源鼠标入口与保护动作基础。动态键盘焦点的再次可见取样、完整Core OS/物理DPI/锁屏/故障还原和最终7项/单次P5整体审查仍继续；Core旧零值proof兼容待全输入链收口。桌面拖动按用户暂缓，本地功能优先、无新增网络专项/中途验收/master合并；完整16项就绪1/16=6.25%（約6%）。

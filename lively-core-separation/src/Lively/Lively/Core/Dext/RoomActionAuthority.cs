@@ -29,7 +29,7 @@ internal sealed record RoomSystemControl(string Capability,string? Action=null,d
 
 // An opaque in-memory continuation, never an authored message or public token.
 internal sealed class RoomExitConfirmation(RoomActionAuthority owner,Guid connection,RoomSessionPeer peer,
-    Guid session,string room,string stamp,string consumer,string button)
+    Guid session,string room,string stamp,string consumer,string button,string? sourceDesk=null,string? transitionTarget=null)
 {
     private int used;
     internal Guid Session=>session;
@@ -37,6 +37,8 @@ internal sealed class RoomExitConfirmation(RoomActionAuthority owner,Guid connec
     internal string Stamp=>stamp;
     internal string Consumer=>consumer;
     internal string Button=>button;
+    internal string? SourceDesk=>sourceDesk;
+    internal string? TransitionTarget=>transitionTarget;
     internal bool Consume(RoomActionAuthority expected,Guid caller,RoomSessionPeer callerPeer)=>
         ReferenceEquals(owner,expected)&&connection==caller&&peer.TransportId==callerPeer.TransportId&&Interlocked.Exchange(ref used,1)==0;
 }
@@ -74,9 +76,9 @@ internal sealed partial class RoomActionAuthority
         try
         {
             return Prepare(connection, peer, session, consumer, status => new RoomButtonsReply(status), (state, context, owner) =>
-                new(RoomActionStatus.Accepted, context.Installation.ActionCatalog!.Buttons.Values.Where(b => InScope(b, owner, context.Snapshot))
+                new(RoomActionStatus.Accepted, context.Installation.ActionCatalog!.Buttons.Values.Where(b => InScope(b, owner, context.Snapshot,SourceDesk(context,consumer,visible:true)))
                     .Select(b => { var action = Resolve(state, context.Installation.RoomId, b, out var target);
-                        return new PublicRoomButton(b.Id, b.Name, b.Scope, action?.Type, target is not null); }).ToArray()));
+                        return new PublicRoomButton(b.Id, b.Name, b.Scope, action?.Type, target is not null); }).ToArray()),visibleSource:true);
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
     }
@@ -92,10 +94,11 @@ internal sealed partial class RoomActionAuthority
                 if (revision is { } expected && context.Snapshot.Revision != expected) return new(RoomActionStatus.StaleInput);
                 var canConsume = owner.CanConsume(context.Role, context.Snapshot);
                 var result = owner.DeclaredCapabilities.ToDictionary(capability => capability,
-                    capability => canConsume ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable,
+                    capability => canConsume || SourceDesk(context,consumer,visible:true) is{} source && owner.CanConsume(context.Role,context.Snapshot,source) && ProtectedCapability(capability)
+                        ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable,
                     StringComparer.Ordinal);
                 return new(RoomActionStatus.Accepted, new ReadOnlyDictionary<string, RoomActionStatus>(result));
-            });
+            },visibleSource:true);
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
     }
@@ -204,9 +207,10 @@ internal sealed partial class RoomActionAuthority
         {
             return Prepare(connection, peer, session, consumer, status => new RoomInputReply(status), (state, context, owner) =>
             {
-                var status = Button(context, owner, button, out _);
+                var source=SourceDesk(context,consumer,nativeInput);
+                var status = Button(context, owner, button, out _,source);
                 if (status != RoomActionStatus.Accepted) return new(status);
-                if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
+                if (!owner.CanConsume(context.Role, context.Snapshot,source)) return new(RoomActionStatus.NotOperable);
                 if (nativeInput != null && !nativeInput.Validate(context.Snapshot, consumer, button)) return new(RoomActionStatus.StaleInput);
                 var physicalTime = nativeInput?.IssuedAt ?? issuedAt;
                 if (Expired(physicalTime, issuedAt)) return new(RoomActionStatus.ExpiredInput);
@@ -220,7 +224,7 @@ internal sealed partial class RoomActionAuthority
                         context.Installation.InstallationStamp, context.Snapshot.Revision, state.Revision, physicalTime, nativeInput));
                     return new(RoomActionStatus.Accepted, id);
                 }
-            });
+            },nativeInput);
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
     }
@@ -239,14 +243,15 @@ internal sealed partial class RoomActionAuthority
     {
         // TimeProvider is injectable; invoke it outside all authorization locks.
         var requestedAt = clock.GetTimestamp();
-        PreparedAction prepared;
+        PreparedAction prepared;var nativeInput=TicketNativeInput(connection,peer,session,consumer,button,ticket);
         try
         {
             prepared = Prepare(connection, peer, session, consumer, status => new PreparedAction(status), (state, context, owner) =>
             {
-                var status = Button(context, owner, button, out var authored);
+                var source=SourceDesk(context,consumer,nativeInput);
+                var status = Button(context, owner, button, out var authored,source);
                 if (status != RoomActionStatus.Accepted) return new(status);
-                if (!owner.CanConsume(context.Role, context.Snapshot)) return new(RoomActionStatus.NotOperable);
+                if (!owner.CanConsume(context.Role, context.Snapshot,source)) return new(RoomActionStatus.NotOperable);
                 if (requested?.Type == "desk.go" && !context.Installation.DeskIds.Contains(requested.DeskId!, StringComparer.Ordinal))
                     return new(RoomActionStatus.Denied);
                 var action = Resolve(state, context.Installation.RoomId, authored!, out var target);
@@ -266,7 +271,7 @@ internal sealed partial class RoomActionAuthority
                 if (action.Type == "binding.launch")
                     return target is null ? new(RoomActionStatus.MissingBinding) : new(RoomActionStatus.Accepted, action.Type, target, IssuedAt: issuedAt);
                 if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: issuedAt,
-                    Exit:new(this,connection,peer,session,context.Installation.RoomId,context.Installation.InstallationStamp,consumer,button));
+                    Exit:new(this,connection,peer,session,context.Installation.RoomId,context.Installation.InstallationStamp,consumer,button,source,source==null?null:context.Snapshot.TargetDeskId));
                 var desks = context.Installation.DeskIds;
                 var current = context.Snapshot.TargetDeskId ?? context.Snapshot.CurrentDeskId;
                 var index = Array.IndexOf(desks.ToArray(), current);
@@ -274,7 +279,7 @@ internal sealed partial class RoomActionAuthority
                     "desk.previous" => desks[(index + desks.Count - 1) % desks.Count], "desk.go" => action.DeskId, _ => null };
                 return targetDesk is null || !desks.Contains(targetDesk, StringComparer.Ordinal)
                     ? new(RoomActionStatus.InvalidButton) : new(RoomActionStatus.Accepted, action.Type, DeskId: targetDesk, IssuedAt: issuedAt);
-            });
+            },nativeInput);
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
         if (prepared.Status != RoomActionStatus.Accepted) return new(prepared.Status);
@@ -296,11 +301,11 @@ internal sealed partial class RoomActionAuthority
             return Prepare(connection,peer,confirmation.Session,confirmation.Consumer,status=>new RoomActionReply(status),(state,context,owner)=>{
                 if(context.Installation.RoomId!=confirmation.Room||context.Installation.InstallationStamp!=confirmation.Stamp)return new(RoomActionStatus.StaleSession);
                 if(context.Snapshot.Lifecycle.Locked)return new(RoomActionStatus.NotOperable);
-                var status=Button(context,owner,confirmation.Button,out var authored);
+                var status=Button(context,owner,confirmation.Button,out var authored,SourceDesk(context,confirmation.Consumer,confirmation:confirmation));
                 if(status!=RoomActionStatus.Accepted)return new(status);
                 if(Resolve(state,context.Installation.RoomId,authored!,out _) is not{Type:"dext.exit",DeskId:null})return new(RoomActionStatus.Denied);
                 return new(Permission(state,context.Installation,owner,confirmation.Consumer,"dext.exit"));
-            });
+            },confirmation:confirmation);
         }catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
     }
 
@@ -311,11 +316,13 @@ internal sealed partial class RoomActionAuthority
     {
         if(!ValidControl(control)||dispatch==null)return new(RoomActionStatus.Denied);
         var requestedAt=clock.GetTimestamp();PreparedAction prepared;
+        var nativeInput=TicketNativeInput(connection,peer,session,consumer,button,ticket);
         try{
             prepared=Prepare(connection,peer,session,consumer,status=>new PreparedAction(status),(state,context,owner)=>{
-                var status=Button(context,owner,button,out var authored);
+                var source=SourceDesk(context,consumer,nativeInput);
+                var status=Button(context,owner,button,out var authored,source);
                 if(status!=RoomActionStatus.Accepted)return new(status);
-                if(!owner.CanConsume(context.Role,context.Snapshot))return new(RoomActionStatus.NotOperable);
+                if(!owner.CanConsume(context.Role,context.Snapshot,source))return new(RoomActionStatus.NotOperable);
                 // An author's control cannot replace the user's configured
                 // navigation/application/exit or the declared default action.
                 if(Resolve(state,context.Installation.RoomId,authored!,out _)!=null)return new(RoomActionStatus.Denied);
@@ -330,7 +337,7 @@ internal sealed partial class RoomActionAuthority
                 if(status!=RoomActionStatus.Accepted)return new(status);
                 lock(gate)lastControls[(consumer,control.Capability)]=requestedAt;
                 return new(RoomActionStatus.Accepted,IssuedAt:issuedAt);
-            });
+            },nativeInput);
         }catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
         if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
         if(Expired(prepared.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
@@ -362,13 +369,14 @@ internal sealed partial class RoomActionAuthority
     }
 
     private T Prepare<T>(Guid connection, RoomSessionPeer peer, Guid session, string consumer,
-        Func<RoomActionStatus, T> rejected, Func<RoomPersonalState, RoomActionContext, RoomActionCatalog.Consumer, T> prepare)
+        Func<RoomActionStatus, T> rejected, Func<RoomPersonalState, RoomActionContext, RoomActionCatalog.Consumer, T> prepare,
+        RoomNativeInputProof? nativeInput=null,bool visibleSource=false,RoomExitConfirmation? confirmation=null)
     {
         // Early refusal avoids reading private state for unauthenticated callers.
         // It is not authority to dispatch: every accepted attempt rechecks below.
         var initial = gateway.ReadActionContext(connection, peer, session, out var early);
         if (initial != RoomProtocolStatus.Accepted) return rejected(Status(initial));
-        var status = Consumer(early!, consumer, out _);
+        var status = Consumer(early!, consumer, out _,nativeInput,visibleSource,confirmation);
         if (status != RoomActionStatus.Accepted) return rejected(status);
         var spin = new SpinWait();
         while (true)
@@ -380,7 +388,7 @@ internal sealed partial class RoomActionAuthority
                 var completed = gateway.TryWithActionContext(connection, peer, session, (admitted, context) =>
                 {
                     if (admitted != RoomProtocolStatus.Accepted) return rejected(Status(admitted));
-                    var authorized = Consumer(context!, consumer, out var owner);
+                    var authorized = Consumer(context!, consumer, out var owner,nativeInput,visibleSource,confirmation);
                     return authorized == RoomActionStatus.Accepted ? prepare(state, context!, owner!) : rejected(authorized);
                 }, out T value);
                 return (completed, value);
@@ -390,20 +398,40 @@ internal sealed partial class RoomActionAuthority
         }
     }
 
-    private static RoomActionStatus Consumer(RoomActionContext context, string consumer, out RoomActionCatalog.Consumer? owner)
+    // A ticket can carry the already-owned completion, never synthesize one.
+    private RoomNativeInputProof? TicketNativeInput(Guid connection,RoomSessionPeer peer,Guid session,string consumer,string button,Guid? ticket)
+    {
+        lock(gate)return ticket is{} id && tickets.TryGetValue(id,out var value) && value.Connection==connection &&
+            value.Peer==peer.TransportId && value.Session==session && value.Consumer==consumer && value.Button==button ? value.NativeInput : null;
+    }
+    private static bool ProtectedCapability(string capability)=>capability is "binding.launch" or "desk.navigate" or "dext.exit" or "media.control" or "audio.control";
+    private static string? SourceDesk(RoomActionContext context,string consumer,RoomNativeInputProof? input=null,bool visible=false,RoomExitConfirmation? confirmation=null)
+    {
+        var snapshot=context.Snapshot;
+        if(context.Role!=RoomClientRole.DesktopPlayer || !snapshot.IsActive || snapshot.Lifecycle.Stage!=RoomLifecycleStage.Desktop)return null;
+        if(confirmation?.SourceDesk is{} origin && confirmation.Consumer==consumer &&
+            (snapshot.CurrentDeskId==origin && snapshot.TargetDeskId==confirmation.TransitionTarget ||
+             snapshot.TargetDeskId==null && snapshot.CurrentDeskId==confirmation.TransitionTarget))return origin;
+        if(snapshot.TargetDeskId==null || snapshot.TransitionId==null)return null;
+        if(visible || input is{SampledMouse:true} && input.Validate(snapshot,consumer,input.Button.Button))return snapshot.CurrentDeskId;
+        return null;
+    }
+    private static RoomActionStatus Consumer(RoomActionContext context, string consumer, out RoomActionCatalog.Consumer? owner,RoomNativeInputProof? nativeInput=null,bool visibleSource=false,RoomExitConfirmation? confirmation=null)
     {
         owner = null;
         if (context.Installation.ActionCatalog is not { } catalog) return RoomActionStatus.Denied;
         if (consumer is null || !catalog.Consumers.TryGetValue(consumer, out owner)) return RoomActionStatus.UnknownConsumer;
-        return owner.IsActive(context.Role, context.Snapshot) ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
+        var source=SourceDesk(context,consumer,nativeInput,visibleSource,confirmation);
+        return owner.IsActive(context.Role, context.Snapshot) || source!=null && owner.IsActive(context.Role,context.Snapshot,source)
+            ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
     }
-    private static bool InScope(AuthoredRoomButton button, RoomActionCatalog.Consumer owner, RoomSessionSnapshot snapshot) =>
-        owner.HasButton(button.Id) && (button.Scope == "room" || button.Scope == (snapshot.TargetDeskId ?? snapshot.CurrentDeskId));
-    private static RoomActionStatus Button(RoomActionContext context, RoomActionCatalog.Consumer owner, string id, out AuthoredRoomButton? button)
+    private static bool InScope(AuthoredRoomButton button, RoomActionCatalog.Consumer owner, RoomSessionSnapshot snapshot,string? source=null) =>
+        owner.HasButton(button.Id) && (button.Scope == "room" || button.Scope == (snapshot.TargetDeskId ?? snapshot.CurrentDeskId) || source!=null && button.Scope==source);
+    private static RoomActionStatus Button(RoomActionContext context, RoomActionCatalog.Consumer owner, string id, out AuthoredRoomButton? button,string? source=null)
     {
         button = null;
         if (id is null || !context.Installation.ActionCatalog!.Buttons.TryGetValue(id, out button)) return RoomActionStatus.InvalidButton;
-        return InScope(button, owner, context.Snapshot) ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
+        return InScope(button, owner, context.Snapshot,source) ? RoomActionStatus.Accepted : RoomActionStatus.Forbidden;
     }
     private static RoomActionStatus Permission(RoomPersonalState state, VerifiedRoomInstallation installed, RoomActionCatalog.Consumer owner, string consumer, string capability)
     {

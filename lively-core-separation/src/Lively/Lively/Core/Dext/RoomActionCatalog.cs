@@ -31,13 +31,13 @@ internal sealed class RoomActionCatalog
         public IReadOnlyList<string> DeclaredCapabilities => Array.AsReadOnly(capabilities.OrderBy(value => value, StringComparer.Ordinal).ToArray());
         public bool HasCapability(string capability) => capabilities.Contains(capability);
         public bool HasButton(string button) => buttons is null || buttons.Contains(button);
-        public bool IsActive(RoomClientRole role, RoomSessionSnapshot snapshot) =>
+        public bool IsActive(RoomClientRole role, RoomSessionSnapshot snapshot,string? deskId=null) =>
             snapshot.IsActive && snapshot.Lifecycle.Stage == stage &&
             ((role == RoomClientRole.DesktopPlayer && desktop) || (role == RoomClientRole.Dock && dock)) &&
-            (desks is null || desks.Contains(snapshot.TargetDeskId ?? snapshot.CurrentDeskId));
+            (desks is null || desks.Contains(deskId ?? snapshot.TargetDeskId ?? snapshot.CurrentDeskId));
 
-        public bool CanConsume(RoomClientRole role, RoomSessionSnapshot snapshot) =>
-            IsActive(role, snapshot) && !snapshot.Lifecycle.Locked &&
+        public bool CanConsume(RoomClientRole role, RoomSessionSnapshot snapshot,string? deskId=null) =>
+            IsActive(role, snapshot,deskId) && !snapshot.Lifecycle.Locked &&
             // A separate visible Dock can remain usable when desktop playback
             // is paused. Start/idle belong to the Player's current visible stage.
             (role == RoomClientRole.Dock || (!snapshot.Lifecycle.PlaybackPaused && snapshot.IsDesktopForeground &&

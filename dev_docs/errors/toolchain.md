@@ -402,3 +402,9 @@ Json.NET new JArray(singleJArray)会选复制构造器摊掉一层；polygons[][
 actualReleasePlayer+正式SDK功能首轮通过（按下等待、同UP一次正数Core请求），但Player正常退出后WebView仍短暂持有自建user-data文件，2s重试预算不足，finally报告清理失败；保留整轮失败记录，不用前面的局部PASS代替完成。
 只枚举本轮Dext-v3-author-input-wire-前缀，核实绝对路径位于GetTempPath内后用PowerShell Remove-Item -LiteralPath删除自建目录；没有删除用户Dext资料或通用WebView缓存。夹具清理改有界100×100ms，随后实际整轮exit0，临时目录为0。
 SDK新增拒绝测试首轮未设置超时而等待旧实现不拒绝，工具会话中断后给该测试500ms上限；真实行为RED保留，后续SDK正确立即拒绝。首个SDK多方法夹具误写desk.next，真实接口为desk.navigate({type:'desk.next'})；夹具接口错误不计生产RED。Windows源码LF/CRLF混合时不能用Environment.NewLine拼跨行锚点，先核实唯一单行锚点；替换失败在写盘前停止，不反复重跑已成功的前半段mutation。
+## #213 源动作夹具需进入desktop并沿创建票据的bridge确认（2026-10-04）
+新增source动作检查初次把有start媒体的Fixture仍留在Starting，Request返回Queued而非桌面Accepted；退出确认又误用Fixture.View，与实际IssueHostInput的私有bridge连接不一致，得到Denied。先SetLifecycle Desktop并沿同一bridge.ConfirmNativeExit调用，再临时读取HEAD生产文件对正确行为重跑RED，恢复本轮实现后GREEN281/281；原失败证据保留，不把夹具错误当生产RED。
+移动wire解析两个out数组不能放在Require(a&&b)后使用第二数组：C#不能从自定义Require推断第一分支为true，CS0165。拆成两个独立Require(TryCreate(...))后编译通过，真实移动wire随后整轮exit0；不是降低精确几何要求。
+### #191 补充：UI清单不列出凭据宿主，不能证明桌面已解除覆盖（2026-10-04）
+CredentialUIBroker进程MainWindowHandle=0，Orca list-apps不列出该应用，list-windows pid返回app_not_found，均不能证明Windows真实像素命中桌面。source-action-native-core-live在空桌面点击前再次WindowFromPoint，命中Credential Dialog Xaml Host全屏，安全断言终止，未点击/关闭凭据窗。finally恢复原壁纸、四文件字节/缺失状态、Room哈希及临时窗口旗标，Core已正常退出。
+实际Core OS门槛仍等待系统窗真正解除；不得只因可见应用列表未列出而重试或填写通过，自己的隔离Player真实可信边沿仍可继续补本地证据。

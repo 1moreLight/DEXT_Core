@@ -173,7 +173,8 @@
         if (report.buttons !== undefined && (!Array.isArray(report.buttons) || report.buttons.length > 1024 ||
           new Set(report.buttons.map(button => button.buttonId)).size !== report.buttons.length ||
           !report.buttons.every(button => rect(button) && buttons.has(button.buttonId) && owner.buttonIds.includes(button.buttonId) &&
-            (buttons.get(button.buttonId).scope === 'room' || buttons.get(button.buttonId).scope === (current.targetDeskId || current.currentDeskId))))) return reject('invalidGeometry');
+            (buttons.get(button.buttonId).scope === 'room' || buttons.get(button.buttonId).scope === (current.targetDeskId || current.currentDeskId) ||
+              current.targetDeskId!==null && buttons.get(button.buttonId).scope===current.currentDeskId)))) return reject('invalidGeometry');
         const nextGroups = report.groups === undefined ? groups : { ...groups, ...Object.fromEntries(Object.entries(report.groups).map(([key, value]) =>
           [key, { matrix: [...value.matrix], opacity: value.opacity }])) };
         const nextOccupied = report.occupied === undefined ? occupied : report.occupied.map(area => ({ id: area.id, x: area.x, y: area.y,

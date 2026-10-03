@@ -106,8 +106,11 @@ internal sealed partial class RoomSessionPlayerBridge
             if(status!=RoomProtocolStatus.Accepted || context!.Snapshot.Revision!=revision || context.Installation.ActionCatalog is not{} catalog)return false;
             foreach(var entry in entries){
                 if(entry==null || entry.Consumer==null || entry.Button==null || !catalog.Consumers.TryGetValue(entry.Consumer,out var owner) ||
-                    !owner.IsActive(context.Role,context.Snapshot) || !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
-                    button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId))return false;
+                    (!owner.IsActive(context.Role,context.Snapshot) && !(context.Role==RoomClientRole.DesktopPlayer && context.Snapshot.TargetDeskId!=null &&
+                        owner.IsActive(context.Role,context.Snapshot,context.Snapshot.CurrentDeskId))) ||
+                    !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
+                    button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId) &&
+                        !(context.Role==RoomClientRole.DesktopPlayer && context.Snapshot.TargetDeskId!=null && button.Scope==context.Snapshot.CurrentDeskId))return false;
             }
             return native.SampleMouse(generation,session,revision,version,sequence,edge,viewport,entries,foreground);
         },out bool accepted) && accepted;
