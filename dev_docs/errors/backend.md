@@ -400,3 +400,7 @@ Player暂停期间缓存Core快照，媒体宿主仍读旧playbackPaused=false�
 ## #169 媒体来源标识可能含Windows路径（2026-10-03）
 
 实际Windows生产投影的回归以SourceAppId=C:\private\player.exe构造来源，97/98失败：GetMediaAsync返回的source ID并非总是公开AUMID。投影清空含冒号、斜线、反斜线、控制字符或超过160字符的ID，保留媒体元数据；audio只level/muted。修复后98/98，来源测试同时断言所有系统控制写入为0。
+
+## #170 原生WebView传输必须与Player读取类型一致（2026-10-03）
+
+native-host最初postMessage已检查的JS对象，单位假传输收对象因此通过；真实Player的TryGetWebMessageAsString抛ArgumentException，SDK权限超时全部denied。保持Player既有字符串入口，生产模块JSON.stringify已检查的信封；单位传输增加typeof string断言再解析。实际ReleasePlayer持续读数、同修订撤权/恢复及暂停全部通过。格式问题不能改为把授予失败视为期望通过。

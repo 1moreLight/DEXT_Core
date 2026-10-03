@@ -1237,3 +1237,8 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] Core数据基础桥验证（2026-10-03）：动作/来源98/98、严格原生消息28/28、内核22/22、协议86/86；实际Windows只读采集时间/硬件/音量通过，当前无媒体会话返回missing。真实ReleasePlayer通过SDK→私有data IPC读数与暂停恢复；该隔离夹具Core回复仍模拟。完整build→start/identity通过：Core60236/Player22844/Watchdog64436，配置器74088为本轮共享D缓存构建；日志20261003_091411.txt，v2恢复inactive。按PID/绝对路径正常退出后Dext进程/1620/1621监听/资源缓存0。
 - [ ] Task3继续正式index/main/style/LivelyInfo与DOM：生产逐值轮询、授权变化恢复、持续组件/默认与作者过渡、当前几何握手、原生逐iframe媒体。当前数据源基础桥不代表原生Room已安装；Task4、7项集中验收、16项范围保持。
+
+- [x] Task3正式原生通信模块：先建立请求作用域/超时/迟到回包、单来源逐值轮询、暂停/销毁取消、同修订撤权和再授权恢复的失败回归；生产native-host只向固定WebView传输发严格请求，Core每值授权，不凭缓存能力放行。接生产frame/media后再补正式DOM及真实Core闭环，7项/16项范围不缩减。
+
+- [x] 正式原生通信模块验证：新10/10、生产组合72/72、资源31/31；实际ReleasePlayer加载native-host/frame/SDK，持续每值私有data IPC，同revision撤权仅隐藏读数、再授权无需重载恢复，原生暂停剩余500ms与最后revision3仍通过。对象传输实际失败后改JSON字符串；夹具Core回包仍模拟，不计生产Core原生Room通过。完整build→start/identity成功：Core104252/Player80696/Watchdog62484/config22424（本轮共享D缓存），日志20261003_093108.txt；v2恢复inactive，正常退出后全部验证进程/端口/资源缓存0。
+- [ ] 下一步正式index/main/style/LivelyInfo及dom-host/input-host：把已验证模块接真正官方页面，持续实例、默认/作者动画与Core提交、每revision几何失效握手；原生逐iframe媒体/布局/Task4和最终7项仍继续。

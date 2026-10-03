@@ -150,3 +150,9 @@ media-host和frame-host的setPlaybackSuspended仅控制本机投递暂停，不�
 实际Windows来源：time含UTC、Unix毫秒和本地偏移；hardware按attachment懒建一份来源，健康标记为false时missing，暂停/撤销停止来源，数据只含CPU/GPU名称、百分比、内存MB和网络字节速率；media只投影媒体元数据/位置/控制状态，源ID若为路径/URI/控制字符或过长则清空；audio只含level和muted，排除设备ID/名称。授权元数据不是读数许可，每个data请求重新校验。原生回复data是JSON本身，ISO日期不被Json.NET转型。
 
 Core真实源码98/98和实际Windows采集通过；真实ReleasePlayer验证SDK读数经过当前私有data IPC，但夹具仍模拟Core回复。正式官方页面的连续provider、权限改变后恢复及完整Core/DOM仍待接线；最终7项人工门槛未据此通过。
+
+## 正式宿主私有通信模块（2026-10-03，接线阶段）
+
+native-host发送Player要求的JSON字符串，只接受固定私有WebView消息；每个请求绑定generation/session/global revision，64个pending、5s超时。身份变化、暂停或dispose取消旧请求、来源和计时器，旧回包不能结束新请求。方法字段严格受限，不接受作者值/权限/票据。每个consumer+数据能力复用单来源，一次data返回后再间隔1秒发下次请求；Core逐值重新授权，available仅32KiB/深度24JSON，其余状态剥离value。
+
+能力watch每秒向Core重查，合并同消费者同作用域进行中的查询，只在公开状态变化时刷新iframe能力。个人撤权和再授权即便没有global revision变化也可停止/恢复读数；暂停停止watch，恢复从当前scope查询。该模块已在真实ReleasePlayer与完整SDK通过持续读数及同revision撤权/恢复，Core回包在该隔离夹具仍模拟。正式index/DOM与真实Core闭环继续接入，未代填最终7项验收。

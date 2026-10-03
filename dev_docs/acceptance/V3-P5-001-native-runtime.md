@@ -107,3 +107,5 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 暂停阶段最终完整build→start/identity通过：Core91052/Player70888/Watchdog83660/配置器78452，日志20261003_082904.txt；v2恢复inactive。用户明确允许正常退出，核对PID/绝对路径后关闭全部验证进程，开发端口/资源缓存0。现有WorkerW纠正和D3D日志未计最终物理步骤通过。
 
 - 2026-10-03 Core消费者数据基础桥：98/98真实权限/来源、严格消息28/28、内核22/22、协议86/86；实际Windows时间/硬件/音量读取通过，无媒体会话诚实missing；真实ReleasePlayer SDK经当前private data IPC验证读数及暂停恢复，Core回包在该夹具仍模拟。完整build→start/identity成功，v2恢复inactive；正常退出后进程/开发端口/资源缓存0。正式DOM/连续provider/权限变化恢复与7项最终步骤仍待完成，不代填物理或完整Core原生Room验收。
+
+- 2026-10-03正式通信模块：新10/10、组合72/72、资源31/31；真实ReleasePlayer/SDK持续逐值private data IPC，同revision撤权隐藏读数、恢复授权无需导航/重载重开来源，原生暂停剩余时间/最后revision3保持通过。Core回包仍模拟；完整build→start/identity通过后正常退出，进程/端口/资源缓存0。正式页面/Core原生Room与上方7项最终步骤未据此打勾。

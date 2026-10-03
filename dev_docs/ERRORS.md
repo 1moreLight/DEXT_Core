@@ -214,3 +214,5 @@
 | #167 | 硬件采样失败仍推零值且跳过等待可能忙循环 | [backend](errors/backend.md) |
 | #168 | 异步数据源恢复的命令回执不表示SDK读数已到达 | [toolchain](errors/toolchain.md) |
 | #169 | Windows媒体SourceAppId可能是绝对可执行路径 | [backend](errors/backend.md) |
+
+| #170 | Player使用TryGetWebMessageAsString，原生postMessage对象会被拒绝 | [backend](errors/backend.md) |

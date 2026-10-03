@@ -1,0 +1,71 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {createNativeHost}=require('./native-host.js');
+const identity={runtimeGeneration:1,sessionId:'room-session',revision:1};
+const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+function fixture(){
+ let time=0,next=1;const tasks=new Map(),sent=[],listeners=new Set();
+ const host=createNativeHost({initialIdentity:identity,transport:{postMessage:v=>{assert.equal(typeof v,'string');sent.push(JSON.parse(v));},addEventListener:(_,cb)=>listeners.add(cb),removeEventListener:(_,cb)=>listeners.delete(cb)},
+   setTimeout:(cb,ms)=>{const id=next++;tasks.set(id,{cb,due:time+ms});return id;},clearTimeout:id=>tasks.delete(id)});
+ function answer(request,payload={}){for(const cb of listeners)cb({data:{type:'dext:v3-native-response',requestId:request.requestId,...identity,runtimeGeneration:request.runtimeGeneration,sessionId:request.sessionId,revision:request.revision,status:'accepted',...payload}});}
+ async function advance(ms){time+=ms;for(const [id,task]of [...tasks])if(task.due<=time){tasks.delete(id);task.cb();}await flush();}
+ return{host,sent,tasks,listeners,answer,advance};
+}
+test('native request sends only fixed consumer identity and current scope',async()=>{
+ const f=fixture();const promise=f.host.readCapabilities({consumerId:'scene',identity});const q=f.sent[0];
+ assert.deepEqual(q,{type:'dext:v3-native-request',protocolVersion:1,requestId:'n1',method:'capabilities',...identity,consumer:'scene'});
+ f.answer(q,{capabilities:{'time.read':'accepted'}});assert.equal((await promise).capabilities['time.read'],'accepted');f.host.dispose();
+});
+test('wrong scope or unknown reply cannot complete a request',async()=>{
+ const f=fixture();let finished=false;const promise=f.host.request('buttons',{consumer:'scene'}).then(()=>finished=true);
+ f.answer(f.sent[0],{revision:2,buttons:[]});await flush();assert.equal(finished,false);
+ f.answer(f.sent[0],{requestId:'unknown',buttons:[]});await flush();assert.equal(finished,false);
+ f.answer(f.sent[0],{buttons:[]});await promise;f.host.dispose();
+});
+test('revision advancement cancels old requests and stale replies do not escape',async()=>{
+ const f=fixture();const result=f.host.request('buttons',{consumer:'scene'}).catch(e=>e.code);
+ assert.equal(f.host.acceptIdentity({...identity,revision:2}),true);assert.equal(await result,'staleInput');
+ assert.equal(f.host.acceptIdentity(identity),false);f.answer(f.sent[0],{buttons:[{id:'private'}]});assert.equal(f.host.readDiagnostics().pendingRequests,0);f.host.dispose();
+});
+test('timeouts and pending limit are bounded and release all request timers',async()=>{
+ const f=fixture();const promises=[];for(let i=0;i<64;i++)promises.push(f.host.request('buttons',{consumer:'scene'}).catch(e=>e.code));
+ await assert.rejects(f.host.request('buttons',{consumer:'scene'}),e=>e.code==='requestLimit');await f.advance(5000);
+ assert.deepEqual(await Promise.all(promises),Array(64).fill('timeout'));assert.equal(f.tasks.size,0);f.host.dispose();
+});
+test('malformed methods and authored authority fields never reach WebView',async()=>{
+ const f=fixture();for(const [method,params]of [['data',{consumer:'scene',capability:'time.read',value:'forged'}],['data',{consumer:'scene',capability:'storage.read'}],['activate',{consumer:'scene',button:'open',geometryVersion:0}],['anything',{}]])
+ await assert.rejects(f.host.request(method,params),e=>e.code==='invalidArgument');assert.equal(f.sent.length,0);f.host.dispose();
+});
+test('one data provider polls only after completion and reauthorizes each value',async()=>{
+ const f=fixture(),values=[];const stop=f.host.subscribeData({consumerId:'scene',capability:'time.read',identity},s=>values.push(s));
+ assert.equal(f.sent.length,1);await f.advance(1000);assert.equal(f.sent.length,1);
+ f.answer(f.sent[0],{data:{status:'available',value:{tick:1}}});await flush();assert.deepEqual(values,[{status:'available',value:{tick:1}}]);
+ await f.advance(1000);assert.equal(f.sent.length,2);assert.equal(f.sent[1].method,'data');
+ f.answer(f.sent[1],{status:'missingPermission',data:{status:'available',value:{tick:99}}});await flush();assert.deepEqual(values.at(-1),{status:'denied'});
+ stop();assert.equal(f.tasks.size,0);f.host.dispose();
+});
+test('unsubscribed or old-revision data can never publish a late value',async()=>{
+ const f=fixture(),values=[];const stop=f.host.subscribeData({consumerId:'scene',capability:'time.read',identity},s=>values.push(s));stop();
+ f.answer(f.sent[0],{data:{status:'available',value:'old'}});await flush();assert.deepEqual(values,[]);
+ f.host.subscribeData({consumerId:'scene',capability:'time.read',identity},s=>values.push(s));f.host.acceptIdentity({...identity,revision:2});
+ f.answer(f.sent[1],{data:{status:'available',value:'old'}});await flush();assert.deepEqual(values,[]);assert.equal(f.tasks.size,0);f.host.dispose();
+});
+test('suspension stops reads and permission watch recovers without global revision changes',async()=>{
+ const f=fixture(),changes=[];const release=f.host.watchCapabilities('scene',reply=>changes.push(reply.capabilities?.['time.read']));
+ f.answer(f.sent[0],{capabilities:{'time.read':'accepted'}});await flush();await f.advance(1000);
+ f.answer(f.sent[1],{capabilities:{'time.read':'missingPermission'}});await flush();await f.advance(1000);
+ f.answer(f.sent[2],{capabilities:{'time.read':'accepted'}});await flush();assert.deepEqual(changes,['accepted','missingPermission','accepted']);
+ f.host.setSuspended(true);const count=f.sent.length;await f.advance(5000);assert.equal(f.sent.length,count);
+ await assert.rejects(f.host.request('buttons',{consumer:'scene'}),e=>e.code==='notOperable');f.host.setSuspended(false);assert.equal(f.sent.length,count+1);
+ release();f.host.dispose();await flush();assert.equal(f.tasks.size,0);assert.equal(f.listeners.size,0);
+});
+test('available data is bounded JSON; failures strip attached private values',async()=>{
+ const f=fixture(),values=[];const stop=f.host.subscribeData({consumerId:'scene',capability:'time.read',identity},v=>values.push(v));
+ f.answer(f.sent[0],{data:{status:'missing',value:'private'}});await flush();assert.deepEqual(values,[{status:'missing'}]);await f.advance(1000);
+ f.answer(f.sent[1],{data:{status:'available',value:'x'.repeat(32769)}});await flush();assert.deepEqual(values.at(-1),{status:'error'});stop();f.host.dispose();
+});
+test('dispose is permanent and releases an outstanding watcher and data read',async()=>{
+ const f=fixture();f.host.watchCapabilities('scene',()=>{});f.host.subscribeData({consumerId:'scene',capability:'time.read',identity},()=>{throw new Error('late');});
+ f.host.dispose();f.host.dispose();await flush();assert.equal(f.tasks.size,0);assert.equal(f.listeners.size,0);assert.equal(f.host.acceptIdentity({...identity,revision:2}),false);
+ await assert.rejects(f.host.request('buttons',{consumer:'scene'}),e=>e.code==='disposed');
+});
