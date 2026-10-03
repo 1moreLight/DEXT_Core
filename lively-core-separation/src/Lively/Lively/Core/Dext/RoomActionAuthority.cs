@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dext.Core.Rooms;
 
@@ -13,7 +14,7 @@ internal enum RoomActionStatus
 {
     Accepted, Queued, Denied, StaleSession, Forbidden, UnknownConsumer, InvalidButton,
     MissingPermission, MissingBinding, InputRequired, StaleInput, ExpiredInput,
-    NotOperable, RequiresConfirmation, LaunchFailed, StorageUnavailable
+    NotOperable, RequiresConfirmation, LaunchFailed, StorageUnavailable, ControlUnavailable, RateLimited
 }
 internal sealed record PublicRoomButton(string Id, string Name, string Scope, string? Action, bool IsBound);
 internal sealed record RoomButtonsReply(RoomActionStatus Status, PublicRoomButton[]? Buttons = null);
@@ -23,6 +24,7 @@ internal sealed record RoomStorageReply(RoomActionStatus Status, JsonElement? Va
 internal sealed record RoomCapabilitiesReply(RoomActionStatus Status, IReadOnlyDictionary<string, RoomActionStatus>? Capabilities = null);
 internal sealed record RoomInputReply(RoomActionStatus Status, Guid? Ticket = null);
 internal sealed record RoomActionReply(RoomActionStatus Status);
+internal sealed record RoomSystemControl(string Capability,string? Action=null,double? Volume=null,bool? Muted=null);
 
 // Authored messages cannot issue input. The native host must first verify a
 // real activation of the current visible entry. Preparation is a short commit
@@ -36,6 +38,8 @@ internal sealed class RoomActionAuthority
     private readonly TimeProvider clock;
     private readonly long timestampFrequency;
     private readonly Dictionary<Guid, InputTicket> tickets = new();
+    private Guid controlSession;
+    private readonly Dictionary<(string Consumer,string Capability),long> lastControls=new();
     private static readonly TimeSpan InputLifetime = TimeSpan.FromMilliseconds(1500);
     private sealed record InputTicket(Guid Connection, string Peer, Guid Session, string Consumer, string Button,
         string Stamp, long SessionRevision, long PrivateRevision, long IssuedAt, RoomNativeInputProof? NativeInput);
@@ -242,31 +246,18 @@ internal sealed class RoomActionAuthority
                 var capability = action.Type.StartsWith("desk.", StringComparison.Ordinal) ? "desk.navigate" : action.Type;
                 status = Permission(state, context.Installation, owner, consumer, capability);
                 if (status != RoomActionStatus.Accepted) return new(status);
-                if (ticket is null) return new(RoomActionStatus.InputRequired);
-                InputTicket input;
-                lock (gate)
-                {
-                    if (!tickets.Remove(ticket.Value, out input!)) return new(RoomActionStatus.StaleInput);
-                }
-                if (input.Connection != connection || input.Peer != peer.TransportId || input.Session != session ||
-                    input.Consumer != consumer || input.Button != button || input.Stamp != context.Installation.InstallationStamp ||
-                    input.SessionRevision != context.Snapshot.Revision || input.PrivateRevision != state.Revision)
-                    return new(RoomActionStatus.StaleInput);
-                if (Expired(input.IssuedAt, requestedAt)) return new(RoomActionStatus.ExpiredInput);
-                // The leaf's one-time consume is the geometry/input commit point.
-                // All authority and personal state is still protected here.
-                if (input.NativeInput != null && !input.NativeInput.Validate(context.Snapshot, consumer, button, consume: true))
-                    return new(RoomActionStatus.StaleInput);
+                status=ConsumeInput(connection,peer,session,consumer,button,ticket,state,context,requestedAt,out var issuedAt);
+                if(status!=RoomActionStatus.Accepted)return new(status);
                 if (action.Type == "binding.launch")
-                    return target is null ? new(RoomActionStatus.MissingBinding) : new(RoomActionStatus.Accepted, action.Type, target, IssuedAt: input.IssuedAt);
-                if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: input.IssuedAt);
+                    return target is null ? new(RoomActionStatus.MissingBinding) : new(RoomActionStatus.Accepted, action.Type, target, IssuedAt: issuedAt);
+                if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: issuedAt);
                 var desks = context.Installation.DeskIds;
                 var current = context.Snapshot.TargetDeskId ?? context.Snapshot.CurrentDeskId;
                 var index = Array.IndexOf(desks.ToArray(), current);
                 var targetDesk = action.Type switch { "desk.next" => desks[(index + 1) % desks.Count],
                     "desk.previous" => desks[(index + desks.Count - 1) % desks.Count], "desk.go" => action.DeskId, _ => null };
                 return targetDesk is null || !desks.Contains(targetDesk, StringComparer.Ordinal)
-                    ? new(RoomActionStatus.InvalidButton) : new(RoomActionStatus.Accepted, action.Type, DeskId: targetDesk, IssuedAt: input.IssuedAt);
+                    ? new(RoomActionStatus.InvalidButton) : new(RoomActionStatus.Accepted, action.Type, DeskId: targetDesk, IssuedAt: issuedAt);
             });
         }
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
@@ -277,6 +268,57 @@ internal sealed class RoomActionAuthority
         try { launch(prepared.Target!); return new(RoomActionStatus.Accepted); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException or ArgumentException)
         { return new(RoomActionStatus.LaunchFailed); }
+    }
+
+    // Only Core supplies dispatch. No callback, Windows/COM operation or await
+    // enters the private store/gateway/native leaf preparation boundary.
+    public async Task<RoomActionReply> InvokeSystemControlAsync(Guid connection,RoomSessionPeer peer,Guid session,
+        string consumer,string button,Guid? ticket,RoomSystemControl control,Func<RoomSystemControl,Task<bool>> dispatch)
+    {
+        if(!ValidControl(control)||dispatch==null)return new(RoomActionStatus.Denied);
+        var requestedAt=clock.GetTimestamp();PreparedAction prepared;
+        try{
+            prepared=Prepare(connection,peer,session,consumer,status=>new PreparedAction(status),(state,context,owner)=>{
+                var status=Button(context,owner,button,out var authored);
+                if(status!=RoomActionStatus.Accepted)return new(status);
+                if(!owner.CanConsume(context.Role,context.Snapshot))return new(RoomActionStatus.NotOperable);
+                // An author's control cannot replace the user's configured
+                // navigation/application/exit or the declared default action.
+                if(Resolve(state,context.Installation.RoomId,authored!,out _)!=null)return new(RoomActionStatus.Denied);
+                status=Permission(state,context.Installation,owner,consumer,control.Capability);
+                if(status!=RoomActionStatus.Accepted)return new(status);
+                lock(gate){
+                    if(controlSession!=session){controlSession=session;lastControls.Clear();}
+                    if(lastControls.TryGetValue((consumer,control.Capability),out var last)&&
+                        ((decimal)requestedAt-last)/timestampFrequency<(decimal).1)return new(RoomActionStatus.RateLimited);
+                }
+                status=ConsumeInput(connection,peer,session,consumer,button,ticket,state,context,requestedAt,out var issuedAt);
+                if(status!=RoomActionStatus.Accepted)return new(status);
+                lock(gate)lastControls[(consumer,control.Capability)]=requestedAt;
+                return new(RoomActionStatus.Accepted,IssuedAt:issuedAt);
+            });
+        }catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        if(Expired(prepared.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
+        try{return new(await dispatch(control)?RoomActionStatus.Accepted:RoomActionStatus.ControlUnavailable);}
+        catch(Exception){return new(RoomActionStatus.ControlUnavailable);}
+    }
+    private static bool ValidControl(RoomSystemControl? control)=>control is{Capability:"media.control",Volume:null,Muted:null}&&
+        control.Action is "play" or "pause" or "toggle" or "next" or "previous" ||
+        control is{Capability:"audio.control",Action:null}&&(control.Volume!=null||control.Muted!=null)&&
+        (control.Volume is not{} value||double.IsFinite(value)&&value>=0&&value<=1);
+
+    private RoomActionStatus ConsumeInput(Guid connection,RoomSessionPeer peer,Guid session,string consumer,string button,Guid? ticket,
+        RoomPersonalState state,RoomActionContext context,long requestedAt,out long issuedAt)
+    {
+        issuedAt=0;if(ticket==null)return RoomActionStatus.InputRequired;InputTicket input;
+        lock(gate){if(!tickets.Remove(ticket.Value,out input!))return RoomActionStatus.StaleInput;}
+        if(input.Connection!=connection||input.Peer!=peer.TransportId||input.Session!=session||input.Consumer!=consumer||input.Button!=button||
+            input.Stamp!=context.Installation.InstallationStamp||input.SessionRevision!=context.Snapshot.Revision||input.PrivateRevision!=state.Revision)
+            return RoomActionStatus.StaleInput;
+        if(Expired(input.IssuedAt,requestedAt))return RoomActionStatus.ExpiredInput;
+        if(input.NativeInput!=null&&!input.NativeInput.Validate(context.Snapshot,consumer,button,consume:true))return RoomActionStatus.StaleInput;
+        issuedAt=input.IssuedAt;return RoomActionStatus.Accepted;
     }
 
     private bool Expired(long issued, long now)

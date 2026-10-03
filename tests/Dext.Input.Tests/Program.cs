@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length == 7 && args[0] == "--v3-native-controls-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6], false, true); return; }
 if (args.Length == 7 && args[0] == "--v3-native-navigation-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6], true); return; }
 if (args.Length == 7 && args[0] == "--v3-native-core-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6]); return; }
 

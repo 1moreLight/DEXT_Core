@@ -106,3 +106,37 @@ test('pending actions still retire on native generation change or playback suspe
  if(mode==='generation')f.host.acceptIdentity({...identity,runtimeGeneration:2});else f.host.setSuspended(true);
  f.answer(request,{status:'accepted',inputSequence:7,inputConsumed:true});assert.equal(await promise,mode==='generation'?'staleInput':'notOperable');f.host.dispose();}
 });
+
+
+test('native controls whitelist actions and patches and require private completion receipts',async()=>{
+ const f=fixture(),base={consumer:'scene',geometryVersion:1,inputSequence:7};
+ for(const action of ['play','pause','toggle','next','previous']){
+   const pending=f.host.request('mediaControl',{...base,action});pending.catch(()=>{});
+   assert.equal(f.sent.at(-1)?.action,action);f.answer(f.sent.at(-1),{inputSequence:7,inputConsumed:true});assert.equal((await pending).status,'accepted');
+ }
+ for(const settings of [{volume:0},{volume:1},{muted:true},{volume:.5,muted:false}]){
+   const pending=f.host.request('audioControl',{...base,settings});pending.catch(()=>{});
+   assert.deepEqual(f.sent.at(-1).settings,settings);f.answer(f.sent.at(-1),{status:'controlUnavailable',inputSequence:7,inputConsumed:true});assert.equal((await pending).status,'controlUnavailable');
+ }
+ f.host.dispose();
+});
+test('invalid native controls never reach the private bridge',async()=>{
+ const f=fixture(),base={consumer:'scene',geometryVersion:1,inputSequence:0};
+ for(const [method,extra]of [['mediaControl',{action:'seek'}],['mediaControl',{action:'play',button:'fake'}],['audioControl',{settings:{}}],['audioControl',{settings:{volume:2}}],['audioControl',{settings:{volume:null}}],['audioControl',{settings:{muted:1}}],['audioControl',{settings:{path:'private'}}],['audioControl',{settings:{volume:NaN}}]]){
+   await assert.rejects(f.host.request(method,{...base,...extra}),{code:'invalidArgument'});
+ }
+ assert.equal(f.sent.length,0);f.host.dispose();
+});
+test('control receipts survive same-document revision but require authentic consumption fields',async()=>{
+ const f=fixture(),p=f.host.request('mediaControl',{consumer:'scene',action:'pause',geometryVersion:1,inputSequence:7});p.catch(()=>{});let done=false;p.then(()=>done=true,()=>done=true);
+ assert.equal(f.sent.length,1);f.host.acceptIdentity({...identity,revision:2});f.answer(f.sent[0],{inputSequence:0,inputConsumed:true});await flush();assert.equal(done,false);
+ f.answer(f.sent[0],{status:'rateLimited',inputSequence:7,inputConsumed:false});assert.equal((await p).status,'rateLimited');f.host.dispose();
+});
+test('pause replacement and disposal cancel outstanding controls',async()=>{
+ for(const mode of ['pause','generation','dispose']){
+   const f=fixture(),p=f.host.request('audioControl',{consumer:'scene',settings:{muted:true},geometryVersion:1,inputSequence:0}).catch(e=>e.code);
+   assert.equal(f.sent.length,1);
+   if(mode==='pause')f.host.setSuspended(true);else if(mode==='generation')f.host.acceptIdentity({...identity,runtimeGeneration:2});else f.host.dispose();
+   assert.equal(await p,mode==='pause'?'notOperable':mode==='dispose'?'disposed':'staleInput');f.host.dispose();
+ }
+});

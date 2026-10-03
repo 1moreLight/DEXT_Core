@@ -1293,14 +1293,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 最新完整build→start/identity：Core80748/Player113524/Watchdog111664/config88192（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_144755.txt；原v2 inactive。按用户授权精确PID/路径正常退出，自己的watcher自然结束；Dext进程/1620与1621监听/资源暂存/临时原生目录0，个人快照哈希/不存在状态未变。
 - [ ] Task3/4下一步：将原生输入证明与作者desk.navigate/系统控制合并为同一次受控动作，补退出确认；继续完整四媒体idle/锁屏组合、独立Player故障重建、个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。最终7项人工步骤不申请中途验收，完整16项开发就绪仍1/16，不合并master。
 
-- [ ] Task3作者导航Core适配（BASEdcb8c3d）：从当前原生完成证明取得所属consumer/button，作者仅请求有界desk.next/previous/go，逐次核对用户覆盖后的实际动作，复用当前授权/一次消费/锁外Core仲裁；请求不能改成另一个动作或覆盖个人绑定。先源码行为RED→GREEN，再接输入宿主统一一次性派发及严格消息/正式SDK/真实Core。默认入口与作者请求竞态未解决前不标整个导航接线完成；系统控制、退出确认与其余Task3/4保持。
+- [x] Task3作者导航Core适配（BASEdcb8c3d，已由5896f14接通）：从当前原生完成证明取得所属consumer/button，作者仅请求有界desk.next/previous/go，逐次核对用户覆盖后的实际动作，复用当前授权/一次消费/锁外Core仲裁；请求不能改成另一个动作或覆盖个人绑定。先源码行为RED→GREEN，再接输入宿主统一一次性派发及严格消息/正式SDK/真实Core。默认入口与作者请求竞态未解决前不标整个导航接线完成；系统控制、退出确认与其余Task3/4保持。
 
 - [x] 导航Core适配第一组：缺失NavigateNative的源码RED→125/125；三个导航变体、无输入/错consumer、默认动作不匹配、个人应用覆盖、撤权/过期/几何/代次/关闭/暂停/锁屏/失焦通过。完整build和启动身份核验通过，Core创建时间晚于新DLL写入；原v2 inactive，已正常退出。
 - [x] 补无默认动作的动态按钮：已声明入口在真实输入和desk.navigate授权下可由作者选择合法目标；已有默认/个人动作必须匹配。仅TargetId的个人绑定在无作者默认动作时应解析为binding.launch，不能被作者导航越过。先行为失败，再同边界修复；完整原生SDK派发仍后续接通。
 
 - [x] 导航Core适配最终128/128（原110+18）：三个变体、current/target分离、匹配默认或个人动作、无动作入口动态go、TargetId-only个人应用绑定、错consumer/无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦均验证。动态入口三项125/128实际失败后修复；未知Desk拒绝不消费原生证明，默认/个人动作不匹配同样保留正常fallback。
 - [x] 最终完整build→start/identity：Core113280/Player67436/Watchdog4976/config25560（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_152025.txt；原v2 inactive。正常精确PID/路径退出Core/配置器，自己的watcher终止，用户个人快照哈希/不存在状态未变。
-- [ ] 导航仍为Core源码生产者：严格原生navigate消息、input-host的默认/SDK一次派发、正式DOM/SDK及真实Core已授权作者导航尚未接通；当前SDK仍诚实unsupported。继续系统控制/退出确认、完整四媒体idle/锁屏/独立Player故障、个人布局/精确移动命中/物理DPI。最终7项待集中执行，16项就绪1/16，不合并。
+- [x] 导航生产者历史接线待办已由5896f14完成：严格原生navigate、默认/SDK统一派发及真实Core作者导航通过。系统控制/退出确认、完整生命周期/个人布局/精确输入和最终7项见本台账后续未完成项；readiness1/16。
 
 
 - [x] Task3导航/输入统一派发（BASEac4b0d1，2026-10-03）：目标是严格原生navigate路由与同一次Core输入的作者请求/默认回退，保留个人绑定优先。先写真实生产行为失败回归；Core完成序号、消费回执、viewport复核；官方DOM固定consumer、仅状态公开、有限回退和失效取消；128项基础上验证并完整构建/真实Player与Core验证。范围外仍按本包总计划，最终7项不缩减、不提前验收或合并。
@@ -1309,6 +1309,21 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际ReleasePlayer输入/窗口/重载五组保持通过。实际Core原生安装/作者SDK/Windows鼠标注入：无输入timer均inputRequired；scene请求next返回accepted；同一Core证明只消费一次，未用顶层导航驱动，共享文档保持。Core正常重启同安装恢复focus/KV和新SDK文档；最终11项PASS。
 - [x] 探针纠正：operable不在运行诊断对象里，改读真实Core；System.Type与Protobuf.Type冲突先修编译，不计生产RED。WindowFromPoint实见ChatGPT PID42576覆盖测试像素107,56，第二轮暂停是正确拒绝；临时Shell显示桌面、验证真实桌面落点，finally Undo核对全部原窗口最小化/最大化状态并恢复鼠标。重启初期前台实为GameViewer工具窗，待原生初始化后重新聚焦桌面一次，全门槛通过，不改生产暂停策略。
 - [x] 完整build→start/身份：Core22860/Player88968/Watchdog74480/config114160，日志20261003_162208.txt，原v2 inactive。配置器为所属D共享缓存，身份脚本OTHER/exit1，绝对路径独立核对；不写成脚本全OK。按PID/路径正常退出，个人SHA256/原不存在状态不变，watcher终止exit0。
-- [ ] Task3继续：系统媒体/音量作者控制、可信Dext退出确认；Task4四媒体生命周期/移动与遮挡的精确输入、个人布局/故障恢复、最后一次完整P5审查。仍按原16项全景与7项人工门槛，readiness1/16，不中途合并。
+- [ ] Task3继续：可信Dext退出确认（媒体/音量基础已在本台账后续接通）；Task4四媒体生命周期/移动与遮挡的精确输入、个人布局/故障恢复、最后一次完整P5审查。仍按原16项全景与7项人工门槛，readiness1/16，不中途合并。
 
 - 2026-10-03最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；全部工具会话已终止。
+
+
+- [x] Task3系统控制接线（BASE5896f14，2026-10-03）：一句目标是SDK封闭媒体动作和Windows默认主音量经当前消费者/声明入口的真实一次输入、授权和限频派发。个人默认/绑定存在时拒绝作者替换并保留默认回退；Core准备在私有锁内，Windows执行在锁外并有全局/attachment并发界限、超时和真实消费回执。先生产行为RED，再严格Player消息/官方DOM/真实Core验证并提交。可信Dext退出确认继续下一步骤；本包全Task3/4、16项和最终7项保持，不中途验收或合并。
+
+- [x] 系统控制Core生产者：真实生产源码166/166（132+34），五种媒体/合法音量patch、撤权/旧输入/几何/暂停/锁屏/失焦、个人绑定和默认导航优先、限频与锁外服务失败均通过。严格消息/SDK/Windows实际接线继续，不将生产者测试标为端到端完成。
+
+
+- [x] 严格Player消息/正式SDK接线：先生产RED，最终JS140/140、消息35/35、Core168/168。mediaControl五意图、audioControl非空有限patch，固定consumer/当前identity/geometry/私有sequence；author仅收status。服务失败消费回执取消默认，未消费的限频/个人绑定拒绝保留默认回退。同文档修订保留在途动作，暂停/换代次/会话/销毁取消。
+- [x] Windows派发界限：每attachment1、全Core4个任务，非阻塞admission；4s等待，比私有5s更短，超时槽位直到原任务真正终止才释放。限制可跨Room/Player重建；媒体等锁/解析及音量设备解析后的取消复核已补，实际取消音量请求不改endpoint。错误不包含私有异常/设备身份。
+- [x] 最终完整build后的实际Core控制：官方SDK经Windows鼠标注入音量改动→恢复，五媒体命令均到达本轮拥有的静音WinRT publisher（每次派发前真实Core当前媒体title核验）。8次完成各一次消费/8份accepted、无默认重复；动态导航仍同文档切页，正常重启同安装恢复focus/KV/新SDK文档。最终15项PASS，注入不填物理/DPI/听音人工门槛。
+- [x] 探针纠正：新ManualClock测试错用Now，先改Advance，不计功能RED；同时无输入请求可被单attachment界限拒绝controlUnavailable，有限重试后再要求inputRequired。多次回执扩大标题使观察丢失，改只报告必要字段与精简KV投影，最终2842字符完整JSON；不是生产控制失败。错误参数--v3-status .先失败，改正确inactive后通过；进程筛选改按真实Lively.Player.WebView2.exe名称，不凭错误别名宣称缺失。
+- [x] 最终常规start/identity：Core40928、Player124608、Watchdog99404、config69696，日志20261003_173146.txt；原v2 inactive。配置器仍所属D共享缓存，身份脚本OTHER/exit1，路径独立核验，不宣称全脚本OK。按精确PID/path正常退出Core/配置器，watcher41725终止exit0，个人SHA256/原不存在状态保持。实际Core夹具finally恢复原桌面、数据、窗口最小化/最大化、前台/鼠标与原endpoint音量。
+- [ ] 唯一接续：可信Dext退出确认与彻底退出产品；随后按Task4完整四媒体生命周期/Player故障、移动/遮挡精确输入、个人布局/恢复和最后一次完整P5审查推进。本包全16项/readiness1/16与上方7项集中人工验收保持，不中途合并。
+
+- 2026-10-03系统控制最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；Core/配置器正常退出，全部工具会话已终止。

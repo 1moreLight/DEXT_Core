@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Dext.Core.Rooms;
 
@@ -33,6 +34,23 @@ internal sealed partial class RoomSessionPlayerBridge
             ?actions.InvokeNavigation(connectionId,peer,session,consumer,proof.Button.Button,issued.Ticket,action):new(issued.Status);
         return new(reply.Status,proof.Sequence,proof.IsConsumed);
     }
+    internal async Task<RoomNativeActionReply> ControlNativeAsync(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,RoomSystemControl control,
+        Func<RoomSystemControl,Task<bool>> dispatch,long inputSequence=0,Action<RoomNativeInputProof>? attempted=null)
+    {
+        if(disposed)return new(RoomActionStatus.StaleSession);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return new(RoomActionStatus.StaleInput);
+        var completed=current.Completed;
+        var proof=completed==null?null:native.GetProof(generation,geometry,consumer,completed.Button.Button,inputSequence);
+        if(proof==null)return new(inputSequence==0?RoomActionStatus.InputRequired:RoomActionStatus.StaleInput);
+        attempted?.Invoke(proof);
+        var issued=actions.IssueHostInput(connectionId,peer,session,consumer,proof.Button.Button,proof);
+        var reply=issued.Status==RoomActionStatus.Accepted
+            ?await actions.InvokeSystemControlAsync(connectionId,peer,session,consumer,proof.Button.Button,issued.Ticket,control,dispatch):new(issued.Status);
+        return new(reply.Status,proof.Sequence,proof.IsConsumed);
+    }
+
     internal RoomButtonsReply NativeButtons(RoomActionAuthority actions,Guid session,string consumer) =>
         disposed?new(RoomActionStatus.StaleSession):actions.ReadButtons(connectionId,peer,session,consumer);
 

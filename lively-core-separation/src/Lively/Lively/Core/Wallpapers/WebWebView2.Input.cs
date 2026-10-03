@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System;
 using System.Linq;
 using System.Threading;
+using Lively.Grpc.Common.Proto.Desktop;
 
 namespace Lively.Core.Wallpapers
 {
@@ -18,6 +19,7 @@ namespace Lively.Core.Wallpapers
             // Never wait for admission on the Core/UI event thread. At most 16
             // consumer storage operations are in flight per private attachment.
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
+            internal RoomNativeControlQueue Controls { get; } = new();
         }
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
@@ -89,6 +91,18 @@ namespace Lively.Core.Wallpapers
                         status=written.Status;
                     }catch(System.Text.Json.JsonException){status=RoomActionStatus.Denied;}
                     finally{a.StorageRequests.Release();}break;
+                case "mediaControl":
+                case "audioControl":
+                    RoomNativeInputProof attempted=null;
+                    RoomNativeActionReply Unavailable(){var proof=Volatile.Read(ref attempted);return new(RoomActionStatus.ControlUnavailable,proof?.Sequence??0,proof?.IsConsumed??false);}
+                    actionReply=await a.Controls.RunAsync(async token=>{
+                        token.ThrowIfCancellationRequested();
+                        a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
+                        return await a.Bridge.ControlNativeAsync(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,
+                            new RoomSystemControl(request.Method=="mediaControl"?"media.control":"audio.control",request.MediaAction,request.Volume,request.Muted),
+                            control=>DispatchNativeControl(control,token),request.InputSequence,proof=>Interlocked.Exchange(ref attempted,proof));
+                    },Unavailable);
+                    status=actionReply.Status;break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
                     actionReply=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button,request.InputSequence);
@@ -105,6 +119,16 @@ namespace Lively.Core.Wallpapers
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
                 status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue});
+        }
+        private async Task<bool> DispatchNativeControl(RoomSystemControl control,CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            if(control.Capability=="audio.control"){systemControlService.SetVolume(control.Volume,control.Muted,token);return true;}
+            var action=control.Action switch {
+                "play"=>SystemMediaAction.Play,"pause"=>SystemMediaAction.Pause,"toggle"=>SystemMediaAction.TogglePlayPause,
+                "next"=>SystemMediaAction.Next,"previous"=>SystemMediaAction.Previous,_=>(SystemMediaAction?)null
+            };
+            return action is{} value && await systemControlService.ControlMediaAsync(value,token);
         }
         private RoomNativeDataSource CreateNativeDataSource() => RoomNativeDataSource.ForWindows(systemControlService);
 

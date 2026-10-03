@@ -26,10 +26,12 @@
     }
     const frames=(options.createFrameHost||root.DextFrameHost.createFrameHost)({window:options.window||root,document,initialSnapshot:snapshot,runtimeGeneration:context.runtimeGeneration,
       initialGeometry:{geometryVersion:0,viewport:options.getViewport()},initialPlaybackSuspended:privatePaused,resolveResource,readCapabilities:q=>native.readCapabilities(q),
-      implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
+      implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write','media.control','audio.control'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
       applyState:options.applyFrameState,invoke:async value=>{
         if(value.method==='actions.activate')return authorAction('activate',{button:value.params.buttonId},value.consumerId,value.identity);
         if(value.method==='desk.navigate')return authorAction('navigate',{action:value.params.action},value.consumerId,value.identity);
+        if(value.method==='media.control')return authorAction('mediaControl',{action:value.params.action},value.consumerId,value.identity);
+        if(value.method==='audio.control')return authorAction('audioControl',{settings:value.params.settings},value.consumerId,value.identity);
         if(value.method==='actions.list'){const reply=await native.request('buttons',{consumer:value.consumerId},value.identity);if(reply.status!=='accepted')throw failure(reply.status);return reply.buttons;}
         if(value.method==='desk.get'){const reply=await native.readCapabilities({consumerId:value.consumerId,identity:value.identity});if(reply.status!=='accepted'||reply.capabilities?.['desk.read']!=='accepted')throw failure('denied');return copy(snapshot);}
         if(value.method==='storage.get'||value.method==='storage.set'){
@@ -190,7 +192,7 @@
       try{
         const reply=await native.request(method,{consumer,...params,geometryVersion:geometry,inputSequence:sequence},identity);
         if(sameActionScope(identity,geometry))consumeReceipt(reply);
-        if(method==='navigate'&&!['accepted','queued'].includes(reply.status))throw failure(reply.status);
+        if(['navigate','mediaControl','audioControl'].includes(method)&&!['accepted','queued'].includes(reply.status))throw failure(reply.status);
         // Private correlation and any Core metadata stay in the official host.
         return{status:reply.status};
       }finally{actionFlights.delete(flight);runDefault();}

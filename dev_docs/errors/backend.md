@@ -432,3 +432,8 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 - 2026-10-03，真实生产JS行为RED15/16：保留当前文档的Core导航请求，Core先发布新修订，再到达真实accepted回执，native-host.acceptIdentity取消在途请求并向SDK返回staleInput。
 - 只在同一generation/session的修订推进时保留已发出的activate/navigate请求及其有界计时；回执必须精确匹配原请求身份和私有消费字段。新代次/会话、暂停、销毁仍取消所有请求，数据/权限/存储旧修订规则不放宽。
 - 不是重派旧请求或给重放成功。原始请求仍由Core按实际证明/个人授权消费；DOM仅公开status。实际Core作者SDK得到accepted，原生完成仅一份消费回执。queued与expiredInput加入原生安全状态集合，Frame错误保留expiredInput。
+
+## #193 Windows控制等待后仍须核对取消
+- 2026-10-03，接线前复核发现既有ControlMediaAsync只在mediaLock前检查token；等锁/读取来源期间请求可已超过Core4s期限。锁内取得后、发送命令前再次检查。
+- 原SetVolume新增带token重载；保留既有签名，通过无取消token转调。解析默认endpoint后每次写level/muted前重新检查，Core只调用带token版本。真实已取消请求拒绝且设备ID/level/mute未改变。
+- 这是源码发现的迟到执行风险与新取消API的RED/GREEN验证，不宣称已复现Windows挂死；已发出的单个COM调用不可被此检查撤回，挂起并发槽位仍需持有至实际终止。

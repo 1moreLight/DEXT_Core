@@ -4,7 +4,7 @@
 })(globalThis,function(root){
   'use strict';
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
-  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation']);
+  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited']);
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f]/.test(v);
   const shape=(v,keys)=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
@@ -35,6 +35,10 @@
       case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
       case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
         (['desk.next','desk.previous'].includes(p.action.type)?shape(p.action,['type']):p.action.type==='desk.go'&&shape(p.action,['type','deskId'])&&id(p.action.deskId,80));
+      case'mediaControl':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&['play','pause','toggle','next','previous'].includes(p.action);
+      case'audioControl':return shape(p,['consumer','settings','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.settings)&&
+        Object.keys(p.settings).length>0&&Object.keys(p.settings).every(k=>['volume','muted'].includes(k))&&
+        (!Object.hasOwn(p.settings,'volume')||finite(p.settings.volume,0,1))&&(!Object.hasOwn(p.settings,'muted')||typeof p.settings.muted==='boolean');
       case'geometry':return shape(p,['geometryVersion','buttons','viewport'])&&integer(p.geometryVersion)&&shape(p.viewport,['width','height','dpr'])&&
         finite(p.viewport.width,64,16384)&&finite(p.viewport.height,64,16384)&&finite(p.viewport.dpr,.5,8)&&Array.isArray(p.buttons)&&p.buttons.length<=4096&&p.buttons.every(b=>
           shape(b,['consumer','button','x','y','width','height','tabIndex'])&&id(b.consumer)&&id(b.button,80)&&finite(b.x,0,1)&&finite(b.y,0,1)&&finite(b.width,Number.EPSILON,1)&&finite(b.height,Number.EPSILON,1)&&
@@ -77,9 +81,9 @@
       // An authoritative action may synchronously publish its new revision
       // before its receipt. Deliver that existing result in this same document;
       // generation/session replacement and pause still cancel all requests.
-      const action=['activate','navigate'].includes(entry.method);
+      const action=['activate','navigate','mediaControl','audioControl'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
-      if(['activate','navigate'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
+      if(['activate','navigate','mediaControl','audioControl'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
       finish(entry,true,reply);
     }
     transport.addEventListener('message',receive);
@@ -141,7 +145,7 @@
       watch.listeners.add(listener);if(created)refreshWatch(watch);let released=false;
       return()=>{if(released)return;released=true;watch.listeners.delete(listener);if(watch.listeners.size===0){stopWatch(watch);watches.delete(consumer);}};
     }
-    function cancelPending(code,retainActions=false){for(const entry of [...pending.values()])if(!retainActions||!['activate','navigate'].includes(entry.method))finish(entry,false,code);capQueries.clear();}
+    function cancelPending(code,retainActions=false){for(const entry of [...pending.values()])if(!retainActions||!['activate','navigate','mediaControl','audioControl'].includes(entry.method))finish(entry,false,code);capQueries.clear();}
     return Object.freeze({
       request:(method,params,scope)=>dispatch(method,params,scope).promise,readCapabilities,subscribeData,watchCapabilities,
       acceptIdentity(next){

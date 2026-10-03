@@ -10,6 +10,27 @@ static class RoomActionChecks
     static void Eq<T>(T expected, T actual) { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}"); }
     public static void Run(Action<string, Action> check)
     {
+
+        check("timed-out Windows control retains attachment admission until actual terminal",()=>{
+            var queue=new RoomNativeControlQueue(TimeSpan.FromMilliseconds(50));var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new ManualResetEventSlim();
+            var terminal=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);int calls=0;
+            try{
+                var result=queue.RunAsync(async token=>{Interlocked.Increment(ref calls);started.Set();await release.Task;terminal.SetResult();return new(RoomActionStatus.Accepted,7,true);},()=>new(RoomActionStatus.ControlUnavailable,7,true));
+                Eq(true,started.Wait(TimeSpan.FromSeconds(2)));var timeout=result.GetAwaiter().GetResult();Eq(RoomActionStatus.ControlUnavailable,timeout.Status);Eq(true,timeout.InputConsumed);
+                var busy=queue.RunAsync(token=>{calls++;return Task.FromResult(new RoomNativeActionReply(RoomActionStatus.Accepted));},()=>new(RoomActionStatus.ControlUnavailable)).GetAwaiter().GetResult();
+                Eq(RoomActionStatus.ControlUnavailable,busy.Status);Eq(0L,busy.InputSequence);Eq(1,calls);
+            }finally{release.TrySetResult();terminal.Task.Wait(TimeSpan.FromSeconds(2));}
+            Eq(true,SpinWait.SpinUntil(()=>queue.RunAsync(token=>Task.FromResult(new RoomNativeActionReply(RoomActionStatus.Accepted)),()=>new(RoomActionStatus.ControlUnavailable)).GetAwaiter().GetResult().Status==RoomActionStatus.Accepted,TimeSpan.FromSeconds(2)));
+        });
+        check("global Windows admission bounds hung jobs across replacement attachments",()=>{
+            var queues=Enumerable.Range(0,5).Select(_=>new RoomNativeControlQueue(TimeSpan.FromMilliseconds(70))).ToArray();
+            var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new CountdownEvent(4);using var terminal=new CountdownEvent(4);int calls=0;
+            try{
+                var jobs=queues.Take(4).Select(q=>q.RunAsync(async token=>{Interlocked.Increment(ref calls);started.Signal();await release.Task;terminal.Signal();return new(RoomActionStatus.Accepted);},()=>new(RoomActionStatus.ControlUnavailable))).ToArray();
+                Eq(true,started.Wait(TimeSpan.FromSeconds(2)));Task.WhenAll(jobs).GetAwaiter().GetResult();
+                Eq(RoomActionStatus.ControlUnavailable,queues[4].RunAsync(token=>{calls++;return Task.FromResult(new RoomNativeActionReply(RoomActionStatus.Accepted));},()=>new(RoomActionStatus.ControlUnavailable)).GetAwaiter().GetResult().Status);Eq(4,calls);
+            }finally{release.TrySetResult();terminal.Wait(TimeSpan.FromSeconds(2));}
+        });
         RoomNativeInputAuthority Native(ActionFixture f) {
             var input=f.Actions.CreateNativeInput();input.Initialize(1,f.Kernel.Snapshot!);return input;
         }
@@ -64,6 +85,68 @@ static class RoomActionChecks
             var denied=bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.previous"),sequence);
             Eq(RoomActionStatus.Denied,denied.Status);Eq(sequence,denied.InputSequence);Eq(false,denied.InputConsumed);
             Eq(true,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next",sequence).InputConsumed);
+        });
+        foreach(var media in new[]{"play","pause","toggle","next","previous"})check("native media controls consume one declared input "+media,()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
+            var request=new RoomSystemControl("media.control",media);
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{Eq(request,c);calls++;return Task.FromResult(true);}).GetAwaiter().GetResult();
+            Eq(RoomActionStatus.Accepted,reply.Status);Eq(1L,reply.InputSequence);Eq(true,reply.InputConsumed);Eq(1,calls);
+            Eq(RoomActionStatus.InputRequired,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);Eq(1,calls);
+        });
+        foreach(var patch in new[]{new RoomSystemControl("audio.control",Volume:0),new RoomSystemControl("audio.control",Volume:1),new RoomSystemControl("audio.control",Muted:true),new RoomSystemControl("audio.control",Muted:false),new RoomSystemControl("audio.control",Volume:.25,Muted:true)})check("native audio typed patch "+patch,()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",patch,c=>{Eq(patch,c);return Task.FromResult(true);}).GetAwaiter().GetResult().Status);
+        });
+        foreach(var request in new[]{new RoomSystemControl("media.control","execute"),new RoomSystemControl("media.control","play",Volume:.3),new RoomSystemControl("audio.control"),new RoomSystemControl("audio.control","play",Volume:.3),new RoomSystemControl("audio.control",Volume:double.NaN),new RoomSystemControl("audio.control",Volume:-.1),new RoomSystemControl("audio.control",Volume:1.1),new RoomSystemControl("binding.launch","play")})check("invalid system control does not consume proof "+request,()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult();
+            Eq(RoomActionStatus.Denied,reply.Status);Eq(false,reply.InputConsumed);Eq(0,calls);Eq(true,n.State!.Completed!=null);
+        });
+        foreach(var failure in new[]{"grant","consumer","expired","geometry","generation","paused","locked","foreground","disposed"})check("native system control rejects changed current facts "+failure,()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;var consumer="scene";var expected=RoomActionStatus.StaleInput;
+            switch(failure){
+                case "grant":f.Store.Update(s=>s.Rooms[Room].Grants.Remove("scene"));expected=RoomActionStatus.MissingPermission;break;
+                case "consumer":consumer="component.widget";expected=RoomActionStatus.InputRequired;break;
+                case "expired":f.Clock.Advance(TimeSpan.FromSeconds(2));expected=RoomActionStatus.ExpiredInput;break;
+                case "geometry":n.InvalidateGeometry(1,f.Session,1);expected=RoomActionStatus.InputRequired;break;
+                case "generation":n.Initialize(2,f.Kernel.Snapshot!);break;
+                case "paused":f.Lifecycle(RoomLifecycleStage.Desktop,paused:true);break;
+                case "locked":f.Lifecycle(RoomLifecycleStage.Desktop,locked:true);break;
+                case "foreground":f.Gateway.SetOperable(f.Coordinator,f.CorePeer,f.Session,false);break;
+                case "disposed":bridge.Dispose();expected=RoomActionStatus.StaleSession;break;
+            }
+            Eq(expected,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,consumer,new("media.control","play"),c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);Eq(0,calls);
+        });
+        check("author system control cannot replace current personal binding and leaves exact fallback",()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);f.Store.Update(s=>s.Rooms[Room].Buttons["dynamic"]=new(TargetId:Target));
+            var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var sequence=n.State!.Completed!.Sequence;var calls=0;
+            var denied=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),c=>{calls++;return Task.FromResult(true);},sequence).GetAwaiter().GetResult();
+            Eq(RoomActionStatus.Denied,denied.Status);Eq(false,denied.InputConsumed);Eq(0,calls);Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","dynamic",sequence).Status);Eq(1,f.Launched.Count);
+        });
+        check("author control cannot replace authored navigation default",()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var calls=0;
+            Eq(RoomActionStatus.Denied,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("audio.control",Volume:.5),c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);
+            Eq(0,calls);Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);
+        });
+        foreach(var error in new[]{"false","exception","cancel"})check("system failures expose safe status and preserve actual consumed edge "+error,()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),c=>{calls++;if(error=="exception")throw new IOException("private path");if(error=="cancel")return Task.FromCanceled<bool>(new CancellationToken(true));return Task.FromResult(false);}).GetAwaiter().GetResult();
+            Eq(RoomActionStatus.ControlUnavailable,reply.Status);Eq(true,reply.InputConsumed);Eq(1,calls);
+        });
+        check("system control callback runs outside all authority locks and current consent is rechecked",()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),async c=>{
+                var check=Task.Run(()=>f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Status);
+                Eq(RoomActionStatus.Accepted,await check.WaitAsync(TimeSpan.FromSeconds(2)));return true;
+            }).GetAwaiter().GetResult();Eq(RoomActionStatus.Accepted,reply.Status);
+        });
+        check("rapid new real system inputs are rate limited without consuming the next proof",()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
+            Task<bool> Send(RoomSystemControl c){calls++;return Task.FromResult(true);}
+            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),Send).GetAwaiter().GetResult().Status);
+            n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);
+            var limited=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult();Eq(RoomActionStatus.RateLimited,limited.Status);Eq(false,limited.InputConsumed);Eq(1,calls);
+            f.Clock.Advance(TimeSpan.FromMilliseconds(100));Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult().Status);Eq(2,calls);
         });
         foreach(var type in new[]{"desk.next","desk.previous","desk.go"})check("native authored navigation matches current configured action "+type,()=>{
             using var f=new ActionFixture();if(type!="desk.next")f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new(type,type=="desk.go"?"focus":null));
@@ -754,7 +837,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false,bool controlCapabilities=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -786,6 +869,9 @@ static class RoomActionChecks
             var storageCaps=new[]{"storage.read","storage.write"};
             if(storageCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["components"]![0]})foreach(var capability in storageCaps)owner!["capabilities"]!.AsArray().Add(capability);manifest=document.ToJsonString();}
             if(navigationDynamic){var document=JsonNode.Parse(manifest)!;document["buttons"]!.AsArray().Add(new JsonObject{["id"]="dynamic",["name"]="Dynamic",["scope"]="room"});manifest=document.ToJsonString();}
+            var controlCaps=new[]{"media.control","audio.control"};
+            if(controlCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["components"]![0]})foreach(var cap in controlCaps)owner!["capabilities"]!.AsArray().Add(cap);
+                document["components"]![0]!["buttonIds"]!.AsArray().Add("dynamic");manifest=document.ToJsonString();}
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);
@@ -809,6 +895,7 @@ static class RoomActionChecks
             if(dataCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","slot.start","slot.idle"})
                 if(room.Grants.TryGetValue(owner,out var grant))room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(dataCaps).Distinct().ToArray());});
             if(storageCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","component.widget"}){var grant=room.Grants[owner];room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(storageCaps).ToArray());}});
+            if(controlCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","component.widget"}){var grant=room.Grants[owner];room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(controlCaps).ToArray());}});
             Actions = new(Gateway, Store, target => Launched.Add(target), Clock);
         }
         public RoomInputReply Input(string button, string consumer = "scene") => Actions.IssueHostInput(View, Peer, Session, consumer, button);

@@ -73,6 +73,31 @@ internal static class NativeInputMessageChecks
             Require(Parse(r)==null);foreach(var sequence in new JToken[]{-1,1.2,"7",9007199254740992L}){r["inputSequence"]=sequence;Require(Parse(r)==null);}
             r["inputSequence"]=0;Require(Parse(r)?.InputSequence==0);r["inputSequence"]=7;Require(Parse(r)?.InputSequence==7);
         });
+
+        JObject Control(string method){var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["inputSequence"]=7;return r;}
+        Check("media controls preserve only five intents across strict Player IPC",()=>{
+            var r=Control("mediaControl");foreach(var action in new[]{"play","pause","toggle","next","previous"}){
+                r["action"]=action;var parsed=Parse(r);Require(parsed?.MediaAction==action&&parsed.InputSequence==7);
+                Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.MediaAction==action);
+            }
+            foreach(var action in new JToken[]{"seek",7,new JObject{["type"]="play"}}){r["action"]=action;Require(Parse(r)==null);}
+            r["action"]="play";r["button"]="fake";Require(Parse(r)==null);r.Remove("button");r["revision"]=2;Require(Parse(r)==null);
+        });
+        Check("audio control strict patch and IPC preserve endpoints and false mute",()=>{
+            var r=Control("audioControl");foreach(var settings in new[]{new JObject{["volume"]=0},new JObject{["volume"]=1},new JObject{["muted"]=false},new JObject{["volume"]=.5,["muted"]=true}}){
+                r["settings"]=settings;var parsed=Parse(r);Require(parsed!=null);var copy=RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest;
+                Require(copy?.Volume==(double?)settings["volume"]&&copy?.Muted==(bool?)settings["muted"]);
+            }
+            foreach(var settings in new JToken[]{new JObject(),new JObject{["volume"]=-.1},new JObject{["volume"]=1.1},new JObject{["volume"]="0.5"},new JObject{["volume"]=JValue.CreateNull()},new JObject{["muted"]=1},new JObject{["path"]="private"}}){r["settings"]=settings;Require(Parse(r)==null);}
+            r["settings"]=new JObject{["muted"]=true};r["ticket"]="pretend";Require(Parse(r)==null);
+        });
+        Check("system controls reject missing unsafe and wrong-generation correlation",()=>{
+            foreach(var method in new[]{"mediaControl","audioControl"}){
+                var r=Control(method);if(method=="mediaControl")r["action"]="pause";else r["settings"]=new JObject{["muted"]=true};
+                foreach(var sequence in new JToken[]{-1,1.2,"7",9007199254740992L}){r["inputSequence"]=sequence;Require(Parse(r)==null);}
+                r["inputSequence"]=0;Require(Parse(r)!=null);r.Remove("inputSequence");Require(Parse(r)==null);r["inputSequence"]=7;r["runtimeGeneration"]=2;Require(Parse(r)==null);
+            }
+        });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }
 }

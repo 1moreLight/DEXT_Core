@@ -27,6 +27,9 @@ namespace Lively.Models.Message
         public long GeometryVersion { get; set; }
         public long InputSequence { get; set; }
         public LivelyRoomNativeNavigation Action { get; set; }
+        public string MediaAction { get; set; }
+        public double? Volume { get; set; }
+        public bool? Muted { get; set; }
         public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
         public string Capability { get; set; }

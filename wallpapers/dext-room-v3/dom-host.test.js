@@ -154,3 +154,27 @@ test('official DOM click cannot race native dispatch or invent an input sequence
  const icon=f.container.children[0].children.find(v=>v.tag==='button');icon.handlers.click?.();await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,0);
  f.host.handleNativeInput(f.event(7,'official'));await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,1);assert.equal(f.calls.find(v=>v.method==='activate').params.inputSequence,7);f.host.dispose();
 });
+
+
+test('author controls use fixed consumer once and reveal status without private receipt',async()=>{
+ for(const [method,params,nativeMethod]of [['media.control',{action:'pause'},'mediaControl'],['audio.control',{settings:{volume:.25,muted:true}},'audioControl']]){
+   const f=actionFixture(m=>Promise.resolve(m===nativeMethod?{status:'accepted',inputSequence:7,inputConsumed:true,deviceId:'private'}:{status:'accepted'}));await f.host.ready;
+   assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes(method),true);
+   f.host.handleNativeInput(f.event(7));assert.deepEqual(await f.invoke(method,params),{status:'accepted'});await f.tick(1000);
+   assert.deepEqual(f.calls.find(v=>v.method===nativeMethod).params,{consumer:'scene',...params,geometryVersion:1,inputSequence:7});
+   assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+ }
+});
+test('system failure after consumption suppresses fallback; rate denial preserves it',async()=>{
+ for(const [status,consumed]of [['controlUnavailable',true],['rateLimited',false],['denied',false]]){
+   const f=actionFixture(m=>Promise.resolve(m==='mediaControl'?{status,inputSequence:7,inputConsumed:consumed}:{status:'accepted',inputSequence:7,inputConsumed:true}));await f.host.ready;f.host.handleNativeInput(f.event(7));
+   await assert.rejects(f.invoke('media.control',{action:'pause'}),{code:status});await f.tick(1000);
+   assert.equal(f.calls.filter(v=>v.method==='activate').length,consumed?0:1);f.host.dispose();
+ }
+});
+test('control before native event holds exact default until async Windows receipt',async()=>{
+ let release;const f=actionFixture(m=>m==='audioControl'?new Promise(r=>release=r):Promise.resolve({status:'accepted'}));await f.host.ready;
+ const p=f.invoke('audio.control',{settings:{muted:true}});p.catch(()=>{});await flush();assert.equal(typeof release,'function');
+ f.host.handleNativeInput(f.event(7));await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);
+ release({status:'accepted',inputSequence:7,inputConsumed:true});await p;await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+});

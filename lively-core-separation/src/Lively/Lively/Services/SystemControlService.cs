@@ -25,6 +25,7 @@ namespace Lively.Services
             cancellationToken.ThrowIfCancellationRequested();
             lock (mediaLock)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var session = mediaManager.CurrentSession;
                 if (session is null)
                     return Task.FromResult(new SystemMediaSnapshot());
@@ -62,6 +63,7 @@ namespace Lively.Services
             cancellationToken.ThrowIfCancellationRequested();
             lock (mediaLock)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var session = mediaManager.CurrentSession;
                 if (session is null)
                     return Task.FromResult(false);
@@ -75,6 +77,7 @@ namespace Lively.Services
                     SystemMediaAction.Previous => MediaPlaybackCommands.Previous,
                     _ => throw new ArgumentOutOfRangeException(nameof(action), action, "Unsupported media action"),
                 };
+                cancellationToken.ThrowIfCancellationRequested();
                 return Task.FromResult(source.SendMediaPlaybackCommand(command));
             }
         }
@@ -86,8 +89,11 @@ namespace Lively.Services
             return Snapshot(device);
         }
 
-        public SystemVolumeSnapshot SetVolume(double? level, bool? muted)
+        public SystemVolumeSnapshot SetVolume(double? level, bool? muted) => SetVolume(level,muted,CancellationToken.None);
+
+        public SystemVolumeSnapshot SetVolume(double? level, bool? muted,CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (level.HasValue && (!double.IsFinite(level.Value) || level.Value < 0 || level.Value > 1))
                 throw new ArgumentOutOfRangeException(nameof(level), "System volume must be between 0.0 and 1.0");
             if (!level.HasValue && !muted.HasValue)
@@ -96,9 +102,15 @@ namespace Lively.Services
             using var enumerator = new MMDeviceEnumerator();
             using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
             if (level.HasValue)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 device.AudioEndpointVolume.MasterVolumeLevelScalar = (float)level.Value;
+            }
             if (muted.HasValue)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 device.AudioEndpointVolume.Mute = muted.Value;
+            }
             return Snapshot(device);
         }
 

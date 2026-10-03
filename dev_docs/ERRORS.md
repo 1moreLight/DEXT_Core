@@ -246,3 +246,7 @@
 | #189 | 导航先推进Core修订，私有宿主提前取消真实动作回执并误报staleInput | [backend](errors/backend.md) |
 | #190 | 输入探针误用未提供的operable诊断字段；COM Type与Protobuf.Type名称冲突 | [toolchain](errors/toolchain.md) |
 | #191 | 聚焦Progman不等于显示桌面，测试点击实际命中覆盖应用；重启初期前台仍是工具窗 | [toolchain](errors/toolchain.md) |
+
+
+| #192 | 控制探针并发前置/计时接口/标题容量/参数和真实进程名核对 | [toolchain](errors/toolchain.md) |
+| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |

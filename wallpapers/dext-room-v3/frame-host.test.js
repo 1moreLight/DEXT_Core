@@ -127,3 +127,11 @@ test('real SDK storage keeps current consumer identity and independently rejects
  const {sdk}=await f.start({capabilities:['storage.read','storage.write']});assert.equal(await sdk.storage.get('missing'),null);await sdk.storage.set('notes',{label:'\u65e5\u671f',items:[1,true,null]});assert.deepEqual(JSON.parse(JSON.stringify(await sdk.storage.get('notes'))),{label:'\u65e5\u671f',items:[1,true,null]});
  assert.equal(calls.every(v=>v.consumerId==='scene'&&v.identity.revision===1),true);writable=false;f.host.refreshPermissions();await flush();await assert.rejects(sdk.storage.set('notes',null),{code:'denied'});assert.deepEqual(JSON.parse(JSON.stringify(await sdk.storage.get('notes'))),{label:'\u65e5\u671f',items:[1,true,null]});f.host.dispose();
 });
+
+test('real SDK control errors preserve bounded safe status and current consumer',async()=>{
+ for(const code of ['controlUnavailable','rateLimited']){
+   const f=fixture({implementedCapabilities:['media.control','audio.control'],readCapabilities:async()=>({status:'accepted',capabilities:{'media.control':'accepted','audio.control':'accepted'}}),invoke:async value=>{f.calls.push(value);throw Object.assign(Error('private native details'),{code});}});
+   const {sdk}=await f.start({capabilities:['media.control','audio.control']});await assert.rejects(sdk.media.control('pause'),{code});await assert.rejects(sdk.audio.control({muted:true}),{code});
+   assert.equal(f.calls.every(v=>v.consumerId==='scene'&&v.identity.revision===1),true);f.host.dispose();
+ }
+});

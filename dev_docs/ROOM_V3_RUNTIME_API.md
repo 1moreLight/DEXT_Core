@@ -163,7 +163,7 @@ native-host发送Player要求的JSON字符串，只接受固定私有WebView消�
 
 dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下，切页不重挂或改src。HTML媒体委托frame-host，四类素材使用media-host。官方资源只从当前inventory解析/content/<generation>/路径。每个global revision先invalidate并等回执，再更新DOM并发布递增私有inputVersion，Core接受后才启用动作；queue修订不重播动画。发布staleInput按新inputVersion最多8次、50ms可取消间隔重试。模型的SDK geometryVersion与私有输入发布版本独立。作者Widget本地矩形须在自身placement内，再平移到设计画布；global组矩阵绕画布原点作用于同一wrapper/图标。默认slide/fade/none回告完成，current只来自Core。
 
-现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTMLMediaElement与WebAudio原生逐iframe基础已在下节接入；完整生命周期仍继续。inert不作为媒体暂停证据。
+现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。此段保留原接线阶段的输入限制；当前desk.navigate、media.control/audio.control及storage均已接消费者专用Core适配，见文末。可信退出确认继续，未实现能力仍报告unsupported。HTMLMediaElement与WebAudio原生逐iframe基础已在下节接入；完整生命周期仍继续。inert不作为媒体暂停证据。
 
 生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟；后续真实Core安装/重启证据见文末，物理输入/DPI与最终7项仍待执行。
 
@@ -188,4 +188,17 @@ Player在首航前注入自身嵌入脚本，捕获原始音视频、DOM、事�
 
 Core已提供ReadStorage/WriteStorage及私有Player连接适配，SDK storage.get仍返回JSON，缺键为null；set(null)保存JSON null。存储按Room副本UUID/固定consumer/稳定key隔离，不返回个人目标或其他消费者值。读写分别逐次重新授权，检查当前session/revision/安装、声明、个人许可与活动事实；不能凭capabilities缓存授权。每值规范JSON32KiB/深度24/每容器4096项、每消费者128键/64KiB、个人总1MiB，超限拒绝而不改原文件。成功保存增加个人revision，发布失败storageUnavailable。旧个人format1缺字段默认空，损坏状态不重置。
 
-110/110真实生产源码检查与完整构建/启动身份通过；Player严格storageGet/storageSet、正式DOM与SDK仍在下一接线阶段，当前作者宿主继续如实报告unsupported。此Core基础不代填实际授权作者KV端到端或最终7项。
+110/110为该生产者阶段历史；当前严格storageGet/storageSet、正式DOM/SDK和实际Core授权KV已接通，撤权恢复、同安装重启读取与日志隐私验证见V3_DELIVERY。最终7项仍待集中人工验收。
+
+
+## 当前系统控制私有IPC（2026-10-03，P5接线）
+
+Dext.media.control只接受play/pause/toggle/next/previous；Dext.audio.control接受非空volume（有限0..1）/muted（boolean）patch，不能携带目标、路径、按钮、票据或原生序号。私有宿主固定consumer和当前generation/session/revision/geometryVersion，并从Core当前真实完成推导已声明button。逐次复核安装、阶段、原生1500ms期限、授权及私有绑定；作者控制仅可用没有默认/个人动作的声明入口，不能替换个人应用、导航或退出。
+
+Core准备与一次证明消费是短私有提交边界，Windows/COM在锁外线程池执行。每consumer+capability最多10次/秒；rateLimited不消费。每attachment至多1、全Core至多4个任务，非阻塞admission；外层4s后controlUnavailable，原生5s期限仍有界。挂起任务在真正终止前持有槽位，不能用重建attachment绕过；已取消请求在媒体等锁/解析和音量设备解析后的写入前再次拒绝。无法撤回已经发出的系统调用，超时不伪造成功。
+
+Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有宿主使用，SDK仅有安全status/错误码。实际消费后服务失败也取消默认回退；未消费的拒绝保留当前配置入口fallback。已发动作在同代次/会话修订中可回执，暂停/换代次/会话/销毁全部取消。实际Core五媒体意图到达拥有的静音publisher、音量改动后恢复、8次输入一次消费与正常重启恢复已验证；人工物理输入、听音、完整生命周期与可信退出确认仍独立进行。
+
+
+
+Player私有mediaControl请求字段：consumer/action/geometryVersion/inputSequence；audioControl为consumer/settings/geometryVersion/inputSequence。均叠加原IdentityFields且不容额外字段、重复JSON字段、假proof或陈旧identity；settings非空且字段仅volume/muted。Core传输DTO的MediaAction/Volume/Muted与导航Action独立，二次闭合校验后才派发。Core未成功消费不报告inputConsumed=true。系统控制status新增controlUnavailable/rateLimited，安全错误码沿frame-host回SDK。正式SDK/DOM/原生消息与Core最终140/35/168项通过，真实Core控制15项PASS。

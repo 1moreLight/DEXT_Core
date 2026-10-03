@@ -6,7 +6,7 @@
   const CAPS=new Set(['desk.read','desk.navigate','time.read','hardware.read','media.read','media.control','audio.read','audio.control','storage.read','storage.write','binding.launch','dext.exit']);
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
   const CHANNELS=new Set(['desk','lifecycle','config','capabilities','geometry']);
-  const ERRORS=new Set(['denied','expiredInput','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidArgument','unknownConsumer','forbidden','missingPermission','invalidButton','missingBinding','launchFailed','requiresConfirmation','timeout']);
+  const ERRORS=new Set(['denied','expiredInput','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidArgument','unknownConsumer','forbidden','missingPermission','invalidButton','missingBinding','launchFailed','requiresConfirmation','timeout','controlUnavailable','rateLimited']);
   const READS=new Set(['desk.get','storage.get']);
   const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
   const text=(value,limit=160)=>typeof value==='string'&&value.length>0&&value.length<=limit&&!/[\u0000-\u001f]/.test(value);

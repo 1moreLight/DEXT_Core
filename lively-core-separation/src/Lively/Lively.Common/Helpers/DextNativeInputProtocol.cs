@@ -47,6 +47,20 @@ namespace Lively.Common.Helpers
                             type!="desk.next" && type!="desk.previous" || !Shape(action,"type"))return null;
                         request.Consumer=Text(o["consumer"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];
                         request.Action=new LivelyRoomNativeNavigation{Type=type,DeskId=type=="desk.go"?Text(action["deskId"]):null};return request;
+
+                    case "mediaControl":
+                        var mediaAction=Text(o["action"]);
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","action","geometryVersion","inputSequence"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) ||
+                            mediaAction!="play" && mediaAction!="pause" && mediaAction!="toggle" && mediaAction!="next" && mediaAction!="previous")return null;
+                        request.Consumer=Text(o["consumer"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];request.MediaAction=mediaAction;return request;
+                    case "audioControl":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","settings","geometryVersion","inputSequence"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) ||
+                            !(o["settings"] is JObject settings) || settings.Count<1 || settings.Count>2 || settings.Properties().Any(p=>p.Name!="volume"&&p.Name!="muted"))return null;
+                        if(settings.Property("volume")!=null){if(!Number(settings["volume"],out var volume)||volume<0||volume>1)return null;request.Volume=volume;}
+                        if(settings.Property("muted")!=null){if(settings["muted"].Type!=JTokenType.Boolean)return null;request.Muted=(bool)settings["muted"];}
+                        request.Consumer=Text(o["consumer"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
                     case "data":
                         var capability=Text(o["capability"]);
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","capability"}).ToArray()) || !Id(Text(o["consumer"]),128) ||

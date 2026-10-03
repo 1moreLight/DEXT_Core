@@ -11,6 +11,10 @@ internal static class NativeDataLiveProbe
         var time=source.Read("time.read");if(time.Status!="available"||!DateTimeOffset.TryParse(time.Value!.Value.GetProperty("utc").GetString(),out var utc)||Math.Abs((DateTimeOffset.UtcNow-utc).TotalSeconds)>5)throw new Exception("actual time sample");
         var audio=source.Read("audio.read");if(audio.Status!="available")throw new Exception("actual audio status: "+audio.Status);
         var volume=audio.Value!.Value;var level=volume.GetProperty("level").GetDouble();if(!double.IsFinite(level)||level<0||level>1||volume.TryGetProperty("deviceId",out _))throw new Exception("actual audio shape");
+        var service=new SystemControlService();var original=service.GetVolume();
+        try{service.SetVolume(0,!original.Muted,new CancellationToken(true));throw new Exception("cancelled native volume dispatched");}catch(OperationCanceledException){}
+        var after=service.GetVolume();if(after.Level!=original.Level||after.Muted!=original.Muted||after.DeviceId!=original.DeviceId)throw new Exception("cancelled native control changed endpoint");
+        Console.WriteLine("PASS expired Windows volume request rejects before device mutation");
         var media=source.Read("media.read");if(media.Status!="available"&&media.Status!="missing")throw new Exception("actual media status: "+media.Status);
         RoomDataSample hardware=new("missing");var stop=DateTime.UtcNow.AddSeconds(12);
         while(DateTime.UtcNow<stop){hardware=source.Read("hardware.read");if(hardware.Status=="available")break;await Task.Delay(100);}

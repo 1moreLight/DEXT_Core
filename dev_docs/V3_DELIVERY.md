@@ -83,3 +83,13 @@ Core私有桥从当前原生完成证明取得consumer/button，作者仅请求�
 
 
 - 2026-10-03P5作者导航补证：严格原生navigate+私有完成序号/真实消费回执+100ms默认回退接通，个人绑定优先和一次消费保留。JS132/132、动作132/132、消息32/32；实际Core作者SDK在Windows注入后accepted/一次切页，无输入timer拒绝，共享文档保留；正常重启同安装恢复focus/KV，全11PASS。原用户数据、临时showdesktop窗口状态与鼠标恢复；常规启动身份及正常关闭已验证。仍为P5阶段实现，完整Task3/4、最终7项和全16就绪1/16未提前完成，系统控制/退出确认/生命周期/个人布局与精确输入继续。
+
+
+## Task3系统控制原生接线与真实Core（2026-10-03）
+封闭媒体五意图与有限音量patch贯通正式SDK/固定consumer DOM/严格Player消息/Core当前私有授权/真实证明/Windows服务；个人默认/绑定优先，限频与一次消费、真实消费回执统一fallback。JS140/140、消息35/35、Core168/168，分别先RED再GREEN；并发限每attachment1/全Core4、外层4s，超时原任务槽位留至实际终止。实际取消音量请求不写设备。
+
+最终完整build后实际Rust安装/Core独立校验/WorkerW/ReleasePlayer：Player92064、sessionfc8791a9-596b-491a-ab7d-4d5f67c28c9c；音量改动→恢复原endpoint，五媒体意图只在真实Core当前title核验为本轮拥有的静音WinRT publisher时发出，均观察到本机回调。8次Windows注入各一次消费/accepted、无默认重复，共享文档保持并由作者动态导航提交focus。正常重启同安装stamp31a93df7...96fee、新Player71896/session1fd1777b...恢复focus/KV/新SDK/GIF/视频；最终15项PASS。
+
+最初并发无输入、标题观察容量导致探针整轮未过，均保留失败证据并纠正夹具，未降生产输入/权限/并发规则。最终finally恢复原桌面、布局/settings/checkpoint/personal字节或不存在状态、用户Room哈希、原endpoint音量/静音、临时showdesktop窗口旗标/前台/鼠标；不代填物理DPI/听音/完整生命周期人工通过。
+
+常规最终start Core40928/Player124608/Watchdog99404/config69696、日志20261003_173146.txt，原v2 inactive。配置器是所属D共享缓存，identity脚本OTHER/exit1并单独核对路径；没有宣称全脚本OK。正常精确PID/path退出，watcher41725exit0、个人原SHA256/缺失状态保持。可信退出确认及完整Task4仍继续，完整16项/readiness1/16、上方7项人工验收和最终P5审查不减、不提前合并。

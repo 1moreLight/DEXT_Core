@@ -362,3 +362,10 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 - 2026-10-03，输入探针FocusDesktop后Windows注入命中应用，Core正确转paused且无证明。Orca窗口列表及实际WindowFromPoint核对：像素107,56归ChatGPT PID42576/Chrome_RenderWidgetHostHWND，桌面仍被覆盖。未修改正确的生产暂停/前台策略。
 - 只对自动桌面输入夹具临时调用Shell.MinimizeAll，并先记录原可见窗口的IsIconic/IsZoomed；落点须属于实际Progman/WorkerW根。finally UndoMinimizeAll，核对所有仍存在原窗口的状态，恢复原前台与鼠标，再写恢复证据。这轮属于Windows注入，不能代替人工物理验收。
 - 重启首次FocusDesktop发生在Player最终初始化之前；实读前台PID24248/Qt51512QWindowToolSaveBits。待实际桌面阶段后仅重聚焦一次并记录，恢复门槛全过，不循环伪造Windows事实或绕过授权。
+
+
+## #192 系统控制探针前置、计时接口和观察容量必须按提供方契约
+- 2026-10-03，新回归误用ManualClock.Now，改既有Advance，不把测试编译错误计生产RED。
+- 两消费者同时发无输入audioControl，一项inputRequired，另一项正确单attachment忙拒绝controlUnavailable。探针有限重试忙请求后再要求inputRequired，保留生产界限；不要求并发请求必能同时进入。
+- 八次输入累积完整回执/KV后标题观察丢失，扩大读取容量仍未解决。只在测试观察器投影必要消费字段与KV owner（实际私有存储另验），最终完整JSON2842字符；历史失败运行保留，不写成整轮成功。
+- --v3-status第二参数是inactive或预期Desk，误传.应失败；修正确inactive参数。进程名是Lively.Player.WebView2.exe，错误少点的别名不能作为缺失依据，须按真实PID/绝对路径核对。
