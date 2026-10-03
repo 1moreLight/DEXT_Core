@@ -18,7 +18,13 @@ namespace Lively.Player.WebView2
             nativeAuthorDeadline=new System.Windows.Forms.Timer{Interval=50};
             nativeAuthorDeadline.Tick+=(sender,args)=>{nativeFrameMedia.ExpireInputActions();if(!nativeFrameMedia.HasInputActions)nativeAuthorDeadline.Stop();};
             nativePointerDelivery=new DextNativePointerDelivery(
-                async packet=>{var accepted=await nativeFrameMedia.ArmInputAsync(packet);if(accepted)nativeAuthorDeadline.Start();return accepted;},()=>nativeFrameMedia.RevokeInputAsync(),
+                async packet=>{
+                    // Establish native control focus before routing to its owned
+                    // author frame. Core still owns the physical button focus.
+                    if(packet.Key!=0&&packet.Consumer!="official")NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
+                    var accepted=await nativeFrameMedia.ArmInputAsync(packet);
+                    if(accepted)nativeAuthorDeadline.Start();return accepted;
+                },()=>nativeFrameMedia.RevokeInputAsync(),
                 ForwardNativePointer,CurrentNativePointer,packet=>nativeFrameMedia.ReleasedInputAsync(packet),
                 ()=>BeginInvoke((Action)(()=>{if(!IsDisposed&&!Disposing)Close();})));
         }
@@ -42,6 +48,12 @@ namespace Lively.Player.WebView2
         {
             var input=new IntPtr(value.InputHandle);
             if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid))return;
+            if(value.Key!=0){
+                if(value.Consumer=="official")return;
+                var pressed=value.Kind=="down";
+                InputUtil.ForwardMessageKeyboard(input,pressed?0x100:0x101,new IntPtr(value.Key),value.ScanCode,pressed,value.IsExtended);
+                return;
+            }
             var down=value.Kind=="down";var move=value.Kind=="move";
             var message=down?0x201:move?0x200:0x202;
             InputUtil.ForwardMessageMouse(input,value.X-value.OriginX,value.Y-value.OriginY,message,

@@ -278,3 +278,5 @@
 | #209 | 输入文档描述误用于嵌套媒体frame；旧Player需显式Compile且无Environment.ProcessId | [backend](errors/backend.md) |
 
 | #210 | 原生SDK wire通过不等于整轮通过；WebView profile退出后仍短暂占用 | [toolchain](errors/toolchain.md) |
+
+| #211 | WinForms.Focus未使非激活Player派发键；先原生controller再路由作者frame | [renderer](errors/renderer.md) |

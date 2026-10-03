@@ -36,6 +36,7 @@
       return !dom;
     }
     function requireOwned(receiver,dom){if(!owned(receiver,dom))throw new SecurityError('Input receiver belongs to another document','SecurityError');}
+    const nativeFocus=root.focus;
     const nonce=apply(random,root.crypto,[]);
     if(typeof nonce!=='string'||!matches(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i,nonce))return false;
     const wrappers=new WeakMap(),originals=new WeakMap(),properties=[],eventNames=[];
@@ -140,6 +141,9 @@
         if(closed||data(value,'token')!==secret)return null;const kind=data(value,'kind');
         if(kind==='describe')return shape(value,['token','kind'])?receipt():null;
         if(data(value,'documentNonce')!==nonce)return null;
+        if(kind==='focus'&&armed&&typeof nativeFocus==='function'&&shape(value,['token','kind','documentNonce'])){
+          apply(nativeFocus,root,[]);return receipt();
+        }
         if(kind==='revoke'&&shape(value,['token','kind','documentNonce'])){armed=false;gestureId=0;structuralVersion=0;current=null;return receipt();}
         if(kind==='arm'&&shape(value,['token','kind','documentNonce','gestureId','structuralVersion'])){
           const next=data(value,'gestureId'),version=data(value,'structuralVersion');

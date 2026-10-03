@@ -37,17 +37,26 @@ namespace Lively.Player.WebView2
         {
             await RevokeInputAsync();
             if(!InputCurrent(value))return false;
-            currentInput=value;inputActions?.Begin(value);var operation=++inputOperation;
-            await Task.WhenAll(frames.Values.Where(InputFrame).ToArray().Select(async frame=>{
+            var selected=frames.Values.Where(InputFrame).Where(f=>value.Key==0||desired[f.Name].Consumer==value.Consumer).ToArray();
+            if(value.Key!=0&&value.Consumer!="official"&&selected.Length!=1)return false;
+            currentInput=value;inputActions?.Begin(value);var operation=++inputOperation;var accepted=true;
+            await Task.WhenAll(selected.Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=value.GestureId;
+                bool Current()=>operation==inputOperation&&InputCurrent(value)&&Alive(frame,epoch)&&frame.InputNonce==nonce;
+                void Check(string json){
+                    var reply=JObject.Parse(json);
+                    if((string)reply["documentNonce"]!=nonce || (bool?)reply["armed"]!=true ||
+                        (long?)reply["gestureId"]!=value.GestureId || (long?)reply["structuralVersion"]!=value.GeometryVersion)
+                        throw new InvalidOperationException("Native input document rejected");
+                }
                 var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion));
-                if(operation!=inputOperation || !InputCurrent(value) || !Alive(frame,epoch) || frame.InputNonce!=nonce)return;
-                var reply=JObject.Parse(json);
-                if((string)reply["documentNonce"]!=nonce || (bool?)reply["armed"]!=true ||
-                    (long?)reply["gestureId"]!=value.GestureId || (long?)reply["structuralVersion"]!=value.GeometryVersion)
-                    throw new InvalidOperationException("Native input arm rejected");
+                if(!Current()){accepted=false;return;}Check(json);
+                if(value.Key!=0){
+                    json=await Execute(frame,DextNativeInputGuardianPolicy.FocusScript(secret,nonce));
+                    if(!Current()){accepted=false;return;}Check(json);
+                }
             }));
-            return operation==inputOperation&&ReferenceEquals(currentInput,value)&&InputCurrent(value);
+            return accepted&&operation==inputOperation&&ReferenceEquals(currentInput,value)&&InputCurrent(value);
         }
         public async Task RevokeInputAsync()
         {

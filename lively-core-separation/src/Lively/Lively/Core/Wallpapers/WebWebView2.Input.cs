@@ -21,6 +21,10 @@ namespace Lively.Core.Wallpapers
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
             internal RoomNativeControlQueue Controls { get; } = new();
             internal RoomNativeInputGesture PointerGesture { get; set; }
+            internal RoomNativeInputGesture KeyGesture { get; set; }
+            internal RoomNativeButton KeyFocus { get; set; }
+            internal int KeyScanCode { get; set; }
+            internal bool KeyExtended { get; set; }
         }
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
@@ -223,12 +227,30 @@ namespace Lively.Core.Wallpapers
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
                 OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=x,Y=y,Modifiers=InputUtil.MouseModifiers});
         }
-        internal bool NativeKey(int key,bool down,bool reverse,bool foreground)
+        internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
-            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);NotifyNative(a,before,true);
-            return before!=null;
+            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);
+            var after=a.Input.State;
+            if(down&&key!=9&&after?.Gesture is{Released:false} gesture&&gesture.Key==key&&gesture.Sequence!=before?.Gesture?.Sequence&&after.Focus is{} focus){
+                a.KeyGesture=gesture;a.KeyFocus=focus;a.KeyScanCode=scanCode;a.KeyExtended=extended;
+                SendNativeKey(gesture,focus,"down",scanCode,extended);
+            }
+            if(!down&&a.KeyGesture is{} previous&&previous.Key==key){
+                var releasedFocus=a.KeyFocus;a.KeyGesture=null;a.KeyFocus=null;
+                SendNativeKey(previous,releasedFocus,"up",a.KeyScanCode,a.KeyExtended);
+            }
+            NotifyNative(a,before,true);return before!=null;
+        }
+        private void SendNativeKey(RoomNativeInputGesture gesture,RoomNativeButton focus,string kind,int scanCode,bool extended)
+        {
+            if(focus==null)return;var v=gesture.Viewport;
+            SendMessage(new LivelyMessageRoomNativePointer{
+                RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
+                GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
+                OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=v.X,Y=v.Y,
+                Key=gesture.Key,ScanCode=scanCode,IsExtended=extended,Consumer=focus.Consumer,Button=focus.Button,EntryId=focus.EntryId??focus.Button});
         }
     }
 }

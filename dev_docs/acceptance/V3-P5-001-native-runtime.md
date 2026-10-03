@@ -291,3 +291,15 @@ author-input-native-wire-final实际ReleasePlayer+正式SDK：trusted DOWN内act
 完整author-input-core-build-final、实际author-input-frame-media-final通过。常规start Core121280/Player81856/Watchdog92464/config54740，日志20261004_025000.txt；共享配置器OTHER/exit1且绝对路径独立核验，随后精确正常关闭、watcher58787 exit0、原四文件hash/缺失保持，Dext进程/开发监听/author fixtures0。
 
 作者真实Enter/Space、移动即时样本/source动作仍待接，Core内部旧零值查询兼容待全输入链收口，实际Core输入补证仍待凭据窗解除。最终人工沿第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消、异步请求拒绝，第5项移动/遮挡/多入口/DPI；拖动暂缓，不新增中途验收。整体16项交付就绪1/16≈6%，七项人工和单次整体审查不提前勾选，不合并master。
+## P5 作者Enter/Space与受控frame键盘接线（2026-10-04，BASE dddff64）
+一句话目标：Core受控Tab焦点选定当前consumer/button，真实Enter/Space DOWN的冻结正数关联经Player同UI arm、原生frame焦点路由和Win32键转发，作者SDK请求等待同次UP后执行一次对应动作。
+范围：复用私有有界输入队列，扩展键/scan/extended/固定焦点consumer/button/entry关联；仅选中直接作者root arm并用预先捕获的Window.focus路由，不新增公开作者焦点或输入票据，也不改作者DOM节点的focus/tab顺序。官方图标仍由Core默认激活，legacy opt-in键盘转发保留；作者鼠标链与暂停媒体回归保持。重复按住、过期/切窗/修订取消只做必要本地回归，不扩展网络专项。拖动暂缓，移动即时样本/source随后接续，原范围不减。
+先原生输入DTO/队列及guardian焦点路由行为RED再实现；实际ReleasePlayer自己的HWND与正式SDK验证真实trusted Enter/Space及一次正数动作（Core包/回执仍fixture），随后完整build→start/身份→正常退出和具名commit。最终人工沿卡第4项鼠标/Enter/Space一次消费、长按/AltTab取消及第5项移动/遮挡/DPI集中执行，整体16项就绪仍1/16≈6%。
+## P5 作者Enter/Space实际Player接线验证（2026-10-04）
+Core受控Tab焦点后的真实Enter/Space DOWN扩展冻结Key/ScanCode/extended/consumer/button/entry私有字段，UP使用同次关联。Player同UI队列先原生controller.MoveFocus(Programmatic)，只对选中consumer的唯一直接作者root arm与捕获Window.focus，再发送Win32 DOWN/UP；不调用作者DOM节点focus或改Tab顺序，官方入口保持Core默认激活。作者SDK仍原rN完整请求与native文档见证汇合，仅同UP转发后发送正数Core动作。
+
+行为：DTO/队列RED10/13→13/13，guardian焦点RED24/25→25/25，生产JS233/233；选中consumer与原动作delivery8/8，Core动作254/254。仅Window.focus与WinForms.Focus的实际两轮没有keydown；NativeViewController原生MoveFocus修正后实际ReleasePlayer+正式SDK Enter、Space和鼠标均exit0，trusted DOWN等UP，一次Core n1/gesture7，前台HWND不变（ERRORS #211）。失败证据保留，Core包/回执及小official route为fixture，正式DOM另由既有行为回归；不当作真实Core OS输入验收。
+
+keyboard-controller-focus-build完整四阶段和keyboard-frame-media-wire-final实际媒体回归通过。常规start Core56016/Player54552/Watchdog106276/config96456，日志20261004_032947.txt；共享配置器OTHER/exit1且精确绝对路径独立核验。正常关闭、watcher91523 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixture均0，Dext保持关闭。
+
+移动即时样本/source动作与Core内部零序号兼容收口继续；实际Core输入补证仍待凭据窗解除。最终人工第4项鼠标/Enter/Space、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行，拖动按用户暂缓；不新增网络专项、不加中途验收，七项与单次全P5审查仍待执行，整体16项就绪1/16≈6%，不合并master。

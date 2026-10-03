@@ -18,7 +18,7 @@ function fixture(){
   setAttributeNS(ns,name,value){return this.setAttribute(name,value);}getAttribute(name){return attributes.get(this)?.[name]??null;}
   _setInline(name,callback){let h=handlers.get(this);if(!h){h={};handlers.set(this,h);}h[name]=callback;}
  }
- class Html extends Element{} class Svg extends Element{} class Document extends Node{} class Window extends Target{} class Shadow extends Node{}
+ let focusCalls=0;class Html extends Element{} class Svg extends Element{} class Document extends Node{} class Window extends Target{focus(){focusCalls++;}} class Shadow extends Node{}
  for(const proto of [Html.prototype,Svg.prototype,Document.prototype,Window.prototype])for(const name of ['onclick','onmousedown','onmouseup','onkeydown','onkeyup','onerror'])Object.defineProperty(proto,name,{configurable:true,enumerable:true,get(){return handlers.get(this)?.[name]??null;},set(value){let h=handlers.get(this);if(!h){h={};handlers.set(this,h);}h[name]=typeof value==='function'?value:null;}});
  const root=new Window();document=new Document();
  Object.defineProperty(Window.prototype,'window',{configurable:true,get(){'use strict';if(this==null)return root;if(this instanceof Window)return this;throw TypeError('Window brand');}});Object.assign(root,{top:{},document,Window,Document,Node,DOMException,Function,Event:Evt,EventTarget:Target,Element,HTMLElement:Html,SVGElement:Svg,ShadowRoot:Shadow,KeyboardEvent:Evt,MouseEvent:Evt,crypto:{randomUUID:()=>NONCE},chrome:{webview:{postMessage(payload){Object.defineProperty(sent,sent.length,{value:JSON.parse(JSON.stringify(payload)),writable:true,configurable:true,enumerable:true});}}}});
@@ -29,7 +29,7 @@ function fixture(){
  const installed=install(root,SECRET);assert.equal(installed,true,'input guardian must install into the controlled native realm');
  const hook=root.__dextNativeInputGuardianV1,send=root.__dextNativeInputRequestV1;
  const arm=(gestureId=1,structuralVersion=1)=>hook({token:SECRET,kind:'arm',documentNonce:NONCE,gestureId,structuralVersion});
- const nativeProperty=(target,name,...args)=>Reflect.apply(handlers.get(target)?.[name],target,args);return{root,node,document,Html,Svg,Shadow,hook,send,arm,fire,sent,events,nativeProperty};
+ const nativeProperty=(target,name,...args)=>Reflect.apply(handlers.get(target)?.[name],target,args);return{root,node,document,Html,Svg,Shadow,hook,send,arm,fire,sent,events,nativeProperty,focusCalls:()=>focusCalls};
 }
 test('defaults closed and author tokens cannot arm a document',()=>{const f=fixture();assert.equal(f.send(request()),false);assert.equal(f.hook({token:'author',kind:'describe'}),null);assert.equal(f.hook({token:SECRET,kind:'arm',documentNonce:'old',gestureId:1,structuralVersion:1}),null);assert.equal(f.hook({token:SECRET,kind:'describe'}).armed,false);});
 test('one synchronous real handler sends only captured private witness and immutable request JSON',()=>{const f=fixture();f.arm(7,9);const json=request();f.node.addEventListener('click',function(){assert.equal(this,f.node);assert.equal(f.send(json),true);});f.fire();assert.deepEqual(f.sent,[{type:'dext:v3-input-witness',protocolVersion:1,token:SECRET,documentNonce:NONCE,gestureId:7,structuralVersion:9,dispatchSequence:1,requestJson:json}]);assert.equal(f.send(request(2)),false);});
@@ -111,4 +111,10 @@ test('unknown foreign-realm native property functions are not returned or rewrap
  f.node._setInline('onclick',foreign);const descriptor=Object.getOwnPropertyDescriptor(f.Html.prototype,'onclick');
  assert.throws(()=>descriptor.get.call(f.node),error=>error.name==='SecurityError');
  f.fire();assert.throws(()=>descriptor.get.call(f.node),error=>error.name==='SecurityError');assert.equal(f.sent.length,0);
+});
+
+test('private Core focus routes keyboard into the selected actual frame with captured Window.focus',()=>{
+ const f=fixture();f.arm(7,3);f.root.focus=()=>{throw Error('authored focus override');};
+ const reply=f.hook({token:SECRET,kind:'focus',documentNonce:NONCE});
+ assert.equal(reply?.armed,true);assert.equal(f.focusCalls(),1);
 });

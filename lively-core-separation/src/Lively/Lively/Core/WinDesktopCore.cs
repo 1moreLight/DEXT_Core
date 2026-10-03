@@ -1294,7 +1294,7 @@ namespace Lively.Core
                 foreach(var wallpaper in Wallpapers)
                 {
                     var selected=hasCursor && (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement==WallpaperArrangement.span);
-                    if(wallpaper is WebWebView2 player && player.NativeKey((int)e.VirtualKey,e.IsKeyDown,(InputUtil.MouseModifiers&4)!=0,foreground&&selected))continue;
+                    if(wallpaper is WebWebView2 player && player.NativeKey((int)e.VirtualKey,e.IsKeyDown,(InputUtil.MouseModifiers&4)!=0,foreground&&selected,e.ScanCode,e.IsExtended))continue;
                     if(foreground && selected && userSettings.Settings.InputForward==InputForwardMode.mousekeyboard && wallpaper.Category.IsDeviceInputAllowed())
                         InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle,e.WindowMessage,e.VirtualKey,e.ScanCode,e.IsKeyDown,e.IsExtended);
                 }

@@ -53,6 +53,12 @@ namespace Lively.Models.Message
         public int X { get; set; }
         public int Y { get; set; }
         public int Modifiers { get; set; }
+        public int Key { get; set; }
+        public int ScanCode { get; set; }
+        public bool IsExtended { get; set; }
+        public string Consumer { get; set; }
+        public string Button { get; set; }
+        public string EntryId { get; set; }
         public LivelyMessageRoomNativePointer() : base(MessageType.cmd_room_native_pointer) { }
     }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage

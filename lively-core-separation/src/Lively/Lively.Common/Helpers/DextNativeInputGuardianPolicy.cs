@@ -40,6 +40,11 @@ namespace Lively.Common.Helpers
             return Call(secret, new JObject { ["token"]=secret, ["kind"]="arm", ["documentNonce"]=documentNonce,
                 ["gestureId"]=gestureId, ["structuralVersion"]=structuralVersion });
         }
+        public static string FocusScript(string secret,string documentNonce)
+        {
+            ValidateNonce(documentNonce);
+            return Call(secret,new JObject{["token"]=secret,["kind"]="focus",["documentNonce"]=documentNonce});
+        }
         public static string RevokeScript(string secret, string documentNonce)
         {
             ValidateNonce(documentNonce);

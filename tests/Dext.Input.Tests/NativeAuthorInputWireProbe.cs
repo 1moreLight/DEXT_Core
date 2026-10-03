@@ -13,7 +13,7 @@ using Dext.Core.Rooms;
 internal static class NativeAuthorInputWireProbe
 {
     [DllImport("user32.dll")] private static extern bool SetProcessDpiAwarenessContext(IntPtr context);
-    public static async Task Run(string player,string sdk)
+    public static async Task Run(string player,string sdk,int nativeKey=0)
     {
         if(!SetProcessDpiAwarenessContext(new IntPtr(-4)))throw new Exception("Author wire requires PerMonitorV2");
         var root=Directory.CreateTempSubdirectory("Dext-v3-author-input-wire-");
@@ -26,14 +26,20 @@ internal static class NativeAuthorInputWireProbe
                 Dext.ready().then(()=>{
                   addEventListener('mousedown',e=>{
                     const pending=Dext.actions.activate('open');
-                    report({kind:'down',trusted:e.isTrusted});
+                    report({kind:'down',trusted:e.isTrusted,key:e.key});
                     pending.then(result=>report({kind:'result',result}),error=>report({kind:'error',code:error.code}));
                   });
-                  addEventListener('mouseup',e=>report({kind:'up',trusted:e.isTrusted}));
+                  addEventListener('mouseup',e=>report({kind:'up',trusted:e.isTrusted,key:e.key}));
                   report({kind:'setup'});
                 });
                 </script>
                 """);
+            if(nativeKey!=0){
+                var authorPath=Path.Combine(content.FullName,"author.html");
+                var author=File.ReadAllText(authorPath).Replace("'mousedown'","'keydown'").Replace("'mouseup'","'keyup'")
+                    .Replace("const pending=Dext.actions.activate","e.preventDefault();const pending=Dext.actions.activate");
+                File.WriteAllText(authorPath,author);
+            }
             // This small official fixture preserves the SDK request verbatim.
             // Production DOM/FrameHost routing is covered separately; Core is simulated.
             File.WriteAllText(Path.Combine(root.FullName,"main.js"),"""
@@ -100,8 +106,12 @@ internal static class NativeAuthorInputWireProbe
                 var issued=Stopwatch.GetTimestamp();
                 LivelyMessageRoomNativePointer Pointer(string kind)=>new(){RuntimeGeneration=1,SessionId=context.SessionId,Revision=1,GeometryVersion=1,
                     GestureId=7,IssuedAt=issued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,PixelWidth=bounds.Width,
-                    PixelHeight=bounds.Height,Dpi=dpi,X=bounds.X+bounds.Width/2,Y=bounds.Y+bounds.Height/2};
-                await Send(Pointer("down"));var down=await NextReport();Require((string?)down["kind"]=="down"&&(bool?)down["trusted"]==true,"trusted native DOWN");
+                    PixelHeight=bounds.Height,Dpi=dpi,X=bounds.X+bounds.Width/2,Y=bounds.Y+bounds.Height/2,
+                    Key=nativeKey,ScanCode=nativeKey==13?28:nativeKey==32?57:0,Consumer=nativeKey==0?null:"scene",
+                    Button=nativeKey==0?null:"open",EntryId=nativeKey==0?null:"button.open"};
+                var foreground=NativeMethods.GetForegroundWindow();await Send(Pointer("down"));var down=await NextReport();Require((string?)down["kind"]=="down"&&(bool?)down["trusted"]==true,"trusted native DOWN");
+                if(nativeKey!=0)Require((string?)down["key"]==(nativeKey==13?"Enter":" "),"wrong native key");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"native input changed foreground window");
                 await Task.Delay(100);Require(requests.IsEmpty,"author DOWN executed before native UP");
                 await Send(Pointer("up"));var stop=DateTime.UtcNow.AddSeconds(8);LivelyMessageRoomNativeRequest? action=null;
                 while(action==null&&DateTime.UtcNow<stop){requests.TryDequeue(out action);if(action==null)await Task.Delay(10);}
@@ -114,7 +124,7 @@ internal static class NativeAuthorInputWireProbe
                 Require((string?)up["kind"]=="up"&&(bool?)up["trusted"]==true&&(string?)result["kind"]=="result"&&(string?)result["result"]?["status"]=="accepted",
                     "trusted UP and SDK result not delivered");
                 await Task.Delay(100);Require(requests.IsEmpty,"duplicate native action");
-                Console.WriteLine("PASS actual ReleasePlayer + production SDK: trusted DOWN waits for same UP, exact root document request r1 becomes one Core request n1/gesture 7; Core response and official route are fixtures");
+                Console.WriteLine("PASS actual ReleasePlayer + production SDK native "+(nativeKey==0?"mouse":nativeKey==13?"Enter":"Space")+": trusted DOWN waits for same UP, exact root r1 becomes one Core n1/gesture7; Core response and official route are fixtures");
             }
             finally{
                 if(!process.HasExited){await Send(new LivelyCloseCmd());process.StandardInput.Close();

@@ -70,6 +70,21 @@ internal static class NativePointerDeliveryChecks
                 Require(!q.Submit(p),"invalid packet "+bad);
             }await q.WhenIdle();Require(forwards==0,"invalid forwarding");
         });
+        LivelyMessageRoomNativePointer KeyPacket(string kind){var p=Packet(kind);p.Key=13;p.ScanCode=28;p.IsExtended=true;p.Consumer="scene";p.Button="open";p.EntryId="button.open";return p;}
+        await Check("keyboard private packet freezes key, scan and Core focus entry",()=>{
+            var input=KeyPacket("down");var dto=(LivelyMessageRoomNativePointer)RuntimeMessageChecks.Roundtrip(input)!;var frozen=new DextNativePointerPacket(dto);
+            input.Consumer="other";Require(frozen.Key==13&&frozen.ScanCode==28&&frozen.IsExtended&&frozen.Consumer=="scene"&&frozen.Button=="open"&&frozen.EntryId=="button.open","keyboard association lost");return Task.CompletedTask;
+        });
+        await Check("keyboard cancel releases the same native key after guardian revoke",async()=>{
+            var order=new List<string>();var q=new DextNativePointerDelivery(p=>Task.FromResult(true),()=>{order.Add("revoke");return Task.CompletedTask;},p=>order.Add(p.Kind+":"+p.Key+":"+p.Consumer),p=>true,p=>Task.CompletedTask,()=>{},()=>0,1000);
+            q.Submit(KeyPacket("down"));await q.WhenIdle();await q.InvalidateAsync();
+            Require(string.Join(",",order)=="down:13:scene,revoke,cancel:13:scene","key release became mouse release");
+        });
+        await Check("mouse UP cannot release a keyboard gesture even with the same correlation",async()=>{
+            var sent=new List<string>();var q=new DextNativePointerDelivery(p=>Task.FromResult(true),()=>Task.CompletedTask,p=>sent.Add(p.Kind),p=>true,p=>Task.CompletedTask,()=>{},()=>0,1000);
+            q.Submit(KeyPacket("down"));await q.WhenIdle();q.Submit(Packet("up"));await q.WhenIdle();Require(sent.SequenceEqual(new[]{"down"}),"mouse released keyboard");
+            q.Submit(KeyPacket("up"));await q.WhenIdle();Require(sent.SequenceEqual(new[]{"down","up"}),"same keyboard UP missing");
+        });
         Console.WriteLine($"{total-failures}/{total} pointer delivery checks passed");if(failures>0)throw new Exception("Pointer delivery regression");
     }
 }

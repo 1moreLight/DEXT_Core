@@ -100,7 +100,7 @@ namespace Lively.Common.Helpers
             foreach(var item in entries.ToArray())Reject(item.Key,item.Value,"expiredInput");
         }
         private bool Current(DextNativeInputFrameScope scope)=>current!=null&&scope!=null&&current.RuntimeGeneration==scope.Generation&&
-            current.SessionId==scope.Session&&current.Revision==scope.Revision;
+            current.SessionId==scope.Session&&current.Revision==scope.Revision&&(current.Key==0||current.Consumer==scope.Consumer);
         private bool Same(DextNativePointerPacket packet)=>current!=null&&packet!=null&&packet.GestureId==current.GestureId&&
             packet.GeometryVersion==current.GeometryVersion&&packet.IssuedAt==current.IssuedAt&&
             packet.RuntimeGeneration==current.RuntimeGeneration&&packet.SessionId==current.SessionId&&packet.Revision==current.Revision&&

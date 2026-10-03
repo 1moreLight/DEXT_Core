@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if(args.Length==4&&args[0]=="--v3-author-key-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],int.Parse(args[3]));return;}
 if(args.Length==3&&args[0]=="--v3-author-input-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2]);return;}
 if(args.Length>0&&args[0]=="--v3-author-action-delivery"){NativeAuthorActionDeliveryChecks.Run();return;}
 if (args.Length == 8 && args[0] == "--v3-native-lifecycle-live") { await NativeCoreLiveProbe.Run(args[1],args[2],args[3],args[4],args[5],args[6],authoredNavigation:true,lifecycleMedia:args[7]); return; }

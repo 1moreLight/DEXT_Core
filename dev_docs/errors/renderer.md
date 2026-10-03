@@ -631,3 +631,7 @@ SVGElement不能只靠HTMLElement式hidden属性假设隐藏；官方焦点显�
 ## #207 原生Window默认receiver、onerror参数与收养节点派发（2026-10-04）
 新增输入guardian的包装不能改变原生Window裸调用：native add/remove/dispatch的undefined/null receiver映射当前Window；DOM属性getter仍按实际文档品牌核对。function listener必须保留原生全部参数，尤其Window.onerror(message,source,lineno,colno,error)，object handleEvent仍按标准传Event。
 节点跨文档收养会让旧document wrapper在新document派发。真实child click复现父输入见证被借用后，包装和见证发送同时核对captured Event.currentTarget、callback receiver与实际文档；未知foreign Function属性getter禁止暴露私有wrapper，已知作者callback保持读取原值。生产单测先21/24失败后24/24，最新Chromium40与实际ReleasePlayer正式文档/媒体初始化通过。第一次onerror断言在前项失败后未执行，不能把未执行项当实机RED。此修复只闭合模块边界，Core/SDK原生手势接线仍待完成。
+
+## #211 非激活Player键盘需原生controller焦点再路由frame（2026-10-04）
+实际ReleasePlayer保留WS_EX_NOACTIVATE。私有frame arm成功后仅captured Window.focus，或先WinForms webView.Focus，Own-HWND Enter检查都没有keydown，不能把私有回执armed当作键盘已到作者文档。复用固定SDK已有NativeViewController，调用MoveFocus(Programmatic)，随后对选中直接root执行captured Window.focus，再发真实Win32键。Enter/Space/鼠标正式SDK wire均收到isTrusted DOWN/UP与一次正数请求，检查前台HWND不变，不伪造JS事件。该检查的Core包/回执仍为fixture，完整Core实际桌面OS验收不能打勾。
+MoveFocus官方语义为将焦点移入WebView并恢复先前/默认文档元素：[Microsoft WebView2 Controller](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller)。这里使用Programmatic，不代替Core受控Tab焦点，也不逐个focus作者DOM节点。生产文件首次C# pattern局部focus重复名导致CS0136，改releasedFocus后完整构建通过；探针替换Console.WriteLine时以首分号切片遇到字符串内部分号，修正精确锚点后才取得运行证据。

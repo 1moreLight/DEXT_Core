@@ -11,7 +11,7 @@
 |---|---|---|---|
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
-| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；nativeframe/SDK手势汇合、个人编辑UI待贯通 | 否 |
+| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；source动作/移动采样、个人编辑UI待贯通 | 否 |
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；完整连续仪表盘/输入/异常恢复待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
 | 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；移动事件取样/实际DPI继续，桌面拖动按用户暂缓 | 否 |
@@ -153,3 +153,12 @@ Core当前RawInput适配已调用的MouseDown/Key流程，现改为在可操作�
 完整gesture-down-core-build四阶段通过；常规start Core73828/Player123844/Watchdog113464/config24756，日志20261004_010606.txt。identity Core/Player/Watchdog及产品/mutex/pipe/data/log OK，所属D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher33543 exit0、原四文件hash/缺失保持，Dext进程0、1420/1421/1621监听0。首次启动调用自动审批超时在CreateProcess前拒绝，原参数单次重试后成功。
 
 下一段传送冻结gesture到Player，在同UI操作内arm和真实Win32转发，再贯通nativeframe witness/SDK requestId及移动DOWN/UP样本。当前SDK/nativeframe尚未使用本关联，author inputSequence=0路径仍在，不能宣称整条作者异步借用已修好；source动作继续，拖动按用户暂缓。最终集中人工仍为卡第4项鼠标/Enter/Space、长按超时/AltTab取消，第5项移动/遮挡/多图标/DPI；完整16项就绪1/16=6.25%（約6%）、七项人工与单次P5审查不提前打勾，不合并master。
+
+## P5 SDK正数鼠标与作者Enter/Space接线补证（2026-10-04）
+Core受控Tab焦点后的真实Enter/Space DOWN扩展冻结Key/ScanCode/extended/consumer/button/entry私有字段，UP使用同次关联。Player同UI队列先原生controller.MoveFocus(Programmatic)，只对选中consumer的唯一直接作者root arm与捕获Window.focus，再发送Win32 DOWN/UP；不调用作者DOM节点focus或改Tab顺序，官方入口保持Core默认激活。作者SDK仍原rN完整请求与native文档见证汇合，仅同UP转发后发送正数Core动作。
+
+行为：DTO/队列RED10/13→13/13，guardian焦点RED24/25→25/25，生产JS233/233；选中consumer与原动作delivery8/8，Core动作254/254。仅Window.focus与WinForms.Focus的实际两轮没有keydown；NativeViewController原生MoveFocus修正后实际ReleasePlayer+正式SDK Enter、Space和鼠标均exit0，trusted DOWN等UP，一次Core n1/gesture7，前台HWND不变（ERRORS #211）。失败证据保留，Core包/回执及小official route为fixture，正式DOM另由既有行为回归；不当作真实Core OS输入验收。
+
+keyboard-controller-focus-build完整四阶段和keyboard-frame-media-wire-final实际媒体回归通过。常规start Core56016/Player54552/Watchdog106276/config96456，日志20261004_032947.txt；共享配置器OTHER/exit1且精确绝对路径独立核验。正常关闭、watcher91523 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixture均0，Dext保持关闭。
+
+移动即时样本/source动作与Core内部零序号兼容收口继续；实际Core输入补证仍待凭据窗解除。最终人工第4项鼠标/Enter/Space、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行，拖动按用户暂缓；不新增网络专项、不加中途验收，七项与单次全P5审查仍待执行，整体16项就绪1/16≈6%，不合并master。
