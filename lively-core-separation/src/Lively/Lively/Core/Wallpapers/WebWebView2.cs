@@ -338,6 +338,12 @@ namespace Lively.Core.Wallpapers
                                 break;
                         }
                         break;
+                    case MessageType.msg_room_native_request:
+                        // Consumer-local KV is private personal data. Log only
+                        // protocol metadata, never keys, values or raw payloads.
+                        var nativeRequest=(LivelyMessageRoomNativeRequest)obj;
+                        Logger.Info($"Wv2{uniqueId}: native request | method={nativeRequest.Method} | generation={nativeRequest.RuntimeGeneration} | revision={nativeRequest.Revision}");
+                        break;
                     default:
                         Logger.Info($"Wv2{uniqueId}: {e.Data}");
                         break;

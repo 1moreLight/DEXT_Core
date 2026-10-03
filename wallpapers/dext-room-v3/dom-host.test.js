@@ -95,3 +95,16 @@ test('new-snapshot frame authorization reaches the production native bridge in t
  try{await f.host.ready;await f.host.acceptSnapshot(f.snap(2));assert.deepEqual(await Promise.all(reads),['accepted','accepted']);}
  finally{f.host.dispose();}
 });
+
+test('official DOM storage forwards fixed consumer and Core JSON without private metadata',async()=>{
+ const value={label:'\u65e5\u671f',at:'2026-10-03T00:00:00Z',items:[1,null]};const f=fixture({request:(method)=>Promise.resolve({status:'accepted',value:method==='storageGet'?value:null,buttons:[],targets:'private'})});await f.host.ready;
+ const scene=[...f.frames.values()].find(v=>v.def.consumerId==='scene');assert.equal(scene.opts.implementedCapabilities.includes('storage.read'),true);assert.equal(scene.opts.implementedCapabilities.includes('storage.write'),true);
+ const identity={runtimeGeneration:1,sessionId:'session',revision:1};const get=await scene.opts.invoke({method:'storage.get',consumerId:'scene',params:{key:'notes'},identity});assert.deepEqual(get,value);assert.equal('targets' in get,false);
+ assert.deepEqual(await scene.opts.invoke({method:'storage.set',consumerId:'scene',params:{key:'notes',value},identity}),{status:'accepted'});
+ assert.deepEqual(f.calls.filter(v=>v.method.startsWith('storage')).map(v=>[v.method,v.params,v.scope]),[['storageGet',{consumer:'scene',key:'notes'},identity],['storageSet',{consumer:'scene',key:'notes',value},identity]]);f.host.dispose();
+});
+test('storage refusals and malformed successful replies cannot be treated as saved values',async()=>{
+ let status='missingPermission';const f=fixture({request:method=>Promise.resolve(method.startsWith('storage')?{status}: {status:'accepted'})});await f.host.ready;const scene=[...f.frames.values()].find(v=>v.def.consumerId==='scene'),identity={runtimeGeneration:1,sessionId:'session',revision:1};
+ await assert.rejects(scene.opts.invoke({method:'storage.set',consumerId:'scene',params:{key:'notes',value:1},identity}),{code:'missingPermission'});status='accepted';
+ await assert.rejects(scene.opts.invoke({method:'storage.get',consumerId:'scene',params:{key:'notes'},identity}),{code:'storageUnavailable'});f.host.dispose();
+});

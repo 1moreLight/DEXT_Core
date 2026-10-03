@@ -144,3 +144,11 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 实际生产Core源码回归110/110：当前storage.read/write分别授权，Room副本/消费者隔离，有界JSON与配额，缺键null、set(null)、持久重读；旧个人快照兼容，损坏/撤权/旧安装/关闭/错误作用域拒绝，写入失败保留原字节。4097项小数组实际失败后修复。只读/写入口通过私有Player连接调用，销毁后拒绝。
 
 完整build→start/identity通过后，原v2状态inactive；核对PID/路径正常退出Core和配置器，自己的watcher结束，用户个人快照哈希/不存在状态未变。这里验证的是Core存储权威基础；严格Player消息、正式DOM/SDK与已授权实际Core KV端到端仍继续，上方7項最终人工步骤不打勾。
+
+## Task3消费者存储原生接线与真实Core（2026-10-03）
+
+生产JS121/121、严格原生消息30/30、Core动作/存储110/110；缺少DOM/Player/Core适配分别先RED后GREEN。正式SDK→所属消费者DOM→严格Player IPC→当前Core私有授权→原子KV已贯通。真实Rust安装/独立Core复核/WorkerW/ReleasePlayer中，两消费者相同key各自读写，中文和ISO日期字符串保持；撤权后拒绝，恢复后无重载继续。Core日志不得含私有KV值的实际marker检查曾失败，改原生请求只记协议元数据后通过。
+
+同一生产安装副本正常Core重启，新Player/会话/SDK文档无需测试导航自动恢复focus并读回原KV，原值未被探针改写。测试管理员仅准备新临时Room的测试授权；权限UI未据此通过。首次用户grid规则正常暂停，探针临时采用真实前台算法并finally逐字节恢复原设置；不把该运行计为grid/idle/锁屏验收。
+
+finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态及用户Room哈希恢复。完整build→start/identity后正常退出，进程/开发端口/资源暂存/临时原生目录0，个人快照未变。上方7项最终人工步骤保持待执行；作者导航/控制/确认、完整生命周期/独立Player故障、个人布局与精确输入/物理DPI继续，完整16项就绪仍1/16，不合并。

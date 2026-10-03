@@ -13,7 +13,12 @@ namespace Lively.Core.Wallpapers
 {
     public partial class WebWebView2
     {
-        private sealed record NativeAttachment(RoomSessionPlayerBridge Bridge,RoomNativeInputAuthority Input,RoomActionAuthority Actions,RoomNativeDataSource Data);
+        private sealed record NativeAttachment(RoomSessionPlayerBridge Bridge,RoomNativeInputAuthority Input,RoomActionAuthority Actions,RoomNativeDataSource Data)
+        {
+            // Never wait for admission on the Core/UI event thread. At most 16
+            // consumer storage operations are in flight per private attachment.
+            internal SemaphoreSlim StorageRequests { get; } = new(16,16);
+        }
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
         internal Func<bool> NativeInputIsForeground { private get; set; }
@@ -31,7 +36,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken storageValue=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -64,6 +69,26 @@ namespace Lively.Core.Wallpapers
                             data=value;
                         }
                     }finally{a.Data.EndRead();}break;
+                case "storageGet":
+                    if(!a.StorageRequests.Wait(0))break;
+                    try {
+                        var stored=await Task.Run(()=>a.Bridge.NativeReadStorage(a.Actions,state.Session,state.Revision,request.Consumer,request.Key));
+                        status=stored.Status;
+                        if(status==RoomActionStatus.Accepted) {
+                            using var reader=new JsonTextReader(new StringReader(stored.Value?.GetRawText()??"null")){DateParseHandling=DateParseHandling.None};
+                            storageValue=JToken.ReadFrom(reader);
+                        }
+                    }finally{a.StorageRequests.Release();}break;
+                case "storageSet":
+                    if(request.ValueJson==null || System.Text.Encoding.UTF8.GetByteCount(request.ValueJson)>32768 || !a.StorageRequests.Wait(0))break;
+                    try {
+                        var written=await Task.Run(()=> {
+                            using var document=System.Text.Json.JsonDocument.Parse(request.ValueJson,new System.Text.Json.JsonDocumentOptions{MaxDepth=24});
+                            return a.Bridge.NativeWriteStorage(a.Actions,state.Session,state.Revision,request.Consumer,request.Key,document.RootElement);
+                        });
+                        status=written.Status;
+                    }catch(System.Text.Json.JsonException){status=RoomActionStatus.Denied;}
+                    finally{a.StorageRequests.Release();}break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
                     status=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button).Status;break;
@@ -71,7 +96,7 @@ namespace Lively.Core.Wallpapers
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=WireStatus(status),buttons,capabilities,data});
+                status=WireStatus(status),buttons,capabilities,data,value=storageValue});
         }
         private RoomNativeDataSource CreateNativeDataSource() => RoomNativeDataSource.ForWindows(systemControlService);
 

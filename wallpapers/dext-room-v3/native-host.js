@@ -22,10 +22,14 @@
     }
     check(value,0);const json=JSON.stringify(value);if(new root.TextEncoder().encode(json).length>limit)throw failure('invalidPayload');return JSON.parse(json);
   }
+  const stableKey=v=>typeof v==='string'&&/^[A-Za-z0-9_.-]{1,80}$/.test(v);
+  function storageValue(v){try{copy(v,32768);return true;}catch(_){return false;}}
   function paramsValid(method,p){
     switch(method){
       case'capabilities':case'buttons':return shape(p,['consumer'])&&id(p.consumer);
       case'data':return shape(p,['consumer','capability'])&&id(p.consumer)&&DATA.has(p.capability);
+      case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
+      case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
       case'invalidateGeometry':return shape(p,[]);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'activate':return shape(p,['consumer','button','geometryVersion'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion);

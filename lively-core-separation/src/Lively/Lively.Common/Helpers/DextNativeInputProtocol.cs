@@ -44,6 +44,13 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","capability"}).ToArray()) || !Id(Text(o["consumer"]),128) ||
                             capability!="time.read" && capability!="hardware.read" && capability!="media.read" && capability!="audio.read")return null;
                         request.Consumer=Text(o["consumer"]);request.Capability=capability;return request;
+                    case "storageGet":
+                    case "storageSet":
+                        var write=request.Method=="storageSet";
+                        if(!Shape(o,IdentityFields.Concat(write?new[]{"consumer","key","value"}:new[]{"consumer","key"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !StableKey(Text(o["key"])))return null;
+                        if(write && !StorageJson(o["value"]))return null;
+                        request.Consumer=Text(o["consumer"]);request.Key=Text(o["key"]);request.ValueJson=write?o["value"].ToString(Formatting.None):null;return request;
                     case "capabilities":
                     case "buttons":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer"}).ToArray()) || !Id(Text(o["consumer"]),128))return null;
@@ -66,6 +73,20 @@ namespace Lively.Common.Helpers
                 }
             }
             catch(Exception e)when(e is JsonException || e is ArgumentException || e is InvalidCastException || e is FormatException || e is OverflowException){return null;}
+        }
+        private static bool StableKey(string value)=>Id(value,80)&&value.All(c=>c>='a'&&c<='z'||c>='A'&&c<='Z'||c>='0'&&c<='9'||c=='_'||c=='.'||c=='-');
+        private static bool StorageJson(JToken value)=>value!=null && Encoding.UTF8.GetByteCount(value.ToString(Formatting.None))<=32768 && StorageShape(value,0);
+        private static bool StorageShape(JToken value,int depth)
+        {
+            if(depth>24)return false;
+            switch(value.Type)
+            {
+                case JTokenType.Object:var properties=((JObject)value).Properties().ToArray();return properties.Length<=4096 && properties.All(p=>StorageShape(p.Value,depth+1));
+                case JTokenType.Array:var entries=(JArray)value;return entries.Count<=4096 && entries.All(v=>StorageShape(v,depth+1));
+                case JTokenType.Float:var number=(double)value;return !double.IsNaN(number)&&!double.IsInfinity(number);
+                case JTokenType.Integer:case JTokenType.String:case JTokenType.Boolean:case JTokenType.Null:return true;
+                default:return false;
+            }
         }
         private static string Text(JToken t)=>t?.Type==JTokenType.String?(string)t:null;
         private static bool Shape(JObject o,params string[] fields)=>o.Count==fields.Length && fields.All(f=>o.Property(f)!=null);

@@ -24,15 +24,22 @@
     }
     const frames=(options.createFrameHost||root.DextFrameHost.createFrameHost)({window:options.window||root,document,initialSnapshot:snapshot,runtimeGeneration:context.runtimeGeneration,
       initialGeometry:{geometryVersion:0,viewport:options.getViewport()},initialPlaybackSuspended:privatePaused,resolveResource,readCapabilities:q=>native.readCapabilities(q),
-      implementedCapabilities:['desk.read','binding.launch','time.read','hardware.read','media.read','audio.read'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
+      implementedCapabilities:['desk.read','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
       applyState:options.applyFrameState,invoke:async value=>{
         if(value.method==='actions.activate')return activate(value.consumerId,value.params.buttonId,value.identity);
         if(value.method==='actions.list'){const reply=await native.request('buttons',{consumer:value.consumerId},value.identity);if(reply.status!=='accepted')throw failure(reply.status);return reply.buttons;}
         if(value.method==='desk.get'){const reply=await native.readCapabilities({consumerId:value.consumerId,identity:value.identity});if(reply.status!=='accepted'||reply.capabilities?.['desk.read']!=='accepted')throw failure('denied');return copy(snapshot);}
+        if(value.method==='storage.get'||value.method==='storage.set'){
+          const params={consumer:value.consumerId,key:value.params.key};if(value.method==='storage.set')params.value=value.params.value;
+          const reply=await native.request(value.method==='storage.get'?'storageGet':'storageSet',params,value.identity);
+          if(reply.status!=='accepted')throw failure(reply.status);
+          if(value.method==='storage.set')return{status:'accepted'};
+          if(!Object.hasOwn(reply,'value'))throw failure('storageUnavailable');return copy(reply.value);
+        }
         if(value.method==='scene.publishGeometry'){if(!await publishGeometry(value.consumerId,value.params.report))throw failure('staleInput');return{status:'accepted'};}
         if(value.method==='scene.completeTransition'){const result=model.animationFinished(value.identity.sessionId,value.params.transitionId);if(!result.accepted)throw failure('staleInput');complete(value.params.transitionId);return{status:'requested'};}
         if(value.method==='scene.done')return{status:media.completeHTML(value.instanceId)?'requested':'notOperable'};
-        // Navigation/control/storage get their own consumer authority adapters;
+        // Navigation/control get their own consumer authority adapters;
         // the legacy trusted top-level Desk endpoint is never used for authors.
         throw failure('unsupported');
       }});

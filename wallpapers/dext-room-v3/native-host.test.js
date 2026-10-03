@@ -69,3 +69,14 @@ test('dispose is permanent and releases an outstanding watcher and data read',as
  f.host.dispose();f.host.dispose();await flush();assert.equal(f.tasks.size,0);assert.equal(f.listeners.size,0);assert.equal(f.host.acceptIdentity({...identity,revision:2}),false);
  await assert.rejects(f.host.request('buttons',{consumer:'scene'}),e=>e.code==='disposed');
 });
+
+test('storage queries carry only current consumer key and detached bounded JSON',async()=>{
+ const f=fixture(),value={label:'\u65e5\u671f',at:'2026-10-03T00:00:00Z',items:[1,true,null]};
+ const put=f.host.request('storageSet',{consumer:'component.shared',key:'notes',value});put.catch(()=>{});value.items.push(2);
+ assert.deepEqual(f.sent[0],{type:'dext:v3-native-request',protocolVersion:1,requestId:'n1',method:'storageSet',...identity,consumer:'component.shared',key:'notes',value:{label:'\u65e5\u671f',at:'2026-10-03T00:00:00Z',items:[1,true,null]}});
+ f.answer(f.sent[0]);assert.equal((await put).status,'accepted');const get=f.host.request('storageGet',{consumer:'component.shared',key:'notes'});f.answer(f.sent[1],{value:null});assert.equal((await get).value,null);f.host.dispose();
+});
+test('malformed storage data and authority aliases never reach the native bridge',async()=>{
+ const f=fixture();for(const [method,params]of [['storageGet',{consumer:'scene',key:'../private'}],['storageGet',{consumer:'scene',key:'notes',path:'C:/private'}],['storageSet',{consumer:'scene',key:'notes'}],['storageSet',{consumer:'scene',key:'notes',value:Infinity}],['storageSet',{consumer:'scene',key:'notes',value:Array(4097).fill(0)}],['storageSet',{consumer:'scene',key:'notes',value:'x'.repeat(32769)}]])
+ await assert.rejects(f.host.request(method,params),e=>e.code==='invalidArgument');assert.equal(f.sent.length,0);f.host.dispose();
+});

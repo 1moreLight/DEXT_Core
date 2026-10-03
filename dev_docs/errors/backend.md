@@ -413,3 +413,7 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 ## #183 JSON字节上限不等于容器项数上限（2026-10-03）
 
 新消费者存储初版限定32KiB/深度24，却允许含4097个0的小数组，违反作者API每容器最多4096项。真实生产检查返回Accepted而非Denied，109/110。规范化值后递归核对每个object/array项数，落盘验证同样调用，修复后110/110。拒绝超限写入前不修改候选个人快照，原字节保持；SDK校验不能替代Core边界。
+
+## #184 私有KV不能复用通用IPC原文日志（2026-10-03）
+
+真实Core已授权SDK存储成功后，唯一私有marker在Core日志出现，实际检查失败。新增ValueJson通过现有通用Logger.Info(e.Data)被完整复制到诊断文件。原生请求独立日志分支只记录method/generation/revision，省略consumer/key/value/raw payload；实际Core同一夹具再次通过marker不出现、撤权与重启持久读取。传输JSON必须有界和当前授权，但这不会自动保护通用日志；新增含个人值的IPC须检查真实生产日志。

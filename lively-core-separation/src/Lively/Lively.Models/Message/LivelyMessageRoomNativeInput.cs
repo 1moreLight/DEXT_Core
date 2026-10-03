@@ -23,6 +23,8 @@ namespace Lively.Models.Message
         public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
         public string Capability { get; set; }
+        public string Key { get; set; }
+        public string ValueJson { get; set; }
         public string Button { get; set; }
         public int PixelWidth { get; set; }
         public int PixelHeight { get; set; }

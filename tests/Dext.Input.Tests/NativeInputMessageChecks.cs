@@ -48,6 +48,19 @@ internal static class NativeInputMessageChecks
             foreach(var capability in new JToken[]{"binding.launch","storage.read",4}){r["capability"]=capability;Require(Parse(r)==null);}r["capability"]="time.read";
             r["value"]="pretend";Require(Parse(r)==null);r.Remove("value");r["revision"]=2;Require(Parse(r)==null);
         });
+        Check("storage get is a current fixed-consumer stable-key query",()=>{
+            var r=Request();r["method"]="storageGet";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["consumer"]="component.shared";r["key"]="notes";
+            Require(Parse(r)?.Key=="notes");r["value"]=1;Require(Parse(r)==null);r.Remove("value");r["key"]="../private";Require(Parse(r)==null);r["key"]="notes";r["revision"]=2;Require(Parse(r)==null);
+        });
+        Check("storage set preserves bounded JSON strings null and strict shape across IPC",()=>{
+            var r=Request();r["method"]="storageSet";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["consumer"]="scene";r["key"]="notes";
+            r["value"]=new JObject{["label"]="\u65e5\u671f",["at"]="2026-10-03T00:00:00Z",["items"]=new JArray(1,true,JValue.CreateNull())};
+            var parsed=Parse(r);Require(parsed?.Key=="notes"&&parsed.ValueJson!=null);using(var valueReader=new Newtonsoft.Json.JsonTextReader(new StringReader(parsed!.ValueJson!)){DateParseHandling=Newtonsoft.Json.DateParseHandling.None})Require(JToken.ReadFrom(valueReader)["at"]!.Type==JTokenType.String);
+            Require((RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest)?.ValueJson==parsed.ValueJson);
+            r["value"]=JValue.CreateNull();Require(Parse(r)?.ValueJson=="null");r.Remove("value");Require(Parse(r)==null);
+            r["value"]=new string('x',32769);Require(Parse(r)==null);r["value"]=new JArray(Enumerable.Repeat(0,4097));Require(Parse(r)==null);
+            r["value"]=1;r["ticket"]="forged";Require(Parse(r)==null);
+        });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }
 }

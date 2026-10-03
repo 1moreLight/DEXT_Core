@@ -339,3 +339,15 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 ### #173 追加：消费者存储新夹具的var多声明不计功能RED（2026-10-03）
 
 新测试误写var path=...,before=...触发CS0819，先拆独立声明；纠正后的RED仅保留尚缺ReadStorage/WriteStorage/Storage字段。最初语法失败不计生产存储行为证据；新增4097项数组后来实际Accepted/Denied失败才属于实现边界缺陷（#183）。
+
+## #185 grid播放规则与前台测试的前置条件（2026-10-03）
+
+真实Core探针卡starting，PlaybackPaused=true、Locked=false。只读设置显示ProcessMonitorAlgorithm=grid；实际可见窗口枚举有maximized应用，WindowUtil.IsDisplayCoveredByWindowGrid遇任何IsZoomed返回covered，与Core暂停一致。FocusDesktop只改变前台，不最小化其他可见窗口，所以不能解除覆盖暂停。这次不是KV实现失败RED。隔离测试在Core停止后临时选择真实foreground算法，原Settings逐字节备份/finally恢复；不伪造Windows事实、不改无关应用窗口，也不把这次运行计为grid/idle/锁屏组合通过。
+
+## #186 读取活体NLog须保留现有写入共享（2026-10-03）
+
+新增日志隐私检查用File.ReadAllText，活体NLog正在写同一文件，触发IOException sharing violation；实际KV本身已成功。用FileStream(FileAccess.Read,FileShare.ReadWrite)+StreamReader只读当前Core PID的日志，随后才真正复现#184的marker泄露。恢复finally仍须覆盖诊断本身失败，不能将读取失败误计为隐私保护通过。
+
+### #173 追加：HTML夹具多层大括号与C#原始字符串（2026-10-03）
+
+为KV日志marker把原始HTML字符串改成$$插值后，JS的连续闭合大括号触发CS9007。改普通原始字符串+固定占位Replace，UUID构成的本地marker无作者输入；纠正语法后才运行行为RED。两项原有WebViewProbe nullable警告未变，本轮StringReader新警告已消除。

@@ -121,3 +121,9 @@ test('cancelled permission query from an old Core revision cannot poison current
 test('permission rejection after document disposal cannot add a late diagnostic',async()=>{
  let reject;const f=fixture({readCapabilities:()=>new Promise((_,fail)=>reject=fail)});const frame=f.mount();frame.load();f.host.dispose();reject(Error('disposed'));await flush();assert.equal(f.host.readDiagnostics().lastError,null);
 });
+
+test('real SDK storage keeps current consumer identity and independently rejects withdrawn write consent',async()=>{
+ let writable=true;const values=new Map(),calls=[];const f=fixture({implementedCapabilities:['storage.read','storage.write'],readCapabilities:async()=>({status:'accepted',capabilities:{'storage.read':'accepted','storage.write':writable?'accepted':'missingPermission'}}),invoke:async value=>{calls.push(value);if(value.method==='storage.set'){values.set(value.params.key,value.params.value);return{status:'accepted'};}return values.get(value.params.key)??null;}});
+ const {sdk}=await f.start({capabilities:['storage.read','storage.write']});assert.equal(await sdk.storage.get('missing'),null);await sdk.storage.set('notes',{label:'\u65e5\u671f',items:[1,true,null]});assert.deepEqual(JSON.parse(JSON.stringify(await sdk.storage.get('notes'))),{label:'\u65e5\u671f',items:[1,true,null]});
+ assert.equal(calls.every(v=>v.consumerId==='scene'&&v.identity.revision===1),true);writable=false;f.host.refreshPermissions();await flush();await assert.rejects(sdk.storage.set('notes',null),{code:'denied'});assert.deepEqual(JSON.parse(JSON.stringify(await sdk.storage.get('notes'))),{label:'\u65e5\u671f',items:[1,true,null]});f.host.dispose();
+});

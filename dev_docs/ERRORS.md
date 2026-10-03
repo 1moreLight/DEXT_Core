@@ -235,3 +235,7 @@
 | #182 | 私有策略普通对象回执被Object.prototype.toJSON拦截或伪造 | [renderer](errors/renderer.md) |
 
 | #183 | 只检查存储JSON字节/深度，4097项小数组仍越过公开容器限制 | [backend](errors/backend.md) |
+
+| #184 | Core通用原生IPC日志把消费者私有KV值写入诊断 | [backend](errors/backend.md) |
+| #185 | 只设置桌面前台不能解除grid算法对最大化可见窗口的暂停 | [toolchain](errors/toolchain.md) |
+| #186 | File.ReadAllText默认共享方式不能读取运行中的NLog写入文件 | [toolchain](errors/toolchain.md) |

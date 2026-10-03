@@ -1284,3 +1284,11 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 消费者存储Core基础验证：生产接口缺失RED→110/110 GREEN（原98+12），读写授权分离、消费者/副本隔离、撤权/旧安装/旧修订/关闭拒绝、暂停/锁屏/前台拒绝、null/持久重读、旧format1兼容、配额和发布失败原字节保留通过。4097项小数组实际Accepted/Denied失败后补递归容器限制（#183）；已关闭私有Player连接不再读写。
 - [x] 本基础最新完整build→start/identity：Core73456/Player112196/Watchdog93060/config51788（本轮共享D缓存，identity OTHER并核对精确路径），日志20261003_135827.txt；原v2 inactive。正常精确PID/路径退出Core和配置器、自己的watcher结束，用户个人快照哈希/不存在状态未变。
 - [ ] 下一步接storageGet/storageSet严格原生消息、Player→Core适配与正式DOM/SDK，按固定消费者和当前scope传输有界JSON并实际ReleasePlayer验证；Core基础未代填已授权作者KV的实际Core端到端。作者导航/系统控制/退出确认、完整idle/锁屏/Player故障、个人布局与精确输入/物理DPI仍继续，最终7项与16项保持。
+
+- [x] Task3消费者存储原生接线（BASE8d929cb）：新增严格storageGet/storageSet消息，固定consumer/key与有界JSON值；Core私有连接逐次检查当前修订/安装/个人授权，官方DOM仅转发所属消费者，SDKget/set保持JSON/null语义。先原生消息与生产JS行为RED→GREEN，再同一正式页面实际ReleasePlayer及真实Core生产安装/当前授权KV/同副本重启持久读取。实机探针仅给新临时Room测试授权，保存个人快照原字节/不存在状态并finally恢复原桌面与全部备份；授权UI与物理输入/其他Task3/4仍继续。完整build→start/identity、正常退出、具名提交，最终7项和16项不减。
+
+- [x] 存储接线阶段验证：严格storageGet/storageSet与正式DOM/SDK通过，生产JS121/121、原生消息30/30、存储/动作110/110。真实Core初次被用户grid覆盖规则正常暂停；只设桌面前台不足以解除最大化可见窗口的覆盖，临时前台算法并finally恢复原设置后，确实复现缺少Core处理导致的denied，再实现有界异步私有适配。
+- [x] 真实生产安装/授权KV端到端：Player46128同文档home→focus revision4，两消费者同key隔离、中文/ISO字符串、实时撤权拒绝/恢复读取、日志不包含KV值通过；正常Core重启后新Player48720/session自动focus revision2，同stamp、新SDK文档读取原值且未覆盖。fixture管理员仅准备新临时Room消费者的测试授权，权限UI未据此完成；所有Core回包/安装复核/Windows事实均真实。
+- [x] 实际日志隐私RED→GREEN：原Core通用IPC日志含ValueJson，marker检查失败；原生请求改为只记method/generation/revision，真实Core再次通过（#184）。夹具读取运行中的NLog须FileShare.ReadWrite（#186），首次原始字符串语法错误不计行为RED（#173追加）。finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态与用户Room哈希恢复。
+- [x] 最新完整build→start/identity：Core80748/Player113524/Watchdog111664/config88192（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_144755.txt；原v2 inactive。按用户授权精确PID/路径正常退出，自己的watcher自然结束；Dext进程/1620与1621监听/资源暂存/临时原生目录0，个人快照哈希/不存在状态未变。
+- [ ] Task3/4下一步：将原生输入证明与作者desk.navigate/系统控制合并为同一次受控动作，补退出确认；继续完整四媒体idle/锁屏组合、独立Player故障重建、个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。最终7项人工步骤不申请中途验收，完整16项开发就绪仍1/16，不合并master。
