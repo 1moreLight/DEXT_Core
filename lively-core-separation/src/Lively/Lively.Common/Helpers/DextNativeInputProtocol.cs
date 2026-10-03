@@ -48,11 +48,11 @@ namespace Lively.Common.Helpers
                         request.GeometryVersion=(long)o["geometryVersion"];return request;
                     case "activate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion","inputSequence"}).ToArray()) ||
-                            !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0))return null;
+                            !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1))return null;
                         request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
                     case "navigate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","action","geometryVersion","inputSequence"}).ToArray()) ||
-                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) || !(o["action"] is JObject action))return null;
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1) || !(o["action"] is JObject action))return null;
                         var type=Text(action["type"]);
                         if(type=="desk.go"?!Shape(action,"type","deskId") || !Id(Text(action["deskId"]),80):
                             type!="desk.next" && type!="desk.previous" || !Shape(action,"type"))return null;
@@ -62,12 +62,12 @@ namespace Lively.Common.Helpers
                     case "mediaControl":
                         var mediaAction=Text(o["action"]);
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","action","geometryVersion","inputSequence"}).ToArray()) ||
-                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) ||
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1) ||
                             mediaAction!="play" && mediaAction!="pause" && mediaAction!="toggle" && mediaAction!="next" && mediaAction!="previous")return null;
                         request.Consumer=Text(o["consumer"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];request.MediaAction=mediaAction;return request;
                     case "audioControl":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","settings","geometryVersion","inputSequence"}).ToArray()) ||
-                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) ||
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1) ||
                             !(o["settings"] is JObject settings) || settings.Count<1 || settings.Count>2 || settings.Properties().Any(p=>p.Name!="volume"&&p.Name!="muted"))return null;
                         if(settings.Property("volume")!=null){if(!Number(settings["volume"],out var volume)||volume<0||volume>1)return null;request.Volume=volume;}
                         if(settings.Property("muted")!=null){if(settings["muted"].Type!=JTokenType.Boolean)return null;request.Muted=(bool)settings["muted"];}

@@ -294,3 +294,6 @@
 
 | #219 | 作者固定矩阵不能叠加小窗口有效布局；publish中geometry信号需保留 | [renderer](errors/renderer.md) |
 | #220 | 探针提前读取尚未挂载组件导致自身轮询中断 | [toolchain](errors/toolchain.md) |
+
+| #221 | 零序号取最近完成的旧回退让迟到动作借用新输入 | [backend](errors/backend.md) |
+| #222 | dotnet run未知参数进入测试程序；部署与实际Player回归须按依赖等待 | [toolchain](errors/toolchain.md) |

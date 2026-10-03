@@ -241,7 +241,7 @@ DextNativeInputRequestJoin供Player UI线程管理，官方SDK原始请求与nat
 
 ### Core原生DOWN关联（2026-10-04）
 RoomNativeInputState新增仅本机可读的Gesture：positive Sequence、Generation/Session/Revision/GeometryVersion、实际RoomNativeViewport（HWND、OS origin、pixel bounds、DPI、drag tolerance）、原始OS点/控制键、单调IssuedAt和Released。序号在实际可操作DOWN分配，跨几何/代次保持单调；UP产生RoomNativeInputProof沿用原Sequence/IssuedAt。空button表可记录DOWN但不完成动作，Tab只选焦点，不分配序号。
-期限从物理DOWN开始，elapsed>=1500ms或时钟回退撤销pending，移动/重复/UP不续期。新DOWN替换旧配对且晚到另一输入设备UP不消费新手势；结构/前台/窗口变更和动作消费撤销当前Gesture，held边沿保留到UP。旧完成proof仍按动作权威返回expiredInput。此字段已通过仅Core stdin的LivelyMessageRoomNativePointer发送到Player，同UI先arm再Win32转发。鼠标及作者Enter/Space按实际原始请求汇合后使用正数inputSequence；Core内部零值proof查询兼容待全输入链收口。
+期限从物理DOWN开始，elapsed>=1500ms或时钟回退撤销pending，移动/重复/UP不续期。新DOWN替换旧配对且晚到另一输入设备UP不消费新手势；结构/前台/窗口变更和动作消费撤销当前Gesture，held边沿保留到UP。旧完成proof仍按动作权威返回expiredInput。此字段已通过仅Core stdin的LivelyMessageRoomNativePointer发送到Player，同UI先arm再Win32转发。鼠标及作者Enter/Space按实际原始请求汇合后使用正数inputSequence；Core proof/消费bridge已要求显式正数，零值不能查询最近完成。
 
 ### 作者Enter/Space文档路由（2026-10-04）
 私有输入包另含Key（0鼠标/13Enter/32Space）、ScanCode、IsExtended、固定Consumer/Button/EntryId；键盘只arm选中consumer唯一有效直接root。Player先原生controller.MoveFocus(Programmatic)，再通过guardian捕获Window.focus路由该文档，后续DOWN/UP沿用同UI有界队列；不修改作者节点Tab顺序或强制节点focus。Core受控Tab仍只选官方按钮元数据与轮廓；官方consumer保持默认原生激活。焦点私有ack只说明控制调用完成，不签发输入证明，原生可信回调/文档双路汇合与Core实际UP消费均须成立。
@@ -285,3 +285,7 @@ native sample保持期间只保存最新待绘制矩阵，匹配end才应用；�
 session与scene.subscribeGeometry包含只读placements，键为component.<ID>，值为1920×1080设计坐标中的当前有效矩形{x,y,width,height}；null表示无法放置，当前未呈现或非组件不提供键。此矩形在source/target/shared作者组矩阵之前，包含当前窗口临时移位/缩放；iframe内部仍为清单逻辑尺寸。Scene得到当前可见组件，其他消费者仅得到自身组件。无savedRect、私人绑定、原生坐标或输入证据，不能写回个人布局。
 geometryVersion用于作者按钮/占用声明及视口结构，单纯有效布局投影变化可在同版本按geometry频道的新sequence更新；完全相同不重复通知。纯作者视觉矩阵不发送geometry事件，不造成Scene与Widget逐帧互相重报。
 作者把有效矩形r变换到期望矩形d时，可使用matrix=[d.width/r.width,0,0,d.height/r.height,d.x-r.x*d.width/r.width,d.y-r.y*d.height/r.height]；仍遵守既有矩阵限幅，缺少/null矩形应隐藏呈现。rooms/v3-continuous用此映射在实际640×480/scale1.5与1920×1080缩放往返中保持同一1600×540仪表盘逻辑视口，呈现底部1920×280与整页1920×1080。更多物理DPI/完整Core OS最终验证继续。
+
+
+### 原生消费必须命名原始输入（2026-10-04）
+私有activate/navigate/mediaControl/audioControl的inputSequence为1..9007199254740991，必须对应原始DOWN及已完成配对；零/省略不能请求最近完成。Core proof与消费bridge也要求显式序号。正数但不匹配当前完成/消费者/几何返回staleInput，零的Core内部调用返回inputRequired并保留真正未消费完成。SDK作者仍不能提交或取得私有序号；authorInput原始SDK request只经既有native witness/请求匹配后得到序号。未消费的失败reply可以为0，不能反向构造消费。测试与实际Player组合证据见V3_DELIVERY，实际Core OS最终门槛保留。

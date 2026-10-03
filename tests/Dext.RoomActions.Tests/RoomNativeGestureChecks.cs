@@ -12,7 +12,7 @@ static partial class RoomActionChecks
             return n;
         }
         RoomNativeInputGesture Gesture(RoomNativeInputAuthority n)=>n.State?.Gesture??throw new Exception("physical DOWN gesture missing");
-        RoomNativeInputProof? Proof(RoomNativeInputAuthority n,long sequence=0)=>n.GetProof(1,n.State!.GeometryVersion,"scene","open",sequence);
+        RoomNativeInputProof? Proof(RoomNativeInputAuthority n,long? sequence=null)=>n.GetProof(1,n.State!.GeometryVersion,"scene","open",sequence??n.State!.Completed?.Sequence??0);
         check("physical DOWN freezes positive sequence scope native viewport point and timestamp",()=>{
             using var f=new ActionFixture();var n=Native(f);f.Clock.Advance(TimeSpan.FromMilliseconds(12));
             n.MouseDown(view,300,400,true);var g=Gesture(n);

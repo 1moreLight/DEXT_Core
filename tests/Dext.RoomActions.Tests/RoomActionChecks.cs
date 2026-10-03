@@ -44,7 +44,7 @@ static partial class RoomActionChecks
             Eq(true,input.PublishGeometry(generation,f.Session,f.Kernel.Snapshot!.Revision,version,viewport,Entries()));
         RoomNativeInputProof Pair(ActionFixture f,RoomNativeInputAuthority input) {
             input.MouseDown(viewport,300,400,true);input.MouseUp(viewport,300,400,true);
-            return input.GetProof(1,1,"scene","open")??throw new Exception("native pair missing");
+            return input.GetProof(1,1,"scene","open",input.State?.Completed?.Sequence??0)??throw new Exception("native pair missing");
         }
         RoomInputReply Ticket(ActionFixture f,RoomNativeInputProof proof)=>f.Actions.IssueHostInput(f.View,f.Peer,f.Session,"scene","open",proof);
         foreach(var wake in new[]{0,13,32})check("wake input held edge cannot become activation on repeat "+wake,()=>{
@@ -53,10 +53,10 @@ static partial class RoomActionChecks
             Geometry(f,n,2);n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
             if(wake==0){n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);}
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,2,"scene","open"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,2,"scene","open",n.State?.Completed?.Sequence??0));
             if(wake==0){n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);}
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
-            Eq(true,n.GetProof(1,2,"scene","open")!=null);
+            Eq(true,n.GetProof(1,2,"scene","open",n.State?.Completed?.Sequence??0)!=null);
         });
         void NavigationPair(ActionFixture f,RoomNativeInputAuthority input,string consumer="scene",string button="next",long version=1) {
             Eq(true,input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,version,viewport,new[]{new RoomNativeButton(consumer,button,.1,.1,.2,.2,0)}));
@@ -78,9 +78,9 @@ static partial class RoomActionChecks
             Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",sequence).Status);Eq(1,f.Launched.Count);
         });        check("native completion sequences are monotonic across mouse keyboard geometry and generation",()=>{
             using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var first=Pair(f,n);
-            Eq(1L,first.Sequence);n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);var second=n.GetProof(1,1,"scene","open")!;
-            Eq(2L,second.Sequence);Geometry(f,n,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(3L,n.GetProof(1,2,"scene","open")!.Sequence);
-            n.Initialize(2,f.Kernel.Snapshot!);Geometry(f,n,1,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(4L,n.GetProof(2,1,"scene","open")!.Sequence);
+            Eq(1L,first.Sequence);n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);var second=n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0)!;
+            Eq(2L,second.Sequence);Geometry(f,n,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(3L,n.GetProof(1,2,"scene","open",n.State?.Completed?.Sequence??0)!.Sequence);
+            n.Initialize(2,f.Kernel.Snapshot!);Geometry(f,n,1,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(4L,n.GetProof(2,1,"scene","open",n.State?.Completed?.Sequence??0)!.Sequence);
         });
         check("delayed default sequence cannot consume a later input on the same button",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);Geometry(f,n);var first=Pair(f,n);var second=Pair(f,n);
@@ -90,9 +90,36 @@ static partial class RoomActionChecks
             Eq(RoomActionStatus.Accepted,accepted.Status);Eq(second.Sequence,accepted.InputSequence);Eq(true,accepted.InputConsumed);Eq(1,f.Launched.Count);
             Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",second.Sequence).Status);Eq(1,f.Launched.Count);
         });
+        check("zero proof lookup cannot select a later completed physical input",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var first=Pair(f,n);var second=Pair(f,n);
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",0));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",first.Sequence));
+            Eq(second,n.GetProof(1,1,"scene","open",second.Sequence));
+        });
+        check("zero activation leaves the exact newer input available",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);Geometry(f,n);var proof=Pair(f,n);
+            var zero=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",0);
+            Eq(RoomActionStatus.InputRequired,zero.Status);Eq(false,zero.InputConsumed);Eq(0,f.Launched.Count);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",proof.Sequence).Status);
+        });
+        check("zero navigation cannot select current completed input",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
+            var sequence=n.State!.Completed!.Sequence;
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),0).Status);
+            Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),sequence).Status);
+        });
+        check("zero system control cannot dispatch or consume current input",()=>{
+            using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
+            var sequence=n.State!.Completed!.Sequence;var calls=0;
+            Task<bool> Send(RoomSystemControl c){calls++;return Task.FromResult(true);}
+            Eq(RoomActionStatus.InputRequired,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","next"),Send,0).GetAwaiter().GetResult().Status);
+            Eq(0,calls);Eq(false,n.State!.Completed!.IsConsumed);
+            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","next"),Send,sequence).GetAwaiter().GetResult().Status);Eq(1,calls);
+        });
         check("navigation receipt identifies consumed completion before private notification",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var sequence=n.State!.Completed!.Sequence;
-            var reply=bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"));
+            var reply=bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0);
             Eq(RoomActionStatus.Accepted,reply.Status);Eq(sequence,reply.InputSequence);Eq(true,reply.InputConsumed);
         });
         check("navigation mismatch receipt leaves exact input for personal/default fallback",()=>{
@@ -104,24 +131,24 @@ static partial class RoomActionChecks
         foreach(var media in new[]{"play","pause","toggle","next","previous"})check("native media controls consume one declared input "+media,()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
             var request=new RoomSystemControl("media.control",media);
-            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{Eq(request,c);calls++;return Task.FromResult(true);}).GetAwaiter().GetResult();
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{Eq(request,c);calls++;return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult();
             Eq(RoomActionStatus.Accepted,reply.Status);Eq(1L,reply.InputSequence);Eq(true,reply.InputConsumed);Eq(1,calls);
-            Eq(RoomActionStatus.InputRequired,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);Eq(1,calls);
+            Eq(RoomActionStatus.InputRequired,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);Eq(1,calls);
         });
         foreach(var patch in new[]{new RoomSystemControl("audio.control",Volume:0),new RoomSystemControl("audio.control",Volume:1),new RoomSystemControl("audio.control",Muted:true),new RoomSystemControl("audio.control",Muted:false),new RoomSystemControl("audio.control",Volume:.25,Muted:true)})check("native audio typed patch "+patch,()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
-            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",patch,c=>{Eq(patch,c);return Task.FromResult(true);}).GetAwaiter().GetResult().Status);
+            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",patch,c=>{Eq(patch,c);return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);
         });
         foreach(var request in new[]{new RoomSystemControl("media.control","execute"),new RoomSystemControl("media.control","play",Volume:.3),new RoomSystemControl("audio.control"),new RoomSystemControl("audio.control","play",Volume:.3),new RoomSystemControl("audio.control",Volume:double.NaN),new RoomSystemControl("audio.control",Volume:-.1),new RoomSystemControl("audio.control",Volume:1.1),new RoomSystemControl("binding.launch","play")})check("invalid system control does not consume proof "+request,()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
-            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult();
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",request,c=>{calls++;return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult();
             Eq(RoomActionStatus.Denied,reply.Status);Eq(false,reply.InputConsumed);Eq(0,calls);Eq(true,n.State!.Completed!=null);
         });
         foreach(var failure in new[]{"grant","consumer","expired","geometry","generation","paused","locked","foreground","disposed"})check("native system control rejects changed current facts "+failure,()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;var consumer="scene";var expected=RoomActionStatus.StaleInput;
             switch(failure){
                 case "grant":f.Store.Update(s=>s.Rooms[Room].Grants.Remove("scene"));expected=RoomActionStatus.MissingPermission;break;
-                case "consumer":consumer="component.widget";expected=RoomActionStatus.InputRequired;break;
+                case "consumer":consumer="component.widget";expected=RoomActionStatus.StaleInput;break;
                 case "expired":f.Clock.Advance(TimeSpan.FromSeconds(2));expected=RoomActionStatus.ExpiredInput;break;
                 case "geometry":n.InvalidateGeometry(1,f.Session,1);expected=RoomActionStatus.InputRequired;break;
                 case "generation":n.Initialize(2,f.Kernel.Snapshot!);break;
@@ -130,7 +157,7 @@ static partial class RoomActionChecks
                 case "foreground":f.Gateway.SetOperable(f.Coordinator,f.CorePeer,f.Session,false);break;
                 case "disposed":bridge.Dispose();expected=RoomActionStatus.StaleSession;break;
             }
-            Eq(expected,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,consumer,new("media.control","play"),c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);Eq(0,calls);
+            Eq(expected,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,consumer,new("media.control","play"),c=>{calls++;return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);Eq(0,calls);
         });
         check("author system control cannot replace current personal binding and leaves exact fallback",()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);f.Store.Update(s=>s.Rooms[Room].Buttons["dynamic"]=new(TargetId:Target));
@@ -140,12 +167,12 @@ static partial class RoomActionChecks
         });
         check("author control cannot replace authored navigation default",()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var calls=0;
-            Eq(RoomActionStatus.Denied,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("audio.control",Volume:.5),c=>{calls++;return Task.FromResult(true);}).GetAwaiter().GetResult().Status);
-            Eq(0,calls);Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);
+            Eq(RoomActionStatus.Denied,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("audio.control",Volume:.5),c=>{calls++;return Task.FromResult(true);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);
+            Eq(0,calls);Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next",n.State?.Completed?.Sequence??0).Status);
         });
         foreach(var error in new[]{"false","exception","cancel"})check("system failures expose safe status and preserve actual consumed edge "+error,()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
-            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),c=>{calls++;if(error=="exception")throw new IOException("private path");if(error=="cancel")return Task.FromCanceled<bool>(new CancellationToken(true));return Task.FromResult(false);}).GetAwaiter().GetResult();
+            var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),c=>{calls++;if(error=="exception")throw new IOException("private path");if(error=="cancel")return Task.FromCanceled<bool>(new CancellationToken(true));return Task.FromResult(false);},n.State?.Completed?.Sequence??0).GetAwaiter().GetResult();
             Eq(RoomActionStatus.ControlUnavailable,reply.Status);Eq(true,reply.InputConsumed);Eq(1,calls);
         });
         check("system control callback runs outside all authority locks and current consent is rechecked",()=>{
@@ -153,20 +180,20 @@ static partial class RoomActionChecks
             var reply=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),async c=>{
                 var check=Task.Run(()=>f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Status);
                 Eq(RoomActionStatus.Accepted,await check.WaitAsync(TimeSpan.FromSeconds(2)));return true;
-            }).GetAwaiter().GetResult();Eq(RoomActionStatus.Accepted,reply.Status);
+            },n.State?.Completed?.Sequence??0).GetAwaiter().GetResult();Eq(RoomActionStatus.Accepted,reply.Status);
         });
         check("rapid new real system inputs are rate limited without consuming the next proof",()=>{
             using var f=new ActionFixture(navigationDynamic:true,controlCapabilities:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");var calls=0;
             Task<bool> Send(RoomSystemControl c){calls++;return Task.FromResult(true);}
-            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),Send).GetAwaiter().GetResult().Status);
+            Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","play"),Send,n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);
             n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);
-            var limited=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult();Eq(RoomActionStatus.RateLimited,limited.Status);Eq(false,limited.InputConsumed);Eq(1,calls);
-            f.Clock.Advance(TimeSpan.FromMilliseconds(100));Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult().Status);Eq(2,calls);
+            var limited=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send,n.State?.Completed?.Sequence??0).GetAwaiter().GetResult();Eq(RoomActionStatus.RateLimited,limited.Status);Eq(false,limited.InputConsumed);Eq(1,calls);
+            f.Clock.Advance(TimeSpan.FromMilliseconds(100));Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send,n.State?.Completed?.Sequence??0).GetAwaiter().GetResult().Status);Eq(2,calls);
         });
 
         RoomExitConfirmation ExitPermit(ActionFixture f,RoomSessionPlayerBridge bridge,RoomNativeInputAuthority native){
             NavigationPair(f,native,"scene","exit");
-            var reply=bridge.ActivateNative(f.Actions,native,1,f.Session,1,1,"scene","exit");
+            var reply=bridge.ActivateNative(f.Actions,native,1,f.Session,1,1,"scene","exit",native.State?.Completed?.Sequence??0);
             Eq(RoomActionStatus.RequiresConfirmation,reply.Status);Eq(true,reply.InputConsumed);
             return reply.Exit??throw new Exception("missing private confirmation");
         }
@@ -218,7 +245,7 @@ static partial class RoomActionChecks
         });
         check("private exit continuation is absent from both JSON serializers",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,"scene","exit");
-            var reply=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","exit");Eq(true,reply.Exit!=null);
+            var reply=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","exit",n.State?.Completed?.Sequence??0);Eq(true,reply.Exit!=null);
             Eq(false,JsonSerializer.Serialize(reply).Contains("Exit"));Eq(false,Newtonsoft.Json.JsonConvert.SerializeObject(reply).Contains("Exit"));
             var direct=new RoomActionReply(RoomActionStatus.RequiresConfirmation,reply.Exit);Eq(false,JsonSerializer.Serialize(direct).Contains("Exit"));Eq(false,Newtonsoft.Json.JsonConvert.SerializeObject(direct).Contains("Exit"));
         });
@@ -231,29 +258,29 @@ static partial class RoomActionChecks
         foreach(var type in new[]{"desk.next","desk.previous","desk.go"})check("native authored navigation matches current configured action "+type,()=>{
             using var f=new ActionFixture();if(type!="desk.next")f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new(type,type=="desk.go"?"focus":null));
             var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var action=new RoomButtonAction(type,type=="desk.go"?"focus":null);
-            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action,n.State?.Completed?.Sequence??0).Status);
             Eq("home",f.Kernel.Snapshot!.CurrentDeskId);Eq("focus",f.Kernel.Snapshot.TargetDeskId);Eq(0,f.Launched.Count);
-            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
+            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action,n.State?.Completed?.Sequence??0).Status);
         });
         check("authored navigation cannot create physical input or borrow another consumer",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);
-            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
-            NavigationPair(f,n);Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"component.widget",new("desk.next")).Status);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);
+            NavigationPair(f,n);Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"component.widget",new("desk.next"),n.State?.Completed?.Sequence??0).Status);
             Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);
         });
         check("mismatched navigation leaves configured default for one legitimate fallback",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
-            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.previous")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);Eq("focus",f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.previous"),n.State?.Completed?.Sequence??0).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next",n.State?.Completed?.Sequence??0).Status);Eq("focus",f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.StaleInput,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);
         });
         check("authored navigation cannot override a user's bound application",()=>{
             using var f=new ActionFixture();f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new("binding.launch",TargetId:Target));
             var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
-            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(0,f.Launched.Count);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next").Status);Eq(1,f.Launched.Count);
-            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);Eq(0,f.Launched.Count);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next",n.State?.Completed?.Sequence??0).Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);Eq(1,f.Launched.Count);
         });
         foreach(var failure in new[]{"grant","expired","geometry","generation","disposed","paused","locked","foreground"})check("native authored navigation rejects changed admission "+failure,()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
@@ -268,31 +295,31 @@ static partial class RoomActionChecks
                 case "locked":f.Lifecycle(RoomLifecycleStage.Desktop,false,true);break;
                 case "foreground":f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false));break;
             }
-            Eq(expected,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);Eq(0,f.Launched.Count);
+            Eq(expected,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);Eq(0,f.Launched.Count);
         });
         check("an unconfigured declared button can request granted dynamic navigation",()=>{
             using var f=new ActionFixture(navigationDynamic:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
-            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus"),n.State?.Completed?.Sequence??0).Status);
             Eq("home",f.Kernel.Snapshot!.CurrentDeskId);Eq("focus",f.Kernel.Snapshot.TargetDeskId);Eq(0,f.Launched.Count);
         });
         check("target-only private binding on an unconfigured button stays authoritative",()=>{
             using var f=new ActionFixture(navigationDynamic:true);f.Store.Update(state=>state.Rooms[Room].Buttons["dynamic"]=new(TargetId:Target));
             var metadata=f.Actions.ReadButtons(f.View,f.Peer,f.Session,"scene").Buttons!.Single(b=>b.Id=="dynamic");Eq("binding.launch",metadata.Action);Eq(true,metadata.IsBound);
             var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
-            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","dynamic").Status);Eq(1,f.Launched.Count);
-            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus"),n.State?.Completed?.Sequence??0).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","dynamic",n.State?.Completed?.Sequence??0).Status);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.InputRequired,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);Eq(1,f.Launched.Count);
         });
         check("dynamic navigation rejects unknown targets without spending the native proof",()=>{
             using var f=new ActionFixture(navigationDynamic:true);var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,button:"dynamic");
-            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","missing")).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
-            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus")).Status);
+            Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","missing"),n.State?.Completed?.Sequence??0).Status);Eq<string?>(null,f.Kernel.Snapshot!.TargetDeskId);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.go","focus"),n.State?.Completed?.Sequence??0).Status);
         });
         check("typed authored navigation rejects malformed variants without consuming default input",()=>{
             using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);
             foreach(var action in new[]{new RoomButtonAction("binding.launch"),new("desk.next","focus"),new("desk.go"),new("desk.go","missing")})
-                Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action).Status);
-            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next")).Status);
+                Eq(RoomActionStatus.Denied,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",action,n.State?.Completed?.Sequence??0).Status);
+            Eq(RoomActionStatus.Accepted,bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"),n.State?.Completed?.Sequence??0).Status);
         });
         RoomStorageReply Read(ActionFixture f,string key="notes",string consumer="scene",long? revision=null)=>
             f.Actions.ReadStorage(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,key);
@@ -522,14 +549,14 @@ static partial class RoomActionChecks
                 Eq(false,bridge!.PublishNativeGeometry(n,1,f.Session,1,1,viewport,[Entries()[0] with{Consumer="invented"}]));
                 Eq(false,bridge.PublishNativeGeometry(n,1,f.Session,1,1,viewport,[Entries()[0] with{Button="focus-only"}]));
                 Eq(true,bridge.PublishNativeGeometry(n,1,f.Session,1,1,viewport,Entries()));
-                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
-                Pair(f,n);Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,2,"scene","open").Status);
-                Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
-                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);Eq(1,f.Launched.Count);
+                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",n.State?.Completed?.Sequence??0).Status);
+                Pair(f,n);Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,2,"scene","open",n.State?.Completed?.Sequence??0).Status);
+                Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",n.State?.Completed?.Sequence??0).Status);
+                Eq(RoomActionStatus.InputRequired,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",n.State?.Completed?.Sequence??0).Status);Eq(1,f.Launched.Count);
                 Eq(RoomProtocolStatus.Accepted,bridge.Refresh());Eq(2L,n.State!.Generation);
-                Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open").Status);
+                Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",n.State?.Completed?.Sequence??0).Status);
             }
-            Eq(RoomActionStatus.StaleSession,bridge!.ActivateNative(f.Actions,n,2,f.Session,1,1,"scene","open").Status);
+            Eq(RoomActionStatus.StaleSession,bridge!.ActivateNative(f.Actions,n,2,f.Session,1,1,"scene","open",n.State?.Completed?.Sequence??0).Status);
         });
         check("private Player geometry publish never waits while gateway observer owns its gate",()=>{
             using var f=new ActionFixture();var n=Native(f);
@@ -543,12 +570,12 @@ static partial class RoomActionChecks
         });
         check("native input requires matching completed down/up and consumes only once",()=>{
             using var f=new ActionFixture();var n=Native(f);Geometry(f,n);
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
-            n.MouseUp(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
-            n.MouseDown(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
-            n.MouseUp(viewport,300,400,true);var proof=n.GetProof(1,1,"scene","open")!;
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"component.widget","open"));
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","icon"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
+            n.MouseUp(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
+            n.MouseDown(viewport,300,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
+            n.MouseUp(viewport,300,400,true);var proof=n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0)!;
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"component.widget","open",n.State?.Completed?.Sequence??0));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","icon",n.State?.Completed?.Sequence??0));
             var ticket=Ticket(f,proof);Eq(RoomActionStatus.Accepted,ticket.Status);Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);
             Eq(RoomActionStatus.StaleInput,Ticket(f,proof).Status);Eq(1,f.Launched.Count);
         });
@@ -560,7 +587,7 @@ static partial class RoomActionChecks
             if(change=="generation")n.Initialize(2,f.Kernel.Snapshot!);
             if(change=="revoke")n.Revoke();
             n.MouseUp(change=="viewport"?viewport with{Width=900}:change=="dpi"?viewport with{Dpi=120}:viewport,change=="outside"?600:300,400,change!="foreground");
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
         });
         check("native polygon envelope cannot authorize points outside the triangle",()=>{
             using var f=new ActionFixture();var n=Native(f);
@@ -569,26 +596,26 @@ static partial class RoomActionChecks
                 """)!;
             Eq(true,n.PublishGeometry(1,f.Session,1,1,viewport,[entry]));
             n.MouseDown(viewport,360,460,true);n.MouseUp(viewport,360,460,true);
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
         });
         check("native geometry is copied and topmost entry owns overlap",()=>{
             using var f=new ActionFixture();var n=Native(f);var entries=new[]{new RoomNativeButton("official","icon",.1,.1,.2,.2,1),Entries()[0]};
             Eq(true,n.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,entries));entries[0]=Entries()[0];
             n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
-            if(n.GetProof(1,1,"official","icon")==null)throw new Exception("frontmost entry missing");
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
+            if(n.GetProof(1,1,"official","icon",n.State?.Completed?.Sequence??0)==null)throw new Exception("frontmost entry missing");
             Eq(false,n.PublishGeometry(1,f.Session,f.Kernel.Snapshot.Revision,2,viewport,new[]{Entries()[0] with{Width=double.NaN}}));
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"official","icon"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"official","icon",n.State?.Completed?.Sequence??0));
         });
         check("native Enter Space and Tab use controlled focus and ignore repeat downs",()=>{
             using var f=new ActionFixture();var n=Native(f);Geometry(f,n);
             n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);
-            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
             n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);Eq("open",n.FocusedButton?.Button);
             foreach(var key in new[]{13,32}){
                 n.Key(viewport,key,true,false,true);n.Key(viewport,key,true,false,true);n.Key(viewport,key,false,false,true);
-                var proof=n.GetProof(1,1,"scene","open")!;var ticket=Ticket(f,proof);Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);
-                n.Key(viewport,key,false,false,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+                var proof=n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0)!;var ticket=Ticket(f,proof);Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);
+                n.Key(viewport,key,false,false,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
             }Eq(2,f.Launched.Count);
         });
         check("native proof expiry starts at physical down instead of authored request",()=>{

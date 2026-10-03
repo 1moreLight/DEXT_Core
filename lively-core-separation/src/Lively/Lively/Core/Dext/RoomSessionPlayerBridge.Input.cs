@@ -10,7 +10,7 @@ internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputS
 internal sealed partial class RoomSessionPlayerBridge
 {
     internal RoomNativeActionReply ActivateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
-        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence=0)
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
     {
         if(disposed)return new(RoomActionStatus.StaleSession);
         var current=native.State;
@@ -33,7 +33,7 @@ internal sealed partial class RoomSessionPlayerBridge
     }
 
     internal RoomNativeActionReply NavigateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
-        long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action,long inputSequence=0)
+        long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action,long inputSequence)
     {
         if(disposed)return new(RoomActionStatus.StaleSession);
         var current=native.State;
@@ -48,7 +48,7 @@ internal sealed partial class RoomSessionPlayerBridge
     }
     internal async Task<RoomNativeActionReply> ControlNativeAsync(RoomActionAuthority actions,RoomNativeInputAuthority native,
         long generation,Guid session,long revision,long geometry,string consumer,RoomSystemControl control,
-        Func<RoomSystemControl,Task<bool>> dispatch,long inputSequence=0,Action<RoomNativeInputProof>? attempted=null)
+        Func<RoomSystemControl,Task<bool>> dispatch,long inputSequence,Action<RoomNativeInputProof>? attempted=null)
     {
         if(disposed)return new(RoomActionStatus.StaleSession);
         var current=native.State;

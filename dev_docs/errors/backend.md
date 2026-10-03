@@ -466,3 +466,7 @@ Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方�
 生产功能实质RED291/295：第二次raw Tab替换第一请求，第一样本被拒；取样待回时Enter/Space没有记录DOWN，早到UP丢失。新增编译RED不能代替这四项行为失败。
 未回焦点请求改有界FIFO，每份当前可见样本按首项推进；激活冻结原始键/scan/QPC/序号和此前末项屏障，UP提前到只标释放，最终焦点后发送原一对。过期前置Tab取消待键，禁止旧焦点或续签时间；新鼠标/几何/会话仍撤销，动作不是多项队列。GREEN295/295及生产Core authority/key delivery+实际ReleasePlayer连续ShiftTab/Enter样本整轮通过，raw OS/完整Core窗口和回复fixture单列。
 夹具编译曾将Guid SessionId调用ToString写入私有pointer，CS0029后按真实DTO类型改回Guid；不放宽消息类型，不计该编译错误为生产功能RED。
+
+## #221 零序号不能表示最近完成（2026-10-04）
+正式Core/Player链已使用DOWN正数关联，Core GetProof仍有sequence=0与零值匹配任意当前proof的旧兼容，消费bridge亦默认0。必要实质RED295/299确认零lookup/启动/导航/系统控制可取得后来完成。移除默认参数与零回退，Player四种消费parser要求正数，Core299/299与消息72/72、最新部署实际正式Player组合通过。
+旧fixture显式传其实际构造完成序号；正数但错消费者/几何应StaleInput，零内部调用InputRequired，均不消费。失败reply0与尚未经过native request join的作者原始authorInput不代表动作准入，不能混同为零值消费。实际Core OS/物理DPI最终门槛仍待补。

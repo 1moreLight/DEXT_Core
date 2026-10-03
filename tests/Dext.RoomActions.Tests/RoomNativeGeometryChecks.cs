@@ -12,7 +12,7 @@ static partial class RoomActionChecks
         RoomNativeButton Entry(string? id="button.open",LivelyRoomNativePoint[][]? polygons=null,string consumer="scene")=>new(consumer,"open",.1,.1,.2,.2,0,id,polygons??[Triangle()]);
         RoomNativeInputAuthority Native(ActionFixture f){var n=f.Actions.CreateNativeInput();n.Initialize(1,f.Kernel.Snapshot!);return n;}
         bool Publish(ActionFixture f,RoomNativeInputAuthority n,RoomNativeButton[] entries,long version=1)=>n.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,version,view,entries);
-        RoomNativeInputProof? Click(RoomNativeInputAuthority n,int x,int y){n.MouseDown(view,x,y,true);n.MouseUp(view,x,y,true);return n.GetProof(1,n.State!.GeometryVersion,"scene","open");}
+        RoomNativeInputProof? Click(RoomNativeInputAuthority n,int x,int y){n.MouseDown(view,x,y,true);n.MouseUp(view,x,y,true);return n.GetProof(1,n.State!.GeometryVersion,"scene","open",n.State?.Completed?.Sequence??0);}
         void Tab(RoomNativeInputAuthority n,bool reverse=false){n.Key(view,9,true,reverse,true);n.Key(view,9,false,reverse,true);}
         foreach(var reverse in new[]{false,true})check("polygon winding keeps strict interior and rejects every boundary "+reverse,()=>{
             using var f=new ActionFixture();var n=Native(f);var triangle=Triangle();if(reverse)Array.Reverse(triangle);
@@ -29,20 +29,20 @@ static partial class RoomActionChecks
             Eq(true,Publish(f,n,[Entry("icon.home/one",[Square(.1,.2)]) with{Width=.1},Entry("icon.home/two",[Square(.2,.3)]) with{X=.2,Width=.1,TabIndex=1}]));
             Eq("icon.home/one",Click(n,250,400)?.Button.EntryId);Eq("icon.home/two",Click(n,350,400)?.Button.EntryId);
             Tab(n);Eq("icon.home/one",n.FocusedButton?.EntryId);Tab(n);Eq("icon.home/two",n.State!.Focus?.EntryId);Tab(n,true);Eq("icon.home/one",n.FocusedButton?.EntryId);
-            n.Key(view,13,true,false,true);n.Key(view,13,false,false,true);var proof=n.GetProof(1,1,"scene","open")!;
+            n.Key(view,13,true,false,true);n.Key(view,13,false,false,true);var proof=n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0)!;
             Eq("icon.home/one",proof.Button.EntryId);var ticket=f.Actions.IssueHostInput(f.View,f.Peer,f.Session,"scene","open",proof);
             Eq(RoomActionStatus.Accepted,f.Invoke("open",ticket.Ticket).Status);Eq(1,f.Launched.Count);
         });
         check("down and up on distinct entries cannot share one action proof",()=>{
             using var f=new ActionFixture();var n=Native(f);
             Eq(true,Publish(f,n,[Entry("one",[Square(.1,.2)]) with{Width=.1},Entry("two",[Square(.2,.3)]) with{X=.2,Width=.1}]));
-            n.MouseDown(view,299,400,true);n.MouseUp(view,301,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+            n.MouseDown(view,299,400,true);n.MouseUp(view,301,400,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open",n.State?.Completed?.Sequence??0));
         });
         check("polygon pieces share one Tab stop and invalidation preserves held edges",()=>{
             using var f=new ActionFixture();var n=Native(f);var entry=Entry(polygons:[Square(.1,.15),Square(.25,.3)]);
             Eq(true,Publish(f,n,[entry]));Tab(n);n.Key(view,32,true,false,true);Eq(true,Publish(f,n,[entry],2));Tab(n);
-            n.Key(view,32,true,false,true);n.Key(view,32,false,false,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,2,"scene","open"));
-            n.Key(view,32,true,false,true);n.Key(view,32,false,false,true);Eq("button.open",n.GetProof(1,2,"scene","open")?.Button.EntryId);
+            n.Key(view,32,true,false,true);n.Key(view,32,false,false,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,2,"scene","open",n.State?.Completed?.Sequence??0));
+            n.Key(view,32,true,false,true);n.Key(view,32,false,false,true);Eq("button.open",n.GetProof(1,2,"scene","open",n.State?.Completed?.Sequence??0)?.Button.EntryId);
             Tab(n);Eq("button.open",n.FocusedButton?.EntryId);
         });
         check("published geometry and exposed focus never retain caller mutable points",()=>{
@@ -92,8 +92,8 @@ static partial class RoomActionChecks
         });
         check("legacy rectangle capacity and half-open edges remain unchanged",()=>{
             using var f=new ActionFixture();var n=Native(f);var entries=Enumerable.Range(0,4096).Select(i=>new RoomNativeButton("scene","button"+i,.125,.125,.25,.25,i)).ToArray();
-            Eq(true,Publish(f,n,entries));n.MouseDown(view,225,325,true);n.MouseUp(view,225,325,true);Eq(true,n.GetProof(1,1,"scene","button0")!=null);
-            n.MouseDown(view,475,575,true);n.MouseUp(view,475,575,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","button0"));
+            Eq(true,Publish(f,n,entries));n.MouseDown(view,225,325,true);n.MouseUp(view,225,325,true);Eq(true,n.GetProof(1,1,"scene","button0",n.State?.Completed?.Sequence??0)!=null);
+            n.MouseDown(view,475,575,true);n.MouseUp(view,475,575,true);Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","button0",n.State?.Completed?.Sequence??0));
             Eq(false,Publish(f,n,entries.Append(new RoomNativeButton("scene","extra",.1,.1,.2,.2,0)).ToArray(),2));
         });
     }

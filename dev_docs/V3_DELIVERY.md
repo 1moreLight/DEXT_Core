@@ -12,9 +12,9 @@
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
 | 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；已有焦点Enter/Space可见采样Core288/288及实际Player通过；单次Tab/移动焦点及连续Tab早到键Core295/295、生产Core类/实际Player组合通过；实际Core OS与个人编辑UI待贯通 | 否 |
-| 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；作者纯视觉矩阵/焦点及实际Player仪表盘同文档bottom→full→bottom基础通过；作者/有效布局多尺寸、完整输入/异常恢复组合待完成 | 否 |
+| 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；作者纯视觉矩阵/焦点及实际Player仪表盘同文档bottom→full→bottom基础通过；SDK有效矩形与640×480 scale1.5展开/放大缩回已验证；完整Core输入/异常恢复组合待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
-| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；作者矩阵本地帧/保持/焦点与实际Player通过；作者/有效布局小窗口组合与实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
+| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；作者矩阵本地帧/保持/焦点与实际Player通过；作者/有效布局小窗口展开及恢复已验证，实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
 | 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
@@ -233,3 +233,11 @@ effective-layout-core-build完整四阶段后常规start Core45276/Player113480/
 接续Core零序号兼容与最终功能组合。系统凭据窗未解除时不重复桌面点击；实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次P5审查待补。最终人工第2项：在v3-continuous底部→整页→底部切页，并缩小/恢复窗口，确认仪表盘实例标识/逻辑尺寸不变、面板满宽且返回底部；第4/5项连续键与移动/DPI集中执行。拖动暂缓，16项开发就绪仍1/16≈6%，13/16和16/16目标保持，不中途验收或合并master。
 
 - 最终证据补记：探针显式断言实际large CSS width>1000及small<500，避免等待deadline后旧窗口矩形被误报缩放通过；重新编译隔离探针及effective-layout-author-wire-final整轮exit0，产品代码不再改变。
+
+
+## P5 原生动作精确正数关联收口（2026-10-04）
+Core GetProof与ActivateNative/NavigateNative/ControlNativeAsync要求显式原始输入序号，零值不再代表最近完成。Player私有activate/navigate/mediaControl/audioControl只接受正数；作者公开SDK的原始request和authorInput仍无序号，由已有native见证/请求汇合补齐。无输入失败回复0继续表示未关联/未消费，不能用它请求动作。
+四个必要功能实质RED295/299：零lookup、启动、导航与系统控制仍取当前完成；移除旧回退、迁移旧fixture调用后299/299。原有正数错误消费者/几何由旧零值InputRequired改为StaleInput，仍拒绝且不消费；零本身为InputRequired。消息实质RED71/72，旧合法packet改正数、旧零值接受断言改拒绝后72/72。未扩大网络或攻击矩阵。
+positive-input-official-wire-final在本轮完整构建部署后实际ReleasePlayer/生产正式宿主整轮exit0：静止/移动源鼠标、动态键、Tab/随帧焦点、生产Core authority/key delivery两个未回ShiftTab+早到Enter、原始正数/QPC/最终entry与一次动作，切页/共享文档/暂停/撤销保持。原始OS边沿/完整Core窗口/动作回复fixture，真实Core OS门槛不代填。
+完整positive-input-core-build四阶段；常规start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt。identity共享D配置器OTHER/exit1，四精确路径另核；正常关闭、watcher94664 exit0、原四文件SHA256/缺失保持、Dext进程/开发监听/author、official、Core与author-visual GUID临时目录0，Dext保持关闭。
+P5剩余实际Core OS/物理DPI/锁屏/故障还原与最终七项/单次P5审查保留，系统凭据宿主未解除时不重复桌面点击。接续V3-P6-001原生Room创建与节点保存，先实际创建/保存重开/撤销重做/应用产品闭环，不扩展网络专项。最终人工第4项连续Tab后Enter/Space与鼠标只动作一次、长按/AltTab取消，第2/5项跨页缩放与实际DPI集中执行；拖动暂缓，全16项就绪仍1/16≈6%，13/16及16/16目标保持，未合并master。

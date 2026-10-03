@@ -421,3 +421,7 @@ native-input-guardian夹具fire(target,type,options)首轮误用fire(type,option
 ## #220 观测轮询须等组件实际挂载（2026-10-04）
 首次effective-layout-author-wire超时：轮询入口立即对尚不存在的component.instrument调用getBoundingClientRect，异常使后续setTimeout不再执行，宿主本身继续正常capabilities/data。在每次轮询先等待实际节点再读取矩形，保留原位置/尺寸/ready门槛后wire2整轮通过。诊断脚本不能把自身时序异常归因于生产渲染器；Core包/回复fixture仍标明。
 检索路径须用rg --files确认，测试文件位于dext-room-v3本层，creator-kit/v3无README；读取日志前须展开__EVIDENCE__占位符，直接读取占位路径会报不存在。以上均已按实际路径接续，无创建占位文件。
+
+## #222 测试run参数与依赖等待（2026-10-04）
+dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown action probe mode；改用已编译--no-build不传参数，才取得真实295/299行为RED，不能把命令失败计生产RED。
+启动实际Player后exec_command可能返回活session；后续build/部署须先等待其退出，避免写入正在使用的Player输出。本轮首次回归/构建都通过，但先后次序不足以确认回归使用最新部署，故部署完成后以positive-input-official-wire-final再验证当前实际二进制整轮，通过后不扩大复测范围。

@@ -45,8 +45,8 @@ internal static class NativeInputWireProbe
                     if(command==='layoutRead')native(request({method:'layoutRead'}));
                     if(command==='layoutSave')native(request({method:'layoutSave',layoutRevision:0,change:{kind:'icon',id:'icon-1',deskId:'home',x:240,y:360}}));
                     if(command==='invalidLayout')for(const change of [{kind:'icon',id:'icon-1',deskId:'home',x:1825,y:0},{kind:'widget',id:'w',x:0,y:0,width:0,height:100},{kind:'dock',id:'w',x:0,y:0,width:100,height:100}])native(request({method:'layoutSave',layoutRevision:0,change}));
-                    if(command==='activate')native(request({method:'activate',geometryVersion:1,inputSequence:0,consumer:'scene',button:'open'}));
-                    if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,inputSequence:0,consumer:'scene',button:'open'}),...extra});
+                    if(command==='activate')native(request({method:'activate',geometryVersion:1,inputSequence:7,consumer:'scene',button:'open'}));
+                    if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,inputSequence:7,consumer:'scene',button:'open'}),...extra});
                     if(command==='frame'){const frame=document.createElement('iframe');frame.sandbox='allow-scripts';frame.src=context.resourceBasePath+'scene/index.html';frame.onload=()=>send({frame:true});document.body.append(frame);}
                     if(command==='reload'){location.reload();return;}
                     send({barrier:d.requestId});

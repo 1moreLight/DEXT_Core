@@ -431,3 +431,20 @@ effective-layout-author-wire-final实际ReleasePlayer/生产宿主与SDK整轮ex
 effective-layout-default-regression实际Player原输入整轮exit0：静止/移动鼠标、动态键、单次Tab/移动焦点、生产Core连续ShiftTab+早到Enter、Core提交/共享文档/暂停/撤销保持通过。无新增网络专项。
 effective-layout-core-build完整四阶段后常规start Core45276/Player113480/Watchdog70200/config114976、日志20261004_070019.txt；identity共享D配置器OTHER/exit1，四精确路径独立核验。正常关闭、watcher96341 exit0、原四文件SHA256/缺失保持、Dext进程/开发监听/author、official、Core及author-visual GUID目录0，Dext保持关闭。常规恢复原v2，不计v3物理输入。
 接续Core零序号兼容与最终功能组合。系统凭据窗未解除时不重复桌面点击；实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次P5审查待补。最终人工第2项：在v3-continuous底部→整页→底部切页，并缩小/恢复窗口，确认仪表盘实例标识/逻辑尺寸不变、面板满宽且返回底部；第4/5项连续键与移动/DPI集中执行。拖动暂缓，16项开发就绪仍1/16≈6%，13/16和16/16目标保持，不中途验收或合并master。
+
+
+## P5 原生动作只关联原始正数输入（2026-10-04，BASE 239a16b）
+一句话目标：取消Core“零序号取最近完成”的旧回退，所有原生启动、导航和系统控制必须明确匹配原始DOWN的正数序号，迟到请求不能借后来输入。
+范围：Core proof/bridge签名要求显式序号；私有Player parser消费动作只接受正数。作者公开SDK仍不提交序号，由已有native frame见证/原始request匹配通道补齐。无输入失败回复可保留0，不能用回复0请求消费；不扩大网络专项，桌面拖动暂缓。
+先必要关联功能RED和现有Core/消息夹具迁移，再生产类+实际正式Player正数鼠标/键/焦点组合回归。改C#后完整build→start/身份→正常关闭、原四文件保持、具名提交。实际Core OS/物理DPI/锁屏/还原仍待系统凭据宿主解除，不重复桌面点击；最终卡第4项连续键与一次动作集中执行，16项就绪仍1/16≈6%，不中途验收或合并。
+- [x] proof与三类bridge消费方法必须显式传序号，零不能查询最近完成。实质Core RED295/299→299/299，旧夹具改传实际构造的完成序号；正数但错消费者/几何明确StaleInput。
+- [x] 四类消费消息只接受1..JS安全整数上限。实质消息RED71/72→72/72，作者公开request仍无序号；构建后positive-input-official-wire-final实际正式Player整轮通过，原始OS/完整Core窗口与回复fixture单列。
+- [x] 完整四阶段positive-input-core-build，正常start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt；共享D配置器identity OTHER/exit1但四精确路径独立核验。正常关闭、watcher94664 exit0、原四文件保持及进程/开发监听/原生GUID目录0；本节随具名阶段提交保存。
+
+
+## P5 原生动作精确正数关联收口（2026-10-04）
+Core GetProof与ActivateNative/NavigateNative/ControlNativeAsync要求显式原始输入序号，零值不再代表最近完成。Player私有activate/navigate/mediaControl/audioControl只接受正数；作者公开SDK的原始request和authorInput仍无序号，由已有native见证/请求汇合补齐。无输入失败回复0继续表示未关联/未消费，不能用它请求动作。
+四个必要功能实质RED295/299：零lookup、启动、导航与系统控制仍取当前完成；移除旧回退、迁移旧fixture调用后299/299。原有正数错误消费者/几何由旧零值InputRequired改为StaleInput，仍拒绝且不消费；零本身为InputRequired。消息实质RED71/72，旧合法packet改正数、旧零值接受断言改拒绝后72/72。未扩大网络或攻击矩阵。
+positive-input-official-wire-final在本轮完整构建部署后实际ReleasePlayer/生产正式宿主整轮exit0：静止/移动源鼠标、动态键、Tab/随帧焦点、生产Core authority/key delivery两个未回ShiftTab+早到Enter、原始正数/QPC/最终entry与一次动作，切页/共享文档/暂停/撤销保持。原始OS边沿/完整Core窗口/动作回复fixture，真实Core OS门槛不代填。
+完整positive-input-core-build四阶段；常规start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt。identity共享D配置器OTHER/exit1，四精确路径另核；正常关闭、watcher94664 exit0、原四文件SHA256/缺失保持、Dext进程/开发监听/author、official、Core与author-visual GUID临时目录0，Dext保持关闭。
+P5剩余实际Core OS/物理DPI/锁屏/故障还原与最终七项/单次P5审查保留，系统凭据宿主未解除时不重复桌面点击。接续V3-P6-001原生Room创建与节点保存，先实际创建/保存重开/撤销重做/应用产品闭环，不扩展网络专项。最终人工第4项连续Tab后Enter/Space与鼠标只动作一次、长按/AltTab取消，第2/5项跨页缩放与实际DPI集中执行；拖动暂缓，全16项就绪仍1/16≈6%，13/16及16/16目标保持，未合并master。

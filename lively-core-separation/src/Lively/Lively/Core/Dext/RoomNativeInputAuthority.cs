@@ -289,11 +289,11 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         }
     }
     // Correlation is private routing metadata, never evidence of a gesture.
-    // Zero asks for the current proof; delayed defaults must name an exact edge.
-    internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button,long sequence=0)
+    // Every action must name its original positive edge; zero never selects a recent proof.
+    internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button,long sequence)
     {
         lock(gate)return generation==document && geometryVersion==version && completed is{} proof &&
-            sequence>=0 && (sequence==0 || sequence==proof.Sequence) &&
+            sequence>0 && sequence==proof.Sequence &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
     }
     private bool BeginGesture(long now,int x,int y,int key,bool reverse=false)

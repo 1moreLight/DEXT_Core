@@ -21,6 +21,17 @@ internal static class NativeInputMessageChecks
             var second=(JObject)b.DeepClone();second["entryId"]="icon.home/two";((JArray)r["buttons"]!).Add(second);
             Require(Parse(r)?.Buttons.Length==2);
         });
+        Check("consumption commands require the exact positive native correlation",()=>{
+            foreach(var method in new[]{"activate","navigate","mediaControl","audioControl"}){
+                var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["inputSequence"]=7;
+                if(method=="activate")r["button"]="open";
+                else if(method=="navigate")r["action"]=new JObject{["type"]="desk.next"};
+                else if(method=="mediaControl")r["action"]="next";
+                else r["settings"]=new JObject{["muted"]=true};
+                Require(Parse(r)?.InputSequence==7);
+                r["inputSequence"]=0;Require(Parse(r)==null);
+            }
+        });
         Check("official author route preserves SDK original JSON without selecting a native sequence",()=>{
             var r=Request();r["method"]="authorInput";r.Remove("viewport");r.Remove("buttons");
             r["consumer"]="scene";r["instanceId"]="instance";r["requestJson"]="{\"requestId\":\"r1\"}";
@@ -87,11 +98,11 @@ internal static class NativeInputMessageChecks
             r["change"]!["deskId"]="home";Require(Parse(r)==null);((JObject)r["change"]!).Remove("deskId");r["change"]!["kind"]="dock";Require(Parse(r)==null);
         });
         Check("authors cannot send an exit decision or a confirmation capability",()=>{
-            var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="exit";r["inputSequence"]=0;Require(Parse(r)!=null);
+            var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="exit";r["inputSequence"]=7;Require(Parse(r)!=null);
             foreach(var field in new[]{"approved","confirmed","exit","confirmation","token"}){r[field]=true;Require(Parse(r)==null);r.Remove(field);}
             r["method"]="confirmExit";Require(Parse(r)==null);
         });
-        Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";r["inputSequence"]=0;Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
+        Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";r["inputSequence"]=7;Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
         Check("startup completion accepts only exact starting phase and has no Windows fact fields",()=>{
             var starting=new DextRoomRuntimeState();starting.Initialize(RuntimeMessageChecks.ContextMessage(f.Context,f.Snapshot,1));
             var snap=RoomSessionPlayerMessage.Create(f.Snapshot with{Lifecycle=new(RoomLifecycleStage.Starting,true,true,4)},["home","focus"]);snap.RuntimeGeneration=1;starting.AcceptSnapshot(snap);
@@ -135,7 +146,7 @@ internal static class NativeInputMessageChecks
         Check("native action correlation rejects missing fractional negative and unsafe sequences",()=>{
             var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";
             Require(Parse(r)==null);foreach(var sequence in new JToken[]{-1,1.2,"7",9007199254740992L}){r["inputSequence"]=sequence;Require(Parse(r)==null);}
-            r["inputSequence"]=0;Require(Parse(r)?.InputSequence==0);r["inputSequence"]=7;Require(Parse(r)?.InputSequence==7);
+            r["inputSequence"]=0;Require(Parse(r)==null);r["inputSequence"]=7;Require(Parse(r)?.InputSequence==7);
         });
 
         JObject Control(string method){var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["inputSequence"]=7;return r;}
@@ -159,7 +170,7 @@ internal static class NativeInputMessageChecks
             foreach(var method in new[]{"mediaControl","audioControl"}){
                 var r=Control(method);if(method=="mediaControl")r["action"]="pause";else r["settings"]=new JObject{["muted"]=true};
                 foreach(var sequence in new JToken[]{-1,1.2,"7",9007199254740992L}){r["inputSequence"]=sequence;Require(Parse(r)==null);}
-                r["inputSequence"]=0;Require(Parse(r)!=null);r.Remove("inputSequence");Require(Parse(r)==null);r["inputSequence"]=7;r["runtimeGeneration"]=2;Require(Parse(r)==null);
+                r["inputSequence"]=7;Require(Parse(r)!=null);r.Remove("inputSequence");Require(Parse(r)==null);r["inputSequence"]=7;r["runtimeGeneration"]=2;Require(Parse(r)==null);
             }
         });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
