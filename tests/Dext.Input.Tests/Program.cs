@@ -7,6 +7,11 @@ if (args.Length == 2 && args[0] == "--v3-input-wire") { await NativeInputWirePro
 
 if (args.Length == 1 && args[0] == "--v3-input-messages") { NativeInputMessageChecks.Run(); return; }
 
+if (args.Length == 4 && args[0] == "--v3-frame-host-wire") {
+    await FrameHostWireProbe.Run(args[1], args[2], args[3]);
+    return;
+}
+
 if (args.Length == 4 && args[0] == "--v3-media-host-wire") {
     await ResourceWireProbe.Run(args[1], args[2], mediaHostFile: args[3]);
     return;

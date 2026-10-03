@@ -97,3 +97,7 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 2026-10-03消费者能力元数据阶段：真实Core生产权限/私有桥77/77、严格原生消息27/27、内核22/22、协议86/86；实际ReleasePlayer能力请求/回复及旧身份/自报声明拒绝通过。完整构建→同分支start/identity成功，验证后正常退出。这里只证明Core授权元数据接线，未实现能力仍unsupported；生产DOM/逐次数据授权/真实物理验收不据此打勾，7项人工步骤与16项全景范围不变。
 
 - 2026-10-03生产媒体模块阶段：模型14/SDK14/媒体12=40/40；实际ReleasePlayer同一生产脚本完成GIF500ms、MP4 ended、委托HTML done一次、保留WebM节点暂停/恢复后继续解码及idle done拒绝，原资源安全/撤销/重载保持通过。最新完整构建→同分支start/identity成功后正常退出。生命周期/完成回调在此媒体夹具里是模拟Core，正式页面/iframe和Core起止/原生挂起整体验证仍未完成，7项人工步骤不变。
+
+- 2026-10-03生产iframe模块阶段：模型15/SDK14/媒体12/iframe13=54/54；真实ReleasePlayer加载生产frame-host和SDK，固定来源、Core状态映射、读数单独隐藏、单来源暂停恢复、所属消费者激活路由、沙箱原生拒绝、持续iframe重载/旧token拒绝通过。能力/数据/激活回复为模拟Core，未代填生产Core或物理动作通过。原生逐iframe媒体、官方页面/DOM/逐次Core授权/几何仍继续，7项最终人工步骤不变。
+
+- iframe阶段完整build→start/identity通过：Core65052/Player8564/Watchdog50436/配置器59448，日志20261003_080601.txt；当前v2恢复inactive。核对PID/路径后正常退出，自己的开发监听停止，Dext进程/开发端口/资源缓存0。WorkerW纠正与D3D查找日志不计最终物理验收通过。

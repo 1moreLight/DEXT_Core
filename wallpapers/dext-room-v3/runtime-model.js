@@ -76,7 +76,7 @@
       const desired = new Set();
       const life = current.lifecycle;
       const playing = current.active && !life.playbackPaused && !life.locked;
-      const desktopActive = playing && life.stage === 'desktop' && current.operable;
+      const desktopActive = playing && life.stage === 'desktop';
       if (room.roomScene) ensure('scene', { consumerId: 'scene', kind: 'scene', entry: room.roomScene.entry,
         capabilities: room.roomScene.capabilities || [], buttonIds: [...buttons.keys()] }, room.roomScene.config || {}, desktopActive, desired, effects);
       const visibleDesks = [current.currentDeskId, current.targetDeskId].filter(Boolean);

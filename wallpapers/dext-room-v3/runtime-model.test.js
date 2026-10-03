@@ -173,3 +173,14 @@ test('unchanged geometry does not advance versions or start a cross-consumer rep
     assert.equal(runtime.readDiagnostics().geometryVersion, version);
   }
 });
+
+
+test('unpaused visuals remain active when Core disables input foreground',()=>{
+  const runtime=createRuntime(room());runtime.acceptSnapshot(snapshot());const scene=find(runtime,'scene').instanceId,widget=find(runtime,'component.clock').instanceId;
+  runtime.acceptSnapshot(snapshot(2,{operable:false}));
+  for(const key of ['scene','component.clock','slot.background.home'])assert.equal(find(runtime,key).state,'active');
+  assert.equal(find(runtime,'scene').instanceId,scene);assert.equal(find(runtime,'component.clock').instanceId,widget);
+  assert.equal(runtime.acceptGeometry('scene',geometry(runtime,{groups:{shared:{matrix:[1,0,0,1,10,20],opacity:1}}})).accepted,true);
+  runtime.acceptSnapshot(snapshot(3,{operable:false,lifecycle:{stage:'desktop',playbackPaused:true,locked:false,revision:2}}));
+  for(const key of ['scene','component.clock','slot.background.home'])assert.equal(find(runtime,key).state,'suspended');
+});

@@ -203,3 +203,6 @@
 
 | #160 | 迟到的旧play Promise按旧epoch暂停了新播放意图 | [renderer](errors/renderer.md) |
 | #161 | 非行锚插入失败后仍运行未知探针模式，默认输入PASS冒充媒体 | [toolchain](errors/toolchain.md) |
+
+| #162 | 渲染活动与输入operable耦合，失焦关输入误暂停仍应播放的实例 | [renderer](errors/renderer.md) |
+| #163 | 数据订阅失败先关闭provider，错误回执被当前provider校验丢弃 | [renderer](errors/renderer.md) |

@@ -1218,3 +1218,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task3媒体模块验证：生产共享模型/SDK/媒体合计40/40（14+14+12）；实际ReleasePlayer加载同一media-host.js，GIF500ms、3sMP4 ended、HTML done一次、同WebM节点暂停后继续前进/静音循环和idle HTML done拒绝通过。原生资源/撤销/重载四组保持通过；完成回调和阶段在该夹具中是模拟Core，生产DOM/iframe/Core联动未据此完成。
 - [x] 最新完整build→start/identity通过：Core54504/Player60004/Watchdog89832/配置器98692，日志20261003_070458.txt；已有v2恢复inactive。验证后正常退出Core/配置器并停止开发监听。
 - [ ] Task3继续：官方index/main/style/LivelyInfo、逐实例iframe/SDK路由、Core逐次数据/动作、默认/作者过渡与几何握手；原生挂起消息的媒体计时暂停及生产Core启动/闲置仍要实际整体验证。Task4/最终7项和16项全景保持未完成。
+
+- [x] Task3 iframe模块：先分离渲染活动与输入operable（Core正常切页仍允许排队，失焦关闭输入不等于播放暂停）；然后生产frame-host以固定WindowProxy/会话/文档token路由SDK、原子Core能力状态、持续节点/订阅和有界请求。原生逐iframe媒体控制及最终页面/Core联动仍须接上实测。
+
+- [x] iframe模块验证（2026-10-03）：模型15/SDK14/媒体12/iframe13=54/54；真实ReleasePlayer运行生产frame-host与完整SDK，固定WindowProxy、能力状态、读数单独拒绝、单订阅暂停恢复、当前消费者动作路由、沙箱直接原生拒绝、重载新token/旧token拒绝通过。能力/数据/激活回复仍由隔离夹具模拟Core；不计实际物理动作或生产Core完整接线。
+- [ ] 原生iframe媒体控制、Player挂起前计时暂停、官方页面/DOM与Core逐次数据/动作、几何握手仍继续；Task4与最终7项人工验收未完成。
+
+- [x] iframe阶段完整build→start/identity成功：Core65052/Player8564/Watchdog50436/配置器59448，日志20261003_080601.txt；实际恢复已有v2，v3-status inactive。用户明确允许退出后核对PID/绝对路径正常关闭Core和配置器，自己的watcher结束；Dext进程、1620/1621监听、资源缓存均0。

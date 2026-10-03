@@ -560,3 +560,11 @@ P5每次接受按钮几何都会通知全部消费者新版本；若监听者重
 ## #160 旧play Promise不能暂停后来的播放意图（2026-10-03）
 
 媒体宿主暂停→恢复两次，旧play Promise迟到完成时，初版用playEpoch不同就pause，误停已恢复的新播放。生产回归实际11/12失败（pause次数3，期望2）。完成回调只在当前实例确实不应播放时pause；迟到失败诊断仍要求匹配当前playEpoch，避免旧拒绝覆盖新成功。最终12/12通过；真实ReleasePlayer验证相同生产脚本的解码、暂停后继续前进及持续节点。异步结果应收敛到当前播放意图，不把旧操作过期等同当前需要暂停。
+
+## #162 输入不可操作不等于播放暂停（2026-10-03）
+
+runtime-model曾把desktopActive写成playing且desktop且operable。正常Core过渡仍允许排队；实际问题是仅失焦关闭输入就暂停场景、共享组件和背景。新增生产回归实际RED（suspended而非active），移除输入operable条件，渲染仍受active/stage/playbackPaused/locked控制；15/15通过。动作权限继续由Core逐次核验，不以渲染活动推断输入授权。
+
+## #163 订阅失败必须在关闭provider前发送读数错误（2026-10-03）
+
+frame-host异步subscribeData拒绝时先删除provider，再调用emit。emit为防迟到数据要求provider仍匹配，因此作者收不到error，读数状态留在旧值。完整生产SDK回归实际12/13失败；先发送有界error再关闭provider，13/13通过。停止订阅后的迟到值仍被拒绝，静态外框保留。

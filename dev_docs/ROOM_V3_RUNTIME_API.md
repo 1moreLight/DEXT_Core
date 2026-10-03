@@ -126,3 +126,11 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 `media-host.js`以已验证资源解析器、当前Core快照读取器和启动完成回告为依赖，按模型instanceId保留节点；HTML挂载/状态/销毁交给iframe宿主。image/GIF start500ms、HTML done或60s、video ended或30s未加载/未进展降级；暂停/锁屏/非活动阶段不消耗计时，background/idle视频静音循环，idle持续至宿主唤醒。启动完成只携当前session、global/lifecycle修订回告，不自行提交Desk；失败每1s活动时间重试且仅一个进行中请求。旧播放Promise按当前意图收敛，不能停掉后来恢复的播放。
 
 当前生产模块已在隔离ReleasePlayer实际解码、计时和持续节点检查通过；该夹具的生命周期和完成回调仍是模拟Core。官方页面、作者SDK、原生挂起投递和生产Core的完整闭环仍待接线，不能把这些模块检查当作完整Room可用或人工验收通过。
+
+## 生产iframe路由模块（2026-10-03，接线阶段）
+
+`frame-host.js`将每个固定消费者/instanceId绑定到一个持续sandbox iframe；只接受该WindowProxy、当前会话/文档token、apiVersion及严格字段。重新load关闭旧请求与数据源，换文档token后再次从Core查询能力，只初始化本次SDK一次。路由token不代表真实输入或权限。Core accepted与当前宿主实际支持共同决定available；授权而未实现是unsupported，暂停或拒绝是denied。
+
+每帧最多64个5s请求，消息UTF8 32KiB、JSON深度24，方法/参数/按钮/阶段/几何范围有界；对外错误不含私有异常。数据按能力复用一个来源，暂停/修订/重载关闭旧源并拒绝迟到数据；来源失败仅回error供SDK隐藏读数。Core适配器必须对每个操作和每个数据值重新授权，不能把能力查询缓存当许可。rendering不受input operable直接控制，仍遵循Core播放和生命周期。
+
+模块现已通过完整SDK与真实ReleasePlayer的来源/令牌/订阅/重载回归；该隔离夹具的私有权限和数据回复是模拟Core。原生逐iframe媒体暂停、完整官方页/DOM、生产Core数据/动作和几何握手仍在P5接线，不把inert当成媒体暂停或完整可用证明。
