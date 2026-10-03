@@ -12,10 +12,12 @@ namespace Lively.Common.Helpers
                 !Positive(value.Revision) || !Positive(value.GeometryVersion) || !Positive(value.GestureId) ||
                 value.IssuedAt<0 || value.InputHandle==0 || value.Dpi<1 || value.Dpi>1536 ||
                 value.PixelWidth<1 || value.PixelHeight<1 || value.PixelWidth>65535 || value.PixelHeight>65535 ||
-                value.SampleMouse&&value.Key!=0 || value.SampleKeyboard&&value.Key==0 || (value.Key!=0&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
+                value.SampleMouse&&value.Key!=0 || value.SampleKeyboard&&value.Key!=13&&value.Key!=32 || (value.Key!=0&&value.Key!=9&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
                 value.Key==0&&(value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
-                value.Key!=0&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
-                (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel" ||
+                value.Key==9&&(value.Kind!="focus"||value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
+                value.Kind=="focus"&&value.Key!=9 || value.Reverse&&value.Key!=9 ||
+                (value.Key==13||value.Key==32)&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
+                (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel"&&value.Kind!="focus" ||
                 (double)value.X-value.OriginX<short.MinValue || (double)value.X-value.OriginX>short.MaxValue ||
                 (double)value.Y-value.OriginY<short.MinValue || (double)value.Y-value.OriginY>short.MaxValue ||
                 value.Kind=="down"&&((double)value.X-value.OriginX<0 || (double)value.X-value.OriginX>=value.PixelWidth ||
@@ -25,13 +27,14 @@ namespace Lively.Common.Helpers
             GeometryVersion=value.GeometryVersion;GestureId=value.GestureId;IssuedAt=value.IssuedAt;InputHandle=value.InputHandle;
             OriginX=value.OriginX;OriginY=value.OriginY;PixelWidth=value.PixelWidth;PixelHeight=value.PixelHeight;
             Dpi=value.Dpi;X=value.X;Y=value.Y;Modifiers=value.Modifiers;
-            SampleMouse=value.SampleMouse;SampleKeyboard=value.SampleKeyboard;Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
+            SampleMouse=value.SampleMouse;SampleKeyboard=value.SampleKeyboard;Reverse=value.Reverse;Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
         }
         private static bool Text(string value,int max){if(string.IsNullOrEmpty(value)||value.Length>max)return false;foreach(var c in value)if(char.IsControl(c))return false;return true;}
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
         public bool SampleMouse {get;}
         public bool SampleKeyboard {get;}
-        public bool SampleVisual=>SampleMouse||SampleKeyboard;
+        public bool Reverse {get;}
+        public bool SampleVisual=>SampleMouse||SampleKeyboard||Kind=="focus";
         public int Key {get;}
         public int ScanCode {get;}
         public bool IsExtended {get;}
@@ -132,6 +135,17 @@ namespace Lively.Common.Helpers
                         if(held==null||Same(held,packet))await Cancel(packet);
                         continue;
                     }
+                    if(packet.Kind=="focus")
+                    {
+                        // Core Tab is one read of current visual regions. Retire
+                        // any authored pair; no DOM key or action is dispatched.
+                        await Cancel();
+                        if(item.Epoch!=epoch||!current(packet)||Expired(packet))continue;
+                        if(!await prepare(packet)||item.Epoch!=epoch||!current(packet)||Expired(packet)){await Cancel();continue;}
+                        await dispatched(packet);
+                        if(item.Epoch!=epoch||!current(packet)||Expired(packet))await Cancel();
+                        continue;
+                    }
                     if(packet.Kind=="down")
                     {
                         if(held!=null)await Cancel();
@@ -174,7 +188,7 @@ namespace Lively.Common.Helpers
                 Kind="cancel",RuntimeGeneration=previous.RuntimeGeneration,SessionId=previous.SessionId,Revision=previous.Revision,
                 GeometryVersion=previous.GeometryVersion,GestureId=previous.GestureId,IssuedAt=previous.IssuedAt,InputHandle=previous.InputHandle,
                 OriginX=previous.OriginX,OriginY=previous.OriginY,PixelWidth=previous.PixelWidth,PixelHeight=previous.PixelHeight,
-                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,SampleMouse=previous.SampleMouse,SampleKeyboard=previous.SampleKeyboard,Key=previous.Key,ScanCode=previous.ScanCode,
+                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,SampleMouse=previous.SampleMouse,SampleKeyboard=previous.SampleKeyboard,Reverse=previous.Reverse,Key=previous.Key,ScanCode=previous.ScanCode,
                 IsExtended=previous.IsExtended,Consumer=previous.Consumer,Button=previous.Button,EntryId=previous.EntryId }));
         }
         private bool Expired(DextNativePointerPacket packet)
@@ -182,7 +196,7 @@ namespace Lively.Common.Helpers
         private static bool Same(DextNativePointerPacket a,DextNativePointerPacket b)=>
             a.RuntimeGeneration==b.RuntimeGeneration&&a.SessionId==b.SessionId&&a.Revision==b.Revision&&a.GeometryVersion==b.GeometryVersion&&
             a.GestureId==b.GestureId&&a.IssuedAt==b.IssuedAt&&a.InputHandle==b.InputHandle&&a.OriginX==b.OriginX&&a.OriginY==b.OriginY&&
-            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.SampleMouse==b.SampleMouse&&a.SampleKeyboard==b.SampleKeyboard&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
+            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.SampleMouse==b.SampleMouse&&a.SampleKeyboard==b.SampleKeyboard&&a.Reverse==b.Reverse&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
             a.IsExtended==b.IsExtended&&a.Consumer==b.Consumer&&a.Button==b.Button&&a.EntryId==b.EntryId;
     }
 }

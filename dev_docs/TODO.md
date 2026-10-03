@@ -1479,3 +1479,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] keyboard-visible-core-build完整四阶段通过；常规start Core48472/Player53308/Watchdog97636/config116124，日志20261004_052345.txt。identity共享D配置器OTHER/exit1且精确路径独立核验。正常关闭、watcher58656 exit0，原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/author及official GUID目录0；以下改动随本阶段具名提交保存。
 
 - [ ] 下一段：转场动态入口的原生Tab取样和移动焦点显示、Core零序号兼容收口；实际Core OS/物理DPI/锁屏/还原保持待补，系统凭据宿主未解除时不重试桌面点击。拖动暂缓、本地功能优先、无新增网络专项；整体16项就绪仍1/16≈6%，最终第4/5项和七项/单次P5审查集中执行。
+
+## P5 原生Tab当前可见选择与移动焦点（2026-10-04，BASE 34190c5）
+一句话目标：真实Tab/ShiftTab选择按当时可见区域重新计算，官方焦点轮廓随同入口移动/裁剪，隐藏时收起且不丢逻辑焦点，后续Enter/Space沿既有可见配对执行。
+范围：Core单次Tab原始DOWN冻结正数关联/方向/QPC，Player同UI读取并保持当前已绘制source/target区域后回Core选择；Tab不激活动作、不转发作者DOM键、不修改作者DOM焦点。已有键盘/鼠标、暂停与修订规则复用，无逐帧IPC；焦点仅本地RAF更新。拖动暂缓、无新增网络专项，实际Core OS/物理DPI/锁屏/还原保持待补。
+先Core当前顺序/同动作多entry/空表与队列单次采样功能RED、DOM轮廓运动/隐藏RED；正式ReleasePlayer移动源Tab取样/焦点跟随验证，Core包与回复fixture单列。完整build→start/身份→正常关闭、原四文件不变、具名提交。人工最终仍卡第4项Tab与Enter/Space一次动作、长按/切窗取消，第5项移动/遮挡/多入口/DPI集中执行；整体16项就绪仍1/16≈6%，不中途确认或合并。
+- [x] Core raw Tab/ShiftTab冻结原QPC/方向/正数关联，单次SampleFocus只在当时可见表按稳定entry选择，不创建动作proof；原生focus队列先撤销旧作者对、只prepare/complete不arm/转发/释放动作。API编译RED后Core291/291，必要队列17/17。
+- [x] DOM焦点轮廓每个默认动画绘制帧按当前可见多边形刷新，出画布隐藏且保留逻辑entry，commit/失效仍清空；实质RED50/52→52/52，无逐帧IPC。tab-visible-moving-official-wire实际ReleasePlayer/正式宿主整轮exit0：一次私有Tab样本、source同动作第二入口、轮廓真实移动/出画布隐藏、geometry计数/版本与动作计数不增加、前台不变；原鼠标/键盘/切页/暂停/撤销通过，CoreTab/选择包与回复fixture。
+- [x] tab-visible-core-build完整四阶段通过；常规start Core96444/Player49548/Watchdog78756/config31380，日志20261004_054313.txt。identity共享D配置器OTHER/exit1且精确路径核验；正常关闭、watcher25867 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official GUID目录0。以下改动随具名阶段提交保存。
+
+- [ ] 接续本地功能：连续Tab及Tab取样尚未返回时立即Enter/Space的Core顺序仲裁；当前单次焦点请求只保留最新gesture，不能把本段宣称为快速键盘全链完成。随后Core零序号兼容收口与持续作者动画/最终组合门槛；实际Core OS/DPI/锁屏/还原仍待系统凭据宿主解除。拖动暂缓、无新增网络专项，完整16项就绪1/16≈6%，最终7项/单次P5审查保持待执行。

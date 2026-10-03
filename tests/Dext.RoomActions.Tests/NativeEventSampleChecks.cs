@@ -86,10 +86,34 @@ internal static class NativeEventSampleChecks
             n.ObserveSnapshot(snapshot with{Revision=2});Require(!Sample(n,"down",sequence:sequence),"old revision sample accepted");
             Require(n.State!.Completed==null,"stale geometry completion");
         });
+        void Focus(RoomNativeInputAuthority n,bool reverse=false,RoomNativeButton[]? entries=null){
+            n.Key(viewport,9,true,reverse,true);
+            Require(n.SampleFocus(1,session,1,1,n.State!.Gesture!.Sequence,viewport,entries??Region(),true,reverse),"current Tab sample");
+            n.Key(viewport,9,false,reverse,true);
+        }
+        check("event Tab chooses current visible entries rather than the boundary table without completing input",()=>{
+            var (n,clock)=Create();n.Key(viewport,9,true,false,true);var sequence=n.State!.Gesture!.Sequence;
+            Require(n.State.Focus==null,"Tab used the old boundary before sample");
+            var entries=new[]{Region("icon.home/moving")[0] with{TabIndex=1},Region("icon.home/first")[0] with{TabIndex=0}};
+            Require(n.SampleFocus(1,session,1,1,sequence,viewport,entries,true,false),"current Tab sample");
+            Require(n.State!.Focus!.EntryId=="icon.home/first"&&n.State.Completed==null&&n.State.Gesture==null,"Tab created action or wrong focus");
+            Require(!n.SampleFocus(1,session,1,1,sequence,viewport,entries,true,false),"duplicate Tab replaced focus");
+        });
+        check("event Tab cycles distinct presentations by stable identity and ShiftTab reverses",()=>{
+            var (n,clock)=Create();var entries=new[]{Region()[0],Region("icon.home/other")[0] with{TabIndex=1}};
+            Focus(n,entries:entries);Require(n.State!.Focus!.EntryId=="icon.home/open","first Tab");
+            Focus(n,entries:entries.Select(b=>b with{X=.6}).ToArray());Require(n.State!.Focus!.EntryId=="icon.home/other","copied moving table lost identity");
+            Focus(n,true,entries);Require(n.State!.Focus!.EntryId=="icon.home/open","ShiftTab not reversed");
+            Focus(n,true,entries);Require(n.State!.Focus!.EntryId=="icon.home/other","ShiftTab not wrapped");
+        });
+        check("empty current Tab sample clears focus and never creates completion",()=>{
+            var (n,clock)=Create();Focus(n);Focus(n,entries:[]);
+            Require(n.State!.Focus==null&&n.State.Completed==null,"empty visible Tab retained old focus");
+        });
         bool KeySample(RoomNativeInputAuthority n,string edge,RoomNativeButton[] entries,int key=13,string entry="icon.home/open")=>
             n.SampleKeyboard(1,session,1,1,n.State!.Gesture!.Sequence,edge,viewport,entries,true,key,"official","open",entry);
         foreach(var key in new[]{13,32})check("sampled key "+key+" waits for both current visible focus edges",()=>{
-            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
+            var (n,clock)=Create();Focus(n);
             n.Key(viewport,key,true,false,true);var sequence=n.State!.Gesture!.Sequence;n.Key(viewport,key,false,false,true);
             Require(n.State!.Completed==null,"raw key UP completed before visibility");
             Require(KeySample(n,"down",Region(x:.35),key),"key DOWN sample");Require(n.State!.Completed==null,"one key sample completed");
@@ -98,13 +122,13 @@ internal static class NativeEventSampleChecks
             Require(proof?.SampledVisual==true&&proof.IssuedAt==0,"moving key lost visual proof or original QPC");
         });
         foreach(var edge in new[]{"down","up"})check("sampled keyboard "+edge+" cannot activate a hidden focus entry",()=>{
-            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
+            var (n,clock)=Create();Focus(n);
             n.Key(viewport,13,true,false,true);KeySample(n,"down",edge=="down"?[]:Region());
             n.Key(viewport,13,false,false,true);KeySample(n,"up",edge=="up"?[]:Region());
             Require(n.State!.Completed==null,"hidden keyboard focus activated");
         });
         check("sampled keyboard keeps the Core focus entry despite another same-button presentation",()=>{
-            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);n.Key(viewport,13,true,false,true);
+            var (n,clock)=Create();Focus(n);n.Key(viewport,13,true,false,true);
             KeySample(n,"down",Region());n.Key(viewport,13,false,false,true);KeySample(n,"up",Region("icon.home/other"));
             Require(n.State!.Completed==null,"keyboard joined another entry");
         });

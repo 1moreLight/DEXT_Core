@@ -14,7 +14,7 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
-    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false);
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false,bool Reverse=false);
 internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
 
 internal sealed class RoomNativeInputProof
@@ -193,6 +193,28 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             CompleteSamples(now);return true;
         }
     }
+    internal bool SampleFocus(long document,Guid session,long revision,long version,long sequence,
+        RoomNativeViewport current,IReadOnlyList<RoomNativeButton> entries,bool foreground,bool reverse)
+    {
+        var now=clock.GetTimestamp();
+        lock(gate)
+        {
+            ExpireGesture(now);
+            if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
+                gesture is not{Key:9} pending || pending.Sequence!=sequence || pending.Reverse!=reverse)return false;
+            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(!AcceptRegions(entries,out var accepted)){gesture=null;focused=null;ResetSamples();return false;}
+            SelectFocus(accepted,reverse);gesture=null;completed=null;ResetSamples();return true;
+        }
+    }
+    private void SelectFocus(AcceptedEntry[] visible,bool reverse)
+    {
+        var order=visible.Where(b=>b.Button.TabIndex>=0).OrderBy(b=>b.Button.TabIndex).ToArray();
+        if(order.Length==0){focused=null;return;}
+        var index=focused==null?-1:Array.FindIndex(order,value=>SameEntry(value,focused));
+        var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
+        focused=order[next];
+    }
     private static bool SameEntry(AcceptedEntry a,AcceptedEntry b)=>a.Button.Consumer==b.Button.Consumer &&
         a.Button.Button==b.Button.Button && a.Button.EntryId==b.Button.EntryId;
     private void CompleteSamples(long now)
@@ -230,11 +252,9 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
                 if(!Available(current,foreground))return;
                 if(key==9)
                 {
-                    var order=buttons.Where(b=>b.Button.TabIndex>=0).OrderBy(b=>b.Button.TabIndex).ToArray();
-                    if(order.Length==0){focused=null;return;}
-                    var index=Array.IndexOf(order,focused);
-                    var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
-                    focused=order[next];return;
+                    if(sampledMouse)BeginGesture(now,0,0,key,reverse);
+                    else SelectFocus(buttons,reverse);
+                    return;
                 }
                 if(focused!=null && BeginGesture(now,0,0,key)){keyboard=new(focused,now,gesture!.Sequence,Key:key);keyTarget=focused;}
             }
@@ -257,10 +277,10 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             sequence>=0 && (sequence==0 || sequence==proof.Sequence) &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
     }
-    private bool BeginGesture(long now,int x,int y,int key)
+    private bool BeginGesture(long now,int x,int y,int key,bool reverse=false)
     {
         if(inputSequence>=9007199254740991){ClearGeometry();return false;}
-        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse,SampleKeyboard:key!=0&&sampledMouse);
+        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse,SampleKeyboard:key!=0&&key!=9&&sampledMouse,Reverse:reverse);
         return true;
     }
     private void Complete(Press press,long now)

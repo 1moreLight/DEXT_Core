@@ -47,11 +47,13 @@ namespace Lively.Player.WebView2
             var begin=Newtonsoft.Json.JsonConvert.SerializeObject(new{operation="begin",sampleId=id,runtimeGeneration=value.RuntimeGeneration,
                 sessionId=value.SessionId,revision=value.Revision,geometryVersion=value.GeometryVersion});
             var script="(()=>{const sample=this.dextNativeInputSample&&this.dextNativeInputSample("+begin+");if(!sample)return null;"+
-                "const receipt="+nativeFrameMedia.OfficialDispatchScript(value)+";if(!receipt||!receipt.armed)return null;sample.dispatchNonce=receipt.documentNonce;return sample;})()";
+                (value.Kind=="focus"?"return sample;})()":
+                    "const receipt="+nativeFrameMedia.OfficialDispatchScript(value)+";if(!receipt||!receipt.armed)return null;sample.dispatchNonce=receipt.documentNonce;return sample;})()");
             var json=await webView.CoreWebView2.ExecuteScriptAsync(script);
             if(!CurrentNativePointer(value))return false;
             var sample=Newtonsoft.Json.Linq.JObject.Parse(json);
-            if((string)sample["sampleId"]!=id||!Guid.TryParseExact((string)sample["dispatchNonce"],"D",out var nonce))return false;
+            var nonce=Guid.Empty;
+            if((string)sample["sampleId"]!=id||value.Kind!="focus"&&!Guid.TryParseExact((string)sample["dispatchNonce"],"D",out nonce))return false;
             var geometry=new Newtonsoft.Json.Linq.JObject{
                 ["type"]="dext:v3-native-request",["protocolVersion"]=1,["requestId"]=id,["method"]="geometry",
                 ["runtimeGeneration"]=value.RuntimeGeneration,["sessionId"]=value.SessionId.ToString(),["revision"]=value.Revision,
@@ -63,7 +65,7 @@ namespace Lively.Player.WebView2
                 entry.Contains(((double)value.X-value.OriginX)/value.PixelWidth,((double)value.Y-value.OriginY)/value.PixelHeight):
                 entry.Consumer==value.Consumer&&entry.Button==value.Button&&entry.EntryId==value.EntryId);
             if(value.SampleKeyboard&&hit==null)return false;
-            if(!value.SampleKeyboard||value.Consumer!="official")nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
             return true;
         }
         private async Task CompleteNativeSampleAsync(DextNativePointerPacket value)
@@ -74,7 +76,7 @@ namespace Lively.Player.WebView2
                 if(own==null||own.Packet!=value)return;
                 // Official defaults use Core's physical key and do not dispatch
                 // a synthetic DOM key. Authored keys still wait for a native receipt.
-                if(!(value.SampleKeyboard&&value.Consumer=="official")&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                if(value.Kind!="focus"&&!(value.SampleKeyboard&&value.Consumer=="official")&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
                 var released=await ReleaseNativeSampleAsync();
                 if(!released||!CurrentNativePointer(value))return;
                 SendToParent(new LivelyMessageRoomNativeSample{Input=new LivelyMessageRoomNativePointer{
@@ -82,7 +84,7 @@ namespace Lively.Player.WebView2
                     GestureId=value.GestureId,IssuedAt=value.IssuedAt,InputHandle=value.InputHandle,Kind=value.Kind,
                     OriginX=value.OriginX,OriginY=value.OriginY,PixelWidth=value.PixelWidth,PixelHeight=value.PixelHeight,Dpi=value.Dpi,
                     X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=value.SampleMouse,SampleKeyboard=value.SampleKeyboard,
-                    Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons});
+                    Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons});
             }finally{if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
         }
         private async Task<bool> ReleaseNativeSampleAsync()

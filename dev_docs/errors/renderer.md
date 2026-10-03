@@ -638,3 +638,8 @@ MoveFocus官方语义为将焦点移入WebView并恢复先前/默认文档元素
 
 ## #212 归一化采样宽度的浮点断言（2026-10-04）
 移动前层把200px Widget裁到40px时，DOM normalized width按right-x得到0.020833333333333315，而测试40/1920为0.020833333333333332，45/46失败。几何本身位置正确；断言改为32*Number.EPSILON机器误差界，生产裁剪和Native验证均未增像素padding。新的readInputSample读已绘制矩阵、不通过估算下一帧位置判断命中；此阶段只是基础，不当作实际Player/Core点击接线通过。
+
+## #215 SVG焦点不能沿旧边界坐标停留（2026-10-04）
+正式DOM以前只在Core focus event画一次inputEntries里的多边形，默认动画随后只移动图标/Widget。源和目标真实行为新增2项均RED（50/52），轮廓的points保持旧值。
+将逻辑focus与SVG绘制分开，每个默认动画绘制帧按当前已绘制可见区域更新轮廓；移出画布/被遮挡隐藏，但不丢逻辑entry；commit/geometry失效/暂停仍清空。必要DOM52/52，实际ReleasePlayer移动source的points随RAF变化、出画布隐藏、geometry版本/请求数和动作数不增加；不靠逐帧IPC或扩大命中区域修复。
+Tab的单次可见查询不等于动作proof，也不证明快速连续键序列已收口；当前Core单gesture覆盖语义的连续Tab/立即激活仲裁继续。

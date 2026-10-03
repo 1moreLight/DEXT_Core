@@ -110,6 +110,15 @@ internal static class NativePointerDeliveryChecks
             p.SampleKeyboard=true;q.Submit(p);await q.WhenIdle();await q.InvalidateAsync();
             Require(sent.Count==2&&sent.All(v=>v.SampleKeyboard)&&sent[1].Kind=="cancel"&&sent[1].Key==13,"cancel dropped sampled key");
         });
+        LivelyMessageRoomNativePointer FocusPacket(){var p=Packet("focus");p.Key=9;p.Reverse=true;return p;}
+        await Check("native Tab samples current geometry once without arm, forwarded key or action release",async()=>{
+            var order=new List<string>();var q=new DextNativePointerDelivery(p=>{order.Add("arm");return Task.FromResult(true);},()=>{order.Add("revoke");return Task.CompletedTask;},
+                p=>order.Add("forward"),p=>true,p=>{order.Add("release");return Task.CompletedTask;},()=>order.Add("failed"),()=>0,1000,
+                prepare:p=>{order.Add("prepare:"+p.Key+":"+p.Reverse);return Task.FromResult(true);},
+                dispatched:p=>{order.Add("sample");return Task.CompletedTask;});
+            Require(q.Submit(FocusPacket()),"Tab private packet admission");await q.WhenIdle();
+            Require(order.SequenceEqual(new[]{"revoke","prepare:9:True","sample"}),"Tab dispatched DOM key or action");
+        });
         Console.WriteLine($"{total-failures}/{total} pointer delivery checks passed");if(failures>0)throw new Exception("Pointer delivery regression");
     }
 }

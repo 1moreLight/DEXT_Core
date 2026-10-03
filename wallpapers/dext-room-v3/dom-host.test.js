@@ -418,3 +418,23 @@ test('visible source widget publishes desk scoped region only for event sampling
  await f.host.acceptSnapshot(f.snap(3,{currentDeskId:'focus'}));
  const committed=f.host.readInputSample({...scope,revision:3},f.host.readDiagnostics().inputVersion);assert.equal(committed.buttons.length,0);f.host.dispose();
 });
+
+test('sampled source focus follows painted movement and hides after leaving canvas without frame IPC',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[{id:'source',buttonId:'next',x:8,y:0}],components:[]},{id:'focus',name:'Focus',icons:[],components:[]}]}});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(50);
+ const version=f.host.readDiagnostics().inputVersion,scope={runtimeGeneration:1,sessionId:'session',revision:2};
+ const sample=f.host.beginNativeInputSample(scope,version,'tab');assert.ok(sample.buttons.some(e=>e.entryId==='icon.home/source'));f.host.endNativeInputSample('tab');
+ assert.equal(f.host.handleNativeInput({...scope,geometryVersion:version,kind:'focus',consumer:'official',button:'next',entryId:'icon.home/source'}),true);
+ const ring=f.container.children[0].children.find(n=>n.className==='dext-v3-focus'),before=ring.children.map(n=>n.attrs.points).join('|'),count=f.calls.filter(v=>v.method==='geometry').length;
+ await f.advance(100);assert.notEqual(ring.children.map(n=>n.attrs.points).join('|'),before);assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);
+ await f.advance(300);assert.equal(ring.hidden,true);assert.equal(f.host.readDiagnostics().focus.entryId,'icon.home/source');f.host.dispose();
+});
+test('sampled target focus follows animation to its final visible polygons',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[],components:[]},{id:'focus',name:'Focus',icons:[{id:'target',buttonId:'next',x:0,y:0}],components:[]}]}});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(225);
+ const version=f.host.readDiagnostics().inputVersion,scope={runtimeGeneration:1,sessionId:'session',revision:2};
+ f.host.beginNativeInputSample(scope,version,'tab');f.host.endNativeInputSample('tab');
+ assert.equal(f.host.handleNativeInput({...scope,geometryVersion:version,kind:'focus',consumer:'official',button:'next',entryId:'icon.focus/target'}),true);
+ const ring=f.container.children[0].children.find(n=>n.className==='dext-v3-focus'),before=ring.children[0].attrs.points;
+ await f.advance(225);assert.notEqual(ring.children[0].attrs.points,before);assert.equal(ring.hidden,false);f.host.dispose();
+});

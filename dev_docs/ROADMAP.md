@@ -1,6 +1,6 @@
 # Dext 开发路线图
 
-> 更新：2026-10-04（V3-CORE-005 已以 `v3FirstTest` 合入；P3/CORE-006基础随隔离P5依赖推进，P5真实Core原生安装/启动/切页/正常重启恢复及WebAudio/消费者KV/作者导航与媒体/音量控制及可信退出确认、四媒体start/idle/暂停/唤醒与独立Player故障重建基础已验证，个人布局Core/私有IPC/DOM读取与有效呈现基础已验证，静止精确区域/同动作多图标/受控焦点基础已验证，实际Core输入补证待Windows凭据窗关闭；Core/Player同UI原生鼠标与正式SDK原始请求正数汇合、作者Enter/Space实际Player派发及私有DOWN/UP采样/可信派发屏障基础已验证；拖动按用户暂缓，本地功能优先，转场源鼠标准入的保护动作/元数据Core类与正式Player移动图标样本已验证，已有受控焦点Enter/Space两边可见采样与实际Player已通过，继续动态Tab/焦点显示及真实Core OS/锁屏/DPI最终门槛，最终集中验收前不合并）。本文是**唯一全景计划**。
+> 更新：2026-10-04（V3-CORE-005 已以 `v3FirstTest` 合入；P3/CORE-006基础随隔离P5依赖推进，P5真实Core原生安装/启动/切页/正常重启恢复及WebAudio/消费者KV/作者导航与媒体/音量控制及可信退出确认、四媒体start/idle/暂停/唤醒与独立Player故障重建基础已验证，个人布局Core/私有IPC/DOM读取与有效呈现基础已验证，静止精确区域/同动作多图标/受控焦点基础已验证，实际Core输入补证待Windows凭据窗关闭；Core/Player同UI原生鼠标与正式SDK原始请求正数汇合、作者Enter/Space实际Player派发及私有DOWN/UP采样/可信派发屏障基础已验证；拖动按用户暂缓，本地功能优先，转场源鼠标准入的保护动作/元数据Core类与正式Player移动图标样本已验证，已有受控焦点Enter/Space两边可见采样与实际Player已通过，单次Tab当前可见选择与焦点随帧显示已验证，连续键顺序及真实Core OS/锁屏/DPI最终门槛继续，最终集中验收前不合并）。本文是**唯一全景计划**。
 > 每个工作包必须能在一个独立分支完成和验收；执行方法见 `WORKFLOW.md`，分支内步骤见 `TODO.md`。
 
 ## 一、当前控制台
@@ -15,7 +15,7 @@
 | 最近完成 | **V3-CORE-005 Core/Player/配置器真实接入** | 用户于 2026-09-30 验收通过；合并提交 `24ac47c`（`v3FirstTest`），工作分支与 worktree 已清理 | master | 临时 `session.v3.json` 绑定已安装样包与 Player PID；真实 Core 修订驱动 Player 切页，配置器显示状态；完整 P3 创作者格式仍排队 |
 | 待集成验收 | **V3-P3-001 v3 作品契约与安装校验** | 基础代码/审查修正已提交自测；原生宿主活体门槛随依赖包补齐，最终集中验收 | `feat/V3-P3-001-room-contract` | 原生v3清单与句柄保护安装，Rust28/Core46；全项仍未就绪 |
 | 待集成验收 | **V3-CORE-006 本机绑定与授权** | 基础实现与一次独立审查修正通过；真实输入/SDK/UI随依赖包接通，最终集中验收 | `feat/V3-CORE-006-binding-authority` | 动作35/35、协议46/46、内核10/10；参数代启实际验证；全项未就绪 |
-| 开发中 | **V3-P5-001 原生持续桌面宿主** | 0acaa3d依赖分支开工；模型/SDK→原生桥→持续DOM→个人几何/实机 | `feat/V3-P5-001-native-runtime` | 真实Core安装/启动/同文档切页及同安装副本重启恢复、WebAudio/消费者KV/作者导航与媒体/音量控制及可信退出确认、四媒体start/idle/暂停/唤醒及独立Player故障基础已验证；个人布局Core/私有IPC/DOM读取与有效呈现基础已验证；静止精确区域/同动作多图标/受控焦点基础已验证；实际Core输入补证待凭据窗关闭；拖动按用户暂缓；Core/Player同UI原生鼠标与正式SDK原始请求正数汇合、作者Enter/Space实际Player派发及私有DOWN/UP采样/可信派发屏障基础已验证；正式geometry已启用鼠标事件采样，实际正式Player静止图标两边采样/一次动作已验证；本地功能优先，source鼠标保护动作Core类281/281与真实Player移动图标两边样本通过；已有受控焦点键盘可见采样Core288/288与实际Enter/Space/移动官方Player通过，动态Tab/焦点显示、真实Core OS/锁屏/DPI/故障还原继续 |
+| 开发中 | **V3-P5-001 原生持续桌面宿主** | 0acaa3d依赖分支开工；模型/SDK→原生桥→持续DOM→个人几何/实机 | `feat/V3-P5-001-native-runtime` | 真实Core安装/启动/同文档切页及同安装副本重启恢复、WebAudio/消费者KV/作者导航与媒体/音量控制及可信退出确认、四媒体start/idle/暂停/唤醒及独立Player故障基础已验证；个人布局Core/私有IPC/DOM读取与有效呈现基础已验证；静止精确区域/同动作多图标/受控焦点基础已验证；实际Core输入补证待凭据窗关闭；拖动按用户暂缓；Core/Player同UI原生鼠标与正式SDK原始请求正数汇合、作者Enter/Space实际Player派发及私有DOWN/UP采样/可信派发屏障基础已验证；正式geometry已启用鼠标事件采样，实际正式Player静止图标两边采样/一次动作已验证；本地功能优先，source鼠标保护动作Core类281/281与真实Player移动图标两边样本通过；已有受控焦点键盘可见采样Core288/288与实际Enter/Space/移动官方Player通过，单次Tab当前可见选择Core291/291与真实移动Player焦点随帧通过；连续键顺序、真实Core OS/锁屏/DPI/故障还原继续 |
 | 最近完成 | **CORE-006 配置器 Core 启动与退出** | 用户于 2026-09-23 验收通过；已快进合入 master `b2dfc65` | master | 配置器连接状态旁提供“启动 Core / 退出 Core”，从当前产品路径安全启动并验证就绪；退出后配置器保留 |
 | 最近完成 | **DESK-REORDER-002 稳定输入上的路径重排** | 用户于 2026-09-23 验收通过；已合入 master `23aa845` | master | 旧直接拖动接纯排序事务和同伴 FLIP；真实 WorkerW 已从正确 worktree 重铺并通过用户验收 |
 | 排队 | **UI-008 桌面画布 tab 移除与 Widget 资源收口** | 用户于 2026-09-28 指定先写 v3 Core；原工作包保留 | 待创建 | 移除内嵌桌面画布，读取 `creator.json` 并清理 Widget 孤儿资源 |

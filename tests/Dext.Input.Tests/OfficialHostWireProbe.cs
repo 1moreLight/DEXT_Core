@@ -41,7 +41,7 @@ internal static class OfficialHostWireProbe
             File.AppendAllText(Path.Combine(root.FullName,"main.js"),"""
                 ;(() => {
                   const documents=new Map(),values=new Map();const send=v=>chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:v}));
-                  const report=command=>send({report:command,iconRects:[...document.querySelectorAll('.dext-v3-icon')].filter(n=>!n.hidden).map(n=>{const r=n.getBoundingClientRect();return{label:n.getAttribute('aria-label'),x:r.left/innerWidth,y:r.top/innerHeight,width:r.width/innerWidth,height:r.height/innerHeight};}),diagnostics:dextRuntimeDiagnostics(),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPieces:document.querySelectorAll('.dext-v3-focus>polygon').length,iframeCount:document.querySelectorAll('iframe').length,documents:[...documents.values()],values:[...values]});
+                  const report=command=>send({report:command,iconRects:[...document.querySelectorAll('.dext-v3-icon')].filter(n=>!n.hidden).map(n=>{const r=n.getBoundingClientRect();return{label:n.getAttribute('aria-label'),x:r.left/innerWidth,y:r.top/innerHeight,width:r.width/innerWidth,height:r.height/innerHeight};}),focusPoints:[...document.querySelectorAll('.dext-v3-focus>polygon')].map(n=>n.getAttribute('points')),diagnostics:dextRuntimeDiagnostics(),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPieces:document.querySelectorAll('.dext-v3-focus>polygon').length,iframeCount:document.querySelectorAll('iframe').length,documents:[...documents.values()],values:[...values]});
                   addEventListener('message',e=>{const owned=[...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source);if(!owned)return;
                     if(e.data?.authorDocument)documents.set(e.data.consumer,e.data);if(e.data?.authorValue)values.set(e.data.consumer,e.data.tick);});
                   const original=dextNativePlaybackChanged;window.dextNativePlaybackChanged=value=>{const accepted=original(value);send({playback:value.paused,accepted,diagnostics:dextRuntimeDiagnostics()});return accepted;};
@@ -152,8 +152,30 @@ internal static class OfficialHostWireProbe
                     kind="activate",consumer="official",button="next",entryId="icon.home/first",inputSequence=9})});
                 Require((long?)(await Next())["activated"]?["InputSequence"]==9&&actions==3,"official sampled key releases one action");
                 Console.WriteLine("PASS actual production moving source keyboard samples: both current painted entry polygons before one default action; Core physical key/packets/replies are fixture, no official DOM key is synthesized");
+                var tabIssued=Stopwatch.GetTimestamp();
+                await Send(new LivelyMessageRoomNativePointer{RuntimeGeneration=1,SessionId=context.SessionId,Revision=2,GeometryVersion=movingVersion,
+                    GestureId=10,IssuedAt=tabIssued,InputHandle=input.ToInt64(),Kind="focus",OriginX=bounds.X,OriginY=bounds.Y,
+                    PixelWidth=bounds.Width,PixelHeight=bounds.Height,Dpi=dpi,X=bounds.X,Y=bounds.Y,Key=9,Reverse=true});
+                var tabSample=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                Require(tabSample?.Input.Kind=="focus"&&tabSample.Input.Key==9&&tabSample.Input.Reverse&&tabSample.Input.IssuedAt==tabIssued&&actions==3,
+                    "Core Tab single current sample must not activate");
+                var tabEntry=tabSample!.Buttons.Where(b=>b.TabIndex>=0).OrderByDescending(b=>b.TabIndex).First();
+                Require(tabEntry.EntryId=="icon.home/second","current reverse Tab table contains the visible source second entry");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                    type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=2,geometryVersion=movingVersion,
+                    kind="focus",consumer=tabEntry.Consumer,button=tabEntry.Button,entryId=tabEntry.EntryId})});
+                await Command("movingFocused");var movingFocused=await NextReport("movingFocused");var geometryCount=geometries;
+                Require((bool?)movingFocused["focusVisible"]==true&&(string?)movingFocused["diagnostics"]?["runtime"]?["focus"]?["entryId"]==tabEntry.EntryId,
+                    "official current sampled Tab entry receives visible SVG focus");
+                await Task.Delay(180);await Command("movingFocusLater");var movingFocusLater=await NextReport("movingFocusLater");
+                Require(!JToken.DeepEquals(movingFocused["focusPoints"],movingFocusLater["focusPoints"])&&(bool?)movingFocusLater["focusVisible"]==true&&
+                    geometries==geometryCount&&(long?)movingFocusLater["diagnostics"]?["runtime"]?["inputVersion"]==movingVersion&&actions==3,
+                    "SVG focus follows painted entry locally without geometry IPC or activation");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"native Tab changed foreground");
+                Console.WriteLine("PASS actual production moving source Tab: one private current sample, distinct source entry, SVG polygons follow local RAF without geometry IPC or action; Core Tab/selection packets are fixture");
                 var completion=await Next();Require((string?)completion["complete"]?["TransitionId"]==transition.ToString(),"default DOM transition reports current completion");
                 await Command("beforeCommit");var before=await NextReport("beforeCommit");Require((string?)before["diagnostics"]?["runtime"]?["currentDeskId"]=="home","host never commits Desk itself");
+                Require((bool?)before["focusVisible"]==false&&(string?)before["diagnostics"]?["runtime"]?["focus"]?["entryId"]==tabEntry.EntryId,"source focus ring hides off canvas while retaining logical identity");
                 await Snapshot(3,"focus");await Command("committed");var committed=await NextReport("committed");Require((bool?)committed["focusVisible"]==false&&committed["diagnostics"]?["runtime"]?["focus"]?.Type==JTokenType.Null,"actual SVG focus cleared on input invalidation");Require((string?)committed["diagnostics"]?["runtime"]?["currentDeskId"]=="focus"&&JToken.DeepEquals(documents,committed["documents"]),"Core commit retains actual iframe documents");
                 var queuedTransition=Guid.NewGuid();await Snapshot(4,"focus","home",queuedTransition);await Snapshot(5,"focus","home",queuedTransition,"focus");await Task.Delay(100);await Send(new LivelySuspendCmd());var paused=await Next();
                 Require((bool?)paused["playback"]==true&&(bool?)paused["accepted"]==true,"official native pause accepted");await Task.Delay(1100);Require(!queue.Any(q=>q["complete"]!=null),"paused default animation cannot finish");

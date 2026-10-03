@@ -101,17 +101,21 @@
       record.element.style.opacity=String(group.opacity);record.element.style.pointerEvents=group.opacity<=0?'none':'';
     }
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
-    function clearFocus(){
-      focus=null;if(!focusNode)return;focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();
-    }
-    function showFocus(entry){
-      clearFocus();if(!entry)return;
+    function clearFocus(){focus=null;paintFocus(null);}
+    function paintFocus(entry){
+      if(!entry){if(focusNode){focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();}return;}
       if(!focusNode){focusNode=svg('svg');focusNode.classList?.add('dext-v3-focus');if(!focusNode.classList)focusNode.className='dext-v3-focus';
         focusNode.setAttribute('viewBox','0 0 1920 1080');focusNode.setAttribute('aria-hidden','true');rootNode.append(focusNode);}
-      focus={consumer:entry.consumer,button:entry.button,entryId:entry.entryId??null};
+      for(const child of [...focusNode.children])child.remove();
       for(const polygon of entry.polygons||[geometry.rectPolygon({x:entry.x,y:entry.y,width:entry.width,height:entry.height})]){
         const path=svg('polygon');path.setAttribute('points',polygon.map(p=>p.x*1920+','+p.y*1080).join(' '));focusNode.append(path);
       }focusNode.hidden=false;focusNode.removeAttribute('hidden');
+    }
+    function showFocus(entry){focus=entry?{consumer:entry.consumer,button:entry.button,entryId:entry.entryId??null}:null;paintFocus(entry);}
+    function refreshFocus(){
+      if(!focus)return;
+      const matches=buttonGeometry(true).filter(e=>e.consumer===focus.consumer&&e.button===focus.button&&(focus.entryId==null||e.entryId===focus.entryId));
+      paintFocus(matches.length===1?matches[0]:null);
     }
     function eventEntry(value){
       const matches=inputEntries.filter(e=>e.consumer===value.consumer&&e.button===value.button&&(value.entryId==null||e.entryId===value.entryId));
@@ -230,6 +234,7 @@
       if(transition.type==='author')return;
       const p=updateDefaultGroups();
       for(const record of records.values())layout(record);for(const record of icons.values()){const group=visualGroups[record.deskId===snapshot.targetDeskId?'target':'source'];layoutIcon(record,group);}
+      refreshFocus();
       // Boundary geometry excludes moving rows; physical edges sample painted rows.
       if(p>=1){animation.finished=true;const result=model.animationFinished(animation.session,animation.id);if(result.accepted)complete(animation.id);}else schedule();
     }

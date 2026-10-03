@@ -44,7 +44,7 @@ namespace Lively.Core.Wallpapers
             if(before==null || sample?.Input==null || sample.Buttons==null || sample.Buttons.Length>4096)return;
             DextNativePointerPacket packet;
             try{packet=new(sample.Input);}catch(ArgumentException){return;}
-            if(!packet.SampleVisual || packet.Kind!="down"&&packet.Kind!="up")return;
+            if(!packet.SampleVisual || packet.Kind!="down"&&packet.Kind!="up"&&packet.Kind!="focus")return;
             var measured=ReadNativeViewport();var foreground=NativeInputIsForeground?.Invoke()==true;
             a.Input.CheckNativeViewport(measured,foreground);
             if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
@@ -52,7 +52,7 @@ namespace Lively.Core.Wallpapers
                 sample.Buttons.Any(b=>b==null))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId))NotifyNative(a,before,true);
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse))NotifyNative(a,before,packet.Kind!="focus");
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
@@ -249,6 +249,9 @@ namespace Lively.Core.Wallpapers
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
             a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);
             var after=a.Input.State;
+            if(down&&key==9&&after?.Gesture is{Key:9} tab&&tab.Sequence!=before?.Gesture?.Sequence){
+                a.KeyGesture=null;a.KeyFocus=null;SendNativeFocus(tab);
+            }
             if(down&&key!=9&&after?.Gesture is{Released:false} gesture&&gesture.Key==key&&gesture.Sequence!=before?.Gesture?.Sequence&&after.Focus is{} focus){
                 a.KeyGesture=gesture;a.KeyFocus=focus;a.KeyScanCode=scanCode;a.KeyExtended=extended;
                 SendNativeKey(gesture,focus,"down",scanCode,extended);
@@ -258,6 +261,14 @@ namespace Lively.Core.Wallpapers
                 SendNativeKey(previous,releasedFocus,"up",a.KeyScanCode,a.KeyExtended);
             }
             NotifyNative(a,before,true);return before!=null;
+        }
+        private void SendNativeFocus(RoomNativeInputGesture gesture)
+        {
+            var v=gesture.Viewport;
+            SendMessage(new LivelyMessageRoomNativePointer{
+                RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
+                GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind="focus",
+                OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=v.X,Y=v.Y,Key=9,Reverse=gesture.Reverse});
         }
         private void SendNativeKey(RoomNativeInputGesture gesture,RoomNativeButton focus,string kind,int scanCode,bool extended)
         {

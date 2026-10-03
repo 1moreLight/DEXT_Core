@@ -265,3 +265,8 @@ ReadButtons与ReadCapabilities可展示source声明入口和保护动作授权�
 私有pointer新增SampleKeyboard（仅Key13/32，与SampleMouse互斥），冻结Core焦点Consumer/Button/EntryId及键/scan；eventSamples模式下键盘原始UP不直接完成，SampleKeyboard以两边当前可见region同焦点entry配对，不用鼠标点。Core完成的SampledVisual涵盖paired mouse或paired keyboard，源准入只接受该证明；旧静止键和元数据查询不扩大source。
 作者guardian reportDispatch也报告trusted keydown/up，Player同UI取样/保持→真实键转发→当前root回执→释放保持/发私有样本→同UP释放作者动作。官方按Core原始物理键默认动作，不合成官方DOM键，prepare/complete只读取两边样本。Core现场OS复核和原DOWN半开1500ms不变。
 已有受控焦点（包括此前鼠标采样确定的source entry）Enter/Space已接通，Core288/288与实际ReleasePlayer作者Enter/Space/移动官方键样本通过；实际Core物理键/包/回复仍未在本轮验证。新的转场Tab顺序尚用边界表，动态Tab/移动焦点显示及物理OS/DPI/锁屏继续。
+
+### 原生单次Tab与本地移动焦点（2026-10-04）
+Core raw Tab/ShiftTab在正式eventSamples下冻结单次焦点请求；private Kind=focus、Key9、Reverse只供所属Player读取当前官方可见样本，不arm/转发作者键或释放动作。Core现场OS/当前安装/声明复核后SampleFocus按当前TabIndex与稳定entry选择，不产生动作proof；静止兼容路径仍直接选边界表。焦点只是显示，Enter/Space另需两边可见完成。
+正式DOM轮廓按本地RAF已绘制多边形更新，不提交逐帧geometry；入口暂时不可见只隐藏轮廓并保留逻辑entry，commit/失效/暂停仍清空。单次Tab Core291/291、DOM52/52、队列17/17及实际移动正式Player通过。
+目前Core只保存最新未回焦点gesture，连续Tab与取样待回时立即激活的顺序收口继续；实际Core物理键/选择包/回复不由隔离Player的fixture替代。

@@ -249,3 +249,7 @@ Core区分主动关闭与当前原生Player故障；故障私有Retire保留chec
 ### 2026-10-04：已有受控焦点的键盘动作同样要求当前可见完成
 修订上述源鼠标准入的完成类型：正式eventSamples下Enter/Space只对Core已选焦点冻结一对原始键边沿；拥有的Player两个当前可见样本均含该entry后才生成SampledVisual，允许源动作一次消费。作者必须实际trusted键回执，官方默认复用Core原始物理键并仅取样，不向官方DOM合成键。source不成为全局活动Desk，数据/存储仍目标上下文。
 本段不扩展作者公开API/节点focus/Tab顺序；转场新的Tab遍历与焦点移动显示继续开发，实际Core OS/DPI门槛不由隔离Player的fixture包替代。
+
+### 2026-10-04：Tab选取当前可见入口，焦点轮廓在本地随帧更新
+正式原生Tab由Core实际DOWN决定方向和关联，Player只在自己的UI队列读取已绘制可见source/target区域，Core选择同consumer/button/entry；不转发作者DOM Tab或授予动作。显示轮廓按本地RAF更新并随可见裁剪隐藏，逻辑焦点保持到正式失效/commit，系统动作另用真实激活配对。无逐帧IPC。
+本段是单次焦点查询基础；连续Tab/立即激活的Core顺序仲裁仍须完成，实际Core OS/DPI/最终组合验收保持。

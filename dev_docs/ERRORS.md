@@ -285,3 +285,4 @@
 
 | #213 | 源动作夹具需进入desktop并沿创建票据的bridge确认；短路out变量不能靠Require推断赋值 | [toolchain](errors/toolchain.md) |
 | #214 | 键盘回执夹具fire需先给receiver；部分文件文本替换失败只接续未写入部分 | [toolchain](errors/toolchain.md) |
+| #215 | SVG焦点若只画边界快照会留在旧坐标；移动轮廓须本地随帧重算 | [renderer](errors/renderer.md) |
