@@ -109,3 +109,15 @@ test('private Player suspension preserves iframe but cancels old sources until f
   assert.equal(f.opens.length,2);assert.equal(f.opens[1].identity.revision,2);assert.equal(frame.sent.filter(value=>value.type==='dext:runtime:init').length,1);
   f.host.dispose();
 });
+
+
+test('cancelled permission query from an old Core revision cannot poison current diagnostics',async()=>{
+ const queries=[];const f=fixture({readCapabilities:()=>new Promise((resolve,reject)=>queries.push({resolve,reject}))});
+ const frame=f.mount(),sdk=f.bind(frame);frame.load();f.host.acceptSnapshot(f.snapshot(2));
+ queries[0].reject(Object.assign(Error('scope cancelled'),{code:'staleInput'}));await flush();assert.equal(f.host.readDiagnostics().lastError,null);
+ queries[1].resolve(f.capabilities);await flush();assert.equal((await sdk.ready()).snapshot.revision,2);assert.equal(f.host.readDiagnostics().lastError,null);f.host.dispose();
+});
+
+test('permission rejection after document disposal cannot add a late diagnostic',async()=>{
+ let reject;const f=fixture({readCapabilities:()=>new Promise((_,fail)=>reject=fail)});const frame=f.mount();frame.load();f.host.dispose();reject(Error('disposed'));await flush();assert.equal(f.host.readDiagnostics().lastError,null);
+});

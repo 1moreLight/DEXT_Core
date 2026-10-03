@@ -1,6 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {createDomHost}=require('./dom-host.js');
 const {createRuntime}=require('./runtime-model.js');
+const {createNativeHost}=require('./native-host.js');
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 function fixture(options={}){
  const room={version:3,apiVersion:1,id:'room',resources:['scene.html','widget.html','bg.svg','start.svg','idle.svg'],roomScene:{entry:'scene.html',capabilities:['desk.read']},
@@ -13,8 +14,8 @@ function fixture(options={}){
  const calls=[],controls=[],frames=new Map(),medias=new Map(),raf=new Map();let now=0,id=0;
  const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
  const document={createElement:node};const container=node('root');
- const bridge={identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[]});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
- const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
+ const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[]});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
+ const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
  const host=createDomHost({document,container,context:{runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
    createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:()=>({width:1920,height:1080,dpr:1}),now:()=>now,
@@ -83,4 +84,14 @@ test('author global scale applies around the canvas origin and matches translate
 test('busy Core geometry admission retries a newer version instead of leaving input disabled',async()=>{
  let attempts=0;const f=fixture({request:method=>Promise.resolve({status:method==='geometry'&&++attempts===1?'staleInput':'accepted'})});await f.host.ready;
  const geometry=f.calls.filter(v=>v.method==='geometry');assert.equal(geometry.length,2);assert.equal(geometry[1].params.geometryVersion,geometry[0].params.geometryVersion+1);assert.equal(f.host.readDiagnostics().inputReady,true);f.host.dispose();
+});
+
+test('new-snapshot frame authorization reaches the production native bridge in the same scope',async()=>{
+ const listeners=new Set(),reads=[],identity={runtimeGeneration:1,sessionId:'session',revision:1};
+ const native=createNativeHost({initialIdentity:identity,transport:{
+  postMessage:raw=>{const q=JSON.parse(raw);queueMicrotask(()=>{for(const receive of listeners)receive({data:{type:'dext:v3-native-response',requestId:q.requestId,runtimeGeneration:q.runtimeGeneration,sessionId:q.sessionId,revision:q.revision,status:'accepted',capabilities:{'desk.read':'accepted'}}});});},
+  addEventListener:(_,cb)=>listeners.add(cb),removeEventListener:(_,cb)=>listeners.delete(cb)}});
+ const f=fixture({native,onFrameSnapshot:(v,opts)=>reads.push(opts.readCapabilities({consumerId:'scene',identity:{...identity,revision:v.revision}}).then(r=>r.status,e=>e.code))});
+ try{await f.host.ready;await f.host.acceptSnapshot(f.snap(2));assert.deepEqual(await Promise.all(reads),['accepted','accepted']);}
+ finally{f.host.dispose();}
 });

@@ -155,7 +155,10 @@
     }
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
-      snapshot=copy(next);visualGroups=model.readDiagnostics().groups;frames.acceptSnapshot(snapshot);return render();
+      snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
+      // Frame updates start authorization reads synchronously. Advance the
+      // native scope first so those reads do not target the previous revision.
+      native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return render();
     }
     function publishGeometry(consumer,report){
       if(disposed)return Promise.resolve(false);let value=copy(report);const definition=model.readDiagnostics().instances.find(d=>d.consumerId===consumer);

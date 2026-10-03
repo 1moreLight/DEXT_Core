@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length == 7 && args[0] == "--v3-native-core-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6]); return; }
+
 if (args.Length == 1 && args[0] == "--v3-idle-window") { NativeIdleWindowChecks.Run(); return; }
 
 if (args.Length == 2 && args[0] == "--v3-input-wire") { await NativeInputWireProbe.Run(args[1]); return; }

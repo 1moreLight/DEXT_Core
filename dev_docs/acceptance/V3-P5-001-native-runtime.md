@@ -116,3 +116,11 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 2026-10-03原生逐iframe音视频基础：政策10/Main8与原组合84，共102/102；真实C#帧策略/输入28/运行20/资源31通过。实际ReleasePlayer完整官方页面验证首航作者play默认暂停、真实WAV/closed Shadow MP4/嵌套音频持续、原始媒体方法不被实例覆盖、伪SDK token/globalThis alias拒绝、阶段和私有挂起/最新状态恢复/保留作者暂停意图/根帧更名暂停/撤销无崩溃。Core响应/提交仍由隔离夹具模拟，不代填真实Core原生Room或物理/DPI步骤；WebAudio仍需继续。完整build→start/identity成功：Core50684/Player57196/Watchdog76868/config122420（本轮共享D缓存），日志20261003_110420.txt；原v2 inactive、精确PID/路径正常退出。上方7项最终步骤与16项完整路线不变。
 
 - 最终销毁路径补强：缓存FrameId移除幂等、政策失败先静音再通过UI队列退出原生事件栈、processFailed撤销其余媒体。最新完整build与实际整页媒体回归再通过；最终start/identity Core106108/Player87720/Watchdog75280/config119552（本轮共享D缓存），日志20261003_111305.txt；原v2 inactive，随后按PID/路径正常退出。
+
+## Task4真实Core原生安装起步（2026-10-03）
+
+生产Rust安装→真实Core独立复核→GIF启动→原生几何回执→Core切页提交通过；Player115676与场景/共享Widget两份实际SDK文档在home revision2→focus revision4保持。视频ready4、实际播放时间0.576、静音循环；授权诊断的取消/作用域顺序双缺陷先失败后修复，完整JS105/105，真实整页error/frameError均null。
+
+导航是临时官方顶部的协议测试驱动，不计物理输入。finally重铺原壁纸、正常退出Core，布局/设置/checkpoint逐字节与原用户Room哈希恢复；临时目录已移除。完整build→start/identity核对后再次正常退出，最终进程/开发端口/资源暂存0。配置器使用本轮共享D缓存，identity显示OTHER并单独核对绝对路径。
+
+四类完整生命周期/实际idle与重启、WebAudio、作者控制/存储/确认、个人布局与精确移动命中、物理输入/DPI及故障恢复仍继续；上方7项最终人工步骤保持待执行，不合并master。

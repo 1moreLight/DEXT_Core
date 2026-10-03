@@ -226,3 +226,6 @@
 | #175 | 原生帧异步化后report须等指定Core修订及geometry ready | [toolchain](errors/toolchain.md) |
 | #176 | Frame.Destroyed内注销COM事件造成WebView原生崩溃 | [backend](errors/backend.md) |
 | #177 | 迟到play事件不能恢复作者已pause的播放意图 | [renderer](errors/renderer.md) |
+
+| #178 | 旧修订或销毁后的权限查询失败回调写入当前诊断 | [renderer](errors/renderer.md) |
+| #179 | 新快照先更新iframe再推进原生identity，当前授权请求被拒为staleInput | [renderer](errors/renderer.md) |

@@ -115,15 +115,17 @@
       const epoch=record.epoch,query=++record.query,scope=identity();
       if(record.permissionTimer!==null)cancel(record.permissionTimer);
       let completed=false;
+      const current=()=>!completed&&alive(record)&&record.epoch===epoch&&record.query===query&&!record.docDisposed&&sameScope(scope);
       const finish=reply=>{
-        if(completed||!alive(record)||record.epoch!==epoch||record.query!==query||record.docDisposed||!sameScope(scope))return;
+        if(!current())return;
         completed=true;cancel(record.permissionTimer);record.permissionTimer=null;
         setCapabilities(record,permissionView(record,reply));initialize(record);
       };
       if(playbackSuspended){finish(null);return;}
-      record.permissionTimer=later(()=>{diagnose('permissionsUnavailable');finish(null);},5000);
-      try{Promise.resolve(options.readCapabilities({consumerId:record.consumerId,identity:scope})).then(finish,()=>{diagnose('permissionsUnavailable');finish(null);});}
-      catch(_){diagnose('permissionsUnavailable');finish(null);}
+      const fail=()=>{if(!current())return;diagnose('permissionsUnavailable');finish(null);};
+      record.permissionTimer=later(fail,5000);
+      try{Promise.resolve(options.readCapabilities({consumerId:record.consumerId,identity:scope})).then(finish,fail);}
+      catch(_){fail();}
     }
     function applyState(record){
       const state=active(record)?'active':'suspended';record.frame.inert=state!=='active';record.frame.setAttribute('aria-hidden',state==='active'?'false':'true');

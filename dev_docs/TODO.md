@@ -1255,3 +1255,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 继续完整Task3/4：WebAudio/AudioContext与更完整HTML音频生命周期、实际Core安装原生Room/保存并恢复用户桌面、消费者导航/控制/存储及退出确认、个人布局/移动中精确命中/遮挡/焦点、真实DPI/物理输入/故障恢复。最终7项和全景16项保持，不将本基础提交记为P5完成。
 
 - 最终销毁路径补强：缓存FrameId移除幂等、政策失败先静音再通过UI队列退出原生事件栈、processFailed撤销其余媒体。最新完整build与实际整页媒体回归再通过；最终start/identity Core106108/Player87720/Watchdog75280/config119552（本轮共享D缓存），日志20261003_111305.txt；原v2 inactive，随后按PID/路径正常退出。
+
+
+- [x] Task4真实Core原生Room闭环起步：现有v3-live只检验旧v2 overlay，不作原生证据。新增生产Rust安装CLI与隔离正式宿主探针，先保存WallpaperLayout/checkpoint与原Room哈希，启动精确分支Core并核验身份；临时原生source→生产install→Core复核→实际WorkerW/SDK/宿主状态，可信官方顶部测试导航只计协议回归，绝不代填物理输入。finally重铺原壁纸、正常退出Core后精确恢复布局/checkpoint并复核；任何恢复失败保留可恢复目录并报告。观察使用临时官方页title，不向生产Core发送saveRoom测试消息；原官方脚本/用户Room不改。全部7项/16项仍保留，完成此阶段后继续完整Task3/4。
+
+- [x] 首次实际Core原生证据：生产Rust安装→真实Core复核→GIF start→实际SDK/几何→可信顶部导航→Core home→focus revision2→4，Player63652与两份场景/共享Widget文档UUID保持，实际父窗WorkerW/Progman；正常重铺原壁纸并退出Core后，布局/设置/checkpoint逐字节与用户Room哈希恢复。该导航是协议回归，不是物理输入；当前证据写native-core-live-evidence。
+- [x] 实际宿主诊断修正：Core修订改变取消旧capabilities查询，frame-host旧失败回调却无作用域检查写permissionsUnavailable；先建立旧revision与disposed失败回归，再修当前查询保护，实际Core再验证。
+
+- [x] 实际Core诊断双修复：旧查询/销毁后失败回调先核对当前scope；新快照必须先推进native identity再更新iframe。生产原生桥RED确实返回staleInput，修正后完整JS105/105。真实Core再次验证Player115676、session7d2d80d9、home revision2→focus revision4，两份SDK文档保持、frameError/error均null，MP4实际ready4/time0.576/静音循环播放。生产Rust安装/真实Core复核/WorkerW父窗均通过；该顶部测试导航仍只计协议回归。
+- [x] 本阶段完整build→start/identity通过：Core52976/Player90320/Watchdog95676，配置器54796为本轮共享D缓存构建（identity脚本显示OTHER，绝对路径已核对），日志20261003_115323.txt；原v2恢复inactive。真实探针保存并精确恢复布局/设置/checkpoint和用户Room哈希；正常退出Core/配置器及本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生Room目录均0。
+- [ ] 完整Task3/4继续：WebAudio/AudioContext、四媒体完整生命周期/实际idle与重启、作者导航/控制/存储/退出确认、个人布局/占用/移动与非矩形精确命中/焦点、实际物理输入/DPI/故障恢复。最终7项不申请中途验收，16项开发就绪仍1/16。

@@ -581,3 +581,11 @@ Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿�
 ## #177 迟到play事件不能恢复已被作者pause清除的意图（2026-10-03）
 
 媒体播放事件异步排队；作者play后pause，迟到play/playing若无条件设wanted=true，下一次宿主恢复会误播。定向RED确实失败；捕获原始paused getter，只在当前元素仍实际播放时从事件建立意图，已暂停的迟到事件不改wanted。政策10/10与真实作者暂停→原生挂起/恢复通过。
+
+## #178 权限失败回调必须先验证当前查询作用域（2026-10-03）
+
+真实Core切页取消旧capabilities请求，frame-host成功回调检查epoch/query/scope，失败回调却先写permissionsUnavailable。旧修订和已销毁文档的失败都会污染当前诊断。两个定向RED后统一current守卫，超时/同步失败/Promise失败仅在当前活文档、当前查询、当前scope下诊断和收敛。当前真实故障仍报告，旧取消不复活状态。
+
+## #179 推进原生身份必须早于新快照的iframe授权查询（2026-10-03）
+
+只修#178后真实Core仍报告permissionsUnavailable。dom-host.acceptSnapshot先frames.acceptSnapshot，再进入render推进native identity；frame更新同步发新revision的授权请求，native-host仍用旧revision，立即返回staleInput，此时查询本身却是当前的。使用生产native-host的定向RED复现accepted/staleInput，先native.acceptIdentity再更新frame后GREEN。完整JS105/105和真实Corehome→focus revision2→4、同文档/解码视频/无frameError通过。原生作用域推进后旧查询取消必须搭配#178当前检查，不应靠忽略所有授权错误掩盖顺序缺陷。
