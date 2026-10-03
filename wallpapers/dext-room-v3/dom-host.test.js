@@ -185,3 +185,24 @@ test('exit entry advertises Dext confirmation and keeps private continuation out
  f.host.handleNativeInput(f.event(7));assert.deepEqual(await f.invoke('actions.activate',{buttonId:'next'}),{status:'requiresConfirmation'});await f.tick(1000);
  assert.equal(f.calls.filter(v=>v.method==='activate').length,1);f.host.dispose();
 });
+
+test('no-idle retains the desktop picture without publishing official activation until wake',async()=>{
+ const f=fixture();await f.host.ready;
+ const root=f.container.children[0],icon=root.children.find(v=>v.tag==='button'),nodes=[...f.frames.values()].map(v=>v.node);
+ await f.host.acceptSnapshot(f.snap(2,{operable:false,lifecycle:{stage:'idle',playbackPaused:false,locked:false,revision:2}}));
+ assert.equal(icon.hidden,false);
+ assert.deepEqual([...f.frames.values()].map(v=>v.node),nodes);
+ for(const consumer of ['scene','component.shared','slot.background.home'])assert.equal(root.children.find(v=>v.dataset.consumer===consumer).hidden,false);
+ assert.equal([...f.frames.values()].every(v=>v.state==='suspended'),true);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);
+ await f.host.acceptSnapshot(f.snap(3,{lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:3}}));
+ assert.equal(icon.hidden,false);assert.deepEqual([...f.frames.values()].map(v=>v.node),nodes);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),true);f.host.dispose();
+});
+test('configured idle hides the desktop icons while retaining their nodes for wake',async()=>{
+ const f=fixture({room:{idle:{type:'image',src:'idle.svg'}}});await f.host.ready;
+ const root=f.container.children[0],icon=root.children.find(v=>v.tag==='button');
+ await f.host.acceptSnapshot(f.snap(2,{operable:false,lifecycle:{stage:'idle',playbackPaused:false,locked:false,revision:2}}));
+ assert.equal(icon.hidden,true);assert.equal(root.children.find(v=>v.dataset.consumer==='slot.idle').hidden,false);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);f.host.dispose();
+});

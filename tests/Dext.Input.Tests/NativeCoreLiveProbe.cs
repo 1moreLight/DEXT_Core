@@ -8,6 +8,7 @@ using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using Lively.Common;
 using Lively.Grpc.Common.Proto.Desktop;
+using Lively.Grpc.Common.Proto.Commands;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -20,6 +21,9 @@ internal static class NativeCoreLiveProbe
 {
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern IntPtr FindWindow(string name,string? title);
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern IntPtr GetDC(IntPtr window);
+    [DllImport("user32.dll")] static extern int ReleaseDC(IntPtr window,IntPtr dc);
+    [DllImport("gdi32.dll")] static extern uint GetPixel(IntPtr dc,int x,int y);
     [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window,out uint pid);
     [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
@@ -46,8 +50,9 @@ internal static class NativeCoreLiveProbe
     [StructLayout(LayoutKind.Explicit)] struct NativeUnion { [FieldOffset(0)] public NativeMouse Mouse; }
     [StructLayout(LayoutKind.Sequential)] struct NativeInput { public uint Type;public NativeUnion Value; }
     delegate bool Callback(IntPtr window,IntPtr data);
-    public static async Task Run(string corePath,string hostDirectory,string installer,string sdk,string mediaDirectory,string evidenceDirectory,bool authoredNavigation=false,bool systemControls=false,bool productExit=false,string? configuratorPath=null)
+    public static async Task Run(string corePath,string hostDirectory,string installer,string sdk,string mediaDirectory,string evidenceDirectory,bool authoredNavigation=false,bool systemControls=false,bool productExit=false,string? configuratorPath=null,bool playerRecovery=false,string? lifecycleMedia=null)
     {
+        if(lifecycleMedia is not null && lifecycleMedia is not ("image" or "gif" or "video" or "html"))throw new ArgumentException("Unknown lifecycle media");
         var authoredInput=authoredNavigation||systemControls||productExit;
         if(authoredInput&&!SetProcessDpiAwarenessContext(new IntPtr(-4)))throw new Exception("Navigation probe requires Core PerMonitorV2 DPI");
         GetCursorPos(out var originalCursor);
@@ -75,18 +80,21 @@ internal static class NativeCoreLiveProbe
             if(systemControls){controlDevices=new();controlDevices.StartMedia(Path.Combine(Path.GetFullPath(mediaDirectory),"clip.mp4"));}
             foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
             File.AppendAllText(Path.Combine(host.FullName,"main.js"),"""
-                ;(()=>{const documents=new Map(),audio=new Map(),storage=new Map(),actions=new Map(),nativeEvents=[],stages=[];let nav=0,first=null;
+                ;(()=>{const documents=new Map(),audio=new Map(),storage=new Map(),actions=new Map(),slots=new Map(),nativeEvents=[],stages=[];let nav=0,first=null;
                   chrome.webview.addEventListener('message',e=>{const v=e.data;if(v.type==='dext:v3-native-event'&&v.kind==='activate'||v.type==='dext:v3-native-response'&&v.inputSequence>0)nativeEvents.push({type:v.type,kind:v.kind,status:v.status,inputSequence:v.inputSequence,inputConsumed:v.inputConsumed});if(nativeEvents.length>16)nativeEvents.shift();});
-                  addEventListener('message',e=>{if(![...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source)||!e.data?.liveDocument)return;documents.set(e.data.consumer,e.data.documentId);audio.set(e.data.consumer,e.data.web);storage.set(e.data.consumer,{...e.data.storage,value:e.data.storage.value&&{owner:e.data.storage.value.owner},existing:e.data.storage.existing&&{owner:e.data.storage.existing.owner}});actions.set(e.data.consumer,e.data.actions);});
-                  setInterval(()=>{const d=dextRuntimeDiagnostics(),r=d.runtime;if(!r)return;
-                    if(stages.at(-1)?.stage!==r.lifecycle.stage)stages.push({stage:r.lifecycle.stage,at:performance.now(),gif:false});
+                  addEventListener('message',e=>{if(![...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source))return;if(e.data?.liveSlot){slots.set(e.data.consumer,e.data);return;}if(!e.data?.liveDocument)return;documents.set(e.data.consumer,e.data.documentId);audio.set(e.data.consumer,e.data.web);storage.set(e.data.consumer,{...e.data.storage,value:e.data.storage.value&&{owner:e.data.storage.value.owner},existing:e.data.storage.existing&&{owner:e.data.storage.existing.owner}});actions.set(e.data.consumer,e.data.actions);});
+                  const report=()=>{const d=dextRuntimeDiagnostics(),r=d.runtime;if(!r)return;
+                    if(stages.at(-1)?.stage!==r.lifecycle.stage)stages.push({stage:r.lifecycle.stage,at:performance.now(),gif:false,mounted:false});
                     if(r.lifecycle.stage==='starting'&&document.querySelector('img[src$="animation.gif"]'))stages.at(-1).gif=true;
+                    if(r.lifecycle.stage==='starting'&&document.querySelector('[data-consumer="slot.start"]')?.firstChild)stages.at(-1).mounted=true;
                     if(!first&&r.inputReady&&r.lifecycle.stage==='desktop')first=performance.now();
                     if(!__AUTHOR_NAV__&&first&&performance.now()-first>700&&nav===0&&r.currentDeskId==='home'&&r.lifecycle.stage==='desktop'&&!d.paused){nav++;chrome.webview.postMessage(JSON.stringify({type:'dext:v3-request-desk',sessionId:d.sessionId,deskId:'focus'}));}
                     document.title='DEXT_V3_LIVE:'+JSON.stringify({generation:d.runtimeGeneration,session:d.sessionId,revision:d.revision,current:r.currentDeskId,target:r.targetDeskId,
                       inputReady:r.inputReady,inputVersion:r.inputVersion,stage:r.lifecycle.stage,paused:d.paused,frames:r.frames.count,instances:r.instances.map(v=>v.instanceId),documents:[...documents],nav,
-                      error:r.lastError,frameError:r.frames.lastError,stages,audio:[...audio],storage:[...storage],actions:[...actions],nativeEvents,videos:[...document.querySelectorAll('video')].map(v=>({ready:v.readyState,time:v.currentTime,paused:v.paused,loop:v.loop,muted:v.muted}))});
-                  },80);
+                      error:r.lastError,frameError:r.frames.lastError,stages,audio:[...audio],storage:[...storage],actions:[...actions],nativeEvents,slots:[...slots],images:[...document.querySelectorAll('img')].map(v=>({consumer:v.parentElement.dataset.consumer,width:v.naturalWidth,hidden:v.parentElement.hidden})),videos:[...document.querySelectorAll('video')].map(v=>({consumer:v.parentElement.dataset.consumer,hidden:v.parentElement.hidden,ready:v.readyState,time:v.currentTime,paused:v.paused,loop:v.loop,muted:v.muted}))});
+                  };
+                  const original=dextNativePlaybackChanged;window.dextNativePlaybackChanged=value=>{const accepted=original(value);report();return accepted;};
+                  setInterval(report,80);
                 })();
                 """.Replace("__AUTHOR_NAV__",authoredInput?"true":"false"));
             File.Copy(Path.GetFullPath(sdk),Path.Combine(source.FullName,"sdk.js"));
@@ -119,11 +127,33 @@ internal static class NativeCoreLiveProbe
                 """.Replace("__PRIVATE_MARKER__","dext-kv-"+roomId).Replace("__AUTHOR_NAV__",authoredInput?"true":"false")
                 .Replace("__PRODUCT_EXIT__",productExit?"true":"false").Replace("__SYSTEM_CONTROLS__",systemControls?"true":"false").Replace("__TEST_LEVEL__",JsonConvert.SerializeObject(controlDevices?.TestLevel??0))
                 .Replace("__ORIGINAL_LEVEL__",JsonConvert.SerializeObject(controlDevices?.OriginalLevel??0)).Replace("__ORIGINAL_MUTED__",controlDevices?.OriginalMuted==true?"true":"false"));
+            if(lifecycleMedia=="html")File.WriteAllText(Path.Combine(source.FullName,"slot.html"),"""
+                <!doctype html><video muted loop autoplay src=clip.mp4></video><audio loop autoplay src=clip.mp4></audio><script src=sdk.js></script><script>
+                const documentId=crypto.randomUUID();Dext.ready().then(()=>{
+                  const context=new AudioContext(),osc=context.createOscillator(),gain=context.createGain();gain.gain.value=0;osc.connect(gain).connect(context.destination);osc.start();context.resume();
+                  document.querySelector('video').play().catch(()=>{});document.querySelector('audio').muted=true;document.querySelector('audio').play().catch(()=>{});
+                  const done={attempts:0,status:null,error:null};let finishing=false;
+                  const report=()=>parent.postMessage({liveSlot:true,consumer:Dext.session.consumerId,documentId,state:context.state,time:context.currentTime,done,video:{time:document.querySelector('video').currentTime,paused:document.querySelector('video').paused}},'*');
+                  report();context.addEventListener('statechange',report);setInterval(report,80);
+                  setInterval(()=>{const life=Dext.session.snapshot.lifecycle;
+                    if(Dext.session.consumerId!=='slot.start'||life.stage!=='starting'||life.playbackPaused||life.locked||context.currentTime<.65||finishing||done.status==='requested')return;
+                    finishing=true;done.attempts++;Dext.scene.done().then(v=>{done.status=v.status;done.error=null;},e=>{done.error=e.code;}).finally(()=>{finishing=false;report();});
+                  },100);
+                });</script>
+                """);
             var manifest=new{version=3,apiVersion=1,id=roomId,name="Actual native Core probe",startDesk="home",resources=new[]{"sdk.js","author.html","background.svg","animation.gif","clip.mp4"},
                 start=new{type="gif",src="animation.gif"},roomScene=new{entry="author.html",capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()},transition=new{type="slide",durationMs=450},buttons=new[]{systemControls?new Dictionary<string,object>{{"id","next"},{"name","Control"},{"scope","room"}}:new Dictionary<string,object>{{"id","next"},{"name","Next"},{"scope","room"},{"action",new{type="desk.next"}}}}.Concat(productExit?new[]{new Dictionary<string,object>{{"id","exit"},{"name","Exit Dext"},{"scope","room"},{"action",new{type="dext.exit"}}}}:Array.Empty<Dictionary<string,object>>()).ToArray(),
                 components=new[]{new{id="shared",role="widget",entry="author.html",placement=new{x=400,y=50,width=260,height=120},buttonIds=new[]{"next"},capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()}},
                 desks=new[]{new{id="home",name="Home",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="image",src="background.svg"}},new{id="focus",name="Focus",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="video",src="clip.mp4"}}}};
-            File.WriteAllText(Path.Combine(source.FullName,"room.json"),JsonConvert.SerializeObject(manifest,Formatting.Indented));
+            var roomManifest=JObject.FromObject(manifest);
+            if(lifecycleMedia is not null){
+                var src=lifecycleMedia switch{"image"=>"background.svg","gif"=>"animation.gif","video"=>"clip.mp4",_=>"slot.html"};
+                var content=new JObject{{"type",lifecycleMedia},{"src",src}};
+                roomManifest["start"]=content.DeepClone();roomManifest["idle"]=content.DeepClone();
+                foreach(var desk in (JArray)roomManifest["desks"]!)desk["background"]=content.DeepClone();
+                if(lifecycleMedia=="html")((JArray)roomManifest["resources"]!).Add("slot.html");
+            }
+            File.WriteAllText(Path.Combine(source.FullName,"room.json"),roomManifest.ToString(Formatting.Indented));
             var install=new ProcessStartInfo(Path.GetFullPath(installer)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardOutput=true,RedirectStandardError=true};
             foreach(var arg in new[]{"--install",source.FullName,Path.Combine(host.FullName,"content")})install.ArgumentList.Add(arg);
             using(var process=Process.Start(install)??throw new Exception("Installer did not start"))
@@ -137,6 +167,7 @@ internal static class NativeCoreLiveProbe
             // instead, then restores the saved Settings.json byte-for-byte.
             var fixtureSettings=System.Text.Json.Nodes.JsonNode.Parse(saved[Path.Combine(data,"Settings.json")]! )!.AsObject();
             fixtureSettings["ProcessMonitorAlgorithm"]=0;
+            if(lifecycleMedia is not null)fixtureSettings["ScreensaverLockOnResume"]=false;
             File.WriteAllText(Path.Combine(data,"Settings.json"),fixtureSettings.ToJsonString());
             events.Add("fixture playback uses foreground algorithm; original settings bytes remain backed up");
             await StartCore();
@@ -149,7 +180,22 @@ internal static class NativeCoreLiveProbe
             var deadline=DateTime.UtcNow.AddSeconds(15);do{original=await Wallpapers();if(original.Count>0)break;await Task.Delay(100);}while(DateTime.UtcNow<deadline);Require(original.Count>0,"original wallpaper is restored before test");
             var screen=original!.FirstOrDefault(w=>w.Screen.IsPrimary)?.Screen??original[0].Screen;
             foreach(var old in original)Require(Directory.Exists(old.LivelyInfoPath),"original wallpaper directory available");
+            CommandsService.CommandsServiceClient? lifecycleCommands=null;
+            if(lifecycleMedia is not null){
+                lifecycleCommands=new(new NamedPipeChannel(".",Constants.SingleInstance.GrpcPipeServerName));
+                var pause=new AutomationCommandRequest();pause.Args.Add(new[]{"app","--play","false"});
+                await lifecycleCommands.AutomationCommandAsync(pause,deadline:DateTime.UtcNow.AddSeconds(5));await Task.Delay(1500);
+            }
             applied=true;await client!.SetWallpaperAsync(new SetWallpaperRequest{LivelyInfoPath=host.FullName,MonitorId=screen.DeviceId},deadline:DateTime.UtcNow.AddSeconds(20));
+            if(lifecycleCommands is not null){
+                var end=DateTime.UtcNow.AddSeconds(10);RoomSessionStatusResponse? starting=null;
+                do{starting=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));if(starting.Active&&starting.RoomId==roomId&&starting.Lifecycle.Stage=="starting"&&starting.Lifecycle.PlaybackPaused)break;await Task.Delay(80);}while(DateTime.UtcNow<end);
+                Require(starting is{Active:true}&&starting.RoomId==roomId&&starting.Lifecycle.Stage=="starting"&&starting.Lifecycle.PlaybackPaused,"real Core creates paused start");
+                await Task.Delay(900);var held=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));
+                Require(held.SessionId==starting.SessionId&&held.Lifecycle.Stage=="starting"&&held.Lifecycle.PlaybackPaused,"paused start cannot spend wall-time completion budget");
+                events.Add("PASS "+lifecycleMedia+" actual Core paused startup retains session and does not complete during inactive wall time");
+                var play=new AutomationCommandRequest();play.Args.Add(new[]{"app","--play","true"});await lifecycleCommands.AutomationCommandAsync(play,deadline:DateTime.UtcNow.AddSeconds(5));
+            }
             FocusDesktop();RoomSessionStatusResponse? active=null;JObject? initial=null,final=null;IntPtr playerWindow=IntPtr.Zero;List<string>? documents=null;string? firstSession=null;int firstPid=0;bool clickSent=false;
             deadline=DateTime.UtcNow.AddSeconds(35);
             while(DateTime.UtcNow<deadline)
@@ -194,7 +240,7 @@ internal static class NativeCoreLiveProbe
                             var inputs=new[]{new NativeInput{Value=new NativeUnion{Mouse=new NativeMouse{Flags=2}}},new NativeInput{Value=new NativeUnion{Mouse=new NativeMouse{Flags=4}}}};
                             Require(SendInput(2,inputs,Marshal.SizeOf<NativeInput>())==2,"OS injected left down/up");clickSent=true;clicksSent++;events.Add("OS mouse injection sent through actual Windows/Core raw input; not manual physical acceptance");
                         }
-                        if(initial!=null&&active.CurrentDeskId=="focus" &&active.TargetDeskId.Length==0&&(string?)observation["current"]=="focus"&&(long?)observation["revision"]==active.Revision&&(bool?)observation["inputReady"]==true&&ObservedAudio(observation)&&ObservedStorage(observation)&&((JArray?)observation["videos"])?.Any(v=>(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false)==true)
+                        if(initial!=null&&active.CurrentDeskId=="focus" &&active.TargetDeskId.Length==0&&(string?)observation["current"]=="focus"&&(long?)observation["revision"]==active.Revision&&(bool?)observation["inputReady"]==true&&ObservedAudio(observation)&&ObservedStorage(observation)&&ObservedBackground(observation))
                         {final=observation;break;}
                     }
                 }
@@ -202,11 +248,11 @@ internal static class NativeCoreLiveProbe
             }
             events.Add("last Core "+JsonConvert.SerializeObject(active));events.Add("last host "+ReadObservation(playerWindow)?.ToString(Formatting.None));var rawTitle=new StringBuilder(32768);GetWindowText(playerWindow,rawTitle,rawTitle.Capacity);events.Add("last title chars="+rawTitle.Length+", tail="+rawTitle.ToString()[Math.Max(0,rawTitle.Length-70)..]);
             Require(initial!=null&&final!=null,"actual Core native startup/geometry/navigation/commit; "+string.Join("\n",events));
-            Require((int?)final!["frames"]==2&&documents!.SequenceEqual(((JArray)final["documents"]!).Select(v=>v.ToString(Formatting.None)).Order()),"actual scene/shared SDK documents retained across Core commit");
+            Require((int?)final!["frames"]==(lifecycleMedia=="html"?5:2)&&documents!.SequenceEqual(((JArray)final["documents"]!).Select(v=>v.ToString(Formatting.None)).Order()),"actual scene/shared SDK documents retained across Core commit");
             Require(final["frameError"]?.Type==JTokenType.Null,"expected stale capability cancellation is not a failure diagnostic");
             using(var player=Process.GetProcessById(firstPid))Require(Path.GetFullPath(player.MainModule!.FileName).Equals(Path.Combine(coreDirectory,"plugins","webview2","Lively.Player.WebView2.exe"),StringComparison.OrdinalIgnoreCase),"exact deployed Release Player");
             var parent=GetParent(playerWindow);var className=new StringBuilder(128);GetClassName(parent,className,className.Capacity);Require(className.ToString() is "WorkerW" or "Progman","real desktop parent: "+className);
-            Require(ObservedStartup(final),"actual GIF startup observed before desktop on the new document");
+            Require(ObservedStartup(final),"actual "+(lifecycleMedia??"GIF")+" startup observed before desktop on the new document");
             Require(ObservedAudio(final),"actual Core allows declared rendering of scene/shared WebAudio clocks");
             if(systemControls){
                 Require(changedVolumeObserved&&restoredVolumeObserved&&clicksSent==8&&controlDevices!.Commands>=5,"all audio and five owned media intents actually reached Windows");
@@ -221,7 +267,7 @@ internal static class NativeCoreLiveProbe
                 Require(final["nativeEvents"] is JArray nativeValues&&nativeValues.Any(v=>(string?)v["kind"]=="activate"&&(long?)v["inputSequence"]>0)&&nativeValues.Count(v=>(string?)v["type"]=="dext:v3-native-response"&&(bool?)v["inputConsumed"]==true)==1,"one real native completion and one consumed action");
                 events.Add("PASS actual author SDK desk.navigate/current consumer/private native proof/Core commit/accepted receipt/no timer authority/no double default through OS mouse injection (manual physical gate remains)");
             }
-            events.Add("PASS actual production Rust install/Core reverify/native SDK/geometry/GIF startup/decoded video/Core commit/same Player and documents/desktop parent "+(authoredInput?"(author SDK native actions with OS injection)":"(trusted top navigation; not physical input)"));
+            events.Add("PASS actual production Rust install/Core reverify/native SDK/geometry/"+(lifecycleMedia??"GIF") +" startup/decoded background/Core commit/same Player and documents/desktop parent "+(authoredInput?"(author SDK native actions with OS injection)":"(trusted top navigation; not physical input)"));
             var persisted=personal.Read().Rooms[roomId].Storage;Require(persisted.Count==2&&persisted.All(p=>p.Value["state"].GetProperty("owner").GetString()==p.Key&&p.Value["state"].GetProperty("label").GetString()=="\u65e5\u671f"&&p.Value["state"].GetProperty("at").GetString()=="2026-10-03T00:00:00Z"),"actual Core stored separate Unicode/ISO JSON values in both consumer namespaces");
             events.Add("PASS actual SDK storage writes/reads through production Core private authority and isolates two identical keys");
             var coreLog=Directory.EnumerateFiles(Path.Combine(data,"logs"),"*.txt").OrderByDescending(File.GetLastWriteTimeUtc)
@@ -240,14 +286,14 @@ internal static class NativeCoreLiveProbe
                 if(restoredSession.Active&&restoredSession.RoomId==roomId&&restoredSession.PlayerPid>0)
                 {
                     var observation=ReadObservation(FindPlayer(restoredSession.PlayerPid));lastRestartedHost=observation;
-                    if(authoredInput&&!focusedAfterRestart&&(string?)observation?["stage"]=="desktop"){
+                    if((authoredInput||playerRecovery)&&!focusedAfterRestart&&(string?)observation?["stage"]=="desktop"){
                         var foreground=GetForegroundWindow();GetWindowThreadProcessId(foreground,out var foregroundPid);events.Add($"restart foreground before final native initialization: pid={foregroundPid}, class={Class(foreground)}");
                         FocusDesktop();focusedAfterRestart=true;await Task.Delay(150);continue;
                     }
                     if(restoredSession.CurrentDeskId=="focus"&&restoredSession.TargetDeskId.Length==0&&restoredSession.InstallationStamp==stamp&&
                         observation!=null&&(string?)observation["stage"]=="desktop"&&(string?)observation["current"]=="focus"&&(bool?)observation["inputReady"]==true&&
                         (long?)observation["revision"]==restoredSession.Revision&&ObservedAudio(observation)&&ObservedStorage(observation,true)&&((JArray?)observation["documents"])?.Count==2&&
-                        ((JArray?)observation["videos"])?.Any(v=>(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false)==true)
+                        ObservedBackground(observation))
                     {restartedHost=observation;break;}
                 }
                 await Task.Delay(80);
@@ -257,12 +303,114 @@ internal static class NativeCoreLiveProbe
             Require((int?)restartedHost!["nav"]==0&&restartedHost["frameError"]?.Type==JTokenType.Null,"restart restoration requires no navigation driver and has no frame authorization error");
             var nextDocuments=((JArray)restartedHost["documents"]!).Select(v=>v.ToString(Formatting.None)).Order().ToList();
             Require(nextDocuments.All(v=>!documents!.Contains(v)),"new Player owns new SDK documents after restart");
-            Require(ObservedStartup(restartedHost),"new Player replays GIF startup once before restored desktop");
+            Require(ObservedStartup(restartedHost),"new Player replays "+(lifecycleMedia??"GIF")+" startup once before restored desktop");
             Require(ObservedAudio(restartedHost),"actual Core restart releases restored scene/shared AudioContexts");
             Require(ObservedStorage(restartedHost,true),"new SDK documents read the same persisted consumer values without test rewritten data");
             Require(System.Text.Json.JsonSerializer.Serialize(personal.Read().Rooms[roomId].Storage)==System.Text.Json.JsonSerializer.Serialize(persisted),"restart and permission recovery did not overwrite persisted author values");
             events.Add("PASS actual Core restart restores persisted consumer JSON into two new SDK documents");
-            events.Add("PASS actual normal Core restart restores committed focus/same installation with new Player/session/SDK documents/GIF startup/decoded video and no test navigation");
+            events.Add("PASS actual normal Core restart restores committed focus/same installation with new Player/session/SDK documents/"+(lifecycleMedia??"GIF")+" startup/decoded background and no test navigation");
+            if(lifecycleMedia is not null){
+                var commands=new CommandsService.CommandsServiceClient(new NamedPipeChannel(".",Constants.SingleInstance.GrpcPipeServerName));
+                var session=restoredSession!.SessionId;var pid=restoredSession.PlayerPid;var before=(JObject)restartedHost!.DeepClone();
+                var originalPlayer=FindPlayer(pid);var originalParent=GetParent(originalPlayer);Require(GetWindowRect(originalPlayer,out var originalBounds),"desktop bounds before idle");
+                for(var cycle=0;cycle<2;cycle++){
+                    await commands.ScreensaverAsync(new ScreensaverRequest{State=ScreensaverState.Start,FadeIn=false},deadline:DateTime.UtcNow.AddSeconds(5));
+                    var idle=await WaitLifecycle("idle",false);
+                    Require(!idle.Status.Operable&&GetParent(FindPlayer(pid))!=originalParent,"same Player actually presented as native idle");
+                    if(cycle==0){
+                        var acquired=(JObject)idle.Host.DeepClone();
+                        if(lifecycleMedia=="gif"){var moving=await SampleGif();Require(moving.Distinct().Count()>1,"actual GIF screen pixels animate before private pause");events.Add("gif active screen pixels "+string.Join(",",moving));}
+                        await Playback(true);var paused=await WaitLifecycle("idle",true);
+                        Require((bool?)paused.Host["paused"]==true&&paused.Host["videos"] is JArray pausedVideos&&pausedVideos.All(v=>(bool?)v["paused"]==true),"actual private playback barrier pauses all top video nodes");
+
+                        if(lifecycleMedia=="gif"){var frozen=await SampleGif();events.Add("gif paused screen pixels "+string.Join(",",frozen));Require(frozen.Distinct().Count()==1,"actual GIF screen pixels freeze during private pause");}
+                        await Task.Delay(1400);
+                        var held=ReadObservation(FindPlayer(pid));Require(held!=null&&(bool?)held["paused"]==true,"paused renderer retains private barrier receipt");
+                        await Playback(false);var resumed=await WaitLifecycle("idle",false);
+                        Require((bool?)resumed.Host["paused"]==false,"actual private playback resume");
+                        if(lifecycleMedia=="gif"){var moving=await SampleGif();Require(moving.Distinct().Count()>1,"actual GIF screen pixels resume animation");events.Add("PASS actual GIF on-screen pixels animate/freeze/resume across private pause "+string.Join(",",moving));}
+                        if(lifecycleMedia is "video" or "html"){
+                            double Clock(JObject host)=>lifecycleMedia=="video"?(double)((JArray)host["videos"]!).First(v=>(string?)v["consumer"]=="slot.idle")["time"]!:(double)((JArray)host["slots"]!).First(v=>(string?)v[0]=="slot.idle")[1]!["time"]!;
+                            var stoppedAt=Clock(paused.Host);var resumedAt=Clock(resumed.Host);
+                            Require(resumedAt>=stoppedAt-.05&&resumedAt-stoppedAt<.8,"media clock excludes 1400ms paused wall time");
+                            await Task.Delay(700);var progressed=ReadObservation(FindPlayer(pid))!;
+                            Require(Clock(progressed)>resumedAt+.2,"media clock progresses after private resume");
+                            events.Add("PASS "+lifecycleMedia+" actual idle media clock excludes pause duration and progresses after resume");
+                        }
+                        Require(SameDocuments(acquired,resumed.Host)&&SameInstances(acquired,resumed.Host),"idle pause/resume retains all documents and instances");
+                        events.Add("PASS "+lifecycleMedia+" actual Core native idle/private pause/resume retains phase/PID/session/Desk/documents/instances");
+                    }
+                    if(cycle==0){
+                        // Actual Windows movement reaches the screensaver's production
+                        // RawInput wake path; it is not a private stage setter.
+                        var input=new[]{new NativeInput{Value=new NativeUnion{Mouse=new NativeMouse{X=2,Flags=1}}}};
+                        Require(SendInput(1,input,Marshal.SizeOf<NativeInput>())==1,"OS mouse wake");
+                    }else await commands.ScreensaverAsync(new ScreensaverRequest{State=ScreensaverState.Stop},deadline:DateTime.UtcNow.AddSeconds(5));
+                    var awake=await WaitLifecycle("desktop",false);var currentPlayer=FindPlayer(pid);
+                    Require(GetParent(currentPlayer)==originalParent&&GetWindowRect(currentPlayer,out var awakeBounds)&&awakeBounds.Equals(originalBounds),"wake restores original native parent and bounds");
+                    Require(SameDocuments(before,awake.Host)&&((JArray)before["instances"]!).All(v=>((JArray)awake.Host["instances"]!).Any(x=>JToken.DeepEquals(x,v))),"wake retains desktop consumers");
+                    Require(((JArray)awake.Host["stages"]!).Count(v=>(string?)v["stage"]=="starting")==1&&(int?)awake.Host["nav"]==0,"wake does not replay start or navigate");
+                    events.Add("PASS "+lifecycleMedia+" native "+(cycle==0?"OS-input wake":"Core stop")+" restores desktop parent/bounds/same Desk/documents/start count");
+                }
+                async Task<List<uint>> SampleGif(){
+                    var window=FindPlayer(pid);Require(GetWindowRect(window,out var bounds),"GIF window bounds");
+                    var point=new NativePoint{X=(bounds.Left+bounds.Right)/2,Y=(bounds.Top+bounds.Bottom)/2};
+                    GetWindowThreadProcessId(GetAncestor(WindowFromPoint(point),2),out var owner);Require(owner==pid,"GIF screen sample belongs to this owned fullscreen Player");
+                    var colors=new List<uint>();
+                    for(var sample=0;sample<10;sample++){
+                        var dc=GetDC(IntPtr.Zero);Require(dc!=IntPtr.Zero,"screen DC");
+                        try{var color=GetPixel(dc,point.X,point.Y);Require(color!=uint.MaxValue,"screen pixel available");colors.Add(color);}finally{ReleaseDC(IntPtr.Zero,dc);}
+                        await Task.Delay(110);
+                    }
+                    return colors;
+                }
+                async Task Playback(bool paused){var request=new AutomationCommandRequest();request.Args.Add(new[]{"app","--play",paused?"false":"true"});await commands.AutomationCommandAsync(request,deadline:DateTime.UtcNow.AddSeconds(5));}
+                async Task<(RoomSessionStatusResponse Status,JObject Host)> WaitLifecycle(string stage,bool paused){
+                    var end=DateTime.UtcNow.AddSeconds(12);RoomSessionStatusResponse? status=null;JObject? observed=null;
+                    while(DateTime.UtcNow<end){
+                        status=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));observed=ReadObservation(FindPlayer(pid));
+                        Require(!core!.HasExited&&status.SessionId==session&&status.PlayerPid==pid&&status.CurrentDeskId=="focus","lifecycle retains Core/player/session/committed Desk");
+                        if(status.Lifecycle.Stage==stage&&status.Lifecycle.PlaybackPaused==paused&&observed!=null&&(string?)observed["stage"]==stage&&(bool?)observed["paused"]==paused&&PausedPictureVisible(pid)==paused){
+                            if(stage=="desktop"?ObservedBackground(observed):paused||ObservedBackground(observed,"slot.idle")){events.Add(lifecycleMedia+" "+stage+" paused="+paused+" "+observed.ToString(Formatting.None));return(status,observed);}
+                        }
+                        await Task.Delay(80);
+                    }
+                    events.Add("lifecycle timeout "+JsonConvert.SerializeObject(status)+" "+observed?.ToString(Formatting.None));throw new TimeoutException(lifecycleMedia+" "+stage+" pause="+paused);
+                }
+                static bool SameDocuments(JObject a,JObject b)=>JToken.DeepEquals(a["documents"],b["documents"])&&a["slots"]!.All(v=>b["slots"]!.Any(x=>JToken.DeepEquals(x[0],v[0])&&JToken.DeepEquals(x[1]!["documentId"],v[1]!["documentId"])));
+                static bool SameInstances(JObject a,JObject b)=>JToken.DeepEquals(a["instances"],b["instances"]);
+            }
+            if(playerRecovery){
+                var corePid=core!.Id;var deadPid=restoredSession!.PlayerPid;var deadSession=restoredSession.SessionId;
+                var deadWindow=FindPlayer(deadPid);var deadDocuments=nextDocuments;
+                using(var failed=Process.GetProcessById(deadPid)){
+                    Require(Path.GetFullPath(failed.MainModule!.FileName!).Equals(Path.Combine(coreDirectory,"plugins","webview2","Lively.Player.WebView2.exe"),StringComparison.OrdinalIgnoreCase),"fault targets only exact owned ReleasePlayer");
+                    failed.Kill();await failed.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+                }
+                JObject? recovered=null;RoomSessionStatusResponse? recovery=null;var stop=DateTime.UtcNow.AddSeconds(30);
+                while(DateTime.UtcNow<stop){
+                    recovery=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));
+                    if(recovery.Active&&recovery.PlayerPid>0&&recovery.PlayerPid!=deadPid){
+                        FocusDesktop();var observation=ReadObservation(FindPlayer(recovery.PlayerPid));
+                        if(recovery.CurrentDeskId=="focus"&&recovery.TargetDeskId.Length==0&&recovery.InstallationStamp==stamp&&
+                            (string?)observation?["stage"]=="desktop"&&(string?)observation["current"]=="focus"&&(bool?)observation["inputReady"]==true&&
+                            (long?)observation["revision"]==recovery.Revision&&ObservedAudio(observation)&&ObservedStorage(observation,true)&&
+                            ObservedBackground(observation)){recovered=observation;break;}
+                    }
+                    await Task.Delay(80);
+                }
+                events.Add("independent Player recovery Core "+JsonConvert.SerializeObject(recovery));events.Add("independent Player recovery host "+recovered?.ToString(Formatting.None));
+                Require(recovered!=null&&!core.HasExited&&core.Id==corePid&&recovery!.SessionId!=deadSession,"actual Core automatically rebuilds independently failed Player with new session");
+                Require(!IsWindow(deadWindow)&&ObservedStartup(recovered!)&&(int?)recovered!["nav"]==0,"old window gone and new document starts once without navigation driver");
+                var recoveredDocuments=((JArray)recovered["documents"]!).Select(v=>v.ToString(Formatting.None)).ToList();
+                Require(recoveredDocuments.Count==2&&recoveredDocuments.All(v=>!deadDocuments.Contains(v)),"new Player owns fresh SDK documents");
+                Require(System.Text.Json.JsonSerializer.Serialize(personal.Read().Rooms[roomId].Storage)==System.Text.Json.JsonSerializer.Serialize(persisted),"Player recovery retains exact persisted consumer KV");
+                events.Add("PASS independent owned Player fault rebuilds on the same Core with committed focus/same stamp/new PID/session/documents/startup/video/audio/KV");
+                await client!.CloseAllWallpapersAsync(new CloseAllWallpapersRequest(),deadline:DateTime.UtcNow.AddSeconds(10));
+                await Task.Delay(1500);
+                Require((await Wallpapers()).Count==0&&!(await client.GetRoomSessionAsync(new Empty())).Active,"normal close cannot resurrect failed Player");
+                events.Add("PASS normal close retires recovered session and does not rebuild the Player");
+            }
             if(productExit){
                 Require(configurator?.HasExited==false,"native configurator survives ordinary Core restart");
                 events.Add("PASS ordinary Core shutdown and same-installation restart preserve native configurator");
@@ -322,6 +470,11 @@ internal static class NativeCoreLiveProbe
             try
             {
                 if(core!=null&&!core.HasExited)CancelOwnedConfirmation(core.Id);
+                if(lifecycleMedia is not null&&core!=null&&!core.HasExited){
+                    var commands=new CommandsService.CommandsServiceClient(new NamedPipeChannel(".",Constants.SingleInstance.GrpcPipeServerName));
+                    await commands.ScreensaverAsync(new ScreensaverRequest{State=ScreensaverState.Stop},deadline:DateTime.UtcNow.AddSeconds(5));
+                    var play=new AutomationCommandRequest();play.Args.Add(new[]{"app","--play","true"});await commands.AutomationCommandAsync(play,deadline:DateTime.UtcNow.AddSeconds(5));
+                }
                 if(productExited){core?.Dispose();core=null;client=null;events.Add("whole-product exit leaves ordinary Windows desktop; original saved layout/data restored below without restarting Dext");}
                 if(applied&&client!=null&&original!=null)
                 {
@@ -387,10 +540,15 @@ internal static class NativeCoreLiveProbe
         static bool ObservedStorageDenied(JObject observation)=>observation["storage"] is JArray values&&values.Count==2&&values.All(v=>v is JArray pair&&pair[1] is JObject storage&&
             (int?)storage["denied"]>0&&((string?)storage["lastError"] is "denied" or "missingPermission"));
         static bool ObservedAudio(JObject observation)=>observation["audio"] is JArray values&&values.Count==2&&values.All(v=>v is JArray pair&&pair.Count==2&&pair[1] is JObject audio&&(string?)audio["state"]=="running"&&(double?)audio["time"]>0.05);
-        static bool ObservedStartup(JObject observation)
+        bool ObservedBackground(JObject observation,string consumer="slot.background.focus"){
+            if(lifecycleMedia is "image" or "gif")return observation["images"] is JArray images&&images.Any(v=>(string?)v["consumer"]==consumer&&(int?)v["width"]>0&&(bool?)v["hidden"]==false);
+            if(lifecycleMedia=="html")return observation["slots"] is JArray slots&&slots.Any(v=>(string?)v[0]==consumer&&(string?)v[1]?["state"]=="running"&&(double?)v[1]?["time"]>0.05);
+            return observation["videos"] is JArray videos&&videos.Any(v=>(string?)v["consumer"]==consumer&&(bool?)v["hidden"]==false&&(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false);
+        }
+        bool ObservedStartup(JObject observation)
         {
             var stages=(JArray?)observation["stages"];
-            return stages?.Count==2&&(string?)stages[0]["stage"]=="starting"&&(bool?)stages[0]["gif"]==true&&
+            return stages?.Count==2&&(string?)stages[0]["stage"]=="starting"&&(lifecycleMedia is null?(bool?)stages[0]["gif"]==true:(bool?)stages[0]["mounted"]==true)&&
                 (string?)stages[1]["stage"]=="desktop"&&(double?)stages[1]["at"]-(double?)stages[0]["at"]>=400;
         }
         static string ReadSharedLog(string path){using var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite);using var reader=new StreamReader(stream);return reader.ReadToEnd();}
@@ -421,5 +579,11 @@ internal static class NativeCoreLiveProbe
     static IntPtr FindPlayer(int pid){IntPtr result=IntPtr.Zero;EnumChildWindows(FindWindow("Progman",null),(window,_)=>{GetWindowThreadProcessId(window,out var owner);if(owner==pid&&ReadObservation(window)!=null){result=window;return false;}return true;},IntPtr.Zero);
         if(result==IntPtr.Zero)EnumChildWindows(IntPtr.Zero,(window,_)=>{GetWindowThreadProcessId(window,out var owner);if(owner==pid&&ReadObservation(window)!=null){result=window;return false;}
             EnumChildWindows(window,(child,_)=>{GetWindowThreadProcessId(child,out var childOwner);if(childOwner==pid&&ReadObservation(child)!=null){result=child;return false;}return true;},IntPtr.Zero);return result==IntPtr.Zero;},IntPtr.Zero);return result;}
+    static bool PausedPictureVisible(int pid){
+        var root=FindPlayer(pid);if(root==IntPtr.Zero)return false;var found=false;
+        EnumChildWindows(root,(window,_)=>{var text=new StringBuilder(80);GetWindowText(window,text,text.Capacity);
+            if(IsWindowVisible(window)&&text.ToString()=="Dext native pause frame"){found=true;return false;}return true;},IntPtr.Zero);
+        return found;
+    }
     static JObject? ReadObservation(IntPtr window){if(window==IntPtr.Zero)return null;var title=new StringBuilder(32768);GetWindowText(window,title,title.Capacity);const string prefix="DEXT_V3_LIVE:";if(!title.ToString().StartsWith(prefix,StringComparison.Ordinal))return null;try{return JObject.Parse(title.ToString()[prefix.Length..]);}catch(JsonException){return null;}}
 }

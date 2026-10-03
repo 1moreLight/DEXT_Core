@@ -249,5 +249,11 @@
 
 
 | #192 | 控制探针并发前置/计时接口/标题容量/参数和真实进程名核对 | [toolchain](errors/toolchain.md) |
-| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |\n
+| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |
+
 | #194 | 退出夹具读取未完成展示的确认窗、覆盖窗口命中及恢复异常掩盖主失败 | [toolchain](errors/toolchain.md) |
+
+| #195 | 生命周期探针误用协调器角色/无存储夹具、未暴露桌面与非活动HTML done计时 | [toolchain](errors/toolchain.md) |
+| #196 | Player退出只解绑而不退役会话会覆盖已提交Desk；主动关闭与故障恢复须分开 | [backend](errors/backend.md) |
+
+| #197 | GIF状态暂停并非画面冻结；原生WebView暂停需要可见性与展示完成屏障 | [renderer](errors/renderer.md) |

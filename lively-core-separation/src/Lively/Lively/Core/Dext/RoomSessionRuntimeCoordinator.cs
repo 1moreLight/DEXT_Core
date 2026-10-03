@@ -8,7 +8,7 @@ public interface IRoomSessionRuntimeCoordinator
     RoomSessionSnapshot? CurrentSnapshot { get; }
     int ActivePlayerPid { get; }
     void OnPageReady(WebWebView2 player);
-    void OnPlayerExited(int? pid);
+    bool OnPlayerExited(int? pid);
     RoomNativeIdleResult EnterNativeIdle();
     void ExitNativeIdle();
     bool IsNativeIdlePresented { get; }
@@ -87,7 +87,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
                 if (player.RefreshRoomSession() == RoomProtocolStatus.Accepted) return;
             }
             player.DetachRoomSession();
-            if (activePlayerPid != 0) authority.Unbind(activePlayerPid);
+            if (activePlayerPid != 0) { gateway.Retire(activeSessionId); authority.Unbind(activePlayerPid); }
             activePlayerPid = 0;
             activePlayer = null;
             activeNativeRoom = false;
@@ -177,21 +177,25 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
         ExitNativeIdle();
     }
 
-    public void OnPlayerExited(int? pid)
+    public bool OnPlayerExited(int? pid)
     {
-        if (pid is not { } exitedPid) return;
+        if (pid is not { } exitedPid) return false;
+        var wasNative = false;
         lock (gate)
         {
-            authority.Unbind(exitedPid);
             if (activePlayerPid == exitedPid)
             {
+                wasNative = activeNativeRoom;
+                gateway.Retire(activeSessionId);
                 activePlayerPid = 0;
                 activePlayer = null;
                 activeNativeRoom = false;
                 activeDisplayId = null;
                 activeInstallationStamp = null;
             }
+            authority.Unbind(exitedPid);
         }
         ClearExitedNativeIdle(exitedPid);
+        return wasNative;
     }
 }

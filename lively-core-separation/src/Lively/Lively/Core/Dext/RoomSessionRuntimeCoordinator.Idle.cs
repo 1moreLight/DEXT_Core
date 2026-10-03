@@ -98,7 +98,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     {
         if (window.TryRestore()) return;
         Logger.Error("v3 idle desktop restoration failed; hidden owned Player will close");
-        player.Terminate();
+        player.TerminateAfterNativeFailure();
     }
     private void QueueIdleRestoreIfChanged(int pid)
     {

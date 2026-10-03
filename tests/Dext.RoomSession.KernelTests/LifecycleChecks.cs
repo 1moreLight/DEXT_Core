@@ -144,6 +144,25 @@ internal static class LifecycleChecks
             Require(restored.TryRestore("room", ["home", "work"], out var snapshot, Policy(true)), "same installation restores");
             Require(snapshot is { CurrentDeskId: "work", IsOperable: false } && snapshot.Lifecycle.Stage == RoomLifecycleStage.Starting, "new document gets start but keeps committed Desk");
         });
+        check("player retirement preserves committed checkpoint and discards in-flight state in the same kernel", () =>
+        {
+            var store = new LifecycleStore(); var now = DateTimeOffset.UtcNow;
+            using var kernel = new RoomSessionKernel(store, clock: () => now);
+            var first = kernel.Start("room", ["home", "work", "other"], "home", Policy());
+            var committed = kernel.Request(first.SessionId, "work").Snapshot!;
+            Require(kernel.Complete(first.SessionId, committed.TransitionId!.Value), "commit work");
+            var pending = kernel.Request(first.SessionId, "home").Snapshot!;
+            kernel.Request(first.SessionId, "other");
+            var checkpoint = store.Current;
+            Require(!kernel.Retire(Guid.NewGuid()) && kernel.Snapshot!.TargetDeskId == "home", "late unrelated exit cannot retire current");
+            Require(kernel.Retire(first.SessionId) && kernel.Snapshot is null && store.Current == checkpoint, "retire without touching saved checkpoint");
+            now = now.AddMinutes(1);
+            Require(!kernel.ExpireTransition() && !kernel.Complete(first.SessionId, pending.TransitionId!.Value), "no late timeout or completion commits after exit");
+            Require(kernel.TryRestore("room", ["home", "work", "other"], out var restored, Policy(true)), "same kernel can restore");
+            Require(restored!.CurrentDeskId == "work" && restored.SessionId != first.SessionId && restored.Revision > pending.Revision &&
+                restored.TargetDeskId is null && restored.QueuedDeskId is null && restored.Lifecycle.Stage == RoomLifecycleStage.Starting, "fresh document restores only committed Desk");
+            Require(!kernel.Retire(first.SessionId) && kernel.Snapshot == restored && store.Current == checkpoint, "old exit cannot retire replacement");
+        });
         check("installation watchdog survives ten second animations and uses per-session policy", () =>
         {
             var now = DateTimeOffset.UtcNow;

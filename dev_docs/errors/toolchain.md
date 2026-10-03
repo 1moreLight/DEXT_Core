@@ -377,3 +377,9 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 - 后续保留primary exception并在finally仅取消本测试Core拥有的确认。仅IsWindowVisible/默认No还不足以表示真实鼠标已命中：实际WindowFromPoint命中Chrome_RenderWidgetHostHWND的覆盖窗口，取消未到达Dext。等待真实No/Yes按钮的OS命中PID（有界3s），不把确认强行前置、不改生产输入策略；此后实际No保持、Yes整套正常退出均通过。
 - 完整退出后的“仅为恢复再次启动Core”额外检查遇异步原壁纸恢复未完成；该辅助Core已正常退出，文件备份精确恢复，失败历史保留。夹具改完整退出后直接恢复原保存文件并保持普通Windows桌面；后续常规start再检查原v2身份。No/Yes局部通过不冒充整轮恢复通过。
 - 最后普通Core/配置器正常关闭与hash比较已经成功，脚本末尾新一行单独接*>导致只写日志的后缀报错。不能重跑已完成的关闭动作；改只读重新核验四文件和零残留并用完整脚本块重定向，native-exit-final-cleanup.log通过。
+
+## #195 生命周期探针要使用真实角色、持久化夹具与活动时间
+- 2026-10-03，同Kernel retire测试先误用coordinator导航/完成，随后默认TransientCheckpointStore永不Read，导致新Restore为Rejected；改真实DesktopPlayer lease与独立MemoryCheckpointStore，不放宽生产角色或Restore条件。不存在路径/错误接口不计生产行为RED。
+- 独立Player探针前两轮在Core正常重启后被覆盖应用保持前台，KV按生产规则拒绝，没走到Kill；保留两轮失败及finally原数据恢复证据，不计独立故障RED。复用OS鼠标作者导航和真实showdesktop曝光后整轮通过，不降低权限或前台条件。
+- 四媒体夹具先无条件创建slot.html但只在HTML声明它，被生产安装器严格inventory拒绝；仅HTML创建文件后通过。HTML初版setTimeout(done)在非活动暂停期到期，生产notOperable正确拒绝且夹具吞掉结果；改实际AudioContext活动时钟+当前生命周期并记录完成/错误、有限间隔重试，active-time整轮通过。不是生产done放行变更。
+- Player私有暂停后JS interval可能停止，必须同步包装生产dextNativePlaybackChanged写观测屏障；不得用暂停后的新interval标题当暂停证据。GIF实际动画冻结单独用owned全屏Player中心OS像素采样，naturalWidth或500ms预算只能证明解码/预算，不能证明画面冻结。

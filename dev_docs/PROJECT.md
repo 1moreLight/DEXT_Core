@@ -231,3 +231,7 @@ Core独占新文档启动入口；官方Player仅可提交当前生命周期修�
 原生v3消费者KV按Room副本UUID与稳定consumer ID隔离，存入Core个人快照，不写作品或安装摘要。storage.read/write分别核验当前安装授权、会话修订和活动/暂停/锁屏/前台；缺键get返回null，set(null)保存JSON null。每值序列化32KiB、深度24、每容器4096项；每消费者128键/64KiB，既有个人文档总1MiB。提交增加个人revision，旧输入票据随之失效。
 
 准备在个人快照锁与gateway非阻塞当前上下文边界完成，锁内不调用作者/系统代码；成功准备的写入在个人锁保护下原子发布，发布失败保留旧字节并返回storageUnavailable，期间发生的后续撤销影响后续操作。旧formatVersion1未写storage字段时默认空，显式null/损坏不能清空。另存仍按已确认范围只复制按钮绑定/皮肤覆盖，KV及授权默认空；删除副本删除其KV并保留全局目标。本次为Core基础，Player/SDK私有消息接线继续。
+
+### 2026-10-03：原生暂停保留当前WebView静帧与有界恢复
+原生v3暂停不能仅靠img解码状态或旧GPU debugger保证GIF画面冻结。Player在当前媒体屏障后CapturePreview自己的WebView到内存Bitmap，显示原生静帧后隐藏WebView并TrySuspendAsync；同WebView/文档/实例持续，恢复按最新Core事实和媒体策略后才显示原WebView。图像不落盘，作者无截图能力；两项异步原生操作各三秒有界并检查当前播放意图。Microsoft说明IsVisible=false是挂起前提，且挂起best effort：[TrySuspendAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)、[CapturePreviewAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.capturepreviewasync)。
+Core区分主动关闭与当前原生Player故障；故障私有Retire保留checkpoint/KV、撤销旧文档权限，经加载锁重查原对象后正常重建新PID/session，三十秒最多三次。退出Core/产品、切换Room后的迟到恢复与主动关闭不重建，失败不把恢复布局写成空。实际锁屏和窗口还原故障仍列最终验收。

@@ -1138,7 +1138,10 @@ namespace Lively.Player.WebView2
             var revision = ++playbackRevision;
             try
             {
+                if (nativeResources != null) await ResumeNativeView();
+                if (!isPaused || revision != playbackRevision) return;
                 if (nativeFrameMedia != null) await nativeFrameMedia.SetSuspendedAsync(true);
+                if (!isPaused || revision != playbackRevision) return;
                 await NotifyNativePlayback(true, revision);
                 if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPauseMedia();
                 if (startArgs.PauseEvent)
@@ -1147,13 +1150,17 @@ namespace Lively.Player.WebView2
             }
             finally
             {
-                if (isPaused && revision == playbackRevision) SuspendRenderingSubProcess();
+                if (isPaused && revision == playbackRevision)
+                {
+                    if (nativeResources != null) await FreezeNativeView(revision);
+                    else SuspendRenderingSubProcess();
+                }
             }
         }
 
         private async Task HandleResume()
         {
-            ResumeRenderingSubProcess();
+            if (nativeResources == null) ResumeRenderingSubProcess();
             // Playback polls can repeat resume while the first async media call
             // is pending. Keep its revision and completion responsible for replay.
             if (!isPaused) return;
@@ -1161,6 +1168,8 @@ namespace Lively.Player.WebView2
             var revision = ++playbackRevision;
             try
             {
+                if (nativeResources != null) await ResumeNativeView();
+                if (isPaused || revision != playbackRevision) return;
                 // Native v3 media belongs to the retained, phase-aware host;
                 // playing every DOM media node could revive an inactive phase.
                 if (nativeResources == null && (startArgs.PauseWebMedia || isVideoStream)) await webView.TryPlayMedia();
@@ -1178,6 +1187,7 @@ namespace Lively.Player.WebView2
                     foreach (var message in roomRuntime.Replay()) PostRuntimeMessage(message);
                     await NotifyNativePlayback(false, revision);
                     if (!isPaused && revision == playbackRevision && nativeFrameMedia != null) await nativeFrameMedia.SetSuspendedAsync(false);
+                    if (nativeResources != null) RevealNativeView(revision);
                 }
             }
         }
@@ -1199,6 +1209,7 @@ namespace Lively.Player.WebView2
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            DisposeNativePausedPicture();
             nativeFrameMedia?.Dispose();
             nativeResources?.Dispose();
             roomRuntime.Invalidate("closed");

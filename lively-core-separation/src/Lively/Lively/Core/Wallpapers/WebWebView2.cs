@@ -75,6 +75,8 @@ namespace Lively.Core.Wallpapers
         public string LivelyPropertyCopyPath { get; }
 
         public bool IsExited { get; private set; }
+        private int closeRequested;
+        internal bool CloseRequested => Volatile.Read(ref closeRequested) != 0;
 
         public WebWebView2(string path,
             LibraryModel model,
@@ -141,6 +143,7 @@ namespace Lively.Core.Wallpapers
 
         public void Close()
         {
+            Interlocked.Exchange(ref closeRequested, 1);
             if (IsExited)
                 return;
 
@@ -849,6 +852,16 @@ namespace Lively.Core.Wallpapers
         }
 
         public void Terminate()
+        {
+            Interlocked.Exchange(ref closeRequested, 1);
+            TerminateProcess();
+        }
+
+        // A verified native presentation failure is a fault, so the Core may
+        // rebuild it. An earlier explicit Close/Terminate still wins.
+        internal void TerminateAfterNativeFailure() => TerminateProcess();
+
+        private void TerminateProcess()
         {
             if (IsExited)
                 return;

@@ -78,6 +78,31 @@ internal static class RuntimeBridgeChecks
                 bridge!.Dispose();
                 Require(revoked == 1, "later disposal does not repeat revocation");
             }));
+        check("trusted retirement revokes the old document and restores the same installation for a new Player",()=>NativeInstallationChecks.WithCopy(root=>{
+            using var f=new Fixture(root,new MemoryCheckpointStore());var revoked=0;
+            Require(RoomSessionPlayerBridge.Connect(f.Gateway,f.Player,f.RoomId,_=>{},out var oldBridge,(_,_)=>{},()=>revoked++)==RoomProtocolStatus.Accepted,"old document connected");
+            using(oldBridge){
+                var desks=f.Authority.Admit(f.Core,new(1,RoomClientRole.Coordinator,f.RoomId))!.Installation.DeskIds;
+                var target=desks.First(d=>d!=f.Kernel.Snapshot!.CurrentDeskId);
+                var view=f.Gateway.Open(f.Player,new(1,RoomClientRole.DesktopPlayer,f.RoomId)).ConnectionId!.Value;
+                var request=f.Gateway.Request(view,f.Player,f.Session,target);
+                Require(request.Status==RoomProtocolStatus.Accepted && request.Snapshot is not null,"request "+request.Status);
+                if(request.Snapshot!.TransitionId is{} transition)Require(f.Gateway.Complete(view,f.Player,f.Session,transition).Status==RoomProtocolStatus.Accepted,"committed Desk");
+                Require(f.Kernel.Snapshot!.CurrentDeskId==target,"target committed");
+
+                Require(f.Gateway.Retire(f.Session) && revoked==1 && f.Kernel.Snapshot is null,"one revocation and retirement");
+                Require(oldBridge!.Read().Status!=RoomProtocolStatus.Accepted && f.Gateway.Start(f.Control,f.Core).Status!=RoomProtocolStatus.Accepted,"old connections cannot revive session");
+                f.Authority.Unbind(7123);Require(f.Authority.Bind(root,8123)!=null,"new PID verifies same install");
+                var control=f.Gateway.Open(f.Core,new(1,RoomClientRole.Coordinator,f.RoomId)).ConnectionId!.Value;
+                var result=f.Gateway.Restore(control,f.Core);Require(result.Status==RoomProtocolStatus.Accepted && result.Snapshot is not null,"restore "+result.Status);
+                var restored=result.Snapshot!;
+                Require(restored.CurrentDeskId==target && restored.SessionId!=f.Session,"committed Desk and new session");
+                Require(!f.Gateway.Retire(f.Session) && f.Kernel.Snapshot==restored,"late old exit does not retire new document");
+                Require(RoomSessionPlayerBridge.Connect(f.Gateway,new("player-process:8123"),f.RoomId,_=>{},out var next)==RoomProtocolStatus.Accepted,"replacement attaches");
+                next!.Dispose();
+            }
+            Require(revoked==1,"old disposal cannot repeat revocation");
+        }));
         check("session stopped during native initialization cannot finish attaching", () => NativeInstallationChecks.WithCopy(root =>
         {
             using var f = new Fixture(root); var revoked = 0; var snapshots = 0;
@@ -113,13 +138,14 @@ internal static class RuntimeBridgeChecks
     private sealed class Fixture : IDisposable
     {
         public readonly InstalledRoomSessionAuthority Authority = new();
-        public readonly RoomSessionKernel Kernel = new();
+        public readonly RoomSessionKernel Kernel;
         public readonly RoomSessionPeer Core = new("core-runtime"), Player = new("player-process:7123");
         public readonly RoomSessionProtocolGateway Gateway;
         public readonly string RoomId;
         public readonly Guid Control, Session;
-        public Fixture(string root)
+        public Fixture(string root,IRoomSessionCheckpointStore? store=null)
         {
+            Kernel=new(store);
             RoomId = Authority.Bind(root, 7123)!.RoomId;
             Gateway = new(Kernel, Authority);
             Control = Gateway.Open(Core, new RoomSessionHello(1, RoomClientRole.Coordinator, RoomId)).ConnectionId!.Value;

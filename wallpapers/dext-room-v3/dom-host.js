@@ -96,7 +96,7 @@
         if(!record){const element=document.createElement('button');element.className='dext-v3-icon';element.type='button';element.textContent=(icon.glyph||'◇')+'\n'+(icon.label||icon.id);element.setAttribute('aria-label',icon.label||icon.id);
           // Core native completion owns official activation; DOM click alone has no authority.
           rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
-        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];record.element.hidden=![snapshot.currentDeskId,snapshot.targetDeskId].includes(desk.id)||snapshot.lifecycle.stage!=='desktop';
+        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];record.element.hidden=![snapshot.currentDeskId,snapshot.targetDeskId].includes(desk.id)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
         record.element.style.left=(32+icon.x*112)+'px';record.element.style.top=(32+icon.y*120)+'px';transform(record.element,32+icon.x*112,32+icon.y*120,group.matrix);record.element.style.opacity=String(group.opacity);
       }
       media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport});
@@ -116,7 +116,7 @@
         if(consumer.startsWith('component.')&&!desks.get(activeDesk()).components.includes(consumer.slice(10))||consumer.startsWith('slot.background.')&&consumer.slice(16)!==activeDesk())continue;
         for(const region of regions){const button=normalized(consumer,region.buttonId,region,visualGroups[classification(record.definition)],index++);if(button)buttons.push(button);}
       }
-      for(const record of icons.values())if(record.deskId===activeDesk()&&!record.element.hidden&&!defaultMoving()){const b=normalized('official',record.icon.buttonId,{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104},visualGroups[snapshot.targetDeskId?'target':'shared'],index++);if(b&&!buttons.some(v=>v.consumer===b.consumer&&v.button===b.button))buttons.push(b);}
+      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()&&!record.element.hidden&&!defaultMoving()){const b=normalized('official',record.icon.buttonId,{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104},visualGroups[snapshot.targetDeskId?'target':'shared'],index++);if(b&&!buttons.some(v=>v.consumer===b.consumer&&v.button===b.button))buttons.push(b);}
       const layer=consumer=>consumer==='official'?40:consumer.startsWith('slot.start')||consumer.startsWith('slot.idle')?80:
         consumer==='scene'?20:records.size&&[...records.values()].find(r=>r.definition.consumerId===consumer)?.definition.kind==='dock'?50:consumer.startsWith('component.')?30:0;
       return buttons.sort((a,b)=>layer(b.consumer)-layer(a.consumer));

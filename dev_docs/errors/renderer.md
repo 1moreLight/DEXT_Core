@@ -601,3 +601,10 @@ Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿�
 ## #182 私有JSON回执要避开继承toJSON（2026-10-03）
 
 WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。普通私有receipt原先可让作者看到documentNonce/sequence甚至伪造settled=true，绕过异步挂起屏障。生产RED确实拦截一次。receipt改用捕获Object.create(null)并写自身字段，作者原型方法无参与；生产组合116/116及实际Player持续安装恶意Object.toJSON后的拦截次数0。公开JSON可按作者行为处理，私有执行参数/回执不能含作者可接管的原型序列化路径。
+
+## #197 GIF暂停必须验证真实画面，WebView睡眠与静帧各有边界
+- 2026-10-03，task4-lifecycle-gif-visual实际Core/ReleasePlayer中原生暂停receipt为true但owned全屏Player中心OS像素仍连续变化。GIF是img，media-host并不控制它；旧GPU debugger调用不保证冻结。不能由自然尺寸或start预算宣称GIF画面已暂停。
+- Native Player在媒体/官方宿主暂停屏障后CapturePreview当前WebView到一张内存Bitmap，以原生PictureBox显示，隐藏WebView后TrySuspendAsync；使用三秒有界等待，当前代次失败正常关闭自己的Player，交由Core有界故障恢复。resume先CoreWebView2.Resume、最新Core事实及媒体策略，再显示原WebView并释放Bitmap。串行渲染操作与playbackRevision拒绝迟到步骤。作者没有截图入口，图像不落盘。
+- 第一次修复重测仍过早：私有JS paused receipt早于异步静帧完成，立即采样可能跨越准备期。探针须等待本Player实际可见的原生静帧窗口；task4-lifecycle-gif-barrier完整通过，播放/暂停/恢复10次OS中心像素分别变化/单色/变化，同文档/实例。此为Windows采样自动证明，实际锁屏/多DPI/用户视觉门槛仍最终集中验收。
+- 新Player文件使用显式Compile列表与C#8；忘加文件/使用文件范围namespace的两次编译错误分别纠正，不把它们计生产RED。不要更改产品语言版本来迎合新文件语法。
+- WebView官方IsVisible=false要求与best-effort说明：[TrySuspendAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)。[HTML Canvas规范](https://html.spec.whatwg.org/multipage/canvas.html)的drawImage针对animated img仅取默认/首帧，不能拿它伪造“当前GIF帧”的冻结；使用本WebView的CapturePreview。

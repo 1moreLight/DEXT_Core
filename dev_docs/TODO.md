@@ -1335,3 +1335,17 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 原生退出最终整轮实机：最终native-exit-core-live-final 13项PASS；正式Rust安装/实际Core/ReleasePlayer/SDK/OS鼠标中No取消保持Core/Player/configurator，Yes默认否确认后四进程正常退出、壁纸窗口消失。无输入exit timer拒绝；普通Core关闭/同副本重启保留配置器。最终finally原布局/settings/checkpoint/personal字节或缺失状态及用户Room哈希恢复；不代填物理输入/DPI人工验收。
 - [x] 最终完整build→常规start/身份/关闭：Core74912/Player27284/Watchdog27548/config32948，日志20261003_182449.txt；原v2 inactive。配置器为本worktree所属D共享缓存，identity脚本OTHER/exit1，路径独立核对，不宣称全脚本OK。普通Core退出保留配置器，随后正常关本配置器窗口，start watcher62965终止exit0；原四文件SHA256/缺失状态保持。最后检查DextProcesses/DevListeners/ResourceCacheFiles/NativeFixtureDirectories全部0。
 - [ ] 下一接续为Task4：完整四媒体start/idle/私有暂停/锁屏/wake与独立Player故障重建；再个人布局/占用/移动与精确命中/遮挡/多图标/焦点，最终一次整体P5审查。16项开发就绪仍1/16，7项集中人工步骤保留，当前P5仍开发中，不中途合并。
+
+- [ ] Task4完整媒体生命周期与Player故障恢复（BASEb91b0d2，2026-10-03）：一句目标是image/video/gif/localHTML在start/desktop/idle/私有暂停/锁屏/wake组合中按Core状态运行，独立Player故障后正常重建同安装且保留已提交Desk/KV、新文档/新session拒绝旧输入和完成。先核对生产入口并写行为RED，修复必要缺口，再实际Core/ReleasePlayer/SDK与OS注入验证，finally恢复原文件/窗口/鼠标且保持Dext退出；不把私有锁屏事实注入计为实际Windows锁屏、不锁用户账户。单轮代理只读映射，根集中编辑/提交；全Task4个人布局/移动/精确命中、16项就绪1/16和最终7项人工门槛保持，最终集中验收前不合并。
+
+- [x] Task4首批生产缺口已按RED/GREEN修复：无idle桌面图标保留但官方输入几何仍限desktop；Kernel/Core私有Retire保留checkpoint、清易失会话/转场/队列并撤销旧连接/订阅。内核23/23、协议87/87；新协议夹具先误用coordinator导航/默认无存储Kernel，修正真实view与MemoryCheckpointStore后通过，未放宽生产角色。
+- [x] 独立Player故障实机：task4-recovery-exposed整轮通过；OS鼠标→作者SDK提交focus后正常Core重启，再只Kill已核对绝对路径的本轮ReleasePlayer；同Core自动新PID/session/SDK文档恢复focus/stamp/原KV及start/video/audio。主动CloseAll不重生。finally原四文件字节/不存在状态、用户Room及临时showdesktop窗口旗标/前台/鼠标恢复、Core正常退出。前两份未暴露真实桌面的夹具停在重启KV前台拒绝，失败证据保留，不计故障重建RED。
+- [x] 四媒体生命周期首轮image实机通过：task4-lifecycle-image-final；实际Core预暂停start不消耗900ms非活动墙钟、正常启动/同安装Core重启，然后同Player native idle→私有暂停/恢复→OS鼠标wake及再次idle→Core stop，Desk/会话/文档/实例/start次数及原父窗/边界保持。锁屏仅行为测试，不锁账户、不代填真实Windows锁屏人工门槛；GIF动画冻结仍待视觉人工证据。
+
+- [x] Task4补证发现真实GIF问题：task4-lifecycle-gif-visual中owned全屏Player中心OS像素暂停期间仍变化，状态/解码门槛不能代表视觉冻结；finally原数据/桌面恢复。具体修复方案：原生Player暂停先完成媒体/宿主屏障，再只抓当前WebView内存帧、显示原生静帧并隐藏WebView，使用官方TrySuspendAsync；resume先恢复WebView执行并投递最新Core事实/媒体策略，最后才显示原WebView并释放图像。保持同文档/实例，异步步骤核对playbackRevision、渲染操作串行，另补真实GIF像素与HTML/视频时钟/已有原生媒体策略实机。
+
+- [x] Task4四媒体最新实机：task4-lifecycle-image/video/html-suspend与gif-barrier整轮通过，预暂停start/恢复/同副本Core重启/两轮同文档idle/私有暂停/OS唤醒或Core stop/原父窗边界恢复；GIF实际owned Player十次像素变化/固定/变化，视频与HTML AudioContext排除暂停墙钟后继续。同文档/实例/start次数保留，不填实际锁屏/物理DPI。
+- [x] Native Player暂停修复：当前WebView内存静帧、隐藏后官方TrySuspendAsync、恢复先最新事实与媒体策略再显示；串行操作/代次检查/各三秒边界/失败关闭当前Player，图像不落盘。生产JS143/143、Kernel23/23、Protocol87/87、Actions185/185；task4-verified-build成功，实际ReleasePlayer媒体wire通过（Core仍fixture），最新实际Core退出十三PASS。四媒体/故障恢复探针均finally恢复原文件/用户Room/窗口/前台/鼠标，Core退出。
+- [ ] 接续Task4个人布局：先私有Core个人覆盖模型与原子保存，固定官方宿主get/save、编辑拖动/占用非法落点回原位、视口临时移位缩小不写盘；之后移动/精确命中/遮挡/多图标/受控焦点。动代码前补当前分支计划与独立验收卡；最终一次整体P5审查、七项集中人工/十六项范围不减，开发就绪1/16，不中途合并。
+
+- 2026-10-03 Task4常规启动复核：Core121280/Player68580/Watchdog114424/config99916，日志20261003_192301.txt；原v2会话inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际绝对路径已独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher95129结束exit0，原四文件SHA256/缺失状态保持；最终DextProcesses/DevListeners/NativeFixtureDirectories均0，保持Dext退出。

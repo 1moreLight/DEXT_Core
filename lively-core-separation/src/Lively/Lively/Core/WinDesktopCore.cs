@@ -39,7 +39,8 @@ namespace Lively.Core
         public ReadOnlyCollection<IWallpaper> Wallpapers => wallpapers.AsReadOnly();
         private IntPtr workerW, progman, shellDLL_DefView, original_WorkerW;
         public IntPtr DesktopWorkerW => workerW;
-        private bool disposedValue;
+        private volatile bool disposedValue;
+        private readonly Queue<DateTimeOffset> nativePlayerRecoveryAttempts = new();
         private bool isRaisedDesktopWithLayeredShellView;
         private readonly List<WallpaperLayoutModel> wallpapersDisconnected = [];
 
@@ -272,12 +273,32 @@ namespace Lively.Core
         /// <summary>
         /// Sets the given wallpaper based on layout usersettings.
         /// </summary>
-        public async Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display)
+        public Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display) =>
+            SetWallpaperAsync(wallpaper, display, null);
+
+        private async Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display, WebWebView2 expectedFailed)
         {
             await semaphoreSlimWallpaperLoadingLock.WaitAsync();
 
             try
             {
+                if (disposedValue || App.IsProductExiting) return;
+                if (expectedFailed is not null)
+                {
+                    // Recheck after the loading lock: a queued recovery must not
+                    // replace a Room the user selected while that lock was busy.
+                    if (!wallpapers.Contains(expectedFailed) || !expectedFailed.IsExited || expectedFailed.CloseRequested) return;
+                    var now = DateTimeOffset.UtcNow;
+                    while (nativePlayerRecoveryAttempts.TryPeek(out var at) && now - at > TimeSpan.FromSeconds(30))
+                        nativePlayerRecoveryAttempts.Dequeue();
+                    if (nativePlayerRecoveryAttempts.Count >= 3)
+                    {
+                        Logger.Error("v3 Player repeatedly failed; automatic recovery paused until a later attempt");
+                        return;
+                    }
+                    nativePlayerRecoveryAttempts.Enqueue(now);
+                    Logger.Info($"v3 recovering unexpectedly exited Player | oldPid={expectedFailed.Pid}");
+                }
                 Logger.Info($"Setting wallpaper: {wallpaper.Title} | {wallpaper.FilePath}");
 
                 // Verify file exists if outside wallpaper install folder
@@ -393,7 +414,7 @@ namespace Lively.Core
                 {
                     Logger.Error(ex1);
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex1.Message));
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -404,7 +425,7 @@ namespace Lively.Core
                         WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex2.Message));
                     else
                         WallpaperError?.Invoke(this, ex2);
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -412,7 +433,7 @@ namespace Lively.Core
                 {
                     Logger.Error(ex3);
                     WallpaperError?.Invoke(this, ex3);
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -430,8 +451,15 @@ namespace Lively.Core
 
         private void Wallpaper_Exited(object sender, EventArgs e)
         {
-            if (sender is WebWebView2 webWallpaper)
-                roomSessionRuntime.OnPlayerExited(webWallpaper.Pid);
+            if (sender is WebWebView2 webWallpaper &&
+                roomSessionRuntime.OnPlayerExited(webWallpaper.Pid) && webWallpaper.IsLoaded && !webWallpaper.CloseRequested)
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    try { await SetWallpaperAsync(webWallpaper.Model, webWallpaper.Screen, webWallpaper); }
+                    catch (Exception error) { Logger.Error(error, "v3 Player recovery failed"); }
+                }));
+            }
             RefreshDesktop();
         }
 
@@ -1356,6 +1384,8 @@ namespace Lively.Core
         {
             if (!disposedValue)
             {
+                // Set before closing Players, including ordinary QuitApp.
+                disposedValue = true;
                 if (disposing)
                 {
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
@@ -1369,7 +1399,6 @@ namespace Lively.Core
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
-                disposedValue = true;
             }
         }
 

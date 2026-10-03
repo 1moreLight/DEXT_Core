@@ -437,3 +437,8 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 - 2026-10-03，接线前复核发现既有ControlMediaAsync只在mediaLock前检查token；等锁/读取来源期间请求可已超过Core4s期限。锁内取得后、发送命令前再次检查。
 - 原SetVolume新增带token重载；保留既有签名，通过无取消token转调。解析默认endpoint后每次写level/muted前重新检查，Core只调用带token版本。真实已取消请求拒绝且设备ID/level/mute未改变。
 - 这是源码发现的迟到执行风险与新取消API的RED/GREEN验证，不宣称已复现Windows挂死；已发出的单个COM调用不可被此检查撤回，挂起并发槽位仍需持有至实际终止。
+
+## #196 Player故障必须退役易失会话再恢复已提交checkpoint
+- 2026-10-03，原Proc_Exited解绑但Kernel仍有snapshot；同Core新Player的TryRestore要求snapshot==null，随后Start覆盖为startDesk。新增Core内部Retire：核对session、停timeout、清易失状态，完全不读写checkpoint；gateway清旧连接/订阅，迟到旧PID/session不得退役新会话。协议和同Kernel回归23/87项通过，实际同Core独立Player故障恢复focus/KV/新身份。
+- Close/Terminate在发送关闭或Kill之前原子记录主动关闭；真实unexpected Exited才排Dispatcher恢复。取得wallpaper loading lock之后再核对旧实例仍当前，Core Dispose先设停机guard，产品退出期间不重生。每Core30秒最多3次自动恢复，初始Show失败不无限重建；失败自动构建不得保存空布局覆盖现有恢复布局。
+- 已核验的native idle父窗恢复失败关闭是故障，使用独立内部TerminateAfterNativeFailure保留故障识别；它不会清除先前主动关闭标志。该Win32失败组合仍在最终人工门槛内，不冒充本轮实际父窗破坏测试。

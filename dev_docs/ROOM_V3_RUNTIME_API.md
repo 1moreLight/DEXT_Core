@@ -107,13 +107,13 @@ Windows RawInput DOWN/UP创建Core内部一次性配对，拖动、失焦、快�
 
 ### 启动完成仲裁（P5阶段实现）
 
-私有原生协议增加startupComplete：带当前runtimeGeneration/sessionId/revision及正整数lifecycleRevision，只允许结束当前starting阶段。Core保留暂停、锁屏、前台事实、已提交Desk与最终队列；旧阶段、旧文档或重复完成拒绝。只有可信Core新文档事件能重新进入starting，普通暂停/锁屏/闲置恢复不能重播start。闲置中重载可先播放新文档start，再回idle。同一实际文档ready只发送一次。生产媒体须在展示完成或规定超时后调用此入口，其DOM实现仍待Task3。
+私有原生协议增加startupComplete：带当前runtimeGeneration/sessionId/revision及正整数lifecycleRevision，只允许结束当前starting阶段。Core保留暂停、锁屏、前台事实、已提交Desk与最终队列；旧阶段、旧文档或重复完成拒绝。只有可信Core新文档事件能重新进入starting，普通暂停/锁屏/闲置恢复不能重播start。闲置中重载可先播放新文档start，再回idle。同一实际文档ready只发送一次。生产media-host已按展示完成或活动时间超时调用此入口；四媒体实际Core预暂停start、恢复与同文档idle验证见文末，实际锁屏仍待最终集中验收。
 
 ### 同Player闲置与宿主唤醒（P5阶段接线）
 
 原生Room进入闲置时Core只改变stage，保留当前Desk、最终队列和Windows暂停/锁屏事实。屏保服务临时将当前Player置于对应显示器，保留同一文档；唤醒还原父窗、样式、坐标与层叠顺序，不另起原生屏保Player。Windows事实中的前台判断包含当前显示器上经核对的闲置展示，原桌面前台采样仍独立；退出展示后先移除此覆盖，再恢复desktop阶段。
 
-原生闲置不因底层应用遮挡而暂停，手动暂停、锁屏、远程和电源规则继续生效。第一次RawInput仅唤醒，按住的鼠标/Enter/Space在松开前不得形成新激活。父窗已失效或还原不可确认时隐藏并关闭本Player，故障重建由后续恢复流程补齐。生产DOM需按idle阶段持续展示idle素材；没有idle时保持桌面画面，作者done不能唤醒。真实Core原生Room闲置、实际物理输入及多DPI门槛仍待最终集中验证。
+原生闲置不因底层应用遮挡而暂停，手动暂停、锁屏、远程和电源规则继续生效。第一次RawInput仅唤醒，按住的鼠标/Enter/Space在松开前不得形成新激活。父窗已失效或还原不可确认时隐藏并关闭本Player，走Core有界故障恢复。生产DOM按idle持续展示素材；没有idle时保留暂停的桌面画面和普通图标，不发布可激活几何，作者done不能唤醒。实际Core四媒体同文档闲置、OS注入唤醒和父窗/边界还原已补证；实际物理输入、锁屏、多DPI及不可还原故障仍待最终集中验证。
 
 ## 原生宿主消费者能力元数据（2026-10-03，接线阶段）
 
@@ -172,7 +172,7 @@ dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下�
 
 Player在首航前注入自身嵌入脚本，捕获原始音视频、DOM、事件与观察器方法；所有子文档初始暂停，顶部官方页由media-host独立控制。私有不可重定义函数使用Player secret、实际文档nonce和单调序列，SDK token不能调策略。原生执行采用真实realm的this，不把私参暴露给作者可替换的globalThis/window别名。closed Shadow音视频与嵌套Frame使用同一原生根消费者；官方页在append前生成私有frame.name，Player按FrameId/父链绑定，根window.name更改后永久暂停该根与后代。消息只能从固定官方顶部文档进入，严格绑定当前generation/session/revision及已声明消费者；这不是新增作者能力或Core输入证明。
 
-是否渲染由Core缓存的完整快照再次限定：current与target都可在过渡中播放，queued不能授权，starting/idle只放对应槽，锁屏/播放暂停拒绝。原生挂起先完成每个子文档暂停屏障，再停渲染进程；暂停期间状态只缓存，恢复先交付最新Core状态再按活动根恢复原播放意图和位置。作者主动pause会清除意图，迟到play事件不把已暂停元素改回wanted。移除节点/pagehide/新文档nonce/旧序列不恢复旧媒体。Destroyed回调只撤销宿主记录，不重入原生COM注销；活体政策失败/超时则静音并关闭Player。
+是否渲染由Core缓存的完整快照再次限定：current与target都可在过渡中播放，queued不能授权，starting/idle只放对应槽，锁屏/播放暂停拒绝。原生挂起先完成每个子文档与官方宿主暂停屏障，再显示当前WebView的内存静帧、隐藏WebView并调用TrySuspendAsync；暂停期间状态只缓存，恢复先交付最新Core状态再按活动根恢复原播放意图和位置。作者主动pause会清除意图，迟到play事件不把已暂停元素改回wanted。移除节点/pagehide/新文档nonce/旧序列不恢复旧媒体。Destroyed回调只撤销宿主记录，不重入原生COM注销；活体政策失败/超时则静音并关闭Player。
 
 102/102 JS及真实ReleasePlayer的WAV、closed Shadow MP4、嵌套音频验证通过；Core回包仍为fixture。该阶段证据只涵盖HTMLMediaElement；后续WebAudio/AudioContext与生产Core原生安装/重启补证见下节。物理输入、完整生命周期与布局/DPI等门槛继续，不能宣称Task3/4或最终7项完成。网络、安全、个人授权和逐值数据校验仍各有独立生产边界。
 
@@ -210,3 +210,8 @@ Player私有mediaControl请求字段：consumer/action/geometryVersion/inputSequ
 Core原生确认窗使用固定Dext标题和退出说明、默认“否”；UI在授权锁外，全Core同时至多一窗。取消保持产品运行并消费许可；确认后按当前安装、私有连接、消费者/按钮scope、授权、个人动作、锁屏和文档代次重查。该可信窗口造成的失焦/播放暂停仅允许完成自己的退出决定，不能放宽其他动作，旧文档/换Room/重放/撤权均不能退出。
 
 通过确认后Core发布独立产品退出状态，原生配置器核对所属Core产品/pipe/data/worktree及实际进程路径后正常退出；Core保留RPC三秒供正常响应的配置器观察，再走既有正常关闭Player/Watchdog/Core。普通配置器“退出Core”保持原语义，配置器仍运行。此通知有界等待，不强杀卡死的配置器；完整运行与最终人工退出门槛仍以本包验收记录为准。
+
+## Task4四媒体暂停与Player故障恢复（2026-10-03）
+暂停保留同一WebView、SDK文档和模型实例。原生Player在媒体屏障后只CapturePreview本WebView到内存Bitmap，由原生静帧展示保证GIF画面不动，隐藏WebView满足TrySuspendAsync前提；挂起为best effort，不把返回false当成动画已停。捕获/挂起各三秒有界，当前playbackRevision失败关闭本Player；旧意图不关闭新意图。恢复先Resume、最新Core快照/上下文、当前消费者媒体策略，最后显示原WebView并释放Bitmap。没有作者截图入口或磁盘图像。
+Core私有Retire仅撤销易失会话/连接/订阅，保留已提交Desk checkpoint及个人KV。意外退出的已加载原生Player，经窗口加载锁后复核仍为当前失败对象、非主动关闭、非Core退出，复用正常安装校验/工厂/WorkerW启动；三十秒最多三次，失败不保存空布局。新PID/新session重新授权并Restore，旧完成/超时/输入不能复活。主动CloseAll与普通/产品退出不自动重生，闲置父窗还原失败使用故障终止路径。
+实际Core四媒体各经过预暂停start、恢复、同安装Core重启、两次idle/暂停/恢复及OS鼠标wake/Core stop；图像/视频/HTML保持实例，视频与AudioContext时钟排除暂停时间。GIF owned Player中心像素在播放/暂停/恢复分别变化/固定/变化。独立Player Kill后的同Core重建恢复focus/stamp/KV；主动关闭不重生。证据见验收卡与V3_DELIVERY。实际锁屏/物理DPI、故障还原、个人布局和精确输入继续，最终七项不据此打勾。

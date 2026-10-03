@@ -188,3 +188,12 @@ finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态�
 历史取消点击实际命中覆盖窗口，等待真实按钮OS命中后No/Yes通过；悬挂确认的恢复先按精确Core PID/路径取消，再正常退出和恢复备份。之后辅助重启的异步原壁纸检查失败，已明确恢复；最终整轮完整退出后直接恢复原文件，保持普通Windows桌面。失败历史保留，不以局部结果冒充整轮通过（ERRORS #194）。
 
 最后完整build→常规start：Core74912/Player27284/Watchdog27548/config32948，日志20261003_182449.txt；原v2 inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际路径独立核对。普通Core正常退出保持配置器，随后关本配置器窗口，启动watcher62965终止exit0；原四文件SHA256/缺失状态保持。最终DextProcesses/DevListeners/ResourceCacheFiles/NativeFixtureDirectories为0。Core产品退出通知等待正常配置器三秒，不强杀卡死实例。整包Task4/最终P5审查与7项人工步骤仍未通过，16项就绪1/16，不合并。
+
+## Task4媒体生命周期与独立Player故障补证（2026-10-03）
+无idle保留桌面图标但禁用官方输入；checkpoint保留式Retire撤销旧连接/订阅/完成。内核23/23、协议87/87、动作185/185、JS/SDK/媒体策略143/143通过。
+实际生产Rust安装/真实Core/WorkerW/ReleasePlayer/SDK四媒体分别通过预暂停start（900ms墙钟不消耗启动阶段）、恢复、同安装正常Core重启、两轮同Player idle/暂停/恢复与OS注入wake/Core stop，原父窗/边界及Desk/session/文档/实例保持。image/video/html证据为task4-lifecycle-{image,video,html}-suspend/native-core-live.log；GIF为task4-lifecycle-gif-barrier/native-core-live.log，owned Player中心十次像素播放/暂停/恢复变化/固定/变化。视频与HTML AudioContext实际时钟排除暂停段后继续前进。
+独立Player故障task4-recovery-exposed：只Kill已核对绝对路径的本轮Player，同Core新PID/session/SDK恢复已提交focus/相同安装stamp/原KV；主动CloseAll不重生。初次GIF真实视觉RED后补原生内存静帧；第一修复重测缺少异步静帧可见屏障，补实际窗口屏障后整轮通过。其余夹具失败按ERRORS #195–197保留，不计生产RED。
+最新完整build task4-verified-build成功；实际ReleasePlayer task4-frame-media-wire通过（其Core回包仍fixture）。最新实际Core退出task4-native-exit-core-live十三项PASS：No取消、Yes四产品进程正常退出，普通Core关闭保留配置器。实机finally恢复原四文件精确字节/缺失状态、用户Room哈希、原窗口旗标/前台/鼠标，Dext保持退出。
+以上增加第1/4/5/11/16项基础证据；锁屏仅行为回归、未锁用户账户。实际物理输入/多DPI、窗口还原故障、个人布局/移动精确命中/遮挡/多图标/焦点与最终P5一次审查继续；最终七项人工门槛、完整十六项范围与开发就绪1/16保持，不中途合并。
+
+- 2026-10-03 Task4常规启动复核：Core121280/Player68580/Watchdog114424/config99916，日志20261003_192301.txt；原v2会话inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际绝对路径已独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher95129结束exit0，原四文件SHA256/缺失状态保持；最终DextProcesses/DevListeners/NativeFixtureDirectories均0，保持Dext退出。

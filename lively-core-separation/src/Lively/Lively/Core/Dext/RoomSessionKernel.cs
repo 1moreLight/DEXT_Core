@@ -241,6 +241,23 @@ public sealed class RoomSessionKernel : IDisposable
         return true;
     }
 
+    // A trusted Player exit invalidates volatile state without changing the
+    // last committed checkpoint. Stop deliberately clears that checkpoint.
+    internal bool Retire(Guid sessionId)
+    {
+        lock (gate)
+        {
+            ThrowIfDisposed();
+            if (snapshot is not { IsActive: true } current || current.SessionId != sessionId) return false;
+            timeoutTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            snapshot = null;
+            deskIds = null;
+            runtimePolicy = null;
+            startupReturnStage = RoomLifecycleStage.Desktop;
+            return true;
+        }
+    }
+
     public bool Stop(Guid sessionId)
     {
         RoomSessionSnapshot result;

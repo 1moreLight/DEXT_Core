@@ -423,6 +423,19 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
+    // Core-only exit notification; no author or RPC request exposes this.
+    internal bool Retire(Guid sessionId)
+    {
+        lock (gate)
+        {
+            if (activeBinding?.SessionId != sessionId || !kernel.Retire(sessionId)) return false;
+            activeBinding = null;
+            connections.Clear();
+            ReleaseAllObservations();
+            return true;
+        }
+    }
+
     public RoomProtocolReply Stop(Guid connectionId, RoomSessionPeer peer, Guid sessionId)
     {
         lock (gate)
