@@ -2,6 +2,7 @@ mod grpc;
 mod creator;
 mod core_runtime;
 mod room_v3;
+mod room_v3_authoring;
 
 use tauri::Manager;
 
@@ -1674,6 +1675,9 @@ fn write_room_file(path: &std::path::Path, room_json: &str) -> Result<(), String
         .as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?;
     object.remove("__source");
+    if room.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return room_v3_authoring::save(path.parent().ok_or("Room path has no parent")?, room_json);
+    }
     validate_room_contract(&room)?;
     let room_dir = path
         .parent()
@@ -1839,6 +1843,17 @@ fn create_room_dir(dir: &std::path::Path, name: &str) -> Result<std::path::PathB
 async fn create_room(dir: String, name: String) -> Result<String, String> {
     create_room_dir(std::path::Path::new(&dir), &name)
         .map(|room_dir| room_dir.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+async fn create_room_v3(dir: String, name: String, room_json: String) -> Result<String, String> {
+    room_v3_authoring::create(std::path::Path::new(&dir), &name, &room_json)
+        .map(|path| display_path(&path))
+}
+
+#[tauri::command]
+async fn import_v3_content(room_dir: String, src_path: String, content_type: String) -> Result<serde_json::Value, String> {
+    room_v3_authoring::import_content(std::path::Path::new(&room_dir), std::path::Path::new(&src_path), &content_type)
 }
 
 const ROOM_CONTENT_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
@@ -3253,6 +3268,8 @@ pub fn run() {
             read_room,
             write_room,
             create_room,
+            create_room_v3,
+            import_v3_content,
             save_room_as,
             duplicate_room,
             rename_room,

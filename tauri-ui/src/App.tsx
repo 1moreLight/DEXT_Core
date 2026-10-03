@@ -21,6 +21,8 @@ import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
+import { V3RoomEditor } from "@/features/room-editor/V3RoomEditor";
+import { createRoomV3, readRoomV3, type RoomV3 } from "@/features/room-editor/v3-document";
 import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
 import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
@@ -102,6 +104,8 @@ const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
   ["zoom", "缩放"],
   ["none", "无"],
 ];
+
+const mockNativeRooms = new Map<string, RoomV3>();
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
 const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
@@ -316,6 +320,7 @@ export default function App() {
   const [transition, setTransition] = useState<Transition>("slide");
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [idleContent, setIdleContent] = useState<Content | null>(null);
+  const [nativeRoom, setNativeRoom] = useState<RoomV3 | null>(null);
   const [roomVersion, setRoomVersion] = useState<number | null>(2);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
@@ -468,6 +473,12 @@ export default function App() {
 
   async function openRoom(path: string, checkDirty = true) {
     if (!IS_TAURI) {
+      const native=mockNativeRooms.get(path);
+      if(native){
+        setNativeRoom(native);setRoomVersion(3);setRoomPath(path);setDirty(false);
+        historyReadyRef.current=false;setShowPreview(false);setStatus("原生 v3 编辑器设计模式");return true;
+      }
+      setNativeRoom(null);
       historyReadyRef.current = false;
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
@@ -498,6 +509,17 @@ export default function App() {
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
+      if (room.version === 3) {
+        const native = readRoomV3(json);
+        historyReadyRef.current = false;
+        setNativeRoom(native); setRoomVersion(3); setRoomPath(path); setDirty(false);
+        setRoomOrphanResources([]); setRoomRecoveryDir(null); setPermissionReviews([]);
+        setShowPreview(false); setFullscreenPreview(false);
+        localStorage.setItem("dext.roomPath", path);
+        setStatus("已打开原生 Room v3 · " + native.name);
+        return true;
+      }
+      setNativeRoom(null);
       const audit = await invoke<RoomEditAudit>("inspect_room_for_edit", { path });
       const baseline = normalizeRoomJson(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
@@ -799,7 +821,7 @@ export default function App() {
     const name = prompt("房间名（建议英文）");
     if (!name) return null;
     try {
-      const path = await invoke<string>("create_room", { dir: libDir, name });
+      const path = await invoke<string>("create_room_v3", { dir: libDir, name, roomJson: JSON.stringify(createRoomV3(name)) });
       await refreshRooms(libDir);
       await openRoom(path, false);
       return path;
@@ -1219,7 +1241,8 @@ export default function App() {
     let n = rooms.length + 1;
     while (rooms.some((r) => r.name === `new-room-${n}`)) n++;
     const name = `new-room-${n}`;
-    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 2, desks: 1, icons: 0, widgets: 0, covers: [] };
+    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 3, desks: 2, icons: 0, widgets: 0, covers: [] };
+    mockNativeRooms.set(room.path, createRoomV3(name));
     setRooms([...rooms, room]);
     setRoomPickPath(room.path);
   }
@@ -1593,7 +1616,7 @@ export default function App() {
   }, [roomEntered, roomPath, dirty, edges, desks, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk, past, future]);
 
   useEffect(() => {
-    if (!IS_TAURI || !roomEntered || !roomPath || roomPath !== appliedRoom) return;
+    if (!IS_TAURI || roomVersion === 3 || !roomEntered || !roomPath || roomPath !== appliedRoom) return;
     let disposed = false;
     let revision = 0;
     const mergeDesktopLayout = async () => {
@@ -1770,6 +1793,15 @@ export default function App() {
                 onApply={(room) => void applyRoomDir(room.path)}
                 onDuplicate={(room) => void duplicateRoom(room)}
                 onRename={(room) => void renameRoom(room)}
+              />
+            ) : roomVersion === 3 && nativeRoom && roomPath ? (
+              <V3RoomEditor key={roomPath} room={nativeRoom} path={roomPath} isTauri={IS_TAURI}
+                canApply={Boolean(readyCoreIdentity)}
+                onDirty={setDirty}
+                onBack={() => {setRoomEntered(false); setDirty(false);}}
+                onSaved={() => {void refreshRooms(libDir);}}
+                onApply={() => invoke("apply_room", {roomDir:roomPath})}
+                onApplied={() => {setAppliedRoom(roomPath); setStatus("已应用原生 Room v3");}}
               />
             ) : (
               /* entered a room: desk editing */

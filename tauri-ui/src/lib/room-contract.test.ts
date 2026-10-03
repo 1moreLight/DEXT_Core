@@ -22,7 +22,11 @@ describe("room contract operation matrix", () => {
       edit: false,
       apply: false,
     });
-    expect(roomContractPolicy(3)).toMatchObject({ recognized: false, edit: false, apply: false });
+    expect(roomContractPolicy(99)).toMatchObject({ recognized: false, edit: false, apply: false });
+  });
+
+  it("enables the native v3 editor/save/apply without unsupported v2 preview/share", () => {
+    expect(roomContractPolicy(3)).toMatchObject({recognized:true, edit:true, save:true, apply:true, preview:false, saveAs:false, zip:false});
   });
 
   it("requires native v2 payloads with a widgets array on every Desk", () => {

@@ -15,7 +15,7 @@
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；作者纯视觉矩阵/焦点及实际Player仪表盘同文档bottom→full→bottom基础通过；SDK有效矩形与640×480 scale1.5展开/放大缩回已验证；完整Core输入/异常恢复组合待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
 | 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；作者矩阵本地帧/保持/焦点与实际Player通过；作者/有效布局小窗口展开及恢复已验证，实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
-| 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
+| 7 | 简单 Room 创建与节点保存 | P6独立v3编辑入口/稳定ID/历史与生产作者文件/四类导入/HTML依赖/保存重开安装基础通过（66/34）；真实Tauri/Core/Player端到端及播放/重启继续 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
 | 10 | 试验台与作者诊断 | v2预览可复用；v3生产协议、多尺寸、拒绝/缺数据/占用定位待做 | 否 |
@@ -241,3 +241,9 @@ Core GetProof与ActivateNative/NavigateNative/ControlNativeAsync要求显式原�
 positive-input-official-wire-final在本轮完整构建部署后实际ReleasePlayer/生产正式宿主整轮exit0：静止/移动源鼠标、动态键、Tab/随帧焦点、生产Core authority/key delivery两个未回ShiftTab+早到Enter、原始正数/QPC/最终entry与一次动作，切页/共享文档/暂停/撤销保持。原始OS边沿/完整Core窗口/动作回复fixture，真实Core OS门槛不代填。
 完整positive-input-core-build四阶段；常规start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt。identity共享D配置器OTHER/exit1，四精确路径另核；正常关闭、watcher94664 exit0、原四文件SHA256/缺失保持、Dext进程/开发监听/author、official、Core与author-visual GUID临时目录0，Dext保持关闭。
 P5剩余实际Core OS/物理DPI/锁屏/故障还原与最终七项/单次P5审查保留，系统凭据宿主未解除时不重复桌面点击。接续V3-P6-001原生Room创建与节点保存，先实际创建/保存重开/撤销重做/应用产品闭环，不扩展网络专项。最终人工第4项连续Tab后Enter/Space与鼠标只动作一次、长按/AltTab取消，第2/5项跨页缩放与实际DPI集中执行；拖动暂缓，全16项就绪仍1/16≈6%，13/16及16/16目标保持，未合并master。
+
+## P6配置器创建与节点保存基础（2026-10-04，BASE99dd8fe）
+独立v3-configurator-create worktree/feat/V3-P6-001-configurator-create，以未合并P5为依赖。新建Room默认两Desk/稳定UUID与Desk ID；v3独立编辑组件保留作者字段，官方导航/待绑定图标分开稳定呈现ID/按钮ID，名称/顺序/起点和Dock组件引用进入原生清单，撤销重做与基于磁盘基线的本机草稿恢复分离。导入资源清单在撤销背景后仍保留，保存不产生孤儿文件。
+生产Rust作者模块共享正式v3校验和资源读取，创建、复制图片/视频/GIF、整目录本地HTML依赖、原子保存重开与正式安装通过。资源缺失或尝试变更副本UUID拒绝，原文不变。保存/应用沿正式Tauri命令接线。旧连续样包重复icon id改detail-view，正式样包检查恢复。
+功能RED为文档3项、v3操作矩阵1项、删除共享按钮引用1项及Rust作者3项；最终Vitest66/66、生产Rust契约+作者34/34、npm build及cargo check通过。p6-ui-browser-final实际headless浏览器整轮新建/节点改名/排序/起点/默认图标/撤销重做/草稿重开及深浅截图通过；文件/Core为mock，不作为真实Tauri证据。Rust媒体字节仅文件夹具，不当作实际解码。
+接续Task3：真实Tauri新建/四媒体导入/保存重开→实际Core/Player应用、active_room原生状态来源、实际播放/切页/重启恢复及库操作支持边界。Dext本段未启动；测试仅拥有的临时文件，浏览器/开发Vite正常关闭。一次最终审查与本包5项/P5七项人工门槛保持；拖动暂缓，无新增网络专项。完整16项开发就绪仍1/16≈6%，未合并master。

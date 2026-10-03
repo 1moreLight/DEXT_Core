@@ -297,3 +297,6 @@
 
 | #221 | 零序号取最近完成的旧回退让迟到动作借用新输入 | [backend](errors/backend.md) |
 | #222 | dotnet run未知参数进入测试程序；部署与实际Player回归须按依赖等待 | [toolchain](errors/toolchain.md) |
+
+| #223 | P6工具脚本默认GBK和JS模板转义导致执行中断；UI主题需等绘制后截图 | [toolchain](errors/toolchain.md) |
+| #224 | 持续样包两Desk重复图标ID，正式Rust契约会拒绝 | [renderer](errors/renderer.md) |

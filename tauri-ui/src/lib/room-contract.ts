@@ -19,6 +19,9 @@ const READ_ONLY = {
 };
 
 export function roomContractPolicy(version: unknown): RoomContractPolicy {
+  if (version === 3) {
+    return {versionLabel:"v3",recognized:true,edit:true,save:true,saveAs:false,apply:true,preview:false,zip:false};
+  }
   if (version === 2) {
     return {
       versionLabel: "v2",
@@ -58,5 +61,5 @@ export function assertRoomV2WritePayload(room: Record<string, unknown>): Record<
 
 export function readOnlyRoomMessage(version: unknown): string {
   const policy = roomContractPolicy(version);
-  return `${policy.versionLabel} 不受支持；Dext 现在只接受原生 Room v2`;
+  return `${policy.versionLabel} 不受支持；Dext 接受原生 Room v2 / v3`;
 }

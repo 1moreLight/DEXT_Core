@@ -652,3 +652,8 @@ Tab的单次可见查询不等于动作proof，也不证明快速连续键序列
 ## #219 作者应从有效矩形映射到目标呈现（2026-10-04）
 640×480/scale1.5实际窗口的CSS小视口按既定布局规则保留像素尺寸、移位/缩放组件，作者固定原始y800矩阵再次叠加后把仪表盘移出画布。设计基准通过无法证明响应式。SDK只读placements提供当前可见组矩阵前有效矩形；Scene读集合、其他消费者自身，内部逻辑视口仍固定。三个功能RED后108/108；样包以有效矩形映射至期望底部/整页，实际小窗口展开及放大缩回通过。
 同geometryVersion的有效投影变化也需通知，完全相同不重复；纯视觉帧不通知。作者async publish未完成时geometry/resize仍须保留dirty待绘制，finally再安排一帧，避免稳定Desk改变有效布局后丢重绘。矩阵限幅保持，物理DPI与完整Core OS门槛另行验证。
+
+## 224. 持续样包图标ID在两个Desk重复
+- 现象：新P6 worktree运行正式Rust契约的样包检查，v3-continuous报duplicate icon id；两Desk都使用view。
+- 修复：保留overview/view，detail图标改detail-view；按钮navigate仍共用，符合两种呈现关联同一按钮的既有契约。正式Rust全套34/34通过。
+- 防再犯：样包不能只跑渲染模型；更新后也运行真实作者Manifest校验。公开按钮可复用，图标呈现ID必须按契约唯一。

@@ -1532,3 +1532,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 完整四阶段positive-input-core-build，正常start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt；共享D配置器identity OTHER/exit1但四精确路径独立核验。正常关闭、watcher94664 exit0、原四文件保持及进程/开发监听/原生GUID目录0；本节随具名阶段提交保存。
 
 - [ ] 接续独立V3-P6-001原生Room创建与节点保存；本分支保留P5实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次审查补证，不将fixture当实机通过。桌面拖动暂缓，完整16项开发就绪1/16≈6%，不中途验收/master合并。
+
+## V3-P6-001 原生Room创建与节点保存（2026-10-04，BASE 99dd8fe）
+一句话目标：配置器创建原生v3 Room，两个Desk与四类本地内容、默认切换/Dock引用可保存重开、撤销重做并实际应用。
+分支feat/V3-P6-001-configurator-create，独立worktree v3-configurator-create；承接未合并P5依赖，最终集中验收前不合并。范围外：Dock模板差异/私人绑定UI/系统AppBar/分享、桌面拖动和新增网络专项。详见plans/V3-P6-001-configurator-create.md。
+- [x] Task1：稳定ID/历史功能RED3/3失败→GREEN；生产Rust创建、四类导入/HTML依赖、原子保存重开、失败原文保持及正式安装RED0/3→GREEN3/3；含原契约必要回归34/34。
+- [x] Task2编辑基础：配置器v3新建/打开入口、独立节点编辑、四类素材/启动待机选择、过渡、Dock引用和默认图标，保存后调用正式apply_room；私人物料不进作者文档。Vitest66/66、npm build和cargo check通过；实际浏览器创建/名称/顺序/起点/图标/撤销重做/草稿重开及深浅绘制通过。浏览器文件/Core仍mock，真实Tauri应用保留Task3。
+- [ ] Task3：真实Tauri/原生安装/Core/Player集成及正常退出，证据和一次最终整体审查。
+- [ ] 用户最终集中验收（与本包独立验收卡一致）；P5真实Core OS/物理DPI/锁屏/还原继续补证，桌面拖动暂缓。完整16项就绪1/16≈6%。
+
+P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-red/final（34/34）、p6-vitest-full（66/66）、p6-ui-build-final、p6-tauri-check、p6-ui-browser-final及p6-ui-dark/light。工具首次UTF-8/JS插值和首轮主题探针定位失败未算通过。旧v3-continuous重复icon ID修正为detail-view，正式样包检查恢复。
+接续Task3注意：active_room仍仅识别v2安装路径，v3应用状态需接正式Core身份/宿主元数据；v3房间库改名等尚复用v2校验，需在真实入口核对并明确支持边界。四类测试中的视频/GIF仅验证作者文件复制/安装，不声称该字节可实际解码。真实Tauri创建保存重开/应用、真实四媒体播放/切页/重启、用户数据精确保护和最终审查尚未执行。Dext本段未启动，隔离临时文件由测试所有权清理，浏览器Vite停止后提交。完整16项就绪1/16≈6%。

@@ -571,3 +571,8 @@ mod tests {
         assert!(validate_manifest(&room).is_err());
     }
 }
+
+#[path = "../../../tauri-ui/src-tauri/src/room_v3_authoring.rs"]
+pub mod room_v3_authoring;
+#[cfg(test)]
+mod authoring_tests;

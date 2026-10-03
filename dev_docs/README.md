@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-09-23。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-10-04。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -18,7 +18,7 @@
 
 目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
 
-DXT-003 将项目收口为唯一原生 Room v2；v1 与更旧 demo 不兼容、不迁移、不重建。新建、编辑、保存、另存、预览、应用和 zip 全链只接受/产生 v2。
+DXT-003完成了原生Room v2链（历史阶段）；v1与更旧demo不兼容。当前v3按ROADMAP开发：P6新建/编辑/保存接原生v3，已有v2链保留至P10收口；v3另存/分享/试验台由后续包接入。完整进度和实际证据见V3_DELIVERY.md，不能用v2同名功能计作v3交付。
 
 ```
 ① 运行时渲染器  wallpapers/dext-room/{index.html,style.css,main.js}

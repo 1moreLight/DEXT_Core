@@ -425,3 +425,8 @@ native-input-guardian夹具fire(target,type,options)首轮误用fire(type,option
 ## #222 测试run参数与依赖等待（2026-10-04）
 dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown action probe mode；改用已编译--no-build不传参数，才取得真实295/299行为RED，不能把命令失败计生产RED。
 启动实际Player后exec_command可能返回活session；后续build/部署须先等待其退出，避免写入正在使用的Player输出。本轮首次回归/构建都通过，但先后次序不足以确认回归使用最新部署，故部署完成后以positive-input-official-wire-final再验证当前实际二进制整轮，通过后不扩大复测范围。
+
+## 223. P6作者文件与界面检查的工具执行顺序
+- 现象：Python read_text未指定encoding，在Windows按GBK读取中文源码而中断；JS String.raw中的反引号或美元插值又曾在工具解析前失败。首轮UI主题截图也早于过渡绘制完成，出现瞬时颜色。
+- 修复：所有文本读写显式UTF-8；嵌入代码用字符拼接避免外层JS插值，解析失败未产生文件改动后才重试。实际浏览器功能整轮最终通过，深浅截图等待主题绘制。
+- 防再犯：工具进程失败和产品功能RED分开记录；中断后核对已写文件；查看真实exit code，命令串最后成功不等于前面成功。P6首轮Rust全套因样包重复ID未绿，最终34/34才算通过。

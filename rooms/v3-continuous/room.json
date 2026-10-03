@@ -55,7 +55,7 @@
       "name": "Detail",
       "icons": [
         {
-          "id": "view",
+          "id": "detail-view",
           "buttonId": "navigate",
           "label": "下一视图",
           "x": 4,
