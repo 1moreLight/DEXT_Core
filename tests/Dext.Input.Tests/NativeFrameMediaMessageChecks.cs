@@ -31,6 +31,7 @@ internal static class NativeFrameMediaMessageChecks
         message.Revision=5;message.Lifecycle.Locked=true;Require(state.AcceptSnapshot(message)&&!state.CanRenderMedia("slot.idle"),"lock always pauses");
         Require(state.Invalidate("navigation")&&!state.CanRenderMedia("scene"),"revoke default paused");
         var source=DextNativeFrameMediaPolicy.BuildScript();Require(source.Contains("__dextNativeMediaPolicyV1")&&!source.Contains("__DEXT_MEDIA_POLICY_TOKEN__"),"embedded script private token replaced");
+        NativeInputGuardianPolicyChecks.Run();
         Console.WriteLine("PASS native media messages: strict scope/shape, source+target membership, phase/pause/lock/revoke, embedded private script");
         static void Require(bool value,string reason){if(!value)throw new Exception(reason);}
     }

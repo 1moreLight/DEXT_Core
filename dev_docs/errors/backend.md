@@ -445,3 +445,6 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 
 ## #201 多边形不能由包围框签输入证明（2026-10-03）
 P5生产authority新增行为测试实际RED：归一化三角形包围框内、三角形外的OS点仍得到完成证明；旧几何只有矩形。同动作多图标也被视为重复入口或DOM吞掉第二个。新增私有呈现entry与凸多片区域，包围框只快速排除，Core测严格内部；DOWN/UP同呈现entry，Tab可区分同动作不同图标，动作仍按consumer/button和一次native完成消费。不能用新entryId/视觉焦点作为证明，输入数组必须脱离且公共Focus/Proof不能泄漏可变几何。具体最终验证见当前验收卡。
+
+## #206 已撤销文档nonce不能通过较新修订复活（2026-10-03）
+bounded native request join更新当前snapshot时需保留同文档rN水位，初版RegisterFrame却在RevokeDocument后允许相同epoch/nonce以更大revision恢复Active。正式行为RED83/84后增加DocumentRevoked，只有实际新的native文档epoch+nonce能重新注册；同文档修订只允许正常revision撤销后的恢复，不能抹去真正文档退休。RevokeAll终结整个join实例，旧callback不能复活；最终84/84。该helper仅关联请求，Core物理证明及授权仍须另行复核。

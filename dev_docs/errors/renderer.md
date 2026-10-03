@@ -620,3 +620,14 @@ WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。�
 ## #202 几何裁剪舍入与SVG焦点隐藏（2026-10-03）
 纯geometry首次18项中2项失败，轴向交点插值产生负坐标/极薄假片；将轴向交点固定到精确裁剪线，并在叉积误差界中计入坐标相减舍入，补斜向/多遮挡后20/20。误差界按机器epsilon，不加CSS像素命中padding；Core C#的machine epsilon为2.2204460492503131e-16，不是double.Epsilon。
 SVGElement不能只靠HTMLElement式hidden属性假设隐藏；官方焦点显式设置/移除hidden attribute，清空polygon并加pointer-events:none，避免焦点轮廓残留或截获指针。实际ReleasePlayer轮廓验证仍需本阶段wire证据。
+
+## #204 跨文档getter不能返回隐藏输入wrapper（2026-10-03）
+两个已注入guardian的同源文档各自有originals WeakMap；子文档的patched onclick getter借到父DOM上时，原生getter取到父wrapper，子WeakMap不认识而将wrapper直接返回。真实Chromium中，在可信callback后的queueMicrotask用缓存真实Event重调该wrapper，eventPhase仍有效，实际再次生成见证。guardian-browser-cross-realm-red.log明确复现；一般timer/缓存original callback单位测试不能覆盖这个边界。
+捕获Node.ownerDocument并固定实际document/root；DOM属性getter/setter、事件注册/移除/dispatch、attribute和attachShadow先核对真正文档，foreign DOM抛SecurityError，不能读作者覆写的ownerDocument。generic非DOM EventTarget仍由捕获的原生方法核验brand，不提供callback获取。对应pure行为RED/GREEN和实际组合跨realm GREEN见当前验收卡，不借sandbox偶然拒绝代替guard本身的边界。
+
+## #205 RegExp.test会动态调用RegExp.exec（2026-10-03）
+仅预捕获RegExp.prototype.test不足以固定验证行为；其内置算法仍调用当前pattern.exec，作者覆盖RegExp.prototype.exec可改变匹配。guardian原语篡改行为测试实际失败。改捕获exec直接执行，同时捕获String.substring/Number.isFinite/整数上限，私有回调记录用自有dense索引，receipt/witness采用null-prototype，禁止原型toJSON、数字setter、species参与私有记录。宿主测试自己的sent.push被数字setter看到不等于生产泄漏，需按真实原生传输边界修夹具并保留失败来源。
+
+## #207 原生Window默认receiver、onerror参数与收养节点派发（2026-10-04）
+新增输入guardian的包装不能改变原生Window裸调用：native add/remove/dispatch的undefined/null receiver映射当前Window；DOM属性getter仍按实际文档品牌核对。function listener必须保留原生全部参数，尤其Window.onerror(message,source,lineno,colno,error)，object handleEvent仍按标准传Event。
+节点跨文档收养会让旧document wrapper在新document派发。真实child click复现父输入见证被借用后，包装和见证发送同时核对captured Event.currentTarget、callback receiver与实际文档；未知foreign Function属性getter禁止暴露私有wrapper，已知作者callback保持读取原值。生产单测先21/24失败后24/24，最新Chromium40与实际ReleasePlayer正式文档/媒体初始化通过。第一次onerror断言在前项失败后未执行，不能把未执行项当实机RED。此修复只闭合模块边界，Core/SDK原生手势接线仍待完成。

@@ -232,3 +232,9 @@ DOM每个新scope以layoutRead读取，只有当前token/generation/session/revi
 同按钮多个官方图标使用icon.<desk>/<icon>呈现实例；作者按钮在所属consumer内使用button.<buttonId>，公共作者geometry仍按原唯一buttonId，不增加entryId或输入票据。原生DOWN/UP必须同一呈现实例，多个可见片不增加Tab停靠点；同动作两个图标分别停靠。私有focus/activate事件增加entryId，焦点清除consumer/button/entryId均null。DOM仅在当前geometry ack后的entry表定位并画官方SVG轮廓；失效、scope变更、暂停、resize均立即清除，不设置作者iframe内部焦点，不产生证明。
 
 geometry.js按真实仿射矩阵裁剪画布并扣前层wrapper；wrapper矩形代表浏览器iframe实际事件拦截面，author occupied仍独立表示布局预留，不能混用。相同z按真实DOM顺序，opacity=0同步关闭wrapper指针拦截。当前这段是边界同步的静止精确几何，不能覆盖默认动画运动中的前层遮挡；具有运动前层的区域暂不签动作，移动事件取样及source手势级准入继续。无逐帧native坐标消息，拖动按用户暂缓。
+
+## P5同步输入守卫私有基础（2026-10-04）
+
+组合document-created bootstrap先安装native-input-guardian.js，再安装媒体policy，共用封闭shadow创建链。私有__dextNativeInputGuardianV1只接受本机secret及describe/arm/revoke闭合字段，以Guid文档nonce和严格增长的positive safe gesture/structural标记当前同步输入回调；pagehide终止旧文档。公共__dextNativeInputRequestV1只接受完整SDK protected action JSON并返回boolean，不返回私有序号。私有dext:v3-input-witness包含protocolVersion/token/documentNonce/gestureId/structuralVersion/dispatchSequence/requestJson；C#从实际native frame核对nonce后严格解析，作者不能自选frame或消费证明。
+
+DextNativeInputRequestJoin供Player UI线程管理，官方SDK原始请求与native frame witness两路必须scope、完整typed请求及关联序号一致；64pending、196frames，第一半包固定1500ms且不续期，rN回放高水位、撤销/错配闭合。它不查最新完成、不执行Core动作、不替代Core物理Down期限。当前模块基础已验证，尚未启用实际SDK/nativeframe/Core生产强制接线；现有动作路径不能据此宣称已拒绝所有timer借用。

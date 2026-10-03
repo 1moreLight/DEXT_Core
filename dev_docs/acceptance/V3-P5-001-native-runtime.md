@@ -229,3 +229,21 @@ layout-pause-controller-build完整成功。新实际controller可见性错误�
 常规build后start Core113804/Player46424/Watchdog125196/config80780、日志20261003_222129.txt；原v2 Player路径核对，Core/插件产品身份及mutex/pipe/data/log报告OK。共享D缓存配置器由identity报告OTHER/exit1，实际绝对路径独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher74869 exit0、原四文件SHA256/缺失状态不变；OwnedProcesses=0，本轮1420/1421/1621开发监听=0，NativeFixtureDirectories=0，ResourceCacheFiles=0。保持Dext关闭。
 
 当前完成的是静止几何与受控焦点基础；默认动画事件取样、source手势级动作、原生作者同步事件见证与Core实机补证继续，桌面拖动按用户暂缓。全16项交付开发就绪仍1/16=6.25%（对话约6%），最终7项人工与单次整体P5审查保持待执行，不合并master。
+
+## P5 原生同步作者输入守卫基础计划（2026-10-03，BASE 1d1a6ff）
+一句话目标：在作者脚本之前建立可信事件同步调用边界，固定原始 requestId/method/params 与原生文档；定时器、microtask、合成事件及缓存事件重调不能生成见证。
+范围：独立私有 guardian 模块、受保护的 listener/property/inline 派发包装、关闭/暂停/文档撤销、捕获原语和私有传输；与原生媒体 bootstrap 共用闭合 shadow 发现。先行为 RED 再实现，包含真实 Chromium 事件测试，禁止将模拟 Event.isTrusted 当实机证据。另建 bounded native 请求汇合基础，禁止它自行选最近完成证明或授予动作。
+后续接线：Player 实际 frame/document 注册、Core 物理 gesture/正数序号、运动 DOWN/UP 视觉取样与 source 手势权限必须闭合后，才能切换生产 SDK/动作强制门槛；本基础阶段不宣称上述接线已完成。桌面拖动按用户暂缓，Core 实机补证等待系统凭据窗清除，Dext 保持关闭。
+人工验收：最终验收卡第4项，真实鼠标/Enter/Space可请求受控动作，timer/Promise continuation/伪造 click/缓存真实事件重调均拒绝；第5项验证移动、遮挡、多呈现入口和DPI。只在全包交付时集中执行，7项不打勾。整体交付就绪仍 1/16=6.25%，推进对话报约6%。
+
+## P5 同步输入守卫与原生请求汇合基础验证（2026-10-04）
+
+私有guardian在作者脚本前与媒体policy同次bootstrap安装；只在当前真实primary鼠标/Enter/Space回调内接受完整SDK requestJson，原始method/params/requestId固定到私有文档/gesture/structural/dispatch envelope。add/remove、inline/property、once/AbortSignal、native Window裸调用和onerror五参数保留；非输入重入清上下文，返回后恢复外层回调，跨文档getter/收养节点不能借父回调。私有描述/arm/revoke回执不暴露消费票据。
+
+行为RED/GREEN包含嵌入缺失、prototype捕获、Window默认this、native onerror参数以及真实child点击借收养父wrapper。最终guardian24/24、完整生产JS229/229、真实headless Chromium40检查通过；Chromium驱动的可信事件不是Windows/Core物理证据。native request join先43/83与撤销边界83/84失败后84/84；两路不可变typed请求、native scope、固定半包1500ms、64pending/196frame、重复/错配/旧文档清理验证。该半包期限不替代Core从真实DOWN起的期限。
+
+完整guardian-core-build-final四阶段成功。guardian-frame-media-wire-green实际ReleasePlayer两个作者文档初始化、guardian默认关闭/受保护hooks、根/闭合shadow/嵌套音视频与WebAudio暂停/恢复、最新修订、撤销回归通过；Core回包仍fixture，没有签发正数原生gesture。常规start Core7084/Player121916/Watchdog122856/config100832；identity插件/pipe/mutex/data/log正常，所属D共享配置器OTHER/exit1且路径独立核对。精确正常关闭、watcher9524 exit0、原四文件hash/缺失保持、浏览器关闭，Dext进程0。
+
+本阶段只交付私有基础，生产SDK尚未提交witness，实际native frame注册/同UI原生输入arm、Core精确正数gesture、移动取样和source动作还需接通，当前author inputSequence=0仍存在。不得以本阶段通过宣称整条动作链的timer/最近完成问题已解决。用户指定本地功能优先，后续不扩展网络安全测试；桌面拖动暂缓，实际Core输入受系统凭据窗影响的补证保持待恢复。最终人工仍按上方第4项鼠标/Enter/Space与异步/伪造/重调，第5项移动/遮挡/多入口/DPI集中执行，不新增中途验收。全16项就绪1/16=6.25%（约6%），7项和单次P5审查不提前勾选，不合并master。
+
+- 最终清理补记：常规日志20261004_003713.txt，本轮1420/1421/1621监听0。git staged check发现新guardian末尾空行，仅修正EOF格式后继续提交，不重跑已充分验证的行为。

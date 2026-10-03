@@ -59,7 +59,11 @@ internal static class NativeFrameMediaWireProbe
                   for(const value of [audio,video])for(const name of ['play','pause','timeupdate'])value.addEventListener(name,sample);context.addEventListener('statechange',sample);
                   setInterval(sample,80);
                   const protectedHook=Object.getOwnPropertyDescriptor(window,'__dextNativeMediaPolicyV1');
+                  const inputHook=Object.getOwnPropertyDescriptor(window,'__dextNativeInputGuardianV1'),inputRequestHook=Object.getOwnPropertyDescriptor(window,'__dextNativeInputRequestV1');
                   parent.postMessage({nativeThreat:true,protected:protectedHook?.configurable===false&&protectedHook.writable===false,
+                    inputGuardProtected:inputHook?.configurable===false&&inputHook.writable===false&&inputRequestHook?.configurable===false&&inputRequestHook.writable===false,
+                    inputGuardFakeDenied:typeof window.__dextNativeInputGuardianV1==='function'&&window.__dextNativeInputGuardianV1({token:'sdk-token',kind:'describe'})===null,
+                    inputGuardOutsideDenied:typeof window.__dextNativeInputRequestV1==='function'&&window.__dextNativeInputRequestV1(JSON.stringify({type:'dext:runtime:request',apiVersion:1,instanceId:Dext.session.instanceId,sessionId:Dext.session.sessionId,token:'fake-sdk-token',requestId:'r1',method:'actions.activate',params:{buttonId:'next'}}))===false,
                     privateRecordsSafe:!leakedControl,audioProtected:Object.getOwnPropertyDescriptor(window,'AudioContext').writable===false&&Object.getOwnPropertyDescriptor(AudioNode.prototype,'connect').configurable===false,defaultPaused,fakeDenied:__dextNativeMediaPolicyV1({token:'sdk-token',kind:'describe'})===null,prototypeProtected:Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype,'play').configurable===false},'*');
                   const cross=document.createElement('iframe');cross.addEventListener('load',()=>{
                     let denied=false,reason=null;try{cross.contentWindow.AudioNode.prototype.connect.call(gain,context.destination);}catch(error){reason=error.name;denied=reason==='SecurityError'||reason==='InvalidAccessError';}
@@ -116,6 +120,8 @@ internal static class NativeFrameMediaWireProbe
                 var initialMedia=(JArray)initial["media"]!;Require(initialMedia.Count==2&&initialMedia.All(v=>((JArray)v["parts"]!).Count==3&&((JArray)v["parts"]!).All(p=>(bool?)p["paused"]==false&&(double?)p["time"]>0.05)),"native root audio/closed-shadow video/nested audio actually advance");
                 var threats=((JArray)initial["threats"]!).Where(v=>(bool?)v["crossRealm"]!=true).ToList();
                 Require(threats.Count==2&&threats.All(v=>(bool?)v["protected"]==true&&(bool?)v["fakeDenied"]==true&&(bool?)v["prototypeProtected"]==true&&(bool?)v["defaultPaused"]==true),"pre-author protected hook and original methods, SDK fake token rejected");
+                Require(threats.All(v=>(bool?)v["inputGuardProtected"]==true&&(bool?)v["inputGuardFakeDenied"]==true&&(bool?)v["inputGuardOutsideDenied"]==true),"actual pre-author input guardian is sealed and does not accept author control or outside-handler requests");
+                Console.WriteLine("PASS actual ReleasePlayer guardian default closure and protected input hooks coexist with native media; no Core gesture grant inferred");
                 var foreign=((JArray)initial["threats"]!).Where(v=>(bool?)v["crossRealm"]==true).ToList();
                 Require(foreign.Count==2&&foreign.All(v=>(bool?)v["denied"]==true),"actual authored blank child cannot lend a cross-realm native output method");
                 Require(((JArray)initial["media"]!).All(v=>(string?)v["web"]?["state"]=="running"&&(double?)v["web"]?["time"]>0.05&&((JArray)v["parts"]!).Any(p=>(string?)p["part"]=="nested"&&(string?)p["webState"]=="running"&&(double?)p["webTime"]>0.05)),"actual root and nested AudioContext clocks advance");

@@ -1382,3 +1382,20 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] P5实际ReleasePlayer正式页面补证：precise-official-host-wire成功，严格私有DTO的双icon独立凸区域、模拟Core焦点命中第二个SVG且失效清除；同SDK文档/只由Core提交/队列/暂停/最新事实/撤销回归保持，Core回包仍fixture。
 - [ ] P5本阶段实际Core原生动作补证受外部凭据窗影响：前两轮operable/前台不成立，后两轮空白像素安全检查拒绝；最终owned像素诊断Credential Dialog Xaml Host/System CredentialUIBroker.exe。四轮finally原数据/Room/桌面与窗口旗标恢复，未点击凭据窗口、未改生产门槛；恢复条件是用户关闭该窗口。等待时继续派发守卫/运动取样，实现范围保持，整体就绪1/16≈6%。
 - [x] P5本阶段常规build→start/身份核对→正常退出：Core113804/Player46424/Watchdog125196/config80780，20261003_222129.txt；identity共享配置器OTHER/exit1并核对路径。精确PID/path正常关闭、watcher74869 exit0，四原文件hash/缺失不变，OwnedProcesses/本轮DevListeners/NativeFixtures/ResourceCacheFiles全0。
+
+## P5 原生同步作者输入守卫基础计划（2026-10-03，BASE 1d1a6ff）
+一句话目标：在作者脚本之前建立可信事件同步调用边界，固定原始 requestId/method/params 与原生文档；定时器、microtask、合成事件及缓存事件重调不能生成见证。
+范围：独立私有 guardian 模块、受保护的 listener/property/inline 派发包装、关闭/暂停/文档撤销、捕获原语和私有传输；与原生媒体 bootstrap 共用闭合 shadow 发现。先行为 RED 再实现，包含真实 Chromium 事件测试，禁止将模拟 Event.isTrusted 当实机证据。另建 bounded native 请求汇合基础，禁止它自行选最近完成证明或授予动作。
+后续接线：Player 实际 frame/document 注册、Core 物理 gesture/正数序号、运动 DOWN/UP 视觉取样与 source 手势权限必须闭合后，才能切换生产 SDK/动作强制门槛；本基础阶段不宣称上述接线已完成。桌面拖动按用户暂缓，Core 实机补证等待系统凭据窗清除，Dext 保持关闭。
+人工验收：最终验收卡第4项，真实鼠标/Enter/Space可请求受控动作，timer/Promise continuation/伪造 click/缓存真实事件重调均拒绝；第5项验证移动、遮挡、多呈现入口和DPI。只在全包交付时集中执行，7项不打勾。整体交付就绪仍 1/16=6.25%，推进对话报约6%。
+
+- [x] 原生输入bootstrap真实行为RED：组合脚本缺少guardian时报错（guardian-embedded-red.log），补嵌入资源/私有builder后GREEN；固定actual realm、Guid文档nonce、正safe gesture/structural bounds，不经作者globalThis/window别名。
+- [x] bounded原生请求汇合基础：source-link行为RED43/83，正式撤销边界RED83/84后GREEN84/84；完整SDK typed参数、当前native scope、两路乱序/错配/重放、64pending/196frames与固定1500ms半包期限。此期限不替代Core从真实DOWN起的物理期限，不授予动作。
+- [x] 同步guardian本阶段验证：实际Chromium40检查、guardian24/24、完整JS229/229；补原生Window裸调用兼容、onerror五参数、跨文档收养后currentTarget/receiver核对及未知foreign callback getter拒绝。实际ReleasePlayer guardian默认关闭/私有hooks与媒体策略共存通过；Core正数手势和SDK强制接线仍待完成。
+
+- [x] 本阶段完整guardian-core-build-final四阶段成功；正式guardian私有builder/witness闭合消息、native join84/84及native media消息回归通过。guardian-frame-media-wire-green实际ReleasePlayer两个作者文档初始化、输入hooks默认关闭、根/closed-shadow/nested音视频与WebAudio暂停/恢复/最新修订/撤销通过；该wire的Core回包仍fixture，不签发物理gesture。
+- [x] 常规start Core7084/Player121916/Watchdog122856/config100832；identity Core/Player/Watchdog/mutex/pipe/data/log OK，所属D共享缓存配置器OTHER/exit1且绝对路径独立核对。按精确PID/path正常退出Core和配置器，start watcher9524 exit0，原四文件SHA256/缺失状态保持，头部浏览器已关闭、Dext进程0。
+- [ ] 接续本地功能：Player真实frame/document与原始SDK requestId两路汇合、Core正数物理gesture与同UI操作转发，再接运动DOWN/UP即时视觉样本和source动作。尚未替换生产author inputSequence=0路径，不宣称timer/最新完成输入漏洞在整条动作链已修好。实际Core补证仍待凭据窗解除；桌面拖动暂缓。
+- 2026-10-04用户推进偏好：以本地功能接通为主，不继续扩展网络安全测试；当前已有改动只做必要回归。每次推进报告完整16项开发就绪百分比，当前仍1/16=6.25%（约6%），全包最终集中验收与单次P5整体审查保持。
+
+- 最终清理补记：常规日志20261004_003713.txt，本轮1420/1421/1621监听0。git staged check发现新guardian末尾空行，仅修正EOF格式后继续提交，不重跑已充分验证的行为。

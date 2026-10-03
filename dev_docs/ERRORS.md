@@ -266,3 +266,9 @@
 | #201 | 精确多边形不能用包围框签输入；同动作不同呈现实例需分开 | [backend](errors/backend.md) |
 | #202 | 几何交点舍入与SVG焦点隐藏属性 | [renderer](errors/renderer.md) |
 | #203 | 转场deadline/JArray层次与精确几何夹具复制清单 | [toolchain](errors/toolchain.md) |
+
+| #204 | 子文档借用属性getter会暴露父文档隐藏输入wrapper | [renderer](errors/renderer.md) |
+| #205 | 捕获RegExp.test仍会进入作者覆盖的exec | [renderer](errors/renderer.md) |
+| #206 | 新snapshot修订不能复活已撤销的原生文档nonce | [backend](errors/backend.md) |
+
+| #207 | 原生Window默认receiver/onerror多参数与收养节点currentTarget须保持真实派发语义 | [renderer](errors/renderer.md) |
