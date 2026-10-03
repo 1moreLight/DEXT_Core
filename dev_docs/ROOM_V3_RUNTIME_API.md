@@ -163,9 +163,9 @@ native-host发送Player要求的JSON字符串，只接受固定私有WebView消�
 
 dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下，切页不重挂或改src。HTML媒体委托frame-host，四类素材使用media-host。官方资源只从当前inventory解析/content/<generation>/路径。每个global revision先invalidate并等回执，再更新DOM并发布递增私有inputVersion，Core接受后才启用动作；queue修订不重播动画。发布staleInput按新inputVersion最多8次、50ms可取消间隔重试。模型的SDK geometryVersion与私有输入发布版本独立。作者Widget本地矩形须在自身placement内，再平移到设计画布；global组矩阵绕画布原点作用于同一wrapper/图标。默认slide/fade/none回告完成，current只来自Core。
 
-现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTMLMediaElement原生逐iframe政策已在下节接入；WebAudio及完整生命周期仍继续。inert不作为媒体暂停证据。
+现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTMLMediaElement与WebAudio原生逐iframe基础已在下节接入；完整生命周期仍继续。inert不作为媒体暂停证据。
 
-生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟，尚未把真实Core原生Room安装、物理输入/DPI或最终7项填通过。
+生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟；后续真实Core安装/重启证据见文末，物理输入/DPI与最终7项仍待执行。
 
 
 ## Player原生子文档音视频策略（2026-10-03，HTMLMediaElement基础）
@@ -174,4 +174,12 @@ Player在首航前注入自身嵌入脚本，捕获原始音视频、DOM、事�
 
 是否渲染由Core缓存的完整快照再次限定：current与target都可在过渡中播放，queued不能授权，starting/idle只放对应槽，锁屏/播放暂停拒绝。原生挂起先完成每个子文档暂停屏障，再停渲染进程；暂停期间状态只缓存，恢复先交付最新Core状态再按活动根恢复原播放意图和位置。作者主动pause会清除意图，迟到play事件不把已暂停元素改回wanted。移除节点/pagehide/新文档nonce/旧序列不恢复旧媒体。Destroyed回调只撤销宿主记录，不重入原生COM注销；活体政策失败/超时则静音并关闭Player。
 
-102/102 JS及真实ReleasePlayer的WAV、closed Shadow MP4、嵌套音频验证通过；Core回包仍为fixture。这里只涵盖HTMLMediaElement；WebAudio/AudioContext、生产Core原生Room、物理输入与布局/DPI等完整门槛继续，不能宣称Task3/4或最终7项完成。网络、安全、个人授权和逐值数据校验仍各有独立生产边界。
+102/102 JS及真实ReleasePlayer的WAV、closed Shadow MP4、嵌套音频验证通过；Core回包仍为fixture。该阶段证据只涵盖HTMLMediaElement；后续WebAudio/AudioContext与生产Core原生安装/重启补证见下节。物理输入、完整生命周期与布局/DPI等门槛继续，不能宣称Task3/4或最终7项完成。网络、安全、个人授权和逐值数据校验仍各有独立生产边界。
+
+## Player原生WebAudio策略与当前实机证据（2026-10-03）
+
+首航前捕获AudioContext/webkitAudioContext构造、原生state/destination与resume/suspend/close、AudioNode连线。当前子文档创建的每个实时上下文有私有Gain输出闸门，默认/非活动即时为0并原生suspend。作者resume只记录活动意图，作者suspend/close清除意图；迟到resume再次核对当前政策，不能开启已停或已销毁输出。硬件destination连接经私有闸门，公开destination和connect返回身份保持原样，不给作者闸门引用。未被当前文档跟踪的context与硬件destination不能借本realm保护方法绕过政策；普通AudioNode/AudioParam连接保持原生行为。每文档最多128个live上下文，close释放配额，pagehide关闭并退役；OfflineAudioContext保持其离线语义。
+
+暂停回执的settled须等实际所有live上下文suspended/closed与挂起回调完成，Player有界轮询私有描述后才挂起renderer；等待期间输出已经静音。活体失败仍走静音并关闭Player。私有记录数组不用作者Array索引setter/species路径；回执是null-prototype对象，不被Object.prototype.toJSON拦截或伪造。该策略不添加SDK方法，不代表数据、网络、存储或动作授权。
+
+生产JS组合116/116与实际ReleasePlayer的根/嵌套AudioContext currentTime、作者意图、阶段/私有暂停/销毁和攻击回归通过；该Player夹具Core回包模拟。生产Rust安装→真实Core复核→实际WorkerW原生Room另外通过同文档切页/正常重启恢复，两新SDK文档AudioContext真实running，原用户桌面与数据精确恢复；顶部测试导航只计协议证据。真实Core证据早于最后null-prototype回执补强，补强后完整build与实际Player再次通过。完整idle/锁屏、独立Player故障、AudioWorklet、布局/物理输入/DPI及最终人工门槛不据此宣称完成。

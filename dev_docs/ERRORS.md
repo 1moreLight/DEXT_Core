@@ -229,3 +229,7 @@
 
 | #178 | 旧修订或销毁后的权限查询失败回调写入当前诊断 | [renderer](errors/renderer.md) |
 | #179 | 新快照先更新iframe再推进原生identity，当前授权请求被拒为staleInput | [renderer](errors/renderer.md) |
+
+| #180 | WebAudio保护方法可被借到未跟踪context或外域硬件destination | [renderer](errors/renderer.md) |
+| #181 | 捕获Array.push/splice仍能经继承索引setter与species泄露私有记录 | [renderer](errors/renderer.md) |
+| #182 | 私有策略普通对象回执被Object.prototype.toJSON拦截或伪造 | [renderer](errors/renderer.md) |

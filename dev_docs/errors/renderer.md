@@ -589,3 +589,15 @@ Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿�
 ## #179 推进原生身份必须早于新快照的iframe授权查询（2026-10-03）
 
 只修#178后真实Core仍报告permissionsUnavailable。dom-host.acceptSnapshot先frames.acceptSnapshot，再进入render推进native identity；frame更新同步发新revision的授权请求，native-host仍用旧revision，立即返回staleInput，此时查询本身却是当前的。使用生产native-host的定向RED复现accepted/staleInput，先native.acceptIdentity再更新frame后GREEN。完整JS105/105和真实Corehome→focus revision2→4、同文档/解码视频/无frameError通过。原生作用域推进后旧查询取消必须搭配#178当前检查，不应靠忽略所有授权错误掩盖顺序缺陷。
+
+## #180 WebAudio方法借用须拒绝未跟踪上下文和硬件目的端（2026-10-03）
+
+保护本realm AudioContext/AudioNode原型仍不足：作者可以把保护方法call到别的realm创建的上下文或硬件destination。生产JS行为RED复现未拒绝借用。捕获原生destination最大声道品牌getter，实时context必须存在本政策WeakMap；硬件目的端必须有本document私有闸门，未跟踪者InvalidAccessError，普通AudioNode/AudioParam连接保留。实际blank-child试验由沙箱SecurityError先行拒绝，不能将它误记为品牌守卫路径执行证据；新守卫直接由生产JS行为测试覆盖。
+
+## #181 捕获原始Array方法不能保护私有记录（2026-10-03）
+
+政策预先捕获Array.push/splice，作者后来仍可在Array.prototype安装数字索引setter，push的继承Set将私有context/Gain记录作为参数暴露；splice删除项还会调用作者Array species，Proxy defineProperty观察删除记录。两项实际RED取得私有对象。私有数组改用捕获Object.defineProperty逐个建立自有dense索引和手动移动/删除，从不调用作者Array方法或species；适用于媒体/上下文/observer列表和私有连接参数。最新生产JS与实际ReleasePlayer攻击回归未取得记录。
+
+## #182 私有JSON回执要避开继承toJSON（2026-10-03）
+
+WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。普通私有receipt原先可让作者看到documentNonce/sequence甚至伪造settled=true，绕过异步挂起屏障。生产RED确实拦截一次。receipt改用捕获Object.create(null)并写自身字段，作者原型方法无参与；生产组合116/116及实际Player持续安装恶意Object.toJSON后的拦截次数0。公开JSON可按作者行为处理，私有执行参数/回执不能含作者可接管的原型序列化路径。

@@ -1270,3 +1270,11 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 同安装副本实际Core正常重启通过：Player83528/session9333ca54先提交focus revision4；正常退出后新Player102184/session540fdca3自动恢复focus revision2，安装stamp不变、测试nav=0，两份SDK文档为新文档。真实GIF starting→desktop观察分别559ms/558ms且各仅一次，MP4恢复ready4/播放time0.253。finally原壁纸、布局/设置/checkpoint与用户Room哈希恢复，临时目录清除。
 - [x] 本阶段build→start/identity完成：Core67896/Player69960/Watchdog8564/config115068（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_121155.txt；原v2 inactive。核对PID/路径正常退出及结束本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生目录均0。完整P5/最终7项/全景16项仍继续，开发就绪1/16。
+
+- [x] Task3 WebAudio门槛（BASE3c01bd9）：首航前捕获AudioContext构造/原型、AudioNode连线及原生状态；内部Gain输出闸门不向作者泄露，默认/阶段/暂停/销毁即时静音并保留作者resume/suspend意图。异步挂起回执须等上下文真正suspended/closed，原生Player有界轮询后才挂起renderer；迟到resume不能恢复已关闭输出。先行为RED，再真实ReleasePlayer根/嵌套AudioContext、实际currentTime暂停/恢复与方法覆盖/伪token回归，完整build→start/identity和正常退出后具名提交。其他Task3/4、最终7项和16项范围保持。
+
+- [x] WebAudio实际RED→GREEN：生产JS组合116/116（原95+原生媒体21）；AudioContext私有Gain闸门/原生异步suspend回执、作者暂停意图、迟到resume拒绝、根/嵌套文档销毁均接入。额外行为失败复现并修复：外域上下文/硬件destination借用、Array继承索引setter与species泄露私有记录、Object.toJSON拦截/伪造暂停回执（ERRORS #180–#182）。
+- [x] 实际ReleasePlayer最新整页回归：两根/嵌套AudioContext真实currentTime运行；挂起1.1s后活动时间0.717s，暂停时间未计入时钟；作者实例方法覆盖、作者suspend意图、阶段/私有暂停/最新状态/根更名/撤销通过。实际Array攻击未获私有记录、Object.toJSON拦截次数0；blank-child借用由实际沙箱SecurityError拒绝，新增原生品牌守卫另由生产JS行为测试验证。该夹具Core回包仍模拟。
+- [x] 实际Core WebAudio安装/重启补证：生产安装同副本，Player68788/home→focus revision4后正常Core重启，新Player95068/新session自动恢复focus revision2、安装stamp不变、测试nav=0；两份新SDK文档中AudioContext均running且time>0.05，GIF start各一次554ms/561ms、视频实际解码恢复。首次探针过早读取旧音频观察值失败，改为等待真实作者状态报告后通过（#175追加）；不倒填首次失败为通过。finally原桌面/布局/设置/checkpoint逐字节及用户Room哈希恢复。该实际Core证据早于最后null-prototype回执补强，补强后完整build与实际ReleasePlayer再次通过。
+- [x] 最新完整build→start/identity通过：Core113124/Player109424/Watchdog27212/config65792（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_131909.txt；原v2 inactive。用户已授权正常退出，核对PID/绝对路径关闭Core和配置器，本轮watcher结束；Dext进程/1620与1621监听/资源暂存/临时原生目录均0。
+- [ ] 完整Task3/4继续：作者导航/控制/存储/退出确认，完整四媒体idle/锁屏组合、独立Player故障重建，个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。WebAudio本基础不代填AudioWorklet或完整恶意内容验证；最终7项保持待执行，16项开发就绪仍1/16，不合并master。

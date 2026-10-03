@@ -48,8 +48,8 @@ internal static class NativeCoreLiveProbe
         {
             foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
             File.AppendAllText(Path.Combine(host.FullName,"main.js"),"""
-                ;(()=>{const documents=new Map(),stages=[];let nav=0,first=null;
-                  addEventListener('message',e=>{if(![...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source)||!e.data?.liveDocument)return;documents.set(e.data.consumer,e.data.documentId);});
+                ;(()=>{const documents=new Map(),audio=new Map(),stages=[];let nav=0,first=null;
+                  addEventListener('message',e=>{if(![...document.querySelectorAll('iframe')].some(f=>f.contentWindow===e.source)||!e.data?.liveDocument)return;documents.set(e.data.consumer,e.data.documentId);audio.set(e.data.consumer,e.data.web);});
                   setInterval(()=>{const d=dextRuntimeDiagnostics(),r=d.runtime;if(!r)return;
                     if(stages.at(-1)?.stage!==r.lifecycle.stage)stages.push({stage:r.lifecycle.stage,at:performance.now(),gif:false});
                     if(r.lifecycle.stage==='starting'&&document.querySelector('img[src$="animation.gif"]'))stages.at(-1).gif=true;
@@ -57,7 +57,7 @@ internal static class NativeCoreLiveProbe
                     if(first&&performance.now()-first>700&&nav===0&&r.currentDeskId==='home'&&r.lifecycle.stage==='desktop'&&!d.paused){nav++;chrome.webview.postMessage(JSON.stringify({type:'dext:v3-request-desk',sessionId:d.sessionId,deskId:'focus'}));}
                     document.title='DEXT_V3_LIVE:'+JSON.stringify({generation:d.runtimeGeneration,session:d.sessionId,revision:d.revision,current:r.currentDeskId,target:r.targetDeskId,
                       inputReady:r.inputReady,stage:r.lifecycle.stage,paused:d.paused,frames:r.frames.count,instances:r.instances.map(v=>v.instanceId),documents:[...documents],nav,
-                      error:r.lastError,frameError:r.frames.lastError,stages,videos:[...document.querySelectorAll('video')].map(v=>({ready:v.readyState,time:v.currentTime,paused:v.paused,loop:v.loop,muted:v.muted}))});
+                      error:r.lastError,frameError:r.frames.lastError,stages,audio:[...audio],videos:[...document.querySelectorAll('video')].map(v=>({ready:v.readyState,time:v.currentTime,paused:v.paused,loop:v.loop,muted:v.muted}))});
                   },80);
                 })();
                 """);
@@ -67,7 +67,8 @@ internal static class NativeCoreLiveProbe
             File.WriteAllText(Path.Combine(source.FullName,"author.html"),"""
                 <!doctype html><h2>Native Core SDK</h2><span id=readout>pending</span><script src=sdk.js></script><script>
                 const documentId=crypto.randomUUID();Dext.ready().then(()=>{
-                  const report=()=>parent.postMessage({liveDocument:true,consumer:Dext.session.consumerId,documentId},'*');report();setInterval(report,160);
+                  const context=new AudioContext(),oscillator=context.createOscillator(),gain=context.createGain();gain.gain.value=0;oscillator.connect(gain).connect(context.destination);oscillator.start();context.resume();
+                  const report=()=>parent.postMessage({liveDocument:true,consumer:Dext.session.consumerId,documentId,web:{state:context.state,time:context.currentTime}},'*');report();context.addEventListener('statechange',report);setInterval(report,160);
                   Dext.data.bindReadout('time.read',document.getElementById('readout'),v=>String(v.unixMs));
                 });
                 </script>
@@ -101,7 +102,7 @@ internal static class NativeCoreLiveProbe
                     {
                         if((string?)observation["stage"]=="desktop"&&(string?)observation["current"]=="home"&&(bool?)observation["inputReady"]==true&&((JArray?)observation["documents"])?.Count==2&&initial==null)
                         {initial=(JObject)observation.DeepClone();documents=((JArray)observation["documents"]!).Select(v=>v.ToString(Formatting.None)).Order().ToList();events.Add("initial "+initial.ToString(Formatting.None));}
-                        if(initial!=null&&active.CurrentDeskId=="focus"&&active.TargetDeskId.Length==0&&(string?)observation["current"]=="focus"&&(long?)observation["revision"]==active.Revision&&(bool?)observation["inputReady"]==true&&((JArray?)observation["videos"])?.Any(v=>(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false)==true)
+                        if(initial!=null&&active.CurrentDeskId=="focus"&&active.TargetDeskId.Length==0&&(string?)observation["current"]=="focus"&&(long?)observation["revision"]==active.Revision&&(bool?)observation["inputReady"]==true&&ObservedAudio(observation)&&((JArray?)observation["videos"])?.Any(v=>(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false)==true)
                         {final=observation;break;}
                     }
                 }
@@ -114,6 +115,7 @@ internal static class NativeCoreLiveProbe
             using(var player=Process.GetProcessById(firstPid))Require(Path.GetFullPath(player.MainModule!.FileName).Equals(Path.Combine(coreDirectory,"plugins","webview2","Lively.Player.WebView2.exe"),StringComparison.OrdinalIgnoreCase),"exact deployed Release Player");
             var parent=GetParent(playerWindow);var className=new StringBuilder(128);GetClassName(parent,className,className.Capacity);Require(className.ToString() is "WorkerW" or "Progman","real desktop parent: "+className);
             Require(ObservedStartup(final),"actual GIF startup observed before desktop on the new document");
+            Require(ObservedAudio(final),"actual Core allows declared rendering of scene/shared WebAudio clocks");
             events.Add("PASS actual production Rust install/Core reverify/native SDK/geometry/GIF startup/decoded video/trusted top navigation/Core commit/same Player and documents/desktop parent (not physical input)");
             var stamp=active!.InstallationStamp;await StopCore();await StartCore();FocusDesktop();
             RoomSessionStatusResponse? restoredSession=null;JObject? restartedHost=null;deadline=DateTime.UtcNow.AddSeconds(35);
@@ -125,7 +127,7 @@ internal static class NativeCoreLiveProbe
                     var observation=ReadObservation(FindPlayer(restoredSession.PlayerPid));
                     if(restoredSession.CurrentDeskId=="focus"&&restoredSession.TargetDeskId.Length==0&&restoredSession.InstallationStamp==stamp&&
                         observation!=null&&(string?)observation["stage"]=="desktop"&&(string?)observation["current"]=="focus"&&(bool?)observation["inputReady"]==true&&
-                        (long?)observation["revision"]==restoredSession.Revision&&((JArray?)observation["documents"])?.Count==2&&
+                        (long?)observation["revision"]==restoredSession.Revision&&ObservedAudio(observation)&&((JArray?)observation["documents"])?.Count==2&&
                         ((JArray?)observation["videos"])?.Any(v=>(int?)v["ready"]>=2&&(double?)v["time"]>0.1&&(bool?)v["paused"]==false)==true)
                     {restartedHost=observation;break;}
                 }
@@ -137,6 +139,7 @@ internal static class NativeCoreLiveProbe
             var nextDocuments=((JArray)restartedHost["documents"]!).Select(v=>v.ToString(Formatting.None)).Order().ToList();
             Require(nextDocuments.All(v=>!documents!.Contains(v)),"new Player owns new SDK documents after restart");
             Require(ObservedStartup(restartedHost),"new Player replays GIF startup once before restored desktop");
+            Require(ObservedAudio(restartedHost),"actual Core restart releases restored scene/shared AudioContexts");
             events.Add("PASS actual normal Core restart restores committed focus/same installation with new Player/session/SDK documents/GIF startup/decoded video and no test navigation");
         }
         finally
@@ -185,6 +188,7 @@ internal static class NativeCoreLiveProbe
             core.Dispose();core=null;
         }
         async Task<List<GetWallpapersResponse>> Wallpapers(){var items=new List<GetWallpapersResponse>();using var stream=client!.GetWallpapers(new Empty(),deadline:DateTime.UtcNow.AddSeconds(10));while(await stream.ResponseStream.MoveNext(CancellationToken.None))items.Add(stream.ResponseStream.Current);return items;}
+        static bool ObservedAudio(JObject observation)=>observation["audio"] is JArray values&&values.Count==2&&values.All(v=>v is JArray pair&&pair.Count==2&&pair[1] is JObject audio&&(string?)audio["state"]=="running"&&(double?)audio["time"]>0.05);
         static bool ObservedStartup(JObject observation)
         {
             var stages=(JArray?)observation["stages"];

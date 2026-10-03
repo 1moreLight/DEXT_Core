@@ -327,3 +327,11 @@ main等待acceptSnapshot Promise，假宿主返回Array.push数字，导致.catc
 ## #175 原生帧策略异步化后，命令回执可先于指定Core快照应用（2026-10-03）
 
 整页探针发revision3紧接report，旧revision2的inputReady仍为true时提前返回，误报文档丢失。命令携带expectedRevision，poll等待页面精确修订和当前geometry ready，再读文档/媒体。原官方探针和新增媒体探针共同修正，不能用IPC到达当异步处理完成。
+
+### #175 追加：真实Core重启后的音频观察值也必须等实际来源（2026-10-03）
+
+WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓存仍是初始audio suspended/time0。首次重启音频断言失败且原桌面恢复成功；改作者statechange报告并要求两AudioContext真实running/time>0.05，再验证新文档而非推断状态。无需改生产政策，也不以固定sleep接受旧观察。native-core-webaudio-ready最终通过，首次失败记录保留。
+
+### #145 追加：WebAudio探针须使用Core已部署的ReleasePlayer路径（2026-10-03）
+
+误传Lively.Player.WebView2/bin/Release/net462不存在路径，命令失败不计媒体证据。正确路径是同分支Core bin/x64/Debug/net9.0-windows10.0.18362.0/plugins/webview2/Lively.Player.WebView2.exe，build.ps1部署Release版本后再运行。

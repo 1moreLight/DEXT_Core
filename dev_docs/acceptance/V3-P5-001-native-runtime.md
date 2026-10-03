@@ -130,3 +130,11 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 同一临时生产安装副本不重装、不改checkpoint、不发恢复导航：Player83528提交focus后正常退出Core，新Player102184/新session自动恢复focus，安装stamp不变、测试nav=0、SDK新文档。真实GIF start在每个新文档只观察到一次starting→desktop（559ms/558ms），视频实际解码播放恢复。原壁纸及布局/设置/checkpoint逐字节和用户Room哈希恢复。完整build→start/identity后正常退出，最终Dext进程/开发端口/资源暂存/临时目录0。
 
 这里只补正常Core重启门槛；独立Player故障重建、完整idle/锁屏组合、WebAudio、物理输入/DPI、个人布局和其余完整Task3/4仍未完成。上方7项最终人工步骤保持待执行。
+
+## Task3 WebAudio原生基础与实际Core补证（2026-10-03）
+
+生产组合116/116，额外作者方法借用、Array索引/species、Object.toJSON回执攻击均先失败后修复。AudioContext私有Gain即时输出闸门与真实原生suspend回执接到Player挂起屏障；作者暂停意图和迟到resume按当前事实收敛。实际ReleasePlayer两个根/嵌套AudioContext真实时钟、挂起1.1s排除墙钟、恢复/阶段/根更名/撤销通过，私有记录与回执未被作者取得；Core回包在该夹具仍模拟。
+
+真实生产Core同安装副本切页与正常重启另外通过，两新SDK文档的AudioContext均running且time>0.05，focus自动恢复、GIF start每新文档一次、视频解码恢复；此Core运行早于最后null-prototype回执补强，补强后完整build与实际Player整页再次通过。finally原桌面及布局/设置/checkpoint逐字节和用户Room哈希恢复。最新build→start/identity后按精确PID/路径正常退出，Dext进程/开发端口/资源暂存/临时原生目录均0。
+
+以上只补WebAudio基础，不把作者静音夹具的真实时钟当作物理听音验收。完整idle/锁屏与独立Player故障恢复、作者导航/控制/存储/确认、个人布局/精确命中/物理输入/DPI仍继续；上方7项最终人工步骤保持待执行，完整P5未完成、16项开发就绪仍1/16。

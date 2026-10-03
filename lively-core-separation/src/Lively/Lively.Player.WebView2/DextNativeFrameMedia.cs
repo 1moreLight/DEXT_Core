@@ -110,8 +110,22 @@ namespace Lively.Player.WebView2
                 var json=await Execute(frame,DextNativeFrameMediaPolicy.ApplyScript(secret,nonce,sequence,active));
                 if(!Alive(frame,epoch)||frame.Nonce!=nonce||frame.Sequence!=sequence)return;
                 if(!active&&frame.Root.Retiring&&json=="null")return; // pagehide has already stopped this retiring document
-                var reply=JObject.Parse(json);
-                if((string)reply["documentNonce"]!=nonce||(long?)reply["sequence"]!=sequence||(bool?)reply["active"]!=active)throw new InvalidOperationException("Native frame policy rejected");
+                var stop=DateTime.UtcNow.AddSeconds(5);
+                while(true)
+                {
+                    var reply=JObject.Parse(json);
+                    if((string)reply["documentNonce"]!=nonce||(long?)reply["sequence"]!=sequence||(bool?)reply["active"]!=active)throw new InvalidOperationException("Native frame policy rejected");
+                    // ExecuteScript returns JSON without awaiting JS Promises.
+                    // The output gate is already muted; await the real WebAudio
+                    // suspension receipt before letting the renderer suspend.
+                    if(active||(bool?)reply["settled"]==true)return;
+                    if(DateTime.UtcNow>=stop)throw new TimeoutException("Native WebAudio suspension timeout");
+                    await Task.Delay(20);
+                    if(!Alive(frame,epoch)||frame.Nonce!=nonce||frame.Sequence!=sequence)return;
+                    json=await Execute(frame,DextNativeFrameMediaPolicy.DescribeScript(secret));
+                    if(!Alive(frame,epoch)||frame.Nonce!=nonce||frame.Sequence!=sequence)return;
+                    if(frame.Root.Retiring&&json=="null")return;
+                }
             }
             catch(Exception error){if(Alive(frame,epoch)&&frame.Nonce==nonce&&frame.Sequence==sequence)Fail(error.GetType().Name+": "+error.Message);}
         }
