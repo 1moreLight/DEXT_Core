@@ -247,3 +247,18 @@ layout-pause-controller-build完整成功。新实际controller可见性错误�
 本阶段只交付私有基础，生产SDK尚未提交witness，实际native frame注册/同UI原生输入arm、Core精确正数gesture、移动取样和source动作还需接通，当前author inputSequence=0仍存在。不得以本阶段通过宣称整条动作链的timer/最近完成问题已解决。用户指定本地功能优先，后续不扩展网络安全测试；桌面拖动暂缓，实际Core输入受系统凭据窗影响的补证保持待恢复。最终人工仍按上方第4项鼠标/Enter/Space与异步/伪造/重调，第5项移动/遮挡/多入口/DPI集中执行，不新增中途验收。全16项就绪1/16=6.25%（约6%），7项和单次P5审查不提前勾选，不合并master。
 
 - 最终清理补记：常规日志20261004_003713.txt，本轮1420/1421/1621监听0。git staged check发现新guardian末尾空行，仅修正EOF格式后继续提交，不重跑已充分验证的行为。
+
+## P5 本地原生按下手势关联计划（2026-10-04，BASE eb59348）
+一句话目标：Core在真实RawInput DOWN冻结正数手势序号、文档scope、实际HWND/viewport/DPI和按下时间，UP完成沿用该序号，为移动DOWN/UP视觉样本及Player串行arm/转发准备同一关联。
+本段范围：Core UI适配已调用的native authority按下/松开状态、鼠标/Enter/Space重复、拖动容差、前台/窗口/结构修订撤销与从DOWN起1500ms期限；空静止几何仍可记录实际视口内按下事实但不产生动作证明。静止几何默认动作和受控Tab保持；不新增网络能力/网络安全测试，不把半包/UP时间当新期限。
+先针对生产Core状态写行为RED，再接冻结模型，运行对应动作回归和完整build→start/身份/正常退出，具名提交。Player nativeframe/SDK汇合与同UI转发仍另续，当前author零序号动作路径不在本段宣称修好，桌面拖动暂缓。
+最终人工沿验收卡第4项鼠标/Enter/Space一次消费、长按超时/AltTab取消、第5项移动/遮挡/多图标/DPI；全包集中执行，不新增中途验收。完整16项就绪仍1/16=6.25%（约6%），Dext探针后退出。
+
+## P5 Core真实DOWN正数关联基础验证（2026-10-04）
+Core当前RawInput适配已调用的MouseDown/Key流程，现改为在可操作实际视口内DOWN时分配私有正数序号并冻结generation/session/revision/geometryVersion/HWND/viewport/DPI/OS点/键和单调时间；UP沿用原序号完成。空静止区域可保留raw点供后续运动样本配对，单独DOWN或无命中UP不产生动作证明。重复DOWN不改序号/时间，拖动超容差、结构/窗口/前台变化与跨键鼠新DOWN取消旧配对，按住状态保留到对应UP。
+
+新增实际生产行为RED238/254（16失败，其中1500ms UP错误生成proof），修复后gesture-down-core-green 254/254。完成时和动作准备统一从DOWN起1500ms半开期限，UP/移动/重读不续期；已及时完成但后来过期的proof仍由动作权威返回expiredInput，已过期的未完成DOWN不能再生成完成。未做新的网络安全专项。本轮只验证Core生产类与必要动作回归，没有补填被凭据窗阻挡的实际Core OS输入。
+
+完整gesture-down-core-build四阶段通过；常规start Core73828/Player123844/Watchdog113464/config24756，日志20261004_010606.txt。identity Core/Player/Watchdog及产品/mutex/pipe/data/log OK，所属D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher33543 exit0、原四文件hash/缺失保持，Dext进程0、1420/1421/1621监听0。首次启动调用自动审批超时在CreateProcess前拒绝，原参数单次重试后成功。
+
+下一段传送冻结gesture到Player，在同UI操作内arm和真实Win32转发，再贯通nativeframe witness/SDK requestId及移动DOWN/UP样本。当前SDK/nativeframe尚未使用本关联，author inputSequence=0路径仍在，不能宣称整条作者异步借用已修好；source动作继续，拖动按用户暂缓。最终集中人工仍为卡第4项鼠标/Enter/Space、长按超时/AltTab取消，第5项移动/遮挡/多图标/DPI；完整16项就绪1/16=6.25%（約6%）、七项人工与单次P5审查不提前打勾，不合并master。

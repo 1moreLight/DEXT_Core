@@ -13,7 +13,9 @@ internal sealed record RoomNativeViewport(nint Handle, int X, int Y, int Width, 
 internal sealed record RoomNativeButton(string Consumer, string Button, double X, double Y,
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
-internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed);
+internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false);
+internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
 
 internal sealed class RoomNativeInputProof
 {
@@ -41,16 +43,23 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private AcceptedEntry[] buttons=Array.Empty<AcceptedEntry>();
     private AcceptedEntry? focused;
     private RoomNativeInputProof? completed;
+    private RoomNativeInputGesture? gesture;
     private Press? mouse, keyboard;
     private bool mouseHeld;
     private readonly HashSet<int> keysHeld=new();
-    private sealed record Press(AcceptedEntry Entry,long IssuedAt,int X=0,int Y=0,int Key=0);
+    private sealed record Press(AcceptedEntry Entry,long IssuedAt,long Sequence,int X=0,int Y=0,int Key=0);
     private sealed class AcceptedEntry(DextNativeGeometryEntry region)
     {
         internal DextNativeGeometryEntry Region {get;}=region;
         internal RoomNativeButton Button {get;}=new(region.Consumer,region.Button,region.X,region.Y,region.Width,region.Height,region.TabIndex,region.EntryId);
     }
-    internal RoomNativeInputState? State { get {lock(gate)return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed);} }
+    internal RoomNativeInputState? State
+    {
+        get {
+            var now=clock.GetTimestamp();
+            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture);}
+        }
+    }
     internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
     internal void CheckNativeViewport(RoomNativeViewport? current,bool foreground)
     {lock(gate){if(!foreground || current==null || viewport!=null && current!=viewport)ClearGeometry();}}
@@ -104,31 +113,44 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         var now=clock.GetTimestamp();
         lock(gate)
         {
+            ExpireGesture(now);
             if(mouseHeld)return;
-            mouseHeld=true;completed=null;mouse=null;keyboard=null;
-            if(!Available(current,foreground)){focused=null;return;}
+            mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;
+            if(!Available(current,foreground) || !Inside(current,x,y)){focused=null;return;}
             focused=Hit(x,y);
-            if(focused!=null)mouse=new(focused,now,x,y);
+            // A raw point can later be resolved against an event-time visual
+            // sample. Recording it alone never creates an action completion.
+            if(!BeginGesture(now,x,y,0))return;
+            if(focused!=null)mouse=new(focused,now,gesture!.Sequence,x,y);
         }
     }
     internal void MouseMove(RoomNativeViewport current,int x,int y,bool foreground)
     {
+        var now=clock.GetTimestamp();
         lock(gate)
         {
+            ExpireGesture(now);
             if(!foreground || viewport!=null && viewport!=current){ClearGeometry();return;}
-            if(mouse==null)return;
-            if(!Available(current,foreground) || Math.Abs((double)x-mouse.X)>current.DragTolerance || Math.Abs((double)y-mouse.Y)>current.DragTolerance)mouse=null;
+            if(gesture is not{Key:0,Released:false} down)return;
+            if(!Available(current,foreground) || Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)
+            {mouse=null;gesture=null;completed=null;}
         }
     }
     internal void MouseUp(RoomNativeViewport current,int x,int y,bool foreground)
     {
+        var now=clock.GetTimestamp();
         lock(gate)
         {
+            ExpireGesture(now);
             if(!mouseHeld)return;
             mouseHeld=false;var down=mouse;mouse=null;
-            if(down==null || !Available(current,foreground) || Hit(x,y)!=down.Entry ||
-                Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)return;
-            Complete(down);
+            // A mouse UP from a superseded pair must not cancel a newer key.
+            if(gesture is not{Key:0,Released:false} pending)return;
+            if(!Available(current,foreground) || !Inside(current,x,y) ||
+                Math.Abs((double)x-pending.X)>current.DragTolerance || Math.Abs((double)y-pending.Y)>current.DragTolerance)
+            {gesture=null;return;}
+            gesture=pending with{Released=true};
+            if(down!=null && Hit(x,y)==down.Entry)Complete(down,now);
         }
     }
     internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground)
@@ -137,27 +159,30 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         var now=clock.GetTimestamp();
         lock(gate)
         {
+            ExpireGesture(now);
             if(down)
             {
                 if(!keysHeld.Add(key))return;
-                completed=null;keyboard=null;
+                completed=null;keyboard=null;mouse=null;gesture=null;
                 if(!Available(current,foreground))return;
                 if(key==9)
                 {
-                    mouse=null;var order=buttons.Where(b=>b.Button.TabIndex>=0).OrderBy(b=>b.Button.TabIndex).ToArray();
+                    var order=buttons.Where(b=>b.Button.TabIndex>=0).OrderBy(b=>b.Button.TabIndex).ToArray();
                     if(order.Length==0){focused=null;return;}
                     var index=Array.IndexOf(order,focused);
                     var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
                     focused=order[next];return;
                 }
-                if(focused!=null)keyboard=new(focused,now,Key:key);
+                if(focused!=null && BeginGesture(now,0,0,key))keyboard=new(focused,now,gesture!.Sequence,Key:key);
             }
             else
             {
                 if(!keysHeld.Remove(key))return;
                 var press=keyboard;if(press==null || press.Key!=key)return;
                 keyboard=null;
-                if(Available(current,foreground) && focused==press.Entry)Complete(press);
+                if(gesture==null || gesture.Key!=key || gesture.Released)return;
+                if(!Available(current,foreground) || focused!=press.Entry){gesture=null;return;}
+                gesture=gesture with{Released=true};Complete(press,now);
             }
         }
     }
@@ -169,11 +194,33 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             sequence>=0 && (sequence==0 || sequence==proof.Sequence) &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
     }
-    private void Complete(Press press)
+    private bool BeginGesture(long now,int x,int y,int key)
     {
-        if(inputSequence>=9007199254740991){ClearGeometry();return;}
-        completed=new(this,press.Entry.Button,press.IssuedAt,++inputSequence);
+        if(inputSequence>=9007199254740991){ClearGeometry();return false;}
+        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key);
+        return true;
     }
+    private void Complete(Press press,long now)
+    {
+        if(gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
+        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence);
+    }
+    private bool Expired(long issued,long now)
+    {
+        var elapsed=((decimal)now-issued)/clock.TimestampFrequency;
+        return elapsed<0 || elapsed>=1.5m;
+    }
+    private void ExpireGesture(long now)
+    {
+        if(gesture!=null && Expired(gesture.IssuedAt,now))
+        {
+            gesture=null;mouse=null;keyboard=null;
+            // Keep an already completed proof for the action authority to return
+            // expiredInput consistently. Its original DOWN time never changes.
+        }
+    }
+    private static bool Inside(RoomNativeViewport value,int x,int y)=>
+        (double)x-value.X>=0 && (double)x-value.X<value.Width && (double)y-value.Y>=0 && (double)y-value.Y<value.Height;
     internal bool Validate(RoomNativeInputProof proof,RoomSessionSnapshot current,string consumer,string button,bool consume)
     {
         lock(gate)
@@ -181,7 +228,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             if(completed!=proof || viewport==null || snapshot==null || !CanInput() ||
                 current.SessionId!=snapshot.SessionId || current.RoomId!=snapshot.RoomId || current.InstallationStamp!=snapshot.InstallationStamp || current.Revision!=snapshot.Revision ||
                 proof.Button.Consumer!=consumer || proof.Button.Button!=button)return false;
-            if(consume){proof.MarkConsumed();completed=null;}
+            if(consume){proof.MarkConsumed();completed=null;gesture=null;}
             return true;
         }
     }
@@ -195,7 +242,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     }
     private void ClearGeometry()
     {
-        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;
+        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;
         // Preserve held edges until UP. Auto-repeat after refresh/geometry change
         // must not turn into a new physical DOWN.
     }

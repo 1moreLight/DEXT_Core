@@ -238,3 +238,7 @@ geometry.js按真实仿射矩阵裁剪画布并扣前层wrapper；wrapper矩形�
 组合document-created bootstrap先安装native-input-guardian.js，再安装媒体policy，共用封闭shadow创建链。私有__dextNativeInputGuardianV1只接受本机secret及describe/arm/revoke闭合字段，以Guid文档nonce和严格增长的positive safe gesture/structural标记当前同步输入回调；pagehide终止旧文档。公共__dextNativeInputRequestV1只接受完整SDK protected action JSON并返回boolean，不返回私有序号。私有dext:v3-input-witness包含protocolVersion/token/documentNonce/gestureId/structuralVersion/dispatchSequence/requestJson；C#从实际native frame核对nonce后严格解析，作者不能自选frame或消费证明。
 
 DextNativeInputRequestJoin供Player UI线程管理，官方SDK原始请求与native frame witness两路必须scope、完整typed请求及关联序号一致；64pending、196frames，第一半包固定1500ms且不续期，rN回放高水位、撤销/错配闭合。它不查最新完成、不执行Core动作、不替代Core物理Down期限。当前模块基础已验证，尚未启用实际SDK/nativeframe/Core生产强制接线；现有动作路径不能据此宣称已拒绝所有timer借用。
+
+### Core原生DOWN关联（2026-10-04）
+RoomNativeInputState新增仅本机可读的Gesture：positive Sequence、Generation/Session/Revision/GeometryVersion、实际RoomNativeViewport（HWND、OS origin、pixel bounds、DPI、drag tolerance）、原始OS点/控制键、单调IssuedAt和Released。序号在实际可操作DOWN分配，跨几何/代次保持单调；UP产生RoomNativeInputProof沿用原Sequence/IssuedAt。空button表可记录DOWN但不完成动作，Tab只选焦点，不分配序号。
+期限从物理DOWN开始，elapsed>=1500ms或时钟回退撤销pending，移动/重复/UP不续期。新DOWN替换旧配对且晚到另一输入设备UP不消费新手势；结构/前台/窗口变更和动作消费撤销当前Gesture，held边沿保留到UP。旧完成proof仍按动作权威返回expiredInput。此字段还没有通过Player私有消息发送，SDK/author零序号入口尚未切换。

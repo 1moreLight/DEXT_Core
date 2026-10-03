@@ -237,3 +237,7 @@ Core独占新文档启动入口；官方Player仅可提交当前生命周期修�
 ### 2026-10-03：原生暂停保留当前WebView静帧与有界恢复
 原生v3暂停不能仅靠img解码状态或旧GPU debugger保证GIF画面冻结。Player在当前媒体屏障后CapturePreview自己的WebView到内存Bitmap，显示原生静帧后隐藏WebView并TrySuspendAsync；同WebView/文档/实例持续，恢复按最新Core事实和媒体策略后才显示原WebView。图像不落盘，作者无截图能力；两项异步原生操作各三秒有界并检查当前播放意图。Microsoft说明IsVisible=false是挂起前提，且挂起best effort：[TrySuspendAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)、[CapturePreviewAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.capturepreviewasync)。
 Core区分主动关闭与当前原生Player故障；故障私有Retire保留checkpoint/KV、撤销旧文档权限，经加载锁重查原对象后正常重建新PID/session，三十秒最多三次。退出Core/产品、切换Room后的迟到恢复与主动关闭不重建，失败不把恢复布局写成空。实际锁屏和窗口还原故障仍列最终验收。
+
+### 2026-10-04：原生手势序号在物理DOWN冻结
+修订2026-10-03「原生完成序号关联」的分配时机：正数序号在Core RawInput DOWN冻结，及时UP完成沿用同一序号和物理时间，供Player同UI arm/转发、native frame见证与运动视觉样本对齐。序号仅私有关联，不能单独授予动作，作者仍不提交私有序号/票据。1500ms使用半开期限，DOWN后的移动/重调/UP/请求不能续期；空静止区域只记录raw输入事实，不产生按钮证明。
+本段Core模型和回归已验证，实际Player/SDK关联及运动样本继续；用户指定本地功能优先，保留已实现输入/安装边界的必要验证，不扩展网络安全专项。拖动暂缓，最终集中验收前不合并。

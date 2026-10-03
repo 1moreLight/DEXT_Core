@@ -12,6 +12,7 @@ static partial class RoomActionChecks
     {
         LayoutChecks(check);
         PreciseInputChecks(check);
+        GestureChecks(check);
 
         check("timed-out Windows control retains attachment admission until actual terminal",()=>{
             var queue=new RoomNativeControlQueue(TimeSpan.FromMilliseconds(50));var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new ManualResetEventSlim();

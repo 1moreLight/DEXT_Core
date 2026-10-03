@@ -11,10 +11,10 @@
 |---|---|---|---|
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
-| 3 | 本机绑定与授权服务 | Core私有存储、已验证消费者目录、原子动作准备与票据35/35；真实Explorer参数传递、完整构建/启动通过；RawInput适配器、作者SDK和个人编辑UI待贯通 | 否 |
+| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；nativeframe/SDK手势汇合、个人编辑UI待贯通 | 否 |
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；完整连续仪表盘/输入/异常恢复待完成 | 否 |
-| 5 | 启动、待机与暂停生命周期 | P5原生暂停桥/逐iframe音视频基础、实际Core GIF启动与视频解码；同安装副本Core正常重启及WebAudio原生基础已验证；完整idle/锁屏组合及Player故障重建待完成 | 否 |
-| 6 | 布局与输入同步 | 原型占用区和旧输入回归；响应式/DPI/动画版本/无空位待验证 | 否 |
+| 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
+| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；移动事件取样/实际DPI继续，桌面拖动按用户暂缓 | 否 |
 | 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
@@ -144,3 +144,12 @@ layout-pause-controller-build完整成功。新实际controller可见性错误�
 本阶段只交付私有基础，生产SDK尚未提交witness，实际native frame注册/同UI原生输入arm、Core精确正数gesture、移动取样和source动作还需接通，当前author inputSequence=0仍存在。不得以本阶段通过宣称整条动作链的timer/最近完成问题已解决。用户指定本地功能优先，后续不扩展网络安全测试；桌面拖动暂缓，实际Core输入受系统凭据窗影响的补证保持待恢复。最终人工仍按上方第4项鼠标/Enter/Space与异步/伪造/重调，第5项移动/遮挡/多入口/DPI集中执行，不新增中途验收。全16项就绪1/16=6.25%（约6%），7项和单次P5审查不提前勾选，不合并master。
 
 - 最终清理补记：常规日志20261004_003713.txt，本轮1420/1421/1621监听0。git staged check发现新guardian末尾空行，仅修正EOF格式后继续提交，不重跑已充分验证的行为。
+
+## P5 Core真实DOWN正数关联基础验证（2026-10-04）
+Core当前RawInput适配已调用的MouseDown/Key流程，现改为在可操作实际视口内DOWN时分配私有正数序号并冻结generation/session/revision/geometryVersion/HWND/viewport/DPI/OS点/键和单调时间；UP沿用原序号完成。空静止区域可保留raw点供后续运动样本配对，单独DOWN或无命中UP不产生动作证明。重复DOWN不改序号/时间，拖动超容差、结构/窗口/前台变化与跨键鼠新DOWN取消旧配对，按住状态保留到对应UP。
+
+新增实际生产行为RED238/254（16失败，其中1500ms UP错误生成proof），修复后gesture-down-core-green 254/254。完成时和动作准备统一从DOWN起1500ms半开期限，UP/移动/重读不续期；已及时完成但后来过期的proof仍由动作权威返回expiredInput，已过期的未完成DOWN不能再生成完成。未做新的网络安全专项。本轮只验证Core生产类与必要动作回归，没有补填被凭据窗阻挡的实际Core OS输入。
+
+完整gesture-down-core-build四阶段通过；常规start Core73828/Player123844/Watchdog113464/config24756，日志20261004_010606.txt。identity Core/Player/Watchdog及产品/mutex/pipe/data/log OK，所属D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher33543 exit0、原四文件hash/缺失保持，Dext进程0、1420/1421/1621监听0。首次启动调用自动审批超时在CreateProcess前拒绝，原参数单次重试后成功。
+
+下一段传送冻结gesture到Player，在同UI操作内arm和真实Win32转发，再贯通nativeframe witness/SDK requestId及移动DOWN/UP样本。当前SDK/nativeframe尚未使用本关联，author inputSequence=0路径仍在，不能宣称整条作者异步借用已修好；source动作继续，拖动按用户暂缓。最终集中人工仍为卡第4项鼠标/Enter/Space、长按超时/AltTab取消，第5项移动/遮挡/多图标/DPI；完整16项就绪1/16=6.25%（約6%）、七项人工与单次P5审查不提前打勾，不合并master。

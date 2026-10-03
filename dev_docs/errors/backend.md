@@ -448,3 +448,7 @@ P5生产authority新增行为测试实际RED：归一化三角形包围框内、
 
 ## #206 已撤销文档nonce不能通过较新修订复活（2026-10-03）
 bounded native request join更新当前snapshot时需保留同文档rN水位，初版RegisterFrame却在RevokeDocument后允许相同epoch/nonce以更大revision恢复Active。正式行为RED83/84后增加DocumentRevoked，只有实际新的native文档epoch+nonce能重新注册；同文档修订只允许正常revision撤销后的恢复，不能抹去真正文档退休。RevokeAll终结整个join实例，旧callback不能复活；最终84/84。该helper仅关联请求，Core物理证明及授权仍须另行复核。
+
+## #208 私有手势关联需要在DOWN冻结，截止UP不能重新开始（2026-10-04）
+旧Core只在UP分配完成序号，Player无法在实际DOWN之前用同一正数关联arm作者文档，UP也可能在物理1500ms截止后新建已过期proof。新增生产RED238/254后，序号改为DOWN分配、UP原序号完成；视口/DPI/OS点/scope/时间不可变，未完成长按按elapsed>=1500ms撤销，动作权威统一半开期限。完成后才过期仍返回expiredInput，不放宽默认动作或作者权限。
+相邻输入设备的新DOWN替换旧pending，晚到另一设备UP不能取消或消费新对；空区域DOWN只记录事实，后续移动视觉样本才能产生按钮完成。修复后254/254、完整build/start/正常退出通过，原四文件保持。本段尚未向Player/SDK发送正数关联，不声称解决整条作者timer入口。

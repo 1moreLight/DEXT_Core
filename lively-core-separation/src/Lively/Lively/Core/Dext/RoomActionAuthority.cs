@@ -358,7 +358,7 @@ internal sealed partial class RoomActionAuthority
     private bool Expired(long issued, long now)
     {
         var elapsed = ((decimal)now - issued) / timestampFrequency;
-        return elapsed < 0 || elapsed > (decimal)InputLifetime.TotalSeconds;
+        return elapsed < 0 || elapsed >= (decimal)InputLifetime.TotalSeconds;
     }
 
     private T Prepare<T>(Guid connection, RoomSessionPeer peer, Guid session, string consumer,
