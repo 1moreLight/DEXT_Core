@@ -78,7 +78,7 @@ internal static class NativeCoreLiveProbe
         try
         {
             if(systemControls){controlDevices=new();controlDevices.StartMedia(Path.Combine(Path.GetFullPath(mediaDirectory),"clip.mp4"));}
-            foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
+            foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","geometry.js", "layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
             File.AppendAllText(Path.Combine(host.FullName,"main.js"),"""
                 ;(()=>{const documents=new Map(),audio=new Map(),storage=new Map(),actions=new Map(),slots=new Map(),nativeEvents=[],stages=[];let nav=0,first=null;
                   chrome.webview.addEventListener('message',e=>{const v=e.data;if(v.type==='dext:v3-native-event'&&v.kind==='activate'||v.type==='dext:v3-native-response'&&v.inputSequence>0)nativeEvents.push({type:v.type,kind:v.kind,status:v.status,inputSequence:v.inputSequence,inputConsumed:v.inputConsumed});if(nativeEvents.length>16)nativeEvents.shift();});
@@ -106,7 +106,7 @@ internal static class NativeCoreLiveProbe
                   const actions={timerError:null,clicks:0,results:[],exitTimer:null,exitResults:[]};let attempted=false;
                   if(__AUTHOR_NAV__){
                     const publish=()=>Dext.scene.publishGeometry({buttons:[{buttonId:'next',x:20,y:20,width:120,height:44},...(__PRODUCT_EXIT__&&Dext.session.consumerId==='scene'?[{buttonId:'exit',x:180,y:20,width:120,height:44}]:[])]}).catch(()=>{});
-                    Dext.scene.subscribeGeometry(publish);Dext.desk.subscribe(value=>{publish();if(value.lifecycle.stage==='desktop'&&!attempted){attempted=true;let retries=0;const test=()=>(__SYSTEM_CONTROLS__?Dext.audio.control({muted:__ORIGINAL_MUTED__}):Dext.desk.navigate({type:'desk.next'})).then(v=>{actions.timerError=v.status;report();},e=>{if(e.code==='controlUnavailable'&&retries++<3){setTimeout(test,180);return;}actions.timerError=e.code;report();});setTimeout(test,250);}});
+                    Dext.scene.subscribeGeometry(publish);Dext.desk.subscribe(value=>{publish();if(value.lifecycle.stage==='desktop'&&!attempted){attempted=true;let retries=0;const test=()=>(__SYSTEM_CONTROLS__?Dext.audio.control({muted:__ORIGINAL_MUTED__}):Dext.desk.navigate({type:'desk.next'})).then(v=>{actions.timerError=v.status;report();},e=>{if(['controlUnavailable','denied','notOperable','staleInput'].includes(e.code)&&retries++<20){setTimeout(test,180);return;}actions.timerError=e.code;report();});setTimeout(test,250);}});
                     document.getElementById('next').addEventListener('click',()=>{const step=actions.clicks++;const command=!__SYSTEM_CONTROLS__||step===7?Dext.desk.navigate({type:'desk.next'}):step===0?Dext.audio.control({volume:__TEST_LEVEL__,muted:__ORIGINAL_MUTED__}):step===1?Dext.audio.control({volume:__ORIGINAL_LEVEL__,muted:__ORIGINAL_MUTED__}):Dext.media.control(['pause','play','toggle','next','previous'][step-2]);command.then(v=>{actions.results.push(v);report();},e=>{actions.results.push({error:e.code});report();});});
                   }
                   if(__PRODUCT_EXIT__&&Dext.session.consumerId==='scene'){
@@ -196,7 +196,7 @@ internal static class NativeCoreLiveProbe
                 events.Add("PASS "+lifecycleMedia+" actual Core paused startup retains session and does not complete during inactive wall time");
                 var play=new AutomationCommandRequest();play.Args.Add(new[]{"app","--play","true"});await lifecycleCommands.AutomationCommandAsync(play,deadline:DateTime.UtcNow.AddSeconds(5));
             }
-            FocusDesktop();RoomSessionStatusResponse? active=null;JObject? initial=null,final=null;IntPtr playerWindow=IntPtr.Zero;List<string>? documents=null;string? firstSession=null;int firstPid=0;bool clickSent=false;
+            FocusDesktop();RoomSessionStatusResponse? active=null;JObject? initial=null,final=null;IntPtr playerWindow=IntPtr.Zero;List<string>? documents=null;string? firstSession=null;int firstPid=0;bool clickSent=false,initialDesktopFocused=false;
             deadline=DateTime.UtcNow.AddSeconds(35);
             while(DateTime.UtcNow<deadline)
             {
@@ -205,7 +205,25 @@ internal static class NativeCoreLiveProbe
                 {
                     if(firstPid==0){firstPid=active.PlayerPid;firstSession=active.SessionId;events.Add("Core native session "+JsonConvert.SerializeObject(active));}
                     Require(firstPid==active.PlayerPid&&firstSession==active.SessionId,"same Core session and Player");
-                    playerWindow=FindPlayer(firstPid);var observation=ReadObservation(playerWindow);
+                    playerWindow=FindPlayer(firstPid);
+                    if(authoredInput&&!clickSent&&playerWindow!=IntPtr.Zero&&GetWindowRect(playerWindow,out var exposureBounds)){
+                        var exposurePoint=new NativePoint{X=exposureBounds.Left+(int)Math.Round((exposureBounds.Right-exposureBounds.Left)*80.0/1920),Y=exposureBounds.Top+(int)Math.Round((exposureBounds.Bottom-exposureBounds.Top)*42.0/1080)};
+                        if(!minimizedForTest){
+                            EnumWindows((window,_)=>{if(IsWindowVisible(window))windowsBefore[window]=(IsIconic(window),IsZoomed(window));return true;},IntPtr.Zero);
+                            desktopShell=Activator.CreateInstance(System.Type.GetTypeFromProgID("Shell.Application")!)!;minimizedForTest=true;((dynamic)desktopShell).MinimizeAll();
+                            await Task.Delay(700);events.Add("test exposes actual desktop before waiting for foreground-gated storage/no-input requests");
+                        }
+                        FocusDesktop();
+                        if(!initialDesktopFocused){
+                            var emptyPoint=new NativePoint{X=exposureBounds.Left+(int)Math.Round((exposureBounds.Right-exposureBounds.Left)*1000.0/1920),Y=exposureBounds.Top+(int)Math.Round((exposureBounds.Bottom-exposureBounds.Top)*500.0/1080)};
+                            events.Add("empty focus point "+emptyPoint.X+","+emptyPoint.Y+" hit="+Class(WindowFromPoint(emptyPoint))+" root="+Class(GetAncestor(WindowFromPoint(emptyPoint),2))+" bounds="+exposureBounds.Left+","+exposureBounds.Top+","+exposureBounds.Right+","+exposureBounds.Bottom);
+                            Require(DesktopPoint(emptyPoint),"empty focus point must belong to actual desktop root");
+                            await Click(emptyPoint);initialDesktopFocused=true;await Task.Delay(250);
+                            events.Add("OS empty-desktop click establishes foreground; empty point is outside every fixture action region; foreground="+Class(GetForegroundWindow()));
+                        }
+                        if(!active.Operable)await Task.Delay(150);
+                    }
+                    var observation=ReadObservation(playerWindow);
                     if(observation!=null)
                     {
                         if((string?)observation["stage"]=="desktop"&&(string?)observation["current"]=="home"&&(bool?)observation["inputReady"]==true&&((JArray?)observation["documents"])?.Count==2&&initial==null)
@@ -290,7 +308,12 @@ internal static class NativeCoreLiveProbe
                     var observation=ReadObservation(FindPlayer(restoredSession.PlayerPid));lastRestartedHost=observation;
                     if((authoredInput||playerRecovery)&&!focusedAfterRestart&&(string?)observation?["stage"]=="desktop"){
                         var foreground=GetForegroundWindow();GetWindowThreadProcessId(foreground,out var foregroundPid);events.Add($"restart foreground before final native initialization: pid={foregroundPid}, class={Class(foreground)}");
-                        FocusDesktop();focusedAfterRestart=true;await Task.Delay(150);continue;
+                        FocusDesktop();
+                        if(authoredInput&&GetWindowRect(FindPlayer(restoredSession.PlayerPid),out var focusBounds)){
+                            var emptyPoint=new NativePoint{X=focusBounds.Left+(int)Math.Round((focusBounds.Right-focusBounds.Left)*1000.0/1920),Y=focusBounds.Top+(int)Math.Round((focusBounds.Bottom-focusBounds.Top)*500.0/1080)};
+                            Require(DesktopPoint(emptyPoint),"restart empty focus point is actual desktop");await Click(emptyPoint);
+                        }
+                        focusedAfterRestart=true;await Task.Delay(150);continue;
                     }
                     if(restoredSession.CurrentDeskId=="focus"&&restoredSession.TargetDeskId.Length==0&&restoredSession.InstallationStamp==stamp&&
                         observation!=null&&(string?)observation["stage"]=="desktop"&&(string?)observation["current"]=="focus"&&(bool?)observation["inputReady"]==true&&

@@ -161,3 +161,37 @@ test('layout reply rejects unknown fields invalid coordinates and stale identity
  const f=fixture();const result=f.host.request('layoutRead',{}).catch(e=>e.code);assert.equal(f.sent.length,1);
  f.answer(f.sent[0],{layout:{revision:1,icons:{},components:{},targets:{}}});assert.equal(await result,'invalidPayload');f.host.dispose();
 });
+
+const preciseEntry=(entryId='icon.home/first')=>({consumer:'official',button:'open',entryId,x:.1,y:.1,width:.3,height:.2,tabIndex:0,polygons:[[{x:.1,y:.1},{x:.4,y:.1},{x:.4,y:.3},{x:.1,y:.3}]]});
+test('private precise entries allow two presentations of one action and preserve their polygons',async()=>{
+ const f=fixture(),params={geometryVersion:1,viewport:{width:1920,height:1080,dpr:1},buttons:[preciseEntry(),{...preciseEntry('icon.home/second'),tabIndex:1}]};
+ const result=f.host.request('geometry',params).catch(e=>e.code);assert.equal(f.sent.length,1);assert.deepEqual(f.sent[0].buttons,params.buttons);f.answer(f.sent[0]);assert.equal((await result).status,'accepted');f.host.dispose();
+});
+test('precise geometry rejects malformed shapes budgets identity collisions and rectangle disagreement',async()=>{
+ const f=fixture(),base={geometryVersion:1,viewport:{width:1920,height:1080,dpr:1}};
+ const bad=[
+ {...preciseEntry(),entryId:'x'.repeat(193)}, {...preciseEntry(),entryId:'bad'+String.fromCharCode(127)}, {...preciseEntry(),entryId:null},
+ {...preciseEntry(),polygons:null}, {...preciseEntry(),polygons:[]},
+ {...preciseEntry(),polygons:[[{x:.1,y:.1},{x:.4,y:.3},{x:.4,y:.1},{x:.1,y:.3}]]},
+ {...preciseEntry(),polygons:[[{x:.1,y:.1},{x:.4,y:.1},{x:.2,y:.2},{x:.4,y:.3},{x:.1,y:.3}]]},
+ {...preciseEntry(),polygons:[[{x:.1,y:.1},{x:.4,y:.1},{x:.4,y:.3},{x:.1,y:.3},{x:.1,y:.1}]]},
+ {...preciseEntry(),polygons:[[{x:.1,y:.1},{x:.4,y:.1},{x:NaN,y:.3}]]},
+ {...preciseEntry(),x:.09}, {...preciseEntry(),polygons:Array(65).fill(preciseEntry().polygons[0])},
+ {...preciseEntry(),polygons:[Array(33).fill({x:.1,y:.1})]},
+ {...preciseEntry(),proof:'forged'}, {...preciseEntry(),polygons:[preciseEntry().polygons[0].map(p=>({...p,extra:1}))]}
+ ];
+ for(const b of bad)await assert.rejects(f.host.request('geometry',{...base,buttons:[b]}),{code:'invalidArgument'});
+ await assert.rejects(f.host.request('geometry',{...base,buttons:[preciseEntry(),preciseEntry()]}),{code:'invalidArgument'});
+ const {entryId,polygons,...legacy}=preciseEntry();await assert.rejects(f.host.request('geometry',{...base,buttons:[legacy,preciseEntry()]}),{code:'invalidArgument'});
+ assert.equal(f.sent.length,0);f.host.dispose();
+});
+test('native focus and activation events have closed kind-specific identities',()=>{
+ const listeners=new Set(),events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:e=>events.push(e),transport:{postMessage(){},addEventListener:(_,cb)=>listeners.add(cb),removeEventListener:(_,cb)=>listeners.delete(cb)}});
+ const event={type:'dext:v3-native-event',...identity,geometryVersion:1,kind:'focus',consumer:'official',button:'open',entryId:'icon.home/first'};
+ const send=e=>{for(const cb of listeners)cb({data:e});};
+ send(event);send({...event,consumer:null,button:null,entryId:null});
+ send({...event,entryId:'x'.repeat(193)});send({...event,consumer:null,button:null,entryId:'dangling'});
+ send({...event,kind:'activate',consumer:null,button:null,entryId:null,inputSequence:1});send({...event,kind:'activate',inputSequence:0});send({...event,unknown:'forged'});
+ send({...event,kind:'activate',inputSequence:1});assert.equal(events.length,3);host.dispose();
+});

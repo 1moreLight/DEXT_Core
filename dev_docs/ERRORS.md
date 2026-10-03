@@ -262,3 +262,7 @@
 | #199 | 布局与暂停探针必须核对真实接口、活动消息与附着后的DPI | [toolchain](errors/toolchain.md) |
 
 | #200 | 显式损坏个人图标覆盖不能回退作者默认值 | [renderer](errors/renderer.md) |
+
+| #201 | 精确多边形不能用包围框签输入；同动作不同呈现实例需分开 | [backend](errors/backend.md) |
+| #202 | 几何交点舍入与SVG焦点隐藏属性 | [renderer](errors/renderer.md) |
+| #203 | 转场deadline/JArray层次与精确几何夹具复制清单 | [toolchain](errors/toolchain.md) |

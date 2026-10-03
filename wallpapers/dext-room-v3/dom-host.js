@@ -9,8 +9,8 @@
   function failure(code){const e=new Error('Dext DOM: '+code);e.code=code;return e;}
   function createDomHost(options){
     const context=copy(options.context),room=context.manifest,document=options.document||root.document,container=options.container,native=options.native;
-    const model=(options.createRuntime||root.DextRuntimeModel.createRuntime)(room),layoutModel=options.layoutModel||root.DextLayoutModel;
-    if(!layoutModel)throw failure('layoutUnavailable');
+    const model=(options.createRuntime||root.DextRuntimeModel.createRuntime)(room),layoutModel=options.layoutModel||root.DextLayoutModel,geometry=options.geometry||root.DextGeometry;
+    if(!layoutModel)throw failure('layoutUnavailable');if(!geometry)throw failure('geometryUnavailable');
     const raf=options.requestAnimationFrame||root.requestAnimationFrame.bind(root),cancel=options.cancelAnimationFrame||root.cancelAnimationFrame.bind(root),now=options.now||(()=>root.performance.now());
     const inventory=new Set(context.resources.map(r=>r.path)),desks=new Map(room.desks.map(d=>[d.id,d])),records=new Map(),icons=new Map();
     const later=options.setTimeout||root.setTimeout.bind(root),cancelTimer=options.clearTimeout||root.clearTimeout.bind(root),waits=new Set();
@@ -19,6 +19,7 @@
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
+    let inputEntries=[],focus=null,focusNode=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
@@ -91,7 +92,7 @@
       // compensates the root canvas without resizing the document itself.
       record.wrapper.style.width=logical.width+'px';record.wrapper.style.height=logical.height+'px';
       transform(record.wrapper,placement.x,placement.y,group.matrix,placement.width/logical.width,placement.height/logical.height);
-      record.wrapper.style.opacity=String(group.opacity);
+      record.wrapper.style.opacity=String(group.opacity);record.wrapper.style.pointerEvents=group.opacity<=0?'none':'';
     }
     function layoutIcon(record,group){
       const item=effectiveLayouts.get('icon:'+record.deskId+'/'+record.icon.id);
@@ -99,7 +100,24 @@
       const rect=record.rect;
       record.element.hidden=!rect||![snapshot.currentDeskId,snapshot.targetDeskId].includes(record.deskId)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
       if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/96,rect.height/104);}
-      record.element.style.opacity=String(group.opacity);
+      record.element.style.opacity=String(group.opacity);record.element.style.pointerEvents=group.opacity<=0?'none':'';
+    }
+    function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
+    function clearFocus(){
+      focus=null;if(!focusNode)return;focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();
+    }
+    function showFocus(entry){
+      clearFocus();if(!entry)return;
+      if(!focusNode){focusNode=svg('svg');focusNode.classList?.add('dext-v3-focus');if(!focusNode.classList)focusNode.className='dext-v3-focus';
+        focusNode.setAttribute('viewBox','0 0 1920 1080');focusNode.setAttribute('aria-hidden','true');rootNode.append(focusNode);}
+      focus={consumer:entry.consumer,button:entry.button,entryId:entry.entryId??null};
+      for(const polygon of entry.polygons||[geometry.rectPolygon({x:entry.x,y:entry.y,width:entry.width,height:entry.height})]){
+        const path=svg('polygon');path.setAttribute('points',polygon.map(p=>p.x*1920+','+p.y*1080).join(' '));focusNode.append(path);
+      }focusNode.hidden=false;focusNode.removeAttribute('hidden');
+    }
+    function eventEntry(value){
+      const matches=inputEntries.filter(e=>e.consumer===value.consumer&&e.button===value.button&&(value.entryId==null||e.entryId===value.entryId));
+      return matches.length===1?matches[0]:null;
     }
     function ensureRoot(){if(rootNode)return;rootNode=document.createElement('div');rootNode.className='dext-v3-canvas';container.append(rootNode);}
     function reconcile(){
@@ -127,43 +145,66 @@
       }
       media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport});
     }
-    function normalized(consumer,button,rect,group,tabIndex){
-      if(group.opacity<=0)return null;const m=group.matrix;
-      if(Math.abs(m[1])>.000001||Math.abs(m[2])>.000001){diagnose('nonRectangularInput');return null;}
-      const points=[[rect.x,rect.y],[rect.x+rect.width,rect.y],[rect.x,rect.y+rect.height],[rect.x+rect.width,rect.y+rect.height]].map(([x,y])=>[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]]);
-      const left=Math.max(0,Math.min(...points.map(p=>p[0]))),right=Math.min(1920,Math.max(...points.map(p=>p[0]))),top=Math.max(0,Math.min(...points.map(p=>p[1]))),bottom=Math.min(1080,Math.max(...points.map(p=>p[1])));
-      if(right<=left||bottom<=top)return null;return{consumer,button,x:left/1920,y:top/1080,width:(right-left)/1920,height:(bottom-top)/1080,tabIndex};
+    function inputLayer(record){
+      const consumer=record.definition?.consumerId;
+      return record.icon?40:consumer==='slot.start'||consumer==='slot.idle'?80:record.definition.kind==='dock'?50:
+        record.definition.kind==='widget'?30:consumer==='scene'?20:0;
+    }
+    function paintNodes(){
+      const nodes=[];let order=0;
+      for(const record of records.values()){
+        const group=visualGroups[classification(record.definition)],rect=recordPlacement(record);
+        if(!record.wrapper.hidden&&group.opacity>0&&rect)nodes.push({record,order:order++,layer:inputLayer(record),group,polygon:geometry.rectPolygon(rect,group.matrix),moving:defaultMoving()&&classification(record.definition)!=='shared'});
+      }
+      for(const record of icons.values()){
+        const group=visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'shared'];
+        if(!record.element.hidden&&group.opacity>0&&record.rect)nodes.push({record,order:order++,layer:40,group,polygon:geometry.rectPolygon(record.rect,group.matrix),moving:defaultMoving()});
+      }return nodes;
+    }
+    function preciseEntry(consumer,button,entryId,rect,node,nodes,tabIndex){
+      const front=nodes.filter(other=>other!==node&&(other.layer>node.layer||other.layer===node.layer&&other.order>node.order));
+      // A boundary publication cannot track a moving foreground cover. Such
+      // entries wait for the separate physical-event sampling mechanism.
+      if(node.moving||front.some(other=>other.moving))return null;
+      const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:front.map(other=>other.polygon)});
+      if(!pieces.length)return null;
+      if(pieces.length>64||pieces.some(p=>p.length>32))throw failure('geometryBudget');
+      const polygons=pieces.map(p=>p.map(v=>({x:v.x/1920,y:v.y/1080}))),points=polygons.flat();
+      const x=Math.min(...points.map(p=>p.x)),y=Math.min(...points.map(p=>p.y)),right=Math.max(...points.map(p=>p.x)),bottom=Math.max(...points.map(p=>p.y));
+      return{consumer,button,entryId,x,y,width:right-x,height:bottom-y,tabIndex,polygons};
     }
     function buttonGeometry(){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.stage==='desktop'&&!snapshot.operable||snapshot.lifecycle.playbackPaused||snapshot.lifecycle.locked)return[];
-      const state=model.readDiagnostics(),buttons=[];let index=0;
+      const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
+      const add=button=>{if(!button)return;vertices+=button.polygons.reduce((n,p)=>n+p.length,0);if(buttons.length>=4096||vertices>65536)throw failure('geometryBudget');buttons.push(button);};
       for(const [consumer,regions]of Object.entries(state.buttonRegions)){
-        const record=[...records.values()].find(r=>r.definition.consumerId===consumer);if(!record||record.wrapper.hidden||defaultMoving()&&classification(record.definition)!=='shared')continue;
+        const node=nodes.find(n=>n.record.definition?.consumerId===consumer);if(!node)continue;
+        const record=node.record;
         if(consumer.startsWith('component.')&&!desks.get(activeDesk()).components.includes(consumer.slice(10))||consumer.startsWith('slot.background.')&&consumer.slice(16)!==activeDesk())continue;
         for(const region of regions){
           const local=localButtons.get(consumer)?.find(b=>b.buttonId===region.buttonId),placement=recordPlacement(record);
           const rect=local&&record.definition.placement?layoutModel.mapLocalRect({localRect:local,logicalSize:record.definition.placement,effectiveRect:placement}):region;
-          const button=normalized(consumer,region.buttonId,rect,visualGroups[classification(record.definition)],index++);if(button)buttons.push(button);
+          add(preciseEntry(consumer,region.buttonId,'button.'+region.buttonId,rect,node,nodes,buttons.length));
         }
       }
-      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()&&!record.element.hidden&&!defaultMoving()){const b=normalized('official',record.icon.buttonId,record.rect,visualGroups[snapshot.targetDeskId?'target':'shared'],index++);if(b&&!buttons.some(v=>v.consumer===b.consumer&&v.button===b.button))buttons.push(b);}
-      const layer=consumer=>consumer==='official'?40:consumer.startsWith('slot.start')||consumer.startsWith('slot.idle')?80:
-        consumer==='scene'?20:records.size&&[...records.values()].find(r=>r.definition.consumerId===consumer)?.definition.kind==='dock'?50:consumer.startsWith('component.')?30:0;
-      return buttons.sort((a,b)=>layer(b.consumer)-layer(a.consumer));
+      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()){
+        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length));
+      }
+      return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
     }
     async function render(){
-      const ownEpoch=++epoch;cancelWaits();clearDefault();completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
+      const ownEpoch=++epoch;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
       const job=async()=>{
         if(disposed||ownEpoch!==epoch)return false;
         try{
           const invalidated=await native.request('invalidateGeometry',{},ownScope);if(invalidated.status!=='accepted'||disposed||ownEpoch!==epoch)return false;
-          syncAnimation();reconcile();const state=model.readDiagnostics();let published;
+          syncAnimation();reconcile();const state=model.readDiagnostics(),entries=buttonGeometry();let published;
           for(let attempt=0;attempt<8;attempt++){
             if(disposed||ownEpoch!==epoch)return false;
-            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:buttonGeometry()},ownScope);
+            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries},ownScope);
             if(published.status!=='staleInput'||attempt===7)break;await yieldRetry();
           }
-          if(disposed||ownEpoch!==epoch)return false;inputReady=published.status==='accepted';if(!inputReady)diagnose('geometryUnavailable');return inputReady;
+          if(disposed||ownEpoch!==epoch)return false;inputReady=published.status==='accepted';if(inputReady)inputEntries=copy(entries);if(!inputReady)diagnose('geometryUnavailable');return inputReady;
         }catch(error){if(!disposed&&ownEpoch===epoch)diagnose(error.code||'geometryUnavailable');return false;}
       };
       serial=serial.then(job,job);return serial;
@@ -232,7 +273,7 @@
     }
     function renderWithLayout(){
       const token=++layoutReadEpoch,identity=scope(),deskId=activeDesk();
-      layoutReady=false;inputReady=false;clearDefault();completion=null;epoch++;cancelWaits();
+      layoutReady=false;inputReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;epoch++;cancelWaits();
       const read=async()=>{
         try{
           const reply=await native.request('layoutRead',{},identity);
@@ -266,19 +307,24 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
+        if(value.kind==='focus'){
+          if(value.consumer===null&&value.button===null&&value.entryId==null){clearFocus();return true;}
+          const entry=eventEntry(value);if(!entry)return false;showFocus(entry);return true;
+        }
         if(value.kind==='activate'){
+          if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
           const own={...completion,identity:scope(),due:value.consumer==='official'};pendingDefault=own;
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
-        }return value.kind==='focus';},
-      dispose(){if(disposed)return;disposed=true;epoch++;layoutReadEpoch++;cancelWaits();clearDefault();completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+        }return false;},
+      dispose(){if(disposed)return;disposed=true;epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

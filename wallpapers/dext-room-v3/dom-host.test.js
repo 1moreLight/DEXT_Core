@@ -3,6 +3,7 @@ const {createDomHost}=require('./dom-host.js');
 const {createRuntime}=require('./runtime-model.js');
 const {createNativeHost}=require('./native-host.js');
 const layoutModel=require('./layout-model.js');
+const geometry=require('./geometry.js');
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 function fixture(options={}){
  const room={version:3,apiVersion:1,id:'room',resources:['scene.html','widget.html','bg.svg','start.svg','idle.svg'],roomScene:{entry:'scene.html',capabilities:['desk.read']},
@@ -13,13 +14,13 @@ function fixture(options={}){
  Object.assign(room,options.room||{});
  const snap=(revision=1,changes={})=>({protocolVersion:1,sessionId:'session',roomId:'room',installationStamp:'stamp',revision,currentDeskId:'home',targetDeskId:null,queuedDeskId:null,transitionId:null,deadlineUtc:null,active:true,operable:true,lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:1},...changes});
  const calls=[],controls=[],frames=new Map(),medias=new Map(),raf=new Map();let now=0,id=0;
- const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
+ const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
  const document={createElement:node};const container=node('root');
  const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
  const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
  const host=createDomHost({document,container,context:{runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
-   layoutModel,createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:options.getViewport||(()=>({width:1920,height:1080,dpr:1})),now:()=>now,
+   layoutModel,geometry,createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:options.getViewport||(()=>({width:1920,height:1080,dpr:1})),now:()=>now,
    requestAnimationFrame:cb=>{raf.set(++id,cb);return id;},cancelAnimationFrame:id=>raf.delete(id),setTimeout:options.setTimeout,clearTimeout:options.clearTimeout});
  async function advance(ms){now+=ms;const tasks=[...raf];raf.clear();for(const [,cb]of tasks)cb(now);await flush();}
  return{host,room,snap,calls,controls,frames,medias,bridge,container,advance,raf};
@@ -269,4 +270,82 @@ test('failed layout refresh keeps confirmed presentation and disables layout sav
 test('disposed host drops an outstanding layout read without reviving DOM',async()=>{
  let release;const f=fixture({request:method=>method==='layoutRead'?new Promise(r=>release=r):undefined});await flush();f.host.dispose();
  release({status:'accepted',layout:savedLayout()});await f.host.ready;assert.equal(f.container.children.length,0);assert.equal(f.frames.size,0);
+});
+
+test('rotated author region publishes its actual polygon rather than its bounding corners',async()=>{
+ const f=fixture({room:{transition:{type:'author',durationMs:450}}});await f.host.ready;
+ await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]});
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[1,.5,-.5,1,200,0],opacity:1}}});
+ const b=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='component.shared');
+ assert.equal(b.entryId,'button.next');assert.equal(b.polygons.length,1);
+ assert.equal(geometry.containsPoint(b.polygons[0],{x:b.x+1e-7,y:b.y+1e-7},{includeBoundary:false}),false);
+ assert.equal(geometry.containsPoint(b.polygons[0],{x:((410+15)-.5*(70+20)+200)/1920,y:(.5*(410+15)+70+20)/1080},{includeBoundary:false}),true);f.host.dispose();
+});
+
+function dockFixture(rect){
+ const f=fixture({room:{resources:['scene.html','widget.html','bg.svg','dock.html'],components:[
+ {id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},
+ {id:'bar',role:'dock',entry:'dock.html',placement:rect,capabilities:[],buttonIds:[]}],
+ desks:[{id:'home',name:'Home',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:['shared','bar'],background:{type:'image',src:'bg.svg'}},{id:'focus',name:'Focus',icons:[],components:['shared','bar']}]}});return f;
+}
+test('front iframe cuts a native entry into separate visible pieces and fully covered entry disappears',async()=>{
+ for(const [rect,count]of [[{x:48,y:32,width:32,height:104},2],[{x:32,y:32,width:96,height:104},0]]){
+  const f=dockFixture(rect);await f.host.ready;const b=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='official');
+  if(!count)assert.equal(b,undefined);else{
+   assert.equal(b.polygons.length,count);
+   assert.equal(b.polygons.some(p=>geometry.containsPoint(p,{x:64/1920,y:70/1080},{includeBoundary:false})),false);
+   assert.equal(b.polygons.some(p=>geometry.containsPoint(p,{x:100/1920,y:70/1080},{includeBoundary:false})),true);
+  }f.host.dispose();
+ }
+});
+test('two official icons bound to one action retain separate presentation entries',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[{id:'first',buttonId:'next',x:0,y:0},{id:'second',buttonId:'next',x:1,y:0}],components:['shared']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
+ const entries=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.filter(v=>v.consumer==='official');
+ assert.deepEqual(entries.map(v=>v.entryId),['icon.home/first','icon.home/second']);assert.equal(entries.every(v=>v.polygons.length===1),true);f.host.dispose();
+});
+test('native focus outlines the acknowledged entry and immediately clears on invalidation or pause',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[{id:'first',buttonId:'next',x:0,y:0},{id:'second',buttonId:'next',x:1,y:0}],components:['shared']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
+ const event={kind:'focus',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,consumer:'official',button:'next',entryId:'icon.home/second'};
+ assert.equal(f.host.handleNativeInput(event),true);
+ assert.deepEqual(f.host.readDiagnostics().focus,{consumer:'official',button:'next',entryId:'icon.home/second'});
+ const outline=f.container.children[0].children.find(v=>v.className==='dext-v3-focus');assert.equal(outline.hidden,false);assert.equal(Object.hasOwn(outline.attrs,'hidden'),false);assert.equal(outline.children.length,1);
+ assert.equal(f.host.handleNativeInput({...event,entryId:'icon.home/missing'}),false);
+ assert.equal(f.host.handleNativeInput({...event,consumer:null,button:null,entryId:null}),true);assert.equal(outline.hidden,true);
+ f.host.handleNativeInput(event);const refresh=f.host.acceptSnapshot(f.snap(2));assert.equal(outline.hidden,true);await refresh;
+ assert.equal(f.host.handleNativeInput(event),false);
+ f.host.handleNativeInput({...event,revision:2,geometryVersion:f.host.readDiagnostics().inputVersion});f.host.setPlaybackSuspended(true);
+ assert.equal(outline.hidden,true);assert.equal(Object.hasOwn(outline.attrs,'hidden'),true);assert.equal(f.host.readDiagnostics().focus,null);f.host.dispose();
+});
+test('zero-opacity front layers do not occlude lower native input or intercept DOM pointers',async()=>{
+ const f=dockFixture({x:32,y:32,width:96,height:104});await f.host.ready;
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[1,0,0,1,0,0],opacity:0}}});
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.length,0);
+ const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
+});
+
+test('transparent source iframe releases target icon input while its actual pointer interception is disabled',async()=>{
+ const f=fixture({room:{transition:{type:'author',durationMs:450},resources:['scene.html','dock.html'],components:[{id:'bar',role:'dock',entry:'dock.html',placement:{x:32,y:32,width:96,height:104},capabilities:[],buttonIds:[]}],
+ desks:[{id:'home',name:'Home',icons:[],components:['bar']},{id:'focus',name:'Focus',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:[]}]}});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{source:{matrix:[1,0,0,1,0,0],opacity:0}}});
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.entryId==='icon.focus/icon'),true);
+ const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
+});
+test('native focus is rejected before a new geometry acknowledgement and after publication failure',async()=>{
+ let hold=false,release;const f=fixture({request:m=>m==='geometry'&&hold?new Promise(r=>release=r):Promise.resolve({status:'accepted',...(m==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})})});await f.host.ready;
+ const event={kind:'focus',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:1,consumer:'official',button:'next',entryId:'icon.home/icon'};
+ assert.equal(f.host.handleNativeInput(event),true);hold=true;const pending=f.host.resize();
+ // Force a changed author geometry instead of an unchanged viewport.
+ await pending;const changed=f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:20,height:20}]});
+ await flush();assert.equal(f.host.handleNativeInput({...event,geometryVersion:f.host.readDiagnostics().inputVersion}),false);
+ release({status:'denied'});await changed;assert.equal(f.host.readDiagnostics().focus,null);assert.equal(f.host.readDiagnostics().inputReady,false);f.host.dispose();
+});
+test('a shared entry under a moving foreground cover waits for event sampling without frame IPC',async()=>{
+ const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'dock',entry:'widget.html',placement:{x:350,y:50,width:50,height:100},capabilities:[],buttonIds:[]}],
+ desks:[{id:'home',name:'Home',icons:[],components:['shared','bar']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
+ await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:200,height:100}]});
+ await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));const count=f.calls.filter(v=>v.method==='geometry').length;
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='component.shared'),false);
+ await f.advance(100);assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);f.host.dispose();
 });

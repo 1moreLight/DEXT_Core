@@ -1,10 +1,17 @@
 using System;
 namespace Lively.Models.Message
 {
+    public sealed class LivelyRoomNativePoint
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
     public sealed class LivelyRoomNativeButton
     {
         public string Consumer { get; set; }
         public string Button { get; set; }
+        public string EntryId { get; set; }
+        public LivelyRoomNativePoint[][] Polygons { get; set; }
         public double X { get; set; }
         public double Y { get; set; }
         public double Width { get; set; }

@@ -87,14 +87,36 @@ namespace Lively.Common.Helpers
                             !(o["buttons"] is JArray entries) || entries.Count>4096 || !(o["viewport"] is JObject view) || !Shape(view,"width","height","dpr") || pixelWidth<=0 || pixelHeight<=0 ||
                             !Number(view["width"],out var width)||!Number(view["height"],out var height)||!Number(view["dpr"],out var scale)||width<=0||height<=0||scale<.1||scale>8||
                             Math.Abs(width*scale-pixelWidth)>2||Math.Abs(height*scale-pixelHeight)>2)return null;
-                        var result=new List<LivelyRoomNativeButton>();var ids=new HashSet<string>(StringComparer.Ordinal);
+                        var result=new List<LivelyRoomNativeButton>();int totalPoints=0;
                         foreach(var token in entries)
                         {
-                            if(!(token is JObject b) || !Shape(b,"consumer","button","x","y","width","height","tabIndex") || !Id(Text(b["consumer"]),128)||!Id(Text(b["button"]),80)||
-                                !Number(b["x"],out var x)||!Number(b["y"],out var y)||!Number(b["width"],out var w)||!Number(b["height"],out var h)||
-                                x<0||y<0||w<=0||h<=0||x+w>1||y+h>1||!Integer(b["tabIndex"],-1,4095)||!ids.Add(Text(b["consumer"])+"\0"+Text(b["button"])))return null;
-                            result.Add(new LivelyRoomNativeButton{Consumer=Text(b["consumer"]),Button=Text(b["button"]),X=x,Y=y,Width=w,Height=h,TabIndex=(int)b["tabIndex"]});
+                            if(!(token is JObject b))return null;
+                            bool hasEntry=b.Property("entryId")!=null,hasPolygons=b.Property("polygons")!=null;
+                            var fields=new[]{"consumer","button","x","y","width","height","tabIndex"}.Concat(hasEntry?new[]{"entryId"}:Array.Empty<string>()).Concat(hasPolygons?new[]{"polygons"}:Array.Empty<string>()).ToArray();
+                            if(!Shape(b,fields)||!Id(Text(b["consumer"]),128)||!Id(Text(b["button"]),80)||hasEntry&&!Id(Text(b["entryId"]),192)||
+                                !Number(b["x"],out var x)||!Number(b["y"],out var y)||!Number(b["width"],out var w)||!Number(b["height"],out var h)||!Integer(b["tabIndex"],-1,4095))return null;
+                            LivelyRoomNativePoint[][] polygons=null;
+                            if(hasPolygons)
+                            {
+                                if(!hasEntry||!(b["polygons"] is JArray pieces)||pieces.Count<1||pieces.Count>DextNativeGeometry.MaxPieces)return null;
+                                polygons=new LivelyRoomNativePoint[pieces.Count][];
+                                for(int i=0;i<pieces.Count;i++)
+                                {
+                                    if(!(pieces[i] is JArray points)||points.Count<3||points.Count>DextNativeGeometry.MaxPointsPerPiece)return null;
+                                    totalPoints+=points.Count;if(totalPoints>DextNativeGeometry.MaxTotalPoints)return null;
+                                    polygons[i]=new LivelyRoomNativePoint[points.Count];
+                                    for(int j=0;j<points.Count;j++)
+                                    {
+                                        if(!(points[j] is JObject p)||!Shape(p,"x","y")||!Number(p["x"],out var px)||!Number(p["y"],out var py))return null;
+                                        polygons[i][j]=new LivelyRoomNativePoint{X=px,Y=py};
+                                    }
+                                }
+                            }
+                            else {totalPoints+=4;if(totalPoints>DextNativeGeometry.MaxTotalPoints)return null;}
+                            result.Add(new LivelyRoomNativeButton{Consumer=Text(b["consumer"]),Button=Text(b["button"]),EntryId=hasEntry?Text(b["entryId"]):null,
+                                X=x,Y=y,Width=w,Height=h,TabIndex=(int)b["tabIndex"],Polygons=polygons});
                         }
+                        if(!DextNativeGeometry.TryCreate(result,out _))return null;
                         request.GeometryVersion=(long)o["geometryVersion"];request.Buttons=result.ToArray();return request;
                     default:return null;
                 }

@@ -442,3 +442,6 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 - 2026-10-03，原Proc_Exited解绑但Kernel仍有snapshot；同Core新Player的TryRestore要求snapshot==null，随后Start覆盖为startDesk。新增Core内部Retire：核对session、停timeout、清易失状态，完全不读写checkpoint；gateway清旧连接/订阅，迟到旧PID/session不得退役新会话。协议和同Kernel回归23/87项通过，实际同Core独立Player故障恢复focus/KV/新身份。
 - Close/Terminate在发送关闭或Kill之前原子记录主动关闭；真实unexpected Exited才排Dispatcher恢复。取得wallpaper loading lock之后再核对旧实例仍当前，Core Dispose先设停机guard，产品退出期间不重生。每Core30秒最多3次自动恢复，初始Show失败不无限重建；失败自动构建不得保存空布局覆盖现有恢复布局。
 - 已核验的native idle父窗恢复失败关闭是故障，使用独立内部TerminateAfterNativeFailure保留故障识别；它不会清除先前主动关闭标志。该Win32失败组合仍在最终人工门槛内，不冒充本轮实际父窗破坏测试。
+
+## #201 多边形不能由包围框签输入证明（2026-10-03）
+P5生产authority新增行为测试实际RED：归一化三角形包围框内、三角形外的OS点仍得到完成证明；旧几何只有矩形。同动作多图标也被视为重复入口或DOM吞掉第二个。新增私有呈现entry与凸多片区域，包围框只快速排除，Core测严格内部；DOWN/UP同呈现entry，Tab可区分同动作不同图标，动作仍按consumer/button和一次native完成消费。不能用新entryId/视觉焦点作为证明，输入数组必须脱离且公共Focus/Proof不能泄漏可变几何。具体最终验证见当前验收卡。

@@ -15,6 +15,12 @@ internal static class NativeInputMessageChecks
             ["viewport"]=new JObject{["width"]=800,["height"]=600,["dpr"]=1.5},["buttons"]=new JArray(new JObject{["consumer"]="scene",["button"]="open",["x"]=.1,["y"]=.2,["width"]=.2,["height"]=.3,["tabIndex"]=0})};
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
+        Check("private polygon geometry accepts separate presentations for one action",()=>{
+            var r=Request();var b=(JObject)r["buttons"]![0]!;b["entryId"]="icon.home/one";
+            b["polygons"]=new JArray { new JArray(new JObject{["x"]=.1,["y"]=.2},new JObject{["x"]=.3,["y"]=.2},new JObject{["x"]=.1,["y"]=.5}) };
+            var second=(JObject)b.DeepClone();second["entryId"]="icon.home/two";((JArray)r["buttons"]!).Add(second);
+            Require(Parse(r)?.Buttons.Length==2);
+        });
         Check("geometry uses native pixels and preserves normalized public fields",()=>{var r=Parse(Request());Require(r?.Buttons.Length==1&&r.Buttons[0].X==.1&&r.PixelWidth==1200&&r.PixelHeight==900);Require(RuntimeMessageChecks.Roundtrip(r!) is LivelyMessageRoomNativeRequest);});
         foreach(var field in new[]{"protocolVersion","runtimeGeneration","revision","geometryVersion"})
             Check("reject noninteger "+field,()=>{var r=Request();r[field]=1.2;Require(Parse(r)==null);});
@@ -26,6 +32,34 @@ internal static class NativeInputMessageChecks
                     case "wrongSession":r["sessionId"]=Guid.NewGuid().ToString();break;case "oldGeneration":r["runtimeGeneration"]=2;break;case "oldRevision":r["revision"]=0;break;case "extraField":r["ticket"]="fake";break;case "badId":r["requestId"]="bad\n";break;
                     case "arrayRoot":raw="[]";break;case "duplicateJson":raw=r.ToString().Replace("\"protocolVersion\": 1","\"protocolVersion\": 1, \"protocolVersion\": 1");break;case "trailingJson":raw=r+"{}";break;case "oversize":raw=new string(' ',1024*1024+1);break;case "afterNavigation":s.Invalidate("navigation");break;}
                 Require(DextNativeInputProtocol.Parse(raw??r.ToString(),s,1200,900)==null);
+            });
+        JObject Precise(){var r=Request();var b=(JObject)r["buttons"]![0]!;b["entryId"]="button.open";b["polygons"]=new JArray { new JArray(new JObject{["x"]=.1,["y"]=.2},new JObject{["x"]=.3,["y"]=.2},new JObject{["x"]=.1,["y"]=.5}) };return r;}
+        Check("private geometry preserves entry and every point through IPC",()=>{
+            var r=Parse(Precise());Require(r!=null);var copy=RuntimeMessageChecks.Roundtrip(r!) as LivelyMessageRoomNativeRequest;
+            Require(copy?.Buttons[0].EntryId=="button.open"&&copy.Buttons[0].Polygons.Length==1&&copy.Buttons[0].Polygons[0][2].Y==.5);
+        });
+        Check("presentation ids allow 192 characters and consumer-local reuse",()=>{
+            var r=Precise();var b=(JObject)r["buttons"]![0]!;b["entryId"]=new string('x',192);var second=(JObject)b.DeepClone();second["consumer"]="component.shared";((JArray)r["buttons"]!).Add(second);Require(Parse(r)?.Buttons.Length==2);
+            b.Remove("polygons");Require(Parse(r)!=null);
+        });
+        Check("private polygon parser accepts both windings and 64 pieces",()=>{
+            var r=Precise();var b=(JObject)r["buttons"]![0]!;var p=(JArray)b["polygons"]![0]!;b["polygons"]=new JArray(Enumerable.Range(0,64).Select(_=>new JArray(p.Reverse())));Require(Parse(r)!=null);
+        });
+        foreach(var bad in new[]{"noEntry","nullEntry","emptyEntry","longEntry","controlEntry","nullPolygons","emptyPolygons","nullPolygon","emptyPolygon","tooManyPieces","tooFewPoints","tooManyPoints","nullPoint","pointField","stringPoint","missingPoint","pointOutside","duplicatePoint","closingPoint","collinear","concave","crossed","bboxWide","bboxShift","sameEntry","legacyFirst","legacyLast"})
+            Check("strict private polygon parser rejects "+bad,()=>{
+                var r=Precise();var b=(JObject)r["buttons"]![0]!;var pieces=(JArray)b["polygons"]!;var p=(JArray)pieces[0]!;
+                JObject Point(double x,double y)=>new(){["x"]=x,["y"]=y};
+                switch(bad){case "noEntry":b.Remove("entryId");break;case "nullEntry":b["entryId"]=JValue.CreateNull();break;case "emptyEntry":b["entryId"]="";break;case "longEntry":b["entryId"]=new string('x',193);break;case "controlEntry":b["entryId"]="bad\n";break;
+                    case "nullPolygons":b["polygons"]=JValue.CreateNull();break;case "emptyPolygons":b["polygons"]=new JArray();break;case "nullPolygon":pieces[0]=JValue.CreateNull();break;case "emptyPolygon":pieces[0]=new JArray();break;
+                    case "tooManyPieces":b["polygons"]=new JArray(Enumerable.Range(0,65).Select(_=>p.DeepClone()));break;case "tooFewPoints":p.RemoveAt(2);break;
+                    case "tooManyPoints":pieces[0]=new JArray(Enumerable.Range(0,33).Select(i=>Point(.2+.1*Math.Cos(i*Math.PI*2/33),.35+.15*Math.Sin(i*Math.PI*2/33))));break;
+                    case "nullPoint":p[0]=JValue.CreateNull();break;case "pointField":p[0]!["z"]=1;break;case "stringPoint":p[0]!["x"]="0.1";break;case "missingPoint":((JObject)p[0]!).Remove("y");break;case "pointOutside":p[0]!["x"]=-.1;break;
+                    case "duplicatePoint":p[1]=p[0]!.DeepClone();break;case "closingPoint":p.Add(p[0]!.DeepClone());break;case "collinear":pieces[0]=new JArray(Point(.1,.2),Point(.2,.35),Point(.3,.5));break;
+                    case "concave":pieces[0]=new JArray(Point(.1,.2),Point(.3,.2),Point(.15,.25),Point(.1,.5));break;case "crossed":pieces[0]=new JArray(Point(.1,.2),Point(.3,.5),Point(.3,.2),Point(.1,.5));break;
+                    case "bboxWide":b["width"]=.21;break;case "bboxShift":b["x"]=.11;break;case "sameEntry":var other=(JObject)b.DeepClone();other["button"]="other";((JArray)r["buttons"]!).Add(other);break;
+                    case "legacyFirst":((JArray)r["buttons"]!).Insert(0,Request()["buttons"]![0]!.DeepClone());break;case "legacyLast":((JArray)r["buttons"]!).Add(Request()["buttons"]![0]!.DeepClone());break;
+                }
+                Require(Parse(r)==null);
             });
         Check("official layout read is private current identity with no consumer or grant fields",()=>{
             var r=Request();r["method"]="layoutRead";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");

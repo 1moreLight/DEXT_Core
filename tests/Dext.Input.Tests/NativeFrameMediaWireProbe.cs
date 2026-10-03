@@ -19,7 +19,7 @@ internal static class NativeFrameMediaWireProbe
         var root=Directory.CreateTempSubdirectory("Dext-v3-official-wire-");
         try
         {
-            foreach(var file in new[]{"index.html","main.js","style.css","layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})
+            foreach(var file in new[]{"index.html","main.js","style.css","geometry.js", "layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})
                 File.Copy(Path.Combine(Path.GetFullPath(hostDirectory),file),Path.Combine(root.FullName,file));
             var content=Directory.CreateDirectory(Path.Combine(root.FullName,"content"));File.Copy(Path.GetFullPath(sdk),Path.Combine(content.FullName,"sdk.js"));
             File.Copy(Path.Combine(Path.GetFullPath(mediaDirectory),"clip.mp4"),Path.Combine(content.FullName,"clip.mp4"));

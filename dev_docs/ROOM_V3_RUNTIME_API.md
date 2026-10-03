@@ -225,3 +225,10 @@ layoutRead可读取当前暂停/starting的安全投影；Player允许该Core私
 固定官方layout-model.js只负责纯布局数学。Core保存值保持1920×1080设计坐标；官方视图在真实CSS视口中先保留普通图标和Widget的基准尺寸，合法原位置优先保留，冲突项先移位再等比缩小，完全无空位不显示。有效矩形换回设计坐标用于同一组变换；不修改保存值、安装或作品。
 DOM每个新scope以layoutRead读取，只有当前token/generation/session/revision/Desk回执可应用；迟到读取不阻塞新Desk。失败保留已确认呈现，但layout.ready=false。共享Widget固定原父节点与作者逻辑viewport，仅wrapper组合矩阵改变；接受的作者局部按钮矩形独立缓存，当前模型仍允许该consumer/区域时才按有效placement重算。占用区按全局/当前Desk过滤，旧限制保留直到scene显式更新，避免新修订/resize清空期间误当解除。
 此阶段还没有桌面编辑或layoutSave入口。轴对齐布局计算不是旋转精确命中；动画/遮挡/多图标/焦点、实际保存/重启及人工DPI仍继续，不减少完整要求。
+
+## P5私有精确区域与焦点协议（2026-10-03）
+官方geometry entry保留consumer/button/x/y/width/height/tabIndex；可增加entryId（consumer内稳定唯一，最多192字符），polygons为1..64块、每块3..32点的归一化凸多边形。polygons必须伴随entryId；每次最多4096 entry、65536点且原JSON 1MiB门槛不变。旧矩形仍按原半开规则；新区域的包围框必须为多片联合紧包围框，只作快速排除，Core精确测多边形严格内部。有限数、严格凸性、自交/重复点/退化、闭合字段和包围框不匹配均拒绝，浮点舍入容差不增加命中范围。输入数组与对外元数据不能修改Core保存几何。
+
+同按钮多个官方图标使用icon.<desk>/<icon>呈现实例；作者按钮在所属consumer内使用button.<buttonId>，公共作者geometry仍按原唯一buttonId，不增加entryId或输入票据。原生DOWN/UP必须同一呈现实例，多个可见片不增加Tab停靠点；同动作两个图标分别停靠。私有focus/activate事件增加entryId，焦点清除consumer/button/entryId均null。DOM仅在当前geometry ack后的entry表定位并画官方SVG轮廓；失效、scope变更、暂停、resize均立即清除，不设置作者iframe内部焦点，不产生证明。
+
+geometry.js按真实仿射矩阵裁剪画布并扣前层wrapper；wrapper矩形代表浏览器iframe实际事件拦截面，author occupied仍独立表示布局预留，不能混用。相同z按真实DOM顺序，opacity=0同步关闭wrapper指针拦截。当前这段是边界同步的静止精确几何，不能覆盖默认动画运动中的前层遮挡；具有运动前层的区域暂不签动作，移动事件取样及source手势级准入继续。无逐帧native坐标消息，拖动按用户暂缓。

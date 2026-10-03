@@ -51,7 +51,7 @@ namespace Lively.Core.Wallpapers
                     var viewport=ReadNativeViewport();
                     if(viewport!=null && request.PixelWidth==viewport.Width && request.PixelHeight==viewport.Height && request.Buttons is{} entries && entries.Length<=4096 && entries.All(b=>b!=null))
                     {
-                        var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex)).ToArray();
+                        var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
                     break;
@@ -182,9 +182,9 @@ namespace Lively.Core.Wallpapers
         private void NotifyNative(NativeAttachment a,RoomNativeInputState before,bool activate)
         {
             var state=a.Input.State;if(state==null)return;
-            if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button});
+            if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button,entryId=state.Focus?.EntryId});
             if(activate && state.Completed is{} proof && !ReferenceEquals(before?.Completed,proof))
-                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button});
+                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
         }
         internal void NativeMouseDown(int x,int y,bool foreground)
         {

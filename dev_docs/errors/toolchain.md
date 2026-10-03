@@ -391,3 +391,9 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 - 常规启动的--v3-status参数是expectedDesk，不是Core路径；本轮误传路径仍可观察真实active=False但整体命令按夹具预期抛错，不写成status命令通过。正常退出与原数据核验另独立成功。
 - 2026-10-03，新增固定layout-model.js后先用--no-build运行旧测试assembly，其复制清单缺新脚本导致renderUnavailable；编译最新探针后又因模拟Core方法清单未加入layoutRead而主动拒绝。更新三个官方夹具复制清单、两个模拟Core封闭只读回复后真实ReleasePlayer整轮通过。两次都是旧夹具不符合新协议，不记作生产缺陷；实际Core读布局另独立验证。
 - 纯布局“先移动”夹具首次把最近合法位置限定右移，实际上向下移动更近且原尺寸可放；调整障碍为仅窄缝与完整空位的真实比较，保留最近位置规则。
+
+## #203 精确几何测试夹具应保留协议层次（2026-10-03）
+DOM转场snapshot必须同时给transitionId和deadlineUtc，否则模型正确拒绝；首次新增遮挡测试忽略acceptSnapshot拒绝后仍以目标Desk断言，出现2项夹具失败。补合法deadline后全生产JS205/205。
+Json.NET new JArray(singleJArray)会选复制构造器摊掉一层；polygons[][]夹具应使用new JArray { inner }。未进真实parser分支的夹具失败不记生产RED。新增geometry.js必须更新官方index与实机夹具复制清单，测试源码改动后不能用旧--no-build assembly。
+
+- 2026-10-03 Core输入探针补证：先等operable/作者timer再显示桌面的顺序可能自锁；曝光/空白聚焦应前置，等待原生前台采样，再测无输入。不能假定SetForegroundWindow调用后已获得桌面前台。此次空白实际像素命中Credential Dialog Xaml Host，系统CredentialUIBroker.exe在运行；安全DesktopPoint检查拒绝了鼠标点击。原权限拒绝保持，四轮finally恢复原数据和窗口，不关闭不属于测试的系统凭据窗。用户关闭该窗后再补实际Core证明；这一外部条件不等于生产多边形缺陷。

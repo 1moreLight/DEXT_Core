@@ -6,7 +6,7 @@
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
   const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited']);
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
-  const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f]/.test(v);
+  const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f\u007f-\u009f]/.test(v);
   const shape=(v,keys)=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
   const integer=(v,min=1,max=Number.MAX_SAFE_INTEGER)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
   const finite=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
@@ -37,6 +37,47 @@
     }
     return Object.entries(p.components).every(([id,r])=>stableKey(id)&&shape(r,['x','y','width','height'])&&finite(r.x,0,1920)&&finite(r.y,0,1080)&&finite(r.width,Number.EPSILON,1920)&&finite(r.height,Number.EPSILON,1080)&&r.x+r.width<=1920&&r.y+r.height<=1080);
   }
+
+  function crossSide(a,b,p){
+    const dx=b.x-a.x,dy=b.y-a.y,px=p.x-a.x,py=p.y-a.y,left=dx*py,right=dy*px,value=left-right;
+    const tolerance=32*Number.EPSILON*(Math.abs(left)+Math.abs(right)+Math.abs(dx)*(Math.abs(p.y)+Math.abs(a.y))+Math.abs(py)*(Math.abs(b.x)+Math.abs(a.x))+Math.abs(dy)*(Math.abs(p.x)+Math.abs(a.x))+Math.abs(px)*(Math.abs(b.y)+Math.abs(a.y)));
+    return value>tolerance?1:value<-tolerance?-1:0;
+  }
+  function preciseButtons(buttons){
+    if(!Array.isArray(buttons)||buttons.length>4096)return false;
+    const entries=new Set(),actions=new Map();let vertices=0;
+    for(const b of buttons){
+      if(!object(b)||Object.keys(b).some(k=>!['consumer','button','x','y','width','height','tabIndex','entryId','polygons'].includes(k))||
+        !['consumer','button','x','y','width','height','tabIndex'].every(k=>Object.hasOwn(b,k))||!id(b.consumer)||!id(b.button,80)||
+        !finite(b.x,0,1)||!finite(b.y,0,1)||!finite(b.width,Number.EPSILON,1)||!finite(b.height,Number.EPSILON,1)||b.x+b.width>1||b.y+b.height>1||!integer(b.tabIndex,-1,4095))return false;
+      const explicit=Object.hasOwn(b,'entryId'),action=JSON.stringify([b.consumer,b.button]),entry=JSON.stringify([b.consumer,explicit?b.entryId:b.button]);
+      if(explicit&&!id(b.entryId,192)||entries.has(entry)||actions.has(action)&&(!explicit||actions.get(action)===false))return false;
+      entries.add(entry);actions.set(action,explicit);
+      if(!Object.hasOwn(b,'polygons')){vertices+=4;if(vertices>65536)return false;continue;}
+      if(!explicit||!Array.isArray(b.polygons)||b.polygons.length<1||b.polygons.length>64)return false;
+      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+      for(const poly of b.polygons){
+        if(!Array.isArray(poly)||poly.length<3||poly.length>32||(vertices+=poly.length)>65536||!poly.every(p=>shape(p,['x','y'])&&finite(p.x,0,1)&&finite(p.y,0,1)))return false;
+        const sign=crossSide(poly[0],poly[1],poly[2]);if(!sign)return false;
+        for(let i=0;i<poly.length;i++){
+          const a=poly[i],end=poly[(i+1)%poly.length];
+          for(let j=0;j<poly.length;j++)if(j!==i&&j!==(i+1)%poly.length&&crossSide(a,end,poly[j])!==sign)return false;
+          minX=Math.min(minX,a.x);minY=Math.min(minY,a.y);maxX=Math.max(maxX,a.x);maxY=Math.max(maxY,a.y);
+        }
+      }
+      const same=(a,c)=>Math.abs(a-c)<=32*Number.EPSILON*Math.max(1,Math.abs(a),Math.abs(c));
+      if(!same(b.x,minX)||!same(b.y,minY)||!same(b.width,maxX-minX)||!same(b.height,maxY-minY))return false;
+    }return true;
+  }
+  function inputEventValid(v){
+    const keys=['type','runtimeGeneration','sessionId','revision','geometryVersion','kind','consumer','button'];
+    if(!object(v)||Object.keys(v).some(k=>!keys.includes(k)&&k!=='entryId'&&k!=='inputSequence')||!keys.every(k=>Object.hasOwn(v,k))||
+      !integer(v.runtimeGeneration)||!id(v.sessionId)||!integer(v.revision)||!integer(v.geometryVersion)||!['focus','activate'].includes(v.kind))return false;
+    const entry=Object.hasOwn(v,'entryId')?v.entryId:null;
+    if(v.kind==='focus'&&Object.hasOwn(v,'inputSequence')||v.kind==='activate'&&!integer(v.inputSequence))return false;
+    if(v.consumer===null||v.button===null)return v.kind==='focus'&&v.consumer===null&&v.button===null&&entry===null;
+    return id(v.consumer)&&id(v.button,80)&&(entry===null||id(entry,192));
+  }
   function paramsValid(method,p){
     switch(method){
       case'capabilities':case'buttons':return shape(p,['consumer'])&&id(p.consumer);
@@ -54,9 +95,7 @@
         Object.keys(p.settings).length>0&&Object.keys(p.settings).every(k=>['volume','muted'].includes(k))&&
         (!Object.hasOwn(p.settings,'volume')||finite(p.settings.volume,0,1))&&(!Object.hasOwn(p.settings,'muted')||typeof p.settings.muted==='boolean');
       case'geometry':return shape(p,['geometryVersion','buttons','viewport'])&&integer(p.geometryVersion)&&shape(p.viewport,['width','height','dpr'])&&
-        finite(p.viewport.width,64,16384)&&finite(p.viewport.height,64,16384)&&finite(p.viewport.dpr,.5,8)&&Array.isArray(p.buttons)&&p.buttons.length<=4096&&p.buttons.every(b=>
-          shape(b,['consumer','button','x','y','width','height','tabIndex'])&&id(b.consumer)&&id(b.button,80)&&finite(b.x,0,1)&&finite(b.y,0,1)&&finite(b.width,Number.EPSILON,1)&&finite(b.height,Number.EPSILON,1)&&
-          b.x+b.width<=1&&b.y+b.height<=1&&integer(b.tabIndex,-1,4095));
+        finite(p.viewport.width,64,16384)&&finite(p.viewport.height,64,16384)&&finite(p.viewport.dpr,.5,8)&&preciseButtons(p.buttons);
       default:return false;
     }
   }
@@ -86,9 +125,7 @@
     function receive(event){
       if(disposed)return;let reply;try{reply=copy(event.data);}catch(_){diagnose('invalidPayload');return;}
       if(reply?.type==='dext:v3-native-event'){
-        if(!suspended&&same(reply,identity)&&integer(reply.geometryVersion)&&['focus','activate'].includes(reply.kind)&&
-          (reply.kind==='focus'||integer(reply.inputSequence))&&
-          (reply.consumer===null&&reply.button===null||id(reply.consumer)&&id(reply.button,80))){try{options.onInput?.(reply);}catch(_){diagnose('inputUnavailable');}}return;
+        if(!suspended&&same(reply,identity)&&inputEventValid(reply)){try{options.onInput?.(reply);}catch(_){diagnose('inputUnavailable');}}return;
       }
       if(reply?.type!=='dext:v3-native-response'||!id(reply.requestId))return;
       const entry=pending.get(reply.requestId);if(!entry||!same(reply,entry.scope)||!STATUS.has(reply.status))return;

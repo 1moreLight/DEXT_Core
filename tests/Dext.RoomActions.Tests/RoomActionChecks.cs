@@ -11,6 +11,7 @@ static partial class RoomActionChecks
     public static void Run(Action<string, Action> check)
     {
         LayoutChecks(check);
+        PreciseInputChecks(check);
 
         check("timed-out Windows control retains attachment admission until actual terminal",()=>{
             var queue=new RoomNativeControlQueue(TimeSpan.FromMilliseconds(50));var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new ManualResetEventSlim();
@@ -546,6 +547,15 @@ static partial class RoomActionChecks
             if(change=="generation")n.Initialize(2,f.Kernel.Snapshot!);
             if(change=="revoke")n.Revoke();
             n.MouseUp(change=="viewport"?viewport with{Width=900}:change=="dpi"?viewport with{Dpi=120}:viewport,change=="outside"?600:300,400,change!="foreground");
+            Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
+        });
+        check("native polygon envelope cannot authorize points outside the triangle",()=>{
+            using var f=new ActionFixture();var n=Native(f);
+            var entry=JsonSerializer.Deserialize<RoomNativeButton>("""
+                {"Consumer":"scene","Button":"open","X":0.1,"Y":0.1,"Width":0.2,"Height":0.2,"TabIndex":0,"EntryId":"button.open","Polygons":[[{"X":0.1,"Y":0.1},{"X":0.3,"Y":0.1},{"X":0.1,"Y":0.3}]]}
+                """)!;
+            Eq(true,n.PublishGeometry(1,f.Session,1,1,viewport,[entry]));
+            n.MouseDown(viewport,360,460,true);n.MouseUp(viewport,360,460,true);
             Eq<RoomNativeInputProof?>(null,n.GetProof(1,1,"scene","open"));
         });
         check("native geometry is copied and topmost entry owns overlap",()=>{

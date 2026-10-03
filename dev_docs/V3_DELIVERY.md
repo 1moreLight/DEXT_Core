@@ -123,3 +123,12 @@ layout-pause-controller-build完整成功。新实际controller可见性错误�
 当前还没有长按编辑/拖动Save UI。下一段接官方Widget把手、编辑态空动作几何/原生pointer、UP一次原子保存与非法落点/失败回滚，再验证真实Core非空布局保存/重启。精确旋转/遮挡/多图标/焦点/物理DPI仍继续，最终一次P5整体审查、七项集中人工门槛、完整十六项/readiness1/16保持，不中途合并。
 
 2026-10-03用户调整：桌面拖动先略过，保留待恢复；当前继续P5精确输入/遮挡/多图标与受控焦点。每次推进报告完整16项开发就绪比例，目前1/16=6.25%（对话约6%），此为交付覆盖率，不能将阶段测试数当百分比。Dext实机探针结束后保持关闭。
+
+## P5静止精确区域/多图标/焦点基础验证（2026-10-03）
+纯geometry20/20，生产JS/SDK/媒体策略205/205；Core authority237/237、strict native message69/69，分别真实行为RED后修正。完整precise-core-build四阶段成功。actualReleasePlayer precise-official-host-wire通过：严格Player保留同动作双icon的两个凸区域，模拟Core焦点准确选第二icon并显示SVG、几何失效清除；原正式SDK/同文档/队列/暂停/最新修订/撤销门槛保持。此wire的Core回包仍fixture，不当作实际Windows物理证明。
+
+本阶段实际Core作者动作探针尚未完成。两轮前台未满足导致动作/KV拒绝，后续两轮将曝光/空白桌面聚焦前置后，安全像素门槛拒绝继续点击；最终记录命中Credential Dialog Xaml Host，并独立核实系统CredentialUIBroker.exe占前台。没有关闭该系统凭据窗或放宽Core规则，四轮finally原桌面/布局/settings/checkpoint/personal字节或缺失状态/用户Room以及临时窗口旗标均恢复，Dext退出。已询问用户关闭窗口后补测；等待期间继续作者派发守卫和移动采样设计。该外部条件仅阻挡实际Core输入补证，不标完整P5完成。
+
+常规build后start Core113804/Player46424/Watchdog125196/config80780、日志20261003_222129.txt；原v2 Player路径核对，Core/插件产品身份及mutex/pipe/data/log报告OK。共享D缓存配置器由identity报告OTHER/exit1，实际绝对路径独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher74869 exit0、原四文件SHA256/缺失状态不变；OwnedProcesses=0，本轮1420/1421/1621开发监听=0，NativeFixtureDirectories=0，ResourceCacheFiles=0。保持Dext关闭。
+
+当前完成的是静止几何与受控焦点基础；默认动画事件取样、source手势级动作、原生作者同步事件见证与Core实机补证继续，桌面拖动按用户暂缓。全16项交付开发就绪仍1/16=6.25%（对话约6%），最终7项人工与单次整体P5审查保持待执行，不合并master。

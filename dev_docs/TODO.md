@@ -1370,3 +1370,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 本阶段完整build→常规start Core92228/Player118936/Watchdog70784/config8336、日志20261003_211317.txt，原v2 Player路径核对。identity所属共享配置器OTHER并核对绝对路径；精确正常退出Core/配置器、watcher19473 CtrlC结束exit1、原四文件hash/缺失状态不变；OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。
 
 2026-10-03用户调整：桌面拖动先略过，保留待恢复；当前继续P5精确输入/遮挡/多图标与受控焦点。每次推进报告完整16项开发就绪比例，目前1/16=6.25%（对话约6%），此为交付覆盖率，不能将阶段测试数当百分比。Dext实机探针结束后保持关闭。
+
+- [ ] P5精确输入纯几何计划（BASE88a04ba，2026-10-03）：先为旋转/斜切矩形建立凸多边形、画布裁剪和前层遮挡差集，结果为多块真实可见区域；测试包围框角落不命中、负行列式、完全/部分/多遮挡、边界及不可变。纯geometry.js不调用native、不产生输入证明、不逐帧跨IPC。后续严格私有几何同步、同按钮多图标稳定区域与键盘受控焦点再接Core；移动动画方案先核对真实输入配对，不能靠降低权限或取消动画输入要求。拖动按用户暂缓。当前16项交付就绪1/16≈6%，此基础不独自增加完成比例。
+
+- [ ] P5精确区域/受控焦点接线计划（2026-10-03）：在纯几何基础上，固定官方DOM按实际矩阵生成凸区域，裁剪画布并扣除前层可见wrapper；Core私有entryId（consumer内唯一）区分同按钮多个呈现实例，polygons并集精确命中而包围框只作快速排除。旧矩形协议保持，新增严格有限/凸性/自交/包围框/64片×32点及总65536点预算和全层深复制，不向作者增加字段/票据。Core DOWN/UP仍同呈现实例、当前HWND/DPI/前台/期限/一次消费；Core原生焦点事件映射已ack区域SVG轮廓，失效/暂停清除。先DOM/native-host及Core生产行为RED，再构建和实际Player/Core验证；移动采样/可信作者派发另续，不冒称静止几何已覆盖移动，拖动暂缓。最终人工卡第4/5项仍待用户集中执行，完整16项交付就绪1/16≈6%。
+
+- [x] P5纯几何基础：geometry.js实际模块行为RED0/18，首实现16/18暴露裁剪交点舍入，修正后18/18并补斜向差集/多遮挡具体风险20/20。输入不变、真实凸差集、矩阵反射/旋转/斜切/画布边界已验证，无native或输入证明。
+- [x] P5官方静止精确区域/私有schema/焦点视图：新增8项DOM及3项native行为先RED后GREEN，全部生产JS/SDK/媒体策略205/205。真实z及DOM顺序前层wrapper裁剪、透明层关闭指针拦截、同动作两图标独立entry、ack前/失败/旧scope拒绝焦点及SVG显式hidden已接入。默认移动前层可能遮挡的区域不采用冻结几何签动作，移动取样仍待接线，不删完整要求。
+- [x] P5 Core精确区域与私有消息基础：生产authority扩展实际RED206/237、parser正确夹具65/69，再237/237与69/69。三角形外的bbox点拒绝、多片空隙、同动作不同呈现DOWN/UP/Tab、CW/CCW及strict凸/简单/预算/包围框、深复制和无几何数组公开元数据已验证。完整precise-core-build通过；实际Player/Core与常规启动退出继续。全16项交付就绪1/16≈6%。
+
+- [x] P5实际ReleasePlayer正式页面补证：precise-official-host-wire成功，严格私有DTO的双icon独立凸区域、模拟Core焦点命中第二个SVG且失效清除；同SDK文档/只由Core提交/队列/暂停/最新事实/撤销回归保持，Core回包仍fixture。
+- [ ] P5本阶段实际Core原生动作补证受外部凭据窗影响：前两轮operable/前台不成立，后两轮空白像素安全检查拒绝；最终owned像素诊断Credential Dialog Xaml Host/System CredentialUIBroker.exe。四轮finally原数据/Room/桌面与窗口旗标恢复，未点击凭据窗口、未改生产门槛；恢复条件是用户关闭该窗口。等待时继续派发守卫/运动取样，实现范围保持，整体就绪1/16≈6%。
+- [x] P5本阶段常规build→start/身份核对→正常退出：Core113804/Player46424/Watchdog125196/config80780，20261003_222129.txt；identity共享配置器OTHER/exit1并核对路径。精确PID/path正常关闭、watcher74869 exit0，四原文件hash/缺失不变，OwnedProcesses/本轮DevListeners/NativeFixtures/ResourceCacheFiles全0。

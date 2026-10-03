@@ -616,3 +616,7 @@ WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。�
 
 ## #200 显式损坏覆盖与缺少覆盖应区分（2026-10-03）
 新纯布局模块初版把非对象的已保存图标位置当作缺少位置，实际行为回归20/21失败。使用自有ID是否存在来区分，存在却无效必须拒绝，不静默回退作者默认；缺少覆盖才用默认格子。修复后21/21。Core严格持久校验与私有native回复仍是前置边界，纯视图层也不吞损坏输入。
+
+## #202 几何裁剪舍入与SVG焦点隐藏（2026-10-03）
+纯geometry首次18项中2项失败，轴向交点插值产生负坐标/极薄假片；将轴向交点固定到精确裁剪线，并在叉积误差界中计入坐标相减舍入，补斜向/多遮挡后20/20。误差界按机器epsilon，不加CSS像素命中padding；Core C#的machine epsilon为2.2204460492503131e-16，不是double.Epsilon。
+SVGElement不能只靠HTMLElement式hidden属性假设隐藏；官方焦点显式设置/移除hidden attribute，清空polygon并加pointer-events:none，避免焦点轮廓残留或截获指针。实际ReleasePlayer轮廓验证仍需本阶段wire证据。
