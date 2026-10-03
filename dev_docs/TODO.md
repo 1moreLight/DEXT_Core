@@ -1438,3 +1438,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际ReleasePlayer+正式SDK：keyboard-enter-controller-focus-wire / keyboard-space-native-wire-final / keyboard-mouse-native-wire-final均exit0，trusted DOWN等待同UP，原r1只生成一次Core n1/gesture7；前台HWND保持不变。Core输入包/回执与小official route仍fixture，不能代填实际Core物理证据。仅Window.focus或WinForms.Focus两轮无keydown，改原生controller后通过（ERRORS #211）；失败日志保留。
 - [x] keyboard-controller-focus-build完整四阶段、实际keyboard-frame-media-wire-final回归通过。常规start Core56016/Player54552/Watchdog106276/config96456，日志20261004_032947.txt；产品/插件/mutex/pipe/data/log正常，D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher91523 exit0，原四文件hash/缺失保持、Dext进程/开发监听/native author fixtures全部0。
 - [ ] 接续本地功能：移动DOWN/UP即时可见区样本与source动作；Core旧零值查询兼容待全输入链收口，实际Core物理输入补证仍待系统凭据窗解除。最终卡第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行；拖动暂缓，无新网络专项、中途验收或master合并。完整16项交付就绪仍1/16=6.25%（约6%）。
+
+## P5 移动视觉的原生事件取样（2026-10-04，BASE 3cdbd72）
+一句话目标：默认/作者变换保持运动，原生DOWN与UP读取当时实际可见凸区域，在Core同一冻结物理手势中配对同entry后再允许动作；不通过逐帧IPC补坐标。
+范围：Core两次采样配对、官方DOM按已绘制组矩阵即时裁剪/遮挡、私有Player采样与派发时视觉保持/释放、真实原生窗口/视口/前台/期限检查，后续source手势级授权保持原范围；旧静止路径只在生产接线完成前兼容。先实现必要Core/DOM行为RED和生产基础，再接私有事件屏障与实际Player/Core证据；不能拿基础测试冒称已经可点移动元素。
+不扩展网络专项；桌面拖动按用户暂缓。最终人工仍第4项鼠标/Enter/Space一次动作、长按/AltTab取消和第5项移动/遮挡/多入口/DPI，集中验收，不新增中途确认。每阶段具名commit、改C#后build→start/正常退出、Dext保持关闭，完整16项就绪1/16≈6%。
+
+- [x] Core移动取样配对基础：PublishGeometry增加内部sampleMouse模式，原生DOWN/UP仍独立冻结同一序号、原始QPC和两次OS点；SampleMouse不创建物理输入，只用严格不可变可见区域命中原始点。DOWN/UP任一半不能完成，两半同consumer/button/entry方可完成；重复半包不替换，期限/拖动/视口/DPI/前台/修订变化仍取消。新检查缺少API编译RED后实现，原动作回归加18项本地行为合计272/272。
+- [x] DOM按已绘制visualGroups即时读取readInputSample，当前geometry ack/scope成立才返回独立副本；采样可计算moving元素及moving前层遮挡的真实多边形，无逐帧或采样读取IPC。行为RED43/46（缺API）→45/46（测试归一化宽度精确相等失败）→46/46，改机器误差断言，生产未加命中padding（ERRORS #212）。
+- [x] event-sample-core-build四阶段通过；常规start Core55712/Player82324/Watchdog93260/config65212，日志20261004_034829.txt，Core DLL写入03:48:23早于Core启动03:48:29。identity共享D配置器OTHER/exit1且精确路径独立核验，随后正常关闭、watcher82155 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixtures0。
+- [ ] 这段是移动取样生产基础，Player尚未调用readInputSample、Core生产PublishNativeGeometry尚未启用sampleMouse；原静止路径仍兼容，不能宣称移动点击已接通。接续实现仅Core/Player私有采样消息、原生派发期间视觉保持/释放和两个edge的实际Player/Core证据，再接source手势级授权；全范围保持。拖动暂缓，最终第4/5项集中人工、网络专项不扩展、不合并master，整体16项就绪1/16≈6%。

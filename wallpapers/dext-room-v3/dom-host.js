@@ -158,11 +158,11 @@
         if(!record.element.hidden&&group.opacity>0&&record.rect)nodes.push({record,order:order++,layer:40,group,polygon:geometry.rectPolygon(record.rect,group.matrix),moving:defaultMoving()});
       }return nodes;
     }
-    function preciseEntry(consumer,button,entryId,rect,node,nodes,tabIndex){
+    function preciseEntry(consumer,button,entryId,rect,node,nodes,tabIndex,sampled=false){
       const front=nodes.filter(other=>other!==node&&(other.layer>node.layer||other.layer===node.layer&&other.order>node.order));
       // A boundary publication cannot track a moving foreground cover. Such
       // entries wait for the separate physical-event sampling mechanism.
-      if(node.moving||front.some(other=>other.moving))return null;
+      if(!sampled&&(node.moving||front.some(other=>other.moving)))return null;
       const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:front.map(other=>other.polygon)});
       if(!pieces.length)return null;
       if(pieces.length>64||pieces.some(p=>p.length>32))throw failure('geometryBudget');
@@ -170,7 +170,7 @@
       const x=Math.min(...points.map(p=>p.x)),y=Math.min(...points.map(p=>p.y)),right=Math.max(...points.map(p=>p.x)),bottom=Math.max(...points.map(p=>p.y));
       return{consumer,button,entryId,x,y,width:right-x,height:bottom-y,tabIndex,polygons};
     }
-    function buttonGeometry(){
+    function buttonGeometry(sampled=false){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.stage==='desktop'&&!snapshot.operable||snapshot.lifecycle.playbackPaused||snapshot.lifecycle.locked)return[];
       const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
       const add=button=>{if(!button)return;vertices+=button.polygons.reduce((n,p)=>n+p.length,0);if(buttons.length>=4096||vertices>65536)throw failure('geometryBudget');buttons.push(button);};
@@ -181,11 +181,11 @@
         for(const region of regions){
           const local=localButtons.get(consumer)?.find(b=>b.buttonId===region.buttonId),placement=recordPlacement(record);
           const rect=local&&record.definition.placement?layoutModel.mapLocalRect({localRect:local,logicalSize:record.definition.placement,effectiveRect:placement}):region;
-          add(preciseEntry(consumer,region.buttonId,'button.'+region.buttonId,rect,node,nodes,buttons.length));
+          add(preciseEntry(consumer,region.buttonId,'button.'+region.buttonId,rect,node,nodes,buttons.length,sampled));
         }
       }
       for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()){
-        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length));
+        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
       }
       return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
     }
@@ -298,6 +298,10 @@
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
     return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,
+      readInputSample(identity,version){
+        if(!identity||!sameActionScope(identity,version))return null;
+        return copy({geometryVersion:inputVersion,viewport:model.readDiagnostics().viewport,buttons:buttonGeometry(true)});
+      },
       resize(){if(disposed)return Promise.resolve(false);const result=model.setViewport(options.getViewport());return result.accepted&&result.effects.length?render():Promise.resolve(result.accepted);},
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){

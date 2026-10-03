@@ -635,3 +635,6 @@ SVGElement不能只靠HTMLElement式hidden属性假设隐藏；官方焦点显�
 ## #211 非激活Player键盘需原生controller焦点再路由frame（2026-10-04）
 实际ReleasePlayer保留WS_EX_NOACTIVATE。私有frame arm成功后仅captured Window.focus，或先WinForms webView.Focus，Own-HWND Enter检查都没有keydown，不能把私有回执armed当作键盘已到作者文档。复用固定SDK已有NativeViewController，调用MoveFocus(Programmatic)，随后对选中直接root执行captured Window.focus，再发真实Win32键。Enter/Space/鼠标正式SDK wire均收到isTrusted DOWN/UP与一次正数请求，检查前台HWND不变，不伪造JS事件。该检查的Core包/回执仍为fixture，完整Core实际桌面OS验收不能打勾。
 MoveFocus官方语义为将焦点移入WebView并恢复先前/默认文档元素：[Microsoft WebView2 Controller](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller)。这里使用Programmatic，不代替Core受控Tab焦点，也不逐个focus作者DOM节点。生产文件首次C# pattern局部focus重复名导致CS0136，改releasedFocus后完整构建通过；探针替换Console.WriteLine时以首分号切片遇到字符串内部分号，修正精确锚点后才取得运行证据。
+
+## #212 归一化采样宽度的浮点断言（2026-10-04）
+移动前层把200px Widget裁到40px时，DOM normalized width按right-x得到0.020833333333333315，而测试40/1920为0.020833333333333332，45/46失败。几何本身位置正确；断言改为32*Number.EPSILON机器误差界，生产裁剪和Native验证均未增像素padding。新的readInputSample读已绘制矩阵、不通过估算下一帧位置判断命中；此阶段只是基础，不当作实际Player/Core点击接线通过。

@@ -303,3 +303,17 @@ Core受控Tab焦点后的真实Enter/Space DOWN扩展冻结Key/ScanCode/extended
 keyboard-controller-focus-build完整四阶段和keyboard-frame-media-wire-final实际媒体回归通过。常规start Core56016/Player54552/Watchdog106276/config96456，日志20261004_032947.txt；共享配置器OTHER/exit1且精确绝对路径独立核验。正常关闭、watcher91523 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixture均0，Dext保持关闭。
 
 移动即时样本/source动作与Core内部零序号兼容收口继续；实际Core输入补证仍待凭据窗解除。最终人工第4项鼠标/Enter/Space、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行，拖动按用户暂缓；不新增网络专项、不加中途验收，七项与单次全P5审查仍待执行，整体16项就绪1/16≈6%，不合并master。
+
+## P5 移动视觉的原生事件取样（2026-10-04，BASE 3cdbd72）
+一句话目标：默认/作者变换保持运动，原生DOWN与UP读取当时实际可见凸区域，在Core同一冻结物理手势中配对同entry后再允许动作；不通过逐帧IPC补坐标。
+范围：Core两次采样配对、官方DOM按已绘制组矩阵即时裁剪/遮挡、私有Player采样与派发时视觉保持/释放、真实原生窗口/视口/前台/期限检查，后续source手势级授权保持原范围；旧静止路径只在生产接线完成前兼容。先实现必要Core/DOM行为RED和生产基础，再接私有事件屏障与实际Player/Core证据；不能拿基础测试冒称已经可点移动元素。
+不扩展网络专项；桌面拖动按用户暂缓。最终人工仍第4项鼠标/Enter/Space一次动作、长按/AltTab取消和第5项移动/遮挡/多入口/DPI，集中验收，不新增中途确认。每阶段具名commit、改C#后build→start/正常退出、Dext保持关闭，完整16项就绪1/16≈6%。
+
+## P5 移动可见区取样配对生产基础（2026-10-04）
+RoomNativeInputAuthority新增内部sampleMouse模式与SampleMouse：raw DOWN冻结原QPC/序号/OS点，raw UP冻结释放点，任一可见区半包不能完成；两个edge命中同consumer/button/entry才建立原始DOWN期限的proof。严格凸多边形沿用DextNativeGeometry不可变副本，移动区域可以位置不同，前层遮挡空区域或同动作不同图标不配对；重复样本不替换，拖动/1500ms/原生视口DPI/前台/结构修订变化仍取消。静止旧模式保持原行为，生产适配尚未切换。
+
+官方DOM readInputSample只在当前ack/identity/geometryVersion下读取已绘制visualGroups，允许当前moving节点并扣除当前moving前层，返回独立normalized凸区域，不触发逐帧native消息。Core新API缺失编译RED后实现，完整动作回归含18项本地采样行为272/272。DOM RED43/46缺API→45/46（测试精确归一化宽度断言）→46/46；只修测试到机器舍入误差，未扩大实际命中区（ERRORS #212）。
+
+event-sample-core-build四阶段通过，常规start Core55712/Player82324/Watchdog93260/config65212，日志20261004_034829.txt；核对DLL构建03:48:23早于03:48:29启动，共享D配置器OTHER/exit1而绝对路径独立核验。精确正常关闭、watcher82155 exit0，原四文件hash/缺失保持、Dext进程/开发监听/author fixtures0。
+
+Player私有采样通道与原生派发期间视觉保持/释放尚未接，生产Core仍静止模式；此阶段不能声称移动点击、source动作或实际Core物理门槛已通过。继续完成整条链并以实际Player/Core证据验证，最终第4项真实鼠标/Enter/Space、长按/AltTab，第5项移动/遮挡/多入口/DPI集中验收。拖动暂缓、无新增网络专项/中途验收，七项及单次全P5审查保持待执行，完整16项就绪1/16≈6%，不合并master。

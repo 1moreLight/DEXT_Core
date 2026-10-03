@@ -245,3 +245,7 @@ RoomNativeInputState新增仅本机可读的Gesture：positive Sequence、Genera
 
 ### 作者Enter/Space文档路由（2026-10-04）
 私有输入包另含Key（0鼠标/13Enter/32Space）、ScanCode、IsExtended、固定Consumer/Button/EntryId；键盘只arm选中consumer唯一有效直接root。Player先原生controller.MoveFocus(Programmatic)，再通过guardian捕获Window.focus路由该文档，后续DOWN/UP沿用同UI有界队列；不修改作者节点Tab顺序或强制节点focus。Core受控Tab仍只选官方按钮元数据与轮廓；官方consumer保持默认原生激活。焦点私有ack只说明控制调用完成，不签发输入证明，原生可信回调/文档双路汇合与Core实际UP消费均须成立。
+
+### 移动视觉取样基础（2026-10-04，尚未切换生产输入）
+官方dom-host.readInputSample(identity,inputVersion)仅在当前geometry ack下读取已绘制组矩阵的可见凸区域，允许moving节点并扣除moving前层，不推进动画、不发送native坐标，结果为独立副本。Core内部PublishGeometry(sampleMouse:true)使原生UP只记录释放点；SampleMouse按真实raw DOWN/UP点分别命中两个不可变区域，两半同consumer/button/entry才完成，不重分配序号或QPC。
+该参数目前没有接入私有geometry请求，Player尚未调用采样函数；正式输入仍静止模式。后续必须贯通原生派发期间的视觉保持/释放与private Player/Core样本，不能用此基础将移动点击标为完成。source动作授权和实际Core物理/DPI门槛继续，公开作者SDK没有样本/证明入口。

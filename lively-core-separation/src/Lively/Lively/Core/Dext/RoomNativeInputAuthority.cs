@@ -14,7 +14,7 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
-    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false);
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null);
 internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
 
 internal sealed class RoomNativeInputProof
@@ -46,6 +46,8 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private RoomNativeInputGesture? gesture;
     private Press? mouse, keyboard;
     private bool mouseHeld;
+    private bool sampledMouse,downSampleReceived,upSampleReceived;
+    private AcceptedEntry? downSample,upSample;
     private readonly HashSet<int> keysHeld=new();
     private sealed record Press(AcceptedEntry Entry,long IssuedAt,long Sequence,int X=0,int Y=0,int Key=0);
     private sealed class AcceptedEntry(DextNativeGeometryEntry region)
@@ -88,7 +90,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     {lock(gate){if(!Identity(document,session,revision))return false;ClearGeometry();return true;}}
 
     internal bool PublishGeometry(long document,Guid session,long revision,long version,
-        RoomNativeViewport nativeViewport,IReadOnlyList<RoomNativeButton> entries)
+        RoomNativeViewport nativeViewport,IReadOnlyList<RoomNativeButton> entries,bool sampleMouse=false)
     {
         lock(gate)
         {
@@ -96,16 +98,8 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             geometryVersion=version;ClearGeometry();
             if(nativeViewport==null || nativeViewport.Handle==0 || nativeViewport.Width<=0 || nativeViewport.Height<=0 ||
                 nativeViewport.Dpi<=0 || nativeViewport.DragTolerance<1 || nativeViewport.DragTolerance>256 || entries==null || entries.Count>4096)return false;
-            var copy=entries.ToArray();
-            var input=new LivelyRoomNativeButton[copy.Length];
-            for(int i=0;i<copy.Length;i++)
-            {
-                var entry=copy[i];if(entry==null)return false;
-                input[i]=new LivelyRoomNativeButton{Consumer=entry.Consumer,Button=entry.Button,EntryId=entry.EntryId,
-                    X=entry.X,Y=entry.Y,Width=entry.Width,Height=entry.Height,TabIndex=entry.TabIndex,Polygons=entry.Polygons};
-            }
-            if(!DextNativeGeometry.TryCreate(input,out var accepted))return false;
-            viewport=nativeViewport;buttons=accepted.Select(region=>new AcceptedEntry(region)).ToArray();return true;
+            if(!AcceptRegions(entries,out var accepted))return false;
+            viewport=nativeViewport;buttons=accepted;sampledMouse=sampleMouse;return true;
         }
     }
     internal void MouseDown(RoomNativeViewport current,int x,int y,bool foreground)
@@ -115,9 +109,9 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         {
             ExpireGesture(now);
             if(mouseHeld)return;
-            mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;
+            mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;ResetSamples();
             if(!Available(current,foreground) || !Inside(current,x,y)){focused=null;return;}
-            focused=Hit(x,y);
+            focused=sampledMouse?null:Hit(x,y);
             // A raw point can later be resolved against an event-time visual
             // sample. Recording it alone never creates an action completion.
             if(!BeginGesture(now,x,y,0))return;
@@ -149,9 +143,54 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             if(!Available(current,foreground) || !Inside(current,x,y) ||
                 Math.Abs((double)x-pending.X)>current.DragTolerance || Math.Abs((double)y-pending.Y)>current.DragTolerance)
             {gesture=null;return;}
-            gesture=pending with{Released=true};
-            if(down!=null && Hit(x,y)==down.Entry)Complete(down,now);
+            gesture=pending with{Released=true,ReleaseX=x,ReleaseY=y};
+            if(sampledMouse)CompleteSamples(now);
+            else if(down!=null && Hit(x,y)==down.Entry)Complete(down,now);
         }
+    }
+    // Called only with native Player event-time geometry. Geometry is not input:
+    // the matching raw DOWN/UP, original QPC, HWND and OS facts remain required.
+    internal bool SampleMouse(long document,Guid session,long revision,long version,long sequence,string edge,
+        RoomNativeViewport current,IReadOnlyList<RoomNativeButton> entries,bool foreground)
+    {
+        var now=clock.GetTimestamp();
+        lock(gate)
+        {
+            ExpireGesture(now);
+            if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
+                gesture is not{Key:0} pending || pending.Sequence!=sequence ||
+                edge!="down"&&edge!="up")return false;
+            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(edge=="down"&&downSampleReceived || edge=="up"&&(upSampleReceived||!pending.Released))return false;
+            if(!AcceptRegions(entries,out var accepted)){gesture=null;completed=null;ResetSamples();return false;}
+            var x=edge=="down"?pending.X:pending.ReleaseX!.Value;
+            var y=edge=="down"?pending.Y:pending.ReleaseY!.Value;
+            var hit=Hit(accepted,current,x,y);
+            if(edge=="down"){downSampleReceived=true;downSample=hit;focused=hit;}
+            else{upSampleReceived=true;upSample=hit;}
+            CompleteSamples(now);return true;
+        }
+    }
+    private void CompleteSamples(long now)
+    {
+        if(!downSampleReceived || !upSampleReceived || gesture is not{Key:0,Released:true} pending)return;
+        if(downSample!=null && upSample!=null && downSample.Button.Consumer==upSample.Button.Consumer &&
+            downSample.Button.Button==upSample.Button.Button && downSample.Button.EntryId==upSample.Button.EntryId)
+            Complete(new(downSample,pending.IssuedAt,pending.Sequence,pending.X,pending.Y),now);
+        else{completed=null;gesture=null;}
+    }
+    private void ResetSamples(){downSample=null;upSample=null;downSampleReceived=false;upSampleReceived=false;}
+    private static bool AcceptRegions(IReadOnlyList<RoomNativeButton> entries,out AcceptedEntry[] result)
+    {
+        result=Array.Empty<AcceptedEntry>();if(entries==null || entries.Count>4096)return false;
+        var copy=entries.ToArray();var input=new LivelyRoomNativeButton[copy.Length];
+        for(int i=0;i<copy.Length;i++){
+            var entry=copy[i];if(entry==null)return false;
+            input[i]=new(){Consumer=entry.Consumer,Button=entry.Button,EntryId=entry.EntryId,
+                X=entry.X,Y=entry.Y,Width=entry.Width,Height=entry.Height,TabIndex=entry.TabIndex,Polygons=entry.Polygons};
+        }
+        if(!DextNativeGeometry.TryCreate(input,out var accepted))return false;
+        result=accepted.Select(region=>new AcceptedEntry(region)).ToArray();return true;
     }
     internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground)
     {
@@ -163,7 +202,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             if(down)
             {
                 if(!keysHeld.Add(key))return;
-                completed=null;keyboard=null;mouse=null;gesture=null;
+                completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();
                 if(!Available(current,foreground))return;
                 if(key==9)
                 {
@@ -214,7 +253,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     {
         if(gesture!=null && Expired(gesture.IssuedAt,now))
         {
-            gesture=null;mouse=null;keyboard=null;
+            gesture=null;mouse=null;keyboard=null;ResetSamples();
             // Keep an already completed proof for the action authority to return
             // expiredInput consistently. Its original DOWN time never changes.
         }
@@ -228,7 +267,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             if(completed!=proof || viewport==null || snapshot==null || !CanInput() ||
                 current.SessionId!=snapshot.SessionId || current.RoomId!=snapshot.RoomId || current.InstallationStamp!=snapshot.InstallationStamp || current.Revision!=snapshot.Revision ||
                 proof.Button.Consumer!=consumer || proof.Button.Button!=button)return false;
-            if(consume){proof.MarkConsumed();completed=null;gesture=null;}
+            if(consume){proof.MarkConsumed();completed=null;gesture=null;ResetSamples();}
             return true;
         }
     }
@@ -237,12 +276,16 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private bool Available(RoomNativeViewport current,bool foreground)=>foreground && CanInput() && viewport!=null && current==viewport;
     private AcceptedEntry? Hit(int x,int y)
     {
-        var px=((double)x-viewport!.X)/viewport.Width;var py=((double)y-viewport.Y)/viewport.Height;
-        return buttons.FirstOrDefault(b=>b.Region.Contains(px,py));
+        return Hit(buttons,viewport!,x,y);
+    }
+    private static AcceptedEntry? Hit(AcceptedEntry[] entries,RoomNativeViewport measured,int x,int y)
+    {
+        var px=((double)x-measured.X)/measured.Width;var py=((double)y-measured.Y)/measured.Height;
+        return entries.FirstOrDefault(b=>b.Region.Contains(px,py));
     }
     private void ClearGeometry()
     {
-        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;
+        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;sampledMouse=false;ResetSamples();
         // Preserve held edges until UP. Auto-repeat after refresh/geometry change
         // must not turn into a new physical DOWN.
     }

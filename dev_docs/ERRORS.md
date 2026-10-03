@@ -280,3 +280,5 @@
 | #210 | 原生SDK wire通过不等于整轮通过；WebView profile退出后仍短暂占用 | [toolchain](errors/toolchain.md) |
 
 | #211 | WinForms.Focus未使非激活Player派发键；先原生controller再路由作者frame | [renderer](errors/renderer.md) |
+
+| #212 | 归一化多边形宽度的机器舍入不能用严格等于测试 | [renderer](errors/renderer.md) |

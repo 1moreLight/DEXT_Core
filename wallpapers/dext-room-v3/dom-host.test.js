@@ -353,3 +353,30 @@ test('a shared entry under a moving foreground cover waits for event sampling wi
  assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='component.shared'),false);
  await f.advance(100);assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);f.host.dispose();
 });
+
+test('event samples read moving target icons at their painted position without frame IPC',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[],components:[]},{id:'focus',name:'Focus',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:[]}]}});await f.host.ready;
+ await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(225);
+ const version=f.host.readDiagnostics().inputVersion,count=f.calls.filter(v=>v.method==='geometry').length;
+ const sample=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:2},version);
+ assert.equal(sample.geometryVersion,version);assert.equal(sample.buttons.length,1);assert.equal(sample.buttons[0].entryId,'icon.focus/icon');
+ assert.equal(sample.buttons[0].x,(32+960)/1920);assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);
+ await f.advance(100);assert.equal(sample.buttons[0].x,(32+960)/1920);f.host.dispose();
+});
+test('event sample clips a moving foreground cover at its current transform',async()=>{
+ const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'dock',entry:'widget.html',placement:{x:1920-200,y:50,width:200,height:100},capabilities:[],buttonIds:[]}],
+ desks:[{id:'home',name:'Home',icons:[],components:['shared','bar']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
+ await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));
+ await f.host.publishGeometry('component.shared',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:200,height:100}]});
+ await f.advance(300);const count=f.calls.filter(v=>v.method==='geometry').length;
+ const sample=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:2},f.host.readDiagnostics().inputVersion);
+ const button=sample.buttons.find(v=>v.consumer==='component.shared');
+ assert.equal(button.x,400/1920);assert.ok(Math.abs(button.width-40/1920)<=32*Number.EPSILON);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);f.host.dispose();
+});
+test('event sample uses acknowledged scope and stays unavailable while paused or invalidated',async()=>{
+ const f=fixture();await f.host.ready;const scope={runtimeGeneration:1,sessionId:'session',revision:1},version=f.host.readDiagnostics().inputVersion;
+ assert.equal(f.host.readInputSample({...scope,revision:2},version),null);assert.equal(f.host.readInputSample(scope,version+1),null);
+ f.host.setPlaybackSuspended(true);assert.equal(f.host.readInputSample(scope,version),null);f.host.dispose();
+ assert.equal(f.host.readInputSample(scope,version),null);
+});

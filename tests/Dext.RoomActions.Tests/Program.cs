@@ -157,6 +157,7 @@ Check("maximum native consumer IDs and counts fit private grants", () =>
 });
 
 RoomActionChecks.Run(Check);
+NativeEventSampleChecks.Run(Check);
 RoomNativeDataSourceChecks.Run(Check);
 Console.WriteLine($"{total - failures}/{total} Room action checks passed");
 Environment.ExitCode = failures == 0 ? 0 : 1;
