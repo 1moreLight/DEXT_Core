@@ -274,3 +274,5 @@
 | #207 | 原生Window默认receiver/onerror多参数与收养节点currentTarget须保持真实派发语义 | [renderer](errors/renderer.md) |
 
 | #208 | UP时分配序号无法在DOWN关联原生frame；长按截止时不能新建完成 | [backend](errors/backend.md) |
+
+| #209 | 输入文档描述误用于嵌套媒体frame；旧Player需显式Compile且无Environment.ProcessId | [backend](errors/backend.md) |

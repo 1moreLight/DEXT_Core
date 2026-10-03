@@ -20,6 +20,7 @@ namespace Lively.Core.Wallpapers
             // consumer storage operations are in flight per private attachment.
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
             internal RoomNativeControlQueue Controls { get; } = new();
+            internal RoomNativeInputGesture PointerGesture { get; set; }
         }
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
@@ -189,17 +190,38 @@ namespace Lively.Core.Wallpapers
         internal void NativeMouseDown(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null);NotifyNative(a,before,false);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null);
+            var after=a.Input.State;
+            if(after?.Gesture is{Key:0,Released:false} gesture&&gesture.Sequence!=before?.Gesture?.Sequence){
+                a.PointerGesture=gesture;SendNativePointer(gesture,"down",x,y);
+            }
+            NotifyNative(a,before,false);
         }
         internal void NativeMouseMove(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseMove(v??MissingViewport,x,y,foreground&&v!=null);NotifyNative(a,before,false);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseMove(v??MissingViewport,x,y,foreground&&v!=null);
+            if(a.PointerGesture is{} gesture){
+                var valid=a.Input.State?.Gesture?.Sequence==gesture.Sequence;
+                SendNativePointer(gesture,valid?"move":"cancel",x,y);
+                if(!valid)a.PointerGesture=null;
+            }
+            NotifyNative(a,before,false);
         }
         internal void NativeMouseUp(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseUp(v??MissingViewport,x,y,foreground&&v!=null);NotifyNative(a,before,true);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseUp(v??MissingViewport,x,y,foreground&&v!=null);
+            if(a.PointerGesture is{} gesture){a.PointerGesture=null;SendNativePointer(gesture,"up",x,y);}
+            NotifyNative(a,before,true);
+        }
+        private void SendNativePointer(RoomNativeInputGesture gesture,string kind,int x,int y)
+        {
+            var v=gesture.Viewport;
+            SendMessage(new LivelyMessageRoomNativePointer{
+                RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
+                GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
+                OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=x,Y=y,Modifiers=InputUtil.MouseModifiers});
         }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground)
         {

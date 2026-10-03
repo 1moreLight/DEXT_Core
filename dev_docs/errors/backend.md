@@ -452,3 +452,8 @@ bounded native request join更新当前snapshot时需保留同文档rN水位，�
 ## #208 私有手势关联需要在DOWN冻结，截止UP不能重新开始（2026-10-04）
 旧Core只在UP分配完成序号，Player无法在实际DOWN之前用同一正数关联arm作者文档，UP也可能在物理1500ms截止后新建已过期proof。新增生产RED238/254后，序号改为DOWN分配、UP原序号完成；视口/DPI/OS点/scope/时间不可变，未完成长按按elapsed>=1500ms撤销，动作权威统一半开期限。完成后才过期仍返回expiredInput，不放宽默认动作或作者权限。
 相邻输入设备的新DOWN替换旧pending，晚到另一设备UP不能取消或消费新对；空区域DOWN只记录事实，后续移动视觉样本才能产生按钮完成。修复后254/254、完整build/start/正常退出通过，原四文件保持。本段尚未向Player/SDK发送正数关联，不声称解决整条作者timer入口。
+
+## #209 输入接线只注册直接作者root，保留嵌套媒体播放（2026-10-04）
+Player新增native input describe后，实际媒体wire在嵌套/blank媒体子文档拿到null，JObject.Parse抛错并按策略正常关闭。输入根资格本来只允许Parent==null，故LoadAsync只对直接作者root读取/验证guardian nonce；嵌套媒体继续既有media policy，不注册输入。增加真实异常原因诊断，实际ReleasePlayer相同媒体wire通过，不放宽直接root的guardian验证。
+旧Player为.NET Framework4.7.2且csproj显式Compile：新partial文件须具名加入Compile，PID使用using Process.GetCurrentProcess().Id缓存；首次遗漏Compile与Environment.ProcessId编译错误不计行为RED。
+指针取消曾沿最初DOWN坐标，MOVE后Invalidate导致释放回跳；新增实际生产队列行为RED9/10，保存最新转发的MOVE后10/10。取消仍先撤销再UP，不调用动作完成回调。

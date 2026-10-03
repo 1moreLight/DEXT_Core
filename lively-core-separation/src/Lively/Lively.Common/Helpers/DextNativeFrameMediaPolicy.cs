@@ -11,6 +11,7 @@ namespace Lively.Common.Helpers
     {
         public string FrameName { get; internal set; }
         public string Consumer { get; internal set; }
+        public string InstanceId { get; internal set; }
         public bool Active { get; internal set; }
     }
     public static class DextNativeFrameMediaPolicy
@@ -24,14 +25,20 @@ namespace Lively.Common.Helpers
                 JObject value;
                 using(var reader=new JsonTextReader(new StringReader(json)){MaxDepth=4,DateParseHandling=DateParseHandling.None})
                 {value=JObject.Load(reader,new JsonLoadSettings{DuplicatePropertyNameHandling=DuplicatePropertyNameHandling.Error});if(reader.Read())return null;}
-                if(value.Count!=Fields.Length||Fields.Any(f=>value.Property(f)==null)||(string)value["type"]!="dext:v3-frame-policy"||
+                if((value.Count!=Fields.Length && value.Count!=Fields.Length+1) || value.Properties().Any(p=>!Fields.Contains(p.Name)&&p.Name!="instanceId") || Fields.Any(f=>value.Property(f)==null)||(string)value["type"]!="dext:v3-frame-policy"||
                     value["protocolVersion"]?.Type!=JTokenType.Integer||(long)value["protocolVersion"]!=1||value["runtimeGeneration"]?.Type!=JTokenType.Integer||
                     value["revision"]?.Type!=JTokenType.Integer||value["sessionId"]?.Type!=JTokenType.String||!Guid.TryParse((string)value["sessionId"],out var session)||
                     !state.CanUseInput((long)value["runtimeGeneration"],session,(long)value["revision"])||value["active"]?.Type!=JTokenType.Boolean||
                     value["frameName"]?.Type!=JTokenType.String||value["consumer"]?.Type!=JTokenType.String)return null;
                 var name=(string)value["frameName"];var consumer=(string)value["consumer"];
                 if(name.Length!=48||!name.StartsWith("dext-native-",StringComparison.Ordinal)||!Guid.TryParseExact(name.Substring(12),"D",out _)||!state.HasMediaConsumer(consumer))return null;
-                return new DextNativeFrameMediaRequest{FrameName=name,Consumer=consumer,Active=(bool)value["active"]};
+                string instance=null;
+                if(value.Property("instanceId")!=null){
+                    if(value["instanceId"].Type!=JTokenType.String)return null;
+                    instance=(string)value["instanceId"];
+                    if(string.IsNullOrEmpty(instance)||instance.Length>160||instance.Any(char.IsControl))return null;
+                }
+                return new DextNativeFrameMediaRequest{FrameName=name,Consumer=consumer,InstanceId=instance,Active=(bool)value["active"]};
             }
             catch(Exception e)when(e is JsonException||e is ArgumentException||e is InvalidCastException||e is FormatException||e is OverflowException){return null;}
         }

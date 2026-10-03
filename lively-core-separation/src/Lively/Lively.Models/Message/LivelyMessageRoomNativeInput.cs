@@ -33,6 +33,28 @@ namespace Lively.Models.Message
         public double? Width { get; set; }
         public double? Height { get; set; }
     }
+    // Core private transport only; this is never parsed from a web message.
+    public sealed class LivelyMessageRoomNativePointer : IpcMessage
+    {
+        public int ProtocolVersion { get; set; }=1;
+        public long RuntimeGeneration { get; set; }
+        public Guid SessionId { get; set; }
+        public long Revision { get; set; }
+        public long GeometryVersion { get; set; }
+        public long GestureId { get; set; }
+        public long IssuedAt { get; set; }
+        public long InputHandle { get; set; }
+        public string Kind { get; set; }
+        public int OriginX { get; set; }
+        public int OriginY { get; set; }
+        public int PixelWidth { get; set; }
+        public int PixelHeight { get; set; }
+        public int Dpi { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Modifiers { get; set; }
+        public LivelyMessageRoomNativePointer() : base(MessageType.cmd_room_native_pointer) { }
+    }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage
     {
         public int ProtocolVersion { get; set; } = 1;

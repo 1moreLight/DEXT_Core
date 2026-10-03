@@ -1242,7 +1242,7 @@ namespace Lively.Core
                 if (IsPrimaryMouseButton(e.Button))
                 {
                     foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseDown(e.X,e.Y,true);
-                    forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y), e.X, e.Y, InputUtil.MouseModifiers);
+                    forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y, false), e.X, e.Y, InputUtil.MouseModifiers);
                 }
             }
             catch (Exception ex)
@@ -1314,7 +1314,7 @@ namespace Lively.Core
         private static bool IsPrimaryMouseButton(RawInputMouseBtn button) =>
             button == (InputUtil.IsMouseButtonsSwapped ? RawInputMouseBtn.right : RawInputMouseBtn.left);
 
-        private IEnumerable<MouseForwardingSession.Target> MouseTargetsAt(int x, int y)
+        private IEnumerable<MouseForwardingSession.Target> MouseTargetsAt(int x, int y, bool includeNative = true)
         {
             var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(x, y));
             var bounds = userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span
@@ -1327,6 +1327,7 @@ namespace Lively.Core
                 {
                     if(wallpaper is WebWebView2 player && player.HasNativeInput)
                     {
+                        if(!includeNative)continue;
                         var viewport=player.ReadNativeViewport();
                         if(viewport!=null)yield return new MouseForwardingSession.Target(viewport.Handle,viewport.X,viewport.Y);
                     }

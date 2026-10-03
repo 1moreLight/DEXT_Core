@@ -21,6 +21,10 @@ if (args.Length == 1 && args[0] == "--v3-input-request-join") { NativeInputReque
 
 if (args.Length == 1 && args[0] == "--v3-input-guardian-policy") { NativeInputGuardianPolicyChecks.Run(); return; }
 
+if (args.Length == 2 && args[0] == "--v3-pointer-wire") { await NativePointerWireProbe.Run(args[1]); return; }
+
+if (args.Length == 1 && args[0] == "--v3-pointer-delivery") { await NativePointerDeliveryChecks.Run(); return; }
+
 if (args.Length == 1 && args[0] == "--v3-input-messages") { NativeInputMessageChecks.Run(); return; }
 
 if (args.Length == 5 && args[0] == "--v3-frame-media-wire") { await NativeFrameMediaWireProbe.Run(args[1], args[2], args[3], args[4]); return; }

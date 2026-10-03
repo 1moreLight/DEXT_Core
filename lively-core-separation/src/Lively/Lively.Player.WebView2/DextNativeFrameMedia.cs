@@ -10,7 +10,7 @@ namespace Lively.Player.WebView2
 {
     // UI-thread owned. No author-supplied frame identifier can select a native
     // frame: only the fixed official document names direct children before mount.
-    internal sealed class DextNativeFrameMedia : IDisposable
+    internal sealed partial class DextNativeFrameMedia : IDisposable
     {
         private sealed class Frame
         {
@@ -20,6 +20,8 @@ namespace Lively.Player.WebView2
             public string Name, Nonce;
             public bool Invalid, Navigating, Retiring;
             public long Epoch, Sequence;
+            public string InputNonce;
+            public long InputGesture, InputDispatch;
             public Action Detach;
             public Frame Root => Parent?.Root ?? this;
         }
@@ -53,14 +55,17 @@ namespace Lively.Player.WebView2
             };
             EventHandler<CoreWebView2NavigationStartingEventArgs> navigating=(s,e)=>{
                 if(e.Cancel)return;
-                var nonce=frame.Nonce;frame.Epoch++;frame.Nonce=null;frame.Sequence=0;frame.Navigating=true;
+                var nonce=frame.Nonce;var inputNonce=frame.InputNonce;frame.Epoch++;frame.Nonce=null;frame.InputNonce=null;frame.InputGesture=0;frame.InputDispatch=0;frame.Sequence=0;frame.Navigating=true;
+                if(inputNonce!=null)Observe(RevokeOldInputAsync(frame,inputNonce));
                 if(nonce!=null)Observe(StopOldAsync(frame,nonce));
             };
             EventHandler<CoreWebView2DOMContentLoadedEventArgs> loaded=(s,e)=>Observe(LoadAsync(frame));
             EventHandler<CoreWebView2FrameCreatedEventArgs> child=(s,e)=>Track(e.Frame,frame);
             EventHandler<object> destroyed=(s,e)=>Remove(frame,false);
+            EventHandler<CoreWebView2WebMessageReceivedEventArgs> input=(s,e)=>ReceiveInput(frame,e.WebMessageAsJson);
+            native.WebMessageReceived+=input;
             native.NameChanged+=renamed;native.NavigationStarting+=navigating;native.DOMContentLoaded+=loaded;native.FrameCreated+=child;native.Destroyed+=destroyed;
-            frame.Detach=()=>{native.NameChanged-=renamed;native.NavigationStarting-=navigating;native.DOMContentLoaded-=loaded;native.FrameCreated-=child;native.Destroyed-=destroyed;};
+            frame.Detach=()=>{native.WebMessageReceived-=input;native.NameChanged-=renamed;native.NavigationStarting-=navigating;native.DOMContentLoaded-=loaded;native.FrameCreated-=child;native.Destroyed-=destroyed;};
         }
         private bool Alive(Frame frame,long epoch)
         {
@@ -83,9 +88,19 @@ namespace Lively.Player.WebView2
                 if(!Alive(frame,epoch))return;
                 var description=JObject.Parse(json);var nonce=(string)description["documentNonce"];
                 if(!Guid.TryParse(nonce,out _)||(bool?)description["active"]!=false||(long?)description["sequence"]!=0)throw new InvalidOperationException("Native frame policy unavailable");
+                // Only registered direct author documents receive input. Nested
+                // media documents still follow their root's playback policy.
+                if(frame.Parent==null){
+                    var inputJson=await Execute(frame,DextNativeInputGuardianPolicy.DescribeScript(secret));
+                    if(!Alive(frame,epoch))return;
+                    var input=JObject.Parse(inputJson);var inputNonce=(string)input["documentNonce"];
+                    if(!Guid.TryParseExact(inputNonce,"D",out _) || (bool?)input["armed"]!=false || (long?)input["gestureId"]!=0 ||
+                        (long?)input["structuralVersion"]!=0)throw new InvalidOperationException("Native frame input policy unavailable");
+                    frame.InputNonce=inputNonce;
+                }
                 frame.Nonce=nonce;await ApplyAsync(frame);
             }
-            catch(Exception){if(Alive(frame,epoch))Fail();}
+            catch(Exception error){if(Alive(frame,epoch))Fail("Frame load: "+error.GetType().Name+": "+error.Message);}
         }
         private async Task StopOldAsync(Frame frame,string nonce)
         {
@@ -133,21 +148,21 @@ namespace Lively.Player.WebView2
         {
             if(disposed||failed)return;var request=DextNativeFrameMediaPolicy.Parse(json,state);if(request==null)return;
             if(!desired.ContainsKey(request.FrameName)&&desired.Count>=196){Fail();return;}
-            if(desired.TryGetValue(request.FrameName,out var old)&&old.Consumer!=request.Consumer){Fail();return;}
+            if(desired.TryGetValue(request.FrameName,out var old)&&(old.Consumer!=request.Consumer || old.InstanceId!=null&&old.InstanceId!=request.InstanceId)){Fail();return;}
             desired[request.FrameName]=request;foreach(var frame in frames.Values.Where(f=>f.Parent==null&&f.Name==request.FrameName))frame.Retiring=false;await RefreshAsync();
         }
         // Cached Core changes while the renderer is suspended cannot execute JS.
         // The pause barrier already stopped every live document; new ones default paused.
         public Task RefreshAsync()=>suspended?Task.CompletedTask:ApplyAllAsync();
         private Task ApplyAllAsync()=>Task.WhenAll(frames.Values.ToArray().Select(ApplyAsync));
-        public Task SetSuspendedAsync(bool value){suspended=value;return ApplyAllAsync();}
-        public Task ResetAsync(){desired.Clear();foreach(var frame in frames.Values)frame.Retiring=true;return RefreshAsync();}
+        public async Task SetSuspendedAsync(bool value){suspended=value;if(value)await RevokeInputAsync();await ApplyAllAsync();}
+        public async Task ResetAsync(){await RevokeInputAsync();desired.Clear();foreach(var frame in frames.Values)frame.Retiring=true;await RefreshAsync();}
         private async void Observe(Task operation){try{await operation;}catch(Exception){Fail();}}
         private void Remove(Frame frame,bool detach=true)
         {
             if(!frames.TryGetValue(frame.Id,out var current)||!ReferenceEquals(current,frame))return;
             foreach(var child in frames.Values.Where(f=>f.Parent==frame).ToArray())Remove(child,detach);
-            frames.Remove(frame.Id);frame.Epoch++;frame.Nonce=null;
+            frames.Remove(frame.Id);frame.Epoch++;frame.Nonce=null;frame.InputNonce=null;frame.InputGesture=0;
             // A Destroyed callback is already inside native frame teardown. Do not
             // reenter the dying frame to remove handlers (WebView native crash).
             if(detach)try{frame.Detach?.Invoke();}catch(Exception){}
@@ -156,7 +171,7 @@ namespace Lively.Player.WebView2
         private void Fail(string reason="Native frame policy unavailable"){if(disposed||failed)return;failed=true;failure(reason);}
         public void Dispose()
         {
-            if(disposed)return;disposed=true;core.FrameCreated-=Created;
+            if(disposed)return;disposed=true;currentInput=null;inputOperation++;core.FrameCreated-=Created;
             foreach(var frame in frames.Values.ToArray())Remove(frame);desired.Clear();
         }
     }

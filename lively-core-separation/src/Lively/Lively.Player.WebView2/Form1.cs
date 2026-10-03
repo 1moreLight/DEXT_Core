@@ -238,6 +238,7 @@ namespace Lively.Player.WebView2
                     }));
                 });
                 await nativeFrameMedia.InitializeAsync();
+                InitializeNativePointer();
             }
             // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
             webView.CoreWebView2.WebMessageReceived += async (s, e) =>
@@ -996,8 +997,17 @@ namespace Lively.Player.WebView2
                         // Reject malformed payloads before they cross into the page.
                     }
                     break;
+                case MessageType.cmd_room_native_pointer:
+                    if(nativePointerDelivery!=null&&nativeNetworkReady&&!runtimeDeliverySuspended)
+                        nativePointerDelivery.Submit((LivelyMessageRoomNativePointer)obj);
+                    break;
                 case MessageType.cmd_room_native_response:
                     var nativeReply = (LivelyMessageRoomNativeResponse)obj;
+                    if(nativePointerDelivery!=null&&nativeReply.PayloadJson!=null){
+                        var privatePayload=JObject.Parse(nativeReply.PayloadJson);
+                        if((string)privatePayload["type"]=="dext:v3-native-event"&&(string)privatePayload["kind"]=="activate")
+                            await nativePointerDelivery.WhenIdle();
+                    }
                     if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || nativeReply.Method == "layoutRead") &&
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
                         nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= 1024*1024 &&
@@ -1015,6 +1025,7 @@ namespace Lively.Player.WebView2
                             nativeResources.Revoke();
                             roomRuntime.Invalidate("invalidated");
                         }
+                        if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
                         PostRuntimeLastMessage();
                     }
@@ -1023,6 +1034,7 @@ namespace Lively.Player.WebView2
                     if (startArgs.DextTrustedHost && roomRuntime.Revoke((LivelyMessageRoomRuntimeRevoke)obj))
                     {
                         nativeResources?.Revoke();
+                        if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
                         PostRuntimeLastMessage();
                     }
@@ -1031,6 +1043,7 @@ namespace Lively.Player.WebView2
                     if (startArgs.DextTrustedHost && roomRuntime.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)obj))
                     {
                         if (!((LivelyMessageRoomSessionSnapshot)obj).IsActive) nativeResources?.Revoke();
+                        if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.RefreshAsync();
                         PostRuntimeLastMessage();
                     }
@@ -1140,6 +1153,7 @@ namespace Lively.Player.WebView2
             {
                 if (nativeResources != null) await ResumeNativeView();
                 if (!isPaused || revision != playbackRevision) return;
+                if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                 if (nativeFrameMedia != null) await nativeFrameMedia.SetSuspendedAsync(true);
                 if (!isPaused || revision != playbackRevision) return;
                 await NotifyNativePlayback(true, revision);

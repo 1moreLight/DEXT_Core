@@ -262,3 +262,18 @@ Core当前RawInput适配已调用的MouseDown/Key流程，现改为在可操作�
 完整gesture-down-core-build四阶段通过；常规start Core73828/Player123844/Watchdog113464/config24756，日志20261004_010606.txt。identity Core/Player/Watchdog及产品/mutex/pipe/data/log OK，所属D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher33543 exit0、原四文件hash/缺失保持，Dext进程0、1420/1421/1621监听0。首次启动调用自动审批超时在CreateProcess前拒绝，原参数单次重试后成功。
 
 下一段传送冻结gesture到Player，在同UI操作内arm和真实Win32转发，再贯通nativeframe witness/SDK requestId及移动DOWN/UP样本。当前SDK/nativeframe尚未使用本关联，author inputSequence=0路径仍在，不能宣称整条作者异步借用已修好；source动作继续，拖动按用户暂缓。最终集中人工仍为卡第4项鼠标/Enter/Space、长按超时/AltTab取消，第5项移动/遮挡/多图标/DPI；完整16项就绪1/16=6.25%（約6%）、七项人工与单次P5审查不提前打勾，不合并master。
+
+## P5 Player原生鼠标与作者请求接线计划（2026-10-04，BASE 47319c9）
+一句话目标：Core冻结的DOWN序号经私有IPC进入Player，先对实际直接作者frame arm，再在同UI串行操作转发Win32 DOWN/UP；原始SDK请求与该frame见证汇合后只用同一正数证明执行动作。
+范围：私有指针包、原生UI有界队列（连续move合并）、实际窗口/视口核验、frame/document注册与生命周期撤销、完整requestId/method/params保留、两路汇合与释放后派发，静止作者鼠标入口先贯通。不会把旧Win32与独立arm通道当作有序，也不允许用零序号找最近完成。官方键盘默认动作保留；作者Enter/Space的真实派发、移动视觉样本及source级动作随后接续，全部原要求保留，拖动暂缓。
+先针对队列顺序/释放/期限与SDK原始请求/正式宿主路由写本地行为RED，再实现Core/Player/SDK，实际ReleasePlayer自己的窗口验证trusted鼠标回调及一次原生请求，Core回复夹具与实际Core物理证据分开。只做必要本地功能回归，网络安全专项不扩展。改C#后完整build→start/身份/正常退出，原四文件保持、Dext退出、具名提交。
+人工步骤沿最终卡第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消、异步请求拒绝，第5项移动/遮挡/多入口/DPI；完整全包集中验收，不新增中途验收。当前完整16项就绪1/16≈6%，P5继续开发，不合并master。
+
+## P5 Player原生鼠标串行转发基础验证（2026-10-04）
+Core真实DOWN冻结字段经私有stdin DTO进入Player同UI有界队列，实际直接root文档先arm再Win32 DOWN，后续UP排队；MOVE合并、取消先撤销后释放且使用最新物理点。真实行为RED2/9→9/9与取消坐标RED9/10→10/10；strict input69/69、Core动作254/254、生产JS229/229。pointer-native-wire-final实际ReleasePlayer自己的HWND收到trusted DOWN/UP并同步进入原生request hook，长按超时撤销后UP拒绝请求。该Core包仍fixture，不代表实际Core完成动作。
+
+pointer-frame-media-wire-final实际根/闭合shadow/嵌套媒体与WebAudio暂停恢复、最新修订和撤销回归通过。首轮新增输入描述误用于嵌套媒体文档导致null并正常关闭Player；改为仅直接作者root建立输入文档，既有媒体子文档只跟随root播放，未赋予子文档输入（ERRORS #209）。失败历史保留。
+
+pointer-core-build-final完整四阶段成功；常规start Core76880/Player79976/Watchdog53304/config31928，日志20261004_022256.txt；Core/插件/pipe/mutex/data/log正常，共享配置器OTHER/exit1且路径独立核对。精确正常关闭、watcher90633 exit0、原四文件hash/缺失不变、Dext进程/开发监听0。
+
+本段尚未接SDK requestId与native witness汇合，也未替换author零序号动作；真实作者键盘、移动DOWN/UP取样与source动作继续。人工仍按最终第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消/异步请求拒绝，第5项移动/遮挡/多入口/DPI集中执行；拖动暂缓、网络专项不扩展、整体就绪1/16≈6%，不新增中途验收、不合并master。

@@ -33,7 +33,7 @@
         onInput:value=>host?.handleNativeInput(value),onPermissionChanged:consumer=>host?.refreshPermissions(consumer)});
       host=DextDomHost.createDomHost({context,initialSnapshot:snapshot,document,container,native,getViewport:viewport,sendControl,initialPlaybackSuspended:paused,
         applyFrameState:(frame,value)=>sendControl({type:'dext:v3-frame-policy',protocolVersion:1,runtimeGeneration:value.identity.runtimeGeneration,
-          sessionId:value.identity.sessionId,revision:value.identity.revision,frameName:frame.name,consumer:value.consumerId,active:value.state==='active'})});
+          sessionId:value.identity.sessionId,revision:value.identity.revision,frameName:frame.name,consumer:value.consumerId,instanceId:value.instanceId,active:value.state==='active'})});
       host.ready.catch(()=>{lastError={code:'renderUnavailable'};});
     }catch(_){native?.dispose();lastError={code:'renderUnavailable'};}
   }

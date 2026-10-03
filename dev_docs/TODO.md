@@ -1409,3 +1409,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Core真实DOWN正数关联：stub行为RED238/254（16失败）后254/254；真实视口/OS点/DPI/键/时间与scope冻结，UP原序号，空区域不授予动作、重复不续期、容差/结构/窗口/跨键鼠取消和1500ms半开期限。当前RawInput适配自然进入新Core类，Player/SDK关联仍待接线。
 - [x] 本阶段完整build→常规start/身份→正常退出：Core73828/Player123844/Watchdog113464/config24756、日志20261004_010606.txt；共享配置器OTHER/exit1且路径独立核对。原四文件hash/缺失不变、watcher33543 exit0，DextProcesses/1420/1421/1621监听均0。
 - [ ] 下一段本地功能：私有gesture消息和Player同UI arm/Win32输入转发，实际nativeframe witness与原始SDK请求汇合；随后移动按下/松开视觉样本。真实Core输入补证仍待凭据窗解除；网络测试不扩展，桌面拖动暂缓，全16项就绪1/16≈6%。
+
+## P5 Player原生鼠标与作者请求接线计划（2026-10-04，BASE 47319c9）
+一句话目标：Core冻结的DOWN序号经私有IPC进入Player，先对实际直接作者frame arm，再在同UI串行操作转发Win32 DOWN/UP；原始SDK请求与该frame见证汇合后只用同一正数证明执行动作。
+范围：私有指针包、原生UI有界队列（连续move合并）、实际窗口/视口核验、frame/document注册与生命周期撤销、完整requestId/method/params保留、两路汇合与释放后派发，静止作者鼠标入口先贯通。不会把旧Win32与独立arm通道当作有序，也不允许用零序号找最近完成。官方键盘默认动作保留；作者Enter/Space的真实派发、移动视觉样本及source级动作随后接续，全部原要求保留，拖动暂缓。
+先针对队列顺序/释放/期限与SDK原始请求/正式宿主路由写本地行为RED，再实现Core/Player/SDK，实际ReleasePlayer自己的窗口验证trusted鼠标回调及一次原生请求，Core回复夹具与实际Core物理证据分开。只做必要本地功能回归，网络安全专项不扩展。改C#后完整build→start/身份/正常退出，原四文件保持、Dext退出、具名提交。
+人工步骤沿最终卡第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消、异步请求拒绝，第5项移动/遮挡/多入口/DPI；完整全包集中验收，不新增中途验收。当前完整16项就绪1/16≈6%，P5继续开发，不合并master。
+
+- [x] Player原生鼠标队列与实际frame arm：私有Core指针DTO沿冻结DOWN scope/序号/HWND/viewport/DPI/QPC进入同UI有界队列；DOWN等待实际直接作者文档arm完成，连续MOVE合并，UP不越过DOWN，取消先revoke再释放原生按住。队列真实RED2/9→9/9；取消最新点回归RED9/10→10/10，严格消息69/69、Core动作254/254、生产JS229/229。
+- [x] 实际ReleasePlayer本地鼠标：pointer-native-wire-final收到trusted DOWN/UP并同步进入私有request hook；长按超时先撤销再UP。Core指针包为夹具，没有推定实际Core动作已通过。实际媒体回归发现嵌套媒体文档不需要输入guardian描述，修为仅直接作者root描述/注册后pointer-frame-media-wire-final通过，音视频/WebAudio原生暂停恢复/最新修订/撤销保持（ERRORS #209）。
+- [x] 完整pointer-core-build-final四阶段通过；常规start Core76880/Player79976/Watchdog53304/config31928，日志20261004_022256.txt；identity共享配置器OTHER/exit1且精确绝对路径独立核对。正常关闭、watcher90633 exit0，原四文件hash/缺失不变，Dext进程与1420/1421/1621监听0。
+- [ ] 当前仍待SDK原始requestId/private witness两路汇合及正数动作派发，生产author零序号路径未替换；作者真实键盘、移动即时样本/source动作随后接续。无新增网络专项，拖动暂缓，整体16项就绪仍1/16≈6%，最终集中验收保持。

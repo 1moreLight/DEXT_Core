@@ -74,6 +74,8 @@
     <Compile Include="Extensions\WebView2\CoreWebView2Extensions.cs" />
     <Compile Include="Extensions\WebView2\DevToolsExtensions.cs" />
     <Compile Include="DextNativeFrameMedia.cs" />
+    <Compile Include="DextNativeFrameMedia.Input.cs" />
+    <Compile Include="Form1.NativeInput.cs" />
     <Compile Include="Form1.NativePause.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
