@@ -215,3 +215,8 @@ Core原生确认窗使用固定Dext标题和退出说明、默认“否”；UI�
 暂停保留同一WebView、SDK文档和模型实例。原生Player在媒体屏障后只CapturePreview本WebView到内存Bitmap，由原生静帧展示保证GIF画面不动，隐藏WebView满足TrySuspendAsync前提；挂起为best effort，不把返回false当成动画已停。捕获/挂起各三秒有界，当前playbackRevision失败关闭本Player；旧意图不关闭新意图。恢复先Resume、最新Core快照/上下文、当前消费者媒体策略，最后显示原WebView并释放Bitmap。没有作者截图入口或磁盘图像。
 Core私有Retire仅撤销易失会话/连接/订阅，保留已提交Desk checkpoint及个人KV。意外退出的已加载原生Player，经窗口加载锁后复核仍为当前失败对象、非主动关闭、非Core退出，复用正常安装校验/工厂/WorkerW启动；三十秒最多三次，失败不保存空布局。新PID/新session重新授权并Restore，旧完成/超时/输入不能复活。主动CloseAll与普通/产品退出不自动重生，闲置父窗还原失败使用故障终止路径。
 实际Core四媒体各经过预暂停start、恢复、同安装Core重启、两次idle/暂停/恢复及OS鼠标wake/Core stop；图像/视频/HTML保持实例，视频与AudioContext时钟排除暂停时间。GIF owned Player中心像素在播放/暂停/恢复分别变化/固定/变化。独立Player Kill后的同Core重建恢复focus/stamp/KV；主动关闭不重生。证据见验收卡与V3_DELIVERY。实际锁屏/物理DPI、故障还原、个人布局和精确输入继续，最终七项不据此打勾。
+
+## Task4个人布局Core与私有IPC基础（2026-10-03）
+个人快照layout由独立revision、icons[deskId][iconId]={x,y}、components[componentId]={x,y,width,height}组成，1920×1080设计坐标。Core只投影当前安装仍认识的Desk/图标及role=widget组件；不返回KV、授权或其他副本。旧format1缺字段初始化为空，显式null/损坏拒绝且保留原文件。另存不复制layout。
+固定官方顶层新增私有layoutRead（身份字段，无consumer）与layoutSave（额外layoutRevision、change），change只允许icon/当前deskId/id/x/y，或widget/id/x/y/width/height。所有数值有限且有界，不接受作者票据、目标路径、Dock/scene或未知字段。Core写入限制当前可操作DesktopPlayer桌面、实际前台、无暂停/锁屏/转场；独立layout CAS与个人快照全局revision共同原子发布，未改变无需写盘，发布失败保留两revision及原字节。
+layoutRead可读取当前暂停/starting的安全投影；Player允许该Core私有metadata响应排队，原生JS真正暂停时不会执行新的请求，恢复后才处理。其余暂停native回复继续拒绝。此基础尚未应用到DOM；长按编辑/拖动、占用避让、有效按钮几何、临时等比缩小与实际Core保存重启仍继续，不代填最终人工验收。

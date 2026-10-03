@@ -257,3 +257,6 @@
 | #196 | Player退出只解绑而不退役会话会覆盖已提交Desk；主动关闭与故障恢复须分开 | [backend](errors/backend.md) |
 
 | #197 | GIF状态暂停并非画面冻结；原生WebView暂停需要可见性与展示完成屏障 | [renderer](errors/renderer.md) |
+
+| #198 | WinForms隐藏不等于原生controller隐藏，暂停可报ERROR_INVALID_STATE | [renderer](errors/renderer.md) |
+| #199 | 布局与暂停探针必须核对真实接口、活动消息与附着后的DPI | [toolchain](errors/toolchain.md) |

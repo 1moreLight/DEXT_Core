@@ -608,3 +608,8 @@ WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。�
 - 第一次修复重测仍过早：私有JS paused receipt早于异步静帧完成，立即采样可能跨越准备期。探针须等待本Player实际可见的原生静帧窗口；task4-lifecycle-gif-barrier完整通过，播放/暂停/恢复10次OS中心像素分别变化/单色/变化，同文档/实例。此为Windows采样自动证明，实际锁屏/多DPI/用户视觉门槛仍最终集中验收。
 - 新Player文件使用显式Compile列表与C#8；忘加文件/使用文件范围namespace的两次编译错误分别纠正，不把它们计生产RED。不要更改产品语言版本来迎合新文件语法。
 - WebView官方IsVisible=false要求与best-effort说明：[TrySuspendAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)。[HTML Canvas规范](https://html.spec.whatwg.org/multipage/canvas.html)的drawImage针对animated img仅取默认/首帧，不能拿它伪造“当前GIF帧”的冻结；使用本WebView的CapturePreview。
+
+## #198 暂停必须核对原生controller的可见状态（2026-10-03）
+实际ReleasePlayer接线回归中，managed control=False/controller=True，TrySuspendAsync报COM 0x8007139F并走当前暂停失败关闭。SDK包装提示“disposed”不能据此认定控件真的被销毁；原生错误与本次布尔诊断符合ERROR_INVALID_STATE/IsVisible要求。外部父窗和样式操作是否造成初始不一致仍是推断。
+复用当前固定WinForms SDK初始化RasterizationScale已使用的controller字段，在静帧可见并隐藏managed控件后明确controller.IsVisible=false且复核，再有界TrySuspend；恢复按当前revision同步两者可见后释放静帧。保留串行门、三秒界限、迟到拒绝和失败关闭自己的Player，不放宽生产暂停策略。新增私有IPC日志只报告原生渲染完成，不含截图或个人布局。
+官方约束：[TrySuspendAsync](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)；同错误的厂商追踪：[WebView2Feedback #2398](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2398)。

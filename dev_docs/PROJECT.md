@@ -55,6 +55,8 @@ RequestInit → Headers → Payload → StreamEnd → Trailers，一次调用一
 
 ## 决策记录
 
+- **2026-10-03｜V3个人桌面布局由Core持有**：每个Room副本的个人快照增加独立layoutRevision；图标按Desk/icon稳定ID保存位置，Widget按component稳定ID保存矩形，基准1920×1080。只有当前DesktopPlayer私有接线能读取投影和提交一个闭合变更，写入重查当前安装/会话/修订、桌面活动/前台、无暂停锁屏转场及布局CAS。作者SDK/iframe没有布局入口；不存在的旧ID保留磁盘原值但不投影。视口缩放、占用避让和临时缩小由视图计算，禁止写成个人保存位置。另存按既定规则只复制按钮/皮肤，不复制布局、KV、授权；作品及安装快照保持只读。
+
 - **2026-09-30｜V3-CORE-005 先接真实会话，再冻结 P3 作品格式**：现有 `room.json` v2 继续承担官方页面视觉数据；同目录的临时 `session.v3.json` 只承载版本、已安装 Room ID、Desk ID 与起始 Desk，用于本地验证 Core 授权和真实 Player 通道。配置器应用时先校验两者一致，再镜像到运行包；普通 v2 Room 应用会撤销旧会话清单。Core 以清单内容和规范化安装路径形成身份戳，绑定自己启动的 Player PID；正式 v3 作者 Schema、签名与分享格式仍由 P3 设计，不把此测试覆盖层冒充最终契约。
 
 - **2026-09-22｜DESK-PREFS-001 输入修复边界**：用户授权比较 master 后自主决定修复或重写。审查确认生产仍是单套旧直接拖动，分支大部分增量为实验/测试/偏好；保留这些功能，只将 Core 按下→移动→释放转发收口到 `MouseForwardingSession`。状态和起始接收 HWND/坐标原点由会话统一持有；不靠 Renderer 忽略取消来容忍错误输入。增加原生 Win32 和生产 Release WebView2 回归；最终 WorkerW 体验仍以人工验收为准。

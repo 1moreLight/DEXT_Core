@@ -34,6 +34,11 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"lifecycleRevision"}).ToArray()) || !Integer(o["lifecycleRevision"],1) ||
                             !state.CanFinishStartup(request.RuntimeGeneration,request.SessionId,request.Revision,(long)o["lifecycleRevision"]))return null;
                         request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
+                    case "layoutRead": return Shape(o,IdentityFields)?request:null;
+                    case "layoutSave":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"layoutRevision","change"}).ToArray()) || !Integer(o["layoutRevision"],0) ||
+                            !(o["change"] is JObject change) || !ParseLayoutChange(change,out var item))return null;
+                        request.LayoutRevision=(long)o["layoutRevision"];request.LayoutChange=item;return request;
                     case "invalidateGeometry": return Shape(o,IdentityFields)?request:null;
                     case "activate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion","inputSequence"}).ToArray()) ||
@@ -95,6 +100,19 @@ namespace Lively.Common.Helpers
                 }
             }
             catch(Exception e)when(e is JsonException || e is ArgumentException || e is InvalidCastException || e is FormatException || e is OverflowException){return null;}
+        }
+        private static bool ParseLayoutChange(JObject item,out LivelyRoomNativeLayoutChange result)
+        {
+            result=null;var kind=Text(item["kind"]);var id=Text(item["id"]);
+            if(!StableKey(id) || !Number(item["x"],out var x)||!Number(item["y"],out var y)||x<0||y<0)return false;
+            if(kind=="icon")
+            {
+                if(!Shape(item,"kind","id","deskId","x","y")||!StableKey(Text(item["deskId"]))||x>1824||y>976)return false;
+                result=new LivelyRoomNativeLayoutChange{Kind=kind,Id=id,DeskId=Text(item["deskId"]),X=x,Y=y};return true;
+            }
+            if(kind!="widget" || !Shape(item,"kind","id","x","y","width","height") || !Number(item["width"],out var w)||!Number(item["height"],out var h)||
+                w<=0||h<=0||x+w>1920||y+h>1080)return false;
+            result=new LivelyRoomNativeLayoutChange{Kind=kind,Id=id,X=x,Y=y,Width=w,Height=h};return true;
         }
         private static bool StableKey(string value)=>Id(value,80)&&value.All(c=>c>='a'&&c<='z'||c>='A'&&c<='Z'||c>='0'&&c<='9'||c=='_'||c=='.'||c=='-');
         private static bool StorageJson(JToken value)=>value!=null && Encoding.UTF8.GetByteCount(value.ToString(Formatting.None))<=32768 && StorageShape(value,0);

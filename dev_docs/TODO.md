@@ -1349,3 +1349,16 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 接续Task4个人布局：先私有Core个人覆盖模型与原子保存，固定官方宿主get/save、编辑拖动/占用非法落点回原位、视口临时移位缩小不写盘；之后移动/精确命中/遮挡/多图标/受控焦点。动代码前补当前分支计划与独立验收卡；最终一次整体P5审查、七项集中人工/十六项范围不减，开发就绪1/16，不中途合并。
 
 - 2026-10-03 Task4常规启动复核：Core121280/Player68580/Watchdog114424/config99916，日志20261003_192301.txt；原v2会话inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际绝对路径已独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher95129结束exit0，原四文件SHA256/缺失状态保持；最终DextProcesses/DevListeners/NativeFixtureDirectories均0，保持Dext退出。
+
+## Task4个人布局原子保存与官方接线计划（BASE58cd855，2026-10-03）
+一句目标：Core按Room副本持有普通图标/共享Widget的位置覆盖，官方桌面保存后重启读回；非法落点或保存失败回原位，缩屏产生的临时布局不写盘。
+范围：独立layoutRevision与图标Desk/icon稳定ID、全局widget component ID，固定1920×1080坐标；仅当前安装/DesktopPlayer/session/revision私有read/save，写入限当前可操作desktop且无转场；只读布局可在暂停/starting保留，不返回其他个人数据，不加入iframe/SDK作者能力。Dock/scene/作者固定按钮不走桌面拖动；另存继续只复制按钮/皮肤，不复制布局/KV/授权。占用由视图当前有效报告计算。
+先生产行为RED：重开/独立revision、不认识ID/非widget/非法坐标/旧revision/旧连接及暂停锁屏转场拒绝、阻塞发布保留旧字节；随后严格Player/native-host和私有Core接线，再DOM长按编辑/拖动、占用回滚及响应式临时调整、实际Core保存重启/故障恢复。每小段更新TODO并具名commit，保持Dext退出，最终一次整体P5审查后集中人工验收。
+人工步骤沿独立验收卡第5/6项：长按普通图标/Widget进入桌面编辑并拖动，落占用区回原位；有效落点保存、重启恢复；缩屏临时移位再缩小，恢复尺寸回保存位置；作品/安装摘要不变，故障保存回原位，物理DPI和旧命中继续专项。此计划不代填任何人工通过，完整16项/就绪1/16、七项最终门槛保持。
+
+- [x] Task4个人布局Core/schema/私有接线：新layout字段读取真实RED（185/186），补Core布局及独立revision后通过；身份/数值/当前Desk与Widget限定/CAS/只读脱离/并发单胜者/写故障保留两revision/旧连接与角色及paused/locked/starting/transition门槛，首轮200/200。严格Player新方法36/38实际RED，JS私有入口3项实际RED，再接只读布局+闭合单item保存后38/38与native-host23/23。私有read在暂停可读取安全布局，save/作者数据/动作仍拒绝；未向frame/SDK增加能力。已补桥关闭/旧格式兼容与实际Player wire验证，继续构建/真实链条。
+- [ ] 个人布局尚未接DOM，当前不能宣称拖动/占用/响应式/实际Core重启保存通过。下一段官方DOM长按编辑/拖动回滚及视口临时布局，作者geometry使用有效Widget位置和实际同实例，不写room.json或安装快照。当前最终七项和16项/就绪1/16保持。
+
+- [ ] Task4官方视图纯布局计算计划（2026-10-03）：独立layout-model.js将Core保存值与当前CSS视口有效值分开；图标及role=widget稳定ID投影、全局/当前Desk占用过滤，先保留合法原尺寸位置，再移动冲突项，实在放不下才等比缩小。纯函数不发保存、不断言人工完成；拖动候选按同一占用/其他对象规则判断，局部按钮矩形按逻辑尺寸映射有效位置。先几何/不可变/恢复尺寸行为RED→GREEN，再接DOM，保持作者iframe逻辑尺寸及同实例。
+- [x] 个人布局Core/私有IPC基础最终验证：202/202、38/38、JS/SDK/媒体策略146/146，完整build成功；layout-private-wire-green实际ReleasePlayer接线（Core回包fixture）与layout-native-pause-gif-verified真实Core GIF整轮通过。原生controller显式可见性修复、活动回执和附着后DPI测试门槛见ERRORS #198/#199。
+- [x] 本阶段常规build后start：Core110068/Player31972/Watchdog24180/config109340，20261003_205127.txt；原v2 active=False。所属共享配置器路径独立核对，identity OTHER未冒称全脚本OK。正常精确PID/path关闭、watcher81581 exit0、原四文件hash/缺失状态保持，OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。DOM保存与占用/缩屏/实际布局重启仍待接入。

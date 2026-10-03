@@ -24,13 +24,27 @@
   }
   const stableKey=v=>typeof v==='string'&&/^[A-Za-z0-9_.-]{1,80}$/.test(v);
   function storageValue(v){try{copy(v,32768);return true;}catch(_){return false;}}
+  function layoutChange(p){
+    if(!object(p)||!stableKey(p.id))return false;
+    return p.kind==='icon'?shape(p,['kind','id','deskId','x','y'])&&stableKey(p.deskId)&&finite(p.x,0,1824)&&finite(p.y,0,976):
+      p.kind==='widget'&&shape(p,['kind','id','x','y','width','height'])&&finite(p.x,0,1920)&&finite(p.y,0,1080)&&finite(p.width,Number.EPSILON,1920)&&finite(p.height,Number.EPSILON,1080)&&p.x+p.width<=1920&&p.y+p.height<=1080;
+  }
+  function layoutValid(p){
+    if(!shape(p,['revision','icons','components'])||!integer(p.revision,0)||!object(p.icons)||!object(p.components)||Object.keys(p.icons).length>64||Object.keys(p.components).length>128)return false;
+    let count=0;for(const [desk,icons]of Object.entries(p.icons)){
+      if(!stableKey(desk)||!object(icons)||Object.keys(icons).length>1024)return false;
+      for(const [id,position]of Object.entries(icons))if(++count>4096||!stableKey(id)||!shape(position,['x','y'])||!finite(position.x,0,1824)||!finite(position.y,0,976))return false;
+    }
+    return Object.entries(p.components).every(([id,r])=>stableKey(id)&&shape(r,['x','y','width','height'])&&finite(r.x,0,1920)&&finite(r.y,0,1080)&&finite(r.width,Number.EPSILON,1920)&&finite(r.height,Number.EPSILON,1080)&&r.x+r.width<=1920&&r.y+r.height<=1080);
+  }
   function paramsValid(method,p){
     switch(method){
       case'capabilities':case'buttons':return shape(p,['consumer'])&&id(p.consumer);
       case'data':return shape(p,['consumer','capability'])&&id(p.consumer)&&DATA.has(p.capability);
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
-      case'invalidateGeometry':return shape(p,[]);
+      case'invalidateGeometry':case'layoutRead':return shape(p,[]);
+      case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
       case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
@@ -55,7 +69,7 @@
     function dispatch(method,params,scope=identity){
       let entry;
       const promise=new Promise((resolve,reject)=>{
-        if(disposed){reject(failure('disposed'));return;}if(suspended){reject(failure('notOperable'));return;}
+        if(disposed){reject(failure('disposed'));return;}if(suspended&&method!=='layoutRead'){reject(failure('notOperable'));return;}
         if(!scopeValid(scope)||!same(scope,identity)){reject(failure('staleInput'));return;}
         if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
         const requestId='n'+(++counter);entry={requestId,method,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
@@ -84,6 +98,7 @@
       const action=['activate','navigate','mediaControl','audioControl'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
       if(['activate','navigate','mediaControl','audioControl'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
+      if(['layoutRead','layoutSave'].includes(entry.method)&&reply.status==='accepted'&&!layoutValid(reply.layout)){finish(entry,false,'invalidPayload');return;}
       finish(entry,true,reply);
     }
     transport.addEventListener('message',receive);

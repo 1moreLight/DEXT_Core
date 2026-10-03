@@ -46,6 +46,22 @@ Check("reopening private data preserves target, binding and skin", () =>
     Equal("glass", saved.Rooms[Room].Buttons["open"].Skin, "skin");
     Equal(1L, saved.Revision, "committed revision");
 });
+Check("personal layout survives reopening without exposing other Room data", () =>
+{
+    using var f=new Fixture();var store=new RoomPersonalStore(f.Path);Seed(store);
+    var path=Path.Combine(f.Path,"personal.json");
+    var json=System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!;
+    json["rooms"]![Room]!["layout"]=System.Text.Json.Nodes.JsonNode.Parse("""
+        {"revision":4,"icons":{"home":{"icon-1":{"x":240,"y":360}}},"components":{"widget":{"x":500,"y":200,"width":300,"height":180}}}
+        """);
+    File.WriteAllText(path,json.ToJsonString());
+    var saved=new RoomPersonalStore(f.Path).Read();
+    using var projection=JsonDocument.Parse(JsonSerializer.Serialize(saved.Rooms[Room],new JsonSerializerOptions{PropertyNamingPolicy=JsonNamingPolicy.CamelCase}));
+    var layout=projection.RootElement.GetProperty("layout");
+    Equal(4L,layout.GetProperty("revision").GetInt64(),"independent layout revision");
+    Equal(240d,layout.GetProperty("icons").GetProperty("home").GetProperty("icon-1").GetProperty("x").GetDouble(),"saved icon position");
+    Equal(1L,saved.Revision,"layout read does not increment personal revision");
+});
 Check("detached reads cannot accidentally persist edits", () =>
 {
     using var f = new Fixture(); var store = new RoomPersonalStore(f.Path); Seed(store);

@@ -140,3 +140,24 @@ test('pause replacement and disposal cancel outstanding controls',async()=>{
    assert.equal(await p,mode==='pause'?'notOperable':mode==='dispose'?'disposed':'staleInput');f.host.dispose();
  }
 });
+
+test('official layout read/save use current identity independent revision and closed coordinates',async()=>{
+ const f=fixture(),layout={revision:0,icons:{},components:{}};
+ const read=f.host.request('layoutRead',{}).catch(e=>e.code);assert.equal(f.sent.length,1);f.answer(f.sent[0],{layout});assert.deepEqual((await read).layout,layout);
+ const save=f.host.request('layoutSave',{layoutRevision:0,change:{kind:'icon',id:'icon-1',deskId:'home',x:240,y:360}}).catch(e=>e.code);
+ assert.equal(f.sent[1].layoutRevision,0);assert.equal(f.sent[1].change.x,240);f.answer(f.sent[1],{layout:{...layout,revision:1}});assert.equal((await save).layout.revision,1);
+ for(const change of [{kind:'icon',id:'i',deskId:'home',x:1825,y:0},{kind:'widget',id:'w',x:0,y:0,width:0,height:100},{kind:'dock',id:'w',x:0,y:0,width:100,height:100}]){
+  await assert.rejects(f.host.request('layoutSave',{layoutRevision:1,change}),e=>e.code==='invalidArgument');
+ }
+ await assert.rejects(f.host.request('layoutRead',{consumer:'scene'}),e=>e.code==='invalidArgument');f.host.dispose();
+});
+test('private layout read alone may run during pause; save and author data remain stopped',async()=>{
+ const f=fixture();f.host.setSuspended(true);const read=f.host.request('layoutRead',{}).catch(e=>e.code);assert.equal(f.sent.length,1);
+ f.answer(f.sent[0],{layout:{revision:3,icons:{},components:{}}});assert.equal((await read).layout.revision,3);
+ for(const [method,params]of [['layoutSave',{layoutRevision:3,change:{kind:'icon',id:'i',deskId:'home',x:0,y:0}}],['data',{consumer:'scene',capability:'time.read'}]])
+  await assert.rejects(f.host.request(method,params),e=>e.code==='notOperable');f.host.dispose();
+});
+test('layout reply rejects unknown fields invalid coordinates and stale identity',async()=>{
+ const f=fixture();const result=f.host.request('layoutRead',{}).catch(e=>e.code);assert.equal(f.sent.length,1);
+ f.answer(f.sent[0],{layout:{revision:1,icons:{},components:{},targets:{}}});assert.equal(await result,'invalidPayload');f.host.dispose();
+});

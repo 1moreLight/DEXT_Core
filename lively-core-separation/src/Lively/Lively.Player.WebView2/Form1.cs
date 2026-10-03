@@ -288,11 +288,11 @@ namespace Lively.Player.WebView2
                     }
                     else if ((string)o.type == "dext:v3-native-request")
                     {
-                        if (nativeResources != null && nativeNetworkReady && !runtimeDeliverySuspended &&
+                        if (nativeResources != null && nativeNetworkReady &&
                             NativeMethods.GetClientRect(webView.Handle, out var client))
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
-                            if (request != null) SendToParent(request);
+                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")) SendToParent(request);
                         }
                     }
                     else if ((string)o.type == "dext:v3-request-desk")
@@ -998,7 +998,7 @@ namespace Lively.Player.WebView2
                     break;
                 case MessageType.cmd_room_native_response:
                     var nativeReply = (LivelyMessageRoomNativeResponse)obj;
-                    if (nativeResources != null && nativeNetworkReady && !runtimeDeliverySuspended &&
+                    if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || nativeReply.Method == "layoutRead") &&
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
                         nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= 1024*1024 &&
                         IsOfficialDextDocument(webView.CoreWebView2.Source))

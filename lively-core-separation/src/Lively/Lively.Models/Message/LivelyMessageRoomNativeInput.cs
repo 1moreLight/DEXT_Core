@@ -16,6 +16,16 @@ namespace Lively.Models.Message
         public string Type { get; set; }
         public string DeskId { get; set; }
     }
+    public sealed class LivelyRoomNativeLayoutChange
+    {
+        public string Kind { get; set; }
+        public string Id { get; set; }
+        public string DeskId { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double? Width { get; set; }
+        public double? Height { get; set; }
+    }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage
     {
         public int ProtocolVersion { get; set; } = 1;
@@ -24,6 +34,8 @@ namespace Lively.Models.Message
         public long RuntimeGeneration { get; set; }
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
+        public long LayoutRevision { get; set; }
+        public LivelyRoomNativeLayoutChange LayoutChange { get; set; }
         public long GeometryVersion { get; set; }
         public long InputSequence { get; set; }
         public LivelyRoomNativeNavigation Action { get; set; }
@@ -43,6 +55,7 @@ namespace Lively.Models.Message
     }
     public sealed class LivelyMessageRoomNativeResponse : IpcMessage
     {
+        public string Method { get; set; }
         public long RuntimeGeneration { get; set; }
         public Guid SessionId { get; set; }
         public string PayloadJson { get; set; }

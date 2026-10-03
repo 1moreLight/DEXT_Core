@@ -383,3 +383,9 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 - 独立Player探针前两轮在Core正常重启后被覆盖应用保持前台，KV按生产规则拒绝，没走到Kill；保留两轮失败及finally原数据恢复证据，不计独立故障RED。复用OS鼠标作者导航和真实showdesktop曝光后整轮通过，不降低权限或前台条件。
 - 四媒体夹具先无条件创建slot.html但只在HTML声明它，被生产安装器严格inventory拒绝；仅HTML创建文件后通过。HTML初版setTimeout(done)在非活动暂停期到期，生产notOperable正确拒绝且夹具吞掉结果；改实际AudioContext活动时钟+当前生命周期并记录完成/错误、有限间隔重试，active-time整轮通过。不是生产done放行变更。
 - Player私有暂停后JS interval可能停止，必须同步包装生产dextNativePlaybackChanged写观测屏障；不得用暂停后的新interval标题当暂停证据。GIF实际动画冻结单独用owned全屏Player中心OS像素采样，naturalWidth或500ms预算只能证明解码/预算，不能证明画面冻结。
+
+## #199 布局与暂停测试要核对真实协议和阶段（2026-10-03）
+布局回归首次误用不存在的SetPlaybackFacts；已有SetRuntimeFacts才是当前接口。Starting不能由已Desktop直接SetLifecycle绕过，测试应按真实media slots启动/BeginDocument进入。编译与夹具状态错误不计生产行为RED。
+原生controller真的暂停后，JS收不到新command/barrier，PostWebMessage的安全布局metadata可排队至resume；改原生完成IPC屏障，暂停中发送Core响应，恢复后三种回执任意合法顺序验证，再用活动JS屏障确认普通paused响应未穿过。不能为了测试而唤醒/放宽作者或动作。
+本轮一次命令误写--native-input-wire，既有Program入口是--v3-input-wire；未运行的夹具不算行为失败。实际窗口还原另一轮parent/style/bounds全部匹配、dpi=120而预附着顶层dpi=144。夹具负屏幕父窗附着本身改变所在显示器DPI，正确门槛是idle前已附着的DPI与restore后匹配；保留完整实际值诊断，不取消DPI校验。
+- 常规启动的--v3-status参数是expectedDesk，不是Core路径；本轮误传路径仍可观察真实active=False但整体命令按夹具预期抛错，不写成status命令通过。正常退出与原数据核验另独立成功。

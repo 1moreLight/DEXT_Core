@@ -41,7 +41,13 @@ namespace Lively.Player.WebView2
                 // IsVisible=false is required. Suspension is best effort; the native
                 // retained image guarantees a still picture even if it is declined.
                 // https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync
+                // WinForms Visible can disagree with the native controller after
+                // external parent/style changes. TrySuspend checks the controller.
+                var controller = NativeViewController();
+                controller.IsVisible = false;
+                if (controller.IsVisible) throw new InvalidOperationException("Native WebView is still visible.");
                 await WaitNativeRenderTask(webView.CoreWebView2.TrySuspendAsync());
+                "Native pause render complete".SendLog(SendToParent);
             }
             catch (Exception error)
             {
@@ -66,6 +72,15 @@ namespace Lively.Player.WebView2
             await operation;
         }
 
+        private CoreWebView2Controller NativeViewController()
+        {
+            // This pinned WinForms SDK already uses the same controller field
+            // for RasterizationScale during initialization.
+            var field = typeof(Microsoft.Web.WebView2.WinForms.WebView2).GetField("_coreWebView2Controller", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            return field?.GetValue(webView) as CoreWebView2Controller
+                ?? throw new InvalidOperationException("Native WebView controller unavailable.");
+        }
+
         private async Task ResumeNativeView()
         {
             await nativePauseRenderGate.WaitAsync();
@@ -76,13 +91,23 @@ namespace Lively.Player.WebView2
         private void RevealNativeView(long revision)
         {
             if (IsDisposed || isPaused || revision != playbackRevision) return;
-            webView.Visible = true;
-            if (nativePausedPicture != null)
+            try
             {
-                nativePausedPicture.Visible = false;
-                var image = nativePausedPicture.Image;
-                nativePausedPicture.Image = null;
-                image?.Dispose();
+                webView.Visible = true;
+                NativeViewController().IsVisible = true;
+                if (IsDisposed || isPaused || revision != playbackRevision) return;
+                if (nativePausedPicture != null)
+                {
+                    nativePausedPicture.Visible = false;
+                    var image = nativePausedPicture.Image;
+                    nativePausedPicture.Image = null;
+                    image?.Dispose();
+                }
+            }
+            catch (Exception error)
+            {
+                if (!IsDisposed && !isPaused && revision == playbackRevision)
+                { error.SendError(SendToParent); Close(); }
             }
         }
 

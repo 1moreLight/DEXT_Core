@@ -48,7 +48,7 @@ internal static class NativeIdleWindowChecks
     public static void RunPlayer(IntPtr window,int pid)
     {
         var original=Read(window);var style=Native.GetWindowLongPtrW(window,-16);var ex=Native.GetWindowLongPtrW(window,-20);
-        var originalParent=Native.GetParent(window);var dpi=Native.GetDpiForWindow(window);IntPtr parent=IntPtr.Zero;DextNativeIdleWindow? lease=null;
+        var originalParent=Native.GetParent(window);IntPtr parent=IntPtr.Zero;DextNativeIdleWindow? lease=null;
         var previousContext=Native.SetThreadDpiAwarenessContext(Native.GetWindowDpiAwarenessContext(window));
         try { parent=Native.CreateWindowExW(0,"STATIC","idle-desktop-fixture",0x80000000,-5000,-5000,1000,800,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero); }
         finally { Native.SetThreadDpiAwarenessContext(previousContext); }
@@ -60,11 +60,14 @@ internal static class NativeIdleWindowChecks
                 Native.SetWindowLongPtrW(window,-16,new IntPtr(childStyle ? (style.ToInt64()&~0x80000000L)|0x40000000L : (style.ToInt64()&~0x40000000L)|0x80000000L));
                 WindowUtil.TrySetParent(window,parent);Require(Native.GetAncestor(window,1)==parent,"fixture attaches actual Player");
                 Require(Native.SetWindowPos(window,IntPtr.Zero,31,43,640,480,0x14),"fixture layout");
-                var attached=Read(window);var attachedStyle=Native.GetWindowLongPtrW(window,-16);var attachedEx=Native.GetWindowLongPtrW(window,-20);
+                var attached=Read(window);var attachedStyle=Native.GetWindowLongPtrW(window,-16);var attachedEx=Native.GetWindowLongPtrW(window,-20);var attachedDpi=Native.GetDpiForWindow(window);
                 var present=DextNativeIdleWindow.TryPresent(window,pid,new Rectangle(-4000,-3000,640,480),out lease,out var diagnostic);
                 Require(present && lease!.IsPresented,"actual Player same window idle: "+diagnostic);
-                Require(lease!.TryRestore() && Native.GetAncestor(window,1)==parent && Read(window)==attached && Native.GetWindowLongPtrW(window,-16)==attachedStyle && Native.GetWindowLongPtrW(window,-20)==attachedEx && Native.GetDpiForWindow(window)==dpi,"actual Player parent/style/bounds/DPI restoration");
-                Console.WriteLine($"PASS actual ReleasePlayer same-HWND/PID idle roundtrip, childStyle={childStyle}, exact parent/style/bounds and DPI {dpi}");
+                var restoreOk=lease!.TryRestore();
+                var restoredParent=Native.GetAncestor(window,1);var restoredBounds=Read(window);var restoredStyle=Native.GetWindowLongPtrW(window,-16);var restoredEx=Native.GetWindowLongPtrW(window,-20);var restoredDpi=Native.GetDpiForWindow(window);
+                Require(restoreOk && restoredParent==parent && restoredBounds==attached && restoredStyle==attachedStyle && restoredEx==attachedEx && restoredDpi==attachedDpi,
+                    $"actual Player parent/style/bounds/DPI restoration: ok={restoreOk}, parent={restoredParent}/{parent}, bounds={restoredBounds}/{attached}, style={restoredStyle.ToInt64():X}/{attachedStyle.ToInt64():X}, ex={restoredEx.ToInt64():X}/{attachedEx.ToInt64():X}, dpi={restoredDpi}/{attachedDpi}");
+                Console.WriteLine($"PASS actual ReleasePlayer same-HWND/PID idle roundtrip, childStyle={childStyle}, exact parent/style/bounds and DPI {attachedDpi}");
             }
         }
         finally

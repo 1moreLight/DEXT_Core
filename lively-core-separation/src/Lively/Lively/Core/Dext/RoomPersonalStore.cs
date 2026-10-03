@@ -16,6 +16,7 @@ internal sealed record PersonalButtonOverride(string? Action = null, string? Des
 internal sealed record RoomCapabilityGrant(string InstallationStamp, string[] Capabilities);
 internal sealed class RoomPersonalData
 {
+    public RoomPersonalLayout Layout { get; set; } = new();
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, Dictionary<string, JsonElement>> Storage { get; set; } = new(StringComparer.Ordinal);
@@ -158,8 +159,9 @@ internal sealed class RoomPersonalStore
         }
         foreach (var (roomId, room) in state.Rooms)
         {
-            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.Storage is not null, "Room personal shape");
-            Require(room!.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
+            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.Storage is not null && room.Layout is not null, "Room personal shape");
+            RoomPersonalLayout.Validate(room!.Layout);
+            Require(room.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
             foreach (var (id, button) in room.Buttons)
             {
                 Id(id); Require(button is not null, "button override");

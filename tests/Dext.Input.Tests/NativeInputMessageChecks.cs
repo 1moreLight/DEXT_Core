@@ -27,6 +27,20 @@ internal static class NativeInputMessageChecks
                     case "arrayRoot":raw="[]";break;case "duplicateJson":raw=r.ToString().Replace("\"protocolVersion\": 1","\"protocolVersion\": 1, \"protocolVersion\": 1");break;case "trailingJson":raw=r+"{}";break;case "oversize":raw=new string(' ',1024*1024+1);break;case "afterNavigation":s.Invalidate("navigation");break;}
                 Require(DextNativeInputProtocol.Parse(raw??r.ToString(),s,1200,900)==null);
             });
+        Check("official layout read is private current identity with no consumer or grant fields",()=>{
+            var r=Request();r["method"]="layoutRead";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");
+            Require(Parse(r)?.Method=="layoutRead");r["consumer"]="scene";Require(Parse(r)==null);r.Remove("consumer");r["revision"]=2;Require(Parse(r)==null);
+        });
+        Check("official layout save preserves independent revision and closed item shape",()=>{
+            var r=Request();r["method"]="layoutSave";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["layoutRevision"]=0;
+            r["change"]=new JObject{["kind"]="icon",["id"]="icon-1",["deskId"]="home",["x"]=240,["y"]=360};
+            var parsed=Parse(r);Require(parsed?.Method=="layoutSave");Require(RuntimeMessageChecks.Roundtrip(parsed!) is LivelyMessageRoomNativeRequest);
+            foreach(var invalid in new JToken[]{-1,1.5,"1"}){r["layoutRevision"]=invalid;Require(Parse(r)==null);}r["layoutRevision"]=0;
+            foreach(var field in new[]{"target","consumer","proof","approved"}){r[field]="fake";Require(Parse(r)==null);r.Remove(field);}
+            r["change"]!["x"]=1825;Require(Parse(r)==null);
+            r["change"]=new JObject{["kind"]="widget",["id"]="widget",["x"]=100,["y"]=200,["width"]=300,["height"]=180};Require(Parse(r)!=null);
+            r["change"]!["deskId"]="home";Require(Parse(r)==null);((JObject)r["change"]!).Remove("deskId");r["change"]!["kind"]="dock";Require(Parse(r)==null);
+        });
         Check("authors cannot send an exit decision or a confirmation capability",()=>{
             var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="exit";r["inputSequence"]=0;Require(Parse(r)!=null);
             foreach(var field in new[]{"approved","confirmed","exit","confirmation","token"}){r[field]=true;Require(Parse(r)==null);r.Remove(field);}

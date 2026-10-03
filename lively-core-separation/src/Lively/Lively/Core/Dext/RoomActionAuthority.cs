@@ -44,7 +44,7 @@ internal sealed class RoomExitConfirmation(RoomActionAuthority owner,Guid connec
 // Authored messages cannot issue input. The native host must first verify a
 // real activation of the current visible entry. Preparation is a short commit
 // boundary; native launch and notification-producing navigation run afterwards.
-internal sealed class RoomActionAuthority
+internal sealed partial class RoomActionAuthority
 {
     private readonly object gate = new();
     private readonly RoomSessionProtocolGateway gateway;

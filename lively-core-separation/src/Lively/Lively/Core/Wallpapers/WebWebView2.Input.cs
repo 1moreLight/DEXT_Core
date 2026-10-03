@@ -38,7 +38,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken storageValue=null;RoomNativeActionReply actionReply=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken layout=null;JToken storageValue=null;RoomNativeActionReply actionReply=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -71,6 +71,25 @@ namespace Lively.Core.Wallpapers
                             data=value;
                         }
                     }finally{a.Data.EndRead();}break;
+                case "layoutRead":
+                case "layoutSave":
+                    if(!a.StorageRequests.Wait(0))break;
+                    try {
+                        var saving=request.Method=="layoutSave";
+                        var measured=saving?ReadNativeViewport():null;
+                        if(saving && (request.LayoutChange==null || measured==null || request.PixelWidth!=measured.Width ||
+                            request.PixelHeight!=measured.Height || NativeInputIsForeground?.Invoke()!=true)){status=RoomActionStatus.NotOperable;break;}
+                        var read=await Task.Run(()=> {
+                            if(!saving)return a.Bridge.NativeReadLayout(a.Actions,state.Session,state.Revision);
+                            var c=request.LayoutChange;
+                            return a.Bridge.NativeSaveLayout(a.Actions,state.Session,state.Revision,request.LayoutRevision,new(c.Kind,c.Id,c.DeskId,c.X,c.Y,c.Width,c.Height));
+                        });
+                        status=read.Status;
+                        if(status==RoomActionStatus.Accepted && read.Layout!=null) {
+                            layout=JObject.Parse(System.Text.Json.JsonSerializer.Serialize(read.Layout,new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase}));
+                            if(saving)a.Input.InvalidateGeometry(state.Generation,state.Session,state.Revision);
+                        }
+                    }finally{a.StorageRequests.Release();}break;
                 case "storageGet":
                     if(!a.StorageRequests.Wait(0))break;
                     try {
@@ -118,7 +137,7 @@ namespace Lively.Core.Wallpapers
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue});
+                status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue,layout},request.Method);
             if(actionReply is{Status:RoomActionStatus.RequiresConfirmation,Exit:{} confirmation})
                 _=ConfirmNativeExitAsync(a,state,confirmation);
         }
@@ -154,11 +173,11 @@ namespace Lively.Core.Wallpapers
         private RoomNativeDataSource CreateNativeDataSource() => RoomNativeDataSource.ForWindows(systemControlService);
 
         private static string WireStatus(RoomActionStatus status) => char.ToLowerInvariant(status.ToString()[0])+status.ToString().Substring(1);
-        private void SendNative(NativeAttachment a,RoomNativeInputState state,object payload)
+        private void SendNative(NativeAttachment a,RoomNativeInputState state,object payload,string method=null)
         {
             if(!ReferenceEquals(Volatile.Read(ref roomNativeAttachment),a))return;
             var current=a.Input.State;if(current==null || current.Generation!=state.Generation || current.Session!=state.Session)return;
-            SendMessage(new LivelyMessageRoomNativeResponse{RuntimeGeneration=state.Generation,SessionId=state.Session,PayloadJson=JsonConvert.SerializeObject(payload)});
+            SendMessage(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=state.Generation,SessionId=state.Session,PayloadJson=JsonConvert.SerializeObject(payload)});
         }
         private void NotifyNative(NativeAttachment a,RoomNativeInputState before,bool activate)
         {

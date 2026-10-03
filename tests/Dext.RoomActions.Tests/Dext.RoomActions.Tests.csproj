@@ -18,6 +18,8 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomRuntimeContext.cs" Link="RoomRuntimeContext.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionCatalog.cs" Link="RoomActionCatalog.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalLayout.cs" Link="RoomPersonalLayout.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.Layout.cs" Link="RoomActionAuthority.Layout.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.cs" Link="RoomActionAuthority.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeInputAuthority.cs" Link="RoomNativeInputAuthority.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeControlQueue.cs" Link="RoomNativeControlQueue.cs" />

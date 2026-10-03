@@ -3,13 +3,14 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 
-static class RoomActionChecks
+static partial class RoomActionChecks
 {
     private const string Room = "d390f9c9-8136-4c56-a00b-afabbac4db2c";
     private const string Target = "ee0760c2-a1e3-4094-b002-81b6ab22a7d5";
     static void Eq<T>(T expected, T actual) { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}"); }
     public static void Run(Action<string, Action> check)
     {
+        LayoutChecks(check);
 
         check("timed-out Windows control retains attachment admission until actual terminal",()=>{
             var queue=new RoomNativeControlQueue(TimeSpan.FromMilliseconds(50));var release=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);using var started=new ManualResetEventSlim();
@@ -902,7 +903,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false,bool controlCapabilities=false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false,bool navigationDynamic=false,bool controlCapabilities=false,bool layoutDock=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -918,6 +919,7 @@ static class RoomActionChecks
              "desks":[{"id":"home","name":"Home","icons":[{"id":"icon-1","buttonId":"icon","x":0,"y":0}],"components":["widget"]},
                       {"id":"focus","name":"Focus","icons":[],"components":[]}]}
             """;
+            if(layoutDock){var document=JsonNode.Parse(manifest)!;document["components"]![0]!["role"]="dock";manifest=document.ToJsonString();}
             if (mediaSlots)
             {
                 var document = JsonNode.Parse(manifest)!;
