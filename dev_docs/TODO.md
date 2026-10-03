@@ -1368,3 +1368,5 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 官方桌面尚无长按编辑/拖动Save入口；正在补实际Core安全布局读取/正常重启验证，随后接长按、官方Widget把手/编辑覆盖层、指针UP原子Save、无效落点/失败回滚。空动作geometry仍保留鼠标转发，Core不会为编辑指针产生动作完成证明；不新增作者动作权限。
 - [x] 官方DOM实际Core读取补证：layout-dom-core-live在实际切页前后/正常Core重启后私有layout0均ready且无错误；原文档/新文档按生命周期保持，focus/KV/GIF/视频恢复，finally原四文件/用户Room恢复。本轮不执行layoutSave、不冒称非空覆盖实际保存通过。
 - [x] 本阶段完整build→常规start Core92228/Player118936/Watchdog70784/config8336、日志20261003_211317.txt，原v2 Player路径核对。identity所属共享配置器OTHER并核对绝对路径；精确正常退出Core/配置器、watcher19473 CtrlC结束exit1、原四文件hash/缺失状态不变；OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。
+
+2026-10-03用户调整：桌面拖动先略过，保留待恢复；当前继续P5精确输入/遮挡/多图标与受控焦点。每次推进报告完整16项开发就绪比例，目前1/16=6.25%（对话约6%），此为交付覆盖率，不能将阶段测试数当百分比。Dext实机探针结束后保持关闭。
