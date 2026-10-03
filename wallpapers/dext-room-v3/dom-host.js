@@ -31,10 +31,7 @@
       initialGeometry:{geometryVersion:0,viewport:options.getViewport()},initialPlaybackSuspended:privatePaused,resolveResource,readCapabilities:q=>native.readCapabilities(q),
       implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write','media.control','audio.control','dext.exit'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
       applyState:options.applyFrameState,invoke:async value=>{
-        if(value.method==='actions.activate')return authorAction('activate',{button:value.params.buttonId},value.consumerId,value.identity);
-        if(value.method==='desk.navigate')return authorAction('navigate',{action:value.params.action},value.consumerId,value.identity);
-        if(value.method==='media.control')return authorAction('mediaControl',{action:value.params.action},value.consumerId,value.identity);
-        if(value.method==='audio.control')return authorAction('audioControl',{settings:value.params.settings},value.consumerId,value.identity);
+        if(['actions.activate','desk.navigate','media.control','audio.control'].includes(value.method))return authorAction(value);
         if(value.method==='actions.list'){const reply=await native.request('buttons',{consumer:value.consumerId},value.identity);if(reply.status!=='accepted')throw failure(reply.status);return reply.buttons;}
         if(value.method==='desk.get'){const reply=await native.readCapabilities({consumerId:value.consumerId,identity:value.identity});if(reply.status!=='accepted'||reply.capabilities?.['desk.read']!=='accepted')throw failure('denied');return copy(snapshot);}
         if(value.method==='storage.get'||value.method==='storage.set'){
@@ -253,18 +250,16 @@
       native.request('activate',{consumer:own.consumer,button:own.button,geometryVersion:own.geometryVersion,inputSequence:own.inputSequence},own.identity)
         .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion))consumeReceipt(reply);},()=>diagnose('activationUnavailable'));
     }
-    async function authorAction(method,params,consumer,identity){
+    async function authorAction(value){
+      const {consumerId:consumer,identity,instanceId,requestJson,method}=value;
       if(!sameActionScope(identity,inputVersion))throw failure('staleInput');
+      if(typeof instanceId!=='string'||typeof requestJson!=='string')throw failure('inputRequired');
       if(actionFlights.size>=64)throw failure('requestLimit');
-      const geometry=inputVersion;
-      const sequence=completion&&completion.consumer===consumer&&completion.inputSequence>consumedSequence&&
-        (method!=='activate'||completion.button===params.button)?completion.inputSequence:0;
-      const flight={consumer,identity:copy(identity),geometry};actionFlights.add(flight);
+      const geometry=inputVersion,flight={consumer,identity:copy(identity),geometry};actionFlights.add(flight);
       try{
-        const reply=await native.request(method,{consumer,...params,geometryVersion:geometry,inputSequence:sequence},identity);
+        const reply=await native.request('authorInput',{consumer,instanceId,requestJson,geometryVersion:geometry},identity);
         if(sameActionScope(identity,geometry))consumeReceipt(reply);
-        if(['navigate','mediaControl','audioControl'].includes(method)&&!['accepted','queued'].includes(reply.status))throw failure(reply.status);
-        // Private correlation and any Core metadata stay in the official host.
+        if(method!=='actions.activate'&&!['accepted','queued'].includes(reply.status))throw failure(reply.status);
         return{status:reply.status};
       }finally{actionFlights.delete(flight);runDefault();}
     }

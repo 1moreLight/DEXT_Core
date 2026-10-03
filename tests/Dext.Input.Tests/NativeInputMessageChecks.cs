@@ -21,6 +21,11 @@ internal static class NativeInputMessageChecks
             var second=(JObject)b.DeepClone();second["entryId"]="icon.home/two";((JArray)r["buttons"]!).Add(second);
             Require(Parse(r)?.Buttons.Length==2);
         });
+        Check("official author route preserves SDK original JSON without selecting a native sequence",()=>{
+            var r=Request();r["method"]="authorInput";r.Remove("viewport");r.Remove("buttons");
+            r["consumer"]="scene";r["instanceId"]="instance";r["requestJson"]="{\"requestId\":\"r1\"}";
+            var parsed=Parse(r);Require(parsed?.AuthorInstance=="instance"&&parsed.SdkRequestJson=="{\"requestId\":\"r1\"}"&&parsed.InputSequence==0);
+        });
         Check("geometry uses native pixels and preserves normalized public fields",()=>{var r=Parse(Request());Require(r?.Buttons.Length==1&&r.Buttons[0].X==.1&&r.PixelWidth==1200&&r.PixelHeight==900);Require(RuntimeMessageChecks.Roundtrip(r!) is LivelyMessageRoomNativeRequest);});
         foreach(var field in new[]{"protocolVersion","runtimeGeneration","revision","geometryVersion"})
             Check("reject noninteger "+field,()=>{var r=Request();r[field]=1.2;Require(Parse(r)==null);});

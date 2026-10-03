@@ -293,7 +293,10 @@ namespace Lively.Player.WebView2
                             NativeMethods.GetClientRect(webView.Handle, out var client))
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
-                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")) SendToParent(request);
+                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")){
+                                if(request.Method=="authorInput")nativeFrameMedia.AcceptInputRequest(request);
+                                else SendToParent(request);
+                            }
                         }
                     }
                     else if ((string)o.type == "dext:v3-request-desk")
@@ -1224,6 +1227,7 @@ namespace Lively.Player.WebView2
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             DisposeNativePausedPicture();
+            nativeAuthorDeadline?.Stop();nativeAuthorDeadline?.Dispose();
             nativeFrameMedia?.Dispose();
             nativeResources?.Dispose();
             roomRuntime.Invalidate("closed");

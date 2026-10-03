@@ -55,6 +55,7 @@ namespace Lively.Player.WebView2
             };
             EventHandler<CoreWebView2NavigationStartingEventArgs> navigating=(s,e)=>{
                 if(e.Cancel)return;
+                if(Guid.TryParseExact(frame.InputNonce,"D",out var oldInputNonce))inputActions?.RevokeDocument(frame.Id,frame.Epoch,oldInputNonce);
                 var nonce=frame.Nonce;var inputNonce=frame.InputNonce;frame.Epoch++;frame.Nonce=null;frame.InputNonce=null;frame.InputGesture=0;frame.InputDispatch=0;frame.Sequence=0;frame.Navigating=true;
                 if(inputNonce!=null)Observe(RevokeOldInputAsync(frame,inputNonce));
                 if(nonce!=null)Observe(StopOldAsync(frame,nonce));
@@ -149,6 +150,7 @@ namespace Lively.Player.WebView2
             if(disposed||failed)return;var request=DextNativeFrameMediaPolicy.Parse(json,state);if(request==null)return;
             if(!desired.ContainsKey(request.FrameName)&&desired.Count>=196){Fail();return;}
             if(desired.TryGetValue(request.FrameName,out var old)&&(old.Consumer!=request.Consumer || old.InstanceId!=null&&old.InstanceId!=request.InstanceId)){Fail();return;}
+            if(!request.Active)await RevokeInputAsync();
             desired[request.FrameName]=request;foreach(var frame in frames.Values.Where(f=>f.Parent==null&&f.Name==request.FrameName))frame.Retiring=false;await RefreshAsync();
         }
         // Cached Core changes while the renderer is suspended cannot execute JS.
@@ -162,6 +164,7 @@ namespace Lively.Player.WebView2
         {
             if(!frames.TryGetValue(frame.Id,out var current)||!ReferenceEquals(current,frame))return;
             foreach(var child in frames.Values.Where(f=>f.Parent==frame).ToArray())Remove(child,detach);
+            inputActions?.RevokeFrame(frame.Id);
             frames.Remove(frame.Id);frame.Epoch++;frame.Nonce=null;frame.InputNonce=null;frame.InputGesture=0;
             // A Destroyed callback is already inside native frame teardown. Do not
             // reenter the dying frame to remove handlers (WebView native crash).
@@ -171,7 +174,7 @@ namespace Lively.Player.WebView2
         private void Fail(string reason="Native frame policy unavailable"){if(disposed||failed)return;failed=true;failure(reason);}
         public void Dispose()
         {
-            if(disposed)return;disposed=true;currentInput=null;inputOperation++;core.FrameCreated-=Created;
+            if(disposed)return;disposed=true;inputActions?.Cancel();currentInput=null;inputOperation++;core.FrameCreated-=Created;
             foreach(var frame in frames.Values.ToArray())Remove(frame);desired.Clear();
         }
     }

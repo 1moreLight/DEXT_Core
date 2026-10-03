@@ -1420,3 +1420,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际ReleasePlayer本地鼠标：pointer-native-wire-final收到trusted DOWN/UP并同步进入私有request hook；长按超时先撤销再UP。Core指针包为夹具，没有推定实际Core动作已通过。实际媒体回归发现嵌套媒体文档不需要输入guardian描述，修为仅直接作者root描述/注册后pointer-frame-media-wire-final通过，音视频/WebAudio原生暂停恢复/最新修订/撤销保持（ERRORS #209）。
 - [x] 完整pointer-core-build-final四阶段通过；常规start Core76880/Player79976/Watchdog53304/config31928，日志20261004_022256.txt；identity共享配置器OTHER/exit1且精确绝对路径独立核对。正常关闭、watcher90633 exit0，原四文件hash/缺失不变，Dext进程与1420/1421/1621监听0。
 - [ ] 当前仍待SDK原始requestId/private witness两路汇合及正数动作派发，生产author零序号路径未替换；作者真实键盘、移动即时样本/source动作随后接续。无新增网络专项，拖动暂缓，整体16项就绪仍1/16≈6%，最终集中验收保持。
+## P5 SDK原始请求与原生鼠标完成关联（2026-10-04，BASE c73eb83）
+一句话目标：实际作者SDK同步提交完整requestJson，正式宿主保留原始rN与固定instance/consumer，经Player实际root文档双路汇合，只在同一原生UP转发后使用正数gesture执行Core动作。
+范围：SDK四类受控请求、FrameHost原文保留、官方authorInput私有路由、nativeframe两路匹配/释放/撤销与严格正数映射；无需增加网络安全专项。先本地SDK/宿主/汇合行为RED，随后实际ReleasePlayer自己的HWND+正式SDK验证按下请求等待UP、一次对应动作消息，Core回包仍夹具。真实作者键盘、移动取样/source手势后续继续，拖动暂缓。
+完成后仅保存到P5工作分支，完整构建/启动/正常退出；最终人工第4/5项集中执行，不增中途验收。整体16项就绪1/16≈6%。
+- [x] SDK与正式作者路由：四类受控请求在同步调用中将完整SDK envelope提交给原生guardian，再走parent；FrameHost保留rN/requestJson与固定instance，DOM改为authorInput，不再选择completion或inputSequence=0。SDK/FrameHost行为RED31/34（2失败、1等待拒绝超时）→34/34；DOM/native route RED65/70→70/70；完整生产JS232/232。公开回复仅status，正数关联只在Player/Core私有链。
+- [x] 原生关联到UP后的动作：生产delivery真实RED0/6→6/6，两路任意先后、DOWN不执行、同UP释放、下一DOWN清待办但保留文档rN水位、1500ms物理期限、文档撤销和三类typed意图映射；旧join84/84，私有parser RED69/70→70/70。实际native registry按当前direct root/document/instance关联，导航/销毁/暂停/重置撤销；deadline timer只在有本次手势时运行。
+- [x] author-input-native-wire-final实际ReleasePlayer+正式SDK通过：trusted DOWN内actions.activate('open')等待同次UP，原始r1只生成一次Core n1/gesture7/geometry1/scene/open，SDK收到accepted。Core包/回执和该小official route仍fixture，生产DOM路由另由行为回归验证；不冒称实际Core桌面物理证明。首轮功能通过但WebView profile退出后2s仍占用、清理失败；确认仅自建GUID目录后清理、重试预算10s，最终整轮exit0且临时目录0（ERRORS #210）。
+- [x] author-input-core-build-final完整四阶段与实际author-input-frame-media-final回归通过；常规start Core121280/Player81856/Watchdog92464/config54740，日志20261004_025000.txt，identity共享配置器OTHER/exit1且精确路径核验。正常关闭、watcher58787 exit0，原四文件SHA256/缺失状态不变、Dext进程/开发监听/native author fixtures全部0。
+- [ ] 接续本地功能：作者Enter/Space真实派发/受控焦点，再接移动DOWN/UP即时可见区样本与source动作。生产作者鼠标已改为原始请求汇合后的正数关联，但Core内部旧零值查询兼容仍保留待全输入链收口；整体准确性/实际Core物理补证未全交付。拖动暂缓、网络专项不扩展，整体16项就绪仍1/16≈6%，最终集中7项验收与单次P5整体审查不提前勾选。

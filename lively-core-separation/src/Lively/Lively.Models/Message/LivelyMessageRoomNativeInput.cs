@@ -73,6 +73,8 @@ namespace Lively.Models.Message
         public bool? Muted { get; set; }
         public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
+        public string AuthorInstance { get; set; }
+        public string SdkRequestJson { get; set; }
         public string Capability { get; set; }
         public string Key { get; set; }
         public string ValueJson { get; set; }

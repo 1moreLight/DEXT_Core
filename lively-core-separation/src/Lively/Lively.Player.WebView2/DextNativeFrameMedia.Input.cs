@@ -1,4 +1,5 @@
 using Lively.Common.Helpers;
+using Lively.Models.Message;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -11,6 +12,22 @@ namespace Lively.Player.WebView2
     {
         private DextNativePointerPacket currentInput;
         private long inputOperation;
+        private DextNativeAuthorActionDelivery inputActions;
+        public void InitializeInputActions(Action<LivelyMessageRoomNativeRequest> ready,Action<LivelyMessageRoomNativeRequest,string> rejected)
+            =>inputActions=new DextNativeAuthorActionDelivery(ready,rejected);
+        public bool HasInputActions=>inputActions?.HasCurrent==true;
+        public void ExpireInputActions()=>inputActions?.Expire();
+        public Task ReleasedInputAsync(DextNativePointerPacket value){inputActions?.Released(value);return Task.CompletedTask;}
+        private DextNativeInputFrameScope InputScope(Frame frame,DextNativePointerPacket value){
+            if(value==null||!InputFrame(frame)||!Guid.TryParseExact(frame.InputNonce,"D",out var nonce))return null;
+            var owner=desired[frame.Name];
+            return new DextNativeInputFrameScope(value.RuntimeGeneration,value.SessionId,value.Revision,frame.Id,frame.Epoch,nonce,owner.Consumer,owner.InstanceId);
+        }
+        public void AcceptInputRequest(LivelyMessageRoomNativeRequest request){
+            var matching=frames.Values.Where(InputFrame).Where(f=>desired[f.Name].Consumer==request.Consumer&&desired[f.Name].InstanceId==request.AuthorInstance).ToArray();
+            var scope=matching.Length==1?InputScope(matching[0],currentInput):null;
+            inputActions?.Official(scope,request);
+        }
         public event Action<DextNativeInputFrameScope,DextNativeInputWitness> InputWitness;
         private bool InputCurrent(DextNativePointerPacket value)=>value!=null&&!disposed&&!failed&&!suspended&&
             state.CanUseInput(value.RuntimeGeneration,value.SessionId,value.Revision);
@@ -20,7 +37,7 @@ namespace Lively.Player.WebView2
         {
             await RevokeInputAsync();
             if(!InputCurrent(value))return false;
-            currentInput=value;var operation=++inputOperation;
+            currentInput=value;inputActions?.Begin(value);var operation=++inputOperation;
             await Task.WhenAll(frames.Values.Where(InputFrame).ToArray().Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=value.GestureId;
                 var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion));
@@ -34,7 +51,7 @@ namespace Lively.Player.WebView2
         }
         public async Task RevokeInputAsync()
         {
-            currentInput=null;inputOperation++;
+            currentInput=null;inputOperation++;inputActions?.Cancel();
             await Task.WhenAll(frames.Values.Where(f=>f.Parent==null&&f.InputNonce!=null).ToArray().Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=0;
                 try{await Execute(frame,DextNativeInputGuardianPolicy.RevokeScript(secret,nonce));}
@@ -58,8 +75,9 @@ namespace Lively.Player.WebView2
                 witness.DispatchSequence<=frame.InputDispatch)return;
             frame.InputDispatch=witness.DispatchSequence;
             var owner=desired[frame.Name];
-            InputWitness?.Invoke(new DextNativeInputFrameScope(value.RuntimeGeneration,value.SessionId,value.Revision,
-                frame.Id,frame.Epoch,nonce,owner.Consumer,owner.InstanceId),witness);
+            var scope=InputScope(frame,value);
+            inputActions?.Witness(scope,witness.RequestJson,witness.GestureId,witness.StructuralVersion);
+            InputWitness?.Invoke(scope,witness);
         }
     }
 }

@@ -277,3 +277,17 @@ pointer-frame-media-wire-final实际根/闭合shadow/嵌套媒体与WebAudio暂�
 pointer-core-build-final完整四阶段成功；常规start Core76880/Player79976/Watchdog53304/config31928，日志20261004_022256.txt；Core/插件/pipe/mutex/data/log正常，共享配置器OTHER/exit1且路径独立核对。精确正常关闭、watcher90633 exit0、原四文件hash/缺失不变、Dext进程/开发监听0。
 
 本段尚未接SDK requestId与native witness汇合，也未替换author零序号动作；真实作者键盘、移动DOWN/UP取样与source动作继续。人工仍按最终第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消/异步请求拒绝，第5项移动/遮挡/多入口/DPI集中执行；拖动暂缓、网络专项不扩展、整体就绪1/16≈6%，不新增中途验收、不合并master。
+## P5 SDK原始请求与原生鼠标完成关联（2026-10-04，BASE c73eb83）
+一句话目标：实际作者SDK同步提交完整requestJson，正式宿主保留原始rN与固定instance/consumer，经Player实际root文档双路汇合，只在同一原生UP转发后使用正数gesture执行Core动作。
+范围：SDK四类受控请求、FrameHost原文保留、官方authorInput私有路由、nativeframe两路匹配/释放/撤销与严格正数映射；无需增加网络安全专项。先本地SDK/宿主/汇合行为RED，随后实际ReleasePlayer自己的HWND+正式SDK验证按下请求等待UP、一次对应动作消息，Core回包仍夹具。真实作者键盘、移动取样/source手势后续继续，拖动暂缓。
+完成后仅保存到P5工作分支，完整构建/启动/正常退出；最终人工第4/5项集中执行，不增中途验收。整体16项就绪1/16≈6%。
+## P5 SDK原始请求与同次原生UP关联验证（2026-10-04）
+生产SDK四类受控请求同步提交完整envelope，再走parent。FrameHost保留rN/requestJson，正式DOM authorInput不再选择最近completion或零序号；Player由实际直接root/frameId/epoch/documentNonce和固定consumer/instance双路匹配，在同次私有UP已转发后生成正数Core请求。下一DOWN/导航/销毁/暂停/重置清待办，文档水位保留，从真实DOWN起1500ms不续期；空闲停止deadline timer。Core仍负责精确button/consumer、权限、OS窗口/前台及一次消费。
+
+行为RED/GREEN：SDK/FrameHost31/34（2失败、1拒绝等待超时）→34/34，DOM/native route65/70→70/70，parser69/70→70/70，native action delivery0/6→6/6，旧join84/84，完整生产JS232/232。新增检查仅本地请求链与必要回归，没有扩展网络专项。
+
+author-input-native-wire-final实际ReleasePlayer+正式SDK：trusted DOWN内actions.activate等待同UP，原始r1只生成一次Core n1、gesture7/geometry1/scene/open，回执accepted。该wire的Core指针/回执与小official route为fixture，正式DOM/FrameHost另有生产行为回归；不代填实际Core OS输入人工门槛。首轮功能通过但自建WebView profile清理失败，修正有界10s释放等待后整轮exit0，历史失败保留（ERRORS #210）。
+
+完整author-input-core-build-final、实际author-input-frame-media-final通过。常规start Core121280/Player81856/Watchdog92464/config54740，日志20261004_025000.txt；共享配置器OTHER/exit1且绝对路径独立核验，随后精确正常关闭、watcher58787 exit0、原四文件hash/缺失保持，Dext进程/开发监听/author fixtures0。
+
+作者真实Enter/Space、移动即时样本/source动作仍待接，Core内部旧零值查询兼容待全输入链收口，实际Core输入补证仍待凭据窗解除。最终人工沿第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消、异步请求拒绝，第5项移动/遮挡/多入口/DPI；拖动暂缓，不新增中途验收。整体16项交付就绪1/16≈6%，七项人工和单次整体审查不提前勾选，不合并master。

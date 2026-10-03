@@ -195,3 +195,9 @@ test('native focus and activation events have closed kind-specific identities',(
  send({...event,kind:'activate',consumer:null,button:null,entryId:null,inputSequence:1});send({...event,kind:'activate',inputSequence:0});send({...event,unknown:'forged'});
  send({...event,kind:'activate',inputSequence:1});assert.equal(events.length,3);host.dispose();
 });
+
+test('official author route retains the original SDK envelope while Player selects positive native correlation',async()=>{
+ const f=fixture(),params={consumer:'scene',instanceId:'instance',requestJson:JSON.stringify({requestId:'r1',method:'actions.activate',params:{buttonId:'open'}}),geometryVersion:3};
+ const p=f.host.request('authorInput',params);assert.equal(f.sent.length,1);assert.equal('inputSequence' in f.sent[0],false);
+ f.answer(f.sent[0],{inputSequence:7,inputConsumed:true});assert.equal((await p).inputSequence,7);f.host.dispose();
+});

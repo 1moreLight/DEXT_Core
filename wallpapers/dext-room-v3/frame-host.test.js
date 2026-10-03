@@ -38,6 +38,7 @@ test('real SDK initializes once from Core capability states without private rout
 });
 test('SDK activation has fixed consumer identity and no input proof is minted by the host',async()=>{
   const f=fixture(),{sdk}=await f.start();assert.equal((await sdk.actions.activate('open')).status,'inputRequired');assert.equal(f.calls.length,1);
+  assert.equal(f.calls[0].requestId,'r1');assert.deepEqual(JSON.parse(f.calls[0].requestJson),f.outbound.find(v=>v.method==='actions.activate'));
   assert.equal(f.calls[0].consumerId,'scene');assert.deepEqual(f.calls[0].params,{buttonId:'open'});assert.equal(f.calls[0].identity.revision,1);assert.equal('ticket' in f.calls[0],false);
   await assert.rejects(sdk.actions.activate('unknown'),{code:'invalidButton'});await assert.rejects(sdk.storage.get('key'),{code:'undeclaredCapability'});f.host.dispose();
 });

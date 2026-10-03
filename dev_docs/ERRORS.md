@@ -276,3 +276,5 @@
 | #208 | UP时分配序号无法在DOWN关联原生frame；长按截止时不能新建完成 | [backend](errors/backend.md) |
 
 | #209 | 输入文档描述误用于嵌套媒体frame；旧Player需显式Compile且无Environment.ProcessId | [backend](errors/backend.md) |
+
+| #210 | 原生SDK wire通过不等于整轮通过；WebView profile退出后仍短暂占用 | [toolchain](errors/toolchain.md) |

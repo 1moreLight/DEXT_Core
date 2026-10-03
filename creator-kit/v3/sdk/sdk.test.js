@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function fixture() {
+function fixture(nativeRequest) {
   const sent = [], events = [], listeners = new Set(), timers = new Map();
   let timerId = 0;
   const parent = { postMessage: message => sent.push(JSON.parse(JSON.stringify(message))) };
@@ -15,6 +15,7 @@ function fixture() {
     removeEventListener: (name, callback) => { if (name === 'message') listeners.delete(callback); },
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     dispatchEvent: event => events.push(event) };
+  if(nativeRequest)context.__dextNativeInputRequestV1=nativeRequest;
   vm.runInNewContext(fs.readFileSync(__dirname + '/dext-sdk.v1.js', 'utf8'), context);
   const snapshot = (revision = 1) => ({ protocolVersion: 1, roomId: 'room', installationStamp: 'stamp', sessionId: 'session', revision,
     currentDeskId: 'a', targetDeskId: null, queuedDeskId: null, transitionId: null, deadlineUtc: null, active: true, operable: true,
@@ -230,4 +231,22 @@ test('geometry listeners receive resize coordinates and the current version for 
   f.event('geometry', { geometryVersion: 3, viewport: { width: 0, height: 720, dpr: 1 } }, 2);
   assert.equal(f.api.session.geometryVersion, 2);
   f.api.dispose();
+});
+
+test('protected SDK methods synchronously submit their complete original request before parent transport', async () => {
+  const observed=[], f=fixture(json=>{observed.push(JSON.parse(json));return true;});
+  f.init({capabilities:{'desk.navigate':'available','media.control':'available','audio.control':'available'}});
+  for(const call of [()=>f.api.actions.activate('open'),()=>f.api.desk.navigate({type:'desk.next'}),()=>f.api.media.control('pause'),()=>f.api.audio.control({muted:true})]){
+    const p=call(), request=f.sent.findLast(v=>v.type==='dext:runtime:request');
+    assert.equal(observed.length,f.sent.filter(v=>v.type==='dext:runtime:request').length);
+    assert.deepEqual(observed.at(-1),request);
+    f.reply(request,{result:{status:'accepted'}});await p;
+  }
+  const p=f.api.desk.get();assert.equal(observed.length,4);f.reply(f.last('desk.get'),{result:f.snapshot()});await p;
+});
+
+test('a refused synchronous native request returns inputRequired without parent transport or pending timer', {timeout:500}, async()=>{
+  const f=fixture(()=>false);f.init();const before=f.sent.length;
+  await assert.rejects(f.api.actions.activate('open'),{code:'inputRequired'});
+  assert.equal(f.sent.length,before);assert.equal(f.api.diagnostics().pendingRequests,0);assert.equal(f.timers.size,0);
 });

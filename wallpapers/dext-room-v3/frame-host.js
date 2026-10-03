@@ -186,7 +186,7 @@
       if(typeof options.invoke!=='function'){reply(record,message.requestId,false,'unsupported');return;}
       const item={requestId:message.requestId,method:message.method,epoch:record.epoch,scope:identity(),timer:null};record.pending.set(item.requestId,item);
       item.timer=later(()=>endRequest(record,item,false,'timeout'),5000);
-      try{Promise.resolve(options.invoke({consumerId:record.consumerId,instanceId:record.instanceId,method:message.method,params:wire(message.params),identity:item.scope})).then(
+      try{Promise.resolve(options.invoke({consumerId:record.consumerId,instanceId:record.instanceId,requestId:message.requestId,requestJson:JSON.stringify(message),method:message.method,params:wire(message.params),identity:item.scope})).then(
         value=>endRequest(record,item,true,value),error=>endRequest(record,item,false,ERRORS.has(error?.code)?error.code:'operationFailed'));
       }catch(error){endRequest(record,item,false,ERRORS.has(error?.code)?error.code:'operationFailed');}
     }

@@ -397,3 +397,8 @@ DOM转场snapshot必须同时给transitionId和deadlineUtc，否则模型正确�
 Json.NET new JArray(singleJArray)会选复制构造器摊掉一层；polygons[][]夹具应使用new JArray { inner }。未进真实parser分支的夹具失败不记生产RED。新增geometry.js必须更新官方index与实机夹具复制清单，测试源码改动后不能用旧--no-build assembly。
 
 - 2026-10-03 Core输入探针补证：先等operable/作者timer再显示桌面的顺序可能自锁；曝光/空白聚焦应前置，等待原生前台采样，再测无输入。不能假定SetForegroundWindow调用后已获得桌面前台。此次空白实际像素命中Credential Dialog Xaml Host，系统CredentialUIBroker.exe在运行；安全DesktopPoint检查拒绝了鼠标点击。原权限拒绝保持，四轮finally恢复原数据和窗口，不关闭不属于测试的系统凭据窗。用户关闭该窗后再补实际Core证明；这一外部条件不等于生产多边形缺陷。
+
+## #210 原生SDK wire必须连同自建profile清理通过（2026-10-04）
+actualReleasePlayer+正式SDK功能首轮通过（按下等待、同UP一次正数Core请求），但Player正常退出后WebView仍短暂持有自建user-data文件，2s重试预算不足，finally报告清理失败；保留整轮失败记录，不用前面的局部PASS代替完成。
+只枚举本轮Dext-v3-author-input-wire-前缀，核实绝对路径位于GetTempPath内后用PowerShell Remove-Item -LiteralPath删除自建目录；没有删除用户Dext资料或通用WebView缓存。夹具清理改有界100×100ms，随后实际整轮exit0，临时目录为0。
+SDK新增拒绝测试首轮未设置超时而等待旧实现不拒绝，工具会话中断后给该测试500ms上限；真实行为RED保留，后续SDK正确立即拒绝。首个SDK多方法夹具误写desk.next，真实接口为desk.navigate({type:'desk.next'})；夹具接口错误不计生产RED。Windows源码LF/CRLF混合时不能用Environment.NewLine拼跨行锚点，先核实唯一单行锚点；替换失败在写盘前停止，不反复重跑已成功的前半段mutation。

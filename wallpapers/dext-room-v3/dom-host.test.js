@@ -113,23 +113,27 @@ test('storage refusals and malformed successful replies cannot be treated as sav
 
 function actionFixture(request){
  let time=0,id=0;const timers=new Map();
- const f=fixture({request,setTimeout:(cb,ms)=>{const key=++id;timers.set(key,{cb,due:time+ms});return key;},clearTimeout:key=>timers.delete(key)});
+ const f=fixture({request:(method,params,scope)=>request(method==='authorInput'?({'actions.activate':'activate','desk.navigate':'navigate','media.control':'mediaControl','audio.control':'audioControl'}[JSON.parse(params.requestJson).method]):method,params,scope),setTimeout:(cb,ms)=>{const key=++id;timers.set(key,{cb,due:time+ms});return key;},clearTimeout:key=>timers.delete(key)});
  f.tick=async ms=>{time+=ms;for(const[key,v]of [...timers])if(v.due<=time){timers.delete(key);v.cb();}await flush();};
  f.event=(sequence,consumer='scene')=>({kind:'activate',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,inputSequence:sequence,consumer,button:'next'});
- f.invoke=(method='desk.navigate',params={action:{type:'desk.next'}})=>[...f.frames.values()].find(v=>v.def.consumerId==='scene').opts.invoke({method,params,consumerId:'scene',identity:{runtimeGeneration:1,sessionId:'session',revision:1}});
+ f.invoke=(method='desk.navigate',params={action:{type:'desk.next'}})=>{
+   const frame=[...f.frames.values()].find(v=>v.def.consumerId==='scene'),identity={runtimeGeneration:1,sessionId:'session',revision:1};
+   const requestJson=JSON.stringify({type:'dext:runtime:request',apiVersion:1,instanceId:'instance',sessionId:'session',token:'fixture',requestId:'r1',method,params});
+   return frame.opts.invoke({method,params,consumerId:'scene',instanceId:'instance',requestId:'r1',requestJson,identity});
+ };
  return f;
 }
 test('authored navigation receipt cancels its late native event and exposes status only',async()=>{
  const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'accepted',inputSequence:7,inputConsumed:true,privateTarget:'secret'}:{status:'accepted'}));await f.host.ready;
  assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes('desk.navigate'),true);
  assert.deepEqual(await f.invoke(),{status:'accepted'});
- assert.deepEqual(f.calls.find(v=>v.method==='navigate').params,{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:0});
+ assert.equal(f.calls.find(v=>v.method==='authorInput').params.instanceId,'instance');assert.deepEqual(JSON.parse(f.calls.find(v=>v.method==='authorInput').params.requestJson).params,{action:{type:'desk.next'}});assert.equal('inputSequence' in f.calls.find(v=>v.method==='authorInput').params,false);
  assert.equal(f.host.handleNativeInput(f.event(7)),false);await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
 });
 test('native event and authored navigation share one completion without default double dispatch',async()=>{
  const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'queued',inputSequence:7,inputConsumed:true}:{status:'accepted'}));await f.host.ready;
  assert.equal(f.host.handleNativeInput(f.event(7)),true);assert.deepEqual(await f.invoke(),{status:'queued'});await f.tick(1000);
- assert.equal(f.calls.find(v=>v.method==='navigate').params.inputSequence,7);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+ assert.equal(f.calls.find(v=>v.method==='authorInput').params.geometryVersion,1);assert.equal('inputSequence' in f.calls.find(v=>v.method==='authorInput').params,false);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
 });
 test('denied navigation preserves configured fallback with the exact native sequence',async()=>{
  const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'denied',inputSequence:7,inputConsumed:false}:{status:'accepted',inputSequence:7,inputConsumed:true}));await f.host.ready;
@@ -163,7 +167,7 @@ test('author controls use fixed consumer once and reveal status without private 
    const f=actionFixture(m=>Promise.resolve(m===nativeMethod?{status:'accepted',inputSequence:7,inputConsumed:true,deviceId:'private'}:{status:'accepted'}));await f.host.ready;
    assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes(method),true);
    f.host.handleNativeInput(f.event(7));assert.deepEqual(await f.invoke(method,params),{status:'accepted'});await f.tick(1000);
-   assert.deepEqual(f.calls.find(v=>v.method===nativeMethod).params,{consumer:'scene',...params,geometryVersion:1,inputSequence:7});
+   assert.deepEqual(JSON.parse(f.calls.find(v=>v.method==='authorInput').params.requestJson).params,params);assert.equal(f.calls.find(v=>v.method==='authorInput').params.consumer,'scene');
    assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
  }
 });
@@ -185,7 +189,7 @@ test('exit entry advertises Dext confirmation and keeps private continuation out
  const f=actionFixture(method=>Promise.resolve(method==='activate'?{status:'requiresConfirmation',inputSequence:7,inputConsumed:true,exit:{secret:'Core-only'}}:{status:'accepted'}));await f.host.ready;
  assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes('dext.exit'),true);
  f.host.handleNativeInput(f.event(7));assert.deepEqual(await f.invoke('actions.activate',{buttonId:'next'}),{status:'requiresConfirmation'});await f.tick(1000);
- assert.equal(f.calls.filter(v=>v.method==='activate').length,1);f.host.dispose();
+ assert.equal(f.calls.filter(v=>v.method==='authorInput').length,1);f.host.dispose();
 });
 
 test('no-idle retains the desktop picture without publishing official activation until wake',async()=>{

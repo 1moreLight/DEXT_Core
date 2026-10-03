@@ -40,6 +40,12 @@ namespace Lively.Common.Helpers
                             !(o["change"] is JObject change) || !ParseLayoutChange(change,out var item))return null;
                         request.LayoutRevision=(long)o["layoutRevision"];request.LayoutChange=item;return request;
                     case "invalidateGeometry": return Shape(o,IdentityFields)?request:null;
+                    case "authorInput":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","instanceId","requestJson","geometryVersion"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !Id(Text(o["instanceId"]),160) || !Integer(o["geometryVersion"],1) ||
+                            o["requestJson"]?.Type!=JTokenType.String || Encoding.UTF8.GetByteCount((string)o["requestJson"])>32768)return null;
+                        request.Consumer=Text(o["consumer"]);request.AuthorInstance=Text(o["instanceId"]);request.SdkRequestJson=(string)o["requestJson"];
+                        request.GeometryVersion=(long)o["geometryVersion"];return request;
                     case "activate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion","inputSequence"}).ToArray()) ||
                             !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0))return null;

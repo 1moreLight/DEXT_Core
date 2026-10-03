@@ -98,6 +98,7 @@ namespace Lively.Common.Helpers
         public DextNativeInputRequestJoin(Func<long> monotonicMilliseconds=null)
         {clock=monotonicMilliseconds??(()=> (long)(Stopwatch.GetTimestamp()*(1000d/Stopwatch.Frequency)));}
         public int PendingCount=>pendingCount;
+        public void CancelPending(){foreach(var frame in frames.Values)Cancel(frame);}
         public bool RegisterFrame(DextNativeInputFrameScope scope)
         {
             if(revoked||!ValidScope(scope))return false;

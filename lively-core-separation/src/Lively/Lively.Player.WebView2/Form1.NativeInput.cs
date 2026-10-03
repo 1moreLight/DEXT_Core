@@ -9,14 +9,26 @@ namespace Lively.Player.WebView2
     public partial class Form1
     {
         private DextNativePointerDelivery nativePointerDelivery;
+        private System.Windows.Forms.Timer nativeAuthorDeadline;
         private static readonly int NativePointerPid=ReadPointerPid();
         private static int ReadPointerPid(){using(var process=System.Diagnostics.Process.GetCurrentProcess())return process.Id;}
         private void InitializeNativePointer()
         {
+            nativeFrameMedia.InitializeInputActions(SendToParent,RejectNativeAuthor);
+            nativeAuthorDeadline=new System.Windows.Forms.Timer{Interval=50};
+            nativeAuthorDeadline.Tick+=(sender,args)=>{nativeFrameMedia.ExpireInputActions();if(!nativeFrameMedia.HasInputActions)nativeAuthorDeadline.Stop();};
             nativePointerDelivery=new DextNativePointerDelivery(
-                packet=>nativeFrameMedia.ArmInputAsync(packet),()=>nativeFrameMedia.RevokeInputAsync(),
-                ForwardNativePointer,CurrentNativePointer,packet=>Task.CompletedTask,
+                async packet=>{var accepted=await nativeFrameMedia.ArmInputAsync(packet);if(accepted)nativeAuthorDeadline.Start();return accepted;},()=>nativeFrameMedia.RevokeInputAsync(),
+                ForwardNativePointer,CurrentNativePointer,packet=>nativeFrameMedia.ReleasedInputAsync(packet),
                 ()=>BeginInvoke((Action)(()=>{if(!IsDisposed&&!Disposing)Close();})));
+        }
+        private void RejectNativeAuthor(LivelyMessageRoomNativeRequest request,string status)
+        {
+            if(IsDisposed||Disposing||!IsOfficialDextDocument(webView.CoreWebView2.Source))return;
+            webView.CoreWebView2.PostWebMessageAsJson(Newtonsoft.Json.JsonConvert.SerializeObject(new{
+                type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=request.RuntimeGeneration,
+                sessionId=request.SessionId,revision=request.Revision,status,inputSequence=0,inputConsumed=false
+            }));
         }
         private bool CurrentNativePointer(DextNativePointerPacket value)
         {

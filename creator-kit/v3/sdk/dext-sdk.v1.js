@@ -2,6 +2,7 @@
   'use strict';
   // Tokens identify an iframe connection. They never prove native input or permission.
   const parentWindow = root.parent;
+  const nativeInputRequest = typeof root.__dextNativeInputRequestV1 === "function" ? root.__dextNativeInputRequestV1 : null;
   const VERSION = 1, MAX_BYTES = 32768, MAX_PENDING = 64, REQUEST_TIMEOUT = 5000;
   const CAPABILITIES = new Set(['desk.read', 'desk.navigate', 'time.read', 'hardware.read', 'media.read', 'media.control',
     'audio.read', 'audio.control', 'storage.read', 'storage.write', 'binding.launch', 'dext.exit']);
@@ -98,6 +99,10 @@
     try { message = wire({ ...identity('dext:runtime:request'), requestId, method, params }); }
     catch (error) { return Promise.reject(error); }
     return new Promise((resolve, reject) => {
+      if(nativeInputRequest && ['actions.activate','desk.navigate','media.control','audio.control'].includes(method)){
+        try{if(nativeInputRequest(JSON.stringify(message))!==true){reject(failure('inputRequired'));return;}}
+        catch(_){reject(failure('inputRequired'));return;}
+      }
       const timer = root.setTimeout(() => { pending.delete(requestId); diagnose('timeout', method); reject(failure('timeout')); }, REQUEST_TIMEOUT);
       pending.set(requestId, { resolve, reject, timer });
       try { parentWindow.postMessage(message, '*'); }
