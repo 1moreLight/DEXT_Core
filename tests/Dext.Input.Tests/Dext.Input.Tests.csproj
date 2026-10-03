@@ -11,6 +11,8 @@
     <None Update="continuous-scene-observer.js" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common/Lively.Common.csproj" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeKeyDelivery.cs" Link="RoomNativeKeyDelivery.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeInputAuthority.cs" Link="RoomNativeInputAuthority.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomRuntimeContext.cs" Link="RoomRuntimeContext.cs" />

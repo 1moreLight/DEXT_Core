@@ -461,3 +461,8 @@ Player新增native input describe后，实际媒体wire在嵌套/blank媒体子�
 ### #170 补充：顶层原生派发receipt也必须匹配字符串接收（2026-10-04）
 Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方顶层现有Form1仍用TryGetWebMessageAsString。新增官方trusted DOWN/UP dispatch回执错误地照搬frame对象postMessage，实际完整官方宿主DOWN等待回执超时并关闭自己的Player。作者root的隔离wire通过不能替代顶层链验证。
 增加真实格式行为断言，RED26/27（object不是string）；官方bootstrap先捕获JSON.stringify，将私有receipt序列化为字符串，GREEN27/27。完整build后正式index/main/dom/native/frame/media/SDK实际ReleasePlayer两边采样与一次图标默认动作通过；原前台保持、暂停/切页/撤销回归通过。未改变既有顶层来源或Core物理/权限规则。
+
+## #216 单个焦点gesture丢连续Tab，早到键用错焦点（2026-10-04）
+生产功能实质RED291/295：第二次raw Tab替换第一请求，第一样本被拒；取样待回时Enter/Space没有记录DOWN，早到UP丢失。新增编译RED不能代替这四项行为失败。
+未回焦点请求改有界FIFO，每份当前可见样本按首项推进；激活冻结原始键/scan/QPC/序号和此前末项屏障，UP提前到只标释放，最终焦点后发送原一对。过期前置Tab取消待键，禁止旧焦点或续签时间；新鼠标/几何/会话仍撤销，动作不是多项队列。GREEN295/295及生产Core authority/key delivery+实际ReleasePlayer连续ShiftTab/Enter样本整轮通过，raw OS/完整Core窗口和回复fixture单列。
+夹具编译曾将Guid SessionId调用ToString写入私有pointer，CS0029后按真实DTO类型改回Guid；不放宽消息类型，不计该编译错误为生产功能RED。

@@ -106,6 +106,41 @@ internal static class NativeEventSampleChecks
             Focus(n,true,entries);Require(n.State!.Focus!.EntryId=="icon.home/open","ShiftTab not reversed");
             Focus(n,true,entries);Require(n.State!.Focus!.EntryId=="icon.home/other","ShiftTab not wrapped");
         });
+        check("two physical Tabs queued before either reply preserve both focus advances",()=>{
+            var (n,clock)=Create();var entries=new[]{Region()[0],Region("icon.home/other")[0] with{TabIndex=1}};
+            n.Key(viewport,9,true,false,true);var first=n.State!.Gesture!.Sequence;n.Key(viewport,9,false,false,true);
+            n.Key(viewport,9,true,false,true);var second=n.State!.Gesture!.Sequence;n.Key(viewport,9,false,false,true);
+            Require(n.SampleFocus(1,session,1,1,first,viewport,entries,true,false),"first queued Tab lost");
+            Require(n.State!.Focus!.EntryId=="icon.home/open","first focus");
+            Require(n.SampleFocus(1,session,1,1,second,viewport,entries,true,false),"second queued Tab lost");
+            Require(n.State!.Focus!.EntryId=="icon.home/other"&&n.State.Completed==null,"second advance not preserved");
+        });
+        foreach(var key in new[]{13,32})check("early "+key+" UP waits for preceding Tabs and emits one original pair",()=>{
+            var (n,clock)=Create();var entries=new[]{Region()[0],Region("icon.home/other")[0] with{TabIndex=1}};
+            n.Key(viewport,9,true,false,true);var first=n.State!.Gesture!.Sequence;n.Key(viewport,9,false,false,true);
+            n.Key(viewport,9,true,false,true);var second=n.State!.Gesture!.Sequence;n.Key(viewport,9,false,false,true);clock.Now=100;
+            n.Key(viewport,key,true,false,true);Require(n.State!.Gesture!=null,"raw activation DOWN not recorded while focus pending");var original=n.State.Gesture!;
+            var emitted=new List<(long Sequence,long Issued,string Kind,string? Entry)>();
+            var delivery=new RoomNativeKeyDelivery(n,(g,f,kind,scan,extended)=>emitted.Add((g.Sequence,g.IssuedAt,kind,f.EntryId)));
+            delivery.Down(original,key==13?28:57,false);n.Key(viewport,key,false,false,true);delivery.Up(key);
+            Require(emitted.Count==0&&!n.State!.KeyReady,"activation crossed unresolved focus");
+            clock.Now=200;n.SampleFocus(1,session,1,1,first,viewport,entries,true,false);delivery.Flush();
+            Require(emitted.Count==0,"first Tab released activation");
+            clock.Now=300;n.SampleFocus(1,session,1,1,second,viewport,entries,true,false);delivery.Flush();delivery.Up(key);
+            Require(emitted.SequenceEqual(new[]{(original.Sequence,100L,"down",(string?)"icon.home/other"),(original.Sequence,100L,"up",(string?)"icon.home/other")}),
+                "deferred pair lost original time/entry or duplicated UP");
+            Require(n.SampleKeyboard(1,session,1,1,original.Sequence,"down",viewport,entries,true,key,"official","open","icon.home/other"),"deferred visible DOWN");
+            Require(n.SampleKeyboard(1,session,1,1,original.Sequence,"up",viewport,entries,true,key,"official","open","icon.home/other"),"deferred visible UP");
+            Require(n.State!.Completed?.IssuedAt==100,"focus wait renewed physical deadline");
+        });
+        check("expired preceding Tab does not release a deferred key into the previous focus",()=>{
+            var (n,clock)=Create();n.Key(viewport,9,true,false,true);var tab=n.State!.Gesture!.Sequence;n.Key(viewport,9,false,false,true);
+            clock.Now=100;n.Key(viewport,13,true,false,true);Require(n.State!.Gesture!=null,"raw activation DOWN not recorded");var key=n.State.Gesture!;var sent=0;
+            var delivery=new RoomNativeKeyDelivery(n,(g,f,kind,scan,extended)=>sent++);delivery.Down(key,28,false);
+            n.Key(viewport,13,false,false,true);clock.Now=1500;
+            Require(!n.SampleFocus(1,session,1,1,tab,viewport,Region(),true,false),"expired focus completed");
+            delivery.Flush();Require(sent==0&&n.State!.Completed==null,"expired focus released key");
+        });
         check("empty current Tab sample clears focus and never creates completion",()=>{
             var (n,clock)=Create();Focus(n);Focus(n,entries:[]);
             Require(n.State!.Focus==null&&n.State.Completed==null,"empty visible Tab retained old focus");

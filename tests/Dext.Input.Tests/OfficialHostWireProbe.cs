@@ -173,9 +173,76 @@ internal static class OfficialHostWireProbe
                     "SVG focus follows painted entry locally without geometry IPC or activation");
                 Require(NativeMethods.GetForegroundWindow()==foreground,"native Tab changed foreground");
                 Console.WriteLine("PASS actual production moving source Tab: one private current sample, distinct source entry, SVG polygons follow local RAF without geometry IPC or action; Core Tab/selection packets are fixture");
+                // Production authority and delivery now own focus ordering and
+                // the completed proof. Raw OS edges and action replies remain
+                // fixture; the owned ReleasePlayer supplies actual painted samples.
+                var orderedCore=new RoomNativeInputAuthority(TimeProvider.System);
+                var orderedViewport=new RoomNativeViewport(input,bounds.X,bounds.Y,bounds.Width,bounds.Height,(int)Math.Ceiling(4d*dpi/96),dpi);
+                orderedCore.Initialize(1,f.Snapshot with{Revision=2,TargetDeskId="focus",TransitionId=transition,DeadlineUtc=DateTimeOffset.UtcNow.AddSeconds(5)});
+                Require(orderedCore.PublishGeometry(1,f.Snapshot.SessionId,2,movingVersion,orderedViewport,[],true),"production Core sampled viewport");
+                // Earlier fixture gestures already used 1..10 in this DOM.
+                for(var seed=0;seed<10;seed++){orderedCore.MouseDown(orderedViewport,bounds.X,bounds.Y,true);orderedCore.MouseUp(orderedViewport,bounds.X,bounds.Y,true);}
+                var orderedPackets=new List<LivelyMessageRoomNativePointer>();
+                var orderedDelivery=new RoomNativeKeyDelivery(orderedCore,(g,focus,kind,scan,extended)=>orderedPackets.Add(new(){
+                    RuntimeGeneration=g.Generation,SessionId=g.Session,Revision=g.Revision,GeometryVersion=g.GeometryVersion,
+                    GestureId=g.Sequence,IssuedAt=g.IssuedAt,InputHandle=g.Viewport.Handle.ToInt64(),Kind=kind,
+                    OriginX=g.Viewport.X,OriginY=g.Viewport.Y,PixelWidth=g.Viewport.Width,PixelHeight=g.Viewport.Height,Dpi=g.Viewport.Dpi,
+                    X=g.Viewport.X,Y=g.Viewport.Y,SampleKeyboard=g.SampleKeyboard,Key=g.Key,ScanCode=scan,IsExtended=extended,
+                    Consumer=focus.Consumer,Button=focus.Button,EntryId=focus.EntryId??focus.Button}));
+                RoomNativeInputGesture RawTab(){
+                    orderedCore.Key(orderedViewport,9,true,true,true);var g=orderedCore.State!.Gesture!;
+                    orderedDelivery.FocusRequested();orderedCore.Key(orderedViewport,9,false,true,true);return g;
+                }
+                LivelyMessageRoomNativePointer OrderedTab(RoomNativeInputGesture g)=>new(){
+                    RuntimeGeneration=g.Generation,SessionId=g.Session,Revision=g.Revision,GeometryVersion=g.GeometryVersion,
+                    GestureId=g.Sequence,IssuedAt=g.IssuedAt,InputHandle=g.Viewport.Handle.ToInt64(),Kind="focus",
+                    OriginX=g.Viewport.X,OriginY=g.Viewport.Y,PixelWidth=g.Viewport.Width,PixelHeight=g.Viewport.Height,Dpi=g.Viewport.Dpi,
+                    X=g.Viewport.X,Y=g.Viewport.Y,Key=9,Reverse=g.Reverse};
+                RoomNativeButton[] OrderedRegions(LivelyMessageRoomNativeSample sample)=>sample.Buttons.Select(b=>
+                    new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
+                async Task OrderedFocus(){
+                    var focus=orderedCore.State!.Focus!;
+                    await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                        type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=2,geometryVersion=movingVersion,
+                        kind="focus",consumer=focus.Consumer,button=focus.Button,entryId=focus.EntryId})});
+                }
+                var firstOrderedTab=RawTab();var secondOrderedTab=RawTab();
+                orderedCore.Key(orderedViewport,13,true,false,true);var orderedKey=orderedCore.State!.Gesture!;
+                orderedDelivery.Down(orderedKey,28,false);orderedCore.Key(orderedViewport,13,false,false,true);orderedDelivery.Up(13);
+                Require(orderedPackets.Count==0&&!orderedCore.State!.KeyReady,"early Enter UP must wait for both Tab replies");
+                await Send(OrderedTab(firstOrderedTab));await Send(OrderedTab(secondOrderedTab));
+                var firstOrderedSample=(await Next())["sample"]!.ToObject<LivelyMessageRoomNativeSample>()!;
+                Require(firstOrderedSample.Input.GestureId==firstOrderedTab.Sequence&&orderedCore.SampleFocus(1,f.Snapshot.SessionId,2,movingVersion,
+                    firstOrderedTab.Sequence,orderedViewport,OrderedRegions(firstOrderedSample),true,true),"first actual Tab sample accepted by production authority");
+                await OrderedFocus();orderedDelivery.Flush();
+                Require(orderedPackets.Count==0&&orderedCore.State!.Focus?.EntryId=="icon.home/second","first reply must not release Enter");
+                var secondOrderedSample=(await Next())["sample"]!.ToObject<LivelyMessageRoomNativeSample>()!;
+                Require(secondOrderedSample.Input.GestureId==secondOrderedTab.Sequence&&orderedCore.SampleFocus(1,f.Snapshot.SessionId,2,movingVersion,
+                    secondOrderedTab.Sequence,orderedViewport,OrderedRegions(secondOrderedSample),true,true),"second actual Tab sample accepted by production authority");
+                var orderedEntry=orderedCore.State!.Focus!.EntryId;
+                Require(orderedEntry=="icon.home/first","two reverse Tabs must preserve both focus advances");
+                await OrderedFocus();orderedDelivery.Flush();
+                Require(orderedPackets.Count==2&&orderedPackets[0].Kind=="down"&&orderedPackets[1].Kind=="up"&&
+                    orderedPackets.All(p=>p.GestureId==orderedKey.Sequence&&p.IssuedAt==orderedKey.IssuedAt&&p.EntryId==orderedEntry),"one deferred pair keeps original QPC and final focus");
+                foreach(var packet in orderedPackets)await Send(packet);
+                foreach(var edge in new[]{"down","up"}){
+                    var sample=(await Next())["sample"]!.ToObject<LivelyMessageRoomNativeSample>()!;
+                    Require(sample.Input.Kind==edge&&sample.Input.GestureId==orderedKey.Sequence&&sample.Input.IssuedAt==orderedKey.IssuedAt&&
+                        orderedCore.SampleKeyboard(1,f.Snapshot.SessionId,2,movingVersion,orderedKey.Sequence,edge,orderedViewport,
+                            OrderedRegions(sample),true,13,"official","next",orderedEntry!),"actual deferred "+edge+" sample accepted by production authority");
+                }
+                var orderedProof=orderedCore.State!.Completed;
+                Require(orderedProof?.SampledVisual==true&&orderedProof.IssuedAt==orderedKey.IssuedAt&&orderedProof.Button.EntryId==orderedEntry,
+                    "production authority completes only current paired final entry with original time");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                    type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=2,geometryVersion=movingVersion,
+                    kind="activate",consumer=orderedProof!.Button.Consumer,button=orderedProof.Button.Button,entryId=orderedProof.Button.EntryId,inputSequence=orderedProof.Sequence})});
+                Require((long?)(await Next())["activated"]?["InputSequence"]==orderedKey.Sequence&&actions==4,"ordered key releases exactly one final-entry action");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"ordered focus/key changed foreground");
+                Console.WriteLine("PASS production Core authority/key delivery + actual ReleasePlayer: two unanswered ShiftTabs and early Enter UP preserve final entry, original QPC and one action; raw OS edges/full Core host/action replies remain fixture");
                 var completion=await Next();Require((string?)completion["complete"]?["TransitionId"]==transition.ToString(),"default DOM transition reports current completion");
                 await Command("beforeCommit");var before=await NextReport("beforeCommit");Require((string?)before["diagnostics"]?["runtime"]?["currentDeskId"]=="home","host never commits Desk itself");
-                Require((bool?)before["focusVisible"]==false&&(string?)before["diagnostics"]?["runtime"]?["focus"]?["entryId"]==tabEntry.EntryId,"source focus ring hides off canvas while retaining logical identity");
+                Require((bool?)before["focusVisible"]==false&&(string?)before["diagnostics"]?["runtime"]?["focus"]?["entryId"]==orderedEntry,"source focus ring hides off canvas while retaining logical identity");
                 await Snapshot(3,"focus");await Command("committed");var committed=await NextReport("committed");Require((bool?)committed["focusVisible"]==false&&committed["diagnostics"]?["runtime"]?["focus"]?.Type==JTokenType.Null,"actual SVG focus cleared on input invalidation");Require((string?)committed["diagnostics"]?["runtime"]?["currentDeskId"]=="focus"&&JToken.DeepEquals(documents,committed["documents"]),"Core commit retains actual iframe documents");
                 var queuedTransition=Guid.NewGuid();await Snapshot(4,"focus","home",queuedTransition);await Snapshot(5,"focus","home",queuedTransition,"focus");await Task.Delay(100);await Send(new LivelySuspendCmd());var paused=await Next();
                 Require((bool?)paused["playback"]==true&&(bool?)paused["accepted"]==true,"official native pause accepted");await Task.Delay(1100);Require(!queue.Any(q=>q["complete"]!=null),"paused default animation cannot finish");

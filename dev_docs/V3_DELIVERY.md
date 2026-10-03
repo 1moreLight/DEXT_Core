@@ -11,10 +11,10 @@
 |---|---|---|---|
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
-| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；已有焦点Enter/Space可见采样Core288/288及实际Player通过；单次Tab可见选择和移动焦点已接；连续键顺序/实际Core OS与个人编辑UI待贯通 | 否 |
+| 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；已有焦点Enter/Space可见采样Core288/288及实际Player通过；单次Tab/移动焦点及连续Tab早到键Core295/295、生产Core类/实际Player组合通过；实际Core OS与个人编辑UI待贯通 | 否 |
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；完整连续仪表盘/输入/异常恢复待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
-| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点已接；连续键顺序/实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
+| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
 | 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
@@ -202,5 +202,13 @@ Core在实际Tab/ShiftTab DOWN冻结方向/正数序号/QPC，正式eventSamples
 API编译RED后tab-visible-core-green291/291；必要队列17/17。轮廓停留旧位置实质DOM RED50/52→52/52，源轮廓运动/出画布隐藏、目标轮廓到最终位置与旧DOM回归通过（ERRORS #215）。
 tab-visible-moving-official-wire实际ReleasePlayer+生产index/main/dom/native/frame/media/SDK整轮exit0：移动源图标一次私有Tab样本含同动作第二呈现，后续SVG多边形真实随RAF改变，geometry计数/版本与动作计数不增加，前台保持，出画布隐藏且逻辑entry保留，commit后清空；原鼠标、移动键盘、共享文档/暂停/最新修订/撤销通过。该wire的Core Tab物理键/选择包/回复fixture，不代填实际Core OS。
 tab-visible-core-build四阶段后常规start Core96444/Player49548/Watchdog78756/config31380，日志20261004_054313.txt。identity共享D配置器OTHER/exit1且精确路径独立核验；常规恢复原v2不计v3物理键。正常退出、watcher25867 exit0，原四文件hash/缺失保持、Dext进程/开发监听/原生author及official临时目录0，Dext保持关闭。
-当前实现只保留一个未返回的Core焦点gesture；新的raw DOWN会替换它。快速连续Tab和Tab采样待回时立即Enter/Space需继续顺序仲裁，不能据此称完整快速键盘已交付。Core零序号兼容、持续作者动画组合与真实Core OS/DPI/锁屏/还原及最终7项/单次P5审查继续；系统凭据窗未解除，本轮没有重复Core桌面点击。
+历史单次Tab阶段（910b964）只保留一个未返回的Core焦点gesture；新的raw DOWN会替换它。快速连续Tab和Tab采样待回时立即Enter/Space需继续顺序仲裁，不能据此称完整快速键盘已交付。Core零序号兼容、持续作者动画组合与真实Core OS/DPI/锁屏/还原及最终7项/单次P5审查继续；系统凭据窗未解除，本轮没有重复Core桌面点击。
 最终人工沿卡第4项Tab/ShiftTab、鼠标/Enter/Space一次动作、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行；拖动按用户暂缓，无新增网络专项/中途确认/master合并，完整16项就绪1/16=6.25%（约6%），13/16及16/16目标保持。
+
+## P5 连续Tab与早到激活的生产Core/实际Player验证（2026-10-04）
+Core保存至多64个未回Tab/ShiftTab原始DOWN请求，SampleFocus只处理FIFO首项，按各自当前可见表逐一推进。紧接Enter/Space冻结原始键/scan/QPC/正数关联，等待此前最后Tab；早到UP只标释放，最终焦点确定后私有RoomNativeKeyDelivery发送一对原序号DOWN/UP。新激活仍覆盖旧激活，不扩展多动作队列；新鼠标/几何/会话取消等待，过期前置Tab取消键，不能使用旧焦点或续签1500ms。焦点请求不创建动作证明。
+编译新API的RED后，生产功能实质keys-ordered-core-behavior-red291/295→keys-ordered-core-green295/295：两次未回Tab、Enter/Space早到UP和前置Tab过期均覆盖。原单次Tab、动态样本/source动作等回归保持。新增输入探针首次把Guid SessionId写成string导致CS0029，按真实DTO类型修正后构建成功；这次夹具编译错误不计生产行为RED。
+keys-ordered-moving-official-wire实际ReleasePlayer+生产index/main/dom/native/frame/media/SDK，接入生产RoomNativeInputAuthority/RoomNativeKeyDelivery整轮exit0：两个未回ShiftTab的实际样本逐一选source second→first；已记录的Enter UP等待最终焦点再发送原QPC/序号的一对，两份实际可见样本在生产authority中形成SampledVisual，最终entry只产生一次动作，原前台保持。原鼠标、移动键/焦点、切页/共享文档、暂停/最新修订、撤销回归通过。原始OS边沿、完整Core窗口/动作回复仍fixture；不代填实际Core OS/物理DPI。
+keys-ordered-core-build四阶段通过后，常规start Core92332/Player98004/Watchdog63388/config74552，日志20261004_060652.txt。identity脚本共享D缓存配置器OTHER/exit1，四精确绝对路径另行核验；常规恢复原v2，不计v3物理键。精确正常关闭、watcher51624 exit0，原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/原生author及official与Core GUID临时目录0，Dext保持关闭。
+下一段为Core零序号兼容收口与持续作者动画组合；实际Core OS/DPI/锁屏/故障还原及最终七项/单次P5审查继续，系统凭据窗未解除时不重复桌面点击。拖动按用户暂缓，本地功能优先、无新增网络专项/中途验收/master合并。完整16项开发就绪仍1/16=6.25%（约6%），13/16及16/16目标不变。
+最终人工第4项增加连续Tab/ShiftTab后立即Enter/Space，确认最终可见焦点只动作一次；长按与AltTab取消。第5项集中验证移动/遮挡/同动作多入口与物理DPI，拖动部分暂缓。

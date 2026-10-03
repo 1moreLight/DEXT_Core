@@ -21,10 +21,7 @@ namespace Lively.Core.Wallpapers
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
             internal RoomNativeControlQueue Controls { get; } = new();
             internal RoomNativeInputGesture PointerGesture { get; set; }
-            internal RoomNativeInputGesture KeyGesture { get; set; }
-            internal RoomNativeButton KeyFocus { get; set; }
-            internal int KeyScanCode { get; set; }
-            internal bool KeyExtended { get; set; }
+            internal RoomNativeKeyDelivery KeyDelivery;
         }
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
@@ -52,7 +49,10 @@ namespace Lively.Core.Wallpapers
                 sample.Buttons.Any(b=>b==null))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse))NotifyNative(a,before,packet.Kind!="focus");
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse)){
+                NotifyNative(a,before,packet.Kind!="focus");
+                if(packet.Kind=="focus")NativeKeys(a).Flush();
+            }
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
@@ -243,6 +243,15 @@ namespace Lively.Core.Wallpapers
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
                 OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=x,Y=y,Modifiers=InputUtil.MouseModifiers,SampleMouse=gesture.SampleMouse});
         }
+        private RoomNativeKeyDelivery NativeKeys(NativeAttachment a)
+        {
+            var current=Volatile.Read(ref a.KeyDelivery);
+            if(current!=null)return current;
+            var created=new RoomNativeKeyDelivery(a.Input,(gesture,focus,kind,scan,extended)=>{
+                if(ReferenceEquals(Volatile.Read(ref roomNativeAttachment),a))SendNativeKey(gesture,focus,kind,scan,extended);
+            });
+            return Interlocked.CompareExchange(ref a.KeyDelivery,created,null)??created;
+        }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32)return false;
@@ -250,16 +259,11 @@ namespace Lively.Core.Wallpapers
             a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);
             var after=a.Input.State;
             if(down&&key==9&&after?.Gesture is{Key:9} tab&&tab.Sequence!=before?.Gesture?.Sequence){
-                a.KeyGesture=null;a.KeyFocus=null;SendNativeFocus(tab);
+                NativeKeys(a).FocusRequested();SendNativeFocus(tab);
             }
-            if(down&&key!=9&&after?.Gesture is{Released:false} gesture&&gesture.Key==key&&gesture.Sequence!=before?.Gesture?.Sequence&&after.Focus is{} focus){
-                a.KeyGesture=gesture;a.KeyFocus=focus;a.KeyScanCode=scanCode;a.KeyExtended=extended;
-                SendNativeKey(gesture,focus,"down",scanCode,extended);
-            }
-            if(!down&&a.KeyGesture is{} previous&&previous.Key==key){
-                var releasedFocus=a.KeyFocus;a.KeyGesture=null;a.KeyFocus=null;
-                SendNativeKey(previous,releasedFocus,"up",a.KeyScanCode,a.KeyExtended);
-            }
+            if(down&&key!=9&&after?.Gesture is{Released:false} gesture&&gesture.Key==key&&gesture.Sequence!=before?.Gesture?.Sequence)
+                NativeKeys(a).Down(gesture,scanCode,extended);
+            if(!down&&key!=9)NativeKeys(a).Up(key);
             NotifyNative(a,before,true);return before!=null;
         }
         private void SendNativeFocus(RoomNativeInputGesture gesture)

@@ -15,7 +15,7 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
     RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false,bool Reverse=false);
-internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
+internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null,bool KeyReady=true);
 
 internal sealed class RoomNativeInputProof
 {
@@ -51,7 +51,9 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private bool sampledMouse,downSampleReceived,upSampleReceived;
     private AcceptedEntry? downSample,upSample,keyTarget;
     private readonly HashSet<int> keysHeld=new();
-    private sealed record Press(AcceptedEntry Entry,long IssuedAt,long Sequence,int X=0,int Y=0,int Key=0);
+    private readonly Queue<RoomNativeInputGesture> focusRequests=new();
+    private long keyFocusBarrier;
+    private sealed record Press(AcceptedEntry? Entry,long IssuedAt,long Sequence,int X=0,int Y=0,int Key=0);
     private sealed class AcceptedEntry(DextNativeGeometryEntry region)
     {
         internal DextNativeGeometryEntry Region {get;}=region;
@@ -61,7 +63,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     {
         get {
             var now=clock.GetTimestamp();
-            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture);}
+            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture,keyFocusBarrier==0);}
         }
     }
     internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
@@ -111,7 +113,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         {
             ExpireGesture(now);
             if(mouseHeld)return;
-            mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;ResetSamples();
+            mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
             if(!Available(current,foreground) || !Inside(current,x,y)){focused=null;return;}
             focused=sampledMouse?null:Hit(x,y);
             // A raw point can later be resolved against an event-time visual
@@ -201,10 +203,20 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         {
             ExpireGesture(now);
             if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
-                gesture is not{Key:9} pending || pending.Sequence!=sequence || pending.Reverse!=reverse)return false;
+                focusRequests.Count==0 || focusRequests.Peek() is not{} pending || pending.Sequence!=sequence || pending.Reverse!=reverse)return false;
             if(!Available(current,foreground)){ClearGeometry();return false;}
-            if(!AcceptRegions(entries,out var accepted)){gesture=null;focused=null;ResetSamples();return false;}
-            SelectFocus(accepted,reverse);gesture=null;completed=null;ResetSamples();return true;
+            if(!AcceptRegions(entries,out var accepted)){focusRequests.Clear();gesture=null;focused=null;keyboard=null;ResetSamples();return false;}
+            focusRequests.Dequeue();SelectFocus(accepted,reverse);
+            if(keyFocusBarrier==pending.Sequence){
+                keyFocusBarrier=0;
+                if(focused==null){gesture=null;keyboard=null;ResetSamples();}
+                else{
+                    keyTarget=focused;
+                    if(keyboard!=null)keyboard=keyboard with{Entry=focused};
+                }
+            }
+            if(gesture is{Key:9} tab&&tab.Sequence==pending.Sequence){gesture=null;ResetSamples();}
+            completed=null;return true;
         }
     }
     private void SelectFocus(AcceptedEntry[] visible,bool reverse)
@@ -225,7 +237,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             Complete(new(downSample,pending.IssuedAt,pending.Sequence,pending.X,pending.Y,pending.Key),now);
         else{completed=null;gesture=null;}
     }
-    private void ResetSamples(){downSample=null;upSample=null;keyTarget=null;downSampleReceived=false;upSampleReceived=false;}
+    private void ResetSamples(){downSample=null;upSample=null;keyTarget=null;keyFocusBarrier=0;downSampleReceived=false;upSampleReceived=false;}
     private static bool AcceptRegions(IReadOnlyList<RoomNativeButton> entries,out AcceptedEntry[] result)
     {
         result=Array.Empty<AcceptedEntry>();if(entries==null || entries.Count>4096)return false;
@@ -249,14 +261,21 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             {
                 if(!keysHeld.Add(key))return;
                 completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();
-                if(!Available(current,foreground))return;
+                if(!Available(current,foreground)){focusRequests.Clear();return;}
                 if(key==9)
                 {
-                    if(sampledMouse)BeginGesture(now,0,0,key,reverse);
+                    if(sampledMouse){
+                        if(focusRequests.Count>=64){ClearGeometry();return;}
+                        if(BeginGesture(now,0,0,key,reverse))focusRequests.Enqueue(gesture!);
+                    }
                     else SelectFocus(buttons,reverse);
                     return;
                 }
-                if(focused!=null && BeginGesture(now,0,0,key)){keyboard=new(focused,now,gesture!.Sequence,Key:key);keyTarget=focused;}
+                if((focused!=null||focusRequests.Count>0) && BeginGesture(now,0,0,key)){
+                    keyboard=new(focused,now,gesture!.Sequence,Key:key);
+                    if(focusRequests.Count>0)keyFocusBarrier=focusRequests.Last().Sequence;
+                    else keyTarget=focused;
+                }
             }
             else
             {
@@ -264,7 +283,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
                 var press=keyboard;if(press==null || press.Key!=key)return;
                 keyboard=null;
                 if(gesture==null || gesture.Key!=key || gesture.Released)return;
-                if(!Available(current,foreground) || focused!=press.Entry){gesture=null;return;}
+                if(!Available(current,foreground) || keyFocusBarrier==0&&focused!=press.Entry){gesture=null;return;}
                 gesture=gesture with{Released=true};if(gesture.SampleKeyboard)CompleteSamples(now);else Complete(press,now);
             }
         }
@@ -285,7 +304,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     }
     private void Complete(Press press,long now)
     {
-        if(gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
+        if(press.Entry==null || gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
         completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard);
     }
     private bool Expired(long issued,long now)
@@ -295,6 +314,12 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     }
     private void ExpireGesture(long now)
     {
+        while(focusRequests.Count>0&&Expired(focusRequests.Peek().IssuedAt,now)){
+            var expired=focusRequests.Dequeue();
+            if(keyFocusBarrier!=0&&expired.Sequence<=keyFocusBarrier || gesture is{Key:9} tab&&tab.Sequence==expired.Sequence){
+                gesture=null;keyboard=null;completed=null;ResetSamples();
+            }
+        }
         if(gesture!=null && Expired(gesture.IssuedAt,now))
         {
             gesture=null;mouse=null;keyboard=null;ResetSamples();
@@ -329,7 +354,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     }
     private void ClearGeometry()
     {
-        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;sampledMouse=false;ResetSamples();
+        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;sampledMouse=false;focusRequests.Clear();ResetSamples();
         // Preserve held edges until UP. Auto-repeat after refresh/geometry change
         // must not turn into a new physical DOWN.
     }

@@ -1489,3 +1489,13 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] tab-visible-core-build完整四阶段通过；常规start Core96444/Player49548/Watchdog78756/config31380，日志20261004_054313.txt。identity共享D配置器OTHER/exit1且精确路径核验；正常关闭、watcher25867 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official GUID目录0。以下改动随具名阶段提交保存。
 
 - [ ] 接续本地功能：连续Tab及Tab取样尚未返回时立即Enter/Space的Core顺序仲裁；当前单次焦点请求只保留最新gesture，不能把本段宣称为快速键盘全链完成。随后Core零序号兼容收口与持续作者动画/最终组合门槛；实际Core OS/DPI/锁屏/还原仍待系统凭据宿主解除。拖动暂缓、无新增网络专项，完整16项就绪1/16≈6%，最终7项/单次P5审查保持待执行。
+
+## P5 连续Tab与取样待回时激活顺序（2026-10-04，BASE 910b964）
+一句话目标：连续真实Tab/ShiftTab每次意图按原顺序处理，紧接的Enter/Space即使UP先到也等待此前Tab的最终焦点，再沿原始QPC/键/序号发送一对并取样完成。
+范围：Core有界未回Tab队列与焦点屏障、可测试私有键派发协调器及真实WebWebView2接线；两个键边沿保持实际时间，不因等待重新签输入。新鼠标/几何/会话撤销仍取消待办，焦点样本不生成动作；原单个激活手势覆盖语义不扩展为多动作队列。拖动暂缓，无新网络专项。
+先连续Tab/早到UP/屏障截止的生产Core功能RED，再真实ReleasePlayer与生产Core类组合验证；Core原始OS事实/完整Core窗口/动作回复fixture单列，系统凭据宿主未解除时不重复桌面点击。改C#后完整build→start/身份→正常退出、原四文件保持、具名提交；最终卡第4/5项集中，完整16项就绪1/16≈6%，不中途确认或合并。
+- [x] Core有界FIFO保留每次未回Tab，Enter/Space等待此前最终焦点；私有派发协调器在早到UP时发送原QPC/键/序号的一对。API编译RED后实质行为RED291/295→GREEN295/295，过期Tab取消等待键，不续签期限。
+- [x] keys-ordered-moving-official-wire实际ReleasePlayer/正式宿主加生产Core authority/key delivery整轮exit0：两个未回ShiftTab逐一选second→first，早到Enter UP等最终focus再只发原QPC/序号的一对，两份实际可见样本形成生产proof后仅一次动作；前台保持。raw OS边沿/完整Core窗口/动作回复仍fixture，原鼠标/移动键/焦点/切页/暂停/撤销回归通过。
+- [x] Core295/295与实际生产Core类/ReleasePlayer组合通过；keys-ordered-core-build四阶段，常规启动四路径/产品身份核对及正常关闭、watcher51624 exit0，原四文件保持、进程/监听/原生GUID夹具0；本节随具名阶段提交保存。
+
+- [ ] 接续Core零序号兼容收口与持续作者动画组合；实际Core OS/DPI/锁屏/故障还原及最终7项/单次P5审查保持。拖动暂缓，系统凭据窗未解除不重复桌面点击，本地功能优先、无新增网络专项，完整16项就绪1/16≈6%。

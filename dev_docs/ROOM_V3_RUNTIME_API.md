@@ -269,4 +269,9 @@ ReadButtons与ReadCapabilities可展示source声明入口和保护动作授权�
 ### 原生单次Tab与本地移动焦点（2026-10-04）
 Core raw Tab/ShiftTab在正式eventSamples下冻结单次焦点请求；private Kind=focus、Key9、Reverse只供所属Player读取当前官方可见样本，不arm/转发作者键或释放动作。Core现场OS/当前安装/声明复核后SampleFocus按当前TabIndex与稳定entry选择，不产生动作proof；静止兼容路径仍直接选边界表。焦点只是显示，Enter/Space另需两边可见完成。
 正式DOM轮廓按本地RAF已绘制多边形更新，不提交逐帧geometry；入口暂时不可见只隐藏轮廓并保留逻辑entry，commit/失效/暂停仍清空。单次Tab Core291/291、DOM52/52、队列17/17及实际移动正式Player通过。
-目前Core只保存最新未回焦点gesture，连续Tab与取样待回时立即激活的顺序收口继续；实际Core物理键/选择包/回复不由隔离Player的fixture替代。
+历史单次Tab阶段（910b964）Core只保存最新未回焦点gesture，连续Tab与取样待回时立即激活的顺序收口继续；实际Core物理键/选择包/回复不由隔离Player的fixture替代。
+
+### 连续Tab与待回焦点的键派发（2026-10-04）
+正式eventSamples模式保存至多64个未回Tab请求，SampleFocus只接FIFO首项并逐次按当前可见表推进。原始Enter/Space可在没有已定焦点但此前Tab待回时记录；内部KeyReady=false直到此前最后Tab完成，原始UP先到仍保留Released。RoomNativeKeyDelivery保存私有scan/extended信息，在最终focus通知后发送原QPC/键/序号的DOWN与已记录UP；不为等待签发新的物理时间或关联。键盘两个当前可见样本仍必需。
+原动作手势只保留最新一个；新鼠标/几何/会话、错误样本或过期前置Tab取消待键。协调器锁可读取输入leaf，leaf不回调IPC或协调器；接线在SampleNativeGeometry返回后通知焦点并Flush。私有DTO与作者API没有新字段。
+生产Core功能实质RED291/295→GREEN295/295；实际ReleasePlayer返回的连续ShiftTab/Enter样本经生产authority/key delivery完成最终entry一次动作。该探针raw OS边沿/完整Core窗口/动作回执仍fixture；实际Core OS/DPI/锁屏与最终组合保持待验收。

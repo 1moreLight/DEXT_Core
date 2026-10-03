@@ -378,3 +378,19 @@ tab-visible-moving-official-wire实际ReleasePlayer+生产index/main/dom/native/
 tab-visible-core-build四阶段后常规start Core96444/Player49548/Watchdog78756/config31380，日志20261004_054313.txt。identity共享D配置器OTHER/exit1且精确路径独立核验；常规恢复原v2不计v3物理键。正常退出、watcher25867 exit0，原四文件hash/缺失保持、Dext进程/开发监听/原生author及official临时目录0，Dext保持关闭。
 当前实现只保留一个未返回的Core焦点gesture；新的raw DOWN会替换它。快速连续Tab和Tab采样待回时立即Enter/Space需继续顺序仲裁，不能据此称完整快速键盘已交付。Core零序号兼容、持续作者动画组合与真实Core OS/DPI/锁屏/还原及最终7项/单次P5审查继续；系统凭据窗未解除，本轮没有重复Core桌面点击。
 最终人工沿卡第4项Tab/ShiftTab、鼠标/Enter/Space一次动作、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行；拖动按用户暂缓，无新增网络专项/中途确认/master合并，完整16项就绪1/16=6.25%（约6%），13/16及16/16目标保持。
+
+## P5 连续Tab与取样待回时激活顺序（2026-10-04，BASE 910b964）
+一句话目标：连续真实Tab/ShiftTab每次意图按原顺序处理，紧接的Enter/Space即使UP先到也等待此前Tab的最终焦点，再沿原始QPC/键/序号发送一对并取样完成。
+范围：Core有界未回Tab队列与焦点屏障、可测试私有键派发协调器及真实WebWebView2接线；两个键边沿保持实际时间，不因等待重新签输入。新鼠标/几何/会话撤销仍取消待办，焦点样本不生成动作；原单个激活手势覆盖语义不扩展为多动作队列。拖动暂缓，无新网络专项。
+先连续Tab/早到UP/屏障截止的生产Core功能RED，再真实ReleasePlayer与生产Core类组合验证；Core原始OS事实/完整Core窗口/动作回复fixture单列，系统凭据宿主未解除时不重复桌面点击。改C#后完整build→start/身份→正常退出、原四文件保持、具名提交；最终卡第4/5项集中，完整16项就绪1/16≈6%，不中途确认或合并。
+- [x] Core有界FIFO保留每次未回Tab，Enter/Space等待此前最终焦点；私有派发协调器在早到UP时发送原QPC/键/序号的一对。API编译RED后实质行为RED291/295→GREEN295/295，过期Tab取消等待键，不续签期限。
+- [x] keys-ordered-moving-official-wire实际ReleasePlayer/正式宿主加生产Core authority/key delivery整轮exit0：两个未回ShiftTab逐一选second→first，早到Enter UP等最终focus再只发原QPC/序号的一对，两份实际可见样本形成生产proof后仅一次动作；前台保持。raw OS边沿/完整Core窗口/动作回复仍fixture，原鼠标/移动键/焦点/切页/暂停/撤销回归通过。
+- [x] Core295/295与实际生产Core类/ReleasePlayer组合通过；keys-ordered-core-build四阶段，常规启动四路径/产品身份核对及正常关闭、watcher51624 exit0，原四文件保持、进程/监听/原生GUID夹具0；本节随具名阶段提交保存。
+
+## P5 连续Tab与早到激活的生产Core/实际Player验证（2026-10-04）
+Core保存至多64个未回Tab/ShiftTab原始DOWN请求，SampleFocus只处理FIFO首项，按各自当前可见表逐一推进。紧接Enter/Space冻结原始键/scan/QPC/正数关联，等待此前最后Tab；早到UP只标释放，最终焦点确定后私有RoomNativeKeyDelivery发送一对原序号DOWN/UP。新激活仍覆盖旧激活，不扩展多动作队列；新鼠标/几何/会话取消等待，过期前置Tab取消键，不能使用旧焦点或续签1500ms。焦点请求不创建动作证明。
+编译新API的RED后，生产功能实质keys-ordered-core-behavior-red291/295→keys-ordered-core-green295/295：两次未回Tab、Enter/Space早到UP和前置Tab过期均覆盖。原单次Tab、动态样本/source动作等回归保持。新增输入探针首次把Guid SessionId写成string导致CS0029，按真实DTO类型修正后构建成功；这次夹具编译错误不计生产行为RED。
+keys-ordered-moving-official-wire实际ReleasePlayer+生产index/main/dom/native/frame/media/SDK，接入生产RoomNativeInputAuthority/RoomNativeKeyDelivery整轮exit0：两个未回ShiftTab的实际样本逐一选source second→first；已记录的Enter UP等待最终焦点再发送原QPC/序号的一对，两份实际可见样本在生产authority中形成SampledVisual，最终entry只产生一次动作，原前台保持。原鼠标、移动键/焦点、切页/共享文档、暂停/最新修订、撤销回归通过。原始OS边沿、完整Core窗口/动作回复仍fixture；不代填实际Core OS/物理DPI。
+keys-ordered-core-build四阶段通过后，常规start Core92332/Player98004/Watchdog63388/config74552，日志20261004_060652.txt。identity脚本共享D缓存配置器OTHER/exit1，四精确绝对路径另行核验；常规恢复原v2，不计v3物理键。精确正常关闭、watcher51624 exit0，原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/原生author及official与Core GUID临时目录0，Dext保持关闭。
+下一段为Core零序号兼容收口与持续作者动画组合；实际Core OS/DPI/锁屏/故障还原及最终七项/单次P5审查继续，系统凭据窗未解除时不重复桌面点击。拖动按用户暂缓，本地功能优先、无新增网络专项/中途验收/master合并。完整16项开发就绪仍1/16=6.25%（约6%），13/16及16/16目标不变。
+最终人工第4项增加连续Tab/ShiftTab后立即Enter/Space，确认最终可见焦点只动作一次；长按与AltTab取消。第5项集中验证移动/遮挡/同动作多入口与物理DPI，拖动部分暂缓。
