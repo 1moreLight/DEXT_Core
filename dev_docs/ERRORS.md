@@ -260,3 +260,5 @@
 
 | #198 | WinForms隐藏不等于原生controller隐藏，暂停可报ERROR_INVALID_STATE | [renderer](errors/renderer.md) |
 | #199 | 布局与暂停探针必须核对真实接口、活动消息与附着后的DPI | [toolchain](errors/toolchain.md) |
+
+| #200 | 显式损坏个人图标覆盖不能回退作者默认值 | [renderer](errors/renderer.md) |

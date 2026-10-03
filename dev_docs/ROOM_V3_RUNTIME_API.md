@@ -1,6 +1,6 @@
 # Room v3 作者 API v1
 
-> V3-P5-001开发中：SDK、纯运行模型、Core生命周期、Player上下文/资源边界及原生输入私有接线已实现；启动完成、同Player闲置、生产DOM/消费者投影、个人布局和最终物理/安全验收仍在Task2–4。自动测试不代表原生宿主已经交付。状态见V3_DELIVERY。
+> V3-P5-001开发中：SDK、Core生命周期、Player资源/输入私有接线、持续DOM与个人布局Core/官方读取和有效呈现基础已实现；桌面长按保存、精确输入及最终锁屏/物理DPI/安全门槛继续。自动测试不代表整包已经交付。状态见V3_DELIVERY。
 
 ## 作者接入
 
@@ -219,4 +219,9 @@ Core私有Retire仅撤销易失会话/连接/订阅，保留已提交Desk checkp
 ## Task4个人布局Core与私有IPC基础（2026-10-03）
 个人快照layout由独立revision、icons[deskId][iconId]={x,y}、components[componentId]={x,y,width,height}组成，1920×1080设计坐标。Core只投影当前安装仍认识的Desk/图标及role=widget组件；不返回KV、授权或其他副本。旧format1缺字段初始化为空，显式null/损坏拒绝且保留原文件。另存不复制layout。
 固定官方顶层新增私有layoutRead（身份字段，无consumer）与layoutSave（额外layoutRevision、change），change只允许icon/当前deskId/id/x/y，或widget/id/x/y/width/height。所有数值有限且有界，不接受作者票据、目标路径、Dock/scene或未知字段。Core写入限制当前可操作DesktopPlayer桌面、实际前台、无暂停/锁屏/转场；独立layout CAS与个人快照全局revision共同原子发布，未改变无需写盘，发布失败保留两revision及原字节。
-layoutRead可读取当前暂停/starting的安全投影；Player允许该Core私有metadata响应排队，原生JS真正暂停时不会执行新的请求，恢复后才处理。其余暂停native回复继续拒绝。此基础尚未应用到DOM；长按编辑/拖动、占用避让、有效按钮几何、临时等比缩小与实际Core保存重启仍继续，不代填最终人工验收。
+layoutRead可读取当前暂停/starting的安全投影；Player允许该Core私有metadata响应排队，原生JS真正暂停时不会执行新的请求，恢复后才处理。其余暂停native回复继续拒绝。该Core/IPC基础阶段尚未应用到DOM；后续官方视图基础见下节，最终人工验收仍不代填。
+
+## Task4官方有效布局与按钮映射基础（2026-10-03）
+固定官方layout-model.js只负责纯布局数学。Core保存值保持1920×1080设计坐标；官方视图在真实CSS视口中先保留普通图标和Widget的基准尺寸，合法原位置优先保留，冲突项先移位再等比缩小，完全无空位不显示。有效矩形换回设计坐标用于同一组变换；不修改保存值、安装或作品。
+DOM每个新scope以layoutRead读取，只有当前token/generation/session/revision/Desk回执可应用；迟到读取不阻塞新Desk。失败保留已确认呈现，但layout.ready=false。共享Widget固定原父节点与作者逻辑viewport，仅wrapper组合矩阵改变；接受的作者局部按钮矩形独立缓存，当前模型仍允许该consumer/区域时才按有效placement重算。占用区按全局/当前Desk过滤，旧限制保留直到scene显式更新，避免新修订/resize清空期间误当解除。
+此阶段还没有桌面编辑或layoutSave入口。轴对齐布局计算不是旋转精确命中；动画/遮挡/多图标/焦点、实际保存/重启及人工DPI仍继续，不减少完整要求。

@@ -78,7 +78,7 @@ internal static class NativeCoreLiveProbe
         try
         {
             if(systemControls){controlDevices=new();controlDevices.StartMedia(Path.Combine(Path.GetFullPath(mediaDirectory),"clip.mp4"));}
-            foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
+            foreach(var file in new[]{"LivelyInfo.json","index.html","main.js","style.css","layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})File.Copy(Path.Combine(hostDirectory,file),Path.Combine(host.FullName,file));
             File.AppendAllText(Path.Combine(host.FullName,"main.js"),"""
                 ;(()=>{const documents=new Map(),audio=new Map(),storage=new Map(),actions=new Map(),slots=new Map(),nativeEvents=[],stages=[];let nav=0,first=null;
                   chrome.webview.addEventListener('message',e=>{const v=e.data;if(v.type==='dext:v3-native-event'&&v.kind==='activate'||v.type==='dext:v3-native-response'&&v.inputSequence>0)nativeEvents.push({type:v.type,kind:v.kind,status:v.status,inputSequence:v.inputSequence,inputConsumed:v.inputConsumed});if(nativeEvents.length>16)nativeEvents.shift();});
@@ -90,7 +90,7 @@ internal static class NativeCoreLiveProbe
                     if(!first&&r.inputReady&&r.lifecycle.stage==='desktop')first=performance.now();
                     if(!__AUTHOR_NAV__&&first&&performance.now()-first>700&&nav===0&&r.currentDeskId==='home'&&r.lifecycle.stage==='desktop'&&!d.paused){nav++;chrome.webview.postMessage(JSON.stringify({type:'dext:v3-request-desk',sessionId:d.sessionId,deskId:'focus'}));}
                     document.title='DEXT_V3_LIVE:'+JSON.stringify({generation:d.runtimeGeneration,session:d.sessionId,revision:d.revision,current:r.currentDeskId,target:r.targetDeskId,
-                      inputReady:r.inputReady,inputVersion:r.inputVersion,stage:r.lifecycle.stage,paused:d.paused,frames:r.frames.count,instances:r.instances.map(v=>v.instanceId),documents:[...documents],nav,
+                      inputReady:r.inputReady,inputVersion:r.inputVersion,layout:r.layout?{revision:r.layout.revision,ready:r.layout.ready,error:r.layout.error}:null,stage:r.lifecycle.stage,paused:d.paused,frames:r.frames.count,instances:r.instances.map(v=>v.instanceId),documents:[...documents],nav,
                       error:r.lastError,frameError:r.frames.lastError,stages,audio:[...audio],storage:[...storage],actions:[...actions],nativeEvents,slots:[...slots],images:[...document.querySelectorAll('img')].map(v=>({consumer:v.parentElement.dataset.consumer,width:v.naturalWidth,hidden:v.parentElement.hidden})),videos:[...document.querySelectorAll('video')].map(v=>({consumer:v.parentElement.dataset.consumer,hidden:v.parentElement.hidden,ready:v.readyState,time:v.currentTime,paused:v.paused,loop:v.loop,muted:v.muted}))});
                   };
                   const original=dextNativePlaybackChanged;window.dextNativePlaybackChanged=value=>{const accepted=original(value);report();return accepted;};
@@ -254,6 +254,8 @@ internal static class NativeCoreLiveProbe
             var parent=GetParent(playerWindow);var className=new StringBuilder(128);GetClassName(parent,className,className.Capacity);Require(className.ToString() is "WorkerW" or "Progman","real desktop parent: "+className);
             Require(ObservedStartup(final),"actual "+(lifecycleMedia??"GIF")+" startup observed before desktop on the new document");
             Require(ObservedAudio(final),"actual Core allows declared rendering of scene/shared WebAudio clocks");
+            Require(ObservedLayout(initial!)&&ObservedLayout(final),"actual private Core layout read accepted before and after Desk commit");
+            events.Add("PASS actual official DOM reads only current private Core layout revision zero before and after Desk commit");
             if(systemControls){
                 Require(changedVolumeObserved&&restoredVolumeObserved&&clicksSent==8&&controlDevices!.Commands>=5,"all audio and five owned media intents actually reached Windows");
                 Require((int?)final["nav"]==0&&final["actions"] is JArray values&&values.Any(v=>v[1]?["results"] is JArray replies&&replies.Count==8&&replies.All(r=>(string?)r["status"]=="accepted")),"all eight authored actions accepted without a trusted navigation driver");
@@ -306,6 +308,8 @@ internal static class NativeCoreLiveProbe
             Require(ObservedStartup(restartedHost),"new Player replays "+(lifecycleMedia??"GIF")+" startup once before restored desktop");
             Require(ObservedAudio(restartedHost),"actual Core restart releases restored scene/shared AudioContexts");
             Require(ObservedStorage(restartedHost,true),"new SDK documents read the same persisted consumer values without test rewritten data");
+            Require(ObservedLayout(restartedHost),"new official DOM reloads the same Core layout after normal restart");
+            events.Add("PASS actual official DOM reloads current private Core layout after normal restart (no layout save performed)");
             Require(System.Text.Json.JsonSerializer.Serialize(personal.Read().Rooms[roomId].Storage)==System.Text.Json.JsonSerializer.Serialize(persisted),"restart and permission recovery did not overwrite persisted author values");
             events.Add("PASS actual Core restart restores persisted consumer JSON into two new SDK documents");
             events.Add("PASS actual normal Core restart restores committed focus/same installation with new Player/session/SDK documents/"+(lifecycleMedia??"GIF")+" startup/decoded background and no test navigation");
@@ -535,6 +539,7 @@ internal static class NativeCoreLiveProbe
             core.Dispose();core=null;
         }
         async Task<List<GetWallpapersResponse>> Wallpapers(){var items=new List<GetWallpapersResponse>();using var stream=client!.GetWallpapers(new Empty(),deadline:DateTime.UtcNow.AddSeconds(10));while(await stream.ResponseStream.MoveNext(CancellationToken.None))items.Add(stream.ResponseStream.Current);return items;}
+        static bool ObservedLayout(JObject observation)=>(long?)observation["layout"]?["revision"]==0&&(bool?)observation["layout"]?["ready"]==true&&observation["layout"]?["error"]?.Type==JTokenType.Null;
         static bool ObservedStorage(JObject observation,bool restarted=false)=>observation["storage"] is JArray values&&values.Count==2&&values.All(v=>v is JArray pair&&pair.Count==2&&pair[1] is JObject storage&&
             (bool?)storage["initialized"]==true&&(int?)storage["reads"]>0&&storage["lastError"]?.Type==JTokenType.Null&&(string?)storage["dateType"]=="string"&&(string?)storage["value"]?["owner"]==(string?)pair[0]&&(!restarted||storage["existing"]?.Type==JTokenType.Object));
         static bool ObservedStorageDenied(JObject observation)=>observation["storage"] is JArray values&&values.Count==2&&values.All(v=>v is JArray pair&&pair[1] is JObject storage&&

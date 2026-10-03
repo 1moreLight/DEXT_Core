@@ -2,6 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const {createDomHost}=require('./dom-host.js');
 const {createRuntime}=require('./runtime-model.js');
 const {createNativeHost}=require('./native-host.js');
+const layoutModel=require('./layout-model.js');
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 function fixture(options={}){
  const room={version:3,apiVersion:1,id:'room',resources:['scene.html','widget.html','bg.svg','start.svg','idle.svg'],roomScene:{entry:'scene.html',capabilities:['desk.read']},
@@ -14,11 +15,11 @@ function fixture(options={}){
  const calls=[],controls=[],frames=new Map(),medias=new Map(),raf=new Map();let now=0,id=0;
  const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
  const document={createElement:node};const container=node('root');
- const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[]});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
+ const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
  const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
  const host=createDomHost({document,container,context:{runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
-   createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:()=>({width:1920,height:1080,dpr:1}),now:()=>now,
+   layoutModel,createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:options.getViewport||(()=>({width:1920,height:1080,dpr:1})),now:()=>now,
    requestAnimationFrame:cb=>{raf.set(++id,cb);return id;},cancelAnimationFrame:id=>raf.delete(id),setTimeout:options.setTimeout,clearTimeout:options.clearTimeout});
  async function advance(ms){now+=ms;const tasks=[...raf];raf.clear();for(const [,cb]of tasks)cb(now);await flush();}
  return{host,room,snap,calls,controls,frames,medias,bridge,container,advance,raf};
@@ -205,4 +206,67 @@ test('configured idle hides the desktop icons while retaining their nodes for wa
  await f.host.acceptSnapshot(f.snap(2,{operable:false,lifecycle:{stage:'idle',playbackPaused:false,locked:false,revision:2}}));
  assert.equal(icon.hidden,true);assert.equal(root.children.find(v=>v.dataset.consumer==='slot.idle').hidden,false);
  assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);f.host.dispose();
+});
+
+
+function savedLayout(revision=1){return{revision,icons:{home:{icon:{x:240,y:360}}},components:{shared:{x:600,y:240,width:200,height:100}}};}
+function wrapper(f,consumer){return f.container.children[0].children.find(v=>v.dataset.consumer===consumer);}
+test('private Core layout is read in current scope and applied without replacing shared documents',async()=>{
+ const f=fixture({request:method=>method==='layoutRead'?Promise.resolve({status:'accepted',layout:savedLayout()}):undefined});await f.host.ready;
+ assert.deepEqual(f.calls.find(v=>v.method==='layoutRead').params,{});
+ assert.equal(f.calls.find(v=>v.method==='layoutRead').scope.revision,1);
+ assert.equal(wrapper(f,'component.shared').style.left,'600px');
+ const icon=f.container.children[0].children.find(v=>v.className==='dext-v3-icon');assert.equal(icon.style.left,'240px');assert.equal(icon.style.top,'360px');
+ const widget=[...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node;
+ await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));
+ assert.equal([...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node,widget);
+ assert.equal(f.host.readDiagnostics().layout.revision,1);assert.equal(f.host.readDiagnostics().layout.ready,true);
+ assert.equal(f.calls.filter(v=>v.method==='layoutSave').length,0);f.host.dispose();
+});
+test('a late layout read cannot apply to a newer Desk or block its rendering',async()=>{
+ let release;const f=fixture({request:(method,params,scope)=>method==='layoutRead'?(scope.revision===1?new Promise(r=>release=r):Promise.resolve({status:'accepted',layout:savedLayout(2)})):undefined});
+ await flush();await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(wrapper(f,'component.shared').style.left,'600px');
+ const old=savedLayout(1);old.components.shared.x=100;release({status:'accepted',layout:old});await f.host.ready;
+ assert.equal(wrapper(f,'component.shared').style.left,'600px');assert.equal(f.host.readDiagnostics().layout.revision,2);f.host.dispose();
+});
+test('author local button geometry follows effective personal placement and logical scaling',async()=>{
+ const personal=savedLayout();personal.components.shared.width=100;personal.components.shared.height=50;
+ const f=fixture({request:method=>method==='layoutRead'?Promise.resolve({status:'accepted',layout:personal}):undefined});await f.host.ready;
+ await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]});
+ const button=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='component.shared');
+ assert.equal(button.x,605/1920);assert.equal(button.y,250/1080);assert.equal(button.width,15/1920);assert.equal(button.height,20/1080);
+ assert.equal(wrapper(f,'component.shared').style.width,'200px');assert.equal(wrapper(f,'component.shared').style.height,'100px');f.host.dispose();
+});
+test('viewport layout retains baseline CSS size and restores saved positions without saving or remounting',async()=>{
+ let viewport={width:1920,height:1080,dpr:1};
+ const f=fixture({getViewport:()=>viewport});await f.host.ready;const widget=[...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node;
+ viewport={width:960,height:540,dpr:2};await f.host.resize();
+ const item=f.host.readDiagnostics().layout.items.find(v=>v.key==='widget:shared');
+ assert.equal(item.effectiveRect.width,400);assert.equal(item.effectiveRect.height,200);assert.equal(item.scale,1);
+ assert.equal(wrapper(f,'component.shared').style.width,'200px');
+ viewport={width:1920,height:1080,dpr:1};await f.host.resize();
+ assert.equal(wrapper(f,'component.shared').style.left,'400px');assert.equal(wrapper(f,'component.shared').style.top,'50px');
+ assert.equal([...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node,widget);
+ assert.equal(f.calls.filter(v=>v.method==='layoutSave').length,0);f.host.dispose();
+});
+test('scene occupied areas affect official layout and remain reserved until an explicit new report',async()=>{
+ const f=fixture();await f.host.ready;
+ const occupied=[{id:'reserved',x:400,y:50,width:200,height:100}];
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,occupied});
+ let item=f.host.readDiagnostics().layout.items.find(v=>v.key==='widget:shared');
+ assert.equal(layoutModel.validateDrop({candidate:item.effectiveRect,itemKey:item.key,occupied,otherItems:[]}).accepted,true);
+ await f.host.acceptSnapshot(f.snap(2));
+ item=f.host.readDiagnostics().layout.items.find(v=>v.key==='widget:shared');
+ assert.equal(layoutModel.validateDrop({candidate:item.effectiveRect,itemKey:item.key,occupied,otherItems:[]}).accepted,true);
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:2,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,occupied:[]});
+ assert.equal(wrapper(f,'component.shared').style.left,'400px');assert.equal(wrapper(f,'component.shared').style.top,'50px');f.host.dispose();
+});
+test('failed layout refresh keeps confirmed presentation and disables layout saving readiness',async()=>{
+ const f=fixture({request:(method,params,scope)=>method==='layoutRead'?Promise.resolve(scope.revision===1?{status:'accepted',layout:savedLayout()}:{status:'storageUnavailable'}):undefined});
+ await f.host.ready;await f.host.acceptSnapshot(f.snap(2));
+ assert.equal(wrapper(f,'component.shared').style.left,'600px');assert.equal(f.host.readDiagnostics().layout.ready,false);assert.equal(f.host.readDiagnostics().layout.error,'storageUnavailable');f.host.dispose();
+});
+test('disposed host drops an outstanding layout read without reviving DOM',async()=>{
+ let release;const f=fixture({request:method=>method==='layoutRead'?new Promise(r=>release=r):undefined});await flush();f.host.dispose();
+ release({status:'accepted',layout:savedLayout()});await f.host.ready;assert.equal(f.container.children.length,0);assert.equal(f.frames.size,0);
 });

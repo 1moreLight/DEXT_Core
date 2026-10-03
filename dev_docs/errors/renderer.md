@@ -613,3 +613,6 @@ WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。�
 实际ReleasePlayer接线回归中，managed control=False/controller=True，TrySuspendAsync报COM 0x8007139F并走当前暂停失败关闭。SDK包装提示“disposed”不能据此认定控件真的被销毁；原生错误与本次布尔诊断符合ERROR_INVALID_STATE/IsVisible要求。外部父窗和样式操作是否造成初始不一致仍是推断。
 复用当前固定WinForms SDK初始化RasterizationScale已使用的controller字段，在静帧可见并隐藏managed控件后明确controller.IsVisible=false且复核，再有界TrySuspend；恢复按当前revision同步两者可见后释放静帧。保留串行门、三秒界限、迟到拒绝和失败关闭自己的Player，不放宽生产暂停策略。新增私有IPC日志只报告原生渲染完成，不含截图或个人布局。
 官方约束：[TrySuspendAsync](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)；同错误的厂商追踪：[WebView2Feedback #2398](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2398)。
+
+## #200 显式损坏覆盖与缺少覆盖应区分（2026-10-03）
+新纯布局模块初版把非对象的已保存图标位置当作缺少位置，实际行为回归20/21失败。使用自有ID是否存在来区分，存在却无效必须拒绝，不静默回退作者默认；缺少覆盖才用默认格子。修复后21/21。Core严格持久校验与私有native回复仍是前置边界，纯视图层也不吞损坏输入。

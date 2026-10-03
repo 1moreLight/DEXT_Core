@@ -19,7 +19,7 @@ internal static class OfficialHostWireProbe
         var root=Directory.CreateTempSubdirectory("Dext-v3-official-wire-");
         try
         {
-            foreach(var file in new[]{"index.html","main.js","style.css","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})
+            foreach(var file in new[]{"index.html","main.js","style.css","layout-model.js","runtime-model.js","native-host.js","frame-host.js","media-host.js","playback-host.js","dom-host.js"})
                 File.Copy(Path.Combine(Path.GetFullPath(hostDirectory),file),Path.Combine(root.FullName,file));
             var content=Directory.CreateDirectory(Path.Combine(root.FullName,"content"));File.Copy(Path.GetFullPath(sdk),Path.Combine(content.FullName,"sdk.js"));
             File.WriteAllText(Path.Combine(content.FullName,"bg.svg"),"<svg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'><rect width='1920' height='1080' fill='#172235'/></svg>");
@@ -85,10 +85,10 @@ internal static class OfficialHostWireProbe
                 async Task Command(string command)=>await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command,revision=expectedRevision})});
                 async Task<JObject> NextReport(string command){var value=await Next();Require((string?)value["report"]==command,"report "+command);return value;}
                 async Task<JObject> Next(){var stop=DateTime.UtcNow.AddSeconds(25);while(DateTime.UtcNow<stop){if(queue.TryDequeue(out var value)){
-                    if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(method is "invalidateGeometry" or "geometry" or "capabilities" or "data","official permitted native request");if(method=="geometry")geometries++;
+                    if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(method is "invalidateGeometry" or "geometry" or "capabilities" or "data" or "layoutRead","official permitted native request");if(method=="geometry")geometries++;
                         if(method=="capabilities"||method=="data")Require(consumer is "scene" or "component.shared","fixed actual consumer");
                         if(method=="data"){Require((string?)request["Capability"]=="time.read","declared actual data");ticks++;}
-                        await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null})});continue;}
+                        await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null,layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});continue;}
                     return value;
                 }if(process.HasExited)throw new Exception("Player exit: "+await errors);await Task.Delay(20);}throw new TimeoutException("official wire: "+string.Join("\n",log.TakeLast(8)));}
             }

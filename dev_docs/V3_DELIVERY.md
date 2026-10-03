@@ -114,3 +114,10 @@ Core布局/动作回归202/202、严格消息38/38、生产JS/SDK/原生媒体�
 layout-pause-controller-build完整成功。新实际controller可见性错误先复现后修复（#198）；最新layout-native-pause-gif-verified真实Rust安装/Core/WorkerW/ReleasePlayer整轮成功，实际屏幕GIF十次样本播放变化/暂停固定/恢复变化、同Player两次idle/wake/Core stop和原父窗/边界/Desk/session/文档/实例保持，finally原四文件字节/缺失状态与用户Room哈希恢复。
 常规start Core110068/Player31972/Watchdog24180/config109340，日志20261003_205127.txt；RPC观察active=False（--v3-status误把Core路径当expectedDesk后按夹具规则抛错，不记该命令通过）。identity脚本将所属D共享缓存配置器记OTHER，实际绝对路径独立核对。按PID/path正常关闭Core和配置器，watcher81581结束exit0；原四文件SHA256/缺失状态保持，OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles均0，保持Dext退出。
 当前仍是Core/IPC基础，DOM未读入个人布局，不能宣称桌面拖动、占用回滚、临时响应式或实际Core布局保存/重启已交付。继续纯视图布局及DOM；最终一次P5整体审查、七项集中人工门槛与全十六项/readiness1/16保持，不合并master。
+
+## Task4官方有效布局与Core读取补证（2026-10-03）
+纯layout-model 21/21（显式损坏覆盖20/21先失败后修复）、新增七项DOM行为RED→35/35，全部生产JS/SDK/原生媒体策略174/174。Core确认布局按稳定ID投影，saved/effective分开，合法原尺寸位置优先、冲突先移位再等比缩小、恢复视口回原保存位置；resize/占用绝不发Save。Widget保留原作者iframe逻辑尺寸、父节点/instanceId，已接受的局部按钮按有效placement重算且不累计偏移；占用限制保留到scene显式新报告。读取token/scope/Desk拒绝迟到、不阻塞新Desk，失败保留确认呈现并关闭保存准备状态。
+完整layout-dom-build成功，layout-dom-frame-media-wire实际ReleasePlayer整页/根与嵌套媒体/WebAudio/暂停/最新修订/作者攻击/撤销回归通过，Core回复在该夹具仍模拟。旧--no-build复制清单及模拟Core方法白名单未更新导致的两次夹具失败如实记录ERRORS #199，不记生产RED。
+最新layout-dom-core-live真实Rust安装/实际Core/WorkerW/ReleasePlayer/SDK读取当前私有layout revision0在切页前后和正常Core重启后均ready=true/error=null；同Player切页保留共享文档，新Core恢复同安装focus/KV/新SDK/GIF/视频，无测试导航。这里只验证布局读取，未执行layoutSave，不宣称桌面保存/重启非空覆盖已交付。finally原四文件字节/缺失状态及用户Room哈希恢复。
+常规start Core92228/Player118936/Watchdog70784/config8336，日志20261003_211317.txt，原v2 Player路径已核对；identity的所属D共享配置器记OTHER，绝对路径独立核验，未宣称全脚本OK。精确PID/path正常退出Core/配置器，watcher19473终止exit1（CtrlC），原四文件SHA256/缺失状态不变；OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles为0，保持Dext关闭。
+当前还没有长按编辑/拖动Save UI。下一段接官方Widget把手、编辑态空动作几何/原生pointer、UP一次原子保存与非法落点/失败回滚，再验证真实Core非空布局保存/重启。精确旋转/遮挡/多图标/焦点/物理DPI仍继续，最终一次P5整体审查、七项集中人工门槛、完整十六项/readiness1/16保持，不中途合并。

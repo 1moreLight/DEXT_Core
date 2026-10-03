@@ -1359,6 +1359,12 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] Task4个人布局Core/schema/私有接线：新layout字段读取真实RED（185/186），补Core布局及独立revision后通过；身份/数值/当前Desk与Widget限定/CAS/只读脱离/并发单胜者/写故障保留两revision/旧连接与角色及paused/locked/starting/transition门槛，首轮200/200。严格Player新方法36/38实际RED，JS私有入口3项实际RED，再接只读布局+闭合单item保存后38/38与native-host23/23。私有read在暂停可读取安全布局，save/作者数据/动作仍拒绝；未向frame/SDK增加能力。已补桥关闭/旧格式兼容与实际Player wire验证，继续构建/真实链条。
 - [ ] 个人布局尚未接DOM，当前不能宣称拖动/占用/响应式/实际Core重启保存通过。下一段官方DOM长按编辑/拖动回滚及视口临时布局，作者geometry使用有效Widget位置和实际同实例，不写room.json或安装快照。当前最终七项和16项/就绪1/16保持。
 
-- [ ] Task4官方视图纯布局计算计划（2026-10-03）：独立layout-model.js将Core保存值与当前CSS视口有效值分开；图标及role=widget稳定ID投影、全局/当前Desk占用过滤，先保留合法原尺寸位置，再移动冲突项，实在放不下才等比缩小。纯函数不发保存、不断言人工完成；拖动候选按同一占用/其他对象规则判断，局部按钮矩形按逻辑尺寸映射有效位置。先几何/不可变/恢复尺寸行为RED→GREEN，再接DOM，保持作者iframe逻辑尺寸及同实例。
+- [x] Task4官方视图纯布局计算计划（2026-10-03）：独立layout-model.js将Core保存值与当前CSS视口有效值分开；图标及role=widget稳定ID投影、全局/当前Desk占用过滤，先保留合法原尺寸位置，再移动冲突项，实在放不下才等比缩小。纯函数不发保存、不断言人工完成；拖动候选按同一占用/其他对象规则判断，局部按钮矩形按逻辑尺寸映射有效位置。先几何/不可变/恢复尺寸行为RED→GREEN，再接DOM，保持作者iframe逻辑尺寸及同实例。
 - [x] 个人布局Core/私有IPC基础最终验证：202/202、38/38、JS/SDK/媒体策略146/146，完整build成功；layout-private-wire-green实际ReleasePlayer接线（Core回包fixture）与layout-native-pause-gif-verified真实Core GIF整轮通过。原生controller显式可见性修复、活动回执和附着后DPI测试门槛见ERRORS #198/#199。
 - [x] 本阶段常规build后start：Core110068/Player31972/Watchdog24180/config109340，20261003_205127.txt；原v2 active=False。所属共享配置器路径独立核对，identity OTHER未冒称全脚本OK。正常精确PID/path关闭、watcher81581 exit0、原四文件hash/缺失状态保持，OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。DOM保存与占用/缩屏/实际布局重启仍待接入。
+
+- [x] Task4纯有效布局模块：模块缺失RED、损坏覆盖20/21行为RED后21/21。CSS视口原尺寸保留/移位优先/必要等比缩小/当前Desk占用/不可变/恢复位置/局部按钮映射及仿射逆变换通过，完全无空位placeable=false，不写个人快照。
+- [x] Task4官方DOM读入/呈现基础：新增七项行为RED后35/35，scope/Desk/读取token拒绝迟到、不阻塞新Desk、共享iframe保持逻辑尺寸及父节点、按钮按有效placement重算、resize不保存、占用保留到显式报告、失败保留已确认呈现/拒绝保存准备状态。生产全JS174/174。layout-model.js加入固定官方服务文件及三个实机夹具，最新完整layout-dom-build成功；layout-dom-frame-media-wire实际ReleasePlayer整页/原生媒体/作者策略回归通过（Core回包仍fixture）。
+- [ ] 官方桌面尚无长按编辑/拖动Save入口；正在补实际Core安全布局读取/正常重启验证，随后接长按、官方Widget把手/编辑覆盖层、指针UP原子Save、无效落点/失败回滚。空动作geometry仍保留鼠标转发，Core不会为编辑指针产生动作完成证明；不新增作者动作权限。
+- [x] 官方DOM实际Core读取补证：layout-dom-core-live在实际切页前后/正常Core重启后私有layout0均ready且无错误；原文档/新文档按生命周期保持，focus/KV/GIF/视频恢复，finally原四文件/用户Room恢复。本轮不执行layoutSave、不冒称非空覆盖实际保存通过。
+- [x] 本阶段完整build→常规start Core92228/Player118936/Watchdog70784/config8336、日志20261003_211317.txt，原v2 Player路径核对。identity所属共享配置器OTHER并核对绝对路径；精确正常退出Core/配置器、watcher19473 CtrlC结束exit1、原四文件hash/缺失状态不变；OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。

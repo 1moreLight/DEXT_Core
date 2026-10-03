@@ -9,7 +9,8 @@
   function failure(code){const e=new Error('Dext DOM: '+code);e.code=code;return e;}
   function createDomHost(options){
     const context=copy(options.context),room=context.manifest,document=options.document||root.document,container=options.container,native=options.native;
-    const model=(options.createRuntime||root.DextRuntimeModel.createRuntime)(room);
+    const model=(options.createRuntime||root.DextRuntimeModel.createRuntime)(room),layoutModel=options.layoutModel||root.DextLayoutModel;
+    if(!layoutModel)throw failure('layoutUnavailable');
     const raf=options.requestAnimationFrame||root.requestAnimationFrame.bind(root),cancel=options.cancelAnimationFrame||root.cancelAnimationFrame.bind(root),now=options.now||(()=>root.performance.now());
     const inventory=new Set(context.resources.map(r=>r.path)),desks=new Map(room.desks.map(d=>[d.id,d])),records=new Map(),icons=new Map();
     const later=options.setTimeout||root.setTimeout.bind(root),cancelTimer=options.clearTimeout||root.clearTimeout.bind(root),waits=new Set();
@@ -17,7 +18,8 @@
     function yieldRetry(){return new Promise(resolve=>{const wait={id:null,resolve};wait.id=later(()=>{waits.delete(wait);resolve();},50);waits.add(wait);});}
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
-    const actionFlights=new Set();
+    const actionFlights=new Set(),localButtons=new Map();
+    let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
     function resolveResource(path){
@@ -67,17 +69,42 @@
       const id=definition.consumerId.slice(10),source=desks.get(snapshot.currentDeskId).components.includes(id),target=desks.get(snapshot.targetDeskId).components.includes(id);
       return source&&target?'shared':target?'target':'source';
     }
+    function recomputeLayouts(state){
+      const next=new Map();
+      for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
+        const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
+        for(const item of layoutModel.resolveDeskLayout({items,viewport:state.viewport,occupied:layoutOccupied,deskId}))next.set(item.key,item);
+      }
+      effectiveLayouts=next;
+    }
+    function recordPlacement(record){
+      const definition=record.definition,author=definition.placement||{x:0,y:0,width:1920,height:1080};
+      if(definition.kind!=='widget')return author;
+      const item=effectiveLayouts.get('widget:'+definition.consumerId.slice(10));
+      return item?(item.placeable?item.effectiveRect:null):author;
+    }
     function layout(record){
-      const definition=record.definition,placement=definition.placement||{x:0,y:0,width:1920,height:1080},group=visualGroups[classification(definition)];
-      record.wrapper.hidden=!visible(definition);record.wrapper.style.left=placement.x+'px';record.wrapper.style.top=placement.y+'px';record.wrapper.style.width=placement.width+'px';record.wrapper.style.height=placement.height+'px';
-      // Every wrapper remains under one fixed parent. Reparenting an iframe
-      // during a transition would reload its document and lose shared state.
-      transform(record.wrapper,placement.x,placement.y,group.matrix);record.wrapper.style.opacity=String(group.opacity);
+      const definition=record.definition,logical=definition.placement||{x:0,y:0,width:1920,height:1080},effective=recordPlacement(record),placement=effective||logical,group=visualGroups[classification(definition)];
+      record.wrapper.hidden=!visible(definition)||!effective;
+      record.wrapper.style.left=placement.x+'px';record.wrapper.style.top=placement.y+'px';
+      // Keep the author iframe viewport and parent stable. Presentation scale
+      // compensates the root canvas without resizing the document itself.
+      record.wrapper.style.width=logical.width+'px';record.wrapper.style.height=logical.height+'px';
+      transform(record.wrapper,placement.x,placement.y,group.matrix,placement.width/logical.width,placement.height/logical.height);
+      record.wrapper.style.opacity=String(group.opacity);
+    }
+    function layoutIcon(record,group){
+      const item=effectiveLayouts.get('icon:'+record.deskId+'/'+record.icon.id);
+      record.rect=item?(item.placeable?item.effectiveRect:null):{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104};
+      const rect=record.rect;
+      record.element.hidden=!rect||![snapshot.currentDeskId,snapshot.targetDeskId].includes(record.deskId)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
+      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/96,rect.height/104);}
+      record.element.style.opacity=String(group.opacity);
     }
     function ensureRoot(){if(rootNode)return;rootNode=document.createElement('div');rootNode.className='dext-v3-canvas';container.append(rootNode);}
     function reconcile(){
       ensureRoot();const state=model.readDiagnostics();const viewport=state.viewport;
-      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';
+      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';recomputeLayouts(state);
       for(const definition of state.instances){
         let record=records.get(definition.instanceId);
         if(!record){
@@ -96,8 +123,7 @@
         if(!record){const element=document.createElement('button');element.className='dext-v3-icon';element.type='button';element.textContent=(icon.glyph||'◇')+'\n'+(icon.label||icon.id);element.setAttribute('aria-label',icon.label||icon.id);
           // Core native completion owns official activation; DOM click alone has no authority.
           rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
-        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];record.element.hidden=![snapshot.currentDeskId,snapshot.targetDeskId].includes(desk.id)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
-        record.element.style.left=(32+icon.x*112)+'px';record.element.style.top=(32+icon.y*120)+'px';transform(record.element,32+icon.x*112,32+icon.y*120,group.matrix);record.element.style.opacity=String(group.opacity);
+        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];layoutIcon(record,group);
       }
       media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport});
     }
@@ -114,9 +140,13 @@
       for(const [consumer,regions]of Object.entries(state.buttonRegions)){
         const record=[...records.values()].find(r=>r.definition.consumerId===consumer);if(!record||record.wrapper.hidden||defaultMoving()&&classification(record.definition)!=='shared')continue;
         if(consumer.startsWith('component.')&&!desks.get(activeDesk()).components.includes(consumer.slice(10))||consumer.startsWith('slot.background.')&&consumer.slice(16)!==activeDesk())continue;
-        for(const region of regions){const button=normalized(consumer,region.buttonId,region,visualGroups[classification(record.definition)],index++);if(button)buttons.push(button);}
+        for(const region of regions){
+          const local=localButtons.get(consumer)?.find(b=>b.buttonId===region.buttonId),placement=recordPlacement(record);
+          const rect=local&&record.definition.placement?layoutModel.mapLocalRect({localRect:local,logicalSize:record.definition.placement,effectiveRect:placement}):region;
+          const button=normalized(consumer,region.buttonId,rect,visualGroups[classification(record.definition)],index++);if(button)buttons.push(button);
+        }
       }
-      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()&&!record.element.hidden&&!defaultMoving()){const b=normalized('official',record.icon.buttonId,{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104},visualGroups[snapshot.targetDeskId?'target':'shared'],index++);if(b&&!buttons.some(v=>v.consumer===b.consumer&&v.button===b.button))buttons.push(b);}
+      for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&record.deskId===activeDesk()&&!record.element.hidden&&!defaultMoving()){const b=normalized('official',record.icon.buttonId,record.rect,visualGroups[snapshot.targetDeskId?'target':'shared'],index++);if(b&&!buttons.some(v=>v.consumer===b.consumer&&v.button===b.button))buttons.push(b);}
       const layer=consumer=>consumer==='official'?40:consumer.startsWith('slot.start')||consumer.startsWith('slot.idle')?80:
         consumer==='scene'?20:records.size&&[...records.values()].find(r=>r.definition.consumerId===consumer)?.definition.kind==='dock'?50:consumer.startsWith('component.')?30:0;
       return buttons.sort((a,b)=>layer(b.consumer)-layer(a.consumer));
@@ -146,7 +176,7 @@
       updateDefaultGroups();schedule();
     }
     function defaultMoving(){return !!snapshot.transitionId&&(room.transition?.type||'slide')!=='author'&&!animation?.finished;}
-    function transform(element,x,y,m){element.style.transform='matrix('+[m[0],m[1],m[2],m[3],m[4]+(m[0]-1)*x+m[2]*y,m[5]+m[1]*x+(m[3]-1)*y].join(',')+')';}
+    function transform(element,x,y,m,sx=1,sy=1){element.style.transform='matrix('+[m[0]*sx,m[1]*sx,m[2]*sy,m[3]*sy,m[4]+(m[0]-1)*x+m[2]*y,m[5]+m[1]*x+(m[3]-1)*y].join(',')+')';}
     function updateDefaultGroups(){
       const transition=room.transition||{type:'slide',durationMs:450};if(!animation||transition.type==='author')return null;
       const p=transition.durationMs===0?1:Math.min(1,animation.elapsed/transition.durationMs);visualGroups=groups();
@@ -158,7 +188,7 @@
       animation.elapsed+=Math.max(0,now()-animation.last);animation.last=now();const transition=room.transition||{type:'slide',durationMs:450};
       if(transition.type==='author')return;
       const p=updateDefaultGroups();
-      for(const record of records.values())layout(record);for(const record of icons.values()){const group=visualGroups[record.deskId===snapshot.targetDeskId?'target':'source'];transform(record.element,32+record.icon.x*112,32+record.icon.y*120,group.matrix);record.element.style.opacity=String(group.opacity);}
+      for(const record of records.values())layout(record);for(const record of icons.values()){const group=visualGroups[record.deskId===snapshot.targetDeskId?'target':'source'];layoutIcon(record,group);}
       // Moving hit regions are invalid until a stationary layout is published.
       if(p>=1){animation.finished=true;const result=model.animationFinished(animation.session,animation.id);if(result.accepted)complete(animation.id);}else schedule();
     }
@@ -197,18 +227,36 @@
         return{status:reply.status};
       }finally{actionFlights.delete(flight);runDefault();}
     }
+    function sameLayoutScope(identity,deskId,token){
+      return !disposed&&token===layoutReadEpoch&&identity.runtimeGeneration===context.runtimeGeneration&&identity.sessionId===snapshot.sessionId&&identity.revision===snapshot.revision&&deskId===activeDesk();
+    }
+    function renderWithLayout(){
+      const token=++layoutReadEpoch,identity=scope(),deskId=activeDesk();
+      layoutReady=false;inputReady=false;clearDefault();completion=null;epoch++;cancelWaits();
+      const read=async()=>{
+        try{
+          const reply=await native.request('layoutRead',{},identity);
+          if(!sameLayoutScope(identity,deskId,token))return false;
+          if(reply.status==='accepted'&&reply.layout){personalLayout=copy(reply.layout);layoutReady=true;layoutError=null;}
+          else layoutError=reply.status==='accepted'?'invalidPayload':reply.status;
+        }catch(error){if(!sameLayoutScope(identity,deskId,token))return false;layoutError=error.code||'storageUnavailable';}
+        return sameLayoutScope(identity,deskId,token)?render():false;
+      };
+      return read();
+    }
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
       snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
-      // Frame updates start authorization reads synchronously. Advance the
-      // native scope first so those reads do not target the previous revision.
-      native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return render();
+      native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return renderWithLayout();
     }
     function publishGeometry(consumer,report){
       if(disposed)return Promise.resolve(false);let value=copy(report);const definition=model.readDiagnostics().instances.find(d=>d.consumerId===consumer);
       if(!definition)return Promise.resolve(false);
       if(definition.placement&&value.buttons){const p=definition.placement;if(value.buttons.some(b=>b.x<0||b.y<0||b.x+b.width>p.width||b.y+b.height>p.height))return Promise.resolve(false);value.buttons=value.buttons.map(b=>({...b,x:b.x+p.x,y:b.y+p.y}));}
-      const result=model.acceptGeometry(consumer,value);if(!result.accepted)return Promise.resolve(false);if(result.effects.length===0)return Promise.resolve(true);
+      const result=model.acceptGeometry(consumer,value);if(!result.accepted)return Promise.resolve(false);
+      if(definition.placement&&report.buttons!==undefined)localButtons.set(consumer,copy(report.buttons));
+      if(consumer==='scene'&&report.occupied!==undefined)layoutOccupied=copy(report.occupied);
+      if(result.effects.length===0)return Promise.resolve(true);
       visualGroups=model.readDiagnostics().groups;return render();
     }
     model.setViewport(options.getViewport());
@@ -218,8 +266,8 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){clearDefault();completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
-        else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);render();}return true;
+        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
         if(value.kind==='activate'){
@@ -229,8 +277,8 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return value.kind==='focus';},
-      dispose(){if(disposed)return;disposed=true;epoch++;cancelWaits();clearDefault();completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      dispose(){if(disposed)return;disposed=true;epoch++;layoutReadEpoch++;cancelWaits();clearDefault();completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

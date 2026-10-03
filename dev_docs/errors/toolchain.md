@@ -389,3 +389,5 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 原生controller真的暂停后，JS收不到新command/barrier，PostWebMessage的安全布局metadata可排队至resume；改原生完成IPC屏障，暂停中发送Core响应，恢复后三种回执任意合法顺序验证，再用活动JS屏障确认普通paused响应未穿过。不能为了测试而唤醒/放宽作者或动作。
 本轮一次命令误写--native-input-wire，既有Program入口是--v3-input-wire；未运行的夹具不算行为失败。实际窗口还原另一轮parent/style/bounds全部匹配、dpi=120而预附着顶层dpi=144。夹具负屏幕父窗附着本身改变所在显示器DPI，正确门槛是idle前已附着的DPI与restore后匹配；保留完整实际值诊断，不取消DPI校验。
 - 常规启动的--v3-status参数是expectedDesk，不是Core路径；本轮误传路径仍可观察真实active=False但整体命令按夹具预期抛错，不写成status命令通过。正常退出与原数据核验另独立成功。
+- 2026-10-03，新增固定layout-model.js后先用--no-build运行旧测试assembly，其复制清单缺新脚本导致renderUnavailable；编译最新探针后又因模拟Core方法清单未加入layoutRead而主动拒绝。更新三个官方夹具复制清单、两个模拟Core封闭只读回复后真实ReleasePlayer整轮通过。两次都是旧夹具不符合新协议，不记作生产缺陷；实际Core读布局另独立验证。
+- 纯布局“先移动”夹具首次把最近合法位置限定右移，实际上向下移动更近且原尺寸可放；调整障碍为仅窄缝与完整空位的真实比较，保留最近位置规则。
