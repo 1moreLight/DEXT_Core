@@ -220,3 +220,9 @@
 | #171 | 官方页缓存先占用畸形快照修订，后续合法状态会被误判旧 | [renderer](errors/renderer.md) |
 | #172 | Core几何admission忙返回staleInput，单次发布会永久关闭输入 | [renderer](errors/renderer.md) |
 | #173 | 异步宿主替身必须返回Promise；C#闭包使用前先初始化捕获上下文 | [toolchain](errors/toolchain.md) |
+
+
+| #174 | 当前SDK Frame.IsDestroyed返回int，必须用实际签名 | [toolchain](errors/toolchain.md) |
+| #175 | 原生帧异步化后report须等指定Core修订及geometry ready | [toolchain](errors/toolchain.md) |
+| #176 | Frame.Destroyed内注销COM事件造成WebView原生崩溃 | [backend](errors/backend.md) |
+| #177 | 迟到play事件不能恢复作者已pause的播放意图 | [renderer](errors/renderer.md) |

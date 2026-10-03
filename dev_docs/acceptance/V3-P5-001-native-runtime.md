@@ -111,3 +111,8 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 2026-10-03正式通信模块：新10/10、组合72/72、资源31/31；真实ReleasePlayer/SDK持续逐值private data IPC，同revision撤权隐藏读数、恢复授权无需导航/重载重开来源，原生暂停剩余时间/最后revision3保持通过。Core回包仍模拟；完整build→start/identity通过后正常退出，进程/端口/资源缓存0。正式页面/Core原生Room与上方7项最终步骤未据此打勾。
 
 - 2026-10-03正式入口基础：DOM12/Main7/生产组合91/91；实际ReleasePlayer整页加载官方index/main/style/modules，当前几何回执/真实SDK读数、两个文档UUID保留、default transition回告但Core fixture提交前current不变、queue和原生暂停/latest revision6、撤销释放均通过。Core权限/数据/提交仍模拟，未代填真实Core原生Room或物理/DPI通过。完整build→start/identity后按PID/路径正常退出，进程/端口/资源缓存0。默认动画静止shared命中基础之外，移动/旋转/遮挡/焦点/布局与原生HTML媒体继续实现；上方7项最终步骤与16项完整要求保持。
+
+
+- 2026-10-03原生逐iframe音视频基础：政策10/Main8与原组合84，共102/102；真实C#帧策略/输入28/运行20/资源31通过。实际ReleasePlayer完整官方页面验证首航作者play默认暂停、真实WAV/closed Shadow MP4/嵌套音频持续、原始媒体方法不被实例覆盖、伪SDK token/globalThis alias拒绝、阶段和私有挂起/最新状态恢复/保留作者暂停意图/根帧更名暂停/撤销无崩溃。Core响应/提交仍由隔离夹具模拟，不代填真实Core原生Room或物理/DPI步骤；WebAudio仍需继续。完整build→start/identity成功：Core50684/Player57196/Watchdog76868/config122420（本轮共享D缓存），日志20261003_110420.txt；原v2 inactive、精确PID/路径正常退出。上方7项最终步骤与16项完整路线不变。
+
+- 最终销毁路径补强：缓存FrameId移除幂等、政策失败先静音再通过UI队列退出原生事件栈、processFailed撤销其余媒体。最新完整build与实际整页媒体回归再通过；最终start/identity Core106108/Player87720/Watchdog75280/config119552（本轮共享D缓存），日志20261003_111305.txt；原v2 inactive，随后按PID/路径正常退出。

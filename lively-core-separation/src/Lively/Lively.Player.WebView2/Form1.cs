@@ -35,6 +35,7 @@ namespace Lively.Player.WebView2
         private readonly DextRoomRuntimeState roomRuntime = new DextRoomRuntimeState();
         private bool nativeRuntimeSeen;
         private DextNativeResourceServer nativeResources;
+        private DextNativeFrameMedia nativeFrameMedia;
         private int resourceRequests;
         private bool nativeNetworkReady;
         private bool roomPageReadySent;
@@ -220,8 +221,26 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2.DocumentTitleChanged += CoreWebView2_DocumentTitleChanged;
             if (startArgs.DextTrustedHost)
                 ConfigureDextOfflineBoundary();
+            if (nativeResources != null)
+            {
+                nativeFrameMedia = new DextNativeFrameMedia(webView.CoreWebView2, roomRuntime, reason =>
+                {
+                    webView.CoreWebView2.IsMuted = true;
+                    // Closing/disposal must leave the native Frame event stack first.
+                    BeginInvoke((Action)(() =>
+                    {
+                        if (IsDisposed || Disposing) return;
+                        new InvalidOperationException("Dext native frame media policy unavailable: " + reason).SendError(SendToParent);
+                        nativeResources.Revoke();
+                        roomRuntime.Invalidate("invalidated");
+                        SendToParent(new LivelyMessageRoomNativeInvalidated { RuntimeGeneration = roomRuntime.Generation });
+                        Close();
+                    }));
+                });
+                await nativeFrameMedia.InitializeAsync();
+            }
             // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
-            webView.CoreWebView2.WebMessageReceived += (s, e) =>
+            webView.CoreWebView2.WebMessageReceived += async (s, e) =>
             {
                 try
                 {
@@ -262,6 +281,10 @@ namespace Lively.Player.WebView2
                         var request = BuildSystemControlRequest(o);
                         if (request != null)
                             SendToParent(request);
+                    }
+                    else if ((string)o.type == "dext:v3-frame-policy")
+                    {
+                        if (nativeFrameMedia != null && nativeNetworkReady) await nativeFrameMedia.AcceptAsync(webMessage);
                     }
                     else if ((string)o.type == "dext:v3-native-request")
                     {
@@ -428,6 +451,7 @@ namespace Lively.Player.WebView2
                 roomPageReadySent = false;
                 nativeResources?.Revoke();
                 if (roomRuntime.Invalidate("navigation")) PostRuntimeLastMessage();
+                if (nativeFrameMedia != null) _ = nativeFrameMedia.ResetAsync();
             };
             webView.CoreWebView2.FrameNavigationStarting += (sender, args) =>
             {
@@ -589,6 +613,7 @@ namespace Lively.Player.WebView2
             nativeNetworkReady = false;
             nativePolicySupported = false;
             roomRuntime.Invalidate("processFailed");
+            if (nativeFrameMedia != null) _ = nativeFrameMedia.ResetAsync();
             ($"{e.ProcessFailedKind}: {e.Reason}, exit={e.ExitCode}").SendError(SendToParent, "CoreWebView2 process failed");
         }
 
@@ -990,6 +1015,7 @@ namespace Lively.Player.WebView2
                             nativeResources.Revoke();
                             roomRuntime.Invalidate("invalidated");
                         }
+                        if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
                         PostRuntimeLastMessage();
                     }
                     break;
@@ -997,6 +1023,7 @@ namespace Lively.Player.WebView2
                     if (startArgs.DextTrustedHost && roomRuntime.Revoke((LivelyMessageRoomRuntimeRevoke)obj))
                     {
                         nativeResources?.Revoke();
+                        if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
                         PostRuntimeLastMessage();
                     }
                     break;
@@ -1004,6 +1031,7 @@ namespace Lively.Player.WebView2
                     if (startArgs.DextTrustedHost && roomRuntime.AcceptSnapshot((LivelyMessageRoomSessionSnapshot)obj))
                     {
                         if (!((LivelyMessageRoomSessionSnapshot)obj).IsActive) nativeResources?.Revoke();
+                        if (nativeFrameMedia != null) await nativeFrameMedia.RefreshAsync();
                         PostRuntimeLastMessage();
                     }
                     break;
@@ -1110,6 +1138,7 @@ namespace Lively.Player.WebView2
             var revision = ++playbackRevision;
             try
             {
+                if (nativeFrameMedia != null) await nativeFrameMedia.SetSuspendedAsync(true);
                 await NotifyNativePlayback(true, revision);
                 if (startArgs.PauseWebMedia || isVideoStream) await webView.TryPauseMedia();
                 if (startArgs.PauseEvent)
@@ -1148,6 +1177,7 @@ namespace Lively.Player.WebView2
                     runtimeDeliverySuspended = false;
                     foreach (var message in roomRuntime.Replay()) PostRuntimeMessage(message);
                     await NotifyNativePlayback(false, revision);
+                    if (!isPaused && revision == playbackRevision && nativeFrameMedia != null) await nativeFrameMedia.SetSuspendedAsync(false);
                 }
             }
         }
@@ -1169,6 +1199,7 @@ namespace Lively.Player.WebView2
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            nativeFrameMedia?.Dispose();
             nativeResources?.Dispose();
             roomRuntime.Invalidate("closed");
             visualizerService?.Dispose();

@@ -27,6 +27,34 @@ namespace Lively.Common.Helpers
             CanUseInput(document, sessionId, snapshotRevision) && (string)snapshotPayload["lifecycle"]?["stage"] == "starting" &&
             (long?)snapshotPayload["lifecycle"]?["revision"] == lifecycleRevision;
 
+        public bool HasMediaConsumer(string consumer)
+        {
+            var manifest = contextPayload?["manifest"] as JObject;
+            if (manifest == null || consumer == null) return false;
+            if (consumer == "scene") return manifest["roomScene"] is JObject;
+            if (consumer == "slot.start" || consumer == "slot.idle") return (string)manifest[consumer == "slot.start" ? "start" : "idle"]?["type"] == "html";
+            if (consumer.StartsWith("component.", StringComparison.Ordinal)) return (manifest["components"] as JArray)?.Any(c => (string)c["id"] == consumer.Substring(10)) == true;
+            if (consumer.StartsWith("slot.background.", StringComparison.Ordinal)) return (manifest["desks"] as JArray)?.Any(d => (string)d["id"] == consumer.Substring(16) && (string)d["background"]?["type"] == "html") == true;
+            return false;
+        }
+
+        // Rendering includes both source and target during a transition. This is
+        // deliberately independent of the stricter input/data consumption gate.
+        public bool CanRenderMedia(string consumer)
+        {
+            if (!HasMediaConsumer(consumer) || snapshotPayload == null || (bool?)snapshotPayload["active"] != true ||
+                (bool?)snapshotPayload["lifecycle"]?["playbackPaused"] != false || (bool?)snapshotPayload["lifecycle"]?["locked"] != false) return false;
+            var stage = (string)snapshotPayload["lifecycle"]?["stage"];
+            if (consumer == "slot.start") return stage == "starting";
+            if (consumer == "slot.idle") return stage == "idle";
+            if (stage != "desktop") return false;
+            if (consumer == "scene") return true;
+            var current = (string)snapshotPayload["currentDeskId"]; var target = (string)snapshotPayload["targetDeskId"];
+            if (consumer.StartsWith("slot.background.", StringComparison.Ordinal)) return consumer.Substring(16) == current || consumer.Substring(16) == target;
+            var component = consumer.Substring(10);
+            return ((JArray)contextPayload["manifest"]["desks"]).Any(d => ((string)d["id"] == current || (string)d["id"] == target) && (d["components"] as JArray)?.Any(c => (string)c == component) == true);
+        }
+
         public bool Initialize(LivelyMessageRoomRuntime value)
         {
             if (value == null || value.ProtocolVersion != 1 || value.RuntimeGeneration <= generation || value.SessionId == Guid.Empty ||

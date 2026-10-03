@@ -163,6 +163,15 @@ native-host发送Player要求的JSON字符串，只接受固定私有WebView消�
 
 dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下，切页不重挂或改src。HTML媒体委托frame-host，四类素材使用media-host。官方资源只从当前inventory解析/content/<generation>/路径。每个global revision先invalidate并等回执，再更新DOM并发布递增私有inputVersion，Core接受后才启用动作；queue修订不重播动画。发布staleInput按新inputVersion最多8次、50ms可取消间隔重试。模型的SDK geometryVersion与私有输入发布版本独立。作者Widget本地矩形须在自身placement内，再平移到设计画布；global组矩阵绕画布原点作用于同一wrapper/图标。默认slide/fade/none回告完成，current只来自Core。
 
-现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTML原生逐iframe媒体政策也未完成，inert不是媒体暂停。
+现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTMLMediaElement原生逐iframe政策已在下节接入；WebAudio及完整生命周期仍继续。inert不作为媒体暂停证据。
 
 生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟，尚未把真实Core原生Room安装、物理输入/DPI或最终7项填通过。
+
+
+## Player原生子文档音视频策略（2026-10-03，HTMLMediaElement基础）
+
+Player在首航前注入自身嵌入脚本，捕获原始音视频、DOM、事件与观察器方法；所有子文档初始暂停，顶部官方页由media-host独立控制。私有不可重定义函数使用Player secret、实际文档nonce和单调序列，SDK token不能调策略。原生执行采用真实realm的this，不把私参暴露给作者可替换的globalThis/window别名。closed Shadow音视频与嵌套Frame使用同一原生根消费者；官方页在append前生成私有frame.name，Player按FrameId/父链绑定，根window.name更改后永久暂停该根与后代。消息只能从固定官方顶部文档进入，严格绑定当前generation/session/revision及已声明消费者；这不是新增作者能力或Core输入证明。
+
+是否渲染由Core缓存的完整快照再次限定：current与target都可在过渡中播放，queued不能授权，starting/idle只放对应槽，锁屏/播放暂停拒绝。原生挂起先完成每个子文档暂停屏障，再停渲染进程；暂停期间状态只缓存，恢复先交付最新Core状态再按活动根恢复原播放意图和位置。作者主动pause会清除意图，迟到play事件不把已暂停元素改回wanted。移除节点/pagehide/新文档nonce/旧序列不恢复旧媒体。Destroyed回调只撤销宿主记录，不重入原生COM注销；活体政策失败/超时则静音并关闭Player。
+
+102/102 JS及真实ReleasePlayer的WAV、closed Shadow MP4、嵌套音频验证通过；Core回包仍为fixture。这里只涵盖HTMLMediaElement；WebAudio/AudioContext、生产Core原生Room、物理输入与布局/DPI等完整门槛继续，不能宣称Task3/4或最终7项完成。网络、安全、个人授权和逐值数据校验仍各有独立生产边界。

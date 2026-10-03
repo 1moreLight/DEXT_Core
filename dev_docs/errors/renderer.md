@@ -576,3 +576,8 @@ frame-host异步subscribeData拒绝时先删除provider，再调用emit。emit�
 ## #172 几何发布要处理生产Core忙状态（2026-10-03）
 
 Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿主单次失败后inputReady=false，若作者重报同几何又无模型effects就可能一直关输入。单位按既有协议模拟第一发布staleInput，实际1!=2失败。最多8次50ms间隔重试，每次递增私有inputVersion；新epoch/暂停/销毁取消等待，身份变化拒绝旧回包。回归和最新真实整页Player通过；这不代表完整物理输入/DPI或移动中命中已验收。
+
+
+## #177 迟到play事件不能恢复已被作者pause清除的意图（2026-10-03）
+
+媒体播放事件异步排队；作者play后pause，迟到play/playing若无条件设wanted=true，下一次宿主恢复会误播。定向RED确实失败；捕获原始paused getter，只在当前元素仍实际播放时从事件建立意图，已暂停的迟到事件不改wanted。政策10/10与真实作者暂停→原生挂起/恢复通过。

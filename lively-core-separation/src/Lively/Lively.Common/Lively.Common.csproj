@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Helpers\native-media-policy.js" LogicalName="Dext.NativeMediaPolicy.js" />
     <EmbeddedResource Include="..\..\..\..\dext-runtime-identity.json"
                       Link="dext-runtime-identity.json"
                       LogicalName="Dext.RuntimeIdentity.json" />

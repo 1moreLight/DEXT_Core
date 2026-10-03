@@ -48,3 +48,10 @@ test('malformed transition cannot advance the official snapshot revision',()=>{
  const f=fixture();f.send(f.context());f.send(f.snapshot());f.send({...f.snapshot(5),transitionId:'unexpected',deadlineUtc:'not a date'});
  assert.equal(f.sandbox.dextRuntimeDiagnostics().revision,1);f.send(f.snapshot(2));assert.equal(f.hosts[0].snapshots.at(-1).revision,2);
 });
+
+
+test('official frame state sends the private root name and current consumer scope',()=>{
+ const f=fixture();f.send(f.context());f.send(f.snapshot());const identity={runtimeGeneration:1,sessionId:'session',revision:1};
+ f.hosts[0].options.applyFrameState({name:'dext-native-name'},{consumerId:'scene',state:'active',identity});
+ assert.deepEqual(f.sent.at(-1),{type:'dext:v3-frame-policy',protocolVersion:1,frameName:'dext-native-name',consumer:'scene',active:true,...identity});
+});

@@ -5,7 +5,11 @@ if (args.Length == 1 && args[0] == "--v3-idle-window") { NativeIdleWindowChecks.
 
 if (args.Length == 2 && args[0] == "--v3-input-wire") { await NativeInputWireProbe.Run(args[1]); return; }
 
+if (args.Length == 1 && args[0] == "--v3-frame-media-messages") { NativeFrameMediaMessageChecks.Run(); return; }
+
 if (args.Length == 1 && args[0] == "--v3-input-messages") { NativeInputMessageChecks.Run(); return; }
+
+if (args.Length == 5 && args[0] == "--v3-frame-media-wire") { await NativeFrameMediaWireProbe.Run(args[1], args[2], args[3], args[4]); return; }
 
 if (args.Length == 4 && args[0] == "--v3-official-host-wire") {
     await OfficialHostWireProbe.Run(args[1], args[2], args[3]);

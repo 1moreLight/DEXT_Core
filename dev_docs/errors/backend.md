@@ -404,3 +404,8 @@ Player暂停期间缓存Core快照，媒体宿主仍读旧playbackPaused=false�
 ## #170 原生WebView传输必须与Player读取类型一致（2026-10-03）
 
 native-host最初postMessage已检查的JS对象，单位假传输收对象因此通过；真实Player的TryGetWebMessageAsString抛ArgumentException，SDK权限超时全部denied。保持Player既有字符串入口，生产模块JSON.stringify已检查的信封；单位传输增加typeof string断言再解析。实际ReleasePlayer持续读数、同修订撤权/恢复及暂停全部通过。格式问题不能改为把授予失败视为期望通过。
+
+
+## #176 Frame.Destroyed回调中注销原生事件可使WebView宿主崩溃（2026-10-03）
+
+真实ReleasePlayer播放根音频、closed Shadow视频及嵌套音频后撤销，连续三次在EmbeddedBrowserWebView.dll 154.0.4258.48 x86以0x4000001f退出。Windows Application 1000/1001确认原生模块，非普通媒体策略异常。在Destroyed内再次对正在销毁的Frame注销COM事件产生重入；改为只移除缓存FrameId、父链/作用域和期望状态，由原生销毁清掉事件；正常活体Dispose才注销。相同整页撤销随后通过，最终媒体/原官方整页再次通过。销毁回调闭包绑定自己的Frame，不依赖事件sender重新认领身份。

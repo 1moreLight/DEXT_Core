@@ -318,3 +318,12 @@ Windows Python Path.read_text()默认GBK，读Form1的UTF8内容失败时此前�
 ## #173 新宿主探针必须遵守真实异步与闭包契约（2026-10-03）
 
 main等待acceptSnapshot Promise，假宿主返回Array.push数字，导致.catch失败并让播放恢复误报false；替身改为async明确返回Promise。新C# Next闭包在context初始化前读取，且var同时声明两个变量，CS0165/CS0819导致探针未执行；先初始化独立Core fixture上下文并拆声明，再跑真实ReleasePlayer。编译失败与假契约失败均不计实际运行证据；修复后完整官方页验证通过。
+
+
+## #174 当前SDK的Frame.IsDestroyed返回int而非bool（2026-10-03）
+
+新增原生帧媒体控制器直接写!IsDestroyed触发CS0023；当前安装WebView2 1.0.3595.46使用0/1返回。以实际SDK/完整Release构建为准，比较==0；缓存FrameId，销毁后不靠其他属性读取身份。
+
+## #175 原生帧策略异步化后，命令回执可先于指定Core快照应用（2026-10-03）
+
+整页探针发revision3紧接report，旧revision2的inputReady仍为true时提前返回，误报文档丢失。命令携带expectedRevision，poll等待页面精确修订和当前geometry ready，再读文档/媒体。原官方探针和新增媒体探针共同修正，不能用IPC到达当异步处理完成。

@@ -221,6 +221,7 @@
       const frame=document.createElement('iframe'),record={instanceId:definition.instanceId,consumerId:definition.consumerId,kind:definition.kind,entry:definition.entry,state:definition.state,
         frame,declared,buttons:new Set(definition.buttonIds||[]),config:wire(definition.config||{}),capabilities:{},sequences:new Map(),channels:new Set(),providers:new Map(),pending:new Map(),
         token:null,epoch:0,query:0,permissionTimer:null,lastRequest:0,disposed:false,docDisposed:false,initialized:false,ready:false};
+      frame.name='dext-native-'+root.crypto.randomUUID();
       frame.sandbox='allow-scripts';frame.referrerPolicy='no-referrer';frame.tabIndex=-1;frame.title=definition.consumerId;
       record.load=()=>{
         if(!alive(record))return;closeDocument(record);record.epoch++;record.docDisposed=false;record.sequences.clear();record.lastRequest=0;record.token=token();

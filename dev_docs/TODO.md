@@ -1248,3 +1248,10 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 正式入口基础验证（2026-10-03）：DOM12/Main7/既有72，组合91/91；同一正式index/main/style/runtime/dom/native/frame/media/SDK在真实ReleasePlayer通过当前几何回执、持续读数、两个SDK文档保持、Core提交前不改变current、queue不重播、原生暂停/最后revision6、撤销释放。Core能力/数据/状态/提交仍由该隔离夹具模拟，不是实际Core已安装Room或物理输入。
 - [x] 正式入口阶段完整build→start/identity成功：Core105132/Player86420/Watchdog24704/config46308（本轮共享D缓存），日志20261003_100228.txt；原v2恢复inactive。按PID/路径正常退出，最终进程/开发端口/资源缓存0；最新有界几何重试后真实整页回归再次通过。最终7项不申请中途验收。
 - [ ] 必须继续完整Task3/4：实际Core原生Room安装/恢复、四媒体完整生命周期、原生逐iframe音视频暂停，消费者导航/控制/存储与退出确认适配，个人布局/占用/真实DPI/物理输入与故障恢复。当前默认动画只给静止shared按钮发布命中；移动按钮与旋转/斜切输入、遮挡裁剪、多图标同按钮及受控焦点仍须input-host完善，不能把目前保守拒绝当作已满足D16。16项就绪仍1/16。
+
+- [x] Task3原生逐iframe音视频基础：先验证首航前捕获原始媒体方法、默认暂停、宿主私有secret/文档nonce/单调序列、暂停保留播放意图、旧文档/伪请求拒绝和closed Shadow DOM；再嵌入Player，在实际Frame对象上绑定当前消费者/代次及Core渲染事实，暂停屏障先停止所有子文档，恢复只释放当前活动帧。作者SDK token不代表播放策略权限，网络和数据授权保持独立；实际ReleasePlayer与整页回归后提交。
+
+- [x] 原生音视频基础证据：102/102 JS、严格媒体/输入28/运行20/资源31，实际ReleasePlayer WAV/closed Shadow MP4/嵌套音频、默认暂停/意图保留/作者方法覆盖和伪请求拒绝、phase/私有挂起最新状态/根更名/撤销通过；Core回包仍fixture。修复原生Destroyed COM重入崩溃及异步report修订竞态，完整build→start/identity通过（Core50684/Player57196/Watchdog76868/config122420），原v2 inactive、精确正常退出。
+- [ ] 继续完整Task3/4：WebAudio/AudioContext与更完整HTML音频生命周期、实际Core安装原生Room/保存并恢复用户桌面、消费者导航/控制/存储及退出确认、个人布局/移动中精确命中/遮挡/焦点、真实DPI/物理输入/故障恢复。最终7项和全景16项保持，不将本基础提交记为P5完成。
+
+- 最终销毁路径补强：缓存FrameId移除幂等、政策失败先静音再通过UI队列退出原生事件栈、processFailed撤销其余媒体。最新完整build与实际整页媒体回归再通过；最终start/identity Core106108/Player87720/Watchdog75280/config119552（本轮共享D缓存），日志20261003_111305.txt；原v2 inactive，随后按PID/路径正常退出。
