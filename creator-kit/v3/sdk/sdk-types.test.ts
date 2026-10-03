@@ -17,3 +17,11 @@ Dext.data.subscribe('file.read', () => {});
 void Dext.scene.publishGeometry({ selector: '#official-icons' });
 // @ts-expect-error authored content cannot mint host input
 void Dext.issueHostInput('open');
+
+Dext.scene.subscribeGeometry(geometry => {
+  const rect: DextRect | null | undefined = geometry.placements['component.instrument'];
+  if (rect) void rect.width;
+});
+void Dext.ready().then(session => session.placements['component.instrument']);
+// @ts-expect-error effective rectangles are read-only views
+Dext.session!.placements['component.instrument'] = null;

@@ -3,25 +3,27 @@
   const instanceId = crypto.randomUUID(), releases = [];
   document.documentElement.dataset.instanceId = instanceId;
   let connected = false, snapshot = null, transition = null, settled = 'overview';
-  let frame = 0, flight = false, disposed = false, elapsed = 0, last = 0, completed = null, paused = false;
-  const rect = desk => desk === 'detail' ? { y: 0, scale: 1080 / 280, sx: 1.2 } : { y: 800, scale: 1, sx: 1 };
-  function schedule() { if (!frame && !flight && !disposed && !paused && snapshot) frame = requestAnimationFrame(paint); }
+  let frame = 0, flight = false, disposed = false, elapsed = 0, last = 0, completed = null, paused = false, dirty = false;
+  const rect = desk => desk === 'detail' ? { x: 0, y: 0, width: 1920, height: 1080 } : { x: 0, y: 800, width: 1920, height: 280 };
+  function schedule() { if (flight) { dirty = true; return; } if (!frame && !flight && !disposed && !paused && snapshot) frame = requestAnimationFrame(paint); }
   async function paint(time) {
-    frame = 0;
+    frame = 0; dirty = false;
     if (disposed || paused || !snapshot) return;
     const own = snapshot, ownTransition = transition;
     if (transition) { elapsed += Math.max(0, time - last); last = time; }
     const p = transition ? Math.min(1, elapsed / 700) : 1, ease = p * p * (3 - 2 * p);
     const from = rect(transition ? own.currentDeskId : settled), to = rect(own.targetDeskId || own.currentDeskId);
-    const sx = from.sx + (to.sx - from.sx) * ease;
-    const matrix = [sx, 0, 0, from.scale + (to.scale - from.scale) * ease, -320 * sx, from.y + (to.y - from.y) * ease];
+    const effective = Dext.session.placements['component.instrument'];
+    const desired = Object.fromEntries(Object.keys(from).map(key => [key, from[key] + (to[key] - from[key]) * ease]));
+    const sx = effective ? desired.width / effective.width : 1, sy = effective ? desired.height / effective.height : 1;
+    const matrix = effective ? [sx, 0, 0, sy, desired.x - effective.x * sx, desired.y - effective.y * sy] : [1, 0, 0, 1, 0, 0];
     const direction = own.targetDeskId === 'detail' ? 1 : -1;
     flight = true;
     try {
       await Dext.scene.publishGeometry({ groups: {
         source: { matrix: [1, 0, 0, 1, transition ? -direction * 1920 * ease : 0, 0], opacity: transition ? 1 - p : 1 },
         target: { matrix: [1, 0, 0, 1, transition ? direction * 1920 * (1 - ease) : 0, 0], opacity: transition ? p : 1 },
-        shared: { matrix, opacity: 1 },
+        shared: { matrix, opacity: effective ? 1 : 0 },
       } });
       if (!disposed && snapshot === own && ownTransition && transition === ownTransition && p === 1 && completed !== ownTransition) {
         completed = ownTransition;
@@ -31,7 +33,7 @@
       // A structural acknowledgement or Core revision may supersede this frame.
     } finally {
       flight = false;
-      if (!disposed && (snapshot !== own || transition && completed !== transition)) schedule();
+      if (!disposed && (dirty || snapshot !== own || transition && completed !== transition)) schedule();
     }
   }
   function connect() {

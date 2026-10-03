@@ -42,19 +42,20 @@ internal static class AuthorVisualWireProbe
                   chrome.webview.addEventListener('message',e=>{
                     const p=e.data?.permissions;if(e.data.type!=='dext:system-control-result'||!p?.command)return;
                     const stop=performance.now()+8000,poll=()=>{
-                      const d=dextRuntimeDiagnostics(),g=d.runtime?.groups?.shared?.matrix,y=g?.[5];
+                      const node=document.querySelector('[data-consumer="component.instrument"]');if(!node){setTimeout(poll,10);return;}
+                      const d=dextRuntimeDiagnostics(),r=node.getBoundingClientRect(),y=r.top/innerHeight;
                       const ready=d.revision===p.revision&&d.runtime?.inputReady&&d.runtime?.buttonRegionCount===1&&widget?.reads>0;
-                      const position=p.position==='moving'?y>200&&y<650:p.position==='top'?Math.abs(y)<.001:p.position==='bottom'?Math.abs(y-800)<.001:true;
-                      if(ready&&position||performance.now()>stop){
-                        const r=document.querySelector('[data-consumer="component.instrument"]').getBoundingClientRect();
-                        send({report:p.command,diagnostics:d,widget,rect:{x:r.left/innerWidth,y:r.top/innerHeight,width:r.width/innerWidth,height:r.height/innerHeight},iconRects:[...document.querySelectorAll('.dext-v3-icon')].map(n=>{const b=n.getBoundingClientRect();return{x:b.left/innerWidth,y:b.top/innerHeight};}),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPoints:[...document.querySelectorAll('.dext-v3-focus>polygon')].map(n=>n.getAttribute('points'))});
+                      const position=p.position==='moving'?y>.2&&y<.6:p.position==='top'?Math.abs(y)<.001:p.position==='bottom'?Math.abs(y-800/1080)<.001:true;
+                      const size=p.size==='large'?innerWidth>1000:p.size==='small'?innerWidth<500:true;
+                      if(ready&&position&&size||performance.now()>stop){
+                        send({report:p.command,diagnostics:d,widget,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},rect:{x:r.left/innerWidth,y:r.top/innerHeight,width:r.width/innerWidth,height:r.height/innerHeight},iconRects:[...document.querySelectorAll('.dext-v3-icon')].map(n=>{const b=n.getBoundingClientRect();return{x:b.left/innerWidth,y:b.top/innerHeight};}),focusVisible:!!document.querySelector('.dext-v3-focus:not([hidden])'),focusPoints:[...document.querySelectorAll('.dext-v3-focus>polygon')].map(n=>n.getAttribute('points'))});
                       }else setTimeout(poll,10);
                     };poll();
                   });
                 })();
                 """);
             var info=new ProcessStartInfo(Path.GetFullPath(player)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardInputEncoding=Encoding.UTF8,WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(player))!};
-            foreach(var arg in new[]{"--wallpaper-url",Path.Combine(root.FullName,"index.html"),"--wallpaper-type","local","--wallpaper-geometry","1920x1080","--wallpaper-user-data",Path.Combine(root.FullName,"user-data"),"--dext-trusted-host","--dext-native-runtime","--wallpaper-scale","1"})info.ArgumentList.Add(arg);
+            foreach(var arg in new[]{"--wallpaper-url",Path.Combine(root.FullName,"index.html"),"--wallpaper-type","local","--wallpaper-geometry","640x480","--wallpaper-user-data",Path.Combine(root.FullName,"user-data"),"--dext-trusted-host","--dext-native-runtime","--wallpaper-scale","1.5"})info.ArgumentList.Add(arg);
             using var process=Process.Start(info)??throw new Exception("Player did not start");
             var queue=new ConcurrentQueue<JObject>();var log=new ConcurrentQueue<string>();var geometries=0;var data=0;var actions=0;IntPtr anchor=IntPtr.Zero;
             var reader=Task.Run(async()=>{while(await process.StandardOutput.ReadLineAsync() is{} line){log.Enqueue(line);try{
@@ -76,12 +77,12 @@ internal static class AuthorVisualWireProbe
             try
             {
                 Require((bool?)(await Next())["ready"]==true,"actual author host ready");
-                var window=process.GetProcessWindow(true);NativeMethods.ShowWindow(window,4);NativeMethods.SetWindowPos(window,0,120,120,1920,1080,0x14);await Task.Delay(200);
+                var window=process.GetProcessWindow(true);NativeMethods.ShowWindow(window,4);NativeMethods.SetWindowPos(window,0,120,120,640,480,0x14);await Task.Delay(200);
                 var foreground=NativeMethods.GetForegroundWindow();
-                await Send(context);await Snapshot(1,"overview");var initial=await Report("initial",1,"bottom");
+                await Send(context);await Snapshot(1,"overview");var initial=await Report("initial",1,"bottom","small");
                 var document=(string)initial["widget"]!["instanceId"]!;var dimensions=initial["widget"]!.DeepClone();
                 Require(Math.Abs((double)initial["rect"]!["y"]!-800d/1080)<.001&&Math.Abs((double)initial["rect"]!["height"]!-280d/1080)<.001,"initial bottom dashboard");
-                Require((int?)dimensions["width"]==1600&&(int?)dimensions["height"]==280,"stable authored logical viewport");
+                Require((int?)dimensions["width"]==1600&&(int?)dimensions["height"]==540,"stable authored logical viewport");
                 var transition=Guid.NewGuid();await Snapshot(2,"overview","detail",transition);
                 var moving=await Report("moving",2,"moving");var geometryCount=geometries;var version=(long)moving["diagnostics"]!["runtime"]!["inputVersion"]!;
                 var middle=NativeMethods.FindWindowEx(anchor,IntPtr.Zero,"Chrome_WidgetWin_0",null);
@@ -100,10 +101,23 @@ internal static class AuthorVisualWireProbe
                 Console.WriteLine("PASS actual ReleasePlayer/production SDK author matrices: moving dashboard/icons and SVG focus, actual current sample, stable structural version, zero frame Core geometry/action traffic");
                 var finished=await Next();Require((string?)finished["complete"]?["TransitionId"]==transition.ToString(),"author reports completion for Core commit");
                 await Snapshot(3,"detail");var full=await Report("full",3,"top");
-                Require(Math.Abs((double)full["rect"]!["height"]!-1)<.001,"same dashboard becomes full page");
+                Require(Math.Abs((double)full["rect"]!["height"]!-1)<.001&&Math.Abs((double)full["rect"]!["width"]!-1)<.001,"same dashboard becomes full page");
                 var backId=Guid.NewGuid();await Snapshot(4,"detail","overview",backId);var back=await Next();Require((string?)back["complete"]?["TransitionId"]==backId.ToString(),"return reports one completion");
                 await Snapshot(5,"overview");var returned=await Report("returned",5,"bottom");
-                foreach(var report in new[]{full,returned})Require((string?)report["widget"]?["instanceId"]==document&&(int?)report["widget"]?["width"]==1600&&(int?)report["widget"]?["height"]==280,"same document and logical viewport after commits");
+                foreach(var report in new[]{full,returned})Require((string?)report["widget"]?["instanceId"]==document&&(int?)report["widget"]?["width"]==1600&&(int?)report["widget"]?["height"]==540,"same document and logical viewport after commits");
+                NativeMethods.SetWindowPos(window,0,120,120,1920,1080,0x14);
+                var enlarged=await Report("enlarged",5,"bottom","large");
+                NativeMethods.SetWindowPos(window,0,120,120,640,480,0x14);
+                var shrunk=await Report("shrunk",5,"bottom","small");
+                Require((double)enlarged["viewport"]!["width"]!>1000&&(double)shrunk["viewport"]!["width"]!<500,"observed actual large and small CSS viewports");
+                foreach(var report in new[]{enlarged,shrunk}){
+                    Require((string?)report["widget"]?["instanceId"]==document&&(int?)report["widget"]?["width"]==1600&&(int?)report["widget"]?["height"]==540,"resize retains authored document/viewport");
+                    Require(Math.Abs((double)report["rect"]!["y"]!-800d/1080)<.001&&Math.Abs((double)report["rect"]!["width"]!-1)<.001&&Math.Abs((double)report["rect"]!["height"]!-280d/1080)<.001,"effective placement maps to requested bottom rectangle after resize");
+                }
+                var initialItem=initial["diagnostics"]!["runtime"]!["layout"]!["items"]!.Single(e=>(string?)e["key"]=="widget:instrument")["effectiveRect"];
+                var restoredItem=shrunk["diagnostics"]!["runtime"]!["layout"]!["items"]!.Single(e=>(string?)e["key"]=="widget:instrument")["effectiveRect"];
+                Require(JToken.DeepEquals(initialItem,restoredItem),"small viewport returns to same effective layout without a save");
+                Console.WriteLine("PASS actual 640x480/scale1.5 -> 1920x1080 -> 640x480: effective placement-derived full-width bottom panel, restored effective layout, same instrument document and 1600x540 logical viewport");
                 Require(data>=1&&NativeMethods.GetForegroundWindow()==foreground,"live readout and unchanged foreground");
                 Console.WriteLine("PASS actual continuous sample: same instrument document/logical viewport bottom -> full page -> bottom, two author completions, Core-only commits, live data, unchanged foreground; Core packets/replies/raw OS keys remain fixture");
             }
@@ -113,8 +127,8 @@ internal static class AuthorVisualWireProbe
                 var snapshot=f.Snapshot with{Revision=revision,CurrentDeskId=current,TargetDeskId=target,TransitionId=transition,DeadlineUtc=transition!=null?DateTimeOffset.UtcNow.AddSeconds(5):null};
                 var value=RoomSessionPlayerMessage.Create(snapshot,["overview","detail"]);value.RuntimeGeneration=1;await Send(value);
             }
-            async Task<JObject> Report(string command,long revision,string? position=null){
-                await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command,revision,position})});
+            async Task<JObject> Report(string command,long revision,string? position=null,string? size=null){
+                await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command,revision,position,size})});
                 var value=await Next();Require((string?)value["report"]==command,"report "+command);return value;
             }
             async Task<JObject> Next(){

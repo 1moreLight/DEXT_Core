@@ -145,7 +145,9 @@
           rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
         const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'source'];layoutIcon(record,group);
       }
-      media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport});
+      const placements=Object.fromEntries([...records.values()].filter(record=>
+        record.definition.consumerId.startsWith('component.')&&visible(record.definition)).map(record=>[record.definition.consumerId,copy(recordPlacement(record))]));
+      media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
     }
     function inputLayer(record){
       const consumer=record.definition?.consumerId;

@@ -291,3 +291,6 @@
 
 | #217 | 作者纯矩阵逐帧重发几何并清焦点；取样保持需排最新视觉帧 | [renderer](errors/renderer.md) |
 | #218 | 持续样包旧SDK与小窗口有效布局叠加；设计基准不代替多尺寸 | [toolchain](errors/toolchain.md) |
+
+| #219 | 作者固定矩阵不能叠加小窗口有效布局；publish中geometry信号需保留 | [renderer](errors/renderer.md) |
+| #220 | 探针提前读取尚未挂载组件导致自身轮询中断 | [toolchain](errors/toolchain.md) |

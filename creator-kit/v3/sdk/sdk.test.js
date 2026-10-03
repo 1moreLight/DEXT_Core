@@ -250,3 +250,18 @@ test('a refused synchronous native request returns inputRequired without parent 
   await assert.rejects(f.api.actions.activate('open'),{code:'inputRequired'});
   assert.equal(f.sent.length,before);assert.equal(f.api.diagnostics().pendingRequests,0);assert.equal(f.timers.size,0);
 });
+test('current effective placements are immutable and can update without a new declaration version', () => {
+  const f = fixture(), initial = { 'component.clock': { x: 0, y: 400, width: 900, height: 300 } };
+  f.init({ placements: initial });
+  const values = []; f.api.scene.subscribeGeometry(value => values.push(value));
+  assert.equal(f.api.session.placements['component.clock'].y, 400);
+  assert.equal(Object.isFrozen(f.api.session.placements['component.clock']), true);
+  f.event('geometry', { geometryVersion: 1, placements: { 'component.clock': null } }, 1);
+  assert.equal(f.api.session.placements['component.clock'], null);
+  assert.equal(values.length, 2);
+  f.event('geometry', { geometryVersion: 1, placements: { 'component.clock': null } }, 2);
+  assert.equal(values.length, 2);
+  f.event('geometry', { geometryVersion: 0, placements: initial }, 3);
+  assert.equal(f.api.session.placements['component.clock'], null);
+  f.api.dispose();
+});

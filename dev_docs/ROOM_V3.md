@@ -88,3 +88,5 @@ Dext.media.control只接受play/pause/toggle/next/previous；Dext.audio.control�
 Core准备与一次证明消费是短私有提交边界，Windows/COM在锁外线程池执行。每consumer+capability最多10次/秒；rateLimited不消费。每attachment至多1、全Core至多4个任务，非阻塞admission；外层4s后controlUnavailable，原生5s期限仍有界。挂起任务在真正终止前持有槽位，不能用重建attachment绕过；已取消请求在媒体等锁/解析和音量设备解析后的写入前再次拒绝。无法撤回已经发出的系统调用，超时不伪造成功。
 
 Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有宿主使用，SDK仅有安全status/错误码。实际消费后服务失败也取消默认回退；未消费的拒绝保留当前配置入口fallback。已发动作在同代次/会话修订中可回执，暂停/换代次/会话/销毁全部取消。实际Core五媒体意图到达拥有的静音publisher、音量改动后恢复、8次输入一次消费与正常重启恢复已验证；人工物理输入、听音、完整生命周期与可信退出确认仍独立进行。
+
+- 2026-10-04 P5有效布局补证：持续Scene经SDK只读placements取得当前可见组件的组矩阵前有效设计矩形，内部逻辑视口不改。v3-continuous仪表盘改为1600×540，用当前矩形映射至底部1920×280/整页1920×1080；实际640×480 scale1.5底部展开往返、1920×1080放大缩回及有效布局恢复已通过。Core包/回复/raw OS键为fixture，更多物理DPI/完整Core OS门槛继续；全16项就绪仍1/16≈6%。

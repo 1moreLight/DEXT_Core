@@ -478,3 +478,20 @@ test('committed Desk icons use source groups while a persistent widget uses shar
  const entry=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.find(b=>b.entryId==='icon.home/icon');
  assert.equal(entry.x,82/1920);assert.equal(entry.y,32/1080);f.host.dispose();
 });
+
+test('author geometry exposes effective pre-group component rectangles through shrink and restore',async()=>{
+ let viewport={width:1920,height:1080,dpr:1};
+ const f=fixture({getViewport:()=>viewport,room:{transition:{type:'author',durationMs:700}}});await f.host.ready;
+ const projected=()=>f.calls.findLast(v=>v.method==='frameGeometry').value.placements;
+ const initial=projected();assert.deepEqual(initial,{'component.shared':{x:400,y:50,width:200,height:100}});
+ const node=[...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node;
+ viewport={width:427,height:320,dpr:1.5};await f.host.resize();
+ const item=f.host.readDiagnostics().layout.items.find(v=>v.key==='widget:shared');
+ assert.deepEqual(projected()['component.shared'],item.effectiveRect);assert.notDeepEqual(projected(),initial);
+ assert.equal(JSON.stringify(projected()).includes('savedRect'),false);
+ const frameCount=f.calls.filter(v=>v.method==='frameGeometry').length,version=f.host.readDiagnostics().geometryVersion;
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:version,groups:{shared:{matrix:[1,0,0,1,0,100],opacity:1}}});
+ assert.equal(f.calls.filter(v=>v.method==='frameGeometry').length,frameCount);
+ viewport={width:1920,height:1080,dpr:1};await f.host.resize();
+ assert.deepEqual(projected(),initial);assert.equal([...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node,node);f.host.dispose();
+});

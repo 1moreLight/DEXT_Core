@@ -39,7 +39,7 @@ addEventListener('pagehide', () => { releases.forEach(release => release()); Dex
 | storage.get / set | 请求当前消费者本机键值；host核验storage.read/write，未接通时明确unsupported |
 | media.control / audio.control | 封闭播放动作和0..1音量/muted；host核验相应声明、授权与输入要求 |
 | scene.publishGeometry | 提交本消费者已声明按钮矩形；roomScene可另交source/target/shared组矩阵、占用区 |
-| scene.subscribeGeometry | 回放/订阅geometryVersion与viewport，resize后重新报告本页实际按钮；相同几何不递增版本，避免消费者互相重报循环 |
+| scene.subscribeGeometry | 回放/订阅geometryVersion、viewport及组矩阵前的placements有效矩形；resize后重新报告本页实际按钮，完全相同不通知，纯视觉帧不通知 |
 | scene.completeTransition | 仅roomScene可回告当前transitionId完成；真正提交由Core完成 |
 | scene.done | 仅slot.start在starting时请求进入桌面；idle必须由宿主唤醒，作者done不能退出idle |
 
@@ -51,7 +51,7 @@ addEventListener('pagehide', () => { releases.forEach(release => release()); Dex
 
 共同信封为`{type,apiVersion:1,instanceId,sessionId,token}`。消息只接受固定parent WindowProxy；沙箱是opaque origin，postMessage目标使用`*`，不能以`event.origin`取代source和信封核验。Core仍独立验证真实Player/连接/安装/消费者。
 
-- init：type=`dext:runtime:init`，含consumerId、kind、capabilities状态对象、config、viewport、geometryVersion、snapshot；一个文档只接受一次合法init。
+- init：type=`dext:runtime:init`，含consumerId、kind、capabilities状态对象、config、viewport、geometryVersion、placements、snapshot；一个文档只接受一次合法init。
 - request：type=`dext:runtime:request`，含单调唯一requestId、method、params；response回同一信封/requestId，`ok:true,result`或`ok:false,error:{code}`。未知、过期、重复及错误token/版本/session响应不能结束其他请求。
 - notify：type=`dext:runtime:notify`，用于ready、dispose以及desk/lifecycle/config/capabilities/data的subscribe/unsubscribe；无需响应。data频道params为`{capability}`。
 - event：type=`dext:runtime:event`，含event、payload、正整数sequence。sequence按频道递增，data按capability分别递增。desk payload为完整快照；lifecycle为其生命周期；geometry为`{geometryVersion,viewport}`；config/capabilities为公开对象；data为`{capability,state}`。
@@ -279,3 +279,9 @@ Core raw Tab/ShiftTab在正式eventSamples下冻结单次焦点请求；private 
 ### 持续作者矩阵与当前已绘制样本（2026-10-04）
 scene.publishGeometry的纯groups变化为本地视觉帧，按钮/占用区/视口的变化仍属结构。视觉帧保持inputReady/inputVersion与逻辑focus，图标/Widget/SVG同次绘制；当前Desk普通图标无转场时也沿source组，共享仪表盘可独立沿shared。按钮尺寸仍是各消费者自己的逻辑坐标，事件样本才将有效布局和当前矩阵投影为裁剪后的可见区域。
 native sample保持期间只保存最新待绘制矩阵，匹配end才应用；结构/快照/暂停/销毁取消待帧及旧保持。诊断模型groups是最新接受值，不充当已绘制位置证明；原生readInputSample从实际visualGroups计算，作者无样本或proof入口。实际ReleasePlayer/SDK设计基准仪表盘往返、图标/焦点、本地帧不发Core几何已验证，多尺寸有效布局/物理DPI保持待补。
+
+
+### 作者Scene按当前有效布局绘制（2026-10-04）
+session与scene.subscribeGeometry包含只读placements，键为component.<ID>，值为1920×1080设计坐标中的当前有效矩形{x,y,width,height}；null表示无法放置，当前未呈现或非组件不提供键。此矩形在source/target/shared作者组矩阵之前，包含当前窗口临时移位/缩放；iframe内部仍为清单逻辑尺寸。Scene得到当前可见组件，其他消费者仅得到自身组件。无savedRect、私人绑定、原生坐标或输入证据，不能写回个人布局。
+geometryVersion用于作者按钮/占用声明及视口结构，单纯有效布局投影变化可在同版本按geometry频道的新sequence更新；完全相同不重复通知。纯作者视觉矩阵不发送geometry事件，不造成Scene与Widget逐帧互相重报。
+作者把有效矩形r变换到期望矩形d时，可使用matrix=[d.width/r.width,0,0,d.height/r.height,d.x-r.x*d.width/r.width,d.y-r.y*d.height/r.height]；仍遵守既有矩阵限幅，缺少/null矩形应隐藏呈现。rooms/v3-continuous用此映射在实际640×480/scale1.5与1920×1080缩放往返中保持同一1600×540仪表盘逻辑视口，呈现底部1920×280与整页1920×1080。更多物理DPI/完整Core OS最终验证继续。

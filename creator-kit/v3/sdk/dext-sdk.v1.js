@@ -71,17 +71,24 @@
       Number.isFinite(value.height) && value.height >= 64 && value.height <= 16384 &&
       Number.isFinite(value.dpr) && value.dpr >= 0.5 && value.dpr <= 8;
   }
+  function placementsValid(value) {
+    return object(value) && Object.keys(value).length <= 128 && Object.entries(value).every(([key, rect]) =>
+      key.startsWith('component.') && id(key.slice(10)) && (rect === null || object(rect) &&
+        Object.keys(rect).length === 4 && ['x', 'y', 'width', 'height'].every(field =>
+          Number.isFinite(rect[field]) && rect[field] >= 0 && rect[field] <= 16384) && rect.width > 0 && rect.height > 0));
+  }
   function initValid(value) {
     return value.apiVersion === VERSION && text(value.instanceId) && text(value.sessionId, 128) && text(value.token, 256) &&
       text(value.consumerId, 100) && ['scene', 'widget', 'dock', 'html', 'media'].includes(value.kind) && capsValid(value.capabilities) &&
       object(value.config) && viewportValid(value.viewport) && revision(value.geometryVersion) &&
+      (value.placements === undefined || placementsValid(value.placements)) &&
       snapshotValid(value.snapshot, value.sessionId);
   }
   function publicSession() {
     if (!session) return null;
     return immutable({ apiVersion: VERSION, instanceId: session.instanceId, sessionId: session.sessionId, consumerId: session.consumerId,
       kind: session.kind, capabilities: session.capabilities, config: session.config, viewport: session.viewport,
-      geometryVersion: session.geometryVersion, snapshot: session.snapshot });
+      geometryVersion: session.geometryVersion, placements: session.placements, snapshot: session.snapshot });
   }
   function identity(type) { return { type, apiVersion: VERSION, instanceId: session.instanceId, sessionId: session.sessionId, token: session.token }; }
   function notify(method, params = {}) {
@@ -157,10 +164,10 @@
     try { value = wire(event.data); } catch (_) { diagnose('invalidMessage'); return; }
     if (value.type === 'dext:runtime:init') {
       if (session || !initValid(value)) return;
-      session = value;
+      session = { ...value, placements: value.placements || {} };
       latest.set('desk', immutable(value.snapshot)); latest.set('lifecycle', immutable(value.snapshot.lifecycle));
       latest.set('config', immutable(value.config)); latest.set('capabilities', immutable(value.capabilities));
-      latest.set('geometry', immutable({ geometryVersion: value.geometryVersion, viewport: value.viewport }));
+      latest.set('geometry', immutable({ geometryVersion: value.geometryVersion, viewport: value.viewport, placements: session.placements }));
       for (const capability of Object.keys(value.capabilities)) if (DATA_CAPABILITIES.has(capability)) latest.set('data:' + capability, immutable(dataInitial(capability)));
       notify('ready');
       for (const key of channels.keys()) {
@@ -198,11 +205,14 @@
       if (!lifeValid(payload) || payload.revision <= session.snapshot.lifecycle.revision) return;
       session.snapshot = { ...session.snapshot, lifecycle: payload }; deliver('lifecycle', payload);
     } else if (value.event === 'geometry') {
-      if (!object(payload) || !revision(payload.geometryVersion) || payload.geometryVersion <= session.geometryVersion ||
-        (payload.viewport !== undefined && !viewportValid(payload.viewport))) return;
-      session.geometryVersion = payload.geometryVersion;
-      if (payload.viewport) session.viewport = payload.viewport;
-      deliver('geometry', { geometryVersion: session.geometryVersion, viewport: session.viewport });
+      if (!object(payload) || !revision(payload.geometryVersion) || payload.geometryVersion < session.geometryVersion ||
+        (payload.viewport !== undefined && !viewportValid(payload.viewport)) ||
+        (payload.placements !== undefined && !placementsValid(payload.placements))) return;
+      const viewport = payload.viewport || session.viewport, placements = payload.placements || session.placements;
+      if (payload.geometryVersion === session.geometryVersion && JSON.stringify(viewport) === JSON.stringify(session.viewport) &&
+        JSON.stringify(placements) === JSON.stringify(session.placements)) { sequences.set(key, value.sequence); return; }
+      session.geometryVersion = payload.geometryVersion; session.viewport = viewport; session.placements = placements;
+      deliver('geometry', { geometryVersion: session.geometryVersion, viewport, placements });
     } else if (value.event === 'config') {
       if (!object(payload)) return; session.config = payload; deliver('config', payload);
     } else if (value.event === 'capabilities') {

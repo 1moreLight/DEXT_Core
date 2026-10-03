@@ -35,7 +35,10 @@
       typeof value.active==='boolean'&&typeof value.operable==='boolean'&&object(life)&&['starting','desktop','idle'].includes(life.stage)&&
       typeof life.playbackPaused==='boolean'&&typeof life.locked==='boolean'&&Number.isSafeInteger(life.revision)&&life.revision>=0;
   }
-  function geometryValid(value){return object(value)&&Number.isSafeInteger(value.geometryVersion)&&value.geometryVersion>=0&&object(value.viewport)&&
+  function placementsValid(value){return object(value)&&Object.keys(value).length<=128&&Object.entries(value).every(([key,rect])=>
+    key.startsWith('component.')&&id(key.slice(10))&&(rect===null||shape(rect,['x','y','width','height'])&&
+    ['x','y','width','height'].every(field=>Number.isFinite(rect[field])&&rect[field]>=0&&rect[field]<=16384)&&rect.width>0&&rect.height>0));}
+  function geometryValid(value){return object(value)&&Number.isSafeInteger(value.geometryVersion)&&value.geometryVersion>=0&&(value.placements===undefined||placementsValid(value.placements))&&object(value.viewport)&&
     ['width','height'].every(key=>Number.isFinite(value.viewport[key])&&value.viewport[key]>=64&&value.viewport[key]<=16384)&&
     Number.isFinite(value.viewport.dpr)&&value.viewport.dpr>=.5&&value.viewport.dpr<=8;}
   function createFrameHost(options){
@@ -45,7 +48,7 @@
     const later=options.setTimeout||root.setTimeout.bind(root),cancel=options.clearTimeout||root.clearTimeout.bind(root);
     const token=options.randomToken||(()=>root.crypto.randomUUID());
     const implemented=new Set((options.implementedCapabilities||[]).filter(capability=>CAPS.has(capability)));
-    let snapshot=wire(options.initialSnapshot),geometry=wire(options.initialGeometry),generation=options.runtimeGeneration,disposed=false,lastError=null,playbackSuspended=options.initialPlaybackSuspended===true;
+    let snapshot=wire(options.initialSnapshot),geometry={...wire(options.initialGeometry),placements:wire(options.initialGeometry.placements||{})},generation=options.runtimeGeneration,disposed=false,lastError=null,playbackSuspended=options.initialPlaybackSuspended===true;
     const records=new Map();
     const diagnose=code=>{lastError={code};};
     const alive=record=>!disposed&&!record.disposed&&records.get(record.instanceId)===record;
@@ -103,11 +106,16 @@
     function permissionView(record,reply){return Object.fromEntries(record.declared.map(capability=>[capability,
       active(record)&&reply?.status==='accepted'&&reply.capabilities?.[capability]==='accepted'
         ?implemented.has(capability)&&(!DATA.has(capability)||typeof options.subscribeData==='function')?'available':'unsupported':'denied']));}
+    function geometryView(record){
+      const placements=record.consumerId==='scene'?geometry.placements:
+        Object.hasOwn(geometry.placements,record.consumerId)?{[record.consumerId]:geometry.placements[record.consumerId]}:{};
+      return{geometryVersion:geometry.geometryVersion,viewport:geometry.viewport,placements};
+    }
     function initialize(record){
       if(!alive(record)||record.docDisposed||record.initialized)return;
       record.initialized=true;
       if(!send(record,{...envelope(record,'dext:runtime:init'),consumerId:record.consumerId,kind:record.kind,capabilities:record.capabilities,
-          config:record.config,viewport:geometry.viewport,geometryVersion:geometry.geometryVersion,snapshot})){record.initialized=false;return;}
+          config:record.config,...geometryView(record),snapshot})){record.initialized=false;return;}
       startSources(record);
     }
     function refreshPermissions(record){
@@ -201,7 +209,7 @@
       if(match[2]==='unsubscribe'){record.channels.delete(channel);if(channel.startsWith('data:'))closeProvider(record,channel.slice(5));return;}
       if(record.channels.has(channel))return;record.channels.add(channel);
       if(channel.startsWith('data:'))startSources(record);
-      else event(record,channel,{desk:snapshot,lifecycle:snapshot.lifecycle,config:record.config,capabilities:record.capabilities,geometry}[channel]);
+      else event(record,channel,{desk:snapshot,lifecycle:snapshot.lifecycle,config:record.config,capabilities:record.capabilities,geometry:geometryView(record)}[channel]);
     }
     function receive(event){
       if(disposed)return;
@@ -245,7 +253,12 @@
         try{snapshot=wire(next);}catch(error){diagnose(error.code||'invalidPayload');return false;}
         for(const record of records.values()){stopSources(record);event(record,'desk',snapshot);applyState(record);refreshPermissions(record);}return true;
       },
-      setGeometry(next){if(disposed||!geometryValid(next)||next.geometryVersion<=geometry.geometryVersion)return false;geometry=wire(next);for(const record of records.values())event(record,'geometry',geometry);return true;},
+      setGeometry(next){
+        if(disposed||!geometryValid(next)||next.geometryVersion<geometry.geometryVersion)return false;
+        const value={...wire(next),placements:wire(next.placements||{})};
+        if(JSON.stringify(value)===JSON.stringify(geometry))return false;
+        geometry=value;for(const record of records.values())event(record,'geometry',geometryView(record));return true;
+      },
       setRuntimeGeneration(next){if(disposed||!Number.isSafeInteger(next)||next<=generation)return false;generation=next;for(const record of records.values()){clearRequests(record,'staleInput');stopSources(record);refreshPermissions(record);}return true;},
       refreshPermissions(instanceId){if(instanceId){const record=records.get(instanceId);if(record)refreshPermissions(record);}else for(const record of records.values())refreshPermissions(record);},
       disposeInstance,

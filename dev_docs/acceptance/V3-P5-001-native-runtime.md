@@ -409,7 +409,25 @@ scene.publishGeometry保留既有API。模型只在按钮矩形/占用区/视口
 实质author-visual-dom-red67/70（三个持续视觉/保持功能失败）；实现后旧边界位置断言改读实际样本，失效夹具改为生命周期变化而非同状态空修订，GREEN含SDK86/86。当前图标误跟shared的新增独立RED后，必要模型/DOM/SDK87/87。这些为本地功能检查，无新增网络专项。
 rooms/v3-continuous升级为共享仪表盘组件+持续scene控制器：仪表盘逻辑1600×280、底部展开到整页返回不重建，普通图标按Desk组参与作者运动；作者等待一次publish完成再下一RAF，queue修订不重播动画，完成只回告Core。初次资源一致性检查发现样包SDK副本陈旧，已复制当前生产版本；正式v3 Schema/全部resources/SDK字节一致均通过。
 author-visual-continuous-wire-final实际ReleasePlayer/生产宿主及SDK整轮exit0：1920×1080设计基准同一仪表盘document ID/内部1600×280视口bottom→full→bottom、两次作者完成回告、Core fixture提交；实际ordinary icon矩形与仪表盘位置变化，current native样本含共享按钮，SVG焦点持续运动，几何计数/版本不因视觉帧增加、动作0、读数存在、前台保持。Core包/动作回执/raw OS键仍fixture，不计实际Core OS输入。
-首轮author-visual-continuous-wire在640×480/scale1.5因既定CSS像素保留和临时布局移位，使基准矩阵叠加后仪表盘出画布；该失败保留。当前实机只证明设计基准，作者矩阵与小窗口有效布局组合、多物理DPI仍须继续，不将修改验证窗口写成响应式已通过。
+首轮author-visual-continuous-wire在640×480/scale1.5因既定CSS像素保留和临时布局移位，使基准矩阵叠加后仪表盘出画布；该失败保留。490fcbb阶段当时实机仅证明设计基准，随后小窗口有效布局组合见下节；多物理DPI仍须继续，不将修改验证窗口写成响应式已通过。
 author-visual-default-regression实际ReleasePlayer整轮exit0：静止/移动鼠标、动态键样本、原生Tab/移动焦点、生产Core类连续ShiftTab早到Enter、切页/共享文档/暂停/最新修订/撤销保持通过。
 author-visual-core-build四阶段后，常规start Core96152/Player95220/Watchdog70036/config58572，日志20261004_063733.txt；identity共享D配置器OTHER/exit1，四精确路径另核。正常关闭、watcher3287 exit0，原四文件SHA256/缺失保持，Dext进程/开发监听/author、official、Core和author-visual GUID目录0。常规恢复原v2，不计v3物理输入，Dext保持关闭。
 后续本地功能继续Core零序号兼容与作者矩阵/小窗口有效布局组合；实际Core OS/物理DPI/锁屏/故障还原仍待补，系统凭据宿主未解除时不重复桌面点击。最终第2项仪表盘跨页实例，第4项连续Tab与键一次动作，第5项移动/遮挡/多入口/DPI集中执行，拖动暂缓。完整16项开发就绪仍1/16=6.25%（约6%），13/16与16/16目标、最终七项与单次P5审查保持，未合并master。
+
+
+## P5 作者矩阵与小窗口有效布局（2026-10-04，BASE 490fcbb）
+一句话目标：持续Scene读取官方当前有效组件矩形，仪表盘在小窗口也能从底部展开为整页，并在实际缩小/恢复中保持同一作者文档与逻辑视口。
+范围：SDK session/geometry增加只读placements；Scene只读当前可见组件的组矩阵前矩形，其他消费者只读自身组件矩形，不含保存布局或私人绑定。同版本有效矩形变化按频道序号发布，完全相同不通知，视觉帧不通知。样包矩阵从有效矩形推导，异步publish中收到resize/geometry仍保留待绘制信号。桌面拖动暂缓，Core零序号/实际Core OS/物理DPI/锁屏/还原不在本段完成，无新增网络专项。
+先SDK/Frame/DOM功能RED，再实际ReleasePlayer640×480 scale1.5底部→整页→底部、放大→缩回验证；Core包/回复/raw OS键保持fixture。改C#探针后完整build→start/身份→正常关闭，原四文件保持并具名提交。最终人工卡第2项切页及缩放确认仪表盘不重建，第5项物理DPI集中；16项就绪仍1/16≈6%，不中途确认或合并。
+- [x] SDK/Frame/DOM增加当前有效矩形投影与同版本有效变化；三个实际功能RED后必要模型/DOM/Frame/SDK108/108。纯视觉不发geometry，收缩/恢复保留文档，SDK类型与样包接续。
+- [x] 样包按有效矩形推导矩阵、flight期间保留dirty待绘制；actual effective-layout-author-wire-final整轮exit0：640×480/scale1.5底部→整页→底部、1920×1080放大→缩回，文档/1600×540逻辑视口不变、有效布局恢复；Core包/回复/raw OS键仍fixture。
+- [x] 必要模型/DOM/Frame/SDK108/108、类型/语法、Schema/资源/SDK一致、原正式Player输入整轮回归通过；完整四阶段build、常规start/身份与正常关闭、watcher96341 exit0、原四文件不变及进程/监听/原生GUID目录0；本节随具名阶段提交保存。
+
+
+## P5 作者矩阵与小窗口有效布局（2026-10-04）
+生产SDK session与scene.subscribeGeometry增加只读placements；Scene读当前可见组件的组矩阵前有效设计矩形，其他消费者仅读自身，无saved布局、私人绑定或OS输入字段。null无法放置，未呈现不提供；同版本有效变化按geometry频道序号发布，重复值和纯视觉帧不通知，内部逻辑视口保持。
+三个功能实质RED后必要模型/DOM/Frame/SDK108/108，类型/语法通过。样包仪表盘逻辑1600×540，根据有效矩形映射到期望底部1920×280/整页1920×1080；async publish期间记录dirty，geometry/resize不能丢下一次绘制。Schema/resources/current SDK字节一致通过。
+effective-layout-author-wire-final实际ReleasePlayer/生产宿主与SDK整轮exit0：640×480/scale1.5的CSS小视口底部→整页→底部、1920×1080放大→缩回，真实DOM矩形满宽/期望高度、同一instrument document/1600×540逻辑视口、有效布局返回原值、读数与前台保持；运动焦点/当前可见样本、结构版本与零逐帧Core几何/动作仍通过。Core包/回复/raw OS键为fixture，不计实际Core OS或多物理DPI。第一轮探针在组件挂载前读getBoundingClientRect导致自身轮询中断，保留effective-layout-author-wire失败日志，修正等待节点后通过，未降低位置验收。
+effective-layout-default-regression实际Player原输入整轮exit0：静止/移动鼠标、动态键、单次Tab/移动焦点、生产Core连续ShiftTab+早到Enter、Core提交/共享文档/暂停/撤销保持通过。无新增网络专项。
+effective-layout-core-build完整四阶段后常规start Core45276/Player113480/Watchdog70200/config114976、日志20261004_070019.txt；identity共享D配置器OTHER/exit1，四精确路径独立核验。正常关闭、watcher96341 exit0、原四文件SHA256/缺失保持、Dext进程/开发监听/author、official、Core及author-visual GUID目录0，Dext保持关闭。常规恢复原v2，不计v3物理输入。
+接续Core零序号兼容与最终功能组合。系统凭据窗未解除时不重复桌面点击；实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次P5审查待补。最终人工第2项：在v3-continuous底部→整页→底部切页，并缩小/恢复窗口，确认仪表盘实例标识/逻辑尺寸不变、面板满宽且返回底部；第4/5项连续键与移动/DPI集中执行。拖动暂缓，16项开发就绪仍1/16≈6%，13/16和16/16目标保持，不中途验收或合并master。

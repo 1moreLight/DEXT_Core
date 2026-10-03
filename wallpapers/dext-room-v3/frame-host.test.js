@@ -136,3 +136,17 @@ test('real SDK control errors preserve bounded safe status and current consumer'
    assert.equal(f.calls.every(v=>v.consumerId==='scene'&&v.identity.revision===1),true);f.host.dispose();
  }
 });
+
+test('effective component rectangles reach Scene and each component view, including same-version updates',async()=>{
+ const viewport={width:640,height:480,dpr:1.5},clock={x:0,y:350,width:1000,height:600},other={x:1200,y:20,width:300,height:200};
+ const f=fixture({initialGeometry:{geometryVersion:1,viewport,placements:{'component.clock':clock,'component.other':other}}});
+ const scene=await f.start(),widget=await f.start({instanceId:'clock',consumerId:'component.clock',kind:'widget'});
+ let view;widget.sdk.scene.subscribeGeometry(value=>view=value);
+ assert.deepEqual(JSON.parse(JSON.stringify(scene.sdk.session.placements)),{'component.clock':clock,'component.other':other});
+ assert.deepEqual(JSON.parse(JSON.stringify(view.placements)),{'component.clock':clock});
+ const next={geometryVersion:1,viewport,placements:{'component.clock':null,'component.other':other}};
+ assert.equal(f.host.setGeometry(next),true);
+ assert.equal(view.placements['component.clock'],null);
+ assert.equal(f.host.setGeometry(next),false);
+ assert.equal(f.frames.length,2);f.host.dispose();
+});

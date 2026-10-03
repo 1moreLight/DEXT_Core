@@ -261,3 +261,8 @@ Core把未回Tab/ShiftTab意图保存在有界FIFO，当前可见取样只能按
 ### 2026-10-04：作者视觉帧在Player本地绘制，结构变化才撤销原生几何
 既有scene.publishGeometry中的source/target/shared矩阵与opacity表达当前视觉帧，单独变化不递增结构geometryVersion、不向Core逐帧发送。按钮矩形、占用区、视口等结构改变仍撤销输入并重新确认；真实原生DOWN/UP各读取已绘制区域，逻辑focus在当前可见区域随帧画SVG。普通图标在已提交Desk也沿source组，允许共享仪表盘独立缩放。
 native取样保持期间后续作者矩阵只存最新值，实际匹配end后绘制；快照/结构/暂停/销毁不释放旧帧进入新状态。共享作者iframe保持文档和内部逻辑尺寸。实际设计基准仪表盘往返已验证；小窗口有效布局和物理DPI仍需组合验证，不用基准窗口代替。
+
+
+### 2026-10-04：作者按只读有效布局组合组矩阵
+为让持续Scene适应既定CSS像素保留和临时布局移位，SDK session/geometry提供当前可见组件在组矩阵前的有效设计矩形placements；Scene可读可见集合，其他消费者仅自身，缺少/null分别表示未呈现/无可放位置。只读呈现数据不修改saved布局、不增加动作权限，不暴露私人绑定或OS输入字段。
+有效投影在同geometryVersion也可按频道sequence更新，重复值及纯视觉帧不通知；结构仍沿既有原生撤销/确认路径。作者从有效矩形映射至目标矩形，内部逻辑视口持续；样包flight期间保留geometry/resize待绘制信号。实际640×480/scale1.5放大缩回和跨页已验证，物理DPI/Core OS最终门槛不由fixture替代。

@@ -39,6 +39,7 @@ declare global {
     readonly config: { readonly [key: string]: DextJson };
     readonly viewport: DextViewport;
     readonly geometryVersion: number;
+    readonly placements: Readonly<Partial<Record<string, DextRect | null>>>;
     readonly snapshot: DextDeskSnapshot;
   }
   type DextDataState = { readonly status: 'available'; readonly value: DextJson }
@@ -93,7 +94,7 @@ declare global {
     readonly media: { control(action: 'play' | 'pause' | 'toggle' | 'next' | 'previous'): Promise<DextActionResult>; };
     readonly audio: { control(settings: { volume?: number; muted?: boolean }): Promise<DextActionResult>; };
     readonly scene: {
-      subscribeGeometry(listener: (geometry: { readonly geometryVersion: number; readonly viewport: DextViewport }) => void): DextUnsubscribe;
+      subscribeGeometry(listener: (geometry: { readonly geometryVersion: number; readonly viewport: DextViewport; readonly placements: Readonly<Partial<Record<string, DextRect | null>>> }) => void): DextUnsubscribe;
       publishGeometry(report: DextGeometryReport): Promise<DextActionResult>;
       completeTransition(transitionId: string): Promise<DextActionResult>;
       done(): Promise<DextActionResult>;

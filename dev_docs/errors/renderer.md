@@ -648,3 +648,7 @@ Tab的单次可见查询不等于动作proof，也不证明快速连续键序列
 原acceptGeometry对groups/opacity变化总是递增geometryVersion，DOM随即render→invalidateGeometry/geometry并清focus、释放native hold。生产行为RED67/70：连续视觉帧失去原版本和焦点，保持中第二份报告因版本推进被拒。
 仅按钮/占用等结构改变才产生invalidateInput/applyGeometry；纯groups产生applyVisualGroups，Widget/图标/焦点同次本地绘制。native hold存最新待矩阵，匹配end后应用；结构/快照/暂停/销毁丢旧待帧。旧断言改读当前物理样本，空同状态修订本来保留模型groups，失效夹具使用真实生命周期变化。GREEN86/86。
 相邻功能发现：普通图标在无转场时错误使用shared矩阵，仪表盘缩放会带走当前Desk入口。新增独立RED后改为source组，shared继续控制共享呈现；透明共享Dock恢复下方独立图标输入，必要87/87。实际ReleasePlayer作者仪表盘/普通图标/焦点、本地无逐帧Core几何与原默认输入回归通过；真实Core OS/DPI最终门槛仍未代填。
+
+## #219 作者应从有效矩形映射到目标呈现（2026-10-04）
+640×480/scale1.5实际窗口的CSS小视口按既定布局规则保留像素尺寸、移位/缩放组件，作者固定原始y800矩阵再次叠加后把仪表盘移出画布。设计基准通过无法证明响应式。SDK只读placements提供当前可见组矩阵前有效矩形；Scene读集合、其他消费者自身，内部逻辑视口仍固定。三个功能RED后108/108；样包以有效矩形映射至期望底部/整页，实际小窗口展开及放大缩回通过。
+同geometryVersion的有效投影变化也需通知，完全相同不重复；纯视觉帧不通知。作者async publish未完成时geometry/resize仍须保留dirty待绘制，finally再安排一帧，避免稳定Desk改变有效布局后丢重绘。矩阵限幅保持，物理DPI与完整Core OS门槛另行验证。

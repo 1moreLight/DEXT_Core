@@ -417,3 +417,7 @@ native-input-guardian夹具fire(target,type,options)首轮误用fire(type,option
 资源检查发现rooms/v3-continuous/scene仍带旧SDK副本；复制当前生产SDK后Schema、全部声明资源及字节一致通过。复制样包要检查嵌入SDK，不能只看creator-kit本体测试绿。
 首轮实际Player采用640×480/scale1.5，实际CSS视口427×320触发既有CSS像素尺寸保留/临时移位；固定基准作者矩阵叠加后仪表盘出画布。修正样包基准布局并以1920×1080/scale1验证同仪表盘底部→整页→返回，多尺寸/个人有效布局组合仍保持待做；不能把改验证窗口写成响应式通过。
 编写shell here-string时内嵌JS模板反引号使functions.exec整段SyntaxError、未执行任何修改；改用普通字符串拼接后接续。日志__EVIDENCE__占位符曾漏替换和rg括号过度转义，修正精确路径/简单模式后继续；没有反复重跑已完成实机或网络矩阵。
+
+## #220 观测轮询须等组件实际挂载（2026-10-04）
+首次effective-layout-author-wire超时：轮询入口立即对尚不存在的component.instrument调用getBoundingClientRect，异常使后续setTimeout不再执行，宿主本身继续正常capabilities/data。在每次轮询先等待实际节点再读取矩形，保留原位置/尺寸/ready门槛后wire2整轮通过。诊断脚本不能把自身时序异常归因于生产渲染器；Core包/回复fixture仍标明。
+检索路径须用rg --files确认，测试文件位于dext-room-v3本层，creator-kit/v3无README；读取日志前须展开__EVIDENCE__占位符，直接读取占位路径会报不存在。以上均已按实际路径接续，无创建占位文件。
