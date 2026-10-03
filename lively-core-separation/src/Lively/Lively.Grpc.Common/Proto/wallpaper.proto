@@ -154,6 +154,8 @@ message GetCoreStatsResponse {
 	int32 process_id = 6;
 	string app_data_directory = 7;
 	string grpc_pipe_name = 8;
+	// Set only after Core-owned confirmation of a current native exit action.
+	bool is_product_exiting = 9;
 }
 
 message RoomSessionLifecycleStatus {

@@ -163,7 +163,7 @@ native-host发送Player要求的JSON字符串，只接受固定私有WebView消�
 
 dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下，切页不重挂或改src。HTML媒体委托frame-host，四类素材使用media-host。官方资源只从当前inventory解析/content/<generation>/路径。每个global revision先invalidate并等回执，再更新DOM并发布递增私有inputVersion，Core接受后才启用动作；queue修订不重播动画。发布staleInput按新inputVersion最多8次、50ms可取消间隔重试。模型的SDK geometryVersion与私有输入发布版本独立。作者Widget本地矩形须在自身placement内，再平移到设计画布；global组矩阵绕画布原点作用于同一wrapper/图标。默认slide/fade/none回告完成，current只来自Core。
 
-现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。此段保留原接线阶段的输入限制；当前desk.navigate、media.control/audio.control及storage均已接消费者专用Core适配，见文末。可信退出确认继续，未实现能力仍报告unsupported。HTMLMediaElement与WebAudio原生逐iframe基础已在下节接入；完整生命周期仍继续。inert不作为媒体暂停证据。
+现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。此段保留原接线阶段的输入限制；当前desk.navigate、media.control/audio.control及storage均已接消费者专用Core适配，见文末。可信退出确认已接私有Core许可与原生确认窗，见文末；未实现能力仍报告unsupported。HTMLMediaElement与WebAudio原生逐iframe基础已在下节接入；完整生命周期仍继续。inert不作为媒体暂停证据。
 
 生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟；后续真实Core安装/重启证据见文末，物理输入/DPI与最终7项仍待执行。
 
@@ -202,3 +202,11 @@ Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有�
 
 
 Player私有mediaControl请求字段：consumer/action/geometryVersion/inputSequence；audioControl为consumer/settings/geometryVersion/inputSequence。均叠加原IdentityFields且不容额外字段、重复JSON字段、假proof或陈旧identity；settings非空且字段仅volume/muted。Core传输DTO的MediaAction/Volume/Muted与导航Action独立，二次闭合校验后才派发。Core未成功消费不报告inputConsumed=true。系统控制status新增controlUnavailable/rateLimited，安全错误码沿frame-host回SDK。正式SDK/DOM/原生消息与Core最终140/35/168项通过，真实Core控制15项PASS。
+
+## 可信退出确认接线（2026-10-03）
+
+具有当前dext.exit授权的已声明入口，在真实一次输入通过后由actions.activate返回requiresConfirmation。官方宿主只接收安全状态和私有消费回执；确认续体只在Core内存中，JSON与Player/作者协议均不包含。作者没有confirmed/approved/token或confirmExit接口，作者自己绘制提示不能代替Dext确认。
+
+Core原生确认窗使用固定Dext标题和退出说明、默认“否”；UI在授权锁外，全Core同时至多一窗。取消保持产品运行并消费许可；确认后按当前安装、私有连接、消费者/按钮scope、授权、个人动作、锁屏和文档代次重查。该可信窗口造成的失焦/播放暂停仅允许完成自己的退出决定，不能放宽其他动作，旧文档/换Room/重放/撤权均不能退出。
+
+通过确认后Core发布独立产品退出状态，原生配置器核对所属Core产品/pipe/data/worktree及实际进程路径后正常退出；Core保留RPC三秒供正常响应的配置器观察，再走既有正常关闭Player/Watchdog/Core。普通配置器“退出Core”保持原语义，配置器仍运行。此通知有界等待，不强杀卡死的配置器；完整运行与最终人工退出门槛仍以本包验收记录为准。

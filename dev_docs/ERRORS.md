@@ -249,4 +249,5 @@
 
 
 | #192 | 控制探针并发前置/计时接口/标题容量/参数和真实进程名核对 | [toolchain](errors/toolchain.md) |
-| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |
+| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |\n
+| #194 | 退出夹具读取未完成展示的确认窗、覆盖窗口命中及恢复异常掩盖主失败 | [toolchain](errors/toolchain.md) |

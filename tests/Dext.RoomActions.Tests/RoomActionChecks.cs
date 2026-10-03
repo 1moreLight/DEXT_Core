@@ -148,6 +148,71 @@ static class RoomActionChecks
             var limited=bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult();Eq(RoomActionStatus.RateLimited,limited.Status);Eq(false,limited.InputConsumed);Eq(1,calls);
             f.Clock.Advance(TimeSpan.FromMilliseconds(100));Eq(RoomActionStatus.Accepted,bridge.ControlNativeAsync(f.Actions,n,1,f.Session,1,1,"scene",new("media.control","pause"),Send).GetAwaiter().GetResult().Status);Eq(2,calls);
         });
+
+        RoomExitConfirmation ExitPermit(ActionFixture f,RoomSessionPlayerBridge bridge,RoomNativeInputAuthority native){
+            NavigationPair(f,native,"scene","exit");
+            var reply=bridge.ActivateNative(f.Actions,native,1,f.Session,1,1,"scene","exit");
+            Eq(RoomActionStatus.RequiresConfirmation,reply.Status);Eq(true,reply.InputConsumed);
+            return reply.Exit??throw new Exception("missing private confirmation");
+        }
+        foreach(var outcome in new[]{"cancel","confirm","stale","revoke","uiFailure"})check("Core native confirmation coordinator "+outcome,()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            var current=true;var prompts=0;var exits=0;var coordinator=new RoomNativeExitCoordinator();
+            Task<bool> Ask(){prompts++;if(outcome=="stale")current=false;
+                if(outcome=="revoke")f.Store.Update(state=>state.Rooms[Room].Grants.Clear());
+                if(outcome=="uiFailure")throw new InvalidOperationException("private UI error");
+                return Task.FromResult(outcome!="cancel");}
+            var result=coordinator.RunAsync(()=>current,Ask,approved=>bridge.ConfirmNativeExit(f.Actions,n,1,permit,approved),
+                ()=>{exits++;return Task.CompletedTask;}).GetAwaiter().GetResult();
+            Eq(1,prompts);Eq(outcome=="confirm"?1:0,exits);
+            Eq(outcome switch{"confirm"=>RoomActionStatus.Accepted,"stale"=>RoomActionStatus.StaleInput,"revoke"=>RoomActionStatus.MissingPermission,_=>RoomActionStatus.Cancelled},result.Status);
+            Eq(RoomActionStatus.Denied,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);
+        });
+        check("Core confirmation serializes pending native dialogs and discards busy permits",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            using var other=new ActionFixture();var on=Native(other);using var ob=NavigationBridge(other,on);var op=ExitPermit(other,ob,on);
+            var entered=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);var release=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);var prompts=0;
+            var pending=new RoomNativeExitCoordinator().RunAsync(()=>true,()=>{entered.SetResult();return release.Task;},v=>bridge.ConfirmNativeExit(f.Actions,n,1,permit,v),()=>throw new Exception("cancel must not exit"));
+            try{entered.Task.Wait(TimeSpan.FromSeconds(2));
+                Eq(RoomActionStatus.Cancelled,new RoomNativeExitCoordinator().RunAsync(()=>true,()=>{prompts++;return Task.FromResult(true);},v=>ob.ConfirmNativeExit(other.Actions,on,1,op,v),()=>throw new Exception("busy must not exit")).GetAwaiter().GetResult().Status);
+                Eq(0,prompts);Eq(RoomActionStatus.Denied,ob.ConfirmNativeExit(other.Actions,on,1,op,true).Status);
+            }finally{release.TrySetResult(false);}
+            Eq(RoomActionStatus.Cancelled,pending.GetAwaiter().GetResult().Status);
+        });
+        check("native exit needs no author confirmation fields and cancellation consumes its private permit",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            Eq(RoomActionStatus.Cancelled,bridge.ConfirmNativeExit(f.Actions,n,1,permit,false).Status);
+            Eq(RoomActionStatus.Denied,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);Eq(0,f.Launched.Count);
+        });
+        check("trusted native exit confirmation tolerates its own pause foreground and unrelated private revision",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            f.Kernel.SetRuntimeFacts(f.Session,new(true,false,false));n.ObserveSnapshot(f.Kernel.Snapshot!);f.Store.Update(state=>state.Targets[Target]=new("Changed","application",@"C:\Windows\System32\calc.exe"));
+            Eq(RoomActionStatus.Accepted,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);
+            Eq(RoomActionStatus.Denied,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);Eq(0,f.Launched.Count);
+        });
+        foreach(var change in new[]{"grant","binding","installation","closed","locked","stage","document"})check("native confirmed exit rechecks current "+change,()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            if(change=="grant")f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=state.Rooms[Room].Grants["scene"] with{Capabilities=Array.Empty<string>()});
+            if(change=="binding")f.Store.Update(state=>state.Rooms[Room].Buttons["exit"]=new("binding.launch",TargetId:Target));
+            if(change=="installation")f.Admission.ReplaceInstallation();if(change=="closed")bridge.Dispose();
+            if(change=="locked")f.Kernel.SetRuntimeFacts(f.Session,new(true,true,false));
+            if(change=="stage")f.Kernel.SetHostStage(f.Session,RoomLifecycleStage.Idle);
+            if(change=="document")n.Initialize(2,f.Kernel.Snapshot!);else n.ObserveSnapshot(f.Kernel.Snapshot!);
+            var expected=change switch{"grant"=>RoomActionStatus.MissingPermission,"binding"=>RoomActionStatus.Denied,"closed"=>RoomActionStatus.StaleSession,"installation"=>RoomActionStatus.Denied,"locked"=>RoomActionStatus.NotOperable,"stage"=>RoomActionStatus.Forbidden,_=>RoomActionStatus.StaleInput};
+            Eq(expected,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);Eq(0,f.Launched.Count);
+        });
+        check("private exit continuation is absent from both JSON serializers",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n,"scene","exit");
+            var reply=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","exit");Eq(true,reply.Exit!=null);
+            Eq(false,JsonSerializer.Serialize(reply).Contains("Exit"));Eq(false,Newtonsoft.Json.JsonConvert.SerializeObject(reply).Contains("Exit"));
+            var direct=new RoomActionReply(RoomActionStatus.RequiresConfirmation,reply.Exit);Eq(false,JsonSerializer.Serialize(direct).Contains("Exit"));Eq(false,Newtonsoft.Json.JsonConvert.SerializeObject(direct).Contains("Exit"));
+        });
+        check("confirmation cannot cross private authority or connection",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);var permit=ExitPermit(f,bridge,n);
+            using var other=new ActionFixture();Eq(RoomActionStatus.Denied,other.Actions.ConfirmExit(other.View,other.Peer,permit,true).Status);
+            Eq(RoomActionStatus.Denied,f.Actions.ConfirmExit(Guid.NewGuid(),f.Peer,permit,true).Status);
+            Eq(RoomActionStatus.Accepted,bridge.ConfirmNativeExit(f.Actions,n,1,permit,true).Status);
+        });
         foreach(var type in new[]{"desk.next","desk.previous","desk.go"})check("native authored navigation matches current configured action "+type,()=>{
             using var f=new ActionFixture();if(type!="desk.next")f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new(type,type=="desk.go"?"focus":null));
             var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var action=new RoomButtonAction(type,type=="desk.go"?"focus":null);

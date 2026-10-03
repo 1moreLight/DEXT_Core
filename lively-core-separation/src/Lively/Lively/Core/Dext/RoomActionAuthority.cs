@@ -14,7 +14,7 @@ internal enum RoomActionStatus
 {
     Accepted, Queued, Denied, StaleSession, Forbidden, UnknownConsumer, InvalidButton,
     MissingPermission, MissingBinding, InputRequired, StaleInput, ExpiredInput,
-    NotOperable, RequiresConfirmation, LaunchFailed, StorageUnavailable, ControlUnavailable, RateLimited
+    NotOperable, RequiresConfirmation, LaunchFailed, StorageUnavailable, ControlUnavailable, RateLimited, Cancelled
 }
 internal sealed record PublicRoomButton(string Id, string Name, string Scope, string? Action, bool IsBound);
 internal sealed record RoomButtonsReply(RoomActionStatus Status, PublicRoomButton[]? Buttons = null);
@@ -23,8 +23,23 @@ internal sealed record RoomDataReply(RoomActionStatus Status, RoomDataSample? Sa
 internal sealed record RoomStorageReply(RoomActionStatus Status, JsonElement? Value = null);
 internal sealed record RoomCapabilitiesReply(RoomActionStatus Status, IReadOnlyDictionary<string, RoomActionStatus>? Capabilities = null);
 internal sealed record RoomInputReply(RoomActionStatus Status, Guid? Ticket = null);
-internal sealed record RoomActionReply(RoomActionStatus Status);
+internal sealed record RoomActionReply(RoomActionStatus Status,
+    [property:System.Text.Json.Serialization.JsonIgnore][property:Newtonsoft.Json.JsonIgnore] RoomExitConfirmation? Exit=null);
 internal sealed record RoomSystemControl(string Capability,string? Action=null,double? Volume=null,bool? Muted=null);
+
+// An opaque in-memory continuation, never an authored message or public token.
+internal sealed class RoomExitConfirmation(RoomActionAuthority owner,Guid connection,RoomSessionPeer peer,
+    Guid session,string room,string stamp,string consumer,string button)
+{
+    private int used;
+    internal Guid Session=>session;
+    internal string Room=>room;
+    internal string Stamp=>stamp;
+    internal string Consumer=>consumer;
+    internal string Button=>button;
+    internal bool Consume(RoomActionAuthority expected,Guid caller,RoomSessionPeer callerPeer)=>
+        ReferenceEquals(owner,expected)&&connection==caller&&peer.TransportId==callerPeer.TransportId&&Interlocked.Exchange(ref used,1)==0;
+}
 
 // Authored messages cannot issue input. The native host must first verify a
 // real activation of the current visible entry. Preparation is a short commit
@@ -44,7 +59,7 @@ internal sealed class RoomActionAuthority
     private sealed record InputTicket(Guid Connection, string Peer, Guid Session, string Consumer, string Button,
         string Stamp, long SessionRevision, long PrivateRevision, long IssuedAt, RoomNativeInputProof? NativeInput);
     private sealed record PreparedAction(RoomActionStatus Status, string? Type = null, PersonalTarget? Target = null,
-        string? DeskId = null, long IssuedAt = 0);
+        string? DeskId = null, long IssuedAt = 0,RoomExitConfirmation? Exit=null);
 
     public RoomActionAuthority(RoomSessionProtocolGateway gateway, RoomPersonalStore store,
         Action<PersonalTarget> launch, TimeProvider? clock = null)
@@ -250,7 +265,8 @@ internal sealed class RoomActionAuthority
                 if(status!=RoomActionStatus.Accepted)return new(status);
                 if (action.Type == "binding.launch")
                     return target is null ? new(RoomActionStatus.MissingBinding) : new(RoomActionStatus.Accepted, action.Type, target, IssuedAt: issuedAt);
-                if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: issuedAt);
+                if (action.Type == "dext.exit") return new(RoomActionStatus.Accepted, action.Type, IssuedAt: issuedAt,
+                    Exit:new(this,connection,peer,session,context.Installation.RoomId,context.Installation.InstallationStamp,consumer,button));
                 var desks = context.Installation.DeskIds;
                 var current = context.Snapshot.TargetDeskId ?? context.Snapshot.CurrentDeskId;
                 var index = Array.IndexOf(desks.ToArray(), current);
@@ -263,11 +279,29 @@ internal sealed class RoomActionAuthority
         catch (Exception error) when (StorageFailure(error)) { return new(RoomActionStatus.StorageUnavailable); }
         if (prepared.Status != RoomActionStatus.Accepted) return new(prepared.Status);
         if (Expired(prepared.IssuedAt, clock.GetTimestamp())) return new(RoomActionStatus.ExpiredInput);
-        if (prepared.Type == "dext.exit") return new(RoomActionStatus.RequiresConfirmation);
+        if (prepared.Type == "dext.exit") return new(RoomActionStatus.RequiresConfirmation,prepared.Exit);
         if (prepared.Type != "binding.launch") return new(Status(gateway.Request(connection, peer, session, prepared.DeskId!).Status));
         try { launch(prepared.Target!); return new(RoomActionStatus.Accepted); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException or ArgumentException)
         { return new(RoomActionStatus.LaunchFailed); }
+    }
+
+    // Only a trusted Core-owned modal decision may call this continuation.
+    // Its own focus/pause change is expected; it grants no generic action bypass.
+    public RoomActionReply ConfirmExit(Guid connection,RoomSessionPeer peer,RoomExitConfirmation? confirmation,bool approved)
+    {
+        if(confirmation==null||!confirmation.Consume(this,connection,peer))return new(RoomActionStatus.Denied);
+        if(!approved)return new(RoomActionStatus.Cancelled);
+        try{
+            return Prepare(connection,peer,confirmation.Session,confirmation.Consumer,status=>new RoomActionReply(status),(state,context,owner)=>{
+                if(context.Installation.RoomId!=confirmation.Room||context.Installation.InstallationStamp!=confirmation.Stamp)return new(RoomActionStatus.StaleSession);
+                if(context.Snapshot.Lifecycle.Locked)return new(RoomActionStatus.NotOperable);
+                var status=Button(context,owner,confirmation.Button,out var authored);
+                if(status!=RoomActionStatus.Accepted)return new(status);
+                if(Resolve(state,context.Installation.RoomId,authored!,out _) is not{Type:"dext.exit",DeskId:null})return new(RoomActionStatus.Denied);
+                return new(Permission(state,context.Installation,owner,confirmation.Consumer,"dext.exit"));
+            });
+        }catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
     }
 
     // Only Core supplies dispatch. No callback, Windows/COM operation or await

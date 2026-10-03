@@ -3220,6 +3220,10 @@ async fn exit_core() -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(creator::CreatorImports::default())
+        .setup(|app| {
+            core_runtime::watch_product_exit(app.handle().clone());
+            Ok(())
+        })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {

@@ -751,6 +751,7 @@ mod tests {
             process_id: 42,
             app_data_directory,
             grpc_pipe_name: grpc_pipe_server_name(),
+            is_product_exiting: false,
         }
     }
 

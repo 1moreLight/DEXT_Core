@@ -27,6 +27,11 @@ internal static class NativeInputMessageChecks
                     case "arrayRoot":raw="[]";break;case "duplicateJson":raw=r.ToString().Replace("\"protocolVersion\": 1","\"protocolVersion\": 1, \"protocolVersion\": 1");break;case "trailingJson":raw=r+"{}";break;case "oversize":raw=new string(' ',1024*1024+1);break;case "afterNavigation":s.Invalidate("navigation");break;}
                 Require(DextNativeInputProtocol.Parse(raw??r.ToString(),s,1200,900)==null);
             });
+        Check("authors cannot send an exit decision or a confirmation capability",()=>{
+            var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="exit";r["inputSequence"]=0;Require(Parse(r)!=null);
+            foreach(var field in new[]{"approved","confirmed","exit","confirmation","token"}){r[field]=true;Require(Parse(r)==null);r.Remove(field);}
+            r["method"]="confirmExit";Require(Parse(r)==null);
+        });
         Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";r["inputSequence"]=0;Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
         Check("startup completion accepts only exact starting phase and has no Windows fact fields",()=>{
             var starting=new DextRoomRuntimeState();starting.Initialize(RuntimeMessageChecks.ContextMessage(f.Context,f.Snapshot,1));

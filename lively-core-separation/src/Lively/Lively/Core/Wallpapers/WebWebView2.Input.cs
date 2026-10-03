@@ -119,6 +119,27 @@ namespace Lively.Core.Wallpapers
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
                 status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue});
+            if(actionReply is{Status:RoomActionStatus.RequiresConfirmation,Exit:{} confirmation})
+                _=ConfirmNativeExitAsync(a,state,confirmation);
+        }
+        private async Task ConfirmNativeExitAsync(NativeAttachment a,RoomNativeInputState state,RoomExitConfirmation confirmation)
+        {
+            bool Current() => !IsExited && ReferenceEquals(Volatile.Read(ref roomNativeAttachment),a) &&
+                a.Input.State is{} current && current.Generation==state.Generation && current.Session==state.Session;
+            try {
+                await new RoomNativeExitCoordinator().RunAsync(Current,async ()=>{
+                    var app=System.Windows.Application.Current;
+                    if(app==null || app.Dispatcher.HasShutdownStarted)return false;
+                    // Send the private consumption receipt before our native
+                    // dialog takes focus and changes the playback snapshot.
+                    await Task.Delay(100);
+                    return await app.Dispatcher.InvokeAsync(()=>Current() &&
+                        System.Windows.MessageBox.Show("是否退出 Dext？桌面、播放器与配置器将关闭，回到普通 Windows 桌面。",
+                            "Dext 退出确认",System.Windows.MessageBoxButton.YesNo,System.Windows.MessageBoxImage.Question,
+                            System.Windows.MessageBoxResult.No)==System.Windows.MessageBoxResult.Yes);
+                },approved=>a.Bridge.ConfirmNativeExit(a.Actions,a.Input,state.Generation,confirmation,approved),App.QuitProductAsync);
+            }
+            catch { a.Bridge.ConfirmNativeExit(a.Actions,a.Input,state.Generation,confirmation,false); }
         }
         private async Task<bool> DispatchNativeControl(RoomSystemControl control,CancellationToken token)
         {

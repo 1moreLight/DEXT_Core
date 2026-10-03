@@ -178,3 +178,10 @@ test('control before native event holds exact default until async Windows receip
  f.host.handleNativeInput(f.event(7));await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);
  release({status:'accepted',inputSequence:7,inputConsumed:true});await p;await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
 });
+
+test('exit entry advertises Dext confirmation and keeps private continuation out of author replies',async()=>{
+ const f=actionFixture(method=>Promise.resolve(method==='activate'?{status:'requiresConfirmation',inputSequence:7,inputConsumed:true,exit:{secret:'Core-only'}}:{status:'accepted'}));await f.host.ready;
+ assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes('dext.exit'),true);
+ f.host.handleNativeInput(f.event(7));assert.deepEqual(await f.invoke('actions.activate',{buttonId:'next'}),{status:'requiresConfirmation'});await f.tick(1000);
+ assert.equal(f.calls.filter(v=>v.method==='activate').length,1);f.host.dispose();
+});

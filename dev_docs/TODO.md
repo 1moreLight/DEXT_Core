@@ -1327,3 +1327,11 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [ ] 唯一接续：可信Dext退出确认与彻底退出产品；随后按Task4完整四媒体生命周期/Player故障、移动/遮挡精确输入、个人布局/恢复和最后一次完整P5审查推进。本包全16项/readiness1/16与上方7项集中人工验收保持，不中途合并。
 
 - 2026-10-03系统控制最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；Core/配置器正常退出，全部工具会话已终止。
+
+- [x] Task3可信退出确认基础接线（BASE87e2d65，2026-10-03）：一句目标是真实入口触发Dext原生确认，取消保持运行，确认后正常关闭整个产品并恢复普通Windows桌面。Core先一次消费输入并签发仅内存可用的确认许可；原生UI在锁外展示，确认后按当前安装/连接/消费者/按钮/授权/绑定/锁屏复核，旧文档与许可重放拒绝。当前可信确认造成的失焦/播放暂停不得误拒自身用户决定；例外仅用于exit许可，不能扩展普通动作。配置器通过核验的Core身份接收独立产品退出通知，普通退出Core继续保留配置器。先生产源码RED/GREEN，再严格宿主/原生UI/完整产品实机验证、完整build→start/退出及具名提交。全Task4/16项/readiness1/16和最终7项仍保持。
+
+- [x] 可信退出私有生产者179/179，加入Core确认协调器后185/185：许可仅Core内存，两个JSON序列器均剥离；取消/重放/错owner/旧文档/撤权/绑定/安装/关闭/锁屏/阶段均检查。原生UI在锁外，自己的失焦/播放暂停只对该退出确认续体豁免，普通动作保持原门槛。并发确认全Core仅一窗，UI失败/忙取消许可，不执行退出。
+- [x] 正式DOM/SDK141/141与Rust生命周期7/7：dext.exit声明接到actions.activate，作者只获requiresConfirmation和安全状态，没有确认方法或私有续体；配置器原生侧读独立产品退出标志并核对产品/数据/pipe、当前worktree和实际PID/executable后正常exit(0)。普通退出Core不发布标志，仍保留配置器。严格原生消息中的伪确认字段专项继续最终回归。
+- [x] 原生退出最终整轮实机：最终native-exit-core-live-final 13项PASS；正式Rust安装/实际Core/ReleasePlayer/SDK/OS鼠标中No取消保持Core/Player/configurator，Yes默认否确认后四进程正常退出、壁纸窗口消失。无输入exit timer拒绝；普通Core关闭/同副本重启保留配置器。最终finally原布局/settings/checkpoint/personal字节或缺失状态及用户Room哈希恢复；不代填物理输入/DPI人工验收。
+- [x] 最终完整build→常规start/身份/关闭：Core74912/Player27284/Watchdog27548/config32948，日志20261003_182449.txt；原v2 inactive。配置器为本worktree所属D共享缓存，identity脚本OTHER/exit1，路径独立核对，不宣称全脚本OK。普通Core退出保留配置器，随后正常关本配置器窗口，start watcher62965终止exit0；原四文件SHA256/缺失状态保持。最后检查DextProcesses/DevListeners/ResourceCacheFiles/NativeFixtureDirectories全部0。
+- [ ] 下一接续为Task4：完整四媒体start/idle/私有暂停/锁屏/wake与独立Player故障重建；再个人布局/占用/移动与精确命中/遮挡/多图标/焦点，最终一次整体P5审查。16项开发就绪仍1/16，7项集中人工步骤保留，当前P5仍开发中，不中途合并。

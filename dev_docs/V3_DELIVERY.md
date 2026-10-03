@@ -93,3 +93,9 @@ Core私有桥从当前原生完成证明取得consumer/button，作者仅请求�
 最初并发无输入、标题观察容量导致探针整轮未过，均保留失败证据并纠正夹具，未降生产输入/权限/并发规则。最终finally恢复原桌面、布局/settings/checkpoint/personal字节或不存在状态、用户Room哈希、原endpoint音量/静音、临时showdesktop窗口旗标/前台/鼠标；不代填物理DPI/听音/完整生命周期人工通过。
 
 常规最终start Core40928/Player124608/Watchdog99404/config69696、日志20261003_173146.txt，原v2 inactive。配置器是所属D共享缓存，identity脚本OTHER/exit1并单独核对路径；没有宣称全脚本OK。正常精确PID/path退出，watcher41725exit0、个人原SHA256/缺失状态保持。可信退出确认及完整Task4仍继续，完整16项/readiness1/16、上方7项人工验收和最终P5审查不减、不提前合并。
+
+## P5可信退出确认基础补证（2026-10-03）
+
+dext.exit经真实一次Core输入签发仅内存可用的确认续体，Core原生Dext确认窗锁外、默认否、单窗；取消消费许可保持运行，确认后当前授权/绑定/安装/消费者/按钮/文档/锁屏重查。作者没有确认方法或私有token。正式SDK/DOM、严格Player消息和实际Core/配置器正常产品退出已贯通：185/141/36项与Rust生命周期7/7；最终真实安装/SDK/OS鼠标No/Yes整轮13PASS，普通Core退出保留配置器。
+
+最终正常build→start/身份及原v2 inactive、按PID/path正常关闭、用户四文件原hash/缺失状态与Room哈希恢复、进程/端口/暂存/夹具0；失败夹具和精确恢复记录保留。配置器产品退出监听核对当前worktree及实际Core PID/path，三秒通知等待不强杀卡死实例。此补条目3/4/11/16基础；完整四媒体生命周期/独立Player故障/个人布局/移动与精确输入、最终7项人工门槛和其余产品交付继续，开发就绪保持1/16。

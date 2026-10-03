@@ -80,6 +80,7 @@ namespace Lively.RPC
                 ProcessId = Process.GetCurrentProcess().Id,
                 AppDataDirectory = Constants.CommonPaths.AppDataDir,
                 GrpcPipeName = Constants.SingleInstance.GrpcPipeServerName,
+                IsProductExiting = App.IsProductExiting,
             });
         }
 

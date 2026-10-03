@@ -26,7 +26,7 @@
     }
     const frames=(options.createFrameHost||root.DextFrameHost.createFrameHost)({window:options.window||root,document,initialSnapshot:snapshot,runtimeGeneration:context.runtimeGeneration,
       initialGeometry:{geometryVersion:0,viewport:options.getViewport()},initialPlaybackSuspended:privatePaused,resolveResource,readCapabilities:q=>native.readCapabilities(q),
-      implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write','media.control','audio.control'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
+      implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write','media.control','audio.control','dext.exit'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
       applyState:options.applyFrameState,invoke:async value=>{
         if(value.method==='actions.activate')return authorAction('activate',{button:value.params.buttonId},value.consumerId,value.identity);
         if(value.method==='desk.navigate')return authorAction('navigate',{action:value.params.action},value.consumerId,value.identity);

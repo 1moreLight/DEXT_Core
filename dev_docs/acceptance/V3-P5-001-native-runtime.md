@@ -19,7 +19,7 @@
 1. 临时应用basic原生样包：图片、视频、GIF、本地HTML均能展示，切页后状态由Core提交；退出探针恢复原用户Room。
 2. 应用continuous：同一仪表盘从底部到整页再返回，场景和共享Widget实例ID/计数不变，图标/Widget与作者画面同步运动。
 3. 快速连续切页，只保留最后输入；作者不回完成或Alt-Tab失焦时立即收敛目标，回来可继续；旧完成不能覆盖。
-4. 鼠标/Enter/Space真实激活背景按钮与普通图标，启动同一已授权测试目标一次；定时请求、伪造点击、错误消费者、过期/重放和陈旧几何均拒绝。
+4. 鼠标/Enter/Space真实激活背景按钮与普通图标，启动同一已授权测试目标一次；定时请求、伪造点击、错误消费者、过期/重放和陈旧几何均拒绝。 退出入口必须显示Core原生Dext确认；取消保留运行，确认后Core/Player/Watchdog/配置器全部正常退出并恢复普通Windows桌面。
 5. 编辑态拖图标/Widget，Widget落作者占用区回原位；缩屏先临时移位再缩小，恢复尺寸还原保存布局。分别核对系统DPI和真实命中。
 6. start/idle/播放暂停/锁屏组合及唤醒保持已提交Desk和共享实例；重启Core/Player恢复同一安装副本Desk，切换Room不接收旧状态。
 7. 恶意样包尝试外部脚本/网站、导航、弹窗、下载、直接原生消息与未授权数据/动作均拒绝；缺数据仅隐藏读数，保留外框，诊断可定位。
@@ -178,3 +178,13 @@ finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态�
 常规最终start Core40928/Player124608/Watchdog99404/config69696、日志20261003_173146.txt，原v2 inactive。配置器是所属D共享缓存，identity脚本OTHER/exit1并单独核对路径；没有宣称全脚本OK。正常精确PID/path退出，watcher41725exit0、个人原SHA256/缺失状态保持。可信退出确认及完整Task4仍继续，完整16项/readiness1/16、上方7项人工验收和最终P5审查不减、不提前合并。
 
 - 2026-10-03系统控制最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；Core/配置器正常退出，全部工具会话已终止。
+
+## Task3可信退出确认与完整产品退出补证（2026-10-03）
+
+私有许可179/179、Core协调器185/185、正式宿主/SDK141/141、严格原生消息36/36、Rust生命周期7/7。许可仅Core内存且两JSON序列器排除；作者不能发送approved/confirmed/confirmation/token/exit或调用confirmExit。原生窗锁外固定Dext文本、默认否，全Core一窗；用户确认后重查当前授权/绑定/安装/文档/锁屏，自己的可信失焦/暂停不误拒决定。
+
+最终实际生产Rust安装/Core/ReleasePlayer/SDK、真实OS鼠标中无输入exit timer拒绝，No取消保持Core/Player/configurator，Yes整套Core/Player/Watchdog/configurator正常退出并去除壁纸窗口；普通Core关闭/同副本重启保留配置器。最终13项PASS含原布局/settings/checkpoint/personal精确字节或缺失状态及用户Room哈希恢复；Windows注入不代填上方第4/5项物理输入/DPI人工验收。
+
+历史取消点击实际命中覆盖窗口，等待真实按钮OS命中后No/Yes通过；悬挂确认的恢复先按精确Core PID/路径取消，再正常退出和恢复备份。之后辅助重启的异步原壁纸检查失败，已明确恢复；最终整轮完整退出后直接恢复原文件，保持普通Windows桌面。失败历史保留，不以局部结果冒充整轮通过（ERRORS #194）。
+
+最后完整build→常规start：Core74912/Player27284/Watchdog27548/config32948，日志20261003_182449.txt；原v2 inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际路径独立核对。普通Core正常退出保持配置器，随后关本配置器窗口，启动watcher62965终止exit0；原四文件SHA256/缺失状态保持。最终DextProcesses/DevListeners/ResourceCacheFiles/NativeFixtureDirectories为0。Core产品退出通知等待正常配置器三秒，不强杀卡死实例。整包Task4/最终P5审查与7项人工步骤仍未通过，16项就绪1/16，不合并。

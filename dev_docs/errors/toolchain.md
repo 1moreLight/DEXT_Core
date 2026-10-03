@@ -369,3 +369,11 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 - 两消费者同时发无输入audioControl，一项inputRequired，另一项正确单attachment忙拒绝controlUnavailable。探针有限重试忙请求后再要求inputRequired，保留生产界限；不要求并发请求必能同时进入。
 - 八次输入累积完整回执/KV后标题观察丢失，扩大读取容量仍未解决。只在测试观察器投影必要消费字段与KV owner（实际私有存储另验），最终完整JSON2842字符；历史失败运行保留，不写成整轮成功。
 - --v3-status第二参数是inactive或预期Desk，误传.应失败；修正确inactive参数。进程名是Lively.Player.WebView2.exe，错误少点的别名不能作为缺失依据，须按真实PID/绝对路径核对。
+
+## #194 原生退出探针必须等真实可点击的确认窗并保留主失败
+- 2026-10-03，私有许可新测试错用不存在的夹具接口、PersonalButtonOverride位置参数和安装更换预期；按真实接口/TargetId命名参数/网关Denied纠正。Rust新测试误用grpc::desktop与私有pipe函数、有效身份使用C:\Dext却被真实debug worktree检查拒绝；按proto模块、公开pipe投影和编译worktree修正。JS替身把初始化也回requiresConfirmation导致无frames，改只对activate回该状态。C#短路out局部未赋值先修编译；这些不计生产行为RED。
+- 历史安装器已不存在，先重新构建当前worktree install_v3；缺二进制的一轮原数据恢复，不计运行时失败。工具JS模板在定义变量前插值曾在调用前失败，不当作执行。
+- 初版只按标题找窗，尚未检查初始化和真实可点击状态；第一次finally正常Core关闭因尚未取消的原生模态窗超时，掩盖原异常。精确Core PID/路径下点击原生No取消后正常退出，按before文件逐字节/缺失状态恢复并核验；不强杀，不清用户目录。
+- 后续保留primary exception并在finally仅取消本测试Core拥有的确认。仅IsWindowVisible/默认No还不足以表示真实鼠标已命中：实际WindowFromPoint命中Chrome_RenderWidgetHostHWND的覆盖窗口，取消未到达Dext。等待真实No/Yes按钮的OS命中PID（有界3s），不把确认强行前置、不改生产输入策略；此后实际No保持、Yes整套正常退出均通过。
+- 完整退出后的“仅为恢复再次启动Core”额外检查遇异步原壁纸恢复未完成；该辅助Core已正常退出，文件备份精确恢复，失败历史保留。夹具改完整退出后直接恢复原保存文件并保持普通Windows桌面；后续常规start再检查原v2身份。No/Yes局部通过不冒充整轮恢复通过。
+- 最后普通Core/配置器正常关闭与hash比较已经成功，脚本末尾新一行单独接*>导致只写日志的后缀报错。不能重跑已完成的关闭动作；改只读重新核验四文件和零残留并用完整脚本块重定向，native-exit-final-cleanup.log通过。

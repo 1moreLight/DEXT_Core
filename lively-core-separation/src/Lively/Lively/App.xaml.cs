@@ -370,6 +370,17 @@ namespace Lively
             mutex = null;
         }
 
+        private static int productExiting;
+        internal static bool IsProductExiting => Volatile.Read(ref productExiting)!=0;
+        internal static async Task QuitProductAsync()
+        {
+            if(Interlocked.CompareExchange(ref productExiting,1,0)!=0)return;
+            // Keep the verified identity RPC alive for native configurators to
+            // observe the separate product-exit notice before normal disposal.
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            QuitApp();
+        }
+
         public static void QuitApp()
         {
             try

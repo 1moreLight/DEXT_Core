@@ -257,6 +257,44 @@ fn verified_process_handle(identity: &CoreIdentity, expected: &Path) -> Result<u
     }
 }
 
+fn product_exit_identity(
+    raw: &crate::proto::desktop::GetCoreStatsResponse,
+    expected: &Path,
+) -> Result<Option<CoreIdentity>, String> {
+    if !raw.is_product_exiting {
+        return Ok(None);
+    }
+    crate::grpc::verify_core_identity_response(raw)?;
+    let identity: CoreIdentity = raw.clone().into();
+    if !identity_is_expected_process(&identity, expected, None) {
+        return Err("refusing product exit from another Core worktree".into());
+    }
+    Ok(Some(identity))
+}
+
+pub fn watch_product_exit(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let Ok(expected) = expected_core_path() else { return };
+        loop {
+            let response = tokio::time::timeout(
+                Duration::from_secs(2), crate::grpc::raw_core_identity(),
+            ).await;
+            if let Ok(Ok(raw)) = response {
+                if let Ok(Some(identity)) = product_exit_identity(&raw, &expected) {
+                    // An RPC's reported path alone cannot authorize app exit:
+                    // hold the actual PID and compare its executable as well.
+                    if let Ok(handle) = verified_process_handle(&identity, &expected) {
+                        unsafe { CloseHandle(handle as _) };
+                        app.exit(0);
+                        return;
+                    }
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(200)).await;
+        }
+    });
+}
+
 pub async fn managed_core_identity() -> Result<CoreIdentity, String> {
     let identity = crate::grpc::core_identity().await?;
     let expected = expected_core_path()?;
@@ -501,4 +539,28 @@ mod tests {
         assert!(!valid_core_binary_identity("Dext", "Lively Core"));
         assert!(!valid_core_binary_identity("", "Dext Core"));
     }
+    #[test]
+    fn product_exit_notice_requires_verified_current_worktree_identity() {
+        use crate::proto::desktop::GetCoreStatsResponse;
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap();
+        let expected = root.join("lively-core-separation/src/Lively/Lively/bin/x64/Debug/net9.0-windows10.0.18362.0/Lively.exe");
+        let mut raw = GetCoreStatsResponse {
+            base_directory: expected.parent().unwrap().to_string_lossy().into(), assembly_version: "1".into(),
+            is_core_initialized: true, product_name: "Dext".into(),
+            runtime_identity: crate::grpc::runtime_identity_name().into(),
+            process_id: 42, app_data_directory: std::env::var("LOCALAPPDATA").unwrap() + r"\Dext",
+            grpc_pipe_name: crate::grpc::pipe_name().strip_prefix(r"\\.\pipe\").unwrap().into(),
+            is_product_exiting: false,
+        };
+        assert!(super::product_exit_identity(&raw, &expected).unwrap().is_none());
+        raw.is_product_exiting = true;
+        assert_eq!(super::product_exit_identity(&raw, &expected).unwrap().unwrap().process_id,42);
+        raw.base_directory = r"C:\Other\".into();
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+        raw.base_directory = expected.parent().unwrap().to_string_lossy().into(); raw.product_name = "Lively Wallpaper".into();
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+        raw.product_name = "Dext".into(); raw.process_id = 0;
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+    }
+
 }

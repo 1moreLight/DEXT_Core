@@ -46,9 +46,9 @@ internal static class NativeCoreLiveProbe
     [StructLayout(LayoutKind.Explicit)] struct NativeUnion { [FieldOffset(0)] public NativeMouse Mouse; }
     [StructLayout(LayoutKind.Sequential)] struct NativeInput { public uint Type;public NativeUnion Value; }
     delegate bool Callback(IntPtr window,IntPtr data);
-    public static async Task Run(string corePath,string hostDirectory,string installer,string sdk,string mediaDirectory,string evidenceDirectory,bool authoredNavigation=false,bool systemControls=false)
+    public static async Task Run(string corePath,string hostDirectory,string installer,string sdk,string mediaDirectory,string evidenceDirectory,bool authoredNavigation=false,bool systemControls=false,bool productExit=false,string? configuratorPath=null)
     {
-        var authoredInput=authoredNavigation||systemControls;
+        var authoredInput=authoredNavigation||systemControls||productExit;
         if(authoredInput&&!SetProcessDpiAwarenessContext(new IntPtr(-4)))throw new Exception("Navigation probe requires Core PerMonitorV2 DPI");
         GetCursorPos(out var originalCursor);
         corePath=Path.GetFullPath(corePath);var coreDirectory=Path.GetDirectoryName(corePath)!;hostDirectory=Path.GetFullPath(hostDirectory);
@@ -68,6 +68,7 @@ internal static class NativeCoreLiveProbe
         var host=Directory.CreateDirectory(Path.Combine(root.FullName,"host"));var source=Directory.CreateDirectory(Path.Combine(root.FullName,"source"));
         var originalForeground=GetForegroundWindow();Process? core=null;DesktopService.DesktopServiceClient? client=null;List<GetWallpapersResponse>? original=null;bool applied=false,restored=false;
         var events=new List<string>();var roomId=Guid.NewGuid().ToString();object? desktopShell=null;bool minimizedForTest=false;var windowsBefore=new Dictionary<IntPtr,(bool Minimized,bool Maximized)>();
+        Process? configurator=null;bool productExited=false;
         NativeControlProbeDevices? controlDevices=null;int clicksSent=0;bool changedVolumeObserved=false,restoredVolumeObserved=false;
         try
         {
@@ -94,11 +95,16 @@ internal static class NativeCoreLiveProbe
             File.WriteAllText(Path.Combine(source.FullName,"author.html"),"""
                 <!doctype html><button id=next style='position:fixed;left:20px;top:20px;width:120px;height:44px'>Next</button><h2 style='margin-top:80px'>Native Core SDK</h2><span id=readout>pending</span><script src=sdk.js></script><script>
                 const documentId=crypto.randomUUID();Dext.ready().then(()=>{
-                  const actions={timerError:null,clicks:0,results:[]};let attempted=false;
+                  const actions={timerError:null,clicks:0,results:[],exitTimer:null,exitResults:[]};let attempted=false;
                   if(__AUTHOR_NAV__){
-                    const publish=()=>Dext.scene.publishGeometry({buttons:[{buttonId:'next',x:20,y:20,width:120,height:44}]}).catch(()=>{});
+                    const publish=()=>Dext.scene.publishGeometry({buttons:[{buttonId:'next',x:20,y:20,width:120,height:44},...(__PRODUCT_EXIT__&&Dext.session.consumerId==='scene'?[{buttonId:'exit',x:180,y:20,width:120,height:44}]:[])]}).catch(()=>{});
                     Dext.scene.subscribeGeometry(publish);Dext.desk.subscribe(value=>{publish();if(value.lifecycle.stage==='desktop'&&!attempted){attempted=true;let retries=0;const test=()=>(__SYSTEM_CONTROLS__?Dext.audio.control({muted:__ORIGINAL_MUTED__}):Dext.desk.navigate({type:'desk.next'})).then(v=>{actions.timerError=v.status;report();},e=>{if(e.code==='controlUnavailable'&&retries++<3){setTimeout(test,180);return;}actions.timerError=e.code;report();});setTimeout(test,250);}});
                     document.getElementById('next').addEventListener('click',()=>{const step=actions.clicks++;const command=!__SYSTEM_CONTROLS__||step===7?Dext.desk.navigate({type:'desk.next'}):step===0?Dext.audio.control({volume:__TEST_LEVEL__,muted:__ORIGINAL_MUTED__}):step===1?Dext.audio.control({volume:__ORIGINAL_LEVEL__,muted:__ORIGINAL_MUTED__}):Dext.media.control(['pause','play','toggle','next','previous'][step-2]);command.then(v=>{actions.results.push(v);report();},e=>{actions.results.push({error:e.code});report();});});
+                  }
+                  if(__PRODUCT_EXIT__&&Dext.session.consumerId==='scene'){
+                    const button=document.createElement('button');button.textContent='Exit Dext';button.style.cssText='position:fixed;left:180px;top:20px;width:120px;height:44px';document.body.append(button);
+                    button.addEventListener('click',()=>Dext.actions.activate('exit').then(v=>{actions.exitResults.push(v);report();},e=>{actions.exitResults.push({error:e.code});report();}));
+                    let tested=false;Dext.desk.subscribe(v=>{if(v.lifecycle.stage==='desktop'&&!tested){tested=true;setTimeout(()=>Dext.actions.activate('exit').then(r=>{actions.exitTimer=r.status;report();}),300);}});
                   }
                   const context=new AudioContext(),oscillator=context.createOscillator(),gain=context.createGain();gain.gain.value=0;oscillator.connect(gain).connect(context.destination);oscillator.start();context.resume();
                   const storage={initialized:false,existing:null,value:null,lastError:null,reads:0,denied:0,dateType:null};let sampling=false;
@@ -111,11 +117,11 @@ internal static class NativeCoreLiveProbe
                 });
                 </script>
                 """.Replace("__PRIVATE_MARKER__","dext-kv-"+roomId).Replace("__AUTHOR_NAV__",authoredInput?"true":"false")
-                .Replace("__SYSTEM_CONTROLS__",systemControls?"true":"false").Replace("__TEST_LEVEL__",JsonConvert.SerializeObject(controlDevices?.TestLevel??0))
+                .Replace("__PRODUCT_EXIT__",productExit?"true":"false").Replace("__SYSTEM_CONTROLS__",systemControls?"true":"false").Replace("__TEST_LEVEL__",JsonConvert.SerializeObject(controlDevices?.TestLevel??0))
                 .Replace("__ORIGINAL_LEVEL__",JsonConvert.SerializeObject(controlDevices?.OriginalLevel??0)).Replace("__ORIGINAL_MUTED__",controlDevices?.OriginalMuted==true?"true":"false"));
             var manifest=new{version=3,apiVersion=1,id=roomId,name="Actual native Core probe",startDesk="home",resources=new[]{"sdk.js","author.html","background.svg","animation.gif","clip.mp4"},
-                start=new{type="gif",src="animation.gif"},roomScene=new{entry="author.html",capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).ToArray()},transition=new{type="slide",durationMs=450},buttons=new[]{systemControls?new Dictionary<string,object>{{"id","next"},{"name","Control"},{"scope","room"}}:new Dictionary<string,object>{{"id","next"},{"name","Next"},{"scope","room"},{"action",new{type="desk.next"}}}},
-                components=new[]{new{id="shared",role="widget",entry="author.html",placement=new{x=400,y=50,width=260,height=120},buttonIds=new[]{"next"},capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).ToArray()}},
+                start=new{type="gif",src="animation.gif"},roomScene=new{entry="author.html",capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()},transition=new{type="slide",durationMs=450},buttons=new[]{systemControls?new Dictionary<string,object>{{"id","next"},{"name","Control"},{"scope","room"}}:new Dictionary<string,object>{{"id","next"},{"name","Next"},{"scope","room"},{"action",new{type="desk.next"}}}}.Concat(productExit?new[]{new Dictionary<string,object>{{"id","exit"},{"name","Exit Dext"},{"scope","room"},{"action",new{type="dext.exit"}}}}:Array.Empty<Dictionary<string,object>>()).ToArray(),
+                components=new[]{new{id="shared",role="widget",entry="author.html",placement=new{x=400,y=50,width=260,height=120},buttonIds=new[]{"next"},capabilities=new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()}},
                 desks=new[]{new{id="home",name="Home",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="image",src="background.svg"}},new{id="focus",name="Focus",icons=Array.Empty<object>(),components=new[]{"shared"},background=new{type="video",src="clip.mp4"}}}};
             File.WriteAllText(Path.Combine(source.FullName,"room.json"),JsonConvert.SerializeObject(manifest,Formatting.Indented));
             var install=new ProcessStartInfo(Path.GetFullPath(installer)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardOutput=true,RedirectStandardError=true};
@@ -124,7 +130,7 @@ internal static class NativeCoreLiveProbe
             {var output=process.StandardOutput.ReadToEndAsync();var error=process.StandardError.ReadToEndAsync();await process.WaitForExitAsync();Require(process.ExitCode==0,"production install: "+await error);File.WriteAllText(Path.Combine(evidence.FullName,"installation.json"),await output);}
             Require(!Process.GetProcessesByName("Lively").Any(p=>{try{return Path.GetFullPath(p.MainModule!.FileName).Equals(corePath,StringComparison.OrdinalIgnoreCase);}catch{return false;}}),"test Core already running");
             var verified=RoomV3Installation.Verify(Path.Combine(host.FullName,"content"));personal=new RoomPersonalStore(personalPath);
-            personal.Update(state=>{var room=new RoomPersonalData();state.Rooms.Add(roomId,room);foreach(var consumer in new[]{"scene","component.shared"})room.Grants.Add(consumer,new(verified.InstallationStamp,new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).ToArray()));});
+            personal.Update(state=>{var room=new RoomPersonalData();state.Rooms.Add(roomId,room);foreach(var consumer in new[]{"scene","component.shared"})room.Grants.Add(consumer,new(verified.InstallationStamp,new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()));});
             events.Add("fixture administrator granted declared navigation/storage only to the temporary verified Room consumers");
             // The user's grid coverage rule correctly pauses behind any maximized
             // visible window. This fixture exercises actual foreground decisions
@@ -134,6 +140,12 @@ internal static class NativeCoreLiveProbe
             File.WriteAllText(Path.Combine(data,"Settings.json"),fixtureSettings.ToJsonString());
             events.Add("fixture playback uses foreground algorithm; original settings bytes remain backed up");
             await StartCore();
+            if(productExit){
+                Require(configuratorPath!=null,"native configurator path required");
+                configurator=Process.Start(new ProcessStartInfo(Path.GetFullPath(configuratorPath!)){UseShellExecute=true,WindowStyle=ProcessWindowStyle.Hidden})??throw new Exception("Configurator did not start");
+                await Task.Delay(1200);Require(!configurator.HasExited,"native configurator running");
+                events.Add("native configurator pid="+configurator.Id+", path="+Path.GetFullPath(configurator.MainModule!.FileName));
+            }
             var deadline=DateTime.UtcNow.AddSeconds(15);do{original=await Wallpapers();if(original.Count>0)break;await Task.Delay(100);}while(DateTime.UtcNow<deadline);Require(original.Count>0,"original wallpaper is restored before test");
             var screen=original!.FirstOrDefault(w=>w.Screen.IsPrimary)?.Screen??original[0].Screen;
             foreach(var old in original)Require(Directory.Exists(old.LivelyInfoPath),"original wallpaper directory available");
@@ -220,7 +232,7 @@ internal static class NativeCoreLiveProbe
             events.Add("PASS actual same-installation consumer storage reads reject withdrawn personal consent");
             GrantRead(true);await WaitStorage(observation=>ObservedStorage(observation),"storage read consent restored");
             events.Add("PASS actual author storage recovers from restored consent without document reload");
-            var stamp=active!.InstallationStamp;await StopCore();await StartCore();FocusDesktop();
+            var stamp=active!.InstallationStamp;await StopCore();if(productExit)Require(configurator?.HasExited==false,"ordinary Core exit preserves configurator");await StartCore();FocusDesktop();
             RoomSessionStatusResponse? restoredSession=null;JObject? restartedHost=null,lastRestartedHost=null;bool focusedAfterRestart=false;deadline=DateTime.UtcNow.AddSeconds(35);
             while(DateTime.UtcNow<deadline)
             {
@@ -251,11 +263,66 @@ internal static class NativeCoreLiveProbe
             Require(System.Text.Json.JsonSerializer.Serialize(personal.Read().Rooms[roomId].Storage)==System.Text.Json.JsonSerializer.Serialize(persisted),"restart and permission recovery did not overwrite persisted author values");
             events.Add("PASS actual Core restart restores persisted consumer JSON into two new SDK documents");
             events.Add("PASS actual normal Core restart restores committed focus/same installation with new Player/session/SDK documents/GIF startup/decoded video and no test navigation");
+            if(productExit){
+                Require(configurator?.HasExited==false,"native configurator survives ordinary Core restart");
+                events.Add("PASS ordinary Core shutdown and same-installation restart preserve native configurator");
+                for(var choice=0;choice<2;choice++){
+                    var stop=DateTime.UtcNow.AddSeconds(15);RoomSessionStatusResponse? status=null;JObject? observation=null;
+                    do {FocusDesktop();await Task.Delay(160);status=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));observation=ReadObservation(FindPlayer(status.PlayerPid));
+                        if(status.Operable&&(bool?)observation?["inputReady"]==true&&observation?["actions"] is JArray actions&&actions.Any(v=>(string?)v[1]?["exitTimer"]=="inputRequired"))break;
+                    }while(DateTime.UtcNow<stop);
+                    Require(status!.Operable&&(bool?)observation?["inputReady"]==true,"real exit entry input ready");
+                    Require(observation!["actions"] is JArray timers&&timers.Any(v=>(string?)v[1]?["exitTimer"]=="inputRequired"),"exit timer cannot open confirmation without actual input");
+                    var currentPlayer=FindPlayer(status.PlayerPid);Require(GetWindowRect(currentPlayer,out var rect),"exit Player bounds");
+                    var point=new NativePoint{X=rect.Left+(int)Math.Round((rect.Right-rect.Left)*240.0/1920),Y=rect.Top+(int)Math.Round((rect.Bottom-rect.Top)*42.0/1080)};
+                    Require(DesktopPoint(point),"exit entry must be exposed on actual desktop");
+                    await Click(point);
+                    IntPtr dialog=IntPtr.Zero;stop=DateTime.UtcNow.AddSeconds(8);
+                    do {EnumWindows((window,_)=>{GetWindowThreadProcessId(window,out var pid);var text=new StringBuilder(128);GetWindowText(window,text,text.Capacity);
+                        if(pid==core!.Id&&Class(window)=="#32770"&&text.ToString()=="Dext 退出确认"&&IsWindowVisible(window)&&GetDlgItem(window,6)!=IntPtr.Zero&&GetDlgItem(window,7)!=IntPtr.Zero&&(SendMessageW(window,0x400,IntPtr.Zero,IntPtr.Zero).ToInt64()&0xffff)==7){dialog=window;return false;}return true;},IntPtr.Zero);
+                        if(dialog!=IntPtr.Zero)break;await Task.Delay(80);
+                    }while(DateTime.UtcNow<stop);
+                    Require(dialog!=IntPtr.Zero,"actual trusted Core-owned native confirmation");
+                    Require((SendMessageW(dialog,0x400,IntPtr.Zero,IntPtr.Zero).ToInt64()&0xffff)==7,"native confirmation defaults to No");
+                    var textSeen=false;EnumChildWindows(dialog,(window,_)=>{var text=new StringBuilder(512);GetWindowText(window,text,text.Capacity);if(text.ToString().Contains("回到普通 Windows 桌面"))textSeen=true;return true;},IntPtr.Zero);
+                    Require(textSeen,"fixed native Dext explanation, not author text");
+                    var button=GetDlgItem(dialog,choice==0?7:6);Require(button!=IntPtr.Zero,"native No/Yes button");Require(GetWindowRect(button,out var bounds),"native button bounds");
+                    var buttonPoint=new NativePoint{X=(bounds.Left+bounds.Right)/2,Y=(bounds.Top+bounds.Bottom)/2};
+                    IntPtr buttonHit=IntPtr.Zero;uint buttonPid=0;stop=DateTime.UtcNow.AddSeconds(3);
+                    do{buttonHit=WindowFromPoint(buttonPoint);GetWindowThreadProcessId(buttonHit,out buttonPid);if(buttonPid==core!.Id)break;await Task.Delay(80);}while(DateTime.UtcNow<stop);
+                    GetWindowThreadProcessId(GetForegroundWindow(),out var foregroundPid);
+                    events.Add($"native choice {choice}: button={button}, bounds={bounds.Left},{bounds.Top},{bounds.Right},{bounds.Bottom}, hit={buttonHit}/{Class(buttonHit)}/pid{buttonPid}, foreground pid={foregroundPid}, Core pid={core!.Id}");
+                    Require(buttonPid==core.Id,"native confirmation button must be exposed to real OS input");
+                    await Click(buttonPoint);
+                    if(choice==0){
+                        stop=DateTime.UtcNow.AddSeconds(5);while(IsWindow(dialog)&&DateTime.UtcNow<stop)await Task.Delay(80);
+                        events.Add($"cancel actual dialog exists={IsWindow(dialog)}, core exited={core!.HasExited}, configurator exited={configurator?.HasExited}");
+                        Require(!IsWindow(dialog)&&!core.HasExited&&configurator?.HasExited==false,"cancel preserves Core and configurator");
+                        Require(Process.GetProcessById(status.PlayerPid).HasExited==false,"cancel preserves native Player");
+                        Require(!(await client.GetCoreStatsAsync(new Empty())).IsProductExiting,"cancel does not publish product-exit notice");
+                        events.Add("PASS actual Core native confirmation defaults No; OS click No cancels and preserves Core/Player/configurator");
+                    }else{
+                        using var player=Process.GetProcessById(status.PlayerPid);
+                        await Task.WhenAll(core!.WaitForExitAsync(),configurator!.WaitForExitAsync(),player.WaitForExitAsync()).WaitAsync(TimeSpan.FromSeconds(12));
+                        Require(core.ExitCode==0&&configurator.ExitCode==0,"normal product process exit codes");
+                        Require(!IsWindow(currentPlayer)&&!IsWindow(dialog),"native desktop Player and confirmation removed");
+                        var watchdogStop=DateTime.UtcNow.AddSeconds(3);
+                        while(Process.GetProcessesByName("Lively.Watchdog").Any(p=>{try{return Path.GetFullPath(p.MainModule!.FileName).StartsWith(coreDirectory,StringComparison.OrdinalIgnoreCase);}catch{return false;}})&&DateTime.UtcNow<watchdogStop)await Task.Delay(80);
+                        Require(!Process.GetProcessesByName("Lively.Watchdog").Any(p=>{try{return Path.GetFullPath(p.MainModule!.FileName).StartsWith(coreDirectory,StringComparison.OrdinalIgnoreCase);}catch{return false;}}),"own Watchdog exits");
+                        productExited=true;
+                        events.Add("PASS OS click Yes: same-worktree native configurator/Core/ReleasePlayer/Watchdog normally exit and desktop wallpaper window is removed");
+                    }
+                }
+            }
+
         }
+        catch(Exception error){events.Add("FAIL primary test: "+error);throw;}
         finally
         {
             try
             {
+                if(core!=null&&!core.HasExited)CancelOwnedConfirmation(core.Id);
+                if(productExited){core?.Dispose();core=null;client=null;events.Add("whole-product exit leaves ordinary Windows desktop; original saved layout/data restored below without restarting Dext");}
                 if(applied&&client!=null&&original!=null)
                 {
                     await client.CloseWallpaperLibraryAsync(new CloseWallpaperLibraryRequest{LivelyInfoPath=host.FullName},deadline:DateTime.UtcNow.AddSeconds(10));
@@ -285,11 +352,12 @@ internal static class NativeCoreLiveProbe
                 File.WriteAllLines(Path.Combine(evidence.FullName,"native-core-live.log"),events);
                 if(restored){var temp=Path.GetFullPath(Path.GetTempPath()).TrimEnd('\\')+"\\";Require(root.FullName.StartsWith(temp,StringComparison.OrdinalIgnoreCase),"fixture cleanup root containment");root.Delete(true);}
                 else Console.Error.WriteLine("Native Core recovery pending; fixture retained: "+root.FullName+"; backups: "+evidence.FullName);
+                if(configurator!=null){if(!configurator.HasExited){configurator.CloseMainWindow();await configurator.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));}configurator.Dispose();}
                 core?.Dispose();controlDevices?.Dispose();if(authoredInput)SetCursorPos(originalCursor.X,originalCursor.Y);
             }
         }
         foreach(var item in events.Where(e=>e.StartsWith("PASS")))Console.WriteLine(item);
-        void GrantRead(bool granted)=>personal!.Update(state=>{foreach(var consumer in new[]{"scene","component.shared"}){var grant=state.Rooms[roomId].Grants[consumer];state.Rooms[roomId].Grants[consumer]=grant with{Capabilities=granted?new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).ToArray():new[]{"desk.read","desk.navigate","time.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).ToArray()};}});
+        void GrantRead(bool granted)=>personal!.Update(state=>{foreach(var consumer in new[]{"scene","component.shared"}){var grant=state.Rooms[roomId].Grants[consumer];state.Rooms[roomId].Grants[consumer]=grant with{Capabilities=granted?new[]{"desk.read","desk.navigate","time.read","storage.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray():new[]{"desk.read","desk.navigate","time.read","storage.write"}.Concat(systemControls?new[]{"media.control","audio.control"}:Array.Empty<string>()).Concat(productExit?new[]{"dext.exit"}:Array.Empty<string>()).ToArray()};}});
         async Task WaitStorage(Func<JObject,bool> accepted,string reason)
         {
             var stop=DateTime.UtcNow.AddSeconds(12);while(DateTime.UtcNow<stop){var status=await client!.GetRoomSessionAsync(new Empty(),deadline:DateTime.UtcNow.AddSeconds(2));var observation=ReadObservation(FindPlayer(status.PlayerPid));
@@ -328,6 +396,19 @@ internal static class NativeCoreLiveProbe
         static string ReadSharedLog(string path){using var stream=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.ReadWrite);using var reader=new StreamReader(stream);return reader.ReadToEnd();}
         static string Hash(byte[] bytes)=>Convert.ToHexString(SHA256.HashData(bytes));
         static void Require(bool value,string reason){if(!value)throw new Exception(reason);}
+    }
+    [DllImport("user32.dll")] static extern IntPtr GetDlgItem(IntPtr dialog,int id);
+    [DllImport("user32.dll")] static extern IntPtr SendMessageW(IntPtr window,uint message,IntPtr wparam,IntPtr lparam);
+    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr window,uint message,IntPtr wparam,IntPtr lparam);
+    static void CancelOwnedConfirmation(int owner){
+        EnumWindows((window,_)=>{GetWindowThreadProcessId(window,out var pid);var title=new StringBuilder(128);GetWindowText(window,title,title.Capacity);
+            if(pid==owner&&title.ToString()=="Dext 退出确认"){var no=GetDlgItem(window,7);if(no!=IntPtr.Zero)PostMessageW(no,0xf5,IntPtr.Zero,IntPtr.Zero);}
+            return true;},IntPtr.Zero);
+    }
+    static async Task Click(NativePoint point){
+        if(!SetCursorPos(point.X,point.Y))throw new Exception("OS cursor");await Task.Delay(120);
+        var inputs=new[]{new NativeInput{Value=new NativeUnion{Mouse=new NativeMouse{Flags=2}}},new NativeInput{Value=new NativeUnion{Mouse=new NativeMouse{Flags=4}}}};
+        if(SendInput(2,inputs,Marshal.SizeOf<NativeInput>())!=2)throw new Exception("OS mouse down/up");
     }
     static string Class(IntPtr window){var name=new StringBuilder(128);GetClassName(window,name,name.Capacity);return name.ToString();}
     static bool DesktopPoint(NativePoint point)=>Class(GetAncestor(WindowFromPoint(point),2)) is "Progman" or "WorkerW";

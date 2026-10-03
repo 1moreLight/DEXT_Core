@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 
 namespace Dext.Core.Rooms;
 
-internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputSequence=0,bool InputConsumed=false);
+internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputSequence=0,bool InputConsumed=false,
+    [property:System.Text.Json.Serialization.JsonIgnore][property:Newtonsoft.Json.JsonIgnore] RoomExitConfirmation? Exit=null);
 
 internal sealed partial class RoomSessionPlayerBridge
 {
@@ -18,8 +19,19 @@ internal sealed partial class RoomSessionPlayerBridge
         if(proof==null)return new(inputSequence==0?RoomActionStatus.InputRequired:RoomActionStatus.StaleInput);
         var issued=actions.IssueHostInput(connectionId,peer,session,consumer,button,proof);
         var reply=issued.Status==RoomActionStatus.Accepted?actions.InvokeButton(connectionId,peer,session,consumer,button,issued.Ticket):new(issued.Status);
-        return new(reply.Status,proof.Sequence,proof.IsConsumed);
+        return new(reply.Status,proof.Sequence,proof.IsConsumed,reply.Exit);
     }
+    internal RoomActionReply ConfirmNativeExit(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,RoomExitConfirmation confirmation,bool approved)
+    {
+        var current=native.State;
+        if(disposed||current==null||current.Generation!=generation||current.Session!=confirmation.Session){
+            actions.ConfirmExit(connectionId,peer,confirmation,false);
+            return new(disposed?RoomActionStatus.StaleSession:RoomActionStatus.StaleInput);
+        }
+        return actions.ConfirmExit(connectionId,peer,confirmation,approved);
+    }
+
     internal RoomNativeActionReply NavigateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
         long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action,long inputSequence=0)
     {
