@@ -380,3 +380,20 @@ test('event sample uses acknowledged scope and stays unavailable while paused or
  f.host.setPlaybackSuspended(true);assert.equal(f.host.readInputSample(scope,version),null);f.host.dispose();
  assert.equal(f.host.readInputSample(scope,version),null);
 });
+
+test('native visual sample holds painted animation until actual dispatch then catches up',async()=>{
+ const f=fixture({room:{desks:[{id:'home',name:'Home',icons:[],components:[]},{id:'focus',name:'Focus',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:[]}]}});await f.host.ready;
+ await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));await f.advance(225);
+ const scope={runtimeGeneration:1,sessionId:'session',revision:2},version=f.host.readDiagnostics().inputVersion,count=f.calls.filter(v=>v.method==='geometry').length;
+ const held=f.host.beginNativeInputSample(scope,version,'sample-1');assert.equal(held.sampleId,'sample-1');const x=held.buttons[0].x;
+ await f.advance(100);assert.equal(f.host.readDiagnostics().transition.elapsed,225);
+ assert.equal(f.host.readInputSample(scope,version).buttons[0].x,x);assert.equal(f.host.endNativeInputSample('other'),false);
+ assert.equal(f.host.endNativeInputSample('sample-1'),true);await f.advance(0);assert.equal(f.host.readDiagnostics().transition.elapsed,325);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);f.host.dispose();
+});
+test('visual sample holds are released by lifecycle invalidation and cannot revive old animation',async()=>{
+ const f=fixture();await f.host.ready;const scope={runtimeGeneration:1,sessionId:'session',revision:1},version=f.host.readDiagnostics().inputVersion;
+ assert.ok(f.host.beginNativeInputSample(scope,version,'sample-1'));f.host.setPlaybackSuspended(true);
+ assert.equal(f.host.endNativeInputSample('sample-1'),false);assert.equal(f.host.beginNativeInputSample(scope,version,'sample-2'),null);
+ f.host.dispose();
+});

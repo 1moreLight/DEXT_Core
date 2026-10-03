@@ -49,7 +49,7 @@ namespace Lively.Player.WebView2
                         (long?)reply["gestureId"]!=value.GestureId || (long?)reply["structuralVersion"]!=value.GeometryVersion)
                         throw new InvalidOperationException("Native input document rejected");
                 }
-                var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion));
+                var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion,value.SampleMouse));
                 if(!Current()){accepted=false;return;}Check(json);
                 if(value.Key!=0){
                     json=await Execute(frame,DextNativeInputGuardianPolicy.FocusScript(secret,nonce));
@@ -60,7 +60,7 @@ namespace Lively.Player.WebView2
         }
         public async Task RevokeInputAsync()
         {
-            currentInput=null;inputOperation++;inputActions?.Cancel();
+            currentInput=null;inputOperation++;inputActions?.Cancel();dispatchReceipt?.TrySetResult(false);dispatchReceipt=null;dispatchPacket=null;
             await Task.WhenAll(frames.Values.Where(f=>f.Parent==null&&f.InputNonce!=null).ToArray().Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=0;
                 try{await Execute(frame,DextNativeInputGuardianPolicy.RevokeScript(secret,nonce));}
@@ -72,6 +72,38 @@ namespace Lively.Player.WebView2
             try{await Execute(frame,DextNativeInputGuardianPolicy.RevokeScript(secret,nonce));}
             catch(Exception){if(!disposed&&!failed&&frames.ContainsKey(frame.Id))throw;}
         }
+        private DextNativePointerPacket dispatchPacket;
+        private string dispatchConsumer;
+        private Guid officialDispatchNonce;
+        private TaskCompletionSource<bool> dispatchReceipt;
+        public string OfficialDispatchScript(DextNativePointerPacket value)=>DextNativeInputGuardianPolicy.OfficialArmScript(secret,value.GestureId,value.GeometryVersion,value.Kind);
+        public void ExpectInputDispatch(DextNativePointerPacket value,string consumer,Guid officialNonce)
+        {
+            dispatchReceipt?.TrySetResult(false);dispatchPacket=value;dispatchConsumer=consumer;officialDispatchNonce=officialNonce;
+            dispatchReceipt=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+        public async Task<bool> WaitInputDispatchAsync(DextNativePointerPacket value)
+        {
+            var receipt=dispatchReceipt;if(receipt==null||dispatchPacket!=value)return false;
+            var remaining=1500-(int)(((decimal)Stopwatch.GetTimestamp()-value.IssuedAt)*1000/Stopwatch.Frequency);
+            if(remaining<=0 || await Task.WhenAny(receipt.Task,Task.Delay(remaining))!=receipt.Task)
+                throw new TimeoutException("Native input dispatch not observed");
+            return await receipt.Task;
+        }
+        public void ReceiveOfficialInputDispatch(string json)
+        {
+            var value=dispatchPacket;
+            if(value==null||!InputCurrent(value)||dispatchConsumer!=null&&dispatchConsumer!="official")return;
+            if(DextNativeInputGuardianPolicy.ParseDispatch(json,secret,officialDispatchNonce,value.GestureId,value.GeometryVersion,value.Kind))
+                dispatchReceipt?.TrySetResult(true);
+        }
+        private bool ReceiveFrameInputDispatch(Frame frame,string json,Guid nonce)
+        {
+            var value=dispatchPacket;
+            if(value==null||!InputCurrent(value)||dispatchConsumer!=null&&dispatchConsumer!=desired[frame.Name].Consumer)return false;
+            if(!DextNativeInputGuardianPolicy.ParseDispatch(json,secret,nonce,value.GestureId,value.GeometryVersion,value.Kind))return false;
+            dispatchReceipt?.TrySetResult(true);return true;
+        }
         private void ReceiveInput(Frame frame,string json)
         {
             var value=currentInput;
@@ -79,6 +111,7 @@ namespace Lively.Player.WebView2
                 !Alive(frame,frame.Epoch) || !Guid.TryParseExact(frame.InputNonce,"D",out var nonce))return;
             var elapsed=((decimal)Stopwatch.GetTimestamp()-value.IssuedAt)/Stopwatch.Frequency;
             if(elapsed<0||elapsed>=1.5m)return;
+            if(ReceiveFrameInputDispatch(frame,json,nonce))return;
             var witness=DextNativeInputGuardianPolicy.ParseWitness(json,secret,nonce);
             if(witness==null || witness.GestureId!=value.GestureId || witness.StructuralVersion!=value.GeometryVersion ||
                 witness.DispatchSequence<=frame.InputDispatch)return;

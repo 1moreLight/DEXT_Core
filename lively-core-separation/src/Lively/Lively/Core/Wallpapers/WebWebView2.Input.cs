@@ -38,6 +38,22 @@ namespace Lively.Core.Wallpapers
                 !DextNativeInputWindow.TryMeasure(Handle,nativeBrowserHandle,InputHandle,pid,out var bounds,out var dpi))return null;
             return new(InputHandle,bounds.X,bounds.Y,bounds.Width,bounds.Height,Math.Clamp((int)Math.Ceiling(4.0*dpi/96),4,256),dpi);
         }
+        private void HandleNativeSample(LivelyMessageRoomNativeSample sample)
+        {
+            var a=Volatile.Read(ref roomNativeAttachment);var before=a?.Input.State;
+            if(before==null || sample?.Input==null || sample.Buttons==null || sample.Buttons.Length>4096)return;
+            DextNativePointerPacket packet;
+            try{packet=new(sample.Input);}catch(ArgumentException){return;}
+            if(!packet.SampleMouse || packet.Key!=0 || packet.Kind!="down"&&packet.Kind!="up")return;
+            var measured=ReadNativeViewport();var foreground=NativeInputIsForeground?.Invoke()==true;
+            a.Input.CheckNativeViewport(measured,foreground);
+            if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
+                measured.Width!=packet.PixelWidth || measured.Height!=packet.PixelHeight || measured.Dpi!=packet.Dpi ||
+                sample.Buttons.Any(b=>b==null))return;
+            var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
+            if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
+                packet.GestureId,packet.Kind,measured,copy,foreground))NotifyNative(a,before,true);
+        }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
@@ -57,7 +73,7 @@ namespace Lively.Core.Wallpapers
                     if(viewport!=null && request.PixelWidth==viewport.Width && request.PixelHeight==viewport.Height && request.Buttons is{} entries && entries.Length<=4096 && entries.All(b=>b!=null))
                     {
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
-                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
+                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
                     break;
                 case "buttons":
@@ -225,7 +241,7 @@ namespace Lively.Core.Wallpapers
             SendMessage(new LivelyMessageRoomNativePointer{
                 RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
-                OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=x,Y=y,Modifiers=InputUtil.MouseModifiers});
+                OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=x,Y=y,Modifiers=InputUtil.MouseModifiers,SampleMouse=gesture.SampleMouse});
         }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
         {

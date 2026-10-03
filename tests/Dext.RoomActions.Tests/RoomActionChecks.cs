@@ -64,7 +64,18 @@ static partial class RoomActionChecks
         RoomSessionPlayerBridge NavigationBridge(ActionFixture f,RoomNativeInputAuthority input) {
             Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,input.ObserveSnapshot,out var bridge));return bridge!;
         }
-        check("native completion sequences are monotonic across mouse keyboard geometry and generation",()=>{
+        check("private native visible samples gate the actual Core action once",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);
+            Eq(true,bridge.PublishNativeGeometry(n,1,f.Session,1,1,viewport,Array.Empty<RoomNativeButton>(),true));
+            n.MouseDown(viewport,300,400,true);var sequence=n.State!.Gesture!.Sequence;n.MouseUp(viewport,300,400,true);
+            Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",sequence).Status);
+            Eq(true,bridge.SampleNativeGeometry(n,1,f.Session,1,1,sequence,"down",viewport,Entries(),true));
+            Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",sequence).Status);
+            Eq(true,bridge.SampleNativeGeometry(n,1,f.Session,1,1,sequence,"up",viewport,Entries(),true));
+            var reply=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",sequence);
+            Eq(RoomActionStatus.Accepted,reply.Status);Eq(true,reply.InputConsumed);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",sequence).Status);Eq(1,f.Launched.Count);
+        });        check("native completion sequences are monotonic across mouse keyboard geometry and generation",()=>{
             using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var first=Pair(f,n);
             Eq(1L,first.Sequence);n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);var second=n.GetProof(1,1,"scene","open")!;
             Eq(2L,second.Sequence);Geometry(f,n,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(3L,n.GetProof(1,2,"scene","open")!.Sequence);

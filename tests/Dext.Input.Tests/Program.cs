@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if(args.Length==3&&args[0]=="--v3-author-sample-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],sampleMouse:true);return;}
 if(args.Length==4&&args[0]=="--v3-author-key-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],int.Parse(args[3]));return;}
 if(args.Length==3&&args[0]=="--v3-author-input-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2]);return;}
 if(args.Length>0&&args[0]=="--v3-author-action-delivery"){NativeAuthorActionDeliveryChecks.Run();return;}

@@ -89,7 +89,7 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer"}).ToArray()) || !Id(Text(o["consumer"]),128))return null;
                         request.Consumer=Text(o["consumer"]);return request;
                     case "geometry":
-                        if(!Shape(o,IdentityFields.Concat(new[]{"geometryVersion","buttons","viewport"}).ToArray()) || !Integer(o["geometryVersion"],1) ||
+                        if(!Shape(o,IdentityFields.Concat(new[]{"geometryVersion","buttons","viewport"}).Concat(o.Property("eventSamples")!=null?new[]{"eventSamples"}:Array.Empty<string>()).ToArray()) || !Integer(o["geometryVersion"],1) ||
                             !(o["buttons"] is JArray entries) || entries.Count>4096 || !(o["viewport"] is JObject view) || !Shape(view,"width","height","dpr") || pixelWidth<=0 || pixelHeight<=0 ||
                             !Number(view["width"],out var width)||!Number(view["height"],out var height)||!Number(view["dpr"],out var scale)||width<=0||height<=0||scale<.1||scale>8||
                             Math.Abs(width*scale-pixelWidth)>2||Math.Abs(height*scale-pixelHeight)>2)return null;
@@ -123,6 +123,7 @@ namespace Lively.Common.Helpers
                                 X=x,Y=y,Width=w,Height=h,TabIndex=(int)b["tabIndex"],Polygons=polygons});
                         }
                         if(!DextNativeGeometry.TryCreate(result,out _))return null;
+                        if(o.Property("eventSamples")!=null){if(o["eventSamples"].Type!=JTokenType.Boolean)return null;request.SampleMouse=(bool)o["eventSamples"];}
                         request.GeometryVersion=(long)o["geometryVersion"];request.Buttons=result.ToArray();return request;
                     default:return null;
                 }

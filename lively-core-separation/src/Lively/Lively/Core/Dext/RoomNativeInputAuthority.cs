@@ -14,7 +14,7 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
-    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null);
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false);
 internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
 
 internal sealed class RoomNativeInputProof
@@ -236,7 +236,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private bool BeginGesture(long now,int x,int y,int key)
     {
         if(inputSequence>=9007199254740991){ClearGeometry();return false;}
-        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key);
+        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse);
         return true;
     }
     private void Complete(Press press,long now)

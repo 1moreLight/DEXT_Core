@@ -19,7 +19,7 @@
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
-    let inputEntries=[],focus=null,focusNode=null;
+    let inputEntries=[],focus=null,focusNode=null,nativeHold=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
@@ -190,7 +190,7 @@
       return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
     }
     async function render(){
-      const ownEpoch=++epoch;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
+      const ownEpoch=++epoch;releaseNativeHold();cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
       const job=async()=>{
         if(disposed||ownEpoch!==epoch)return false;
         try{
@@ -198,7 +198,7 @@
           syncAnimation();reconcile();const state=model.readDiagnostics(),entries=buttonGeometry();let published;
           for(let attempt=0;attempt<8;attempt++){
             if(disposed||ownEpoch!==epoch)return false;
-            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries},ownScope);
+            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries,eventSamples:true},ownScope);
             if(published.status!=='staleInput'||attempt===7)break;await yieldRetry();
           }
           if(disposed||ownEpoch!==epoch)return false;inputReady=published.status==='accepted';if(inputReady)inputEntries=copy(entries);if(!inputReady)diagnose('geometryUnavailable');return inputReady;
@@ -207,7 +207,7 @@
       serial=serial.then(job,job);return serial;
     }
     function complete(transitionId){options.sendControl({type:'dext:v3-transition-complete',sessionId:snapshot.sessionId,transitionId});}
-    function schedule(){if(frameId===null&&!disposed&&!privatePaused&&animation&&!animation.finished)frameId=raf(step);}
+    function schedule(){if(!nativeHold&&frameId===null&&!disposed&&!privatePaused&&animation&&!animation.finished)frameId=raf(step);}
     function syncAnimation(){
       if(!snapshot.transitionId){if(frameId!==null)cancel(frameId);frameId=null;animation=null;return;}
       if(!animation||animation.id!==snapshot.transitionId){if(frameId!==null)cancel(frameId);frameId=null;animation={id:snapshot.transitionId,session:snapshot.sessionId,elapsed:0,last:now(),finished:false};}
@@ -227,8 +227,11 @@
       if(transition.type==='author')return;
       const p=updateDefaultGroups();
       for(const record of records.values())layout(record);for(const record of icons.values()){const group=visualGroups[record.deskId===snapshot.targetDeskId?'target':'source'];layoutIcon(record,group);}
-      // Moving hit regions are invalid until a stationary layout is published.
+      // Boundary geometry excludes moving rows; physical edges sample painted rows.
       if(p>=1){animation.finished=true;const result=model.animationFinished(animation.session,animation.id);if(result.accepted)complete(animation.id);}else schedule();
+    }
+    function releaseNativeHold(){
+      if(!nativeHold)return false;nativeHold=null;schedule();return true;
     }
     function sameActionScope(identity,geometry){
       return !disposed&&inputReady&&!privatePaused&&identity.runtimeGeneration===context.runtimeGeneration&&
@@ -302,11 +305,17 @@
         if(!identity||!sameActionScope(identity,version))return null;
         return copy({geometryVersion:inputVersion,viewport:model.readDiagnostics().viewport,buttons:buttonGeometry(true)});
       },
+      beginNativeInputSample(identity,version,sampleId){
+        if(nativeHold||typeof sampleId!=='string'||!sampleId.length||sampleId.length>128||!identity||!sameActionScope(identity,version))return null;
+        const sample=copy({sampleId,geometryVersion:inputVersion,viewport:model.readDiagnostics().viewport,buttons:buttonGeometry(true)});
+        nativeHold={sampleId};if(frameId!==null)cancel(frameId);frameId=null;inputEntries=copy(sample.buttons);return sample;
+      },
+      endNativeInputSample(sampleId){return nativeHold?.sampleId===sampleId?releaseNativeHold():false;},
       resize(){if(disposed)return Promise.resolve(false);const result=model.setViewport(options.getViewport());return result.accepted&&result.effects.length?render():Promise.resolve(result.accepted);},
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold();inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -322,7 +331,7 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      dispose(){if(disposed)return;disposed=true;releaseNativeHold();epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
       readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }

@@ -118,3 +118,18 @@ test('private Core focus routes keyboard into the selected actual frame with cap
  const reply=f.hook({token:SECRET,kind:'focus',documentNonce:NONCE});
  assert.equal(reply?.armed,true);assert.equal(f.focusCalls(),1);
 });
+test('native sampled mouse dispatch receipts are independent from authored action callbacks',()=>{
+ const f=fixture();assert.ok(f.hook({token:SECRET,kind:'arm',documentNonce:NONCE,gestureId:1,structuralVersion:2,reportDispatch:true}));
+ f.fire(f.node,'mousedown');f.fire(f.node,'mouseup');
+ assert.deepEqual(f.sent.map(v=>[v.type,v.kind,v.gestureId]),[['dext:v3-input-dispatched','down',1],['dext:v3-input-dispatched','up',1]]);
+});
+
+test('official trusted dispatch receipt uses the string transport consumed by Player',()=>{
+ const f=fixture();f.root.top=f.root;
+ assert.equal(require(target).installOfficial(f.root,SECRET),true);
+ const hook=f.root.__dextNativeOfficialInputDispatchV1;
+ assert.equal(hook({token:SECRET,kind:'arm',gestureId:7,structuralVersion:2,edge:'down'}).armed,true);
+ f.fire(f.node,'mousedown');
+ assert.equal(f.sent.length,1);assert.equal(typeof f.sent[0],'string');
+ assert.deepEqual(JSON.parse(f.sent[0]),{type:'dext:v3-input-dispatched',protocolVersion:1,token:SECRET,documentNonce:NONCE,gestureId:7,structuralVersion:2,kind:'down'});
+});

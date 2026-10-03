@@ -1448,3 +1448,15 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] DOM按已绘制visualGroups即时读取readInputSample，当前geometry ack/scope成立才返回独立副本；采样可计算moving元素及moving前层遮挡的真实多边形，无逐帧或采样读取IPC。行为RED43/46（缺API）→45/46（测试归一化宽度精确相等失败）→46/46，改机器误差断言，生产未加命中padding（ERRORS #212）。
 - [x] event-sample-core-build四阶段通过；常规start Core55712/Player82324/Watchdog93260/config65212，日志20261004_034829.txt，Core DLL写入03:48:23早于Core启动03:48:29。identity共享D配置器OTHER/exit1且精确路径独立核验，随后正常关闭、watcher82155 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixtures0。
 - [ ] 这段是移动取样生产基础，Player尚未调用readInputSample、Core生产PublishNativeGeometry尚未启用sampleMouse；原静止路径仍兼容，不能宣称移动点击已接通。接续实现仅Core/Player私有采样消息、原生派发期间视觉保持/释放和两个edge的实际Player/Core证据，再接source手势级授权；全范围保持。拖动暂缓，最终第4/5项集中人工、网络专项不扩展、不合并master，整体16项就绪1/16≈6%。
+
+## P5 Player原生采样与派发屏障（2026-10-04，BASE 8a738f1）
+一句话目标：同一Player UI队列在DOWN/UP派发前读取并保持当前官方可见几何，收到实际文档可信派发回执后释放视觉并通过独立私有IPC交Core；Core样本在作者动作释放前处理，同原始物理边沿配对。
+范围：可取消且有界的采样/派发屏障、直接作者root与官方top真实回执、默认动画在短屏障后按原活动时钟继续、私有样本严格同scope/HWND/viewport/DPI及声明按钮校验，正式geometry启用鼠标采样模式。无逐帧IPC、无公开作者样本入口、不会用固定延时冒充原生回执；键盘与原有静止行为回归保持。source手势级授权随后接，不能削减原范围。
+先本地队列顺序/DOM保持/私有消息行为RED，接线后实际ReleasePlayer+正式宿主验证两个采样与一次SDK动作；Core包/回执fixture与真实Core OS证据分开。完整build→start→正常关闭，Dext保持关闭；只必要本地回归，不新增网络专项。最终第4/5项集中人工、拖动暂缓、不合并master；整体16项就绪1/16≈6%。
+
+- [x] 同UI采样屏障：DOWN arm后prepare、可信dispatch后交样本，UP完成后才释放作者动作；拒绝prepare不转发，异步DOWN receipt阻止后续UP。真实行为RED缺prepare构造参数→15/15；DOM已绘制矩阵begin/end保持当前visualGroups，RAF停止后按原活动时钟继续，失效/暂停/销毁释放hold；RED46/48→48/48。标准geometry现在eventSamples:true，生产Player/Core采样模式已启用，前节“尚未接线”仅为8a738f1历史状态。
+- [x] Core私有msg_room_native_sample只沿拥有的Player stdout进入；同原始scope/HWND/视口/DPI与安装/consumer/button声明重核，再同Core原始DOWN/UP点配对。必要消息71/71、Core动作273/273；缺一半无动作，两半同entry后一次消费，旧原始QPC不刷新。
+- [x] 实际ReleasePlayer+正式SDK event-barrier-sample-native-wire exit0：直接作者root可信DOWN/UP两份私有样本先于一次r1→n1/gesture7动作。小official几何/路由与Core包/回执为fixture。event-barrier-official-top-wire首轮实际正式DOM失败，顶层对象receipt被既有TryGetWebMessageAsString拒绝；补实质RED26/27并改为字符串，GREEN27/27，再完整构建后event-barrier-official-top-wire-final exit0：正式index/main/dom/native/frame/media/SDK的精确图标两边采样、一条官方动作、前台不变，切页/同文档/暂停/最新修订/撤销保持通过。Core包/回执仍fixture，动态几何是生产DOM行为证据48/48，本次实际wire图标静止，不冒称移动/Core OS/DPI全链通过（ERRORS #170补充）。
+- [x] event-barrier-enter-native-wire-final与event-barrier-space-native-wire-final均exit0：新bootstrap/队列下原真实trusted Enter/Space、同UP正数一次作者动作保持。
+- [x] event-barrier-frame-media-wire-final必要回归exit0；event-barrier-core-build-final完整四阶段后常规start Core25536/Player57252/Watchdog30248/config120196，日志20261004_043025.txt。identity共享D配置器OTHER/exit1且精确绝对路径独立核验；正常关闭Core/配置器与watcher73666 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official临时目录0。具名阶段提交后继续source与移动补证。
+- [ ] 接续source手势级准入与移动正式宿主/真实Core OS补证、Core零序号兼容收口；系统凭据窗未解除时不代填Core物理输入。拖动按用户暂缓，本地功能优先，不扩展网络专项、不中途验收/合并master；完整16项就绪1/16≈6%，最终卡第4/5项和全包7项/单次P5审查保持待执行。

@@ -83,7 +83,7 @@ internal sealed partial class RoomSessionPlayerBridge
         disposed?new(RoomActionStatus.StaleSession):actions.SaveLayout(connectionId,peer,session,revision,layoutRevision,change);
 
     internal bool PublishNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
-        long version,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries)
+        long version,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool sampleMouse=false)
     {
         if(disposed || entries==null || entries.Count>4096)return false;
         return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>
@@ -95,7 +95,21 @@ internal sealed partial class RoomSessionPlayerBridge
                     !owner.IsActive(context.Role,context.Snapshot) || !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
                     button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId))return false;
             }
-            return native.PublishGeometry(generation,session,revision,version,viewport,entries);
+            return native.PublishGeometry(generation,session,revision,version,viewport,entries,sampleMouse);
+        },out bool accepted) && accepted;
+    }
+    internal bool SampleNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
+        long version,long sequence,string edge,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool foreground)
+    {
+        if(disposed || entries==null || entries.Count>4096)return false;
+        return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>{
+            if(status!=RoomProtocolStatus.Accepted || context!.Snapshot.Revision!=revision || context.Installation.ActionCatalog is not{} catalog)return false;
+            foreach(var entry in entries){
+                if(entry==null || entry.Consumer==null || entry.Button==null || !catalog.Consumers.TryGetValue(entry.Consumer,out var owner) ||
+                    !owner.IsActive(context.Role,context.Snapshot) || !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
+                    button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId))return false;
+            }
+            return native.SampleMouse(generation,session,revision,version,sequence,edge,viewport,entries,foreground);
         },out bool accepted) && accepted;
     }
 }

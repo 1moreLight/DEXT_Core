@@ -457,3 +457,7 @@ bounded native request join更新当前snapshot时需保留同文档rN水位，�
 Player新增native input describe后，实际媒体wire在嵌套/blank媒体子文档拿到null，JObject.Parse抛错并按策略正常关闭。输入根资格本来只允许Parent==null，故LoadAsync只对直接作者root读取/验证guardian nonce；嵌套媒体继续既有media policy，不注册输入。增加真实异常原因诊断，实际ReleasePlayer相同媒体wire通过，不放宽直接root的guardian验证。
 旧Player为.NET Framework4.7.2且csproj显式Compile：新partial文件须具名加入Compile，PID使用using Process.GetCurrentProcess().Id缓存；首次遗漏Compile与Environment.ProcessId编译错误不计行为RED。
 指针取消曾沿最初DOWN坐标，MOVE后Invalidate导致释放回跳；新增实际生产队列行为RED9/10，保存最新转发的MOVE后10/10。取消仍先撤销再UP，不调用动作完成回调。
+
+### #170 补充：顶层原生派发receipt也必须匹配字符串接收（2026-10-04）
+Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方顶层现有Form1仍用TryGetWebMessageAsString。新增官方trusted DOWN/UP dispatch回执错误地照搬frame对象postMessage，实际完整官方宿主DOWN等待回执超时并关闭自己的Player。作者root的隔离wire通过不能替代顶层链验证。
+增加真实格式行为断言，RED26/27（object不是string）；官方bootstrap先捕获JSON.stringify，将私有receipt序列化为字符串，GREEN27/27。完整build后正式index/main/dom/native/frame/media/SDK实际ReleasePlayer两边采样与一次图标默认动作通过；原前台保持、暂停/切页/撤销回归通过。未改变既有顶层来源或Core物理/权限规则。

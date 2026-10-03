@@ -317,3 +317,14 @@ RoomNativeInputAuthority新增内部sampleMouse模式与SampleMouse：raw DOWN�
 event-sample-core-build四阶段通过，常规start Core55712/Player82324/Watchdog93260/config65212，日志20261004_034829.txt；核对DLL构建03:48:23早于03:48:29启动，共享D配置器OTHER/exit1而绝对路径独立核验。精确正常关闭、watcher82155 exit0，原四文件hash/缺失保持、Dext进程/开发监听/author fixtures0。
 
 Player私有采样通道与原生派发期间视觉保持/释放尚未接，生产Core仍静止模式；此阶段不能声称移动点击、source动作或实际Core物理门槛已通过。继续完成整条链并以实际Player/Core证据验证，最终第4项真实鼠标/Enter/Space、长按/AltTab，第5项移动/遮挡/多入口/DPI集中验收。拖动暂缓、无新增网络专项/中途验收，七项及单次全P5审查保持待执行，完整16项就绪1/16≈6%，不合并master。
+
+## P5 Player原生采样与派发屏障（2026-10-04，BASE 8a738f1）
+一句话目标：同一Player UI队列在DOWN/UP派发前读取并保持当前官方可见几何，收到实际文档可信派发回执后释放视觉并通过独立私有IPC交Core；Core样本在作者动作释放前处理，同原始物理边沿配对。
+范围：可取消且有界的采样/派发屏障、直接作者root与官方top真实回执、默认动画在短屏障后按原活动时钟继续、私有样本严格同scope/HWND/viewport/DPI及声明按钮校验，正式geometry启用鼠标采样模式。无逐帧IPC、无公开作者样本入口、不会用固定延时冒充原生回执；键盘与原有静止行为回归保持。source手势级授权随后接，不能削减原范围。
+先本地队列顺序/DOM保持/私有消息行为RED，接线后实际ReleasePlayer+正式宿主验证两个采样与一次SDK动作；Core包/回执fixture与真实Core OS证据分开。完整build→start→正常关闭，Dext保持关闭；只必要本地回归，不新增网络专项。最终第4/5项集中人工、拖动暂缓、不合并master；整体16项就绪1/16≈6%。
+## P5 Player原生采样与派发屏障验证（2026-10-04）
+同一Player UI队列先读取正式DOM已绘制凸区域并保持官方RAF，再转发Win32 DOWN/UP；当前直接作者root或官方top实际trusted primary事件回执到达后，释放视觉并发私有样本。默认动画随后沿原活动时钟继续，无逐帧IPC。Core重测实际HWND/OS origin/尺寸/DPI/前台、当前安装/scope/声明入口，并以自己的原始raw点配对；两个edge同entry才完成，UP样本先于同UP释放的作者动作。
+队列RED缺prepare参数→15/15、DOM hold RED46/48→48/48、消息71/71、Core动作273/273；官方顶层字符串回执RED26/27→27/27。正式geometry已eventSamples:true，前阶段“未接线/静止生产”只为8a738f1历史，当前由本节替代。
+event-barrier-sample-native-wire实际ReleasePlayer/正式SDK：可信DOWN/UP两份私有样本先于一次原r1→n1/gesture7作者动作；小official几何/路由及Core包/回执fixture。event-barrier-official-top-wire-final实际生产index/main/dom/native/frame/media/SDK：两个精确图标多边形采样、同入口一条官方动作、原前台不变；切页、同文档、受控SVG焦点/清除、暂停/最新修订和撤销通过。首轮顶层对象receipt被现有字符串receiver拒绝，按ERRORS #170补充修复后整轮exit0，未放宽来源/物理权限。实际wire图标静止；运动/遮挡为DOM行为证据，不据此填写移动或实际Core OS/DPI验收。
+event-barrier-enter-native-wire-final/space-native-wire-final与frame-media-wire-final必要回归均exit0。event-barrier-core-build-final完整四阶段成功后，常规start Core25536/Player57252/Watchdog30248/config120196，日志20261004_043025.txt。产品/插件/mutex/pipe/data/log正常，共享D配置器在identity脚本为OTHER/exit1且精确绝对路径独立核验；本次常规启动恢复原v2，不计原生v3物理输入。
+精确正常退出Core/配置器、watcher73666 exit0；原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/author与official GUID临时目录0。后续source手势级准入、真正移动正式宿主与Core OS输入、物理DPI/锁屏和故障还原保持完整范围；凭据窗限制不能用fixture代替。拖动按用户暂缓，本地功能优先、无新网络专项/中途验收/master合并，完整16项就绪仍1/16=6.25%（约6%）；最终第4/5项与七项/单次P5审查集中执行。

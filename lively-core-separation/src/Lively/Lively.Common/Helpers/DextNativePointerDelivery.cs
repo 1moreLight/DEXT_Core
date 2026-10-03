@@ -12,7 +12,7 @@ namespace Lively.Common.Helpers
                 !Positive(value.Revision) || !Positive(value.GeometryVersion) || !Positive(value.GestureId) ||
                 value.IssuedAt<0 || value.InputHandle==0 || value.Dpi<1 || value.Dpi>1536 ||
                 value.PixelWidth<1 || value.PixelHeight<1 || value.PixelWidth>65535 || value.PixelHeight>65535 ||
-                (value.Key!=0&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
+                value.SampleMouse&&value.Key!=0 || (value.Key!=0&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
                 value.Key==0&&(value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
                 value.Key!=0&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
                 (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel" ||
@@ -25,10 +25,11 @@ namespace Lively.Common.Helpers
             GeometryVersion=value.GeometryVersion;GestureId=value.GestureId;IssuedAt=value.IssuedAt;InputHandle=value.InputHandle;
             OriginX=value.OriginX;OriginY=value.OriginY;PixelWidth=value.PixelWidth;PixelHeight=value.PixelHeight;
             Dpi=value.Dpi;X=value.X;Y=value.Y;Modifiers=value.Modifiers;
-            Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
+            SampleMouse=value.SampleMouse;Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
         }
         private static bool Text(string value,int max){if(string.IsNullOrEmpty(value)||value.Length>max)return false;foreach(var c in value)if(char.IsControl(c))return false;return true;}
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
+        public bool SampleMouse {get;}
         public int Key {get;}
         public int ScanCode {get;}
         public bool IsExtended {get;}
@@ -68,6 +69,8 @@ namespace Lively.Common.Helpers
         private readonly Func<DextNativePointerPacket,bool> current;
         private readonly Func<DextNativePointerPacket,Task> released;
         private readonly Action failed;
+        private readonly Func<DextNativePointerPacket,Task<bool>> prepare;
+        private readonly Func<DextNativePointerPacket,Task> dispatched;
         private readonly Func<long> clock;
         private readonly long frequency;
         private readonly List<Entry> pending=new List<Entry>();
@@ -77,11 +80,13 @@ namespace Lively.Common.Helpers
         private TaskCompletionSource<bool> idle;
         public DextNativePointerDelivery(Func<DextNativePointerPacket,Task<bool>> arm,Func<Task> revoke,
             Action<DextNativePointerPacket> forward,Func<DextNativePointerPacket,bool> current,
-            Func<DextNativePointerPacket,Task> released,Action failed,Func<long> clock=null,long frequency=0)
+            Func<DextNativePointerPacket,Task> released,Action failed,Func<long> clock=null,long frequency=0,
+            Func<DextNativePointerPacket,Task<bool>> prepare=null,Func<DextNativePointerPacket,Task> dispatched=null)
         {
             this.arm=arm??throw new ArgumentNullException(nameof(arm));this.revoke=revoke??throw new ArgumentNullException(nameof(revoke));
             this.forward=forward??throw new ArgumentNullException(nameof(forward));this.current=current??throw new ArgumentNullException(nameof(current));
             this.released=released??throw new ArgumentNullException(nameof(released));this.failed=failed??throw new ArgumentNullException(nameof(failed));
+            this.prepare=prepare??(packet=>Task.FromResult(true));this.dispatched=dispatched??(packet=>Task.CompletedTask);
             this.clock=clock??Stopwatch.GetTimestamp;this.frequency=frequency==0?Stopwatch.Frequency:frequency;
             if(this.frequency<=0)throw new ArgumentOutOfRangeException(nameof(frequency));
         }
@@ -131,12 +136,20 @@ namespace Lively.Common.Helpers
                         if(!current(packet)||Expired(packet))continue;
                         var accepted=await arm(packet);
                         if(item.Epoch!=epoch || !accepted || !current(packet) || Expired(packet)){await Cancel();continue;}
-                        forward(packet);held=packet;continue;
+                        if(!await prepare(packet) || item.Epoch!=epoch || !current(packet) || Expired(packet)){await Cancel();continue;}
+                        forward(packet);held=packet;await dispatched(packet);
+                        if(item.Epoch!=epoch || !current(packet) || Expired(packet))await Cancel();
+                        continue;
                     }
                     if(held==null || !Same(held,packet))continue;
                     if(!current(packet)||Expired(packet)){await Cancel(packet);continue;}
+                    if(packet.Kind=="up" && (!await prepare(packet) || item.Epoch!=epoch || !current(packet) || Expired(packet))){await Cancel(packet);continue;}
                     forward(packet);
-                    if(packet.Kind=="up"){held=null;await released(packet);}
+                    if(packet.Kind=="up"){
+                        await dispatched(packet);
+                        if(item.Epoch!=epoch || !current(packet) || Expired(packet)){await Cancel(packet);continue;}
+                        held=null;await released(packet);
+                    }
                     else held=packet;
                 }
             }
@@ -159,7 +172,7 @@ namespace Lively.Common.Helpers
                 Kind="cancel",RuntimeGeneration=previous.RuntimeGeneration,SessionId=previous.SessionId,Revision=previous.Revision,
                 GeometryVersion=previous.GeometryVersion,GestureId=previous.GestureId,IssuedAt=previous.IssuedAt,InputHandle=previous.InputHandle,
                 OriginX=previous.OriginX,OriginY=previous.OriginY,PixelWidth=previous.PixelWidth,PixelHeight=previous.PixelHeight,
-                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,Key=previous.Key,ScanCode=previous.ScanCode,
+                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,SampleMouse=previous.SampleMouse,Key=previous.Key,ScanCode=previous.ScanCode,
                 IsExtended=previous.IsExtended,Consumer=previous.Consumer,Button=previous.Button,EntryId=previous.EntryId }));
         }
         private bool Expired(DextNativePointerPacket packet)
@@ -167,7 +180,7 @@ namespace Lively.Common.Helpers
         private static bool Same(DextNativePointerPacket a,DextNativePointerPacket b)=>
             a.RuntimeGeneration==b.RuntimeGeneration&&a.SessionId==b.SessionId&&a.Revision==b.Revision&&a.GeometryVersion==b.GeometryVersion&&
             a.GestureId==b.GestureId&&a.IssuedAt==b.IssuedAt&&a.InputHandle==b.InputHandle&&a.OriginX==b.OriginX&&a.OriginY==b.OriginY&&
-            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
+            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.SampleMouse==b.SampleMouse&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
             a.IsExtended==b.IsExtended&&a.Consumer==b.Consumer&&a.Button==b.Button&&a.EntryId==b.EntryId;
     }
 }

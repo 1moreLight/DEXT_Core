@@ -283,6 +283,10 @@ namespace Lively.Player.WebView2
                         if (request != null)
                             SendToParent(request);
                     }
+                    else if ((string)o.type == "dext:v3-input-dispatched")
+                    {
+                        if(nativeNetworkReady&&!runtimeDeliverySuspended)nativeFrameMedia?.ReceiveOfficialInputDispatch(webMessage);
+                    }
                     else if ((string)o.type == "dext:v3-frame-policy")
                     {
                         if (nativeFrameMedia != null && nativeNetworkReady) await nativeFrameMedia.AcceptAsync(webMessage);

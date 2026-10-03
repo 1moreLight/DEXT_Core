@@ -69,6 +69,14 @@
   addEventListener('resize',resize);
   function dispose(){if(disposed)return;disposed=true;playback.dispose();disposeHost();context=null;transport.removeEventListener('message',receive);removeEventListener('resize',resize);}
   addEventListener('pagehide',dispose,{once:true});
+  // Called by the owning native Player on this fixed official document only.
+  globalThis.dextNativeInputSample=value=>{
+    if(disposed||!host||!object(value)||typeof value.sampleId!=='string')return null;
+    if(value.operation==='end')return host.endNativeInputSample(value.sampleId);
+    if(value.operation!=='begin'||!scopeForInput(value)||!positive(value.geometryVersion))return null;
+    return host.beginNativeInputSample({runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision},value.geometryVersion,value.sampleId);
+  };
+  function scopeForInput(value){return context&&snapshot&&value.runtimeGeneration===context.runtimeGeneration&&value.sessionId===snapshot.sessionId&&value.revision===snapshot.revision;}
   globalThis.dextRuntimeDiagnostics=()=>({disposed,paused,runtimeGeneration:context?.runtimeGeneration||retired,sessionId:context?.sessionId||null,revision:snapshot?.revision||0,lastError:lastError&&{...lastError},runtime:host?.readDiagnostics()||null});
   sendControl({type:'dext:v3-page-ready'});
 })();

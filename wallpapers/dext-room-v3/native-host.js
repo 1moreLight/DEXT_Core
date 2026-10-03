@@ -95,7 +95,7 @@
       case'audioControl':return shape(p,['consumer','settings','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.settings)&&
         Object.keys(p.settings).length>0&&Object.keys(p.settings).every(k=>['volume','muted'].includes(k))&&
         (!Object.hasOwn(p.settings,'volume')||finite(p.settings.volume,0,1))&&(!Object.hasOwn(p.settings,'muted')||typeof p.settings.muted==='boolean');
-      case'geometry':return shape(p,['geometryVersion','buttons','viewport'])&&integer(p.geometryVersion)&&shape(p.viewport,['width','height','dpr'])&&
+      case'geometry':return (shape(p,['geometryVersion','buttons','viewport'])||shape(p,['geometryVersion','buttons','viewport','eventSamples'])&&typeof p.eventSamples==='boolean')&&integer(p.geometryVersion)&&shape(p.viewport,['width','height','dpr'])&&
         finite(p.viewport.width,64,16384)&&finite(p.viewport.height,64,16384)&&finite(p.viewport.dpr,.5,8)&&preciseButtons(p.buttons);
       default:return false;
     }

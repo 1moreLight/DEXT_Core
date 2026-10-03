@@ -26,7 +26,13 @@ internal static class NativeInputMessageChecks
             r["consumer"]="scene";r["instanceId"]="instance";r["requestJson"]="{\"requestId\":\"r1\"}";
             var parsed=Parse(r);Require(parsed?.AuthorInstance=="instance"&&parsed.SdkRequestJson=="{\"requestId\":\"r1\"}"&&parsed.InputSequence==0);
         });
-        Check("geometry uses native pixels and preserves normalized public fields",()=>{var r=Parse(Request());Require(r?.Buttons.Length==1&&r.Buttons[0].X==.1&&r.PixelWidth==1200&&r.PixelHeight==900);Require(RuntimeMessageChecks.Roundtrip(r!) is LivelyMessageRoomNativeRequest);});
+        Check("official geometry opts in to private native mouse event samples",()=>{
+            var value=Request();value["eventSamples"]=true;var parsed=Parse(value);Require(parsed?.SampleMouse==true);
+            var packet=new LivelyMessageRoomNativePointer{RuntimeGeneration=1,SessionId=f.Snapshot.SessionId,Revision=1,GeometryVersion=1,
+                GestureId=1,InputHandle=42,Kind="down",PixelWidth=1200,PixelHeight=900,Dpi=144,X=200,Y=200,SampleMouse=true};
+            var sample=new LivelyMessageRoomNativeSample{Input=packet,Buttons=parsed!.Buttons};
+            Require(RuntimeMessageChecks.Roundtrip(sample) is LivelyMessageRoomNativeSample reply&&reply.Input.SampleMouse&&reply.Buttons.Length==1);
+        });        Check("geometry uses native pixels and preserves normalized public fields",()=>{var r=Parse(Request());Require(r?.Buttons.Length==1&&r.Buttons[0].X==.1&&r.PixelWidth==1200&&r.PixelHeight==900);Require(RuntimeMessageChecks.Roundtrip(r!) is LivelyMessageRoomNativeRequest);});
         foreach(var field in new[]{"protocolVersion","runtimeGeneration","revision","geometryVersion"})
             Check("reject noninteger "+field,()=>{var r=Request();r[field]=1.2;Require(Parse(r)==null);});
         foreach(var bad in new[]{"missingX","missingTab","unknownEntry","stringNumber","fractionalTab","duplicateEntry","unknownViewport","missingScale","wrongScale","wrongSession","oldGeneration","oldRevision","extraField","badId","arrayRoot","duplicateJson","trailingJson","oversize","afterNavigation"})

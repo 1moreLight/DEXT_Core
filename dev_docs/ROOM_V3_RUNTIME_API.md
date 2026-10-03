@@ -246,6 +246,12 @@ RoomNativeInputState新增仅本机可读的Gesture：positive Sequence、Genera
 ### 作者Enter/Space文档路由（2026-10-04）
 私有输入包另含Key（0鼠标/13Enter/32Space）、ScanCode、IsExtended、固定Consumer/Button/EntryId；键盘只arm选中consumer唯一有效直接root。Player先原生controller.MoveFocus(Programmatic)，再通过guardian捕获Window.focus路由该文档，后续DOWN/UP沿用同UI有界队列；不修改作者节点Tab顺序或强制节点focus。Core受控Tab仍只选官方按钮元数据与轮廓；官方consumer保持默认原生激活。焦点私有ack只说明控制调用完成，不签发输入证明，原生可信回调/文档双路汇合与Core实际UP消费均须成立。
 
-### 移动视觉取样基础（2026-10-04，尚未切换生产输入）
+### 移动视觉取样基础（2026-10-04，8a738f1历史阶段）
 官方dom-host.readInputSample(identity,inputVersion)仅在当前geometry ack下读取已绘制组矩阵的可见凸区域，允许moving节点并扣除moving前层，不推进动画、不发送native坐标，结果为独立副本。Core内部PublishGeometry(sampleMouse:true)使原生UP只记录释放点；SampleMouse按真实raw DOWN/UP点分别命中两个不可变区域，两半同consumer/button/entry才完成，不重分配序号或QPC。
 该参数目前没有接入私有geometry请求，Player尚未调用采样函数；正式输入仍静止模式。后续必须贯通原生派发期间的视觉保持/释放与private Player/Core样本，不能用此基础将移动点击标为完成。source动作授权和实际Core物理/DPI门槛继续，公开作者SDK没有样本/证明入口。
+
+### Player原生采样与派发屏障（2026-10-04，替代上节未接线状态）
+标准私有geometry请求增加eventSamples:true，Core因此只记录raw DOWN/UP，等待拥有的Player两个样本；旧参数缺省false仅兼容先前调用。SampleMouse随同冻结的私有pointer包进入Player，不用于键盘。
+同UI队列先arm当前直接root，再一次ExecuteScript调用固定官方dextNativeInputSample(begin)读取已绘制凸区域并停止官方RAF，arm顶层原生dispatch捕获后转发Win32边沿。实际根或官方top的可信primary mousedown/up回执匹配文档nonce/原序号/结构版本/edge后，ExecuteScript(end)释放视觉；下一帧沿原活动时钟继续。未收到实际回执不使用固定睡眠代替，等待只在原物理DOWN起1500ms内。失效、暂停、销毁和取消释放hold。
+Player随后发独立msg_room_native_sample{Input,Buttons}，只经其私有stdout进入Core，Core现场重测所属HWND/OS bounds/DPI/前台并校验当前安装、修订和声明入口。它使用自己冻结的OS DOWN/UP点，不能用Player包创建物理输入。两个edge均匹配同consumer/button/entry方完成；UP样本处理先于同UP释放的作者请求。公开SDK仍只提交原始动作请求和接收status。
+当前正式静止官方图标与直接作者root实际Player两边采样/一次动作已验证；运动矩阵/遮挡/hold为生产DOM行为证据，真实运动/完整Core OS/DPI与source手势级准入继续。Core包与响应夹具不计实际桌面输入证明。

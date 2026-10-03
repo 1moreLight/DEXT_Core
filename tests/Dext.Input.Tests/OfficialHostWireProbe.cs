@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Runtime.InteropServices;
 using Lively.Common.Extensions;
+using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Models.Message;
 using Newtonsoft.Json;
@@ -51,8 +52,10 @@ internal static class OfficialHostWireProbe
                 """);
             var info=new ProcessStartInfo(Path.GetFullPath(player)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,StandardInputEncoding=Encoding.UTF8,WorkingDirectory=Path.GetDirectoryName(Path.GetFullPath(player))!};
             foreach(var arg in new[]{"--wallpaper-url",Path.Combine(root.FullName,"index.html"),"--wallpaper-type","local","--wallpaper-geometry","640x480","--wallpaper-user-data",Path.Combine(root.FullName,"user-data"),"--dext-trusted-host","--dext-native-runtime","--wallpaper-scale","1.5"})info.ArgumentList.Add(arg);
-            using var process=Process.Start(info)??throw new Exception("Player did not start");var queue=new ConcurrentQueue<JObject>();var log=new ConcurrentQueue<string>();var geometries=0;JObject? lastGeometry=null;var ticks=0;long expectedRevision=0;
+            using var process=Process.Start(info)??throw new Exception("Player did not start");var queue=new ConcurrentQueue<JObject>();var log=new ConcurrentQueue<string>();var geometries=0;JObject? lastGeometry=null;var ticks=0;long expectedRevision=0;IntPtr anchor=IntPtr.Zero;var actions=0;
             var reader=Task.Run(async()=>{while(await process.StandardOutput.ReadLineAsync() is{} line){log.Enqueue(line);try{var value=JObject.Parse(line);var type=(int?)value["Type"];
+                if(type==(int)MessageType.msg_hwnd)anchor=new IntPtr((long)value["Hwnd"]!);
+                if(type==(int)MessageType.msg_room_native_sample)queue.Enqueue(new JObject{["sample"]=value});
                 if(value["RoomJson"] is{} room)queue.Enqueue(JObject.Parse((string)room!));
                 if(type==(int)MessageType.msg_room_session_ready)queue.Enqueue(new JObject{["ready"]=true});
                 if(type==(int)MessageType.msg_room_native_request)queue.Enqueue(new JObject{["native"]=value});
@@ -73,6 +76,33 @@ internal static class OfficialHostWireProbe
                 Require((int?)initial["iframeCount"]==2&&(int?)initial["diagnostics"]?["runtime"]?["frames"]?["count"]==2&&geometries>=1,"actual official DOM mounts scene and shared widget after geometry ack");
                 var documents=(JArray)initial["documents"]!;Require(documents.Count==2&&documents.All(d=>(int?)d["readyCount"]==1),"two SDK documents initialize once");
                 Require(lastGeometry?["Buttons"] is JArray nativeEntries&&nativeEntries.Count(e=>(string?)e["Consumer"]=="official"&&(string?)e["Button"]=="next"&&e["Polygons"] is JArray)==2,"actual strict Player preserves two polygon entries for one action");
+                Require((bool?)lastGeometry?["SampleMouse"]==true,"production geometry enables event samples");
+                var middle=NativeMethods.FindWindowEx(anchor,IntPtr.Zero,"Chrome_WidgetWin_0",null);
+                var input=NativeMethods.FindWindowEx(middle,IntPtr.Zero,"Chrome_WidgetWin_1",null);
+                Require(DextNativeInputWindow.TryMeasure(window,anchor,input,process.Id,out var bounds,out var dpi),"official owned input viewport");
+                var first=((JArray)lastGeometry!["Buttons"]!).Single(e=>(string?)e["EntryId"]=="icon.home/first");
+                var px=bounds.X+(int)(((double)first["X"]!+(double)first["Width"]!/2)*bounds.Width);
+                var py=bounds.Y+(int)(((double)first["Y"]!+(double)first["Height"]!/2)*bounds.Height);
+                var inputVersion=(long)initial["diagnostics"]!["runtime"]!["inputVersion"]!;
+                var issued=Stopwatch.GetTimestamp();
+                LivelyMessageRoomNativePointer Pointer(string kind)=>new(){RuntimeGeneration=1,SessionId=context.SessionId,Revision=1,GeometryVersion=inputVersion,
+                    GestureId=7,IssuedAt=issued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,PixelWidth=bounds.Width,
+                    PixelHeight=bounds.Height,Dpi=dpi,X=px,Y=py,SampleMouse=true};
+                var foreground=NativeMethods.GetForegroundWindow();
+                await Send(Pointer("down"));var downSample=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                Require(downSample?.Input.Kind=="down"&&downSample.Input.GestureId==7&&actions==0,"official trusted DOWN receipt sends sample before activation");
+                await Send(Pointer("up"));var upSample=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                Require(upSample?.Input.Kind=="up"&&upSample.Input.IssuedAt==issued&&upSample.Input.GestureId==7&&actions==0,"official trusted UP receipt sends second sample before activation");
+                Require(downSample!.Buttons.Any(e=>e.EntryId=="icon.home/first"&&e.Polygons.Length>0)&&upSample!.Buttons.Any(e=>e.EntryId=="icon.home/first"&&e.Polygons.Length>0),
+                    "actual official DOM samples retain exact icon polygon identity");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"sampled official input changed foreground window");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                    type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=1,geometryVersion=inputVersion,
+                    kind="activate",consumer="official",button="next",entryId="icon.home/first",inputSequence=7})});
+                var activated=(await Next())["activated"];
+                Require((string?)activated?["Consumer"]=="official"&&(string?)activated?["Button"]=="next"&&(long?)activated?["InputSequence"]==7&&actions==1,
+                    "actual official host releases exactly the sampled icon default action");
+                Console.WriteLine("PASS actual production DOM/top native receipt: DOWN/UP polygon samples, one official icon action, unchanged foreground; Core packets/replies are fixture");
                 await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=1,geometryVersion=(long?)initial["diagnostics"]?["runtime"]?["inputVersion"],kind="focus",consumer="official",button="next",entryId="icon.home/second"})});
                 await Command("focusSecond");var focused=await NextReport("focusSecond");
                 Require((string?)focused["diagnostics"]?["runtime"]?["focus"]?["entryId"]=="icon.home/second"&&(bool?)focused["focusVisible"]==true&&(int?)focused["focusPieces"]==1,"actual official SVG focuses exact second icon without author DOM focus");
@@ -89,10 +119,11 @@ internal static class OfficialHostWireProbe
                 async Task Command(string command)=>await Send(new LivelyMessageSystemControlResponse{RequestId=command,PermissionsJson=JsonConvert.SerializeObject(new{command,revision=expectedRevision})});
                 async Task<JObject> NextReport(string command){var value=await Next();Require((string?)value["report"]==command,"report "+command);return value;}
                 async Task<JObject> Next(){var stop=DateTime.UtcNow.AddSeconds(25);while(DateTime.UtcNow<stop){if(queue.TryDequeue(out var value)){
-                    if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(method is "invalidateGeometry" or "geometry" or "capabilities" or "data" or "layoutRead","official permitted native request");if(method=="geometry"){geometries++;lastGeometry=(JObject)request;}
+                    if(value["native"] is{} request){var method=(string?)request["Method"];var consumer=(string?)request["Consumer"];Require(method is "invalidateGeometry" or "geometry" or "capabilities" or "data" or "layoutRead" or "activate","official permitted native request");if(method=="geometry"){geometries++;lastGeometry=(JObject)request;}
                         if(method=="capabilities"||method=="data")Require(consumer is "scene" or "component.shared","fixed actual consumer");
+                        if(method=="activate")actions++;
                         if(method=="data"){Require((string?)request["Capability"]=="time.read","declared actual data");ticks++;}
-                        await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null,layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});continue;}
+                        await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{type="dext:v3-native-response",requestId=(string?)request["RequestId"],runtimeGeneration=1,sessionId=context.SessionId,revision=(long?)request["Revision"],status="accepted",inputSequence=method=="activate"?7:0,inputConsumed=method=="activate",capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"time.read","accepted"}},data=method=="data"?new{status="available",value=new{tick=ticks}}:null,layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});if(method=="activate")return new JObject{["activated"]=request};continue;}
                     return value;
                 }if(process.HasExited)throw new Exception("Player exit: "+await errors);await Task.Delay(20);}throw new TimeoutException("official wire: "+string.Join("\n",log.TakeLast(8)));}
             }

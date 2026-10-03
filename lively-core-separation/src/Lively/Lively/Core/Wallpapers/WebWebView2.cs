@@ -341,6 +341,8 @@ namespace Lively.Core.Wallpapers
                                 break;
                         }
                         break;
+                    case MessageType.msg_room_native_sample:
+                        Logger.Info($"Wv2{uniqueId}: native visible input sample");break;
                     case MessageType.msg_room_native_request:
                         // Consumer-local KV is private personal data. Log only
                         // protocol metadata, never keys, values or raw payloads.
@@ -463,6 +465,8 @@ namespace Lively.Core.Wallpapers
                     case MessageType.msg_room_native_request:
                         await HandleNativeRequest((LivelyMessageRoomNativeRequest)obj);
                         break;
+                    case MessageType.msg_room_native_sample:
+                        HandleNativeSample((LivelyMessageRoomNativeSample)obj);break;
                     case MessageType.msg_room_native_invalidated:
                         roomNativeAttachment?.Input.InvalidateDocument(((LivelyMessageRoomNativeInvalidated)obj).RuntimeGeneration);
                         break;

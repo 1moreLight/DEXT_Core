@@ -32,13 +32,37 @@ namespace Lively.Common.Helpers
         }
         public static string DescribeScript(string secret) =>
             Call(secret, new JObject { ["token"]=secret, ["kind"]="describe" });
-        public static string ArmScript(string secret, string documentNonce, long gestureId, long structuralVersion)
+        public static string ArmScript(string secret, string documentNonce, long gestureId, long structuralVersion,bool reportDispatch=false)
         {
             ValidateNonce(documentNonce);
             if(gestureId<=0 || gestureId>MaxSafeInteger)throw new ArgumentOutOfRangeException(nameof(gestureId));
             if(structuralVersion<=0 || structuralVersion>MaxSafeInteger)throw new ArgumentOutOfRangeException(nameof(structuralVersion));
-            return Call(secret, new JObject { ["token"]=secret, ["kind"]="arm", ["documentNonce"]=documentNonce,
-                ["gestureId"]=gestureId, ["structuralVersion"]=structuralVersion });
+            var value=new JObject { ["token"]=secret, ["kind"]="arm", ["documentNonce"]=documentNonce,
+                ["gestureId"]=gestureId, ["structuralVersion"]=structuralVersion };
+            if(reportDispatch)value["reportDispatch"]=true;return Call(secret,value);
+        }
+        public static string OfficialArmScript(string secret,long gesture,long structure,string edge)
+        {
+            ValidateSecret(secret);
+            return "this.__dextNativeOfficialInputDispatchV1 && this.__dextNativeOfficialInputDispatchV1("+
+                new JObject{["token"]=secret,["kind"]="arm",["gestureId"]=gesture,["structuralVersion"]=structure,["edge"]=edge}.ToString(Formatting.None)+")";
+        }
+        public static bool ParseDispatch(string json,string secret,Guid nonce,long gesture,long structure,string edge)
+        {
+            if(json==null||json.Length>2048||nonce==Guid.Empty)return false;
+            try{
+                JObject value;
+                using(var reader=new JsonTextReader(new StringReader(json)){MaxDepth=4,DateParseHandling=DateParseHandling.None}){
+                    value=JObject.Load(reader,new JsonLoadSettings{DuplicatePropertyNameHandling=DuplicatePropertyNameHandling.Error});if(reader.Read())return false;
+                }
+                var fields=new[]{"type","protocolVersion","token","documentNonce","gestureId","structuralVersion","kind"};
+                return value.Count==fields.Length&&fields.All(f=>value.Property(f)!=null)&&value["type"].Type==JTokenType.String&&
+                    (string)value["type"]=="dext:v3-input-dispatched"&&value["protocolVersion"].Type==JTokenType.Integer&&(long)value["protocolVersion"]==1&&
+                    value["token"].Type==JTokenType.String&&(string)value["token"]==secret&&value["documentNonce"].Type==JTokenType.String&&
+                    Guid.TryParseExact((string)value["documentNonce"],"D",out var actual)&&actual==nonce&&
+                    PositiveInteger(value["gestureId"],out var g)&&g==gesture&&PositiveInteger(value["structuralVersion"],out var s)&&s==structure&&
+                    value["kind"].Type==JTokenType.String&&(string)value["kind"]==edge;
+            }catch(Exception error)when(error is JsonException||error is ArgumentException||error is InvalidCastException||error is FormatException||error is OverflowException){return false;}
         }
         public static string FocusScript(string secret,string documentNonce)
         {

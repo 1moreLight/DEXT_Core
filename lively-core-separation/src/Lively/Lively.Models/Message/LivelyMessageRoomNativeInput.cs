@@ -53,6 +53,7 @@ namespace Lively.Models.Message
         public int X { get; set; }
         public int Y { get; set; }
         public int Modifiers { get; set; }
+        public bool SampleMouse { get; set; }
         public int Key { get; set; }
         public int ScanCode { get; set; }
         public bool IsExtended { get; set; }
@@ -87,8 +88,16 @@ namespace Lively.Models.Message
         public string Button { get; set; }
         public int PixelWidth { get; set; }
         public int PixelHeight { get; set; }
+        public bool SampleMouse { get; set; }
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeRequest() : base(MessageType.msg_room_native_request) { }
+    }
+    // Native Player -> owning Core only. Never parsed from an authored web message.
+    public sealed class LivelyMessageRoomNativeSample : IpcMessage
+    {
+        public LivelyMessageRoomNativePointer Input { get; set; }
+        public LivelyRoomNativeButton[] Buttons { get; set; }
+        public LivelyMessageRoomNativeSample() : base(MessageType.msg_room_native_sample) { }
     }
     public sealed class LivelyMessageRoomNativeResponse : IpcMessage
     {

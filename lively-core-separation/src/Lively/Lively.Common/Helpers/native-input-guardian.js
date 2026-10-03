@@ -54,7 +54,7 @@
       }
     }
     for(const name of ['mousedown','mouseup','click','keydown','keyup'])if(!known(eventNames,name))append(eventNames,name);
-    let armed=false,closed=false,gestureId=0,structuralVersion=0,highestGesture=0,dispatchSequence=0,lastRequest=0,current=null;
+    let reportDispatch=false,armed=false,closed=false,gestureId=0,structuralVersion=0,highestGesture=0,dispatchSequence=0,lastRequest=0,current=null;
     const lookup=(map,value)=>apply(mapGet,map,[value]),has=(map,value)=>apply(mapHas,map,[value]);
     const remember=(map,key,value)=>apply(mapSet,map,[key,value]);
     function eligible(event,receiver){
@@ -85,6 +85,11 @@
     }
     function capture(event){
       let entries,kind;try{entries=apply(path,event,[]);kind=apply(type,event,[]);}catch(_){return;}
+      if(this===root&&reportDispatch&&armed&&!closed&&eligible(event,root)&&(kind==='mousedown'||kind==='mouseup')){
+        const receipt=create(null);receipt.type='dext:v3-input-dispatched';receipt.protocolVersion=1;receipt.token=secret;
+        receipt.documentNonce=nonce;receipt.gestureId=gestureId;receipt.structuralVersion=structuralVersion;receipt.kind=kind==='mousedown'?'down':'up';
+        apply(post,transport,[receipt]);
+      }
       // Installing handlers does not open an input context across callback checkpoints.
       for(let i=0;i<entries.length;i++)inline(entries[i],'on'+kind);
     }
@@ -145,10 +150,10 @@
           apply(nativeFocus,root,[]);return receipt();
         }
         if(kind==='revoke'&&shape(value,['token','kind','documentNonce'])){armed=false;gestureId=0;structuralVersion=0;current=null;return receipt();}
-        if(kind==='arm'&&shape(value,['token','kind','documentNonce','gestureId','structuralVersion'])){
+        if(kind==='arm'&&(shape(value,['token','kind','documentNonce','gestureId','structuralVersion'])||shape(value,['token','kind','documentNonce','gestureId','structuralVersion','reportDispatch'])&&typeof data(value,'reportDispatch')==='boolean')){
           const next=data(value,'gestureId'),version=data(value,'structuralVersion');
           if(!integer(next)||next<=highestGesture||!integer(version)||version<=0)return null;
-          highestGesture=next;gestureId=next;structuralVersion=version;armed=true;current=null;return receipt();
+          highestGesture=next;gestureId=next;structuralVersion=version;reportDispatch=data(value,'reportDispatch')===true;armed=true;current=null;return receipt();
         }
       }catch(_){}
       return null;
@@ -204,6 +209,30 @@
     define(root,'__dextNativeInputRequestV1',{configurable:false,writable:false,value:send});
     return true;
   }
-  if(typeof module==='object'&&module.exports)module.exports=Object.freeze({install});
-  else install(this,'__DEXT_INPUT_GUARDIAN_TOKEN__');
+  function installOfficial(root,secret){
+    if(root!==root.top||!root.chrome?.webview||typeof secret!=='string')return false;
+    const define=Object.defineProperty,apply=Reflect.apply,add=root.EventTarget.prototype.addEventListener;
+    const get=Object.getOwnPropertyDescriptor(new root.Event('dext-native'),'isTrusted')?.get,post=root.chrome.webview.postMessage;
+    const button=Object.getOwnPropertyDescriptor(root.MouseEvent.prototype,'button')?.get;
+    const stringify=JSON.stringify,nonce=root.crypto.randomUUID();let expected=null;
+    if(!get||!button)return false;
+    define(root,'__dextNativeOfficialInputDispatchV1',{configurable:false,writable:false,value:value=>{
+      if(!value||value.token!==secret)return null;
+      if(value.kind==='revoke'){expected=null;return{documentNonce:nonce,armed:false};}
+      if(value.kind!=='arm'||!Number.isSafeInteger(value.gestureId)||value.gestureId<=0||
+        !Number.isSafeInteger(value.structuralVersion)||value.structuralVersion<=0||!['down','up'].includes(value.edge))return null;
+      expected={gestureId:value.gestureId,structuralVersion:value.structuralVersion,edge:value.edge};return{documentNonce:nonce,armed:true};
+    }});
+    function dispatch(event){
+      if(!expected||!apply(get,event,[])||apply(button,event,[])!==0)return;
+      const edge=event.type==='mousedown'?'down':'up';if(edge!==expected.edge)return;
+      const value={type:'dext:v3-input-dispatched',protocolVersion:1,token:secret,documentNonce:nonce,
+        gestureId:expected.gestureId,structuralVersion:expected.structuralVersion,kind:edge};
+      expected=null;apply(post,root.chrome.webview,[apply(stringify,JSON,[value])]);
+    }
+    apply(add,root,['mousedown',dispatch,true]);apply(add,root,['mouseup',dispatch,true]);
+    apply(add,root,['pagehide',()=>{expected=null;},true]);return true;
+  }
+  if(typeof module==='object'&&module.exports)module.exports=Object.freeze({install,installOfficial});
+  else if(this===this.top)installOfficial(this,'__DEXT_INPUT_GUARDIAN_TOKEN__');else install(this,'__DEXT_INPUT_GUARDIAN_TOKEN__');
 }).call(this);

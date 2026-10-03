@@ -85,6 +85,23 @@ internal static class NativePointerDeliveryChecks
             q.Submit(KeyPacket("down"));await q.WhenIdle();q.Submit(Packet("up"));await q.WhenIdle();Require(sent.SequenceEqual(new[]{"down"}),"mouse released keyboard");
             q.Submit(KeyPacket("up"));await q.WhenIdle();Require(sent.SequenceEqual(new[]{"down","up"}),"same keyboard UP missing");
         });
+        await Check("visual sampling and actual dispatch barriers serialize DOWN and UP",async()=>{
+            var first=new TaskCompletionSource<bool>();var second=new TaskCompletionSource<bool>();var order=new List<string>();
+            var q=new DextNativePointerDelivery(p=>Task.FromResult(true),()=>Task.CompletedTask,p=>order.Add("forward:"+p.Kind),
+                p=>true,p=>{order.Add("released");return Task.CompletedTask;},()=>order.Add("failed"),()=>0,1000,
+                prepare:p=>{order.Add("sample:"+p.Kind);return Task.FromResult(true);},
+                dispatched:async p=>{await(p.Kind=="down"?first.Task:second.Task);order.Add("dispatch:"+p.Kind);});
+            q.Submit(Packet("down"));q.Submit(Packet("up"));Require(order.SequenceEqual(new[]{"sample:down","forward:down"}),"UP crossed DOWN dispatch");
+            first.SetResult(true);await Task.Delay(10);
+            Require(order.SequenceEqual(new[]{"sample:down","forward:down","dispatch:down","sample:up","forward:up"}),"ordered UP sample");
+            second.SetResult(true);await q.WhenIdle();Require(order.Last()=="released"&&order[^2]=="dispatch:up","action released before actual UP");
+        });
+        await Check("a refused visual sample prevents native forwarding",async()=>{
+            var sent=new List<string>();var q=new DextNativePointerDelivery(p=>Task.FromResult(true),()=>Task.CompletedTask,p=>sent.Add(p.Kind),
+                p=>true,p=>{sent.Add("released");return Task.CompletedTask;},()=>{},()=>0,1000,
+                prepare:p=>Task.FromResult(false),dispatched:p=>Task.CompletedTask);
+            q.Submit(Packet("down"));q.Submit(Packet("up"));await q.WhenIdle();Require(sent.Count==0,"refused sample forwarded");
+        });
         Console.WriteLine($"{total-failures}/{total} pointer delivery checks passed");if(failures>0)throw new Exception("Pointer delivery regression");
     }
 }
