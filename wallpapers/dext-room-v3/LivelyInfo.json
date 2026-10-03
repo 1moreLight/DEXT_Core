@@ -1,0 +1,7 @@
+{
+  "Title": "Dext Room v3",
+  "Type": "webaudio",
+  "FileName": "index.html",
+  "IsAbsolutePath": false,
+  "Arguments": "--dext-trusted-host true --dext-native-runtime"
+}

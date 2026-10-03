@@ -201,7 +201,7 @@
           currentDeskId: current && current.currentDeskId, targetDeskId: current && current.targetDeskId,
           queuedDeskId: current && current.queuedDeskId, transitionId: current && current.transitionId,
           lifecycle: current && current.lifecycle, geometryVersion, viewport, disposed, lastRejected,
-          instances: [...instances.values()], occupied, groups, buttonRegionCount: [...buttonRegions.values()].reduce((sum, values) => sum + values.length, 0) });
+          instances: [...instances.values()], occupied, groups, buttonRegions: Object.fromEntries(buttonRegions), buttonRegionCount: [...buttonRegions.values()].reduce((sum, values) => sum + values.length, 0) });
       },
     };
     return Object.freeze(api);

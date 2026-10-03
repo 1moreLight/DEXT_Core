@@ -568,3 +568,11 @@ runtime-model曾把desktopActive写成playing且desktop且operable。正常Core�
 ## #163 订阅失败必须在关闭provider前发送读数错误（2026-10-03）
 
 frame-host异步subscribeData拒绝时先删除provider，再调用emit。emit为防迟到数据要求provider仍匹配，因此作者收不到error，读数状态留在旧值。完整生产SDK回归实际12/13失败；先发送有界error再关闭provider，13/13通过。停止订阅后的迟到值仍被拒绝，静态外框保留。
+
+## #171 官方页先校验完整transition再占修订（2026-10-03）
+
+新main只检查身份/revision/lifecycle，畸形无target却带transition/deadline的revision5先写主缓存，虽然下层模型拒绝，随后合法revision2仍被主层判旧。实际单位回归5!=1失败；主层补target-null与transition/deadline一致性及有限日期校验，在缓存前拒绝。后续合法revision2可用，真实正式页Player回归保持通过。
+
+## #172 几何发布要处理生产Core忙状态（2026-10-03）
+
+Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿主单次失败后inputReady=false，若作者重报同几何又无模型effects就可能一直关输入。单位按既有协议模拟第一发布staleInput，实际1!=2失败。最多8次50ms间隔重试，每次递增私有inputVersion；新epoch/暂停/销毁取消等待，身份变化拒绝旧回包。回归和最新真实整页Player通过；这不代表完整物理输入/DPI或移动中命中已验收。

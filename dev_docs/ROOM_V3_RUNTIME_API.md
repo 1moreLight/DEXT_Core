@@ -156,3 +156,13 @@ Core真实源码98/98和实际Windows采集通过；真实ReleasePlayer验证SDK
 native-host发送Player要求的JSON字符串，只接受固定私有WebView消息；每个请求绑定generation/session/global revision，64个pending、5s超时。身份变化、暂停或dispose取消旧请求、来源和计时器，旧回包不能结束新请求。方法字段严格受限，不接受作者值/权限/票据。每个consumer+数据能力复用单来源，一次data返回后再间隔1秒发下次请求；Core逐值重新授权，available仅32KiB/深度24JSON，其余状态剥离value。
 
 能力watch每秒向Core重查，合并同消费者同作用域进行中的查询，只在公开状态变化时刷新iframe能力。个人撤权和再授权即便没有global revision变化也可停止/恢复读数；暂停停止watch，恢复从当前scope查询。该模块已在真实ReleasePlayer与完整SDK通过持续读数及同revision撤权/恢复，Core回包在该隔离夹具仍模拟。正式index/DOM与真实Core闭环继续接入，未代填最终7项验收。
+
+## 正式原生页面与DOM适配器（2026-10-03，接线基础）
+
+正式index/main/style/LivelyInfo已建立。main等待同generation/session/Room/installation的Core上下文及完整快照才挂载，重复context/旧snapshot不重建，撤销保留generation墓碑。原生暂停钩子可先于首context；恢复同一次同步调用先接受最新状态/合法新代次再释放，旧代次不能释放新宿主。畸形transition/deadline不占用主页面修订号。
+
+dom-host从纯模型完整实例表收敛；所有iframe位于固定wrapper下，切页不重挂或改src。HTML媒体委托frame-host，四类素材使用media-host。官方资源只从当前inventory解析/content/<generation>/路径。每个global revision先invalidate并等回执，再更新DOM并发布递增私有inputVersion，Core接受后才启用动作；queue修订不重播动画。发布staleInput按新inputVersion最多8次、50ms可取消间隔重试。模型的SDK geometryVersion与私有输入发布版本独立。作者Widget本地矩形须在自身placement内，再平移到设计画布；global组矩阵绕画布原点作用于同一wrapper/图标。默认slide/fade/none回告完成，current只来自Core。
+
+现有基础仅给默认动画的静止shared区域提供命中；旋转/斜切暂不发布矩形，不能以包围框冒充精确命中。移动中输入、遮挡裁剪、多图标同按钮、受控焦点及个人布局继续属于input-host/Task4，原要求不取消。desk.navigate/control/storage及退出确认尚待消费者专用Core适配；未实现能力报告unsupported。HTML原生逐iframe媒体政策也未完成，inert不是媒体暂停。
+
+生产组合91/91，真实ReleasePlayer整页验证两个SDK文档持续、Core-only提交、queue/private pause/latest revision和撤销释放。该夹具Core回复仍模拟，尚未把真实Core原生Room安装、物理输入/DPI或最终7项填通过。

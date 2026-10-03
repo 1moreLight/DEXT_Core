@@ -109,3 +109,5 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 - 2026-10-03 Core消费者数据基础桥：98/98真实权限/来源、严格消息28/28、内核22/22、协议86/86；实际Windows时间/硬件/音量读取通过，无媒体会话诚实missing；真实ReleasePlayer SDK经当前private data IPC验证读数及暂停恢复，Core回包在该夹具仍模拟。完整build→start/identity成功，v2恢复inactive；正常退出后进程/开发端口/资源缓存0。正式DOM/连续provider/权限变化恢复与7项最终步骤仍待完成，不代填物理或完整Core原生Room验收。
 
 - 2026-10-03正式通信模块：新10/10、组合72/72、资源31/31；真实ReleasePlayer/SDK持续逐值private data IPC，同revision撤权隐藏读数、恢复授权无需导航/重载重开来源，原生暂停剩余时间/最后revision3保持通过。Core回包仍模拟；完整build→start/identity通过后正常退出，进程/端口/资源缓存0。正式页面/Core原生Room与上方7项最终步骤未据此打勾。
+
+- 2026-10-03正式入口基础：DOM12/Main7/生产组合91/91；实际ReleasePlayer整页加载官方index/main/style/modules，当前几何回执/真实SDK读数、两个文档UUID保留、default transition回告但Core fixture提交前current不变、queue和原生暂停/latest revision6、撤销释放均通过。Core权限/数据/提交仍模拟，未代填真实Core原生Room或物理/DPI通过。完整build→start/identity后按PID/路径正常退出，进程/端口/资源缓存0。默认动画静止shared命中基础之外，移动/旋转/遮挡/焦点/布局与原生HTML媒体继续实现；上方7项最终步骤与16项完整要求保持。

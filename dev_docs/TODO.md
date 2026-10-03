@@ -1242,3 +1242,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 - [x] 正式原生通信模块验证：新10/10、生产组合72/72、资源31/31；实际ReleasePlayer加载native-host/frame/SDK，持续每值私有data IPC，同revision撤权仅隐藏读数、再授权无需重载恢复，原生暂停剩余500ms与最后revision3仍通过。对象传输实际失败后改JSON字符串；夹具Core回包仍模拟，不计生产Core原生Room通过。完整build→start/identity成功：Core104252/Player80696/Watchdog62484/config22424（本轮共享D缓存），日志20261003_093108.txt；v2恢复inactive，正常退出后全部验证进程/端口/资源缓存0。
 - [ ] 下一步正式index/main/style/LivelyInfo及dom-host/input-host：把已验证模块接真正官方页面，持续实例、默认/作者动画与Core提交、每revision几何失效握手；原生逐iframe媒体/布局/Task4和最终7项仍继续。
+
+- [x] Task3正式DOM入口基础：测试先行，建立index/main/style/LivelyInfo与dom-host；只接受当前Core上下文/快照，先invalidate回执再更新DOM、发布当前几何后启用动作；持续frame/media节点不重挂，queue修订重新发布输入但不重播动画，启动/闲置沿用已验证模块。原生逐iframe媒体政策、个人布局/移动中命中与完整真实Core/Task4门槛仍须随后完成。
+
+- [x] 正式入口基础验证（2026-10-03）：DOM12/Main7/既有72，组合91/91；同一正式index/main/style/runtime/dom/native/frame/media/SDK在真实ReleasePlayer通过当前几何回执、持续读数、两个SDK文档保持、Core提交前不改变current、queue不重播、原生暂停/最后revision6、撤销释放。Core能力/数据/状态/提交仍由该隔离夹具模拟，不是实际Core已安装Room或物理输入。
+- [x] 正式入口阶段完整build→start/identity成功：Core105132/Player86420/Watchdog24704/config46308（本轮共享D缓存），日志20261003_100228.txt；原v2恢复inactive。按PID/路径正常退出，最终进程/开发端口/资源缓存0；最新有界几何重试后真实整页回归再次通过。最终7项不申请中途验收。
+- [ ] 必须继续完整Task3/4：实际Core原生Room安装/恢复、四媒体完整生命周期、原生逐iframe音视频暂停，消费者导航/控制/存储与退出确认适配，个人布局/占用/真实DPI/物理输入与故障恢复。当前默认动画只给静止shared按钮发布命中；移动按钮与旋转/斜切输入、遮挡裁剪、多图标同按钮及受控焦点仍须input-host完善，不能把目前保守拒绝当作已满足D16。16项就绪仍1/16。

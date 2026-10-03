@@ -216,3 +216,7 @@
 | #169 | Windows媒体SourceAppId可能是绝对可执行路径 | [backend](errors/backend.md) |
 
 | #170 | Player使用TryGetWebMessageAsString，原生postMessage对象会被拒绝 | [backend](errors/backend.md) |
+
+| #171 | 官方页缓存先占用畸形快照修订，后续合法状态会被误判旧 | [renderer](errors/renderer.md) |
+| #172 | Core几何admission忙返回staleInput，单次发布会永久关闭输入 | [renderer](errors/renderer.md) |
+| #173 | 异步宿主替身必须返回Promise；C#闭包使用前先初始化捕获上下文 | [toolchain](errors/toolchain.md) |

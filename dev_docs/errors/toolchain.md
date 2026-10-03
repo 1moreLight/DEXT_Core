@@ -314,3 +314,7 @@ Windows Python Path.read_text()默认GBK，读Form1的UTF8内容失败时此前�
 ## #168 异步SDK数据回执与真实读数状态（2026-10-03）
 
 接入真正私有data IPC后，命令barrier回执先于异步来源到达，实际ReleasePlayer恢复检查timeHidden=true。该失败属于夹具旧同步假设，不是Core授予错误。改为最多5秒等待作者实际readout.hidden变false再报告，暂停仍检查即时拒绝；不使用固定sleep或修改期望接受隐藏值。最终SDK/private data IPC暂停恢复通过，模拟Core属性仍明确保留。
+
+## #173 新宿主探针必须遵守真实异步与闭包契约（2026-10-03）
+
+main等待acceptSnapshot Promise，假宿主返回Array.push数字，导致.catch失败并让播放恢复误报false；替身改为async明确返回Promise。新C# Next闭包在context初始化前读取，且var同时声明两个变量，CS0165/CS0819导致探针未执行；先初始化独立Core fixture上下文并拆声明，再跑真实ReleasePlayer。编译失败与假契约失败均不计实际运行证据；修复后完整官方页验证通过。
