@@ -33,6 +33,86 @@ static class RoomActionChecks
             else {n.Key(viewport,wake,true,false,true);n.Key(viewport,wake,false,false,true);}
             Eq(true,n.GetProof(1,2,"scene","open")!=null);
         });
+        RoomStorageReply Read(ActionFixture f,string key="notes",string consumer="scene",long? revision=null)=>
+            f.Actions.ReadStorage(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,key);
+        RoomActionReply Write(ActionFixture f,string json="{\"items\":[1,true,null]}",string key="notes",string consumer="scene",long? revision=null) {
+            using var value=JsonDocument.Parse(json);return f.Actions.WriteStorage(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,key,value.RootElement);
+        }
+        check("consumer JSON storage persists detached values and missing keys return null",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);Eq(RoomActionStatus.Accepted,Read(f).Status);Eq<JsonElement?>(null,Read(f).Value);
+            Eq(RoomActionStatus.Accepted,Write(f).Status);var read=Read(f);Eq("{\"items\":[1,true,null]}",read.Value!.Value.GetRawText());
+            var reopened=new RoomPersonalStore(f.PersonalPath).Read();Eq(3,reopened.Rooms[Room].Storage["scene"]["notes"].GetProperty("items").GetArrayLength());
+            reopened.Rooms[Room].Storage.Clear();Eq(3,Read(f).Value!.Value.GetProperty("items").GetArrayLength());
+            Eq(RoomActionStatus.Accepted,Write(f,"null").Status);Eq(JsonValueKind.Null,Read(f).Value!.Value.ValueKind);
+        });
+        check("consumer storage namespaces isolate identical keys and Room copies",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);Eq(RoomActionStatus.Accepted,Write(f,"1").Status);
+            Eq<JsonElement?>(null,Read(f,consumer:"component.widget").Value);Eq(RoomActionStatus.Accepted,Write(f,"2",consumer:"component.widget").Status);
+            Eq(1,Read(f).Value!.Value.GetInt32());Eq(2,Read(f,consumer:"component.widget").Value!.Value.GetInt32());
+            const string copy="7265c092-080f-49cb-a001-56495511e9cc";f.Store.CopyRoom(Room,copy);Eq(0,f.Store.Read().Rooms[copy].Storage.Count);
+            f.Store.DeleteRoom(Room);Eq(false,f.Store.Read().Rooms.ContainsKey(Room));Eq(true,f.Store.Read().Targets.ContainsKey(Target));
+        });
+        check("storage authorization is current and each direction has its own grant",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);var stamp=f.Kernel.Snapshot!.InstallationStamp;
+            f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new(stamp,new[]{"storage.write"}));Eq(RoomActionStatus.Accepted,Write(f).Status);Eq(RoomActionStatus.MissingPermission,Read(f).Status);
+            f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new(stamp,new[]{"storage.read"}));Eq(RoomActionStatus.Accepted,Read(f).Status);var revision=f.Store.Read().Revision;
+            Eq(RoomActionStatus.MissingPermission,Write(f).Status);Eq(revision,f.Store.Read().Revision);
+            f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new("old-installation",new[]{"storage.read","storage.write"}));Eq(RoomActionStatus.MissingPermission,Read(f).Status);Eq(RoomActionStatus.MissingPermission,Write(f).Status);
+            using var undeclared=new ActionFixture();Eq(RoomActionStatus.Forbidden,Write(undeclared).Status);Eq(RoomActionStatus.Forbidden,Read(undeclared).Status);
+        });
+        check("wrong peer role session owner and stale revision cannot read or write storage",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);var revision=f.Kernel.Snapshot!.Revision;var before=File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"));
+            Eq(RoomActionStatus.Denied,f.Actions.ReadStorage(f.View,new("other"),f.Session,revision,"scene","notes").Status);
+            Eq(RoomActionStatus.Forbidden,f.Actions.ReadStorage(f.Coordinator,f.CorePeer,f.Session,revision,"scene","notes").Status);
+            Eq(RoomActionStatus.StaleSession,f.Actions.ReadStorage(f.View,f.Peer,Guid.NewGuid(),revision,"scene","notes").Status);
+            Eq(RoomActionStatus.UnknownConsumer,Write(f,consumer:"invented").Status);Eq(RoomActionStatus.StaleInput,Write(f,revision:revision+1).Status);
+            Eq(RoomActionStatus.StaleInput,Read(f,revision:revision+1).Status);Eq(true,before.SequenceEqual(File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"))));
+        });
+        foreach(var fact in new[]{"pause","lock","foreground"})check("storage respects current runtime "+fact,()=>{
+            using var f=new ActionFixture(storageCapabilities:true);if(fact=="foreground")f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false));else f.Lifecycle(RoomLifecycleStage.Desktop,fact=="pause",fact=="lock");
+            var revision=f.Store.Read().Revision;Eq(RoomActionStatus.NotOperable,Read(f).Status);Eq(RoomActionStatus.NotOperable,Write(f).Status);Eq(revision,f.Store.Read().Revision);
+        });
+        check("storage quotas invalid values and invalid keys preserve committed bytes",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);Eq(RoomActionStatus.Accepted,Write(f).Status);var before=File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"));
+            Eq(RoomActionStatus.Denied,Write(f,JsonSerializer.Serialize(new string('x',32768))).Status);
+            Eq(RoomActionStatus.Denied,Write(f,JsonSerializer.Serialize(Enumerable.Repeat(0,4097))).Status);
+            Eq(RoomActionStatus.Denied,Write(f,key:"../personal").Status);Eq(RoomActionStatus.Denied,Write(f,key:new string('a',81)).Status);
+            var nested="0";for(var i=0;i<26;i++)nested="["+nested+"]";Eq(RoomActionStatus.Denied,Write(f,nested).Status);
+            Eq(RoomActionStatus.Denied,f.Actions.WriteStorage(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"scene","notes",default).Status);
+            Eq(true,before.SequenceEqual(File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"))));
+            for(var i=0;i<127;i++)Eq(RoomActionStatus.Accepted,Write(f,"0",key:"k"+i).Status);before=File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"));
+            Eq(RoomActionStatus.Denied,Write(f,"0",key:"overflow").Status);Eq(true,before.SequenceEqual(File.ReadAllBytes(Path.Combine(f.PersonalPath,"personal.json"))));
+            using var quota=new ActionFixture(storageCapabilities:true);Eq(RoomActionStatus.Accepted,Write(quota,JsonSerializer.Serialize(new string('x',32000)),key:"one").Status);
+            Eq(RoomActionStatus.Accepted,Write(quota,JsonSerializer.Serialize(new string('x',32000)),key:"two").Status);before=File.ReadAllBytes(Path.Combine(quota.PersonalPath,"personal.json"));
+            Eq(RoomActionStatus.Denied,Write(quota,JsonSerializer.Serialize(new string('x',2000)),key:"three").Status);Eq(true,before.SequenceEqual(File.ReadAllBytes(Path.Combine(quota.PersonalPath,"personal.json"))));
+        });
+        check("blocked private storage publication returns safe failure and retains old value",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);Eq(RoomActionStatus.Accepted,Write(f,"1").Status);var path=Path.Combine(f.PersonalPath,"personal.json");var before=File.ReadAllBytes(path);
+            using(var locked=new FileStream(path,FileMode.Open,FileAccess.Read,FileShare.Read))Eq(RoomActionStatus.StorageUnavailable,Write(f,"2").Status);
+            Eq(true,before.SequenceEqual(File.ReadAllBytes(path)));Eq(1,Read(f).Value!.Value.GetInt32());
+        });
+        check("private storage wait rechecks revocation before preparing a write",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);using var editing=new ManualResetEventSlim();using var release=new ManualResetEventSlim();using var admitted=new ManualResetEventSlim();
+            var edit=Task.Run(()=>{try{f.Store.Update(_=>{editing.Set();release.Wait();throw new OperationCanceledException();});}catch(OperationCanceledException){}});if(!editing.Wait(TimeSpan.FromSeconds(5)))throw new Exception("edit barrier");
+            f.Admission.OnAdmit=()=>admitted.Set();var write=Task.Run(()=>Write(f));
+            try{if(!admitted.Wait(TimeSpan.FromSeconds(5)))throw new Exception("admit barrier");f.Admission.Enabled=false;}finally{release.Set();}
+            if(!Task.WaitAll(new Task[]{edit,write},TimeSpan.FromSeconds(5)))throw new Exception("storage authority deadlock");Eq(false,write.Result.Status==RoomActionStatus.Accepted);Eq(0,f.Store.Read().Rooms[Room].Storage.Count);
+        });
+        check("pre-storage format1 snapshots remain readable and malformed storage is never cleared",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);var path=Path.Combine(f.PersonalPath,"personal.json");var document=JsonNode.Parse(File.ReadAllText(path))!;
+            foreach(var entry in document["rooms"]!.AsObject())entry.Value!.AsObject().Remove("storage");File.WriteAllText(path,document.ToJsonString());
+            Eq(RoomActionStatus.Accepted,Read(f).Status);Eq<JsonElement?>(null,Read(f).Value);Eq(RoomActionStatus.Accepted,Write(f,"1").Status);
+            document=JsonNode.Parse(File.ReadAllText(path))!;document["rooms"]![Room]!["storage"]=null;File.WriteAllText(path,document.ToJsonString());var before=File.ReadAllBytes(path);
+            Eq(RoomActionStatus.StorageUnavailable,Read(f).Status);Eq(RoomActionStatus.StorageUnavailable,Write(f).Status);Eq(true,before.SequenceEqual(File.ReadAllBytes(path)));
+        });
+        check("private storage bridge closes authority after document lease disposal",()=>{
+            using var f=new ActionFixture(storageCapabilities:true);Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,_=>{},out var bridge));
+            var revision=f.Kernel.Snapshot!.Revision;using var value=JsonDocument.Parse("{\"notes\":1}");
+            Eq(RoomActionStatus.Accepted,bridge!.NativeWriteStorage(f.Actions,f.Session,revision,"scene","notes",value.RootElement).Status);
+            Eq(1,bridge.NativeReadStorage(f.Actions,f.Session,revision,"scene","notes").Value!.Value.GetProperty("notes").GetInt32());bridge.Dispose();
+            Eq(RoomActionStatus.StaleSession,bridge.NativeReadStorage(f.Actions,f.Session,revision,"scene","notes").Status);
+            Eq(RoomActionStatus.StaleSession,bridge.NativeWriteStorage(f.Actions,f.Session,revision,"scene","notes",value.RootElement).Status);
+        });
         RoomDataSample Sample(string json="{\"utc\":\"2026-10-03T00:00:00Z\"}") { using var d=JsonDocument.Parse(json);return new("available",d.RootElement.Clone()); }
         RoomDataReply Data(ActionFixture f,Func<RoomDataSample> capture,string capability="time.read",string consumer="scene",long? revision=null) =>
             f.Actions.ReadData(f.View,f.Peer,f.Session,revision??f.Kernel.Snapshot!.Revision,consumer,capability,capture);
@@ -567,6 +647,7 @@ static class RoomActionChecks
         public RoomSessionPeer Peer { get; } = new("player");
         public RoomSessionPeer CorePeer { get; } = new("runtime");
         public RoomPersonalStore Store { get; }
+        public string PersonalPath => Path.Combine(fixture.Path,"personal");
         public RoomSessionProtocolGateway Gateway { get; }
         public Admission Admission { get; }
         public RoomActionAuthority Actions { get; }
@@ -575,7 +656,7 @@ static class RoomActionChecks
         public Guid View { get; }
         public Guid Coordinator { get; }
         public Guid Session { get; }
-        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false)
+        public ActionFixture(bool mediaSlots = false,bool dataCapabilities=false,bool storageCapabilities=false)
         {
             var directory = Path.Combine(fixture.Path, "installed"); Directory.CreateDirectory(directory);
             var manifest = """
@@ -604,6 +685,8 @@ static class RoomActionChecks
             if(dataCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["start"],document["idle"]}.Where(owner=>owner!=null))
                 foreach(var capability in dataCaps)if(!owner!["capabilities"]!.AsArray().Any(value=>value!.GetValue<string>()==capability))owner["capabilities"]!.AsArray().Add(capability);
                 manifest=document.ToJsonString();}
+            var storageCaps=new[]{"storage.read","storage.write"};
+            if(storageCapabilities){var document=JsonNode.Parse(manifest)!;foreach(var owner in new[]{document["roomScene"],document["components"]![0]})foreach(var capability in storageCaps)owner!["capabilities"]!.AsArray().Add(capability);manifest=document.ToJsonString();}
             var manifestBytes = System.Text.Encoding.UTF8.GetBytes(manifest); var html = System.Text.Encoding.UTF8.GetBytes("<!doctype html><title>Fixture</title>");
             static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
             File.WriteAllBytes(Path.Combine(directory, "room.json"), manifestBytes); File.WriteAllBytes(Path.Combine(directory, "scene.html"), html);
@@ -626,6 +709,7 @@ static class RoomActionChecks
             });
             if(dataCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","slot.start","slot.idle"})
                 if(room.Grants.TryGetValue(owner,out var grant))room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(dataCaps).Distinct().ToArray());});
+            if(storageCapabilities)Store.Update(state=>{var room=state.Rooms[Room];foreach(var owner in new[]{"scene","component.widget"}){var grant=room.Grants[owner];room.Grants[owner]=new(grant.InstallationStamp,grant.Capabilities.Concat(storageCaps).ToArray());}});
             Actions = new(Gateway, Store, target => Launched.Add(target), Clock);
         }
         public RoomInputReply Input(string button, string consumer = "scene") => Actions.IssueHostInput(View, Peer, Session, consumer, button);

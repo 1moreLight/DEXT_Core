@@ -1278,3 +1278,9 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 实际Core WebAudio安装/重启补证：生产安装同副本，Player68788/home→focus revision4后正常Core重启，新Player95068/新session自动恢复focus revision2、安装stamp不变、测试nav=0；两份新SDK文档中AudioContext均running且time>0.05，GIF start各一次554ms/561ms、视频实际解码恢复。首次探针过早读取旧音频观察值失败，改为等待真实作者状态报告后通过（#175追加）；不倒填首次失败为通过。finally原桌面/布局/设置/checkpoint逐字节及用户Room哈希恢复。该实际Core证据早于最后null-prototype回执补强，补强后完整build与实际ReleasePlayer再次通过。
 - [x] 最新完整build→start/identity通过：Core113124/Player109424/Watchdog27212/config65792（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_131909.txt；原v2 inactive。用户已授权正常退出，核对PID/绝对路径关闭Core和配置器，本轮watcher结束；Dext进程/1620与1621监听/资源暂存/临时原生目录均0。
 - [ ] 完整Task3/4继续：作者导航/控制/存储/退出确认，完整四媒体idle/锁屏组合、独立Player故障重建，个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。WebAudio本基础不代填AudioWorklet或完整恶意内容验证；最终7项保持待执行，16项开发就绪仍1/16，不合并master。
+
+- [x] Task3消费者本机存储权威基础（BASEf158bdb）：按Room副本与稳定consumer隔离JSON KV，逐次核验当前连接/安装/session/revision/活动阶段及storage.read/write个人授权；缺键get返回null，每值32KiB/深度24、每消费者128键/64KiB及全局1MiB约束，失败保留原字节。原子准备不等待gateway锁，个人状态发布前不暴露成功；先真实源码RED→GREEN、完整build→start/identity/正常退出后提交。原生IPC/SDK适配随后接通，最终7项不变。导航因原生自动激活与作者请求需合并为同一次受控输入，随input-host完成，未借可信顶部接口放行。
+
+- [x] 消费者存储Core基础验证：生产接口缺失RED→110/110 GREEN（原98+12），读写授权分离、消费者/副本隔离、撤权/旧安装/旧修订/关闭拒绝、暂停/锁屏/前台拒绝、null/持久重读、旧format1兼容、配额和发布失败原字节保留通过。4097项小数组实际Accepted/Denied失败后补递归容器限制（#183）；已关闭私有Player连接不再读写。
+- [x] 本基础最新完整build→start/identity：Core73456/Player112196/Watchdog93060/config51788（本轮共享D缓存，identity OTHER并核对精确路径），日志20261003_135827.txt；原v2 inactive。正常精确PID/路径退出Core和配置器、自己的watcher结束，用户个人快照哈希/不存在状态未变。
+- [ ] 下一步接storageGet/storageSet严格原生消息、Player→Core适配与正式DOM/SDK，按固定消费者和当前scope传输有界JSON并实际ReleasePlayer验证；Core基础未代填已授权作者KV的实际Core端到端。作者导航/系统控制/退出确认、完整idle/锁屏/Player故障、个人布局与精确输入/物理DPI仍继续，最终7项与16项保持。

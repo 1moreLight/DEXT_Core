@@ -138,3 +138,9 @@ Runtime153禁RTC策略与mDNS接口初始化冲突曾使渲染进程退出；官
 真实生产Core同安装副本切页与正常重启另外通过，两新SDK文档的AudioContext均running且time>0.05，focus自动恢复、GIF start每新文档一次、视频解码恢复；此Core运行早于最后null-prototype回执补强，补强后完整build与实际Player整页再次通过。finally原桌面及布局/设置/checkpoint逐字节和用户Room哈希恢复。最新build→start/identity后按精确PID/路径正常退出，Dext进程/开发端口/资源暂存/临时原生目录均0。
 
 以上只补WebAudio基础，不把作者静音夹具的真实时钟当作物理听音验收。完整idle/锁屏与独立Player故障恢复、作者导航/控制/存储/确认、个人布局/精确命中/物理输入/DPI仍继续；上方7项最终人工步骤保持待执行，完整P5未完成、16项开发就绪仍1/16。
+
+## Task3 Core消费者本机存储基础（2026-10-03）
+
+实际生产Core源码回归110/110：当前storage.read/write分别授权，Room副本/消费者隔离，有界JSON与配额，缺键null、set(null)、持久重读；旧个人快照兼容，损坏/撤权/旧安装/关闭/错误作用域拒绝，写入失败保留原字节。4097项小数组实际失败后修复。只读/写入口通过私有Player连接调用，销毁后拒绝。
+
+完整build→start/identity通过后，原v2状态inactive；核对PID/路径正常退出Core和配置器，自己的watcher结束，用户个人快照哈希/不存在状态未变。这里验证的是Core存储权威基础；严格Player消息、正式DOM/SDK与已授权实际Core KV端到端仍继续，上方7項最终人工步骤不打勾。

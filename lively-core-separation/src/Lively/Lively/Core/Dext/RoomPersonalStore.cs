@@ -18,6 +18,7 @@ internal sealed class RoomPersonalData
 {
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Dictionary<string, JsonElement>> Storage { get; set; } = new(StringComparer.Ordinal);
 }
 internal sealed class RoomPersonalState
 {
@@ -69,6 +70,40 @@ internal sealed class RoomPersonalStore
             Publish(bytes);
         }
     }
+    // The callback may prepare one bounded private mutation under current
+    // consent. Busy gateway attempts return Publish=false and retry only after
+    // this lock is released. Publish failures retain the previous file bytes.
+    internal T UpdateForDispatch<T>(Func<RoomPersonalState, (bool Publish, T Value)> prepare)
+    {
+        lock (gate)
+        {
+            using var retained = RoomV3Installation.RetainDirectory(directory);
+            var state=ReadState();var revision=state.Revision;var result=prepare(state);
+            if(!result.Publish)return result.Value;
+            state.Revision=checked(revision+1);Validate(state);
+            var bytes=JsonSerializer.SerializeToUtf8Bytes(state,JsonOptions);
+            Require(bytes.Length<=Limit,"personal data quota");Publish(bytes);return result.Value;
+        }
+    }
+    internal static bool StorageFits(IReadOnlyDictionary<string,JsonElement> values) =>
+        values.Count<=128 && JsonSerializer.SerializeToUtf8Bytes(values,JsonOptions).Length<=65536;
+    internal static JsonElement NormalizeStorageValue(JsonElement value)
+    {
+        var bytes=JsonSerializer.SerializeToUtf8Bytes(value,JsonOptions);
+        Require(bytes.Length<=32768,"consumer value quota");
+        using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=24});
+        RoomV3Installation.CheckUniqueJson(document.RootElement);CheckStorageContainers(document.RootElement);
+        return document.RootElement.Clone();
+    }
+    private static void CheckStorageContainers(JsonElement value)
+    {
+        if(value.ValueKind==JsonValueKind.Array)
+        {Require(value.GetArrayLength()<=4096,"storage array count");foreach(var child in value.EnumerateArray())CheckStorageContainers(child);}
+        else if(value.ValueKind==JsonValueKind.Object)
+        {var count=0;foreach(var property in value.EnumerateObject()){Require(++count<=4096,"storage object count");CheckStorageContainers(property.Value);}}
+    }
+    private static void ConsumerId(string id) => Id(id.StartsWith("component.",StringComparison.Ordinal)?id.Substring(10):
+        id.StartsWith("slot.background.",StringComparison.Ordinal)?id.Substring(16):id);
     public void CopyRoom(string sourceId, string newId)
     {
         Uuid(sourceId); Uuid(newId);
@@ -123,8 +158,8 @@ internal sealed class RoomPersonalStore
         }
         foreach (var (roomId, room) in state.Rooms)
         {
-            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null, "Room personal shape");
-            Require(room!.Buttons.Count <= 1024 && room.Grants.Count <= 196, "Room personal count");
+            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.Storage is not null, "Room personal shape");
+            Require(room!.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
             foreach (var (id, button) in room.Buttons)
             {
                 Id(id); Require(button is not null, "button override");
@@ -134,6 +169,11 @@ internal sealed class RoomPersonalStore
                 if (button.Skin is not null) Id(button.Skin);
                 Require(button.Action != "desk.go" || button.DeskId is not null, "desk.go target");
                 Require(button.DeskId is null || button.Action == "desk.go", "unexpected Desk target");
+            }
+            foreach(var (consumer,values) in room.Storage)
+            {
+                ConsumerId(consumer);Require(values is not null && StorageFits(values),"consumer storage quota");
+                foreach(var (key,value) in values!) {Id(key);NormalizeStorageValue(value);}
             }
             foreach (var (id, grant) in room.Grants)
             {

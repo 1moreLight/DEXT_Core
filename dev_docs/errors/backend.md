@@ -409,3 +409,7 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 ## #176 Frame.Destroyed回调中注销原生事件可使WebView宿主崩溃（2026-10-03）
 
 真实ReleasePlayer播放根音频、closed Shadow视频及嵌套音频后撤销，连续三次在EmbeddedBrowserWebView.dll 154.0.4258.48 x86以0x4000001f退出。Windows Application 1000/1001确认原生模块，非普通媒体策略异常。在Destroyed内再次对正在销毁的Frame注销COM事件产生重入；改为只移除缓存FrameId、父链/作用域和期望状态，由原生销毁清掉事件；正常活体Dispose才注销。相同整页撤销随后通过，最终媒体/原官方整页再次通过。销毁回调闭包绑定自己的Frame，不依赖事件sender重新认领身份。
+
+## #183 JSON字节上限不等于容器项数上限（2026-10-03）
+
+新消费者存储初版限定32KiB/深度24，却允许含4097个0的小数组，违反作者API每容器最多4096项。真实生产检查返回Accepted而非Denied，109/110。规范化值后递归核对每个object/array项数，落盘验证同样调用，修复后110/110。拒绝超限写入前不修改候选个人快照，原字节保持；SDK校验不能替代Core边界。

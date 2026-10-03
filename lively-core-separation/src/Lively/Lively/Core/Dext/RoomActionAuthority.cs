@@ -19,6 +19,7 @@ internal sealed record PublicRoomButton(string Id, string Name, string Scope, st
 internal sealed record RoomButtonsReply(RoomActionStatus Status, PublicRoomButton[]? Buttons = null);
 internal sealed record RoomDataSample(string Status, JsonElement? Value = null);
 internal sealed record RoomDataReply(RoomActionStatus Status, RoomDataSample? Sample = null);
+internal sealed record RoomStorageReply(RoomActionStatus Status, JsonElement? Value = null);
 internal sealed record RoomCapabilitiesReply(RoomActionStatus Status, IReadOnlyDictionary<string, RoomActionStatus>? Capabilities = null);
 internal sealed record RoomInputReply(RoomActionStatus Status, Guid? Ticket = null);
 internal sealed record RoomActionReply(RoomActionStatus Status);
@@ -122,6 +123,58 @@ internal sealed class RoomActionAuthority
         using var document = JsonDocument.Parse(json, new JsonDocumentOptions { MaxDepth = 24 });
         return new("available", document.RootElement.Clone());
     }
+
+    public RoomStorageReply ReadStorage(Guid connection,RoomSessionPeer peer,Guid session,long revision,string consumer,string key)
+    {
+        try { RoomPersonalStore.Id(key); } catch(InvalidDataException) {return new(RoomActionStatus.Denied);}
+        try
+        {
+            return Prepare(connection,peer,session,consumer,status=>new RoomStorageReply(status),(state,context,owner)=>
+            {
+                var status=StoragePermission(state,context,owner,consumer,revision,"storage.read");
+                if(status!=RoomActionStatus.Accepted)return new(status);
+                return state.Rooms.TryGetValue(context.Installation.RoomId,out var room) && room.Storage.TryGetValue(consumer,out var values) && values.TryGetValue(key,out var value)
+                    ?new(RoomActionStatus.Accepted,value.Clone()):new(RoomActionStatus.Accepted);
+            });
+        }
+        catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+    }
+    public RoomActionReply WriteStorage(Guid connection,RoomSessionPeer peer,Guid session,long revision,string consumer,string key,JsonElement value)
+    {
+        JsonElement normalized;
+        try {RoomPersonalStore.Id(key);normalized=RoomPersonalStore.NormalizeStorageValue(value);}
+        catch(Exception error)when(error is InvalidDataException or JsonException or InvalidOperationException or ArgumentException){return new(RoomActionStatus.Denied);}
+        try
+        {
+            var initial=gateway.ReadActionContext(connection,peer,session,out var early);
+            if(initial!=RoomProtocolStatus.Accepted)return new(Status(initial));
+            var initialOwner=Consumer(early!,consumer,out _);if(initialOwner!=RoomActionStatus.Accepted)return new(initialOwner);
+            var spin=new SpinWait();
+            while(true)
+            {
+                var result=store.UpdateForDispatch(state=>
+                {
+                    var completed=gateway.TryWithActionContext(connection,peer,session,(admitted,context)=>
+                    {
+                        if(admitted!=RoomProtocolStatus.Accepted)return new RoomActionReply(Status(admitted));
+                        var status=Consumer(context!,consumer,out var owner);if(status!=RoomActionStatus.Accepted)return new(status);
+                        status=StoragePermission(state,context!,owner!,consumer,revision,"storage.write");if(status!=RoomActionStatus.Accepted)return new(status);
+                        var room=state.Rooms[context!.Installation.RoomId];
+                        var candidate=room.Storage.TryGetValue(consumer,out var existing)?new Dictionary<string,JsonElement>(existing,StringComparer.Ordinal):new(StringComparer.Ordinal);
+                        candidate[key]=normalized;
+                        if(!RoomPersonalStore.StorageFits(candidate))return new(RoomActionStatus.Denied);
+                        room.Storage[consumer]=candidate;return new(RoomActionStatus.Accepted);
+                    },out RoomActionReply reply);
+                    return(completed && reply.Status==RoomActionStatus.Accepted,(completed,reply));
+                });
+                if(result.completed)return result.reply;spin.SpinOnce();
+            }
+        }
+        catch(Exception error)when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+    }
+    private static RoomActionStatus StoragePermission(RoomPersonalState state,RoomActionContext context,RoomActionCatalog.Consumer owner,
+        string consumer,long revision,string capability) => context.Snapshot.Revision!=revision?RoomActionStatus.StaleInput:
+        !owner.CanConsume(context.Role,context.Snapshot)?RoomActionStatus.NotOperable:Permission(state,context.Installation,owner,consumer,capability);
 
     internal RoomNativeInputAuthority CreateNativeInput() => new(clock);
 

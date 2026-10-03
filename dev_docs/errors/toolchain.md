@@ -335,3 +335,7 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 ### #145 追加：WebAudio探针须使用Core已部署的ReleasePlayer路径（2026-10-03）
 
 误传Lively.Player.WebView2/bin/Release/net462不存在路径，命令失败不计媒体证据。正确路径是同分支Core bin/x64/Debug/net9.0-windows10.0.18362.0/plugins/webview2/Lively.Player.WebView2.exe，build.ps1部署Release版本后再运行。
+
+### #173 追加：消费者存储新夹具的var多声明不计功能RED（2026-10-03）
+
+新测试误写var path=...,before=...触发CS0819，先拆独立声明；纠正后的RED仅保留尚缺ReadStorage/WriteStorage/Storage字段。最初语法失败不计生产存储行为证据；新增4097项数组后来实际Accepted/Denied失败才属于实现边界缺陷（#183）。

@@ -64,3 +64,7 @@ Core消费者权限/逐值数据98/98、严格消息28/28、实际Windows只读�
 生产116/116与真实ReleasePlayer整页验证AudioContext私有输出闸门、原生suspend完成屏障、作者暂停意图、根/嵌套文档实际时钟；作者Array与Object.toJSON攻击先RED后修复。实际Core生产安装/同副本正常重启补证两份新SDK文档AudioContext运行、focus自动恢复、GIF start仅一次与视频解码，原用户桌面/数据精确恢复。最后回执补强后完整build/实际Player/start/identity通过，正常退出后进程/端口/暂存0。
 
 第5/11项增加基础证据。完整四媒体idle/锁屏、独立Player故障、作者控制/存储/确认、布局/精确移动命中/物理输入/DPI和其余产品项仍继续；不声称AudioWorklet或全恶意内容安全验证。最终7项人工步骤保持，开发就绪仍1/16。
+
+## P5消费者存储Core基础补证（2026-10-03）
+
+Core按副本/消费者隔离JSON KV，当前读写分别授权、配额、故障原字节保留、旧format1兼容、私有连接关闭拒绝；生产110/110，完整build→start/identity与用户个人快照不变检查通过，随后正常退出。Player严格消息/正式DOM/SDK与实际Core已授权KV端到端尚未接通，当前作者能力仍unsupported。该基础不增加开发就绪计数，保持1/16和完整最终7项/16项。

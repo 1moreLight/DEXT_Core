@@ -63,3 +63,9 @@ Core持有`%LOCALAPPDATA%/Dext/v3/personal/personal.json`，格式版本1、递�
 消费者目录还包含`slot.start`、`slot.idle`和`slot.background.<DeskID>`，分别只在starting、idle及该Desk桌面阶段活动；采用各Content自己的capabilities/buttonIds，不继承scene或official授权。个人授权最多196消费者，background的Desk ID仍限80字符。
 
 Core只允许未暂停、未锁屏且处于桌面前台的当前Player消费者实际读取能力或激活动作。starting/idle媒体不受仅描述桌面切页的IsOperable字段误拒；桌面阶段仍需IsOperable。独立可见Dock保留桌面暂停例外，锁屏无例外。公开按钮元数据可在结构上活动时读取，不代表可以消费能力。前台事实即使未改变IsOperable也递增全局revision，旧输入不能在恢复后复活。真实Windows/可见性/物理输入适配仍按P5验收卡推进。
+
+### Core消费者JSON存储基础（2026-10-03）
+
+个人Room数据增加storage（旧formatVersion1缺字段默认空）；命名空间按副本UUID/consumer/key，键为1..80字符稳定ID。storage.read/write分别经过当前安装、私有连接、会话修订、消费者活动和个人授权检查。get缺键返回null，set(null)保存JSON null。每值规范JSON32KiB/深度24/每容器4096项、每消费者128键/64KiB，全个人快照既有1MiB限制。成功写入增加个人revision，失败保留旧字节；显式null或损坏storage拒绝，不清空。另存仅复制已确认的按钮/皮肤覆盖，KV与授权默认空；删除副本清理其KV。
+
+Core生产源码110/110验证，实际启动身份与原个人快照未改检查通过；作者Player/SDK消息仍需随后接通，此基础不代表已授权作者KV的完整原生端到端交付。

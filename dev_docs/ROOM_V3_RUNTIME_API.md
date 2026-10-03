@@ -183,3 +183,9 @@ Player在首航前注入自身嵌入脚本，捕获原始音视频、DOM、事�
 暂停回执的settled须等实际所有live上下文suspended/closed与挂起回调完成，Player有界轮询私有描述后才挂起renderer；等待期间输出已经静音。活体失败仍走静音并关闭Player。私有记录数组不用作者Array索引setter/species路径；回执是null-prototype对象，不被Object.prototype.toJSON拦截或伪造。该策略不添加SDK方法，不代表数据、网络、存储或动作授权。
 
 生产JS组合116/116与实际ReleasePlayer的根/嵌套AudioContext currentTime、作者意图、阶段/私有暂停/销毁和攻击回归通过；该Player夹具Core回包模拟。生产Rust安装→真实Core复核→实际WorkerW原生Room另外通过同文档切页/正常重启恢复，两新SDK文档AudioContext真实running，原用户桌面与数据精确恢复；顶部测试导航只计协议证据。真实Core证据早于最后null-prototype回执补强，补强后完整build与实际Player再次通过。完整idle/锁屏、独立Player故障、AudioWorklet、布局/物理输入/DPI及最终人工门槛不据此宣称完成。
+
+## 消费者存储生产权威基础（2026-10-03）
+
+Core已提供ReadStorage/WriteStorage及私有Player连接适配，SDK storage.get仍返回JSON，缺键为null；set(null)保存JSON null。存储按Room副本UUID/固定consumer/稳定key隔离，不返回个人目标或其他消费者值。读写分别逐次重新授权，检查当前session/revision/安装、声明、个人许可与活动事实；不能凭capabilities缓存授权。每值规范JSON32KiB/深度24/每容器4096项、每消费者128键/64KiB、个人总1MiB，超限拒绝而不改原文件。成功保存增加个人revision，发布失败storageUnavailable。旧个人format1缺字段默认空，损坏状态不重置。
+
+110/110真实生产源码检查与完整构建/启动身份通过；Player严格storageGet/storageSet、正式DOM与SDK仍在下一接线阶段，当前作者宿主继续如实报告unsupported。此Core基础不代填实际授权作者KV端到端或最终7项。

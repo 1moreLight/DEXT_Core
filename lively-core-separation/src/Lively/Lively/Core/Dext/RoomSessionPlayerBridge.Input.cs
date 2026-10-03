@@ -25,6 +25,11 @@ internal sealed partial class RoomSessionPlayerBridge
     internal RoomDataReply NativeData(RoomActionAuthority actions,Guid session,long revision,string consumer,string capability,Func<RoomDataSample> capture) =>
         disposed?new(RoomActionStatus.StaleSession):actions.ReadData(connectionId,peer,session,revision,consumer,capability,capture);
 
+    internal RoomStorageReply NativeReadStorage(RoomActionAuthority actions,Guid session,long revision,string consumer,string key) =>
+        disposed?new(RoomActionStatus.StaleSession):actions.ReadStorage(connectionId,peer,session,revision,consumer,key);
+    internal RoomActionReply NativeWriteStorage(RoomActionAuthority actions,Guid session,long revision,string consumer,string key,System.Text.Json.JsonElement value) =>
+        disposed?new(RoomActionStatus.StaleSession):actions.WriteStorage(connectionId,peer,session,revision,consumer,key,value);
+
     internal bool PublishNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
         long version,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries)
     {

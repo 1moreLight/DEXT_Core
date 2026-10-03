@@ -233,3 +233,5 @@
 | #180 | WebAudio保护方法可被借到未跟踪context或外域硬件destination | [renderer](errors/renderer.md) |
 | #181 | 捕获Array.push/splice仍能经继承索引setter与species泄露私有记录 | [renderer](errors/renderer.md) |
 | #182 | 私有策略普通对象回执被Object.prototype.toJSON拦截或伪造 | [renderer](errors/renderer.md) |
+
+| #183 | 只检查存储JSON字节/深度，4097项小数组仍越过公开容器限制 | [backend](errors/backend.md) |
