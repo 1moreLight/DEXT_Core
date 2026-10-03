@@ -16,6 +16,8 @@
     function cancelWaits(){for(const wait of waits){cancelTimer(wait.id);wait.resolve();}waits.clear();}
     function yieldRetry(){return new Promise(resolve=>{const wait={id:null,resolve};wait.id=later(()=>{waits.delete(wait);resolve();},50);waits.add(wait);});}
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
+    let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
+    const actionFlights=new Set();
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
     function resolveResource(path){
@@ -24,9 +26,10 @@
     }
     const frames=(options.createFrameHost||root.DextFrameHost.createFrameHost)({window:options.window||root,document,initialSnapshot:snapshot,runtimeGeneration:context.runtimeGeneration,
       initialGeometry:{geometryVersion:0,viewport:options.getViewport()},initialPlaybackSuspended:privatePaused,resolveResource,readCapabilities:q=>native.readCapabilities(q),
-      implementedCapabilities:['desk.read','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
+      implementedCapabilities:['desk.read','desk.navigate','binding.launch','time.read','hardware.read','media.read','audio.read','storage.read','storage.write'],subscribeData:(q,emit)=>native.subscribeData(q,emit),
       applyState:options.applyFrameState,invoke:async value=>{
-        if(value.method==='actions.activate')return activate(value.consumerId,value.params.buttonId,value.identity);
+        if(value.method==='actions.activate')return authorAction('activate',{button:value.params.buttonId},value.consumerId,value.identity);
+        if(value.method==='desk.navigate')return authorAction('navigate',{action:value.params.action},value.consumerId,value.identity);
         if(value.method==='actions.list'){const reply=await native.request('buttons',{consumer:value.consumerId},value.identity);if(reply.status!=='accepted')throw failure(reply.status);return reply.buttons;}
         if(value.method==='desk.get'){const reply=await native.readCapabilities({consumerId:value.consumerId,identity:value.identity});if(reply.status!=='accepted'||reply.capabilities?.['desk.read']!=='accepted')throw failure('denied');return copy(snapshot);}
         if(value.method==='storage.get'||value.method==='storage.set'){
@@ -89,7 +92,8 @@
       for(const desk of room.desks)for(const icon of desk.icons){
         const key=desk.id+'\0'+icon.id;let record=icons.get(key);
         if(!record){const element=document.createElement('button');element.className='dext-v3-icon';element.type='button';element.textContent=(icon.glyph||'◇')+'\n'+(icon.label||icon.id);element.setAttribute('aria-label',icon.label||icon.id);
-          const click=()=>{activate('official',icon.buttonId).catch(()=>diagnose('activationUnavailable'));};element.addEventListener('click',click);rootNode.append(element);record={deskId:desk.id,icon,element,click};icons.set(key,record);}
+          // Core native completion owns official activation; DOM click alone has no authority.
+          rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
         const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];record.element.hidden=![snapshot.currentDeskId,snapshot.targetDeskId].includes(desk.id)||snapshot.lifecycle.stage!=='desktop';
         record.element.style.left=(32+icon.x*112)+'px';record.element.style.top=(32+icon.y*120)+'px';transform(record.element,32+icon.x*112,32+icon.y*120,group.matrix);record.element.style.opacity=String(group.opacity);
       }
@@ -116,7 +120,7 @@
       return buttons.sort((a,b)=>layer(b.consumer)-layer(a.consumer));
     }
     async function render(){
-      const ownEpoch=++epoch;cancelWaits();inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
+      const ownEpoch=++epoch;cancelWaits();clearDefault();completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
       const job=async()=>{
         if(disposed||ownEpoch!==epoch)return false;
         try{
@@ -156,9 +160,40 @@
       // Moving hit regions are invalid until a stationary layout is published.
       if(p>=1){animation.finished=true;const result=model.animationFinished(animation.session,animation.id);if(result.accepted)complete(animation.id);}else schedule();
     }
-    async function activate(consumer,button,identity=scope()){
-      if(disposed||!inputReady||privatePaused)return{status:'staleInput'};
-      const reply=await native.request('activate',{consumer,button,geometryVersion:inputVersion},identity);return{status:reply.status};
+    function sameActionScope(identity,geometry){
+      return !disposed&&inputReady&&!privatePaused&&identity.runtimeGeneration===context.runtimeGeneration&&
+        identity.sessionId===snapshot.sessionId&&identity.revision===snapshot.revision&&geometry===inputVersion;
+    }
+    function clearDefault(){if(defaultTimer!==null)cancelTimer(defaultTimer);defaultTimer=null;pendingDefault=null;}
+    function consumeReceipt(reply){
+      if(reply.inputConsumed!==true||!Number.isSafeInteger(reply.inputSequence)||reply.inputSequence<=0)return;
+      consumedSequence=Math.max(consumedSequence,reply.inputSequence);
+      if(pendingDefault&&pendingDefault.inputSequence<=consumedSequence)clearDefault();
+    }
+    function runDefault(){
+      defaultTimer=null;const own=pendingDefault;
+      if(!own||!own.due)return;
+      if(!sameActionScope(own.identity,own.geometryVersion)){clearDefault();return;}
+      if([...actionFlights].some(f=>f.consumer===own.consumer&&f.geometry===own.geometryVersion&&
+        f.identity.sessionId===own.identity.sessionId&&f.identity.revision===own.identity.revision))return;
+      pendingDefault=null;
+      native.request('activate',{consumer:own.consumer,button:own.button,geometryVersion:own.geometryVersion,inputSequence:own.inputSequence},own.identity)
+        .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion))consumeReceipt(reply);},()=>diagnose('activationUnavailable'));
+    }
+    async function authorAction(method,params,consumer,identity){
+      if(!sameActionScope(identity,inputVersion))throw failure('staleInput');
+      if(actionFlights.size>=64)throw failure('requestLimit');
+      const geometry=inputVersion;
+      const sequence=completion&&completion.consumer===consumer&&completion.inputSequence>consumedSequence&&
+        (method!=='activate'||completion.button===params.button)?completion.inputSequence:0;
+      const flight={consumer,identity:copy(identity),geometry};actionFlights.add(flight);
+      try{
+        const reply=await native.request(method,{consumer,...params,geometryVersion:geometry,inputSequence:sequence},identity);
+        if(sameActionScope(identity,geometry))consumeReceipt(reply);
+        if(method==='navigate'&&!['accepted','queued'].includes(reply.status))throw failure(reply.status);
+        // Private correlation and any Core metadata stay in the official host.
+        return{status:reply.status};
+      }finally{actionFlights.delete(flight);runDefault();}
     }
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
@@ -181,12 +216,18 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){clearDefault();completion=null;privatePaused=true;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);render();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
-        if(value.kind==='activate'){activate(value.consumer,value.button).catch(()=>diagnose('activationUnavailable'));return true;}return value.kind==='focus';},
-      dispose(){if(disposed)return;disposed=true;epoch++;cancelWaits();inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();for(const record of icons.values())record.element.removeEventListener('click',record.click);frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();rootNode?.remove();},
+        if(value.kind==='activate'){
+          if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
+          lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          const own={...completion,identity:scope(),due:value.consumer==='official'};pendingDefault=own;
+          if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
+          return true;
+        }return value.kind==='focus';},
+      dispose(){if(disposed)return;disposed=true;epoch++;cancelWaits();clearDefault();completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();rootNode?.remove();},
       readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }

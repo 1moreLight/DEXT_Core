@@ -36,7 +36,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken storageValue=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken storageValue=null;RoomNativeActionReply actionReply=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -91,12 +91,20 @@ namespace Lively.Core.Wallpapers
                     finally{a.StorageRequests.Release();}break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
-                    status=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button).Status;break;
+                    actionReply=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button,request.InputSequence);
+                    status=actionReply.Status;break;
+                case "navigate":
+                    a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
+                    if(request.Action!=null){
+                        actionReply=a.Bridge.NavigateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,
+                            new RoomButtonAction(request.Action.Type,request.Action.DeskId),request.InputSequence);
+                        status=actionReply.Status;
+                    }break;
             }
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=WireStatus(status),buttons,capabilities,data,value=storageValue});
+                status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue});
         }
         private RoomNativeDataSource CreateNativeDataSource() => RoomNativeDataSource.ForWindows(systemControlService);
 
@@ -112,7 +120,7 @@ namespace Lively.Core.Wallpapers
             var state=a.Input.State;if(state==null)return;
             if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button});
             if(activate && state.Completed is{} proof && !ReferenceEquals(before?.Completed,proof))
-                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=proof.Button.Consumer,button=proof.Button.Button});
+                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button});
         }
         internal void NativeMouseDown(int x,int y,bool foreground)
         {
@@ -127,7 +135,7 @@ namespace Lively.Core.Wallpapers
         internal void NativeMouseUp(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseUp(v??MissingViewport,x,y,foreground&&v!=null);NotifyNative(a,before,false);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseUp(v??MissingViewport,x,y,foreground&&v!=null);NotifyNative(a,before,true);
         }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground)
         {

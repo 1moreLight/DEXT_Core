@@ -4,7 +4,7 @@
 })(globalThis,function(root){
   'use strict';
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
-  const STATUS=new Set(['accepted','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation']);
+  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation']);
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f]/.test(v);
   const shape=(v,keys)=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
@@ -32,7 +32,9 @@
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
       case'invalidateGeometry':return shape(p,[]);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
-      case'activate':return shape(p,['consumer','button','geometryVersion'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion);
+      case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
+      case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
+        (['desk.next','desk.previous'].includes(p.action.type)?shape(p.action,['type']):p.action.type==='desk.go'&&shape(p.action,['type','deskId'])&&id(p.action.deskId,80));
       case'geometry':return shape(p,['geometryVersion','buttons','viewport'])&&integer(p.geometryVersion)&&shape(p.viewport,['width','height','dpr'])&&
         finite(p.viewport.width,64,16384)&&finite(p.viewport.height,64,16384)&&finite(p.viewport.dpr,.5,8)&&Array.isArray(p.buttons)&&p.buttons.length<=4096&&p.buttons.every(b=>
           shape(b,['consumer','button','x','y','width','height','tabIndex'])&&id(b.consumer)&&id(b.button,80)&&finite(b.x,0,1)&&finite(b.y,0,1)&&finite(b.width,Number.EPSILON,1)&&finite(b.height,Number.EPSILON,1)&&
@@ -52,7 +54,7 @@
         if(disposed){reject(failure('disposed'));return;}if(suspended){reject(failure('notOperable'));return;}
         if(!scopeValid(scope)||!same(scope,identity)){reject(failure('staleInput'));return;}
         if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
-        const requestId='n'+(++counter);entry={requestId,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
+        const requestId='n'+(++counter);entry={requestId,method,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
         entry.timer=later(()=>finish(entry,false,'timeout'),5000);
         try{transport.postMessage(JSON.stringify(copy({type:'dext:v3-native-request',protocolVersion:1,requestId,method,...scope,...params})));}
         catch(_){finish(entry,false,'transportUnavailable');}
@@ -67,10 +69,17 @@
       if(disposed)return;let reply;try{reply=copy(event.data);}catch(_){diagnose('invalidPayload');return;}
       if(reply?.type==='dext:v3-native-event'){
         if(!suspended&&same(reply,identity)&&integer(reply.geometryVersion)&&['focus','activate'].includes(reply.kind)&&
+          (reply.kind==='focus'||integer(reply.inputSequence))&&
           (reply.consumer===null&&reply.button===null||id(reply.consumer)&&id(reply.button,80))){try{options.onInput?.(reply);}catch(_){diagnose('inputUnavailable');}}return;
       }
       if(reply?.type!=='dext:v3-native-response'||!id(reply.requestId))return;
-      const entry=pending.get(reply.requestId);if(!entry||!same(reply,entry.scope)||!same(reply,identity)||!STATUS.has(reply.status))return;
+      const entry=pending.get(reply.requestId);if(!entry||!same(reply,entry.scope)||!STATUS.has(reply.status))return;
+      // An authoritative action may synchronously publish its new revision
+      // before its receipt. Deliver that existing result in this same document;
+      // generation/session replacement and pause still cancel all requests.
+      const action=['activate','navigate'].includes(entry.method);
+      if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
+      if(['activate','navigate'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
       finish(entry,true,reply);
     }
     transport.addEventListener('message',receive);
@@ -132,13 +141,13 @@
       watch.listeners.add(listener);if(created)refreshWatch(watch);let released=false;
       return()=>{if(released)return;released=true;watch.listeners.delete(listener);if(watch.listeners.size===0){stopWatch(watch);watches.delete(consumer);}};
     }
-    function cancelPending(code){for(const entry of [...pending.values()])finish(entry,false,code);capQueries.clear();}
+    function cancelPending(code,retainActions=false){for(const entry of [...pending.values()])if(!retainActions||!['activate','navigate'].includes(entry.method))finish(entry,false,code);capQueries.clear();}
     return Object.freeze({
       request:(method,params,scope)=>dispatch(method,params,scope).promise,readCapabilities,subscribeData,watchCapabilities,
       acceptIdentity(next){
         if(disposed||!scopeValid(next)||next.runtimeGeneration<identity.runtimeGeneration||next.runtimeGeneration===identity.runtimeGeneration&&
           (next.sessionId!==identity.sessionId||next.revision<identity.revision))return false;
-        if(same(next,identity))return true;identity=copy(next);cancelPending('staleInput');for(const source of [...sources.values()])stopSource(source);
+        if(same(next,identity))return true;const retainActions=next.runtimeGeneration===identity.runtimeGeneration&&next.sessionId===identity.sessionId;identity=copy(next);cancelPending('staleInput',retainActions);for(const source of [...sources.values()])stopSource(source);
         for(const watch of watches.values()){stopWatch(watch);watch.last=null;refreshWatch(watch);}return true;
       },
       setSuspended(value){

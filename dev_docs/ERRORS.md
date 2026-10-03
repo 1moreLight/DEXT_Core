@@ -241,3 +241,8 @@
 | #186 | File.ReadAllText默认共享方式不能读取运行中的NLog写入文件 | [toolchain](errors/toolchain.md) |
 
 | #187 | 无作者默认动作的按钮只有个人TargetId时，解析为空动作且不显示绑定 | [backend](errors/backend.md) |
+
+| #188 | 原生鼠标UP生成完成证明但NotifyNative传false，画布默认按钮不收到激活 | [backend](errors/backend.md) |
+| #189 | 导航先推进Core修订，私有宿主提前取消真实动作回执并误报staleInput | [backend](errors/backend.md) |
+| #190 | 输入探针误用未提供的operable诊断字段；COM Type与Protobuf.Type名称冲突 | [toolchain](errors/toolchain.md) |
+| #191 | 聚焦Progman不等于显示桌面，测试点击实际命中覆盖应用；重启初期前台仍是工具窗 | [toolchain](errors/toolchain.md) |

@@ -11,6 +11,11 @@ namespace Lively.Models.Message
         public double Height { get; set; }
         public int TabIndex { get; set; }
     }
+    public sealed class LivelyRoomNativeNavigation
+    {
+        public string Type { get; set; }
+        public string DeskId { get; set; }
+    }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage
     {
         public int ProtocolVersion { get; set; } = 1;
@@ -20,6 +25,8 @@ namespace Lively.Models.Message
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
         public long GeometryVersion { get; set; }
+        public long InputSequence { get; set; }
+        public LivelyRoomNativeNavigation Action { get; set; }
         public long LifecycleRevision { get; set; }
         public string Consumer { get; set; }
         public string Capability { get; set; }

@@ -80,3 +80,29 @@ test('malformed storage data and authority aliases never reach the native bridge
  const f=fixture();for(const [method,params]of [['storageGet',{consumer:'scene',key:'../private'}],['storageGet',{consumer:'scene',key:'notes',path:'C:/private'}],['storageSet',{consumer:'scene',key:'notes'}],['storageSet',{consumer:'scene',key:'notes',value:Infinity}],['storageSet',{consumer:'scene',key:'notes',value:Array(4097).fill(0)}],['storageSet',{consumer:'scene',key:'notes',value:'x'.repeat(32769)}]])
  await assert.rejects(f.host.request(method,params),e=>e.code==='invalidArgument');assert.equal(f.sent.length,0);f.host.dispose();
 });
+
+test('strict navigation carries private correlation and cannot name a binding or proof',async()=>{
+ const f=fixture();
+ for(const action of [{type:'desk.next'},{type:'desk.previous'},{type:'desk.go',deskId:'focus'}]){
+ const promise=f.host.request('navigate',{consumer:'scene',action,geometryVersion:1,inputSequence:0});promise.catch(()=>{});const request=f.sent.at(-1);assert.equal(request.method,'navigate');
+ f.answer(request,{status:'queued',inputSequence:7,inputConsumed:true});assert.equal((await promise).status,'queued');}
+ for(const params of [{consumer:'scene',action:{type:'binding.launch'},geometryVersion:1,inputSequence:0},{consumer:'scene',action:{type:'desk.next',deskId:'focus'},geometryVersion:1,inputSequence:0},{consumer:'scene',action:{type:'desk.go'},geometryVersion:1,inputSequence:0},{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:-1},{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:0,ticket:'fake'}])
+ await assert.rejects(f.host.request('navigate',params),{code:'invalidArgument'});assert.equal(f.sent.length,3);f.host.dispose();
+});
+test('expired action response resolves and invalid private consumption receipts are ignored',async()=>{
+ const f=fixture();let done=false;
+ const promise=f.host.request('activate',{consumer:'scene',button:'open',geometryVersion:1,inputSequence:4}).then(v=>{done=true;return v;});promise.catch(()=>{});
+ const request=f.sent.at(-1);assert.equal(request.method,'activate');f.answer(request,{status:'expiredInput',inputSequence:1.2,inputConsumed:true});await flush();assert.equal(done,false);
+ f.answer(request,{status:'expiredInput',inputSequence:4,inputConsumed:false});assert.equal((await promise).status,'expiredInput');f.host.dispose();
+});
+
+test('a completed native navigation receipt may follow its own same-document Core revision',async()=>{
+ const f=fixture();const promise=f.host.request('navigate',{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:0}).catch(e=>({status:e.code}));const request=f.sent.at(-1);
+ f.host.acceptIdentity({...identity,revision:2});f.answer(request,{status:'accepted',inputSequence:7,inputConsumed:true});
+ assert.equal((await promise).status,'accepted');f.host.dispose();
+});
+test('pending actions still retire on native generation change or playback suspension',async()=>{
+ for(const mode of ['generation','pause']){const f=fixture();const promise=f.host.request('navigate',{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:0}).catch(e=>e.code);const request=f.sent.at(-1);
+ if(mode==='generation')f.host.acceptIdentity({...identity,runtimeGeneration:2});else f.host.setSuspended(true);
+ f.answer(request,{status:'accepted',inputSequence:7,inputConsumed:true});assert.equal(await promise,mode==='generation'?'staleInput':'notOperable');f.host.dispose();}
+});

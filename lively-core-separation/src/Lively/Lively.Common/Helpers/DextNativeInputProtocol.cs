@@ -36,9 +36,17 @@ namespace Lively.Common.Helpers
                         request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
                     case "invalidateGeometry": return Shape(o,IdentityFields)?request:null;
                     case "activate":
-                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion"}).ToArray()) ||
-                            !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1))return null;
-                        request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.GeometryVersion=(long)o["geometryVersion"];return request;
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion","inputSequence"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0))return null;
+                        request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
+                    case "navigate":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","action","geometryVersion","inputSequence"}).ToArray()) ||
+                            !Id(Text(o["consumer"]),128) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],0) || !(o["action"] is JObject action))return null;
+                        var type=Text(action["type"]);
+                        if(type=="desk.go"?!Shape(action,"type","deskId") || !Id(Text(action["deskId"]),80):
+                            type!="desk.next" && type!="desk.previous" || !Shape(action,"type"))return null;
+                        request.Consumer=Text(o["consumer"]);request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];
+                        request.Action=new LivelyRoomNativeNavigation{Type=type,DeskId=type=="desk.go"?Text(action["deskId"]):null};return request;
                     case "data":
                         var capability=Text(o["capability"]);
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","capability"}).ToArray()) || !Id(Text(o["consumer"]),128) ||

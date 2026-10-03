@@ -421,3 +421,14 @@ native-host最初postMessage已检查的JS对象，单位假传输收对象因�
 ## #187 TargetId-only个人绑定不能在空默认入口中丢失（2026-10-03）
 
 导航生产者回归125/128中，合法无作者默认动作的按钮配了个人TargetId，公开Action仍null/IsBound=false，正常激活也会MissingBinding。Resolve只在已有binding.launch动作时读取TargetId；空默认入口缺少动作推断。保留显式个人Action→作者默认Action原优先级，两者均不存在时才以TargetId推断binding.launch。实际源码128/128通过，公开元数据正确、作者动态导航不能绕过该个人绑定，普通activate仅启动一次。另补无任何配置入口的已授权真实输入动态导航与未知Desk提前拒绝；GUI/SDK原生接线与物理输入仍后续验证。
+
+
+## #188 原生鼠标UP生成证明但没有投递激活
+- 2026-10-03，P5作者导航接线发现：NativeMouseUp正确生成Completed，但NotifyNative最后参数为false；只有DOM click作者处理器可以主动消费，纯画布默认按钮缺少原生激活事件。
+- 改为true，并为真实完成附加私有单调序号。官方图标只走原生事件，去掉与Core事件竞争的DOM click派发。代码路径发现不冒充旧物理失败；最终实际Core Windows注入产生activate/sequence1和一份inputConsumed回执。
+- 回归核对鼠标/Enter/Space所有完成路径、Core原生事件、作者/默认共同消费与旧序号拒绝；最终人工输入仍独立验收。
+
+## #189 导航成功被修订更新误报旧输入
+- 2026-10-03，真实生产JS行为RED15/16：保留当前文档的Core导航请求，Core先发布新修订，再到达真实accepted回执，native-host.acceptIdentity取消在途请求并向SDK返回staleInput。
+- 只在同一generation/session的修订推进时保留已发出的activate/navigate请求及其有界计时；回执必须精确匹配原请求身份和私有消费字段。新代次/会话、暂停、销毁仍取消所有请求，数据/权限/存储旧修订规则不放宽。
+- 不是重派旧请求或给重放成功。原始请求仍由Core按实际证明/个人授权消费；DOM仅公开status。实际Core作者SDK得到accepted，原生完成仅一份消费回执。queued与expiredInput加入原生安全状态集合，Frame错误保留expiredInput。

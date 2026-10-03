@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Dext.Core.Rooms;
 
@@ -15,8 +16,12 @@ internal sealed record RoomNativeInputState(long Generation, Guid Session, long 
 internal sealed class RoomNativeInputProof
 {
     private readonly RoomNativeInputAuthority owner;
-    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt)
-    { this.owner=owner; Button=button; IssuedAt=issuedAt; }
+    private int consumed;
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; }
+    internal long Sequence { get; }
+    internal bool IsConsumed => Volatile.Read(ref consumed)!=0;
+    internal void MarkConsumed() => Volatile.Write(ref consumed,1);
     internal RoomNativeButton Button { get; }
     internal long IssuedAt { get; }
     internal bool Validate(RoomSessionSnapshot snapshot,string consumer,string button,bool consume=false) =>
@@ -28,7 +33,7 @@ internal sealed class RoomNativeInputProof
 internal sealed class RoomNativeInputAuthority(TimeProvider clock)
 {
     private readonly object gate=new();
-    private long generation, geometryVersion;
+    private long generation, geometryVersion, inputSequence;
     private RoomSessionSnapshot? snapshot;
     private RoomNativeViewport? viewport;
     private RoomNativeButton[] buttons=Array.Empty<RoomNativeButton>();
@@ -115,7 +120,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             mouseHeld=false;var down=mouse;mouse=null;
             if(down==null || !Available(current,foreground) || Hit(x,y)!=down.Button ||
                 Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)return;
-            completed=new(this,down.Button,down.IssuedAt);
+            Complete(down);
         }
     }
     internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground)
@@ -144,14 +149,22 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
                 if(!keysHeld.Remove(key))return;
                 var press=keyboard;if(press==null || press.Key!=key)return;
                 keyboard=null;
-                if(Available(current,foreground) && focused==press.Button)completed=new(this,press.Button,press.IssuedAt);
+                if(Available(current,foreground) && focused==press.Button)Complete(press);
             }
         }
     }
-    internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button)
+    // Correlation is private routing metadata, never evidence of a gesture.
+    // Zero asks for the current proof; delayed defaults must name an exact edge.
+    internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button,long sequence=0)
     {
         lock(gate)return generation==document && geometryVersion==version && completed is{} proof &&
+            sequence>=0 && (sequence==0 || sequence==proof.Sequence) &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
+    }
+    private void Complete(Press press)
+    {
+        if(inputSequence>=9007199254740991){ClearGeometry();return;}
+        completed=new(this,press.Button,press.IssuedAt,++inputSequence);
     }
     internal bool Validate(RoomNativeInputProof proof,RoomSessionSnapshot current,string consumer,string button,bool consume)
     {
@@ -160,7 +173,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             if(completed!=proof || viewport==null || snapshot==null || !CanInput() ||
                 current.SessionId!=snapshot.SessionId || current.RoomId!=snapshot.RoomId || current.InstallationStamp!=snapshot.InstallationStamp || current.Revision!=snapshot.Revision ||
                 proof.Button.Consumer!=consumer || proof.Button.Button!=button)return false;
-            if(consume)completed=null;
+            if(consume){proof.MarkConsumed();completed=null;}
             return true;
         }
     }

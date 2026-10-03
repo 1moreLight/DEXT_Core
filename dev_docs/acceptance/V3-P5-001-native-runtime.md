@@ -158,3 +158,11 @@ finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态�
 缺失私有NavigateNative API先RED，第一组125/125；无默认动作的动态入口及TargetId-only个人绑定再实际失败125/128，修复后128/128。生产Core源码验证当前consumer/按钮/动作、三导航变体、current/target分离、未知目标拒绝、用户覆盖优先、一次消费、无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦。完整build→start/identity后正常退出，原v2 inactive，个人快照未变。
 
 这些正向输入通过生产native authority方法构造，非实际Windows物理事件；严格navigate消息、默认/SDK统一派发、已授权实际Core作者导航仍未接通，当前SDK诚实unsupported。上方7项集中人工步骤不打勾，整体Task3/4、系统控制/退出确认、布局/完整生命周期继续，16项就绪保持1/16，不合并。
+
+
+## Task3作者导航与输入统一派发补证（2026-10-03）
+生产JS132/132、动作132/132、严格消息32/32与完整Core/ReleasePlayer构建通过；实际ReleasePlayer原输入/HWND/拒绝/暂停/重载门槛保持。实际Core作者SDK导航：timer无输入拒绝、Windows注入形成真实Core完成、一次消费/一次accepted、同文档提交focus与保留共享实例；正常重启同安装恢复focus/KV和新SDK文档，最终11PASS。探针临时显示桌面，最终核对原窗口最小化/最大化状态、前台/鼠标和所有原数据恢复。
+
+常规start Core22860/Player88968/Watchdog74480/config114160，日志20261003_162208.txt；原v2 inactive。配置器所属共享Dcache独立路径核对，身份脚本OTHER/exit1，未宣称全脚本OK。全部按PID/路径正常退出，watcherexit0，个人原hash/缺失状态不变。无中途验收/合并；Windows注入不能填上方第4/5项人工通过，最终7项与全16范围/readiness1/16不变。
+
+- 2026-10-03最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；全部工具会话已终止。

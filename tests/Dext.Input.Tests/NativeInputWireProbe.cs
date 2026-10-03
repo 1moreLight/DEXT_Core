@@ -42,8 +42,8 @@ internal static class NativeInputWireProbe
                     if(command==='capabilities')native(request({method:'capabilities',consumer:'slot.start'}));
                     if(command==='invalidCapabilities')for(const extra of [{capabilities:['binding.launch']},{consumer:4},{consumer:'scene',revision:snapshot.revision+1}])native({...request({method:'capabilities',consumer:'slot.start'}),...extra});
                     if(command==='pageReady'){native({type:'dext:v3-page-ready'});native({type:'dext:v3-page-ready'});}
-                    if(command==='activate')native(request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}));
-                    if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,consumer:'scene',button:'open'}),...extra});
+                    if(command==='activate')native(request({method:'activate',geometryVersion:1,inputSequence:0,consumer:'scene',button:'open'}));
+                    if(command==='invalid')for(const extra of [{runtimeGeneration:1.2},{revision:0},{ticket:'fake'},{consumer:4}])native({...request({method:'activate',geometryVersion:1,inputSequence:0,consumer:'scene',button:'open'}),...extra});
                     if(command==='frame'){const frame=document.createElement('iframe');frame.sandbox='allow-scripts';frame.src=context.resourceBasePath+'scene/index.html';frame.onload=()=>send({frame:true});document.body.append(frame);}
                     if(command==='reload'){location.reload();return;}
                     send({barrier:d.requestId});

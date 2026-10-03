@@ -3,31 +3,35 @@ using System.Collections.Generic;
 
 namespace Dext.Core.Rooms;
 
+internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputSequence=0,bool InputConsumed=false);
+
 internal sealed partial class RoomSessionPlayerBridge
 {
-    internal RoomActionReply ActivateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
-        long generation,Guid session,long revision,long geometry,string consumer,string button)
+    internal RoomNativeActionReply ActivateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence=0)
     {
         if(disposed)return new(RoomActionStatus.StaleSession);
         var current=native.State;
         if(current==null || current.Generation!=generation || current.Session!=session || current.Revision!=revision)return new(RoomActionStatus.StaleInput);
-        var proof=native.GetProof(generation,geometry,consumer,button);
-        if(proof==null)return new(RoomActionStatus.InputRequired);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return new(inputSequence==0?RoomActionStatus.InputRequired:RoomActionStatus.StaleInput);
         var issued=actions.IssueHostInput(connectionId,peer,session,consumer,button,proof);
-        return issued.Status==RoomActionStatus.Accepted?actions.InvokeButton(connectionId,peer,session,consumer,button,issued.Ticket):new(issued.Status);
+        var reply=issued.Status==RoomActionStatus.Accepted?actions.InvokeButton(connectionId,peer,session,consumer,button,issued.Ticket):new(issued.Status);
+        return new(reply.Status,proof.Sequence,proof.IsConsumed);
     }
-    internal RoomActionReply NavigateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
-        long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action)
+    internal RoomNativeActionReply NavigateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,RoomButtonAction action,long inputSequence=0)
     {
         if(disposed)return new(RoomActionStatus.StaleSession);
         var current=native.State;
         if(current==null || current.Generation!=generation || current.Session!=session || current.Revision!=revision)return new(RoomActionStatus.StaleInput);
         var completed=current.Completed;
-        var proof=completed==null?null:native.GetProof(generation,geometry,consumer,completed.Button.Button);
-        if(proof==null)return new(RoomActionStatus.InputRequired);
+        var proof=completed==null?null:native.GetProof(generation,geometry,consumer,completed.Button.Button,inputSequence);
+        if(proof==null)return new(inputSequence==0?RoomActionStatus.InputRequired:RoomActionStatus.StaleInput);
         var issued=actions.IssueHostInput(connectionId,peer,session,consumer,proof.Button.Button,proof);
-        return issued.Status==RoomActionStatus.Accepted
+        var reply=issued.Status==RoomActionStatus.Accepted
             ?actions.InvokeNavigation(connectionId,peer,session,consumer,proof.Button.Button,issued.Ticket,action):new(issued.Status);
+        return new(reply.Status,proof.Sequence,proof.IsConsumed);
     }
     internal RoomButtonsReply NativeButtons(RoomActionAuthority actions,Guid session,string consumer) =>
         disposed?new(RoomActionStatus.StaleSession):actions.ReadButtons(connectionId,peer,session,consumer);

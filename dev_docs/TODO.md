@@ -1301,3 +1301,14 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 导航Core适配最终128/128（原110+18）：三个变体、current/target分离、匹配默认或个人动作、无动作入口动态go、TargetId-only个人应用绑定、错consumer/无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦均验证。动态入口三项125/128实际失败后修复；未知Desk拒绝不消费原生证明，默认/个人动作不匹配同样保留正常fallback。
 - [x] 最终完整build→start/identity：Core113280/Player67436/Watchdog4976/config25560（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_152025.txt；原v2 inactive。正常精确PID/路径退出Core/配置器，自己的watcher终止，用户个人快照哈希/不存在状态未变。
 - [ ] 导航仍为Core源码生产者：严格原生navigate消息、input-host的默认/SDK一次派发、正式DOM/SDK及真实Core已授权作者导航尚未接通；当前SDK仍诚实unsupported。继续系统控制/退出确认、完整四媒体idle/锁屏/独立Player故障、个人布局/精确移动命中/物理DPI。最终7项待集中执行，16项就绪1/16，不合并。
+
+
+- [x] Task3导航/输入统一派发（BASEac4b0d1，2026-10-03）：目标是严格原生navigate路由与同一次Core输入的作者请求/默认回退，保留个人绑定优先。先写真实生产行为失败回归；Core完成序号、消费回执、viewport复核；官方DOM固定consumer、仅状态公开、有限回退和失效取消；128项基础上验证并完整构建/真实Player与Core验证。范围外仍按本包总计划，最终7项不缩减、不提前验收或合并。
+
+- [x] 严格navigate/私有输入完成序号与消费回执：JS真实RED27/36后36/36；新增同文档修订回执实际RED15/16后修复。最终生产JS132/132（111宿主/SDK+21原生媒体策略）、Core动作132/132、严格原生消息32/32。默认回退100ms，SDK在途时等待，Core仍从实际DOWN计算1500ms期限；旧序号不能消费同按钮的新输入。
+- [x] 实际ReleasePlayer输入/窗口/重载五组保持通过。实际Core原生安装/作者SDK/Windows鼠标注入：无输入timer均inputRequired；scene请求next返回accepted；同一Core证明只消费一次，未用顶层导航驱动，共享文档保持。Core正常重启同安装恢复focus/KV和新SDK文档；最终11项PASS。
+- [x] 探针纠正：operable不在运行诊断对象里，改读真实Core；System.Type与Protobuf.Type冲突先修编译，不计生产RED。WindowFromPoint实见ChatGPT PID42576覆盖测试像素107,56，第二轮暂停是正确拒绝；临时Shell显示桌面、验证真实桌面落点，finally Undo核对全部原窗口最小化/最大化状态并恢复鼠标。重启初期前台实为GameViewer工具窗，待原生初始化后重新聚焦桌面一次，全门槛通过，不改生产暂停策略。
+- [x] 完整build→start/身份：Core22860/Player88968/Watchdog74480/config114160，日志20261003_162208.txt，原v2 inactive。配置器为所属D共享缓存，身份脚本OTHER/exit1，绝对路径独立核对；不写成脚本全OK。按PID/路径正常退出，个人SHA256/原不存在状态不变，watcher终止exit0。
+- [ ] Task3继续：系统媒体/音量作者控制、可信Dext退出确认；Task4四媒体生命周期/移动与遮挡的精确输入、个人布局/故障恢复、最后一次完整P5审查。仍按原16项全景与7项人工门槛，readiness1/16，不中途合并。
+
+- 2026-10-03最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；全部工具会话已终止。

@@ -351,3 +351,14 @@ WebAudio实际Core探针原先仅等视频decoded/inputReady，标题观察缓�
 ### #173 追加：HTML夹具多层大括号与C#原始字符串（2026-10-03）
 
 为KV日志marker把原始HTML字符串改成$$插值后，JS的连续闭合大括号触发CS9007。改普通原始字符串+固定占位Replace，UUID构成的本地marker无作者输入；纠正语法后才运行行为RED。两项原有WebViewProbe nullable警告未变，本轮StringReader新警告已消除。
+
+
+## #190 原生输入探针误读诊断字段和Type名称冲突
+- 2026-10-03，新探针要求observation.operable，但生产readDiagnostics未提供此字段；Core实际operable=true，SDK timer正确inputRequired，探针却没有发送鼠标。改读真实RPC状态，缺字段不当false事实。
+- COM Shell测试代码的Type和Google.Protobuf.WellKnownTypes.Type歧义导致编译失败；明确System.Type。两者都是探针错误，未计生产功能RED；原数据在finally恢复。
+- 新字段先核对提供方契约，记录未通过运行的真实状态，不能只记录成功分支。文档命令模板的Markdown反引号也曾提前结束JS字符串，工具执行前解析失败；修模板后才运行，未重跑已执行编辑。
+
+## #191 聚焦桌面不等于实际桌面可点击
+- 2026-10-03，输入探针FocusDesktop后Windows注入命中应用，Core正确转paused且无证明。Orca窗口列表及实际WindowFromPoint核对：像素107,56归ChatGPT PID42576/Chrome_RenderWidgetHostHWND，桌面仍被覆盖。未修改正确的生产暂停/前台策略。
+- 只对自动桌面输入夹具临时调用Shell.MinimizeAll，并先记录原可见窗口的IsIconic/IsZoomed；落点须属于实际Progman/WorkerW根。finally UndoMinimizeAll，核对所有仍存在原窗口的状态，恢复原前台与鼠标，再写恢复证据。这轮属于Windows注入，不能代替人工物理验收。
+- 重启首次FocusDesktop发生在Player最终初始化之前；实读前台PID24248/Qt51512QWindowToolSaveBits。待实际桌面阶段后仅重聚焦一次并记录，恢复门槛全过，不循环伪造Windows事实或绕过授权。

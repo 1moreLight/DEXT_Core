@@ -27,7 +27,7 @@ internal static class NativeInputMessageChecks
                     case "arrayRoot":raw="[]";break;case "duplicateJson":raw=r.ToString().Replace("\"protocolVersion\": 1","\"protocolVersion\": 1, \"protocolVersion\": 1");break;case "trailingJson":raw=r+"{}";break;case "oversize":raw=new string(' ',1024*1024+1);break;case "afterNavigation":s.Invalidate("navigation");break;}
                 Require(DextNativeInputProtocol.Parse(raw??r.ToString(),s,1200,900)==null);
             });
-        Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
+        Check("activate requests carry no native proof or private launch target",()=>{var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";r["inputSequence"]=0;Require(Parse(r)!=null);r["proof"]="pretend";Require(Parse(r)==null);});
         Check("startup completion accepts only exact starting phase and has no Windows fact fields",()=>{
             var starting=new DextRoomRuntimeState();starting.Initialize(RuntimeMessageChecks.ContextMessage(f.Context,f.Snapshot,1));
             var snap=RoomSessionPlayerMessage.Create(f.Snapshot with{Lifecycle=new(RoomLifecycleStage.Starting,true,true,4)},["home","focus"]);snap.RuntimeGeneration=1;starting.AcceptSnapshot(snap);
@@ -60,6 +60,18 @@ internal static class NativeInputMessageChecks
             r["value"]=JValue.CreateNull();Require(Parse(r)?.ValueJson=="null");r.Remove("value");Require(Parse(r)==null);
             r["value"]=new string('x',32769);Require(Parse(r)==null);r["value"]=new JArray(Enumerable.Repeat(0,4097));Require(Parse(r)==null);
             r["value"]=1;r["ticket"]="forged";Require(Parse(r)==null);
+        });
+        Check("native navigate preserves only typed three-variant action and private completion sequence",()=>{
+            var r=Request();r["method"]="navigate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["inputSequence"]=7;
+            foreach(var type in new[]{"desk.next","desk.previous","desk.go"}){r["action"]=type=="desk.go"?new JObject{["type"]=type,["deskId"]="focus"}:new JObject{["type"]=type};
+                var parsed=Parse(r);Require(parsed?.Action?.Type==type&&parsed.InputSequence==7);Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.Action?.Type==type);}
+            foreach(var action in new JToken[]{new JObject{["type"]="binding.launch"},new JObject{["type"]="desk.next",["deskId"]="focus"},new JObject{["type"]="desk.go"},new JObject{["type"]="desk.go",["deskId"]=7}}){r["action"]=action;Require(Parse(r)==null);}
+            r["action"]=new JObject{["type"]="desk.next"};r["button"]="open";Require(Parse(r)==null);r.Remove("button");r["ticket"]="fake";Require(Parse(r)==null);
+        });
+        Check("native action correlation rejects missing fractional negative and unsafe sequences",()=>{
+            var r=Request();r["method"]="activate";r.Remove("viewport");r.Remove("buttons");r["consumer"]="scene";r["button"]="open";
+            Require(Parse(r)==null);foreach(var sequence in new JToken[]{-1,1.2,"7",9007199254740992L}){r["inputSequence"]=sequence;Require(Parse(r)==null);}
+            r["inputSequence"]=0;Require(Parse(r)?.InputSequence==0);r["inputSequence"]=7;Require(Parse(r)?.InputSequence==7);
         });
         Console.WriteLine($"{passed}/{total} native input message checks passed");if(passed!=total)throw new Exception("native message checks failed");
     }

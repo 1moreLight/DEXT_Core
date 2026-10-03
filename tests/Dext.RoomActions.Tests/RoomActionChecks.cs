@@ -40,6 +40,31 @@ static class RoomActionChecks
         RoomSessionPlayerBridge NavigationBridge(ActionFixture f,RoomNativeInputAuthority input) {
             Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,input.ObserveSnapshot,out var bridge));return bridge!;
         }
+        check("native completion sequences are monotonic across mouse keyboard geometry and generation",()=>{
+            using var f=new ActionFixture();var n=Native(f);Geometry(f,n);var first=Pair(f,n);
+            Eq(1L,first.Sequence);n.Key(viewport,13,true,false,true);n.Key(viewport,13,false,false,true);var second=n.GetProof(1,1,"scene","open")!;
+            Eq(2L,second.Sequence);Geometry(f,n,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(3L,n.GetProof(1,2,"scene","open")!.Sequence);
+            n.Initialize(2,f.Kernel.Snapshot!);Geometry(f,n,1,2);n.MouseDown(viewport,300,400,true);n.MouseUp(viewport,300,400,true);Eq(4L,n.GetProof(2,1,"scene","open")!.Sequence);
+        });
+        check("delayed default sequence cannot consume a later input on the same button",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);Geometry(f,n);var first=Pair(f,n);var second=Pair(f,n);
+            var stale=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",first.Sequence);
+            Eq(RoomActionStatus.StaleInput,stale.Status);Eq(false,stale.InputConsumed);Eq(0,f.Launched.Count);
+            var accepted=bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",second.Sequence);
+            Eq(RoomActionStatus.Accepted,accepted.Status);Eq(second.Sequence,accepted.InputSequence);Eq(true,accepted.InputConsumed);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","open",second.Sequence).Status);Eq(1,f.Launched.Count);
+        });
+        check("navigation receipt identifies consumed completion before private notification",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var sequence=n.State!.Completed!.Sequence;
+            var reply=bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.next"));
+            Eq(RoomActionStatus.Accepted,reply.Status);Eq(sequence,reply.InputSequence);Eq(true,reply.InputConsumed);
+        });
+        check("navigation mismatch receipt leaves exact input for personal/default fallback",()=>{
+            using var f=new ActionFixture();var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var sequence=n.State!.Completed!.Sequence;
+            var denied=bridge.NavigateNative(f.Actions,n,1,f.Session,1,1,"scene",new("desk.previous"),sequence);
+            Eq(RoomActionStatus.Denied,denied.Status);Eq(sequence,denied.InputSequence);Eq(false,denied.InputConsumed);
+            Eq(true,bridge.ActivateNative(f.Actions,n,1,f.Session,1,1,"scene","next",sequence).InputConsumed);
+        });
         foreach(var type in new[]{"desk.next","desk.previous","desk.go"})check("native authored navigation matches current configured action "+type,()=>{
             using var f=new ActionFixture();if(type!="desk.next")f.Store.Update(state=>state.Rooms[Room].Buttons["next"]=new(type,type=="desk.go"?"focus":null));
             var n=Native(f);using var bridge=NavigationBridge(f,n);NavigationPair(f,n);var action=new RoomButtonAction(type,type=="desk.go"?"focus":null);

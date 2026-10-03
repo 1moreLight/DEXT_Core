@@ -19,7 +19,7 @@ function fixture(options={}){
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
  const host=createDomHost({document,container,context:{runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
    createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:()=>({width:1920,height:1080,dpr:1}),now:()=>now,
-   requestAnimationFrame:cb=>{raf.set(++id,cb);return id;},cancelAnimationFrame:id=>raf.delete(id)});
+   requestAnimationFrame:cb=>{raf.set(++id,cb);return id;},cancelAnimationFrame:id=>raf.delete(id),setTimeout:options.setTimeout,clearTimeout:options.clearTimeout});
  async function advance(ms){now+=ms;const tasks=[...raf];raf.clear();for(const [,cb]of tasks)cb(now);await flush();}
  return{host,room,snap,calls,controls,frames,medias,bridge,container,advance,raf};
 }
@@ -67,7 +67,7 @@ test('author component geometry translates local rects and publishes only its de
 test('stale native focus or activation cannot use newer geometry',async()=>{
  const f=fixture();await f.host.ready;const version=f.host.readDiagnostics().inputVersion;
  assert.equal(f.host.handleNativeInput({kind:'activate',sessionId:'session',runtimeGeneration:1,revision:1,geometryVersion:version-1,consumer:'official',button:'next'}),false);
- f.host.handleNativeInput({kind:'activate',sessionId:'session',runtimeGeneration:1,revision:1,geometryVersion:version,consumer:'official',button:'next'});await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,1);f.host.dispose();
+ f.host.handleNativeInput({kind:'activate',sessionId:'session',runtimeGeneration:1,revision:1,geometryVersion:version,inputSequence:1,consumer:'official',button:'next'});await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,1);f.host.dispose();
 });
 test('disposed host cannot revive a frame, input or animation',async()=>{
  const f=fixture();await f.host.ready;f.host.dispose();f.host.dispose();assert.equal(await f.host.acceptSnapshot(f.snap(2)),false);assert.equal(f.frames.size,0);assert.equal(f.medias.size,0);assert.equal(f.raf.size,0);assert.equal(f.host.readDiagnostics().inputReady,false);
@@ -107,4 +107,50 @@ test('storage refusals and malformed successful replies cannot be treated as sav
  let status='missingPermission';const f=fixture({request:method=>Promise.resolve(method.startsWith('storage')?{status}: {status:'accepted'})});await f.host.ready;const scene=[...f.frames.values()].find(v=>v.def.consumerId==='scene'),identity={runtimeGeneration:1,sessionId:'session',revision:1};
  await assert.rejects(scene.opts.invoke({method:'storage.set',consumerId:'scene',params:{key:'notes',value:1},identity}),{code:'missingPermission'});status='accepted';
  await assert.rejects(scene.opts.invoke({method:'storage.get',consumerId:'scene',params:{key:'notes'},identity}),{code:'storageUnavailable'});f.host.dispose();
+});
+
+function actionFixture(request){
+ let time=0,id=0;const timers=new Map();
+ const f=fixture({request,setTimeout:(cb,ms)=>{const key=++id;timers.set(key,{cb,due:time+ms});return key;},clearTimeout:key=>timers.delete(key)});
+ f.tick=async ms=>{time+=ms;for(const[key,v]of [...timers])if(v.due<=time){timers.delete(key);v.cb();}await flush();};
+ f.event=(sequence,consumer='scene')=>({kind:'activate',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,inputSequence:sequence,consumer,button:'next'});
+ f.invoke=(method='desk.navigate',params={action:{type:'desk.next'}})=>[...f.frames.values()].find(v=>v.def.consumerId==='scene').opts.invoke({method,params,consumerId:'scene',identity:{runtimeGeneration:1,sessionId:'session',revision:1}});
+ return f;
+}
+test('authored navigation receipt cancels its late native event and exposes status only',async()=>{
+ const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'accepted',inputSequence:7,inputConsumed:true,privateTarget:'secret'}:{status:'accepted'}));await f.host.ready;
+ assert.equal([...f.frames.values()][0].opts.implementedCapabilities.includes('desk.navigate'),true);
+ assert.deepEqual(await f.invoke(),{status:'accepted'});
+ assert.deepEqual(f.calls.find(v=>v.method==='navigate').params,{consumer:'scene',action:{type:'desk.next'},geometryVersion:1,inputSequence:0});
+ assert.equal(f.host.handleNativeInput(f.event(7)),false);await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+});
+test('native event and authored navigation share one completion without default double dispatch',async()=>{
+ const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'queued',inputSequence:7,inputConsumed:true}:{status:'accepted'}));await f.host.ready;
+ assert.equal(f.host.handleNativeInput(f.event(7)),true);assert.deepEqual(await f.invoke(),{status:'queued'});await f.tick(1000);
+ assert.equal(f.calls.find(v=>v.method==='navigate').params.inputSequence,7);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+});
+test('denied navigation preserves configured fallback with the exact native sequence',async()=>{
+ const f=actionFixture(method=>Promise.resolve(method==='navigate'?{status:'denied',inputSequence:7,inputConsumed:false}:{status:'accepted',inputSequence:7,inputConsumed:true}));await f.host.ready;
+ f.host.handleNativeInput(f.event(7));await assert.rejects(f.invoke(),{code:'denied'});await f.tick(1000);
+ assert.deepEqual(f.calls.find(v=>v.method==='activate').params,{consumer:'scene',button:'next',geometryVersion:1,inputSequence:7});f.host.dispose();
+});
+test('SDK request preceding native event holds fallback until its consumption receipt',async()=>{
+ let release;const f=actionFixture(method=>method==='navigate'?new Promise(r=>release=r):Promise.resolve({status:'accepted'}));await f.host.ready;
+ const pending=f.invoke();pending.catch(()=>{});await flush();f.host.handleNativeInput(f.event(7));await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);
+ release({status:'accepted',inputSequence:7,inputConsumed:true});await pending;await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();
+});
+test('old duplicate events and delayed defaults cannot dispatch a later physical completion',async()=>{
+ const f=actionFixture(method=>Promise.resolve({status:'accepted',inputSequence:9,inputConsumed:true}));await f.host.ready;
+ f.host.handleNativeInput(f.event(7));f.host.handleNativeInput(f.event(9));assert.equal(f.host.handleNativeInput(f.event(7)),false);assert.equal(f.host.handleNativeInput(f.event(9)),false);
+ await f.tick(1000);const requests=f.calls.filter(v=>v.method==='activate');assert.equal(requests.length,1);assert.equal(requests[0].params.inputSequence,9);f.host.dispose();
+});
+test('snapshot change private pause and disposal cancel pending native fallback',async()=>{
+ for(const mode of ['snapshot','pause','dispose']){const f=actionFixture(()=>Promise.resolve({status:'accepted'}));await f.host.ready;f.host.handleNativeInput(f.event(7));
+ if(mode==='snapshot')await f.host.acceptSnapshot(f.snap(2));if(mode==='pause')f.host.setPlaybackSuspended(true);if(mode==='dispose')f.host.dispose();
+ await f.tick(1000);assert.equal(f.calls.filter(v=>v.method==='activate').length,0);f.host.dispose();}
+});
+test('official DOM click cannot race native dispatch or invent an input sequence',async()=>{
+ const f=actionFixture(()=>Promise.resolve({status:'accepted',inputSequence:7,inputConsumed:true}));await f.host.ready;
+ const icon=f.container.children[0].children.find(v=>v.tag==='button');icon.handlers.click?.();await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,0);
+ f.host.handleNativeInput(f.event(7,'official'));await flush();assert.equal(f.calls.filter(v=>v.method==='activate').length,1);assert.equal(f.calls.find(v=>v.method==='activate').params.inputSequence,7);f.host.dispose();
 });
