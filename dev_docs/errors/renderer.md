@@ -643,3 +643,8 @@ MoveFocus官方语义为将焦点移入WebView并恢复先前/默认文档元素
 正式DOM以前只在Core focus event画一次inputEntries里的多边形，默认动画随后只移动图标/Widget。源和目标真实行为新增2项均RED（50/52），轮廓的points保持旧值。
 将逻辑focus与SVG绘制分开，每个默认动画绘制帧按当前已绘制可见区域更新轮廓；移出画布/被遮挡隐藏，但不丢逻辑entry；commit/geometry失效/暂停仍清空。必要DOM52/52，实际ReleasePlayer移动source的points随RAF变化、出画布隐藏、geometry版本/请求数和动作数不增加；不靠逐帧IPC或扩大命中区域修复。
 Tab的单次可见查询不等于动作proof，也不证明快速连续键序列已收口；当前Core单gesture覆盖语义的连续Tab/立即激活仲裁继续。
+
+## #217 作者纯矩阵逐帧重发几何并清焦点（2026-10-04）
+原acceptGeometry对groups/opacity变化总是递增geometryVersion，DOM随即render→invalidateGeometry/geometry并清focus、释放native hold。生产行为RED67/70：连续视觉帧失去原版本和焦点，保持中第二份报告因版本推进被拒。
+仅按钮/占用等结构改变才产生invalidateInput/applyGeometry；纯groups产生applyVisualGroups，Widget/图标/焦点同次本地绘制。native hold存最新待矩阵，匹配end后应用；结构/快照/暂停/销毁丢旧待帧。旧断言改读当前物理样本，空同状态修订本来保留模型groups，失效夹具使用真实生命周期变化。GREEN86/86。
+相邻功能发现：普通图标在无转场时错误使用shared矩阵，仪表盘缩放会带走当前Desk入口。新增独立RED后改为source组，shared继续控制共享呈现；透明共享Dock恢复下方独立图标输入，必要87/87。实际ReleasePlayer作者仪表盘/普通图标/焦点、本地无逐帧Core几何与原默认输入回归通过；真实Core OS/DPI最终门槛仍未代填。

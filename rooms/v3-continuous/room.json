@@ -8,14 +8,15 @@
     "scene/index.html",
     "scene/main.js",
     "scene/style.css",
-    "scene/dext-sdk.v1.js"
+    "scene/dext-sdk.v1.js",
+    "widget/index.html",
+    "widget/main.js",
+    "widget/style.css"
   ],
   "roomScene": {
     "entry": "scene/index.html",
     "capabilities": [
-      "desk.read",
-      "desk.navigate",
-      "time.read"
+      "desk.read"
     ]
   },
   "transition": {
@@ -36,14 +37,54 @@
     {
       "id": "overview",
       "name": "Overview",
-      "icons": [],
-      "components": []
+      "icons": [
+        {
+          "id": "view",
+          "buttonId": "navigate",
+          "label": "下一视图",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "components": [
+        "instrument"
+      ]
     },
     {
       "id": "detail",
       "name": "Detail",
-      "icons": [],
-      "components": []
+      "icons": [
+        {
+          "id": "view",
+          "buttonId": "navigate",
+          "label": "下一视图",
+          "x": 4,
+          "y": 0
+        }
+      ],
+      "components": [
+        "instrument"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "instrument",
+      "role": "widget",
+      "entry": "widget/index.html",
+      "placement": {
+        "x": 320,
+        "y": 0,
+        "width": 1600,
+        "height": 280
+      },
+      "capabilities": [
+        "desk.read",
+        "time.read"
+      ],
+      "buttonIds": [
+        "navigate"
+      ]
     }
   ]
 }

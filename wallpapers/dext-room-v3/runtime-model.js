@@ -181,10 +181,15 @@
           width: area.width, height: area.height, ...(area.deskId === undefined ? {} : { deskId: area.deskId }) }));
         const nextButtons = report.buttons === undefined ? buttonRegions.get(consumer) || [] : report.buttons.map(button => ({ buttonId: button.buttonId,
           x: button.x, y: button.y, width: button.width, height: button.height }));
-        if (JSON.stringify(groups) === JSON.stringify(nextGroups) && JSON.stringify(occupied) === JSON.stringify(nextOccupied) &&
-          JSON.stringify(buttonRegions.get(consumer) || []) === JSON.stringify(nextButtons)) return result();
+        const visualChanged = JSON.stringify(groups) !== JSON.stringify(nextGroups);
+        const structureChanged = JSON.stringify(occupied) !== JSON.stringify(nextOccupied) ||
+          JSON.stringify(buttonRegions.get(consumer) || []) !== JSON.stringify(nextButtons);
+        if (!visualChanged && !structureChanged) return result();
         groups = nextGroups; occupied = nextOccupied;
         if (report.buttons !== undefined) buttonRegions.set(consumer, nextButtons);
+        // Group matrices describe the current painted frame. Physical-event
+        // samples resolve them locally; only structural edits revoke geometry.
+        if (!structureChanged) return result([{ type: 'applyVisualGroups', groups: clone(groups) }]);
         geometryVersion++;
         return result([{ type: 'invalidateInput', reason: 'geometryChanged', geometryVersion }, { type: 'applyGeometry', geometryVersion,
           groups: clone(groups), occupied: clone(occupied), buttonRegions: Object.fromEntries([...buttonRegions].map(([key, value]) => [key, clone(value)])) },

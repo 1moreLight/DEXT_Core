@@ -412,3 +412,8 @@ CredentialUIBroker进程MainWindowHandle=0，Orca list-apps不列出该应用，
 ## #214 键盘回执夹具必须保持真实receiver参数（2026-10-04）
 native-input-guardian夹具fire(target,type,options)首轮误用fire(type,options)，因此事件未走root捕获，不能记生产RED。修正receiver为f.node后同一功能仍实质RED27/28（缺keydown/up回执），加入真实键回执后28/28；原失败日志保留。Core新SampleKeyboard/SampledVisual缺API的编译RED单独记录，不冒称行为RED。
 跨多文件mutation在第一文件已写盘后，第二文件的SampledMouse模式锚点断言失败；核实实际input is{SampledMouse:true}语法，再只执行未写入后半段，避免重复修改已成功文件。查代码的几次旧文件名假设（RoomNativeInputQueue/RoomNativeSampleChecks/guardian大小写）不匹配；先rg --files得到实际WebWebView2.Input/NativeEventSampleChecks/native-input-guardian.js再读。最终diff --check与完整四阶段构建通过。
+
+## #218 持续样包SDK副本与设计基准检查（2026-10-04）
+资源检查发现rooms/v3-continuous/scene仍带旧SDK副本；复制当前生产SDK后Schema、全部声明资源及字节一致通过。复制样包要检查嵌入SDK，不能只看creator-kit本体测试绿。
+首轮实际Player采用640×480/scale1.5，实际CSS视口427×320触发既有CSS像素尺寸保留/临时移位；固定基准作者矩阵叠加后仪表盘出画布。修正样包基准布局并以1920×1080/scale1验证同仪表盘底部→整页→返回，多尺寸/个人有效布局组合仍保持待做；不能把改验证窗口写成响应式通过。
+编写shell here-string时内嵌JS模板反引号使functions.exec整段SyntaxError、未执行任何修改；改用普通字符串拼接后接续。日志__EVIDENCE__占位符曾漏替换和rg括号过度转义，修正精确路径/简单模式后继续；没有反复重跑已完成实机或网络矩阵。

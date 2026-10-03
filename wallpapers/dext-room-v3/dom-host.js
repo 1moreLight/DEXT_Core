@@ -19,7 +19,7 @@
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
-    let inputEntries=[],focus=null,focusNode=null,nativeHold=null;
+    let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
@@ -143,7 +143,7 @@
         if(!record){const element=document.createElement('button');element.className='dext-v3-icon';element.type='button';element.textContent=(icon.glyph||'◇')+'\n'+(icon.label||icon.id);element.setAttribute('aria-label',icon.label||icon.id);
           // Core native completion owns official activation; DOM click alone has no authority.
           rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
-        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'shared'];layoutIcon(record,group);
+        const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'source'];layoutIcon(record,group);
       }
       media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport});
     }
@@ -159,7 +159,7 @@
         if(!record.wrapper.hidden&&group.opacity>0&&rect)nodes.push({record,order:order++,layer:inputLayer(record),group,polygon:geometry.rectPolygon(rect,group.matrix),moving:defaultMoving()&&classification(record.definition)!=='shared'});
       }
       for(const record of icons.values()){
-        const group=visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'shared'];
+        const group=visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source'];
         if(!record.element.hidden&&group.opacity>0&&record.rect)nodes.push({record,order:order++,layer:40,group,polygon:geometry.rectPolygon(record.rect,group.matrix),moving:defaultMoving()});
       }return nodes;
     }
@@ -197,7 +197,7 @@
       return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
     }
     async function render(){
-      const ownEpoch=++epoch;releaseNativeHold();cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
+      const ownEpoch=++epoch;releaseNativeHold(false);cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
       const job=async()=>{
         if(disposed||ownEpoch!==epoch)return false;
         try{
@@ -233,13 +233,24 @@
       animation.elapsed+=Math.max(0,now()-animation.last);animation.last=now();const transition=room.transition||{type:'slide',durationMs:450};
       if(transition.type==='author')return;
       const p=updateDefaultGroups();
-      for(const record of records.values())layout(record);for(const record of icons.values()){const group=visualGroups[record.deskId===snapshot.targetDeskId?'target':'source'];layoutIcon(record,group);}
-      refreshFocus();
+      paintVisuals();
       // Boundary geometry excludes moving rows; physical edges sample painted rows.
       if(p>=1){animation.finished=true;const result=model.animationFinished(animation.session,animation.id);if(result.accepted)complete(animation.id);}else schedule();
     }
-    function releaseNativeHold(){
-      if(!nativeHold)return false;nativeHold=null;schedule();return true;
+    function paintVisuals(){
+      for(const record of records.values())layout(record);
+      for(const record of icons.values())layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
+      refreshFocus();
+    }
+    function applyVisualGroups(next){
+      if(nativeHold){pendingVisualGroups=next;return;}
+      visualGroups=next;paintVisuals();
+    }
+    function releaseNativeHold(apply=true){
+      if(!nativeHold)return false;nativeHold=null;
+      const pending=pendingVisualGroups;pendingVisualGroups=null;
+      if(apply&&pending){visualGroups=pending;paintVisuals();}
+      schedule();return true;
     }
     function sameActionScope(identity,geometry){
       return !disposed&&inputReady&&!privatePaused&&identity.runtimeGeneration===context.runtimeGeneration&&
@@ -304,7 +315,9 @@
       if(definition.placement&&report.buttons!==undefined)localButtons.set(consumer,copy(report.buttons));
       if(consumer==='scene'&&report.occupied!==undefined)layoutOccupied=copy(report.occupied);
       if(result.effects.length===0)return Promise.resolve(true);
-      visualGroups=model.readDiagnostics().groups;return render();
+      const nextGroups=model.readDiagnostics().groups;
+      if(result.effects.every(effect=>effect.type==='applyVisualGroups')){applyVisualGroups(nextGroups);return Promise.resolve(true);}
+      visualGroups=nextGroups;return render();
     }
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
@@ -323,7 +336,7 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold();inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -339,7 +352,7 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;releaseNativeHold();epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      dispose(){if(disposed)return;disposed=true;releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
       readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }

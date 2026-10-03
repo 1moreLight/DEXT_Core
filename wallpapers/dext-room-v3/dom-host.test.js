@@ -80,7 +80,7 @@ test('author global scale applies around the canvas origin and matches translate
  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]});
  await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[2,0,0,2,10,20],opacity:1}}});
  const widget=f.container.children[0].children.find(v=>v.dataset.consumer==='component.shared');assert.equal(widget.style.transform,'matrix(2,0,0,2,410,70)');
- const button=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='component.shared');assert.equal(button.x,830/1920);assert.equal(button.y,160/1080);f.host.dispose();
+ const button=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.find(v=>v.consumer==='component.shared');assert.equal(button.x,830/1920);assert.equal(button.y,160/1080);f.host.dispose();
 });
 
 test('busy Core geometry admission retries a newer version instead of leaving input disabled',async()=>{
@@ -280,7 +280,7 @@ test('rotated author region publishes its actual polygon rather than its boundin
  const f=fixture({room:{transition:{type:'author',durationMs:450}}});await f.host.ready;
  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]});
  await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[1,.5,-.5,1,200,0],opacity:1}}});
- const b=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='component.shared');
+ const b=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.find(v=>v.consumer==='component.shared');
  assert.equal(b.entryId,'button.next');assert.equal(b.polygons.length,1);
  assert.equal(geometry.containsPoint(b.polygons[0],{x:b.x+1e-7,y:b.y+1e-7},{includeBoundary:false}),false);
  assert.equal(geometry.containsPoint(b.polygons[0],{x:((410+15)-.5*(70+20)+200)/1920,y:(.5*(410+15)+70+20)/1080},{includeBoundary:false}),true);f.host.dispose();
@@ -323,7 +323,7 @@ test('native focus outlines the acknowledged entry and immediately clears on inv
 test('zero-opacity front layers do not occlude lower native input or intercept DOM pointers',async()=>{
  const f=dockFixture({x:32,y:32,width:96,height:104});await f.host.ready;
  await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[1,0,0,1,0,0],opacity:0}}});
- assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.length,0);
+ assert.deepEqual(f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.map(b=>b.consumer),['official']);
  const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
 });
 
@@ -333,7 +333,7 @@ test('transparent source iframe releases target icon input while its actual poin
  await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));
  assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);
  await f.host.publishGeometry('scene',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{source:{matrix:[1,0,0,1,0,0],opacity:0}}});
- assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.entryId==='icon.focus/icon'),true);
+ assert.equal(f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:2},f.host.readDiagnostics().inputVersion).buttons.some(v=>v.entryId==='icon.focus/icon'),true);
  const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
 });
 test('native focus is rejected before a new geometry acknowledgement and after publication failure',async()=>{
@@ -437,4 +437,44 @@ test('sampled target focus follows animation to its final visible polygons',asyn
  assert.equal(f.host.handleNativeInput({...scope,geometryVersion:version,kind:'focus',consumer:'official',button:'next',entryId:'icon.focus/target'}),true);
  const ring=f.container.children[0].children.find(n=>n.className==='dext-v3-focus'),before=ring.children[0].attrs.points;
  await f.advance(225);assert.notEqual(ring.children[0].attrs.points,before);assert.equal(ring.hidden,false);f.host.dispose();
+});
+
+test('continuous author visual frames move icons widget and focus locally with one structural version',async()=>{
+ const f=fixture({room:{transition:{type:'author',durationMs:450}}});await f.host.ready;
+ const nodes=[...f.frames.values()].map(v=>v.node),scope={runtimeGeneration:1,sessionId:'session',revision:1};
+ const version=f.host.readDiagnostics().inputVersion,structural=f.host.readDiagnostics().geometryVersion,count=f.calls.filter(v=>v.method==='geometry').length;
+ f.host.beginNativeInputSample(scope,version,'tab');f.host.endNativeInputSample('tab');
+ assert.equal(f.host.handleNativeInput({...scope,geometryVersion:version,kind:'focus',consumer:'official',button:'next',entryId:'icon.home/icon'}),true);
+ const ring=f.container.children[0].children.find(n=>n.className==='dext-v3-focus'),before=ring.children[0].attrs.points;
+ for(const y of [100,200]){
+  assert.equal(await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:structural,groups:{source:{matrix:[1,0,0,1,0,y],opacity:1},shared:{matrix:[1,0,0,1,0,y],opacity:1}}}),true);
+  assert.equal(f.host.readDiagnostics().inputReady,true);assert.equal(f.host.readDiagnostics().inputVersion,version);
+ }
+ assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);assert.deepEqual([...f.frames.values()].map(v=>v.node),nodes);
+ const widget=f.container.children[0].children.find(n=>n.dataset.consumer==='component.shared'),icon=f.container.children[0].children.find(n=>n.className==='dext-v3-icon');
+ assert.equal(widget.style.transform,'matrix(1,0,0,1,0,200)');assert.equal(icon.style.transform,'matrix(1,0,0,1,0,200)');
+ assert.notEqual(ring.children[0].attrs.points,before);assert.equal(f.host.readDiagnostics().focus.entryId,'icon.home/icon');
+ assert.equal(f.host.readInputSample(scope,version).buttons.find(b=>b.entryId==='icon.home/icon').y,232/1080);f.host.dispose();
+});
+test('author visual frames wait behind a native sample and latest frame paints once after release',async()=>{
+ const f=fixture({room:{transition:{type:'author',durationMs:450}}});await f.host.ready;
+ const scope={runtimeGeneration:1,sessionId:'session',revision:1},version=f.host.readDiagnostics().inputVersion,structural=f.host.readDiagnostics().geometryVersion;
+ const held=f.host.beginNativeInputSample(scope,version,'held');assert.ok(held);
+ for(const y of [100,200])assert.equal(await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:structural,groups:{source:{matrix:[1,0,0,1,0,y],opacity:1},shared:{matrix:[1,0,0,1,0,y],opacity:1}}}),true);
+ assert.equal(f.host.readInputSample(scope,version).buttons.find(b=>b.entryId==='icon.home/icon').y,32/1080);
+ assert.equal(f.host.endNativeInputSample('other'),false);assert.equal(f.host.endNativeInputSample('held'),true);
+ assert.equal(f.host.readInputSample(scope,version).buttons.find(b=>b.entryId==='icon.home/icon').y,232/1080);
+ f.host.beginNativeInputSample(scope,version,'old');await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:structural,groups:{source:{matrix:[1,0,0,1,0,300],opacity:1},shared:{matrix:[1,0,0,1,0,300],opacity:1}}});
+ await f.host.acceptSnapshot(f.snap(2,{lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:2}}));assert.equal(f.host.endNativeInputSample('old'),false);
+ assert.equal(f.host.readInputSample({...scope,revision:2},f.host.readDiagnostics().inputVersion).buttons.find(b=>b.entryId==='icon.home/icon').y,32/1080);f.host.dispose();
+});
+
+test('committed Desk icons use source groups while a persistent widget uses shared groups',async()=>{
+ const f=fixture({room:{transition:{type:'author',durationMs:450}}});await f.host.ready;
+ await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,
+  groups:{source:{matrix:[1,0,0,1,50,0],opacity:1},shared:{matrix:[1,0,0,1,0,200],opacity:1}}});
+ const icon=f.container.children[0].children.find(n=>n.className==='dext-v3-icon'),widget=f.container.children[0].children.find(n=>n.dataset.consumer==='component.shared');
+ assert.equal(icon.style.transform,'matrix(1,0,0,1,50,0)');assert.equal(widget.style.transform,'matrix(1,0,0,1,0,200)');
+ const entry=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.find(b=>b.entryId==='icon.home/icon');
+ assert.equal(entry.x,82/1920);assert.equal(entry.y,32/1080);f.host.dispose();
 });

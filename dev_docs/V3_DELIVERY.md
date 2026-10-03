@@ -12,9 +12,9 @@
 | 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
 | 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；已有焦点Enter/Space可见采样Core288/288及实际Player通过；单次Tab/移动焦点及连续Tab早到键Core295/295、生产Core类/实际Player组合通过；实际Core OS与个人编辑UI待贯通 | 否 |
-| 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；完整连续仪表盘/输入/异常恢复待完成 | 否 |
+| 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；作者纯视觉矩阵/焦点及实际Player仪表盘同文档bottom→full→bottom基础通过；作者/有效布局多尺寸、完整输入/异常恢复组合待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
-| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
+| 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；作者矩阵本地帧/保持/焦点与实际Player通过；作者/有效布局小窗口组合与实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
 | 7 | 简单 Room 创建与节点保存 | v2编辑器存在；v3正式格式、稳定ID、四类内容和端到端待做 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
@@ -212,3 +212,13 @@ keys-ordered-moving-official-wire实际ReleasePlayer+生产index/main/dom/native
 keys-ordered-core-build四阶段通过后，常规start Core92332/Player98004/Watchdog63388/config74552，日志20261004_060652.txt。identity脚本共享D缓存配置器OTHER/exit1，四精确绝对路径另行核验；常规恢复原v2，不计v3物理键。精确正常关闭、watcher51624 exit0，原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/原生author及official与Core GUID临时目录0，Dext保持关闭。
 下一段为Core零序号兼容收口与持续作者动画组合；实际Core OS/DPI/锁屏/故障还原及最终七项/单次P5审查继续，系统凭据窗未解除时不重复桌面点击。拖动按用户暂缓，本地功能优先、无新增网络专项/中途验收/master合并。完整16项开发就绪仍1/16=6.25%（约6%），13/16及16/16目标不变。
 最终人工第4项增加连续Tab/ShiftTab后立即Enter/Space，确认最终可见焦点只动作一次；长按与AltTab取消。第5项集中验证移动/遮挡/同动作多入口与物理DPI，拖动部分暂缓。
+
+## P5 持续作者动画与本地视觉矩阵验证（2026-10-04）
+scene.publishGeometry保留既有API。模型只在按钮矩形/占用区/视口等结构变化递增geometryVersion并撤销输入；仅source/target/shared矩阵或opacity变化返回applyVisualGroups，Player本地一次绘制Widget/图标/焦点，不清焦点、不重发Core几何。真实原生事件继续读取当前已绘制可见区域，不用旧边界位置命中。保持native sample时只排最新矩阵，匹配end后应用；结构/快照/暂停/销毁取消旧保持。普通图标在无转场的已提交Desk也使用source组，可与共享仪表盘分别控制。
+实质author-visual-dom-red67/70（三个持续视觉/保持功能失败）；实现后旧边界位置断言改读实际样本，失效夹具改为生命周期变化而非同状态空修订，GREEN含SDK86/86。当前图标误跟shared的新增独立RED后，必要模型/DOM/SDK87/87。这些为本地功能检查，无新增网络专项。
+rooms/v3-continuous升级为共享仪表盘组件+持续scene控制器：仪表盘逻辑1600×280、底部展开到整页返回不重建，普通图标按Desk组参与作者运动；作者等待一次publish完成再下一RAF，queue修订不重播动画，完成只回告Core。初次资源一致性检查发现样包SDK副本陈旧，已复制当前生产版本；正式v3 Schema/全部resources/SDK字节一致均通过。
+author-visual-continuous-wire-final实际ReleasePlayer/生产宿主及SDK整轮exit0：1920×1080设计基准同一仪表盘document ID/内部1600×280视口bottom→full→bottom、两次作者完成回告、Core fixture提交；实际ordinary icon矩形与仪表盘位置变化，current native样本含共享按钮，SVG焦点持续运动，几何计数/版本不因视觉帧增加、动作0、读数存在、前台保持。Core包/动作回执/raw OS键仍fixture，不计实际Core OS输入。
+首轮author-visual-continuous-wire在640×480/scale1.5因既定CSS像素保留和临时布局移位，使基准矩阵叠加后仪表盘出画布；该失败保留。当前实机只证明设计基准，作者矩阵与小窗口有效布局组合、多物理DPI仍须继续，不将修改验证窗口写成响应式已通过。
+author-visual-default-regression实际ReleasePlayer整轮exit0：静止/移动鼠标、动态键样本、原生Tab/移动焦点、生产Core类连续ShiftTab早到Enter、切页/共享文档/暂停/最新修订/撤销保持通过。
+author-visual-core-build四阶段后，常规start Core96152/Player95220/Watchdog70036/config58572，日志20261004_063733.txt；identity共享D配置器OTHER/exit1，四精确路径另核。正常关闭、watcher3287 exit0，原四文件SHA256/缺失保持，Dext进程/开发监听/author、official、Core和author-visual GUID目录0。常规恢复原v2，不计v3物理输入，Dext保持关闭。
+后续本地功能继续Core零序号兼容与作者矩阵/小窗口有效布局组合；实际Core OS/物理DPI/锁屏/故障还原仍待补，系统凭据宿主未解除时不重复桌面点击。最终第2项仪表盘跨页实例，第4项连续Tab与键一次动作，第5项移动/遮挡/多入口/DPI集中执行，拖动暂缓。完整16项开发就绪仍1/16=6.25%（约6%），13/16与16/16目标、最终七项与单次P5审查保持，未合并master。

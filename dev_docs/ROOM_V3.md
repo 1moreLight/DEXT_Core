@@ -33,7 +33,7 @@ Windows发布使用已验证目录句柄完成改名，资源读取和暂存写�
 ## 样包与检查
 
 - `rooms/v3-basic`：无共享HTML的简单Room，有待绑定应用入口。
-- `rooms/v3-continuous`：同一共享场景跨两个Desk，实例ID可观察；SDK调用需后续正式宿主接入。
+- `rooms/v3-continuous`：持续scene控制source/target/shared矩阵，同一共享仪表盘从底部到整页返回；Widget实例ID/内部视口可观察，普通图标参与Desk动画。正式SDK已接实际Player基准验证，多尺寸及完整Core组合仍见V3_DELIVERY。
 - `cargo test --manifest-path tests/room-v3-contract/Cargo.toml`：独立测试实际生产契约模块，不依赖Tauri或改桌面。
 
 ## Core个人数据与动作边界（V3-CORE-006）

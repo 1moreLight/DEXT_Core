@@ -184,3 +184,17 @@ test('unpaused visuals remain active when Core disables input foreground',()=>{
   runtime.acceptSnapshot(snapshot(3,{operable:false,lifecycle:{stage:'desktop',playbackPaused:true,locked:false,revision:2}}));
   for(const key of ['scene','component.clock','slot.background.home'])assert.equal(find(runtime,key).state,'suspended');
 });
+
+test('continuous author group frames preserve structural version and declared regions',()=>{
+ const runtime=createRuntime(room());runtime.acceptSnapshot(snapshot());
+ runtime.acceptGeometry('component.clock',geometry(runtime,{buttons:[{buttonId:'next',x:50,y:60,width:100,height:40}]}));
+ const before=runtime.readDiagnostics();
+ for(const y of [100,200,300]){
+  const result=runtime.acceptGeometry('scene',geometry(runtime,{groups:{shared:{matrix:[1,0,0,1,0,y],opacity:1}}}));
+  assert.equal(result.accepted,true);assert.deepEqual(result.effects.map(e=>e.type),['applyVisualGroups']);
+  assert.equal(runtime.readDiagnostics().geometryVersion,before.geometryVersion);
+  assert.deepEqual(runtime.readDiagnostics().buttonRegions,before.buttonRegions);
+ }
+ const changed=runtime.acceptGeometry('scene',geometry(runtime,{occupied:[{id:'panel',x:0,y:800,width:1920,height:280}]}));
+ assert.ok(changed.effects.some(e=>e.type==='invalidateInput'));assert.equal(runtime.readDiagnostics().geometryVersion,before.geometryVersion+1);
+});

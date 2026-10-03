@@ -63,7 +63,7 @@ addEventListener('pagehide', () => { releases.forEach(release => release()); Dex
 
 快照含protocolVersion、Room/session/installation身份、revision、current/target/queued Desk、transitionId/deadlineUtc、active/operable和lifecycle。lifecycle含自己的revision，变化也增加全局revision。旧revision、旧session和同session换安装戳不接受。queue修订不会重播当前动画；动画完成只发完成请求，超时/失焦按Core最终快照收敛。
 
-设计画布1920×1080；viewport为实际CSS宽高和dpr。SDK将当前session/revision/transition/geometryVersion加入几何报告，作者不能传入自己的这四个值。宿主接受报告后递增geometryVersion并通知所有活动消费者，取消旧输入。矩形必须有界，组只允许6项仿射matrix和opacity，不接受DOM、selector、CSS或原生窗口尺寸。
+设计画布1920×1080；viewport为实际CSS宽高和dpr。SDK将当前session/revision/transition/geometryVersion加入几何报告，作者不能传入自己的这四个值。按钮/占用区等结构报告改变时递增geometryVersion并通知活动消费者、取消旧输入；纯组矩阵/opacity帧在Player本地绘制，不递增结构版本或重发Core几何。矩形必须有界，组只允许6项仿射matrix和opacity，不接受DOM、selector、CSS或原生窗口尺寸。
 
 ## 生命周期和媒体裁定
 
@@ -275,3 +275,7 @@ Core raw Tab/ShiftTab在正式eventSamples下冻结单次焦点请求；private 
 正式eventSamples模式保存至多64个未回Tab请求，SampleFocus只接FIFO首项并逐次按当前可见表推进。原始Enter/Space可在没有已定焦点但此前Tab待回时记录；内部KeyReady=false直到此前最后Tab完成，原始UP先到仍保留Released。RoomNativeKeyDelivery保存私有scan/extended信息，在最终focus通知后发送原QPC/键/序号的DOWN与已记录UP；不为等待签发新的物理时间或关联。键盘两个当前可见样本仍必需。
 原动作手势只保留最新一个；新鼠标/几何/会话、错误样本或过期前置Tab取消待键。协调器锁可读取输入leaf，leaf不回调IPC或协调器；接线在SampleNativeGeometry返回后通知焦点并Flush。私有DTO与作者API没有新字段。
 生产Core功能实质RED291/295→GREEN295/295；实际ReleasePlayer返回的连续ShiftTab/Enter样本经生产authority/key delivery完成最终entry一次动作。该探针raw OS边沿/完整Core窗口/动作回执仍fixture；实际Core OS/DPI/锁屏与最终组合保持待验收。
+
+### 持续作者矩阵与当前已绘制样本（2026-10-04）
+scene.publishGeometry的纯groups变化为本地视觉帧，按钮/占用区/视口的变化仍属结构。视觉帧保持inputReady/inputVersion与逻辑focus，图标/Widget/SVG同次绘制；当前Desk普通图标无转场时也沿source组，共享仪表盘可独立沿shared。按钮尺寸仍是各消费者自己的逻辑坐标，事件样本才将有效布局和当前矩阵投影为裁剪后的可见区域。
+native sample保持期间只保存最新待绘制矩阵，匹配end才应用；结构/快照/暂停/销毁取消待帧及旧保持。诊断模型groups是最新接受值，不充当已绘制位置证明；原生readInputSample从实际visualGroups计算，作者无样本或proof入口。实际ReleasePlayer/SDK设计基准仪表盘往返、图标/焦点、本地帧不发Core几何已验证，多尺寸有效布局/物理DPI保持待补。

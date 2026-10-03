@@ -288,3 +288,6 @@
 | #215 | SVG焦点若只画边界快照会留在旧坐标；移动轮廓须本地随帧重算 | [renderer](errors/renderer.md) |
 
 | #216 | 单个焦点gesture丢连续Tab；早到键必须等待最终焦点并保留原QPC | [backend](errors/backend.md) |
+
+| #217 | 作者纯矩阵逐帧重发几何并清焦点；取样保持需排最新视觉帧 | [renderer](errors/renderer.md) |
+| #218 | 持续样包旧SDK与小窗口有效布局叠加；设计基准不代替多尺寸 | [toolchain](errors/toolchain.md) |
