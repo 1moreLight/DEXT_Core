@@ -14,17 +14,18 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
-    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false);
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false);
 internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null);
 
 internal sealed class RoomNativeInputProof
 {
     private readonly RoomNativeInputAuthority owner;
     private int consumed;
-    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false)
-    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; }
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false,bool sampledKeyboard=false)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; SampledVisual=sampledMouse||sampledKeyboard; }
     internal long Sequence { get; }
     internal bool SampledMouse { get; }
+    internal bool SampledVisual { get; }
     internal bool IsConsumed => Volatile.Read(ref consumed)!=0;
     internal void MarkConsumed() => Volatile.Write(ref consumed,1);
     internal RoomNativeButton Button { get; }
@@ -48,7 +49,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private Press? mouse, keyboard;
     private bool mouseHeld;
     private bool sampledMouse,downSampleReceived,upSampleReceived;
-    private AcceptedEntry? downSample,upSample;
+    private AcceptedEntry? downSample,upSample,keyTarget;
     private readonly HashSet<int> keysHeld=new();
     private sealed record Press(AcceptedEntry Entry,long IssuedAt,long Sequence,int X=0,int Y=0,int Key=0);
     private sealed class AcceptedEntry(DextNativeGeometryEntry region)
@@ -172,15 +173,37 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
             CompleteSamples(now);return true;
         }
     }
+    internal bool SampleKeyboard(long document,Guid session,long revision,long version,long sequence,string edge,
+        RoomNativeViewport current,IReadOnlyList<RoomNativeButton> entries,bool foreground,int key,string consumer,string button,string entry)
+    {
+        var now=clock.GetTimestamp();
+        lock(gate)
+        {
+            ExpireGesture(now);
+            if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
+                gesture is not{SampleKeyboard:true} pending || pending.Sequence!=sequence || pending.Key!=key ||
+                keyTarget==null || keyTarget.Button.Consumer!=consumer || keyTarget.Button.Button!=button ||
+                (keyTarget.Button.EntryId??keyTarget.Button.Button)!=entry || edge!="down"&&edge!="up")return false;
+            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(edge=="down"&&downSampleReceived || edge=="up"&&(upSampleReceived||!pending.Released))return false;
+            if(!AcceptRegions(entries,out var accepted)){gesture=null;completed=null;ResetSamples();return false;}
+            var visible=accepted.FirstOrDefault(value=>SameEntry(value,keyTarget));
+            if(edge=="down"){downSampleReceived=true;downSample=visible;}
+            else{upSampleReceived=true;upSample=visible;}
+            CompleteSamples(now);return true;
+        }
+    }
+    private static bool SameEntry(AcceptedEntry a,AcceptedEntry b)=>a.Button.Consumer==b.Button.Consumer &&
+        a.Button.Button==b.Button.Button && a.Button.EntryId==b.Button.EntryId;
     private void CompleteSamples(long now)
     {
-        if(!downSampleReceived || !upSampleReceived || gesture is not{Key:0,Released:true} pending)return;
-        if(downSample!=null && upSample!=null && downSample.Button.Consumer==upSample.Button.Consumer &&
-            downSample.Button.Button==upSample.Button.Button && downSample.Button.EntryId==upSample.Button.EntryId)
-            Complete(new(downSample,pending.IssuedAt,pending.Sequence,pending.X,pending.Y),now);
+        if(!downSampleReceived || !upSampleReceived || gesture is not{Released:true} pending)return;
+        if(downSample!=null && upSample!=null && SameEntry(downSample,upSample) &&
+            (pending.Key==0 || keyTarget!=null&&SameEntry(downSample,keyTarget)))
+            Complete(new(downSample,pending.IssuedAt,pending.Sequence,pending.X,pending.Y,pending.Key),now);
         else{completed=null;gesture=null;}
     }
-    private void ResetSamples(){downSample=null;upSample=null;downSampleReceived=false;upSampleReceived=false;}
+    private void ResetSamples(){downSample=null;upSample=null;keyTarget=null;downSampleReceived=false;upSampleReceived=false;}
     private static bool AcceptRegions(IReadOnlyList<RoomNativeButton> entries,out AcceptedEntry[] result)
     {
         result=Array.Empty<AcceptedEntry>();if(entries==null || entries.Count>4096)return false;
@@ -213,7 +236,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
                     var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
                     focused=order[next];return;
                 }
-                if(focused!=null && BeginGesture(now,0,0,key))keyboard=new(focused,now,gesture!.Sequence,Key:key);
+                if(focused!=null && BeginGesture(now,0,0,key)){keyboard=new(focused,now,gesture!.Sequence,Key:key);keyTarget=focused;}
             }
             else
             {
@@ -222,7 +245,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
                 keyboard=null;
                 if(gesture==null || gesture.Key!=key || gesture.Released)return;
                 if(!Available(current,foreground) || focused!=press.Entry){gesture=null;return;}
-                gesture=gesture with{Released=true};Complete(press,now);
+                gesture=gesture with{Released=true};if(gesture.SampleKeyboard)CompleteSamples(now);else Complete(press,now);
             }
         }
     }
@@ -237,13 +260,13 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
     private bool BeginGesture(long now,int x,int y,int key)
     {
         if(inputSequence>=9007199254740991){ClearGeometry();return false;}
-        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse);
+        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse,SampleKeyboard:key!=0&&sampledMouse);
         return true;
     }
     private void Complete(Press press,long now)
     {
         if(gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
-        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse);
+        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard);
     }
     private bool Expired(long issued,long now)
     {

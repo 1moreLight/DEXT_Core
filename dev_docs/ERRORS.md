@@ -284,3 +284,4 @@
 | #212 | 归一化多边形宽度的机器舍入不能用严格等于测试 | [renderer](errors/renderer.md) |
 
 | #213 | 源动作夹具需进入desktop并沿创建票据的bridge确认；短路out变量不能靠Require推断赋值 | [toolchain](errors/toolchain.md) |
+| #214 | 键盘回执夹具fire需先给receiver；部分文件文本替换失败只接续未写入部分 | [toolchain](errors/toolchain.md) |

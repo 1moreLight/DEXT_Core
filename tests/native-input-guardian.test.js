@@ -133,3 +133,11 @@ test('official trusted dispatch receipt uses the string transport consumed by Pl
  assert.equal(f.sent.length,1);assert.equal(typeof f.sent[0],'string');
  assert.deepEqual(JSON.parse(f.sent[0]),{type:'dext:v3-input-dispatched',protocolVersion:1,token:SECRET,documentNonce:NONCE,gestureId:7,structuralVersion:2,kind:'down'});
 });
+
+test('native sampled Enter/Space receipts precede authored key callbacks',()=>{
+ for(const key of ['Enter',' ']){
+  const f=fixture();assert.ok(f.hook({token:SECRET,kind:'arm',documentNonce:NONCE,gestureId:1,structuralVersion:2,reportDispatch:true}));
+  f.fire(f.node,'keydown',{key});f.fire(f.node,'keyup',{key});
+  assert.deepEqual(f.sent.map(v=>[v.type,v.kind]),[['dext:v3-input-dispatched','down'],['dext:v3-input-dispatched','up']]);
+ }
+});

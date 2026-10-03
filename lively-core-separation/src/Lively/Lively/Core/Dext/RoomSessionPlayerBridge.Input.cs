@@ -99,7 +99,8 @@ internal sealed partial class RoomSessionPlayerBridge
         },out bool accepted) && accepted;
     }
     internal bool SampleNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
-        long version,long sequence,string edge,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool foreground)
+        long version,long sequence,string edge,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool foreground,
+        int key=0,string? consumer=null,string? buttonId=null,string? entryId=null)
     {
         if(disposed || entries==null || entries.Count>4096)return false;
         return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>{
@@ -112,7 +113,8 @@ internal sealed partial class RoomSessionPlayerBridge
                     button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId) &&
                         !(context.Role==RoomClientRole.DesktopPlayer && context.Snapshot.TargetDeskId!=null && button.Scope==context.Snapshot.CurrentDeskId))return false;
             }
-            return native.SampleMouse(generation,session,revision,version,sequence,edge,viewport,entries,foreground);
+            return key==0?native.SampleMouse(generation,session,revision,version,sequence,edge,viewport,entries,foreground):
+                native.SampleKeyboard(generation,session,revision,version,sequence,edge,viewport,entries,foreground,key,consumer!,buttonId!,entryId!);
         },out bool accepted) && accepted;
     }
 }

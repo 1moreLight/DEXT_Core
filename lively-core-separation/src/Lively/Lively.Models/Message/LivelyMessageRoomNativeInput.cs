@@ -54,6 +54,7 @@ namespace Lively.Models.Message
         public int Y { get; set; }
         public int Modifiers { get; set; }
         public bool SampleMouse { get; set; }
+        public bool SampleKeyboard { get; set; }
         public int Key { get; set; }
         public int ScanCode { get; set; }
         public bool IsExtended { get; set; }

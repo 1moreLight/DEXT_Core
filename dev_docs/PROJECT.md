@@ -245,3 +245,7 @@ Core区分主动关闭与当前原生Player故障；故障私有Retire保留chec
 转场同时显示source/target，source的本机动作只接受Core真实raw DOWN/UP和拥有的Player实际派发样本配对产生的sampled mouse完成；consumer声明须属于源Desk，button作用域仍room/对应Desk，个人绑定、授权、1500ms、修订和一次消费保持。准入只供同一保护动作，不把source设成全局活动Desk；data/storage继续目标上下文。
 只读按钮和已授权保护动作能力元数据允许投影仍挂载的source，方便已显示控件继续提交请求；这些读数不生成证明。默认导航按现有target计算并只保留最后意图。源退出入口沿Core原生确认续体冻结原source/target对，确认自身失焦提交target后仍复核该对、当前安装/会话/消费者/权限/绑定/锁屏；新Room或不同Desk对不享受该例外。作者不能提交source scope、确认token或输入序号。
 当前实现覆盖鼠标两边原生样本与保护动作；移动键盘焦点的再次可见采样、真实Core OS/DPI和最终全包验收继续，不能把此阶段当成完整动态输入交付。
+
+### 2026-10-04：已有受控焦点的键盘动作同样要求当前可见完成
+修订上述源鼠标准入的完成类型：正式eventSamples下Enter/Space只对Core已选焦点冻结一对原始键边沿；拥有的Player两个当前可见样本均含该entry后才生成SampledVisual，允许源动作一次消费。作者必须实际trusted键回执，官方默认复用Core原始物理键并仅取样，不向官方DOM合成键。source不成为全局活动Desk，数据/存储仍目标上下文。
+本段不扩展作者公开API/节点focus/Tab顺序；转场新的Tab遍历与焦点移动显示继续开发，实际Core OS/DPI门槛不由隔离Player的fixture包替代。

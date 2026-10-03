@@ -413,7 +413,7 @@ internal sealed partial class RoomActionAuthority
             (snapshot.CurrentDeskId==origin && snapshot.TargetDeskId==confirmation.TransitionTarget ||
              snapshot.TargetDeskId==null && snapshot.CurrentDeskId==confirmation.TransitionTarget))return origin;
         if(snapshot.TargetDeskId==null || snapshot.TransitionId==null)return null;
-        if(visible || input is{SampledMouse:true} && input.Validate(snapshot,consumer,input.Button.Button))return snapshot.CurrentDeskId;
+        if(visible || input is{SampledVisual:true} && input.Validate(snapshot,consumer,input.Button.Button))return snapshot.CurrentDeskId;
         return null;
     }
     private static RoomActionStatus Consumer(RoomActionContext context, string consumer, out RoomActionCatalog.Consumer? owner,RoomNativeInputProof? nativeInput=null,bool visibleSource=false,RoomExitConfirmation? confirmation=null)

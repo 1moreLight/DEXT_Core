@@ -133,6 +133,25 @@ internal static class OfficialHostWireProbe
                 var movingActivated=(await Next())["activated"];
                 Require((long?)movingActivated?["InputSequence"]==8&&actions==2,"moving source releases one original sequence action");
                 Console.WriteLine("PASS actual production animated source icon: different painted DOWN/UP polygons contain same native point, two trusted receipts and one original sequence action; Core packets/replies are fixture");
+                var keyIssued=Stopwatch.GetTimestamp();
+                LivelyMessageRoomNativePointer MovingKey(string kind)=>new(){RuntimeGeneration=1,SessionId=context.SessionId,Revision=2,GeometryVersion=movingVersion,
+                    GestureId=9,IssuedAt=keyIssued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,
+                    PixelWidth=bounds.Width,PixelHeight=bounds.Height,Dpi=dpi,X=bounds.X,Y=bounds.Y,SampleKeyboard=true,
+                    Key=13,ScanCode=28,Consumer="official",Button="next",EntryId="icon.home/first"};
+                await Send(MovingKey("down"));var keyDown=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                await Send(MovingKey("up"));var keyUp=(await Next())["sample"]?.ToObject<LivelyMessageRoomNativeSample>();
+                Require(keyDown?.Input.SampleKeyboard==true&&keyUp?.Input.SampleKeyboard==true&&keyDown.Input.Key==13&&
+                    keyUp.Input.GestureId==9&&keyUp.Input.IssuedAt==keyIssued&&actions==2,"official Core key samples precede default action");
+                Require(DextNativeGeometry.TryCreate(keyDown!.Buttons,out var keyDownRegions),"moving key DOWN regions");
+                Require(DextNativeGeometry.TryCreate(keyUp!.Buttons,out var keyUpRegions),"moving key UP regions");
+                Require(keyDownRegions.Single(r=>r.EntryId=="icon.home/first").X!=keyUpRegions.Single(r=>r.EntryId=="icon.home/first").X,
+                    "official key reads two different painted source positions");
+                Require(NativeMethods.GetForegroundWindow()==foreground,"sampled official key changed foreground");
+                await Send(new LivelyMessageRoomNativeResponse{RuntimeGeneration=1,SessionId=context.SessionId,PayloadJson=JsonConvert.SerializeObject(new{
+                    type="dext:v3-native-event",runtimeGeneration=1,sessionId=context.SessionId,revision=2,geometryVersion=movingVersion,
+                    kind="activate",consumer="official",button="next",entryId="icon.home/first",inputSequence=9})});
+                Require((long?)(await Next())["activated"]?["InputSequence"]==9&&actions==3,"official sampled key releases one action");
+                Console.WriteLine("PASS actual production moving source keyboard samples: both current painted entry polygons before one default action; Core physical key/packets/replies are fixture, no official DOM key is synthesized");
                 var completion=await Next();Require((string?)completion["complete"]?["TransitionId"]==transition.ToString(),"default DOM transition reports current completion");
                 await Command("beforeCommit");var before=await NextReport("beforeCommit");Require((string?)before["diagnostics"]?["runtime"]?["currentDeskId"]=="home","host never commits Desk itself");
                 await Snapshot(3,"focus");await Command("committed");var committed=await NextReport("committed");Require((bool?)committed["focusVisible"]==false&&committed["diagnostics"]?["runtime"]?["focus"]?.Type==JTokenType.Null,"actual SVG focus cleared on input invalidation");Require((string?)committed["diagnostics"]?["runtime"]?["currentDeskId"]=="focus"&&JToken.DeepEquals(documents,committed["documents"]),"Core commit retains actual iframe documents");

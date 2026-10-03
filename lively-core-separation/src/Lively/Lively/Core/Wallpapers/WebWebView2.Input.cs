@@ -44,7 +44,7 @@ namespace Lively.Core.Wallpapers
             if(before==null || sample?.Input==null || sample.Buttons==null || sample.Buttons.Length>4096)return;
             DextNativePointerPacket packet;
             try{packet=new(sample.Input);}catch(ArgumentException){return;}
-            if(!packet.SampleMouse || packet.Key!=0 || packet.Kind!="down"&&packet.Kind!="up")return;
+            if(!packet.SampleVisual || packet.Kind!="down"&&packet.Kind!="up")return;
             var measured=ReadNativeViewport();var foreground=NativeInputIsForeground?.Invoke()==true;
             a.Input.CheckNativeViewport(measured,foreground);
             if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
@@ -52,7 +52,7 @@ namespace Lively.Core.Wallpapers
                 sample.Buttons.Any(b=>b==null))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground))NotifyNative(a,before,true);
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId))NotifyNative(a,before,true);
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
@@ -266,7 +266,7 @@ namespace Lively.Core.Wallpapers
                 RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
                 OriginX=v.X,OriginY=v.Y,PixelWidth=v.Width,PixelHeight=v.Height,Dpi=v.Dpi,X=v.X,Y=v.Y,
-                Key=gesture.Key,ScanCode=scanCode,IsExtended=extended,Consumer=focus.Consumer,Button=focus.Button,EntryId=focus.EntryId??focus.Button});
+                SampleKeyboard=gesture.SampleKeyboard,Key=gesture.Key,ScanCode=scanCode,IsExtended=extended,Consumer=focus.Consumer,Button=focus.Button,EntryId=focus.EntryId??focus.Button});
         }
     }
 }

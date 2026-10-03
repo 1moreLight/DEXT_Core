@@ -408,3 +408,7 @@ SDK新增拒绝测试首轮未设置超时而等待旧实现不拒绝，工具�
 ### #191 补充：UI清单不列出凭据宿主，不能证明桌面已解除覆盖（2026-10-04）
 CredentialUIBroker进程MainWindowHandle=0，Orca list-apps不列出该应用，list-windows pid返回app_not_found，均不能证明Windows真实像素命中桌面。source-action-native-core-live在空桌面点击前再次WindowFromPoint，命中Credential Dialog Xaml Host全屏，安全断言终止，未点击/关闭凭据窗。finally恢复原壁纸、四文件字节/缺失状态、Room哈希及临时窗口旗标，Core已正常退出。
 实际Core OS门槛仍等待系统窗真正解除；不得只因可见应用列表未列出而重试或填写通过，自己的隔离Player真实可信边沿仍可继续补本地证据。
+
+## #214 键盘回执夹具必须保持真实receiver参数（2026-10-04）
+native-input-guardian夹具fire(target,type,options)首轮误用fire(type,options)，因此事件未走root捕获，不能记生产RED。修正receiver为f.node后同一功能仍实质RED27/28（缺keydown/up回执），加入真实键回执后28/28；原失败日志保留。Core新SampleKeyboard/SampledVisual缺API的编译RED单独记录，不冒称行为RED。
+跨多文件mutation在第一文件已写盘后，第二文件的SampledMouse模式锚点断言失败；核实实际input is{SampledMouse:true}语法，再只执行未写入后半段，避免重复修改已成功文件。查代码的几次旧文件名假设（RoomNativeInputQueue/RoomNativeSampleChecks/guardian大小写）不匹配；先rg --files得到实际WebWebView2.Input/NativeEventSampleChecks/native-input-guardian.js再读。最终diff --check与完整四阶段构建通过。

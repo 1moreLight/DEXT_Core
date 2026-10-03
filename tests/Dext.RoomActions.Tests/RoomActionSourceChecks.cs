@@ -25,6 +25,20 @@ static partial class RoomActionChecks
             Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,input,1,f.Session,revision,1,consumer,"open",sequence).Status);
             Eq(RoomActionStatus.Forbidden,f.Input("open",consumer).Status);
         });
+        foreach(var key in new[]{13,32})check("sampled visible source key launches once "+key,()=>{
+            using var f=new ActionFixture(sourceScoped:true);using var bridge=Start(f,out var input);
+            Sample(f,bridge,input,"scene","open");var revision=f.Kernel.Snapshot!.Revision;
+            input.Key(viewport,key,true,false,true);var sequence=input.State!.Gesture!.Sequence;
+            input.Key(viewport,key,false,false,true);Eq(null,input.State!.Completed);
+            var entries=new[]{new RoomNativeButton("scene","open",.35,.2,.2,.2,0,"button.open")};
+            Eq(true,bridge.SampleNativeGeometry(input,1,f.Session,revision,1,sequence,"down",viewport,entries,true,key,"scene","open","button.open"));
+            entries[0]=entries[0] with{X=.45};
+            Eq(true,bridge.SampleNativeGeometry(input,1,f.Session,revision,1,sequence,"up",viewport,entries,true,key,"scene","open","button.open"));
+            Eq(true,input.State!.Completed!.SampledVisual);Eq(false,input.State.Completed.SampledMouse);
+            var result=bridge.ActivateNative(f.Actions,input,1,f.Session,revision,1,"scene","open",sequence);
+            Eq(RoomActionStatus.Accepted,result.Status);Eq(true,result.InputConsumed);Eq(1,f.Launched.Count);
+            Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,input,1,f.Session,revision,1,"scene","open",sequence).Status);
+        });
         check("visible source metadata exposes actions without granting data or storage",()=>{
             using var f=new ActionFixture(storageCapabilities:true,sourceScoped:true);using var bridge=Start(f,out var input);
             Eq(RoomActionStatus.Accepted,f.Actions.ReadButtons(f.View,f.Peer,f.Session,"component.widget").Status);

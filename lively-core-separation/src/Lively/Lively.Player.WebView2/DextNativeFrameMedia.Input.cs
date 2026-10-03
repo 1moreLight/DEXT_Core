@@ -49,7 +49,7 @@ namespace Lively.Player.WebView2
                         (long?)reply["gestureId"]!=value.GestureId || (long?)reply["structuralVersion"]!=value.GeometryVersion)
                         throw new InvalidOperationException("Native input document rejected");
                 }
-                var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion,value.SampleMouse));
+                var json=await Execute(frame,DextNativeInputGuardianPolicy.ArmScript(secret,nonce,value.GestureId,value.GeometryVersion,value.SampleVisual));
                 if(!Current()){accepted=false;return;}Check(json);
                 if(value.Key!=0){
                     json=await Execute(frame,DextNativeInputGuardianPolicy.FocusScript(secret,nonce));

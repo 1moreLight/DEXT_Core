@@ -85,9 +85,9 @@
     }
     function capture(event){
       let entries,kind;try{entries=apply(path,event,[]);kind=apply(type,event,[]);}catch(_){return;}
-      if(this===root&&reportDispatch&&armed&&!closed&&eligible(event,root)&&(kind==='mousedown'||kind==='mouseup')){
+      if(this===root&&reportDispatch&&armed&&!closed&&eligible(event,root)&&(kind==='mousedown'||kind==='mouseup'||kind==='keydown'||kind==='keyup')){
         const receipt=create(null);receipt.type='dext:v3-input-dispatched';receipt.protocolVersion=1;receipt.token=secret;
-        receipt.documentNonce=nonce;receipt.gestureId=gestureId;receipt.structuralVersion=structuralVersion;receipt.kind=kind==='mousedown'?'down':'up';
+        receipt.documentNonce=nonce;receipt.gestureId=gestureId;receipt.structuralVersion=structuralVersion;receipt.kind=kind==='mousedown'||kind==='keydown'?'down':'up';
         apply(post,transport,[receipt]);
       }
       // Installing handlers does not open an input context across callback checkpoints.

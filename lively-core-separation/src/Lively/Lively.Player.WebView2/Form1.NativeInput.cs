@@ -37,7 +37,7 @@ namespace Lively.Player.WebView2
         private NativeVisualSample nativeVisualSample;
         private async Task<bool> PrepareNativeSampleAsync(DextNativePointerPacket value)
         {
-            if(!value.SampleMouse)return true;
+            if(!value.SampleVisual)return true;
             if(!CurrentNativePointer(value)||!IsOfficialDextDocument(webView.CoreWebView2.Source))return false;
             await ReleaseNativeSampleAsync();
             var id=Guid.NewGuid().ToString("D");
@@ -59,22 +59,30 @@ namespace Lively.Player.WebView2
             var parsed=DextNativeInputProtocol.Parse(geometry.ToString(Newtonsoft.Json.Formatting.None),roomRuntime,value.PixelWidth,value.PixelHeight);
             if(parsed==null||parsed.GeometryVersion!=value.GeometryVersion||!DextNativeGeometry.TryCreate(parsed.Buttons,out var entries))return false;
             nativeVisualSample.Buttons=parsed.Buttons;
-            var hit=System.Linq.Enumerable.FirstOrDefault(entries,entry=>entry.Contains(((double)value.X-value.OriginX)/value.PixelWidth,((double)value.Y-value.OriginY)/value.PixelHeight));
-            nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);return true;
+            var hit=System.Linq.Enumerable.FirstOrDefault(entries,entry=>value.Key==0?
+                entry.Contains(((double)value.X-value.OriginX)/value.PixelWidth,((double)value.Y-value.OriginY)/value.PixelHeight):
+                entry.Consumer==value.Consumer&&entry.Button==value.Button&&entry.EntryId==value.EntryId);
+            if(value.SampleKeyboard&&hit==null)return false;
+            if(!value.SampleKeyboard||value.Consumer!="official")nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            return true;
         }
         private async Task CompleteNativeSampleAsync(DextNativePointerPacket value)
         {
-            if(!value.SampleMouse)return;
+            if(!value.SampleVisual)return;
             var own=nativeVisualSample;
             try{
-                if(own==null||own.Packet!=value||!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                if(own==null||own.Packet!=value)return;
+                // Official defaults use Core's physical key and do not dispatch
+                // a synthetic DOM key. Authored keys still wait for a native receipt.
+                if(!(value.SampleKeyboard&&value.Consumer=="official")&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
                 var released=await ReleaseNativeSampleAsync();
                 if(!released||!CurrentNativePointer(value))return;
                 SendToParent(new LivelyMessageRoomNativeSample{Input=new LivelyMessageRoomNativePointer{
                     RuntimeGeneration=value.RuntimeGeneration,SessionId=value.SessionId,Revision=value.Revision,GeometryVersion=value.GeometryVersion,
                     GestureId=value.GestureId,IssuedAt=value.IssuedAt,InputHandle=value.InputHandle,Kind=value.Kind,
                     OriginX=value.OriginX,OriginY=value.OriginY,PixelWidth=value.PixelWidth,PixelHeight=value.PixelHeight,Dpi=value.Dpi,
-                    X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=true},Buttons=own.Buttons});
+                    X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=value.SampleMouse,SampleKeyboard=value.SampleKeyboard,
+                    Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons});
             }finally{if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
         }
         private async Task<bool> ReleaseNativeSampleAsync()

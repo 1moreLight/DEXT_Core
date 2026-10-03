@@ -260,3 +260,8 @@ Player随后发独立msg_room_native_sample{Input,Buttons}，只经其私有stdo
 Core私有proof标记SampledMouse，只在真实两边样本同entry完成时设置；源consumer/Desk按钮的IssueHostInput、配置动作、导航与系统控制只借用该当前证明。没有sampled完成的普通票据、键盘旧静止完成或单边样本不扩大源scope。权限、个人动作优先、原DOWN期限和一次消费照常复核；导航相对当前target排队。
 ReadButtons与ReadCapabilities可展示source声明入口和保护动作授权状态，source专属data/storage仍notOperable/forbidden；公开能力状态不能代替动作消费。Core原生source退出确认只冻结自己的原source/target对，复核原会话安装与当前用户配置；原生modal失焦提交同target后可完成，其他Room/Desk对/锁屏/撤权不接受。
 当前真实移动source图标的Player两边样本和默认动作wire已验证，Core输入包/回复为fixture；生产Core类源应用/导航/控制/退出与必要回归281/281。真正Core OS桌面输入仍被系统Credential Dialog Xaml Host覆盖，未点击该窗口，原数据/桌面已恢复；动态键盘焦点再次可见采样、物理DPI/锁屏和最终集中验收继续。
+
+### 受控焦点 Enter/Space 的动态可见取样（2026-10-04，接续源鼠标准入）
+私有pointer新增SampleKeyboard（仅Key13/32，与SampleMouse互斥），冻结Core焦点Consumer/Button/EntryId及键/scan；eventSamples模式下键盘原始UP不直接完成，SampleKeyboard以两边当前可见region同焦点entry配对，不用鼠标点。Core完成的SampledVisual涵盖paired mouse或paired keyboard，源准入只接受该证明；旧静止键和元数据查询不扩大source。
+作者guardian reportDispatch也报告trusted keydown/up，Player同UI取样/保持→真实键转发→当前root回执→释放保持/发私有样本→同UP释放作者动作。官方按Core原始物理键默认动作，不合成官方DOM键，prepare/complete只读取两边样本。Core现场OS复核和原DOWN半开1500ms不变。
+已有受控焦点（包括此前鼠标采样确定的source entry）Enter/Space已接通，Core288/288与实际ReleasePlayer作者Enter/Space/移动官方键样本通过；实际Core物理键/包/回复仍未在本轮验证。新的转场Tab顺序尚用边界表，动态Tab/移动焦点显示及物理OS/DPI/锁屏继续。

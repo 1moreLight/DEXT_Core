@@ -12,7 +12,7 @@ namespace Lively.Common.Helpers
                 !Positive(value.Revision) || !Positive(value.GeometryVersion) || !Positive(value.GestureId) ||
                 value.IssuedAt<0 || value.InputHandle==0 || value.Dpi<1 || value.Dpi>1536 ||
                 value.PixelWidth<1 || value.PixelHeight<1 || value.PixelWidth>65535 || value.PixelHeight>65535 ||
-                value.SampleMouse&&value.Key!=0 || (value.Key!=0&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
+                value.SampleMouse&&value.Key!=0 || value.SampleKeyboard&&value.Key==0 || (value.Key!=0&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
                 value.Key==0&&(value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
                 value.Key!=0&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
                 (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel" ||
@@ -25,11 +25,13 @@ namespace Lively.Common.Helpers
             GeometryVersion=value.GeometryVersion;GestureId=value.GestureId;IssuedAt=value.IssuedAt;InputHandle=value.InputHandle;
             OriginX=value.OriginX;OriginY=value.OriginY;PixelWidth=value.PixelWidth;PixelHeight=value.PixelHeight;
             Dpi=value.Dpi;X=value.X;Y=value.Y;Modifiers=value.Modifiers;
-            SampleMouse=value.SampleMouse;Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
+            SampleMouse=value.SampleMouse;SampleKeyboard=value.SampleKeyboard;Key=value.Key;ScanCode=value.ScanCode;IsExtended=value.IsExtended;Consumer=value.Consumer;Button=value.Button;EntryId=value.EntryId;
         }
         private static bool Text(string value,int max){if(string.IsNullOrEmpty(value)||value.Length>max)return false;foreach(var c in value)if(char.IsControl(c))return false;return true;}
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
         public bool SampleMouse {get;}
+        public bool SampleKeyboard {get;}
+        public bool SampleVisual=>SampleMouse||SampleKeyboard;
         public int Key {get;}
         public int ScanCode {get;}
         public bool IsExtended {get;}
@@ -172,7 +174,7 @@ namespace Lively.Common.Helpers
                 Kind="cancel",RuntimeGeneration=previous.RuntimeGeneration,SessionId=previous.SessionId,Revision=previous.Revision,
                 GeometryVersion=previous.GeometryVersion,GestureId=previous.GestureId,IssuedAt=previous.IssuedAt,InputHandle=previous.InputHandle,
                 OriginX=previous.OriginX,OriginY=previous.OriginY,PixelWidth=previous.PixelWidth,PixelHeight=previous.PixelHeight,
-                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,SampleMouse=previous.SampleMouse,Key=previous.Key,ScanCode=previous.ScanCode,
+                Dpi=previous.Dpi,X=previous.X,Y=previous.Y,Modifiers=previous.Modifiers,SampleMouse=previous.SampleMouse,SampleKeyboard=previous.SampleKeyboard,Key=previous.Key,ScanCode=previous.ScanCode,
                 IsExtended=previous.IsExtended,Consumer=previous.Consumer,Button=previous.Button,EntryId=previous.EntryId }));
         }
         private bool Expired(DextNativePointerPacket packet)
@@ -180,7 +182,7 @@ namespace Lively.Common.Helpers
         private static bool Same(DextNativePointerPacket a,DextNativePointerPacket b)=>
             a.RuntimeGeneration==b.RuntimeGeneration&&a.SessionId==b.SessionId&&a.Revision==b.Revision&&a.GeometryVersion==b.GeometryVersion&&
             a.GestureId==b.GestureId&&a.IssuedAt==b.IssuedAt&&a.InputHandle==b.InputHandle&&a.OriginX==b.OriginX&&a.OriginY==b.OriginY&&
-            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.SampleMouse==b.SampleMouse&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
+            a.PixelWidth==b.PixelWidth&&a.PixelHeight==b.PixelHeight&&a.Dpi==b.Dpi&&a.SampleMouse==b.SampleMouse&&a.SampleKeyboard==b.SampleKeyboard&&a.Key==b.Key&&a.ScanCode==b.ScanCode&&
             a.IsExtended==b.IsExtended&&a.Consumer==b.Consumer&&a.Button==b.Button&&a.EntryId==b.EntryId;
     }
 }

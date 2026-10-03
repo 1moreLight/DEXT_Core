@@ -13,7 +13,7 @@ using Dext.Core.Rooms;
 internal static class NativeAuthorInputWireProbe
 {
     [DllImport("user32.dll")] private static extern bool SetProcessDpiAwarenessContext(IntPtr context);
-    public static async Task Run(string player,string sdk,int nativeKey=0,bool sampleMouse=false)
+    public static async Task Run(string player,string sdk,int nativeKey=0,bool sampleMouse=false,bool sampleKeyboard=false)
     {
         if(!SetProcessDpiAwarenessContext(new IntPtr(-4)))throw new Exception("Author wire requires PerMonitorV2");
         var root=Directory.CreateTempSubdirectory("Dext-v3-author-input-wire-");
@@ -78,7 +78,7 @@ internal static class NativeAuthorInputWireProbe
                 });
                 send({ready:true});
                 """);
-            if(sampleMouse)File.AppendAllText(Path.Combine(root.FullName,"main.js"),"""
+            if(sampleMouse||sampleKeyboard)File.AppendAllText(Path.Combine(root.FullName,"main.js"),"""
                 globalThis.dextNativeInputSample=value=>{
                   if(value.operation==='end')return true;
                   return{sampleId:value.sampleId,geometryVersion:1,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
@@ -114,7 +114,7 @@ internal static class NativeAuthorInputWireProbe
                 LivelyMessageRoomNativePointer Pointer(string kind)=>new(){RuntimeGeneration=1,SessionId=context.SessionId,Revision=1,GeometryVersion=1,
                     GestureId=7,IssuedAt=issued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,PixelWidth=bounds.Width,
                     PixelHeight=bounds.Height,Dpi=dpi,X=bounds.X+bounds.Width/2,Y=bounds.Y+bounds.Height/2,
-                    SampleMouse=sampleMouse,Key=nativeKey,ScanCode=nativeKey==13?28:nativeKey==32?57:0,Consumer=nativeKey==0?null:"scene",
+                    SampleMouse=sampleMouse,SampleKeyboard=sampleKeyboard,Key=nativeKey,ScanCode=nativeKey==13?28:nativeKey==32?57:0,Consumer=nativeKey==0?null:"scene",
                     Button=nativeKey==0?null:"open",EntryId=nativeKey==0?null:"button.open"};
                 var foreground=NativeMethods.GetForegroundWindow();await Send(Pointer("down"));var down=await NextReport();Require((string?)down["kind"]=="down"&&(bool?)down["trusted"]==true,"trusted native DOWN");
                 if(nativeKey!=0)Require((string?)down["key"]==(nativeKey==13?"Enter":" "),"wrong native key");
@@ -131,11 +131,11 @@ internal static class NativeAuthorInputWireProbe
                 Require((string?)up["kind"]=="up"&&(bool?)up["trusted"]==true&&(string?)result["kind"]=="result"&&(string?)result["result"]?["status"]=="accepted",
                     "trusted UP and SDK result not delivered");
                 await Task.Delay(100);Require(requests.IsEmpty,"duplicate native action");
-                if(sampleMouse){
+                if(sampleMouse||sampleKeyboard){
                     var edges=samples.ToArray();Require(edges.Length==2&&edges[0].Input.Kind=="down"&&edges[1].Input.Kind=="up"&&
-                        edges.All(edge=>edge.Input.SampleMouse&&edge.Input.GestureId==7&&edge.Input.IssuedAt==issued&&edge.Buttons.Length==1&&edge.Buttons[0].EntryId=="button.open"),
+                        edges.All(edge=>(sampleKeyboard?edge.Input.SampleKeyboard&&edge.Input.Key==nativeKey:edge.Input.SampleMouse)&&edge.Input.GestureId==7&&edge.Input.IssuedAt==issued&&edge.Buttons.Length==1&&edge.Buttons[0].EntryId=="button.open"),
                         "native dispatch samples not delivered before author action");
-                    Console.WriteLine("PASS actual Player captures both visual samples after trusted dispatch and before SDK action release; official geometry and Core are fixtures");
+                    Console.WriteLine("PASS actual Player captures both "+(sampleKeyboard?"keyboard":"mouse")+" visual samples after trusted dispatch and before SDK action release; official geometry and Core are fixtures");
                 }                Console.WriteLine("PASS actual ReleasePlayer + production SDK native "+(nativeKey==0?"mouse":nativeKey==13?"Enter":"Space")+": trusted DOWN waits for same UP, exact root r1 becomes one Core n1/gesture7; Core response and official route are fixtures");
             }
             finally{

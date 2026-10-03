@@ -86,6 +86,28 @@ internal static class NativeEventSampleChecks
             n.ObserveSnapshot(snapshot with{Revision=2});Require(!Sample(n,"down",sequence:sequence),"old revision sample accepted");
             Require(n.State!.Completed==null,"stale geometry completion");
         });
+        bool KeySample(RoomNativeInputAuthority n,string edge,RoomNativeButton[] entries,int key=13,string entry="icon.home/open")=>
+            n.SampleKeyboard(1,session,1,1,n.State!.Gesture!.Sequence,edge,viewport,entries,true,key,"official","open",entry);
+        foreach(var key in new[]{13,32})check("sampled key "+key+" waits for both current visible focus edges",()=>{
+            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
+            n.Key(viewport,key,true,false,true);var sequence=n.State!.Gesture!.Sequence;n.Key(viewport,key,false,false,true);
+            Require(n.State!.Completed==null,"raw key UP completed before visibility");
+            Require(KeySample(n,"down",Region(x:.35),key),"key DOWN sample");Require(n.State!.Completed==null,"one key sample completed");
+            Require(KeySample(n,"up",Region(x:.45),key),"key UP sample");
+            var proof=n.GetProof(1,1,"official","open",sequence);
+            Require(proof?.SampledVisual==true&&proof.IssuedAt==0,"moving key lost visual proof or original QPC");
+        });
+        foreach(var edge in new[]{"down","up"})check("sampled keyboard "+edge+" cannot activate a hidden focus entry",()=>{
+            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);
+            n.Key(viewport,13,true,false,true);KeySample(n,"down",edge=="down"?[]:Region());
+            n.Key(viewport,13,false,false,true);KeySample(n,"up",edge=="up"?[]:Region());
+            Require(n.State!.Completed==null,"hidden keyboard focus activated");
+        });
+        check("sampled keyboard keeps the Core focus entry despite another same-button presentation",()=>{
+            var (n,clock)=Create();n.Key(viewport,9,true,false,true);n.Key(viewport,9,false,false,true);n.Key(viewport,13,true,false,true);
+            KeySample(n,"down",Region());n.Key(viewport,13,false,false,true);KeySample(n,"up",Region("icon.home/other"));
+            Require(n.State!.Completed==null,"keyboard joined another entry");
+        });
         check("stationary compatibility keeps native hit pairing and rejects event samples",()=>{
             var (n,clock)=Create(false);n.MouseDown(viewport,-600,300,true);var sequence=n.State!.Gesture!.Sequence;n.MouseUp(viewport,-600,300,true);
             Require(n.State!.Completed!=null,"stationary pair changed");Require(!Sample(n,"down",sequence:sequence),"stationary mode sampled");

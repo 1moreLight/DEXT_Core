@@ -343,3 +343,21 @@ source-moving-official-wire actual ReleasePlayer/生产index/main/dom/native/fra
 实际source-action-native-core-live已尝试生产安装/Core/WorkerW，但WindowsFromPoint仍命中Credential Dialog Xaml Host全屏；Orca可见应用列表未列出且process.MainWindowHandle=0是弱证据。点击前断言停止、没有点击/关闭系统凭据窗，finally恢复原壁纸、四文件原字节/缺失、Room哈希和临时窗口旗标；此轮不计实际Core输入通过（ERRORS #191补充），待系统窗真正解除才补。
 source-action-core-build完整四阶段后常规start Core43772/Player72276/Watchdog120536/config119928，日志20261004_050155.txt。identity共享D配置器OTHER/exit1且精确绝对路径独立核验。精确正常关闭Core/配置器，watcher2576 exit0，原四文件hash/缺失状态保持，Dext进程/开发监听/author、official、Core原生GUID目录0。
 此阶段完成转场源鼠标入口与保护动作基础。动态键盘焦点的再次可见取样、完整Core OS/物理DPI/锁屏/故障还原和最终7项/单次P5整体审查仍继续；Core旧零值proof兼容待全输入链收口。桌面拖动按用户暂缓，本地功能优先、无新增网络专项/中途验收/master合并；完整16项就绪1/16=6.25%（約6%）。
+
+## P5 受控焦点的 Enter/Space 可见采样（2026-10-04，BASE 59206c1）
+一句话目标：已有 Core 受控焦点在转场/移动时，Enter/Space 的原始 DOWN/UP 各读取当前可见区域，同一入口两边均可见后才执行一次动作。
+范围：复用 Player 同 UI 视觉保持队列、私有键盘采样标记和 Core 冻结键/焦点/QPC；作者等待真实 trusted key 回执，官方默认入口由 Core 原始物理键提供输入并只取样，不伪造 DOM 键事件。移动源入口采用完成的视觉键盘 proof；消失/遮挡/另入口取消。已有 Tab 顺序暂沿边界表，转场中重新 Tab 遍历动态可见入口后续补齐，不宣称已交付。拖动暂缓，无新增网络专项。
+先必要 Core/DTO 与可信键回执 RED，再实际 ReleasePlayer Enter/Space 和正式移动官方入口验证。Core 包/回复 fixture 不替代实际 Core OS；系统凭据宿主阻挡时不重试桌面点击。改 C# 后完整 build→start/身份→正常关闭，原四文件保持，具名提交；整体16项就绪1/16≈6%，最终验收卡第4/5项集中执行，不中途确认或合并。
+- [ ] Core 原始键边沿与两边同焦点可见样本完成、源动作。
+- [ ] Player 私有键采样、实际作者 Enter/Space 和移动官方入口。
+- [ ] 必要回归、完整构建、常规启动/关闭与具名提交。
+
+## P5 受控焦点 Enter/Space 的当前可见样本验证（2026-10-04）
+正式eventSamples模式下Core原始Enter/Space DOWN冻结同一键/焦点entry/正数序号/QPC，UP仅记录释放。Player私有SampleKeyboard沿同UI队列读取已绘制source/target可见凸区域并保持官方RAF；两边都含Core原焦点同entry才形成SampledVisual并允许一次源保护动作，移动改变矩形不换entry，缺一边/遮挡/同动作另实例均不完成。
+作者只arm当前consumer直接root，真实trusted keydown/up回执后发msg_room_native_sample，UP样本先于一次SDK原请求释放。官方默认按钮复用Core实际原始键事实，只读取样本，不向官方DOM合成键事件；样本不能创建Core输入，OS HWND/bounds/DPI/前台/修订/期限复核保留。source data/storage仍按目标上下文，普通静止键完成不扩大source。
+新API编译RED保留；必要Core功能keyboard-visible-core-green 288/288（Enter/Space配对、隐藏半边、同按钮另实例、源应用两种键一次消费），可信键回执夹具修正receiver后实质RED27/28→28/28，私有DTO/队列16/16。fixture调用与部分文本替换问题见ERRORS #214。
+keyboard-visible-enter-wire和space-wire实际ReleasePlayer+正式SDK整轮exit0：trusted DOWN等待同UP，两份键盘样本先于唯一r1→n1/gesture7请求，前台不变。其official几何/路由和Core包/回复fixture。
+keyboard-visible-moving-official-wire实际ReleasePlayer+生产index/main/dom/native/frame/media/SDK整轮exit0：真正移动源图标键盘两边X不同、同entry当前区域，样本先于唯一gesture9默认动作；旧静止/移动鼠标、图标区分、焦点、切页/共享文档、暂停/最新修订、撤销继续通过。该官方键不合成DOM事件；Core物理键/包/回复fixture，不代填真实Core OS。
+keyboard-visible-core-build四阶段后常规start Core48472/Player53308/Watchdog97636/config116124，日志20261004_052345.txt。identity共享D配置器OTHER/exit1，精确四进程路径独立核验；常规恢复原v2不计v3物理输入。正常退出、watcher58656 exit0，原四文件hash/缺失保持、Dext进程/开发监听/原生author及official临时目录0，Dext保持关闭。
+本段只完成已有Core受控焦点的动态Enter/Space。转场中新的Tab遍历仍用边界表，动态Tab与移动焦点显示继续；Core零序号兼容、实际Core OS/物理DPI/锁屏/故障还原和最终7项/单次P5审查未完成。系统凭据宿主仍为实际桌面阻碍，本轮不重复Core桌面点击。拖动暂缓、本地功能优先、无新增网络专项/中途验收/master合并，16项就绪仍1/16=6.25%（约6%），13/16及16/16目标不变。
+最终人工仍沿卡第4项验证鼠标/Enter/Space一次动作、长按与AltTab取消；第5项在移动/遮挡/多入口/物理DPI下复核，集中执行。

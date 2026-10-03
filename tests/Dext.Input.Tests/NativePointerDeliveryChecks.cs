@@ -102,6 +102,14 @@ internal static class NativePointerDeliveryChecks
                 prepare:p=>Task.FromResult(false),dispatched:p=>Task.CompletedTask);
             q.Submit(Packet("down"));q.Submit(Packet("up"));await q.WhenIdle();Require(sent.Count==0,"refused sample forwarded");
         });
+        await Check("sampled keyboard flag is immutable and retained on native cancel",async()=>{
+            var p=KeyPacket("down");p.SampleKeyboard=true;var copy=new DextNativePointerPacket((LivelyMessageRoomNativePointer)RuntimeMessageChecks.Roundtrip(p)!);
+            p.SampleKeyboard=false;Require(copy.SampleKeyboard,"keyboard sampling flag lost");
+            var sent=new List<DextNativePointerPacket>();var q=new DextNativePointerDelivery(v=>Task.FromResult(true),()=>Task.CompletedTask,sent.Add,
+                v=>true,v=>Task.CompletedTask,()=>{},()=>0,1000);
+            p.SampleKeyboard=true;q.Submit(p);await q.WhenIdle();await q.InvalidateAsync();
+            Require(sent.Count==2&&sent.All(v=>v.SampleKeyboard)&&sent[1].Kind=="cancel"&&sent[1].Key==13,"cancel dropped sampled key");
+        });
         Console.WriteLine($"{total-failures}/{total} pointer delivery checks passed");if(failures>0)throw new Exception("Pointer delivery regression");
     }
 }
