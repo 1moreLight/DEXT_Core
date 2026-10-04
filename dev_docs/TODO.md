@@ -1557,3 +1557,13 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 - [ ] 真实桌面默认导航/动画同步及非起点重启、系统选择框操作、一次最终整体审查与集中确认保留。P6本地闭环已贯通，按连续授权接续独立P6-002；完整16项仍1/16≈6%，不合并master。
 
 证据在本线程evidence目录：p6-native-config-live-2初次应用失败、p6-canonical-live、p6-media-native-live/actual-media、p6-save-failure-live、p6-restart-live/actual-restart、p6-final-product-live/native-final-evidence、p6-final-restore。工具选择器/误选房间/作用域/日志失败与产品失败分开记录；最后真实功能和精确恢复单独通过。见ERRORS225–227。拖动暂缓，无新增网络专项，最终本卡五项/P5七项保持。
+
+## V3-P6-002 Dock模板与交互编辑（2026-10-04，BASE6d15d1b）
+一句话目标：配置器选择原生Dock模板后自动识别区域，共享数据/按钮配置与Desk逐字段差异可保存重开，实际Core/Player呈现。
+独立feat/V3-P6-002-dock-template / v3-dock-template；承接未合并P6-001依赖。范围外：AppBar/顶层Dock、私人目标/皮肤、分享；拖动暂缓，无新增网络专项。Native执行与最终集中验收沿用户连续授权；设计/计划在plans，本包人工六项见独立验收卡。
+- [x] 已读当前计划/契约/工作流，创建独立worktree/分支，写设计、实施计划与验收；CodeGraph未初始化，使用rg兜底，不擅自索引。
+- [ ] Task1 模板描述/稳定ID/共享差异/删除引用，生产作者文件完整导入与功能RED→GREEN。
+- [ ] Task2 两款官方HTML模板、独立编辑UI/作者公开数据与默认操作、实际浏览器/保存重开。
+- [ ] Task3 当前Core只读数据授权状态/允许/撤销，生产接口及必要完整构建。
+- [ ] Task4 真实Tauri/Core/Player/数据/几何/重启证据，原状态保护与正常退出、必要回归及具名提交。
+- [ ] 最终集中本包六项/P5物理门槛和一次整体审查；不合并master，完整16项仍1/16≈6%。
