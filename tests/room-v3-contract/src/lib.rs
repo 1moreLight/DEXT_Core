@@ -576,3 +576,8 @@ mod tests {
 pub mod room_v3_authoring;
 #[cfg(test)]
 mod authoring_tests;
+
+#[path = "../../../tauri-ui/src-tauri/src/room_v3_dock.rs"]
+pub mod room_v3_dock;
+#[cfg(test)]
+mod dock_tests;

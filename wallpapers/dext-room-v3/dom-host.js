@@ -72,7 +72,12 @@
       const next=new Map();
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
-        for(const item of layoutModel.resolveDeskLayout({items,viewport:state.viewport,occupied:layoutOccupied,deskId}))next.set(item.key,item);
+        // Dock geometry belongs to the official host. A component author can
+        // publish its buttons, while only roomScene can publish occupied areas.
+        const referenced=new Set(desks.get(deskId).components);
+        const dockAreas=(room.components||[]).filter(component=>component.role==='dock'&&referenced.has(component.id))
+          .map(component=>({id:'dock.'+component.id,deskId,...component.placement}));
+        for(const item of layoutModel.resolveDeskLayout({items,viewport:state.viewport,occupied:[...layoutOccupied,...dockAreas],deskId}))next.set(item.key,item);
       }
       effectiveLayouts=next;
     }

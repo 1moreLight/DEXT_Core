@@ -1562,8 +1562,15 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 一句话目标：配置器选择原生Dock模板后自动识别区域，共享数据/按钮配置与Desk逐字段差异可保存重开，实际Core/Player呈现。
 独立feat/V3-P6-002-dock-template / v3-dock-template；承接未合并P6-001依赖。范围外：AppBar/顶层Dock、私人目标/皮肤、分享；拖动暂缓，无新增网络专项。Native执行与最终集中验收沿用户连续授权；设计/计划在plans，本包人工六项见独立验收卡。
 - [x] 已读当前计划/契约/工作流，创建独立worktree/分支，写设计、实施计划与验收；CodeGraph未初始化，使用rg兜底，不擅自索引。
-- [ ] Task1 模板描述/稳定ID/共享差异/删除引用，生产作者文件完整导入与功能RED→GREEN。
-- [ ] Task2 两款官方HTML模板、独立编辑UI/作者公开数据与默认操作、实际浏览器/保存重开。
+- [x] Task1 模板描述/稳定ID/共享差异/删除引用，生产作者文件完整导入与功能RED→GREEN；原生目录/导入/检查命令及Tauri编译通过。
+- [x] Task2 两款官方HTML模板、独立编辑UI/作者公开数据与默认操作；实际浏览器草稿重开/历史/字段继承/删除通过，原生Tauri保存重开随Task4。
 - [ ] Task3 当前Core只读数据授权状态/允许/撤销，生产接口及必要完整构建。
 - [ ] Task4 真实Tauri/Core/Player/数据/几何/重启证据，原状态保护与正常退出、必要回归及具名提交。
 - [ ] 最终集中本包六项/P5物理门槛和一次整体审查；不合并master，完整16项仍1/16≈6%。
+
+- [x] Task1 模型七项功能RED→GREEN：模板共区组件/按钮稳定身份、只改叶子/共享继承、null与数组、删除引用与新ID、Desk默认动作与引用清理。原生模板目录与完整HTML/CSS/JS/SDK资源导入已接；继续正式保存/安装与构建核对。
+
+- [x] Task2 Dock保留区RED→GREEN；普通图标/Widget避让已引用Dock固定placement，不引用的Desk还原作者位置。原精确遮挡检查改为真实作者shared矩阵移动Dock覆盖图标，继续验证当前可见多片区域，未删除旧门槛。DOM57/57，模型/文档10/10，生产作者5/5+Dock3/3，作者HTML夹具1/1和编辑UI夹具、npm build/cargo check通过。
+- [ ] 接续Task3当前Core只读能力允许/撤销及状态读回，再Task4真实Tauri/Core/Player生产集成。浏览器数据/动作是明确夹具，未冒称活体；本轮不启动Dext、不改用户数据。完整16项仍1/16≈6%。
+
+- [x] 修正复用node_modules junction的Vite本地字体403：只加入依赖真实目录，浏览器资源检查与字体就绪补证；不扩大网络专项。

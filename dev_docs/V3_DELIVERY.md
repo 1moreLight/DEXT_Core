@@ -260,3 +260,9 @@ p6-media-native-live通过：由实际配置器逐Desk设起点重应用，真�
 必要自测为生产Rust36/36（两个来源/改名功能RED→GREEN）、Vitest66/66、两个具名v2库改名/Windows显示路径回归、npm build、cargo check；此前完整build.ps1四阶段通过。最后start watcher78843/75916 exit0；Core45588/config58764/Player34052精确路径核验，配置器先正常关、Core普通退出，原四文件SHA256/缺失和原localStorage精确恢复，Dext进程/监听/自有GUID/安装前代副本/观察器0。第一轮Core先关导致配置器窗口关闭但驻留，所有权核对后停止，未称该轮正常退出；最终两轮均正常退出。
 
 最终本包五项/P5七项及一次整体审查保持；默认导航/动画同步、非起点重启、系统选择框和物理输入/DPI待集中，凭据宿主未解除时不做桌面点击。无新增网络专项，拖动暂缓，按连续授权接续独立P6-002；完整16项仍1/16≈6%，不合并。主要证据在本线程evidence目录：p6-canonical-live、media-native-live/actual-media、save-failure-live、restart-live/actual-restart、final-product-live/native-final-evidence、final-restore。
+
+## P6 Dock模板与字段差异基础（2026-10-04，BASE6d15d1b）
+独立v3-dock-template / feat/V3-P6-002-dock-template，承接未合并P6-001。原生目录/导入/检查命令嵌入两款自包含模板描述/HTML/CSS/JS和当前SDK，导入完整资源不改源清单，真实本地保存/重读/安装通过。config保存公开模板描述、参数、启用语义区域、数据选择及稳定按钮映射；所有四个已开放只读源均可选。Desk只写递归差异，null显式/数组替换，逐字段重置恢复共享；动作相同恢复共享按钮。替换保留共区ID，删除仍有其他引用的按钮保留，重建用新ID，不动个人目标。
+生产配置器代码接外观→共享交互→Desk引用/差异，默认导航/待绑定/退出及目标Desk、删除区域、历史/草稿重开。UI先RED后浏览器功能夹具通过。作者HTML按真实DOM/resize报自己的按钮，缺数据/格式错误保外框隐藏读数；作者数据/动作明确为夹具。正式Dock不允许occupied，官方宿主按当前Desk引用的placement为普通图标/Widget避让；不引用时恢复保存位置，旧精确遮挡门槛用作者矩阵移动Dock覆盖继续验证。字体junction本地403修正，编辑资源零失败。
+必要检查：模型/原文档10/10，生产Rust作者5/5+Dock3/3，两款作者HTML夹具1/1、编辑浏览器夹具，DOM57/57，npm build/cargo check通过。未运行额外网络专项。日志p6-dock-frontend-final、native-files、browser-host/browser-final、tauri-check；UI/两款作者截图均在本线程evidence目录。本段不启动Dext，不改用户数据；浏览器Vite结束退出。
+接续Task3当前Core只读授权状态/允许/撤销，再Task4真实Tauri保存重开、Core/ReleasePlayer实际数据/按钮几何/普通重启和原状态保护。最终本包六项/P5七项与一次整体审查保持，凭据宿主未解除时不做Core OS桌面输入；拖动暂缓，完整16项仍1/16≈6%，不合并master。

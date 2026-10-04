@@ -304,3 +304,7 @@
 | #225 | 非规范宿主路径使原生主机哈希不同；排队回执冒称应用成功 | [backend](errors/backend.md) |
 | #226 | 原生库改名返回扩展路径，选中状态与库列表不匹配 | [frontend](errors/frontend.md) |
 | #227 | P6原生选择器夹具/诊断cwd/选择器前缀及正常退出顺序 | [toolchain](errors/toolchain.md) |
+
+| #228 | Dock组件只有按钮几何准入，不能按Scene发布occupied；固定框需由官方宿主避让 | [renderer](errors/renderer.md) |
+
+| #229 | worktree复用node_modules junction后Vite字体落在默认fs.allow之外，预览403但构建正常 | [toolchain](errors/toolchain.md) |

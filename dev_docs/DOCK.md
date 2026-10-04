@@ -201,3 +201,8 @@ Dock 图标管理的正式入口 = 配置器 `DockEditor`。
 - 演示房间 `rooms/test-dock-hud/`：全局底部 + 两桌各自 icons（OpenCode/Steam 真图标），切桌只换应用、位置不动；autoHide 已关（功能保留）
 - 鱼眼放大已整体移除（提交 ee56202，git 历史可恢复）
 - 预览：`scripts/room-preview.ps1`（root=仓库根）→ `http://localhost:5174/wallpapers/dext-room/?room=../../rooms/test-dock-hud/`
+
+## 原生v3模板编辑基础（2026-10-04，P6-002开发中）
+当前v3使用components中role=dock及dockComponentId、Desk.components引用，不套用上述v2 dock节点。官方三栏/导航模板的template.json描述公开placement、参数、语义数据/按钮区域及示例；config.template保留描述，appearance为参数，enabledRegions为启用语义区域，slots为数据选择，buttonSlots映射稳定Root按钮ID。所有已开放time/hardware/media/audio只读源均可选，字段路径和解释方式由作者配置。
+Desk.componentOverrides仅保存差异叶子，对象递归继承、null显式覆盖、数组整体替换；逐字段恢复删除差异，默认动作相同可恢复共享按钮。语义相同的模板替换保留组件/按钮ID；删除后重建新ID，其他图标/内容仍引用的按钮保留，旧资源池不丢。私人目标/皮肤不进Room，UI由后续P6-003接入。
+Dock作者只能按实际DOM/resize报告自身buttons；occupied仍只属于roomScene，官方宿主按当前Desk所引用Dock的固定placement保留区域，让普通图标/Widget避让。不引用的Desk恢复自己的保存位置，不写个人布局、不重建共享组件。Core当前只读授权与实际Tauri/Core/Player验证在P6-002 Task3/4继续；浏览器夹具不计活体完成。

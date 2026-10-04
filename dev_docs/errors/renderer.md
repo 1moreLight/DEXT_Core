@@ -657,3 +657,9 @@ Tab的单次可见查询不等于动作proof，也不证明快速连续键序列
 - 现象：新P6 worktree运行正式Rust契约的样包检查，v3-continuous报duplicate icon id；两Desk都使用view。
 - 修复：保留overview/view，detail图标改detail-view；按钮navigate仍共用，符合两种呈现关联同一按钮的既有契约。正式Rust全套34/34通过。
 - 防再犯：样包不能只跑渲染模型；更新后也运行真实作者Manifest校验。公开按钮可复用，图标呈现ID必须按契约唯一。
+
+## #228 Dock模板占用不能误用Scene的occupied权限（2026-10-04）
+现象：P6模板计划把Dock按钮与占用一起发布，但正式runtime只允许scene交occupied/groups；未保留固定Dock框时，本地图标/Widget会与Dock重叠（新增功能检查实际RED）。
+原因：把roomScene布局接口与Dock组件按钮接口合并理解；旧精确遮挡夹具也故意用静止Dock盖图标，不能代表应有布局。
+修复：模板只报buttons，官方宿主按当前Desk引用的Dock placement加入保留区。不引用的Desk恢复保存位置。精确遮挡检查保留，通过作者shared矩阵把原本不重叠的Dock移到图标上，再读取当前可见采样，继续验证两片/全遮挡；新避让检查与DOM57/57通过。
+下次：先核对consumer准入范围；作者矩形为组件自身逻辑坐标，Dock不新增占用发布权限。

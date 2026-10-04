@@ -289,3 +289,6 @@ geometryVersion用于作者按钮/占用声明及视口结构，单纯有效布�
 
 ### 原生消费必须命名原始输入（2026-10-04）
 私有activate/navigate/mediaControl/audioControl的inputSequence为1..9007199254740991，必须对应原始DOWN及已完成配对；零/省略不能请求最近完成。Core proof与消费bridge也要求显式序号。正数但不匹配当前完成/消费者/几何返回staleInput，零的Core内部调用返回inputRequired并保留真正未消费完成。SDK作者仍不能提交或取得私有序号；authorInput原始SDK request只经既有native witness/请求匹配后得到序号。未消费的失败reply可以为0，不能反向构造消费。测试与实际Player组合证据见V3_DELIVERY，实际Core OS最终门槛保留。
+
+## P6-002模板作者基础（2026-10-04）
+官方Dock模板以自包含HTML/CSS/JS/SDK和template.json导入作品，复用现有config/componentOverrides；未新增SDK通道。模板配置/数据状态及实际DOM按钮报告已用作者HTML浏览器夹具检查，当前Core授权及生产活体验证继续。Dock按自身逻辑坐标报告buttons，不能发布occupied/groups；其placement占用由官方宿主按Desk引用保留。roomScene发布occupied的正式范围保持。

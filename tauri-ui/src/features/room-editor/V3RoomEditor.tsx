@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { addV3Icon, createV3History, moveV3Desk, newV3Desk, readRoomV3, recordV3Change, redoV3, removeV3Desk,
   serializeRoomV3, undoV3, type RoomV3, type V3Content, type V3History } from "./v3-document";
 
+import { V3DockEditor } from "./V3DockEditor";
+import { attachDockTemplate, setDeskDockReference } from "./dock-template";
+import type { DockTemplateDescriptor } from "./dock-template";
+
 type Props = { room:RoomV3; path:string; isTauri:boolean; canApply:boolean; onBack:()=>void; onDirty:(dirty:boolean)=>void;
   onSaved:()=>void; onApply:()=>Promise<void>; onApplied:()=>void };
 type Draft = {base:string;history:V3History;resources:string[]};
@@ -52,15 +56,25 @@ export function V3RoomEditor(props:Props){
     const source=await open({multiple:false,filters:[{name:labels[kind],extensions:extensions[kind]}]});
     if(typeof source!=="string")return;
     const result=await invoke<{content:V3Content;resources:string[]}>("import_v3_content",{roomDir:props.path,srcPath:source,contentType:kind});
-    const next=structuredClone(room);
+    let next=structuredClone(room);
+    if(slot==="dock"&&next.components?.find(c=>c.id===next.dockComponentId)?.config?.template)for(const d of next.desks)if(d.components.includes(next.dockComponentId!))next=setDeskDockReference(next,d.id,false);
     if(slot==="background")next.desks.find(d=>d.id===desk.id)!.background=result.content;
     else if(slot==="dock"){
       const componentId="dock-"+crypto.randomUUID();
       (next.components??=[]).push({id:componentId,role:"dock",entry:result.content.src,placement:{x:0,y:960,width:1920,height:120},capabilities:[]});
-      const old=next.dockComponentId;next.dockComponentId=componentId;for(const d of next.desks){d.components=d.components.filter(id=>id!==old);d.components.push(componentId);}
+      const old=next.dockComponentId;next.dockComponentId=componentId;for(const d of next.desks){d.components=d.components.filter(id=>id!==old);if(d.componentOverrides&&old){delete d.componentOverrides[old];if(!Object.keys(d.componentOverrides).length)delete d.componentOverrides;}d.components.push(componentId);}
     }else next[slot]=result.content;
     setDraft(current=>({...current,resources:[...new Set([...current.resources,...result.resources])],history:recordV3Change(current.history,next)}));
     setMessage("素材已复制；保存后生效");
+  }
+  async function importDock(descriptor:DockTemplateDescriptor) {
+    await run(async()=>{
+      const imported=props.isTauri?await invoke<{entry:string;resources:string[];descriptor:DockTemplateDescriptor}>("import_v3_dock_template",{roomDir:props.path,templateId:descriptor.id})
+        :{entry:descriptor.entry,resources:[],descriptor};
+      const next=attachDockTemplate(room,imported.descriptor,imported);
+      setDraft(current=>({...current,resources:[...new Set([...current.resources,...imported.resources])],history:recordV3Change(current.history,next)}));
+      setMessage(props.isTauri?"Dock 模板已复制；保存后生效":"浏览器设计模式：仅编辑草稿，未复制模板文件");
+    });
   }
   const contentPicker=(slot:"background"|"start"|"idle",content:V3Content|undefined)=>(
     <div className="space-y-2">
@@ -110,25 +124,18 @@ export function V3RoomEditor(props:Props){
             <span className="text-xs text-muted-foreground">{d.background?labels[d.background.type]:"默认背景"} · {d.icons.length} 图标</span>
           </button>
         </div>)}</div>
-        <div className="rounded-lg border border-dashed p-3">
-          <h3 className="mb-2 text-sm font-medium">Dock 外观 → 共享交互 → Desk 引用</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            <select aria-label="共享 Dock 引用" className="min-w-48 rounded border bg-background p-2 text-sm" disabled={busy} value={room.dockComponentId??""} onChange={e=>update(r=>{
-              const old=r.dockComponentId,id=e.target.value;
-              if(id)r.dockComponentId=id;else delete r.dockComponentId;
-              for(const d of r.desks){d.components=d.components.filter(c=>c!==old);if(id&&!d.components.includes(id))d.components.push(id);}
-            })}>
-              <option value="">无共享 Dock</option>{docks.map(d=><option key={d.id} value={d.id}>{d.id}</option>)}
-            </select>
-            <Button variant="outline" disabled={busy} onClick={()=>void run(()=>pick("html","dock"))}>添加本地 Dock</Button>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">引用线复用组件，与 Desk 间切页关系分开；模板参数和按钮配置按后续工作包接入。</p>
-          {room.dockComponentId&&<div className="mt-3 flex flex-wrap gap-3">{room.desks.map(d=>
-            <label key={d.id} className="text-sm"><input type="checkbox" className="mr-2" disabled={busy} checked={d.components.includes(room.dockComponentId!)} onChange={e=>update(r=>{
-              const target=r.desks.find(v=>v.id===d.id)!;target.components=target.components.filter(c=>c!==r.dockComponentId);
-              if(e.target.checked)target.components.push(r.dockComponentId!);
-            })}/>{d.name}</label>)}</div>}
+        <div className="flex flex-wrap items-center gap-2">
+          <select aria-label="共享 Dock 引用" className="min-w-48 rounded border bg-background p-2 text-sm" disabled={busy} value={room.dockComponentId??""} onChange={e=>{
+            const old=room.dockComponentId,id=e.target.value;let next=structuredClone(room);
+            if(old&&next.components?.find(c=>c.id===old)?.config?.template)for(const d of next.desks)if(d.components.includes(old))next=setDeskDockReference(next,d.id,false);
+            for(const d of next.desks){d.components=d.components.filter(c=>c!==old);if(d.componentOverrides&&old){delete d.componentOverrides[old];if(!Object.keys(d.componentOverrides).length)delete d.componentOverrides;}if(id&&!d.components.includes(id))d.components.push(id);}
+            if(id)next.dockComponentId=id;else delete next.dockComponentId;change(next);
+          }}>
+            <option value="">无共享 Dock</option>{docks.map(d=><option key={d.id} value={d.id}>{d.config?.template?(d.config.template as DockTemplateDescriptor).name:d.id}</option>)}
+          </select>
+          <Button variant="outline" disabled={busy} onClick={()=>void run(()=>pick("html","dock"))}>添加本地 Dock</Button>
         </div>
+        <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
         <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材</summary>
           <div className="mt-3 space-y-4"><div><h3 className="mb-2 text-sm">启动</h3>{contentPicker("start",room.start)}</div>
             <div><h3 className="mb-2 text-sm">待机</h3>{contentPicker("idle",room.idle)}</div></div></details>

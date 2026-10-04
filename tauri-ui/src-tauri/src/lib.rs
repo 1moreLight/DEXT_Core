@@ -3,6 +3,7 @@ mod creator;
 mod core_runtime;
 mod room_v3;
 mod room_v3_authoring;
+mod room_v3_dock;
 
 use tauri::Manager;
 
@@ -1861,6 +1862,19 @@ async fn import_v3_content(room_dir: String, src_path: String, content_type: Str
     room_v3_authoring::import_content(std::path::Path::new(&room_dir), std::path::Path::new(&src_path), &content_type)
 }
 
+#[tauri::command]
+async fn list_v3_dock_templates() -> Result<Vec<serde_json::Value>, String> { room_v3_dock::list() }
+
+#[tauri::command]
+async fn import_v3_dock_template(room_dir: String, template_id: String) -> Result<serde_json::Value, String> {
+    room_v3_dock::import(std::path::Path::new(&room_dir), &template_id)
+}
+
+#[tauri::command]
+async fn inspect_v3_dock_template(room_dir: String, component_id: String) -> Result<serde_json::Value, String> {
+    room_v3_dock::inspect(std::path::Path::new(&room_dir), &component_id)
+}
+
 const ROOM_CONTENT_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
 const ROOM_ASSET_DIRS: [&str; 5] = ["background", "switch", "start", "idle", "widgets"];
 const ROOM_LEGACY_PATHS: [&str; 4] = ["transition", "end", "room.js", "room.css"];
@@ -3323,6 +3337,9 @@ pub fn run() {
             create_room,
             create_room_v3,
             import_v3_content,
+            list_v3_dock_templates,
+            import_v3_dock_template,
+            inspect_v3_dock_template,
             save_room_as,
             duplicate_room,
             rename_room,

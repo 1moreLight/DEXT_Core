@@ -1,0 +1,145 @@
+{
+  "formatVersion": 1,
+  "id": "navigation-bar",
+  "name": "简洁导航栏",
+  "entry": "index.html",
+  "placement": {
+    "x": 0,
+    "y": 800,
+    "width": 1920,
+    "height": 280
+  },
+  "parameters": [
+    {
+      "id": "height",
+      "name": "高度",
+      "type": "number",
+      "default": 180,
+      "min": 100,
+      "max": 280
+    },
+    {
+      "id": "roundness",
+      "name": "圆角",
+      "type": "number",
+      "default": 24,
+      "min": 0,
+      "max": 40
+    },
+    {
+      "id": "theme",
+      "name": "配色",
+      "type": "choice",
+      "default": "midnight",
+      "options": [
+        {
+          "value": "midnight",
+          "label": "午夜"
+        },
+        {
+          "value": "porcelain",
+          "label": "瓷白"
+        },
+        {
+          "value": "forest",
+          "label": "苔绿"
+        }
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "id": "previous",
+      "name": "上一页",
+      "kind": "button",
+      "defaultAction": {
+        "type": "desk.previous"
+      }
+    },
+    {
+      "id": "application",
+      "name": "我的应用",
+      "kind": "button",
+      "defaultAction": {
+        "type": "binding.launch"
+      }
+    },
+    {
+      "id": "next",
+      "name": "下一页",
+      "kind": "button",
+      "defaultAction": {
+        "type": "desk.next"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "id": "cpu",
+      "name": "CPU 使用率",
+      "source": {
+        "capability": "hardware.read",
+        "path": [
+          "cpuPercent"
+        ],
+        "format": "number"
+      }
+    },
+    {
+      "id": "gpu",
+      "name": "GPU 使用率",
+      "source": {
+        "capability": "hardware.read",
+        "path": [
+          "gpuPercent"
+        ],
+        "format": "number"
+      }
+    },
+    {
+      "id": "clock",
+      "name": "本地时间",
+      "source": {
+        "capability": "time.read",
+        "path": [
+          "unixMilliseconds"
+        ],
+        "format": "clock"
+      }
+    },
+    {
+      "id": "countdown",
+      "name": "倒计时示例",
+      "source": {
+        "capability": "time.read",
+        "path": [
+          "unixMilliseconds"
+        ],
+        "format": "countdown",
+        "deadline": "2030-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "media",
+      "name": "当前媒体标题",
+      "source": {
+        "capability": "media.read",
+        "path": [
+          "title"
+        ],
+        "format": "text"
+      }
+    },
+    {
+      "id": "audio",
+      "name": "主音量",
+      "source": {
+        "capability": "audio.read",
+        "path": [
+          "volume"
+        ],
+        "format": "number"
+      }
+    }
+  ]
+}

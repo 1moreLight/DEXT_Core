@@ -294,7 +294,13 @@ function dockFixture(rect){
 }
 test('front iframe cuts a native entry into separate visible pieces and fully covered entry disappears',async()=>{
  for(const [rect,count]of [[{x:48,y:32,width:32,height:104},2],[{x:32,y:32,width:96,height:104},0]]){
-  const f=dockFixture(rect);await f.host.ready;const b=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='official');
+  // Layout avoids the saved Dock rectangle; an author visual transform can
+  // still move the Dock over an icon. Verify the current visible sample.
+  const f=dockFixture({x:1600,y:900,width:rect.width,height:rect.height});await f.host.ready;
+  await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,
+    groups:{shared:{matrix:[1,0,0,1,rect.x-1600,rect.y-900],opacity:1}}});
+  const sample=f.host.beginNativeInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion,'occlusion');
+  const b=sample.buttons.find(v=>v.consumer==='official');
   if(!count)assert.equal(b,undefined);else{
    assert.equal(b.polygons.length,count);
    assert.equal(b.polygons.some(p=>geometry.containsPoint(p,{x:64/1920,y:70/1080},{includeBoundary:false})),false);
@@ -494,4 +500,17 @@ test('author geometry exposes effective pre-group component rectangles through s
  assert.equal(f.calls.filter(v=>v.method==='frameGeometry').length,frameCount);
  viewport={width:1920,height:1080,dpr:1};await f.host.resize();
  assert.deepEqual(projected(),initial);assert.equal([...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node,node);f.host.dispose();
+});
+
+test('referenced Dock reserves its placement for icons and widgets and unreferenced Desk restores saved positions',async()=>{
+ const dock={id:'dock',role:'dock',entry:'dock.html',placement:{x:0,y:800,width:1920,height:280},capabilities:[]};
+ const widget={id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:840,width:200,height:100},capabilities:[]};
+ const f=fixture({room:{resources:['scene.html','widget.html','dock.html'],components:[widget,dock],dockComponentId:'dock',
+  desks:[{id:'home',name:'Home',icons:[{id:'bottom',buttonId:'next',x:0,y:7}],components:['shared','dock']},
+    {id:'focus',name:'Focus',icons:[],components:['shared']}]}});
+ await f.host.ready;
+ for(const item of f.host.readDiagnostics().layout.items)assert.ok(item.effectiveRect.y+item.effectiveRect.height<=800,'items must avoid Dock placement');
+ await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));
+ const restored=f.host.readDiagnostics().layout.items.find(item=>item.key==='widget:shared');
+ assert.equal(restored.effectiveRect.y,840);assert.equal(f.calls.filter(call=>call.method==='layoutSave').length,0);f.host.dispose();
 });

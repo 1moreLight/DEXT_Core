@@ -435,3 +435,12 @@ dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown 
 覆写冻结的__TAURI_INTERNALS__.invoke未截到dialog，选择返回null，素材状态等待超时，未算导入通过。改为只截实际Vite dialog模块的选择文件返回，生产Tauri invoke/import/write/apply/RPC均保持；prompt亦为输入夹具，原生系统选择框仍待最终验收。
 首次保存失败探针打开错Room；先确认编辑器名称/路径，再临时移动自有资源，真实失败反馈/原字节保持通过。卡片可访问名含“已选中”，锚定开头等待不到；改唯一房间名匹配。观察器相对路径cwd为tauri-ui，首次文件不存在后改绝对路径。清理后误把*>作为新语句，日志写入失败；不重做递归删除，以只读精确恢复/进程/监听/目录检查保存最终日志。
 第一轮先关Core，再CloseMainWindow，配置器窗口关闭但进程驻留，报PostMessage无效HWND；核对PID/共享二进制绝对路径后停止自有进程，watcher exit-1如实保留。后两轮先关配置器、再普通Core退出，watcher78843/75916 exit0；原四文件/缺失与localStorage恢复，进程/监听/自有资源0。未操作凭据宿主或做Core OS点击。
+
+### 2026-10-04 P6-002复核（沿用#223/#227）
+编辑脚本在tauri-ui cwd却带repo前缀时，首个write_text即FileNotFoundError；npm exec也不会自动切换项目目录，tsc相对project路径必须与实际cwd一致。改为明确repo或tauri-ui绝对工作目录再定位文件；本轮失败脚本未写任何源码，重试后构建/夹具通过。HTML生成拼接引号曾留下字面量+template+，读取实际作者文件后修正，两个作者浏览器夹具通过。
+测试复用同Room切换模板时不能清空旧资源清单；保存所有实际导入资源后正式安装通过。这是夹具错误，未改生产安装校验。依赖通过已核对node_modules junction复用，编译目标显式指定已有缓存。
+
+## #229 node_modules junction的字体真实路径未被Vite允许（2026-10-04）
+现象：复用已核对依赖目录的worktree构建/编辑功能通过，但Vite日志显示Geist字体403，浏览器回落到系统字体。
+原因：Vite把资源解析到junction真实目标，默认允许范围只包含当前项目和Vite客户端。
+修复：保留searchForWorkspaceRoot默认范围，并仅增加已解析node_modules真实目录。浏览器编辑检查记录所有失败资源、等document.fonts.ready并要求零失败；后续预览重新截图。未开放其他目录，生产打包资源原本正常。
