@@ -319,3 +319,5 @@
 | #234 | 删除目标成功须关闭同ID旧表单，避免保存意外重建 | [frontend](errors/frontend.md) |
 
 | #235 | 普通图标新增须同时检查Desk图标与Room按钮额度；已有按钮可复用 | [frontend](errors/frontend.md) |
+
+| #236 | 试验台适配须沿正式SDK动作结构，诊断采样需跟随当前视觉帧 | [frontend](errors/frontend.md) |

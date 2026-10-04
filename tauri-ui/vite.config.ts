@@ -23,7 +23,7 @@ export default defineConfig(async () => ({
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     // Worktrees may reuse a local node_modules junction; serve its font assets.
-    fs: { allow: [searchForWorkspaceRoot(__dirname), realpathSync(path.resolve(__dirname, "node_modules"))] },
+    fs: { allow: [searchForWorkspaceRoot(__dirname), path.resolve(__dirname, "../wallpapers/dext-room-v3"), realpathSync(path.resolve(__dirname, "node_modules"))] },
     port: 1620,
     strictPort: true,
     host: host || false,

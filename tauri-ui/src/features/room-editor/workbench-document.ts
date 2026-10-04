@@ -1,0 +1,10 @@
+import style from "../../../../wallpapers/dext-room-v3/style.css?raw";
+import geometry from "../../../../wallpapers/dext-room-v3/geometry.js?raw";
+import layout from "../../../../wallpapers/dext-room-v3/layout-model.js?raw";
+import runtime from "../../../../wallpapers/dext-room-v3/runtime-model.js?raw";
+import frames from "../../../../wallpapers/dext-room-v3/frame-host.js?raw";
+import media from "../../../../wallpapers/dext-room-v3/media-host.js?raw";
+import dom from "../../../../wallpapers/dext-room-v3/dom-host.js?raw";
+import adapter from "./workbench-host.js?raw";
+const scripts=[geometry,layout,runtime,frames,media,dom,adapter].map(source=>"<script>"+source.replace(/<\/script/gi,"<\\/script")+"</script>").join("");
+export const workbenchDocument="<!doctype html><html><head><meta charset='utf-8'><meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: http://v3preview.localhost; media-src http://v3preview.localhost; font-src http://v3preview.localhost; frame-src http://v3preview.localhost; connect-src 'none'; form-action 'none'\"><style>"+style.replace(/<\/style/gi,"<\\/style")+"</style></head><body><main id='runtime' aria-label='草稿预览'></main>"+scripts+"</body></html>";

@@ -4,6 +4,7 @@ mod core_runtime;
 mod room_v3;
 mod room_v3_authoring;
 mod room_v3_dock;
+mod room_v3_workbench;
 
 use tauri::Manager;
 
@@ -3323,6 +3324,7 @@ async fn exit_core() -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(creator::CreatorImports::default())
+        .manage(room_v3_workbench::PreviewResources::default())
         .setup(|app| {
             core_runtime::watch_product_exit(app.handle().clone());
             Ok(())
@@ -3339,6 +3341,12 @@ pub fn run() {
             };
             serve_lib_file(request.uri().path(), &dir)
         })
+        .register_uri_scheme_protocol("v3preview", |ctx, request| {
+            match ctx.app_handle().try_state::<room_v3_workbench::PreviewResources>() {
+                Some(state) => room_v3_workbench::serve(&request,&state),
+                None => tauri::http::Response::builder().status(503).body(Vec::new()).unwrap(),
+            }
+        })
         .register_uri_scheme_protocol("creator", |ctx, request| {
             match ctx.app_handle().try_state::<creator::CreatorImports>() {
                 Some(imports) => creator::serve_creator_file(request.uri().path(), &imports),
@@ -3346,6 +3354,8 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            room_v3_workbench::prepare_v3_workbench,
+            room_v3_workbench::release_v3_workbench,
             get_wallpapers,
             get_installed_apps,
             launch_app,

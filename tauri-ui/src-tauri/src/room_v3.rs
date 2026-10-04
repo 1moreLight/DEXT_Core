@@ -188,6 +188,12 @@ pub struct ResourceReader {
     file: File,
     _directories: Vec<File>,
 }
+impl ResourceReader {
+    pub fn length(&self) -> std::io::Result<u64> { Ok(self.file.metadata()?.len()) }
+}
+impl std::io::Seek for ResourceReader {
+    fn seek(&mut self, position: std::io::SeekFrom) -> std::io::Result<u64> { std::io::Seek::seek(&mut self.file,position) }
+}
 impl Read for ResourceReader {
     fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
         self.file.read(buffer)

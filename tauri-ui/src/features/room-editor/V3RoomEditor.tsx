@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { addV3Icon, createV3History, moveV3Desk, newV3Desk, readRoomV3, recordV3Change, redoV3, removeV3Desk, removeV3Presentation,
   serializeRoomV3, undoV3, v3IconCreationIssue, type RoomV3, type V3Content, type V3History } from "./v3-document";
 
+import { V3Workbench } from "./V3Workbench";
 import { V3PersonalEditor } from "./V3PersonalEditor";
 import type {AppPickerItem} from "@/components/AppPickerDialog";
 import { V3DockEditor } from "./V3DockEditor";
@@ -35,6 +36,7 @@ export function V3RoomEditor(props:Props){
   const iconCreationIssue=v3IconCreationIssue(room,desk.id,true);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
+  const [workbenchOpen,setWorkbenchOpen]=useState(false);
   const dirty=serializeRoomV3(room,draft.resources)!==draft.base;
   const docks=(room.components??[]).filter(c=>c.role==="dock");
   const change=(next:RoomV3)=>setDraft(current=>({...current,history:recordV3Change(current.history,next)}));
@@ -90,9 +92,11 @@ export function V3RoomEditor(props:Props){
       </div>
     </div>
   );
+  if(workbenchOpen)return <V3Workbench room={{...room,resources:[...new Set([...room.resources,...draft.resources])]}} path={props.path} isTauri={props.isTauri} deskId={desk.id} onBack={()=>setWorkbenchOpen(false)}/>;
   return <section className="flex min-h-0 flex-1 flex-col gap-3" aria-label="原生 v3 Room 编辑器">
     <header className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
       <Button variant="ghost" disabled={busy} onClick={props.onBack}>返回房间库</Button>
+      <Button variant="outline" disabled={busy} onClick={()=>setWorkbenchOpen(true)}>打开试验台</Button>
       <span className="font-medium">{room.name}</span><span className="text-xs text-muted-foreground">v3 · {dirty?"未保存":"已保存"}</span>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy||!draft.history.past.length} onClick={()=>setDraft(d=>({...d,history:undoV3(d.history)}))}>撤销</Button>
