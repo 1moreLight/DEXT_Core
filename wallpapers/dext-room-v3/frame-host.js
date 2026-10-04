@@ -39,7 +39,7 @@
     key.startsWith('component.')&&id(key.slice(10))&&(rect===null||shape(rect,['x','y','width','height'])&&
     ['x','y','width','height'].every(field=>Number.isFinite(rect[field])&&rect[field]>=0&&rect[field]<=16384)&&rect.width>0&&rect.height>0));}
   function geometryValid(value){return object(value)&&Number.isSafeInteger(value.geometryVersion)&&value.geometryVersion>=0&&(value.placements===undefined||placementsValid(value.placements))&&object(value.viewport)&&
-    ['width','height'].every(key=>Number.isFinite(value.viewport[key])&&value.viewport[key]>=64&&value.viewport[key]<=16384)&&
+    ['width','height'].every(key=>Number.isFinite(value.viewport[key])&&value.viewport[key]>=(key==='height'?48:64)&&value.viewport[key]<=16384)&&
     Number.isFinite(value.viewport.dpr)&&value.viewport.dpr>=.5&&value.viewport.dpr<=8;}
   function createFrameHost(options){
     if(!snapshotValid(options.initialSnapshot)||!geometryValid(options.initialGeometry)||!Number.isSafeInteger(options.runtimeGeneration)||options.runtimeGeneration<1||
@@ -56,7 +56,7 @@
     const sameScope=scope=>scope.sessionId===snapshot.sessionId&&scope.revision===snapshot.revision&&scope.runtimeGeneration===generation;
     function active(record){
       const stage=record.consumerId==='slot.start'?'starting':record.consumerId==='slot.idle'?'idle':'desktop';
-      return alive(record)&&!playbackSuspended&&!record.docDisposed&&record.state==='active'&&snapshot.active&&snapshot.lifecycle.stage===stage&&!snapshot.lifecycle.playbackPaused&&!snapshot.lifecycle.locked;
+      return alive(record)&&!playbackSuspended&&!record.docDisposed&&record.state==='active'&&snapshot.active&&snapshot.lifecycle.stage===stage&&(options.viewKind==='dock'||!snapshot.lifecycle.playbackPaused)&&!snapshot.lifecycle.locked;
     }
     function envelope(record,type){return{type,apiVersion:1,instanceId:record.instanceId,sessionId:snapshot.sessionId,token:record.token};}
     function send(record,value){

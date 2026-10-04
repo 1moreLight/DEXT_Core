@@ -1683,3 +1683,10 @@ Task1轻量核对：双proto源码逐字一致、具名接线位置和diff核对
 - [ ] Task3 正式Dock视图、SDK、几何/真实输入与独立可见性接通；Task4任务栏恢复看护、Task5必要构建/实际运行继续游戏后集中。
 当前工作包编码2/5=40%（步骤计数，非工时或已验收功能）。本轮仅源码和差异核对，不编译、不启动应用/窗口、不做桌面输入或新测试矩阵；不合并master。
 源码接线收尾：隐藏窗口不能使用只找可见HWND的旧枚举，改用已知WebView HWND的顶层祖先并核对实际Player PID；协议上下文/订阅/重放原来只许DesktopPlayer，按已绑定Dock角色补齐，Complete/CompleteStartup仍只许桌面。见ERRORS #240。最后构建/Windows与六项人工验收均未执行。
+
+### P8 Task3 视图与窗口部分（2026-10-05）
+- [x] 编码：正式runtime携带Dock视图身份，仅呈现当前Desk引用的dockComponentId，复用作者SDK/按钮发现与绑定；保留作者逻辑画布，通过有效呈现映射到独立Dock窗口，48 DIP高度与官方键盘控件遮挡进入几何。
+- [x] 编码：Core/Player私有窗口状态与策略按generation/session/revision校验；原生宿主与可见性、媒体暂停和只读数据接线。窗口可用须等待实际输入通道及可见性同步，当前显示awaitingInput并保持隐藏。
+- [ ] Task3剩余：接Core真实OS鼠标/受控键盘路由、一次动作与桌面暂停时Dock导航；未把视图/进程存在当作完整可用。
+- [ ] Task4任务栏替代/恢复与Task5必要构建、实际Windows六项验收继续。
+当前包编码约50%（Task1/2完成，Task3部分完成；估算不是整体V3交付比例）。仅五份JS语法、Player csproj XML与具名差异检查通过，未编译C#/Rust/TS、未启动应用或触碰桌面；用户全屏游戏约束保持。不合并master。源码发现及处理见ERRORS #241。

@@ -326,3 +326,5 @@
 | #238 | 顶层Dock原型初次Shown窗口不能只凭逻辑visible=false跳过原生隐藏 | [renderer](errors/renderer.md) |
 | #239 | 原生Dock资格必须读取dockComponentId，偏好enabled不等于宿主运行 | [backend](errors/backend.md) |
 | #240 | 隐藏Dock须沿实际WebView祖先取HWND；共享上下文不能仍独占DesktopPlayer角色 | [backend](errors/backend.md) |
+
+| #241 | 独立Dock须保留作者画布/有效几何，实际输入与可见性同步后才报窗口可用 | [renderer](errors/renderer.md) |

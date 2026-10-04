@@ -18,7 +18,12 @@ namespace Lively.Player.WebView2
         private readonly uint explorerMessage = RegisterWindowMessage("TaskbarCreated");
         private bool registered, arranging, arrangeQueued, disposed, started;
         private bool keyboard, expanded, fullscreen, shellFullscreen, arrangingWindows;
-        private bool visible;
+        private bool visible, available = true;
+        private readonly string role;
+        internal bool IsStarted => started;
+        internal bool IsVisible => visible;
+        internal bool IsKeyboard => keyboard;
+        internal bool IsFullscreen => fullscreen;
         private int heightDip = 128;
         private DockMode mode;
         private IntPtr previousForeground;
@@ -28,9 +33,10 @@ namespace Lively.Player.WebView2
         internal event Action<object> StateChanged;
         internal event Action<Exception> Failed;
 
-        internal DextDockWindowHost(Form form)
+        internal DextDockWindowHost(Form form, string role = "dock-probe")
         {
             owner = form;
+            this.role = role;
             AssignHandle(form.Handle);
             // Form.Shown already made the offscreen HWND visible; establish real hidden state
             // before moving it onto the screen (initial autohide/fullscreen must stay hidden).
@@ -41,12 +47,26 @@ namespace Lively.Player.WebView2
 
         internal void Start(DockMode initial, int height)
         {
+            if (started || disposed) return;
+            // Application.Run may show the HWND after construction; reestablish
+            // hidden native state before the first on-screen arrangement.
+            SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, 0x0097);
+            visible = false;
             beforeWorkArea = ReadPrimaryWorkArea();
             started = true;
             heightDip = ClampHeight(height);
             fullscreen = ForegroundCoversPrimary();
             SetMode(initial);
             timer.Start();
+        }
+
+        internal void SetAvailability(bool value)
+        {
+            if (disposed || available == value) return;
+            available = value;
+            if (!value) { expanded = false; LeaveKeyboard(false); }
+            UpdateVisibility();
+            Publish();
         }
 
         internal void SetMode(DockMode value)
@@ -197,7 +217,7 @@ namespace Lively.Player.WebView2
                     if (fullscreen) { expanded = false; LeaveKeyboard(false); }
                     else if (mode != DockMode.Autohide) expanded = true;
                 }
-                if (mode == DockMode.Autohide && !fullscreen && !arrangingWindows)
+                if (available && mode == DockMode.Autohide && !fullscreen && !arrangingWindows)
                 {
                     Point cursor;
                     if (GetCursorPos(out cursor))
@@ -241,7 +261,7 @@ namespace Lively.Player.WebView2
 
         private void UpdateVisibility()
         {
-            var next = started && !fullscreen && !arrangingWindows &&
+            var next = started && available && !fullscreen && !arrangingWindows &&
                 (mode != DockMode.Autohide || expanded);
             if (next == visible) return;
             visible = next;
@@ -254,7 +274,7 @@ namespace Lively.Player.WebView2
         {
             return new
             {
-                role = "dock-probe", mode = mode.ToString().ToLowerInvariant(), heightDip,
+                role, started, available, mode = mode.ToString().ToLowerInvariant(), heightDip,
                 dpi = GetDpiForWindow(Handle), visible, keyboard, fullscreen, appBarRegistered = registered,
                 hwnd = Handle.ToInt64().ToString(), foreground = GetForegroundWindow().ToInt64().ToString(),
                 window = Describe(lastBounds), workArea = Describe(ReadPrimaryWorkArea()),

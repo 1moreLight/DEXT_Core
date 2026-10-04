@@ -669,3 +669,7 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 
 ## #238 顶层Dock初次隐藏需同步原生HWND状态（2026-10-04）
 源码核对发现：原型在Form.Shown后创建窗口行为，logical visible初始false，但HWND实际已在屏外显示。直接布局移动后，autohide或已有全屏时next=false与缓存相同，UpdateVisibility提前返回，会把实际可见窗口留在主屏。现在AssignHandle后先SWP_HIDEWINDOW/NOACTIVATE，再布局并统一显示策略；实际原生运行仍待游戏结束，未虚构故障复现或修复通过。DPI默认处理还可能改变实际矩形，布局比较用GetWindowRect；首次跨DPI重排，ABM_REMOVE后的工作区用GetMonitorInfo即时读回。原生透明框HRESULT仅说明API调用，不证明WebView/背景透出，验收仍看实际普通软件。
+
+## #241 独立Dock不能压缩整Room或提前冒报窗口可用（2026-10-05）
+源码接线发现：复用整桌面宿主会把Scene/图标与桌面暂停规则带入Dock；仅缩小viewport又可能低于既有64px校验或令作者按钮几何失配。Dock视图现在只呈现正式dockComponentId，保持作者组件逻辑画布，通过有效矩形映射到宿主，Dock高度允许48 DIP，官方键盘控件进入遮挡；桌面过渡完成仍由桌面视图负责。
+原生宿主还须区分rendererReady与真实输入已连接，并等待媒体/可见性同步后才报WindowReady。当前Core实际OS输入未接，策略为false、状态awaitingInput、窗口保持隐藏，不能用进程存在或偏好enabled代填成功。以上为源码发现与处理，仅语法/XML/差异检查通过，真实Windows/DPI/输入尚未验证。

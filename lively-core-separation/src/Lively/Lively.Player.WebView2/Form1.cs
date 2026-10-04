@@ -108,6 +108,7 @@ namespace Lively.Player.WebView2
                 };
             }
 
+            if (startArgs.DextDock) WindowState = FormWindowState.Normal;
             InitializeWebView2Async().Await(() => {
                 _ = ListenToParent();
             }, 
@@ -139,7 +140,7 @@ namespace Lively.Player.WebView2
             base.OnShown(e);
             // Task3 releases this hidden window only after the formal Dock
             // view, geometry and physical input have initialized.
-            if (startArgs?.DextDock == true) Hide();
+            if (startArgs?.DextDock == true && nativeDockWindow?.IsStarted != true) Hide();
         }
 
         private void HandleParseError(IEnumerable<Error> errs)
@@ -265,6 +266,17 @@ namespace Lively.Player.WebView2
                     var webMessage = e.TryGetWebMessageAsString();
                     if (nativeResources != null && Encoding.UTF8.GetByteCount(webMessage) > 1024 * 1024) return;
                     var o = JsonConvert.DeserializeObject<dynamic>(webMessage);
+                    if (startArgs.DextDock && ((string)o.type == "dext:v3-dock-ready" || (string)o.type == "dext:v3-dock-keyboard"))
+                    {
+                        var control = JObject.Parse(webMessage);
+                        if (control["runtimeGeneration"]?.Type != JTokenType.Integer || control["revision"]?.Type != JTokenType.Integer ||
+                            !Guid.TryParse((string)control["sessionId"], out var dockSession)) return;
+                        var generation = (long)control["runtimeGeneration"]; var revision = (long)control["revision"];
+                        if (!NativeDockIdentity(generation, dockSession, revision)) return;
+                        if ((string)control["type"] == "dext:v3-dock-ready") await OnNativeDockRendererReady(generation, dockSession, revision);
+                        else if (nativeDockInputConnected && nativeDockRendererReady) nativeDockWindow?.EnterKeyboard();
+                        return;
+                    }
                     if ((string)o.type == "saveRoom")
                     {
                         SendToParent(new LivelyMessageSaveRoomCmd()
@@ -423,6 +435,7 @@ namespace Lively.Player.WebView2
             SendToParent(new LivelyMessageHwnd() {
                 Hwnd = webView.Handle.ToInt32()
             });
+            InitializeNativeDockWindow();
         }
 
         private bool IsTopLevelWebMessage(CoreWebView2WebMessageReceivedEventArgs e)
@@ -470,6 +483,7 @@ namespace Lively.Player.WebView2
                 nativeNetworkReady = false;
                 nativeNavigationId = args.NavigationId;
                 roomPageReadySent = false;
+                ResetNativeDockDocument();
                 nativeResources?.Revoke();
                 if (roomRuntime.Invalidate("navigation")) PostRuntimeLastMessage();
                 if (nativeFrameMedia != null) _ = nativeFrameMedia.ResetAsync();
@@ -912,6 +926,9 @@ namespace Lively.Player.WebView2
                     //    });
                     //}
                     break;
+                case MessageType.cmd_room_dock_policy:
+                    if (startArgs.DextDock) await ApplyNativeDockPolicy((LivelyMessageRoomDockPolicy)obj);
+                    break;
                 case MessageType.cmd_suspend:
                     await HandleSuspend();
                     break;
@@ -1040,6 +1057,7 @@ namespace Lively.Player.WebView2
                         roomRuntime.Initialize((LivelyMessageRoomRuntime)obj))
                     {
                         nativeRuntimeSeen = true;
+                        ResetNativeDockDocument();
                         var runtime = (LivelyMessageRoomRuntime)obj;
                         if (nativeResources != null && !nativeResources.Activate(runtime.RuntimeGeneration, runtime.Resources))
                         {
@@ -1049,11 +1067,13 @@ namespace Lively.Player.WebView2
                         if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
                         PostRuntimeLastMessage();
+                        if (startArgs.DextDock) await SynchronizeNativeDockWindow();
                     }
                     break;
                 case MessageType.cmd_room_runtime_revoke:
                     if (startArgs.DextTrustedHost && roomRuntime.Revoke((LivelyMessageRoomRuntimeRevoke)obj))
                     {
+                        ResetNativeDockDocument();
                         nativeResources?.Revoke();
                         if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.ResetAsync();
@@ -1067,6 +1087,7 @@ namespace Lively.Player.WebView2
                         if (nativePointerDelivery != null) await nativePointerDelivery.InvalidateAsync();
                         if (nativeFrameMedia != null) await nativeFrameMedia.RefreshAsync();
                         PostRuntimeLastMessage();
+                        if (startArgs.DextDock) await SynchronizeNativeDockWindow();
                     }
                     break;
                 case MessageType.cmd_desktop_icon_preferences:
@@ -1244,6 +1265,7 @@ namespace Lively.Player.WebView2
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            DisposeNativeDockWindow();
             DisposeNativePausedPicture();
             nativeAuthorDeadline?.Stop();nativeAuthorDeadline?.Dispose();
             nativeFrameMedia?.Dispose();

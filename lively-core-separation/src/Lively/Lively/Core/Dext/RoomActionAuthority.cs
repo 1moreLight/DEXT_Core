@@ -198,7 +198,7 @@ internal sealed partial class RoomActionAuthority
         string consumer,long revision,string capability) => context.Snapshot.Revision!=revision?RoomActionStatus.StaleInput:
         !owner.CanConsume(context.Role,context.Snapshot)?RoomActionStatus.NotOperable:Permission(state,context.Installation,owner,consumer,capability);
 
-    internal RoomNativeInputAuthority CreateNativeInput() => new(clock);
+    internal RoomNativeInputAuthority CreateNativeInput(RoomClientRole role = RoomClientRole.DesktopPlayer) => new(clock,role);
 
     public RoomInputReply IssueHostInput(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string button, RoomNativeInputProof? nativeInput = null)
     {

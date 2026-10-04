@@ -221,12 +221,12 @@ namespace Lively.Core.Wallpapers
                     return RoomProtocolStatus.Denied;
                 if (role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock)) return RoomProtocolStatus.Denied;
                 var peer = new RoomSessionPeer($"{(role == RoomClientRole.Dock ? "dock-process" : "player-process")}:{Pid.Value}");
-                var native=actions.CreateNativeInput();
+                var native=actions.CreateNativeInput(role);
                 var data=CreateNativeDataSource();
                 var messages = new RoomSessionPlayerMessages(SendMessage,
                     () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray(),
-                    (generation,snapshot)=>{native.Initialize(generation,snapshot);data.ObserveSnapshot(snapshot);RoomSnapshotObserved?.Invoke(snapshot);},
-                    snapshot=>{native.ObserveSnapshot(snapshot);data.ObserveSnapshot(snapshot);RoomSnapshotObserved?.Invoke(snapshot);},()=>{native.Revoke();data.Suspend();},
+                    (generation,snapshot)=>{native.Initialize(generation,snapshot);ObserveNativeDataSnapshot(data,snapshot,role);RoomSnapshotObserved?.Invoke(snapshot);},
+                    snapshot=>{native.ObserveSnapshot(snapshot);ObserveNativeDataSnapshot(data,snapshot,role);RoomSnapshotObserved?.Invoke(snapshot);},()=>{native.Revoke();data.Suspend();},
                     role == RoomClientRole.Dock ? "dock" : "desktop");
                 // Callbacks use this stream directly. Subscribe sends its first
                 // context/snapshot before Connect assigns the bridge field.
@@ -491,6 +491,9 @@ namespace Lively.Core.Wallpapers
                         break;
                     case MessageType.msg_room_native_sample:
                         HandleNativeSample((LivelyMessageRoomNativeSample)obj);break;
+                    case MessageType.msg_room_dock_state:
+                        AcceptNativeDockState((LivelyMessageRoomDockState)obj);
+                        break;
                     case MessageType.msg_room_native_invalidated:
                         roomNativeAttachment?.Input.InvalidateDocument(((LivelyMessageRoomNativeInvalidated)obj).RuntimeGeneration);
                         break;

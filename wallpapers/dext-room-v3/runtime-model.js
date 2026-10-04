@@ -15,10 +15,10 @@
       [key, Object.hasOwn(override, key) ? (object(shared[key]) && object(override[key]) ? merge(shared[key], override[key]) : clone(override[key])) : clone(shared[key])]));
   }
   const identityGroups = () => Object.fromEntries(['source', 'target', 'shared'].map(name => [name, { matrix: [1, 0, 0, 1, 0, 0], opacity: 1 }]));
-  function createRuntime(verifiedManifest) {
+  function createRuntime(verifiedManifest, options = {}) {
     if (!object(verifiedManifest) || verifiedManifest.version !== 3 || verifiedManifest.apiVersion !== 1 ||
       !Array.isArray(verifiedManifest.desks) || verifiedManifest.desks.length === 0) throw new TypeError('Verified native v3 manifest required');
-    const room = clone(verifiedManifest);
+    const room = clone(verifiedManifest), dockView = options.viewKind === "dock";
     const desks = new Map(room.desks.map(desk => [desk.id, desk]));
     const components = new Map((room.components || []).map(component => [component.id, component]));
     const buttons = new Map((room.buttons || []).map(button => [button.id, button]));
@@ -75,26 +75,26 @@
     function reconcile(effects) {
       const desired = new Set();
       const life = current.lifecycle;
-      const playing = current.active && !life.playbackPaused && !life.locked;
+      const playing = current.active && (dockView || !life.playbackPaused) && !life.locked;
       const desktopActive = playing && life.stage === 'desktop';
-      if (room.roomScene) ensure('scene', { consumerId: 'scene', kind: 'scene', entry: room.roomScene.entry,
+      if (!dockView && room.roomScene) ensure('scene', { consumerId: 'scene', kind: 'scene', entry: room.roomScene.entry,
         capabilities: room.roomScene.capabilities || [], buttonIds: [...buttons.keys()] }, room.roomScene.config || {}, desktopActive, desired, effects);
       const visibleDesks = [current.currentDeskId, current.targetDeskId].filter(Boolean);
       const effective = desks.get(current.targetDeskId || current.currentDeskId);
       for (const deskId of visibleDesks) {
         const desk = desks.get(deskId);
-        ensureSlot('slot.background.' + deskId, desk.background, desktopActive, desired, effects);
+        if (!dockView) ensureSlot('slot.background.' + deskId, desk.background, desktopActive, desired, effects);
         for (const id of desk.components) {
           const component = components.get(id);
-          if (!component) continue; // Core installation validation remains the manifest authority.
+          if (!component || dockView && (id !== room.dockComponentId || component.role !== "dock")) continue; // Core installation validation remains the manifest authority.
           const override = effective.componentOverrides && effective.componentOverrides[id];
           const config = override ? merge(component.config || {}, override) : component.config || {};
           ensure('component.' + id, { consumerId: 'component.' + id, kind: component.role, entry: component.entry,
             capabilities: component.capabilities || [], buttonIds: component.buttonIds || [], placement: component.placement }, config, desktopActive, desired, effects);
         }
       }
-      if (life.stage === 'starting') ensureSlot('slot.start', room.start, playing, desired, effects);
-      if (life.stage === 'idle') ensureSlot('slot.idle', room.idle, playing, desired, effects);
+      if (!dockView && life.stage === 'starting') ensureSlot('slot.start', room.start, playing, desired, effects);
+      if (!dockView && life.stage === 'idle') ensureSlot('slot.idle', room.idle, playing, desired, effects);
       for (const instance of instances.values()) {
         if (!desired.has(instance.key) && instance.state !== 'suspended') {
           instance.state = 'suspended';
@@ -139,20 +139,20 @@
         if (layoutChanged) invalidateGeometry(effects, replaced ? 'sessionChanged' : 'snapshotChanged');
         if (transitionChanged) completedTransition = null;
         reconcile(effects);
-        if (transitionChanged && current.transitionId) effects.push({ type: 'beginTransition', sessionId: current.sessionId,
+        if (!dockView && transitionChanged && current.transitionId) effects.push({ type: 'beginTransition', sessionId: current.sessionId,
           transitionId: current.transitionId, revision: current.revision, fromDeskId: current.currentDeskId, targetDeskId: current.targetDeskId,
           deadlineUtc: current.deadlineUtc, transition: clone(room.transition || { type: 'slide', durationMs: 450 }) });
         return result(effects);
       },
       animationFinished(sessionId, transitionId) {
-        if (disposed || !current || !current.active || current.sessionId !== sessionId || current.transitionId !== transitionId ||
+        if (dockView || disposed || !current || !current.active || current.sessionId !== sessionId || current.transitionId !== transitionId ||
           transitionId === null || completedTransition === transitionId) return reject('staleTransition');
         completedTransition = transitionId;
         return result([{ type: 'completeTransition', sessionId, transitionId }]);
       },
       setViewport(value) {
         if (disposed) return reject('disposed');
-        if (!object(value) || !finite(value.width, 64, 16384) || !finite(value.height, 64, 16384) || !finite(value.dpr, 0.5, 8)) return reject('invalidViewport');
+        if (!object(value) || !finite(value.width, 64, 16384) || !finite(value.height, dockView ? 48 : 64, 16384) || !finite(value.dpr, 0.5, 8)) return reject('invalidViewport');
         if (JSON.stringify(viewport) === JSON.stringify(value)) return result();
         viewport = { width: value.width, height: value.height, dpr: value.dpr };
         const effects = []; invalidateGeometry(effects, 'viewportChanged');
@@ -203,7 +203,7 @@
         effects.push({ type: 'invalidateInput', reason: 'disposed', geometryVersion }); return result(effects);
       },
       readDiagnostics() {
-        return clone({ roomId: room.id, sessionId: current && current.sessionId, revision: current && current.revision,
+        return clone({ viewKind: dockView ? "dock" : "desktop", roomId: room.id, sessionId: current && current.sessionId, revision: current && current.revision,
           currentDeskId: current && current.currentDeskId, targetDeskId: current && current.targetDeskId,
           queuedDeskId: current && current.queuedDeskId, transitionId: current && current.transitionId,
           lifecycle: current && current.lifecycle, geometryVersion, viewport, disposed, lastRejected,

@@ -73,7 +73,8 @@ internal sealed class RoomActionCatalog
             var desks = room.GetProperty("desks").EnumerateArray()
                 .Where(d => Strings(d, "components").Contains(id, StringComparer.Ordinal)).Select(d => d.GetProperty("id").GetString()!);
             consumers.Add("component." + id, new(Strings(component, "capabilities"), Strings(component, "buttonIds"), desks,
-                true, component.GetProperty("role").GetString() == "dock"));
+                true, component.GetProperty("role").GetString() == "dock" &&
+                    room.TryGetProperty("dockComponentId", out var nativeDock) && nativeDock.GetString() == id));
         }
         void Slot(string id, JsonElement content, RoomLifecycleStage stage, string[]? desks = null) =>
             consumers.Add(id, new(Strings(content, "capabilities"), Strings(content, "buttonIds"), desks, true, false, stage));

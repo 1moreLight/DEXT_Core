@@ -52,10 +52,12 @@ internal sealed partial class RoomNativeDataSource : IDisposable
         catch (Exception) { return new("error"); }
     }
 
-    public void ObserveSnapshot(RoomSessionSnapshot snapshot)
+    public void ObserveSnapshot(RoomSessionSnapshot snapshot, bool isDock = false, bool dockVisible = true)
     {
-        var enabled = snapshot.IsActive && !snapshot.Lifecycle.PlaybackPaused && !snapshot.Lifecycle.Locked && snapshot.IsDesktopForeground &&
-            (snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.IsOperable);
+        var enabled = snapshot.IsActive && !snapshot.Lifecycle.Locked &&
+            (isDock ? dockVisible && snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop :
+                !snapshot.Lifecycle.PlaybackPaused && snapshot.IsDesktopForeground &&
+                (snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.IsOperable));
         Volatile.Write(ref hardwareEnabled, enabled ? 1 : 0);
         if (!enabled) Suspend();
     }

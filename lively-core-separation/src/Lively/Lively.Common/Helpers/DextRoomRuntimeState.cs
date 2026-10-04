@@ -19,6 +19,22 @@ namespace Lively.Common.Helpers
         private string[] desks;
         private JObject contextPayload, snapshotPayload, revokePayload;
 
+        public bool DockLocked => (bool?)snapshotPayload?["lifecycle"]?["locked"] != false;
+        public bool DockCanPresent
+        {
+            get
+            {
+                if ((string)contextPayload?["viewKind"] != "dock" || snapshotPayload == null ||
+                    (bool?)snapshotPayload["active"] != true || DockLocked ||
+                    (string)snapshotPayload["lifecycle"]?["stage"] != "desktop") return false;
+                var manifest = contextPayload["manifest"];
+                var dock = (string)manifest["dockComponentId"];
+                var deskId = (string)snapshotPayload["targetDeskId"] ?? (string)snapshotPayload["currentDeskId"];
+                return dock != null && (manifest["desks"] as JArray)?.Any(d =>
+                    (string)d["id"] == deskId && (d["components"] as JArray)?.Any(c => (string)c == dock) == true) == true;
+            }
+        }
+
         public long Generation => generation;
         public bool HasContext(long document, Guid sessionId) => contextPayload != null && generation == document && session == sessionId;
         public bool CanUseInput(long document, Guid sessionId, long snapshotRevision) => HasContext(document,sessionId) &&
@@ -42,6 +58,8 @@ namespace Lively.Common.Helpers
         // deliberately independent of the stricter input/data consumption gate.
         public bool CanRenderMedia(string consumer)
         {
+            if ((string)contextPayload?["viewKind"] == "dock")
+                return DockCanPresent && consumer == "component." + (string)contextPayload["manifest"]["dockComponentId"];
             if (!HasMediaConsumer(consumer) || snapshotPayload == null || (bool?)snapshotPayload["active"] != true ||
                 (bool?)snapshotPayload["lifecycle"]?["playbackPaused"] != false || (bool?)snapshotPayload["lifecycle"]?["locked"] != false) return false;
             var stage = (string)snapshotPayload["lifecycle"]?["stage"];

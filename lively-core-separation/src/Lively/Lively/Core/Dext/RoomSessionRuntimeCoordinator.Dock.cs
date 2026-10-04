@@ -92,17 +92,22 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         {
             var player = dockPlayer;
             var current = player is not null && demand.Matches(player.Demand);
-            var phase = current ? dockPhase : demand.Phase;
+            var window = current ? player?.Player.RoomDockWindowState : null;
+            var ready = window is { RendererReady: true, WindowReady: true };
+            var phase = current ? (window is { RendererReady: true } ?
+                !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
+                window!.Fullscreen ? "fullscreen" : window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
             if (player is not null && !current) phase = "stopping";
             else if (demand.ShouldRun && player is null && dockPhase == "faulted") phase = "faulted";
             var reason = phase == "unsupportedMode" ? "常驻占位暂不可运行。" :
                 phase == "hostPending" ? "Dock 宿主正在等待启动。" :
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
+                phase == "awaitingInput" ? "专用 Dock 视图已连接，物理输入还未接通。" :
                 current || phase == "faulted" ? dockReason : null;
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, false, false, false, reason), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, false, reason), result.Message);
         }
     }
 
@@ -190,6 +195,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
 
         var player = demand.Desktop!.CreateDockPlayer(demand.Settings.Preferences!.HeightDip);
         owned = new DockPlayer(player, demand);
+        player.RoomDockStateChanged += QueueDockUpdate;
         player.RoomPageReady += (_, _) => { owned.PageReady.TrySetResult(); QueueDockUpdate(); };
         player.Exited += (_, _) =>
         {
@@ -221,6 +227,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (attached != RoomProtocolStatus.Accepted)
                 throw new InvalidOperationException("Dock session attach rejected: " + attached);
             owned.Attached = true;
+            // Physical input is enabled only after its Core-owned OS route is
+            // attached. The renderer can report readiness while still hidden.
+            player.SendNativeDockPolicy(false);
             lock (dockGate)
             {
                 dockPhase = "awaitingRenderer"; dockReason = "已连接共享会话，正式 Dock 视图和输入正在初始化。";
@@ -243,6 +252,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         }
         var player = owned.Player;
         authority.UnbindDock(player.Pid ?? 0);
+        player.RoomDockStateChanged -= QueueDockUpdate;
         player.DetachRoomSession();
         if (player.Pid is not null && !player.IsExited)
         {

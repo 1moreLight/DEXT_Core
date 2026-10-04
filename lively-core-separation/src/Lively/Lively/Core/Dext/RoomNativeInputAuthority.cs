@@ -36,7 +36,7 @@ internal sealed class RoomNativeInputProof
 
 // Leaf lock only: never call gateway, personal storage, IPC, JS or native APIs
 // while holding gate. Snapshot observers and dispatch may enter in that order.
-internal sealed class RoomNativeInputAuthority(TimeProvider clock)
+internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRole role = RoomClientRole.DesktopPlayer)
 {
     private readonly object gate=new();
     private long generation, geometryVersion, inputSequence;
@@ -341,7 +341,9 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock)
         }
     }
     private bool Identity(long document,Guid session,long revision) => generation==document && snapshot is{IsActive:true} && snapshot.SessionId==session && snapshot.Revision==revision;
-    private bool CanInput()=>snapshot is{IsActive:true,IsDesktopForeground:true} && !snapshot.Lifecycle.PlaybackPaused && !snapshot.Lifecycle.Locked;
+    private bool CanInput()=>snapshot is{IsActive:true} && !snapshot.Lifecycle.Locked &&
+        (role==RoomClientRole.Dock?snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop:
+            snapshot.IsDesktopForeground&&!snapshot.Lifecycle.PlaybackPaused);
     private bool Available(RoomNativeViewport current,bool foreground)=>foreground && CanInput() && viewport!=null && current==viewport;
     private AcceptedEntry? Hit(int x,int y)
     {
