@@ -274,3 +274,10 @@ p6-media-native-live通过：由实际配置器逐Desk设起点重应用，真�
 普通Core退出/启动保持Room、当前Desk、安装戳与读权限，新session/Player重新初始化模板/SDK/几何。实际替换导航模板保留组件/共有按钮ID和旧资源；新安装四项读许可false，明确允许time不使hardware变true，作者字节保持。两模板生产呈现与几何已核对，物理切页/同实例/缩放继续集中。
 原localStorage逐键精确恢复，配置器按owned PID/绝对路径正常OS关窗，再Core app --shutdown true普通退出；start watcher39064 exit0。原四文件字节/缺失精确恢复、自己Temp及同Room安装/前代/source记录删除，Dext进程/1620/1621/9226/9227监听0；最终只读恢复核对exit0。默认JS close/minimize未获权限，未为测试开放；日志末行重定向工具失败不重做已完成删除，以只读证据收口。
 证据：p6-read-grants-core-final/ui/build/tauri-check、dock-native-live/grants-native/native-evidence、dock-before/after-restart、dock-new-install、dock-runtime-start/restored和actual configurator/Player截图。本包六项/P5七项/最终一次审查和集中确认保持；不重复凭据宿主覆盖的Core OS输入、不扩展网络专项，拖动暂缓，完整16项就绪仍1/16≈6%，13/16及16/16目标不变，未合并master。按连续授权下一项接P6-003统一按钮与个人呈现编辑。
+
+## P6 统一按钮与本机呈现基础（2026-10-04，BASE6c32e66）
+独立v3-personal-editor / feat/V3-P6-003-personal-editor。Core当前Coordinator读取全按钮并原子编辑动作/全局目标/皮肤；跨Room目标删除引用、恢复作者默认不删目标，作者公开投影不变。限定Core0/7→7/7，官方投影/定位7/9→9/9，只读授权必要6/6，无新增网络专项。
+统一按钮/来源/未绑定、动作/目标库/应用库/皮肤与普通呈现UI已接。新iconId复用buttonId，删呈现不删按钮；模型3项RED→GREEN，连原文档6/6。npm build/cargo check/Core四阶段build→start通过。
+真实自有Room a4f2e314-53a0-4673-9b91-5cb4dc8b6fa2，两Desk/作者按钮/两普通呈现：Tauri目标创建/绑定、同buttonId本机设置、增呈现/撤销重做/保存应用、发现未绑定和其他Desk。作者文件无私人目标ID/路径/皮肤；ReleasePlayer正式SDK几何accepted，两图标glass→outline，作者iframe保留。未发送物理动作；Core operable=false不能计真实程序启动成功。
+初始ActiveRoom snake_case使面板不可用，按实际camelCase sourcePath修正/重新打开后通过。真实定位accepted但visible=false，发现视觉提示误用动作operable条件；补本地功能RED→GREEN，动作采样仍为空。最后修复后的实际定位/普通重启、Desk改名排序、目标删改重置与呈现删除UI继续。
+用户将全屏游戏，立即正常关配置器再Core普通退出，watcher30520 exit0；原localStorage/四文件字节/缺失恢复，自有Temp/安装前代/source记录清理，Dext和1620/1621/9226/9227监听0。游戏期间不启动、编译或做桌面输入；最后前端字段/视觉定位收尾待下一轮打包/实际核对。集中本卡六项/P5物理门槛/一次整体审查保留，完整16项仍1/16≈6%，不合并master。证据p6-personal-*在本线程evidence。

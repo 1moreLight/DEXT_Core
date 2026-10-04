@@ -1586,3 +1586,24 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 - [ ] Task4余项：实际桌面可读时的真实值/撤销可见更新、物理默认导航/同实例切页/缩放等集中；凭据宿主未解除不重复Core OS输入。一次最终整体审查和本包六项/P5七项仍保留；接续P6-003本地编辑，完整16项就绪1/16≈6%，不合并master。
 
 本段证据：p6-read-grants-core-final（6/6）、read-grants-ui、dock-ui-with-grants、read-grants-build/tauri-check、dock-native-live、dock-grants-native/native-evidence、dock-before/after-restart、dock-new-install、dock-runtime-start/restored；实际配置器/Player截图在本线程evidence目录。首轮check即时断言、按URL定位不透明沙箱帧、默认window权限和末行日志重定向均为探针问题，按ERRORS #230/#227接续；没有把工具失败算产品RED或扩大网络专项。
+
+## V3-P6-003 统一按钮与个人呈现编辑（2026-10-04，BASE6c32e66）
+一句话目标：发现当前原生Room所有按钮，配置本机动作/目标/皮肤和独立普通图标呈现，不改分享作品的私人边界。
+独立feat/V3-P6-003-personal-editor / v3-personal-editor。范围外：顶层Dock、游戏、分享、完整试验台；拖动后置，无新增网络专项。manual六项见独立验收卡，连续开发/最终集中，完整16项1/16≈6%。
+- [x] 顺序核对README/ROADMAP/TODO/ERRORS及V3_PLAN/D05/本轮Core模型；创建依赖6c32e66的独立worktree/分支，计划和验收先写；CodeGraph目录存在但未初始化，rg兜底，不擅自索引。现有依赖junction复用。
+- [ ] Task1：Core个人编辑读回/覆盖/目标管理、限定--personal-editor本地功能RED/GREEN，proto/Tauri接线/完整构建。
+- [ ] Task2：统一按钮搜索与目标/动作/皮肤、普通呈现增删/历史模型和编辑UI；源Room与私人覆盖分开。
+- [ ] Task3：正式Player普通图标皮肤与短时定位；必要模型/渲染/实际Player证据。
+- [ ] Task4：真实Tauri/Core/Player/普通重启与原状态精确恢复/正常退出，具名提交；最终集中本卡/P5物理门槛/单次审查。
+
+- [x] Task1 Core七项本地功能实际RED0/7→GREEN7/7；所有声明/未绑定发现、同目标启动调度、覆盖/皮肤重读重置、全局删除跨Room引用保持、只启用所选动作、失败原字节及无变化不发布。已接Coordinator/proto/Tauri，继续实际构建与配置器UI；不增加网络专项。
+
+### P6-003 本机编辑与正式皮肤集成（2026-10-04）
+- [x] Core个人编辑七项0/7→7/7，官方皮肤/临时定位两项7/9→9/9；Coordinator泛型包装、双proto、RPC/Tauri接线完成，仅旧只读授权必要6/6回归。无新增网络专项。
+- [x] 当前全按钮/未绑定/其他Desk搜索与来源，动作、application/file/url目标库、应用库选择、删改确认/恢复默认和皮肤UI接线。实际配置器创建目标/绑定/皮肤保存，作者原文无目标ID/路径/参数/skin；其余删改/重置UI实际证据继续。
+- [x] 现有按钮独立普通呈现模型3项RED→GREEN，连原文档6/6；实际第二图标、撤销重做和保存应用，新iconId同buttonId，作者入口仍在。删除呈现保留按钮/目标/其他引用；拖动后置。
+- [x] 官方presentationRead→ReleasePlayer→DOM私人皮肤；真实两图标glass→outline，同作者iframe保持、SDK几何accepted。DOM59/59；实际operable=false时定位最初visible=false，ERRORS #232修复视觉读取，针对RED→GREEN2/2且动作采样仍为空。修复后实际定位待继续。
+- [x] npm build、cargo check、Core完整四阶段build→start通过。ActiveRoom来源camelCase错误修正，重新打开实际面板可用（ERRORS #231）。最后纯前端字段/视觉定位收尾待下一轮打包及普通重启核对。
+- [x] 用户将全屏游戏，立即正常关配置器77036、Core100348；watcher30520 exit0。原localStorage/四文件字节和缺失精确恢复，自有Temp/安装/前代/source记录清理，Dext/1620/1621/9226/9227监听0。
+- [ ] 游戏期间不启动Dext/配置器、不编译、不做桌面输入；轻量修复与记录随本轮具名提交。结束游戏后接实际定位/普通重启、Desk改名排序保持、目标删改重置和呈现删除UI；最终本卡六项/P5门槛及一次整体审查，完整16项仍1/16≈6%，不合并master。
+证据：本线程evidence的p6-personal-editor-red/core（9/9）、presentation-red、read-grants-regression、model-red/model（6/6）、ui-build/tauri-check/core-build、dom（59/59）、locator-red/green（2/2）、native首轮（来源字段失败）/native-resume（真实目标/呈现/皮肤）、native-evidence及截图、runtime-start/restored。定位旧visible=false、物理动作未完成单列。

@@ -16,6 +16,8 @@ service DesktopService {
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
   rpc GetRoomSession (google.protobuf.Empty) returns (RoomSessionStatusResponse);
+  rpc GetRoomPersonalEditor (RoomPersonalEditorRequest) returns (RoomPersonalEditorResponse);
+  rpc EditRoomPersonal (RoomPersonalEditRequest) returns (RoomPersonalEditorResponse);
   rpc GetRoomReadGrants (RoomReadGrantsRequest) returns (RoomReadGrantsResponse);
   rpc SetRoomReadGrant (RoomSetReadGrantRequest) returns (RoomReadGrantsResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
@@ -312,4 +314,18 @@ message RoomReadGrantsResponse {
   string room_id = 2;
   string installation_stamp = 3;
   repeated RoomReadGrantConsumerStatus consumers = 4;
+}
+
+// Configurator-only personal data, never routed to an author frame.
+message RoomPersonalEditorRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+}
+message RoomPersonalEditRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+  string edit_json = 3;
+}
+message RoomPersonalEditorResponse {
+  string reply_json = 1;
 }

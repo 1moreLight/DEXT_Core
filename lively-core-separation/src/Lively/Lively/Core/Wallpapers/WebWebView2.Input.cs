@@ -59,7 +59,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;
             if(state==null || request.ProtocolVersion!=1 || string.IsNullOrEmpty(request.RequestId) || request.RequestId.Length>128 ||
                 request.RuntimeGeneration!=state.Generation || request.SessionId!=state.Session || request.Revision!=state.Revision)return;
-            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null;JToken layout=null;JToken storageValue=null;RoomNativeActionReply actionReply=null;
+            var status=RoomActionStatus.Denied;object buttons=null,capabilities=null,data=null,presentation=null;JToken layout=null;JToken storageValue=null;RoomNativeActionReply actionReply=null;
             switch(request.Method)
             {
                 case "startupComplete":
@@ -75,6 +75,12 @@ namespace Lively.Core.Wallpapers
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
+                    break;
+                case "presentationRead":
+                    var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision));
+                    status=view.Status;
+                    if(view.Presentation is{} present)presentation=JObject.Parse(System.Text.Json.JsonSerializer.Serialize(present,
+                        new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase}));
                     break;
                 case "buttons":
                     var list=a.Bridge.NativeButtons(a.Actions,state.Session,request.Consumer);status=list.Status;
@@ -158,7 +164,7 @@ namespace Lively.Core.Wallpapers
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,
-                status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue,layout},request.Method);
+                status=WireStatus(status),inputSequence=actionReply?.InputSequence??0,inputConsumed=actionReply?.InputConsumed??false,buttons,capabilities,data,value=storageValue,layout,presentation},request.Method);
             if(actionReply is{Status:RoomActionStatus.RequiresConfirmation,Exit:{} confirmation})
                 _=ConfirmNativeExitAsync(a,state,confirmation);
         }

@@ -310,3 +310,6 @@
 | #229 | worktree复用node_modules junction后Vite字体落在默认fs.allow之外，预览403但构建正常 | [toolchain](errors/toolchain.md) |
 
 | #230 | 配置器授权控件等待真实持久化后确认；不透明Player帧按DOM定位，关窗不为探针扩JS权限 | [toolchain](errors/toolchain.md) |
+
+| #231 | ActiveRoom实际camelCase来源字段错误使本机面板不可用 | [frontend](errors/frontend.md) |
+| #232 | 视觉定位误用桌面动作operable条件；独立可见几何，保留输入规则 | [renderer](errors/renderer.md) |

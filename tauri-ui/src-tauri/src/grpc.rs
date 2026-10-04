@@ -7,6 +7,7 @@ use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{
     CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, RoomSessionStatusResponse,
+    RoomPersonalEditorRequest, RoomPersonalEditRequest, RoomPersonalEditorResponse,
     RoomReadGrantsRequest, RoomSetReadGrantRequest, RoomReadGrantsResponse,
     SetSystemVolumeRequest,
     SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
@@ -381,6 +382,19 @@ async fn read_grant_call(method: &str, request: &[u8]) -> Result<RoomReadGrants,
         consumers: response.consumers.into_iter().map(|consumer| RoomReadGrantConsumer { consumer_id: consumer.consumer_id,
             capabilities: consumer.capabilities.into_iter().map(|capability| RoomReadGrantCapability {
                 capability: capability.capability, allowed: capability.allowed }).collect() }).collect() })
+}
+async fn personal_editor_call(method: &str, request: &[u8]) -> Result<serde_json::Value, String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomPersonalEditorResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no personal editor state".to_string())?;
+    serde_json::from_str(&response.reply_json).map_err(|_| "Dext Core returned invalid personal editor state".to_string())
+}
+pub async fn get_personal_editor(room_id: String, installation_stamp: String) -> Result<serde_json::Value, String> {
+    personal_editor_call("GetRoomPersonalEditor", &RoomPersonalEditorRequest { room_id, installation_stamp }.encode_to_vec()).await
+}
+pub async fn edit_personal(room_id: String, installation_stamp: String, edit: serde_json::Value) -> Result<serde_json::Value, String> {
+    personal_editor_call("EditRoomPersonal", &RoomPersonalEditRequest { room_id, installation_stamp, edit_json: edit.to_string() }.encode_to_vec()).await
 }
 pub async fn get_read_grants(room_id: String, installation_stamp: String) -> Result<RoomReadGrants, String> {
     read_grant_call("GetRoomReadGrants", &RoomReadGrantsRequest { room_id, installation_stamp }.encode_to_vec()).await

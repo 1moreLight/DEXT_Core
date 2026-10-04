@@ -663,3 +663,6 @@ Tab的单次可见查询不等于动作proof，也不证明快速连续键序列
 原因：把roomScene布局接口与Dock组件按钮接口合并理解；旧精确遮挡夹具也故意用静止Dock盖图标，不能代表应有布局。
 修复：模板只报buttons，官方宿主按当前Desk引用的Dock placement加入保留区。不引用的Desk恢复保存位置。精确遮挡检查保留，通过作者shared矩阵把原本不重叠的Dock移到图标上，再读取当前可见采样，继续验证两片/全遮挡；新避让检查与DOM57/57通过。
 下次：先核对consumer准入范围；作者矩形为组件自身逻辑坐标，Dock不新增占用发布权限。
+
+## #232 视觉定位不能误用桌面动作可操作条件（2026-10-04）
+Core定位accepted/投影真实送达，但配置器前台operable=false，buttonGeometry返回空，图标换肤正常而无提示。新增该状态功能RED定位null，保留原动作几何条件，抽取visibleButtonGeometry仅用于视觉提示；GREEN同时确认动作采样仍为空。暂停/锁屏/非Desktop仍不定位，不产生动作/证明。用户随后全屏游戏，立即退出Dext；最后修复的实际定位/普通重启待继续，不将旧accepted或fixture冒称实机成功。

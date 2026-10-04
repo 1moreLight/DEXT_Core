@@ -15,7 +15,7 @@ function fixture(options={}){
  const snap=(revision=1,changes={})=>({protocolVersion:1,sessionId:'session',roomId:'room',installationStamp:'stamp',revision,currentDeskId:'home',targetDeskId:null,queuedDeskId:null,transitionId:null,deadlineUtc:null,active:true,operable:true,lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:1},...changes});
  const calls=[],controls=[],frames=new Map(),medias=new Map(),raf=new Map();let now=0,id=0;
  const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
- const document={createElement:node};const container=node('root');
+ const document={createElement:node,createElementNS:(_ns,tag)=>node(tag)};const container=node('root');
  const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
  const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
@@ -513,4 +513,30 @@ test('referenced Dock reserves its placement for icons and widgets and unreferen
  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));
  const restored=f.host.readDiagnostics().layout.items.find(item=>item.key==='widget:shared');
  assert.equal(restored.effectiveRect.y,840);assert.equal(f.calls.filter(call=>call.method==='layoutSave').length,0);f.host.dispose();
+});
+
+
+test('personal skins update ordinary presentations without replacing frames or changing geometry',async()=>{
+ const timers=new Map();let timerId=0,skin='glass';
+ const f=fixture({setTimeout:(cb,ms)=>{timers.set(++timerId,{cb,ms});return timerId;},clearTimeout:id=>timers.delete(id),
+  request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{next:skin},locator:null}}):undefined});
+ await f.host.ready;await flush();
+ const canvas=f.container.children[0],icon=canvas.children.find(n=>n.tag==='button'),nodes=[...f.frames.values()].map(v=>v.node),version=f.host.readDiagnostics().inputVersion,rect={...icon.style};
+ assert.equal(icon.dataset.skin,'glass');skin='outline';
+ const task=[...timers].find(([,v])=>v.ms===750);timers.delete(task[0]);await task[1].cb();await flush();
+ assert.equal(icon.dataset.skin,'outline');assert.deepEqual([...f.frames.values()].map(v=>v.node),nodes);assert.equal(f.host.readDiagnostics().inputVersion,version);assert.deepEqual(icon.style,rect);
+ f.host.dispose();assert.equal(timers.size,0);
+});
+test('private button locator outlines visible author and icon regions without activation and expires',async()=>{
+ const timers=new Map();let timerId=0;
+ const f=fixture({initialSnapshot:{protocolVersion:1,sessionId:"session",roomId:"room",installationStamp:"stamp",revision:1,currentDeskId:"home",targetDeskId:null,queuedDeskId:null,transitionId:null,deadlineUtc:null,active:true,operable:false,lifecycle:{stage:"desktop",playbackPaused:false,locked:false,revision:1}},setTimeout:(cb,ms)=>{timers.set(++timerId,{cb,ms});return timerId;},clearTimeout:id=>timers.delete(id),
+  request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:{requestId:'request',buttonId:'next'}}}):undefined});
+ await f.host.ready;await flush();
+ assert.equal(f.host.readDiagnostics().presentation.locator,'next');
+ assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+ assert.deepEqual(f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons,[]);
+ const layer=f.container.children[0].children.find(n=>n.attrs.class==='dext-v3-locator');assert.ok(layer.children.length>0);
+ const task=[...timers].find(([,v])=>v.ms===2500);timers.delete(task[0]);task[1].cb();
+ assert.equal(f.host.readDiagnostics().presentation.locator,null);assert.equal(f.container.children[0].children.includes(layer),false);
+ f.host.dispose();assert.equal(timers.size,0);
 });

@@ -1795,7 +1795,7 @@ export default function App() {
                 onRename={(room) => void renameRoom(room)}
               />
             ) : roomVersion === 3 && nativeRoom && roomPath ? (
-              <V3RoomEditor key={roomPath} room={nativeRoom} path={roomPath} isTauri={IS_TAURI}
+              <V3RoomEditor key={roomPath} room={nativeRoom} path={roomPath} apps={apps} isTauri={IS_TAURI}
                 canApply={Boolean(readyCoreIdentity)}
                 onDirty={setDirty}
                 onBack={() => {setRoomEntered(false); setDirty(false);}}

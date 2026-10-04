@@ -134,3 +134,6 @@
 ## #226 改名返回路径须与列表和应用状态使用同一表示（2026-10-04）
 rename_room_dir采用canonical源，Windows返回带扩展前缀目标；list_rooms/active_room是常规路径。配置器找不到roomPickPath/appliedRoom，退回库首项，立即编辑会打开另一Room。仅看磁盘改名和来源成功不足以验证UI。
 rename_room返回display_path；原生作者rename更新name并保持UUID/资源，失败尝试恢复原文。最后UTF-8改名后不重新选卡，立即编辑正确Room，实际来源/节点/资源保持。UsePage复制入口和App处理器按saveAs能力禁用，v3不能因edit开放而允许未接通的复制。
+
+## #231 ActiveRoom来源字段须核对实际camelCase回复（2026-10-04）
+新个人面板误声明active_room.source_path，实际Rust Serialize为sourcePath。sameSource读undefined抛错，实际Core正常。读取真实RPC/source确认后修正；初次HMR旧面板仍有旧错误，重新打开后当前本机面板可用。接续同一自有Room，不重跑初始化覆盖原localStorage备份。Core检查不能代替Tauri JSON字段/实际UI核对。

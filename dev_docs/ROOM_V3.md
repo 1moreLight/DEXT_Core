@@ -97,3 +97,8 @@ Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有�
 ### 配置器本机只读授权（2026-10-04，P6-002）
 个人Room增加readGrants，格式仍为1，缺字段默认空；按当前安装戳/固定consumer保存time.read、hardware.read、media.read、audio.read。当前readGrants记录对这四项优先（空数组表示明确撤销）；没有当前记录时兼容原grants当前戳中的明确许可。配置器只修改选择的读权限，原grants中的绑定/控制授权、目标、按钮、布局与KV保持。旧安装的读许可不继承，新安装允许time不会把旧控制授权提升到新戳。另存不复制授权，作者Room与分享不包含此字段。
 Core当前Coordinator可在桌面不可操作时编辑这些本机选择；作者每个真实数据请求仍逐次核验当前连接/安装/声明/授权与生命周期。允许勾选不保证当前桌面可读或Windows来源存在。当前生产接线/真实Tauri/普通重启证据见V3_DELIVERY；物理桌面数据/输入门槛保持。
+
+### 本机按钮编辑（V3-P6-003，开发中）
+配置器get_v3_personal_editor/edit_v3_personal核对当前安装和active_room.sourcePath，再读写本机设置。发现全部稳定按钮，包括未绑定/其他Desk；Core闭合setButton/resetButton/upsertTarget/removeTarget/locateButton。全局application/file/url目标以配置器生成的稳定UUID保存，更新保持引用；删除清全部Room目标引用而保留动作/皮肤。
+显式动作保存仅为拥有该按钮且声明能力的消费者补充该项当前许可，不提升旧安装控制授权，不改readGrants/布局/KV。作品和作者SDK不含目标路径/参数/工作目录/TargetId/皮肤。普通图标新iconId引用已有buttonId，删除呈现保留按钮/其他入口，可撤销重做。
+官方顶层私有presentationRead只投影经典/玻璃/描边皮肤和短时定位，不投影全局目标；换肤不重挂作者iframe、不改逻辑尺寸。视觉定位使用可见几何，动作仍使用原可操作规则和真实输入。实际配置器/两图标换肤通过，最后定位修复/普通重启与最终门槛见TODO/验收卡；游戏期间Dext保持停止。

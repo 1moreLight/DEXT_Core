@@ -449,3 +449,6 @@ dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown 
 首轮UI运输夹具直接import预打包react-dom_client的命名createRoot，模块没有该导出；改默认ReactDOM.createRoot后才得到实际“缺复选框”RED。用于故意保存失败/旧副本的Playwright check要求立即勾选，与生产确认后更新/失败保持相冲突；这些步骤改click后等待错误和最终状态。真实RPC也需click后等待确认勾选，不把瞬时回滚算产品失败。
 真实Player顶层为安装哈希.localhost，sandbox子帧URL可能为空；不能按源文件URL或dext-room-v3字样寻找。先核对官方顶层title、实际iframe src匹配当前组件entry，再读真实子帧DOM；两生产模板/accepted几何通过，未把不透明帧当不存在或注入fixture。
 默认Tauri权限没有window.minimize/close，JS调用拒绝。未为测试扩大权限；按owned PID/绝对路径核对后CloseMainWindow正常OS关窗/进程退出，再普通Core退出，watcher39064 exit0。原localStorage/四文件精确恢复。清理命令末行错误追加独立2>&1导致命令exit1，但删除/恢复已完成；沿#227不重跑递归删除，用独立只读恢复/所有权/进程/监听检查exit0保存证据。
+
+### 2026-10-04 P6-003本地编辑检查（沿#223/#227）
+C#顶层Program的Copy常量不能由partial测试类直接使用（CS8801），改为该检查内独立copyId；TS项目库不含String.replaceAll，改global replace，不扩大目标库。命令曾在tauri-ui cwd重复加tauri-ui前缀，首个写入即失败，改正确路径且未重跑初始化/原始备份。大型exec的String.raw内Markdown反引号也会解析失败，不执行任何脚本；用普通文本记录再执行。

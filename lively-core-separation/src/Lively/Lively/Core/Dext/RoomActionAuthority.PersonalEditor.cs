@@ -1,0 +1,202 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+namespace Dext.Core.Rooms;
+
+public sealed record RoomPersonalButtonSettings(string? Action = null, string? DeskId = null, string? TargetId = null, string? Skin = null);
+public sealed record RoomPersonalEditorButton(string Id, string Name, string Scope, string? DefaultAction, string? DefaultDeskId,
+    string? EffectiveAction, string? EffectiveDeskId, bool IsBound, RoomPersonalButtonSettings? Personal);
+public sealed record RoomPersonalEditorTarget(string Id, string Name, string Kind, string Target, string Arguments, string WorkingDirectory, int UseCount);
+public sealed record RoomPersonalSkin(string Id, string Name);
+public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins);
+public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
+
+internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
+internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator);
+internal sealed record RoomPresentationReply(RoomActionStatus Status,RoomPresentationSnapshot? Presentation=null);
+
+internal sealed partial class RoomActionAuthority
+{
+    private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
+    private PersonalLocator? personalLocator;
+    internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    {
+        var initial=gateway.ReadActionContext(connection,peer,session,out var early);
+        if(initial!=RoomProtocolStatus.Accepted)return new(Status(initial));
+        var eligible=LayoutEligibility(early!,revision,false);if(eligible!=RoomActionStatus.Accepted)return new(eligible);
+        try
+        {
+            var spin=new SpinWait();
+            while(true)
+            {
+                var result=store.ReadForDispatch(state=>{
+                    var completed=gateway.TryWithActionContext(connection,peer,session,(admitted,context)=>{
+                        if(admitted!=RoomProtocolStatus.Accepted)return new RoomPresentationReply(Status(admitted));
+                        var current=LayoutEligibility(context!,revision,false);if(current!=RoomActionStatus.Accepted)return new(current);
+                        state.Rooms.TryGetValue(context!.Installation.RoomId,out var room);
+                        var skins=context.Installation.ActionCatalog!.Buttons.Keys.ToDictionary(id=>id,id=>{
+                            var skin=room?.Buttons.GetValueOrDefault(id)?.Skin;
+                            return EditorSkins.Any(s=>s.Id==skin)?skin:null;
+                        },StringComparer.Ordinal);
+                        var locator=Volatile.Read(ref personalLocator);
+                        var valid=locator is not null&&locator.Session==session&&locator.Stamp==context.Installation.InstallationStamp&&
+                            locator.Room==context.Installation.RoomId&&clock.GetElapsedTime(locator.IssuedAt,clock.GetTimestamp())<TimeSpan.FromSeconds(3);
+                        return new(RoomActionStatus.Accepted,new(state.Revision,skins,valid?new(locator!.Request,locator.Button):null));
+                    },out RoomPresentationReply reply);
+                    return(completed,reply);
+                });
+                if(result.completed)return result.reply;spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+    }
+    private sealed record PersonalEdit(string Operation, string? ButtonId = null, string? Action = null, string? DeskId = null,
+        string? TargetId = null, string? Skin = null, string? Name = null, string? Kind = null, string? Target = null,
+        string? Arguments = null, string? WorkingDirectory = null);
+    private static readonly JsonSerializerOptions EditorJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 24 };
+    private static readonly RoomPersonalSkin[] EditorSkins = { new("classic","经典"), new("glass","玻璃"), new("outline","描边") };
+    private static RoomPersonalEditorReply EditorFailure(RoomActionStatus status) => new(GrantFailure(status).Status);
+
+    public RoomPersonalEditorReply GetPersonalEditor(Guid connection, RoomSessionPeer peer, Guid session, string roomId, string stamp) =>
+        PersonalEditorOperation(connection,peer,session,roomId,stamp,null);
+
+    public RoomPersonalEditorReply EditPersonal(Guid connection, RoomSessionPeer peer, Guid session, string roomId, string stamp, string editJson)
+    {
+        PersonalEdit edit;
+        try
+        {
+            if (editJson is null || Encoding.UTF8.GetByteCount(editJson) > 32768) return EditorFailure(RoomActionStatus.Denied);
+            using var document = JsonDocument.Parse(editJson,new JsonDocumentOptions { MaxDepth=24 });
+            var root=document.RootElement;
+            if (root.ValueKind!=JsonValueKind.Object) return EditorFailure(RoomActionStatus.Denied);
+            RoomV3Installation.CheckUniqueJson(root);
+            edit=JsonSerializer.Deserialize<PersonalEdit>(editJson,EditorJson) ?? throw new InvalidDataException();
+            string[] keys=edit.Operation switch {
+                "setButton"=>new[]{"operation","buttonId","action","deskId","targetId","skin"},
+                "resetButton" or "locateButton"=>new[]{"operation","buttonId"},
+                "upsertTarget"=>new[]{"operation","targetId","name","kind","target","arguments","workingDirectory"},
+                "removeTarget"=>new[]{"operation","targetId"},
+                _=>Array.Empty<string>() };
+            if(keys.Length==0 || root.EnumerateObject().Any(p=>!keys.Contains(p.Name,StringComparer.Ordinal))) return EditorFailure(RoomActionStatus.Denied);
+            if(edit.Operation is "setButton" or "resetButton" or "locateButton") RoomPersonalStore.Id(edit.ButtonId!);
+            if(edit.TargetId is not null) RoomPersonalStore.Uuid(edit.TargetId);
+            if(edit.Operation is "upsertTarget" or "removeTarget" && edit.TargetId is null) return EditorFailure(RoomActionStatus.Denied);
+            if(edit.Operation=="upsertTarget") RoomPersonalStore.ValidateTarget(EditTarget(edit));
+            if(edit.Operation=="setButton")
+            {
+                if(edit.Action is not null && !RoomPersonalStore.ActionNames.Contains(edit.Action,StringComparer.Ordinal)) return EditorFailure(RoomActionStatus.Denied);
+                if(edit.Skin is not null) RoomPersonalStore.Id(edit.Skin);
+                if(edit.DeskId is not null) RoomPersonalStore.Id(edit.DeskId);
+                if(edit.Action=="desk.go" ? edit.DeskId is null : edit.DeskId is not null) return EditorFailure(RoomActionStatus.Denied);
+            }
+        }
+        catch(Exception error) when(error is InvalidDataException or JsonException or InvalidOperationException or ArgumentException)
+        { return EditorFailure(RoomActionStatus.Denied); }
+        return PersonalEditorOperation(connection,peer,session,roomId,stamp,edit);
+    }
+
+    private static PersonalTarget EditTarget(PersonalEdit edit) =>
+        new(edit.Name??"",edit.Kind??"",edit.Target??"",edit.Arguments??"",edit.WorkingDirectory??"");
+
+    private RoomPersonalEditorReply PersonalEditorOperation(Guid connection,RoomSessionPeer peer,Guid session,string room,string stamp,PersonalEdit? edit)
+    {
+        try
+        {
+            var initial=gateway.ReadCoordinatorContext(connection,peer,session,out var early);
+            if(initial!=RoomProtocolStatus.Accepted)return EditorFailure(Status(initial));
+            var identity=GrantIdentity(early!,room,stamp);if(identity!=RoomActionStatus.Accepted)return EditorFailure(identity);
+            var spin=new SpinWait();
+            while(true)
+            {
+                (bool Completed,bool Publish,RoomPersonalEditorReply Reply) Attempt(RoomPersonalState state)
+                {
+                    var complete=gateway.TryWithCoordinatorContext(connection,peer,session,(status,context)=>{
+                        if(status!=RoomProtocolStatus.Accepted)return(false,EditorFailure(Status(status)));
+                        var current=GrantIdentity(context!,room,stamp);
+                        return current==RoomActionStatus.Accepted?PrepareEditor(state,context!.Installation,context.Snapshot,edit):(false,EditorFailure(current));
+                    },out (bool Publish,RoomPersonalEditorReply Reply) outcome);
+                    return(complete,complete&&outcome.Publish,outcome.Reply);
+                }
+                var result=edit is null?store.ReadForDispatch(Attempt):
+                    store.UpdateForDispatch(state=>{var candidate=Attempt(state);return(candidate.Publish,candidate);});
+                if(result.Completed)return result.Reply;spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)||error is OverflowException)
+        {return EditorFailure(RoomActionStatus.StorageUnavailable);}
+    }
+
+    private (bool Publish,RoomPersonalEditorReply Reply) PrepareEditor(RoomPersonalState state,VerifiedRoomInstallation installed,RoomSessionSnapshot snapshot,PersonalEdit? edit)
+    {
+        var changed=false;
+        if(edit?.Operation=="locateButton")
+        {
+            if(!installed.ActionCatalog!.Buttons.TryGetValue(edit.ButtonId!,out var button))return(false,EditorFailure(RoomActionStatus.InvalidButton));
+            if(snapshot.Lifecycle.Stage!=RoomLifecycleStage.Desktop||snapshot.TransitionId is not null||
+                button.Scope!="room"&&button.Scope!=snapshot.CurrentDeskId)return(false,EditorFailure(RoomActionStatus.NotOperable));
+            Volatile.Write(ref personalLocator,new(snapshot.SessionId,installed.InstallationStamp,installed.RoomId,button.Id,Guid.NewGuid().ToString("D"),clock.GetTimestamp()));
+        }
+        else if(edit?.Operation is "setButton" or "resetButton")
+        {
+            if(!installed.ActionCatalog!.Buttons.TryGetValue(edit.ButtonId!,out var authored))
+                return(false,EditorFailure(RoomActionStatus.InvalidButton));
+            state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
+            room.Buttons.TryGetValue(edit.ButtonId!,out var old);
+            if(edit.Operation=="resetButton") changed=room.Buttons.Remove(edit.ButtonId!);
+            else
+            {
+                if(edit.TargetId is not null && !state.Targets.ContainsKey(edit.TargetId))return(false,EditorFailure(RoomActionStatus.MissingBinding));
+                if(edit.Action=="desk.go"&&!installed.DeskIds.Contains(edit.DeskId!,StringComparer.Ordinal))return(false,EditorFailure(RoomActionStatus.Denied));
+                if(edit.Skin is not null && !EditorSkins.Any(s=>s.Id==edit.Skin) && edit.Skin!=old?.Skin)return(false,EditorFailure(RoomActionStatus.Denied));
+                var value=new PersonalButtonOverride(edit.Action,edit.DeskId,edit.TargetId,edit.Skin);
+                var empty=value==new PersonalButtonOverride();
+                if(empty) changed=room.Buttons.Remove(edit.ButtonId!);
+                else if(value!=old){room.Buttons[edit.ButtonId!]=value;changed=true;}
+                var action=edit.Action??authored.Action?.Type??(edit.TargetId is not null?"binding.launch":null);
+                var required=action switch {"binding.launch"=>"binding.launch","dext.exit"=>"dext.exit","desk.next" or "desk.previous" or "desk.go"=>"desk.navigate",_=>null};
+                if(required is not null)foreach(var (id,owner) in installed.ActionCatalog.Consumers)
+                {
+                    if(!owner.HasButton(edit.ButtonId!)||!owner.HasCapability(required))continue;
+                    var current=room.Grants.TryGetValue(id,out var grant)&&grant.InstallationStamp==installed.InstallationStamp
+                        ?grant.Capabilities.ToHashSet(StringComparer.Ordinal):new HashSet<string>(StringComparer.Ordinal);
+                    if(current.Add(required)){room.Grants[id]=new(installed.InstallationStamp,current.OrderBy(x=>x,StringComparer.Ordinal).ToArray());changed=true;}
+                }
+            }
+            if(changed&&existing is null)state.Rooms[installed.RoomId]=room;
+        }
+        else if(edit?.Operation=="upsertTarget")
+        {
+            var value=EditTarget(edit);
+            if(!state.Targets.TryGetValue(edit.TargetId!,out var old)||old!=value){state.Targets[edit.TargetId!]=value;changed=true;}
+        }
+        else if(edit?.Operation=="removeTarget")
+        {
+            changed=state.Targets.Remove(edit.TargetId!);
+            foreach(var room in state.Rooms.Values)foreach(var (id,button) in room.Buttons.ToArray())
+                if(button.TargetId==edit.TargetId){var value=button with{TargetId=null};if(value==new PersonalButtonOverride())room.Buttons.Remove(id);else room.Buttons[id]=value;changed=true;}
+        }
+        return(changed,new("accepted",installed.RoomId,installed.InstallationStamp,ProjectEditor(state,installed,changed)));
+    }
+
+    private static RoomPersonalEditorSnapshot ProjectEditor(RoomPersonalState state,VerifiedRoomInstallation installed,bool publish)
+    {
+        state.Rooms.TryGetValue(installed.RoomId,out var room);
+        var buttons=installed.ActionCatalog!.Buttons.Values.OrderBy(b=>b.Id,StringComparer.Ordinal).Select(b=>{
+            PersonalButtonOverride? value=null;room?.Buttons.TryGetValue(b.Id,out value);
+            var action=Resolve(state,installed.RoomId,b,out var target);
+            return new RoomPersonalEditorButton(b.Id,b.Name,b.Scope,b.Action?.Type,b.Action?.DeskId,action?.Type,action?.DeskId,target is not null,
+                value is null?null:new RoomPersonalButtonSettings(value.Action,value.DeskId,value.TargetId,value.Skin));
+        }).ToArray();
+        var uses=state.Rooms.Values.SelectMany(r=>r.Buttons.Values).Where(b=>b.TargetId is not null).GroupBy(b=>b.TargetId!)
+            .ToDictionary(group=>group.Key,group=>group.Count(),StringComparer.Ordinal);
+        var targets=state.Targets.OrderBy(pair=>pair.Value.Name,StringComparer.Ordinal).ThenBy(pair=>pair.Key,StringComparer.Ordinal)
+            .Select(pair=>new RoomPersonalEditorTarget(pair.Key,pair.Value.Name,pair.Value.Kind,pair.Value.Target,pair.Value.Arguments,pair.Value.WorkingDirectory,uses.GetValueOrDefault(pair.Key))).ToArray();
+        return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray());
+    }
+}

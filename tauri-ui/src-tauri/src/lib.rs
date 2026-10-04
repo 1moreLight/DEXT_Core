@@ -3289,6 +3289,16 @@ async fn v3_session_status() -> Result<grpc::RoomSessionStatus, String> {
 }
 
 #[tauri::command]
+async fn get_v3_personal_editor(room_id: String, installation_stamp: String) -> Result<serde_json::Value, String> {
+    grpc::get_personal_editor(room_id, installation_stamp).await
+}
+
+#[tauri::command]
+async fn edit_v3_personal(room_id: String, installation_stamp: String, edit: serde_json::Value) -> Result<serde_json::Value, String> {
+    grpc::edit_personal(room_id, installation_stamp, edit).await
+}
+
+#[tauri::command]
 async fn get_v3_read_grants(room_id: String, installation_stamp: String) -> Result<grpc::RoomReadGrants, String> {
     grpc::get_read_grants(room_id, installation_stamp).await
 }
@@ -3379,6 +3389,8 @@ pub fn run() {
             core_stats,
             core_identity,
             v3_session_status,
+            get_v3_personal_editor,
+            edit_v3_personal,
             get_v3_read_grants,
             set_v3_read_grant,
             start_core,

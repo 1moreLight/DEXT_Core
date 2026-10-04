@@ -20,6 +20,7 @@
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
+    let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
     const diagnose=code=>{lastError={code};};
@@ -148,6 +149,7 @@
         if(!record){const element=document.createElement('button');element.className='dext-v3-icon';element.type='button';element.textContent=(icon.glyph||'◇')+'\n'+(icon.label||icon.id);element.setAttribute('aria-label',icon.label||icon.id);
           // Core native completion owns official activation; DOM click alone has no authority.
           rootNode.append(element);record={deskId:desk.id,icon,element};icons.set(key,record);}
+        record.element.dataset.skin=presentationSkins[icon.buttonId]||'classic';
         const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'source'];layoutIcon(record,group);
       }
       const placements=Object.fromEntries([...records.values()].filter(record=>
@@ -184,6 +186,9 @@
     }
     function buttonGeometry(sampled=false){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.stage==='desktop'&&!snapshot.operable||snapshot.lifecycle.playbackPaused||snapshot.lifecycle.locked)return[];
+      return visibleButtonGeometry(sampled);
+    }
+    function visibleButtonGeometry(sampled=false){
       const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
       const add=button=>{if(!button)return;vertices+=button.polygons.reduce((n,p)=>n+p.length,0);if(buttons.length>=4096||vertices>65536)throw failure('geometryBudget');buttons.push(button);};
       for(const [consumer,regions]of Object.entries(state.buttonRegions)){
@@ -309,9 +314,39 @@
       };
       return read();
     }
+
+    function clearLocator(){
+      if(locatorTimer!==null)cancelTimer(locatorTimer);locatorTimer=null;locatorButton=null;
+      locatorNode?.remove();locatorNode=null;
+    }
+    function paintLocator(button){
+      clearLocator();if(privatePaused||snapshot.lifecycle.stage!=='desktop')return;
+      const entries=visibleButtonGeometry(true).filter(entry=>entry.button===button);
+      if(!entries.length)return;
+      locatorButton=button;locatorNode=document.createElementNS('http://www.w3.org/2000/svg','svg');locatorNode.setAttribute('class','dext-v3-locator');locatorNode.setAttribute('viewBox','0 0 1920 1080');rootNode.append(locatorNode);
+      for(const entry of entries)for(const polygon of entry.polygons){const path=document.createElementNS('http://www.w3.org/2000/svg','polygon');path.setAttribute('points',polygon.map(p=>p.x*1920+','+p.y*1080).join(' '));locatorNode.append(path);}
+      locatorTimer=later(clearLocator,2500);
+    }
+    async function refreshPresentation(){
+      if(disposed||presentationRunning)return;presentationRunning=true;
+      const identity=scope();
+      try{
+        const reply=await native.request('presentationRead',{},identity);
+        if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
+        if(reply.status==='accepted'&&reply.presentation){
+          presentationSkins=copy(reply.presentation.skins);
+          for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
+          const locator=reply.presentation.locator;
+          if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}
+          if(!locator&&locatorButton)clearLocator();
+        }
+      }catch(_){/* Optional presentation metadata never delays layout or input. */}
+      finally{presentationRunning=false;if(!disposed)presentationTimer=later(refreshPresentation,750);}
+    }
+
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
-      snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
+      clearLocator();snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
       native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return renderWithLayout();
     }
     function publishGeometry(consumer,report){
@@ -328,6 +363,7 @@
     }
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
+    ready.then(()=>refreshPresentation());
     return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,
       readInputSample(identity,version){
         if(!identity||!sameActionScope(identity,version))return null;
@@ -343,7 +379,7 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -359,8 +395,8 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      dispose(){if(disposed)return;disposed=true;if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

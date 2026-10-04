@@ -84,7 +84,7 @@
       case'data':return shape(p,['consumer','capability'])&&id(p.consumer)&&DATA.has(p.capability);
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
-      case'invalidateGeometry':case'layoutRead':return shape(p,[]);
+      case'invalidateGeometry':case'layoutRead':case'presentationRead':return shape(p,[]);
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'authorInput':return shape(p,['consumer','instanceId','requestJson','geometryVersion'])&&id(p.consumer)&&id(p.instanceId,160)&&typeof p.requestJson==='string'&&new root.TextEncoder().encode(p.requestJson).length<=32768&&integer(p.geometryVersion);
@@ -109,7 +109,7 @@
     function dispatch(method,params,scope=identity){
       let entry;
       const promise=new Promise((resolve,reject)=>{
-        if(disposed){reject(failure('disposed'));return;}if(suspended&&method!=='layoutRead'){reject(failure('notOperable'));return;}
+        if(disposed){reject(failure('disposed'));return;}if(suspended&&!['layoutRead','presentationRead'].includes(method)){reject(failure('notOperable'));return;}
         if(!scopeValid(scope)||!same(scope,identity)){reject(failure('staleInput'));return;}
         if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
         const requestId='n'+(++counter);entry={requestId,method,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
@@ -136,6 +136,7 @@
       const action=['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
       if(['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
+      if(entry.method==='presentationRead'&&reply.status==='accepted'&&(!shape(reply.presentation,['revision','skins','locator'])||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
       if(['layoutRead','layoutSave'].includes(entry.method)&&reply.status==='accepted'&&!layoutValid(reply.layout)){finish(entry,false,'invalidPayload');return;}
       finish(entry,true,reply);
     }

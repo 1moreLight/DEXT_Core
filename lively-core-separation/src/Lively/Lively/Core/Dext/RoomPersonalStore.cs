@@ -150,13 +150,7 @@ internal sealed class RoomPersonalStore
         foreach (var (id, target) in state.Targets)
         {
             Uuid(id); Require(target is not null, "target required");
-            Text(target!.Name, 256, true); Text(target.Target, 4096, true); Text(target.Arguments, 8192); Text(target.WorkingDirectory, 4096);
-            Require(target.Kind is "application" or "file" or "url", "target kind");
-            if (target.Kind == "url")
-                Require(Uri.TryCreate(target.Target, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http", "target URL");
-            else Require(Path.IsPathFullyQualified(target.Target), "target path");
-            Require(target.WorkingDirectory.Length == 0 || Path.IsPathFullyQualified(target.WorkingDirectory), "working directory");
-            Require(target.Kind == "application" || (target.Arguments.Length == 0 && target.WorkingDirectory.Length == 0), "non-application parameters");
+            ValidateTarget(target!);
         }
         foreach (var (roomId, room) in state.Rooms)
         {
@@ -195,9 +189,19 @@ internal sealed class RoomPersonalStore
             }
         }
     }
+    internal static void ValidateTarget(PersonalTarget target)
+    {
+        Text(target!.Name, 256, true); Text(target.Target, 4096, true); Text(target.Arguments, 8192); Text(target.WorkingDirectory, 4096);
+        Require(target.Kind is "application" or "file" or "url", "target kind");
+        if (target.Kind == "url")
+            Require(Uri.TryCreate(target.Target, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http", "target URL");
+        else Require(Path.IsPathFullyQualified(target.Target), "target path");
+        Require(target.WorkingDirectory.Length == 0 || Path.IsPathFullyQualified(target.WorkingDirectory), "working directory");
+        Require(target.Kind == "application" || (target.Arguments.Length == 0 && target.WorkingDirectory.Length == 0), "non-application parameters");
+    }
     internal static void Id(string id) => Require(!string.IsNullOrEmpty(id) && id.Length <= 80 &&
         id.All(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '_' or '.' or '-'), "stable ID");
-    private static void Uuid(string id) => Require(Guid.TryParseExact(id, "D", out var value) && value != Guid.Empty && value.ToString("D") == id, "canonical UUID");
+    internal static void Uuid(string id) => Require(Guid.TryParseExact(id, "D", out var value) && value != Guid.Empty && value.ToString("D") == id, "canonical UUID");
     private static void Text(string text, int maximum, bool required = false) => Require(text is not null &&
         text.Length <= maximum && (!required || !string.IsNullOrWhiteSpace(text)) && !text.Contains('\0'), "personal text");
     private static void Require([DoesNotReturnIf(false)] bool value, string detail) { if (!value) throw new InvalidDataException("Invalid private Room state: " + detail); }

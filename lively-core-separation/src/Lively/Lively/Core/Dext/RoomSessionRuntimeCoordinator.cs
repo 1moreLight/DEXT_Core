@@ -13,6 +13,8 @@ public interface IRoomSessionRuntimeCoordinator
     void ExitNativeIdle();
     bool IsNativeIdlePresented { get; }
     string? NativeIdleDisplayId { get; }
+    RoomPersonalEditorReply GetRoomPersonalEditor(string roomId, string installationStamp);
+    RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson);
     RoomReadGrantsReply GetRoomReadGrants(string roomId, string installationStamp);
     RoomReadGrantsReply SetRoomReadGrant(string roomId, string installationStamp, string consumerId, string[] capabilities, bool allow);
 }

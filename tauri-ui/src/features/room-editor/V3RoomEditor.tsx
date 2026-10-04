@@ -3,14 +3,16 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { addV3Icon, createV3History, moveV3Desk, newV3Desk, readRoomV3, recordV3Change, redoV3, removeV3Desk,
+import { addV3Icon, createV3History, moveV3Desk, newV3Desk, readRoomV3, recordV3Change, redoV3, removeV3Desk, removeV3Presentation,
   serializeRoomV3, undoV3, type RoomV3, type V3Content, type V3History } from "./v3-document";
 
+import { V3PersonalEditor } from "./V3PersonalEditor";
+import type {AppPickerItem} from "@/components/AppPickerDialog";
 import { V3DockEditor } from "./V3DockEditor";
 import { attachDockTemplate, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor } from "./dock-template";
 
-type Props = { room:RoomV3; path:string; isTauri:boolean; canApply:boolean; onBack:()=>void; onDirty:(dirty:boolean)=>void;
+type Props = { room:RoomV3; path:string; apps:AppPickerItem[]; isTauri:boolean; canApply:boolean; onBack:()=>void; onDirty:(dirty:boolean)=>void;
   onSaved:()=>void; onApply:()=>Promise<void>; onApplied:()=>void };
 type Draft = {base:string;history:V3History;resources:string[]};
 const labels = {image:"图片",video:"视频",gif:"GIF",html:"本地 HTML"} as const;
@@ -136,6 +138,7 @@ export function V3RoomEditor(props:Props){
           <Button variant="outline" disabled={busy} onClick={()=>void run(()=>pick("html","dock"))}>添加本地 Dock</Button>
         </div>
         <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
+        <V3PersonalEditor room={room} path={props.path} deskId={desk.id} apps={props.apps} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} dirty={dirty} onChange={change}/>
         <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材</summary>
           <div className="mt-3 space-y-4"><div><h3 className="mb-2 text-sm">启动</h3>{contentPicker("start",room.start)}</div>
             <div><h3 className="mb-2 text-sm">待机</h3>{contentPicker("idle",room.idle)}</div></div></details>
@@ -155,11 +158,7 @@ export function V3RoomEditor(props:Props){
             <Button key={action} variant="outline" size="sm" disabled={busy||desk.icons.length>=512} onClick={()=>change(addV3Icon(room,desk.id,action==="desk.next"?"下一页":action==="desk.previous"?"上一页":"我的应用",action))}>
               {action==="desk.next"?"+ 下一页":action==="desk.previous"?"+ 上一页":"+ 待绑定应用"}</Button>)}</div>
           <ul className="mt-3 space-y-2">{desk.icons.map(icon=><li key={icon.id} className="flex items-center justify-between rounded border px-2 py-1 text-sm">
-            <span>{icon.glyph} {icon.label}</span><Button variant="ghost" size="sm" disabled={busy} onClick={()=>update(r=>{
-              r.desks.find(d=>d.id===desk.id)!.icons=r.desks.find(d=>d.id===desk.id)!.icons.filter(i=>i.id!==icon.id);
-              if(!r.desks.some(d=>d.icons.some(i=>i.buttonId===icon.buttonId))&&!r.components?.some(c=>c.buttonIds?.includes(icon.buttonId))&&!r.start?.buttonIds?.includes(icon.buttonId)&&!r.idle?.buttonIds?.includes(icon.buttonId)&&!r.desks.some(d=>d.background?.buttonIds?.includes(icon.buttonId)))
-                r.buttons=r.buttons?.filter(b=>b.id!==icon.buttonId);
-            })}>移除</Button></li>)}</ul>
+            <span>{icon.glyph} {icon.label}</span><Button variant="ghost" size="sm" disabled={busy} onClick={()=>change(removeV3Presentation(room,desk.id,icon.id))}>移除</Button></li>)}</ul>
         </div>
       </aside>
     </div>

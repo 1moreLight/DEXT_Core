@@ -64,3 +64,19 @@ export function redoV3(history:V3History):V3History {
   if(!history.future.length)return history;
   return {present:copy(history.future[0]),past:[...history.past.slice(-49),copy(history.present)],future:history.future.slice(1)};
 }
+
+
+export function addV3Presentation(room:RoomV3,deskId:string,buttonId:string):RoomV3 {
+  const next=copy(room),desk=next.desks.find(d=>d.id===deskId),button=next.buttons?.find(b=>b.id===buttonId);
+  if(!desk||!button)throw new Error("Desk 或按钮已不存在");
+  if(button.scope!=="room"&&button.scope!==deskId)throw new Error("按钮作用域不属于这个 Desk");
+  if(desk.icons.length>=512)throw new Error("这个 Desk 的图标数量已达上限");
+  const index=desk.icons.length;
+  desk.icons.push({id:id("icon"),buttonId,label:button.name,glyph:"◇",x:index%8,y:Math.floor(index/8)});
+  return next;
+}
+export function removeV3Presentation(room:RoomV3,deskId:string,iconId:string):RoomV3 {
+  const next=copy(room),desk=next.desks.find(d=>d.id===deskId);if(!desk)throw new Error("Desk 已不存在");
+  desk.icons=desk.icons.filter(icon=>icon.id!==iconId);
+  return next;
+}
