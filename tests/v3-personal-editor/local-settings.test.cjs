@@ -39,3 +39,20 @@ test("button discovery reflects the effective local action and missing targets",
  assert.equal(label(authored,{...snapshot.buttons[0],effectiveAction:"binding.launch",isBound:true}),"已绑定");
  assert.equal(label(navigation),"默认动作");
 });
+
+test("deleting an edited target closes its stale form and cannot offer to recreate it",async()=>{
+ const {targetFormAfterPersonalEdit:update}=await api;
+ const form={id:"notes",name:"Notes",kind:"application",target:"C:/Windows/notepad.exe",arguments:"draft args",workingDirectory:"",useCount:2};
+ assert.equal(update(form,{operation:"removeTarget",targetId:"notes"},true),null);
+ assert.deepEqual(update(form,{operation:"removeTarget",targetId:"notes"},false),form);
+ assert.deepEqual(update(form,{operation:"removeTarget",targetId:"other"},true),form);
+});
+test("target save failure preserves the retry ID and typed fields; only its confirmed save closes it",async()=>{
+ const {targetFormAfterPersonalEdit:update}=await api;
+ const form={id:"stable-retry",name:"Notes draft",kind:"application",target:"C:/Windows/notepad.exe",arguments:"typed args",workingDirectory:"C:/Windows",useCount:0};
+ const edit={operation:"upsertTarget",targetId:form.id,name:form.name,kind:form.kind,target:form.target,arguments:form.arguments,workingDirectory:form.workingDirectory};
+ assert.deepEqual(update(form,edit,false),form);
+ assert.equal(update(form,edit,true),null);
+ assert.deepEqual(update(form,{operation:"locateButton",buttonId:"open"},true),form);
+ assert.equal(update(null,{operation:"removeTarget",targetId:"notes"},true),null);
+});

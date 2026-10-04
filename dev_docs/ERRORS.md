@@ -315,3 +315,5 @@
 | #232 | 视觉定位误用桌面动作operable条件；独立可见几何，保留输入规则 | [renderer](errors/renderer.md) |
 
 | #233 | 目标库/定位回执丢未保存按钮选择；绑定状态需采用当前有效动作 | [frontend](errors/frontend.md) |
+
+| #234 | 删除目标成功须关闭同ID旧表单，避免保存意外重建 | [frontend](errors/frontend.md) |

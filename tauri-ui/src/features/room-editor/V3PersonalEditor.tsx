@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {AppPickerDialog,type AppPickerItem} from "@/components/AppPickerDialog";
 import {addV3Presentation,type RoomV3} from "./v3-document";
-import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
+import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,targetFormAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
 
 type Props={room:RoomV3;path:string;deskId:string;apps:AppPickerItem[];isTauri:boolean;canApply:boolean;disabled:boolean;dirty:boolean;onChange:(room:RoomV3)=>void};
 type Board={stamp:string;currentDesk:string;editor:PersonalSnapshot};
@@ -55,7 +55,7 @@ export function V3PersonalEditor(props:Props){
    const reply=await invoke<PersonalReply>("edit_v3_personal",{roomId:props.room.id,installationStamp:before.stamp,edit});
    if(epoch.current!==token)return false;
    if(valid(reply,props.room.id,before.stamp)){
-    setBoard({...before,editor:reply.editor!});setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,reply.editor!,true));
+    setBoard({...before,editor:reply.editor!});setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,reply.editor!,true));setForm(current=>targetFormAfterPersonalEdit(current,edit,true));
     setNotice(edit.operation==="locateButton"?"已请求定位当前可见区域。":"本机设置已保存。");return true;
    }
    if(reply.status==="staleSession"){setBoard(null);setNotice("运行副本已变化，请重新读取或应用当前作品。");}
@@ -107,7 +107,7 @@ export function V3PersonalEditor(props:Props){
      <select aria-label="目标类型" className="w-full rounded border bg-background p-2 text-sm" value={form.kind} onChange={e=>setForm({...form,kind:e.target.value as PersonalTarget["kind"],arguments:"",workingDirectory:""})}><option value="application">应用</option><option value="file">文件</option><option value="url">网页</option></select>
      <Input aria-label="目标路径或网址" placeholder={form.kind==="url"?"https://…":"完整本机路径"} value={form.target} onChange={e=>setForm({...form,target:e.target.value})}/>
      {form.kind==="application"&&<><Input aria-label="启动参数" placeholder="启动参数（可选）" value={form.arguments} onChange={e=>setForm({...form,arguments:e.target.value})}/><Input aria-label="工作目录" placeholder="工作目录（可选）" value={form.workingDirectory} onChange={e=>setForm({...form,workingDirectory:e.target.value})}/></>}
-     <div className="flex gap-2"><Button size="sm" onClick={()=>void save({operation:"upsertTarget",targetId:form.id,name:form.name,kind:form.kind,target:form.target,arguments:form.arguments,workingDirectory:form.workingDirectory}).then(ok=>{if(ok)setForm(null);})}>保存目标</Button><Button variant="ghost" size="sm" onClick={()=>setForm(null)}>取消</Button></div>
+     <div className="flex gap-2"><Button size="sm" onClick={()=>void save({operation:"upsertTarget",targetId:form.id,name:form.name,kind:form.kind,target:form.target,arguments:form.arguments,workingDirectory:form.workingDirectory})}>保存目标</Button><Button variant="ghost" size="sm" onClick={()=>setForm(null)}>取消</Button></div>
     </div>}
    </fieldset>
   </details>

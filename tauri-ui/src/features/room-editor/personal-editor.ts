@@ -41,3 +41,7 @@ export function buttonBindingLabel(authored:V3Button,confirmed?:PersonalButton):
   if(action==="binding.launch")return confirmed?.isBound?"已绑定":"未绑定";
   return confirmed?.personal?.action?"本机动作":"默认动作";
 }
+
+export function targetFormAfterPersonalEdit(form:PersonalTarget|null,edit:PersonalEditCommand,accepted:boolean):PersonalTarget|null {
+  return accepted&&form&&(edit.operation==="upsertTarget"||edit.operation==="removeTarget")&&edit.targetId===form.id?null:form;
+}
