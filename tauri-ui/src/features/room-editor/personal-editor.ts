@@ -20,3 +20,24 @@ export function discoverV3Buttons(room:RoomV3):(V3Button&{sources:string[]})[] {
   });
 }
 export const sameSource=(a:string,b:string)=>a.replace(/^\\\\\?\\/,"").replace(/\//g,"\\").replace(/\\+$/,"").toLowerCase()===b.replace(/^\\\\\?\\/,"").replace(/\//g,"\\").replace(/\\+$/,"").toLowerCase();
+
+export type PersonalEditCommand =
+  | ({operation:"setButton";buttonId:string}&ButtonSettings)
+  | {operation:"resetButton"|"locateButton";buttonId:string}
+  | {operation:"upsertTarget";targetId:string;name:string;kind:PersonalTarget["kind"];target:string;arguments:string;workingDirectory:string}
+  | {operation:"removeTarget";targetId:string};
+export function settingsAfterPersonalEdit(draft:ButtonSettings,selectedId:string,edit:PersonalEditCommand,confirmed:PersonalSnapshot,accepted:boolean):ButtonSettings {
+  if((edit.operation==="setButton"||edit.operation==="resetButton"&&accepted)&&edit.buttonId===selectedId){
+    const button=confirmed.buttons.find(b=>b.id===selectedId);
+    return button?.personal?{...button.personal}:{action:null,deskId:null,targetId:null,skin:null};
+  }
+  if(accepted&&edit.operation==="removeTarget"&&draft.targetId===edit.targetId)return {...draft,targetId:null};
+  return {...draft};
+}
+
+export function buttonBindingLabel(authored:V3Button,confirmed?:PersonalButton):string {
+  const action=confirmed?confirmed.effectiveAction:authored.action?.type;
+  if(!action)return "未绑定";
+  if(action==="binding.launch")return confirmed?.isBound?"已绑定":"未绑定";
+  return confirmed?.personal?.action?"本机动作":"默认动作";
+}

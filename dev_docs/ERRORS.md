@@ -313,3 +313,5 @@
 
 | #231 | ActiveRoom实际camelCase来源字段错误使本机面板不可用 | [frontend](errors/frontend.md) |
 | #232 | 视觉定位误用桌面动作operable条件；独立可见几何，保留输入规则 | [renderer](errors/renderer.md) |
+
+| #233 | 目标库/定位回执丢未保存按钮选择；绑定状态需采用当前有效动作 | [frontend](errors/frontend.md) |

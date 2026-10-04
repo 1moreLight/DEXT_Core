@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {AppPickerDialog,type AppPickerItem} from "@/components/AppPickerDialog";
 import {addV3Presentation,type RoomV3} from "./v3-document";
-import {discoverV3Buttons,sameSource,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
+import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
 
 type Props={room:RoomV3;path:string;deskId:string;apps:AppPickerItem[];isTauri:boolean;canApply:boolean;disabled:boolean;dirty:boolean;onChange:(room:RoomV3)=>void};
 type Board={stamp:string;currentDesk:string;editor:PersonalSnapshot};
@@ -48,19 +48,19 @@ export function V3PersonalEditor(props:Props){
  const button=authored.find(b=>b.id===selected),confirmed=board?.editor.buttons.find(b=>b.id===selected);
  const canEdit=Boolean(board&&confirmed&&confirmed.scope===button?.scope&&confirmed.name===button?.name&&confirmed.defaultAction===(button?.action?.type??null)&&confirmed.defaultDeskId===(button?.action?.deskId??null)&&!props.dirty);
  const locked=props.disabled||pending;
- const save=async(edit:object)=>{
+ const save=async(edit:PersonalEditCommand)=>{
   if(!board||busy.current||locked||props.dirty)return false;
   const before=board,token=++epoch.current;busy.current=true;setPending(true);
   try{
    const reply=await invoke<PersonalReply>("edit_v3_personal",{roomId:props.room.id,installationStamp:before.stamp,edit});
    if(epoch.current!==token)return false;
    if(valid(reply,props.room.id,before.stamp)){
-    setBoard({...before,editor:reply.editor!});setSettings(choice(reply.editor!.buttons.find(b=>b.id===selected)));
-    setNotice("operation" in edit&&edit.operation==="locateButton"?"已请求定位当前可见区域。":"本机设置已保存。");return true;
+    setBoard({...before,editor:reply.editor!});setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,reply.editor!,true));
+    setNotice(edit.operation==="locateButton"?"已请求定位当前可见区域。":"本机设置已保存。");return true;
    }
    if(reply.status==="staleSession"){setBoard(null);setNotice("运行副本已变化，请重新读取或应用当前作品。");}
-   else{setSettings(choice(before.editor.buttons.find(b=>b.id===selected)));setNotice(reply.status==="notOperable"?"当前 Desk 或桌面阶段无法定位这个按钮。":reply.status==="missingBinding"?"目标已不存在，请重新选择。":"保存失败，已保留原本机设置。");}
-  }catch{if(epoch.current===token){setSettings(choice(before.editor.buttons.find(b=>b.id===selected)));setNotice("保存失败，已保留原本机设置。");}}
+   else{setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,before.editor,false));setNotice(reply.status==="notOperable"?"当前 Desk 或桌面阶段无法定位这个按钮。":reply.status==="missingBinding"?"目标已不存在，请重新选择。":"保存失败，已保留原本机设置。");}
+  }catch{if(epoch.current===token){setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,before.editor,false));setNotice("保存失败，已保留原本机设置。");}}
   finally{if(epoch.current===token){busy.current=false;setPending(false);}}
   return false;
  };
@@ -75,7 +75,7 @@ export function V3PersonalEditor(props:Props){
   <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
    <div className="max-h-72 space-y-1 overflow-auto" aria-label="已声明按钮列表">{shown.map(b=><button key={b.id} type="button" aria-label={"选择按钮 "+b.name} aria-pressed={b.id===selected} disabled={pending} className={"block w-full rounded border p-2 text-left text-sm "+(b.id===selected?"border-cyan-500 bg-cyan-500/10":"")} onClick={()=>setSelected(b.id)}>
     <span className="block">{b.name}</span><span className="block break-all text-[10px] text-muted-foreground">{b.id}</span>
-    <span className="text-xs text-muted-foreground">{board?.editor.buttons.find(x=>x.id===b.id)?.isBound?"已绑定":b.action?.type==="binding.launch"||!b.action?"未绑定":"默认动作"}</span>
+    <span className="text-xs text-muted-foreground">{buttonBindingLabel(b,board?.editor.buttons.find(x=>x.id===b.id))}</span>
    </button>)}{!shown.length&&<p className="text-xs text-muted-foreground">没有匹配的按钮。</p>}</div>
    {button&&<div className="space-y-3">
     <div><h3 className="text-sm font-medium">{button.name}</h3><p className="break-all text-xs text-muted-foreground">{button.sources.join(" / ")||"已声明，尚无呈现"}</p>

@@ -137,3 +137,7 @@ rename_room返回display_path；原生作者rename更新name并保持UUID/资源
 
 ## #231 ActiveRoom来源字段须核对实际camelCase回复（2026-10-04）
 新个人面板误声明active_room.source_path，实际Rust Serialize为sourcePath。sameSource读undefined抛错，实际Core正常。读取真实RPC/source确认后修正；初次HMR旧面板仍有旧错误，重新打开后当前本机面板可用。接续同一自有Room，不重跑初始化覆盖原localStorage备份。Core检查不能代替Tauri JSON字段/实际UI核对。
+
+## #233 目标库/视觉定位回执不能重置尚未保存的按钮选择（2026-10-04）
+个人面板每个编辑回执都从确认按钮覆盖表单，保存目标或定位时把待保存的动作/Desk/皮肤选择丢掉，失败也会清空草稿。列表另按作者默认动作显示绑定徽标，启动改导航后误报未绑定，导航改缺目标启动却显示默认动作。
+修复：按闭合操作更新选择，只有自身setButton确认/失败或成功resetButton回到确认值；目标元数据/定位保持草稿，成功删除仅清该目标引用。徽标使用Core有效动作与isBound。三个操作序列实际RED→GREEN，标签追加RED→GREEN，最终生产TS直接Node4/4约0.25秒；未构建/启动应用，真实UI在用户游戏结束后继续。

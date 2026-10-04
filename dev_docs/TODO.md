@@ -1591,7 +1591,7 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 一句话目标：发现当前原生Room所有按钮，配置本机动作/目标/皮肤和独立普通图标呈现，不改分享作品的私人边界。
 独立feat/V3-P6-003-personal-editor / v3-personal-editor。范围外：顶层Dock、游戏、分享、完整试验台；拖动后置，无新增网络专项。manual六项见独立验收卡，连续开发/最终集中，完整16项1/16≈6%。
 - [x] 顺序核对README/ROADMAP/TODO/ERRORS及V3_PLAN/D05/本轮Core模型；创建依赖6c32e66的独立worktree/分支，计划和验收先写；CodeGraph目录存在但未初始化，rg兜底，不擅自索引。现有依赖junction复用。
-- [ ] Task1：Core个人编辑读回/覆盖/目标管理、限定--personal-editor本地功能RED/GREEN，proto/Tauri接线/完整构建。
+- [x] Task1：Core个人编辑读回/覆盖/目标管理、限定--personal-editor本地功能RED/GREEN，proto/Tauri接线/完整构建。
 - [ ] Task2：统一按钮搜索与目标/动作/皮肤、普通呈现增删/历史模型和编辑UI；源Room与私人覆盖分开。
 - [ ] Task3：正式Player普通图标皮肤与短时定位；必要模型/渲染/实际Player证据。
 - [ ] Task4：真实Tauri/Core/Player/普通重启与原状态精确恢复/正常退出，具名提交；最终集中本卡/P5物理门槛/单次审查。
@@ -1607,3 +1607,12 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 - [x] 用户将全屏游戏，立即正常关配置器77036、Core100348；watcher30520 exit0。原localStorage/四文件字节和缺失精确恢复，自有Temp/安装/前代/source记录清理，Dext/1620/1621/9226/9227监听0。
 - [ ] 游戏期间不启动Dext/配置器、不编译、不做桌面输入；轻量修复与记录随本轮具名提交。结束游戏后接实际定位/普通重启、Desk改名排序保持、目标删改重置和呈现删除UI；最终本卡六项/P5门槛及一次整体审查，完整16项仍1/16≈6%，不合并master。
 证据：本线程evidence的p6-personal-editor-red/core（9/9）、presentation-red、read-grants-regression、model-red/model（6/6）、ui-build/tauri-check/core-build、dom（59/59）、locator-red/green（2/2）、native首轮（来源字段失败）/native-resume（真实目标/呈现/皮肤）、native-evidence及截图、runtime-start/restored。定位旧visible=false、物理动作未完成单列。
+
+### P6-003 游戏期间轻量选择保持（2026-10-04，BASE e495615）
+一句话目标：目标库保存/删除和视觉定位不丢用户尚未保存的按钮动作/Desk/皮肤选择；显式按钮保存失败仍显示原确认值。范围外：实际Player重启/窗口/构建，继续保持Dext停止。
+- [x] 把当前任何RPC回执都重置按钮表单的问题提取为生产选择更新函数；以几个真实操作序列用Node原生TypeScript执行验证RED→GREEN，不调用TS/Vite编译器或浏览器。
+- [x] 接入UI成功/失败回执，记录坑与验收第5项选择保持步骤；具名提交。实际界面、定位修复和普通重启保留游戏结束后集中。
+
+- [x] 统一按钮列表按Core当前有效动作显示绑定状态；将启动改为导航不再误报未绑定，改为缺目标启动必须显示未绑定。仅同组三个检查加一项本地状态序列。
+
+本轮轻量功能证据：生产TS直接由本机Node执行，选择保持实际0/3→3/3，状态标签3/4→4/4；一轮最终进程约0.25秒，未运行编译器/浏览器/应用，也未触及用户数据。目标元数据保存/定位成功与失败保留待保存动作/Desk/目标/皮肤；明确删除仅清对应目标；显式按钮保存失败回到原确认值，重置失败保待保存选择。列表以Core有效动作标识本机导航和缺目标启动（ERRORS #233）。最后完整打包/实际UI/修复定位/普通重启仍等结束游戏；本轮具名提交，不合并，整体1/16≈6%。
