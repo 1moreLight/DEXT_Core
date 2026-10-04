@@ -8,6 +8,7 @@ use tokio::net::windows::named_pipe::ClientOptions;
 use crate::proto::desktop::{
     CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, RoomSessionStatusResponse,
     RoomPersonalEditorRequest, RoomPersonalEditRequest, RoomPersonalEditorResponse,
+    RoomPersonalCopyRequest, RoomPersonalDeleteRequest, RoomPersonalLifecycleResponse,
     RoomReadGrantsRequest, RoomSetReadGrantRequest, RoomReadGrantsResponse,
     RoomDockPreferenceRequest, RoomDockStatusResponse,
     SetSystemVolumeRequest,
@@ -391,6 +392,23 @@ async fn personal_editor_call(method: &str, request: &[u8]) -> Result<serde_json
         .ok_or_else(|| "Dext Core returned no personal editor state".to_string())?;
     serde_json::from_str(&response.reply_json).map_err(|_| "Dext Core returned invalid personal editor state".to_string())
 }
+async fn personal_lifecycle_call(method: &str, request: &[u8]) -> Result<(), String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomPersonalLifecycleResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no personal copy/delete confirmation".to_string())?;
+    if response.status != "accepted" {
+        return Err(format!("{}: {}", response.status, response.message));
+    }
+    Ok(())
+}
+pub async fn copy_room_personal(source_room_id: String, new_room_id: String) -> Result<(), String> {
+    personal_lifecycle_call("CopyRoomPersonal", &RoomPersonalCopyRequest { source_room_id, new_room_id }.encode_to_vec()).await
+}
+pub async fn delete_room_personal(room_id: String, dry_run: bool) -> Result<(), String> {
+    personal_lifecycle_call("DeleteRoomPersonal", &RoomPersonalDeleteRequest { room_id, dry_run }.encode_to_vec()).await
+}
+
 pub async fn get_personal_editor(room_id: String, installation_stamp: String) -> Result<serde_json::Value, String> {
     personal_editor_call("GetRoomPersonalEditor", &RoomPersonalEditorRequest { room_id, installation_stamp }.encode_to_vec()).await
 }

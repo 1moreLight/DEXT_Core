@@ -224,3 +224,78 @@ pub fn import(library: &Path, archive_path: &Path, requested_name: Option<&str>)
     fs::rename(&contents, &destination).map_err(|e| format!("publish imported Room: {e}"))?;
     Ok(destination)
 }
+/// Outside every Room directory, so this recovery intent never enters a share.
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PersonalCleanupIntent {
+    format_version: u32,
+    pub room_id: String,
+    pub room_name: String,
+}
+const CLEANUP_PREFIX: &str = ".dext-personal-delete-";
+fn cleanup_identity(id: &str) -> Result<(), String> {
+    if id.len() != 36 || id.bytes().enumerate().any(|(index, byte)|
+        if [8,13,18,23].contains(&index) { byte != b'-' }
+        else { !byte.is_ascii_hexdigit() || byte.is_ascii_uppercase() }) ||
+        id == "00000000-0000-0000-0000-000000000000" {
+        return Err("personal cleanup requires a canonical Room UUID".into());
+    }
+    Ok(())
+}
+pub fn queue_personal_cleanup(library: &Path, room_id: &str, room_name: &str) -> Result<PathBuf, String> {
+    cleanup_identity(room_id)?;
+    crate::validate_room_name(room_name)?;
+    let library = library.canonicalize().map_err(|e| e.to_string())?;
+    let path = library.join(format!("{CLEANUP_PREFIX}{room_id}.json"));
+    let intent = PersonalCleanupIntent { format_version: 1, room_id: room_id.into(), room_name: room_name.into() };
+    let bytes = serde_json::to_vec(&intent).map_err(|e| e.to_string())?;
+    if path.exists() {
+        let existing = read_cleanup_intent(&path)?;
+        if existing.room_id != room_id || existing.room_name != room_name { return Err("conflicting personal cleanup intent".into()); }
+        return Ok(path);
+    }
+    let mut temp = tempfile::NamedTempFile::new_in(&library).map_err(|e| e.to_string())?;
+    temp.write_all(&bytes).and_then(|_| temp.as_file_mut().sync_all()).map_err(|e| e.to_string())?;
+    temp.persist_noclobber(&path).map_err(|e| format!("save personal cleanup intent: {}", e.error))?;
+    Ok(path)
+}
+fn read_cleanup_intent(path: &Path) -> Result<PersonalCleanupIntent, String> {
+    if crate::is_reparse_point(path)? { return Err("cleanup intent cannot be a reparse point".into()); }
+    let mut bytes = Vec::new();
+    let file = fs::File::open(path).map_err(|e| if e.raw_os_error() == Some(32) {
+        "personal cleanup intent busy".to_string()
+    } else { e.to_string() })?;
+    file.take(4097).read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+    if bytes.len() > 4096 { return Err("personal cleanup intent exceeds limit".into()); }
+    let intent: PersonalCleanupIntent = serde_json::from_slice(&bytes).map_err(|e| format!("read personal cleanup intent: {e}"))?;
+    cleanup_identity(&intent.room_id)?;
+    crate::validate_room_name(&intent.room_name)?;
+    let expected_name = format!("{CLEANUP_PREFIX}{}.json",intent.room_id);
+    if intent.format_version != 1 || path.file_name().and_then(|s| s.to_str()) != Some(expected_name.as_str()) {
+        return Err("invalid personal cleanup intent identity".into());
+    }
+    Ok(intent)
+}
+pub fn pending_personal_cleanup(library: &Path) -> Result<Vec<(PathBuf, PersonalCleanupIntent)>, String> {
+    if !library.exists() { return Ok(Vec::new()); }
+    let mut entries = Vec::new();
+    for entry in fs::read_dir(library).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.starts_with(CLEANUP_PREFIX) && name.ends_with(".json") {
+            let path = entry.path();
+            match read_cleanup_intent(&path) {
+                Ok(intent) => entries.push((path, intent)),
+                Err(error) if error == "personal cleanup intent busy" => continue,
+                Err(error) => return Err(error),
+            }
+        }
+    }
+    Ok(entries)
+}
+pub fn cleanup_source_restored(library: &Path, intent: &PersonalCleanupIntent) -> Result<bool, String> {
+    let source = library.join(&intent.room_name);
+    if !source.exists() { return Ok(false); }
+    let document = room_v3::read_document(&source)?;
+    Ok(document["id"].as_str() == Some(intent.room_id.as_str()))
+}

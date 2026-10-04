@@ -132,6 +132,15 @@ namespace Lively.RPC
         public override Task<RoomPersonalEditorResponse> EditRoomPersonal(RoomPersonalEditRequest request, ServerCallContext context) =>
             Task.FromResult(PersonalEditorResponse(roomSessionRuntime.EditRoomPersonal(request.RoomId, request.InstallationStamp, request.EditJson)));
 
+        public override Task<RoomPersonalLifecycleResponse> CopyRoomPersonal(RoomPersonalCopyRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalLifecycleResponse(roomSessionRuntime.CopyRoomPersonal(request.SourceRoomId, request.NewRoomId)));
+
+        public override Task<RoomPersonalLifecycleResponse> DeleteRoomPersonal(RoomPersonalDeleteRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalLifecycleResponse(roomSessionRuntime.DeleteRoomPersonal(request.RoomId, request.DryRun)));
+
+        private static RoomPersonalLifecycleResponse PersonalLifecycleResponse(RoomPersonalLifecycleReply reply) => new()
+        { Status = reply.Status, Message = reply.Message ?? string.Empty };
+
         private static RoomPersonalEditorResponse PersonalEditorResponse(RoomPersonalEditorReply reply) => new()
         {
             ReplyJson = System.Text.Json.JsonSerializer.Serialize(reply,

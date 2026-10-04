@@ -22,6 +22,49 @@ internal sealed record RoomPresentationReply(RoomActionStatus Status,RoomPresent
 
 internal sealed partial class RoomActionAuthority
 {
+    private readonly object roomCopyLifecycleGate = new();
+    private readonly HashSet<string> cancelledRoomCopyIds = new(StringComparer.Ordinal);
+
+    internal RoomPersonalLifecycleReply CopyRoomPersonal(string sourceRoomId, string newRoomId)
+    {
+        try
+        {
+            lock (roomCopyLifecycleGate)
+            {
+                if (cancelledRoomCopyIds.Contains(newRoomId))
+                    return new("cancelled", "该副本复制已取消，请重新另存。");
+                store.CopyRoom(sourceRoomId, newRoomId);
+                return new("accepted");
+            }
+        }
+        catch (InvalidDataException error) { return new("denied", error.Message); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        { return new("storageUnavailable", error.Message); }
+    }
+
+    internal RoomPersonalLifecycleReply DeleteRoomPersonal(string roomId, bool dryRun)
+    {
+        try
+        {
+            RoomPersonalStore.Uuid(roomId);
+            lock (roomCopyLifecycleGate)
+            {
+                if (dryRun) store.Read();
+                else
+                {
+                    store.DeleteRoom(roomId);
+                    // A late copy RPC for an abandoned fresh UUID must not
+                    // recreate settings after recovery already removed them.
+                    cancelledRoomCopyIds.Add(roomId);
+                }
+                return new("accepted");
+            }
+        }
+        catch (InvalidDataException error) { return new("denied", error.Message); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        { return new("storageUnavailable", error.Message); }
+    }
+
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)

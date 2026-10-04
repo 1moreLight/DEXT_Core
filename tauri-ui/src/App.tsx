@@ -388,6 +388,18 @@ export default function App() {
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const readyCoreIdentity = coreIdentity?.is_core_initialized ? coreIdentity : null;
+
+  useEffect(() => {
+    if (!IS_TAURI || !readyCoreIdentity) return;
+    let cancelled = false;
+    invoke<{cleaned:number;pending:number;messages:string[]}>("cleanup_v3_personal_deletions", {libraryDir:libDir})
+      .then(reply => {
+        if (cancelled) return;
+        if (reply.pending) setStatus("Room私人数据清理待重试：" + reply.messages.join("；"));
+        else if (reply.cleaned) setStatus("已处理 " + reply.cleaned + " 项Room私人数据恢复记录");
+      }).catch(error => {if(!cancelled)setStatus("Room私人数据清理暂未完成：" + String(error));});
+    return () => {cancelled = true;};
+  }, [libDir,readyCoreIdentity?.process_id]);
   const activeRoomPolicy = roomContractPolicy(roomVersion);
   const activeRoomAudit: RoomEditAudit = {
     permissionReviews,
@@ -831,7 +843,7 @@ export default function App() {
     }
   }
 
-  async function saveAs() {
+  async function saveAs(nativeDraftJson?: string) {
     if (!roomPath) {
       setStatus("先新建或选择一个房间");
       return;
@@ -844,6 +856,9 @@ export default function App() {
       setStatus(roomIntegrityReason);
       return;
     }
+    if (roomVersion === 3 && !readyCoreIdentity) {
+      setStatus("先启动 Core，以复制本机绑定和皮肤；作品原文保持"); return;
+    }
     const name = prompt("另存为（建议英文）");
     if (!name) return;
     try {
@@ -851,7 +866,7 @@ export default function App() {
         roomDir: roomPath,
         dir: libDir,
         name,
-        roomJson: JSON.stringify(buildRoomV2(), null, 2),
+        roomJson: roomVersion === 3 ? nativeDraftJson ?? JSON.stringify(nativeRoom) : JSON.stringify(buildRoomV2(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -1412,7 +1427,8 @@ export default function App() {
       for (let index = 0; index < paths.length; index += 1) {
         setRoomBusy(`正在移到回收站 ${index + 1} / ${paths.length}`);
         try {
-          await invoke("delete_room", { libraryDir: libDir, roomDir: paths[index] });
+          const result = await invoke<{personalCleanupPending?:boolean;message?:string}>("delete_room", { libraryDir: libDir, roomDir: paths[index] });
+          if (result?.personalCleanupPending) failures.push(result.message || "Room已回收，私人数据清理待Core重连");
         } catch (error) {
           failures.push(`${paths[index]}：${String(error)}`);
         }
@@ -1489,6 +1505,10 @@ export default function App() {
     if (!name) return;
     if (!IS_TAURI) {
       const next = { ...room, name, path: `C:\\mock\\${name}` };
+      if (room.version === 3) {
+        const copy = structuredClone(mockNativeRooms.get(room.path) ?? createRoomV3(room.name));
+        copy.id = crypto.randomUUID(); copy.name = name; mockNativeRooms.set(next.path, copy);
+      }
       setRooms((current) => [...current, next]);
       setHeroPath(next.path);
       setStatus(`已复制 ${room.name} → ${name}（UI 设计模式）`);
@@ -1797,6 +1817,8 @@ export default function App() {
             ) : roomVersion === 3 && nativeRoom && roomPath ? (
               <V3RoomEditor key={roomPath} room={nativeRoom} path={roomPath} apps={apps} isTauri={IS_TAURI}
                 canApply={Boolean(readyCoreIdentity)}
+                onSaveAs={json => saveAs(json)}
+                onShare={() => exportRooms([roomPath])}
                 onDirty={setDirty}
                 onBack={() => {setRoomEntered(false); setDirty(false);}}
                 onSaved={() => {void refreshRooms(libDir);}}

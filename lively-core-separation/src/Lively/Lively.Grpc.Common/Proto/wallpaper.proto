@@ -20,6 +20,8 @@ service DesktopService {
   rpc SetRoomDockPreference (RoomDockPreferenceRequest) returns (RoomDockStatusResponse);
   rpc GetRoomPersonalEditor (RoomPersonalEditorRequest) returns (RoomPersonalEditorResponse);
   rpc EditRoomPersonal (RoomPersonalEditRequest) returns (RoomPersonalEditorResponse);
+  rpc CopyRoomPersonal (RoomPersonalCopyRequest) returns (RoomPersonalLifecycleResponse);
+  rpc DeleteRoomPersonal (RoomPersonalDeleteRequest) returns (RoomPersonalLifecycleResponse);
   rpc GetRoomReadGrants (RoomReadGrantsRequest) returns (RoomReadGrantsResponse);
   rpc SetRoomReadGrant (RoomSetReadGrantRequest) returns (RoomReadGrantsResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
@@ -334,3 +336,16 @@ message RoomPersonalEditorResponse {
 
 message RoomDockPreferenceRequest { string patch_json = 1; }
 message RoomDockStatusResponse { string reply_json = 1; }
+
+message RoomPersonalCopyRequest {
+  string source_room_id = 1;
+  string new_room_id = 2;
+}
+message RoomPersonalDeleteRequest {
+  string room_id = 1;
+  bool dry_run = 2;
+}
+message RoomPersonalLifecycleResponse {
+  string status = 1;
+  string message = 2;
+}

@@ -15,6 +15,8 @@ public interface IRoomSessionRuntimeCoordinator
     string? NativeIdleDisplayId { get; }
     RoomPersonalEditorReply GetRoomPersonalEditor(string roomId, string installationStamp);
     RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson);
+    RoomPersonalLifecycleReply CopyRoomPersonal(string sourceRoomId, string newRoomId);
+    RoomPersonalLifecycleReply DeleteRoomPersonal(string roomId, bool dryRun);
     RoomDockStatusReply GetRoomDockStatus();
     RoomDockStatusReply SetRoomDockPreference(string patchJson);
     void RouteDockMouse(int x, int y, string edge, bool blocked) { }

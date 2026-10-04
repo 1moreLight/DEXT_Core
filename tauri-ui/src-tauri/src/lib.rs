@@ -1958,6 +1958,39 @@ fn save_room_as_dir(
     Ok(target)
 }
 
+static ROOM_SHARING_TRANSACTION: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+async fn copy_native_room(source: String, library: String, name: String, json: String) -> Result<String, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let cleanup_library = library.clone();
+    let cleanup_name = name.clone();
+    let identity = core_runtime::managed_core_identity().await
+        .map_err(|e| format!("本机另存需要连接 Dext Core，以确认个人绑定/皮肤复制：{e}"))?;
+    if !identity.is_core_initialized { return Err("Core 正在初始化，请稍后另存".into()); }
+    let prepared = tauri::async_runtime::spawn_blocking(move || room_v3_sharing::prepare_copy(
+        std::path::Path::new(&source), std::path::Path::new(&library), &name, &json))
+        .await.map_err(|e| format!("prepare native Room copy: {e}"))??;
+    let new_id = prepared.room_id.clone();
+    if let Err(error) = grpc::copy_room_personal(prepared.source_id.clone(), new_id.clone()).await {
+        let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name);
+        return Err(format!("个人复制未确认，作品副本尚未发布；原Room保持。新副本ID {new_id}：{error}; recovery intent: {journal:?}"));
+    }
+    let result = tauri::async_runtime::spawn_blocking(move || prepared.publish()).await
+        .unwrap_or_else(|e| Err(format!("publish native Room copy: {e}")));
+    match result {
+        Ok(path) => Ok(path.to_string_lossy().into_owned()),
+        Err(error) => {
+            match grpc::delete_room_personal(new_id.clone(), false).await {
+                Ok(()) => Err(format!("{error}; copied personal overrides rolled back")),
+                Err(cleanup) => {
+                    let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name);
+                    Err(format!("{error}; 新副本未发布，个人清理待重试 {new_id}: {cleanup}; recovery intent: {journal:?}"))
+                },
+            }
+        }
+    }
+}
+
 #[tauri::command]
 async fn save_room_as(
     room_dir: String,
@@ -1965,6 +1998,11 @@ async fn save_room_as(
     name: String,
     room_json: String,
 ) -> Result<String, String> {
+    let candidate: serde_json::Value = serde_json::from_str(&room_json)
+        .map_err(|e| format!("parse copied Room: {e}"))?;
+    if candidate.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return copy_native_room(room_dir, dir, name, room_json).await;
+    }
     save_room_as_dir(
         std::path::Path::new(&room_dir),
         std::path::Path::new(&dir),
@@ -1991,6 +2029,12 @@ async fn duplicate_room(
     room_dir: String,
     name: String,
 ) -> Result<String, String> {
+    let source = direct_room_in_library(std::path::Path::new(&library_dir), std::path::Path::new(&room_dir))?;
+    let json = std::fs::read_to_string(source.join("room.json")).map_err(|e| format!("read copied Room: {e}"))?;
+    let document: serde_json::Value = serde_json::from_str(&json).map_err(|e| format!("parse copied Room: {e}"))?;
+    if document.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return copy_native_room(source.to_string_lossy().into_owned(), library_dir, name, json).await;
+    }
     duplicate_room_dir(
         std::path::Path::new(&library_dir),
         std::path::Path::new(&room_dir),
@@ -2036,19 +2080,73 @@ async fn rename_room(
 }
 
 #[tauri::command]
-async fn delete_room(library_dir: String, room_dir: String) -> Result<(), String> {
-    let room = direct_room_entry_in_library(
-        std::path::Path::new(&library_dir),
-        std::path::Path::new(&room_dir),
-    )?;
-    trash::delete(&room).map_err(|error| {
-        format!(
-            "move Room {:?} to the Windows Recycle Bin failed: {error}",
-            room.file_name().unwrap_or_default()
-        )
-    })
+async fn cleanup_v3_personal_deletions(library_dir: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let library = std::path::Path::new(&library_dir);
+    let mut cleaned = 0usize;
+    let mut messages = Vec::new();
+    let intents = room_v3_sharing::pending_personal_cleanup(library)?;
+    for (path, intent) in intents {
+        let result = match room_v3_sharing::cleanup_source_restored(library, &intent) {
+            Ok(true) => Ok(()),
+            Ok(false) => grpc::delete_room_personal(intent.room_id.clone(), false).await,
+            Err(error) => Err(error),
+        };
+        match result {
+            Ok(()) => match std::fs::remove_file(&path) {
+                Ok(()) => cleaned += 1,
+                Err(error) => messages.push(format!("{}: {error}", intent.room_id)),
+            },
+            Err(error) => messages.push(format!("{}: {error}", intent.room_id)),
+        }
+    }
+    Ok(serde_json::json!({"cleaned":cleaned,"pending":messages.len(),"messages":messages}))
 }
 
+#[tauri::command]
+async fn delete_room(library_dir: String, room_dir: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let library = std::path::Path::new(&library_dir);
+    let room = direct_room_entry_in_library(library, std::path::Path::new(&room_dir))?;
+    let document = room_v3::read_document(&room).ok();
+    let native_id = document.as_ref().filter(|doc| doc["version"] == 3)
+        .and_then(|doc| doc["id"].as_str()).map(str::to_owned);
+    let intent = if let Some(id) = &native_id {
+        grpc::delete_room_personal(id.clone(), true).await
+            .map_err(|e| format!("个人数据删除尚未确认，Room未移动：{e}"))?;
+        Some(room_v3_sharing::queue_personal_cleanup(library, id,
+            room.file_name().and_then(|s| s.to_str()).ok_or("Room name is not UTF-8")?)?)
+    } else { None };
+    let intent_lease = intent.as_ref().map(|path| {
+        let mut options = std::fs::OpenOptions::new();
+        options.read(true);
+        #[cfg(windows)] {
+            use std::os::windows::fs::OpenOptionsExt;
+            options.share_mode(0);
+        }
+        options.open(path).map_err(|e| format!("hold personal cleanup intent: {e}"))
+    }).transpose()?;
+    if let Err(error) = trash::delete(&room) {
+        // Preserve intent: a restored source cancels cleanup, a partial Shell
+        // move with an error can still finish its private cleanup on reconnect.
+        return Err(format!("move Room to the Windows Recycle Bin failed: {error}"));
+    }
+    drop(intent_lease);
+    if let (Some(id), Some(path)) = (native_id, intent) {
+        let cleanup = grpc::delete_room_personal(id.clone(), false).await;
+        match cleanup {
+            Ok(()) => {
+                if let Err(error) = std::fs::remove_file(path) {
+                    return Ok(serde_json::json!({"deleted":true,"roomId":id,"personalCleanupPending":true,
+                        "message":format!("私人数据已清理，恢复记录待清除：{error}")}));
+                }
+            }
+            Err(error) => return Ok(serde_json::json!({"deleted":true,"roomId":id,"personalCleanupPending":true,
+                "message":format!("Room已移入回收站，私人数据清理待Core重连：{error}")})),
+        }
+    }
+    Ok(serde_json::json!({"deleted":true,"personalCleanupPending":false}))
+}
 fn zip_directory(
     writer: &mut zip::ZipWriter<&mut std::fs::File>,
     root: &std::path::Path,
@@ -3393,6 +3491,7 @@ pub fn run() {
             duplicate_room,
             rename_room,
             delete_room,
+            cleanup_v3_personal_deletions,
             export_room_zip,
             import_room_zip,
             apply_room,

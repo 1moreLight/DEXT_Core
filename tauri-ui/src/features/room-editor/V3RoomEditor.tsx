@@ -14,7 +14,8 @@ import { attachDockTemplate, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor } from "./dock-template";
 
 type Props = { room:RoomV3; path:string; apps:AppPickerItem[]; isTauri:boolean; canApply:boolean; onBack:()=>void; onDirty:(dirty:boolean)=>void;
-  onSaved:()=>void; onApply:()=>Promise<void>; onApplied:()=>void };
+  onSaved:()=>void; onApply:()=>Promise<void>; onApplied:()=>void;
+  onSaveAs:(json:string)=>Promise<void>; onShare:()=>Promise<void> };
 type Draft = {base:string;history:V3History;resources:string[]};
 const labels = {image:"图片",video:"视频",gif:"GIF",html:"本地 HTML"} as const;
 const extensions = {image:["png","jpg","jpeg","webp","svg","avif"],video:["mp4","webm"],gif:["gif"],html:["html","htm"]};
@@ -102,6 +103,11 @@ export function V3RoomEditor(props:Props){
         <Button variant="outline" disabled={busy||!draft.history.past.length} onClick={()=>setDraft(d=>({...d,history:undoV3(d.history)}))}>撤销</Button>
         <Button variant="outline" disabled={busy||!draft.history.future.length} onClick={()=>setDraft(d=>({...d,history:redoV3(d.history)}))}>重做</Button>
         <Button disabled={busy} onClick={()=>void run(async()=>{await save();})}>保存</Button>
+        <Button variant="outline" disabled={busy||!props.canApply||!props.isTauri} title={!props.canApply?"先启动 Core，以复制本机绑定和皮肤":undefined}
+          onClick={()=>void run(()=>props.onSaveAs(serializeRoomV3(room,draft.resources)))}>另存为</Button>
+        <Button variant="outline" disabled={busy||!props.isTauri} onClick={()=>void run(async()=>{
+          if(await save())await props.onShare();
+        })}>保存并导出</Button>
         <Button variant="outline" disabled={busy||!props.canApply||!props.isTauri} title={!props.canApply?"先启动 Core":undefined} onClick={()=>void run(async()=>{
           if(!await save())return;await props.onApply();props.onApplied();setMessage("已保存并应用到桌面");
         })}>保存并应用</Button>
