@@ -164,13 +164,17 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
-    internal RoomProtocolStatus ReadActionContext(Guid connectionId, RoomSessionPeer peer, Guid sessionId, out RoomActionContext? context)
+    internal RoomProtocolStatus ReadActionContext(Guid connectionId, RoomSessionPeer peer, Guid sessionId, out RoomActionContext? context) =>
+        ReadRoleContext(connectionId, peer, sessionId, false, out context);
+    internal RoomProtocolStatus ReadCoordinatorContext(Guid connectionId, RoomSessionPeer peer, Guid sessionId, out RoomActionContext? context) =>
+        ReadRoleContext(connectionId, peer, sessionId, true, out context);
+    private RoomProtocolStatus ReadRoleContext(Guid connectionId, RoomSessionPeer peer, Guid sessionId, bool coordinator, out RoomActionContext? context)
     {
         lock (gate)
         {
             context = null;
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error.Status;
-            if (connection.Hello.Role == RoomClientRole.Coordinator) return RoomProtocolStatus.Forbidden;
+            if ((connection.Hello.Role == RoomClientRole.Coordinator) != coordinator) return RoomProtocolStatus.Forbidden;
             if (!TryCurrentSession(connection, out var current, out error)) return error.Status;
             if (current.SessionId != sessionId) return RoomProtocolStatus.StaleSession;
             context = new RoomActionContext(installation, current, connection.Hello.Role);
@@ -182,6 +186,12 @@ internal sealed class RoomSessionProtocolGateway
     // snapshot observer under gate can itself need that private lock. Retrying
     // after releasing it avoids reversing the existing observation lock order.
     internal bool TryWithActionContext<T>(Guid connectionId, RoomSessionPeer peer, Guid sessionId,
+        Func<RoomProtocolStatus, RoomActionContext?, T> prepare, out T result) =>
+        TryWithRoleContext(connectionId, peer, sessionId, false, prepare, out result);
+    internal bool TryWithCoordinatorContext<T>(Guid connectionId, RoomSessionPeer peer, Guid sessionId,
+        Func<RoomProtocolStatus, RoomActionContext?, T> prepare, out T result) =>
+        TryWithRoleContext(connectionId, peer, sessionId, true, prepare, out result);
+    private bool TryWithRoleContext<T>(Guid connectionId, RoomSessionPeer peer, Guid sessionId, bool coordinator,
         Func<RoomProtocolStatus, RoomActionContext?, T> prepare, out T result)
     {
         result = default!;
@@ -196,7 +206,7 @@ internal sealed class RoomSessionProtocolGateway
             {
                 if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error, (_, _) => admission))
                     return prepare(error.Status, null);
-                if (connection.Hello.Role == RoomClientRole.Coordinator) return prepare(RoomProtocolStatus.Forbidden, null);
+                if ((connection.Hello.Role == RoomClientRole.Coordinator) != coordinator) return prepare(RoomProtocolStatus.Forbidden, null);
                 return kernel.WithSnapshot(current =>
                 {
                     if (!IsBound(current, installation) || current!.SessionId != sessionId || connection.SessionId != sessionId)

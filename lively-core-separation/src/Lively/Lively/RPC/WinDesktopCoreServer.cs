@@ -114,6 +114,26 @@ namespace Lively.RPC
                 });
         }
 
+        public override Task<RoomReadGrantsResponse> GetRoomReadGrants(RoomReadGrantsRequest request, ServerCallContext context) =>
+            Task.FromResult(ReadGrantResponse(roomSessionRuntime.GetRoomReadGrants(request.RoomId, request.InstallationStamp)));
+
+        public override Task<RoomReadGrantsResponse> SetRoomReadGrant(RoomSetReadGrantRequest request, ServerCallContext context) =>
+            Task.FromResult(ReadGrantResponse(roomSessionRuntime.SetRoomReadGrant(request.RoomId, request.InstallationStamp,
+                request.ConsumerId, request.Capabilities.ToArray(), request.Allow)));
+
+        private static RoomReadGrantsResponse ReadGrantResponse(RoomReadGrantsReply reply)
+        {
+            var result = new RoomReadGrantsResponse { Status = reply.Status, RoomId = reply.RoomId, InstallationStamp = reply.InstallationStamp };
+            foreach (var consumer in reply.Consumers ?? Array.Empty<RoomReadGrantConsumer>())
+            {
+                var row = new RoomReadGrantConsumerStatus { ConsumerId = consumer.ConsumerId };
+                foreach (var capability in consumer.Capabilities)
+                    row.Capabilities.Add(new RoomReadGrantCapabilityStatus { Capability = capability.Capability, Allowed = capability.Allowed });
+                result.Consumers.Add(row);
+            }
+            return result;
+        }
+
         public override Task<SystemMediaSnapshot> GetSystemMedia(Empty _, ServerCallContext context)
         {
             return systemControlService.GetMediaAsync(context.CancellationToken);

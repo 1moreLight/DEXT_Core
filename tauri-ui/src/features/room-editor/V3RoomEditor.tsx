@@ -135,7 +135,7 @@ export function V3RoomEditor(props:Props){
           </select>
           <Button variant="outline" disabled={busy} onClick={()=>void run(()=>pick("html","dock"))}>添加本地 Dock</Button>
         </div>
-        <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
+        <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
         <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材</summary>
           <div className="mt-3 space-y-4"><div><h3 className="mb-2 text-sm">启动</h3>{contentPicker("start",room.start)}</div>
             <div><h3 className="mb-2 text-sm">待机</h3>{contentPicker("idle",room.idle)}</div></div></details>

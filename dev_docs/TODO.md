@@ -1564,7 +1564,7 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 - [x] 已读当前计划/契约/工作流，创建独立worktree/分支，写设计、实施计划与验收；CodeGraph未初始化，使用rg兜底，不擅自索引。
 - [x] Task1 模板描述/稳定ID/共享差异/删除引用，生产作者文件完整导入与功能RED→GREEN；原生目录/导入/检查命令及Tauri编译通过。
 - [x] Task2 两款官方HTML模板、独立编辑UI/作者公开数据与默认操作；实际浏览器草稿重开/历史/字段继承/删除通过，原生Tauri保存重开随Task4。
-- [ ] Task3 当前Core只读数据授权状态/允许/撤销，生产接口及必要完整构建。
+- [x] Task3 当前Core只读授权状态/允许/撤销已贯通配置器/Tauri/生产RPC；限定功能6/6、UI夹具及真实允许/撤销/新安装/重启、完整build→start通过。实际桌面读数仍随Task4。
 - [ ] Task4 真实Tauri/Core/Player/数据/几何/重启证据，原状态保护与正常退出、必要回归及具名提交。
 - [ ] 最终集中本包六项/P5物理门槛和一次整体审查；不合并master，完整16项仍1/16≈6%。
 
@@ -1574,3 +1574,15 @@ P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-
 - [ ] 接续Task3当前Core只读能力允许/撤销及状态读回，再Task4真实Tauri/Core/Player生产集成。浏览器数据/动作是明确夹具，未冒称活体；本轮不启动Dext、不改用户数据。完整16项仍1/16≈6%。
 
 - [x] 修正复用node_modules junction的Vite本地字体403：只加入依赖真实目录，浏览器资源检查与字体就绪补证；不扩大网络专项。
+
+- [x] Task3开工及接线完成：Core个人只读授权独立集合+当前Coordinator编辑/读回→两份proto与Tauri→配置器四项明确允许/撤销。先跑限定--read-grants功能RED，接完整build.ps1→start.ps1；实际数据/原状态恢复依Task4，不增加网络专项。
+
+### P6-002 Task3授权接线与生产模板集成（2026-10-04，BASE27e9f2a）
+- [x] Core个人readGrants独立保存四种只读授权，当前安装记录优先、旧grants兼容，无关目标/按钮/布局/KV/控制授权保持；当前Coordinator读回/原子编辑，暂停可编辑、实际数据仍遵循桌面规则。限定--read-grants功能0/6→6/6，含真实时间provider、撤销、旧安装不提升、保存失败原字节与无变化不发布。
+- [x] 两份proto/Core RPC/Tauri命令和独立本机授权面板已接；四项逐项允许/撤销不改作者草稿/清单，副本失效清旧状态，失败保留已确认值。UI运输夹具实际RED缺复选框→GREEN，原Dock编辑夹具通过；npm build/cargo check和完整build.ps1四阶段通过。
+- [x] 实际Tauri创建两Desk/模板导入/完整资源/共享与稀疏差异/保存重开；Core应用、当前授权读回/独立允许/撤销和作者字节/已保存状态保持。原生ReleasePlayer/正式SDK三栏六个区域可见、按钮几何accepted；当前Core operable=false，三个读数denied并隐藏，不能计真实读数成功。
+- [x] 真实普通Core退出→启动，同Room/Desk/安装戳/授权，新session/Player，模板与几何重新初始化；替换导航模板保留组件/共有按钮ID和旧资源，新安装授权全false，再允许time不带入hardware。两款生产模板运行已核对。
+- [x] 当前代码完整build→start；配置器JS close/minimize默认权限未开放，不为探针扩权。原localStorage精确恢复后按核对PID/路径正常OS关窗，再普通Core shutdown；start watcher39064 exit0。原四文件字节/缺失精确恢复、自有Temp及安装/前代/source记录清理，Dext/开发与调试监听0；最终只读恢复核对exit0。本节随具名阶段提交保存。
+- [ ] Task4余项：实际桌面可读时的真实值/撤销可见更新、物理默认导航/同实例切页/缩放等集中；凭据宿主未解除不重复Core OS输入。一次最终整体审查和本包六项/P5七项仍保留；接续P6-003本地编辑，完整16项就绪1/16≈6%，不合并master。
+
+本段证据：p6-read-grants-core-final（6/6）、read-grants-ui、dock-ui-with-grants、read-grants-build/tauri-check、dock-native-live、dock-grants-native/native-evidence、dock-before/after-restart、dock-new-install、dock-runtime-start/restored；实际配置器/Player截图在本线程evidence目录。首轮check即时断言、按URL定位不透明沙箱帧、默认window权限和末行日志重定向均为探针问题，按ERRORS #230/#227接续；没有把工具失败算产品RED或扩大网络专项。

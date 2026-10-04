@@ -19,6 +19,7 @@ internal sealed class RoomPersonalData
     public RoomPersonalLayout Layout { get; set; } = new();
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
+    public Dictionary<string, RoomCapabilityGrant> ReadGrants { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, Dictionary<string, JsonElement>> Storage { get; set; } = new(StringComparer.Ordinal);
 }
 internal sealed class RoomPersonalState
@@ -159,9 +160,9 @@ internal sealed class RoomPersonalStore
         }
         foreach (var (roomId, room) in state.Rooms)
         {
-            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.Storage is not null && room.Layout is not null, "Room personal shape");
+            Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.ReadGrants is not null && room.Storage is not null && room.Layout is not null, "Room personal shape");
             RoomPersonalLayout.Validate(room!.Layout);
-            Require(room.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
+            Require(room.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.ReadGrants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
             foreach (var (id, button) in room.Buttons)
             {
                 Id(id); Require(button is not null, "button override");
@@ -176,6 +177,13 @@ internal sealed class RoomPersonalStore
             {
                 ConsumerId(consumer);Require(values is not null && StorageFits(values),"consumer storage quota");
                 foreach(var (key,value) in values!) {Id(key);NormalizeStorageValue(value);}
+            }
+            foreach (var (id, grant) in room.ReadGrants)
+            {
+                ConsumerId(id); Require(grant is not null, "read grant required"); Text(grant!.InstallationStamp, 128, true);
+                Require(grant.Capabilities is not null && grant.Capabilities.Length <= 4 &&
+                    grant.Capabilities.Distinct(StringComparer.Ordinal).Count() == grant.Capabilities.Length &&
+                    grant.Capabilities.All(c => c is "time.read" or "hardware.read" or "media.read" or "audio.read"), "read grant capabilities");
             }
             foreach (var (id, grant) in room.Grants)
             {

@@ -292,3 +292,7 @@ geometryVersion用于作者按钮/占用声明及视口结构，单纯有效布�
 
 ## P6-002模板作者基础（2026-10-04）
 官方Dock模板以自包含HTML/CSS/JS/SDK和template.json导入作品，复用现有config/componentOverrides；未新增SDK通道。模板配置/数据状态及实际DOM按钮报告已用作者HTML浏览器夹具检查，当前Core授权及生产活体验证继续。Dock按自身逻辑坐标报告buttons，不能发布occupied/groups；其placement占用由官方宿主按Desk引用保留。roomScene发布occupied的正式范围保持。
+
+### 配置器私有只读授权RPC（2026-10-04，P6-002）
+DesktopService增加GetRoomReadGrants(room_id,installation_stamp)与SetRoomReadGrant(room_id,installation_stamp,consumer_id,capabilities[],allow)。Core复核当前原生安装/Player/session，内部当前Coordinator上下文只读/原子编辑个人readGrants；返回status、Room/安装戳、当前声明读能力的consumer/capability/allowed，不返回值、目标或其他权限。设置仅接受四种已声明读能力，失败不发布；相同有效选择不增加个人revision。
+Tauri get_v3_read_grants/set_v3_read_grant经既有验证named pipe调用，配置器按当前已应用Room/安装戳显示并逐项显式允许/撤销。保存失败保留已确认勾选，staleSession清旧显示再读新副本。授权不改变作者草稿/清单，不增加作者SDK编辑方法；actual data仍沿既有每值Core权限和活动核验。

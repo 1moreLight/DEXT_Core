@@ -7,6 +7,7 @@ use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{
     CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, RoomSessionStatusResponse,
+    RoomReadGrantsRequest, RoomSetReadGrantRequest, RoomReadGrantsResponse,
     SetSystemVolumeRequest,
     SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
     SystemVolumeSnapshot, WallpaperMessageRequest,
@@ -360,6 +361,33 @@ pub struct RoomSessionStatus {
     pub deadline_utc: String,
     pub installation_stamp: String,
     pub lifecycle: Option<RoomLifecycleStatus>,
+}
+
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrantCapability { pub capability: String, pub allowed: bool }
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrantConsumer { pub consumer_id: String, pub capabilities: Vec<RoomReadGrantCapability> }
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrants { pub status: String, pub room_id: String, pub installation_stamp: String, pub consumers: Vec<RoomReadGrantConsumer> }
+async fn read_grant_call(method: &str, request: &[u8]) -> Result<RoomReadGrants, String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomReadGrantsResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no read grant state".to_string())?;
+    Ok(RoomReadGrants { status: response.status, room_id: response.room_id, installation_stamp: response.installation_stamp,
+        consumers: response.consumers.into_iter().map(|consumer| RoomReadGrantConsumer { consumer_id: consumer.consumer_id,
+            capabilities: consumer.capabilities.into_iter().map(|capability| RoomReadGrantCapability {
+                capability: capability.capability, allowed: capability.allowed }).collect() }).collect() })
+}
+pub async fn get_read_grants(room_id: String, installation_stamp: String) -> Result<RoomReadGrants, String> {
+    read_grant_call("GetRoomReadGrants", &RoomReadGrantsRequest { room_id, installation_stamp }.encode_to_vec()).await
+}
+pub async fn set_read_grant(room_id: String, installation_stamp: String, consumer_id: String,
+    capabilities: Vec<String>, allow: bool) -> Result<RoomReadGrants, String> {
+    read_grant_call("SetRoomReadGrant", &RoomSetReadGrantRequest { room_id, installation_stamp, consumer_id, capabilities, allow }.encode_to_vec()).await
 }
 
 pub async fn room_session_status() -> Result<RoomSessionStatus, String> {

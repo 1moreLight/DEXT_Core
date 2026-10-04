@@ -444,3 +444,8 @@ dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown 
 现象：复用已核对依赖目录的worktree构建/编辑功能通过，但Vite日志显示Geist字体403，浏览器回落到系统字体。
 原因：Vite把资源解析到junction真实目标，默认允许范围只包含当前项目和Vite客户端。
 修复：保留searchForWorkspaceRoot默认范围，并仅增加已解析node_modules真实目录。浏览器编辑检查记录所有失败资源、等document.fonts.ready并要求零失败；后续预览重新截图。未开放其他目录，生产打包资源原本正常。
+
+## #230 授权控件应等待持久化，实际Player帧与本机关窗（2026-10-04）
+首轮UI运输夹具直接import预打包react-dom_client的命名createRoot，模块没有该导出；改默认ReactDOM.createRoot后才得到实际“缺复选框”RED。用于故意保存失败/旧副本的Playwright check要求立即勾选，与生产确认后更新/失败保持相冲突；这些步骤改click后等待错误和最终状态。真实RPC也需click后等待确认勾选，不把瞬时回滚算产品失败。
+真实Player顶层为安装哈希.localhost，sandbox子帧URL可能为空；不能按源文件URL或dext-room-v3字样寻找。先核对官方顶层title、实际iframe src匹配当前组件entry，再读真实子帧DOM；两生产模板/accepted几何通过，未把不透明帧当不存在或注入fixture。
+默认Tauri权限没有window.minimize/close，JS调用拒绝。未为测试扩大权限；按owned PID/绝对路径核对后CloseMainWindow正常OS关窗/进程退出，再普通Core退出，watcher39064 exit0。原localStorage/四文件精确恢复。清理命令末行错误追加独立2>&1导致命令exit1，但删除/恢复已完成；沿#227不重跑递归删除，用独立只读恢复/所有权/进程/监听检查exit0保存证据。

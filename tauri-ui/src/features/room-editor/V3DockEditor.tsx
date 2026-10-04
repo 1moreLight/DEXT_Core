@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { V3ReadGrantPanel } from "./V3ReadGrantPanel";
 import panels from "../../../../creator-kit/v3/dock-templates/three-panels/template.json";
 import navigation from "../../../../creator-kit/v3/dock-templates/navigation-bar/template.json";
 import { dockComponent, readDockDescriptor, effectiveDockConfig, setDockValue, resetDockValue, setDockAction, removeDockRegion, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor, DockDataSource, DockRegion } from "./dock-template";
 import type { RoomV3, V3Button } from "./v3-document";
 const builtIns = [panels,navigation] as DockTemplateDescriptor[];
-type Props={room:RoomV3;deskId:string;isTauri:boolean;disabled:boolean;onChange:(room:RoomV3)=>void;onImport:(descriptor:DockTemplateDescriptor)=>Promise<void>;onMessage:(message:string)=>void};
+type Props={room:RoomV3;deskId:string;isTauri:boolean;canApply:boolean;disabled:boolean;onChange:(room:RoomV3)=>void;onImport:(descriptor:DockTemplateDescriptor)=>Promise<void>;onMessage:(message:string)=>void};
 const sources=[["time.read","时间"],["hardware.read","硬件"],["media.read","媒体"],["audio.read","音量"]];
 const object=(value:unknown):value is Record<string,unknown>=>value!==null&&typeof value==="object"&&!Array.isArray(value);
 const selectStyle="w-full rounded border bg-background p-2 text-sm";
@@ -89,6 +90,7 @@ export function V3DockEditor(props:Props){
     <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
    </div>
   </>}
+  {dock&&<V3ReadGrantPanel key={room.id+":"+dock.id} roomId={room.id} consumerId={"component."+dock.id} isTauri={props.isTauri} canApply={props.canApply} disabled={props.disabled}/>}
   {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。选择官方模板即可配置数据与按钮。</p>}
  </section>;
 }

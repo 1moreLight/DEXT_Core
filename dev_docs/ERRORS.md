@@ -308,3 +308,5 @@
 | #228 | Dock组件只有按钮几何准入，不能按Scene发布occupied；固定框需由官方宿主避让 | [renderer](errors/renderer.md) |
 
 | #229 | worktree复用node_modules junction后Vite字体落在默认fs.allow之外，预览403但构建正常 | [toolchain](errors/toolchain.md) |
+
+| #230 | 配置器授权控件等待真实持久化后确认；不透明Player帧按DOM定位，关窗不为探针扩JS权限 | [toolchain](errors/toolchain.md) |

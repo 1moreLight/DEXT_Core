@@ -93,3 +93,7 @@ Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有�
 
 ## 配置器应用来源（P6内部元数据）
 官方宿主在content安装目录外使用source.v3.json，保存formatVersion1、规范sourcePath和完整installation快照。它服务配置器当前Room标记，作者资源/SDK/room.json/分享均不携带它；记录与当前安装不匹配时不显示该来源。apply_room通过规范宿主路径请求Core，等当前Room新会话/有效Player与稳定安装后才记来源；Core非活动时原生active_room为空。普通Core重启仍按同安装快照匹配，保存回执不能代表应用成功。
+
+### 配置器本机只读授权（2026-10-04，P6-002）
+个人Room增加readGrants，格式仍为1，缺字段默认空；按当前安装戳/固定consumer保存time.read、hardware.read、media.read、audio.read。当前readGrants记录对这四项优先（空数组表示明确撤销）；没有当前记录时兼容原grants当前戳中的明确许可。配置器只修改选择的读权限，原grants中的绑定/控制授权、目标、按钮、布局与KV保持。旧安装的读许可不继承，新安装允许time不会把旧控制授权提升到新戳。另存不复制授权，作者Room与分享不包含此字段。
+Core当前Coordinator可在桌面不可操作时编辑这些本机选择；作者每个真实数据请求仍逐次核验当前连接/安装/声明/授权与生命周期。允许勾选不保证当前桌面可读或Windows来源存在。当前生产接线/真实Tauri/普通重启证据见V3_DELIVERY；物理桌面数据/输入门槛保持。

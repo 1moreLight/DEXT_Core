@@ -3289,6 +3289,17 @@ async fn v3_session_status() -> Result<grpc::RoomSessionStatus, String> {
 }
 
 #[tauri::command]
+async fn get_v3_read_grants(room_id: String, installation_stamp: String) -> Result<grpc::RoomReadGrants, String> {
+    grpc::get_read_grants(room_id, installation_stamp).await
+}
+
+#[tauri::command]
+async fn set_v3_read_grant(room_id: String, installation_stamp: String, consumer_id: String,
+    capabilities: Vec<String>, allow: bool) -> Result<grpc::RoomReadGrants, String> {
+    grpc::set_read_grant(room_id, installation_stamp, consumer_id, capabilities, allow).await
+}
+
+#[tauri::command]
 async fn start_core() -> Result<grpc::CoreIdentity, String> {
     core_runtime::start_core().await
 }
@@ -3368,6 +3379,8 @@ pub fn run() {
             core_stats,
             core_identity,
             v3_session_status,
+            get_v3_read_grants,
+            set_v3_read_grant,
             start_core,
             exit_core,
             get_system_media,

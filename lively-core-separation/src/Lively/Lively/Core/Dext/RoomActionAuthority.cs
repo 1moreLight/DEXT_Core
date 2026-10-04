@@ -436,9 +436,12 @@ internal sealed partial class RoomActionAuthority
     private static RoomActionStatus Permission(RoomPersonalState state, VerifiedRoomInstallation installed, RoomActionCatalog.Consumer owner, string consumer, string capability)
     {
         if (!owner.HasCapability(capability)) return RoomActionStatus.Forbidden;
-        return state.Rooms.TryGetValue(installed.RoomId, out var room) && room.Grants.TryGetValue(consumer, out var grant) &&
-            grant.InstallationStamp == installed.InstallationStamp && grant.Capabilities.Contains(capability, StringComparer.Ordinal)
-            ? RoomActionStatus.Accepted : RoomActionStatus.MissingPermission;
+        if (!state.Rooms.TryGetValue(installed.RoomId, out var room)) return RoomActionStatus.MissingPermission;
+        if (ReadableData.Contains(capability) && room.ReadGrants.TryGetValue(consumer, out var readGrant) &&
+            readGrant.InstallationStamp == installed.InstallationStamp)
+            return readGrant.Capabilities.Contains(capability, StringComparer.Ordinal) ? RoomActionStatus.Accepted : RoomActionStatus.MissingPermission;
+        return room.Grants.TryGetValue(consumer, out var grant) && grant.InstallationStamp == installed.InstallationStamp &&
+            grant.Capabilities.Contains(capability, StringComparer.Ordinal) ? RoomActionStatus.Accepted : RoomActionStatus.MissingPermission;
     }
     private static RoomButtonAction? Resolve(RoomPersonalState state, string roomId, AuthoredRoomButton button, out PersonalTarget? target)
     {

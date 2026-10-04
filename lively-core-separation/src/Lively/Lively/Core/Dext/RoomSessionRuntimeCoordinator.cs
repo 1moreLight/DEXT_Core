@@ -13,6 +13,8 @@ public interface IRoomSessionRuntimeCoordinator
     void ExitNativeIdle();
     bool IsNativeIdlePresented { get; }
     string? NativeIdleDisplayId { get; }
+    RoomReadGrantsReply GetRoomReadGrants(string roomId, string installationStamp);
+    RoomReadGrantsReply SetRoomReadGrant(string roomId, string installationStamp, string consumerId, string[] capabilities, bool allow);
 }
 
 internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordinator, IDisposable

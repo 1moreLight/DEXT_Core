@@ -266,3 +266,11 @@ p6-media-native-live通过：由实际配置器逐Desk设起点重应用，真�
 生产配置器代码接外观→共享交互→Desk引用/差异，默认导航/待绑定/退出及目标Desk、删除区域、历史/草稿重开。UI先RED后浏览器功能夹具通过。作者HTML按真实DOM/resize报自己的按钮，缺数据/格式错误保外框隐藏读数；作者数据/动作明确为夹具。正式Dock不允许occupied，官方宿主按当前Desk引用的placement为普通图标/Widget避让；不引用时恢复保存位置，旧精确遮挡门槛用作者矩阵移动Dock覆盖继续验证。字体junction本地403修正，编辑资源零失败。
 必要检查：模型/原文档10/10，生产Rust作者5/5+Dock3/3，两款作者HTML夹具1/1、编辑浏览器夹具，DOM57/57，npm build/cargo check通过。未运行额外网络专项。日志p6-dock-frontend-final、native-files、browser-host/browser-final、tauri-check；UI/两款作者截图均在本线程evidence目录。本段不启动Dext，不改用户数据；浏览器Vite结束退出。
 接续Task3当前Core只读授权状态/允许/撤销，再Task4真实Tauri保存重开、Core/ReleasePlayer实际数据/按钮几何/普通重启和原状态保护。最终本包六项/P5七项与一次整体审查保持，凭据宿主未解除时不做Core OS桌面输入；拖动暂缓，完整16项仍1/16≈6%，不合并master。
+
+## P6 Dock只读授权与生产模板集成（2026-10-04，BASE27e9f2a）
+当前分支feat/V3-P6-002-dock-template。Core个人readGrants独立保存四种只读权限，保留原grants控制/绑定授权和私人目标/按钮/布局/KV；旧format1缺字段默认空，旧当前grants许可兼容。当前Coordinator内部上下文与原子存储接生产RPC、两份proto、Tauri命令和独立React本机授权面板。四项明确允许/撤销、失败确认值保持、旧安装清空/重读，不修改作者文档/草稿/历史。
+限定Core功能RED0/6→6/6，含实际生产time provider和失败原字节、旧安装不提升、暂停可编辑/作者仍不可读、无关状态保持/无变化不发布；UI运输夹具RED缺控件→GREEN，原Dock编辑夹具通过。npm build/cargo check、完整四阶段build.ps1→start.ps1通过。没有增加网络/安全专项或重跑完整攻击矩阵。
+实际Room748940f7-db74-436f-ab08-27c050954200经真实Tauri创建、三栏导入/完整资源/共享与Desk稀疏差异/保存重开/应用，真实Core当前授权读回/独立time与hardware允许及time撤销通过；作者清单字节和已保存状态保持。实际正式ReleasePlayer/SDK六区静态框和按钮几何accepted；当前Core operable=false，三栏数据denied且隐藏，所以真实读数仍未计通过。CDP仅只读观察真实帧，没有注入会话/授权或OS输入。
+普通Core退出/启动保持Room、当前Desk、安装戳与读权限，新session/Player重新初始化模板/SDK/几何。实际替换导航模板保留组件/共有按钮ID和旧资源；新安装四项读许可false，明确允许time不使hardware变true，作者字节保持。两模板生产呈现与几何已核对，物理切页/同实例/缩放继续集中。
+原localStorage逐键精确恢复，配置器按owned PID/绝对路径正常OS关窗，再Core app --shutdown true普通退出；start watcher39064 exit0。原四文件字节/缺失精确恢复、自己Temp及同Room安装/前代/source记录删除，Dext进程/1620/1621/9226/9227监听0；最终只读恢复核对exit0。默认JS close/minimize未获权限，未为测试开放；日志末行重定向工具失败不重做已完成删除，以只读证据收口。
+证据：p6-read-grants-core-final/ui/build/tauri-check、dock-native-live/grants-native/native-evidence、dock-before/after-restart、dock-new-install、dock-runtime-start/restored和actual configurator/Player截图。本包六项/P5七项/最终一次审查和集中确认保持；不重复凭据宿主覆盖的Core OS输入、不扩展网络专项，拖动暂缓，完整16项就绪仍1/16≈6%，13/16及16/16目标不变，未合并master。按连续授权下一项接P6-003统一按钮与个人呈现编辑。

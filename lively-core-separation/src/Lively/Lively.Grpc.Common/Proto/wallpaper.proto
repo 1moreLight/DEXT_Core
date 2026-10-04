@@ -16,6 +16,8 @@ service DesktopService {
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
   rpc GetRoomSession (google.protobuf.Empty) returns (RoomSessionStatusResponse);
+  rpc GetRoomReadGrants (RoomReadGrantsRequest) returns (RoomReadGrantsResponse);
+  rpc SetRoomReadGrant (RoomSetReadGrantRequest) returns (RoomReadGrantsResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
   rpc EditWallpaper(EditWallpaperRequest) returns (EditWallpaperResponse);
   rpc CreateWallpaper(CreateWallpaperRequest) returns (CreateWallpaperResponse);
@@ -283,4 +285,31 @@ enum UpdateWallpaperCategory {
 	changed = 0;
 	remove = 1;
     done = 2;
+}
+
+// Configurator-only metadata; no private targets or mutable author interface.
+message RoomReadGrantsRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+}
+message RoomSetReadGrantRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+  string consumer_id = 3;
+  repeated string capabilities = 4;
+  bool allow = 5;
+}
+message RoomReadGrantCapabilityStatus {
+  string capability = 1;
+  bool allowed = 2;
+}
+message RoomReadGrantConsumerStatus {
+  string consumer_id = 1;
+  repeated RoomReadGrantCapabilityStatus capabilities = 2;
+}
+message RoomReadGrantsResponse {
+  string status = 1;
+  string room_id = 2;
+  string installation_stamp = 3;
+  repeated RoomReadGrantConsumerStatus consumers = 4;
 }
