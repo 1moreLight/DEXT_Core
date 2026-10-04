@@ -24,7 +24,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         public bool Matches(DockDemand other) => ShouldRun && other.ShouldRun &&
             ReferenceEquals(Desktop, other.Desktop) && Snapshot?.SessionId == other.Snapshot?.SessionId &&
             Installation?.InstallationStamp == other.Installation?.InstallationStamp &&
-            Settings.Preferences?.HeightDip == other.Settings.Preferences?.HeightDip;
+            Settings.Preferences?.HeightDip == other.Settings.Preferences?.HeightDip &&
+            Settings.Preferences?.Mode == other.Settings.Preferences?.Mode;
     }
 
     private sealed class DockPlayer(WebWebView2 player, DockDemand demand)
@@ -70,7 +71,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var phase = settings.Preferences is null ? "settingsUnavailable" :
                 !settings.Preferences.Enabled ? "disabled" :
                 context is null ? "noNativeRoom" : !hasDock ? "noDock" :
-                settings.Preferences.Mode == "reserve" ? "unsupportedMode" : "hostPending";
+                "hostPending";
             return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase);
         }
     }
@@ -98,18 +99,22 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var window = current ? player?.Player.RoomDockWindowState : null;
             var ready = window is { RendererReady: true, WindowReady: true };
             var viewport = ready ? player?.Player.ReadNativeViewport() : null;
-            ready = ready && viewport != null;
+            ready = ready && viewport != null && window!.Mode == result.Preferences?.Mode;
+            var appBarOccupied = current && player?.Player.NativeDockReservationReady == true;
+            var reserve = result.Preferences?.Mode == "reserve";
+            var modeReady = ready && (!reserve || appBarOccupied);
             int? effectiveHeight = viewport is null ? null : Math.Max(1, (int)Math.Round(viewport.Height * 96.0 / viewport.Dpi));
             int? displayDpi = viewport?.Dpi;
             var heightConstrained = effectiveHeight is { } actualHeight &&
                 result.Preferences is { } preferences && actualHeight < preferences.HeightDip;
-            var taskbarReady = current && ready && player?.Guard?.Ready == true;
+            var taskbarReady = current && modeReady && player?.Guard?.Ready == true;
             var phase = current ? (window is { RendererReady: true } ?
                 !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
-                window!.Fullscreen ? "fullscreen" : window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
+                window!.Fullscreen ? "fullscreen" : reserve && !appBarOccupied ? "awaitingWorkArea" :
+                window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
             if (player is not null && !current) phase = "stopping";
             else if (demand.ShouldRun && player is null && dockPhase == "faulted") phase = "faulted";
-            var reason = phase == "unsupportedMode" ? "常驻占位暂不可运行。" :
+            var reason = phase == "awaitingWorkArea" ? "正在等待 Windows 确认 Dock 占位工作区。" :
                 phase == "hostPending" ? "Dock 宿主正在等待启动。" :
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
                 phase == "awaitingInput" ? "Dock 输入与窗口状态正在同步。" :
@@ -119,7 +124,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, modeReady && !reserve, modeReady && reserve, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained, appBarOccupied), result.Message);
         }
     }
 
@@ -207,7 +212,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (DateTimeOffset.UtcNow < dockRetryAfter) return;
         if (Volatile.Read(ref dockDisposed) != 0) return;
 
-        var player = demand.Desktop!.CreateDockPlayer(demand.Settings.Preferences!.HeightDip);
+        var player = demand.Desktop!.CreateDockPlayer(demand.Settings.Preferences!.HeightDip, demand.Settings.Preferences.Mode);
         owned = new DockPlayer(player, demand);
         player.RoomDockStateChanged += QueueDockUpdate;
         player.RoomPageReady += (_, _) => { owned.PageReady.TrySetResult(); QueueDockUpdate(); };

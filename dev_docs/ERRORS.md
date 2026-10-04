@@ -336,3 +336,4 @@
 
 | #245 | Dock窗口回报不代替有效输入窗口，实际高度/DPI需从原生测量读取 | [backend](errors/backend.md) |
 | #246 | room-v3的-text规则保留复制CRLF；新样包固定LF后检查暂存差异 | [toolchain](errors/toolchain.md) |
+| #247 | 常驻选项不能以当前已占位为前提；AppBar注册不证明真实最大化工作区 | [backend](errors/backend.md) |

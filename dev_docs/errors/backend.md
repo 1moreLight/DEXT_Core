@@ -489,3 +489,5 @@ Shell ABM_GETSTATE的0是有效状态，Windows 7起缺少ALWAYSONTOP位也不�
 
 ## #245 Dock实际高度和可用状态不能只用Player回报（2026-10-05）
 源码接线发现：WindowReady不证明Core有有效输入窗口，保存高度也不代表实际DPI/宿主限高。Core沿现有ReadNativeViewport测量实际HWND/尺寸/DPI，缺失则保持awaitingInput、不请求替代任务栏。该测量不要求窗口展开，不因自动隐藏产生反复恢复/替代。配置器显示实际DIP/DPI/受限状态，屏幕约束不覆盖保存值。仅源码核对，实际DPI/输入/隐藏行为待游戏后集中验收。
+## #247 常驻选择与实际工作区确认须分开（2026-10-05）
+源码接线发现：若reserve选项以当前reserveAvailable作为选择前提，自动隐藏用户永远无法第一次切到常驻。设置页允许保存常驻偏好，Core按模式身份先关闭旧宿主后重建，只有实际占位才报告reserveAvailable/AppBarOccupied。AppBar注册成功不代替窗口位置及工作区；Player查询实际矩形/工作区，Core按有效输入窗口和GetMonitorInfo再次确认后才隐藏原任务栏。不可呈现时注销，DPI/Explorer重协商，临时全屏隐藏沿原型保留注册策略；不写SPI_SETWORKAREA。当前仅源码/工程XML核对，Windows运行证据留Task4。

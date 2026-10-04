@@ -42,7 +42,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 snapshot is { IsActive: true } && snapshot.SessionId == owned.Demand.Snapshot?.SessionId &&
                 !snapshot.Lifecycle.Locked && snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop &&
                 owned.Player.RoomDockWindowState is { RendererReady: true, WindowReady: true, Locked: false } &&
-                owned.Player.ReadNativeViewport() is not null);
+                owned.Player.ReadNativeViewport() is not null &&
+                (owned.Player.NativeDockMode != "reserve" || owned.Player.NativeDockReservationReady));
         }, null, 1000, 1000);
     }
 
@@ -52,6 +53,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         var wanted = !owned.Stopping && Volatile.Read(ref dockDisposed) == 0 && demand.Matches(owned.Demand) &&
             owned.Attached && window is { RendererReady: true, WindowReady: true, Locked: false } &&
             owned.Player.ReadNativeViewport() is not null &&
+            (owned.Player.NativeDockMode != "reserve" || owned.Player.NativeDockReservationReady) &&
             demand.Snapshot is { IsActive: true } && !demand.Snapshot.Lifecycle.Locked &&
             demand.Snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop;
         var guard = owned.Guard;

@@ -22,6 +22,8 @@ namespace Lively.Player.WebView2
         private void InitializeNativeDockWindow()
         {
             if (!startArgs.DextDock) return;
+            if (startArgs.DextDockMode != "autohide" && startArgs.DextDockMode != "reserve")
+                throw new ArgumentException("Invalid Core Dock mode.");
             BackColor = Color.Black;
             WindowState = FormWindowState.Normal;
             // The HWND stays hidden; Core admits its identity before enabling
@@ -94,7 +96,8 @@ namespace Lively.Player.WebView2
                 var enabled = nativeDockRendererReady && nativeDockInputConnected;
                 nativeDockWindow.SetAvailability(enabled && roomRuntime.DockCanPresent);
                 if (enabled && !nativeDockWindow.IsStarted)
-                    nativeDockWindow.Start(DextDockWindowHost.DockMode.Autohide, startArgs.DextDockHeight);
+                    nativeDockWindow.Start(startArgs.DextDockMode == "reserve" ? DextDockWindowHost.DockMode.Reserve :
+                        DextDockWindowHost.DockMode.Autohide, startArgs.DextDockHeight);
                 if (!nativeDockRendererReady || roomRuntime.Generation <= 0) return;
                 var visible = nativeDockWindow.IsVisible && enabled && roomRuntime.DockCanPresent;
                 var identity = roomRuntime.Replay();
@@ -140,7 +143,9 @@ namespace Lively.Player.WebView2
                 WindowReady = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted && nativeDockVisibilitySynchronized,
                 WindowHwnd = Handle.ToInt64(), Visible = nativeDockWindow.IsVisible,
                 Keyboard = nativeDockWindow.IsKeyboard, Fullscreen = nativeDockWindow.IsFullscreen,
-                Locked = roomRuntime.DockLocked, HeightDip = startArgs.DextDockHeight
+                Locked = roomRuntime.DockLocked, HeightDip = startArgs.DextDockHeight,
+                Mode = startArgs.DextDockMode, AppBarRegistered = nativeDockWindow.IsAppBarRegistered,
+                AppBarReady = nativeDockWindow.IsAppBarReady
             });
         }
 

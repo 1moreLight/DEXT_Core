@@ -40,6 +40,8 @@ namespace Lively.Core.Wallpapers
         private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly bool trustedDextHost;
         private readonly bool nativeDock;
+        private readonly string nativeDockMode;
+        internal string NativeDockMode => nativeDockMode;
         private RoomSessionPlayerBridge roomSessionBridge;
         private readonly object roomSessionLock = new();
         private long roomRuntimeGeneration;
@@ -92,9 +94,10 @@ namespace Lively.Core.Wallpapers
             string audioVisualizerId = null,
             bool isScreensaver = false,
             LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null,
-            bool isNativeDock = false, int dockHeightDip = 128)
+            bool isNativeDock = false, int dockHeightDip = 128, string dockMode = "autohide")
         {
             nativeDock = isNativeDock;
+            nativeDockMode = dockMode;
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
             wallpaperPath = path;
@@ -120,9 +123,9 @@ namespace Lively.Core.Wallpapers
             trustedDextHost = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0;
             if (isNativeDock)
             {
-                if (!trustedDextHost || dockHeightDip is < 48 or > 240)
+                if (!trustedDextHost || dockHeightDip is < 48 or > 240 || dockMode is not ("autohide" or "reserve"))
                     throw new ArgumentException("Native Dock requires an official Room host and valid height");
-                cmdArgs.Append(" --dext-dock --dext-dock-height " + dockHeightDip);
+                cmdArgs.Append(" --dext-dock --dext-dock-height " + dockHeightDip + " --dext-dock-mode " + dockMode);
             }
             this.desktopIconPreferences = trustedDextHost
                 ? desktopIconPreferences
@@ -153,9 +156,9 @@ namespace Lively.Core.Wallpapers
 
         // Separately owned by the coordinator, never part of the wallpaper
         // collection or WorkerW desktop input forwarding.
-        internal WebWebView2 CreateDockPlayer(int heightDip) => new(wallpaperPath, Model, Screen,
+        internal WebWebView2 CreateDockPlayer(int heightDip, string mode) => new(wallpaperPath, Model, Screen,
             null, LivelyPropertyCopyPath, Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-profile"),
-            AppTheme.Auto, 0, isNativeDock: true, dockHeightDip: heightDip);
+            AppTheme.Auto, 0, isNativeDock: true, dockHeightDip: heightDip, dockMode: mode);
 
         public void Close()
         {

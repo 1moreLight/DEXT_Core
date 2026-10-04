@@ -79,7 +79,7 @@ export function V3DockSettings({corePid,setStatus}:Props) {
         <span>显示方式</span>
         <select className="rounded-md border border-border bg-background px-3 py-2 text-xs" aria-label="Dock 显示方式" disabled={disabled} value={draft?.mode ?? "autohide"} onChange={event => edit({mode:event.target.value as V3DockPreferences["mode"]})}>
           <option value="autohide">触边展开，离开收起</option>
-          <option value="reserve" disabled={!confirmed?.runtime.reserveAvailable}>常驻占位（暂不可运行）</option>
+          <option value="reserve">常驻显示，最大化窗口避让</option>
         </select>
       </label>
       <label className="flex items-center justify-between gap-4 text-sm">
@@ -95,9 +95,10 @@ export function V3DockSettings({corePid,setStatus}:Props) {
         <span className="text-xs text-muted-foreground">{!native ? "浏览器设计预览" : corePid === null ? "Core 未连接" : error ? "状态暂不可读" : confirmed ? dockRuntimeLabel(confirmed.runtime) : busy ? "正在读取" : "尚未读取"}</span>
       </div>
       {confirmed?.preferences && <p className="text-xs text-muted-foreground">已保存：{confirmed.preferences.enabled ? "启用" : "关闭"} · {confirmed.preferences.mode === "autohide" ? "自动隐藏" : "常驻占位"} · {confirmed.preferences.heightDip} DIP{confirmed.runtime.playerPid > 0 ? " · PID " + confirmed.runtime.playerPid : ""}</p>}
-      {confirmed?.preferences?.enabled && confirmed.runtime.autoHideAvailable && <p className="text-xs text-muted-foreground">Windows 主任务栏替代：{confirmed.runtime.taskbarReplacementReady ? "已接管，退出时恢复" : "尚未确认就绪"}</p>}
+      {confirmed?.preferences?.enabled && (confirmed.runtime.autoHideAvailable || confirmed.runtime.reserveAvailable) && <p className="text-xs text-muted-foreground">Windows 主任务栏替代：{confirmed.runtime.taskbarReplacementReady ? "已接管，退出时恢复" : "尚未确认就绪"}</p>}
+      {confirmed?.preferences?.enabled && confirmed.preferences.mode === "reserve" && <p className="text-xs text-muted-foreground">Windows 工作区占位：{confirmed.runtime.appBarOccupied ? "已确认最大化避让" : "尚未确认"} · 禁用或退出后释放</p>}
       {confirmed?.runtime.reason && corePid !== null && <p className="text-xs text-muted-foreground">{confirmed.runtime.reason}</p>}
-      {confirmed?.preferences?.enabled && !confirmed.runtime.autoHideAvailable && <p className="text-xs text-amber-500">启用偏好已保存，Dock 当前尚不可运行。</p>}
+      {confirmed?.preferences?.enabled && !(confirmed.runtime.autoHideAvailable || confirmed.runtime.reserveAvailable) && <p className="text-xs text-amber-500">启用偏好已保存，Dock 当前尚不可运行。</p>}
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </div>
   </section>;

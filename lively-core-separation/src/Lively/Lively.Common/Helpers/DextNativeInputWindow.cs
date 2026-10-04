@@ -19,6 +19,29 @@ namespace Lively.Common.Helpers
                 !Measure(root,browser,input,playerPid,out var second,out var secondDpi) || first!=second || firstDpi!=secondDpi)return false;
             viewport=first;dpi=firstDpi;return true;
         }
+        // Query current native work area, never the cached Screen.WorkingArea.
+        public static bool TryReadWorkArea(IntPtr root, out Rectangle workArea)
+        {
+            workArea = default;
+            if (root == IntPtr.Zero) return false;
+            var monitor = NativeMethods.MonitorFromWindow(root, 2);
+            var info = new WorkAreaInfo { Size = (uint)Marshal.SizeOf(typeof(WorkAreaInfo)) };
+            if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info) ||
+                info.Work.Right <= info.Work.Left || info.Work.Bottom <= info.Work.Top) return false;
+            workArea = Rectangle.FromLTRB(info.Work.Left, info.Work.Top, info.Work.Right, info.Work.Bottom);
+            return true;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WorkAreaRect { internal int Left, Top, Right, Bottom; }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct WorkAreaInfo
+        {
+            internal uint Size;
+            internal WorkAreaRect Monitor, Work;
+            internal uint Flags;
+        }
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool GetMonitorInfo(IntPtr monitor, ref WorkAreaInfo info);
         public static bool IsOwnedChild(IntPtr root,IntPtr browser,IntPtr input,int pid)=>
             root!=IntPtr.Zero&&browser!=IntPtr.Zero&&input!=IntPtr.Zero&&pid>0&&
             NativeMethods.GetWindowThreadProcessId(root,out int rootPid)!=0&&rootPid==pid&&

@@ -112,6 +112,10 @@ namespace Lively.Player.WebView2
             HelpText = "Core-owned Dock height in DIP.")]
         public int DextDockHeight { get; set; }
 
+        [Option("dext-dock-mode", Required = false, Default = "autohide",
+            HelpText = "Core-owned Dock mode: autohide or reserve.")]
+        public string DextDockMode { get; set; }
+
         [Option("wallpaper-color-scheme",
         Required = false,
         HelpText = "Set PreferredColorScheme.")]

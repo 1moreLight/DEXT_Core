@@ -24,6 +24,24 @@ namespace Lively.Player.WebView2
         internal bool IsVisible => visible;
         internal bool IsKeyboard => keyboard;
         internal bool IsFullscreen => fullscreen;
+        internal bool IsAppBarRegistered => registered;
+        internal bool IsAppBarReady
+        {
+            get
+            {
+                if (disposed || !registered || mode != DockMode.Reserve || lastBounds.IsEmpty) return false;
+                Rect actual;
+                if (!GetWindowRect(Handle, out actual) || actual.Rectangle != lastBounds) return false;
+                try
+                {
+                    var work = ReadPrimaryWorkArea();
+                    var screen = Screen.PrimaryScreen.Bounds;
+                    return work.Width > 0 && work.Height > 0 && work.Bottom <= lastBounds.Top &&
+                        lastBounds.Top >= screen.Top && lastBounds.Bottom <= screen.Bottom;
+                }
+                catch { return false; }
+            }
+        }
         private int heightDip = 128;
         private DockMode mode;
         private IntPtr previousForeground;
@@ -65,6 +83,11 @@ namespace Lively.Player.WebView2
             if (disposed || available == value) return;
             available = value;
             if (!value) { expanded = false; LeaveKeyboard(false); }
+            if (started && mode == DockMode.Reserve && role == "native-dock")
+            {
+                if (!value) Unregister();
+                else if (!registered) SetMode(mode);
+            }
             UpdateVisibility();
             Publish();
         }
@@ -74,7 +97,7 @@ namespace Lively.Player.WebView2
             if (disposed) return;
             if (registered && value != DockMode.Reserve) Unregister();
 
-            if (value == DockMode.Reserve && !registered)
+            if (value == DockMode.Reserve && !registered && (role != "native-dock" || available))
             {
                 var data = AppBarData();
                 data.Callback = callbackMessage;
@@ -175,7 +198,7 @@ namespace Lively.Player.WebView2
                     SHAppBarMessage(2, ref data); // ABM_QUERYPOS
                     data.Rect.Top = data.Rect.Bottom - height;
                     target = data.Rect.Rectangle;
-                    if (target != lastBounds)
+                    if (target != lastBounds || !IsAppBarReady)
                     {
                         SHAppBarMessage(3, ref data); // ABM_SETPOS: final result belongs to Windows.
                         target = data.Rect.Rectangle;
@@ -234,6 +257,7 @@ namespace Lively.Player.WebView2
                             expanded = false;
                     }
                 }
+                if (registered && !IsAppBarReady) QueueArrange();
                 UpdateVisibility();
                 Publish();
             }
@@ -275,7 +299,7 @@ namespace Lively.Player.WebView2
             return new
             {
                 role, started, available, mode = mode.ToString().ToLowerInvariant(), heightDip,
-                dpi = GetDpiForWindow(Handle), visible, keyboard, fullscreen, appBarRegistered = registered,
+                dpi = GetDpiForWindow(Handle), visible, keyboard, fullscreen, appBarRegistered = registered, appBarReady = IsAppBarReady,
                 hwnd = Handle.ToInt64().ToString(), foreground = GetForegroundWindow().ToInt64().ToString(),
                 window = Describe(lastBounds), workArea = Describe(ReadPrimaryWorkArea()),
                 originalWorkArea = Describe(beforeWorkArea), screen = Describe(Screen.PrimaryScreen.Bounds)

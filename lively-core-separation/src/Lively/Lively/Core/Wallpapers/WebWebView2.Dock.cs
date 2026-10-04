@@ -1,5 +1,6 @@
 using Dext.Core.Rooms;
 using Lively.Common.Helpers.Pinvoke;
+using Lively.Common.Helpers;
 using Lively.Models.Message;
 using System;
 using System.Diagnostics;
@@ -30,6 +31,19 @@ namespace Lively.Core.Wallpapers
             }
         }
 
+        internal bool NativeDockReservationReady
+        {
+            get
+            {
+                var state = RoomDockWindowState;
+                var viewport = ReadNativeViewport();
+                return nativeDockMode == "reserve" && state is { Mode: "reserve", WindowReady: true,
+                    AppBarRegistered: true, AppBarReady: true } && viewport != null &&
+                    DextNativeInputWindow.TryReadWorkArea(Handle, out var work) &&
+                    work.Bottom <= viewport.Y && work.Top < viewport.Y;
+            }
+        }
+
         private void ObserveNativeDataSnapshot(RoomNativeDataSource data, RoomSessionSnapshot snapshot, RoomClientRole role)
         {
             var window = RoomDockWindowState;
@@ -44,6 +58,7 @@ namespace Lively.Core.Wallpapers
                 value.ProtocolVersion != 1 || current == null || value.RuntimeGeneration != current.Generation ||
                 value.SessionId != current.Session || value.Revision != current.Revision ||
                 value.WindowHwnd != Handle.ToInt64() || value.HeightDip is < 48 or > 240 ||
+                value.Mode != nativeDockMode || value.AppBarReady && (!value.AppBarRegistered || value.Mode != "reserve") ||
                 value.WindowReady && !value.RendererReady || value.Keyboard && !value.Visible ||
                 NativeMethods.GetWindowThreadProcessId(Handle, out int ownerPid) == 0 || ownerPid != pid)
                 return;
@@ -56,7 +71,9 @@ namespace Lively.Core.Wallpapers
                 previous.RendererReady == value.RendererReady && previous.WindowReady == value.WindowReady &&
                 previous.WindowHwnd == value.WindowHwnd && previous.Visible == value.Visible &&
                 previous.Keyboard == value.Keyboard && previous.Fullscreen == value.Fullscreen &&
-                previous.Locked == value.Locked && previous.HeightDip == value.HeightDip) return;
+                previous.Locked == value.Locked && previous.HeightDip == value.HeightDip &&
+                previous.Mode == value.Mode && previous.AppBarRegistered == value.AppBarRegistered &&
+                previous.AppBarReady == value.AppBarReady) return;
             var snapshot = attached.Bridge.Read().Snapshot;
             if (snapshot != null) attached.Data.ObserveSnapshot(snapshot, true, value.WindowReady && value.Visible);
             if (!value.WindowReady || !value.Visible || value.Locked)

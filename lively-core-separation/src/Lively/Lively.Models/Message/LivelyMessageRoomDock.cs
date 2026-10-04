@@ -18,6 +18,9 @@ namespace Lively.Models.Message
         public bool Fullscreen { get; set; }
         public bool Locked { get; set; }
         public int HeightDip { get; set; }
+        public string Mode { get; set; } = "autohide";
+        public bool AppBarRegistered { get; set; }
+        public bool AppBarReady { get; set; }
         public LivelyMessageRoomDockState() : base(MessageType.msg_room_dock_state) { }
     }
 
