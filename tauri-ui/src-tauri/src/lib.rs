@@ -577,8 +577,13 @@ fn direct_room_in_library(
             .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
-    validate_room_contract(&value)?;
-    validate_room_asset_references(&room, &value)?;
+    if room_version(&value)? == 3 {
+        let manifest=room_v3::validate_manifest(&value)?;
+        for path in manifest.resource_paths {room_v3::open_resource(&room,&path)?;}
+    } else {
+        validate_room_contract(&value)?;
+        validate_room_asset_references(&room, &value)?;
+    }
     Ok(room)
 }
 
@@ -1985,6 +1990,9 @@ fn rename_room_dir(
 ) -> Result<std::path::PathBuf, String> {
     validate_room_name(name)?;
     let source = direct_room_in_library(library_dir, room_dir)?;
+    if room_v3::read_document(&source)?.get("version").and_then(serde_json::Value::as_u64)==Some(3) {
+        return room_v3_authoring::rename(&source,name);
+    }
     let library = source
         .parent()
         .ok_or_else(|| "Room has no library parent".to_string())?;
@@ -2008,7 +2016,7 @@ async fn rename_room(
         std::path::Path::new(&room_dir),
         &name,
     )
-    .map(|path| path.to_string_lossy().into_owned())
+    .map(|path| display_path(&path))
 }
 
 #[tauri::command]
@@ -2437,12 +2445,40 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
     let src = canonical.as_path();
     let room = room_v3::read_document(src)?;
     if room_version(&room)? == 3 {
-        let host = std::path::Path::new(WALLPAPER_V3_DIR);
+        let host = std::path::Path::new(WALLPAPER_V3_DIR)
+            .canonicalize().map_err(|e| format!("resolve native renderer: {e}"))?;
         if !host.join("index.html").is_file() || !host.join("LivelyInfo.json").is_file() {
             return Err("native v3 official renderer is not installed".into());
         }
-        room_v3::install(src, &host.join("content"))?;
-        return grpc::set_wallpaper(WALLPAPER_V3_DIR).await;
+        let previous = grpc::room_session_status().await?;
+        let installation = room_v3::install(src, &host.join("content"))?;
+        // Use the same absolute path for the Player URL and resource-server origin.
+        // SetWallpaper acknowledges scheduling, before the new session is attached.
+        grpc::set_wallpaper(&display_path(&host)).await?;
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(25);
+        let mut last_error = "Core has not attached the native Room".to_string();
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(std::time::Duration::from_secs(2), grpc::room_session_status()).await {
+                Ok(Ok(status)) if status.active && status.player_pid > 0 &&
+                    status.room_id == installation.room_id && status.session_id != previous.session_id &&
+                    !status.installation_stamp.is_empty() => {
+                    let bytes = std::fs::read(host.join("content/installation.json"))
+                        .map_err(|e| format!("read applied installation: {e}"))?;
+                    let current: room_v3::Installation = serde_json::from_slice(&bytes)
+                        .map_err(|e| format!("read applied installation: {e}"))?;
+                    if current != installation {
+                        return Err("installed Room changed while applying; please retry".into());
+                    }
+                    room_v3_authoring::record_source(&host, src, &installation)?;
+                    return Ok(());
+                }
+                Ok(Err(error)) => last_error = error,
+                Err(_) => last_error = "Core session query timed out".into(),
+                _ => {}
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
+        return Err(format!("Room saved, but native application was not confirmed: {last_error}"));
     }
     let pkg = std::path::Path::new(WALLPAPER_DIR);
     sync_room_to_package(src, pkg, &display_path(&canonical))?;
@@ -2472,6 +2508,23 @@ fn normalized_path(path: &std::path::Path) -> String {
 
 async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
     let wallpapers = grpc::get_wallpapers().await?;
+    let native_runtime=std::path::Path::new(WALLPAPER_V3_DIR).canonicalize()
+        .unwrap_or_else(|_|std::path::PathBuf::from(WALLPAPER_V3_DIR));
+    let native_norm=normalized_path(&native_runtime);
+    if let Some(running)=wallpapers.iter().find(|wallpaper|{
+        let path=std::path::Path::new(&wallpaper.path).canonicalize().unwrap_or_else(|_|std::path::PathBuf::from(&wallpaper.path));
+        let candidate=normalized_path(&path);
+        candidate==native_norm||candidate.strip_prefix(&native_norm).is_some_and(|suffix|suffix.starts_with(std::path::MAIN_SEPARATOR))
+    }){
+        let session = grpc::room_session_status().await?;
+        if !session.active || session.player_pid <= 0 {
+            return Ok(None);
+        }
+        return room_v3_authoring::active_source(&native_runtime).map(|source|source.map(|source_path|ActiveWallpaper{
+            room:ActiveRoom{source_path,runtime_path:display_path(&native_runtime)},
+            lively_info_path:running.path.clone(),
+        }));
+    }
     let runtime = std::path::Path::new(WALLPAPER_DIR)
         .canonicalize()
         .unwrap_or_else(|_| std::path::PathBuf::from(WALLPAPER_DIR));

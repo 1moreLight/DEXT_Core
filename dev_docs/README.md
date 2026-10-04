@@ -203,13 +203,14 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
 | `core_identity` / `start_core` / `exit_core` | `→ CoreIdentity` / `→ CoreIdentity` / `→ ()` | 轮询当前配置器所属 Core 的验证身份；从同一构建启动并等待就绪，或经 RPC 正常退出 Core，配置器保留 |
 | `list_rooms` | `(dir) → {name,path,desks,icons,version,widgets}[]` | 扫房间库；识别版本并统计 Widget，不执行 Widget |
-| `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
+| `read_room` / `write_room` | `(path[, room_json])` | 写入剥离私有来源；v2验证原子替换，v3走正式作者校验/资源检查/原子保存 |
 | `sync_active_desk_icons` | `(library_dir, room_dir, desk_index, icons, enter_edit, highlight_target?) → {active,saved,liveUpdated,roomJson?,liveError?}` | 仅库内、来源戳匹配的当前 Room 可写；原子更新源 Room 与运行包并发送布局消息，运行时失败仍保留源文件保存结果 |
 | `create_room` | `(dir, name) → path` | 建最小合法 v2 和五个内容目录 |
+| `create_room_v3` / `import_v3_content` | 创建(dir,name,room_json) / 导入(room_dir,src_path,content_type) | 原生v3创建稳定清单；复制image/video/GIF或HTML入口同目录依赖，返回content/resources |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v2，并镜像五类资源；失败不留下半成品 |
 | `duplicate_room` | `(library_dir, room_dir, name) → path` | 仅复制库内直接子 Room，完整镜像 v2 JSON 与五类资源，失败清理目标 |
-| `rename_room` | `(library_dir, room_dir, name) → path` | 仅重命名库内直接子 Room，拒绝非法名称、重名、链接和库外路径；运行中 Room 随后重新应用刷新来源戳 |
-| `apply_room` | `(room_dir)` | 严格验证 v2，镜像五类资源，并仅在运行包注入规范化 `__source` |
+| `rename_room` | (library_dir,room_dir,name) → path | 库内直接子Room；v3更新name保持UUID/资源，返回显示路径；运行中Room重新应用刷新来源 |
+| `apply_room` | (room_dir) | v2镜像并注入私有来源；v3安装快照、规范宿主路径并等Core新会话确认，来源单存source.v3.json |
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
 | `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v2 zip；校验 Widget 声明并防路径穿越、链接、重复项、解压炸弹、重名和残留 |
@@ -218,7 +219,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `confirm_creator_import` | `(token, room_dir, room_json, desk_index, scene_target?) → Content/Widget` | 用户确认后事务式写入 Scene/Widget；重新执行完整 Room/资源校验 |
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
-| `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
+| `active_room` / `stop_wallpapers` | → ActiveRoom? / → () | v2读取运行包来源，v3核对活跃Core/Player及私有来源与安装快照；停止Player保留Core |
 | `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段；patch 返回保存后的设置和 `not_needed / applied / deferred` 实时投递状态 |
 | `validate_room_library` | `(path) → canonical_path` | 创建并实际读写探测 Room 库，成功后前端才持久化路径 |
 | `diagnostics_json` / `export_diagnostics` | `→ JSON` / `(path)` | 汇总配置器/Core 版本、身份、进程、pipe、目录、运行包与源 Room |

@@ -159,3 +159,105 @@ pub fn import_content(dir: &Path, source: &Path, kind: &str) -> Result<Value, St
     let _ = staging.keep();
     Ok(json!({"content":content,"resources":resources}))
 }
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct AppliedSource {
+    format_version: u32,
+    source_path: String,
+    installation: room_v3::Installation,
+}
+pub fn record_source(
+    host: &Path,
+    source: &Path,
+    installation: &room_v3::Installation,
+) -> Result<(), String> {
+    let canonical = source
+        .canonicalize()
+        .map_err(|e| format!("resolve applied source: {e}"))?;
+    let mut source_path = canonical.to_string_lossy().into_owned();
+    #[cfg(windows)]
+    {
+        if let Some(unc) = source_path.strip_prefix(r"\\?\UNC\") {
+            source_path = format!(r"\\{}", unc);
+        } else if let Some(local) = source_path.strip_prefix(r"\\?\") {
+            source_path = local.to_string();
+        }
+    }
+    let value = AppliedSource {
+        format_version: 1,
+        source_path,
+        installation: installation.clone(),
+    };
+    let bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
+    let mut temporary = tempfile::NamedTempFile::new_in(host).map_err(|e| e.to_string())?;
+    temporary
+        .write_all(&bytes)
+        .and_then(|_| temporary.flush())
+        .map_err(|e| e.to_string())?;
+    temporary
+        .persist(host.join("source.v3.json"))
+        .map_err(|e| e.error.to_string())?;
+    Ok(())
+}
+pub fn active_source(host: &Path) -> Result<Option<String>, String> {
+    let record = match fs::read(host.join("source.v3.json")) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(format!("read native source: {error}")),
+    };
+    let record: AppliedSource =
+        serde_json::from_slice(&record).map_err(|e| format!("read native source: {e}"))?;
+    if record.format_version != 1 {
+        return Err("unsupported applied source record".into());
+    }
+    let installed = match fs::read(host.join("content/installation.json")) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(format!("read active installation: {error}")),
+    };
+    let installed: room_v3::Installation =
+        serde_json::from_slice(&installed).map_err(|e| e.to_string())?;
+    if record.installation != installed {
+        return Ok(None);
+    }
+    let source = Path::new(&record.source_path);
+    if !source.is_absolute() || !source.join("room.json").is_file() {
+        return Ok(None);
+    }
+    let document = room_v3::read_document(source)?;
+    if document["id"].as_str() != Some(installed.room_id.as_str()) {
+        return Ok(None);
+    }
+    Ok(Some(record.source_path))
+}
+pub fn rename(room: &Path, name: &str) -> Result<PathBuf, String> {
+    let _guard = AUTHOR_LOCK.lock().map_err(|_| "author lock unavailable")?;
+    if name.is_empty()
+        || name != name.trim()
+        || name == "."
+        || name == ".."
+        || name.ends_with('.')
+        || name
+            .chars()
+            .any(|c| c.is_control() || r#"\/:*?"<>|"#.contains(c))
+    {
+        return Err("invalid room name".into());
+    }
+    let target = room.parent().ok_or("Room has no parent")?.join(name);
+    if target.exists() {
+        return Err("room already exists".into());
+    }
+    let original = room_v3::read_document(room)?;
+    room_v3::validate_manifest(&original)?;
+    let mut document = original.clone();
+    document["name"] = json!(name);
+    write(room, &document)?;
+    if let Err(error) = fs::rename(room, &target) {
+        let restored = write(room, &original);
+        return Err(format!(
+            "rename Room: {error}; original name restore: {restored:?}"
+        ));
+    }
+    Ok(target)
+}

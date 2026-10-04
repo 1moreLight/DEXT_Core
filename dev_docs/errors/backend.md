@@ -470,3 +470,7 @@ Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方�
 ## #221 零序号不能表示最近完成（2026-10-04）
 正式Core/Player链已使用DOWN正数关联，Core GetProof仍有sequence=0与零值匹配任意当前proof的旧兼容，消费bridge亦默认0。必要实质RED295/299确认零lookup/启动/导航/系统控制可取得后来完成。移除默认参数与零回退，Player四种消费parser要求正数，Core299/299与消息72/72、最新部署实际正式Player组合通过。
 旧fixture显式传其实际构造完成序号；正数但错消费者/几何应StaleInput，零内部调用InputRequired，均不消费。失败reply0与尚未经过native request join的作者原始authorInput不代表动作准入，不能混同为零值消费。实际Core OS/物理DPI最终门槛仍待补。
+
+## #225 原生应用统一启动路径并等待真实新会话（2026-10-04）
+真实Tauri导入/保存后apply_room返回Ok，但Core inactive、Player导航OperationCanceled。资源服务器先Path.GetFullPath再计算虚拟域名，官方文档校验却从原始启动URL计算。配置器常量含src-tauri/../../，二者域名不同，此前使用规范路径的探针不能证明配置器入口。
+apply_room规范宿主绝对路径并剥扩展前缀。SetWallpaper只报告排队，最多25s等待当前Room新session/有效Player/安装戳与稳定完整安装快照，之后才记私有来源和返回成功；失败明示保存完成、应用未确认。同安装重复应用的新session/Player实机通过。active_room原生分支要求Core会话活跃/有效Player及来源记录匹配完整安装；来源不注入作者清单。

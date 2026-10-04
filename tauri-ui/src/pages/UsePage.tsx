@@ -118,7 +118,7 @@ export function UsePage(props: UsePageProps) {
             </dl>
             {!roomContractPolicy(heroRoom.version).edit && <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">{readOnlyRoomMessage(heroRoom.version)}。不会读取为草稿、改写或丢弃 Widget 数据。</p>}
             <div className="mt-auto grid grid-cols-2 gap-2 pt-5">
-              <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => props.onDuplicateRoom(heroRoom)}><Copy className="h-4 w-4" /> 复制</Button>
+              <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(heroRoom.version).saveAs} onClick={() => props.onDuplicateRoom(heroRoom)}><Copy className="h-4 w-4" /> 复制</Button>
               <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(heroRoom.version).edit} onClick={() => props.onRenameRoom(heroRoom)}><Pencil className="h-4 w-4" /> 重命名</Button>
               <Button variant="outline" disabled={Boolean(busy)} onClick={() => props.onEditRoom(heroRoom)}><Pencil className="h-4 w-4" /> {roomContractPolicy(heroRoom.version).edit ? "编辑" : "只读查看"}</Button>
               <Button variant={heroRoom.path === appliedRoom ? "outline" : "default"} disabled={Boolean(busy) || !roomContractPolicy(heroRoom.version).apply || (isTauri && !coreIdentity)} title={!roomContractPolicy(heroRoom.version).apply ? readOnlyRoomMessage(heroRoom.version) : isTauri && !coreIdentity ? "Dext Core 未连接，仍可浏览本地 Room" : undefined} onClick={() => heroRoom.path === appliedRoom ? props.onStopRoom() : props.onApplyRoom(heroRoom)}>

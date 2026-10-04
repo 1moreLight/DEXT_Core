@@ -90,3 +90,6 @@ Core准备与一次证明消费是短私有提交边界，Windows/COM在锁外�
 Accepted/controlUnavailable等回执的inputSequence/inputConsumed只在私有宿主使用，SDK仅有安全status/错误码。实际消费后服务失败也取消默认回退；未消费的拒绝保留当前配置入口fallback。已发动作在同代次/会话修订中可回执，暂停/换代次/会话/销毁全部取消。实际Core五媒体意图到达拥有的静音publisher、音量改动后恢复、8次输入一次消费与正常重启恢复已验证；人工物理输入、听音、完整生命周期与可信退出确认仍独立进行。
 
 - 2026-10-04 P5有效布局补证：持续Scene经SDK只读placements取得当前可见组件的组矩阵前有效设计矩形，内部逻辑视口不改。v3-continuous仪表盘改为1600×540，用当前矩形映射至底部1920×280/整页1920×1080；实际640×480 scale1.5底部展开往返、1920×1080放大缩回及有效布局恢复已通过。Core包/回复/raw OS键为fixture，更多物理DPI/完整Core OS门槛继续；全16项就绪仍1/16≈6%。
+
+## 配置器应用来源（P6内部元数据）
+官方宿主在content安装目录外使用source.v3.json，保存formatVersion1、规范sourcePath和完整installation快照。它服务配置器当前Room标记，作者资源/SDK/room.json/分享均不携带它；记录与当前安装不匹配时不显示该来源。apply_room通过规范宿主路径请求Core，等当前Room新会话/有效Player与稳定安装后才记来源；Core非活动时原生active_room为空。普通Core重启仍按同安装快照匹配，保存回执不能代表应用成功。

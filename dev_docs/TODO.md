@@ -1543,3 +1543,17 @@ pm run tauri build 并气泡提示，完成后重试即可。
 
 P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-red/final（34/34）、p6-vitest-full（66/66）、p6-ui-build-final、p6-tauri-check、p6-ui-browser-final及p6-ui-dark/light。工具首次UTF-8/JS插值和首轮主题探针定位失败未算通过。旧v3-continuous重复icon ID修正为detail-view，正式样包检查恢复。
 接续Task3注意：active_room仍仅识别v2安装路径，v3应用状态需接正式Core身份/宿主元数据；v3房间库改名等尚复用v2校验，需在真实入口核对并明确支持边界。四类测试中的视频/GIF仅验证作者文件复制/安装，不声称该字节可实际解码。真实Tauri创建保存重开/应用、真实四媒体播放/切页/重启、用户数据精确保护和最终审查尚未执行。Dext本段未启动，隔离临时文件由测试所有权清理，浏览器Vite停止后提交。完整16项就绪1/16≈6%。
+
+### P6 Task3 接线（2026-10-04，BASE2ba11e5）
+本段目标：真实配置器创建/导入/保存/重开，正式安装应用后由实际Core/Player状态识别当前v3副本；库改名保持身份和资源。先补原生应用来源映射与改名功能RED，再真实Tauri/四媒体实际解码/切页恢复，原用户状态精确保护并正常退出。本地功能优先；凭据宿主遮挡时不重复Core OS点击，输入/DPI最终门槛保持。
+- [x] host私有来源记录匹配当前安装快照，active_room同时识别v3路径；原生库改名保留UUID和资源。两个实际功能RED后生产作者/契约36/36；实际配置器UTF-8改名、立即重开、应用来源匹配通过。
+- [ ] 真实Tauri文件/应用、实际Core/ReleasePlayer四媒体呈现、切页与重启证据；有fixture明确单列。
+- [x] 必要回归/构建与用户文件恢复、正常退出；本节随具名阶段提交保存。最终集中验收/一次整体审查继续。
+
+- [x] 真实Tauri创建/四类导入与HTML目录依赖/Dock、保存重开稳定ID、实际Core/ReleasePlayer应用与运行来源匹配。由配置器设起点→重应用观察四媒体加载/呈现、HTML CSS/JS及Dock运行；prompt/选择文件为输入夹具，其余生产链真实。
+- [x] UTF-8改名后立即打开正确Room，身份/四Desk/Dock/资源与应用来源保持；实际撤销/重做；缺资源保存明确失败，原清单字节不变，未保存状态可见。重复同安装应用等新session/Player，不能拿旧会话或RPC排队回执报告成功。
+- [x] 同安装副本普通Core退出→启动：同Room/Desk/安装戳/来源，新session/Player，HTML/Dock重新运行；Desk恰为配置起点，不冒称非起点checkpoint已由本探针证明。
+- [x] Vitest66/66、生产Rust36/36、两个具名v2库改名/Windows路径回归、npm build和cargo check；此前完整build.ps1四阶段通过。最终start watcher78843/75916 exit0，配置器先正常关再普通Core退出；原四文件字节/缺失和原localStorage恢复，Dext进程/1620/1621/9226/9227监听及自有GUID/安装/观察器0。
+- [ ] 真实桌面默认导航/动画同步及非起点重启、系统选择框操作、一次最终整体审查与集中确认保留。P6本地闭环已贯通，按连续授权接续独立P6-002；完整16项仍1/16≈6%，不合并master。
+
+证据在本线程evidence目录：p6-native-config-live-2初次应用失败、p6-canonical-live、p6-media-native-live/actual-media、p6-save-failure-live、p6-restart-live/actual-restart、p6-final-product-live/native-final-evidence、p6-final-restore。工具选择器/误选房间/作用域/日志失败与产品失败分开记录；最后真实功能和精确恢复单独通过。见ERRORS225–227。拖动暂缓，无新增网络专项，最终本卡五项/P5七项保持。

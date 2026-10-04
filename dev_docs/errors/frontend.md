@@ -130,3 +130,7 @@
 修复：新增“刷新运行诊断”按钮和可滚动 JSON 面板；浏览器 mock 提供脱敏占位，Tauri 断线/失败显示明确错误。
 
 防再犯：后端新增只读诊断命令时，配置器应同时提供查看入口和导出入口。
+
+## #226 改名返回路径须与列表和应用状态使用同一表示（2026-10-04）
+rename_room_dir采用canonical源，Windows返回带扩展前缀目标；list_rooms/active_room是常规路径。配置器找不到roomPickPath/appliedRoom，退回库首项，立即编辑会打开另一Room。仅看磁盘改名和来源成功不足以验证UI。
+rename_room返回display_path；原生作者rename更新name并保持UUID/资源，失败尝试恢复原文。最后UTF-8改名后不重新选卡，立即编辑正确Room，实际来源/节点/资源保持。UsePage复制入口和App处理器按saveAs能力禁用，v3不能因edit开放而允许未接通的复制。

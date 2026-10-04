@@ -7,6 +7,7 @@ dext-room-demo/
 output/playwright/
 tests/**/bin/
 tests/**/obj/
+tests/**/target/
 
 # media assets: videos are runtime/test data, keep out of git
 *.mp4
@@ -41,3 +42,4 @@ rooms/library.json
 *.tmp
 # Host-owned native v3 installation; authored samples remain tracked in rooms/.
 /wallpapers/dext-room-v3/content/
+/wallpapers/dext-room-v3/source.v3.json

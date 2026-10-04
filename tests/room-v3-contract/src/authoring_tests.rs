@@ -85,3 +85,50 @@ fn missing_resource_save_keeps_existing_manifest_and_identity() {
     assert!(author::save(&room, &doc.to_string()).is_err());
     assert_eq!(std::fs::read(room.join("room.json")).unwrap(), before);
 }
+
+#[test]
+fn native_active_source_survives_restart_and_tracks_exact_installation() {
+    let temp = tempfile::tempdir().unwrap();
+    let room = author::create(temp.path(), "author", &document().to_string()).unwrap();
+    let host = temp.path().join("host");
+    std::fs::create_dir(&host).unwrap();
+    let snapshot = room_v3::install(&room, &host.join("content")).unwrap();
+    author::record_source(&host, &room, &snapshot).unwrap();
+    assert_eq!(
+        author::active_source(&host).unwrap(),
+        Some(room.to_string_lossy().to_string())
+    );
+    let mut doc = room_v3::read_document(&room).unwrap();
+    doc["name"] = json!("Changed");
+    author::save(&room, &doc.to_string()).unwrap();
+    let next = room_v3::install(&room, &host.join("content")).unwrap();
+    assert_eq!(author::active_source(&host).unwrap(), None);
+    author::record_source(&host, &room, &next).unwrap();
+    assert_eq!(
+        author::active_source(&host).unwrap(),
+        Some(room.to_string_lossy().to_string())
+    );
+    assert!(room_v3::read_document(&host.join("content"))
+        .unwrap()
+        .get("sourcePath")
+        .is_none());
+}
+#[test]
+fn native_room_rename_keeps_identity_and_reopens_assets() {
+    let temp = tempfile::tempdir().unwrap();
+    let room = author::create(temp.path(), "author", &document().to_string()).unwrap();
+    let resource = temp.path().join("picture.svg");
+    std::fs::write(&resource, b"<svg/>").unwrap();
+    let imported = author::import_content(&room, &resource, "image").unwrap();
+    let mut doc = document();
+    doc["resources"] = imported["resources"].clone();
+    doc["desks"][0]["background"] = imported["content"].clone();
+    author::save(&room, &doc.to_string()).unwrap();
+    let renamed = author::rename(&room, "renamed").unwrap();
+    assert!(!room.exists());
+    let reopened = room_v3::read_document(&renamed).unwrap();
+    assert_eq!(reopened["name"], "renamed");
+    assert_eq!(reopened["id"], doc["id"]);
+    assert_eq!(reopened["resources"], doc["resources"]);
+    room_v3::install(&renamed, &temp.path().join("installed")).unwrap();
+}

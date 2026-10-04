@@ -1484,7 +1484,7 @@ export default function App() {
     });
   }
   async function duplicateRoom(room: RoomInfo) {
-    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version).saveAs) return setStatus(readOnlyRoomMessage(room.version));
     const name = prompt("复制后的 Room 名称", `${room.name}-copy`)?.trim();
     if (!name) return;
     if (!IS_TAURI) {

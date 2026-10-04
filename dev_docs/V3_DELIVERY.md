@@ -9,13 +9,13 @@
 
 | # | 原计划交付 | 当前证据与不足 | 开发就绪 |
 |---|---|---|---|
-| 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启已验证，正式配置器创建/应用待集成 | 否 |
+| 1 | 契约与安装快照 | P3-001原生清单/摘要安装与Core复核、审查竞态修正；P5已证真实Rust安装→Core/Player切页；同安装副本Core重启及正式配置器创建/保存/重开/实际应用已验证；最终全链组合复核保留 | 否 |
 | 2 | Room/Desk 状态服务 | V3-CORE-001～005；协议30/30、真实切页/重启恢复，2026-09-30 验收合入 | 是 |
 | 3 | 本机绑定与授权服务 | Core私有绑定/授权、消费者KV与作者SDK导航/媒体/音量/可信退出已验证；RawInput静止精确命中、DOWN正数关联254/254；Core/Player鼠标/作者Enter/Space与SDK正数汇合基础通过；源鼠标保护动作Core类281/281、真实Player移动图标取样通过；已有焦点Enter/Space可见采样Core288/288及实际Player通过；单次Tab/移动焦点及连续Tab早到键Core295/295、生产Core类/实际Player组合通过；实际Core OS与个人编辑UI待贯通 | 否 |
 | 4 | 持续桌面 Player | P5正式持续DOM与实际Core切页保持同Player/两份SDK文档；作者纯视觉矩阵/焦点及实际Player仪表盘同文档bottom→full→bottom基础通过；SDK有效矩形与640×480 scale1.5展开/放大缩回已验证；完整Core输入/异常恢复组合待完成 | 否 |
 | 5 | 启动、待机与暂停生命周期 | 实际Core四媒体start/idle/暂停/wake与GIF视觉冻结、同安装Core重启/独立Player故障重建及WebAudio已验证；真实Windows锁屏、DPI与最终组合门槛保留 | 否 |
 | 6 | 布局与输入同步 | 个人布局Core/私有IPC/DOM读取与saved/effective呈现、静止凸区域/遮挡/多图标/焦点已验证；Core两边事件取样与真实Player移动源图标样本已接；已有焦点Enter/Space两边可见采样已接；单次Tab/移动焦点与连续键顺序Core295/295、生产Core类/实际Player组合通过；作者矩阵本地帧/保持/焦点与实际Player通过；作者/有效布局小窗口展开及恢复已验证，实际Core OS/DPI继续，桌面拖动按用户暂缓 | 否 |
-| 7 | 简单 Room 创建与节点保存 | P6独立v3编辑入口/稳定ID/历史与生产作者文件/四类导入/HTML依赖/保存重开安装基础通过（66/34）；真实Tauri/Core/Player端到端及播放/重启继续 | 否 |
+| 7 | 简单 Room 创建与节点保存 | 真实Tauri创建/四媒体导入/HTML依赖/Dock、稳定节点/历史/保存重开/库改名/失败原文保持，实际Core/Player应用呈现和同安装普通重启/来源状态通过；默认桌面导航/动画、非起点恢复/系统选择框及最终整体审查待集中 | 否 |
 | 8 | Dock 模板与交互编辑 | v2固定参数；v3模板声明/共享值/逐字段连线差异待做 | 否 |
 | 9 | 统一按钮与个人呈现编辑 | v3按钮列表、定位、个人绑定/皮肤覆盖待做 | 否 |
 | 10 | 试验台与作者诊断 | v2预览可复用；v3生产协议、多尺寸、拒绝/缺数据/占用定位待做 | 否 |
@@ -247,3 +247,16 @@ P5剩余实际Core OS/物理DPI/锁屏/故障还原与最终七项/单次P5审�
 生产Rust作者模块共享正式v3校验和资源读取，创建、复制图片/视频/GIF、整目录本地HTML依赖、原子保存重开与正式安装通过。资源缺失或尝试变更副本UUID拒绝，原文不变。保存/应用沿正式Tauri命令接线。旧连续样包重复icon id改detail-view，正式样包检查恢复。
 功能RED为文档3项、v3操作矩阵1项、删除共享按钮引用1项及Rust作者3项；最终Vitest66/66、生产Rust契约+作者34/34、npm build及cargo check通过。p6-ui-browser-final实际headless浏览器整轮新建/节点改名/排序/起点/默认图标/撤销重做/草稿重开及深浅截图通过；文件/Core为mock，不作为真实Tauri证据。Rust媒体字节仅文件夹具，不当作实际解码。
 接续Task3：真实Tauri新建/四媒体导入/保存重开→实际Core/Player应用、active_room原生状态来源、实际播放/切页/重启恢复及库操作支持边界。Dext本段未启动；测试仅拥有的临时文件，浏览器/开发Vite正常关闭。一次最终审查与本包5项/P5七项人工门槛保持；拖动暂缓，无新增网络专项。完整16项开发就绪仍1/16≈6%，未合并master。
+
+## P6真实配置器与原生应用闭环（2026-10-04，BASE2ba11e5）
+host私有source.v3.json保存规范绝对源路径和完整安装快照；来源不注入作者清单。active_room识别原生v3时要求活跃Core会话/有效Player及与当前安装完全相同的来源记录。原生库改名更新作者name，保持UUID/节点/资源，命令返回显示路径，避免Windows扩展前缀使配置器选错Room。复制入口按saveAs能力禁用，后续分享包接通。
+
+实际配置器Room0fbf8cd6-1d2b-46c3-915c-0137242255fe从默认两Desk创建，导入四类可解码媒体及HTML目录CSS/JS，添加同Dock引用四Desk；生产Rust作者/安装/Core/ReleasePlayer贯通。prompt/文件选择是本地输入夹具，不覆盖生产Tauri invoke、作者文件、RPC或Core/Player，也不当作系统选择框物理验收。首次应用仅SetWallpaper排队回执，Core inactive、Player导航OperationCanceled；路径含../..，与原生资源服务器规范化后的主机哈希不同。改为规范绝对宿主路径；apply_room最多等待25s，确认当前Room新session/Player及稳定安装后才记录来源和返回成功。最后同安装重复应用明确新session/Player、同安装戳通过。
+
+p6-media-native-live通过：由实际配置器逐Desk设起点重应用，真实Player图片/GIF自然尺寸非零，视频ready/实际尺寸/无错误/播放时间变化，HTML背景与Dock有正确CSS色值及持续JS计数。只读官方title观察器和自有HTML观测代码是证据夹具，没有注入会话/授权/输入，之后恢复main.js原字节并移除自有素材。此证据不替代桌面切页手势或GIF多帧物理观察。
+
+实际UTF-8库改名后立即打开正确Room，身份/四Desk/Dock/资源和应用来源保持；实际撤销重做、缺资源保存失败的清楚反馈/未保存状态及原清单字节不变通过。普通Core退出再启动，同安装戳和Room/current Desk/源路径，新Player/session，HTML/Dock重新运行；本轮Desk恰为配置起点，非起点checkpoint恢复仍沿最终步骤核对。
+
+必要自测为生产Rust36/36（两个来源/改名功能RED→GREEN）、Vitest66/66、两个具名v2库改名/Windows显示路径回归、npm build、cargo check；此前完整build.ps1四阶段通过。最后start watcher78843/75916 exit0；Core45588/config58764/Player34052精确路径核验，配置器先正常关、Core普通退出，原四文件SHA256/缺失和原localStorage精确恢复，Dext进程/监听/自有GUID/安装前代副本/观察器0。第一轮Core先关导致配置器窗口关闭但驻留，所有权核对后停止，未称该轮正常退出；最终两轮均正常退出。
+
+最终本包五项/P5七项及一次整体审查保持；默认导航/动画同步、非起点重启、系统选择框和物理输入/DPI待集中，凭据宿主未解除时不做桌面点击。无新增网络专项，拖动暂缓，按连续授权接续独立P6-002；完整16项仍1/16≈6%，不合并。主要证据在本线程evidence目录：p6-canonical-live、media-native-live/actual-media、save-failure-live、restart-live/actual-restart、final-product-live/native-final-evidence、final-restore。

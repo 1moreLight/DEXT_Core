@@ -300,3 +300,7 @@
 
 | #223 | P6工具脚本默认GBK和JS模板转义导致执行中断；UI主题需等绘制后截图 | [toolchain](errors/toolchain.md) |
 | #224 | 持续样包两Desk重复图标ID，正式Rust契约会拒绝 | [renderer](errors/renderer.md) |
+
+| #225 | 非规范宿主路径使原生主机哈希不同；排队回执冒称应用成功 | [backend](errors/backend.md) |
+| #226 | 原生库改名返回扩展路径，选中状态与库列表不匹配 | [frontend](errors/frontend.md) |
+| #227 | P6原生选择器夹具/诊断cwd/选择器前缀及正常退出顺序 | [toolchain](errors/toolchain.md) |
