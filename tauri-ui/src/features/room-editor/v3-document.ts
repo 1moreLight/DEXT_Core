@@ -44,7 +44,15 @@ export function removeV3Desk(room:RoomV3,deskId:string):RoomV3 {
   cleanReferences(next.start);cleanReferences(next.idle);
   return next;
 }
+export function v3IconCreationIssue(room:RoomV3,deskId:string,newButton:boolean):string|null {
+  const desk=room.desks.find(d=>d.id===deskId);
+  if(!desk)return "Desk 已不存在";
+  if(desk.icons.length>=512)return "这个 Desk 的图标数量已达上限";
+  if(newButton&&(room.buttons?.length??0)>=1024)return "这个 Room 的按钮数量已达上限，可复用现有按钮";
+  return null;
+}
 export function addV3Icon(room:RoomV3,deskId:string,label:string,action:"desk.next"|"desk.previous"|"binding.launch"):RoomV3 {
+  const issue=v3IconCreationIssue(room,deskId,true);if(issue)throw new Error(issue);
   const next=copy(room),desk=next.desks.find(d=>d.id===deskId);if(!desk)throw new Error("Desk 已不存在");
   const buttonId=id("button"),index=desk.icons.length;
   (next.buttons??=[]).push({id:buttonId,name:label,scope:deskId,action:{type:action}});
@@ -70,7 +78,7 @@ export function addV3Presentation(room:RoomV3,deskId:string,buttonId:string):Roo
   const next=copy(room),desk=next.desks.find(d=>d.id===deskId),button=next.buttons?.find(b=>b.id===buttonId);
   if(!desk||!button)throw new Error("Desk 或按钮已不存在");
   if(button.scope!=="room"&&button.scope!==deskId)throw new Error("按钮作用域不属于这个 Desk");
-  if(desk.icons.length>=512)throw new Error("这个 Desk 的图标数量已达上限");
+  const issue=v3IconCreationIssue(room,deskId,false);if(issue)throw new Error(issue);
   const index=desk.icons.length;
   desk.icons.push({id:id("icon"),buttonId,label:button.name,glyph:"◇",x:index%8,y:Math.floor(index/8)});
   return next;

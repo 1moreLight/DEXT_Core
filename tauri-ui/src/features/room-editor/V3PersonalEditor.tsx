@@ -3,7 +3,7 @@ import {invoke} from "@tauri-apps/api/core";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {AppPickerDialog,type AppPickerItem} from "@/components/AppPickerDialog";
-import {addV3Presentation,type RoomV3} from "./v3-document";
+import {addV3Presentation,v3IconCreationIssue,type RoomV3} from "./v3-document";
 import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,targetFormAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
 
 type Props={room:RoomV3;path:string;deskId:string;apps:AppPickerItem[];isTauri:boolean;canApply:boolean;disabled:boolean;dirty:boolean;onChange:(room:RoomV3)=>void};
@@ -66,6 +66,7 @@ export function V3PersonalEditor(props:Props){
  };
  const shown=authored.filter(b=>(scope==="all"||b.scope===scope)&&[b.name,b.id,...b.sources].some(v=>v.toLocaleLowerCase().includes(query.toLocaleLowerCase())));
  const target=board?.editor.targets.find(t=>t.id===settings.targetId);
+ const presentationIssue=v3IconCreationIssue(props.room,props.deskId,false);
  return <section aria-label="按钮与本机设置" className="space-y-3 rounded-lg border p-3">
   <div><h2 className="font-medium">按钮与本机设置</h2><p className="text-xs text-muted-foreground">查看作品入口，设置本机动作和图标外观。目标路径只保存在本机。</p></div>
   <div className="flex gap-2"><Input aria-label="搜索按钮" placeholder="名称、ID 或来源" value={query} onChange={e=>setQuery(e.target.value)}/>
@@ -93,7 +94,8 @@ export function V3PersonalEditor(props:Props){
      </div>
     </fieldset>
     {canEdit&&button.scope!=="room"&&board?.currentDesk!==button.scope&&<p className="text-xs text-muted-foreground">按钮位于其他 Desk；切换到该 Desk 后可定位。</p>}
-    <Button variant="outline" size="sm" disabled={locked||(button.scope!=="room"&&button.scope!==props.deskId)} onClick={()=>props.onChange(addV3Presentation(props.room,props.deskId,button.id))}>在当前 Desk 添加普通图标</Button>
+    <Button variant="outline" size="sm" disabled={locked||Boolean(presentationIssue)||(button.scope!=="room"&&button.scope!==props.deskId)} title={presentationIssue??undefined} onClick={()=>props.onChange(addV3Presentation(props.room,props.deskId,button.id))}>在当前 Desk 添加普通图标</Button>
+    {presentationIssue&&<p className="text-xs text-muted-foreground">{presentationIssue}</p>}
     <p className="text-xs text-muted-foreground">普通图标与原入口使用同一按钮。添加呈现后请保存并应用；皮肤仅改变普通图标。</p>
    </div>}
   </div>

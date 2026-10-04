@@ -317,3 +317,5 @@
 | #233 | 目标库/定位回执丢未保存按钮选择；绑定状态需采用当前有效动作 | [frontend](errors/frontend.md) |
 
 | #234 | 删除目标成功须关闭同ID旧表单，避免保存意外重建 | [frontend](errors/frontend.md) |
+
+| #235 | 普通图标新增须同时检查Desk图标与Room按钮额度；已有按钮可复用 | [frontend](errors/frontend.md) |

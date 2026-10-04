@@ -56,3 +56,24 @@ test("target save failure preserves the retry ID and typed fields; only its conf
  assert.deepEqual(update(form,{operation:"locateButton",buttonId:"open"},true),form);
  assert.equal(update(null,{operation:"removeTarget",targetId:"notes"},true),null);
 });
+
+const documentApi=import(pathToFileURL(path.join(__dirname,"../../tauri-ui/src/features/room-editor/v3-document.ts")).href);
+const roomWithCounts=(icons,buttons)=>({version:3,apiVersion:1,id:"room",name:"Room",startDesk:"desk",resources:[],desks:[{id:"desk",name:"Desk",components:[],icons:Array.from({length:icons},(_,i)=>({id:"icon-"+i,buttonId:"button-0",x:i%8,y:Math.floor(i/8)}))}],buttons:Array.from({length:buttons},(_,i)=>({id:"button-"+i,name:"Button "+i,scope:"room"}))});
+test("full Desk refuses both new-button and existing-button icons without changing the author",async()=>{
+ const {addV3Icon,addV3Presentation}=await documentApi;
+ const full=roomWithCounts(512,1),before=JSON.stringify(full);
+ assert.throws(()=>addV3Icon(full,"desk","New","binding.launch"),/图标数量已达上限/);
+ assert.throws(()=>addV3Presentation(full,"desk","button-0"),/图标数量已达上限/);
+ assert.equal(JSON.stringify(full),before);
+ const next=addV3Icon(roomWithCounts(511,1),"desk","Last","binding.launch");
+ assert.equal(next.desks[0].icons.length,512);
+});
+test("Room button limit prevents new declarations while existing-button presentations stay available",async()=>{
+ const {addV3Icon,addV3Presentation}=await documentApi;
+ const full=roomWithCounts(0,1024),before=JSON.stringify(full);
+ assert.throws(()=>addV3Icon(full,"desk","New","binding.launch"),/按钮数量已达上限/);
+ assert.equal(JSON.stringify(full),before);
+ const next=addV3Presentation(full,"desk","button-0");
+ assert.equal(next.buttons.length,1024);assert.equal(next.desks[0].icons.length,1);
+ assert.equal(next.desks[0].icons[0].buttonId,"button-0");assert.equal(JSON.stringify(full),before);
+});
