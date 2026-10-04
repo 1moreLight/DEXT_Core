@@ -1,0 +1,8 @@
+export type V3DockPreferences = {schemaVersion:number; enabled:boolean; mode:"autohide"|"reserve"; heightDip:number};
+export type V3DockRuntime = {phase:string; playerPid:number; roomId:string|null; deskId:string|null; hasDock:boolean; autoHideAvailable:boolean; reserveAvailable:boolean; taskbarReplacementReady:boolean; reason:string|null};
+export type V3DockStatus = {status:string; preferences:V3DockPreferences|null; runtime:V3DockRuntime; message:string|null};
+
+export function dockRuntimeLabel(runtime: V3DockRuntime): string {
+  const labels: Record<string,string> = {disabled:"已关闭",noNativeRoom:"当前未运行原生 Room",noDock:"当前 Desk 没有原生 Dock",hostPending:"Dock 宿主尚未就绪",settingsUnavailable:"偏好暂不可读",starting:"Dock 正在启动",running:"Dock 正在运行",hidden:"Dock 已收起",fullscreen:"全屏期间隐藏",locked:"锁屏期间隐藏",faulted:"Dock 启动失败",unsupportedMode:"当前模式暂不可运行"};
+  return labels[runtime.phase] || "Dock 状态未知";
+}

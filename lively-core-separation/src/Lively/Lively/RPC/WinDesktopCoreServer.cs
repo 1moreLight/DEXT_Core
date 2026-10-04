@@ -114,6 +114,18 @@ namespace Lively.RPC
                 });
         }
 
+        public override Task<RoomDockStatusResponse> GetRoomDockStatus(Empty _, ServerCallContext context) =>
+            Task.FromResult(DockResponse(roomSessionRuntime.GetRoomDockStatus()));
+
+        public override Task<RoomDockStatusResponse> SetRoomDockPreference(RoomDockPreferenceRequest request, ServerCallContext context) =>
+            Task.FromResult(DockResponse(roomSessionRuntime.SetRoomDockPreference(request.PatchJson)));
+
+        private static RoomDockStatusResponse DockResponse(RoomDockStatusReply reply) => new()
+        {
+            ReplyJson = System.Text.Json.JsonSerializer.Serialize(reply,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })
+        };
+
         public override Task<RoomPersonalEditorResponse> GetRoomPersonalEditor(RoomPersonalEditorRequest request, ServerCallContext context) =>
             Task.FromResult(PersonalEditorResponse(roomSessionRuntime.GetRoomPersonalEditor(request.RoomId, request.InstallationStamp)));
 

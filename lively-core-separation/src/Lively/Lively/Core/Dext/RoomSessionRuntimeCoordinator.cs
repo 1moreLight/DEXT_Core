@@ -15,6 +15,8 @@ public interface IRoomSessionRuntimeCoordinator
     string? NativeIdleDisplayId { get; }
     RoomPersonalEditorReply GetRoomPersonalEditor(string roomId, string installationStamp);
     RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson);
+    RoomDockStatusReply GetRoomDockStatus();
+    RoomDockStatusReply SetRoomDockPreference(string patchJson);
     RoomReadGrantsReply GetRoomReadGrants(string roomId, string installationStamp);
     RoomReadGrantsReply SetRoomReadGrant(string roomId, string installationStamp, string consumerId, string[] capabilities, bool allow);
 }
@@ -28,6 +30,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private readonly RoomSessionKernel kernel;
     private readonly RoomRuntimeFactsSource runtimeFacts;
     private readonly RoomActionAuthority actions;
+    private readonly RoomDockPreferenceStore dockPreferences;
     private WebWebView2? activePlayer;
     private bool activeNativeRoom;
     private string? activeDisplayId;
@@ -36,13 +39,14 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private string? activeInstallationStamp;
 
     public RoomSessionRuntimeCoordinator(InstalledRoomSessionAuthority authority,
-        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions)
+        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences)
     {
         this.authority = authority;
         this.gateway = gateway;
         this.kernel = kernel;
         this.runtimeFacts = runtimeFacts;
         this.actions = actions;
+        this.dockPreferences = dockPreferences;
         runtimeFacts.Sampled += OnRuntimeFactsSampled;
     }
 

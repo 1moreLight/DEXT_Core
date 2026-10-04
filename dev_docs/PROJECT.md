@@ -281,3 +281,6 @@ Core个人快照Room.readGrants与既有grants分开，仍绑定同一Room副本
 正式v3 DOM/SDK/布局模块直接用于独立试验台，资源会话只读原生源Room；数据/授权/内存存储只模拟，不与真实Core/个人状态共享。诊断层与示例JSON不保存到作品；共享组件默认placement通过明确“应用到草稿”进入既有作者历史，仍需编辑器保存才写盘，稳定按钮/组件ID和引用保持。高级HTML固定按钮仍由作者代码定义，可在试验台定位源码与实际区域。该决定不替代正式Player实机验收。
 
 | 2026-10-04 | P2b用现有Release WebView2 Player的显式Dock原型入口和独立NativeWindow行为，正常顶层输入不走WorkerW转发；后续P8复用窗口行为并接Core/SDK，不另建平行桌面状态内核。原型高度128 DIP、48..240 DIP且屏幕20%只是待实机确认的试验约束；产品最终值、任务栏隐藏/异常恢复及正式偏好均保持P8门槛。 |
+
+### 2026-10-04 原生Dock偏好与运行状态
+Dock enabled/mode/heightDip保存为Dext全局v3/dock-preferences.json，与Room作品、安装、副本个人绑定分开；切Room不复制或覆盖它。配置器只显示Core确认的保存值与真实宿主状态，偏好enabled不表示运行，尚无宿主/PID或模式不可用须明确反馈。原生Dock资格使用正式dockComponentId及Desk引用，不把普通桌面Dock组件自动提升为顶层窗口。Windows原任务栏替代/故障恢复保持P8必做门槛。

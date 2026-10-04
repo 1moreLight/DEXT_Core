@@ -474,3 +474,6 @@ Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方�
 ## #225 原生应用统一启动路径并等待真实新会话（2026-10-04）
 真实Tauri导入/保存后apply_room返回Ok，但Core inactive、Player导航OperationCanceled。资源服务器先Path.GetFullPath再计算虚拟域名，官方文档校验却从原始启动URL计算。配置器常量含src-tauri/../../，二者域名不同，此前使用规范路径的探针不能证明配置器入口。
 apply_room规范宿主绝对路径并剥扩展前缀。SetWallpaper只报告排队，最多25s等待当前Room新session/有效Player/安装戳与稳定完整安装快照，之后才记私有来源和返回成功；失败明示保存完成、应用未确认。同安装重复应用的新session/Player实机通过。active_room原生分支要求Core会话活跃/有效Player及来源记录匹配完整安装；来源不注入作者清单。
+
+## #239 原生Dock资格与偏好不可冒称宿主运行（2026-10-04）
+P8接线源码核对发现：只查当前Desk的任意role=dock组件会把普通桌面Dock误报为原生Dock，与已冻结ROOM_V3的dockComponentId不符。现在从当前已核验安装读取该明确ID并查有效Desk引用；UI用独立Core runtime.phase/PID/available事实，enabled只表示已保存偏好。当前宿主尚未接入明确hostPending/PID0，常驻unsupportedMode；不会用保存accepted制造running。公共IRoomSessionRuntimeCoordinator新增返回类型需public，已一并核对修正；未运行编译器或伪造实际失败/通过证据。

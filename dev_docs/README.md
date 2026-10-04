@@ -271,3 +271,4 @@ P7当前分支在原生Room编辑器提供“打开试验台”，独立预览�
 试验台还提供共享Dock/Widget默认布局应用到草稿、资源源码只读定位、自定义JSON示例；返回编辑器沿原撤销与保存，不用预览修改私人绑定。
 
 P2b顶层Dock原型：scripts/dock-probe.ps1仅供手动原生验收，依当前worktree已构建ReleasePlayer；默认overlay、180秒退出，可明确选择autohide/reserve。原型未接Core/个人数据，不代表P8已启用；正式状态看ROADMAP及acceptance/V3-P2B-001-top-dock.md。
+P8原生Dock设置接线：配置器设置中的独立卡经Core读取/保存全局偏好，显示当前Room/Desk资格与真实运行状态；宿主未接入不会显示已启用。当前范围和下一步见ROADMAP/TODO及acceptance/V3-P8-001-dock-autohide.md。

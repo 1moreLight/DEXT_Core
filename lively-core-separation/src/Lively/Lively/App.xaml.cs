@@ -232,6 +232,7 @@ namespace Lively
                     services.GetRequiredService<RoomSessionProtocolGateway>(), services.GetRequiredService<RoomPersonalStore>(),
                     target => { new Lively.Services.AppCatalogService().Launch(target.Target, target.Arguments, target.WorkingDirectory); }))
                 .AddSingleton<RoomRuntimeFactsSource>()
+                .AddSingleton(_ => new RoomDockPreferenceStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-preferences.json")))
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())

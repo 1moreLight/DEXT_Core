@@ -458,3 +458,6 @@ P7创作写入调用返回CreateProcess Rejected：automatic permission approval
 
 ### #237 补充：生成PowerShell源码时不要在JS模板里放裸反引号
 P2b资产写入命令在functions.exec解析阶段报SyntaxError，未执行任何文件写入；原因是PowerShell续行符反引号直接终结了JS String.raw模板。移除续行、使用单行Start-Process后原写入成功。执行状态以工具返回为准，不把脚本解析失败算产品失败，也不重复已执行的追加命令。
+
+### #237 补充：PowerShell下rg路径通配符用-g，不直接拼目录星号
+P8查代码两条命令把RoomSession*或DextRoomRuntime*作为路径参数，rg按字面路径返回Windows os error123。改为已确认目录配-g '*.cs'及明确文件定位完成；没有重跑写入命令或把定位失败算产品失败。后续代码定位先按CodeGraph可用状态，再用rg的过滤器。

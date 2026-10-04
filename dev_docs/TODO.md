@@ -1662,3 +1662,16 @@ Ruling：用户少验证优先进度，沿P7依赖继续功能；P7编码3/4=75%
 
 P2b首轮代码：ReleasePlayer显式--dext-dock-probe分支，不接Core/WorkerW输入；可复用native HWND宿主、主屏底部/48..240 DIP与20%上限、非激活鼠标及明确键盘/Escape恢复、AppBar两步协商/最终矩形/注销、自动隐藏、全屏及Explorer/DPI重新定位。固定HTML真实事件计数和当前原生前台/窗口/工作区诊断；独立Mutex、临时profile/events日志、30..900秒自动退出（默认180），手动脚本只用当前worktree部署的ReleasePlayer。代码核对修正DPI默认处理改变实际矩形后不能只比较旧缓存、初次跨DPI需再布局、即时工作区用GetMonitorInfo，不计运行通过。node --check与PowerShell仅ParseFile通过，未运行脚本/编译器/应用；C#编译/原生输入/透明/焦点/DPI/AppBar/异常退出均未验证。编码3/4=75%，Task4待；整体16项就绪仍1/16≈6%，本轮具名提交不合并。
 源码收尾：原型先隐藏已Shown的HWND再布局，防止autohide/初始全屏的逻辑false遗漏真实窗口；加入DWM扩展框/黑色client及明确透明空隙诊断，仅记录HRESULT、真实透出仍必须实机验证；注销后即时工作区读取异常不阻止剩余关闭。ERRORS #238。
+
+## V3-P8-001 顶层 Dock 自动隐藏（2026-10-04，BASE2afcfd5）
+独立feat/V3-P8-001-dock-autohide / v3-dock-runtime；目标和五步见plans/V3-P8-001-dock-autohide.md，六项人工步骤见独立卡。范围外：常驻占位产品模式/游戏覆盖/拖动/分享。
+Ruling：沿用户少验证优先功能与集中验收授权推进；游戏期间不编译/启动/桌面输入；P2b原生证据继续保留，不等于产品已就绪。
+- [x] Task1 编码：全局Dock偏好独立原子保存/当前Room可用性与宿主尚未连接状态、proto/Tauri/设置页；编译与实际运行待Task5。
+- [ ] Task2 Core单实例Dock Player与绑定/共享会话/关闭重建。
+- [ ] Task3 正式Dock视图/SDK/几何/实际输入/数据。
+- [ ] Task4 Windows任务栏替代与退出/异常恢复看护。
+- [ ] Task5 游戏后必要build→start/一次原生冒烟、最终集中验收与整体审查。
+开工0/5=0%，完整16项就绪1/16≈6%；CodeGraph未初始化，rg兜底，不扩网络专项。
+
+P8 Task1代码：v3/dock-preferences.json全局独立保存，默认关闭/自动隐藏/128 DIP，48..240校验；读不建文件或重置，具名稀疏patch/重复未知字段拒绝、同值不写、临时文件原子替换和失败已确认值保持。Core查询经过当前安装身份并按正式dockComponentId与当前/目标Desk引用判断原生Dock，尚无宿主明确hostPending/PID0/不可运行，常驻明确unsupportedMode；没把enabled偏好当运行。双proto/RPC→当前Core身份核验Rust调用→Tauri→设置独立卡完整接线，断开/重连拒迟到回执、忙碌序列化、显式保存/刷新不丢待保存草稿，保存失败保已确认行。源码核对修正公共接口类型可见性和不能把任意桌面Dock组件当原生Dock。没有编译/运行/新测试矩阵；Task1编码1/5=20%，Task2-4继续，完整16项就绪仍1/16≈6%；游戏约束不变。本轮具名提交不合并。
+Task1轻量核对：双proto源码逐字一致、具名接线位置和diff核对通过；没有运行编译器、测试矩阵、窗口或桌面输入。
