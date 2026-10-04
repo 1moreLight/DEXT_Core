@@ -15,6 +15,8 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissio
     private readonly object gate = new();
     private string? packageDirectory;
     private int playerPid;
+    private int dockPid;
+    private string? dockStamp;
 
     public VerifiedRoomInstallation? Bind(string packageDirectory, int playerPid)
     {
@@ -26,6 +28,7 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissio
         {
             this.packageDirectory = directory;
             this.playerPid = playerPid;
+            dockPid = 0; dockStamp = null;
         }
         return installation;
     }
@@ -37,6 +40,31 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissio
             if (this.playerPid != playerPid) return;
             packageDirectory = null;
             this.playerPid = 0;
+            dockPid = 0; dockStamp = null;
+        }
+    }
+
+    // Only the coordinator binds a second Core-created process to the current
+    // desktop installation. This binding never replaces the desktop process.
+    public bool BindDock(int desktopPid, int pid, string installationStamp)
+    {
+        lock (gate)
+        {
+            if (pid <= 0 || desktopPid != playerPid || pid == playerPid ||
+                packageDirectory is null || (dockPid != 0 && dockPid != pid)) return false;
+            var installation = ReadInstallation(packageDirectory);
+            if (installation?.RuntimeContext is null || installation.InstallationStamp != installationStamp) return false;
+            dockPid = pid; dockStamp = installationStamp;
+            return true;
+        }
+    }
+
+    public void UnbindDock(int pid)
+    {
+        lock (gate)
+        {
+            if (dockPid != pid) return;
+            dockPid = 0; dockStamp = null;
         }
     }
 
@@ -47,10 +75,12 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissio
             if (packageDirectory is null ||
                 !((peer.TransportId == "core-runtime" && hello.Role == RoomClientRole.Coordinator) ||
                   (peer.TransportId == $"player-process:{playerPid}" &&
-                   hello.Role == RoomClientRole.DesktopPlayer)))
+                   hello.Role == RoomClientRole.DesktopPlayer) ||
+                  (dockPid > 0 && peer.TransportId == $"dock-process:{dockPid}" && hello.Role == RoomClientRole.Dock)))
                 return null;
             var installation = ReadInstallation(packageDirectory);
-            return installation is null || installation.RoomId != hello.RoomId
+            return installation is null || installation.RoomId != hello.RoomId ||
+                (hello.Role == RoomClientRole.Dock && installation.InstallationStamp != dockStamp)
                 ? null
                 : new RoomSessionAdmission(peer.TransportId, hello.Role, installation);
         }

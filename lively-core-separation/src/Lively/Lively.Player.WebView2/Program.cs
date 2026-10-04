@@ -18,7 +18,8 @@ namespace Lively.Player.WebView2
                 Environment.Exit(2);
 
             var dockProbe = Array.IndexOf(Environment.GetCommandLineArgs(), "--dext-dock-probe") >= 0;
-            if (dockProbe) DextDockWindowHost.UsePerMonitorDpi();
+            if (dockProbe || Array.IndexOf(Environment.GetCommandLineArgs(), "--dext-dock") >= 0)
+                DextDockWindowHost.UsePerMonitorDpi();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             if (dockProbe)

@@ -16,6 +16,7 @@ namespace Lively.Models.Message
         public string RoomId { get; set; }
         public string InstallationStamp { get; set; }
         // A raw JSON string intentionally crosses System.Text.Json -> Json.NET.
+        public string ViewKind { get; set; } = "desktop";
         public string ManifestJson { get; set; }
         public LivelyRoomRuntimeResource[] Resources { get; set; }
         public LivelyMessageRoomRuntime() : base(MessageType.cmd_room_runtime) { }

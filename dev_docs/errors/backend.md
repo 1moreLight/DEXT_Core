@@ -477,3 +477,8 @@ apply_room规范宿主绝对路径并剥扩展前缀。SetWallpaper只报告排�
 
 ## #239 原生Dock资格与偏好不可冒称宿主运行（2026-10-04）
 P8接线源码核对发现：只查当前Desk的任意role=dock组件会把普通桌面Dock误报为原生Dock，与已冻结ROOM_V3的dockComponentId不符。现在从当前已核验安装读取该明确ID并查有效Desk引用；UI用独立Core runtime.phase/PID/available事实，enabled只表示已保存偏好。当前宿主尚未接入明确hostPending/PID0，常驻unsupportedMode；不会用保存accepted制造running。公共IRoomSessionRuntimeCoordinator新增返回类型需public，已一并核对修正；未运行编译器或伪造实际失败/通过证据。
+
+## #240 隐藏 Dock 不能沿用可见窗枚举和 DesktopPlayer 独占上下文（2026-10-04）
+源码接线发现：旧GetProcessWindow(nativeSearch:true)只返回IsWindowVisible窗口；正式Dock初始化期间隐藏，继续用它将取不到根HWND。同时协议ReadRuntimeContext/Subscribe初始化/Replay仅准DesktopPlayer，新增Dock PID绑定仍不能取得同一正式上下文。
+修正：Dock使用已知WebView HWND的根祖先（现有枚举GetRoot）并核对Core创建进程PID；上下文、订阅和重放按已绑定DesktopPlayer或Dock放行，启动/过渡完成继续只准DesktopPlayer。管理器先确认旧进程退出再创建替代，未确认退出留故障，不并发开第二个。
+证据范围：源码与接线核对，游戏期间未编译/运行，实际隐藏窗初始化及共享快照仍待本包游戏后验收。不能把源码修正记为Windows运行通过。

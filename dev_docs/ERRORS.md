@@ -325,3 +325,4 @@
 | #237 | 自动审批检查超时未执行时只重试一次原参数，不重跑已执行写入 | [toolchain](errors/toolchain.md) |
 | #238 | 顶层Dock原型初次Shown窗口不能只凭逻辑visible=false跳过原生隐藏 | [renderer](errors/renderer.md) |
 | #239 | 原生Dock资格必须读取dockComponentId，偏好enabled不等于宿主运行 | [backend](errors/backend.md) |
+| #240 | 隐藏Dock须沿实际WebView祖先取HWND；共享上下文不能仍独占DesktopPlayer角色 | [backend](errors/backend.md) |

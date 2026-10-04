@@ -132,6 +132,16 @@ namespace Lively.Player.WebView2
             }
         }
 
+        protected override bool ShowWithoutActivation => startArgs?.DextDock == true || base.ShowWithoutActivation;
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            // Task3 releases this hidden window only after the formal Dock
+            // view, geometry and physical input have initialized.
+            if (startArgs?.DextDock == true) Hide();
+        }
+
         private void HandleParseError(IEnumerable<Error> errs)
         {
             if (errs != null)
@@ -144,6 +154,9 @@ namespace Lively.Player.WebView2
 
         public async Task InitializeWebView2Async()
         {
+            if (startArgs.DextDock && (!startArgs.DextNativeRuntime || !startArgs.DextTrustedHost ||
+                startArgs.DextDockHeight < 48 || startArgs.DextDockHeight > 240))
+                throw new InvalidOperationException("Dock requires a trusted native Room and bounded height");
             if (startArgs.DextNativeRuntime)
             {
                 if (!startArgs.DextTrustedHost || startArgs.Type != WebPageType.local || startArgs.Screensaver)
@@ -1023,6 +1036,7 @@ namespace Lively.Player.WebView2
                     break;
                 case MessageType.cmd_room_runtime:
                     if (startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source) &&
+                        ((LivelyMessageRoomRuntime)obj).ViewKind == (startArgs.DextDock ? "dock" : "desktop") &&
                         roomRuntime.Initialize((LivelyMessageRoomRuntime)obj))
                     {
                         nativeRuntimeSeen = true;

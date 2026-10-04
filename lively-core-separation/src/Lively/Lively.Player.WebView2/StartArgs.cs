@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using Lively.Models.Enums;
 
 namespace Lively.Player.WebView2
@@ -103,6 +103,14 @@ namespace Lively.Player.WebView2
         [Option("dext-native-runtime", Required = false, Default = false,
             HelpText = "Use the verified native v3 resource service before first navigation.")]
         public bool DextNativeRuntime { get; set; }
+
+        [Option("dext-dock", Required = false, Default = false,
+            HelpText = "Run a Core-owned native Dock view outside WorkerW.")]
+        public bool DextDock { get; set; }
+
+        [Option("dext-dock-height", Required = false, Default = 128,
+            HelpText = "Core-owned Dock height in DIP.")]
+        public int DextDockHeight { get; set; }
 
         [Option("wallpaper-color-scheme",
         Required = false,

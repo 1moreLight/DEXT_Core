@@ -7,7 +7,7 @@ namespace Dext.Core.Rooms;
 // One stream per attached bridge; generation allocation belongs to the Player
 // lifetime, so messages from an older attachment cannot revive a new document.
 internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<long> nextGeneration, string[] deskIds,
-    Action<long,RoomSessionSnapshot>? nativeInitialize=null, Action<RoomSessionSnapshot>? nativeSnapshot=null, Action? nativeRevoke=null)
+    Action<long,RoomSessionSnapshot>? nativeInitialize=null, Action<RoomSessionSnapshot>? nativeSnapshot=null, Action? nativeRevoke=null, string viewKind="desktop")
 {
     private readonly object gate = new();
     private bool active;
@@ -28,7 +28,7 @@ internal sealed class RoomSessionPlayerMessages(Action<IpcMessage> send, Func<lo
             send(new LivelyMessageRoomRuntime
             {
                 RuntimeGeneration = generation, SessionId = session, RoomId = room, InstallationStamp = stamp,
-                ManifestJson = context.Manifest.GetRawText(),
+                ManifestJson = context.Manifest.GetRawText(), ViewKind = viewKind,
                 Resources = context.Resources.Select(item => new LivelyRoomRuntimeResource
                 { Path = item.Path, Sha256 = item.Sha256, Size = item.Size }).ToArray()
             });

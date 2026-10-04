@@ -39,6 +39,7 @@ namespace Lively.Core.Wallpapers
         private readonly object sendLock = new();
         private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly bool trustedDextHost;
+        private readonly bool nativeDock;
         private RoomSessionPlayerBridge roomSessionBridge;
         private readonly object roomSessionLock = new();
         private long roomRuntimeGeneration;
@@ -52,6 +53,7 @@ namespace Lively.Core.Wallpapers
         public event EventHandler Exited;
         public event EventHandler Loaded;
         internal event EventHandler RoomPageReady;
+        internal event Action<RoomSessionSnapshot> RoomSnapshotObserved;
 
         internal bool IsTrustedDextHost => trustedDextHost;
         internal string RoomPackageDirectory => File.Exists(wallpaperPath)
@@ -89,8 +91,10 @@ namespace Lively.Core.Wallpapers
             double? scale = null,
             string audioVisualizerId = null,
             bool isScreensaver = false,
-            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null)
+            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null,
+            bool isNativeDock = false, int dockHeightDip = 128)
         {
+            nativeDock = isNativeDock;
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
             wallpaperPath = path;
@@ -114,6 +118,12 @@ namespace Lively.Core.Wallpapers
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);
             trustedDextHost = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (isNativeDock)
+            {
+                if (!trustedDextHost || dockHeightDip is < 48 or > 240)
+                    throw new ArgumentException("Native Dock requires an official Room host and valid height");
+                cmdArgs.Append(" --dext-dock --dext-dock-height " + dockHeightDip);
+            }
             this.desktopIconPreferences = trustedDextHost
                 ? desktopIconPreferences
                 : null;
@@ -140,6 +150,12 @@ namespace Lively.Core.Wallpapers
             //for logging purpose
             uniqueId = globalCount++;
         }
+
+        // Separately owned by the coordinator, never part of the wallpaper
+        // collection or WorkerW desktop input forwarding.
+        internal WebWebView2 CreateDockPlayer(int heightDip) => new(wallpaperPath, Model, Screen,
+            null, LivelyPropertyCopyPath, Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-profile"),
+            AppTheme.Auto, 0, isNativeDock: true, dockHeightDip: heightDip);
 
         public void Close()
         {
@@ -195,24 +211,27 @@ namespace Lively.Core.Wallpapers
         // Room and started/restored its session. No page-provided field is used as
         // a transport identity or as installation evidence.
         internal RoomProtocolStatus AttachRoomSession(RoomSessionProtocolGateway gateway,
-            string roomId, IReadOnlyList<string> deskIds, RoomActionAuthority actions)
+            string roomId, IReadOnlyList<string> deskIds, RoomActionAuthority actions,
+            RoomClientRole role = RoomClientRole.DesktopPlayer)
         {
             lock (roomSessionLock)
             {
                 if (!trustedDextHost || !IsLoaded || IsExited || Pid is null ||
                     deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
                     return RoomProtocolStatus.Denied;
-                var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
+                if (role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock)) return RoomProtocolStatus.Denied;
+                var peer = new RoomSessionPeer($"{(role == RoomClientRole.Dock ? "dock-process" : "player-process")}:{Pid.Value}");
                 var native=actions.CreateNativeInput();
                 var data=CreateNativeDataSource();
                 var messages = new RoomSessionPlayerMessages(SendMessage,
                     () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray(),
-                    (generation,snapshot)=>{native.Initialize(generation,snapshot);data.ObserveSnapshot(snapshot);},
-                    snapshot=>{native.ObserveSnapshot(snapshot);data.ObserveSnapshot(snapshot);},()=>{native.Revoke();data.Suspend();});
+                    (generation,snapshot)=>{native.Initialize(generation,snapshot);data.ObserveSnapshot(snapshot);RoomSnapshotObserved?.Invoke(snapshot);},
+                    snapshot=>{native.ObserveSnapshot(snapshot);data.ObserveSnapshot(snapshot);RoomSnapshotObserved?.Invoke(snapshot);},()=>{native.Revoke();data.Suspend();},
+                    role == RoomClientRole.Dock ? "dock" : "desktop");
                 // Callbacks use this stream directly. Subscribe sends its first
                 // context/snapshot before Connect assigns the bridge field.
                 var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId,
-                    messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke);
+                    messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke, role);
                 if (status == RoomProtocolStatus.Accepted) {
                     roomSessionBridge = bridge;
                     roomNativeAttachment = new(bridge,native,actions,data);
@@ -372,7 +391,12 @@ namespace Lively.Core.Wallpapers
                                 {
                                     this.InputHandle = NativeMethods.FindWindowEx(chrome_WidgetWin_0, IntPtr.Zero, "Chrome_WidgetWin_1", null);
                                 }
-                                Handle = process.GetProcessWindow(true);
+                                // Dock stays hidden during initialization, so a
+                                // visible-window enumeration cannot identify it.
+                                Handle = nativeDock ? NativeMethods.GetAncestor(handle, NativeMethods.GetAncestorFlags.GetRoot)
+                                    : process.GetProcessWindow(true);
+                                if (nativeDock && (NativeMethods.GetWindowThreadProcessId(Handle, out int dockRootPid) == 0 || dockRootPid != Pid))
+                                    throw new InvalidOperationException("Dock HWND does not belong to its Core-owned process");
 
                                 if (IntPtr.Equals(Handle, IntPtr.Zero) || IntPtr.Equals(InputHandle, IntPtr.Zero))
                                     throw new Exception("Browser input/window handle NULL.");

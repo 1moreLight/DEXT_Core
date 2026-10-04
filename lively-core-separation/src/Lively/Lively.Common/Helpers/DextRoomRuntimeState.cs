@@ -60,7 +60,8 @@ namespace Lively.Common.Helpers
             if (value == null || value.ProtocolVersion != 1 || value.RuntimeGeneration <= generation || value.SessionId == Guid.Empty ||
                 !Guid.TryParse(value.RoomId, out var roomGuid) || roomGuid == Guid.Empty || string.IsNullOrWhiteSpace(value.InstallationStamp) ||
                 value.InstallationStamp.Length > 128 || value.ManifestJson == null || Encoding.UTF8.GetByteCount(value.ManifestJson) > 1024 * 1024 ||
-                value.Resources == null || value.Resources.Length > 4096) return false;
+                value.Resources == null || value.Resources.Length > 4096 ||
+                (value.ViewKind != "desktop" && value.ViewKind != "dock")) return false;
             try
             {
                 JObject manifest;
@@ -90,7 +91,7 @@ namespace Lively.Common.Helpers
                 {
                     ["type"] = "dext:v3-runtime", ["protocolVersion"] = 1, ["runtimeGeneration"] = value.RuntimeGeneration,
                     ["sessionId"] = value.SessionId.ToString(), ["roomId"] = value.RoomId, ["installationStamp"] = value.InstallationStamp,
-                    ["manifest"] = manifest,
+                    ["manifest"] = manifest, ["viewKind"] = value.ViewKind,
                     ["resourceBasePath"] = "/content/" + value.RuntimeGeneration.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/",
                     ["resources"] = new JArray(value.Resources.Select(p => new JObject { ["path"] = p.Path, ["sha256"] = p.Sha256, ["size"] = p.Size }))
                 };

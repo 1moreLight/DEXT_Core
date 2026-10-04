@@ -73,6 +73,12 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
 
     public void OnPageReady(WebWebView2 player)
     {
+        try { OnDesktopPageReady(player); }
+        finally { QueueDockUpdate(); }
+    }
+
+    private void OnDesktopPageReady(WebWebView2 player)
+    {
         if (!player.IsTrustedDextHost || player.Pid is not { } pid) return;
         QueueIdleRestoreIfChanged(pid);
         lock (gate)
@@ -94,6 +100,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
                 }
                 if (player.RefreshRoomSession() == RoomProtocolStatus.Accepted) return;
             }
+            if (activePlayer is not null) activePlayer.RoomSnapshotObserved -= OnDockSourceSnapshot;
             player.DetachRoomSession();
             if (activePlayerPid != 0) { gateway.Retire(activeSessionId); authority.Unbind(activePlayerPid); }
             activePlayerPid = 0;
@@ -137,6 +144,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
                 }
                 activePlayerPid = pid;
                 activePlayer = player;
+                player.RoomSnapshotObserved += OnDockSourceSnapshot;
                 activeNativeRoom = installation.RuntimeContext is not null;
                 activeDisplayId = player.Screen.DeviceId;
                 activeSessionId = session.Snapshot.SessionId;
@@ -182,6 +190,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     public void Dispose()
     {
         runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+        DisposeDock();
         ExitNativeIdle();
     }
 
@@ -194,6 +203,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
             if (activePlayerPid == exitedPid)
             {
                 wasNative = activeNativeRoom;
+                if (activePlayer is not null) activePlayer.RoomSnapshotObserved -= OnDockSourceSnapshot;
                 gateway.Retire(activeSessionId);
                 activePlayerPid = 0;
                 activePlayer = null;
@@ -203,6 +213,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
             }
             authority.Unbind(exitedPid);
         }
+        QueueDockUpdate();
         ClearExitedNativeIdle(exitedPid);
         return wasNative;
     }

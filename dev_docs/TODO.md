@@ -1667,7 +1667,7 @@ P2b首轮代码：ReleasePlayer显式--dext-dock-probe分支，不接Core/Worker
 独立feat/V3-P8-001-dock-autohide / v3-dock-runtime；目标和五步见plans/V3-P8-001-dock-autohide.md，六项人工步骤见独立卡。范围外：常驻占位产品模式/游戏覆盖/拖动/分享。
 Ruling：沿用户少验证优先功能与集中验收授权推进；游戏期间不编译/启动/桌面输入；P2b原生证据继续保留，不等于产品已就绪。
 - [x] Task1 编码：全局Dock偏好独立原子保存/当前Room可用性与宿主尚未连接状态、proto/Tauri/设置页；编译与实际运行待Task5。
-- [ ] Task2 Core单实例Dock Player与绑定/共享会话/关闭重建。
+- [x] Task2 编码：Core单实例Dock Player与绑定/共享会话/关闭重建，真实运行未证。
 - [ ] Task3 正式Dock视图/SDK/几何/实际输入/数据。
 - [ ] Task4 Windows任务栏替代与退出/异常恢复看护。
 - [ ] Task5 游戏后必要build→start/一次原生冒烟、最终集中验收与整体审查。
@@ -1675,3 +1675,11 @@ Ruling：沿用户少验证优先功能与集中验收授权推进；游戏期�
 
 P8 Task1代码：v3/dock-preferences.json全局独立保存，默认关闭/自动隐藏/128 DIP，48..240校验；读不建文件或重置，具名稀疏patch/重复未知字段拒绝、同值不写、临时文件原子替换和失败已确认值保持。Core查询经过当前安装身份并按正式dockComponentId与当前/目标Desk引用判断原生Dock，尚无宿主明确hostPending/PID0/不可运行，常驻明确unsupportedMode；没把enabled偏好当运行。双proto/RPC→当前Core身份核验Rust调用→Tauri→设置独立卡完整接线，断开/重连拒迟到回执、忙碌序列化、显式保存/刷新不丢待保存草稿，保存失败保已确认行。源码核对修正公共接口类型可见性和不能把任意桌面Dock组件当原生Dock。没有编译/运行/新测试矩阵；Task1编码1/5=20%，Task2-4继续，完整16项就绪仍1/16≈6%；游戏约束不变。本轮具名提交不合并。
 Task1轻量核对：双proto源码逐字一致、具名接线位置和diff核对通过；没有运行编译器、测试矩阵、窗口或桌面输入。
+
+### P8 Task2 Core 独立 Dock Player 接线（2026-10-04）
+- [x] 编码：单个Core所有的Dock Player，正式dock-process PID与当前主Player/安装摘要绑定；角色独立，共用既有gateway/kernel快照，不进WorkerW壁纸集合。
+- [x] 编码：主Player页面就绪、快照/Desk变化与偏好保存排队协调；安装/Room/高度变化、无Dock、禁用和退出先关闭旧Player，旧进程未确认退出不创建替代。启动有界等待，独立退出5..30秒退避重建，关机取消排队并关闭自有进程。
+- [x] 编码：runtime携带desktop/dock视图身份，正式上下文/订阅/重放允许已绑定Dock角色；桌面启动和过渡完成权限保持。Dock窗口目前隐藏等待Task3，不将进程/偏好冒报可运行。
+- [ ] Task3 正式Dock视图、SDK、几何/真实输入与独立可见性接通；Task4任务栏恢复看护、Task5必要构建/实际运行继续游戏后集中。
+当前工作包编码2/5=40%（步骤计数，非工时或已验收功能）。本轮仅源码和差异核对，不编译、不启动应用/窗口、不做桌面输入或新测试矩阵；不合并master。
+源码接线收尾：隐藏窗口不能使用只找可见HWND的旧枚举，改用已知WebView HWND的顶层祖先并核对实际Player PID；协议上下文/订阅/重放原来只许DesktopPlayer，按已绑定Dock角色补齐，Complete/CompleteStartup仍只许桌面。见ERRORS #240。最后构建/Windows与六项人工验收均未执行。

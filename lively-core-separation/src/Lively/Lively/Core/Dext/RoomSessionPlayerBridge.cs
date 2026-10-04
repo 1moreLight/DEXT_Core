@@ -28,14 +28,15 @@ internal sealed partial class RoomSessionPlayerBridge : IDisposable
 
     public static RoomProtocolStatus Connect(RoomSessionProtocolGateway gateway, RoomSessionPeer peer,
         string roomId, Action<RoomSessionSnapshot> sendSnapshot, out RoomSessionPlayerBridge? bridge,
-        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize = null, Action? revoked = null)
+        Action<RoomRuntimeContext?, RoomSessionSnapshot>? initialize = null, Action? revoked = null,
+        RoomClientRole role = RoomClientRole.DesktopPlayer)
     {
         ArgumentNullException.ThrowIfNull(gateway);
         ArgumentNullException.ThrowIfNull(peer);
         ArgumentNullException.ThrowIfNull(sendSnapshot);
         bridge = null;
         var opened = gateway.Open(peer, new RoomSessionHello(RoomSessionKernel.ProtocolVersion,
-            RoomClientRole.DesktopPlayer, roomId));
+            role, roomId));
         if (opened.Status != RoomProtocolStatus.Accepted || opened.ConnectionId is not { } id)
             return opened.Status;
         try

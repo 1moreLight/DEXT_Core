@@ -226,7 +226,7 @@ internal sealed class RoomSessionProtocolGateway
         {
             context = null;
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error.Status;
-            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return RoomProtocolStatus.Forbidden;
+            if (connection.Hello.Role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock)) return RoomProtocolStatus.Forbidden;
             if (!TryCurrentSession(connection, out var current, out error)) return error.Status;
             if (current.SessionId != sessionId) return RoomProtocolStatus.StaleSession;
             // Legacy development overlays have no native verified manifest.
@@ -256,7 +256,7 @@ internal sealed class RoomSessionProtocolGateway
             subscription = null;
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
             if (!TryCurrentSession(connection, out var current, out error)) return error;
-            if (initialize is not null && connection.Hello.Role != RoomClientRole.DesktopPlayer)
+            if (initialize is not null && connection.Hello.Role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock))
                 return Reject(RoomProtocolStatus.Forbidden);
             var observation = new Observation(this, connectionId, revoked);
             if (!observations.TryGetValue(connectionId, out var list))
@@ -289,7 +289,7 @@ internal sealed class RoomSessionProtocolGateway
         lock (gate)
         {
             if (!TryAuthorize(connectionId, peer, out var connection, out var installation, out var error)) return error;
-            if (connection.Hello.Role != RoomClientRole.DesktopPlayer) return Reject(RoomProtocolStatus.Forbidden);
+            if (connection.Hello.Role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock)) return Reject(RoomProtocolStatus.Forbidden);
             if (!TryCurrentSession(connection, out var current, out error)) return error;
             initialize?.Invoke(installation.RuntimeContext, current);
             if (!TryAuthorize(connectionId, peer, out connection, out _, out error) ||
