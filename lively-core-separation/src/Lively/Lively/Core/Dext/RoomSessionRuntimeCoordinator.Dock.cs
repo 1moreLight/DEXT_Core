@@ -34,7 +34,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         public TaskCompletionSource PageReady { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Exited { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public volatile bool Stopping;
-        public bool Attached;
+        public volatile bool Attached;
     }
 
     private DockDemand ReadDockDemand(RoomDockPreferenceResult? settings = null)
@@ -102,7 +102,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var reason = phase == "unsupportedMode" ? "常驻占位暂不可运行。" :
                 phase == "hostPending" ? "Dock 宿主正在等待启动。" :
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
-                phase == "awaitingInput" ? "专用 Dock 视图已连接，物理输入还未接通。" :
+                phase == "awaitingInput" ? "Dock 输入与窗口状态正在同步。" :
                 current || phase == "faulted" ? dockReason : null;
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
@@ -187,6 +187,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 if (owned.Player.RefreshRoomSession() != RoomProtocolStatus.Accepted)
                     throw new InvalidOperationException("Dock document replay rejected");
             }
+            if (owned.Attached) owned.Player.ConnectNativeDockInput();
             return;
         }
         lock (dockGate)
@@ -227,9 +228,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (attached != RoomProtocolStatus.Accepted)
                 throw new InvalidOperationException("Dock session attach rejected: " + attached);
             owned.Attached = true;
-            // Physical input is enabled only after its Core-owned OS route is
-            // attached. The renderer can report readiness while still hidden.
-            player.SendNativeDockPolicy(false);
+            // WinDesktopCore routes its existing raw OS input to this owned
+            // Player. Natural WebView edges are gated before controlled replay.
+            player.ConnectNativeDockInput();
             lock (dockGate)
             {
                 dockPhase = "awaitingRenderer"; dockReason = "已连接共享会话，正式 Dock 视图和输入正在初始化。";
@@ -251,6 +252,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             dockPhase = "stopping"; dockReason = null;
         }
         var player = owned.Player;
+        player.DisconnectNativeDockInput();
         authority.UnbindDock(player.Pid ?? 0);
         player.RoomDockStateChanged -= QueueDockUpdate;
         player.DetachRoomSession();
@@ -287,6 +289,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         {
             owned.Stopping = true;
             authority.UnbindDock(owned.Player.Pid ?? 0);
+            owned.Player.DisconnectNativeDockInput();
             owned.Player.DetachRoomSession();
             owned.Player.Close();
             // Also covers disposal arriving after an idle worker has made its

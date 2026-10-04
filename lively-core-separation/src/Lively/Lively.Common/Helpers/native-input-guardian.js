@@ -1,7 +1,7 @@
 /* Private Player bootstrap. Installed before authors; this file is not an author capability. */
 (function () {
   'use strict';
-  function install(root, secret) {
+  function install(root, secret, controlledDockInput=false) {
     const define=Object.defineProperty,describe=Object.getOwnPropertyDescriptor,names=Object.getOwnPropertyNames,
       symbols=Object.getOwnPropertySymbols,create=Object.create,apply=Reflect.apply,parse=JSON.parse,integer=Number.isSafeInteger;
     const getProto=Object.getPrototypeOf,mapGet=WeakMap.prototype.get,mapSet=WeakMap.prototype.set,mapHas=WeakMap.prototype.has;
@@ -53,8 +53,36 @@
         const eventName=apply(substring,name,[2]);if(!known(eventNames,eventName))append(eventNames,eventName);
       }
     }
-    for(const name of ['mousedown','mouseup','click','keydown','keyup'])if(!known(eventNames,name))append(eventNames,name);
+    for(const name of ['pointerdown','pointerup','mousedown','mouseup','click','keydown','keyup'])if(!known(eventNames,name))append(eventNames,name);
     let reportDispatch=false,armed=false,closed=false,gestureId=0,structuralVersion=0,highestGesture=0,dispatchSequence=0,lastRequest=0,current=null;
+    const stop=eventProto.stopImmediatePropagation,prevent=eventProto.preventDefault;
+    const now=root.performance?.now;
+    const clock=()=>apply(now,root.performance,[]);
+    let dockEdge=null,dockClick=null;
+    function gateDock(event,kind,entries){
+      if(!controlledDockInput||!apply(trusted,event,[]))return true;
+      const mouse=kind==='pointerdown'||kind==='pointerup'||kind==='mousedown'||kind==='mouseup';
+      const keyboard=kind==='keydown'||kind==='keyup';
+      if(!mouse&&!keyboard&&kind!=='click')return true;
+      if(mouse&&apply(button,event,[])!==0)return true;
+      if(keyboard){const value=apply(key,event,[]);if(value!=='Enter'&&value!==' '&&value!=='Tab'&&value!=='Escape')return true;}
+      let allowed=false;
+      const time=clock();
+      if(kind==='click'){
+        allowed=!!dockClick&&time-dockClick.time<1500&&known(dockClick.targets,entries[0]);
+        dockClick=null;
+      }else if(dockEdge&&time-dockEdge.time<1500){
+        const edge=kind==='mousedown'||kind==='pointerdown'||kind==='keydown'?'down':'up';
+        const code=keyboard?(apply(key,event,[])==='Enter'?13:apply(key,event,[])===' '?32:-1):0;
+        if(edge===dockEdge.edge&&code===dockEdge.key&&!dockEdge.seen[kind]){
+          dockEdge.seen[kind]=true;allowed=true;
+          if(kind==='mouseup'||kind==='keydown'&&code===13||kind==='keyup'&&code===32)
+            dockClick={time,targets:entries};
+        }
+      }
+      if(!allowed){apply(prevent,event,[]);apply(stop,event,[]);}
+      return allowed;
+    }
     const lookup=(map,value)=>apply(mapGet,map,[value]),has=(map,value)=>apply(mapHas,map,[value]);
     const remember=(map,key,value)=>apply(mapSet,map,[key,value]);
     function eligible(event,receiver){
@@ -85,6 +113,7 @@
     }
     function capture(event){
       let entries,kind;try{entries=apply(path,event,[]);kind=apply(type,event,[]);}catch(_){return;}
+      if(this===root&&!gateDock(event,kind,entries))return;
       if(this===root&&reportDispatch&&armed&&!closed&&eligible(event,root)&&(kind==='mousedown'||kind==='mouseup'||kind==='keydown'||kind==='keyup')){
         const receipt=create(null);receipt.type='dext:v3-input-dispatched';receipt.protocolVersion=1;receipt.token=secret;
         receipt.documentNonce=nonce;receipt.gestureId=gestureId;receipt.structuralVersion=structuralVersion;receipt.kind=kind==='mousedown'||kind==='keydown'?'down':'up';
@@ -149,11 +178,19 @@
         if(kind==='focus'&&armed&&typeof nativeFocus==='function'&&shape(value,['token','kind','documentNonce'])){
           apply(nativeFocus,root,[]);return receipt();
         }
-        if(kind==='revoke'&&shape(value,['token','kind','documentNonce'])){armed=false;gestureId=0;structuralVersion=0;current=null;return receipt();}
+        if(kind==='revoke'&&shape(value,['token','kind','documentNonce'])){armed=false;gestureId=0;structuralVersion=0;current=null;dockEdge=null;dockClick=null;return receipt();}
+        if(kind==='dockEdge'&&controlledDockInput&&armed&&shape(value,['token','kind','documentNonce','gestureId','structuralVersion','edge','key'])){
+          const edge=data(value,'edge'),code=data(value,'key');
+          if(data(value,'gestureId')!==gestureId||data(value,'structuralVersion')!==structuralVersion||
+            edge!=='down'&&edge!=='up'||code!==0&&code!==13&&code!==32)return null;
+          dockEdge={edge,key:code,time:clock(),seen:create(null)};
+          if(edge==='down')dockClick=null;
+          return receipt();
+        }
         if(kind==='arm'&&(shape(value,['token','kind','documentNonce','gestureId','structuralVersion'])||shape(value,['token','kind','documentNonce','gestureId','structuralVersion','reportDispatch'])&&typeof data(value,'reportDispatch')==='boolean')){
           const next=data(value,'gestureId'),version=data(value,'structuralVersion');
           if(!integer(next)||next<=highestGesture||!integer(version)||version<=0)return null;
-          highestGesture=next;gestureId=next;structuralVersion=version;reportDispatch=data(value,'reportDispatch')===true;armed=true;current=null;return receipt();
+          dockEdge=null;dockClick=null;highestGesture=next;gestureId=next;structuralVersion=version;reportDispatch=data(value,'reportDispatch')===true;armed=true;current=null;return receipt();
         }
       }catch(_){}
       return null;
@@ -203,25 +240,52 @@
         lastRequest=+apply(substring,message.requestId,[1]);apply(post,transport,[witness]);return true;
       }catch(_){return false;}
     }
-    function retire(){closed=true;armed=false;gestureId=0;structuralVersion=0;current=null;}
+    function retire(){closed=true;armed=false;gestureId=0;structuralVersion=0;current=null;dockEdge=null;dockClick=null;}
     apply(add,root,['pagehide',retire,true]);
     define(root,'__dextNativeInputGuardianV1',{configurable:false,writable:false,value:hook});
     define(root,'__dextNativeInputRequestV1',{configurable:false,writable:false,value:send});
     return true;
   }
-  function installOfficial(root,secret){
+  function installOfficial(root,secret,controlledDockInput=false){
     if(root!==root.top||!root.chrome?.webview||typeof secret!=='string')return false;
     const define=Object.defineProperty,apply=Reflect.apply,add=root.EventTarget.prototype.addEventListener;
     const get=Object.getOwnPropertyDescriptor(new root.Event('dext-native'),'isTrusted')?.get,post=root.chrome.webview.postMessage;
     const button=Object.getOwnPropertyDescriptor(root.MouseEvent.prototype,'button')?.get;
-    const stringify=JSON.stringify,nonce=root.crypto.randomUUID();let expected=null;
+    const stringify=JSON.stringify,nonce=root.crypto.randomUUID();let expected=null,clickTarget=null;
+    const stop=root.Event.prototype.stopImmediatePropagation,prevent=root.Event.prototype.preventDefault;
+    const composedPath=root.Event.prototype.composedPath,now=root.performance?.now;
+    let clickTime=0;
+    function gate(event){
+      if(!controlledDockInput||!apply(get,event,[]))return true;
+      const entries=apply(composedPath,event,[]);
+      if(entries.some(node=>node?.id==='dext-dock-keyboard'))return true;
+      const type=event.type;
+      if(type==='keydown'||type==='keyup'){
+        if(!['Tab','Enter',' ','Escape'].includes(event.key))return true;
+        apply(prevent,event,[]);apply(stop,event,[]);return false;
+      }else if(apply(button,event,[])!==0)return true;
+      let allowed=false;
+      if(type==='click'){
+        allowed=clickTarget===entries[0]&&apply(now,root.performance,[])-clickTime<1500;
+        clickTarget=null;
+      }else if(expected){
+        const edge=type==='pointerdown'||type==='mousedown'?'down':'up';
+        if(edge===expected.edge&&!expected.seen[type]){
+          expected.seen[type]=true;allowed=true;
+          if(type==='mouseup'){clickTarget=entries[0];clickTime=apply(now,root.performance,[]);}
+        }
+      }
+      if(!allowed){apply(prevent,event,[]);apply(stop,event,[]);}
+      return allowed;
+    }
     if(!get||!button)return false;
     define(root,'__dextNativeOfficialInputDispatchV1',{configurable:false,writable:false,value:value=>{
       if(!value||value.token!==secret)return null;
-      if(value.kind==='revoke'){expected=null;return{documentNonce:nonce,armed:false};}
+      if(value.kind==='revoke'){expected=null;clickTarget=null;return{documentNonce:nonce,armed:false};}
       if(value.kind!=='arm'||!Number.isSafeInteger(value.gestureId)||value.gestureId<=0||
         !Number.isSafeInteger(value.structuralVersion)||value.structuralVersion<=0||!['down','up'].includes(value.edge))return null;
-      expected={gestureId:value.gestureId,structuralVersion:value.structuralVersion,edge:value.edge};return{documentNonce:nonce,armed:true};
+      expected={gestureId:value.gestureId,structuralVersion:value.structuralVersion,edge:value.edge,seen:Object.create(null)};
+      if(value.edge==='down')clickTarget=null;return{documentNonce:nonce,armed:true};
     }});
     function dispatch(event){
       if(!expected||!apply(get,event,[])||apply(button,event,[])!==0)return;
@@ -230,9 +294,11 @@
         gestureId:expected.gestureId,structuralVersion:expected.structuralVersion,kind:edge};
       expected=null;apply(post,root.chrome.webview,[apply(stringify,JSON,[value])]);
     }
+    if(controlledDockInput)for(const type of ['pointerdown','pointerup','mousedown','mouseup','click','keydown','keyup'])
+      apply(add,root,[type,gate,true]);
     apply(add,root,['mousedown',dispatch,true]);apply(add,root,['mouseup',dispatch,true]);
     apply(add,root,['pagehide',()=>{expected=null;},true]);return true;
   }
   if(typeof module==='object'&&module.exports)module.exports=Object.freeze({install,installOfficial});
-  else if(this===this.top)installOfficial(this,'__DEXT_INPUT_GUARDIAN_TOKEN__');else install(this,'__DEXT_INPUT_GUARDIAN_TOKEN__');
+  else if(this===this.top)installOfficial(this,'__DEXT_INPUT_GUARDIAN_TOKEN__','__DEXT_DOCK_INPUT_GATE__'==='true');else install(this,'__DEXT_INPUT_GUARDIAN_TOKEN__','__DEXT_DOCK_INPUT_GATE__'==='true');
 }).call(this);

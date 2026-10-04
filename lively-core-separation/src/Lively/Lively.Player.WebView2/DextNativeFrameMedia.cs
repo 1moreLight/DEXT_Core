@@ -28,15 +28,16 @@ namespace Lively.Player.WebView2
         private readonly CoreWebView2 core;
         private readonly DextRoomRuntimeState state;
         private readonly Action<string> failure;
+        private readonly bool controlledDockInput;
         private readonly string secret=DextNativeFrameMediaPolicy.NewSecret();
         private readonly Dictionary<uint,Frame> frames=new Dictionary<uint,Frame>();
         private readonly Dictionary<string,DextNativeFrameMediaRequest> desired=new Dictionary<string,DextNativeFrameMediaRequest>(StringComparer.Ordinal);
         private bool suspended,disposed,failed;
-        public DextNativeFrameMedia(CoreWebView2 core,DextRoomRuntimeState state,Action<string> failure)
-        {this.core=core;this.state=state;this.failure=failure;}
+        public DextNativeFrameMedia(CoreWebView2 core,DextRoomRuntimeState state,Action<string> failure,bool controlledDockInput=false)
+        {this.core=core;this.state=state;this.failure=failure;this.controlledDockInput=controlledDockInput;}
         public async Task InitializeAsync()
         {
-            await core.AddScriptToExecuteOnDocumentCreatedAsync(DextNativeFrameMediaPolicy.BuildScript(secret));
+            await core.AddScriptToExecuteOnDocumentCreatedAsync(DextNativeFrameMediaPolicy.BuildScript(secret,controlledDockInput));
             core.FrameCreated+=Created;
         }
         private void Created(object sender,CoreWebView2FrameCreatedEventArgs e)=>Track(e.Frame,null);

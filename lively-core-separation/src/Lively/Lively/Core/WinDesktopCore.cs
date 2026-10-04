@@ -1191,6 +1191,7 @@ namespace Lively.Core
 
         private void RawInput_MouseMoveRaw(object sender, MouseRawArgs e)
         {
+            roomSessionRuntime.RouteDockMouse(e.X, e.Y, "move", screenSaver.IsRunning);
             // Record held edges with foreground=false so wake auto-repeat
             // cannot create a new DOWN after the desktop returns.
             if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
@@ -1227,6 +1228,8 @@ namespace Lively.Core
 
         private void RawInput_MouseDownRaw(object sender, MouseClickRawArgs e)
         {
+            if (IsPrimaryMouseButton(e.Button))
+                roomSessionRuntime.RouteDockMouse(e.X, e.Y, "down", screenSaver.IsRunning);
             if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
             {
                 if (IsPrimaryMouseButton(e.Button))
@@ -1253,6 +1256,8 @@ namespace Lively.Core
 
         private void RawInput_MouseUpRaw(object sender, MouseClickRawArgs e)
         {
+            if (IsPrimaryMouseButton(e.Button))
+                roomSessionRuntime.RouteDockMouse(e.X, e.Y, "up", screenSaver.IsRunning);
             if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
             {
                 if (IsPrimaryMouseButton(e.Button))
@@ -1278,6 +1283,8 @@ namespace Lively.Core
 
         private void RawInput_KeyboardClickRaw(object sender, KeyboardClickRawArgs e)
         {
+            roomSessionRuntime.RouteDockKey((int)e.VirtualKey, e.IsKeyDown,
+                (InputUtil.MouseModifiers & 4) != 0, e.ScanCode, e.IsExtended, screenSaver.IsRunning);
             if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
             {
                 foreach (var player in Wallpapers.OfType<WebWebView2>())

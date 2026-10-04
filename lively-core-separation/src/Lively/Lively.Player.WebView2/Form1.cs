@@ -250,7 +250,7 @@ namespace Lively.Player.WebView2
                         SendToParent(new LivelyMessageRoomNativeInvalidated { RuntimeGeneration = roomRuntime.Generation });
                         Close();
                     }));
-                });
+                }, startArgs.DextDock);
                 await nativeFrameMedia.InitializeAsync();
                 InitializeNativePointer();
             }

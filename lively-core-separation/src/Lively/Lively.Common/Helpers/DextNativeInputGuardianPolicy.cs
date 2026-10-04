@@ -22,13 +22,14 @@ namespace Lively.Common.Helpers
     public static class DextNativeInputGuardianPolicy
     {
         private const long MaxSafeInteger = 9007199254740991;
-        public static string BuildScript(string secret)
+        public static string BuildScript(string secret, bool controlledDockInput=false)
         {
             ValidateSecret(secret);
             using(var stream=typeof(DextNativeInputGuardianPolicy).Assembly.GetManifestResourceStream("Dext.NativeInputGuardian.js") ??
                 throw new InvalidOperationException("Native input guardian missing"))
             using(var reader=new StreamReader(stream))
-                return reader.ReadToEnd().Replace("__DEXT_INPUT_GUARDIAN_TOKEN__", secret);
+                return reader.ReadToEnd().Replace("__DEXT_INPUT_GUARDIAN_TOKEN__", secret)
+                    .Replace("__DEXT_DOCK_INPUT_GATE__", controlledDockInput ? "true" : "false");
         }
         public static string DescribeScript(string secret) =>
             Call(secret, new JObject { ["token"]=secret, ["kind"]="describe" });
@@ -63,6 +64,16 @@ namespace Lively.Common.Helpers
                     PositiveInteger(value["gestureId"],out var g)&&g==gesture&&PositiveInteger(value["structuralVersion"],out var s)&&s==structure&&
                     value["kind"].Type==JTokenType.String&&(string)value["kind"]==edge;
             }catch(Exception error)when(error is JsonException||error is ArgumentException||error is InvalidCastException||error is FormatException||error is OverflowException){return false;}
+        }
+        public static string DockEdgeScript(string secret,string documentNonce,long gesture,long structure,string edge,int key)
+        {
+            ValidateNonce(documentNonce);
+            if (edge != "down" && edge != "up" || key != 0 && key != 13 && key != 32)
+                throw new ArgumentException("Invalid Dock input edge");
+            return Call(secret,new JObject {
+                ["token"]=secret,["kind"]="dockEdge",["documentNonce"]=documentNonce,
+                ["gestureId"]=gesture,["structuralVersion"]=structure,["edge"]=edge,["key"]=key
+            });
         }
         public static string FocusScript(string secret,string documentNonce)
         {

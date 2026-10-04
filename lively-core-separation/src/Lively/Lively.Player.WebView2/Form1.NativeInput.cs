@@ -66,6 +66,8 @@ namespace Lively.Player.WebView2
                 entry.Consumer==value.Consumer&&entry.Button==value.Button&&entry.EntryId==value.EntryId);
             if(value.SampleKeyboard&&hit==null)return false;
             if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            if (startArgs.DextDock && value.Kind != "focus" &&
+                !await nativeFrameMedia.PrepareDockEdgeAsync(value,hit?.Consumer)) return false;
             return true;
         }
         private async Task CompleteNativeSampleAsync(DextNativePointerPacket value)

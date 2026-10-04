@@ -43,12 +43,12 @@ namespace Lively.Common.Helpers
             catch(Exception e)when(e is JsonException||e is ArgumentException||e is InvalidCastException||e is FormatException||e is OverflowException){return null;}
         }
         public static string NewSecret()=>Guid.NewGuid().ToString("N")+Guid.NewGuid().ToString("N");
-        public static string BuildScript(string secret=null)
+        public static string BuildScript(string secret=null,bool controlledDockInput=false)
         {
             secret=secret??NewSecret();
             if(secret.Length!=64||secret.Any(c=>!(c>='0'&&c<='9'||c>='a'&&c<='f')))throw new ArgumentException("Invalid private media secret");
             using(var stream=typeof(DextNativeFrameMediaPolicy).Assembly.GetManifestResourceStream("Dext.NativeMediaPolicy.js")??throw new InvalidOperationException("Native media policy missing"))
-            using(var reader=new StreamReader(stream))return DextNativeInputGuardianPolicy.BuildScript(secret)+Environment.NewLine+reader.ReadToEnd().Replace("__DEXT_MEDIA_POLICY_TOKEN__",secret);
+            using(var reader=new StreamReader(stream))return DextNativeInputGuardianPolicy.BuildScript(secret,controlledDockInput)+Environment.NewLine+reader.ReadToEnd().Replace("__DEXT_MEDIA_POLICY_TOKEN__",secret);
         }
         public static string DescribeScript(string secret)=>Call(new JObject{["token"]=secret,["kind"]="describe"});
         public static string ApplyScript(string secret,string nonce,long sequence,bool active)=>Call(new JObject{["token"]=secret,["documentNonce"]=nonce,["sequence"]=sequence,["active"]=active});

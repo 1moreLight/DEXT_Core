@@ -187,7 +187,14 @@ public sealed class RoomSessionKernel : IDisposable
         return result;
     }
 
-    public RoomCommandResult Request(Guid sessionId, string deskId)
+    public RoomCommandResult Request(Guid sessionId, string deskId) => RequestCore(sessionId, deskId, false);
+
+    // Called only after a bound native Dock action consumed its real input.
+    // A paused/unfocused desktop cannot complete an animation: change its saved
+    // Desk immediately while keeping the actual desktop playback facts intact.
+    internal RoomCommandResult RequestFromDock(Guid sessionId, string deskId) => RequestCore(sessionId, deskId, true);
+
+    private RoomCommandResult RequestCore(Guid sessionId, string deskId, bool nativeDock)
     {
         RoomSessionSnapshot result;
         RoomCommandStatus status;
@@ -200,10 +207,22 @@ public sealed class RoomSessionKernel : IDisposable
                 return new RoomCommandResult(RoomCommandStatus.Rejected, null);
             if (deskIds is null || !deskIds.Contains(deskId))
                 return new RoomCommandResult(RoomCommandStatus.Rejected, current);
-            if (current.TargetDeskId is null && current.IsOperable && current.CurrentDeskId == deskId)
+            if (nativeDock && (current.Lifecycle.Locked || current.Lifecycle.Stage != RoomLifecycleStage.Desktop))
+                return new RoomCommandResult(RoomCommandStatus.Rejected, current);
+            if (current.TargetDeskId is null && (current.IsOperable || nativeDock) && current.CurrentDeskId == deskId)
                 return new RoomCommandResult(RoomCommandStatus.Rejected, current);
 
-            if (!current.IsOperable || current.TargetDeskId is not null)
+            if (nativeDock && !current.IsOperable)
+            {
+                // Persist before publishing; a failed write preserves the full
+                // previous session/transition and can be retried by the user.
+                store.Write(new RoomSessionCheckpoint(1, current.RoomId, deskId,
+                    current.InstallationStamp.Length == 0 ? null : current.InstallationStamp));
+                result = current with { CurrentDeskId = deskId, TargetDeskId = null, QueuedDeskId = null,
+                    TransitionId = null, DeadlineUtc = null, Revision = ++revision };
+                status = RoomCommandStatus.Accepted;
+            }
+            else if (!current.IsOperable || current.TargetDeskId is not null)
             {
                 result = current with { QueuedDeskId = deskId, Revision = ++revision };
                 status = RoomCommandStatus.Queued;

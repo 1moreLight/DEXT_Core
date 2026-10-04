@@ -328,3 +328,5 @@
 | #240 | 隐藏Dock须沿实际WebView祖先取HWND；共享上下文不能仍独占DesktopPlayer角色 | [backend](errors/backend.md) |
 
 | #241 | 独立Dock须保留作者画布/有效几何，实际输入与可见性同步后才报窗口可用 | [renderer](errors/renderer.md) |
+
+| #242 | 原生Dock自然输入与转发须去重，可信Dock切页不能被桌面暂停队列卡住 | [renderer](errors/renderer.md) |

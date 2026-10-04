@@ -285,7 +285,7 @@ internal sealed partial class RoomActionAuthority
         if (prepared.Status != RoomActionStatus.Accepted) return new(prepared.Status);
         if (Expired(prepared.IssuedAt, clock.GetTimestamp())) return new(RoomActionStatus.ExpiredInput);
         if (prepared.Type == "dext.exit") return new(RoomActionStatus.RequiresConfirmation,prepared.Exit);
-        if (prepared.Type != "binding.launch") return new(Status(gateway.Request(connection, peer, session, prepared.DeskId!).Status));
+        if (prepared.Type != "binding.launch") return new(Status(gateway.RequestAfterNativeInput(connection, peer, session, prepared.DeskId!).Status));
         try { launch(prepared.Target!); return new(RoomActionStatus.Accepted); }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException or ArgumentException)
         { return new(RoomActionStatus.LaunchFailed); }

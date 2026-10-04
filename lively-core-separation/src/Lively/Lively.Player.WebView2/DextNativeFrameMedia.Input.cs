@@ -58,6 +58,24 @@ namespace Lively.Player.WebView2
             }));
             return accepted&&operation==inputOperation&&ReferenceEquals(currentInput,value)&&InputCurrent(value);
         }
+        public async Task<bool> PrepareDockEdgeAsync(DextNativePointerPacket value,string consumer)
+        {
+            if (!controlledDockInput || value.Kind == "focus") return true;
+            if (!InputCurrent(value) || currentInput?.GestureId != value.GestureId) return false;
+            var selected=frames.Values.Where(InputFrame).Where(frame=>consumer==null||desired[frame.Name].Consumer==consumer).ToArray();
+            if (consumer!=null && consumer!="official" && selected.Length!=1) return false;
+            foreach (var frame in selected)
+            {
+                var epoch=frame.Epoch;var nonce=frame.InputNonce;
+                var reply=JObject.Parse(await Execute(frame,DextNativeInputGuardianPolicy.DockEdgeScript(
+                    secret,nonce,value.GestureId,value.GeometryVersion,value.Kind,value.Key)));
+                if (!Alive(frame,epoch)||frame.InputNonce!=nonce||!InputCurrent(value)||
+                    (string)reply["documentNonce"]!=nonce||(bool?)reply["armed"]!=true||
+                    (long?)reply["gestureId"]!=value.GestureId||(long?)reply["structuralVersion"]!=value.GeometryVersion)
+                    return false;
+            }
+            return InputCurrent(value);
+        }
         public async Task RevokeInputAsync()
         {
             currentInput=null;inputOperation++;inputActions?.Cancel();dispatchReceipt?.TrySetResult(false);dispatchReceipt=null;dispatchPacket=null;

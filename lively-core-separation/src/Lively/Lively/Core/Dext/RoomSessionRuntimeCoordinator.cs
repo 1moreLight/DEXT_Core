@@ -17,6 +17,8 @@ public interface IRoomSessionRuntimeCoordinator
     RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson);
     RoomDockStatusReply GetRoomDockStatus();
     RoomDockStatusReply SetRoomDockPreference(string patchJson);
+    void RouteDockMouse(int x, int y, string edge, bool blocked) { }
+    void RouteDockKey(int key, bool down, bool reverse, int scanCode, bool extended, bool blocked) { }
     RoomReadGrantsReply GetRoomReadGrants(string roomId, string installationStamp);
     RoomReadGrantsReply SetRoomReadGrant(string roomId, string installationStamp, string consumerId, string[] capabilities, bool allow);
 }

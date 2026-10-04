@@ -299,7 +299,13 @@ internal sealed class RoomSessionProtocolGateway
         }
     }
 
-    public RoomProtocolReply Request(Guid connectionId, RoomSessionPeer peer, Guid sessionId, string deskId)
+    public RoomProtocolReply Request(Guid connectionId, RoomSessionPeer peer, Guid sessionId, string deskId) =>
+        RequestCore(connectionId, peer, sessionId, deskId, false);
+
+    internal RoomProtocolReply RequestAfterNativeInput(Guid connectionId, RoomSessionPeer peer, Guid sessionId, string deskId) =>
+        RequestCore(connectionId, peer, sessionId, deskId, true);
+
+    private RoomProtocolReply RequestCore(Guid connectionId, RoomSessionPeer peer, Guid sessionId, string deskId, bool nativeInput)
     {
         lock (gate)
         {
@@ -309,7 +315,10 @@ internal sealed class RoomSessionProtocolGateway
             if (current.SessionId != sessionId) return Reject(RoomProtocolStatus.StaleSession);
             if (!installation.DeskIds.Contains(deskId, StringComparer.Ordinal))
                 return Reject(RoomProtocolStatus.InvalidDesk);
-            var result = kernel.Request(sessionId, deskId);
+            RoomCommandResult result;
+            try { result = nativeInput && connection.Hello.Role == RoomClientRole.Dock
+                    ? kernel.RequestFromDock(sessionId, deskId) : kernel.Request(sessionId, deskId); }
+            catch (Exception failure) when (IsStorageFailure(failure)) { return StorageFailure(failure); }
             return result.Status switch
             {
                 RoomCommandStatus.Accepted => Accept(result.Snapshot!),
