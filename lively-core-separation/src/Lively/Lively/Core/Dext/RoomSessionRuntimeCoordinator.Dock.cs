@@ -35,6 +35,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         public TaskCompletionSource Exited { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public volatile bool Stopping;
         public volatile bool Attached;
+        public volatile RoomDockTaskbarGuard? Guard;
+        public DateTimeOffset GuardRetryAfter;
+        public long HeartbeatStaleSince;
     }
 
     private DockDemand ReadDockDemand(RoomDockPreferenceResult? settings = null)
@@ -94,6 +97,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var current = player is not null && demand.Matches(player.Demand);
             var window = current ? player?.Player.RoomDockWindowState : null;
             var ready = window is { RendererReady: true, WindowReady: true };
+            var taskbarReady = current && player?.Guard?.Ready == true;
             var phase = current ? (window is { RendererReady: true } ?
                 !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
                 window!.Fullscreen ? "fullscreen" : window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
@@ -103,11 +107,13 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 phase == "hostPending" ? "Dock 宿主正在等待启动。" :
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
                 phase == "awaitingInput" ? "Dock 输入与窗口状态正在同步。" :
-                current || phase == "faulted" ? dockReason : null;
+                current && ready && !taskbarReady && !demand.Snapshot!.Lifecycle.Locked
+                    ? player?.Guard?.Error ?? "Dock 已就绪，正在等待 Windows 任务栏替代看护。"
+                    : current || phase == "faulted" ? dockReason : null;
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, false, reason), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, taskbarReady, reason), result.Message);
         }
     }
 
@@ -188,6 +194,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                     throw new InvalidOperationException("Dock document replay rejected");
             }
             if (owned.Attached) owned.Player.ConnectNativeDockInput();
+            await EnsureDockTaskbarAsync(owned, demand);
             return;
         }
         lock (dockGate)
@@ -251,6 +258,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             owned.Stopping = true;
             dockPhase = "stopping"; dockReason = null;
         }
+        await StopDockTaskbarAsync(owned);
         var player = owned.Player;
         player.DisconnectNativeDockInput();
         authority.UnbindDock(player.Pid ?? 0);
@@ -283,11 +291,13 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     {
         if (Interlocked.Exchange(ref dockDisposed, 1) != 0) return;
         dockLifetime.Cancel();
+        dockMaintenance?.Dispose();
         DockPlayer? owned;
         lock (dockGate) owned = dockPlayer;
         if (owned is not null)
         {
             owned.Stopping = true;
+            _ = StopDockTaskbarAsync(owned);
             authority.UnbindDock(owned.Player.Pid ?? 0);
             owned.Player.DisconnectNativeDockInput();
             owned.Player.DetachRoomSession();

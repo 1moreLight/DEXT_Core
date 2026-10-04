@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -20,6 +20,11 @@ namespace Lively.Utility.Watchdog
 
         static void Main(string[] args)
         {
+            if (args.Length > 0 && args[0] == "--dext-dock-guard")
+            {
+                DockTaskbarGuard.Run(args);
+                return;
+            }
             int parentProcessId;
             Process parentProcess;
 

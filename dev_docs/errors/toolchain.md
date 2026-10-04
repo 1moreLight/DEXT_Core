@@ -463,3 +463,6 @@ P2b资产写入命令在functions.exec解析阶段报SyntaxError，未执行任�
 P8查代码两条命令把RoomSession*或DextRoomRuntime*作为路径参数，rg按字面路径返回Windows os error123。改为已确认目录配-g '*.cs'及明确文件定位完成；没有重跑写入命令或把定位失败算产品失败。后续代码定位先按CodeGraph可用状态，再用rg的过滤器。
 
 P8记录脚本收尾：误用PowerShell自动变量Error导致赋值失败、错误文本写入新记录位置；读取末尾确认后仅纠正该次新追加内容，改用taskErrorRecord，不重跑已执行的代码/台账追加。属于工具问题，未计产品运行证据。
+
+## #244 批量编辑默认非终止错误不能当整段成功（2026-10-05）
+本轮末尾误留一个不存在Common.cs的编辑调用，ReadAllText错误默认未终止PowerShell，整段返回exit0；前面的具名编辑已执行，缺失路径没有创建。未重跑已执行编辑，保留实际状态；后续编辑统一ErrorActionPreference=Stop并验证锚点。检查仍以具名git status/diff为准，不能把shell退出码单独当完整编辑或编译成功。

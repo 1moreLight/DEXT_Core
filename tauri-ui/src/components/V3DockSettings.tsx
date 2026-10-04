@@ -90,6 +90,7 @@ export function V3DockSettings({corePid,setStatus}:Props) {
         <span className="text-xs text-muted-foreground">{!native ? "浏览器设计预览" : corePid === null ? "Core 未连接" : error ? "状态暂不可读" : confirmed ? dockRuntimeLabel(confirmed.runtime) : busy ? "正在读取" : "尚未读取"}</span>
       </div>
       {confirmed?.preferences && <p className="text-xs text-muted-foreground">已保存：{confirmed.preferences.enabled ? "启用" : "关闭"} · {confirmed.preferences.mode === "autohide" ? "自动隐藏" : "常驻占位"} · {confirmed.preferences.heightDip} DIP{confirmed.runtime.playerPid > 0 ? " · PID " + confirmed.runtime.playerPid : ""}</p>}
+      {confirmed?.preferences?.enabled && confirmed.runtime.autoHideAvailable && <p className="text-xs text-muted-foreground">Windows 主任务栏替代：{confirmed.runtime.taskbarReplacementReady ? "已接管，退出时恢复" : "尚未确认就绪"}</p>}
       {confirmed?.runtime.reason && corePid !== null && <p className="text-xs text-muted-foreground">{confirmed.runtime.reason}</p>}
       {confirmed?.preferences?.enabled && !confirmed.runtime.autoHideAvailable && <p className="text-xs text-amber-500">启用偏好已保存，Dock 当前尚不可运行。</p>}
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}

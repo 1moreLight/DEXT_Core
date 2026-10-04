@@ -482,3 +482,7 @@ P8接线源码核对发现：只查当前Desk的任意role=dock组件会把普�
 源码接线发现：旧GetProcessWindow(nativeSearch:true)只返回IsWindowVisible窗口；正式Dock初始化期间隐藏，继续用它将取不到根HWND。同时协议ReadRuntimeContext/Subscribe初始化/Replay仅准DesktopPlayer，新增Dock PID绑定仍不能取得同一正式上下文。
 修正：Dock使用已知WebView HWND的根祖先（现有枚举GetRoot）并核对Core创建进程PID；上下文、订阅和重放按已绑定DesktopPlayer或Dock放行，启动/过渡完成继续只准DesktopPlayer。管理器先确认旧进程退出再创建替代，未确认退出留故障，不并发开第二个。
 证据范围：源码与接线核对，游戏期间未编译/运行，实际隐藏窗初始化及共享快照仍待本包游戏后验收。不能把源码修正记为Windows运行通过。
+
+## #243 任务栏恢复不能只靠正常Dispose或API返回TRUE（2026-10-05）
+源码接线发现：正常退出恢复不能覆盖Core被结束、Player失去响应及Explorer重建。已采用独立Watchdog模式和精确PID/启动时刻、lease/mutex、持久恢复记录；先保存原基线再隐藏，Core也监督看护，失效后不遗留旧顶层Dock。Player心跳恢复给唤醒留宽限，健康维护不重复读完整安装。
+Shell ABM_GETSTATE的0是有效状态，Windows 7起缺少ALWAYSONTOP位也不代表任务栏不置顶；ABM_SETSTATE总返回TRUE，不能把返回值当效果证据。代码读取实际自动隐藏/可见状态再报告，恢复失败保留记录；全屏时仅还原Shell策略，不强行把任务栏显示到游戏上。接口参考：Microsoft ABM_GETSTATE / ABM_SETSTATE（见V3_DELIVERY链接）。以上仅源码和项目XML检查，实际工作区/DPI/游戏/崩溃恢复仍须Windows验收。

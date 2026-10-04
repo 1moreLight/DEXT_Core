@@ -13,6 +13,7 @@ namespace Lively.Player.WebView2
     public partial class Form1
     {
         private DextDockWindowHost nativeDockWindow;
+        private System.Windows.Forms.Timer nativeDockHeartbeat;
         private bool nativeDockRendererReady, nativeDockInputConnected;
         private bool nativeDockVisibilitySynchronized, nativeDockSynchronizedVisible;
         private long nativeDockStateVersion;
@@ -37,6 +38,9 @@ namespace Lively.Player.WebView2
                 BeginInvoke((Action)(() => { if (!IsDisposed && !Disposing) Close(); }));
             };
             DextDockWindowHost.ExtendTransparentFrame(Handle);
+            nativeDockHeartbeat = new System.Windows.Forms.Timer { Interval = 1000 };
+            nativeDockHeartbeat.Tick += (_, _) => PublishNativeDockState();
+            nativeDockHeartbeat.Start();
         }
 
         private bool NativeDockIdentity(long generation, Guid session, long revision) =>
@@ -143,6 +147,9 @@ namespace Lively.Player.WebView2
         private void DisposeNativeDockWindow()
         {
             nativeDockStateVersion++;
+            nativeDockHeartbeat?.Stop();
+            nativeDockHeartbeat?.Dispose();
+            nativeDockHeartbeat = null;
             nativeDockWindow?.Dispose();
             nativeDockWindow = null;
         }

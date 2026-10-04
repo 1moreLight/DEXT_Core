@@ -309,3 +309,6 @@ Core创建单个Dock进程，当前主Player/安装摘要的独立Dock身份，�
 
 ## P8 Task3 OS输入/受控键盘/暂停切页编码（2026-10-05）
 Core复用现有RawInput，独立Dock窗口的实际命中、可见性、全屏/锁屏与显式键盘会话决定准入；鼠标不再依赖桌面前台，受控Tab/Enter/Space与Esc恢复接线。预装Dock门控阻止未准备/重复的自然与转发边沿，一次click预算，既有物理采样与SDK动作消费保持。外围键不清闲置Dock几何，触边刷新避开未完成动作。可信Dock切页在桌面暂停/非前台时同kernel先写checkpoint再直接更新Desk，不伪造桌面可操作事实或等待暂停动画。当前包编码3/5=60%，Task4任务栏替代/看护待；Task3此前输入策略关闭状态已由本轮接线取代。只检查guardian JS语法与具名差异，未编译或实际运行；条目12原生Windows证据仍不足，六项游戏后集中验收保持。
+
+## P8 Task4 独立任务栏恢复编码（2026-10-05）
+Watchdog新增独立Dock模式，不混入壁纸清理名单；Core/Dock PID+启动时刻、lease/mutex与心跳确定所有权。主任务栏原自动隐藏/可见状态及Explorer身份先原子落盘，再变更Shell状态并读取实际状态确认。独立看护关闭故障后的精确自有Dock并恢复，Core监督及落盘记录支持看护/Explorer/下次启动恢复；无Dock/禁用/退出先恢复，失败保留记录。全屏恢复不强行显示任务栏到游戏上，Player UI恢复有宽限；健康心跳不反复读安装/Room。配置器区分窗口可用和任务栏替代确认。Windows接口依据：[ABM_GETSTATE](https://learn.microsoft.com/en-us/windows/win32/shell/abm-getstate)、[ABM_SETSTATE](https://learn.microsoft.com/en-us/windows/win32/shell/abm-setstate)。当前包编码4/5=80%；仅csproj XML/源包含及diff核对，未构建/启动/系统变更。条目12实际原生证据仍不足，六项游戏后人工验收与整体审查保留，不合并。

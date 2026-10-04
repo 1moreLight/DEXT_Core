@@ -330,3 +330,6 @@
 | #241 | 独立Dock须保留作者画布/有效几何，实际输入与可见性同步后才报窗口可用 | [renderer](errors/renderer.md) |
 
 | #242 | 原生Dock自然输入与转发须去重，可信Dock切页不能被桌面暂停队列卡住 | [renderer](errors/renderer.md) |
+
+| #243 | 任务栏恢复须独立看护/落盘，ABM_SETSTATE返回TRUE不能证明隐藏或恢复 | [backend](errors/backend.md) |
+| #244 | 批量编辑非终止错误会返回exit0，须Stop/锚点与具名状态核对 | [toolchain](errors/toolchain.md) |

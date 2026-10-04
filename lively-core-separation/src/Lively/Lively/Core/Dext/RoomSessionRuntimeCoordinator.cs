@@ -50,6 +50,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
         this.actions = actions;
         this.dockPreferences = dockPreferences;
         runtimeFacts.Sampled += OnRuntimeFactsSampled;
+        InitializeDockTaskbarMaintenance();
     }
 
     public int ActivePlayerPid { get { lock (gate) return activePlayerPid; } }
