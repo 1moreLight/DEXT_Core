@@ -271,8 +271,11 @@ fn read_cleanup_intent(path: &Path) -> Result<PersonalCleanupIntent, String> {
         "personal cleanup intent busy".to_string()
     } else { e.to_string() })?;
     file.take(4097).read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+    parse_cleanup_intent(path, &bytes)
+}
+fn parse_cleanup_intent(path: &Path, bytes: &[u8]) -> Result<PersonalCleanupIntent, String> {
     if bytes.len() > 4096 { return Err("personal cleanup intent exceeds limit".into()); }
-    let intent: PersonalCleanupIntent = serde_json::from_slice(&bytes).map_err(|e| format!("read personal cleanup intent: {e}"))?;
+    let intent: PersonalCleanupIntent = serde_json::from_slice(bytes).map_err(|e| format!("read personal cleanup intent: {e}"))?;
     cleanup_identity(&intent.room_id)?;
     crate::validate_room_name(&intent.room_name)?;
     let expected_name = format!("{CLEANUP_PREFIX}{}.json",intent.room_id);
@@ -280,6 +283,29 @@ fn read_cleanup_intent(path: &Path) -> Result<PersonalCleanupIntent, String> {
         return Err("invalid personal cleanup intent identity".into());
     }
     Ok(intent)
+}
+/// Hold the actual recovery record through copy/trash/cleanup. Another
+/// configurator must acquire this lease before calling Core cleanup.
+pub fn lease_personal_cleanup(path: &Path) -> Result<(fs::File, PersonalCleanupIntent), String> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(windows)] {
+        use std::os::windows::fs::OpenOptionsExt;
+        options.share_mode(0).custom_flags(0x00200000);
+    }
+    let mut file = options.open(path).map_err(|e| if e.raw_os_error() == Some(32) {
+        "personal cleanup intent busy".to_string()
+    } else {format!("hold personal cleanup intent: {e}")})?;
+    let meta = file.metadata().map_err(|e|e.to_string())?;
+    if !meta.is_file() { return Err("personal cleanup intent is not a file".into()); }
+    #[cfg(windows)] {
+        use std::os::windows::fs::MetadataExt;
+        if meta.file_attributes() & 0x400 != 0 {return Err("personal cleanup intent is a reparse point".into());}
+    }
+    let mut bytes = Vec::new();
+    Read::by_ref(&mut file).take(4097).read_to_end(&mut bytes).map_err(|e|e.to_string())?;
+    let intent = parse_cleanup_intent(path,&bytes)?;
+    Ok((file,intent))
 }
 pub fn pending_personal_cleanup(library: &Path) -> Result<Vec<(PathBuf, PersonalCleanupIntent)>, String> {
     if !library.exists() { return Ok(Vec::new()); }

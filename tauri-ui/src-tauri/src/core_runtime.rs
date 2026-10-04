@@ -262,7 +262,17 @@ fn verified_process_handle(identity: &CoreIdentity, expected: &Path) -> Result<u
     let handle = open_core_process(identity.process_id)?;
     let actual = process_executable(handle);
     match actual {
-        Ok(actual) if same_executable(&actual, expected) => Ok(handle),
+        Ok(actual) if same_executable(&actual, expected) => {
+            // Reusing an already running Core must enforce the same release
+            // profile as spawning it.
+            if cfg!(feature = "v3-release") {
+                if let Err(error) = validate_core_binary_identity(&actual) {
+                    unsafe { CloseHandle(handle as _) };
+                    return Err(error);
+                }
+            }
+            Ok(handle)
+        }
         Ok(actual) => {
             unsafe { CloseHandle(handle as _) };
             Err(format!(
@@ -276,6 +286,19 @@ fn verified_process_handle(identity: &CoreIdentity, expected: &Path) -> Result<u
             Err(error)
         }
     }
+}
+
+pub(crate) fn verify_running_release_profile(
+    raw: &crate::proto::desktop::GetCoreStatsResponse,
+) -> Result<(), String> {
+    if !cfg!(feature = "v3-release") {
+        return Ok(());
+    }
+    let expected = expected_core_path()?;
+    let identity: CoreIdentity = raw.clone().into();
+    let handle = verified_process_handle(&identity, &expected)?;
+    unsafe { CloseHandle(handle as _) };
+    Ok(())
 }
 
 fn product_exit_identity(
@@ -555,7 +578,11 @@ mod tests {
 
     #[test]
     fn refuses_stale_lively_build_before_spawn() {
-        assert!(valid_core_binary_identity("Dext", "Dext Core"));
+        assert_eq!(
+            valid_core_binary_identity("Dext", "Dext Core"),
+            !cfg!(feature = "v3-release")
+        );
+        assert!(valid_core_binary_identity("Dext", "Dext v3 desktop runtime core"));
         assert!(!valid_core_binary_identity(
             "Lively Wallpaper",
             "Lively Wallpaper"

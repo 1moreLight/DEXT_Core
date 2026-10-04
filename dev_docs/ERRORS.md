@@ -343,3 +343,5 @@
 
 | #250 | 安装清理不能按前缀路径递归删除；部分删除重试需目录身份与剩余摘要 | [backend](errors/backend.md) |
 | #251 | 可搬移发布版不能沿用编译机宿主/许可路径；配置器和Core须同v3配置 | [toolchain](errors/toolchain.md) |
+
+| #252 | 私人另存恢复记录写在RPC之后留下崩溃空窗；已有Core复用绕过v3发布元数据 | [backend](errors/backend.md) |

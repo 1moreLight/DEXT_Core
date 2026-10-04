@@ -220,6 +220,7 @@ pub(crate) async fn raw_core_identity() -> Result<GetCoreStatsResponse, String> 
 async fn verified_core_identity() -> Result<GetCoreStatsResponse, String> {
     let response = raw_core_identity().await?;
     verify_core_identity_response(&response)?;
+    crate::core_runtime::verify_running_release_profile(&response)?;
     Ok(response)
 }
 

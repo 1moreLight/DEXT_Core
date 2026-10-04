@@ -2004,20 +2004,32 @@ async fn copy_native_room(source: String, library: String, name: String, json: S
         std::path::Path::new(&source), std::path::Path::new(&library), &name, &json))
         .await.map_err(|e| format!("prepare native Room copy: {e}"))??;
     let new_id = prepared.room_id.clone();
+    // Write and lease recovery intent BEFORE Core can persist private data.
+    // A crash after acceptance but before publication must remain recoverable.
+    let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name)?;
+    let (lease, _) = room_v3_sharing::lease_personal_cleanup(&journal)?;
     if let Err(error) = grpc::copy_room_personal(prepared.source_id.clone(), new_id.clone()).await {
-        let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name);
-        return Err(format!("个人复制未确认，作品副本尚未发布；原Room保持。新副本ID {new_id}：{error}; recovery intent: {journal:?}"));
+        return Err(format!("个人复制未确认，作品副本尚未发布；原Room保持。新副本ID {new_id}：{error}；恢复记录已保留"));
     }
     let result = tauri::async_runtime::spawn_blocking(move || prepared.publish()).await
         .unwrap_or_else(|e| Err(format!("publish native Room copy: {e}")));
     match result {
-        Ok(path) => Ok(path.to_string_lossy().into_owned()),
+        Ok(path) => {
+            // Once the author copy exists, recovery cancels cleanup even if
+            // record removal is interrupted. Never roll back a published copy.
+            drop(lease);
+            let _ = std::fs::remove_file(&journal);
+            Ok(path.to_string_lossy().into_owned())
+        },
         Err(error) => {
             match grpc::delete_room_personal(new_id.clone(), false).await {
-                Ok(()) => Err(format!("{error}; copied personal overrides rolled back")),
+                Ok(()) => {
+                    drop(lease);
+                    let _ = std::fs::remove_file(&journal);
+                    Err(format!("{error}; copied personal overrides rolled back"))
+                },
                 Err(cleanup) => {
-                    let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name);
-                    Err(format!("{error}; 新副本未发布，个人清理待重试 {new_id}: {cleanup}; recovery intent: {journal:?}"))
+                    Err(format!("{error}; 新副本未发布，个人清理待重试 {new_id}: {cleanup}；恢复记录已保留"))
                 },
             }
         }
@@ -2119,12 +2131,18 @@ async fn cleanup_v3_personal_deletions(library_dir: String) -> Result<serde_json
     let mut cleaned = 0usize;
     let mut messages = Vec::new();
     let intents = room_v3_sharing::pending_personal_cleanup(library)?;
-    for (path, intent) in intents {
+    for (path, _) in intents {
+        let (lease, intent) = match room_v3_sharing::lease_personal_cleanup(&path) {
+            Ok(value) => value,
+            Err(error) if error == "personal cleanup intent busy" => continue,
+            Err(error) => {messages.push(error);continue;},
+        };
         let result = match room_v3_sharing::cleanup_source_restored(library, &intent) {
             Ok(true) => Ok(()),
             Ok(false) => grpc::delete_room_personal(intent.room_id.clone(), false).await,
             Err(error) => Err(error),
         };
+        drop(lease);
         match result {
             Ok(()) => match std::fs::remove_file(&path) {
                 Ok(()) => cleaned += 1,
@@ -2150,15 +2168,7 @@ async fn delete_room(library_dir: String, room_dir: String) -> Result<serde_json
         Some(room_v3_sharing::queue_personal_cleanup(library, id,
             room.file_name().and_then(|s| s.to_str()).ok_or("Room name is not UTF-8")?)?)
     } else { None };
-    let intent_lease = intent.as_ref().map(|path| {
-        let mut options = std::fs::OpenOptions::new();
-        options.read(true);
-        #[cfg(windows)] {
-            use std::os::windows::fs::OpenOptionsExt;
-            options.share_mode(0);
-        }
-        options.open(path).map_err(|e| format!("hold personal cleanup intent: {e}"))
-    }).transpose()?;
+    let intent_lease = intent.as_ref().map(|path| room_v3_sharing::lease_personal_cleanup(path).map(|(lease,_)|lease)).transpose()?;
     if let Err(error) = trash::delete(&room) {
         // Preserve intent: a restored source cancels cleanup, a partial Shell
         // move with an error can still finish its private cleanup on reconnect.
