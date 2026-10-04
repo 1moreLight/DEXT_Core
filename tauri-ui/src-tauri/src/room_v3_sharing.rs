@@ -326,7 +326,22 @@ pub fn pending_personal_cleanup(library: &Path) -> Result<Vec<(PathBuf, Personal
 }
 pub fn cleanup_source_restored(library: &Path, intent: &PersonalCleanupIntent) -> Result<bool, String> {
     let source = library.join(&intent.room_name);
-    if !source.exists() { return Ok(false); }
-    let document = room_v3::read_document(&source)?;
-    Ok(document["id"].as_str() == Some(intent.room_id.as_str()))
+    if source.try_exists().map_err(|e| format!("inspect restored Room: {e}"))? {
+        let document = room_v3::read_document(&source)?;
+        if document["id"].as_str() == Some(intent.room_id.as_str()) { return Ok(true); }
+    }
+    // Room identity survives a directory rename. Check published library roots,
+    // never the nested contents of copy/import staging directories.
+    for (index, entry) in fs::read_dir(library).map_err(|e| format!("inspect Room library: {e}"))?.enumerate() {
+        if index >= 4096 { return Err("Room library recovery scan exceeds 4096 entries; cleanup retained".into()); }
+        let entry = entry.map_err(|e| format!("inspect Room library entry: {e}"))?;
+        if !entry.file_type().map_err(|e| format!("inspect Room directory: {e}"))?.is_dir() { continue; }
+        let candidate = entry.path();
+        if candidate == source { continue; }
+        if !candidate.join("room.json").try_exists().map_err(|e| format!("inspect Room manifest: {e}"))? { continue; }
+        let document = room_v3::read_document(&candidate)
+            .map_err(|e| format!("cannot confirm Room absence; cleanup retained: {e}"))?;
+        if document["id"].as_str() == Some(intent.room_id.as_str()) { return Ok(true); }
+    }
+    Ok(false)
 }
