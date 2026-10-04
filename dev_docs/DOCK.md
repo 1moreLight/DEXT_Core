@@ -1,6 +1,6 @@
 # Dock 模块契约（2026-08-27 定稿 v0）
 
-> 本文档是 Dock 功能（常驻图标区 + 样式自定义）的唯一接口说明。
+> 本文档是历史v0/v2 Dock模块说明；当前原生v3组件/模板契约见ROOM_V3.md，当前开发顺序见ROADMAP.md。
 > 数据层只有 room.json；渲染器全在 `wallpapers/dext-room/main.js`；配置器在 `tauri-ui/src/`。
 
 ## 零、与用户内容的边界

@@ -88,3 +88,13 @@ export function removeV3Presentation(room:RoomV3,deskId:string,iconId:string):Ro
   desk.icons=desk.icons.filter(icon=>icon.id!==iconId);
   return next;
 }
+
+export function setV3ComponentPlacement(room:RoomV3,componentId:string,placement:V3Component["placement"]):RoomV3 {
+  if(![placement.x,placement.y,placement.width,placement.height].every(Number.isFinite)||
+     placement.x<0||placement.y<0||placement.width<=0||placement.height<=0||
+     placement.x+placement.width>1920||placement.y+placement.height>1080)
+    throw new Error("组件位置和尺寸必须留在 1920 × 1080 设计画布内");
+  const next=copy(room),component=next.components?.find(c=>c.id===componentId);
+  if(!component)throw new Error("组件已不存在");
+  component.placement={...placement};return next;
+}

@@ -1,6 +1,6 @@
 # room.json v2 正式契约
 
-> DXT-003 起，Room v2 是项目唯一支持的 Room 格式。机器格式真相源为仓库根目录 `room-v2.schema.json`；源 Room 与导出包禁止携带运行态字段 `__source`。
+> 本文件描述历史Room v2契约，仍用于保留的v2链；当前原生v3见ROOM_V3.md，实施状态见ROADMAP.md。v2机器格式真相源为仓库根目录room-v2.schema.json；源Room与导出包禁止携带运行态字段__source。
 > v1 已废弃且不兼容、不迁移、不重建；当前 demo 可直接删除或改写为 v2。
 
 ## 一、Room 与官方宿主

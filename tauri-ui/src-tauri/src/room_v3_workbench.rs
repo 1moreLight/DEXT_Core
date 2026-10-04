@@ -66,7 +66,7 @@ pub fn serve(request:&Request<Vec<u8>>,state:&PreviewResources)->Response<Vec<u8
     }
     let mut response=Response::builder().status(if partial.is_some(){206}else{200})
         .header("Content-Type",super::mime_of(Path::new(path))).header("Content-Length",length.to_string())
-        .header("Access-Control-Allow-Origin","*").header("Accept-Ranges","bytes").header("Cache-Control","no-store")
+        .header("Access-Control-Allow-Origin","*").header("Access-Control-Expose-Headers","Content-Range").header("Accept-Ranges","bytes").header("Cache-Control","no-store")
         .header("Content-Security-Policy","default-src 'none'; script-src 'unsafe-inline' http://v3preview.localhost; style-src 'unsafe-inline' http://v3preview.localhost; img-src data: http://v3preview.localhost; media-src http://v3preview.localhost; font-src http://v3preview.localhost; connect-src 'none'; frame-src http://v3preview.localhost; base-uri 'none'; form-action 'none'");
     if partial.is_some(){response=response.header("Content-Range",format!("bytes {start}-{end}/{total}"));}
     response.body(bytes).unwrap()

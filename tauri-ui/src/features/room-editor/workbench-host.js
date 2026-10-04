@@ -22,6 +22,7 @@
   function source(capability) {
     const status=settings.data[capability]||'available';
     if(status!=='available')return {status};
+    if(Object.hasOwn(settings.samples||{},capability))return{status:'available',value:copy(settings.samples[capability])};
     const now=Date.now(),iso=new Date(now).toISOString();
     const values={
       'time.read':{unixMilliseconds:now,utc:iso,local:iso,timeZone:'UTC',offsetMinutes:0},
@@ -124,13 +125,14 @@
       host.setPlaybackSuspended(value.paused);void host.acceptSnapshot(snapshot);
     }
     if(value.data){for(const callbacks of watches.values())for(const callback of callbacks)callback();emit();}
+    if(value.samples)emit();
     report();
   }
   addEventListener('message',async event=>{
     if(event.source!==parent||!event.data||typeof event.data.token!=='string')return;
     const value=event.data;
     if(value.type==='dext:workbench:init'&&!host){
-      owner=value.token;room=copy(value.room);settings={data:{},cpuPercent:32,gpuPercent:19,audioLevel:.5,showButtons:true,showOccupied:true,showComponents:false,buttonId:'',...value.settings};
+      owner=value.token;room=copy(value.room);settings={data:{},samples:{},cpuPercent:32,gpuPercent:19,audioLevel:.5,showButtons:true,showOccupied:true,showComponents:false,buttonId:'',...value.settings};
       snapshot={protocolVersion:1,runtimeGeneration:1,roomId:room.id,sessionId:'preview-'+token(),installationStamp:'preview-'+owner,revision:1,
         deskIds:room.desks.map(d=>d.id),currentDeskId:value.deskId||room.startDesk,targetDeskId:null,queuedDeskId:null,transitionId:null,deadlineUtc:null,active:true,operable:true,
         lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:0}};

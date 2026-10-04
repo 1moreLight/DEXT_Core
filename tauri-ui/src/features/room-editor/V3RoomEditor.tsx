@@ -92,7 +92,7 @@ export function V3RoomEditor(props:Props){
       </div>
     </div>
   );
-  if(workbenchOpen)return <V3Workbench room={{...room,resources:[...new Set([...room.resources,...draft.resources])]}} path={props.path} isTauri={props.isTauri} deskId={desk.id} onBack={()=>setWorkbenchOpen(false)}/>;
+  if(workbenchOpen)return <V3Workbench room={{...room,resources:[...new Set([...room.resources,...draft.resources])]}} path={props.path} isTauri={props.isTauri} deskId={desk.id} onBack={()=>setWorkbenchOpen(false)} onChange={change}/>;
   return <section className="flex min-h-0 flex-1 flex-col gap-3" aria-label="原生 v3 Room 编辑器">
     <header className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
       <Button variant="ghost" disabled={busy} onClick={props.onBack}>返回房间库</Button>

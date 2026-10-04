@@ -452,3 +452,6 @@ dotnet run --project ... --nologo将未识别参数交测试程序，报Unknown 
 
 ### 2026-10-04 P6-003本地编辑检查（沿#223/#227）
 C#顶层Program的Copy常量不能由partial测试类直接使用（CS8801），改为该检查内独立copyId；TS项目库不含String.replaceAll，改global replace，不扩大目标库。命令曾在tauri-ui cwd重复加tauri-ui前缀，首个写入即失败，改正确路径且未重跑初始化/原始备份。大型exec的String.raw内Markdown反引号也会解析失败，不执行任何脚本；用普通文本记录再执行。
+
+## #237 自动审批检查超时不是脚本已执行（2026-10-04）
+P7创作写入调用返回CreateProcess Rejected：automatic permission approval review未在deadline完成，未创建进程。它不等于源实现失败或需要改变目标权限。确认返回明确表示未执行后，用同一cmd/workdir/require_escalated参数只重试一次成功；追加型写入不得对已运行/未知结果盲目重跑。以后先保存命令参数，重试前区分创建拒绝与运行中句柄，避免重复追加或重置用户数据。
