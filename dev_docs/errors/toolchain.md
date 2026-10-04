@@ -455,3 +455,6 @@ C#顶层Program的Copy常量不能由partial测试类直接使用（CS8801），
 
 ## #237 自动审批检查超时不是脚本已执行（2026-10-04）
 P7创作写入调用返回CreateProcess Rejected：automatic permission approval review未在deadline完成，未创建进程。它不等于源实现失败或需要改变目标权限。确认返回明确表示未执行后，用同一cmd/workdir/require_escalated参数只重试一次成功；追加型写入不得对已运行/未知结果盲目重跑。以后先保存命令参数，重试前区分创建拒绝与运行中句柄，避免重复追加或重置用户数据。
+
+### #237 补充：生成PowerShell源码时不要在JS模板里放裸反引号
+P2b资产写入命令在functions.exec解析阶段报SyntaxError，未执行任何文件写入；原因是PowerShell续行符反引号直接终结了JS String.raw模板。移除续行、使用单行Start-Process后原写入成功。执行状态以工具返回为准，不把脚本解析失败算产品失败，也不重复已执行的追加命令。

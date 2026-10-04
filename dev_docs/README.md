@@ -269,3 +269,5 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 ## v3 作者试验台开发入口
 P7当前分支在原生Room编辑器提供“打开试验台”，独立预览当前草稿、多尺寸/Desk/生命周期、示例数据与权限状态、按钮/占用/组件/资源诊断。直接复用正式v3宿主源码；模拟资源会话与真实Core动作/私人存储隔离。实现状态以ROADMAP及acceptance/V3-P7-001-workbench.md为准，首轮代码未做完整构建或实机验收。
 试验台还提供共享Dock/Widget默认布局应用到草稿、资源源码只读定位、自定义JSON示例；返回编辑器沿原撤销与保存，不用预览修改私人绑定。
+
+P2b顶层Dock原型：scripts/dock-probe.ps1仅供手动原生验收，依当前worktree已构建ReleasePlayer；默认overlay、180秒退出，可明确选择autohide/reserve。原型未接Core/个人数据，不代表P8已启用；正式状态看ROADMAP及acceptance/V3-P2B-001-top-dock.md。

@@ -323,3 +323,4 @@
 | #236 | 试验台适配须沿正式SDK动作结构，诊断采样需跟随当前视觉帧 | [frontend](errors/frontend.md) |
 
 | #237 | 自动审批检查超时未执行时只重试一次原参数，不重跑已执行写入 | [toolchain](errors/toolchain.md) |
+| #238 | 顶层Dock原型初次Shown窗口不能只凭逻辑visible=false跳过原生隐藏 | [renderer](errors/renderer.md) |

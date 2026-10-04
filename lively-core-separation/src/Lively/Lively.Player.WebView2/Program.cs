@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 
@@ -17,9 +17,14 @@ namespace Lively.Player.WebView2
             if (!IsWebView2Available())
                 Environment.Exit(2);
 
+            var dockProbe = Array.IndexOf(Environment.GetCommandLineArgs(), "--dext-dock-probe") >= 0;
+            if (dockProbe) DextDockWindowHost.UsePerMonitorDpi();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            if (dockProbe)
+                Environment.ExitCode = DextDockProbeForm.Run(System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Skip(Environment.GetCommandLineArgs(), 1)));
+            else
+                Application.Run(new Form1());
         }
 
         private static bool IsWebView2Available()

@@ -666,3 +666,6 @@ Tab的单次可见查询不等于动作proof，也不证明快速连续键序列
 
 ## #232 视觉定位不能误用桌面动作可操作条件（2026-10-04）
 Core定位accepted/投影真实送达，但配置器前台operable=false，buttonGeometry返回空，图标换肤正常而无提示。新增该状态功能RED定位null，保留原动作几何条件，抽取visibleButtonGeometry仅用于视觉提示；GREEN同时确认动作采样仍为空。暂停/锁屏/非Desktop仍不定位，不产生动作/证明。用户随后全屏游戏，立即退出Dext；最后修复的实际定位/普通重启待继续，不将旧accepted或fixture冒称实机成功。
+
+## #238 顶层Dock初次隐藏需同步原生HWND状态（2026-10-04）
+源码核对发现：原型在Form.Shown后创建窗口行为，logical visible初始false，但HWND实际已在屏外显示。直接布局移动后，autohide或已有全屏时next=false与缓存相同，UpdateVisibility提前返回，会把实际可见窗口留在主屏。现在AssignHandle后先SWP_HIDEWINDOW/NOACTIVATE，再布局并统一显示策略；实际原生运行仍待游戏结束，未虚构故障复现或修复通过。DPI默认处理还可能改变实际矩形，布局比较用GetWindowRect；首次跨DPI重排，ABM_REMOVE后的工作区用GetMonitorInfo即时读回。原生透明框HRESULT仅说明API调用，不证明WebView/背景透出，验收仍看实际普通软件。

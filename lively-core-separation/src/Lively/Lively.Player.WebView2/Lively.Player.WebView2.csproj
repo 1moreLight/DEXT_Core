@@ -73,6 +73,8 @@
   <ItemGroup>
     <Compile Include="Extensions\WebView2\CoreWebView2Extensions.cs" />
     <Compile Include="Extensions\WebView2\DevToolsExtensions.cs" />
+    <Compile Include="DextDockWindowHost.cs" />
+    <Compile Include="DextDockProbeForm.cs" />
     <Compile Include="DextNativeFrameMedia.cs" />
     <Compile Include="DextNativeFrameMedia.Input.cs" />
     <Compile Include="Form1.NativeInput.cs" />
@@ -135,6 +137,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DockProbe\index.html"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="DockProbe\probe.css"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="DockProbe\probe.js"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="appicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

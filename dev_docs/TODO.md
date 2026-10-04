@@ -1650,3 +1650,15 @@ P7首轮代码：只读资源会话/协议支持媒体Range，准备/释放命�
 - [x] 本轮具名提交，实际构建和一次冒烟留Task4/游戏后，不加测试矩阵。
 
 本轮创作代码：共享Dock/Widget placement表单→现有作者history，明确应用草稿后再返回保存；ID/引用不换。消费者资源链接→HTML/CSS/JS/JSON只读源码，Range最多256KiB、长文件标截断、切换/退出取消；空资源416回退空文件GET。任意合法JSON示例可独立保存到模拟设置，解析失败保旧值，恢复默认不改其他数据源；缺失/拒绝状态仍优先。只有JS语法与diff核对，没有编译/浏览器/应用或新测试矩阵。Task1-3编码完成、Task4待，当前仍3/4=75%；完整就绪1/16≈6%。审批超时未执行后一次原参数重试成功，ERRORS #237。
+
+## V3-P2B-001 顶层 Dock 与 AppBar 原型（2026-10-04，BASE7a1f31b）
+独立feat/V3-P2B-001-top-dock / v3-top-dock。目标：普通软件前的HTML Dock、正常原生输入与焦点、触边和AppBar工作区可复现，给P8复用。范围外：正式Core/动作/任务栏替代恢复/游戏覆盖/拖动。
+Ruling：用户少验证优先进度，沿P7依赖继续功能；P7编码3/4=75%/运行待，不称完成。游戏期间不编译/启动/桌面输入。
+- [x] Task1 编码独立原生窗口、底部/DPI高度和正常输入/焦点；实际行为待Task4。
+- [x] Task2 编码AppBar模式/恢复与全屏抑制；实际Windows门槛待Task4。
+- [x] Task3 编码本地交互诊断样包和手动启动脚本；未运行。
+- [ ] Task4 游戏后必要build→start及一次原生功能冒烟，六项人工验收见独立卡；最终集中不合并master。
+开工编码0/4=0%；完整16项仍1/16≈6%。CodeGraph未初始化，rg兜底；不追加网络专项。
+
+P2b首轮代码：ReleasePlayer显式--dext-dock-probe分支，不接Core/WorkerW输入；可复用native HWND宿主、主屏底部/48..240 DIP与20%上限、非激活鼠标及明确键盘/Escape恢复、AppBar两步协商/最终矩形/注销、自动隐藏、全屏及Explorer/DPI重新定位。固定HTML真实事件计数和当前原生前台/窗口/工作区诊断；独立Mutex、临时profile/events日志、30..900秒自动退出（默认180），手动脚本只用当前worktree部署的ReleasePlayer。代码核对修正DPI默认处理改变实际矩形后不能只比较旧缓存、初次跨DPI需再布局、即时工作区用GetMonitorInfo，不计运行通过。node --check与PowerShell仅ParseFile通过，未运行脚本/编译器/应用；C#编译/原生输入/透明/焦点/DPI/AppBar/异常退出均未验证。编码3/4=75%，Task4待；整体16项就绪仍1/16≈6%，本轮具名提交不合并。
+源码收尾：原型先隐藏已Shown的HWND再布局，防止autohide/初始全屏的逻辑false遗漏真实窗口；加入DWM扩展框/黑色client及明确透明空隙诊断，仅记录HRESULT、真实透出仍必须实机验证；注销后即时工作区读取异常不阻止剩余关闭。ERRORS #238。
