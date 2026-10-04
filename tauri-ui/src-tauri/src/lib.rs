@@ -98,6 +98,7 @@ struct RoomInfo {
     icons: usize,
     widgets: usize,
     covers: Vec<CoverRef>,
+    compatibility: Option<room_v3::CompatibilityReport>,
 }
 
 #[derive(serde::Serialize)]
@@ -1272,11 +1273,13 @@ fn allowed_switches(desk_count: usize) -> std::collections::HashSet<String> {
 }
 
 fn room_version(room: &serde_json::Value) -> Result<u64, String> {
-    room.as_object()
+    let version = room.as_object()
         .ok_or_else(|| "room root must be an object".to_string())?
         .get("version")
         .and_then(|value| value.as_u64())
-        .ok_or_else(|| "room.version must be a positive integer".to_string())
+        .ok_or_else(|| "room.version must be a positive integer".to_string())?;
+    if version >= 3 { room_v3::require_compatibility(room)?; }
+    Ok(version)
 }
 
 fn widget_id_is_valid(value: &str) -> bool {
@@ -1634,10 +1637,14 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
         if p.is_dir() && p.join("room.json").is_file() {
             let (mut desks, mut icons, mut widgets) = (0usize, 0usize, 0usize);
             let mut version = None;
+            let mut compatibility = None;
             let mut covers = Vec::new();
             if let Ok(txt) = std::fs::read_to_string(p.join("room.json")) {
                 if let Ok(j) = serde_json::from_str::<serde_json::Value>(&txt) {
                     version = j.get("version").and_then(|value| value.as_u64());
+                    if version.is_some_and(|v| v >= 3) {
+                        compatibility = Some(native_room_compatibility(&j));
+                    }
                     if let Some(arr) = j["desks"].as_array() {
                         desks = arr.len();
                         for d in arr {
@@ -1656,6 +1663,7 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
                 icons,
                 widgets,
                 covers,
+                compatibility,
             });
         }
     }
@@ -1663,6 +1671,26 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
     Ok(out)
 }
 
+fn native_room_compatibility(document: &serde_json::Value) -> room_v3::CompatibilityReport {
+    let mut report = room_v3::compatibility(document);
+    if report.supported {
+        if let Err(error) = room_v3::validate_manifest(document) {
+            report.supported = false;
+            report.needs_update = error.contains("需要更新");
+            report.message = error;
+        }
+    }
+    report
+}
+#[tauri::command]
+async fn inspect_room_compatibility(path: String) -> Result<room_v3::CompatibilityReport, String> {
+    let file = std::path::Path::new(&path);
+    if file.file_name().and_then(|v| v.to_str()) != Some("room.json") {
+        return Err("only a Room manifest can be inspected".into());
+    }
+    let document = room_v3::read_document(file.parent().ok_or("Room has no parent")?)?;
+    Ok(native_room_compatibility(&document))
+}
 #[tauri::command]
 async fn read_room(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| format!("read room failed: {e}"))
@@ -3480,6 +3508,7 @@ pub fn run() {
             save_library,
             list_rooms,
             read_room,
+            inspect_room_compatibility,
             write_room,
             create_room,
             create_room_v3,

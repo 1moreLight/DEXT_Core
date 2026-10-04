@@ -1,3 +1,5 @@
+export type RoomCompatibility = { supported: boolean; needsUpdate: boolean; message: string };
+
 export type RoomContractPolicy = {
   versionLabel: string;
   recognized: boolean;
@@ -18,7 +20,10 @@ const READ_ONLY = {
   zip: false,
 };
 
-export function roomContractPolicy(version: unknown): RoomContractPolicy {
+export function roomContractPolicy(version: unknown, compatibility?: RoomCompatibility | null): RoomContractPolicy {
+  if (compatibility && !compatibility.supported) {
+    return {versionLabel: compatibility.needsUpdate ? "需要更新" : "暂不可用", recognized:false, ...READ_ONLY};
+  }
   if (version === 3) {
     return {versionLabel:"v3",recognized:true,edit:true,save:true,saveAs:true,apply:true,preview:false,zip:true};
   }
@@ -59,7 +64,8 @@ export function assertRoomV2WritePayload(room: Record<string, unknown>): Record<
   return room;
 }
 
-export function readOnlyRoomMessage(version: unknown): string {
+export function readOnlyRoomMessage(version: unknown, compatibility?: RoomCompatibility | null): string {
+  if (compatibility && !compatibility.supported) return compatibility.message;
   const policy = roomContractPolicy(version);
   return `${policy.versionLabel} 不受支持；Dext 接受原生 Room v2 / v3`;
 }

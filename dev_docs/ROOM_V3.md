@@ -102,3 +102,6 @@ Core当前Coordinator可在桌面不可操作时编辑这些本机选择；作�
 配置器get_v3_personal_editor/edit_v3_personal核对当前安装和active_room.sourcePath，再读写本机设置。发现全部稳定按钮，包括未绑定/其他Desk；Core闭合setButton/resetButton/upsertTarget/removeTarget/locateButton。全局application/file/url目标以配置器生成的稳定UUID保存，更新保持引用；删除清全部Room目标引用而保留动作/皮肤。
 显式动作保存仅为拥有该按钮且声明能力的消费者补充该项当前许可，不提升旧安装控制授权，不改readGrants/布局/KV。作品和作者SDK不含目标路径/参数/工作目录/TargetId/皮肤。普通图标新iconId引用已有buttonId，删除呈现保留按钮/其他入口，可撤销重做。
 官方顶层私有presentationRead只投影经典/玻璃/描边皮肤和短时定位，不投影全局目标；换肤不重挂作者iframe、不改逻辑尺寸。视觉定位使用可见几何，动作仍使用原可操作规则和真实输入。实际配置器/两图标换肤通过，最后定位修复/普通重启与最终门槛见TODO/验收卡；游戏期间Dext保持停止。
+
+## 首发兼容基线（P10-002，源码阶段）
+根目录room-v3-compatibility.json固定API1词汇，fixtures/room-v3/release-api1固定六套原始作者/zip与摘要。未知格式/API/能力/动作/媒体等在严格读取前提示更新，不降级猜测或写回；本机缺授权/绑定仍按既有编辑处理。原始清单只读查看不产生编辑草稿。兼容读入不代表真实能力已验收，升级门槛见RELEASE_V3_COMPATIBILITY.md；现无已发布的其他v3版本，不自动转换，未来转换必须新增副本并保留原件/私人数据。

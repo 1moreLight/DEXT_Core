@@ -1,0 +1,90 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "783a4998-a1b3-418d-b101-003afebbb005",
+  "name": "API1 continuous",
+  "startDesk": "overview",
+  "resources": [
+    "scene/index.html",
+    "scene/main.js",
+    "scene/style.css",
+    "scene/dext-sdk.v1.js",
+    "widget/index.html",
+    "widget/main.js",
+    "widget/style.css"
+  ],
+  "roomScene": {
+    "entry": "scene/index.html",
+    "capabilities": [
+      "desk.read"
+    ]
+  },
+  "transition": {
+    "type": "author",
+    "durationMs": 700
+  },
+  "buttons": [
+    {
+      "id": "navigate",
+      "name": "切换视图",
+      "scope": "room",
+      "action": {
+        "type": "desk.next"
+      }
+    }
+  ],
+  "desks": [
+    {
+      "id": "overview",
+      "name": "Overview",
+      "icons": [
+        {
+          "id": "view",
+          "buttonId": "navigate",
+          "label": "下一视图",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "components": [
+        "instrument"
+      ]
+    },
+    {
+      "id": "detail",
+      "name": "Detail",
+      "icons": [
+        {
+          "id": "detail-view",
+          "buttonId": "navigate",
+          "label": "下一视图",
+          "x": 4,
+          "y": 0
+        }
+      ],
+      "components": [
+        "instrument"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "instrument",
+      "role": "widget",
+      "entry": "widget/index.html",
+      "placement": {
+        "x": 320,
+        "y": 0,
+        "width": 1600,
+        "height": 540
+      },
+      "capabilities": [
+        "desk.read",
+        "time.read"
+      ],
+      "buttonIds": [
+        "navigate"
+      ]
+    }
+  ]
+}

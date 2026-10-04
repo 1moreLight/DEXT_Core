@@ -338,3 +338,5 @@
 | #246 | room-v3的-text规则保留复制CRLF；新样包固定LF后检查暂存差异 | [toolchain](errors/toolchain.md) |
 | #247 | 常驻选项不能以当前已占位为前提；AppBar注册不证明真实最大化工作区 | [backend](errors/backend.md) |
 | #248 | 原生另存不能复用v2固定资源目录；复制或删除RPC未确认需保留恢复记录 | [backend](errors/backend.md) |
+
+| #249 | 未来Room要求须先兼容判定；只读清单不能进旧编辑器规范化 | [backend](errors/backend.md) |

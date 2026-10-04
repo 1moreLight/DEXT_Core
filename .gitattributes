@@ -1,2 +1,5 @@
 # Installation digests describe exact bytes on every platform.
 dev_docs/fixtures/room-v3/** -text
+
+# Frozen API1 baseline bytes are identical on every platform.
+room-v3-compatibility.json -text

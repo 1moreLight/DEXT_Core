@@ -124,7 +124,12 @@ pub fn is_native_archive(path: &Path) -> Result<bool, String> {
     entry.by_ref().take(room_v3::MAX_MANIFEST_BYTES as u64 + 1).read_to_end(&mut bytes)
         .map_err(|e| format!("read zip manifest: {e}"))?;
     if bytes.len() > room_v3::MAX_MANIFEST_BYTES { return Ok(false); }
-    Ok(room_v3::parse_document(&bytes)?.get("version").and_then(Value::as_u64) == Some(3))
+    let document = room_v3::parse_document(&bytes)?;
+    if document.get("version").and_then(Value::as_u64).is_some_and(|v| v >= 3) {
+        room_v3::require_compatibility(&document)?;
+        return Ok(true);
+    }
+    Ok(false)
 }
 pub fn export(source: &Path, destination: &Path) -> Result<(), String> {
     let document = room_v3::read_document(source)?;

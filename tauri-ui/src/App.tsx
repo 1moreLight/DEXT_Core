@@ -307,6 +307,13 @@ export default function App() {
     () => initialLibDir()
   );
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
+  const [rawRoomView, setRawRoomView] = useState<{name:string;json:string;message:string}|null>(null);
+  const rawRoomDialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(()=>{
+    const dialog = rawRoomDialogRef.current;
+    if (rawRoomView && dialog && !dialog.open) dialog.showModal();
+    return ()=>{ if(dialog?.open) dialog.close(); };
+  },[rawRoomView]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const { coreIdentity, coreIdentityError, v3Session, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore } = useDextRuntime(IS_TAURI);
@@ -521,7 +528,13 @@ export default function App() {
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
-      if (room.version === 3) {
+      if (typeof room.version === "number" && room.version >= 3) {
+        const report = await invoke<import("@/lib/room-contract").RoomCompatibility>("inspect_room_compatibility", {path: path + "\\room.json"});
+        if (!report.supported) {
+          setRawRoomView({name: path.split(/[\\/]/).pop() ?? "Room",json,message:report.message});
+          setStatus(report.message);
+          return false;
+        }
         const native = readRoomV3(json);
         historyReadyRef.current = false;
         setNativeRoom(native); setRoomVersion(3); setRoomPath(path); setDirty(false);
@@ -584,7 +597,7 @@ export default function App() {
       setStatus(
         room.version === 2
           ? roomOpenStatus(path.split(/[\\/]/).filter(Boolean).pop() ?? "Room", audit, Boolean(restored?.dirty))
-          : readOnlyRoomMessage(room.version)
+          : readOnlyRoomMessage(room.version, room.compatibility)
       );
       return true;
     } catch (e) {
@@ -649,8 +662,8 @@ export default function App() {
       return;
     }
     const target = rooms.find((room) => room.path === dir);
-    if (target && !roomContractPolicy(target.version).apply) {
-      setStatus(readOnlyRoomMessage(target.version));
+    if (target && !roomContractPolicy(target.version, target.compatibility).apply) {
+      setStatus(readOnlyRoomMessage(target.version, target.compatibility));
       return;
     }
     if (!IS_TAURI) {
@@ -1292,13 +1305,20 @@ export default function App() {
     await applyRoomDir(room.path);
   }
   async function enterRoomEditor(room: RoomInfo) {
+    if (!roomContractPolicy(room.version, room.compatibility).edit) {
+      try {
+        const json = IS_TAURI ? await invoke<string>("read_room", {path: room.path + "\\room.json"}) : "{}";
+        setRawRoomView({name:room.name,json,message:readOnlyRoomMessage(room.version,room.compatibility)});
+      } catch (error) { setStatus("无法查看原始清单：" + String(error)); }
+      return;
+    }
     const opened = await openRoom(room.path);
     if (!opened) return;
     setRoomPickPath(room.path);
     setEditNav("room");
-    setRoomEntered(roomContractPolicy(room.version).edit);
+    setRoomEntered(roomContractPolicy(room.version, room.compatibility).edit);
     setMode("edit");
-    if (!roomContractPolicy(room.version).edit) setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).edit) setStatus(readOnlyRoomMessage(room.version, room.compatibility));
   }
   async function stopWallpaper() {
     if (roomOperationRef.current || roomBusy) return;
@@ -1376,9 +1396,9 @@ export default function App() {
     }
     const items = paths.map((path) => rooms.find((room) => room.path === path)).filter(Boolean) as RoomInfo[];
     if (!items.length) return;
-    const readOnly = items.find((room) => !roomContractPolicy(room.version).zip);
+    const readOnly = items.find((room) => !roomContractPolicy(room.version, room.compatibility).zip);
     if (readOnly) {
-      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version)}`);
+      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version, readOnly.compatibility)}`);
       return;
     }
     setRoomBusy(`准备导出 ${items.length} 个 Room…`);
@@ -1500,7 +1520,7 @@ export default function App() {
     });
   }
   async function duplicateRoom(room: RoomInfo) {
-    if (!roomContractPolicy(room.version).saveAs) return setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).saveAs) return setStatus(readOnlyRoomMessage(room.version, room.compatibility));
     const name = prompt("复制后的 Room 名称", `${room.name}-copy`)?.trim();
     if (!name) return;
     if (!IS_TAURI) {
@@ -1528,7 +1548,7 @@ export default function App() {
     }
   }
   async function renameRoom(room: RoomInfo) {
-    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).edit) return setStatus(readOnlyRoomMessage(room.version, room.compatibility));
     const name = prompt("新的 Room 名称", room.name)?.trim();
     if (!name || name === room.name) return;
     if (!IS_TAURI) {
@@ -2371,7 +2391,11 @@ export default function App() {
           onClose={() => setShowCreatorImport(false)}
         />
       )}
-      {fullscreenPreview && (
+      {rawRoomView && <dialog ref={rawRoomDialogRef} onCancel={()=>setRawRoomView(null)} aria-label="原始 Room 清单（只读）" className="fixed inset-0 z-50 m-auto flex max-h-[85vh] w-[min(900px,90vw)] flex-col rounded-xl border border-border bg-background p-5 text-foreground shadow-2xl">
+        <div className="flex items-center justify-between gap-4"><h2 className="font-semibold">{rawRoomView.name} · 原始清单（只读）</h2><Button autoFocus variant="outline" onClick={()=>setRawRoomView(null)}>关闭</Button></div>
+        <p className="my-3 text-sm text-amber-600 dark:text-amber-300">{rawRoomView.message}</p>
+        <pre tabIndex={0} className="min-h-0 flex-1 overflow-auto rounded-md bg-muted p-4 text-xs">{rawRoomView.json}</pre>
+      </dialog>}      {fullscreenPreview && (
         <div className="fixed inset-0 z-50 bg-black">
           <iframe
             ref={fullscreenPreviewRef}

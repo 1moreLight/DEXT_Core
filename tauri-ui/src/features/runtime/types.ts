@@ -66,4 +66,5 @@ export interface RoomInfo {
   icons: number;
   widgets: number;
   covers?: CoverRef[];
+  compatibility?: import("@/lib/room-contract").RoomCompatibility | null;
 }

@@ -1,0 +1,386 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "783a4998-a1b3-418d-b101-003afebbb006",
+  "name": "API1 dock",
+  "startDesk": "home",
+  "resources": [
+    "assets/home.svg",
+    "assets/focus.svg",
+    "assets/quiet.svg",
+    "dock/index.html",
+    "dock/style.css",
+    "dock/main.js",
+    "dock/template.json",
+    "dock/dext-sdk.v1.js"
+  ],
+  "transition": {
+    "durationMs": 450,
+    "type": "slide"
+  },
+  "dockComponentId": "shared-dock",
+  "buttons": [
+    {
+      "action": {
+        "type": "desk.previous"
+      },
+      "name": "上一页",
+      "scope": "room",
+      "id": "previous"
+    },
+    {
+      "action": {
+        "type": "desk.next"
+      },
+      "name": "下一页",
+      "scope": "room",
+      "id": "next"
+    },
+    {
+      "action": {
+        "type": "binding.launch"
+      },
+      "name": "我的应用",
+      "scope": "room",
+      "id": "application"
+    }
+  ],
+  "components": [
+    {
+      "id": "shared-dock",
+      "role": "dock",
+      "entry": "dock/index.html",
+      "placement": {
+        "x": 0,
+        "y": 800,
+        "width": 1920,
+        "height": 280
+      },
+      "capabilities": [
+        "desk.read",
+        "desk.navigate",
+        "time.read",
+        "hardware.read",
+        "media.read",
+        "audio.read",
+        "binding.launch"
+      ],
+      "buttonIds": [
+        "previous",
+        "application",
+        "next"
+      ],
+      "config": {
+        "template": {
+          "formatVersion": 1,
+          "id": "three-panels",
+          "name": "三栏仪表盘",
+          "entry": "index.html",
+          "placement": {
+            "x": 0,
+            "y": 800,
+            "width": 1920,
+            "height": 280
+          },
+          "parameters": [
+            {
+              "id": "height",
+              "name": "高度",
+              "type": "number",
+              "default": 180,
+              "min": 100,
+              "max": 280
+            },
+            {
+              "id": "roundness",
+              "name": "圆角",
+              "type": "number",
+              "default": 24,
+              "min": 0,
+              "max": 40
+            },
+            {
+              "id": "theme",
+              "name": "配色",
+              "type": "choice",
+              "default": "midnight",
+              "options": [
+                {
+                  "value": "midnight",
+                  "label": "午夜"
+                },
+                {
+                  "value": "porcelain",
+                  "label": "瓷白"
+                },
+                {
+                  "value": "forest",
+                  "label": "苔绿"
+                }
+              ]
+            }
+          ],
+          "regions": [
+            {
+              "id": "left",
+              "name": "左栏",
+              "kind": "data",
+              "defaultSource": {
+                "capability": "hardware.read",
+                "path": [
+                  "cpuPercent"
+                ],
+                "format": "number"
+              }
+            },
+            {
+              "id": "middle",
+              "name": "中栏",
+              "kind": "data",
+              "defaultSource": {
+                "capability": "time.read",
+                "path": [
+                  "unixMilliseconds"
+                ],
+                "format": "clock"
+              }
+            },
+            {
+              "id": "right",
+              "name": "右栏",
+              "kind": "data",
+              "defaultSource": {
+                "capability": "hardware.read",
+                "path": [
+                  "gpuPercent"
+                ],
+                "format": "number"
+              }
+            },
+            {
+              "id": "previous",
+              "name": "上一页",
+              "kind": "button",
+              "defaultAction": {
+                "type": "desk.previous"
+              }
+            },
+            {
+              "id": "application",
+              "name": "我的应用",
+              "kind": "button",
+              "defaultAction": {
+                "type": "binding.launch"
+              }
+            },
+            {
+              "id": "next",
+              "name": "下一页",
+              "kind": "button",
+              "defaultAction": {
+                "type": "desk.next"
+              }
+            }
+          ],
+          "examples": [
+            {
+              "id": "cpu",
+              "name": "CPU 使用率",
+              "source": {
+                "capability": "hardware.read",
+                "path": [
+                  "cpuPercent"
+                ],
+                "format": "number"
+              }
+            },
+            {
+              "id": "gpu",
+              "name": "GPU 使用率",
+              "source": {
+                "capability": "hardware.read",
+                "path": [
+                  "gpuPercent"
+                ],
+                "format": "number"
+              }
+            },
+            {
+              "id": "clock",
+              "name": "本地时间",
+              "source": {
+                "capability": "time.read",
+                "path": [
+                  "unixMilliseconds"
+                ],
+                "format": "clock"
+              }
+            },
+            {
+              "id": "countdown",
+              "name": "倒计时示例",
+              "source": {
+                "capability": "time.read",
+                "path": [
+                  "unixMilliseconds"
+                ],
+                "format": "countdown",
+                "deadline": "2030-01-01T00:00:00Z"
+              }
+            },
+            {
+              "id": "media",
+              "name": "当前媒体标题",
+              "source": {
+                "capability": "media.read",
+                "path": [
+                  "title"
+                ],
+                "format": "text"
+              }
+            },
+            {
+              "id": "audio",
+              "name": "主音量",
+              "source": {
+                "capability": "audio.read",
+                "path": [
+                  "volume"
+                ],
+                "format": "number"
+              }
+            }
+          ]
+        },
+        "appearance": {
+          "height": 180,
+          "theme": "midnight",
+          "roundness": 24
+        },
+        "enabledRegions": [
+          "left",
+          "middle",
+          "right",
+          "previous",
+          "application",
+          "next"
+        ],
+        "buttonSlots": {
+          "previous": "previous",
+          "next": "next",
+          "application": "application"
+        },
+        "slots": {
+          "middle": {
+            "format": "clock",
+            "capability": "time.read",
+            "path": [
+              "unixMilliseconds"
+            ]
+          },
+          "left": {
+            "format": "number",
+            "capability": "hardware.read",
+            "path": [
+              "cpuPercent"
+            ]
+          },
+          "right": {
+            "format": "number",
+            "capability": "hardware.read",
+            "path": [
+              "gpuPercent"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "desks": [
+    {
+      "icons": [
+        {
+          "buttonId": "next",
+          "y": 0,
+          "glyph": "→",
+          "x": 0,
+          "label": "下一页",
+          "id": "home-next"
+        }
+      ],
+      "name": "共享",
+      "components": [
+        "shared-dock"
+      ],
+      "background": {
+        "src": "assets/home.svg",
+        "type": "image"
+      },
+      "id": "home"
+    },
+    {
+      "components": [
+        "shared-dock"
+      ],
+      "componentOverrides": {
+        "shared-dock": {
+          "slots": {
+            "right": {
+              "format": "clock",
+              "capability": "time.read",
+              "path": [
+                "unixMilliseconds"
+              ]
+            }
+          },
+          "appearance": {
+            "theme": "forest"
+          }
+        }
+      },
+      "background": {
+        "src": "assets/focus.svg",
+        "type": "image"
+      },
+      "icons": [
+        {
+          "buttonId": "next",
+          "y": 0,
+          "glyph": "→",
+          "x": 0,
+          "label": "无 Dock 页",
+          "id": "focus-next"
+        }
+      ],
+      "name": "本页差异",
+      "id": "focus"
+    },
+    {
+      "icons": [
+        {
+          "buttonId": "previous",
+          "y": 0,
+          "glyph": "←",
+          "x": 0,
+          "label": "返回 Dock",
+          "id": "quiet-previous"
+        },
+        {
+          "buttonId": "next",
+          "y": 0,
+          "glyph": "→",
+          "x": 1,
+          "label": "回到共享页",
+          "id": "quiet-next"
+        }
+      ],
+      "name": "无 Dock",
+      "components": [],
+      "background": {
+        "src": "assets/quiet.svg",
+        "type": "image"
+      },
+      "id": "quiet"
+    }
+  ]
+}

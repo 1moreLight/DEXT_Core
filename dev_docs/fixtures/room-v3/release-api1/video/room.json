@@ -1,0 +1,76 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "783a4998-a1b3-418d-b101-003afebbb002",
+  "name": "API1 video",
+  "startDesk": "home",
+  "resources": [
+    "assets/motion.webm"
+  ],
+  "transition": {
+    "type": "slide",
+    "durationMs": 450
+  },
+  "buttons": [
+    {
+      "id": "next",
+      "name": "下一页",
+      "scope": "room",
+      "action": {
+        "type": "desk.next"
+      }
+    },
+    {
+      "id": "app",
+      "name": "我的应用",
+      "scope": "home",
+      "action": {
+        "type": "binding.launch"
+      }
+    }
+  ],
+  "desks": [
+    {
+      "id": "home",
+      "name": "Home",
+      "background": {
+        "type": "video",
+        "src": "assets/motion.webm"
+      },
+      "icons": [
+        {
+          "buttonId": "next",
+          "x": 0,
+          "y": 0,
+          "label": "下一页",
+          "glyph": "→",
+          "id": "next-icon"
+        },
+        {
+          "buttonId": "app",
+          "x": 1,
+          "y": 0,
+          "label": "我的应用",
+          "glyph": "◇",
+          "id": "app-icon"
+        }
+      ],
+      "components": []
+    },
+    {
+      "id": "focus",
+      "name": "Focus",
+      "icons": [
+        {
+          "buttonId": "next",
+          "x": 0,
+          "y": 0,
+          "label": "返回",
+          "glyph": "←",
+          "id": "return-icon"
+        }
+      ],
+      "components": []
+    }
+  ]
+}

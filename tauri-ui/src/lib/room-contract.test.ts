@@ -29,6 +29,11 @@ describe("room contract operation matrix", () => {
     expect(roomContractPolicy(3)).toMatchObject({recognized:true, edit:true, save:true, apply:true, preview:false, saveAs:true, zip:true});
   });
 
+  it("keeps a recognized Room read-only when its author API or requirements need an update", () => {
+    const incompatible = {supported:false, needsUpdate:true, message:"需要更新 Dext"};
+    expect(roomContractPolicy(3, incompatible)).toMatchObject({recognized:false,edit:false,save:false,saveAs:false,apply:false,preview:false,zip:false});
+    expect(roomContractPolicy(3, {supported:true,needsUpdate:false,message:"API1"}).apply).toBe(true);
+  });
   it("requires native v2 payloads with a widgets array on every Desk", () => {
     const v2 = { version: 2, desks: [{ name: "Desk", icons: [], widgets: [] }] };
     expect(assertRoomV2WritePayload(v2)).toBe(v2);

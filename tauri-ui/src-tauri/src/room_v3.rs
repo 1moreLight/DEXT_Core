@@ -983,6 +983,95 @@ fn public_config(value: &Value, depth: usize) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompatibilityReport {
+    pub supported: bool,
+    pub needs_update: bool,
+    pub message: String,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CompatibilityBasis {
+    room_version: u64,
+    author_api_version: u64,
+    capabilities: Vec<String>,
+    actions: Vec<String>,
+    content_types: Vec<String>,
+    transition_types: Vec<String>,
+    component_roles: Vec<String>,
+}
+fn compatibility_basis() -> &'static CompatibilityBasis {
+    static BASIS: std::sync::OnceLock<CompatibilityBasis> = std::sync::OnceLock::new();
+    BASIS.get_or_init(|| serde_json::from_str(include_str!("../../../room-v3-compatibility.json"))
+        .expect("bundled API1 compatibility basis"))
+}
+/// Requirements only: supported never bypasses full manifest/resource validation.
+pub fn compatibility(value: &Value) -> CompatibilityReport {
+    fn update(detail: String) -> CompatibilityReport {
+        CompatibilityReport { supported: false, needs_update: true,
+            message: format!("需要更新 Dext：{detail}；当前版本不会转换或改写原件") }
+    }
+    let basis = compatibility_basis();
+    let version = value.get("version").and_then(Value::as_u64);
+    let api = value.get("apiVersion").and_then(Value::as_u64);
+    if version != Some(basis.room_version) || api != Some(basis.author_api_version) {
+        return if version.is_some_and(|v| v >= basis.room_version) && api.is_some() {
+            update(format!("作品要求 Room {:?} / 作者 API {:?}", version, api))
+        } else {
+            CompatibilityReport { supported: false, needs_update: false, message: "Room 版本字段缺失或无效；原件已保留".into() }
+        };
+    }
+    let mut subjects = Vec::new();
+    if let Some(scene) = value.get("roomScene") { subjects.push(scene); }
+    for name in ["start", "idle"] { if let Some(content) = value.get(name) { subjects.push(content); } }
+    if let Some(desks) = value.get("desks").and_then(Value::as_array) {
+        for desk in desks { if let Some(content) = desk.get("background") { subjects.push(content); } }
+    }
+    if let Some(components) = value.get("components").and_then(Value::as_array) {
+        for component in components {
+            subjects.push(component);
+            if let Some(role) = component.get("role").and_then(Value::as_str) {
+                if !basis.component_roles.iter().any(|v| v == role) {
+                    return update(format!("组件类型 {}", role.chars().take(80).collect::<String>()));
+                }
+            }
+        }
+    }
+    for subject in subjects {
+        if let Some(values) = subject.get("capabilities").and_then(Value::as_array) {
+            for capability in values.iter().filter_map(Value::as_str) {
+                if !basis.capabilities.iter().any(|v| v == capability) {
+                    return update(format!("能力 {}", capability.chars().take(80).collect::<String>()));
+                }
+            }
+        }
+        if let Some(kind) = subject.get("type").and_then(Value::as_str) {
+            if !basis.content_types.iter().any(|v| v == kind) {
+                return update(format!("媒体类型 {}", kind.chars().take(80).collect::<String>()));
+            }
+        }
+    }
+    if let Some(buttons) = value.get("buttons").and_then(Value::as_array) {
+        for button in buttons {
+            if let Some(kind) = button.get("action").and_then(|v| v.get("type")).and_then(Value::as_str) {
+                if !basis.actions.iter().any(|v| v == kind) {
+                    return update(format!("动作 {}", kind.chars().take(80).collect::<String>()));
+                }
+            }
+        }
+    }
+    if let Some(kind) = value.get("transition").and_then(|v| v.get("type")).and_then(Value::as_str) {
+        if !basis.transition_types.iter().any(|v| v == kind) {
+            return update(format!("转场 {}", kind.chars().take(80).collect::<String>()));
+        }
+    }
+    CompatibilityReport { supported: true, needs_update: false, message: "Room v3 / API 1".into() }
+}
+pub fn require_compatibility(value: &Value) -> Result<(), String> {
+    let report = compatibility(value);
+    if report.supported { Ok(()) } else { Err(report.message) }
+}
 pub fn validate_manifest(value: &Value) -> Result<Manifest, String> {
     fn shape(value: &Value) -> Result<(), String> {
         match value {
@@ -1018,8 +1107,9 @@ pub fn validate_manifest(value: &Value) -> Result<Manifest, String> {
         serde_json::to_vec(value).map_err(|e| e.to_string())?.len() <= MAX_MANIFEST_BYTES,
         "manifest exceeds 1 MiB",
     )?;
+    require_compatibility(value)?;
     let room: RoomDocument =
-        serde_json::from_value(value.clone()).map_err(|e| format!("invalid v3 manifest: {e}"))?;
+        serde_json::from_value(value.clone()).map_err(|e| if e.to_string().contains("unknown field") { format!("当前 Dext 无法读取作品字段，可能需要更新；原件已保留：{e}") } else { format!("invalid v3 manifest: {e}") })?;
     require(
         room.version == 3 && room.api_version == 1,
         "unsupported Room or author API version",

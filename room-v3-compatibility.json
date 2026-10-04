@@ -1,0 +1,46 @@
+{
+  "contentTypes": [
+    "image",
+    "video",
+    "gif",
+    "html"
+  ],
+  "capabilities": [
+    "desk.read",
+    "desk.navigate",
+    "time.read",
+    "hardware.read",
+    "media.read",
+    "media.control",
+    "audio.read",
+    "audio.control",
+    "storage.read",
+    "storage.write",
+    "binding.launch",
+    "dext.exit"
+  ],
+  "hostProtocolVersion": 1,
+  "actions": [
+    "desk.next",
+    "desk.previous",
+    "desk.go",
+    "binding.launch",
+    "dext.exit"
+  ],
+  "transitionTypes": [
+    "slide",
+    "fade",
+    "none",
+    "author"
+  ],
+  "personalFormatVersion": 1,
+  "roomVersion": 3,
+  "baselineId": "dext-v3-api1-first-release",
+  "authorApiVersion": 1,
+  "formatVersion": 1,
+  "installationFormatVersion": 1,
+  "componentRoles": [
+    "widget",
+    "dock"
+  ]
+}

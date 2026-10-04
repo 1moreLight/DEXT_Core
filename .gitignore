@@ -43,3 +43,6 @@ rooms/library.json
 # Host-owned native v3 installation; authored samples remain tracked in rooms/.
 /wallpapers/dext-room-v3/content/
 /wallpapers/dext-room-v3/source.v3.json
+
+# Tiny frozen API1 release video (5 KiB), required by its resource manifest.
+!dev_docs/fixtures/room-v3/release-api1/video/assets/motion.webm

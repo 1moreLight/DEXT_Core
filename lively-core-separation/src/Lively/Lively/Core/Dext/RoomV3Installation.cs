@@ -59,6 +59,7 @@ internal static class RoomV3Installation
 
     private static HashSet<string> ValidateManifest(JsonElement room)
     {
+        Require(Integer(room, "version") == 3 && Integer(room, "apiVersion") == 1, "需要更新 Dext：不支持此 Room 格式或作者 API；原件和个人数据保持");
         Fields(room, "version apiVersion id name startDesk desks resources roomScene start idle transition components buttons dockComponentId");
         Require(Integer(room, "version") == 3 && Integer(room, "apiVersion") == 1, "Room version");
         Require(Guid.TryParseExact(Text(room, "id"), "D", out var uuid) && uuid != Guid.Empty, "Room UUID");
@@ -80,7 +81,7 @@ internal static class RoomV3Installation
             Require(Text(value, "type") switch {
                 "html" => ext == ".html", "gif" => ext == ".gif", "video" => ext is ".mp4" or ".webm",
                 "image" => ext is ".png" or ".jpg" or ".jpeg" or ".webp" or ".svg" or ".avif" or ".gif", _ => false
-            }, "content type");
+            }, "需要更新 Dext：不支持媒体类型或扩展名；原件保持");
         }
         var desks = Array(room, "desks", 64); Require(desks.Length > 0, "empty Desks");
         var deskIds = new HashSet<string>(StringComparer.Ordinal);
@@ -100,7 +101,7 @@ internal static class RoomV3Installation
         if (Optional(room, "transition", out var transition))
         {
             Fields(transition, "type durationMs"); var type = Text(transition, "type");
-            Require(type is "slide" or "fade" or "none" or "author", "transition type");
+            Require(type is "slide" or "fade" or "none" or "author", "需要更新 Dext：不支持作品转场；原件保持");
             Require(Integer(transition, "durationMs") is >= 0 and <= 10000, "transition duration");
             Require(type != "author" || Optional(room, "roomScene", out _), "author requires scene");
         }
@@ -113,7 +114,7 @@ internal static class RoomV3Installation
             if (Optional(button, "action", out var action))
             {
                 Fields(action, "type deskId"); var type = Text(action, "type");
-                Require(type is "desk.next" or "desk.previous" or "desk.go" or "binding.launch" or "dext.exit", "action type");
+                Require(type is "desk.next" or "desk.previous" or "desk.go" or "binding.launch" or "dext.exit", "需要更新 Dext：不支持作品动作；原件保持");
                 Require(type == "desk.go" ? Optional(action, "deskId", out var target) && deskIds.Contains(target.GetString()!)
                     : !Optional(action, "deskId", out _), "action Desk");
             }
@@ -127,7 +128,7 @@ internal static class RoomV3Installation
         {
             Fields(component, "id role entry placement capabilities buttonIds config");
             var id = Text(component, "id"); Id(id); var role = Text(component, "role");
-            Require(role is "widget" or "dock", "component role"); Require(components.TryAdd(id, role), "duplicate component");
+            Require(role is "widget" or "dock", "需要更新 Dext：不支持组件类型；原件保持"); Require(components.TryAdd(id, role), "duplicate component");
             Entry(Text(component, "entry"), true); ValidateCapabilities(component); Config(component);
             var placement = component.GetProperty("placement"); Fields(placement, "x y width height");
             var x = placement.GetProperty("x").GetDouble(); var y = placement.GetProperty("y").GetDouble();
@@ -170,7 +171,18 @@ internal static class RoomV3Installation
         foreach (var item in refs) Require(valid.Contains(item.GetString()!) && seen.Add(item.GetString()!), "duplicate or missing reference");
         return seen;
     }
-    private static void ValidateCapabilities(JsonElement subject) => References(Array(subject, "capabilities", Capabilities.Length, true), Capabilities);
+    private static void ValidateCapabilities(JsonElement subject)
+    {
+        var values = Array(subject, "capabilities", 4096, true);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var value in values)
+        {
+            Require(value.ValueKind == JsonValueKind.String, "capability shape");
+            var capability = value.GetString()!;
+            Require(Capabilities.Contains(capability), "需要更新 Dext：不支持作品声明能力；原件和个人数据保持");
+            Require(seen.Add(capability), "duplicate capability");
+        }
+    }
     private static void Config(JsonElement subject) { if (subject.TryGetProperty("config", out var config)) PublicConfig(config, 0); }
     private static void PublicConfig(JsonElement value, int depth)
     {
