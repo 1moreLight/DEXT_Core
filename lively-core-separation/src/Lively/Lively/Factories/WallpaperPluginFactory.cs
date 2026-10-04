@@ -1,4 +1,4 @@
-﻿using Lively.Common.Helpers;
+using Lively.Common.Helpers;
 using Lively.Common.Services;
 using Lively.Core;
 using Lively.Core.Display;
@@ -44,7 +44,20 @@ namespace Lively.Factories
             bool isWindowed = false,
             bool isScreensaver = false)
         {
-            switch (model.LivelyInfo.Type)
+#if DEXT_V3_RELEASE
+            var official = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wallpapers", "dext-room-v3", "index.html"));
+            if ((model.LivelyInfo.Type != WallpaperType.web && model.LivelyInfo.Type != WallpaperType.webaudio) ||
+                !string.Equals(Path.GetFullPath(model.FilePath), official, StringComparison.OrdinalIgnoreCase))
+                throw new PluginNotFoundException("Dext v3 发布版仅接受官方原生 Room 宿主。");
+            Dext.Core.Rooms.RoomV3Installation.Verify(Path.Combine(Path.GetDirectoryName(official)!, "content"));
+            return new WebWebView2(model.FilePath, model, display,
+                userSettings.Settings.WebDebugPort,
+                lpFactory.CreateLivelyPropertyFolder(model, display, arrangement, userSettings),
+                GetWebView2UserDataDir(arrangement, display, isWindowed),
+                userSettings.Settings.ApplicationTheme, userSettings.Settings.AudioVolumeGlobal,
+                GetWebView2Scale(display, isWindowed), userSettings.Settings.VisualizerAudioDeviceId,
+                isScreensaver, CreateDesktopIconPreferences());
+#else            switch (model.LivelyInfo.Type)
             {
                 case WallpaperType.web:
                 case WallpaperType.webaudio:
@@ -210,6 +223,7 @@ namespace Lively.Factories
                     }
             }
             throw new PluginNotFoundException("Wallpaper player not found.");
+#endif
         }
 
         private string GetWebView2UserDataDir(WallpaperArrangement arrangement, DisplayMonitor display, bool isWindowed)

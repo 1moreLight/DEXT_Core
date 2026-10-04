@@ -1,0 +1,19 @@
+{
+  "hostDirectory": "wallpapers/dext-room-v3",
+  "profile": "v3-release",
+  "formatVersion": 1,
+  "hostAssets": [
+    "LivelyInfo.json",
+    "index.html",
+    "style.css",
+    "geometry.js",
+    "layout-model.js",
+    "runtime-model.js",
+    "native-host.js",
+    "frame-host.js",
+    "media-host.js",
+    "playback-host.js",
+    "dom-host.js",
+    "main.js"
+  ]
+}

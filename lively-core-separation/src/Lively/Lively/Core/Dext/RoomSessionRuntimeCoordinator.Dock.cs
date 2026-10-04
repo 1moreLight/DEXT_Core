@@ -130,7 +130,12 @@ internal sealed partial class RoomSessionRuntimeCoordinator
 
     // Snapshot callbacks may run while the gateway holds its lock. Only enqueue;
     // installation reads, process launch and waits run outside that callback.
-    private void OnDockSourceSnapshot(RoomSessionSnapshot snapshot) => QueueDockUpdate();
+    private readonly RoomPerformanceTrace performanceTrace = new();
+    private void OnDockSourceSnapshot(RoomSessionSnapshot snapshot)
+    {
+        performanceTrace.Observe(snapshot);
+        QueueDockUpdate();
+    }
 
     private void QueueDockUpdate()
     {

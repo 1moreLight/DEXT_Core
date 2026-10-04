@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -25,15 +25,19 @@
     <DocumentationFile />
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(DextV3Release)'=='true'">
+    <DefineConstants>$(DefineConstants);DEXT_V3_RELEASE</DefineConstants>
+    <Description>Dext v3 desktop runtime core</Description>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Plugins\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Plugins\**">
+    <Content Include="Plugins\**" Condition="'$(DextV3Release)'!='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Bundle\**">
+    <Content Include="Bundle\**" Condition="'$(DextV3Release)'!='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -47,10 +51,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\Plugins\Mpv\LivelyProperties.json">
+    <Content Include="Assets\Plugins\Mpv\LivelyProperties.json" Condition="'$(DextV3Release)'!='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\Plugins\Mpv\LivelyProperties.loc.json">
+    <Content Include="Assets\Plugins\Mpv\LivelyProperties.loc.json" Condition="'$(DextV3Release)'!='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Nlog.config">

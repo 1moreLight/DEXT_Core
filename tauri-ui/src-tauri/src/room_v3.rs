@@ -8,6 +8,9 @@ use std::collections::{BTreeMap, HashSet};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+#[path = "room_v3_recovery.rs"]
+mod recovery;
+pub use recovery::{inspect_recovery, restore_retained, cleanup_retained, RecoveryReport};
 
 // Preserve decoded property uniqueness before converting raw author JSON to Value.
 struct UniqueJson(Value);
@@ -629,6 +632,8 @@ fn install_inner(
     fs::create_dir(&stage.0).map_err(|e| io_error("create installation staging", e))?;
     let root = root_directory(&stage.0)?;
     let stage_guard = lock_directory(&root)?;
+    #[cfg(windows)]
+    recovery::record_stage(&parent, stage.0.file_name().and_then(|n|n.to_str()).ok_or("staging name")?, &stage_guard, &snapshot)?;
     observe("staging");
     for relative in
         std::iter::once("room.json").chain(snapshot.resources.iter().map(|r| r.path.as_str()))

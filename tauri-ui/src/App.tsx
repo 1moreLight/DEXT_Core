@@ -474,7 +474,7 @@ export default function App() {
     if (!IS_TAURI) return;
     refreshRooms(libDir).then(async (list) => {
       const last = localStorage.getItem("dext.roomPath");
-      const target = list.find((r) => r.path === last)?.path ?? list[0]?.path;
+      const target = list.find((r) => r.path === last && roomContractPolicy(r.version,r.compatibility).edit)?.path ?? list.find((r)=>roomContractPolicy(r.version,r.compatibility).edit)?.path;
       if (target) await openRoom(target, false);
     });
   }, []);

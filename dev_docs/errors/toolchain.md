@@ -471,3 +471,5 @@ P8记录脚本收尾：误用PowerShell自动变量Error导致赋值失败、错
 room-v3/**为保持安装摘要设为-text，Git不会规范新复制资源的CRLF；暂存差异检查因此将行末CR报告为尾部空白。仅将新native-dock源样包资源规范为UTF8/LF，并比较去CR后的模板/SDK文本一致；已有带installation.json的摘要夹具保持原字节。以后复制到摘要夹具目录需先选择固定换行，不用全局Git配置或重写历史夹具绕过检查。首次未暂存新文件时diff检查不含新样包，最终以暂存检查为准。
 P8-002补充（沿#244）：批量UI替换的正向autoHideAvailable锚点也匹配了带!的负向条件，随后负向锚点缺失使Stop正确停止。读取实际diff确认两处已成为预期复合条件，只接续尚未执行的占位反馈/TS字段，未重放此前C#/台账写入。
 #244 补充（2026-10-05）：PowerShell脚本成功不重置LASTEXITCODE，null或之前原生命令值不能用于判定普通脚本结果。本轮冻结摘要六套已成功，包装层误读LASTEXITCODE抛错；前面的文件写入已执行，不重放。普通脚本使用ErrorActionPreference Stop/异常，LASTEXITCODE只紧跟原生进程核对。
+## #251 发布候选须同时切换路径和产品配置（2026-10-05）
+开发const编译机wallpapers路径、about许可路径及external-target开发Core探测，搬移后失效。源码新增v3-release配置：同目录Core/Dext v3元数据、官方宿主与许可文档相对产品根；Core只分派官方WebView2，Assets/Plugins旧内容从发布移除。新目录部署精确宿主清单与来源说明、记录实际文件摘要；未跑Release构建，不冒称已可移机运行。恢复/性能/缺资源及最终状态见独立卡。

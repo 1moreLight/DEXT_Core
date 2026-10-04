@@ -16,7 +16,9 @@ static LIFECYCLE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(()
 static STARTED_CORE: tokio::sync::Mutex<Option<Child>> = tokio::sync::Mutex::const_new(None);
 
 fn valid_core_binary_identity(product: &str, description: &str) -> bool {
-    product.eq_ignore_ascii_case("Dext") && description.to_ascii_lowercase().starts_with("dext")
+    product.eq_ignore_ascii_case("Dext") && if cfg!(feature="v3-release") {
+        description.to_ascii_lowercase().starts_with("dext v3")
+    } else { description.to_ascii_lowercase().starts_with("dext") }
 }
 
 fn version_value(info: &[u8], sub_block: &str) -> Option<String> {
@@ -114,7 +116,9 @@ fn core_path_for_configurator_with_target(
             })
         });
 
-    let core = if development_binary {
+    let core = if cfg!(feature = "v3-release") {
+        config_path.parent().ok_or("cannot resolve product directory")?.join("Lively.exe")
+    } else if development_binary {
         manifest
             .parent()
             .and_then(Path::parent)
@@ -169,6 +173,23 @@ fn expected_core_path() -> Result<PathBuf, String> {
     let configurator = std::env::current_exe()
         .map_err(|error| format!("cannot locate configurator executable: {error}"))?;
     core_path_for_configurator(&configurator, Path::new(env!("CARGO_MANIFEST_DIR")))
+}
+
+pub fn native_assets_directory() -> Result<PathBuf,String> {
+    let directory = if cfg!(feature="v3-release") {
+        expected_core_path()?.parent().ok_or("Dext product has no parent directory")?.join("wallpapers/dext-room-v3")
+    } else {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../wallpapers/dext-room-v3")
+    };
+    let directory=directory.canonicalize().map_err(|e|format!("缺少原生桌面资源，请修复 Dext 安装：{e}"))?;
+    if !directory.join("index.html").is_file() || !directory.join("LivelyInfo.json").is_file() {
+        return Err("缺少 Dext 原生宿主入口，请修复安装".into());
+    }
+    Ok(directory)
+}
+pub fn require_core_stopped_for_maintenance() -> Result<(), String> {
+    if mutex_exists()? { Err("请先退出 Dext Core，再恢复或清理旧安装；源 Room 和个人配置保持".into()) }
+    else { Ok(()) }
 }
 
 fn mutex_exists() -> Result<bool, String> {
@@ -370,6 +391,7 @@ pub async fn start_core() -> Result<CoreIdentity, String> {
             return Err("Dext Core process is still running but not responding".into());
         }
     }
+    let launch_started=Instant::now();
     let child = Command::new(&expected)
         .current_dir(
             expected
@@ -381,7 +403,9 @@ pub async fn start_core() -> Result<CoreIdentity, String> {
     let pid = child.id();
     *started = Some(child);
     drop(started);
-    wait_until_ready(&expected, Some(pid)).await
+    let identity=wait_until_ready(&expected, Some(pid)).await?;
+    crate::room_performance::record("core.spawn.ready",launch_started,serde_json::json!({"processId":pid}));
+    Ok(identity)
 }
 
 pub async fn exit_core() -> Result<(), String> {

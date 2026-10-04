@@ -12,6 +12,7 @@ import {
 } from "@/lib/desktop-icon-preferences";
 
 import { V3DockSettings } from "@/components/V3DockSettings";
+import { V3InstallationMaintenance } from "@/components/V3InstallationMaintenance";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -408,6 +409,7 @@ export function SettingsPage(props: SettingsPageProps) {
 
           <section>
             <h2 className="mb-4 text-sm font-semibold">Room 库与诊断</h2>
+            <V3InstallationMaintenance isTauri={IS_TAURI} coreRunning={Boolean(props.coreIdentity)} setStatus={props.setStatus}/>
             <div className="space-y-3 border-y border-border py-4">
               <label className="block text-xs font-medium text-muted-foreground">Room 库路径</label>
               <div className="flex gap-2">

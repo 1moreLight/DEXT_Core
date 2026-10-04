@@ -276,3 +276,5 @@ P8原生Dock设置接线：配置器设置中的独立卡经Core读取/保存全
 ### v3 首发与升级兼容入口
 - 规则：RELEASE_V3_COMPATIBILITY.md；固定词汇：../room-v3-compatibility.json。
 - 原始样包/分享zip/摘要：fixtures/room-v3/release-api1；只读字节检查：../scripts/verify-release-rooms.ps1。当前发布资格与实机证据仍以ROADMAP和验收卡为准。
+
+- v3候选部署/维护/性能：RELEASE_V3.md；scripts/build-v3-release.ps1只构建到新目录、不启动，游戏期间不得执行。完整状态仍认ROADMAP/验收卡。

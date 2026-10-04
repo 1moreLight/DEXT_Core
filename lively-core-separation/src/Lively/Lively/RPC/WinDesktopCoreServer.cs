@@ -223,6 +223,10 @@ namespace Lively.RPC
             catch (Exception e)
             {
                 Logger.Error(e.ToString());
+#if DEXT_V3_RELEASE
+                throw new global::Grpc.Core.RpcException(new global::Grpc.Core.Status(
+                    global::Grpc.Core.StatusCode.FailedPrecondition, "Dext v3 原生宿主未能启动，请核对安装和作品资源。"));
+#endif
             }
 
             return await Task.FromResult(new Empty());

@@ -340,3 +340,6 @@
 | #248 | 原生另存不能复用v2固定资源目录；复制或删除RPC未确认需保留恢复记录 | [backend](errors/backend.md) |
 
 | #249 | 未来Room要求须先兼容判定；只读清单不能进旧编辑器规范化 | [backend](errors/backend.md) |
+
+| #250 | 安装清理不能按前缀路径递归删除；部分删除重试需目录身份与剩余摘要 | [backend](errors/backend.md) |
+| #251 | 可搬移发布版不能沿用编译机宿主/许可路径；配置器和Core须同v3配置 | [toolchain](errors/toolchain.md) |

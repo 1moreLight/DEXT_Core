@@ -6,6 +6,7 @@ mod room_v3_authoring;
 mod room_v3_sharing;
 mod room_v3_dock;
 mod room_v3_workbench;
+mod room_performance;
 
 use tauri::Manager;
 
@@ -78,7 +79,7 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 // 2026-08-27: derive from CARGO_MANIFEST_DIR (tauri-ui/src-tauri) so the path
 // survives repo relocation; recompile after moving the repo.
 const WALLPAPER_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room");
-const WALLPAPER_V3_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room-v3");
+// Native runtime paths are resolved beside the installed product in v3-release.
 const CMD_ROOM_LAYOUT_SYNC: i32 = 26;
 const CMD_DESKTOP_ICON_PREFERENCES: i32 = 27;
 static DESK_LAYOUT_SYNC_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
@@ -430,12 +431,15 @@ async fn validate_room_library(path: String) -> Result<String, String> {
         .map(|validated| validated.to_string_lossy().into_owned())
 }
 
+fn product_document_root() -> Result<std::path::PathBuf,String> {
+    let root = if cfg!(feature="v3-release") {
+        std::env::current_exe().map_err(|e|e.to_string())?.parent().ok_or("product has no directory")?.to_path_buf()
+    } else { std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..") };
+    root.canonicalize().map_err(|e|format!("resolve product documents: {e}"))
+}
 #[tauri::command]
 async fn about_info() -> Result<AboutInfo, String> {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let root = product_document_root()?;
     let entries = [
         (
             "license",
@@ -485,10 +489,7 @@ fn about_document_path(document_id: &str) -> Result<std::path::PathBuf, String> 
         "configurator-readme" => "tauri-ui/README.md",
         _ => return Err("unknown About document".into()),
     };
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let root = product_document_root()?;
     let path = root
         .join(relative)
         .canonicalize()
@@ -1279,6 +1280,7 @@ fn room_version(room: &serde_json::Value) -> Result<u64, String> {
         .and_then(|value| value.as_u64())
         .ok_or_else(|| "room.version must be a positive integer".to_string())?;
     if version >= 3 { room_v3::require_compatibility(room)?; }
+    else if cfg!(feature="v3-release") { return Err("v3 发布版只支持原生 Room v3；旧作品原件保持，不自动迁移".into()); }
     Ok(version)
 }
 
@@ -1644,6 +1646,9 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
                     version = j.get("version").and_then(|value| value.as_u64());
                     if version.is_some_and(|v| v >= 3) {
                         compatibility = Some(native_room_compatibility(&j));
+                    } else if cfg!(feature="v3-release") {
+                        compatibility = Some(room_v3::CompatibilityReport {supported:false,needs_update:false,
+                            message:"v3 发布版只支持原生 Room v3；旧作品原件保持，不自动迁移".into()});
                     }
                     if let Some(arr) = j["desks"].as_array() {
                         desks = arr.len();
@@ -2587,6 +2592,37 @@ fn read_v3_session_overlay(
 // Mirror Room-owned data into the wallpaper package, then reload it.
 // WebView2 virtual host can only serve files inside the package dir (ERRORS #7/#27).
 #[tauri::command]
+async fn v3_installation_recovery(offset: Option<usize>) -> Result<room_v3::RecoveryReport, String> {
+    let host = native_runtime_directory()?;
+    tauri::async_runtime::spawn_blocking(move || room_v3::inspect_recovery(&host,offset.unwrap_or(0))).await
+        .map_err(|e|format!("read recovery inventory: {e}"))?
+}
+#[tauri::command]
+async fn maintain_v3_installation(name: String, manifest_sha256: String, operation: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    core_runtime::require_core_stopped_for_maintenance()?;
+    let host = native_runtime_directory()?;
+    tauri::async_runtime::spawn_blocking(move || {
+        core_runtime::require_core_stopped_for_maintenance()?;
+        match operation.as_str() {
+            "restore" => {
+                let started=std::time::Instant::now();
+                let snapshot = room_v3::restore_retained(&host,&name,&manifest_sha256)?;
+                room_performance::record("native.installation.restored",started,serde_json::json!({"roomId":snapshot.room_id}));
+                Ok(serde_json::json!({"operation":"restore","roomId":snapshot.room_id,"message":"旧安装已恢复；原始作品和个人绑定保持，请启动 Core 后重新应用"}))
+            }
+            "cleanup" => {
+                let bytes = room_v3::cleanup_retained(&host,&name,&manifest_sha256)?;
+                Ok(serde_json::json!({"operation":"cleanup","freedBytes":bytes,"message":"已清理所选认证安装残留；源 Room 和个人数据保持"}))
+            }
+            _ => Err("unknown installation maintenance operation".into()),
+        }
+    }).await.map_err(|e|format!("installation maintenance interrupted: {e}"))?
+}
+fn native_runtime_directory() -> Result<std::path::PathBuf,String> {
+    core_runtime::native_assets_directory()
+}
+#[tauri::command]
 async fn apply_room(room_dir: String) -> Result<(), String> {
     let canonical = std::path::Path::new(&room_dir)
         .canonicalize()
@@ -2594,13 +2630,15 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
     let src = canonical.as_path();
     let room = room_v3::read_document(src)?;
     if room_version(&room)? == 3 {
-        let host = std::path::Path::new(WALLPAPER_V3_DIR)
-            .canonicalize().map_err(|e| format!("resolve native renderer: {e}"))?;
+        let apply_started=std::time::Instant::now();
+        let host = native_runtime_directory()?;
         if !host.join("index.html").is_file() || !host.join("LivelyInfo.json").is_file() {
             return Err("native v3 official renderer is not installed".into());
         }
         let previous = grpc::room_session_status().await?;
+        let install_started=std::time::Instant::now();
         let installation = room_v3::install(src, &host.join("content"))?;
+        room_performance::record("native.install.verified",install_started,serde_json::json!({"roomId":installation.room_id,"resourceBytes":installation.resources.iter().map(|r|r.size).sum::<u64>()}));
         // Use the same absolute path for the Player URL and resource-server origin.
         // SetWallpaper acknowledges scheduling, before the new session is attached.
         grpc::set_wallpaper(&display_path(&host)).await?;
@@ -2619,6 +2657,7 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
                         return Err("installed Room changed while applying; please retry".into());
                     }
                     room_v3_authoring::record_source(&host, src, &installation)?;
+                    room_performance::record("native.apply.sessionConfirmed",apply_started,serde_json::json!({"roomId":installation.room_id,"playerPid":status.player_pid}));
                     return Ok(());
                 }
                 Ok(Err(error)) => last_error = error,
@@ -2657,8 +2696,7 @@ fn normalized_path(path: &std::path::Path) -> String {
 
 async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
     let wallpapers = grpc::get_wallpapers().await?;
-    let native_runtime=std::path::Path::new(WALLPAPER_V3_DIR).canonicalize()
-        .unwrap_or_else(|_|std::path::PathBuf::from(WALLPAPER_V3_DIR));
+    let native_runtime=native_runtime_directory()?;
     let native_norm=normalized_path(&native_runtime);
     if let Some(running)=wallpapers.iter().find(|wallpaper|{
         let path=std::path::Path::new(&wallpaper.path).canonicalize().unwrap_or_else(|_|std::path::PathBuf::from(&wallpaper.path));
@@ -2994,6 +3032,7 @@ async fn diagnostic_value() -> Result<serde_json::Value, String> {
         "logDirectory": std::path::Path::new(&identity.app_data_directory).join("logs"),
         "wallpapers": wallpapers,
         "activeRoom": active,
+        "actualOperationTimings": room_performance::samples(),
     }))
 }
 
@@ -3524,6 +3563,8 @@ pub fn run() {
             export_room_zip,
             import_room_zip,
             apply_room,
+            v3_installation_recovery,
+            maintain_v3_installation,
             active_room,
             sync_active_desk_icons,
             stop_wallpapers,
