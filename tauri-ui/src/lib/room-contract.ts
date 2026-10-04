@@ -20,7 +20,7 @@ const READ_ONLY = {
 
 export function roomContractPolicy(version: unknown): RoomContractPolicy {
   if (version === 3) {
-    return {versionLabel:"v3",recognized:true,edit:true,save:true,saveAs:false,apply:true,preview:false,zip:false};
+    return {versionLabel:"v3",recognized:true,edit:true,save:true,saveAs:false,apply:true,preview:false,zip:true};
   }
   if (version === 2) {
     return {

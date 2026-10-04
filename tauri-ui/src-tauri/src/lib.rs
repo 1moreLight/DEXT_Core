@@ -3,6 +3,7 @@ mod creator;
 mod core_runtime;
 mod room_v3;
 mod room_v3_authoring;
+mod room_v3_sharing;
 mod room_v3_dock;
 mod room_v3_workbench;
 
@@ -2112,11 +2113,15 @@ fn export_room_zip_file(
     destination: &std::path::Path,
 ) -> Result<(), String> {
     use std::io::Write;
+
     let mut room: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(room_dir.join("room.json"))
             .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
+    if room.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return room_v3_sharing::export(room_dir, destination);
+    }
     room.as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?
         .remove("__source");
@@ -2221,6 +2226,9 @@ fn import_room_zip_file(
     requested_name: Option<&str>,
 ) -> Result<std::path::PathBuf, String> {
     use std::io::Read;
+    if room_v3_sharing::is_native_archive(archive_path)? {
+        return room_v3_sharing::import(library_dir, archive_path, requested_name);
+    }
     let library = library_dir
         .canonicalize()
         .or_else(|_| {
