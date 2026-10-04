@@ -333,3 +333,6 @@
 
 | #243 | 任务栏恢复须独立看护/落盘，ABM_SETSTATE返回TRUE不能证明隐藏或恢复 | [backend](errors/backend.md) |
 | #244 | 批量编辑非终止错误会返回exit0，须Stop/锚点与具名状态核对 | [toolchain](errors/toolchain.md) |
+
+| #245 | Dock窗口回报不代替有效输入窗口，实际高度/DPI需从原生测量读取 | [backend](errors/backend.md) |
+| #246 | room-v3的-text规则保留复制CRLF；新样包固定LF后检查暂存差异 | [toolchain](errors/toolchain.md) |

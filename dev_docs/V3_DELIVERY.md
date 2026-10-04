@@ -312,3 +312,5 @@ Core复用现有RawInput，独立Dock窗口的实际命中、可见性、全屏/
 
 ## P8 Task4 独立任务栏恢复编码（2026-10-05）
 Watchdog新增独立Dock模式，不混入壁纸清理名单；Core/Dock PID+启动时刻、lease/mutex与心跳确定所有权。主任务栏原自动隐藏/可见状态及Explorer身份先原子落盘，再变更Shell状态并读取实际状态确认。独立看护关闭故障后的精确自有Dock并恢复，Core监督及落盘记录支持看护/Explorer/下次启动恢复；无Dock/禁用/退出先恢复，失败保留记录。全屏恢复不强行显示任务栏到游戏上，Player UI恢复有宽限；健康心跳不反复读安装/Room。配置器区分窗口可用和任务栏替代确认。Windows接口依据：[ABM_GETSTATE](https://learn.microsoft.com/en-us/windows/win32/shell/abm-getstate)、[ABM_SETSTATE](https://learn.microsoft.com/en-us/windows/win32/shell/abm-setstate)。当前包编码4/5=80%；仅csproj XML/源包含及diff核对，未构建/启动/系统变更。条目12实际原生证据仍不足，六项游戏后人工验收与整体审查保留，不合并。
+
+P8高度反馈/离线样包（2026-10-05）：有效输入窗口测量决定就绪及任务栏替代资格，配置器显示实际高度DIP/DPI/受限状态，不改已保存偏好。完整native-dock源包复用正式三栏模板/SDK，覆盖共享、Desk差异及无Dock返回路径，不预制安装身份或私人目标。当前包仍编码4/5=80%，游戏期间仅源码/静态资源核对，构建和Windows证据待Task5；完整V3范围保持。

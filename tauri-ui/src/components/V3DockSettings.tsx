@@ -85,6 +85,11 @@ export function V3DockSettings({corePid,setStatus}:Props) {
       <label className="flex items-center justify-between gap-4 text-sm">
         <span>高度</span><div className="flex items-center gap-2"><Input className="w-24" type="number" min={48} max={240} aria-label="Dock 高度" disabled={disabled} value={height} onChange={event => {dirty.current = true; setHeight(event.target.value);}}/><span className="text-xs text-muted-foreground">DIP</span></div>
       </label>
+      <p className="text-xs text-muted-foreground">高度按主屏 DPI 换算，最多使用当前可用高度的 20%。屏幕限制不会改写已保存的偏好。</p>
+      {corePid !== null && confirmed?.runtime.effectiveHeightDip != null && <p className={confirmed.runtime.heightConstrained ? "text-xs text-amber-500" : "text-xs text-muted-foreground"}>
+        当前实际高度：{confirmed.runtime.effectiveHeightDip} DIP{confirmed.runtime.displayDpi != null ? " · " + confirmed.runtime.displayDpi + " DPI" : ""}
+        {confirmed.runtime.heightConstrained ? " · 已按主屏可用尺寸限制" : ""}
+      </p>}
       <div className="flex items-center justify-between gap-3">
         <Button size="sm" disabled={disabled} onClick={() => void save()}>{busy ? "处理中…" : "保存偏好"}</Button>
         <span className="text-xs text-muted-foreground">{!native ? "浏览器设计预览" : corePid === null ? "Core 未连接" : error ? "状态暂不可读" : confirmed ? dockRuntimeLabel(confirmed.runtime) : busy ? "正在读取" : "尚未读取"}</span>

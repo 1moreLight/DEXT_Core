@@ -486,3 +486,6 @@ P8接线源码核对发现：只查当前Desk的任意role=dock组件会把普�
 ## #243 任务栏恢复不能只靠正常Dispose或API返回TRUE（2026-10-05）
 源码接线发现：正常退出恢复不能覆盖Core被结束、Player失去响应及Explorer重建。已采用独立Watchdog模式和精确PID/启动时刻、lease/mutex、持久恢复记录；先保存原基线再隐藏，Core也监督看护，失效后不遗留旧顶层Dock。Player心跳恢复给唤醒留宽限，健康维护不重复读完整安装。
 Shell ABM_GETSTATE的0是有效状态，Windows 7起缺少ALWAYSONTOP位也不代表任务栏不置顶；ABM_SETSTATE总返回TRUE，不能把返回值当效果证据。代码读取实际自动隐藏/可见状态再报告，恢复失败保留记录；全屏时仅还原Shell策略，不强行把任务栏显示到游戏上。接口参考：Microsoft ABM_GETSTATE / ABM_SETSTATE（见V3_DELIVERY链接）。以上仅源码和项目XML检查，实际工作区/DPI/游戏/崩溃恢复仍须Windows验收。
+
+## #245 Dock实际高度和可用状态不能只用Player回报（2026-10-05）
+源码接线发现：WindowReady不证明Core有有效输入窗口，保存高度也不代表实际DPI/宿主限高。Core沿现有ReadNativeViewport测量实际HWND/尺寸/DPI，缺失则保持awaitingInput、不请求替代任务栏。该测量不要求窗口展开，不因自动隐藏产生反复恢复/替代。配置器显示实际DIP/DPI/受限状态，屏幕约束不覆盖保存值。仅源码核对，实际DPI/输入/隐藏行为待游戏后集中验收。

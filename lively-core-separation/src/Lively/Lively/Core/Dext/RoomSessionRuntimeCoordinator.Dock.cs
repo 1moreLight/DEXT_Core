@@ -97,7 +97,13 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var current = player is not null && demand.Matches(player.Demand);
             var window = current ? player?.Player.RoomDockWindowState : null;
             var ready = window is { RendererReady: true, WindowReady: true };
-            var taskbarReady = current && player?.Guard?.Ready == true;
+            var viewport = ready ? player?.Player.ReadNativeViewport() : null;
+            ready = ready && viewport != null;
+            int? effectiveHeight = viewport is null ? null : Math.Max(1, (int)Math.Round(viewport.Height * 96.0 / viewport.Dpi));
+            int? displayDpi = viewport?.Dpi;
+            var heightConstrained = effectiveHeight is { } actualHeight &&
+                result.Preferences is { } preferences && actualHeight < preferences.HeightDip;
+            var taskbarReady = current && ready && player?.Guard?.Ready == true;
             var phase = current ? (window is { RendererReady: true } ?
                 !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
                 window!.Fullscreen ? "fullscreen" : window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
@@ -113,7 +119,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, taskbarReady, reason), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, ready, false, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained), result.Message);
         }
     }
 

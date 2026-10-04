@@ -466,3 +466,6 @@ P8记录脚本收尾：误用PowerShell自动变量Error导致赋值失败、错
 
 ## #244 批量编辑默认非终止错误不能当整段成功（2026-10-05）
 本轮末尾误留一个不存在Common.cs的编辑调用，ReadAllText错误默认未终止PowerShell，整段返回exit0；前面的具名编辑已执行，缺失路径没有创建。未重跑已执行编辑，保留实际状态；后续编辑统一ErrorActionPreference=Stop并验证锚点。检查仍以具名git status/diff为准，不能把shell退出码单独当完整编辑或编译成功。
+
+## #246 自包含样包复制CRLF遇到fixtures的-text规则（2026-10-05）
+room-v3/**为保持安装摘要设为-text，Git不会规范新复制资源的CRLF；暂存差异检查因此将行末CR报告为尾部空白。仅将新native-dock源样包资源规范为UTF8/LF，并比较去CR后的模板/SDK文本一致；已有带installation.json的摘要夹具保持原字节。以后复制到摘要夹具目录需先选择固定换行，不用全局Git配置或重写历史夹具绕过检查。首次未暂存新文件时diff检查不含新样包，最终以暂存检查为准。

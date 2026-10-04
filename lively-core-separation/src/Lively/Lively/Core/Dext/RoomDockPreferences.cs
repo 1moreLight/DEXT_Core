@@ -102,6 +102,7 @@ internal sealed class RoomDockPreferenceStore
 }
 
 public sealed record RoomDockRuntimeStatus(string Phase, int PlayerPid, string? RoomId, string? DeskId,
-    bool HasDock, bool AutoHideAvailable, bool ReserveAvailable, bool TaskbarReplacementReady, string? Reason);
+    bool HasDock, bool AutoHideAvailable, bool ReserveAvailable, bool TaskbarReplacementReady, string? Reason,
+    int? EffectiveHeightDip = null, int? DisplayDpi = null, bool HeightConstrained = false);
 public sealed record RoomDockStatusReply(string Status, RoomDockPreferences? Preferences,
     RoomDockRuntimeStatus Runtime, string? Message = null);
