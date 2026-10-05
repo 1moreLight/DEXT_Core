@@ -20,3 +20,11 @@
 Task2完成（2026-10-05）：build-v3-release.ps1完整退出0；Release WebView2 Player/Watchdog/Core及features v3-release的TS/Vite/Rust配置器、六套冻结摘要、精确发布资产/许可/实际inventory全部成功。修正Player C#8双弃置参数、看护finally越作用域变量、工厂#else与switch同一行、Windows FileDescription沿AssemblyTitle而非Description的问题。字体经JS入口加载，重建打包五个woff2，无跨盘残留字体警告。未升级上游依赖或扩网络测试。
 start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发Player部署。实际启动Core PID55780、配置器PID10280，路径均属于同一候选；Dext v3 Core元数据、Dext mutex/pipe通过。computer-use只读实际配置器tree显示“Dext Core 已连接”；旧v2原件只读/暂不可用，不自动迁移。仅启动未应用样包，无Player呈现、Dock任务栏更改或全链验收证据。Task3/4保留，不合并或发布。
 当前实施2/4=50%，完整v3仍未验收完成。ERRORS #254。
+
+2026-10-06验收修复（仍2/4=50%，Task3未勾完）：
+旧main Debug Core与旧Player的混用日志出现UnknownOptionError；已按精确路径退出旧Core，启动原Release候选，配置器真实tree显示已连接，用户v3test可应用。诊断实测资源安装267ms、完整应用2232ms。
+焦点返回回归4/4通过，修复同视口焦点丢失误清按钮几何；v3托盘打开同目录配置器，候选补可双击启动入口。新Release候选启动与桌面人工结果待下条记录。
+本轮优先人工步骤：①新候选start-dext.cmd打开配置器，应用v3test；②悬停后分别点击切Desk和应用按钮；③切到配置器/其他窗口再回桌面重复点击，托盘重新打开配置器；④再应用一次核对等待是否正常。对应原步骤1/2/3/4；原步骤5/6及全16项证据仍待集中验收，拖动略过，未获通过不合并。
+
+修正版实机启动（2026-10-06）：完整Release退出0，候选D:\use\Orca\DEXT\DEXT_Core\.build\v3-candidate-20261006-inputfix-r2，约267MiB，含start-dext.cmd。Core27096/配置器14176/Player34660/Watchdog11456均来自同目录；真实配置器“Dext Core 已连接”“已应用 v3test”。WallpaperLayout及原已开启Dext启动项现指向新候选。
+旧产品目录升级恢复曾拒绝旧宿主路径，且RestoreWallpaper枚举遇集合变更；重新应用用户v3test后当前布局恢复。目录升级自动恢复保留Task3未完成，原备份.build/v3-repair-backup-1791217508527与旧候选不删除。人工Dock/焦点/托盘结果待用户，本包仍50%，未合并。

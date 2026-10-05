@@ -68,7 +68,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     }
     internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
     internal void CheckNativeViewport(RoomNativeViewport? current,bool foreground)
-    {lock(gate){if(!foreground || current==null || viewport!=null && current!=viewport)ClearGeometry();}}
+    {lock(gate){if(current==null || viewport!=null && current!=viewport)ClearGeometry();else if(!foreground)ClearInput();}}
     internal RoomNativeButton? FocusedButton { get {lock(gate)return focused?.Button;} }
 
     internal void Initialize(long nextGeneration,RoomSessionSnapshot next)
@@ -128,7 +128,8 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         lock(gate)
         {
             ExpireGesture(now);
-            if(!foreground || viewport!=null && viewport!=current){ClearGeometry();return;}
+            if(viewport!=null && viewport!=current){ClearGeometry();return;}
+            if(!foreground){ClearInput();return;}
             if(gesture is not{Key:0,Released:false} down)return;
             if(!Available(current,foreground) || Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)
             {mouse=null;gesture=null;completed=null;}
@@ -164,7 +165,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
                 gesture is not{Key:0} pending || pending.Sequence!=sequence ||
                 edge!="down"&&edge!="up")return false;
-            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(!Available(current,foreground)){CheckNativeViewport(current,foreground);ClearInput();return false;}
             if(edge=="down"&&downSampleReceived || edge=="up"&&(upSampleReceived||!pending.Released))return false;
             if(!AcceptRegions(entries,out var accepted)){gesture=null;completed=null;ResetSamples();return false;}
             var x=edge=="down"?pending.X:pending.ReleaseX!.Value;
@@ -186,7 +187,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
                 gesture is not{SampleKeyboard:true} pending || pending.Sequence!=sequence || pending.Key!=key ||
                 keyTarget==null || keyTarget.Button.Consumer!=consumer || keyTarget.Button.Button!=button ||
                 (keyTarget.Button.EntryId??keyTarget.Button.Button)!=entry || edge!="down"&&edge!="up")return false;
-            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(!Available(current,foreground)){CheckNativeViewport(current,foreground);ClearInput();return false;}
             if(edge=="down"&&downSampleReceived || edge=="up"&&(upSampleReceived||!pending.Released))return false;
             if(!AcceptRegions(entries,out var accepted)){gesture=null;completed=null;ResetSamples();return false;}
             var visible=accepted.FirstOrDefault(value=>SameEntry(value,keyTarget));
@@ -204,7 +205,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             ExpireGesture(now);
             if(!sampledMouse || !Identity(document,session,revision) || geometryVersion!=version ||
                 focusRequests.Count==0 || focusRequests.Peek() is not{} pending || pending.Sequence!=sequence || pending.Reverse!=reverse)return false;
-            if(!Available(current,foreground)){ClearGeometry();return false;}
+            if(!Available(current,foreground)){CheckNativeViewport(current,foreground);ClearInput();return false;}
             if(!AcceptRegions(entries,out var accepted)){focusRequests.Clear();gesture=null;focused=null;keyboard=null;ResetSamples();return false;}
             focusRequests.Dequeue();SelectFocus(accepted,reverse);
             if(keyFocusBarrier==pending.Sequence){
@@ -356,7 +357,12 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     }
     private void ClearGeometry()
     {
-        viewport=null;buttons=Array.Empty<AcceptedEntry>();focused=null;completed=null;mouse=null;keyboard=null;gesture=null;sampledMouse=false;focusRequests.Clear();ResetSamples();
+        viewport=null;buttons=Array.Empty<AcceptedEntry>();sampledMouse=false;ClearInput();
+    }
+    private void ClearInput()
+    {
+        // Focus changes cancel physical input but keep the unchanged published regions.
+        focused=null;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
         // Preserve held edges until UP. Auto-repeat after refresh/geometry change
         // must not turn into a new physical DOWN.
     }

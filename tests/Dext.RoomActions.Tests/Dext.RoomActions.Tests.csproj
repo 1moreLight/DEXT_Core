@@ -24,6 +24,7 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.PersonalEditor.cs" Link="RoomActionAuthority.PersonalEditor.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.ReadGrants.cs" Link="RoomActionAuthority.ReadGrants.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.cs" Link="RoomActionAuthority.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalLifecycleReply.cs" Link="RoomPersonalLifecycleReply.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeInputAuthority.cs" Link="RoomNativeInputAuthority.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeControlQueue.cs" Link="RoomNativeControlQueue.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeExitCoordinator.cs" Link="RoomNativeExitCoordinator.cs" />

@@ -47,6 +47,9 @@ if ($identity.ProductName -ne 'Dext' -or -not $identity.FileDescription.StartsWi
 foreach ($required in @('dext-configurator.exe','plugins/webview2/Lively.Player.WebView2.exe','Plugins/Watchdog/Lively.Watchdog.exe')) {
     if (-not (Test-Path -LiteralPath (Join-Path $output $required) -PathType Leaf)) { throw "Product executable missing: $required" }
 }
+[IO.Directory]::CreateDirectory((Join-Path $output "scripts")) | Out-Null
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "start.ps1") -Destination (Join-Path $output "scripts/start.ps1")
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "start-v3-release.cmd") -Destination (Join-Path $output "start-dext.cmd")
 $inventory = @(Get-ChildItem -LiteralPath $output -Recurse -File | ForEach-Object {
     @{path=$_.FullName.Substring($output.Length+1).Replace('\','/');size=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}
 })

@@ -1779,3 +1779,18 @@ Task1补充：恢复清理按稳定Room UUID检查库内已发布作品，目录
 Task2完成（2026-10-05）：build-v3-release.ps1完整退出0；Release WebView2 Player/Watchdog/Core及features v3-release的TS/Vite/Rust配置器、六套冻结摘要、精确发布资产/许可/实际inventory全部成功。修正Player C#8双弃置参数、看护finally越作用域变量、工厂#else与switch同一行、Windows FileDescription沿AssemblyTitle而非Description的问题。字体经JS入口加载，重建打包五个woff2，无跨盘残留字体警告。未升级上游依赖或扩网络测试。
 start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发Player部署。实际启动Core PID55780、配置器PID10280，路径均属于同一候选；Dext v3 Core元数据、Dext mutex/pipe通过。computer-use只读实际配置器tree显示“Dext Core 已连接”；旧v2原件只读/暂不可用，不自动迁移。仅启动未应用样包，无Player呈现、Dock任务栏更改或全链验收证据。Task3/4保留，不合并或发布。
 当前实施2/4=50%，完整v3仍未验收完成。ERRORS #254。
+
+2026-10-06验收修复：用户报告重启后配置器打不开、桌面Dock点击无效和每次应用壁纸慢。保持INTEGRATION同一分支；先恢复同候选启动，复现v3test动作与一次应用耗时，再按具体原因修复并必要build→start。人工验收卡原步骤1/2/3/4涵盖三项，未修复前实施仍2/4=50%，不合并。
+
+2026-10-06修复推进（仍属INTEGRATION Task3，实施2/4=50%）：
+- [x] 恢复同候选Core/配置器并用真实配置器应用用户v3test。诊断：21,142,032字节资源安装267ms，完整应用2232ms；旧Debug日志含旧Player UnknownOptionError，不以当前Release之外的混用构建判定性能。
+- [x] 焦点丢失误清空已发布按钮几何，无新快照时永不恢复：保留同视口几何，只取消输入/焦点/完成回执；视口变化仍失效。针对DesktopPlayer/Dock和普通/事件采样4项回归先失败“fresh desktop DOWN missing after focus return”，修复后4/4通过。
+- [x] v3托盘配置器改查同目录exe，缺件只提示重新解压完整产品；候选携带start-dext.cmd和scripts/start.ps1，显式Release启动。
+- [x] 修复回归项目遗漏共享RoomPersonalLifecycleReply类型：独立源文件并链接，不复制类型到测试。
+- [x] Release Core编译成功；前端node_modules已缺失导致tauri命令不存在，npm ci --offline --no-audit --no-fund从本机缓存恢复471包，未升级锁文件。
+- [ ] 完整新候选构建、同候选启动和用户桌面两类按钮/切焦点/托盘重开/应用耗时人工复验。源Room和个人绑定备份保留，不合并。
+
+- [x] 新候选完整build-v3-release退出0（日志.build/v3-inputfix-build-r2.log）；发布目录.build/v3-candidate-20261006-inputfix-r2，280,202,910字节（约267MiB），含双击入口。先精确路径退出旧Core/配置器，再build→start新候选。
+- [x] 实际Core PID27096、配置器14176、Player34660、Watchdog11456均同候选；真实配置器“Dext Core 已连接”“已应用 v3test”，WallpaperLayout保存新候选路径，原已开启Windows Dext启动项由Core更新为新候选。
+- [ ] 切换发布目录时旧WallpaperLayout指向旧宿主，被新发布Factory拒绝且RestoreWallpaper枚举遇集合变更；本轮重新应用用户v3test已恢复布局到新路径，原件及恢复备份保留。路径升级恢复仍列Task3待修，不把同候选普通重启与目录升级混为一项。
+- [ ] 用户复验两类Dock按钮、切焦点后重复点击、托盘重开配置器和等待时间。当前2/4=50%，代码轮提交后待验收，不合并。

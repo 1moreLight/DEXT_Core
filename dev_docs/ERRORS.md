@@ -349,3 +349,6 @@
 | #253 | 恢复清理只按旧目录名找作品，已发布Room改名后误删个人覆盖 | [backend](errors/backend.md) |
 
 | #254 | 集中Release构建暴露C#语言/作用域/预处理行错误，文件描述取AssemblyTitle，跨盘CSS字体导入残留构建路径 | [toolchain](errors/toolchain.md) |
+
+| #255 | 焦点丢失误清按钮几何，回到桌面没有新发布导致点击永久失效 | [backend](errors/backend.md) |
+| #256 | 发布托盘误找旧配置器路径；回归项目遗漏共享回执类型，本机依赖缺失需离线恢复 | [toolchain](errors/toolchain.md) |

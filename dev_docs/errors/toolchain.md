@@ -478,3 +478,6 @@ Player固定C#8，两个同名_参数需要C#9；改具名sender/args。Watchdog
 .NET Win32 FileDescription来自AssemblyTitle；仅改Description仍输出Dext Core。v3条件同时指定Dext v3 Core标题，实际候选VersionInfo核对通过。
 node_modules跨C/D盘junction下，Tailwind展开字体CSS @import时生成无法解析的盘符相对路径；改main.tsx的包CSS导入，经Vite自有CSS资源处理后五套woff2进入dist，完整Tauri Release再次成功。
 证据：完整build-v3-release退出0，候选资产inventory通过；start.ps1显式ReleaseDirectory实际Core/配置器启动，UI显示Dext Core已连接。仅构建/启动证据，不等于Room/Player/Dock全链已验收。自动审批一次deadline超时明确未启动命令，原只读命令重试一次成功，未重放任何写入。
+
+## #256（2026-10-06）便携候选托盘仍找旧target路径，测试链接遗漏共享回执类型
+v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/target/release并尝试npm默认构建。修复：发布版只找同目录exe，缺件提示完整产品；打包start-dext.cmd与显式Release启动脚本，缓存清空/重启无需走Debug入口。RoomActions回归项目还遗漏PersonalLifecycleReply：将生产声明移到独立文件并链接。构建前本机node_modules已缺失使tauri命令不存在；通过锁文件一致性检查后离线恢复依赖，失败半成品保留，新目录继续构建。

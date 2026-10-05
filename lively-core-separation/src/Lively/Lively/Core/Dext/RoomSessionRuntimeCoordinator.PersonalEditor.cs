@@ -1,5 +1,4 @@
 namespace Dext.Core.Rooms;
-public sealed record RoomPersonalLifecycleReply(string Status, string? Message = null);
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
     // Local configurator RPC only; never forwarded into the author protocol.
