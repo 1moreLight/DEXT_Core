@@ -57,7 +57,8 @@ namespace Lively.Factories
                 userSettings.Settings.ApplicationTheme, userSettings.Settings.AudioVolumeGlobal,
                 GetWebView2Scale(display, isWindowed), userSettings.Settings.VisualizerAudioDeviceId,
                 isScreensaver, CreateDesktopIconPreferences());
-#else            switch (model.LivelyInfo.Type)
+#else
+            switch (model.LivelyInfo.Type)
             {
                 case WallpaperType.web:
                 case WallpaperType.webaudio:

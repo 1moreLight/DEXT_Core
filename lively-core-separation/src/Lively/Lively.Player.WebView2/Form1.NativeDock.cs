@@ -41,7 +41,7 @@ namespace Lively.Player.WebView2
             };
             DextDockWindowHost.ExtendTransparentFrame(Handle);
             nativeDockHeartbeat = new System.Windows.Forms.Timer { Interval = 1000 };
-            nativeDockHeartbeat.Tick += (_, _) => PublishNativeDockState();
+            nativeDockHeartbeat.Tick += (sender, args) => PublishNativeDockState();
             nativeDockHeartbeat.Start();
         }
 

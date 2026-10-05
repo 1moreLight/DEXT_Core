@@ -119,7 +119,6 @@ namespace Lively.Utility.Watchdog
                 for (var attempt = 0; recovery != null && attempt < 40; attempt++)
                 {
                     try { restored = recovery.Restore(); if (restored) break; } catch { }
-                    if (received) Reply(lease, "PULSE", reported ?? "READY");
                     Thread.Sleep(125);
                 }
                 Reply(lease, restored ? "RESTORED" : "RESTORE_PENDING", "");

@@ -21,3 +21,4 @@ Core DEXT_PERF记录单调时钟内核切页完成/中断，不在gateway锁内�
 - 可接受增量：实际基线后按D13确定，不在代码阶段假定阈值
 - 四媒体/两Dock/原件/私人绑定/退出恢复和原用户状态：独立卡六项待验收
 只有完整16项与真实Release/兼容/性能证据通过后才具备发布资格，当前不合并或发布。
+候选启动：scripts/start.ps1 -ReleaseDirectory <同一候选目录>。显式指定发布目录时只使用该目录的Core/Release配置器，要求Dext v3元数据；不进入日常Debug自动构建或重新部署开发Player。

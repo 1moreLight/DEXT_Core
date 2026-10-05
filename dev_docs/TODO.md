@@ -1763,7 +1763,7 @@ v3-release Cargo/MSBuild配置限定官方原生宿主/WebView2，旧入口从�
 ## V3-INTEGRATION-001 集中集成验收（2026-10-05，BASE0bc4330）
 独立feat/V3-INTEGRATION-001-integration / v3-integration；四步和范围见计划，六项人工步骤见独立卡。
 - [x] Task1 编码：另存先记录恢复意图并持有租约；已有Core连接同样核对v3发布身份。
-- [ ] Task2 必要Release构建/同候选身份。
+- [x] Task2 必要Release构建/同候选身份，Core与配置器实际启动/连接通过。
 - [ ] Task3 一次集中本地全链/恢复/兼容/性能。
 - [ ] Task4 完整16项证据/整体审查和原数据恢复。
 当前实施1/4=25%；游戏是否结束已异步询问，未答复前只源码，不构建/启动/桌面输入。构建与Windows全链仍未验证，后续三步保留。
@@ -1773,3 +1773,9 @@ Task1源代码收尾：Core私人复制可能先持久化，原先仅RPC失败/�
 Task1补充：恢复清理按稳定Room UUID检查库内已发布作品，目录改名或原名被其他Room复用后仍保留原作品个人绑定。只读扫描直接子目录的清单，不递归进入暂存内容；无法确认缺失时保留恢复记录。实施仍1/4=25%，不因增加修复抬高比例。真实另存→目录改名→重连恢复归入原人工步骤5，游戏结束后一次集中验证，不新增测试矩阵。
 
 阻塞记录（2026-10-05）：连续三轮核对仍未收到用户结束全屏游戏的答复；当前工作区干净，最后代码af705cd。Task1源码修正已保存，剩余Task2必要Release构建、Task3实机全链/性能、Task4完整证据与审查依赖构建和桌面验收。未启动任何编译/窗口，亦无活构建句柄可等待。恢复条件：用户确认游戏已结束、可以构建和启动验收；随后直接继续Task2，不重做已完成源码或新增测试矩阵。完整V3范围保留，未完成、未合并。
+
+恢复（2026-10-05）：用户明确回复“游戏结束 继续构建”，开始Task2必要Release候选构建；不重做已保存源码或扩测试矩阵。node_modules复用主目录，package-lock哈希一致；Rust缓存和候选输出使用D盘。
+
+Task2完成（2026-10-05）：build-v3-release.ps1完整退出0；Release WebView2 Player/Watchdog/Core及features v3-release的TS/Vite/Rust配置器、六套冻结摘要、精确发布资产/许可/实际inventory全部成功。修正Player C#8双弃置参数、看护finally越作用域变量、工厂#else与switch同一行、Windows FileDescription沿AssemblyTitle而非Description的问题。字体经JS入口加载，重建打包五个woff2，无跨盘残留字体警告。未升级上游依赖或扩网络测试。
+start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发Player部署。实际启动Core PID55780、配置器PID10280，路径均属于同一候选；Dext v3 Core元数据、Dext mutex/pipe通过。computer-use只读实际配置器tree显示“Dext Core 已连接”；旧v2原件只读/暂不可用，不自动迁移。仅启动未应用样包，无Player呈现、Dock任务栏更改或全链验收证据。Task3/4保留，不合并或发布。
+当前实施2/4=50%，完整v3仍未验收完成。ERRORS #254。

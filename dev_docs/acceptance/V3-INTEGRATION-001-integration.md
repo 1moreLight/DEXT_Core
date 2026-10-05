@@ -1,9 +1,9 @@
 # V3-INTEGRATION-001 集中集成验收
-状态：受阻；实施1/4=25%，代码af705cd，基线0bc4330，feat/V3-INTEGRATION-001-integration。
+状态：开发中；实施2/4=50%，基线0bc4330，feat/V3-INTEGRATION-001-integration。
 目标/范围外见独立计划。
 ## 实施
 - [x] Task1 编码：另存中断记录/租约、已运行Core的v3发布身份修正。
-- [ ] Task2 同一候选必要Release构建与身份。
+- [x] Task2 同一候选必要Release构建与身份；Core/配置器启动和实际UI连接通过。
 - [ ] Task3 一次集中全链/必要恢复/兼容/性能实测。
 - [ ] Task4 完整16项证据/整体审查/原数据恢复。
 ## 人工步骤（游戏结束后）
@@ -16,3 +16,7 @@
 当前实施1/4=25%；Task1仅源码/差异核对，未构建或实机验证。另存与已有Core身份修正见TODO；六项人工步骤待游戏后集中执行。
 
 阻塞记录（2026-10-05）：连续三轮核对仍未收到用户结束全屏游戏的答复；当前工作区干净，最后代码af705cd。Task1源码修正已保存，剩余Task2必要Release构建、Task3实机全链/性能、Task4完整证据与审查依赖构建和桌面验收。未启动任何编译/窗口，亦无活构建句柄可等待。恢复条件：用户确认游戏已结束、可以构建和启动验收；随后直接继续Task2，不重做已完成源码或新增测试矩阵。完整V3范围保留，未完成、未合并。
+
+Task2完成（2026-10-05）：build-v3-release.ps1完整退出0；Release WebView2 Player/Watchdog/Core及features v3-release的TS/Vite/Rust配置器、六套冻结摘要、精确发布资产/许可/实际inventory全部成功。修正Player C#8双弃置参数、看护finally越作用域变量、工厂#else与switch同一行、Windows FileDescription沿AssemblyTitle而非Description的问题。字体经JS入口加载，重建打包五个woff2，无跨盘残留字体警告。未升级上游依赖或扩网络测试。
+start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发Player部署。实际启动Core PID55780、配置器PID10280，路径均属于同一候选；Dext v3 Core元数据、Dext mutex/pipe通过。computer-use只读实际配置器tree显示“Dext Core 已连接”；旧v2原件只读/暂不可用，不自动迁移。仅启动未应用样包，无Player呈现、Dock任务栏更改或全链验收证据。Task3/4保留，不合并或发布。
+当前实施2/4=50%，完整v3仍未验收完成。ERRORS #254。

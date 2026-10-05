@@ -473,3 +473,8 @@ P8-002补充（沿#244）：批量UI替换的正向autoHideAvailable锚点也匹
 #244 补充（2026-10-05）：PowerShell脚本成功不重置LASTEXITCODE，null或之前原生命令值不能用于判定普通脚本结果。本轮冻结摘要六套已成功，包装层误读LASTEXITCODE抛错；前面的文件写入已执行，不重放。普通脚本使用ErrorActionPreference Stop/异常，LASTEXITCODE只紧跟原生进程核对。
 ## #251 发布候选须同时切换路径和产品配置（2026-10-05）
 开发const编译机wallpapers路径、about许可路径及external-target开发Core探测，搬移后失效。源码新增v3-release配置：同目录Core/Dext v3元数据、官方宿主与许可文档相对产品根；Core只分派官方WebView2，Assets/Plugins旧内容从发布移除。新目录部署精确宿主清单与来源说明、记录实际文件摘要；未跑Release构建，不冒称已可移机运行。恢复/性能/缺资源及最终状态见独立卡。
+## #254 集中Release编译与可搬移资产（2026-10-05）
+Player固定C#8，两个同名_参数需要C#9；改具名sender/args。Watchdog finally引用仅while块内的received，删除误带入的心跳行，实际恢复回执保留。v3工厂#else必须独立一行，原与switch拼在一行触发CS1025。
+.NET Win32 FileDescription来自AssemblyTitle；仅改Description仍输出Dext Core。v3条件同时指定Dext v3 Core标题，实际候选VersionInfo核对通过。
+node_modules跨C/D盘junction下，Tailwind展开字体CSS @import时生成无法解析的盘符相对路径；改main.tsx的包CSS导入，经Vite自有CSS资源处理后五套woff2进入dist，完整Tauri Release再次成功。
+证据：完整build-v3-release退出0，候选资产inventory通过；start.ps1显式ReleaseDirectory实际Core/配置器启动，UI显示Dext Core已连接。仅构建/启动证据，不等于Room/Player/Dock全链已验收。自动审批一次deadline超时明确未启动命令，原只读命令重试一次成功，未重放任何写入。

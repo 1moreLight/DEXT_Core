@@ -27,6 +27,7 @@
 
   <PropertyGroup Condition="'$(DextV3Release)'=='true'">
     <DefineConstants>$(DefineConstants);DEXT_V3_RELEASE</DefineConstants>
+    <AssemblyTitle>Dext v3 Core</AssemblyTitle>
     <Description>Dext v3 desktop runtime core</Description>
   </PropertyGroup>
   <ItemGroup>
