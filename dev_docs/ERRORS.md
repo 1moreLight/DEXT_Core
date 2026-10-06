@@ -354,3 +354,4 @@
 | #256 | 发布托盘误找旧配置器路径；回归项目遗漏共享回执类型，本机依赖缺失需离线恢复 | [toolchain](errors/toolchain.md) |
 
 | #257 | 应用Room漏启用默认导航，空本机数据使切页被权限拒绝；动作失败缺少用户提示与结果日志 | [backend](errors/backend.md) |
+| #258 | 作者几何去重与宿主焦点清表冲突，保留文档却丢失按钮声明 | [backend](errors/backend.md) |

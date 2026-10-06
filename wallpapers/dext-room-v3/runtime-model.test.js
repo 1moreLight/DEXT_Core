@@ -146,11 +146,11 @@ test('component buttons work without roomScene and are limited to the declared a
   assert.equal(runtime.acceptGeometry('component.clock', geometry(runtime, { buttons: [] })).accepted, false);
 });
 
-test('geometry version changes remove stale consumer regions and no private overrides mutate the authored manifest', () => {
+test('viewport reprojection preserves declarations without mutating the authored manifest', () => {
   const manifest = room(), original = JSON.stringify(manifest); const runtime = createRuntime(manifest); runtime.acceptSnapshot(snapshot());
   runtime.acceptGeometry('component.clock', geometry(runtime, { buttons: [{ buttonId: 'next', x: 50, y: 60, width: 100, height: 40 }] }));
   runtime.setViewport({ width: 1024, height: 768, dpr: 2 });
-  assert.equal(runtime.readDiagnostics().buttonRegionCount, 0); assert.equal(JSON.stringify(manifest), original);
+  assert.equal(runtime.readDiagnostics().buttonRegionCount, 1); assert.equal(JSON.stringify(manifest), original);
   const detached = runtime.readDiagnostics(); detached.instances.length = 0;
   assert.ok(runtime.readDiagnostics().instances.length > 0);
 });
@@ -197,4 +197,40 @@ test('continuous author group frames preserve structural version and declared re
  }
  const changed=runtime.acceptGeometry('scene',geometry(runtime,{occupied:[{id:'panel',x:0,y:800,width:1920,height:280}]}));
  assert.ok(changed.effects.some(e=>e.type==='invalidateInput'));assert.equal(runtime.readDiagnostics().geometryVersion,before.geometryVersion+1);
+});
+
+test('retained author buttons survive focus and layout changes without another author report', () => {
+  const manifest = room(); delete manifest.desks[1].componentOverrides;
+  const runtime = createRuntime(manifest); runtime.acceptSnapshot(snapshot());
+  const buttons = [{ buttonId: 'next', x: 50, y: 60, width: 100, height: 40 }];
+  assert.equal(runtime.acceptGeometry('component.clock', geometry(runtime, { buttons })).accepted, true);
+  const oldReport = geometry(runtime, { buttons });
+  const instanceId = find(runtime, 'component.clock').instanceId;
+  for (const value of [
+    snapshot(2, { operable: false }),
+    snapshot(3),
+    transitioning(4),
+    snapshot(5, { currentDeskId: 'focus' }),
+    snapshot(6, { lifecycle: { stage: 'idle', playbackPaused: false, locked: false, revision: 2 } }),
+    snapshot(7, { lifecycle: { stage: 'desktop', playbackPaused: false, locked: false, revision: 3 } })
+  ]) {
+    const result = runtime.acceptSnapshot(value);
+    assert.ok(result.effects.some(effect => effect.type === 'invalidateInput'));
+    assert.deepEqual(runtime.readDiagnostics().buttonRegions['component.clock'], buttons);
+    assert.equal(find(runtime, 'component.clock').instanceId, instanceId);
+  }
+  runtime.setViewport({ width: 2560, height: 1440, dpr: 1.25 });
+  assert.deepEqual(runtime.readDiagnostics().buttonRegions['component.clock'], buttons);
+  assert.equal(runtime.acceptGeometry('component.clock', oldReport).accepted, false);
+  runtime.acceptSnapshot(snapshot(8, { sessionId: 'session-two' }));
+  assert.deepEqual(runtime.readDiagnostics().buttonRegions, {});
+});
+
+test('changed author configuration clears its previous button declarations', () => {
+  const runtime = createRuntime(room()); runtime.acceptSnapshot(snapshot());
+  assert.equal(runtime.acceptGeometry('component.clock', geometry(runtime, {
+    buttons: [{ buttonId: 'next', x: 50, y: 60, width: 100, height: 40 }]
+  })).accepted, true);
+  runtime.acceptSnapshot(transitioning());
+  assert.equal(runtime.readDiagnostics().buttonRegions['component.clock'], undefined);
 });

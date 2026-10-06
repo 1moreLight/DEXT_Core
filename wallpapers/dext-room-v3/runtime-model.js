@@ -30,7 +30,10 @@
     function result(effects = []) { return { accepted: true, status: 'accepted', effects }; }
     function reject(status) { lastRejected = status; return { accepted: false, status, effects: [] }; }
     function invalidateGeometry(effects, reason) {
-      geometryVersion++; groups = identityGroups(); occupied = []; buttonRegions.clear();
+      // Button declarations belong to the retained author document. Focus/layout
+      // changes invalidate native input and reproject these declarations, even
+      // when the author deduplicates an unchanged geometry report.
+      geometryVersion++; groups = identityGroups(); occupied = [];
       effects.push({ type: 'invalidateInput', geometryVersion, reason }, { type: 'layoutNeeded', geometryVersion, viewport: clone(viewport) });
     }
     function validSnapshot(value) {
@@ -58,6 +61,7 @@
         effects.push({ type: 'mountInstance', ...clone(instance) });
       } else {
         if (JSON.stringify(instance.config) !== JSON.stringify(config || {})) {
+          buttonRegions.delete(key); // A config update may rebuild the author DOM.
           instance.config = clone(config || {});
           effects.push({ type: 'updateInstance', instanceId: instance.instanceId, key, config: clone(instance.config) });
         }

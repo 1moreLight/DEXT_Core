@@ -518,3 +518,9 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 修复：配置器确认当前安装应用成功后，调用Coordinator enableNavigation，仅启用有效desk.next/previous/go所属消费者的desk.navigate，保留同戳其他授权和个人覆盖。目标仍明确选择；缺绑定在桌面显示说明，Core记录activate/navigate/geometry结果。
 验证：空个人数据先失败、修后personal-editor10/10；提示定向1/1；Release及真实应用成功、导航授权落盘。用户授权ChatGPT后正式RPC绑定accepted。真实桌面点击仍待验收，不用RPC成功替代点击成功。
 诊断临时RPC小工具首次引用旧Protobuf导致CS1705，按候选实际3.33.1对齐后运行成功；不更改产品依赖。
+## #258 作者几何去重与宿主焦点清表冲突（2026-10-06）
+症状：桌面Dock悬停闪边框，原生activate请求为StaleInput；前后台与坐标正常。最后坐标诊断DOWN point=1077,1322、foreground=True、available=True，但regions为空，未创建completion。不能因收到author activate便断言Core已成功命中。
+原因：runtime-model.invalidateGeometry在焦点/生命周期/切页/缩放时清空buttonRegions；作者文档仍保留，Dock以按钮矩形JSON去重，不重报同样位置，导致区域永久丢失。先前静态输入路径回退不能补回空表，已取消。
+处理：参考旧版3c42552保留同一交互对象的原则，按钮声明随文档保留；配置改变清该消费者、会话销毁清全表。原生输入每轮仍作废，DOM按最新可见性、Desk范围、变换和遮挡重新投影。旧版原生手势接收方固定逻辑本就保留，无需整库退回临时v3格式。
+验证：runtime-model 18/18本地回归通过，涵盖作者不重报时焦点往返、切页、生命周期/缩放、配置改变和换会话。仅此不证明桌面真实点击通过，用户验收尚待。
+部署：恢复dbe018c导航候选的已构建二进制并核对原inventory，全部宿主资产取当前源码，沿用当前发布路径避免目录升级恢复问题。Copy-Item覆盖运行中的配置器会失败；按精确路径退出并等待文件释放后复制，使用Stop错误策略，重生成inventory并核对摘要后再启动。
