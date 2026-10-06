@@ -540,3 +540,12 @@ test('private button locator outlines visible author and icon regions without ac
  assert.equal(f.host.readDiagnostics().presentation.locator,null);assert.equal(f.container.children[0].children.includes(layer),false);
  f.host.dispose();assert.equal(timers.size,0);
 });
+
+test('unbound native button shows a visible explanation',async()=>{
+ const f=fixture({request:method=>method==='activate'?Promise.resolve({status:'missingBinding'}):undefined});
+ await f.host.ready;
+ f.host.handleNativeInput({kind:'activate',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,inputSequence:1,consumer:'official',button:'next'});
+ await flush();
+ assert.ok(f.container.children.some(node=>node.className==='dext-v3-action-notice'&&node.textContent.includes('绑定')));
+ f.host.dispose();
+});

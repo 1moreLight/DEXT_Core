@@ -2667,6 +2667,12 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
                         return Err("installed Room changed while applying; please retry".into());
                     }
                     room_v3_authoring::record_source(&host, src, &installation)?;
+                    // Applying a Room enables its declared navigation buttons for this installation.
+                    let navigation = grpc::edit_personal(installation.room_id.clone(), status.installation_stamp.clone(),
+                        serde_json::json!({"operation":"enableNavigation"})).await?;
+                    if navigation.get("status").and_then(|value| value.as_str()) != Some("accepted") {
+                        return Err("Room 已应用，但切页按钮启用失败，请重新应用。".into());
+                    }
                     room_performance::record("native.apply.sessionConfirmed",apply_started,serde_json::json!({"roomId":installation.room_id,"playerPid":status.player_pid}));
                     return Ok(());
                 }

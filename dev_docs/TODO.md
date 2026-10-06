@@ -1794,3 +1794,9 @@ start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发P
 - [x] 实际Core PID27096、配置器14176、Player34660、Watchdog11456均同候选；真实配置器“Dext Core 已连接”“已应用 v3test”，WallpaperLayout保存新候选路径，原已开启Windows Dext启动项由Core更新为新候选。
 - [ ] 切换发布目录时旧WallpaperLayout指向旧宿主，被新发布Factory拒绝且RestoreWallpaper枚举遇集合变更；本轮重新应用用户v3test已恢复布局到新路径，原件及恢复备份保留。路径升级恢复仍列Task3待修，不把同候选普通重启与目录升级混为一项。
 - [ ] 用户复验两类Dock按钮、切焦点后重复点击、托盘重开配置器和等待时间。当前2/4=50%，代码轮提交后待验收，不合并。
+
+2026-10-06二次验收失败：真实日志已有activate请求，本机v3/personal无personal.json。目标：应用Room时通过已有Coordinator编辑入口启用当前有效导航按钮，仅授予所属消费者desk.navigate；应用目标仍需用户选择，缺绑定明确提示。增加动作结果日志，针对无个人数据的首次应用验证，再build→start。仍INTEGRATION Task3、50%，人工步骤沿用切页/应用/焦点往返。
+
+- [x] 2026-10-06 二次修复：应用后以当前安装戳启用有效导航；缺绑定反馈与动作结果日志已接入。personal-editor 定向10/10、缺绑定提示定向1/1、完整Release构建通过。
+- [x] 新候选 v3-candidate-20261006-navigation 启动 Core26984/配置器29268，真实配置器应用v3test成功；本机导航grant落盘。用户指定ChatGPT经Coordinator EditRoomPersonal保存目标及按钮绑定，两次accepted，采用explorer.exe + 已发现的ChatGPT AppsFolder ID。
+- [ ] 桌面真实切页/ChatGPT启动/焦点往返结果待用户；尚无本轮activate日志，不以配置成功代替点击验收。本工作包仍2/4=50%，不合并。

@@ -275,7 +275,23 @@
         identity.sessionId===snapshot.sessionId&&identity.revision===snapshot.revision&&geometry===inputVersion;
     }
     function clearDefault(){if(defaultTimer!==null)cancelTimer(defaultTimer);defaultTimer=null;pendingDefault=null;}
+    let actionNotice=null,actionNoticeTimer=null;
+    function clearActionNotice(){
+      if(actionNoticeTimer!==null)cancelTimer(actionNoticeTimer);actionNoticeTimer=null;
+      actionNotice?.remove();actionNotice=null;
+    }
+    function showActionResult(status){
+      const messages={missingBinding:'这个按钮还未绑定应用，请在配置器的“本机按钮”中选择目标。',
+        missingPermission:'这个按钮尚未启用，请重新应用 Room 或在配置器中保存本机动作。',
+        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机按钮配置暂时无法读取，请检查配置器诊断。'};
+      if(status==='accepted'||status==='queued'){clearActionNotice();return;}
+      if(!messages[status])return;
+      clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
+      actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
+      actionNoticeTimer=later(clearActionNotice,5000);
+    }
     function consumeReceipt(reply){
+      showActionResult(reply.status);
       if(reply.inputConsumed!==true||!Number.isSafeInteger(reply.inputSequence)||reply.inputSequence<=0)return;
       consumedSequence=Math.max(consumedSequence,reply.inputSequence);
       if(pendingDefault&&pendingDefault.inputSequence<=consumedSequence)clearDefault();
@@ -403,7 +419,7 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      dispose(){if(disposed)return;disposed=true;clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
       readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }

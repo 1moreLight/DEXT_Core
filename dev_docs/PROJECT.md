@@ -284,3 +284,5 @@ Core个人快照Room.readGrants与既有grants分开，仍绑定同一Room副本
 
 ### 2026-10-04 原生Dock偏好与运行状态
 Dock enabled/mode/heightDip保存为Dext全局v3/dock-preferences.json，与Room作品、安装、副本个人绑定分开；切Room不复制或覆盖它。配置器只显示Core确认的保存值与真实宿主状态，偏好enabled不表示运行，尚无宿主/PID或模式不可用须明确反馈。原生Dock资格使用正式dockComponentId及Desk引用，不把普通桌面Dock组件自动提升为顶层窗口。Windows原任务栏替代/故障恢复保持P8必做门槛。
+
+- **2026-10-06｜应用Room启用其导航**：用户在配置器应用当前Room时，由Coordinator为当前安装的有效导航按钮所属消费者保存desk.navigate授权。仍按安装戳检查；应用启动目标、其他能力与个人覆盖按原有显式编辑流程，不从作者声明直接赋予。避免首次应用后基础切页无响应。

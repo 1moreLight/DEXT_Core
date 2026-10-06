@@ -161,6 +161,8 @@ namespace Lively.Core.Wallpapers
                         status=actionReply.Status;
                     }break;
             }
+            if(request.Method is "activate" or "navigate" or "geometry")
+                Logger.Info($"Wv2{uniqueId}: native result | method={request.Method} | status={status} | consumer={request.Consumer} | button={request.Button} | sequence={request.InputSequence} | geometry={request.GeometryVersion} | revision={request.Revision}");
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.
             SendNative(a,state,new{type="dext:v3-native-response",requestId=request.RequestId,runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,

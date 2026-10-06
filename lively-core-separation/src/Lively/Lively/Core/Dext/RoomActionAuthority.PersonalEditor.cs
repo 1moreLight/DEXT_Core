@@ -121,6 +121,7 @@ internal sealed partial class RoomActionAuthority
             RoomV3Installation.CheckUniqueJson(root);
             edit=JsonSerializer.Deserialize<PersonalEdit>(editJson,EditorJson) ?? throw new InvalidDataException();
             string[] keys=edit.Operation switch {
+                "enableNavigation"=>new[]{"operation"},
                 "setButton"=>new[]{"operation","buttonId","action","deskId","targetId","skin"},
                 "resetButton" or "locateButton"=>new[]{"operation","buttonId"},
                 "upsertTarget"=>new[]{"operation","targetId","name","kind","target","arguments","workingDirectory"},
@@ -178,7 +179,24 @@ internal sealed partial class RoomActionAuthority
     private (bool Publish,RoomPersonalEditorReply Reply) PrepareEditor(RoomPersonalState state,VerifiedRoomInstallation installed,RoomSessionSnapshot snapshot,PersonalEdit? edit)
     {
         var changed=false;
-        if(edit?.Operation=="locateButton")
+        if(edit?.Operation=="enableNavigation")
+        {
+            state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
+            foreach(var button in installed.ActionCatalog!.Buttons.Values)
+            {
+                var action=Resolve(state,installed.RoomId,button,out _);
+                if(action?.Type is not ("desk.next" or "desk.previous" or "desk.go"))continue;
+                foreach(var (id,owner) in installed.ActionCatalog.Consumers)
+                {
+                    if(!owner.HasButton(button.Id)||!owner.HasCapability("desk.navigate"))continue;
+                    var capabilities=room.Grants.TryGetValue(id,out var grant)&&grant.InstallationStamp==installed.InstallationStamp
+                        ?grant.Capabilities.ToHashSet(StringComparer.Ordinal):new HashSet<string>(StringComparer.Ordinal);
+                    if(capabilities.Add("desk.navigate")){room.Grants[id]=new(installed.InstallationStamp,capabilities.OrderBy(x=>x,StringComparer.Ordinal).ToArray());changed=true;}
+                }
+            }
+            if(changed&&existing is null)state.Rooms[installed.RoomId]=room;
+        }
+        else if(edit?.Operation=="locateButton")
         {
             if(!installed.ActionCatalog!.Buttons.TryGetValue(edit.ButtonId!,out var button))return(false,EditorFailure(RoomActionStatus.InvalidButton));
             if(snapshot.Lifecycle.Stage!=RoomLifecycleStage.Desktop||snapshot.TransitionId is not null||

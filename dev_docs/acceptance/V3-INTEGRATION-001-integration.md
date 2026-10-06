@@ -28,3 +28,6 @@ start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发P
 
 修正版实机启动（2026-10-06）：完整Release退出0，候选D:\use\Orca\DEXT\DEXT_Core\.build\v3-candidate-20261006-inputfix-r2，约267MiB，含start-dext.cmd。Core27096/配置器14176/Player34660/Watchdog11456均来自同目录；真实配置器“Dext Core 已连接”“已应用 v3test”。WallpaperLayout及原已开启Dext启动项现指向新候选。
 旧产品目录升级恢复曾拒绝旧宿主路径，且RestoreWallpaper枚举遇集合变更；重新应用用户v3test后当前布局恢复。目录升级自动恢复保留Task3未完成，原备份.build/v3-repair-backup-1791217508527与旧候选不删除。人工Dock/焦点/托盘结果待用户，本包仍50%，未合并。
+
+2026-10-06二次修复：用户反馈仍闪边框、不能切页。本机personal.json原先不存在；应用流程漏启用导航。已增加当前安装导航启用、未绑定提示和原生执行状态日志。定向personal-editor 10/10、缺绑定提示1/1、完整Release通过。新候选.build/v3-candidate-20261006-navigation已启动，真实配置器显示“已应用v3test”，本机导航grant已核对；ChatGPT本机目标和“我的应用”绑定经正式编辑RPC各返回accepted。
+本轮人工步骤：①桌面点上一页、下一页，确认背景实际切换；②点我的应用，确认ChatGPT打开；③切其他窗口再回桌面，重复切页和应用按钮；④再次应用v3test，核对耗时和按钮仍可用。目前真实点击结果待回报，尚不宣称修复验收通过；实施仍2/4=50%，目录升级恢复及原步骤5/6仍待办。

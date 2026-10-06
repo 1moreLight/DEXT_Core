@@ -512,3 +512,9 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 
 ## #255（2026-10-06）焦点丢失清空按钮几何，回到桌面没有重发
 症状：Dock悬停短暂有边框，但Desk切换和应用按钮不能点击。RoomNativeInputAuthority.CheckNativeViewport/MouseMove把foreground=false等同几何失效；配置器打开后viewport与buttons被永久清空，而同revision不会自动重新发布。修复：同原生视口仅清输入手势、完成回执、焦点和采样；保留按钮区域，视口/文档/快照改变仍清几何。4项焦点返回回归先失败后通过；桌面人工复验独立记录，单测不等同人工通过。
+
+## #257 应用Room后默认导航未启用（2026-10-06）
+症状：Dock有悬停反馈却不能切Desk。真实请求已到activate，但本机v3/personal目录没有personal.json，导航Permission必然missingPermission；不能将应用按钮的缺目标解释成全部切页故障。
+修复：配置器确认当前安装应用成功后，调用Coordinator enableNavigation，仅启用有效desk.next/previous/go所属消费者的desk.navigate，保留同戳其他授权和个人覆盖。目标仍明确选择；缺绑定在桌面显示说明，Core记录activate/navigate/geometry结果。
+验证：空个人数据先失败、修后personal-editor10/10；提示定向1/1；Release及真实应用成功、导航授权落盘。用户授权ChatGPT后正式RPC绑定accepted。真实桌面点击仍待验收，不用RPC成功替代点击成功。
+诊断临时RPC小工具首次引用旧Protobuf导致CS1705，按候选实际3.33.1对齐后运行成功；不更改产品依赖。

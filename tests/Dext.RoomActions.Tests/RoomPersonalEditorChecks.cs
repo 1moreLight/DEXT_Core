@@ -8,6 +8,16 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("applying fresh Room enables navigation without granting application launch",()=>{
+   using var f=new ActionFixture();f.Store.Update(s=>{s.Rooms.Clear();s.Targets.Clear();});
+   Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));
+   Editor(Edit(f,new{operation="enableNavigation"}));
+   Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));
+   Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","binding.launch"));
+   Eq(0,f.Store.Read().Rooms[Room].Buttons.Count);
+   Eq(RoomActionStatus.Accepted,f.Invoke("next",f.Input("next").Ticket).Status);
+   Eq("focus",f.Kernel.Snapshot!.TargetDeskId);
+  });
   check("editor discovers every declared button including unbound and other Desk",()=>{
    using var f=new ActionFixture();var value=Editor(Read(f));
    Eq(6,value.Buttons.Length);Eq(false,value.Buttons.Single(b=>b.Id=="unbound").IsBound);

@@ -259,6 +259,7 @@ internal sealed partial class RoomActionAuthority
                 // navigation; configured defaults/private bindings keep priority.
                 action ??= requested;
                 if (action is null) return new(RoomActionStatus.MissingBinding);
+                if (action.Type == "binding.launch" && target is null) return new(RoomActionStatus.MissingBinding);
                 // Read the current user override/default inside this same private
                 // preparation boundary. An author cannot replace a configured
                 // entry's action by requesting a different navigation operation.
