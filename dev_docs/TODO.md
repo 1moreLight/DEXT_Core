@@ -1800,3 +1800,10 @@ start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发P
 - [x] 2026-10-06 二次修复：应用后以当前安装戳启用有效导航；缺绑定反馈与动作结果日志已接入。personal-editor 定向10/10、缺绑定提示定向1/1、完整Release构建通过。
 - [x] 新候选 v3-candidate-20261006-navigation 启动 Core26984/配置器29268，真实配置器应用v3test成功；本机导航grant落盘。用户指定ChatGPT经Coordinator EditRoomPersonal保存目标及按钮绑定，两次accepted，采用explorer.exe + 已发现的ChatGPT AppsFolder ID。
 - [ ] 桌面真实切页/ChatGPT启动/焦点往返结果待用户；尚无本轮activate日志，不以配置成功代替点击验收。本工作包仍2/4=50%，不合并。
+2026-10-06用户要求局部回退：本轮三类真实activate均StaleInput，授权和目标补齐后仍不可用。目标：静止按钮恢复已发布几何的原生DOWN/UP命中；只有动态可见几何与静态出版不同的场景保留事件采样，保留正数关联和当前会话检查。范围外：不回退整个v3或作品格式、不扩安全矩阵。先定向静止/运动路径检查，再Release重建并应用原v3test；人工：上一页/下一页/ChatGPT，焦点往返，再应用耗时。加激活前后输入状态诊断核对剩余失效。仍INTEGRATION Task3，2/4=50%。
+- [x] 局部回退源码：当前静态按钮多边形与实时采样一致时，geometry.eventSamples=false，恢复原生已发布区域DOWN/UP；两者不同仍使用事件采样。静止/转场定向1/1、焦点返回4/4通过；激活准入日志记录前后台/测量视口/检查前后完成序号。
+- [x] 完整Release构建退出0，候选.build/v3-candidate-20261006-input-rollback；旧Core经ShutDown正常退出，新Core39596/配置器12268已连接，真实配置器“已应用v3test”；原ChatGPT目标ID/按钮绑定经正式编辑入口复用并确认accepted。
+- [ ] 回退版真实桌面三类按钮及焦点往返待用户。之前候选实际三类activate全部StaleInput，不能把导航授权补齐认定为全部原因。本工作包仍50%。
+- [x] 已取消(2026-10-06)：本轮静态输入回退与临时Trace诊断未解决实际点击。用户要求“停止测试 准备回退”，停止全部测试/构建，正常关闭Core。五个具名源码文件撤销回dbe018c，本轮临时变更不交付。
+- [x] 回退准备：当前Settings/WallpaperLayout/Room会话/个人绑定和v3test原件备份于主目录.build/v3-rollback-backup-20261006；已验收基线tag v3FirstTest确认，合并24ac47c。
+- [ ] 确定回退范围：v3FirstTest为旧临时session.v3契约，不能直接把现在的原生Room v3当作该版作品；完整运行版回退与保留当前v3格式的输入适配回退需明确区分。未切换master、未清理旧候选。当前INTEGRATION50%。
