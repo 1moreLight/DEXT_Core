@@ -60,3 +60,4 @@ start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发P
 - [x] 仅定向按钮发布检查1/1通过，diff --check通过；未改C#/Rust，无需重编译。
 - [x] 已经由正式ShutDown退出误启动的旧Debug Core；同目录候选宿主更新、inventory重生成；start.ps1启动Release Core32488/配置器9548。
 - [ ] 用户比较快速单击切页/我的应用、焦点往返后的漏点与等待；原移动取消阈值未调整。50%，待验收、未合并。
+2026-10-07 启动补记：旧Debug运行失败后WallpaperLayout为空；正式退出Core后恢复20261006备份中同一发布路径的布局，重新start.ps1（Core12516/配置器32676）。实际点击仍待用户验收。
