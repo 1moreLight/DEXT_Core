@@ -64,6 +64,7 @@ test('author component geometry translates local rects and publishes only its de
  const f=fixture();await f.host.ready;const geometryVersion=f.host.readDiagnostics().geometryVersion;
  assert.equal(await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]}),true);
  const button=f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.find(v=>v.consumer==='component.shared');assert.equal(button.x,410/1920);assert.equal(button.y,70/1080);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.eventSamples,false);
  assert.equal(await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{}}),false);f.host.dispose();
 });
 test('stale native focus or activation cannot use newer geometry',async()=>{

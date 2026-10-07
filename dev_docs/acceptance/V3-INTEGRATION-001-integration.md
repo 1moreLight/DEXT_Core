@@ -48,3 +48,15 @@ start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发P
 - [x] 复用已验证dbe018c导航候选的650项基线inventory，撤掉失败试改的Core/Player/配置器二进制，覆盖全部当前宿主资产；继续使用input-rollback原路径，保持当前恢复布局有效，重生成inventory。未编译Rust/C#。
 - [x] start.ps1完成启动：Core45348，配置器36652；日志已有WebView原生请求，自动恢复启动。旧配置器占用exe，精确路径结束该进程并等待释放后复制成功；非宿主基线文件摘要全部一致。
 - [ ] 人工验收：桌面上一页/下一页实际切换；我的应用打开ChatGPT；切其他窗口后返回桌面重复。此次未代用户点击，不能声称实机故障已解决。保留Task3/4，未合并。
+
+2026-10-07 点击手感试改（INTEGRATION Task3，50%）
+用户确认能够触发但不灵敏，明确要求先取消异步试试。目标：关闭鼠标按下/松开的事件时几何采样，改走Core已发布几何的原生命中路径。仅改变采样开关，保留作者请求关联、位移阈值及其它行为，以便比较；不扩安全测试。
+- [ ] 关闭geometry.eventSamples，定向核对已发布按钮仍可用。
+- [ ] 更新当前Release宿主、退出误启动的旧Debug Core，以同目录Release启动。
+- [ ] 人工：快速单击上一页/下一页、我的应用；切其他窗口后回来再点，比较漏点和等待。转场中的移动按钮不作为本轮验收目标；未通过不合并。
+
+2026-10-07 本轮结果：
+- [x] geometry.eventSamples=false；Player的PrepareNativeSampleAsync/CompleteNativeSampleAsync对普通鼠标直接跳过，Core按已发布区域完成DOWN/UP。作者请求关联仍在，不宣称进程间通信全部同步化。
+- [x] 仅定向按钮发布检查1/1通过，diff --check通过；未改C#/Rust，无需重编译。
+- [x] 已经由正式ShutDown退出误启动的旧Debug Core；同目录候选宿主更新、inventory重生成；start.ps1启动Release Core32488/配置器9548。
+- [ ] 用户比较快速单击切页/我的应用、焦点往返后的漏点与等待；原移动取消阈值未调整。50%，待验收、未合并。
