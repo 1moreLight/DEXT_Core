@@ -355,3 +355,5 @@
 
 | #257 | 应用Room漏启用默认导航，空本机数据使切页被权限拒绝；动作失败缺少用户提示与结果日志 | [backend](errors/backend.md) |
 | #258 | 作者几何去重与宿主焦点清表冲突，保留文档却丢失按钮声明 | [backend](errors/backend.md) |
+
+| #259 | 作者Dock重复焦点外框及已配置导航的额外作者等待影响点击反馈 | [backend](errors/backend.md) |
