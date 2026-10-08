@@ -481,3 +481,7 @@ node_modules跨C/D盘junction下，Tailwind展开字体CSS @import时生成无�
 
 ## #256（2026-10-06）便携候选托盘仍找旧target路径，测试链接遗漏共享回执类型
 v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/target/release并尝试npm默认构建。修复：发布版只找同目录exe，缺件提示完整产品；打包start-dext.cmd与显式Release启动脚本，缓存清空/重启无需走Debug入口。RoomActions回归项目还遗漏PersonalLifecycleReply：将生产声明移到独立文件并链接。构建前本机node_modules已缺失使tauri命令不存在；通过锁文件一致性检查后离线恢复依赖，失败半成品保留，新目录继续构建。
+
+## #262 实验样包批量命令过长与安装目标父目录（2026-10-08）
+通过exec_command一次传入全部14份作者文件的PowerShell写入脚本，编码后的命令超过Windows进程命令长度，返回OS206，未执行文件写入。按文件/小批JSON分段落盘，单批约5500字符内；UTF8/LF源码与完整资源列表另行核对。不重放已成功的小批次，自动审批超时也先区分未启动与已有写入。
+首次install_v3检查目标在worktree不存在的.build下，检查父路径报OS2；显式创建检查用父目录、使用完整绝对源/目标路径后正式安装成功。这是检查路径准备问题，不是Room清单失败。静态预览截图只作外观证据，不当作Core/Player实际动作或生命周期通过。
