@@ -515,6 +515,16 @@ pub async fn send_message_wallpaper(lively_info_path: &str, msg: &str) -> Result
     .map(|_| ())
 }
 
+pub async fn close_wallpaper_library(folder: &str) -> Result<(), String> {
+    let request = crate::proto::desktop::CloseWallpaperLibraryRequest {
+        lively_info_path: folder.to_string(),
+        ..Default::default()
+    };
+    verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/CloseWallpaperLibrary",
+        &request.encode_to_vec(),
+    ).await.map(|_| ())
+}
 pub async fn close_all_wallpapers() -> Result<(), String> {
     let request = CloseAllWallpapersRequest::default();
     verified_call(

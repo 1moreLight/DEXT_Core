@@ -2647,7 +2647,28 @@ async fn apply_room(room_dir: String) -> Result<(), String> {
         }
         let previous = grpc::room_session_status().await?;
         let install_started=std::time::Instant::now();
-        let installation = room_v3::install(src, &host.join("content"))?;
+        // End the old bound installation before replacing its retained resources.
+        if previous.player_pid > 0 {
+            grpc::close_wallpaper_library(&display_path(&host)).await?;
+            let release_deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(5);
+            while grpc::room_session_status().await?.player_pid == previous.player_pid {
+                if tokio::time::Instant::now() >= release_deadline {
+                    return Err("旧壁纸尚未退出，请稍后重新应用。".into());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            }
+        }
+        let installation = match room_v3::install(src, &host.join("content")) {
+            Ok(installation) => installation,
+            Err(error) => {
+                if previous.player_pid > 0 {
+                    if let Err(restore) = grpc::set_wallpaper(&display_path(&host)).await {
+                        return Err(format!("{error}; 恢复旧壁纸失败：{restore}"));
+                    }
+                }
+                return Err(error);
+            }
+        };
         room_performance::record("native.install.verified",install_started,serde_json::json!({"roomId":installation.room_id,"resourceBytes":installation.resources.iter().map(|r|r.size).sum::<u64>()}));
         // Use the same absolute path for the Player URL and resource-server origin.
         // SetWallpaper acknowledges scheduling, before the new session is attached.

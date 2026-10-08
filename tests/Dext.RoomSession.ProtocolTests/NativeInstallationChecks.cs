@@ -6,6 +6,39 @@ internal static class NativeInstallationChecks
 {
     public static void Run(Action<string, Action> check)
     {
+        check("retained admission keeps resources stable until Player unbind", () => WithCopy(root =>
+        {
+            var peer = new RoomSessionPeer("player-process:7123");
+            using var baseline = new InstalledRoomSessionAuthority();
+            var original = baseline.Bind(root, 7123) ?? throw new Exception("baseline did not bind");
+            var hello = new RoomSessionHello(1, RoomClientRole.DesktopPlayer, original.RoomId);
+            var elapsed = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < 200; i++)
+                if (baseline.Admit(peer, hello) is null) throw new Exception("baseline admission failed");
+            var baselineMs = elapsed.Elapsed.TotalMilliseconds;
+            baseline.Unbind(7123);
+
+            using var authority = new InstalledRoomSessionAuthority(retainNativeInstallation: true);
+            var installation = authority.Bind(root, 7123) ?? throw new Exception("retained installation did not bind");
+            elapsed.Restart();
+            for (var i = 0; i < 200; i++)
+                if (authority.Admit(peer, hello)?.Installation.InstallationStamp != installation.InstallationStamp)
+                    throw new Exception("bound installation lost its context");
+            Console.WriteLine($"200 admissions: repeated verification {baselineMs:F2}ms; retained {elapsed.Elapsed.TotalMilliseconds:F2}ms");
+
+            var resourcePath = Path.Combine(root, "assets/background.svg");
+            var writeBlocked = false;
+            try { using var writer = new FileStream(resourcePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite); }
+            catch (IOException) { writeBlocked = true; }
+            if (!writeBlocked) throw new Exception("bound resource bytes could change while admissions reused them");
+            authority.Unbind(7123);
+            if (authority.Admit(peer, hello) is not null) throw new Exception("old Player survived unbind");
+            using (var writer = new FileStream(resourcePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite)) { }
+            if (authority.Bind(root, 7124) is null || authority.Admit(peer, hello) is not null)
+                throw new Exception("replacement Player binding retained the previous Player");
+            authority.Dispose();
+            using (var writer = new FileStream(resourcePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite)) { }
+        }));
         check("verified native manifest controls startup stage stamp and animation watchdog", () => WithCopy(root =>
         {
             PrepareHtmlSlots(root);

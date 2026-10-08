@@ -359,3 +359,5 @@
 | #259 | 作者Dock重复焦点外框及已配置导航的额外作者等待影响点击反馈 | [backend](errors/backend.md) |
 
 | #260 | 滑动方向只比较Desk索引导致首尾循环反向；v3添加应用入口过于隐蔽 | [backend](errors/backend.md) |
+
+| #261 | 每次原生点击重复验证整套安装资源；缓存需随Player释放并调整重新应用顺序 | [backend](errors/backend.md) |

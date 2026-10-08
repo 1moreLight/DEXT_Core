@@ -223,7 +223,7 @@ namespace Lively
                 .AddSingleton<IDesktopCore, WinDesktopCore>()
                 .AddSingleton(_ => new RoomSessionKernel(new FileRoomSessionCheckpointStore(
                     Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "room-session.json"))))
-                .AddSingleton<InstalledRoomSessionAuthority>()
+                .AddSingleton<InstalledRoomSessionAuthority>(_ => new InstalledRoomSessionAuthority(retainNativeInstallation: true))
                 .AddSingleton<IRoomSessionAdmissionAuthority>(services =>
                     services.GetRequiredService<InstalledRoomSessionAuthority>())
                 .AddSingleton<RoomSessionProtocolGateway>()

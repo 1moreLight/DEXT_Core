@@ -536,3 +536,9 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 原因：默认slide使用toIndex>fromIndex决定方向，三页下一页末尾→首位会错误地反向。为多于两页的首尾相邻切换增加循环判定，其余维持索引方向；定向测试同时覆盖末→首、首→末和普通相邻。
 应用入口原在右侧默认图标区名为“待绑定应用”，顶部补“添加应用”并改原按钮标签，继续明确保存应用后选择本机目标。私人路径不写入作品。
 本轮导航模板试回经典胶囊Dock外观，保留矩形焦点和既有输入，不把样式变化当作StaleInput根因修复。实际桌面结果另验收。
+
+## #261 原生点击重复验证整套安装资源（2026-10-08）
+证据：旧实际activate请求到结果约250–440ms；InstalledRoomSessionAuthority.Admit每次ReadInstallation，原生Verify逐个读取/摘要所有资源，一次动作经多次准入重复执行。用户v3test约21MB；不能将全部StaleInput归因于这一项。
+修复：生产Bind完整验证并保留目录及已验证文件只读句柄，持句柄再次核验后复用VerifiedRoomInstallation；当前Player/Dock/会话/动作和本机授权仍实时检查。Unbind/重Bind/Dispose释放。安装文档不属于作者资源扩展名白名单，需专用固定文件读取；InvalidDataException不属于IOException，绑定失败需显式捕获以释放已打开句柄。
+接入：Rust原先先替换content再关闭旧Player，与只读保留句柄冲突；重新应用先按当前宿主库路径关闭并等待旧Player解绑，再原子安装，安装失败尝试重开保留的旧宿主。
+验证：同一真实文件夹单项生命周期回归先失败后通过；200次准入重复验证579.49ms、复用20.93ms，仅为小样包环节测量。Core/Player/Watchdog Release与TS/Vite/Rust配置器构建成功。实际配置器旧Player运行时点击“重新应用”，33168退出、50584绑定且UI确认已应用v3test。未保存编辑草稿。真实Dock点击改善仍待用户，不扩网络/安全矩阵；WorkerW Z-order日志及漏点结论保留验收边界。

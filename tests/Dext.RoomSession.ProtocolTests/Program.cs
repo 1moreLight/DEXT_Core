@@ -8,6 +8,7 @@ var total = 0;
 
 void Check(string name, Action test)
 {
+    if (args.Length > 0 && !name.Contains(args[0], StringComparison.OrdinalIgnoreCase)) return;
     total++;
     try
     {
@@ -17,7 +18,7 @@ void Check(string name, Action test)
     catch (Exception error)
     {
         failures++;
-        Console.Error.WriteLine($"FAIL {name}: {error.Message}");
+        Console.Error.WriteLine($"FAIL {name}: {error}");
     }
 }
 

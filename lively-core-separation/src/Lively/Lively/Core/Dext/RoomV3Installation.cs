@@ -298,6 +298,11 @@ internal static class RoomV3Installation
         ResourcePath(relative);
         return OpenLocal(root, relative);
     }
+    internal static ResourceReader OpenInstallationDocument(string root, string name)
+    {
+        Require(name is "room.json" or "installation.json", "installation document");
+        return OpenLocal(root, name);
+    }
     internal static SafeFileHandle RetainDirectory(string root) => OpenHandle(Path.GetFullPath(root), true, Path.GetFullPath(root));
     internal static void CheckUniqueJson(JsonElement value) => UniqueProperties(value);
     private static ResourceReader OpenLocal(string root, string relative)
