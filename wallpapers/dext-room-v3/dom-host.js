@@ -243,7 +243,7 @@
     function updateDefaultGroups(){
       const transition=room.transition||{type:'slide',durationMs:450};if(!animation||transition.type==='author')return null;
       const p=transition.durationMs===0?1:Math.min(1,animation.elapsed/transition.durationMs);visualGroups=groups();
-      if(transition.type==='slide'){const direction=room.desks.findIndex(d=>d.id===snapshot.targetDeskId)>room.desks.findIndex(d=>d.id===snapshot.currentDeskId)?1:-1;visualGroups.source.matrix[4]=-direction*1920*p;visualGroups.target.matrix[4]=direction*1920*(1-p);}
+      if(transition.type==='slide'){const from=room.desks.findIndex(d=>d.id===snapshot.currentDeskId),to=room.desks.findIndex(d=>d.id===snapshot.targetDeskId),count=room.desks.length;const direction=count>2&&from===count-1&&to===0?1:count>2&&from===0&&to===count-1?-1:to>from?1:-1;visualGroups.source.matrix[4]=-direction*1920*p;visualGroups.target.matrix[4]=direction*1920*(1-p);}
       else if(transition.type==='fade'){visualGroups.source.opacity=1-p;visualGroups.target.opacity=p;}return p;
     }
     function step(){

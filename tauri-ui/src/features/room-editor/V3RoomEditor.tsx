@@ -98,6 +98,10 @@ export function V3RoomEditor(props:Props){
     <header className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
       <Button variant="ghost" disabled={busy} onClick={props.onBack}>返回房间库</Button>
       <Button variant="outline" disabled={busy} onClick={()=>setWorkbenchOpen(true)}>打开试验台</Button>
+      <Button variant="outline" disabled={busy||Boolean(iconCreationIssue)} title={iconCreationIssue??("向 "+desk.name+" 添加应用图标")} onClick={()=>{
+        change(addV3Icon(room,desk.id,"我的应用","binding.launch"));
+        setMessage("已向 "+desk.name+" 添加应用图标。保存并应用后，在“按钮与本机设置”中选择这个图标并绑定本机应用。");
+      }}>添加应用</Button>
       <span className="font-medium">{room.name}</span><span className="text-xs text-muted-foreground">v3 · {dirty?"未保存":"已保存"}</span>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy||!draft.history.past.length} onClick={()=>setDraft(d=>({...d,history:undoV3(d.history)}))}>撤销</Button>
@@ -167,7 +171,7 @@ export function V3RoomEditor(props:Props){
         <div><h3 className="mb-2 text-sm font-medium">默认图标</h3>
           <div className="flex flex-wrap gap-2">{(["desk.previous","desk.next","binding.launch"] as const).map(action=>
             <Button key={action} variant="outline" size="sm" disabled={busy||Boolean(iconCreationIssue)} title={iconCreationIssue??undefined} onClick={()=>change(addV3Icon(room,desk.id,action==="desk.next"?"下一页":action==="desk.previous"?"上一页":"我的应用",action))}>
-              {action==="desk.next"?"+ 下一页":action==="desk.previous"?"+ 上一页":"+ 待绑定应用"}</Button>)}</div>
+              {action==="desk.next"?"+ 下一页":action==="desk.previous"?"+ 上一页":"+ 添加应用"}</Button>)}</div>
           {iconCreationIssue&&<p className="mt-2 text-xs text-muted-foreground">{iconCreationIssue}</p>}
           <ul className="mt-3 space-y-2">{desk.icons.map(icon=><li key={icon.id} className="flex items-center justify-between rounded border px-2 py-1 text-sm">
             <span>{icon.glyph} {icon.label}</span><Button variant="ghost" size="sm" disabled={busy} onClick={()=>change(removeV3Presentation(room,desk.id,icon.id))}>移除</Button></li>)}</ul>

@@ -11,3 +11,10 @@ button.panel{flex:0 0 84px;align-items:center;padding:12px 4px;cursor:pointer;co
 button.panel:hover{border-color:var(--line)}button.panel:focus,button.panel:focus-visible{outline:none}
 .button-glyph{font-size:28px;color:var(--accent)}.button-label{font-size:12px}button[data-bound=true] .button-glyph:after{content:"";display:block;width:4px;height:4px;margin:auto;background:var(--accent);border-radius:50%}
 .placeholder{margin:auto;color:var(--muted)}[hidden]{display:none!important}
+
+/* Classic bottom Dock: stable button bounds, no animated hover/focus ring. */
+body:has(#dock[data-template=navigation-bar]){padding:24px}
+#dock[data-template=navigation-bar]{width:auto;min-width:240px;height:auto;min-height:72px;align-items:center;gap:16px;padding:10px 20px;border:0;border-radius:999px;background:rgba(20,20,20,.55);backdrop-filter:blur(12px);box-shadow:0 6px 24px rgba(0,0,0,.4)}
+#dock[data-template=navigation-bar] button.panel{flex:0 0 72px;min-height:64px;gap:4px;padding:6px 8px;border:1px solid transparent;border-radius:12px;background:transparent}
+#dock[data-template=navigation-bar] button.panel:hover{border-color:transparent}
+#dock[data-template=navigation-bar] button.panel:focus,#dock[data-template=navigation-bar] button.panel:focus-visible{outline:none}

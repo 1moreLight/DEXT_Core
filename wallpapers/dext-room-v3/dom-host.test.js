@@ -550,3 +550,15 @@ test('unbound native button shows a visible explanation',async()=>{
  assert.ok(f.container.children.some(node=>node.className==='dext-v3-action-notice'&&node.textContent.includes('绑定')));
  f.host.dispose();
 });
+test('three Desk wraparound keeps next and previous slide directions',async()=>{
+ for(const [from,to,direction] of [['last','home',1],['home','last',-1],['home','middle',1],['middle','last',1]]){
+  const desks=['home','middle','last'].map(id=>({id,name:id,icons:[],components:[],background:{type:'image',src:'bg.svg'}}));
+  const initialSnapshot={protocolVersion:1,sessionId:'session',roomId:'room',installationStamp:'stamp',revision:1,currentDeskId:from,targetDeskId:null,queuedDeskId:null,transitionId:null,deadlineUtc:null,active:true,operable:true,lifecycle:{stage:'desktop',playbackPaused:false,locked:false,revision:1}};
+  const f=fixture({room:{desks},initialSnapshot});await f.host.ready;
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:from,targetDeskId:to,transitionId:'wrap',deadlineUtc:'2030-01-01T00:00:00Z'}));
+  await f.advance(225);
+  const source=f.container.children[0].children.find(n=>n.dataset.consumer==='slot.background.'+from);
+  assert.equal(source.style.transform,'matrix(1,0,0,1,'+(-direction*960)+',0)');
+  f.host.dispose();
+ }
+});

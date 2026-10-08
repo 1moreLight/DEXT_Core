@@ -357,3 +357,5 @@
 | #258 | 作者几何去重与宿主焦点清表冲突，保留文档却丢失按钮声明 | [backend](errors/backend.md) |
 
 | #259 | 作者Dock重复焦点外框及已配置导航的额外作者等待影响点击反馈 | [backend](errors/backend.md) |
+
+| #260 | 滑动方向只比较Desk索引导致首尾循环反向；v3添加应用入口过于隐蔽 | [backend](errors/backend.md) |
