@@ -8,6 +8,6 @@
 .readout{font-size:clamp(20px,2vw,32px);font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 button.panel{flex:0 0 84px;align-items:center;padding:12px 4px;cursor:pointer;color:var(--text);font:inherit}
 [data-template=navigation-bar] button.panel{flex:1}
-button.panel:hover{border-color:var(--accent)}button.panel:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+button.panel:hover{border-color:var(--line)}button.panel:focus,button.panel:focus-visible{outline:none}
 .button-glyph{font-size:28px;color:var(--accent)}.button-label{font-size:12px}button[data-bound=true] .button-glyph:after{content:"";display:block;width:4px;height:4px;margin:auto;background:var(--accent);border-radius:50%}
 .placeholder{margin:auto;color:var(--muted)}[hidden]{display:none!important}

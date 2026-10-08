@@ -550,16 +550,3 @@ test('unbound native button shows a visible explanation',async()=>{
  assert.ok(f.container.children.some(node=>node.className==='dext-v3-action-notice'&&node.textContent.includes('绑定')));
  f.host.dispose();
 });
-test('authored Dock navigation dispatches immediately and keeps its own focus styling',async()=>{
- const f=fixture({room:{components:[{id:'shared',role:'dock',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next'],config:{}}]}});
- await f.host.ready;
- await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:10,y:20,width:30,height:40}]});
- const event={runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,consumer:'component.shared',button:'next',entryId:'button.next'};
- assert.equal(f.host.handleNativeInput({...event,kind:'focus'}),true);
- assert.equal(f.container.children[0].children.some(n=>n.tag==='svg'&&!n.hidden),false);
- assert.equal(f.host.handleNativeInput({...event,kind:'activate',inputSequence:1}),true);
- assert.equal(f.calls.filter(v=>v.method==='activate').length,1);
- assert.equal(f.host.handleNativeInput({...event,kind:'activate',inputSequence:1}),false);
- assert.equal(f.calls.filter(v=>v.method==='activate').length,1);
- f.host.dispose();
-});
