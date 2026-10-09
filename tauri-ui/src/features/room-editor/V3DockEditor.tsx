@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { V3ReadGrantPanel } from "./V3ReadGrantPanel";
 import panels from "../../../../creator-kit/v3/dock-templates/three-panels/template.json";
 import navigation from "../../../../creator-kit/v3/dock-templates/navigation-bar/template.json";
 import { dockComponent, readDockDescriptor, effectiveDockConfig, setDockValue, resetDockValue, setDockAction, removeDockRegion, setDeskDockReference } from "./dock-template";
@@ -90,7 +89,6 @@ export function V3DockEditor(props:Props){
     <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
    </div>
   </>}
-  {dock&&<V3ReadGrantPanel key={room.id+":"+dock.id} roomId={room.id} consumerId={"component."+dock.id} isTauri={props.isTauri} canApply={props.canApply} disabled={props.disabled}/>}
   {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。选择官方模板即可配置数据与按钮。</p>}
  </section>;
 }

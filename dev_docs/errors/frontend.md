@@ -153,3 +153,8 @@ rename_room返回display_path；原生作者rename更新name并保持UUID/资源
 ## #236 试验台模拟接线与正式作者协议、当前几何须一致（2026-10-04）
 首轮源接口核对发现，SDK导航发送params.action对象，公开按钮action是字符串；不能按独立deskId或作者清单action对象模拟。诊断只缓存geometry发布回执会留在动画旧坐标；发送全部控制设置中的旧Desk又会使调数据时误导航。
 修正为正式SDK结构/公开投影；从正式DOM的readInputSample读取当前帧区域，Desk导航独立发送，其他模拟开关不带旧Desk。仅源核对/JS语法，未宣称实际运行通过；Task4一次真实资源/SDK/区域冒烟集中验证，不扩展网络专项。
+
+## #263 v3本机数据授权只挂Dock，漏掉Widget（2026-10-09）
+用户星轨实验室的读数声明在component.observatory，navigation只有导航/绑定能力。V3DockEditor只挂V3ReadGrantPanel并传component.navigation，面板过滤该消费者，返回无读数时错误引导重新应用；正式Core GetReadGrants实际已包含全部声明只读源。
+修复：授权面板独立挂在Room编辑器，按当前安装身份的Core回复列出全部只读消费者，来源选择提供Widget/场景/背景/Dock名称；逐项保存仍传确认的consumerId/installationStamp，原授权和迟到结果处理保持，撤销只改对应项。新入口不扩KV或系统控制授权。
+验证：TS/Vite及配置器v3-release完整成功；替换精确路径配置器并start.ps1复用Core，实际UI控件树出现Widget · 轨道观测台及四项复选框。授权由用户选择，没有代填允许/撤销或桌面读数验收。UI截图若被前台窗口遮挡，不能作为配置器视觉通过，使用控件树核对并停止额外前台操作。

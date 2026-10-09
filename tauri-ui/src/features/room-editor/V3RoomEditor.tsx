@@ -10,6 +10,7 @@ import { V3Workbench } from "./V3Workbench";
 import { V3PersonalEditor } from "./V3PersonalEditor";
 import type {AppPickerItem} from "@/components/AppPickerDialog";
 import { V3DockEditor } from "./V3DockEditor";
+import { V3ReadGrantPanel } from "./V3ReadGrantPanel";
 import { attachDockTemplate, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor } from "./dock-template";
 
@@ -40,6 +41,11 @@ export function V3RoomEditor(props:Props){
   const [workbenchOpen,setWorkbenchOpen]=useState(false);
   const dirty=serializeRoomV3(room,draft.resources)!==draft.base;
   const docks=(room.components??[]).filter(c=>c.role==="dock");
+  const consumerNames:Record<string,string> = Object.fromEntries([
+    ["scene","持续场景"],["slot.start","启动页面"],["slot.idle","待机页面"],
+    ...room.desks.map(d=>["slot.background."+d.id,"背景 · "+d.name]),
+    ...(room.components??[]).map(c=>["component."+c.id,(c.role==="widget"?"Widget · ":"Dock · ")+(typeof c.config?.title==="string"?c.config.title:c.id)]),
+  ]);
   const change=(next:RoomV3)=>setDraft(current=>({...current,history:recordV3Change(current.history,next)}));
   const update=(edit:(next:RoomV3)=>void)=>{const next=structuredClone(room);edit(next);change(next);};
   useEffect(()=>{
@@ -153,6 +159,7 @@ export function V3RoomEditor(props:Props){
           <Button variant="outline" disabled={busy} onClick={()=>void run(()=>pick("html","dock"))}>添加本地 Dock</Button>
         </div>
         <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
+        <V3ReadGrantPanel roomId={room.id} consumerNames={consumerNames} isTauri={props.isTauri} canApply={props.canApply} disabled={busy}/>
         <V3PersonalEditor room={room} path={props.path} deskId={desk.id} apps={props.apps} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} dirty={dirty} onChange={change}/>
         <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材</summary>
           <div className="mt-3 space-y-4"><div><h3 className="mb-2 text-sm">启动</h3>{contentPicker("start",room.start)}</div>
