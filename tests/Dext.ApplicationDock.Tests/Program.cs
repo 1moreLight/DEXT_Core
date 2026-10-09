@@ -1,6 +1,8 @@
 using Lively.Services.ApplicationDock;
-if (args.Contains("--fixture")) { NativeProbe.RunFixture(); return; }
+if (args.Contains("--fixture")) { NativeProbe.RunFixture(args.Contains("--interactive") ? 300000 : 30000); return; }
 if (args.Contains("--native")) NativeProbe.Run();
+if (args.Contains("--observe")) { Console.WriteLine("foreground=" + DockWindows.Foreground + " fullscreen=" + DockWindows.IsFullscreen()); return; }
+if (args.Length == 2 && args[0] == "--inspect") { NativeProbe.Inspect(int.Parse(args[1])); return; }
 var pin = new DockPin("Editor", @"C:\Apps\Editor.exe", "", @"C:\Apps");
 var windows = new[] {
  new DockTask(11, 101, "Document A", @"c:\apps\editor.exe"),

@@ -4,14 +4,14 @@ using Lively.Services.ApplicationDock;
 
 static class NativeProbe
 {
-    public static void RunFixture()
+    public static void RunFixture(int lifetimeMs = 30000)
     {
         var thread = new Thread(() =>
         {
             using var first = new PassiveForm { Text = "DEXT controlled Dock window A", Width = 320, Height = 140, Left = 80, Top = 80 };
             using var second = new PassiveForm { Text = "DEXT controlled Dock window B", Width = 320, Height = 140, Left = 100, Top = 240 };
             first.Show(); second.Show();
-            var lifetime = new System.Windows.Forms.Timer { Interval = 30000 };
+            var lifetime = new System.Windows.Forms.Timer { Interval = lifetimeMs };
             lifetime.Tick += (_, _) => System.Windows.Forms.Application.ExitThread();
             lifetime.Start();
             System.Windows.Forms.Application.Run();
@@ -19,6 +19,22 @@ static class NativeProbe
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start(); thread.Join();
     }
+    public static void Inspect(int processId)
+    {
+        EnumWindows((window, _) => {
+            GetWindowThreadProcessId(window, out var pid);
+            if (pid != processId) return true;
+            var title = new System.Text.StringBuilder(256);
+            GetWindowText(window, title, title.Capacity);
+            Console.WriteLine("hwnd=" + window + " visible=" + IsWindowVisible(window) + " title=" + title);
+            return true;
+        }, IntPtr.Zero);
+    }
+    private delegate bool EnumProc(IntPtr window, IntPtr value);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc callback, IntPtr value);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out int pid);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] private static extern int GetWindowText(IntPtr window, System.Text.StringBuilder value, int count);
     public static void Run()
     {
         using var child = Process.Start(new ProcessStartInfo(Environment.ProcessPath!, "--fixture") { UseShellExecute = false });
