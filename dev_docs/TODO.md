@@ -1926,3 +1926,11 @@ Task3实验样包计划（仍2/4=50%）：沿已确认V3路线制作rooms/v3-orb
 halfV3合并收尾（2026-10-09）：master无冲突命名合并，合并提交由本地halfV3标记定位。合并后只跑必要本地冒烟：runtime-model18/18、visible-data5/5；未重复桌面操作或全部网络/安全矩阵。当前运行候选保持。
 主线原21项Room文件删除和导入的v3-orbit-lab/v3test已完整保留；备份.build/halfV3-local-room-state-20261009与stash e08778387809a44a491a4e72fd6ebdb8517e5ee2均保留。恢复后导入Room仍按原本机清单/字节存在，源目录与提交作者样包的差异属于未提交本机状态，未混入合并。
 本轮v3-integration worktree已通过应用归档为可恢复快照，feat/V3-INTEGRATION-001-integration已安全删除。旧堆叠依赖分支不在本轮清理范围。阶段合并完成，整体集成仍2/4=50%，下一项继续Task3/4集中验收。
+
+## V3-P8-003 系统应用Dock（2026-10-09）
+目标：固定应用、真实运行窗口和点击启动/切换/最小化，完成配置器入口与重启恢复。范围/人工步骤见plans/V3-P8-003-app-taskbar.md及对应验收卡。
+- [ ] Task1 模型/本机偏好与窗口枚举/动作，定向验证。
+- [ ] Task2 原生Dock呈现与Core生命周期。
+- [ ] Task3 配置器/RPC/来源与Release。
+- [ ] Task4 实际验证、提交待验收。
+进度0/4=0%；原集成包50%。
