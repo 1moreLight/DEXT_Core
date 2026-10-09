@@ -75,6 +75,13 @@ internal sealed class DockPreviewWindow : Window
         RefreshThumbnails();
     }
 
+    public void FollowAnchor(double centerInDip, double dockTop)
+    {
+        if (!IsVisible) return;
+        anchorCenter = centerInDip;
+        anchorTop = dockTop;
+        Reposition();
+    }
     public void UpdateGroup(DockGroup value)
     {
         if (!IsVisible) return;
