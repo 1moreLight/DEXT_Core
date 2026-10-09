@@ -94,7 +94,8 @@ internal sealed partial class RoomActionAuthority
                 if (revision is { } expected && context.Snapshot.Revision != expected) return new(RoomActionStatus.StaleInput);
                 var canConsume = owner.CanConsume(context.Role, context.Snapshot);
                 var result = owner.DeclaredCapabilities.ToDictionary(capability => capability,
-                    capability => canConsume || SourceDesk(context,consumer,visible:true) is{} source && owner.CanConsume(context.Role,context.Snapshot,source) && ProtectedCapability(capability)
+                    capability => (ReadableData.Contains(capability) ? owner.CanReadData(context.Role, context.Snapshot) :
+                        canConsume || SourceDesk(context,consumer,visible:true) is{} source && owner.CanConsume(context.Role,context.Snapshot,source) && ProtectedCapability(capability))
                         ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable,
                     StringComparer.Ordinal);
                 return new(RoomActionStatus.Accepted, new ReadOnlyDictionary<string, RoomActionStatus>(result));
@@ -106,7 +107,7 @@ internal sealed partial class RoomActionAuthority
     public RoomActionStatus AuthorizeCapability(Guid connection, RoomSessionPeer peer, Guid session, string consumer, string capability)
     {
         try { return Prepare(connection, peer, session, consumer, status => status,
-            (state, context, owner) => owner.CanConsume(context.Role, context.Snapshot)
+            (state, context, owner) => (ReadableData.Contains(capability) ? owner.CanReadData(context.Role, context.Snapshot) : owner.CanConsume(context.Role, context.Snapshot))
                 ? Permission(state, context.Installation, owner, consumer, capability) : RoomActionStatus.NotOperable); }
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
     }
@@ -118,7 +119,7 @@ internal sealed partial class RoomActionAuthority
     {
         if (capability is null || !ReadableData.Contains(capability)) return new(RoomActionStatus.Forbidden);
         RoomActionStatus Authorize() => Prepare(connection, peer, session, consumer, status => status, (state, context, owner) =>
-            context.Snapshot.Revision != revision ? RoomActionStatus.StaleInput : !owner.CanConsume(context.Role, context.Snapshot)
+            context.Snapshot.Revision != revision ? RoomActionStatus.StaleInput : !owner.CanReadData(context.Role, context.Snapshot)
                 ? RoomActionStatus.NotOperable : Permission(state, context.Installation, owner, consumer, capability));
         try
         {

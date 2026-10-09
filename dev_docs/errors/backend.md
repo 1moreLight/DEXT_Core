@@ -542,3 +542,9 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 修复：生产Bind完整验证并保留目录及已验证文件只读句柄，持句柄再次核验后复用VerifiedRoomInstallation；当前Player/Dock/会话/动作和本机授权仍实时检查。Unbind/重Bind/Dispose释放。安装文档不属于作者资源扩展名白名单，需专用固定文件读取；InvalidDataException不属于IOException，绑定失败需显式捕获以释放已打开句柄。
 接入：Rust原先先替换content再关闭旧Player，与只读保留句柄冲突；重新应用先按当前宿主库路径关闭并等待旧Player解绑，再原子安装，安装失败尝试重开保留的旧宿主。
 验证：同一真实文件夹单项生命周期回归先失败后通过；200次准入重复验证579.49ms、复用20.93ms，仅为小样包环节测量。Core/Player/Watchdog Release与TS/Vite/Rust配置器构建成功。实际配置器旧Player运行时点击“重新应用”，33168退出、50584绑定且UI确认已应用v3test。未保存编辑草稿。真实Dock点击改善仍待用户，不扩网络/安全矩阵；WorkerW Z-order日志及漏点结论保留验收边界。
+
+## #264 观测台字段与只读前台限制（2026-10-09）
+根因：样包将内部SystemMediaSnapshot.HasSession/音量概念直接写成公开JSON的hasSession/volume。实际media.read的available值不带hasSession，audio.read字段为level，因此媒体误报无会话且音量无读数。生产只读消费又调用动作CanConsume，硬件ObserveSnapshot用foreground/operable停止源，普通小窗口失焦便清空观测台，动画却未实际暂停。
+处理：样包按available/title/artist与level/muted呈现；四种只读能力改用CanReadData，保留活动stage/Desk、锁屏、实际playbackPaused、声明和当前安装授权。硬件源同样跟随实际暂停。动作/KV继续CanConsume。配置器授权提示按实际lifecycle暂停/锁屏判断，不把operable=false当成数据已暂停。
+证据：五项visible-data定向回归先2/5失败，修复后5/5通过；普通小窗口保持四读源/硬件，暂停/锁屏/撤权停止，动作/KV仍NotOperable。样包官方形状媒体/音量呈现检查通过，JS语法通过。临时Node检查初稿少一个闭合括号，修正夹具后通过；未据夹具语法失败判断产品失败。实机B站需Windows提供媒体会话，实际验收另记。
+本轮部署补记：Release build→start成功；同候选目录实际重新应用后安装Widget摘要与源一致，UI授权提示按真实暂停。一次真实Windows来源为media=available；具体B站标题及普通小窗口连续读数仍交用户验收，新安装权限未代用户允许。

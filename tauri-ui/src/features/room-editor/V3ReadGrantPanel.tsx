@@ -5,7 +5,7 @@ type Props = { roomId:string; consumerNames?:Record<string,string>; isTauri:bool
 type Capability = { capability:string; allowed:boolean };
 type Consumer = { consumerId:string; capabilities:Capability[] };
 type Grants = { status:string; roomId:string; installationStamp:string; consumers?:Consumer[] };
-type Session = { active:boolean; room_id:string; installation_stamp:string; player_pid:number; operable:boolean };
+type Session = { active:boolean; room_id:string; installation_stamp:string; player_pid:number; operable:boolean; lifecycle?:{ playback_paused:boolean; locked:boolean } };
 type Board = { stamp:string; consumers:Consumer[]; paused:boolean };
 const sources = [
   ["time.read", "时间数据"], ["hardware.read", "硬件数据"],
@@ -51,8 +51,9 @@ export function V3ReadGrantPanel(props:Props) {
           setBoard(null); setNotice(reply.status === "accepted" ? "当前已应用作品没有声明数据读取；作品新增数据源后，请保存并重新应用。" : appliedHint);
           return;
         }
-        setBoard({stamp:session.installation_stamp, consumers:declared, paused:!session.operable});
-        setNotice(session.operable ? "正在编辑当前已应用副本的本机授权。" : "桌面暂不可读取；授权仍可保存，桌面恢复可用后读取。");
+        const paused = Boolean(session.lifecycle?.playback_paused || session.lifecycle?.locked);
+        setBoard({stamp:session.installation_stamp, consumers:declared, paused});
+        setNotice(!paused ? "正在编辑当前已应用副本的本机授权。" : "壁纸已暂停或锁屏；授权仍可保存，恢复后读取。");
       } catch {
         if (current()) { setBoard(null); setNotice("暂时无法读取本机授权，请确认 Core 正在运行。"); }
       }
@@ -75,7 +76,7 @@ export function V3ReadGrantPanel(props:Props) {
       const declared = capabilities(reply, props.roomId, confirmed.stamp);
       if (declared?.length) {
         setBoard({...confirmed, consumers:declared});
-        setNotice(confirmed.paused ? "授权已保存；桌面恢复可用后读取。" : "本机授权已保存。");
+        setNotice(confirmed.paused ? "授权已保存；壁纸恢复播放并解锁后读取。" : "本机授权已保存。");
       } else if (reply.status === "staleSession") {
         setBoard(null); setNotice("运行副本已变化，正在重新读取本机授权；新副本需要重新允许。");
       } else {

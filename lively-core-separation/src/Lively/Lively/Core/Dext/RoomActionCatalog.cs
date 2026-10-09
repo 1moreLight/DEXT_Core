@@ -36,6 +36,10 @@ internal sealed class RoomActionCatalog
             ((role == RoomClientRole.DesktopPlayer && desktop) || (role == RoomClientRole.Dock && dock)) &&
             (desks is null || desks.Contains(deskId ?? snapshot.TargetDeskId ?? snapshot.CurrentDeskId));
 
+        public bool CanReadData(RoomClientRole role, RoomSessionSnapshot snapshot) =>
+            IsActive(role, snapshot) && !snapshot.Lifecycle.Locked &&
+            (role == RoomClientRole.Dock || !snapshot.Lifecycle.PlaybackPaused);
+
         public bool CanConsume(RoomClientRole role, RoomSessionSnapshot snapshot,string? deskId=null) =>
             IsActive(role, snapshot,deskId) && !snapshot.Lifecycle.Locked &&
             // A separate visible Dock can remain usable when desktop playback

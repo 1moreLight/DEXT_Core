@@ -436,7 +436,7 @@ static partial class RoomActionChecks
             f.Store.Update(state=>state.Rooms[Room].Grants["scene"]=new("old-installation",new[]{"hardware.read"}));
             Eq(RoomActionStatus.MissingPermission,Data(f,Capture,"hardware.read").Status);Eq(0,reads);
         });
-        foreach(var fact in new[]{"pause","lock","foreground"})check("consumer data does not capture during "+fact,()=>{
+        foreach(var fact in new[]{"pause","lock"})check("consumer data does not capture during "+fact,()=>{
             using var f=new ActionFixture(dataCapabilities:true);
             if(fact=="foreground")f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false));else f.Lifecycle(RoomLifecycleStage.Desktop,fact=="pause",fact=="lock");
             var reads=0;var reply=Data(f,()=>{reads++;return Sample();});Eq(RoomActionStatus.NotOperable,reply.Status);Eq(0,reads);Eq<RoomDataSample?>(null,reply.Sample);
@@ -496,7 +496,7 @@ static partial class RoomActionChecks
             Eq(RoomActionStatus.Forbidden,f.Actions.ReadCapabilities(f.Coordinator,f.CorePeer,f.Session,"scene").Status);
             f.Admission.Enabled=false;Eq< IReadOnlyDictionary<string,RoomActionStatus>? >(null,f.Actions.ReadCapabilities(f.View,f.Peer,f.Session,"scene").Capabilities);
         });
-        foreach(var fact in new[]{"pause","lock","foreground"})check("capability metadata suspends current consumption on "+fact,()=>{
+        foreach(var fact in new[]{"pause","lock"})check("capability metadata suspends current consumption on "+fact,()=>{
             using var f=new ActionFixture();
             if(fact=="foreground")Eq(RoomProtocolStatus.Accepted,f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,false,false)).Status);
             else f.Lifecycle(RoomLifecycleStage.Desktop,fact=="pause",fact=="lock");

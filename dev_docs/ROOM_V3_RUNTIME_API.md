@@ -296,3 +296,7 @@ geometryVersion用于作者按钮/占用声明及视口结构，单纯有效布�
 ### 配置器私有只读授权RPC（2026-10-04，P6-002）
 DesktopService增加GetRoomReadGrants(room_id,installation_stamp)与SetRoomReadGrant(room_id,installation_stamp,consumer_id,capabilities[],allow)。Core复核当前原生安装/Player/session，内部当前Coordinator上下文只读/原子编辑个人readGrants；返回status、Room/安装戳、当前声明读能力的consumer/capability/allowed，不返回值、目标或其他权限。设置仅接受四种已声明读能力，失败不发布；相同有效选择不增加个人revision。
 Tauri get_v3_read_grants/set_v3_read_grant经既有验证named pipe调用，配置器按当前已应用Room/安装戳显示并逐项显式允许/撤销。保存失败保留已确认勾选，staleSession清旧显示再读新副本。授权不改变作者草稿/清单，不增加作者SDK编辑方法；actual data仍沿既有每值Core权限和活动核验。
+
+### 只读读数在普通小窗口下继续（2026-10-09）
+四种data.subscribe只读能力与动作输入operable分开：当前活动stage/Desk、未锁屏且桌面未实际playbackPaused时允许消费，普通窗口取得前台不会清空读数；实际暂停、锁屏、离开所属Desk或撤权仍停止。Dock沿既有可见Desktop生命周期。actions、系统控制和storage保持原消费规则。
+当前生产media.read在available时即代表已有系统会话，value包含title/artist/playbackStatus等，无hasSession字段；无会话为status=missing。audio.read的value为level（0..1）与muted，无volume字段。作者作品不能把播放器内部DTO当作公开数据形状。

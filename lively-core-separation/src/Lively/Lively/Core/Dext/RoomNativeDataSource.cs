@@ -56,8 +56,7 @@ internal sealed partial class RoomNativeDataSource : IDisposable
     {
         var enabled = snapshot.IsActive && !snapshot.Lifecycle.Locked &&
             (isDock ? dockVisible && snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop :
-                !snapshot.Lifecycle.PlaybackPaused && snapshot.IsDesktopForeground &&
-                (snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.IsOperable));
+                !snapshot.Lifecycle.PlaybackPaused);
         Volatile.Write(ref hardwareEnabled, enabled ? 1 : 0);
         if (!enabled) Suspend();
     }

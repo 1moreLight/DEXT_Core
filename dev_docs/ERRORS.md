@@ -363,3 +363,4 @@
 | #261 | 每次原生点击重复验证整套安装资源；缓存需随Player释放并调整重新应用顺序 | [backend](errors/backend.md) |
 | #262 | Windows编码后命令过长使批量样包写入未启动；安装检查需要已存在的目标父目录 | [toolchain](errors/toolchain.md) |
 | #263 | v3本机数据授权只挂Dock，Widget声明已到Core却无配置器入口 | [frontend](errors/frontend.md) |
+| #264 | 观测台误用内部媒体/音量字段；只读消费误绑桌面前台使小窗口清空读数 | [backend](errors/backend.md) |
