@@ -1,5 +1,6 @@
 using System;
 using Lively.Services.ApplicationDock;
+if (args.Length == 2 && args[0] == "--interactive-preview") { InteractivePreviewProbe.Run(int.Parse(args[1])); return; }
 void Check(bool pass, string label) { if (!pass) throw new Exception(label); Console.WriteLine("PASS " + label); }
 var wide = DockPreviewGeometry.Fit(1920,1080,200,120);
 Check(wide.Width == 200 && wide.Height == 112 && wide.Top == 4, "landscape preview fits without cropping");

@@ -23,3 +23,11 @@
 
 候选包清单：release-inventory.json已生成，650项文件摘要；本分支声明的hostAssets与候选逐项摘要一致。Core源码4999890，配置器复用已验证P8-003产物，清单明确记录来源。
 补充设计建议05已做完；diff审查04开做。工作包仍67%，未合并。
+
+### 受控预览交互补证计划
+状态：开做。通过测试项目链接同一生产Dock/预览源码，添加普通观察窗口供自动化发现。仅枚举受控fixture进程，点击仍调用真实DockWindows.Perform；不更改产品窗口样式、不调整旧桌面输入。该证据只覆盖受控独立宿主，不能替代用户正式桌面验收。
+
+受控宿主结果：普通观察窗口成功出现在Orca列表，生产同款Dock工具窗口仍被过滤，指定真实HWND也返回windowNotFound。未改产品样式绕过工具限制。测试进程已结束，实际Core Dock已恢复enabled=True，pins=0，error为空。
+测试入口：Dext.DockPreview.Tests.exe --interactive-preview <fixture PID>；仅对给定测试PID展示生产Dock/预览，五分钟自动结束，无固定/启动功能，不能作为完整Core集成证明。正式鼠标/触屏及预览仍待验收。
+
+修复版运行目录：D:\use\Orca\DEXT\DEXT_Core\.build\v3-dock-preview-reviewed-20261010；Core PID43892（只代表此次启动），源码1137ec5；start.ps1身份核对成功。上方4999890候选运行信息为历史。
