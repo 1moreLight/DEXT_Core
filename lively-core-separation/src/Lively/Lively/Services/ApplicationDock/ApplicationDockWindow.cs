@@ -11,7 +11,7 @@ using System.Windows.Media.Imaging;
 
 namespace Lively.Services.ApplicationDock;
 
-internal sealed class ApplicationDockWindow : Window
+internal sealed partial class ApplicationDockWindow : Window
 {
     private readonly StackPanel strip = new() { Orientation = Orientation.Horizontal };
     private readonly Dictionary<string, ImageSource> icons = new(StringComparer.OrdinalIgnoreCase);
@@ -54,6 +54,7 @@ internal sealed class ApplicationDockWindow : Window
         };
         SizeChanged += (_, _) => Position();
         Loaded += (_, _) => Position();
+        InitializePreview();
     }
 
     private void Position()
@@ -69,9 +70,10 @@ internal sealed class ApplicationDockWindow : Window
         Position();
         message.Text = error ?? "";
         message.Visibility = string.IsNullOrEmpty(error) ? Visibility.Collapsed : Visibility.Visible;
+        UpdatePreview(groups);
         var next = System.Text.Json.JsonSerializer.Serialize(new { groups, foreground });
         // Never replace the button that owns a physical mouse-down before its mouse-up.
-        if (next == signature || Mouse.LeftButton == MouseButtonState.Pressed || Mouse.RightButton == MouseButtonState.Pressed ||
+        if (next == signature || preview?.IsVisible == true || Mouse.LeftButton == MouseButtonState.Pressed || Mouse.RightButton == MouseButtonState.Pressed ||
             strip.Children.OfType<Button>().Any(b => b.ContextMenu?.IsOpen == true)) return;
         signature = next;
         strip.Children.Clear();
@@ -114,10 +116,11 @@ internal sealed class ApplicationDockWindow : Window
             pinItem.Click += (_, _) => pin(group);
             menu.Items.Add(pinItem);
             button.ContextMenu = menu;
+            AttachPreview(button, group);
             button.Click += (_, _) =>
             {
-                if (group.Windows.Count > 1) { menu.PlacementTarget = button; menu.IsOpen = true; }
-                else click(group, null);
+                if (group.Windows.Count > 1) OpenPreview(button, group.Key);
+                else { ClosePreview(); click(group, null); }
             };
             strip.Children.Add(button);
         }

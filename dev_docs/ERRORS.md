@@ -367,3 +367,5 @@
 | #265 | 主线导入Room与新样包路径重合，合并前须保存本机文件/删除状态；恢复不混入提交 | [git](errors/git.md) |
 
 | #266 | 原生应用Dock刷新不得在按下/抬起之间替换按钮；状态轮询不能吞掉配置点击 | [frontend](errors/frontend.md) |
+
+| #267 | 预览窗口未Show时DPI尚未初始化，锚点须从已显示Dock的DIP坐标传递 | [frontend](errors/frontend.md) |
