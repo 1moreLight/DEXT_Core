@@ -117,6 +117,7 @@ namespace Lively
             {
                 // Run startup tasks.
                 Services.GetRequiredService<AppInitializer>().Run();
+                Services.GetRequiredService<Lively.Services.ApplicationDock.ApplicationDockService>().Start();
                 Services.GetRequiredService<RoomSessionKernel>();
                 Logger.Info($"Dext Room session kernel ready | protocol={RoomSessionKernel.ProtocolVersion} | v2 wallpaper session remains separate");
                 Services.GetRequiredService<RoomSessionProtocolGateway>();
@@ -244,6 +245,7 @@ namespace Lively
                 .AddSingleton<ISystray, Systray>()
                 .AddSingleton<ITransparentTbService, TranslucentTBService>()
                 .AddSingleton<ISystemControlService, SystemControlService>()
+                .AddSingleton<Lively.Services.ApplicationDock.ApplicationDockService>()
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<WinDesktopCoreServer>()

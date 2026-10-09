@@ -424,6 +424,17 @@ pub async fn set_read_grant(room_id: String, installation_stamp: String, consume
     read_grant_call("SetRoomReadGrant", &RoomSetReadGrantRequest { room_id, installation_stamp, consumer_id, capabilities, allow }.encode_to_vec()).await
 }
 
+pub async fn application_dock_status(patch: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    let (method, request) = match patch {
+        Some(value) => ("EditApplicationDock", RoomDockPreferenceRequest { patch_json: value.to_string() }.encode_to_vec()),
+        None => ("GetApplicationDockStatus", Vec::new()),
+    };
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, &request).await?;
+    let response = payloads.iter().find_map(|payload| RoomDockStatusResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no application Dock state".to_string())?;
+    serde_json::from_str(&response.reply_json).map_err(|_| "Dext Core returned invalid application Dock state".to_string())
+}
 pub async fn room_dock_status(patch: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
     let (method, request) = match patch {
         Some(value) => ("SetRoomDockPreference", RoomDockPreferenceRequest { patch_json: value.to_string() }.encode_to_vec()),

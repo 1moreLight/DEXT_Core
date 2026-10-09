@@ -158,3 +158,8 @@ rename_room返回display_path；原生作者rename更新name并保持UUID/资源
 用户星轨实验室的读数声明在component.observatory，navigation只有导航/绑定能力。V3DockEditor只挂V3ReadGrantPanel并传component.navigation，面板过滤该消费者，返回无读数时错误引导重新应用；正式Core GetReadGrants实际已包含全部声明只读源。
 修复：授权面板独立挂在Room编辑器，按当前安装身份的Core回复列出全部只读消费者，来源选择提供Widget/场景/背景/Dock名称；逐项保存仍传确认的consumerId/installationStamp，原授权和迟到结果处理保持，撤销只改对应项。新入口不扩KV或系统控制授权。
 验证：TS/Vite及配置器v3-release完整成功；替换精确路径配置器并start.ps1复用Core，实际UI控件树出现Widget · 轨道观测台及四项复选框。授权由用户选择，没有代填允许/撤销或桌面读数验收。UI截图若被前台窗口遮挡，不能作为配置器视觉通过，使用控件树核对并停止额外前台操作。
+
+## #266 原生应用 Dock 刷新与点击交错（2026-10-09）
+问题：窗口标题/前台变化触发控件重建时，若发生在鼠标按下和抬起之间，会丢失 Click；配置器状态查询在途时直接 return 会吞掉用户修改。
+处理：原生 Dock 在物理按键按下或菜单打开时延后控件重建；配置器用请求序号丢弃旧查询结果，修改请求优先，只有重复修改互斥。
+验证：Release 编译、Core RPC；物理鼠标手感保留在独立验收卡，不能由接口检查替代。

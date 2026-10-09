@@ -365,3 +365,5 @@
 | #263 | v3本机数据授权只挂Dock，Widget声明已到Core却无配置器入口 | [frontend](errors/frontend.md) |
 | #264 | 观测台误用内部媒体/音量字段；只读消费误绑桌面前台使小窗口清空读数 | [backend](errors/backend.md) |
 | #265 | 主线导入Room与新样包路径重合，合并前须保存本机文件/删除状态；恢复不混入提交 | [git](errors/git.md) |
+
+| #266 | 原生应用Dock刷新不得在按下/抬起之间替换按钮；状态轮询不能吞掉配置点击 | [frontend](errors/frontend.md) |

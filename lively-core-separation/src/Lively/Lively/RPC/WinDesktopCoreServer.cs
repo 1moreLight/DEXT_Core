@@ -44,6 +44,7 @@ namespace Lively.RPC
         private readonly IWallpaperPluginFactory wallpaperFactory;
         private readonly ISystemControlService systemControlService;
         private readonly IRoomSessionRuntimeCoordinator roomSessionRuntime;
+        private readonly Lively.Services.ApplicationDock.ApplicationDockService applicationDock;
 
         public WinDesktopCoreServer(IDesktopCore desktopCore,
             IRunnerService runner,
@@ -54,7 +55,7 @@ namespace Lively.RPC
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory,
             ISystemControlService systemControlService,
-            IRoomSessionRuntimeCoordinator roomSessionRuntime)
+            IRoomSessionRuntimeCoordinator roomSessionRuntime, Lively.Services.ApplicationDock.ApplicationDockService applicationDock)
         {
             this.runner = runner;
             this.desktopCore = desktopCore;
@@ -66,6 +67,7 @@ namespace Lively.RPC
             this.wallpaperLibraryFactory = wallpaperLibraryFactory;
             this.systemControlService = systemControlService;
             this.roomSessionRuntime = roomSessionRuntime;
+            this.applicationDock = applicationDock;
         }
 
         public override Task<GetCoreStatsResponse> GetCoreStats(Empty _, ServerCallContext context)
@@ -114,6 +116,17 @@ namespace Lively.RPC
                 });
         }
 
+        public override Task<RoomDockStatusResponse> GetApplicationDockStatus(Empty _, ServerCallContext context) =>
+            Task.FromResult(ApplicationDockResponse(applicationDock.Status()));
+
+        public override Task<RoomDockStatusResponse> EditApplicationDock(RoomDockPreferenceRequest request, ServerCallContext context) =>
+            Task.FromResult(ApplicationDockResponse(applicationDock.Edit(request.PatchJson)));
+
+        private static RoomDockStatusResponse ApplicationDockResponse(object reply) => new()
+        {
+            ReplyJson = System.Text.Json.JsonSerializer.Serialize(reply,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })
+        };
         public override Task<RoomDockStatusResponse> GetRoomDockStatus(Empty _, ServerCallContext context) =>
             Task.FromResult(DockResponse(roomSessionRuntime.GetRoomDockStatus()));
 

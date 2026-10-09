@@ -1,3 +1,4 @@
+import {ApplicationDockSettings} from "./ApplicationDockSettings";
 import {useEffect,useRef,useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
 import {Button} from "@/components/ui/button";
@@ -66,6 +67,7 @@ export function V3DockSettings({corePid,setStatus}:Props) {
 
   function edit(patch:Partial<V3DockPreferences>) {dirty.current = true; setDraft(value => value ? {...value,...patch} : value);}
   return <section>
+    <ApplicationDockSettings corePid={corePid} setStatus={setStatus}/>
     <div className="mb-4 flex items-center justify-between">
       <h2 className="text-sm font-semibold">原生 Dock</h2>
       <Button variant="ghost" size="sm" disabled={!native || corePid === null || busy} onClick={() => void load()}>刷新状态</Button>

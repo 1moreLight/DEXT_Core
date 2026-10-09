@@ -3521,6 +3521,15 @@ async fn set_v3_read_grant(room_id: String, installation_stamp: String, consumer
 }
 
 #[tauri::command]
+async fn get_application_dock_status() -> Result<serde_json::Value, String> {
+    grpc::application_dock_status(None).await
+}
+
+#[tauri::command]
+async fn edit_application_dock(patch: serde_json::Value) -> Result<serde_json::Value, String> {
+    grpc::application_dock_status(Some(patch)).await
+}
+#[tauri::command]
 async fn get_v3_dock_status() -> Result<serde_json::Value, String> {
     grpc::room_dock_status(None).await
 }
@@ -3627,6 +3636,8 @@ pub fn run() {
             edit_v3_personal,
             get_v3_read_grants,
             set_v3_read_grant,
+            get_application_dock_status,
+            edit_application_dock,
             get_v3_dock_status,
             set_v3_dock_preference,
             start_core,

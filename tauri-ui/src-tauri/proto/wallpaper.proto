@@ -16,6 +16,8 @@ service DesktopService {
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
   rpc GetRoomSession (google.protobuf.Empty) returns (RoomSessionStatusResponse);
+  rpc GetApplicationDockStatus (google.protobuf.Empty) returns (RoomDockStatusResponse);
+  rpc EditApplicationDock (RoomDockPreferenceRequest) returns (RoomDockStatusResponse);
   rpc GetRoomDockStatus (google.protobuf.Empty) returns (RoomDockStatusResponse);
   rpc SetRoomDockPreference (RoomDockPreferenceRequest) returns (RoomDockStatusResponse);
   rpc GetRoomPersonalEditor (RoomPersonalEditorRequest) returns (RoomPersonalEditorResponse);
