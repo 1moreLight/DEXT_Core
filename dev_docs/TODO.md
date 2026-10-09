@@ -1917,3 +1917,8 @@ Task3实验样包计划（仍2/4=50%）：沿已确认V3路线制作rooms/v3-orb
 - [x] 2026-10-09：Core/WebView2 Player/Watchdog Release build.ps1与配置器TS/Vite/Rust v3-release成功；五项visible-data最终5/5，官方JSON投影与JS语法通过。实际Windows只读源采样media=available，未控制播放/音量；既有NuGet审计源不可达/Vite体积/Rust未读字段警告保留。
 - [x] 2026-10-09：配置器确认作者已保存后正式退出Core，正常关闭配置器；备份旧二进制/Widget/zip于主项目.build/v3-before-data-fix-20261009。沿用候选路径部署并start.ps1，Core22840/配置器43816启动；仅替换导入样包widget/main.js，保留用户清单。实际“重新应用”成功，当前Player40624，UI已应用且安装Widget摘要与源一致。
 - [x] 2026-10-09：样包zip更新，根目录14文件与清单一致，SHA256=cefebe40a02f419c7fd534361f9f461d2be13aed3b49f0a02e0f8b63d54568b1；预览源与指南同步。未代用户允许新安装权限，未进行桌面点击/媒体播放操作；实现3/3=100%，Task3仍待人工、整包2/4=50%，未合并。
+
+## 2026-10-09 halfV3阶段合入
+- [x] 用户明确授权当前阶段合入master，名称halfV3；范围为当前feat/V3-INTEGRATION-001-integration及已有堆叠依赖。
+- [x] 状态与验收/归档已记录，整体仍2/4=50%；未完成Task3/4留给下一轮独立续项。
+- [ ] 主线本机Room状态备份/暂存→命名合并→最小冒烟→恢复本机文件→归档已合并worktree及分支。
