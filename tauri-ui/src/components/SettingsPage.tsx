@@ -11,6 +11,9 @@ import {
   type DextSettingsView,
 } from "@/lib/desktop-icon-preferences";
 
+import { V3DockSettings } from "@/components/V3DockSettings";
+import { V3InstallationMaintenance } from "@/components/V3InstallationMaintenance";
+
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 type Theme = "light" | "dark";
@@ -251,6 +254,7 @@ export function SettingsPage(props: SettingsPageProps) {
     <section className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
       <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-8">
+          <V3DockSettings corePid={props.coreIdentity?.process_id ?? null} setStatus={props.setStatus} />
           <section>
             <div className="mb-4 flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-primary" />
@@ -405,6 +409,7 @@ export function SettingsPage(props: SettingsPageProps) {
 
           <section>
             <h2 className="mb-4 text-sm font-semibold">Room 库与诊断</h2>
+            <V3InstallationMaintenance isTauri={IS_TAURI} coreRunning={Boolean(props.coreIdentity)} setStatus={props.setStatus}/>
             <div className="space-y-3 border-y border-border py-4">
               <label className="block text-xs font-medium text-muted-foreground">Room 库路径</label>
               <div className="flex gap-2">

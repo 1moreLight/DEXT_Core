@@ -21,6 +21,8 @@ import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
 import { CreatorImportDialog } from "@/components/CreatorImportDialog";
 import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
+import { V3RoomEditor } from "@/features/room-editor/V3RoomEditor";
+import { createRoomV3, readRoomV3, type RoomV3 } from "@/features/room-editor/v3-document";
 import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
 import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
@@ -102,6 +104,8 @@ const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
   ["zoom", "缩放"],
   ["none", "无"],
 ];
+
+const mockNativeRooms = new Map<string, RoomV3>();
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
 const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
@@ -303,6 +307,13 @@ export default function App() {
     () => initialLibDir()
   );
   const [rooms, setRooms] = useState<RoomInfo[]>([]);
+  const [rawRoomView, setRawRoomView] = useState<{name:string;json:string;message:string}|null>(null);
+  const rawRoomDialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(()=>{
+    const dialog = rawRoomDialogRef.current;
+    if (rawRoomView && dialog && !dialog.open) dialog.showModal();
+    return ()=>{ if(dialog?.open) dialog.close(); };
+  },[rawRoomView]);
   const [roomPath, setRoomPath] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const { coreIdentity, coreIdentityError, v3Session, appliedRoom, setAppliedRoom, markCoreDisconnected, refreshCore } = useDextRuntime(IS_TAURI);
@@ -316,6 +327,7 @@ export default function App() {
   const [transition, setTransition] = useState<Transition>("slide");
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [idleContent, setIdleContent] = useState<Content | null>(null);
+  const [nativeRoom, setNativeRoom] = useState<RoomV3 | null>(null);
   const [roomVersion, setRoomVersion] = useState<number | null>(2);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
   const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
@@ -383,6 +395,18 @@ export default function App() {
   const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const readyCoreIdentity = coreIdentity?.is_core_initialized ? coreIdentity : null;
+
+  useEffect(() => {
+    if (!IS_TAURI || !readyCoreIdentity) return;
+    let cancelled = false;
+    invoke<{cleaned:number;pending:number;messages:string[]}>("cleanup_v3_personal_deletions", {libraryDir:libDir})
+      .then(reply => {
+        if (cancelled) return;
+        if (reply.pending) setStatus("Room私人数据清理待重试：" + reply.messages.join("；"));
+        else if (reply.cleaned) setStatus("已处理 " + reply.cleaned + " 项Room私人数据恢复记录");
+      }).catch(error => {if(!cancelled)setStatus("Room私人数据清理暂未完成：" + String(error));});
+    return () => {cancelled = true;};
+  }, [libDir,readyCoreIdentity?.process_id]);
   const activeRoomPolicy = roomContractPolicy(roomVersion);
   const activeRoomAudit: RoomEditAudit = {
     permissionReviews,
@@ -450,7 +474,7 @@ export default function App() {
     if (!IS_TAURI) return;
     refreshRooms(libDir).then(async (list) => {
       const last = localStorage.getItem("dext.roomPath");
-      const target = list.find((r) => r.path === last)?.path ?? list[0]?.path;
+      const target = list.find((r) => r.path === last && roomContractPolicy(r.version,r.compatibility).edit)?.path ?? list.find((r)=>roomContractPolicy(r.version,r.compatibility).edit)?.path;
       if (target) await openRoom(target, false);
     });
   }, []);
@@ -468,6 +492,12 @@ export default function App() {
 
   async function openRoom(path: string, checkDirty = true) {
     if (!IS_TAURI) {
+      const native=mockNativeRooms.get(path);
+      if(native){
+        setNativeRoom(native);setRoomVersion(3);setRoomPath(path);setDirty(false);
+        historyReadyRef.current=false;setShowPreview(false);setStatus("原生 v3 编辑器设计模式");return true;
+      }
+      setNativeRoom(null);
       historyReadyRef.current = false;
       setDesks(MOCK_DESKS);
       setActiveDesk(0);
@@ -498,6 +528,23 @@ export default function App() {
     try {
       const json = await invoke<string>("read_room", { path: `${path}\\room.json` });
       const room = JSON.parse(json);
+      if (typeof room.version === "number" && room.version >= 3) {
+        const report = await invoke<import("@/lib/room-contract").RoomCompatibility>("inspect_room_compatibility", {path: path + "\\room.json"});
+        if (!report.supported) {
+          setRawRoomView({name: path.split(/[\\/]/).pop() ?? "Room",json,message:report.message});
+          setStatus(report.message);
+          return false;
+        }
+        const native = readRoomV3(json);
+        historyReadyRef.current = false;
+        setNativeRoom(native); setRoomVersion(3); setRoomPath(path); setDirty(false);
+        setRoomOrphanResources([]); setRoomRecoveryDir(null); setPermissionReviews([]);
+        setShowPreview(false); setFullscreenPreview(false);
+        localStorage.setItem("dext.roomPath", path);
+        setStatus("已打开原生 Room v3 · " + native.name);
+        return true;
+      }
+      setNativeRoom(null);
       const audit = await invoke<RoomEditAudit>("inspect_room_for_edit", { path });
       const baseline = normalizeRoomJson(json);
       const nextDesks = Array.isArray(room.desks) && room.desks.length
@@ -550,7 +597,7 @@ export default function App() {
       setStatus(
         room.version === 2
           ? roomOpenStatus(path.split(/[\\/]/).filter(Boolean).pop() ?? "Room", audit, Boolean(restored?.dirty))
-          : readOnlyRoomMessage(room.version)
+          : readOnlyRoomMessage(room.version, room.compatibility)
       );
       return true;
     } catch (e) {
@@ -615,8 +662,8 @@ export default function App() {
       return;
     }
     const target = rooms.find((room) => room.path === dir);
-    if (target && !roomContractPolicy(target.version).apply) {
-      setStatus(readOnlyRoomMessage(target.version));
+    if (target && !roomContractPolicy(target.version, target.compatibility).apply) {
+      setStatus(readOnlyRoomMessage(target.version, target.compatibility));
       return;
     }
     if (!IS_TAURI) {
@@ -799,7 +846,7 @@ export default function App() {
     const name = prompt("房间名（建议英文）");
     if (!name) return null;
     try {
-      const path = await invoke<string>("create_room", { dir: libDir, name });
+      const path = await invoke<string>("create_room_v3", { dir: libDir, name, roomJson: JSON.stringify(createRoomV3(name)) });
       await refreshRooms(libDir);
       await openRoom(path, false);
       return path;
@@ -809,7 +856,7 @@ export default function App() {
     }
   }
 
-  async function saveAs() {
+  async function saveAs(nativeDraftJson?: string) {
     if (!roomPath) {
       setStatus("先新建或选择一个房间");
       return;
@@ -822,6 +869,9 @@ export default function App() {
       setStatus(roomIntegrityReason);
       return;
     }
+    if (roomVersion === 3 && !readyCoreIdentity) {
+      setStatus("先启动 Core，以复制本机绑定和皮肤；作品原文保持"); return;
+    }
     const name = prompt("另存为（建议英文）");
     if (!name) return;
     try {
@@ -829,7 +879,7 @@ export default function App() {
         roomDir: roomPath,
         dir: libDir,
         name,
-        roomJson: JSON.stringify(buildRoomV2(), null, 2),
+        roomJson: roomVersion === 3 ? nativeDraftJson ?? JSON.stringify(nativeRoom) : JSON.stringify(buildRoomV2(), null, 2),
       });
       await refreshRooms(libDir);
       await openRoom(path, false);
@@ -1219,7 +1269,8 @@ export default function App() {
     let n = rooms.length + 1;
     while (rooms.some((r) => r.name === `new-room-${n}`)) n++;
     const name = `new-room-${n}`;
-    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 2, desks: 1, icons: 0, widgets: 0, covers: [] };
+    const room: RoomInfo = { name, path: `C:\\mock\\${name}`, version: 3, desks: 2, icons: 0, widgets: 0, covers: [] };
+    mockNativeRooms.set(room.path, createRoomV3(name));
     setRooms([...rooms, room]);
     setRoomPickPath(room.path);
   }
@@ -1254,13 +1305,20 @@ export default function App() {
     await applyRoomDir(room.path);
   }
   async function enterRoomEditor(room: RoomInfo) {
+    if (!roomContractPolicy(room.version, room.compatibility).edit) {
+      try {
+        const json = IS_TAURI ? await invoke<string>("read_room", {path: room.path + "\\room.json"}) : "{}";
+        setRawRoomView({name:room.name,json,message:readOnlyRoomMessage(room.version,room.compatibility)});
+      } catch (error) { setStatus("无法查看原始清单：" + String(error)); }
+      return;
+    }
     const opened = await openRoom(room.path);
     if (!opened) return;
     setRoomPickPath(room.path);
     setEditNav("room");
-    setRoomEntered(roomContractPolicy(room.version).edit);
+    setRoomEntered(roomContractPolicy(room.version, room.compatibility).edit);
     setMode("edit");
-    if (!roomContractPolicy(room.version).edit) setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).edit) setStatus(readOnlyRoomMessage(room.version, room.compatibility));
   }
   async function stopWallpaper() {
     if (roomOperationRef.current || roomBusy) return;
@@ -1338,9 +1396,9 @@ export default function App() {
     }
     const items = paths.map((path) => rooms.find((room) => room.path === path)).filter(Boolean) as RoomInfo[];
     if (!items.length) return;
-    const readOnly = items.find((room) => !roomContractPolicy(room.version).zip);
+    const readOnly = items.find((room) => !roomContractPolicy(room.version, room.compatibility).zip);
     if (readOnly) {
-      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version)}`);
+      setStatus(`${readOnly.name}：${readOnlyRoomMessage(readOnly.version, readOnly.compatibility)}`);
       return;
     }
     setRoomBusy(`准备导出 ${items.length} 个 Room…`);
@@ -1389,7 +1447,8 @@ export default function App() {
       for (let index = 0; index < paths.length; index += 1) {
         setRoomBusy(`正在移到回收站 ${index + 1} / ${paths.length}`);
         try {
-          await invoke("delete_room", { libraryDir: libDir, roomDir: paths[index] });
+          const result = await invoke<{personalCleanupPending?:boolean;message?:string}>("delete_room", { libraryDir: libDir, roomDir: paths[index] });
+          if (result?.personalCleanupPending) failures.push(result.message || "Room已回收，私人数据清理待Core重连");
         } catch (error) {
           failures.push(`${paths[index]}：${String(error)}`);
         }
@@ -1461,11 +1520,15 @@ export default function App() {
     });
   }
   async function duplicateRoom(room: RoomInfo) {
-    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).saveAs) return setStatus(readOnlyRoomMessage(room.version, room.compatibility));
     const name = prompt("复制后的 Room 名称", `${room.name}-copy`)?.trim();
     if (!name) return;
     if (!IS_TAURI) {
       const next = { ...room, name, path: `C:\\mock\\${name}` };
+      if (room.version === 3) {
+        const copy = structuredClone(mockNativeRooms.get(room.path) ?? createRoomV3(room.name));
+        copy.id = crypto.randomUUID(); copy.name = name; mockNativeRooms.set(next.path, copy);
+      }
       setRooms((current) => [...current, next]);
       setHeroPath(next.path);
       setStatus(`已复制 ${room.name} → ${name}（UI 设计模式）`);
@@ -1485,7 +1548,7 @@ export default function App() {
     }
   }
   async function renameRoom(room: RoomInfo) {
-    if (!roomContractPolicy(room.version).edit) return setStatus(readOnlyRoomMessage(room.version));
+    if (!roomContractPolicy(room.version, room.compatibility).edit) return setStatus(readOnlyRoomMessage(room.version, room.compatibility));
     const name = prompt("新的 Room 名称", room.name)?.trim();
     if (!name || name === room.name) return;
     if (!IS_TAURI) {
@@ -1593,7 +1656,7 @@ export default function App() {
   }, [roomEntered, roomPath, dirty, edges, desks, dock, transition, startName, startContent, idleName, idleContent, hasStart, startDesk, past, future]);
 
   useEffect(() => {
-    if (!IS_TAURI || !roomEntered || !roomPath || roomPath !== appliedRoom) return;
+    if (!IS_TAURI || roomVersion === 3 || !roomEntered || !roomPath || roomPath !== appliedRoom) return;
     let disposed = false;
     let revision = 0;
     const mergeDesktopLayout = async () => {
@@ -1770,6 +1833,17 @@ export default function App() {
                 onApply={(room) => void applyRoomDir(room.path)}
                 onDuplicate={(room) => void duplicateRoom(room)}
                 onRename={(room) => void renameRoom(room)}
+              />
+            ) : roomVersion === 3 && nativeRoom && roomPath ? (
+              <V3RoomEditor key={roomPath} room={nativeRoom} path={roomPath} apps={apps} isTauri={IS_TAURI}
+                canApply={Boolean(readyCoreIdentity)}
+                onSaveAs={json => saveAs(json)}
+                onShare={() => exportRooms([roomPath])}
+                onDirty={setDirty}
+                onBack={() => {setRoomEntered(false); setDirty(false);}}
+                onSaved={() => {void refreshRooms(libDir);}}
+                onApply={() => invoke("apply_room", {roomDir:roomPath})}
+                onApplied={() => {setAppliedRoom(roomPath); setStatus("已应用原生 Room v3");}}
               />
             ) : (
               /* entered a room: desk editing */
@@ -2317,7 +2391,11 @@ export default function App() {
           onClose={() => setShowCreatorImport(false)}
         />
       )}
-      {fullscreenPreview && (
+      {rawRoomView && <dialog ref={rawRoomDialogRef} onCancel={()=>setRawRoomView(null)} aria-label="原始 Room 清单（只读）" className="fixed inset-0 z-50 m-auto flex max-h-[85vh] w-[min(900px,90vw)] flex-col rounded-xl border border-border bg-background p-5 text-foreground shadow-2xl">
+        <div className="flex items-center justify-between gap-4"><h2 className="font-semibold">{rawRoomView.name} · 原始清单（只读）</h2><Button autoFocus variant="outline" onClick={()=>setRawRoomView(null)}>关闭</Button></div>
+        <p className="my-3 text-sm text-amber-600 dark:text-amber-300">{rawRoomView.message}</p>
+        <pre tabIndex={0} className="min-h-0 flex-1 overflow-auto rounded-md bg-muted p-4 text-xs">{rawRoomView.json}</pre>
+      </dialog>}      {fullscreenPreview && (
         <div className="fixed inset-0 z-50 bg-black">
           <iframe
             ref={fullscreenPreviewRef}

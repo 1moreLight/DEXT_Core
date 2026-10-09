@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Dext Dock 原型</title>
+<link rel="stylesheet" href="probe.css">
+<script src="probe.js" defer></script>
+</head>
+<body>
+<main>
+<section class="identity"><b>Dext Dock</b><span>P2b 原生原型</span><small>仅本页诊断 · 不调用个人应用</small></section>
+<section class="controls" aria-label="原生窗口模式">
+<div class="modes">
+<button data-mode="overlay">浮动显示</button><button data-mode="autohide">触边隐藏</button><button data-mode="reserve">常驻占位</button>
+</div>
+<label class="height">高度 <input id="height" type="range" min="48" max="240" value="128"><output id="height-value">128 DIP</output></label>
+<div class="actions"><button id="keyboard">键盘操作</button><button id="mouse">退出键盘</button><button id="transparent">透明空隙</button><button id="close">关闭</button></div>
+</section>
+<section class="input">
+<button id="counter">点击计数 <b id="click-count">0</b></button>
+<output id="input-counts">按下 0 / 松开 0 / 滚轮 0</output>
+<small>明确进入键盘后可用 Tab / Enter / Space；Esc 退出。离开触边模式约半秒收起。</small>
+</section>
+<section class="diagnostics" aria-live="polite">
+<strong id="status">等待原生宿主</strong>
+<pre id="rectangles">正在读取窗口、DPI 和工作区…</pre>
+<span id="notice">原型保留 Windows 任务栏；默认 180 秒自动退出。</span>
+</section>
+</main>
+</body>
+</html>

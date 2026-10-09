@@ -1,0 +1,10 @@
+(() => {
+'use strict';
+const buttons=Array.from(document.querySelectorAll('[data-dext-button]')),releases=[],preview=new URLSearchParams(location.search).has('preview'),ids=['orbit','spectrum','dusk'];
+let connected=false,frame=0,lastGeometry='',current='orbit';
+function select(desk){current=desk;for(const button of buttons){if(button.dataset.desk===desk)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}}
+function geometry(){if(frame||!connected)return;frame=requestAnimationFrame(async()=>{frame=0;const regions=buttons.map(button=>{const r=button.getBoundingClientRect();return {buttonId:button.dataset.dextButton,x:r.x,y:r.y,width:r.width,height:r.height};}).filter(r=>r.width>0&&r.height>0),signature=JSON.stringify(regions);if(signature===lastGeometry)return;try{const result=await Dext.scene.publishGeometry({buttons:regions});if(result.status==='accepted')lastGeometry=signature;}catch{lastGeometry='';}});}
+for(const button of buttons)button.addEventListener('click',()=>{if(connected){Dext.actions.activate(button.dataset.dextButton).catch(()=>{});return;}if(!preview)return;const id=button.dataset.dextButton;if(id==='application')return;const desk=button.dataset.desk||ids[(ids.indexOf(current)+(id==='previous'?2:1))%3];select(desk);parent.postMessage({type:'orbit-preview-desk',desk},'*');});
+function connect(){if(connected||!Dext.session)return;connected=true;releases.push(Dext.desk.subscribe(s=>{select(s.targetDeskId||s.currentDeskId);geometry();}));releases.push(Dext.scene.subscribeGeometry(geometry));geometry();}
+const observer=new ResizeObserver(geometry);observer.observe(document.querySelector('nav'));addEventListener('dext:ready',connect,{once:true});addEventListener('resize',geometry);addEventListener('pagehide',()=>{if(frame)cancelAnimationFrame(frame);observer.disconnect();releases.forEach(fn=>fn());Dext.dispose();},{once:true});select('orbit');connect();
+})();

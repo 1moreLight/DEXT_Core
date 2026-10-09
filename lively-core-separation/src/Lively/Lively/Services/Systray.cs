@@ -93,6 +93,10 @@ namespace Lively.Services
                 return;
             }
 
+#if DEXT_V3_RELEASE
+            notifyIcon.ShowBalloonTip(3000, Constants.ApplicationType.Name, "发布目录缺少 dext-configurator.exe，请重新解压完整 Dext 产品。", ToolTipIcon.Warning);
+            return;
+#else
             var repoRoot = new DirectoryInfo(AppContext.BaseDirectory);
             while (repoRoot != null && !File.Exists(Path.Combine(repoRoot.FullName, "tauri-ui", "package.json")))
                 repoRoot = repoRoot.Parent;
@@ -110,10 +114,16 @@ namespace Lively.Services
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
+#endif
         }
 
         private static string FindConfiguratorExe()
         {
+            var colocated = Path.Combine(AppContext.BaseDirectory, "dext-configurator.exe");
+            if (File.Exists(colocated)) return colocated;
+#if DEXT_V3_RELEASE
+            return null;
+#else
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
             for (; dir != null; dir = dir.Parent)
             {
@@ -122,6 +132,7 @@ namespace Lively.Services
                     return candidate;
             }
             return null;
+#endif
         }
 
         private void UpdatePauseMenu(PlaybackPolicy policy)

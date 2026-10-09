@@ -1,0 +1,1 @@
+Dext.ready().then(()=>Dext.data.bindReadout('time.read',document.getElementById('clock'),(value,node)=>{node.textContent=JSON.stringify(value);})).catch(()=>{});

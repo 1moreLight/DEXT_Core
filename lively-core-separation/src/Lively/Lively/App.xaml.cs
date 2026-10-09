@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using GrpcDotNetNamedPipes;
 using Dext.Core.Rooms;
 using Lively.Commandline;
@@ -223,10 +223,16 @@ namespace Lively
                 .AddSingleton<IDesktopCore, WinDesktopCore>()
                 .AddSingleton(_ => new RoomSessionKernel(new FileRoomSessionCheckpointStore(
                     Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "room-session.json"))))
-                .AddSingleton<InstalledRoomSessionAuthority>()
+                .AddSingleton<InstalledRoomSessionAuthority>(_ => new InstalledRoomSessionAuthority(retainNativeInstallation: true))
                 .AddSingleton<IRoomSessionAdmissionAuthority>(services =>
                     services.GetRequiredService<InstalledRoomSessionAuthority>())
                 .AddSingleton<RoomSessionProtocolGateway>()
+                .AddSingleton(_ => new RoomPersonalStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "personal")))
+                .AddSingleton(services => new RoomActionAuthority(
+                    services.GetRequiredService<RoomSessionProtocolGateway>(), services.GetRequiredService<RoomPersonalStore>(),
+                    target => { new Lively.Services.AppCatalogService().Launch(target.Target, target.Arguments, target.WorkingDirectory); }))
+                .AddSingleton<RoomRuntimeFactsSource>()
+                .AddSingleton(_ => new RoomDockPreferenceStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-preferences.json")))
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())
@@ -363,6 +369,17 @@ namespace Lively
             mutex?.ReleaseMutex();
             mutex?.Close();
             mutex = null;
+        }
+
+        private static int productExiting;
+        internal static bool IsProductExiting => Volatile.Read(ref productExiting)!=0;
+        internal static async Task QuitProductAsync()
+        {
+            if(Interlocked.CompareExchange(ref productExiting,1,0)!=0)return;
+            // Keep the verified identity RPC alive for native configurators to
+            // observe the separate product-exit notice before normal disposal.
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            QuitApp();
         }
 
         public static void QuitApp()

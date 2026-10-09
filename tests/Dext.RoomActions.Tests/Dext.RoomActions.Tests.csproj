@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common/Lively.Common.csproj" />
+    <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common.Services/Lively.Common.Services.csproj" />
+    <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/SystemControlService.cs" Link="SystemControlService.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeDataSource.Windows.cs" Link="RoomNativeDataSource.Windows.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeDataSource.cs" Link="RoomNativeDataSource.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalStore.cs" Link="RoomPersonalStore.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomV3Installation.cs" Link="RoomV3Installation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeKeyDelivery.cs" Link="RoomNativeKeyDelivery.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomRuntimeContext.cs" Link="RoomRuntimeContext.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionCatalog.cs" Link="RoomActionCatalog.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalLayout.cs" Link="RoomPersonalLayout.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.Layout.cs" Link="RoomActionAuthority.Layout.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.PersonalEditor.cs" Link="RoomActionAuthority.PersonalEditor.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.ReadGrants.cs" Link="RoomActionAuthority.ReadGrants.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionAuthority.cs" Link="RoomActionAuthority.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalLifecycleReply.cs" Link="RoomPersonalLifecycleReply.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeInputAuthority.cs" Link="RoomNativeInputAuthority.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeControlQueue.cs" Link="RoomNativeControlQueue.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeExitCoordinator.cs" Link="RoomNativeExitCoordinator.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.Input.cs" Link="RoomSessionPlayerBridge.Input.cs" />
+  </ItemGroup>
+</Project>

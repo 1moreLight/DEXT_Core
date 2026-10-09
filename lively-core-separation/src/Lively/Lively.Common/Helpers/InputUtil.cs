@@ -1,4 +1,4 @@
-﻿using Lively.Common.Helpers.Pinvoke;
+using Lively.Common.Helpers.Pinvoke;
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -64,14 +64,17 @@ namespace Lively.Common.Helpers
         /// <param name="wParam">Virtual-Key code</param>
         /// <param name="scanCode">OEM code of the key</param>
         /// <param name="isPressed">Key is pressed</param>
-        public static void ForwardMessageKeyboard(IntPtr hwnd, int msg, IntPtr wParam, int scanCode, bool isPressed)
+        public static bool RawKeyIsDown(int flags) => (flags & 1) == 0;
+        public static bool RawKeyIsExtended(int flags) => (flags & 2) != 0;
+
+        public static void ForwardMessageKeyboard(IntPtr hwnd, int msg, IntPtr wParam, int scanCode, bool isPressed, bool isExtended = false)
         {
             //Ref:
             // https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
             // https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keyup
             uint lParam = 1u; //press
-            lParam |= (uint)scanCode << 16; //oem code
-            lParam |= 1u << 24; //extended key
+            lParam |= ((uint)scanCode & 0xff) << 16; //oem code
+            if (isExtended) lParam |= 1u << 24; // E0 prefix only
             lParam |= 0u << 29; //context code; Note: Alt key combos wont't work
             /* Same as:
              * lParam = isPressed ? (lParam |= 0u << 30) : (lParam |= 1u << 30); //prev key state

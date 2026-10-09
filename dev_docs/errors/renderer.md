@@ -548,3 +548,132 @@ Playwright 都全绿，但真实 WorkerW/WebView2 中仍表现为几乎无法拖
 原因：`msg_wploaded` 表示 WebView 导航完成，不表示 `loadRoom()` 的异步数据和节点已构建。
 
 修复：官方页面在 `loadRoom()` 结束后再发 `dext:v3-page-ready`；Core 只在这个消息与 `msg_wploaded` 均到达后附加 Player 并发送完整快照。真实样包切页和重启恢复已验证。
+
+## #134 消费者重报同一几何触发循环（2026-10-03）
+
+P5每次接受按钮几何都会通知全部消费者新版本；若监听者重报同一矩形，旧实现再次递增版本并重新通知，可能形成跨组件消息环。新增生产模型回归实际RED（重复报告产生invalidateInput/applyGeometry/notifyGeometry）后，规范化几何并比较有效值；不变报告返回accepted、无effects、版本不动。28/28模型与SDK通过，真实DOM适配随后验证。resize仍先失效旧输入，变化报告正常更新。
+
+## #135 SDK就绪与销毁重入（2026-10-03）
+
+初始化期间作者监听可立即dispose，旧代码继续回放并发ready；已resolve的ready Promise又让销毁后的ready()返回旧实例。生产SDK回归初始回放11/13与销毁ready13/14实际失败后，所有回放/事件分支检查disposed，ready()再次调用明确拒绝，移除监听并释放所有pending/订阅。最终SDK14/14、模型14/14通过。token不公开，旧session不能重新初始化。
+
+## #160 旧play Promise不能暂停后来的播放意图（2026-10-03）
+
+媒体宿主暂停→恢复两次，旧play Promise迟到完成时，初版用playEpoch不同就pause，误停已恢复的新播放。生产回归实际11/12失败（pause次数3，期望2）。完成回调只在当前实例确实不应播放时pause；迟到失败诊断仍要求匹配当前playEpoch，避免旧拒绝覆盖新成功。最终12/12通过；真实ReleasePlayer验证相同生产脚本的解码、暂停后继续前进及持续节点。异步结果应收敛到当前播放意图，不把旧操作过期等同当前需要暂停。
+
+## #162 输入不可操作不等于播放暂停（2026-10-03）
+
+runtime-model曾把desktopActive写成playing且desktop且operable。正常Core过渡仍允许排队；实际问题是仅失焦关闭输入就暂停场景、共享组件和背景。新增生产回归实际RED（suspended而非active），移除输入operable条件，渲染仍受active/stage/playbackPaused/locked控制；15/15通过。动作权限继续由Core逐次核验，不以渲染活动推断输入授权。
+
+## #163 订阅失败必须在关闭provider前发送读数错误（2026-10-03）
+
+frame-host异步subscribeData拒绝时先删除provider，再调用emit。emit为防迟到数据要求provider仍匹配，因此作者收不到error，读数状态留在旧值。完整生产SDK回归实际12/13失败；先发送有界error再关闭provider，13/13通过。停止订阅后的迟到值仍被拒绝，静态外框保留。
+
+## #171 官方页先校验完整transition再占修订（2026-10-03）
+
+新main只检查身份/revision/lifecycle，畸形无target却带transition/deadline的revision5先写主缓存，虽然下层模型拒绝，随后合法revision2仍被主层判旧。实际单位回归5!=1失败；主层补target-null与transition/deadline一致性及有限日期校验，在缓存前拒绝。后续合法revision2可用，真实正式页Player回归保持通过。
+
+## #172 几何发布要处理生产Core忙状态（2026-10-03）
+
+Core的TryWithActionContext不等待授权网关，竞争返回staleInput；宿主单次失败后inputReady=false，若作者重报同几何又无模型effects就可能一直关输入。单位按既有协议模拟第一发布staleInput，实际1!=2失败。最多8次50ms间隔重试，每次递增私有inputVersion；新epoch/暂停/销毁取消等待，身份变化拒绝旧回包。回归和最新真实整页Player通过；这不代表完整物理输入/DPI或移动中命中已验收。
+
+
+## #177 迟到play事件不能恢复已被作者pause清除的意图（2026-10-03）
+
+媒体播放事件异步排队；作者play后pause，迟到play/playing若无条件设wanted=true，下一次宿主恢复会误播。定向RED确实失败；捕获原始paused getter，只在当前元素仍实际播放时从事件建立意图，已暂停的迟到事件不改wanted。政策10/10与真实作者暂停→原生挂起/恢复通过。
+
+## #178 权限失败回调必须先验证当前查询作用域（2026-10-03）
+
+真实Core切页取消旧capabilities请求，frame-host成功回调检查epoch/query/scope，失败回调却先写permissionsUnavailable。旧修订和已销毁文档的失败都会污染当前诊断。两个定向RED后统一current守卫，超时/同步失败/Promise失败仅在当前活文档、当前查询、当前scope下诊断和收敛。当前真实故障仍报告，旧取消不复活状态。
+
+## #179 推进原生身份必须早于新快照的iframe授权查询（2026-10-03）
+
+只修#178后真实Core仍报告permissionsUnavailable。dom-host.acceptSnapshot先frames.acceptSnapshot，再进入render推进native identity；frame更新同步发新revision的授权请求，native-host仍用旧revision，立即返回staleInput，此时查询本身却是当前的。使用生产native-host的定向RED复现accepted/staleInput，先native.acceptIdentity再更新frame后GREEN。完整JS105/105和真实Corehome→focus revision2→4、同文档/解码视频/无frameError通过。原生作用域推进后旧查询取消必须搭配#178当前检查，不应靠忽略所有授权错误掩盖顺序缺陷。
+
+## #180 WebAudio方法借用须拒绝未跟踪上下文和硬件目的端（2026-10-03）
+
+保护本realm AudioContext/AudioNode原型仍不足：作者可以把保护方法call到别的realm创建的上下文或硬件destination。生产JS行为RED复现未拒绝借用。捕获原生destination最大声道品牌getter，实时context必须存在本政策WeakMap；硬件目的端必须有本document私有闸门，未跟踪者InvalidAccessError，普通AudioNode/AudioParam连接保留。实际blank-child试验由沙箱SecurityError先行拒绝，不能将它误记为品牌守卫路径执行证据；新守卫直接由生产JS行为测试覆盖。
+
+## #181 捕获原始Array方法不能保护私有记录（2026-10-03）
+
+政策预先捕获Array.push/splice，作者后来仍可在Array.prototype安装数字索引setter，push的继承Set将私有context/Gain记录作为参数暴露；splice删除项还会调用作者Array species，Proxy defineProperty观察删除记录。两项实际RED取得私有对象。私有数组改用捕获Object.defineProperty逐个建立自有dense索引和手动移动/删除，从不调用作者Array方法或species；适用于媒体/上下文/observer列表和私有连接参数。最新生产JS与实际ReleasePlayer攻击回归未取得记录。
+
+## #182 私有JSON回执要避开继承toJSON（2026-10-03）
+
+WebView2 ExecuteScript序列化返回对象会调用Object.prototype.toJSON。普通私有receipt原先可让作者看到documentNonce/sequence甚至伪造settled=true，绕过异步挂起屏障。生产RED确实拦截一次。receipt改用捕获Object.create(null)并写自身字段，作者原型方法无参与；生产组合116/116及实际Player持续安装恶意Object.toJSON后的拦截次数0。公开JSON可按作者行为处理，私有执行参数/回执不能含作者可接管的原型序列化路径。
+
+## #197 GIF暂停必须验证真实画面，WebView睡眠与静帧各有边界
+- 2026-10-03，task4-lifecycle-gif-visual实际Core/ReleasePlayer中原生暂停receipt为true但owned全屏Player中心OS像素仍连续变化。GIF是img，media-host并不控制它；旧GPU debugger调用不保证冻结。不能由自然尺寸或start预算宣称GIF画面已暂停。
+- Native Player在媒体/官方宿主暂停屏障后CapturePreview当前WebView到一张内存Bitmap，以原生PictureBox显示，隐藏WebView后TrySuspendAsync；使用三秒有界等待，当前代次失败正常关闭自己的Player，交由Core有界故障恢复。resume先CoreWebView2.Resume、最新Core事实及媒体策略，再显示原WebView并释放Bitmap。串行渲染操作与playbackRevision拒绝迟到步骤。作者没有截图入口，图像不落盘。
+- 第一次修复重测仍过早：私有JS paused receipt早于异步静帧完成，立即采样可能跨越准备期。探针须等待本Player实际可见的原生静帧窗口；task4-lifecycle-gif-barrier完整通过，播放/暂停/恢复10次OS中心像素分别变化/单色/变化，同文档/实例。此为Windows采样自动证明，实际锁屏/多DPI/用户视觉门槛仍最终集中验收。
+- 新Player文件使用显式Compile列表与C#8；忘加文件/使用文件范围namespace的两次编译错误分别纠正，不把它们计生产RED。不要更改产品语言版本来迎合新文件语法。
+- WebView官方IsVisible=false要求与best-effort说明：[TrySuspendAsync](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)。[HTML Canvas规范](https://html.spec.whatwg.org/multipage/canvas.html)的drawImage针对animated img仅取默认/首帧，不能拿它伪造“当前GIF帧”的冻结；使用本WebView的CapturePreview。
+
+## #198 暂停必须核对原生controller的可见状态（2026-10-03）
+实际ReleasePlayer接线回归中，managed control=False/controller=True，TrySuspendAsync报COM 0x8007139F并走当前暂停失败关闭。SDK包装提示“disposed”不能据此认定控件真的被销毁；原生错误与本次布尔诊断符合ERROR_INVALID_STATE/IsVisible要求。外部父窗和样式操作是否造成初始不一致仍是推断。
+复用当前固定WinForms SDK初始化RasterizationScale已使用的controller字段，在静帧可见并隐藏managed控件后明确controller.IsVisible=false且复核，再有界TrySuspend；恢复按当前revision同步两者可见后释放静帧。保留串行门、三秒界限、迟到拒绝和失败关闭自己的Player，不放宽生产暂停策略。新增私有IPC日志只报告原生渲染完成，不含截图或个人布局。
+官方约束：[TrySuspendAsync](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.trysuspendasync)；同错误的厂商追踪：[WebView2Feedback #2398](https://github.com/MicrosoftEdge/WebView2Feedback/issues/2398)。
+
+## #200 显式损坏覆盖与缺少覆盖应区分（2026-10-03）
+新纯布局模块初版把非对象的已保存图标位置当作缺少位置，实际行为回归20/21失败。使用自有ID是否存在来区分，存在却无效必须拒绝，不静默回退作者默认；缺少覆盖才用默认格子。修复后21/21。Core严格持久校验与私有native回复仍是前置边界，纯视图层也不吞损坏输入。
+
+## #202 几何裁剪舍入与SVG焦点隐藏（2026-10-03）
+纯geometry首次18项中2项失败，轴向交点插值产生负坐标/极薄假片；将轴向交点固定到精确裁剪线，并在叉积误差界中计入坐标相减舍入，补斜向/多遮挡后20/20。误差界按机器epsilon，不加CSS像素命中padding；Core C#的machine epsilon为2.2204460492503131e-16，不是double.Epsilon。
+SVGElement不能只靠HTMLElement式hidden属性假设隐藏；官方焦点显式设置/移除hidden attribute，清空polygon并加pointer-events:none，避免焦点轮廓残留或截获指针。实际ReleasePlayer轮廓验证仍需本阶段wire证据。
+
+## #204 跨文档getter不能返回隐藏输入wrapper（2026-10-03）
+两个已注入guardian的同源文档各自有originals WeakMap；子文档的patched onclick getter借到父DOM上时，原生getter取到父wrapper，子WeakMap不认识而将wrapper直接返回。真实Chromium中，在可信callback后的queueMicrotask用缓存真实Event重调该wrapper，eventPhase仍有效，实际再次生成见证。guardian-browser-cross-realm-red.log明确复现；一般timer/缓存original callback单位测试不能覆盖这个边界。
+捕获Node.ownerDocument并固定实际document/root；DOM属性getter/setter、事件注册/移除/dispatch、attribute和attachShadow先核对真正文档，foreign DOM抛SecurityError，不能读作者覆写的ownerDocument。generic非DOM EventTarget仍由捕获的原生方法核验brand，不提供callback获取。对应pure行为RED/GREEN和实际组合跨realm GREEN见当前验收卡，不借sandbox偶然拒绝代替guard本身的边界。
+
+## #205 RegExp.test会动态调用RegExp.exec（2026-10-03）
+仅预捕获RegExp.prototype.test不足以固定验证行为；其内置算法仍调用当前pattern.exec，作者覆盖RegExp.prototype.exec可改变匹配。guardian原语篡改行为测试实际失败。改捕获exec直接执行，同时捕获String.substring/Number.isFinite/整数上限，私有回调记录用自有dense索引，receipt/witness采用null-prototype，禁止原型toJSON、数字setter、species参与私有记录。宿主测试自己的sent.push被数字setter看到不等于生产泄漏，需按真实原生传输边界修夹具并保留失败来源。
+
+## #207 原生Window默认receiver、onerror参数与收养节点派发（2026-10-04）
+新增输入guardian的包装不能改变原生Window裸调用：native add/remove/dispatch的undefined/null receiver映射当前Window；DOM属性getter仍按实际文档品牌核对。function listener必须保留原生全部参数，尤其Window.onerror(message,source,lineno,colno,error)，object handleEvent仍按标准传Event。
+节点跨文档收养会让旧document wrapper在新document派发。真实child click复现父输入见证被借用后，包装和见证发送同时核对captured Event.currentTarget、callback receiver与实际文档；未知foreign Function属性getter禁止暴露私有wrapper，已知作者callback保持读取原值。生产单测先21/24失败后24/24，最新Chromium40与实际ReleasePlayer正式文档/媒体初始化通过。第一次onerror断言在前项失败后未执行，不能把未执行项当实机RED。此修复只闭合模块边界，Core/SDK原生手势接线仍待完成。
+
+## #211 非激活Player键盘需原生controller焦点再路由frame（2026-10-04）
+实际ReleasePlayer保留WS_EX_NOACTIVATE。私有frame arm成功后仅captured Window.focus，或先WinForms webView.Focus，Own-HWND Enter检查都没有keydown，不能把私有回执armed当作键盘已到作者文档。复用固定SDK已有NativeViewController，调用MoveFocus(Programmatic)，随后对选中直接root执行captured Window.focus，再发真实Win32键。Enter/Space/鼠标正式SDK wire均收到isTrusted DOWN/UP与一次正数请求，检查前台HWND不变，不伪造JS事件。该检查的Core包/回执仍为fixture，完整Core实际桌面OS验收不能打勾。
+MoveFocus官方语义为将焦点移入WebView并恢复先前/默认文档元素：[Microsoft WebView2 Controller](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller)。这里使用Programmatic，不代替Core受控Tab焦点，也不逐个focus作者DOM节点。生产文件首次C# pattern局部focus重复名导致CS0136，改releasedFocus后完整构建通过；探针替换Console.WriteLine时以首分号切片遇到字符串内部分号，修正精确锚点后才取得运行证据。
+
+## #212 归一化采样宽度的浮点断言（2026-10-04）
+移动前层把200px Widget裁到40px时，DOM normalized width按right-x得到0.020833333333333315，而测试40/1920为0.020833333333333332，45/46失败。几何本身位置正确；断言改为32*Number.EPSILON机器误差界，生产裁剪和Native验证均未增像素padding。新的readInputSample读已绘制矩阵、不通过估算下一帧位置判断命中；此阶段只是基础，不当作实际Player/Core点击接线通过。
+
+## #215 SVG焦点不能沿旧边界坐标停留（2026-10-04）
+正式DOM以前只在Core focus event画一次inputEntries里的多边形，默认动画随后只移动图标/Widget。源和目标真实行为新增2项均RED（50/52），轮廓的points保持旧值。
+将逻辑focus与SVG绘制分开，每个默认动画绘制帧按当前已绘制可见区域更新轮廓；移出画布/被遮挡隐藏，但不丢逻辑entry；commit/geometry失效/暂停仍清空。必要DOM52/52，实际ReleasePlayer移动source的points随RAF变化、出画布隐藏、geometry版本/请求数和动作数不增加；不靠逐帧IPC或扩大命中区域修复。
+Tab的单次可见查询不等于动作proof，也不证明快速连续键序列已收口；当前Core单gesture覆盖语义的连续Tab/立即激活仲裁继续。
+
+## #217 作者纯矩阵逐帧重发几何并清焦点（2026-10-04）
+原acceptGeometry对groups/opacity变化总是递增geometryVersion，DOM随即render→invalidateGeometry/geometry并清focus、释放native hold。生产行为RED67/70：连续视觉帧失去原版本和焦点，保持中第二份报告因版本推进被拒。
+仅按钮/占用等结构改变才产生invalidateInput/applyGeometry；纯groups产生applyVisualGroups，Widget/图标/焦点同次本地绘制。native hold存最新待矩阵，匹配end后应用；结构/快照/暂停/销毁丢旧待帧。旧断言改读当前物理样本，空同状态修订本来保留模型groups，失效夹具使用真实生命周期变化。GREEN86/86。
+相邻功能发现：普通图标在无转场时错误使用shared矩阵，仪表盘缩放会带走当前Desk入口。新增独立RED后改为source组，shared继续控制共享呈现；透明共享Dock恢复下方独立图标输入，必要87/87。实际ReleasePlayer作者仪表盘/普通图标/焦点、本地无逐帧Core几何与原默认输入回归通过；真实Core OS/DPI最终门槛仍未代填。
+
+## #219 作者应从有效矩形映射到目标呈现（2026-10-04）
+640×480/scale1.5实际窗口的CSS小视口按既定布局规则保留像素尺寸、移位/缩放组件，作者固定原始y800矩阵再次叠加后把仪表盘移出画布。设计基准通过无法证明响应式。SDK只读placements提供当前可见组矩阵前有效矩形；Scene读集合、其他消费者自身，内部逻辑视口仍固定。三个功能RED后108/108；样包以有效矩形映射至期望底部/整页，实际小窗口展开及放大缩回通过。
+同geometryVersion的有效投影变化也需通知，完全相同不重复；纯视觉帧不通知。作者async publish未完成时geometry/resize仍须保留dirty待绘制，finally再安排一帧，避免稳定Desk改变有效布局后丢重绘。矩阵限幅保持，物理DPI与完整Core OS门槛另行验证。
+
+## 224. 持续样包图标ID在两个Desk重复
+- 现象：新P6 worktree运行正式Rust契约的样包检查，v3-continuous报duplicate icon id；两Desk都使用view。
+- 修复：保留overview/view，detail图标改detail-view；按钮navigate仍共用，符合两种呈现关联同一按钮的既有契约。正式Rust全套34/34通过。
+- 防再犯：样包不能只跑渲染模型；更新后也运行真实作者Manifest校验。公开按钮可复用，图标呈现ID必须按契约唯一。
+
+## #228 Dock模板占用不能误用Scene的occupied权限（2026-10-04）
+现象：P6模板计划把Dock按钮与占用一起发布，但正式runtime只允许scene交occupied/groups；未保留固定Dock框时，本地图标/Widget会与Dock重叠（新增功能检查实际RED）。
+原因：把roomScene布局接口与Dock组件按钮接口合并理解；旧精确遮挡夹具也故意用静止Dock盖图标，不能代表应有布局。
+修复：模板只报buttons，官方宿主按当前Desk引用的Dock placement加入保留区。不引用的Desk恢复保存位置。精确遮挡检查保留，通过作者shared矩阵把原本不重叠的Dock移到图标上，再读取当前可见采样，继续验证两片/全遮挡；新避让检查与DOM57/57通过。
+下次：先核对consumer准入范围；作者矩形为组件自身逻辑坐标，Dock不新增占用发布权限。
+
+## #232 视觉定位不能误用桌面动作可操作条件（2026-10-04）
+Core定位accepted/投影真实送达，但配置器前台operable=false，buttonGeometry返回空，图标换肤正常而无提示。新增该状态功能RED定位null，保留原动作几何条件，抽取visibleButtonGeometry仅用于视觉提示；GREEN同时确认动作采样仍为空。暂停/锁屏/非Desktop仍不定位，不产生动作/证明。用户随后全屏游戏，立即退出Dext；最后修复的实际定位/普通重启待继续，不将旧accepted或fixture冒称实机成功。
+
+## #238 顶层Dock初次隐藏需同步原生HWND状态（2026-10-04）
+源码核对发现：原型在Form.Shown后创建窗口行为，logical visible初始false，但HWND实际已在屏外显示。直接布局移动后，autohide或已有全屏时next=false与缓存相同，UpdateVisibility提前返回，会把实际可见窗口留在主屏。现在AssignHandle后先SWP_HIDEWINDOW/NOACTIVATE，再布局并统一显示策略；实际原生运行仍待游戏结束，未虚构故障复现或修复通过。DPI默认处理还可能改变实际矩形，布局比较用GetWindowRect；首次跨DPI重排，ABM_REMOVE后的工作区用GetMonitorInfo即时读回。原生透明框HRESULT仅说明API调用，不证明WebView/背景透出，验收仍看实际普通软件。
+
+## #241 独立Dock不能压缩整Room或提前冒报窗口可用（2026-10-05）
+源码接线发现：复用整桌面宿主会把Scene/图标与桌面暂停规则带入Dock；仅缩小viewport又可能低于既有64px校验或令作者按钮几何失配。Dock视图现在只呈现正式dockComponentId，保持作者组件逻辑画布，通过有效矩形映射到宿主，Dock高度允许48 DIP，官方键盘控件进入遮挡；桌面过渡完成仍由桌面视图负责。
+原生宿主还须区分rendererReady与真实输入已连接，并等待媒体/可见性同步后才报WindowReady。当前Core实际OS输入未接，策略为false、状态awaitingInput、窗口保持隐藏，不能用进程存在或偏好enabled代填成功。以上为源码发现与处理，仅语法/XML/差异检查通过，真实Windows/DPI/输入尚未验证。
+
+## #242 原生Dock自然输入不能与Core转发重复；暂停桌面不应卡住Dock导航（2026-10-05）
+源码接线发现：原生顶层WebView会自然收到输入，既有Core私有链又会转发同一边沿。Dock专用预装门控现在在样本准备后允许一次对应边沿及一次click，阻止未准备和重复边沿；桌面默认不开该门控。外围按键只记录本地held，避免误清空闲Dock几何；触边刷新避开未完成的鼠标/键盘动作，鼠标准入读取真实Dock HWND而非要求桌面前台。
+同一次接线发现kernel普通Request在桌面不可操作时只排队，Dock普通软件前导航会等桌面恢复。已消费真实输入的Dock内部请求现在先持久化并直接提交Desk，保留原播放/前台事实，锁屏和非Desktop阶段仍拒绝；旧过渡完成不再匹配。以上为源码处理，只有JS语法/diff检查，不宣称C#编译或真实Windows点击/导航已通过，实际门槛集中游戏后执行。

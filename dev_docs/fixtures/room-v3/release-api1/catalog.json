@@ -1,0 +1,220 @@
+{
+  "baselineId": "dext-v3-api1-first-release",
+  "formatVersion": 1,
+  "status": "candidate-awaiting-runtime",
+  "samples": [
+    {
+      "name": "image",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb001",
+      "archive": {
+        "sha256": "d916b7812737e3480b829f292dc7c315e0b90803e22f44834c9199f5bfddbb4b",
+        "size": 1018,
+        "path": "archives/image.zip"
+      },
+      "files": [
+        {
+          "sha256": "ad7e8aa5d23a4a64480af71236b99900844c4c097a887198c1874e9ecad2a4f9",
+          "size": 1387,
+          "path": "room.json"
+        },
+        {
+          "sha256": "6f9c2616513c680411979bc53c21ad10a597dec9c38e0052678f5faf6912396a",
+          "size": 493,
+          "path": "assets/background.svg"
+        }
+      ],
+      "directory": "image"
+    },
+    {
+      "name": "video",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb002",
+      "archive": {
+        "sha256": "4b69232cbe70fc76cd485f672fd2ca5232b558111bbabcfaabc3620970eaef99",
+        "size": 5668,
+        "path": "archives/video.zip"
+      },
+      "files": [
+        {
+          "sha256": "7e89fe66a0f503c716486b0e863ab1561204b5fd52efdf0ada4c4978c3d26459",
+          "size": 1381,
+          "path": "room.json"
+        },
+        {
+          "sha256": "4cfd4dcc8c772fce6ccac47565927f28e5246cec236f450d00e040da07818e37",
+          "size": 5096,
+          "path": "assets/motion.webm"
+        }
+      ],
+      "directory": "video"
+    },
+    {
+      "name": "gif",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb003",
+      "archive": {
+        "sha256": "2eaa8229655f12d7a80f3a3d1ce7ed0249c3331a546620955cf5f5b42dd36edb",
+        "size": 6690,
+        "path": "archives/gif.zip"
+      },
+      "files": [
+        {
+          "sha256": "4446dbb2dd97d4fc4828c30aac3dfca206c3889d2bf1613eab1c10155f1289b2",
+          "size": 1373,
+          "path": "room.json"
+        },
+        {
+          "sha256": "5c9625518a2fb2512e5dd2c096a05b7ad0639dbb0523d95722b30e543b50816d",
+          "size": 6197,
+          "path": "assets/pulse.gif"
+        }
+      ],
+      "directory": "gif"
+    },
+    {
+      "name": "html",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb004",
+      "archive": {
+        "sha256": "55f18678f5b10403fa82d884259e427ba05f4a54a78ad22022aa5fa81e965217",
+        "size": 7048,
+        "path": "archives/html.zip"
+      },
+      "files": [
+        {
+          "sha256": "a740a77794d7e696d4195637dde54db6f75147b97a670223df1e515a6f0b4673",
+          "size": 1501,
+          "path": "room.json"
+        },
+        {
+          "sha256": "fdea71343a0736ef38702bfdc6afd1b105c39c1f8f281589aed5a68ab992bdd0",
+          "size": 387,
+          "path": "page/index.html"
+        },
+        {
+          "sha256": "e09eccd1542f0df1f409678a3f273b44c8b20c84f1a11d55058bdcde25ee9c5a",
+          "size": 346,
+          "path": "page/style.css"
+        },
+        {
+          "sha256": "d24824407995effd901c6ba610abd3b78ecde554222cff1e6d4061e6a0039ebe",
+          "size": 161,
+          "path": "page/main.js"
+        },
+        {
+          "sha256": "bfb55264c77719ac293bf50ca24d05b3780a12df9a78465836b54a55bcd51885",
+          "size": 19953,
+          "path": "page/dext-sdk.v1.js"
+        }
+      ],
+      "directory": "html"
+    },
+    {
+      "name": "continuous",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb005",
+      "archive": {
+        "sha256": "703c305e1be078903b9620593209832eabd4c4648bacbe9711d5fa4256f6e5d4",
+        "size": 9725,
+        "path": "archives/continuous.zip"
+      },
+      "files": [
+        {
+          "sha256": "2f9083cab91de28c1751e77d57f3e9e6539bd56ab3522622e92579b61ef617a3",
+          "size": 1608,
+          "path": "room.json"
+        },
+        {
+          "sha256": "580748f07d9fdbc72ae27278b38e607907fa5fb96b81c0233b8967c08fe5aaa9",
+          "size": 308,
+          "path": "scene/index.html"
+        },
+        {
+          "sha256": "b6fc61ad3154cc78b02bb27adc96dab20c8e1a09a44e7a6d7d8fba8d72065f58",
+          "size": 3484,
+          "path": "scene/main.js"
+        },
+        {
+          "sha256": "739dbe55a57e7b351c70a0d63915725614c0ee20c9669e00f68c25e997f0d1ff",
+          "size": 82,
+          "path": "scene/style.css"
+        },
+        {
+          "sha256": "bfb55264c77719ac293bf50ca24d05b3780a12df9a78465836b54a55bcd51885",
+          "size": 19953,
+          "path": "scene/dext-sdk.v1.js"
+        },
+        {
+          "sha256": "c6a4e69c6a3208f347f7651fb47be368ffbadd377568512dd909243711f2b560",
+          "size": 577,
+          "path": "widget/index.html"
+        },
+        {
+          "sha256": "2bb174dedf0a33ec0c8c0a6e25798379ac49a79e7c3c8e033d029be1455ae82a",
+          "size": 1662,
+          "path": "widget/main.js"
+        },
+        {
+          "sha256": "9250a027befa87f1328655e5c1ff668d9ade0c589f180e54bcb41bd7f866901a",
+          "size": 502,
+          "path": "widget/style.css"
+        }
+      ],
+      "directory": "continuous"
+    },
+    {
+      "name": "dock",
+      "roomId": "783a4998-a1b3-418d-b101-003afebbb006",
+      "archive": {
+        "sha256": "255ab4b1453f4b786693d36dcfaab77e8fc17a9697b814ad2fe4927b036a9c0d",
+        "size": 13094,
+        "path": "archives/dock.zip"
+      },
+      "files": [
+        {
+          "sha256": "a4611bb622d68f1bd9fcc9dfd2953f5b3aeae2120db3d1890c09c6e8e9e967a5",
+          "size": 8939,
+          "path": "room.json"
+        },
+        {
+          "sha256": "b5e562f81f76e4dbff19fec213a5ce26d82291839164bc3fabc5f2865631efe0",
+          "size": 447,
+          "path": "assets/home.svg"
+        },
+        {
+          "sha256": "85163cc86c6c421591351bcc428d357f08459641cd36c6ab46e7a6693af10531",
+          "size": 463,
+          "path": "assets/focus.svg"
+        },
+        {
+          "sha256": "2dc59d19ee2b35a43dd1f3f819c6da5dba2837fd186fab07dafbe881c72fe2d9",
+          "size": 457,
+          "path": "assets/quiet.svg"
+        },
+        {
+          "sha256": "d6ddcd46d75a1ad9946696ec34d83fe9169e5dbf38f30abe7207168c965608a0",
+          "size": 427,
+          "path": "dock/index.html"
+        },
+        {
+          "sha256": "7eb18ca448f34adbd603df75225483ac1b79390f793b6d717882781a4577b81a",
+          "size": 1917,
+          "path": "dock/style.css"
+        },
+        {
+          "sha256": "a7ce014e07b7adbbcc1a2ddd70d649cffd725134d1e41d48a37ceb7bbe4bdcb2",
+          "size": 6361,
+          "path": "dock/main.js"
+        },
+        {
+          "sha256": "07f3b4d1f421025722d00ab84b2c23cf1b76d3f5be3818ea6932c6b5c7e8fd7b",
+          "size": 3345,
+          "path": "dock/template.json"
+        },
+        {
+          "sha256": "bfb55264c77719ac293bf50ca24d05b3780a12df9a78465836b54a55bcd51885",
+          "size": 19953,
+          "path": "dock/dext-sdk.v1.js"
+        }
+      ],
+      "directory": "dock"
+    }
+  ],
+  "contractSha256": "a2495f2fcb6e5ae95b66ffb3a1cd6f716e675fa9a129e75708cf11aae850fed9"
+}

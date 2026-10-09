@@ -85,7 +85,7 @@ namespace Lively.Services
             if (string.IsNullOrWhiteSpace(workingDirectory) && !Path.IsPathRooted(target))
                 workingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
 
-            if (ExplorerShellLaunchService.TryOpen(target, workingDirectory, "open", out _))
+            if (ExplorerShellLaunchService.TryOpen(target, workingDirectory, "open", out _, arguments))
                 return null;
 
             var startInfo = new System.Diagnostics.ProcessStartInfo
@@ -282,7 +282,7 @@ namespace Lively.Services
         private const int ShellWindowFindNeedDispatch = 1;
         private const int ShowNormal = 1;
 
-        public static bool TryOpen(string path, string workingDirectory, string verb, out string error)
+        public static bool TryOpen(string path, string workingDirectory, string verb, out string error, string arguments = null)
         {
             error = null;
             object localShell = null;
@@ -321,7 +321,7 @@ namespace Lively.Services
                 dynamic document = desktopDocument;
                 explorerHostedShell = document.Application;
                 dynamic explorerShell = explorerHostedShell;
-                explorerShell.ShellExecute(path, string.Empty, workingDirectory ?? string.Empty, verb, ShowNormal);
+                explorerShell.ShellExecute(path, arguments ?? string.Empty, workingDirectory ?? string.Empty, verb, ShowNormal);
                 return true;
             }
             catch (Exception ex)

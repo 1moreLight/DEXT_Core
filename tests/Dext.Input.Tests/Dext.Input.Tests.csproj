@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.18362.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -11,9 +11,19 @@
     <None Update="continuous-scene-observer.js" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Common/Lively.Common.csproj" />
     <ProjectReference Include="../../lively-core-separation/src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeKeyDelivery.cs" Link="RoomNativeKeyDelivery.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeInputAuthority.cs" Link="RoomNativeInputAuthority.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionProtocol.cs" Link="RoomSessionProtocol.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomRuntimeContext.cs" Link="RoomRuntimeContext.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomV3Installation.cs" Link="RoomV3Installation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalLayout.cs" Link="RoomPersonalLayout.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalStore.cs" Link="RoomPersonalStore.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomActionCatalog.cs" Link="RoomActionCatalog.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerMessage.cs" Link="RoomSessionPlayerMessage.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerMessages.cs" Link="RoomSessionPlayerMessages.cs" />
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 </Project>

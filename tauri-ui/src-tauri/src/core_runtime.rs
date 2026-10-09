@@ -16,7 +16,9 @@ static LIFECYCLE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(()
 static STARTED_CORE: tokio::sync::Mutex<Option<Child>> = tokio::sync::Mutex::const_new(None);
 
 fn valid_core_binary_identity(product: &str, description: &str) -> bool {
-    product.eq_ignore_ascii_case("Dext") && description.to_ascii_lowercase().starts_with("dext")
+    product.eq_ignore_ascii_case("Dext") && if cfg!(feature="v3-release") {
+        description.to_ascii_lowercase().starts_with("dext v3")
+    } else { description.to_ascii_lowercase().starts_with("dext") }
 }
 
 fn version_value(info: &[u8], sub_block: &str) -> Option<String> {
@@ -114,7 +116,9 @@ fn core_path_for_configurator_with_target(
             })
         });
 
-    let core = if development_binary {
+    let core = if cfg!(feature = "v3-release") {
+        config_path.parent().ok_or("cannot resolve product directory")?.join("Lively.exe")
+    } else if development_binary {
         manifest
             .parent()
             .and_then(Path::parent)
@@ -169,6 +173,23 @@ fn expected_core_path() -> Result<PathBuf, String> {
     let configurator = std::env::current_exe()
         .map_err(|error| format!("cannot locate configurator executable: {error}"))?;
     core_path_for_configurator(&configurator, Path::new(env!("CARGO_MANIFEST_DIR")))
+}
+
+pub fn native_assets_directory() -> Result<PathBuf,String> {
+    let directory = if cfg!(feature="v3-release") {
+        expected_core_path()?.parent().ok_or("Dext product has no parent directory")?.join("wallpapers/dext-room-v3")
+    } else {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../wallpapers/dext-room-v3")
+    };
+    let directory=directory.canonicalize().map_err(|e|format!("缺少原生桌面资源，请修复 Dext 安装：{e}"))?;
+    if !directory.join("index.html").is_file() || !directory.join("LivelyInfo.json").is_file() {
+        return Err("缺少 Dext 原生宿主入口，请修复安装".into());
+    }
+    Ok(directory)
+}
+pub fn require_core_stopped_for_maintenance() -> Result<(), String> {
+    if mutex_exists()? { Err("请先退出 Dext Core，再恢复或清理旧安装；源 Room 和个人配置保持".into()) }
+    else { Ok(()) }
 }
 
 fn mutex_exists() -> Result<bool, String> {
@@ -241,7 +262,17 @@ fn verified_process_handle(identity: &CoreIdentity, expected: &Path) -> Result<u
     let handle = open_core_process(identity.process_id)?;
     let actual = process_executable(handle);
     match actual {
-        Ok(actual) if same_executable(&actual, expected) => Ok(handle),
+        Ok(actual) if same_executable(&actual, expected) => {
+            // Reusing an already running Core must enforce the same release
+            // profile as spawning it.
+            if cfg!(feature = "v3-release") {
+                if let Err(error) = validate_core_binary_identity(&actual) {
+                    unsafe { CloseHandle(handle as _) };
+                    return Err(error);
+                }
+            }
+            Ok(handle)
+        }
         Ok(actual) => {
             unsafe { CloseHandle(handle as _) };
             Err(format!(
@@ -255,6 +286,57 @@ fn verified_process_handle(identity: &CoreIdentity, expected: &Path) -> Result<u
             Err(error)
         }
     }
+}
+
+pub(crate) fn verify_running_release_profile(
+    raw: &crate::proto::desktop::GetCoreStatsResponse,
+) -> Result<(), String> {
+    if !cfg!(feature = "v3-release") {
+        return Ok(());
+    }
+    let expected = expected_core_path()?;
+    let identity: CoreIdentity = raw.clone().into();
+    let handle = verified_process_handle(&identity, &expected)?;
+    unsafe { CloseHandle(handle as _) };
+    Ok(())
+}
+
+fn product_exit_identity(
+    raw: &crate::proto::desktop::GetCoreStatsResponse,
+    expected: &Path,
+) -> Result<Option<CoreIdentity>, String> {
+    if !raw.is_product_exiting {
+        return Ok(None);
+    }
+    crate::grpc::verify_core_identity_response(raw)?;
+    let identity: CoreIdentity = raw.clone().into();
+    if !identity_is_expected_process(&identity, expected, None) {
+        return Err("refusing product exit from another Core worktree".into());
+    }
+    Ok(Some(identity))
+}
+
+pub fn watch_product_exit(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let Ok(expected) = expected_core_path() else { return };
+        loop {
+            let response = tokio::time::timeout(
+                Duration::from_secs(2), crate::grpc::raw_core_identity(),
+            ).await;
+            if let Ok(Ok(raw)) = response {
+                if let Ok(Some(identity)) = product_exit_identity(&raw, &expected) {
+                    // An RPC's reported path alone cannot authorize app exit:
+                    // hold the actual PID and compare its executable as well.
+                    if let Ok(handle) = verified_process_handle(&identity, &expected) {
+                        unsafe { CloseHandle(handle as _) };
+                        app.exit(0);
+                        return;
+                    }
+                }
+            }
+            tokio::time::sleep(Duration::from_millis(200)).await;
+        }
+    });
 }
 
 pub async fn managed_core_identity() -> Result<CoreIdentity, String> {
@@ -332,6 +414,7 @@ pub async fn start_core() -> Result<CoreIdentity, String> {
             return Err("Dext Core process is still running but not responding".into());
         }
     }
+    let launch_started=Instant::now();
     let child = Command::new(&expected)
         .current_dir(
             expected
@@ -343,7 +426,9 @@ pub async fn start_core() -> Result<CoreIdentity, String> {
     let pid = child.id();
     *started = Some(child);
     drop(started);
-    wait_until_ready(&expected, Some(pid)).await
+    let identity=wait_until_ready(&expected, Some(pid)).await?;
+    crate::room_performance::record("core.spawn.ready",launch_started,serde_json::json!({"processId":pid}));
+    Ok(identity)
 }
 
 pub async fn exit_core() -> Result<(), String> {
@@ -493,7 +578,11 @@ mod tests {
 
     #[test]
     fn refuses_stale_lively_build_before_spawn() {
-        assert!(valid_core_binary_identity("Dext", "Dext Core"));
+        assert_eq!(
+            valid_core_binary_identity("Dext", "Dext Core"),
+            !cfg!(feature = "v3-release")
+        );
+        assert!(valid_core_binary_identity("Dext", "Dext v3 desktop runtime core"));
         assert!(!valid_core_binary_identity(
             "Lively Wallpaper",
             "Lively Wallpaper"
@@ -501,4 +590,28 @@ mod tests {
         assert!(!valid_core_binary_identity("Dext", "Lively Core"));
         assert!(!valid_core_binary_identity("", "Dext Core"));
     }
+    #[test]
+    fn product_exit_notice_requires_verified_current_worktree_identity() {
+        use crate::proto::desktop::GetCoreStatsResponse;
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap();
+        let expected = root.join("lively-core-separation/src/Lively/Lively/bin/x64/Debug/net9.0-windows10.0.18362.0/Lively.exe");
+        let mut raw = GetCoreStatsResponse {
+            base_directory: expected.parent().unwrap().to_string_lossy().into(), assembly_version: "1".into(),
+            is_core_initialized: true, product_name: "Dext".into(),
+            runtime_identity: crate::grpc::runtime_identity_name().into(),
+            process_id: 42, app_data_directory: std::env::var("LOCALAPPDATA").unwrap() + r"\Dext",
+            grpc_pipe_name: crate::grpc::pipe_name().strip_prefix(r"\\.\pipe\").unwrap().into(),
+            is_product_exiting: false,
+        };
+        assert!(super::product_exit_identity(&raw, &expected).unwrap().is_none());
+        raw.is_product_exiting = true;
+        assert_eq!(super::product_exit_identity(&raw, &expected).unwrap().unwrap().process_id,42);
+        raw.base_directory = r"C:\Other\".into();
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+        raw.base_directory = expected.parent().unwrap().to_string_lossy().into(); raw.product_name = "Lively Wallpaper".into();
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+        raw.product_name = "Dext".into(); raw.process_id = 0;
+        assert!(super::product_exit_identity(&raw, &expected).is_err());
+    }
+
 }

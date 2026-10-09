@@ -35,3 +35,7 @@
   ②worktree 注册表随 .git 拷贝会残留幽灵，新仓库必须 `git worktree prune`；
   ③检查双仓库：`git rev-parse --git-dir` 对比两边是否同一个路径
 - 排查手法：`git worktree list` 出现 `prunable` 标记 = 幽灵注册；两个仓库同名分支哈希不同 = 已分叉
+
+## #265 halfV3合并与本机Room同路径（2026-10-09）
+主线有21项既有Room文件本机删除，未跟踪的导入v3-orbit-lab与本次新增版本化样包同路径，不能直接覆盖或清理。先按摘要备份两个导入目录，并只对rooms做include-untracked暂存；主线tracked干净后按用户授权合并。随后以stash原父与tracked树的binary diff恢复原删除，导入目录从字节核验备份恢复；保留stash和备份，私人Room差异不暂存入合并。
+恢复命令初稿在functions.exec的JS原始模板中使用PowerShell变量花括号，被JS提前解释而ReferenceError，shell未执行；改为PowerShell字符串拼接后执行成功。不要把此错误视作Git恢复失败，也不要再次重复已成功恢复。

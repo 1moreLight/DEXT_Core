@@ -1,6 +1,12 @@
 mod grpc;
 mod creator;
 mod core_runtime;
+mod room_v3;
+mod room_v3_authoring;
+mod room_v3_sharing;
+mod room_v3_dock;
+mod room_v3_workbench;
+mod room_performance;
 
 use tauri::Manager;
 
@@ -73,6 +79,7 @@ async fn save_library(dir: String, library_json: String) -> Result<(), String> {
 // 2026-08-27: derive from CARGO_MANIFEST_DIR (tauri-ui/src-tauri) so the path
 // survives repo relocation; recompile after moving the repo.
 const WALLPAPER_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../wallpapers/dext-room");
+// Native runtime paths are resolved beside the installed product in v3-release.
 const CMD_ROOM_LAYOUT_SYNC: i32 = 26;
 const CMD_DESKTOP_ICON_PREFERENCES: i32 = 27;
 static DESK_LAYOUT_SYNC_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
@@ -92,6 +99,7 @@ struct RoomInfo {
     icons: usize,
     widgets: usize,
     covers: Vec<CoverRef>,
+    compatibility: Option<room_v3::CompatibilityReport>,
 }
 
 #[derive(serde::Serialize)]
@@ -423,12 +431,15 @@ async fn validate_room_library(path: String) -> Result<String, String> {
         .map(|validated| validated.to_string_lossy().into_owned())
 }
 
+fn product_document_root() -> Result<std::path::PathBuf,String> {
+    let root = if cfg!(feature="v3-release") {
+        std::env::current_exe().map_err(|e|e.to_string())?.parent().ok_or("product has no directory")?.to_path_buf()
+    } else { std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..") };
+    root.canonicalize().map_err(|e|format!("resolve product documents: {e}"))
+}
 #[tauri::command]
 async fn about_info() -> Result<AboutInfo, String> {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let root = product_document_root()?;
     let entries = [
         (
             "license",
@@ -478,10 +489,7 @@ fn about_document_path(document_id: &str) -> Result<std::path::PathBuf, String> 
         "configurator-readme" => "tauri-ui/README.md",
         _ => return Err("unknown About document".into()),
     };
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .canonicalize()
-        .map_err(|error| format!("resolve Dext repository failed: {error}"))?;
+    let root = product_document_root()?;
     let path = root
         .join(relative)
         .canonicalize()
@@ -574,8 +582,13 @@ fn direct_room_in_library(
             .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
-    validate_room_contract(&value)?;
-    validate_room_asset_references(&room, &value)?;
+    if room_version(&value)? == 3 {
+        let manifest=room_v3::validate_manifest(&value)?;
+        for path in manifest.resource_paths {room_v3::open_resource(&room,&path)?;}
+    } else {
+        validate_room_contract(&value)?;
+        validate_room_asset_references(&room, &value)?;
+    }
     Ok(room)
 }
 
@@ -1261,11 +1274,14 @@ fn allowed_switches(desk_count: usize) -> std::collections::HashSet<String> {
 }
 
 fn room_version(room: &serde_json::Value) -> Result<u64, String> {
-    room.as_object()
+    let version = room.as_object()
         .ok_or_else(|| "room root must be an object".to_string())?
         .get("version")
         .and_then(|value| value.as_u64())
-        .ok_or_else(|| "room.version must be a positive integer".to_string())
+        .ok_or_else(|| "room.version must be a positive integer".to_string())?;
+    if version >= 3 { room_v3::require_compatibility(room)?; }
+    else if cfg!(feature="v3-release") { return Err("v3 发布版只支持原生 Room v3；旧作品原件保持，不自动迁移".into()); }
+    Ok(version)
 }
 
 fn widget_id_is_valid(value: &str) -> bool {
@@ -1623,10 +1639,17 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
         if p.is_dir() && p.join("room.json").is_file() {
             let (mut desks, mut icons, mut widgets) = (0usize, 0usize, 0usize);
             let mut version = None;
+            let mut compatibility = None;
             let mut covers = Vec::new();
             if let Ok(txt) = std::fs::read_to_string(p.join("room.json")) {
                 if let Ok(j) = serde_json::from_str::<serde_json::Value>(&txt) {
                     version = j.get("version").and_then(|value| value.as_u64());
+                    if version.is_some_and(|v| v >= 3) {
+                        compatibility = Some(native_room_compatibility(&j));
+                    } else if cfg!(feature="v3-release") {
+                        compatibility = Some(room_v3::CompatibilityReport {supported:false,needs_update:false,
+                            message:"v3 发布版只支持原生 Room v3；旧作品原件保持，不自动迁移".into()});
+                    }
                     if let Some(arr) = j["desks"].as_array() {
                         desks = arr.len();
                         for d in arr {
@@ -1645,6 +1668,7 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
                 icons,
                 widgets,
                 covers,
+                compatibility,
             });
         }
     }
@@ -1652,6 +1676,26 @@ async fn list_rooms(app: tauri::AppHandle, dir: String) -> Result<Vec<RoomInfo>,
     Ok(out)
 }
 
+fn native_room_compatibility(document: &serde_json::Value) -> room_v3::CompatibilityReport {
+    let mut report = room_v3::compatibility(document);
+    if report.supported {
+        if let Err(error) = room_v3::validate_manifest(document) {
+            report.supported = false;
+            report.needs_update = error.contains("需要更新");
+            report.message = error;
+        }
+    }
+    report
+}
+#[tauri::command]
+async fn inspect_room_compatibility(path: String) -> Result<room_v3::CompatibilityReport, String> {
+    let file = std::path::Path::new(&path);
+    if file.file_name().and_then(|v| v.to_str()) != Some("room.json") {
+        return Err("only a Room manifest can be inspected".into());
+    }
+    let document = room_v3::read_document(file.parent().ok_or("Room has no parent")?)?;
+    Ok(native_room_compatibility(&document))
+}
 #[tauri::command]
 async fn read_room(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| format!("read room failed: {e}"))
@@ -1672,6 +1716,9 @@ fn write_room_file(path: &std::path::Path, room_json: &str) -> Result<(), String
         .as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?;
     object.remove("__source");
+    if room.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return room_v3_authoring::save(path.parent().ok_or("Room path has no parent")?, room_json);
+    }
     validate_room_contract(&room)?;
     let room_dir = path
         .parent()
@@ -1839,6 +1886,30 @@ async fn create_room(dir: String, name: String) -> Result<String, String> {
         .map(|room_dir| room_dir.to_string_lossy().into_owned())
 }
 
+#[tauri::command]
+async fn create_room_v3(dir: String, name: String, room_json: String) -> Result<String, String> {
+    room_v3_authoring::create(std::path::Path::new(&dir), &name, &room_json)
+        .map(|path| display_path(&path))
+}
+
+#[tauri::command]
+async fn import_v3_content(room_dir: String, src_path: String, content_type: String) -> Result<serde_json::Value, String> {
+    room_v3_authoring::import_content(std::path::Path::new(&room_dir), std::path::Path::new(&src_path), &content_type)
+}
+
+#[tauri::command]
+async fn list_v3_dock_templates() -> Result<Vec<serde_json::Value>, String> { room_v3_dock::list() }
+
+#[tauri::command]
+async fn import_v3_dock_template(room_dir: String, template_id: String) -> Result<serde_json::Value, String> {
+    room_v3_dock::import(std::path::Path::new(&room_dir), &template_id)
+}
+
+#[tauri::command]
+async fn inspect_v3_dock_template(room_dir: String, component_id: String) -> Result<serde_json::Value, String> {
+    room_v3_dock::inspect(std::path::Path::new(&room_dir), &component_id)
+}
+
 const ROOM_CONTENT_DIRS: [&str; 4] = ["background", "switch", "start", "idle"];
 const ROOM_ASSET_DIRS: [&str; 5] = ["background", "switch", "start", "idle", "widgets"];
 const ROOM_LEGACY_PATHS: [&str; 4] = ["transition", "end", "room.js", "room.css"];
@@ -1920,6 +1991,51 @@ fn save_room_as_dir(
     Ok(target)
 }
 
+static ROOM_SHARING_TRANSACTION: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+async fn copy_native_room(source: String, library: String, name: String, json: String) -> Result<String, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let cleanup_library = library.clone();
+    let cleanup_name = name.clone();
+    let identity = core_runtime::managed_core_identity().await
+        .map_err(|e| format!("本机另存需要连接 Dext Core，以确认个人绑定/皮肤复制：{e}"))?;
+    if !identity.is_core_initialized { return Err("Core 正在初始化，请稍后另存".into()); }
+    let prepared = tauri::async_runtime::spawn_blocking(move || room_v3_sharing::prepare_copy(
+        std::path::Path::new(&source), std::path::Path::new(&library), &name, &json))
+        .await.map_err(|e| format!("prepare native Room copy: {e}"))??;
+    let new_id = prepared.room_id.clone();
+    // Write and lease recovery intent BEFORE Core can persist private data.
+    // A crash after acceptance but before publication must remain recoverable.
+    let journal = room_v3_sharing::queue_personal_cleanup(std::path::Path::new(&cleanup_library), &new_id, &cleanup_name)?;
+    let (lease, _) = room_v3_sharing::lease_personal_cleanup(&journal)?;
+    if let Err(error) = grpc::copy_room_personal(prepared.source_id.clone(), new_id.clone()).await {
+        return Err(format!("个人复制未确认，作品副本尚未发布；原Room保持。新副本ID {new_id}：{error}；恢复记录已保留"));
+    }
+    let result = tauri::async_runtime::spawn_blocking(move || prepared.publish()).await
+        .unwrap_or_else(|e| Err(format!("publish native Room copy: {e}")));
+    match result {
+        Ok(path) => {
+            // Once the author copy exists, recovery cancels cleanup even if
+            // record removal is interrupted. Never roll back a published copy.
+            drop(lease);
+            let _ = std::fs::remove_file(&journal);
+            Ok(path.to_string_lossy().into_owned())
+        },
+        Err(error) => {
+            match grpc::delete_room_personal(new_id.clone(), false).await {
+                Ok(()) => {
+                    drop(lease);
+                    let _ = std::fs::remove_file(&journal);
+                    Err(format!("{error}; copied personal overrides rolled back"))
+                },
+                Err(cleanup) => {
+                    Err(format!("{error}; 新副本未发布，个人清理待重试 {new_id}: {cleanup}；恢复记录已保留"))
+                },
+            }
+        }
+    }
+}
+
 #[tauri::command]
 async fn save_room_as(
     room_dir: String,
@@ -1927,6 +2043,11 @@ async fn save_room_as(
     name: String,
     room_json: String,
 ) -> Result<String, String> {
+    let candidate: serde_json::Value = serde_json::from_str(&room_json)
+        .map_err(|e| format!("parse copied Room: {e}"))?;
+    if candidate.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return copy_native_room(room_dir, dir, name, room_json).await;
+    }
     save_room_as_dir(
         std::path::Path::new(&room_dir),
         std::path::Path::new(&dir),
@@ -1953,6 +2074,12 @@ async fn duplicate_room(
     room_dir: String,
     name: String,
 ) -> Result<String, String> {
+    let source = direct_room_in_library(std::path::Path::new(&library_dir), std::path::Path::new(&room_dir))?;
+    let json = std::fs::read_to_string(source.join("room.json")).map_err(|e| format!("read copied Room: {e}"))?;
+    let document: serde_json::Value = serde_json::from_str(&json).map_err(|e| format!("parse copied Room: {e}"))?;
+    if document.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return copy_native_room(source.to_string_lossy().into_owned(), library_dir, name, json).await;
+    }
     duplicate_room_dir(
         std::path::Path::new(&library_dir),
         std::path::Path::new(&room_dir),
@@ -1968,6 +2095,9 @@ fn rename_room_dir(
 ) -> Result<std::path::PathBuf, String> {
     validate_room_name(name)?;
     let source = direct_room_in_library(library_dir, room_dir)?;
+    if room_v3::read_document(&source)?.get("version").and_then(serde_json::Value::as_u64)==Some(3) {
+        return room_v3_authoring::rename(&source,name);
+    }
     let library = source
         .parent()
         .ok_or_else(|| "Room has no library parent".to_string())?;
@@ -1991,23 +2121,75 @@ async fn rename_room(
         std::path::Path::new(&room_dir),
         &name,
     )
-    .map(|path| path.to_string_lossy().into_owned())
+    .map(|path| display_path(&path))
 }
 
 #[tauri::command]
-async fn delete_room(library_dir: String, room_dir: String) -> Result<(), String> {
-    let room = direct_room_entry_in_library(
-        std::path::Path::new(&library_dir),
-        std::path::Path::new(&room_dir),
-    )?;
-    trash::delete(&room).map_err(|error| {
-        format!(
-            "move Room {:?} to the Windows Recycle Bin failed: {error}",
-            room.file_name().unwrap_or_default()
-        )
-    })
+async fn cleanup_v3_personal_deletions(library_dir: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let library = std::path::Path::new(&library_dir);
+    let mut cleaned = 0usize;
+    let mut messages = Vec::new();
+    let intents = room_v3_sharing::pending_personal_cleanup(library)?;
+    for (path, _) in intents {
+        let (lease, intent) = match room_v3_sharing::lease_personal_cleanup(&path) {
+            Ok(value) => value,
+            Err(error) if error == "personal cleanup intent busy" => continue,
+            Err(error) => {messages.push(error);continue;},
+        };
+        let result = match room_v3_sharing::cleanup_source_restored(library, &intent) {
+            Ok(true) => Ok(()),
+            Ok(false) => grpc::delete_room_personal(intent.room_id.clone(), false).await,
+            Err(error) => Err(error),
+        };
+        drop(lease);
+        match result {
+            Ok(()) => match std::fs::remove_file(&path) {
+                Ok(()) => cleaned += 1,
+                Err(error) => messages.push(format!("{}: {error}", intent.room_id)),
+            },
+            Err(error) => messages.push(format!("{}: {error}", intent.room_id)),
+        }
+    }
+    Ok(serde_json::json!({"cleaned":cleaned,"pending":messages.len(),"messages":messages}))
 }
 
+#[tauri::command]
+async fn delete_room(library_dir: String, room_dir: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    let library = std::path::Path::new(&library_dir);
+    let room = direct_room_entry_in_library(library, std::path::Path::new(&room_dir))?;
+    let document = room_v3::read_document(&room).ok();
+    let native_id = document.as_ref().filter(|doc| doc["version"] == 3)
+        .and_then(|doc| doc["id"].as_str()).map(str::to_owned);
+    let intent = if let Some(id) = &native_id {
+        grpc::delete_room_personal(id.clone(), true).await
+            .map_err(|e| format!("个人数据删除尚未确认，Room未移动：{e}"))?;
+        Some(room_v3_sharing::queue_personal_cleanup(library, id,
+            room.file_name().and_then(|s| s.to_str()).ok_or("Room name is not UTF-8")?)?)
+    } else { None };
+    let intent_lease = intent.as_ref().map(|path| room_v3_sharing::lease_personal_cleanup(path).map(|(lease,_)|lease)).transpose()?;
+    if let Err(error) = trash::delete(&room) {
+        // Preserve intent: a restored source cancels cleanup, a partial Shell
+        // move with an error can still finish its private cleanup on reconnect.
+        return Err(format!("move Room to the Windows Recycle Bin failed: {error}"));
+    }
+    drop(intent_lease);
+    if let (Some(id), Some(path)) = (native_id, intent) {
+        let cleanup = grpc::delete_room_personal(id.clone(), false).await;
+        match cleanup {
+            Ok(()) => {
+                if let Err(error) = std::fs::remove_file(path) {
+                    return Ok(serde_json::json!({"deleted":true,"roomId":id,"personalCleanupPending":true,
+                        "message":format!("私人数据已清理，恢复记录待清除：{error}")}));
+                }
+            }
+            Err(error) => return Ok(serde_json::json!({"deleted":true,"roomId":id,"personalCleanupPending":true,
+                "message":format!("Room已移入回收站，私人数据清理待Core重连：{error}")})),
+        }
+    }
+    Ok(serde_json::json!({"deleted":true,"personalCleanupPending":false}))
+}
 fn zip_directory(
     writer: &mut zip::ZipWriter<&mut std::fs::File>,
     root: &std::path::Path,
@@ -2072,11 +2254,15 @@ fn export_room_zip_file(
     destination: &std::path::Path,
 ) -> Result<(), String> {
     use std::io::Write;
+
     let mut room: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(room_dir.join("room.json"))
             .map_err(|error| format!("read room.json failed: {error}"))?,
     )
     .map_err(|error| format!("parse room.json failed: {error}"))?;
+    if room.get("version").and_then(serde_json::Value::as_u64) == Some(3) {
+        return room_v3_sharing::export(room_dir, destination);
+    }
     room.as_object_mut()
         .ok_or_else(|| "room root must be an object".to_string())?
         .remove("__source");
@@ -2181,6 +2367,9 @@ fn import_room_zip_file(
     requested_name: Option<&str>,
 ) -> Result<std::path::PathBuf, String> {
     use std::io::Read;
+    if room_v3_sharing::is_native_archive(archive_path)? {
+        return room_v3_sharing::import(library_dir, archive_path, requested_name);
+    }
     let library = library_dir
         .canonicalize()
         .or_else(|_| {
@@ -2413,11 +2602,109 @@ fn read_v3_session_overlay(
 // Mirror Room-owned data into the wallpaper package, then reload it.
 // WebView2 virtual host can only serve files inside the package dir (ERRORS #7/#27).
 #[tauri::command]
+async fn v3_installation_recovery(offset: Option<usize>) -> Result<room_v3::RecoveryReport, String> {
+    let host = native_runtime_directory()?;
+    tauri::async_runtime::spawn_blocking(move || room_v3::inspect_recovery(&host,offset.unwrap_or(0))).await
+        .map_err(|e|format!("read recovery inventory: {e}"))?
+}
+#[tauri::command]
+async fn maintain_v3_installation(name: String, manifest_sha256: String, operation: String) -> Result<serde_json::Value, String> {
+    let _transaction = ROOM_SHARING_TRANSACTION.lock().await;
+    core_runtime::require_core_stopped_for_maintenance()?;
+    let host = native_runtime_directory()?;
+    tauri::async_runtime::spawn_blocking(move || {
+        core_runtime::require_core_stopped_for_maintenance()?;
+        match operation.as_str() {
+            "restore" => {
+                let started=std::time::Instant::now();
+                let snapshot = room_v3::restore_retained(&host,&name,&manifest_sha256)?;
+                room_performance::record("native.installation.restored",started,serde_json::json!({"roomId":snapshot.room_id}));
+                Ok(serde_json::json!({"operation":"restore","roomId":snapshot.room_id,"message":"旧安装已恢复；原始作品和个人绑定保持，请启动 Core 后重新应用"}))
+            }
+            "cleanup" => {
+                let bytes = room_v3::cleanup_retained(&host,&name,&manifest_sha256)?;
+                Ok(serde_json::json!({"operation":"cleanup","freedBytes":bytes,"message":"已清理所选认证安装残留；源 Room 和个人数据保持"}))
+            }
+            _ => Err("unknown installation maintenance operation".into()),
+        }
+    }).await.map_err(|e|format!("installation maintenance interrupted: {e}"))?
+}
+fn native_runtime_directory() -> Result<std::path::PathBuf,String> {
+    core_runtime::native_assets_directory()
+}
+#[tauri::command]
 async fn apply_room(room_dir: String) -> Result<(), String> {
     let canonical = std::path::Path::new(&room_dir)
         .canonicalize()
         .map_err(|error| format!("Room directory not found: {error}"))?;
     let src = canonical.as_path();
+    let room = room_v3::read_document(src)?;
+    if room_version(&room)? == 3 {
+        let apply_started=std::time::Instant::now();
+        let host = native_runtime_directory()?;
+        if !host.join("index.html").is_file() || !host.join("LivelyInfo.json").is_file() {
+            return Err("native v3 official renderer is not installed".into());
+        }
+        let previous = grpc::room_session_status().await?;
+        let install_started=std::time::Instant::now();
+        // End the old bound installation before replacing its retained resources.
+        if previous.player_pid > 0 {
+            grpc::close_wallpaper_library(&display_path(&host)).await?;
+            let release_deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(5);
+            while grpc::room_session_status().await?.player_pid == previous.player_pid {
+                if tokio::time::Instant::now() >= release_deadline {
+                    return Err("旧壁纸尚未退出，请稍后重新应用。".into());
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+            }
+        }
+        let installation = match room_v3::install(src, &host.join("content")) {
+            Ok(installation) => installation,
+            Err(error) => {
+                if previous.player_pid > 0 {
+                    if let Err(restore) = grpc::set_wallpaper(&display_path(&host)).await {
+                        return Err(format!("{error}; 恢复旧壁纸失败：{restore}"));
+                    }
+                }
+                return Err(error);
+            }
+        };
+        room_performance::record("native.install.verified",install_started,serde_json::json!({"roomId":installation.room_id,"resourceBytes":installation.resources.iter().map(|r|r.size).sum::<u64>()}));
+        // Use the same absolute path for the Player URL and resource-server origin.
+        // SetWallpaper acknowledges scheduling, before the new session is attached.
+        grpc::set_wallpaper(&display_path(&host)).await?;
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(25);
+        let mut last_error = "Core has not attached the native Room".to_string();
+        while tokio::time::Instant::now() < deadline {
+            match tokio::time::timeout(std::time::Duration::from_secs(2), grpc::room_session_status()).await {
+                Ok(Ok(status)) if status.active && status.player_pid > 0 &&
+                    status.room_id == installation.room_id && status.session_id != previous.session_id &&
+                    !status.installation_stamp.is_empty() => {
+                    let bytes = std::fs::read(host.join("content/installation.json"))
+                        .map_err(|e| format!("read applied installation: {e}"))?;
+                    let current: room_v3::Installation = serde_json::from_slice(&bytes)
+                        .map_err(|e| format!("read applied installation: {e}"))?;
+                    if current != installation {
+                        return Err("installed Room changed while applying; please retry".into());
+                    }
+                    room_v3_authoring::record_source(&host, src, &installation)?;
+                    // Applying a Room enables its declared navigation buttons for this installation.
+                    let navigation = grpc::edit_personal(installation.room_id.clone(), status.installation_stamp.clone(),
+                        serde_json::json!({"operation":"enableNavigation"})).await?;
+                    if navigation.get("status").and_then(|value| value.as_str()) != Some("accepted") {
+                        return Err("Room 已应用，但切页按钮启用失败，请重新应用。".into());
+                    }
+                    room_performance::record("native.apply.sessionConfirmed",apply_started,serde_json::json!({"roomId":installation.room_id,"playerPid":status.player_pid}));
+                    return Ok(());
+                }
+                Ok(Err(error)) => last_error = error,
+                Err(_) => last_error = "Core session query timed out".into(),
+                _ => {}
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
+        return Err(format!("Room saved, but native application was not confirmed: {last_error}"));
+    }
     let pkg = std::path::Path::new(WALLPAPER_DIR);
     sync_room_to_package(src, pkg, &display_path(&canonical))?;
     grpc::set_wallpaper(WALLPAPER_DIR).await
@@ -2446,6 +2733,22 @@ fn normalized_path(path: &std::path::Path) -> String {
 
 async fn active_wallpaper_value() -> Result<Option<ActiveWallpaper>, String> {
     let wallpapers = grpc::get_wallpapers().await?;
+    let native_runtime=native_runtime_directory()?;
+    let native_norm=normalized_path(&native_runtime);
+    if let Some(running)=wallpapers.iter().find(|wallpaper|{
+        let path=std::path::Path::new(&wallpaper.path).canonicalize().unwrap_or_else(|_|std::path::PathBuf::from(&wallpaper.path));
+        let candidate=normalized_path(&path);
+        candidate==native_norm||candidate.strip_prefix(&native_norm).is_some_and(|suffix|suffix.starts_with(std::path::MAIN_SEPARATOR))
+    }){
+        let session = grpc::room_session_status().await?;
+        if !session.active || session.player_pid <= 0 {
+            return Ok(None);
+        }
+        return room_v3_authoring::active_source(&native_runtime).map(|source|source.map(|source_path|ActiveWallpaper{
+            room:ActiveRoom{source_path,runtime_path:display_path(&native_runtime)},
+            lively_info_path:running.path.clone(),
+        }));
+    }
     let runtime = std::path::Path::new(WALLPAPER_DIR)
         .canonicalize()
         .unwrap_or_else(|_| std::path::PathBuf::from(WALLPAPER_DIR));
@@ -2766,6 +3069,7 @@ async fn diagnostic_value() -> Result<serde_json::Value, String> {
         "logDirectory": std::path::Path::new(&identity.app_data_directory).join("logs"),
         "wallpapers": wallpapers,
         "activeRoom": active,
+        "actualOperationTimings": room_performance::samples(),
     }))
 }
 
@@ -3196,6 +3500,37 @@ async fn v3_session_status() -> Result<grpc::RoomSessionStatus, String> {
 }
 
 #[tauri::command]
+async fn get_v3_personal_editor(room_id: String, installation_stamp: String) -> Result<serde_json::Value, String> {
+    grpc::get_personal_editor(room_id, installation_stamp).await
+}
+
+#[tauri::command]
+async fn edit_v3_personal(room_id: String, installation_stamp: String, edit: serde_json::Value) -> Result<serde_json::Value, String> {
+    grpc::edit_personal(room_id, installation_stamp, edit).await
+}
+
+#[tauri::command]
+async fn get_v3_read_grants(room_id: String, installation_stamp: String) -> Result<grpc::RoomReadGrants, String> {
+    grpc::get_read_grants(room_id, installation_stamp).await
+}
+
+#[tauri::command]
+async fn set_v3_read_grant(room_id: String, installation_stamp: String, consumer_id: String,
+    capabilities: Vec<String>, allow: bool) -> Result<grpc::RoomReadGrants, String> {
+    grpc::set_read_grant(room_id, installation_stamp, consumer_id, capabilities, allow).await
+}
+
+#[tauri::command]
+async fn get_v3_dock_status() -> Result<serde_json::Value, String> {
+    grpc::room_dock_status(None).await
+}
+
+#[tauri::command]
+async fn set_v3_dock_preference(patch: serde_json::Value) -> Result<serde_json::Value, String> {
+    grpc::room_dock_status(Some(patch)).await
+}
+
+#[tauri::command]
 async fn start_core() -> Result<grpc::CoreIdentity, String> {
     core_runtime::start_core().await
 }
@@ -3209,6 +3544,11 @@ async fn exit_core() -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(creator::CreatorImports::default())
+        .manage(room_v3_workbench::PreviewResources::default())
+        .setup(|app| {
+            core_runtime::watch_product_exit(app.handle().clone());
+            Ok(())
+        })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .register_uri_scheme_protocol("dext", |_ctx, request| {
@@ -3221,6 +3561,12 @@ pub fn run() {
             };
             serve_lib_file(request.uri().path(), &dir)
         })
+        .register_uri_scheme_protocol("v3preview", |ctx, request| {
+            match ctx.app_handle().try_state::<room_v3_workbench::PreviewResources>() {
+                Some(state) => room_v3_workbench::serve(&request,&state),
+                None => tauri::http::Response::builder().status(503).body(Vec::new()).unwrap(),
+            }
+        })
         .register_uri_scheme_protocol("creator", |ctx, request| {
             match ctx.app_handle().try_state::<creator::CreatorImports>() {
                 Some(imports) => creator::serve_creator_file(request.uri().path(), &imports),
@@ -3228,6 +3574,8 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            room_v3_workbench::prepare_v3_workbench,
+            room_v3_workbench::release_v3_workbench,
             get_wallpapers,
             get_installed_apps,
             launch_app,
@@ -3236,15 +3584,24 @@ pub fn run() {
             save_library,
             list_rooms,
             read_room,
+            inspect_room_compatibility,
             write_room,
             create_room,
+            create_room_v3,
+            import_v3_content,
+            list_v3_dock_templates,
+            import_v3_dock_template,
+            inspect_v3_dock_template,
             save_room_as,
             duplicate_room,
             rename_room,
             delete_room,
+            cleanup_v3_personal_deletions,
             export_room_zip,
             import_room_zip,
             apply_room,
+            v3_installation_recovery,
+            maintain_v3_installation,
             active_room,
             sync_active_desk_icons,
             stop_wallpapers,
@@ -3266,6 +3623,12 @@ pub fn run() {
             core_stats,
             core_identity,
             v3_session_status,
+            get_v3_personal_editor,
+            edit_v3_personal,
+            get_v3_read_grants,
+            set_v3_read_grant,
+            get_v3_dock_status,
+            set_v3_dock_preference,
             start_core,
             exit_core,
             get_system_media,

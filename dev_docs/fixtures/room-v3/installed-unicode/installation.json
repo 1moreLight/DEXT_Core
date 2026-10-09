@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "roomId": "231db51a-19db-4a3a-9c06-dbb9b3db86f9",
+  "manifestSha256": "8379c3c06da8192ee34a3ba06178d03bc2e37be2cbcd81d34bd4547b1ee9b7a9",
+  "resources": [
+    {
+      "path": "assets/.js",
+      "sha256": "0d2486423c5ca59bb4752a189d73dbb9a16e495b08821110ec417ae89266da6f",
+      "size": 19
+    },
+    {
+      "path": "assets/😀.js",
+      "sha256": "0d2486423c5ca59bb4752a189d73dbb9a16e495b08821110ec417ae89266da6f",
+      "size": 19
+    }
+  ]
+}

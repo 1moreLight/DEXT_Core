@@ -270,3 +270,281 @@ RawInput 按位拆解组合按键标志，负 client 坐标按 signed 16-bit 打
 原因：`core_path_for_configurator` 和身份脚本仅接受 `tauri-ui/src-tauri/target/debug`，未考虑编译时的 `CARGO_TARGET_DIR`。此前为节省 C 盘空间把 Rust target 重定向到 D 盘。
 
 修复：配置器以编译时 `CARGO_TARGET_DIR` 或标准 target 识别自身，始终从编译时 manifest 所在 worktree 定位 Core；身份脚本支持当前环境的 target 目录。Rust 定向回归和真实三进程路径/pipe 核对通过。
+
+## #123 公开 config 的 Schema 与原生校验必须一致（2026-10-02）
+
+V3-P3-001 的公开配置 Schema 要求对象，初版递归数据检查却允许顶层数组/字符串。新增真实行为回归先失败；递归入口在 depth=0 检查 object 后通过。嵌套 target/secret/绝对路径仍拒绝。以后新增 Value 类型配置时同时验证形状、引用与隐私限制，不把递归遍历通过等同于完整契约通过。
+# #124 原生安装拒绝异常必须在准入边界收口（2026-10-02）
+
+- 现象：Core原生样包可以绑定，但摘要/结构反例向调用方抛异常，测试33/42。
+- 原因：独立校验器使用InvalidDataException；原准入catch只含IOException等，未覆盖它。
+- 修复：准入明确捕获无效数据异常并返回拒绝；保持未知程序错误可见。同一反例回归全部通过。
+- 检查：同时跑正例与重新摘要后仍非法的结构反例，避免“所有包都拒绝”造成假绿。
+# #126 原生v3双语言边界必须校验原始JSON并采用同一排序（2026-10-02）
+
+- 现象：Rust能安装Core拒绝的作品；U+E000/U+1F600资源顺序相反，重复JSON键被Value抹掉，config:null被Option当缺省。
+- 修复：原始字节通过递归唯一键解析器再转Value；显式null结构拒绝；Core按UTF8字节排序。公共config内部nullable值仍保留。
+- 检查：共享Unicode安装样包，重复原始键/空config的先红后绿回归，不能只检查解析后的对象。
+
+# #127 私人file URI检查须忽略scheme大小写（2026-10-02）
+
+- 现象：file:被拒但FILE:/FiLe:进入公开config。
+- 修复：Rust前缀eq_ignore_ascii_case、CoreOrdinalIgnoreCase；合法HTML入口配匹配资源摘要后回归，避免另一个入口错误掩盖漏洞。
+
+## #129 安装时先查路径再写入/改名，暂存链接与发布替换可越过校验（2026-10-02）
+
+- 现象：真实Windows回归中，暂存assets被换成junction后旧写法先覆盖外部文件再拒绝；发布前目标和暂存目录可被另一个操作改名。
+- 原因：目录/文件属性检查与后续路径操作之间存在竞态；Drop中对失去所有权的路径递归删除同样不安全。
+- 修复：保留已检验根/祖先/资源句柄，checked create_new写入；目录发布用SetFileInformationByHandle改名并拒绝删除共享。失败不覆盖新出现的非本包目标，旧安装及失败暂存留给有界核验清理。
+- 检查：独立Rust28/28，包括两项真实RED→GREEN；Core46/46。掉电恢复/清理仍是最终发布门槛。
+
+## #130 FILE_RENAME_INFO长度不含NUL，但FileName需提供终止符（2026-10-02）
+
+- 现象：个人快照SetFileInformationByHandle间歇ERROR_INVALID_NAME；锁定旧文件测试偶尔未拒绝，实际目标名被读到缓冲区末尾之外。
+- 原因：按FileNameLength仅分配UTF16内容，遗漏FileName要求的NUL终止符；原生调用读取了非本次数据。
+- 修复：缓冲区多分配并清零2字节，长度仍写入内容字节数。现有真实保存/重开/旧文件锁定回归6/9→9/9。
+- 检查：不能只检查Win32返回成功，必须重读固定目标名并验证旧文件被锁时发布失败且原字节不变。
+
+## #131 Explorer代启成功分支丢失应用参数（2026-10-03）
+
+现象：受控WinExe捕获参数回归失败，Explorer path=True，未生成捕获文件。原因：AppCatalogService.Launch把arguments留给fallback，ExplorerShellLaunchService.ShellExecute固定空参数。修复：TryOpen显式接收arguments并传ShellExecute；已有调用保留可选参数。真实受控目标验证带空格参数和工作目录均正确，测试先RED后GREEN。以后须验证实际Explorer路径，不能以替代delegate断言代表原生启动。
+
+## #132 桌面暂停错误拒绝可见Dock绑定（2026-10-03）
+
+现象：Dock launch keeps equal permission while desktop is paused回归23/24，返回NotOperable。原因：动作权威对所有视图应用桌面IsOperable。修复：只有Desktop签发/激活受该状态限制；Dock仍查安装、消费者、授权、绑定与一次性输入，导航继续由会话内核仲裁。24/24 GREEN。真实宿主仍须核验当前可见Dock及物理输入，票据单元测试不能代填该门槛。
+
+## #133 缓存上下文跨过撤销的动作派发（2026-10-03）
+
+现象：35项最终回归前，关闭/停止/暂停/安装解绑替换及个人grant/target/revision修改8项实际失败（25/33）。原因：Context和个人Read分别释放锁后，旧上下文仍用于后续启动。修复：在短同步准备边界保护私有快照、gateway、安装权威和kernel当前状态，消耗票据返回不可变计划；原生launch/gateway.Request在所有锁外执行。gateway竞争时不持私有锁阻塞，释放后重试，防观察者反向读个人数据死锁。单调过期在等待后再次核验。35/35、协议46/46、内核10/10及Explorer实际启动通过。规则：撤销在准备提交前生效则拒绝；已提交动作可能完成，后续撤销影响未来动作。以后不能只补一次快照重读，必须保留线性准备边界及共享锁外副作用。
+
+## #136 输入探针显式源码依赖未同步（2026-10-03）
+
+Dext.Input.Tests显式链接RoomSessionProtocol.cs；CORE-006增加RoomActionCatalog/RoomActionContext后，探针未同步Compile Include，还原依赖后真实编译出现4项CS0246。本轮补RoomActionCatalog与RuntimeContext源文件引用。新增协议依赖时检查所有链接该源文件的csproj，不能只验证主Core和协议测试项目。
+
+## #138 快照跨进程投影漏字段（2026-10-03）
+
+内核快照新增信息不会自动穿过WebWebView2的DTO映射与Player Form1匿名JS投影。隔离ReleasePlayer实际只收到旧字段，测试失败。新增唯一RoomSessionPlayerMessage投影并由生产与探针共用；消息DTO和Form1显式传递queue/deadline/active/installationStamp/lifecycle，实际页面正反两组状态通过。gRPC/Rust/TS也同步字段，后续变化须验证实际接收端，不能以内核测试代替IPC。
+
+## #140 媒体槽权限必须独立检查阶段和前台修订（2026-10-03）
+
+新增回归实际36/44失败：slot消费者未建立，个人130项上限不足196项，统一IsOperable又使starting/idle全部拒绝。若只放开IsOperable，还会使暂停/锁屏或后台消费；原先非桌面阶段的前台变化也不递增revision，旧票据可能恢复可用。
+
+从已验证清单建立独立媒体消费者；结构活动检查stage/Desk/role，实际消费再检查暂停/锁屏/前台，Dock仅保留桌面暂停例外。Core前台事实进入同一内部快照，每次变化推进全局revision；个人最大196、background稳定ID后缀80字符。新阶段/锁屏/前台/等待竞态与最大数量回归44/44通过。原生Windows事实和物理输入仍必须后续实接，单元票据不代替实机验收。
+
+## #141 Windows事实必须进入首个快照并原子更新（2026-10-03）
+
+旧协调者Start/Restore未传Windows状态，内核默认未锁屏/桌面前台；即使随后补发SetLifecycle再SetOperable，解锁与前台变化也可能分成两帧。播放策略又不等于实际每显示器暂停结果。
+
+独立RoomRuntimeFactsSource记录实际Pause/Play、锁屏和独立前台，未知状态限制操作。Start/Restore直接构造完整初始状态；SetRuntimeFacts一次提交三事实，存储失败保留原快照并允许相同采样重试。协议72/72包含首次订阅无宽松中间态、后台解锁从不出现可操作修订、权限边界及显示器范围。完整构建/真实v2恢复启动通过；真实原生v3锁屏与唤醒验收仍须后续执行。
+
+## #142 Framework Player标准输出编码破坏Unicode（2026-10-03）
+
+真实IPC探针发送中文清单并回读，名字变成替换字符；纯Json.NET内存测试未发现。Player使用Framework控制台默认编码，Core/.NET9按UTF-8读管道。统一SendToParent使用StringEscapeHandling.EscapeNonAscii输出ASCII JSON，实际中文精确匹配通过；探针stdin明确UTF-8，与Core一致。不能仅用同进程序列化测试宣称跨进程Unicode正确。
+
+## #143 重复异步Resume取消首次重放（2026-10-03）
+
+真实WebView测试将media JS延迟120ms，暂停后连续发送两次Resume，第一组快照成功但恢复重放超时。重复Resume递增修订后直接返回，首次await完成已不匹配，最后缓存状态从未发布。现在仅实际暂停→恢复增加playbackRevision，重复Resume不改它；runtimeDeliverySuspended独立跨异步恢复保持，完成后依次重放context/最后快照或revoke。实际五组探针通过，不以同步模型代替UI异步时序。
+
+## #144 非对象Desk导致上下文接收抛异常（2026-10-03）
+
+接收器直接读取declaredDesks中的id，标量/null消息触发Cannot access child value on JValue，回归17/19。先核验每项JObject和id字符串、资源字符串数组，再投影；19/19通过，非法新上下文不破坏上一份有效状态。
+
+## #146 WorkerW层级日志与物理验收的区别（2026-10-03，待Task4复核）
+
+真实启动日志20261003_032422出现一次Unexpected WorkerW Z-order。现有EnsureWorkerWZOrder检测最后子窗不符后调用SetWindowPos到HWND_BOTTOM，随后Player loaded/ready成功；代码没有检查该原生调用返回值。本轮仅证明进程/管道身份、恢复和正常退出，未量测纠正后的物理层级。不把身份成功写成层级测试通过；最终WorkerW/DPI门槛须验证实际呈现。
+
+## #147 合法资源路径超过完整Windows MAX_PATH（2026-10-03）
+
+现象：资源31项阶段新增最大240字节相对路径后原生服务返回403，实际Framework Player也读取失败。原因：安装目录前缀使完整路径超过传统Win32限制。修复：CreateFileW使用已规范化、已验证根下的扩展绝对路径（本地与UNC分别处理）；句柄最终路径仍做真实根边界检查。最长资源与Unicode路径在纯测试和ReleasePlayer实测通过，未放宽240字节清单上限。
+
+## #149 RTC构造异常不是Connection-Allowlist生效判据（2026-10-03）
+
+现象：响应有webrtc=block，new RTCPeerConnection仍成功，旧自检错误退出。原因：策略拒绝ICE候选/连接，不要求构造抛SecurityError。修复：带report-to token但不配置外部报告端点；新ReportingObserver监听connection-allowlist，构造无ICE server的peer后takeRecords，核对当前URL、单一响应origin、connection=webrtc及disposition=enforce。close/disconnect清理；无有效强制报告则诊断退出。官方/沙箱页真实报告和缺API反例通过。
+
+## #150 Runtime禁RTC与mDNS接口初始化冲突（2026-10-03，仍有最终恢复门槛）
+
+实测WebView2 153.0.4234.32：inherited about:blank中RTC构造，以及同一官方页reload后再次构造，可使renderer退出，kind=RenderProcessExited/reason=Crashed/exit3。Chromium日志明确No binder found for interface network.mojom.MdnsResponder及bad IPC123。当前Chromium源码在强制webrtc=block时不注册该binder，但RTC工厂仍可创建MdnsResponderAdapter并请求它；与现场吻合，不能归咎于opaque origin或资源摘要。
+
+官方能力自检改为每个WebView实例一次，每次文档仍有相同强制响应策略，实际资源/撤销/reload回归通过。ProcessFailed撤销资源、清就绪状态，并报告类型/原因/退出码。该规避不保证恶意作者反复构造RTC时的稳定性；P5 Task4保留真实故障恢复门槛。被移除的about:blank诊断用例不计通过；不靠放开RTC、关闭策略、JS覆盖API或不受支持的flag伪造边界。详见resource-research的官方源码链接。
+
+## #152 原生JSON字段须先验类型和形状（2026-10-03）
+
+输入协议初版用JToken强制转换/ToObject，测试14/25：1.2可转整数，数字字符串可转double，缺x/tabIndex取0，未知几何字段被忽略。改为严格Integer/Float/String token、必需且唯一的字段形状、有界安全整数、重复consumer/button拒绝；25/25通过。入口大小/深度/重复JSON键/尾部JSON和当前代次身份共同校验，不以DTO反序列化成功代替边界。
+
+## #153 原始键盘BREAK/E0是独立位（2026-10-03）
+
+RawInputMsgWindow旧Flags!=Up会把E0|Up误当Down，InputUtil又把所有按键设置extended位。改为BREAK位1判断松开、E0位2判断扩展；向Core事件保留扩展事实，普通Enter不加bit24，真正扩展键才加；keyUp的previous/transition位为1。隐藏原生接收窗口验证实收lParam和Raw flags，不能只用JS键盘测试代填。
+
+## #158 SetParent后再次恢复原始样式（2026-10-03）
+
+原生闲置还原的父窗和矩形正确，但STYLE多出WS_CLIPSIBLINGS，严格测试失败。SetParent会改变相关窗口状态；先规范为child、重挂后再写回完整原始style/exstyle并刷新frame，随后核验实际状态，负坐标夹具精确还原通过。不要只以SetParent返回值代替还原成功。
+
+## #159 原生popup祖先与实际置顶（2026-10-03）
+
+实际WinForms Player脱离后带隐藏owner，GetParent非零并不代表仍在WorkerW。以GA_ROOT确认独立根窗口、GA_PARENT保存/恢复真实父窗；参见[GetParent](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getparent)、[GetAncestor](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getancestor)。传统WorkerW保留popup样式，不能只接受WS_CHILD。
+
+传统parented-popup重挂后SetWindowPos(TOPMOST)返回true，但实际WS_EX_TOPMOST未设置；重复样式/布局刷新均未解决。显式NOTOPMOST→TOPMOST后真实根窗口、可见性、矩形和TOPMOST位全部符合。普通child与实际ReleasePlayer两种样式往返及DPI120还原通过；多系统DPI/实际WorkerW和故障重建仍未代填。
+
+## #164 原生暂停必须先停止官方宿主的活动期限（2026-10-03）
+
+Player暂停期间缓存Core快照，媒体宿主仍读旧playbackPaused=false；直接挂起/恢复渲染不能保证JS活动期限停止。实际ReleasePlayer回归在收到暂停后产生revision1的500ms启动完成，没有暂停回执。新增私有ExecuteScript同步通知，await完成后才原生挂起；media/frame停止计时、媒体意图和来源。恢复同步处理最后缓存Core状态再释放，跳过旧TryPlayMedia的无差别全节点播放。当前revision3、剩余活动计时及新来源修订实测通过；Core生命周期事实不被此本地暂停门修改。原生逐iframe媒体与完整页面仍待接线。
+
+## #165 新官方模块仍须显式加入原生资源白名单（2026-10-03）
+
+新增playback-host.js并在隔离官方页引用，但DextNativeResourceServer有限白名单没有它。后续clockStart无法访问模块并超时；这一失败不计暂停逻辑RED。加入单个具名官方文件并重新部署ReleasePlayer后，实际暂停回归才测到#164。内容清单与官方模块白名单是两个范围，不能用放开目录映射修复。
+
+## #167 硬件来源健康状态与最低采样间隔（2026-10-03）
+
+源检查发现CPU/性能计数器失败后仍发布默认零读数，且跳过后续GPU等待可能使while循环忙跑。增加IsAvailable健康标记；失败missing，非有限数error；每轮按Stopwatch补足至少1秒周期。假来源验证失败不会伪造available，实际机器健康采集通过；没有把健康采集称为强制真实计数器失败验证。
+
+## #169 媒体来源标识可能含Windows路径（2026-10-03）
+
+实际Windows生产投影的回归以SourceAppId=C:\private\player.exe构造来源，97/98失败：GetMediaAsync返回的source ID并非总是公开AUMID。投影清空含冒号、斜线、反斜线、控制字符或超过160字符的ID，保留媒体元数据；audio只level/muted。修复后98/98，来源测试同时断言所有系统控制写入为0。
+
+## #170 原生WebView传输必须与Player读取类型一致（2026-10-03）
+
+native-host最初postMessage已检查的JS对象，单位假传输收对象因此通过；真实Player的TryGetWebMessageAsString抛ArgumentException，SDK权限超时全部denied。保持Player既有字符串入口，生产模块JSON.stringify已检查的信封；单位传输增加typeof string断言再解析。实际ReleasePlayer持续读数、同修订撤权/恢复及暂停全部通过。格式问题不能改为把授予失败视为期望通过。
+
+
+## #176 Frame.Destroyed回调中注销原生事件可使WebView宿主崩溃（2026-10-03）
+
+真实ReleasePlayer播放根音频、closed Shadow视频及嵌套音频后撤销，连续三次在EmbeddedBrowserWebView.dll 154.0.4258.48 x86以0x4000001f退出。Windows Application 1000/1001确认原生模块，非普通媒体策略异常。在Destroyed内再次对正在销毁的Frame注销COM事件产生重入；改为只移除缓存FrameId、父链/作用域和期望状态，由原生销毁清掉事件；正常活体Dispose才注销。相同整页撤销随后通过，最终媒体/原官方整页再次通过。销毁回调闭包绑定自己的Frame，不依赖事件sender重新认领身份。
+
+## #183 JSON字节上限不等于容器项数上限（2026-10-03）
+
+新消费者存储初版限定32KiB/深度24，却允许含4097个0的小数组，违反作者API每容器最多4096项。真实生产检查返回Accepted而非Denied，109/110。规范化值后递归核对每个object/array项数，落盘验证同样调用，修复后110/110。拒绝超限写入前不修改候选个人快照，原字节保持；SDK校验不能替代Core边界。
+
+## #184 私有KV不能复用通用IPC原文日志（2026-10-03）
+
+真实Core已授权SDK存储成功后，唯一私有marker在Core日志出现，实际检查失败。新增ValueJson通过现有通用Logger.Info(e.Data)被完整复制到诊断文件。原生请求独立日志分支只记录method/generation/revision，省略consumer/key/value/raw payload；实际Core同一夹具再次通过marker不出现、撤权与重启持久读取。传输JSON必须有界和当前授权，但这不会自动保护通用日志；新增含个人值的IPC须检查真实生产日志。
+
+## #187 TargetId-only个人绑定不能在空默认入口中丢失（2026-10-03）
+
+导航生产者回归125/128中，合法无作者默认动作的按钮配了个人TargetId，公开Action仍null/IsBound=false，正常激活也会MissingBinding。Resolve只在已有binding.launch动作时读取TargetId；空默认入口缺少动作推断。保留显式个人Action→作者默认Action原优先级，两者均不存在时才以TargetId推断binding.launch。实际源码128/128通过，公开元数据正确、作者动态导航不能绕过该个人绑定，普通activate仅启动一次。另补无任何配置入口的已授权真实输入动态导航与未知Desk提前拒绝；GUI/SDK原生接线与物理输入仍后续验证。
+
+
+## #188 原生鼠标UP生成证明但没有投递激活
+- 2026-10-03，P5作者导航接线发现：NativeMouseUp正确生成Completed，但NotifyNative最后参数为false；只有DOM click作者处理器可以主动消费，纯画布默认按钮缺少原生激活事件。
+- 改为true，并为真实完成附加私有单调序号。官方图标只走原生事件，去掉与Core事件竞争的DOM click派发。代码路径发现不冒充旧物理失败；最终实际Core Windows注入产生activate/sequence1和一份inputConsumed回执。
+- 回归核对鼠标/Enter/Space所有完成路径、Core原生事件、作者/默认共同消费与旧序号拒绝；最终人工输入仍独立验收。
+
+## #189 导航成功被修订更新误报旧输入
+- 2026-10-03，真实生产JS行为RED15/16：保留当前文档的Core导航请求，Core先发布新修订，再到达真实accepted回执，native-host.acceptIdentity取消在途请求并向SDK返回staleInput。
+- 只在同一generation/session的修订推进时保留已发出的activate/navigate请求及其有界计时；回执必须精确匹配原请求身份和私有消费字段。新代次/会话、暂停、销毁仍取消所有请求，数据/权限/存储旧修订规则不放宽。
+- 不是重派旧请求或给重放成功。原始请求仍由Core按实际证明/个人授权消费；DOM仅公开status。实际Core作者SDK得到accepted，原生完成仅一份消费回执。queued与expiredInput加入原生安全状态集合，Frame错误保留expiredInput。
+
+## #193 Windows控制等待后仍须核对取消
+- 2026-10-03，接线前复核发现既有ControlMediaAsync只在mediaLock前检查token；等锁/读取来源期间请求可已超过Core4s期限。锁内取得后、发送命令前再次检查。
+- 原SetVolume新增带token重载；保留既有签名，通过无取消token转调。解析默认endpoint后每次写level/muted前重新检查，Core只调用带token版本。真实已取消请求拒绝且设备ID/level/mute未改变。
+- 这是源码发现的迟到执行风险与新取消API的RED/GREEN验证，不宣称已复现Windows挂死；已发出的单个COM调用不可被此检查撤回，挂起并发槽位仍需持有至实际终止。
+
+## #196 Player故障必须退役易失会话再恢复已提交checkpoint
+- 2026-10-03，原Proc_Exited解绑但Kernel仍有snapshot；同Core新Player的TryRestore要求snapshot==null，随后Start覆盖为startDesk。新增Core内部Retire：核对session、停timeout、清易失状态，完全不读写checkpoint；gateway清旧连接/订阅，迟到旧PID/session不得退役新会话。协议和同Kernel回归23/87项通过，实际同Core独立Player故障恢复focus/KV/新身份。
+- Close/Terminate在发送关闭或Kill之前原子记录主动关闭；真实unexpected Exited才排Dispatcher恢复。取得wallpaper loading lock之后再核对旧实例仍当前，Core Dispose先设停机guard，产品退出期间不重生。每Core30秒最多3次自动恢复，初始Show失败不无限重建；失败自动构建不得保存空布局覆盖现有恢复布局。
+- 已核验的native idle父窗恢复失败关闭是故障，使用独立内部TerminateAfterNativeFailure保留故障识别；它不会清除先前主动关闭标志。该Win32失败组合仍在最终人工门槛内，不冒充本轮实际父窗破坏测试。
+
+## #201 多边形不能由包围框签输入证明（2026-10-03）
+P5生产authority新增行为测试实际RED：归一化三角形包围框内、三角形外的OS点仍得到完成证明；旧几何只有矩形。同动作多图标也被视为重复入口或DOM吞掉第二个。新增私有呈现entry与凸多片区域，包围框只快速排除，Core测严格内部；DOWN/UP同呈现entry，Tab可区分同动作不同图标，动作仍按consumer/button和一次native完成消费。不能用新entryId/视觉焦点作为证明，输入数组必须脱离且公共Focus/Proof不能泄漏可变几何。具体最终验证见当前验收卡。
+
+## #206 已撤销文档nonce不能通过较新修订复活（2026-10-03）
+bounded native request join更新当前snapshot时需保留同文档rN水位，初版RegisterFrame却在RevokeDocument后允许相同epoch/nonce以更大revision恢复Active。正式行为RED83/84后增加DocumentRevoked，只有实际新的native文档epoch+nonce能重新注册；同文档修订只允许正常revision撤销后的恢复，不能抹去真正文档退休。RevokeAll终结整个join实例，旧callback不能复活；最终84/84。该helper仅关联请求，Core物理证明及授权仍须另行复核。
+
+## #208 私有手势关联需要在DOWN冻结，截止UP不能重新开始（2026-10-04）
+旧Core只在UP分配完成序号，Player无法在实际DOWN之前用同一正数关联arm作者文档，UP也可能在物理1500ms截止后新建已过期proof。新增生产RED238/254后，序号改为DOWN分配、UP原序号完成；视口/DPI/OS点/scope/时间不可变，未完成长按按elapsed>=1500ms撤销，动作权威统一半开期限。完成后才过期仍返回expiredInput，不放宽默认动作或作者权限。
+相邻输入设备的新DOWN替换旧pending，晚到另一设备UP不能取消或消费新对；空区域DOWN只记录事实，后续移动视觉样本才能产生按钮完成。修复后254/254、完整build/start/正常退出通过，原四文件保持。本段尚未向Player/SDK发送正数关联，不声称解决整条作者timer入口。
+
+## #209 输入接线只注册直接作者root，保留嵌套媒体播放（2026-10-04）
+Player新增native input describe后，实际媒体wire在嵌套/blank媒体子文档拿到null，JObject.Parse抛错并按策略正常关闭。输入根资格本来只允许Parent==null，故LoadAsync只对直接作者root读取/验证guardian nonce；嵌套媒体继续既有media policy，不注册输入。增加真实异常原因诊断，实际ReleasePlayer相同媒体wire通过，不放宽直接root的guardian验证。
+旧Player为.NET Framework4.7.2且csproj显式Compile：新partial文件须具名加入Compile，PID使用using Process.GetCurrentProcess().Id缓存；首次遗漏Compile与Environment.ProcessId编译错误不计行为RED。
+指针取消曾沿最初DOWN坐标，MOVE后Invalidate导致释放回跳；新增实际生产队列行为RED9/10，保存最新转发的MOVE后10/10。取消仍先撤销再UP，不调用动作完成回调。
+
+### #170 补充：顶层原生派发receipt也必须匹配字符串接收（2026-10-04）
+Player的直接frame媒体/输入receiver可读WebMessageAsJson；固定官方顶层现有Form1仍用TryGetWebMessageAsString。新增官方trusted DOWN/UP dispatch回执错误地照搬frame对象postMessage，实际完整官方宿主DOWN等待回执超时并关闭自己的Player。作者root的隔离wire通过不能替代顶层链验证。
+增加真实格式行为断言，RED26/27（object不是string）；官方bootstrap先捕获JSON.stringify，将私有receipt序列化为字符串，GREEN27/27。完整build后正式index/main/dom/native/frame/media/SDK实际ReleasePlayer两边采样与一次图标默认动作通过；原前台保持、暂停/切页/撤销回归通过。未改变既有顶层来源或Core物理/权限规则。
+
+## #216 单个焦点gesture丢连续Tab，早到键用错焦点（2026-10-04）
+生产功能实质RED291/295：第二次raw Tab替换第一请求，第一样本被拒；取样待回时Enter/Space没有记录DOWN，早到UP丢失。新增编译RED不能代替这四项行为失败。
+未回焦点请求改有界FIFO，每份当前可见样本按首项推进；激活冻结原始键/scan/QPC/序号和此前末项屏障，UP提前到只标释放，最终焦点后发送原一对。过期前置Tab取消待键，禁止旧焦点或续签时间；新鼠标/几何/会话仍撤销，动作不是多项队列。GREEN295/295及生产Core authority/key delivery+实际ReleasePlayer连续ShiftTab/Enter样本整轮通过，raw OS/完整Core窗口和回复fixture单列。
+夹具编译曾将Guid SessionId调用ToString写入私有pointer，CS0029后按真实DTO类型改回Guid；不放宽消息类型，不计该编译错误为生产功能RED。
+
+## #221 零序号不能表示最近完成（2026-10-04）
+正式Core/Player链已使用DOWN正数关联，Core GetProof仍有sequence=0与零值匹配任意当前proof的旧兼容，消费bridge亦默认0。必要实质RED295/299确认零lookup/启动/导航/系统控制可取得后来完成。移除默认参数与零回退，Player四种消费parser要求正数，Core299/299与消息72/72、最新部署实际正式Player组合通过。
+旧fixture显式传其实际构造完成序号；正数但错消费者/几何应StaleInput，零内部调用InputRequired，均不消费。失败reply0与尚未经过native request join的作者原始authorInput不代表动作准入，不能混同为零值消费。实际Core OS/物理DPI最终门槛仍待补。
+
+## #225 原生应用统一启动路径并等待真实新会话（2026-10-04）
+真实Tauri导入/保存后apply_room返回Ok，但Core inactive、Player导航OperationCanceled。资源服务器先Path.GetFullPath再计算虚拟域名，官方文档校验却从原始启动URL计算。配置器常量含src-tauri/../../，二者域名不同，此前使用规范路径的探针不能证明配置器入口。
+apply_room规范宿主绝对路径并剥扩展前缀。SetWallpaper只报告排队，最多25s等待当前Room新session/有效Player/安装戳与稳定完整安装快照，之后才记私有来源和返回成功；失败明示保存完成、应用未确认。同安装重复应用的新session/Player实机通过。active_room原生分支要求Core会话活跃/有效Player及来源记录匹配完整安装；来源不注入作者清单。
+
+## #239 原生Dock资格与偏好不可冒称宿主运行（2026-10-04）
+P8接线源码核对发现：只查当前Desk的任意role=dock组件会把普通桌面Dock误报为原生Dock，与已冻结ROOM_V3的dockComponentId不符。现在从当前已核验安装读取该明确ID并查有效Desk引用；UI用独立Core runtime.phase/PID/available事实，enabled只表示已保存偏好。当前宿主尚未接入明确hostPending/PID0，常驻unsupportedMode；不会用保存accepted制造running。公共IRoomSessionRuntimeCoordinator新增返回类型需public，已一并核对修正；未运行编译器或伪造实际失败/通过证据。
+
+## #240 隐藏 Dock 不能沿用可见窗枚举和 DesktopPlayer 独占上下文（2026-10-04）
+源码接线发现：旧GetProcessWindow(nativeSearch:true)只返回IsWindowVisible窗口；正式Dock初始化期间隐藏，继续用它将取不到根HWND。同时协议ReadRuntimeContext/Subscribe初始化/Replay仅准DesktopPlayer，新增Dock PID绑定仍不能取得同一正式上下文。
+修正：Dock使用已知WebView HWND的根祖先（现有枚举GetRoot）并核对Core创建进程PID；上下文、订阅和重放按已绑定DesktopPlayer或Dock放行，启动/过渡完成继续只准DesktopPlayer。管理器先确认旧进程退出再创建替代，未确认退出留故障，不并发开第二个。
+证据范围：源码与接线核对，游戏期间未编译/运行，实际隐藏窗初始化及共享快照仍待本包游戏后验收。不能把源码修正记为Windows运行通过。
+
+## #243 任务栏恢复不能只靠正常Dispose或API返回TRUE（2026-10-05）
+源码接线发现：正常退出恢复不能覆盖Core被结束、Player失去响应及Explorer重建。已采用独立Watchdog模式和精确PID/启动时刻、lease/mutex、持久恢复记录；先保存原基线再隐藏，Core也监督看护，失效后不遗留旧顶层Dock。Player心跳恢复给唤醒留宽限，健康维护不重复读完整安装。
+Shell ABM_GETSTATE的0是有效状态，Windows 7起缺少ALWAYSONTOP位也不代表任务栏不置顶；ABM_SETSTATE总返回TRUE，不能把返回值当效果证据。代码读取实际自动隐藏/可见状态再报告，恢复失败保留记录；全屏时仅还原Shell策略，不强行把任务栏显示到游戏上。接口参考：Microsoft ABM_GETSTATE / ABM_SETSTATE（见V3_DELIVERY链接）。以上仅源码和项目XML检查，实际工作区/DPI/游戏/崩溃恢复仍须Windows验收。
+
+## #245 Dock实际高度和可用状态不能只用Player回报（2026-10-05）
+源码接线发现：WindowReady不证明Core有有效输入窗口，保存高度也不代表实际DPI/宿主限高。Core沿现有ReadNativeViewport测量实际HWND/尺寸/DPI，缺失则保持awaitingInput、不请求替代任务栏。该测量不要求窗口展开，不因自动隐藏产生反复恢复/替代。配置器显示实际DIP/DPI/受限状态，屏幕约束不覆盖保存值。仅源码核对，实际DPI/输入/隐藏行为待游戏后集中验收。
+## #247 常驻选择与实际工作区确认须分开（2026-10-05）
+源码接线发现：若reserve选项以当前reserveAvailable作为选择前提，自动隐藏用户永远无法第一次切到常驻。设置页允许保存常驻偏好，Core按模式身份先关闭旧宿主后重建，只有实际占位才报告reserveAvailable/AppBarOccupied。AppBar注册成功不代替窗口位置及工作区；Player查询实际矩形/工作区，Core按有效输入窗口和GetMonitorInfo再次确认后才隐藏原任务栏。不可呈现时注销，DPI/Explorer重协商，临时全屏隐藏沿原型保留注册策略；不写SPI_SETWORKAREA。当前仅源码/工程XML核对，Windows运行证据留Task4。
+## #248 原生另存资源与私人生命周期必须接真实入口（2026-10-05）
+v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版本；Room副本还要新UUID及独立个人绑定/皮肤。按正式声明资源暂存，Core复制确认后发布，不继承授权/KV/个人布局。删除作者目录不等于个人数据清理完成，RPC连接错误也不能证明Core没有执行。
+源码实现独立个人复制/删除RPC、结果不明的库根恢复意图、删除租约与恢复原件检测；Core串行复制/删除，删除标记拒绝迟到复制。UI区分已移入回收站与个人清理待重试。仅源代码接线通过差异核对，Windows构建/时序/断电恢复仍在独立验收门槛。
+## #249 未来要求须在严格反序列化/旧版分派之前解释（2026-10-05）
+只有version3可编辑的政策忽略apiVersion和未知能力，旧zip探测器把未来版本交给v2分派，用户只得到普通字段错误；旧只读入口仍读取成规范化草稿。源码修正：统一固定API1要求检查、未知格式/能力清楚提示、Core独立拒绝；库列表兼容回执禁用受影响入口，清单只读另窗且打开再次核对。未构建/运行，最终完整升级回归仍需实际证据。
+## #250 安装清理须保留真实句柄和中断记录（2026-10-05）
+.dext-install/.dext-previous前缀不是删除凭据；按可变路径递归删除也不能证明实际对象。源码实现固定宿主、有界枚举、完整摘要或创建阶段目录身份记录；先核验所有剩余文件，持祖先句柄并以DELETE文件/目录句柄删除，部分失败可重试，未知或变动对象保持。原生FILE_DISPOSITION_INFO的DeleteFile为BOOLEAN，按1字节传入；FILE_ID_INFO组合卷与128位ID。公开微软定义见RELEASE_V3.md，Windows实际构建/执行仍待集中门槛。
+## #252 另存预写恢复记录与已有Core发布身份（2026-10-05）
+现象：Core复制私人覆盖已持久化、配置器尚未发布作者目录时崩溃，原记录生成顺序无法保证恢复；v3配置器只在新启动时校验v3产品描述，复用已有Core路径未执行同一检查。
+原因：恢复记录在RPC错误分支才生成，恢复枚举后未重新持有记录租约；产品描述检查没有覆盖既有进程和正式RPC入口。
+修复：复制RPC前写入意图并持有独占记录租约直到发布/回滚；恢复重试重新获取并读取记录，忙时跳过。已运行Core的真实进程核对同时检查v3发布元数据，正式RPC身份验证沿用此检查。
+证据边界：源码与差异核对，现有产品描述断言修正配置期望；未构建或执行Windows中断/恢复。用户游戏结束后按INTEGRATION验收卡集中验证，不额外扩展网络矩阵。
+
+## #253 恢复清理需按Room身份识别目录改名（2026-10-05）
+现象：另存作者目录已经发布但恢复记录未移除，随后目录改名，重连恢复把旧目录缺失误认为作品未发布而删除个人覆盖。
+原因：只读取意图里的旧room_name；Room UUID保持不变却没有用于库内作品查找。
+修复：先查原目录UUID，再只读扫描库内直接子目录清单，匹配稳定UUID就取消私人清理。暂存内容为嵌套目录，不当作已发布作品；读错误或超过扫描上限保持记录，不冒称作品缺失。
+证据边界：源码与具名差异检查，Windows实测归入INTEGRATION人工步骤5；未构建/启动，不新增网络或恢复测试矩阵。
+
+## #255（2026-10-06）焦点丢失清空按钮几何，回到桌面没有重发
+症状：Dock悬停短暂有边框，但Desk切换和应用按钮不能点击。RoomNativeInputAuthority.CheckNativeViewport/MouseMove把foreground=false等同几何失效；配置器打开后viewport与buttons被永久清空，而同revision不会自动重新发布。修复：同原生视口仅清输入手势、完成回执、焦点和采样；保留按钮区域，视口/文档/快照改变仍清几何。4项焦点返回回归先失败后通过；桌面人工复验独立记录，单测不等同人工通过。
+
+## #257 应用Room后默认导航未启用（2026-10-06）
+症状：Dock有悬停反馈却不能切Desk。真实请求已到activate，但本机v3/personal目录没有personal.json，导航Permission必然missingPermission；不能将应用按钮的缺目标解释成全部切页故障。
+修复：配置器确认当前安装应用成功后，调用Coordinator enableNavigation，仅启用有效desk.next/previous/go所属消费者的desk.navigate，保留同戳其他授权和个人覆盖。目标仍明确选择；缺绑定在桌面显示说明，Core记录activate/navigate/geometry结果。
+验证：空个人数据先失败、修后personal-editor10/10；提示定向1/1；Release及真实应用成功、导航授权落盘。用户授权ChatGPT后正式RPC绑定accepted。真实桌面点击仍待验收，不用RPC成功替代点击成功。
+诊断临时RPC小工具首次引用旧Protobuf导致CS1705，按候选实际3.33.1对齐后运行成功；不更改产品依赖。
+## #258 作者几何去重与宿主焦点清表冲突（2026-10-06）
+症状：桌面Dock悬停闪边框，原生activate请求为StaleInput；前后台与坐标正常。最后坐标诊断DOWN point=1077,1322、foreground=True、available=True，但regions为空，未创建completion。不能因收到author activate便断言Core已成功命中。
+原因：runtime-model.invalidateGeometry在焦点/生命周期/切页/缩放时清空buttonRegions；作者文档仍保留，Dock以按钮矩形JSON去重，不重报同样位置，导致区域永久丢失。先前静态输入路径回退不能补回空表，已取消。
+处理：参考旧版3c42552保留同一交互对象的原则，按钮声明随文档保留；配置改变清该消费者、会话销毁清全表。原生输入每轮仍作废，DOM按最新可见性、Desk范围、变换和遮挡重新投影。旧版原生手势接收方固定逻辑本就保留，无需整库退回临时v3格式。
+验证：runtime-model 18/18本地回归通过，涵盖作者不重报时焦点往返、切页、生命周期/缩放、配置改变和换会话。仅此不证明桌面真实点击通过，用户验收尚待。
+部署：恢复dbe018c导航候选的已构建二进制并核对原inventory，全部宿主资产取当前源码，沿用当前发布路径避免目录升级恢复问题。Copy-Item覆盖运行中的配置器会失败；按精确路径退出并等待文件释放后复制，使用Stop错误策略，重生成inventory并核对摘要后再启动。
+
+## #259 作者Dock重复焦点与导航等待（2026-10-07）
+现象：作者圆角hover/focus-visible上又有宿主矩形SVG焦点；用户感觉抖动且切页迟缓。宿主层pointer-events:none，不可推断其拦截点击。关闭事件采样后真实日志仍有StaleInput，首次点击失效须继续按实际反馈判断。
+调整：作者Dock用自身焦点样式；已配置desk动作的Dock在Core完成事件到达后立即分发默认动作，省去100ms作者等待，已有作者请求仍协调消费回执。其它消费者保留原有等待策略。作品自身slide durationMs=450保持。
+证据：三项定向DOM回归通过，同Release启动。只证明上述行为，不证明所有漏点和hover抖动已经解决。
+
+#259 续记（2026-10-08）：用户明确要求保留宿主矩形焦点、去掉作者圆角高亮，且反馈又不能点。撤回ce3d908两处试改至80ea518，作者模板和用户Room CSS取消hover变色/focus outline；保持面板圆角外形。修改作者CSS须正式重新应用更新安装；配置器实际应用成功、原ChatGPT目标复用绑定accepted。旧日志仍有StaleInput，后续另有两次UtilityProcessExited崩溃，不能把高亮层当作唯一根因。8项定向检查通过，实际点击待用户验收。
+
+## #260 循环切页反向与应用入口（2026-10-08）
+原因：默认slide使用toIndex>fromIndex决定方向，三页下一页末尾→首位会错误地反向。为多于两页的首尾相邻切换增加循环判定，其余维持索引方向；定向测试同时覆盖末→首、首→末和普通相邻。
+应用入口原在右侧默认图标区名为“待绑定应用”，顶部补“添加应用”并改原按钮标签，继续明确保存应用后选择本机目标。私人路径不写入作品。
+本轮导航模板试回经典胶囊Dock外观，保留矩形焦点和既有输入，不把样式变化当作StaleInput根因修复。实际桌面结果另验收。
+
+## #261 原生点击重复验证整套安装资源（2026-10-08）
+证据：旧实际activate请求到结果约250–440ms；InstalledRoomSessionAuthority.Admit每次ReadInstallation，原生Verify逐个读取/摘要所有资源，一次动作经多次准入重复执行。用户v3test约21MB；不能将全部StaleInput归因于这一项。
+修复：生产Bind完整验证并保留目录及已验证文件只读句柄，持句柄再次核验后复用VerifiedRoomInstallation；当前Player/Dock/会话/动作和本机授权仍实时检查。Unbind/重Bind/Dispose释放。安装文档不属于作者资源扩展名白名单，需专用固定文件读取；InvalidDataException不属于IOException，绑定失败需显式捕获以释放已打开句柄。
+接入：Rust原先先替换content再关闭旧Player，与只读保留句柄冲突；重新应用先按当前宿主库路径关闭并等待旧Player解绑，再原子安装，安装失败尝试重开保留的旧宿主。
+验证：同一真实文件夹单项生命周期回归先失败后通过；200次准入重复验证579.49ms、复用20.93ms，仅为小样包环节测量。Core/Player/Watchdog Release与TS/Vite/Rust配置器构建成功。实际配置器旧Player运行时点击“重新应用”，33168退出、50584绑定且UI确认已应用v3test。未保存编辑草稿。真实Dock点击改善仍待用户，不扩网络/安全矩阵；WorkerW Z-order日志及漏点结论保留验收边界。
+
+## #264 观测台字段与只读前台限制（2026-10-09）
+根因：样包将内部SystemMediaSnapshot.HasSession/音量概念直接写成公开JSON的hasSession/volume。实际media.read的available值不带hasSession，audio.read字段为level，因此媒体误报无会话且音量无读数。生产只读消费又调用动作CanConsume，硬件ObserveSnapshot用foreground/operable停止源，普通小窗口失焦便清空观测台，动画却未实际暂停。
+处理：样包按available/title/artist与level/muted呈现；四种只读能力改用CanReadData，保留活动stage/Desk、锁屏、实际playbackPaused、声明和当前安装授权。硬件源同样跟随实际暂停。动作/KV继续CanConsume。配置器授权提示按实际lifecycle暂停/锁屏判断，不把operable=false当成数据已暂停。
+证据：五项visible-data定向回归先2/5失败，修复后5/5通过；普通小窗口保持四读源/硬件，暂停/锁屏/撤权停止，动作/KV仍NotOperable。样包官方形状媒体/音量呈现检查通过，JS语法通过。临时Node检查初稿少一个闭合括号，修正夹具后通过；未据夹具语法失败判断产品失败。实机B站需Windows提供媒体会话，实际验收另记。
+本轮部署补记：Release build→start成功；同候选目录实际重新应用后安装Widget摘要与源一致，UI授权提示按真实暂停。一次真实Windows来源为media=available；具体B站标题及普通小窗口连续读数仍交用户验收，新安装权限未代用户允许。

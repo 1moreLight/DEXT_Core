@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
 using Lively.Common.Helpers;
@@ -23,7 +23,7 @@ using Dext.Core.Rooms;
 
 namespace Lively.Core.Wallpapers
 {
-    public class WebWebView2 : IWallpaper
+    public partial class WebWebView2 : IWallpaper
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly TaskCompletionSource<Exception> tcsProcessWait = new();
@@ -39,8 +39,12 @@ namespace Lively.Core.Wallpapers
         private readonly object sendLock = new();
         private readonly LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences;
         private readonly bool trustedDextHost;
+        private readonly bool nativeDock;
+        private readonly string nativeDockMode;
+        internal string NativeDockMode => nativeDockMode;
         private RoomSessionPlayerBridge roomSessionBridge;
-        private string[] roomSessionDeskIds;
+        private readonly object roomSessionLock = new();
+        private long roomRuntimeGeneration;
         private bool roomPageReadyReceived;
         private readonly HashSet<string> monitoredAppTargets = new(StringComparer.OrdinalIgnoreCase);
         private readonly Lively.Services.SystemControlService systemControlService = new();
@@ -51,6 +55,7 @@ namespace Lively.Core.Wallpapers
         public event EventHandler Exited;
         public event EventHandler Loaded;
         internal event EventHandler RoomPageReady;
+        internal event Action<RoomSessionSnapshot> RoomSnapshotObserved;
 
         internal bool IsTrustedDextHost => trustedDextHost;
         internal string RoomPackageDirectory => File.Exists(wallpaperPath)
@@ -74,6 +79,8 @@ namespace Lively.Core.Wallpapers
         public string LivelyPropertyCopyPath { get; }
 
         public bool IsExited { get; private set; }
+        private int closeRequested;
+        internal bool CloseRequested => Volatile.Read(ref closeRequested) != 0;
 
         public WebWebView2(string path,
             LibraryModel model,
@@ -86,8 +93,11 @@ namespace Lively.Core.Wallpapers
             double? scale = null,
             string audioVisualizerId = null,
             bool isScreensaver = false,
-            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null)
+            LivelyMessageDesktopIconPreferencesCmd desktopIconPreferences = null,
+            bool isNativeDock = false, int dockHeightDip = 128, string dockMode = "autohide")
         {
+            nativeDock = isNativeDock;
+            nativeDockMode = dockMode;
             var filePath = ResolveFilePath(path, model);
             LivelyPropertyCopyPath = livelyPropertyPath;
             wallpaperPath = path;
@@ -111,6 +121,12 @@ namespace Lively.Core.Wallpapers
             if (TryParseUserCommandArgs(model.LivelyInfo.Arguments, out string parsedArgs))
                 cmdArgs.Append(" " + parsedArgs);
             trustedDextHost = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (isNativeDock)
+            {
+                if (!trustedDextHost || dockHeightDip is < 48 or > 240 || dockMode is not ("autohide" or "reserve"))
+                    throw new ArgumentException("Native Dock requires an official Room host and valid height");
+                cmdArgs.Append(" --dext-dock --dext-dock-height " + dockHeightDip + " --dext-dock-mode " + dockMode);
+            }
             this.desktopIconPreferences = trustedDextHost
                 ? desktopIconPreferences
                 : null;
@@ -138,8 +154,15 @@ namespace Lively.Core.Wallpapers
             uniqueId = globalCount++;
         }
 
+        // Separately owned by the coordinator, never part of the wallpaper
+        // collection or WorkerW desktop input forwarding.
+        internal WebWebView2 CreateDockPlayer(int heightDip, string mode) => new(wallpaperPath, Model, Screen,
+            null, LivelyPropertyCopyPath, Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-profile"),
+            AppTheme.Auto, 0, isNativeDock: true, dockHeightDip: heightDip, dockMode: mode);
+
         public void Close()
         {
+            Interlocked.Exchange(ref closeRequested, 1);
             if (IsExited)
                 return;
 
@@ -191,55 +214,51 @@ namespace Lively.Core.Wallpapers
         // Room and started/restored its session. No page-provided field is used as
         // a transport identity or as installation evidence.
         internal RoomProtocolStatus AttachRoomSession(RoomSessionProtocolGateway gateway,
-            string roomId, IReadOnlyList<string> deskIds)
+            string roomId, IReadOnlyList<string> deskIds, RoomActionAuthority actions,
+            RoomClientRole role = RoomClientRole.DesktopPlayer)
         {
-            if (!trustedDextHost || !IsLoaded || IsExited || Pid is null ||
-                deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
-                return RoomProtocolStatus.Denied;
-            var peer = new RoomSessionPeer($"player-process:{Pid.Value}");
-            var installedDeskIds = deskIds.ToArray();
-            var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId, snapshot =>
+            lock (roomSessionLock)
             {
-                if (!IsExited) SendRoomSessionSnapshot(snapshot, installedDeskIds);
-            }, out var bridge);
-            if (status == RoomProtocolStatus.Accepted)
-            {
-                roomSessionBridge = bridge;
-                roomSessionDeskIds = installedDeskIds;
+                if (!trustedDextHost || !IsLoaded || IsExited || Pid is null ||
+                    deskIds is null || deskIds.Count == 0 || roomSessionBridge is not null)
+                    return RoomProtocolStatus.Denied;
+                if (role is not (RoomClientRole.DesktopPlayer or RoomClientRole.Dock)) return RoomProtocolStatus.Denied;
+                var peer = new RoomSessionPeer($"{(role == RoomClientRole.Dock ? "dock-process" : "player-process")}:{Pid.Value}");
+                var native=actions.CreateNativeInput(role);
+                var data=CreateNativeDataSource();
+                var messages = new RoomSessionPlayerMessages(SendMessage,
+                    () => Interlocked.Increment(ref roomRuntimeGeneration), deskIds.ToArray(),
+                    (generation,snapshot)=>{native.Initialize(generation,snapshot);ObserveNativeDataSnapshot(data,snapshot,role);RoomSnapshotObserved?.Invoke(snapshot);},
+                    snapshot=>{native.ObserveSnapshot(snapshot);ObserveNativeDataSnapshot(data,snapshot,role);RoomSnapshotObserved?.Invoke(snapshot);},()=>{native.Revoke();data.Suspend();},
+                    role == RoomClientRole.Dock ? "dock" : "desktop");
+                // Callbacks use this stream directly. Subscribe sends its first
+                // context/snapshot before Connect assigns the bridge field.
+                var status = RoomSessionPlayerBridge.Connect(gateway, peer, roomId,
+                    messages.Snapshot, out var bridge, messages.Initialize, messages.Revoke, role);
+                if (status == RoomProtocolStatus.Accepted) {
+                    roomSessionBridge = bridge;
+                    roomNativeAttachment = new(bridge,native,actions,data);
+                } else {native.Revoke();data.Dispose();}
+                return status;
             }
-            return status;
         }
 
         internal RoomProtocolStatus RefreshRoomSession()
         {
-            if (roomSessionBridge is null || roomSessionDeskIds is null)
-                return RoomProtocolStatus.StaleSession;
-            var reply = roomSessionBridge.Read();
-            if (reply.Status == RoomProtocolStatus.Accepted && reply.Snapshot is not null)
-                SendRoomSessionSnapshot(reply.Snapshot, roomSessionDeskIds);
-            return reply.Status;
+            lock (roomSessionLock)
+                return roomSessionBridge?.Refresh() ?? RoomProtocolStatus.StaleSession;
         }
 
         internal void DetachRoomSession()
         {
-            roomSessionBridge?.Dispose();
-            roomSessionBridge = null;
-            roomSessionDeskIds = null;
-        }
-
-        private void SendRoomSessionSnapshot(RoomSessionSnapshot snapshot, string[] deskIds) =>
-            SendMessage(new LivelyMessageRoomSessionSnapshot
+            NativeAttachment retired;
+            lock (roomSessionLock)
             {
-                ProtocolVersion = snapshot.ProtocolVersion,
-                SessionId = snapshot.SessionId,
-                RoomId = snapshot.RoomId,
-                DeskIds = deskIds,
-                CurrentDeskId = snapshot.CurrentDeskId,
-                TargetDeskId = snapshot.TargetDeskId,
-                TransitionId = snapshot.TransitionId,
-                Revision = snapshot.Revision,
-                IsOperable = snapshot.IsOperable,
-            });
+                retired=Interlocked.Exchange(ref roomNativeAttachment,null);retired?.Input.Revoke();
+                roomSessionBridge?.Dispose();roomSessionBridge = null;
+            }
+            retired?.Data.Dispose();
+        }
 
         public void SetVolume(int volume)
         {
@@ -344,6 +363,14 @@ namespace Lively.Core.Wallpapers
                                 break;
                         }
                         break;
+                    case MessageType.msg_room_native_sample:
+                        Logger.Info($"Wv2{uniqueId}: native visible input sample");break;
+                    case MessageType.msg_room_native_request:
+                        // Consumer-local KV is private personal data. Log only
+                        // protocol metadata, never keys, values or raw payloads.
+                        var nativeRequest=(LivelyMessageRoomNativeRequest)obj;
+                        Logger.Info($"Wv2{uniqueId}: native request | method={nativeRequest.Method} | generation={nativeRequest.RuntimeGeneration} | revision={nativeRequest.Revision}");
+                        break;
                     default:
                         Logger.Info($"Wv2{uniqueId}: {e.Data}");
                         break;
@@ -360,13 +387,19 @@ namespace Lively.Core.Wallpapers
                             {
                                 //CefBrowserWindow
                                 var handle = new IntPtr(((LivelyMessageHwnd)obj).Hwnd);
+                                nativeBrowserHandle = handle;
                                 //WindowsForms10.Window.8.app.0.141b42a_r9_ad1
                                 var chrome_WidgetWin_0 = NativeMethods.FindWindowEx(handle, IntPtr.Zero, "Chrome_WidgetWin_0", null);
                                 if (!chrome_WidgetWin_0.Equals(IntPtr.Zero))
                                 {
                                     this.InputHandle = NativeMethods.FindWindowEx(chrome_WidgetWin_0, IntPtr.Zero, "Chrome_WidgetWin_1", null);
                                 }
-                                Handle = process.GetProcessWindow(true);
+                                // Dock stays hidden during initialization, so a
+                                // visible-window enumeration cannot identify it.
+                                Handle = nativeDock ? NativeMethods.GetAncestor(handle, NativeMethods.GetAncestorFlags.GetRoot)
+                                    : process.GetProcessWindow(true);
+                                if (nativeDock && (NativeMethods.GetWindowThreadProcessId(Handle, out int dockRootPid) == 0 || dockRootPid != Pid))
+                                    throw new InvalidOperationException("Dock HWND does not belong to its Core-owned process");
 
                                 if (IntPtr.Equals(Handle, IntPtr.Zero) || IntPtr.Equals(InputHandle, IntPtr.Zero))
                                     throw new Exception("Browser input/window handle NULL.");
@@ -455,6 +488,17 @@ namespace Lively.Core.Wallpapers
                         break;
                     case MessageType.msg_system_control_request:
                         _ = HandleSystemControlRequestAsync((LivelyMessageSystemControlRequest)obj);
+                        break;
+                    case MessageType.msg_room_native_request:
+                        await HandleNativeRequest((LivelyMessageRoomNativeRequest)obj);
+                        break;
+                    case MessageType.msg_room_native_sample:
+                        HandleNativeSample((LivelyMessageRoomNativeSample)obj);break;
+                    case MessageType.msg_room_dock_state:
+                        AcceptNativeDockState((LivelyMessageRoomDockState)obj);
+                        break;
+                    case MessageType.msg_room_native_invalidated:
+                        roomNativeAttachment?.Input.InvalidateDocument(((LivelyMessageRoomNativeInvalidated)obj).RuntimeGeneration);
                         break;
                     case MessageType.msg_room_session_request:
                         if (roomSessionBridge is { } requestBridge)
@@ -842,6 +886,16 @@ namespace Lively.Core.Wallpapers
         }
 
         public void Terminate()
+        {
+            Interlocked.Exchange(ref closeRequested, 1);
+            TerminateProcess();
+        }
+
+        // A verified native presentation failure is a fault, so the Core may
+        // rebuild it. An earlier explicit Close/Terminate still wins.
+        internal void TerminateAfterNativeFailure() => TerminateProcess();
+
+        private void TerminateProcess()
         {
             if (IsExited)
                 return;

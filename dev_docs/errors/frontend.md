@@ -130,3 +130,31 @@
 修复：新增“刷新运行诊断”按钮和可滚动 JSON 面板；浏览器 mock 提供脱敏占位，Tauri 断线/失败显示明确错误。
 
 防再犯：后端新增只读诊断命令时，配置器应同时提供查看入口和导出入口。
+
+## #226 改名返回路径须与列表和应用状态使用同一表示（2026-10-04）
+rename_room_dir采用canonical源，Windows返回带扩展前缀目标；list_rooms/active_room是常规路径。配置器找不到roomPickPath/appliedRoom，退回库首项，立即编辑会打开另一Room。仅看磁盘改名和来源成功不足以验证UI。
+rename_room返回display_path；原生作者rename更新name并保持UUID/资源，失败尝试恢复原文。最后UTF-8改名后不重新选卡，立即编辑正确Room，实际来源/节点/资源保持。UsePage复制入口和App处理器按saveAs能力禁用，v3不能因edit开放而允许未接通的复制。
+
+## #231 ActiveRoom来源字段须核对实际camelCase回复（2026-10-04）
+新个人面板误声明active_room.source_path，实际Rust Serialize为sourcePath。sameSource读undefined抛错，实际Core正常。读取真实RPC/source确认后修正；初次HMR旧面板仍有旧错误，重新打开后当前本机面板可用。接续同一自有Room，不重跑初始化覆盖原localStorage备份。Core检查不能代替Tauri JSON字段/实际UI核对。
+
+## #233 目标库/视觉定位回执不能重置尚未保存的按钮选择（2026-10-04）
+个人面板每个编辑回执都从确认按钮覆盖表单，保存目标或定位时把待保存的动作/Desk/皮肤选择丢掉，失败也会清空草稿。列表另按作者默认动作显示绑定徽标，启动改导航后误报未绑定，导航改缺目标启动却显示默认动作。
+修复：按闭合操作更新选择，只有自身setButton确认/失败或成功resetButton回到确认值；目标元数据/定位保持草稿，成功删除仅清该目标引用。徽标使用Core有效动作与isBound。三个操作序列实际RED→GREEN，标签追加RED→GREEN，最终生产TS直接Node4/4约0.25秒；未构建/启动应用，真实UI在用户游戏结束后继续。
+
+## #234 删除目标成功后旧编辑表单仍可把目标重建（2026-10-04）
+目标列表允许编辑表单开启时明确删除；原流程删除只改Core目标列表，旧表单未关闭。再次点击保存以同UUID upsert，已删除目标会无意重建。
+修复：目标表单在Core确认同ID upsertTarget或removeTarget成功后关闭；失败、其他目标或定位保持内容和重试ID。UI通过同一成功回执更新，去掉单独的保存promise清空。生产TS直接Node实际5/6→6/6约0.14秒，没有编译/应用/窗口；实际UI按验收第5项游戏后核对。
+
+## #235 普通图标新增数量检查在模型/两个入口不一致（2026-10-04）
+原默认图标模型不检查数量，UI只检查Desk512图标而没检查Room1024按钮，会编辑出无法保存的作者清单；个人面板复用按钮入口满512仍可点击并从事件抛错。
+修复：同一v3IconCreationIssue检查Desk存在、512图标及仅新声明时1024按钮。两模型守原文、两个UI禁用并显示原因；按钮满额仍允许复用已有按钮，移除呈现仍保声明。生产TS直接Node实际6/8→8/8约0.16秒，原文不变/最后一项/ID保持均覆盖。未编译或启动窗口，实际UI按第3项游戏后核对。
+
+## #236 试验台模拟接线与正式作者协议、当前几何须一致（2026-10-04）
+首轮源接口核对发现，SDK导航发送params.action对象，公开按钮action是字符串；不能按独立deskId或作者清单action对象模拟。诊断只缓存geometry发布回执会留在动画旧坐标；发送全部控制设置中的旧Desk又会使调数据时误导航。
+修正为正式SDK结构/公开投影；从正式DOM的readInputSample读取当前帧区域，Desk导航独立发送，其他模拟开关不带旧Desk。仅源核对/JS语法，未宣称实际运行通过；Task4一次真实资源/SDK/区域冒烟集中验证，不扩展网络专项。
+
+## #263 v3本机数据授权只挂Dock，漏掉Widget（2026-10-09）
+用户星轨实验室的读数声明在component.observatory，navigation只有导航/绑定能力。V3DockEditor只挂V3ReadGrantPanel并传component.navigation，面板过滤该消费者，返回无读数时错误引导重新应用；正式Core GetReadGrants实际已包含全部声明只读源。
+修复：授权面板独立挂在Room编辑器，按当前安装身份的Core回复列出全部只读消费者，来源选择提供Widget/场景/背景/Dock名称；逐项保存仍传确认的consumerId/installationStamp，原授权和迟到结果处理保持，撤销只改对应项。新入口不扩KV或系统控制授权。
+验证：TS/Vite及配置器v3-release完整成功；替换精确路径配置器并start.ps1复用Core，实际UI控件树出现Widget · 轨道观测台及四项复选框。授权由用户选择，没有代填允许/撤销或桌面读数验收。UI截图若被前台窗口遮挡，不能作为配置器视觉通过，使用控件树核对并停止额外前台操作。

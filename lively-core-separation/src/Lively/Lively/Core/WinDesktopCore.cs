@@ -1,4 +1,4 @@
-﻿using Lively.Common;
+using Lively.Common;
 using Lively.Common.Com;
 using Lively.Common.Exceptions;
 using Lively.Common.Extensions;
@@ -39,7 +39,8 @@ namespace Lively.Core
         public ReadOnlyCollection<IWallpaper> Wallpapers => wallpapers.AsReadOnly();
         private IntPtr workerW, progman, shellDLL_DefView, original_WorkerW;
         public IntPtr DesktopWorkerW => workerW;
-        private bool disposedValue;
+        private volatile bool disposedValue;
+        private readonly Queue<DateTimeOffset> nativePlayerRecoveryAttempts = new();
         private bool isRaisedDesktopWithLayeredShellView;
         private readonly List<WallpaperLayoutModel> wallpapersDisconnected = [];
 
@@ -55,6 +56,7 @@ namespace Lively.Core
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly ITransparentTbService ttbService;
         private readonly IWatchdogService watchdog;
+        private readonly IScreensaverService screenSaver;
         private readonly IPlayback playback;
         private readonly RawInputMsgWindow rawInput;
         private readonly WndProcMsgWindow WndProc;
@@ -72,8 +74,10 @@ namespace Lively.Core
             WndProcMsgWindow wndProc,
             IWallpaperPluginFactory wallpaperFactory,
             IWallpaperLibraryFactory wallpaperLibraryFactory,
-            IRoomSessionRuntimeCoordinator roomSessionRuntime)
+            IRoomSessionRuntimeCoordinator roomSessionRuntime,
+            IScreensaverService screenSaver)
         {
+            this.screenSaver = screenSaver;
             this.userSettings = userSettings;
             this.displayManager = displayManager;
             this.ttbService = ttbService;
@@ -269,12 +273,32 @@ namespace Lively.Core
         /// <summary>
         /// Sets the given wallpaper based on layout usersettings.
         /// </summary>
-        public async Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display)
+        public Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display) =>
+            SetWallpaperAsync(wallpaper, display, null);
+
+        private async Task SetWallpaperAsync(LibraryModel wallpaper, DisplayMonitor display, WebWebView2 expectedFailed)
         {
             await semaphoreSlimWallpaperLoadingLock.WaitAsync();
 
             try
             {
+                if (disposedValue || App.IsProductExiting) return;
+                if (expectedFailed is not null)
+                {
+                    // Recheck after the loading lock: a queued recovery must not
+                    // replace a Room the user selected while that lock was busy.
+                    if (!wallpapers.Contains(expectedFailed) || !expectedFailed.IsExited || expectedFailed.CloseRequested) return;
+                    var now = DateTimeOffset.UtcNow;
+                    while (nativePlayerRecoveryAttempts.TryPeek(out var at) && now - at > TimeSpan.FromSeconds(30))
+                        nativePlayerRecoveryAttempts.Dequeue();
+                    if (nativePlayerRecoveryAttempts.Count >= 3)
+                    {
+                        Logger.Error("v3 Player repeatedly failed; automatic recovery paused until a later attempt");
+                        return;
+                    }
+                    nativePlayerRecoveryAttempts.Enqueue(now);
+                    Logger.Info($"v3 recovering unexpectedly exited Player | oldPid={expectedFailed.Pid}");
+                }
                 Logger.Info($"Setting wallpaper: {wallpaper.Title} | {wallpaper.FilePath}");
 
                 // Verify file exists if outside wallpaper install folder
@@ -390,7 +414,7 @@ namespace Lively.Core
                 {
                     Logger.Error(ex1);
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex1.Message));
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -401,7 +425,7 @@ namespace Lively.Core
                         WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex2.Message));
                     else
                         WallpaperError?.Invoke(this, ex2);
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -409,7 +433,7 @@ namespace Lively.Core
                 {
                     Logger.Error(ex3);
                     WallpaperError?.Invoke(this, ex3);
-                    WallpaperChanged?.Invoke(this, EventArgs.Empty);
+                    if (expectedFailed is null) WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                     currentWallpaper?.Dispose();
                 }
@@ -427,15 +451,25 @@ namespace Lively.Core
 
         private void Wallpaper_Exited(object sender, EventArgs e)
         {
-            if (sender is WebWebView2 webWallpaper)
-                roomSessionRuntime.OnPlayerExited(webWallpaper.Pid);
+            if (sender is WebWebView2 webWallpaper &&
+                roomSessionRuntime.OnPlayerExited(webWallpaper.Pid) && webWallpaper.IsLoaded && !webWallpaper.CloseRequested)
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
+                {
+                    try { await SetWallpaperAsync(webWallpaper.Model, webWallpaper.Screen, webWallpaper); }
+                    catch (Exception error) { Logger.Error(error, "v3 Player recovery failed"); }
+                }));
+            }
             RefreshDesktop();
         }
 
         private void RoomPageReady(object sender, EventArgs e)
         {
             if (sender is WebWebView2 webWallpaper)
+            {
+                webWallpaper.NativeInputIsForeground = () => userSettings.Settings.InputForward != InputForwardMode.off && IsDesktop();
                 roomSessionRuntime.OnPageReady(webWallpaper);
+            }
         }
 
         private async Task SetDesktopPictureOrLockscreen(IWallpaper wallpaper)
@@ -1157,8 +1191,19 @@ namespace Lively.Core
 
         private void RawInput_MouseMoveRaw(object sender, MouseRawArgs e)
         {
+            roomSessionRuntime.RouteDockMouse(e.X, e.Y, "move", screenSaver.IsRunning);
+            // Record held edges with foreground=false so wake auto-repeat
+            // cannot create a new DOWN after the desktop returns.
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseMove(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             try
             {
+                var nativeForeground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseMove(e.X,e.Y,nativeForeground);
                 if (forwardedMouse.IsActive)
                 {
                     if (userSettings.Settings.InputForward == InputForwardMode.off)
@@ -1183,13 +1228,25 @@ namespace Lively.Core
 
         private void RawInput_MouseDownRaw(object sender, MouseClickRawArgs e)
         {
+            if (IsPrimaryMouseButton(e.Button))
+                roomSessionRuntime.RouteDockMouse(e.X, e.Y, "down", screenSaver.IsRunning);
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                if (IsPrimaryMouseButton(e.Button))
+                    foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseDown(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             if (userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
                 return;
 
             try
             {
                 if (IsPrimaryMouseButton(e.Button))
-                    forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y), e.X, e.Y, InputUtil.MouseModifiers);
+                {
+                    foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseDown(e.X,e.Y,true);
+                    forwardedMouse.Begin(MouseTargetsAt(e.X, e.Y, false), e.X, e.Y, InputUtil.MouseModifiers);
+                }
             }
             catch (Exception ex)
             {
@@ -1199,11 +1256,24 @@ namespace Lively.Core
 
         private void RawInput_MouseUpRaw(object sender, MouseClickRawArgs e)
         {
+            if (IsPrimaryMouseButton(e.Button))
+                roomSessionRuntime.RouteDockMouse(e.X, e.Y, "up", screenSaver.IsRunning);
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                if (IsPrimaryMouseButton(e.Button))
+                    foreach (var player in Wallpapers.OfType<WebWebView2>()) player.NativeMouseUp(e.X, e.Y, false);
+                forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                return;
+            }
             try
             {
                 // Finish the DOWN recipient even if foreground or pointer display changed.
                 if (IsPrimaryMouseButton(e.Button))
+                {
+                    var foreground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                    foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeMouseUp(e.X,e.Y,foreground);
                     forwardedMouse.End(e.X, e.Y, InputUtil.MouseModifiers);
+                }
             }
             catch (Exception ex)
             {
@@ -1213,24 +1283,27 @@ namespace Lively.Core
 
         private void RawInput_KeyboardClickRaw(object sender, KeyboardClickRawArgs e)
         {
+            roomSessionRuntime.RouteDockKey((int)e.VirtualKey, e.IsKeyDown,
+                (InputUtil.MouseModifiers & 4) != 0, e.ScanCode, e.IsExtended, screenSaver.IsRunning);
+            if (screenSaver.IsRunning && screenSaver.Mode == ScreensaverApplyMode.nativeRuntime)
+            {
+                foreach (var player in Wallpapers.OfType<WebWebView2>())
+                    player.NativeKey((int)e.VirtualKey, e.IsKeyDown, false, false);
+                return;
+            }
             try
             {
-                // Don't forward when not on desktop.
-                if (userSettings.Settings.InputForward != InputForwardMode.mousekeyboard || !IsDesktop())
-                    return;
-
-                // Detect active wallpaper based on cursor.
-                if (!NativeMethods.GetCursorPos(out NativeMethods.POINT P))
-                    return;
-
-                var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(P.X, P.Y));
-                foreach (var wallpaper in Wallpapers)
+                // Controlled v3 Tab/Enter/Space use Core focus even in mouse
+                // mode. Ordinary keyboard forwarding retains its opt-in setting.
+                var foreground=userSettings.Settings.InputForward!=InputForwardMode.off && IsDesktop();
+                var hasCursor=NativeMethods.GetCursorPos(out NativeMethods.POINT p);
+                var display=hasCursor?displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(p.X,p.Y)):null;
+                foreach(var wallpaper in Wallpapers)
                 {
-                    if (wallpaper.Category.IsDeviceInputAllowed() &&
-                        (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
-                    {
-                        InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle, e.WindowMessage, e.VirtualKey, e.ScanCode, e.IsKeyDown);
-                    }
+                    var selected=hasCursor && (display.Equals(wallpaper.Screen) || userSettings.Settings.WallpaperArrangement==WallpaperArrangement.span);
+                    if(wallpaper is WebWebView2 player && player.NativeKey((int)e.VirtualKey,e.IsKeyDown,(InputUtil.MouseModifiers&4)!=0,foreground&&selected,e.ScanCode,e.IsExtended))continue;
+                    if(foreground && selected && userSettings.Settings.InputForward==InputForwardMode.mousekeyboard && wallpaper.Category.IsDeviceInputAllowed())
+                        InputUtil.ForwardMessageKeyboard(wallpaper.InputHandle,e.WindowMessage,e.VirtualKey,e.ScanCode,e.IsKeyDown,e.IsExtended);
                 }
             }
             catch (Exception ex)
@@ -1248,7 +1321,7 @@ namespace Lively.Core
         private static bool IsPrimaryMouseButton(RawInputMouseBtn button) =>
             button == (InputUtil.IsMouseButtonsSwapped ? RawInputMouseBtn.right : RawInputMouseBtn.left);
 
-        private IEnumerable<MouseForwardingSession.Target> MouseTargetsAt(int x, int y)
+        private IEnumerable<MouseForwardingSession.Target> MouseTargetsAt(int x, int y, bool includeNative = true)
         {
             var display = displayManager.GetDisplayMonitorFromPoint(new System.Drawing.Point(x, y));
             var bounds = userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span
@@ -1259,7 +1332,13 @@ namespace Lively.Core
                 if (wallpaper.Category.IsDeviceInputAllowed() &&
                     (wallpaper.Screen.Equals(display) || userSettings.Settings.WallpaperArrangement == WallpaperArrangement.span))
                 {
-                    yield return new MouseForwardingSession.Target(wallpaper.InputHandle, bounds.X, bounds.Y);
+                    if(wallpaper is WebWebView2 player && player.HasNativeInput)
+                    {
+                        if(!includeNative)continue;
+                        var viewport=player.ReadNativeViewport();
+                        if(viewport!=null)yield return new MouseForwardingSession.Target(viewport.Handle,viewport.X,viewport.Y);
+                    }
+                    else yield return new MouseForwardingSession.Target(wallpaper.InputHandle, bounds.X, bounds.Y);
                 }
             }
         }
@@ -1313,6 +1392,8 @@ namespace Lively.Core
         {
             if (!disposedValue)
             {
+                // Set before closing Players, including ordinary QuitApp.
+                disposedValue = true;
                 if (disposing)
                 {
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
@@ -1326,7 +1407,6 @@ namespace Lively.Core
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
-                disposedValue = true;
             }
         }
 

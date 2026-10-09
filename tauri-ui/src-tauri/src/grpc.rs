@@ -7,6 +7,10 @@ use tokio::net::windows::named_pipe::ClientOptions;
 
 use crate::proto::desktop::{
     CloseAllWallpapersRequest, GetCoreStatsResponse, GetWallpapersResponse, RoomSessionStatusResponse,
+    RoomPersonalEditorRequest, RoomPersonalEditRequest, RoomPersonalEditorResponse,
+    RoomPersonalCopyRequest, RoomPersonalDeleteRequest, RoomPersonalLifecycleResponse,
+    RoomReadGrantsRequest, RoomSetReadGrantRequest, RoomReadGrantsResponse,
+    RoomDockPreferenceRequest, RoomDockStatusResponse,
     SetSystemVolumeRequest,
     SystemMediaAction, SystemMediaControlRequest, SystemMediaControlResponse, SystemMediaSnapshot,
     SystemVolumeSnapshot, WallpaperMessageRequest,
@@ -216,6 +220,7 @@ pub(crate) async fn raw_core_identity() -> Result<GetCoreStatsResponse, String> 
 async fn verified_core_identity() -> Result<GetCoreStatsResponse, String> {
     let response = raw_core_identity().await?;
     verify_core_identity_response(&response)?;
+    crate::core_runtime::verify_running_release_profile(&response)?;
     Ok(response)
 }
 
@@ -337,6 +342,14 @@ pub async fn core_identity() -> Result<CoreIdentity, String> {
 }
 
 #[derive(Clone, serde::Serialize)]
+pub struct RoomLifecycleStatus {
+    pub stage: String,
+    pub playback_paused: bool,
+    pub locked: bool,
+    pub revision: i64,
+}
+
+#[derive(Clone, serde::Serialize)]
 pub struct RoomSessionStatus {
     pub active: bool,
     pub protocol_version: i32,
@@ -349,6 +362,78 @@ pub struct RoomSessionStatus {
     pub transition_id: String,
     pub operable: bool,
     pub player_pid: i32,
+    pub deadline_utc: String,
+    pub installation_stamp: String,
+    pub lifecycle: Option<RoomLifecycleStatus>,
+}
+
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrantCapability { pub capability: String, pub allowed: bool }
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrantConsumer { pub consumer_id: String, pub capabilities: Vec<RoomReadGrantCapability> }
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoomReadGrants { pub status: String, pub room_id: String, pub installation_stamp: String, pub consumers: Vec<RoomReadGrantConsumer> }
+async fn read_grant_call(method: &str, request: &[u8]) -> Result<RoomReadGrants, String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomReadGrantsResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no read grant state".to_string())?;
+    Ok(RoomReadGrants { status: response.status, room_id: response.room_id, installation_stamp: response.installation_stamp,
+        consumers: response.consumers.into_iter().map(|consumer| RoomReadGrantConsumer { consumer_id: consumer.consumer_id,
+            capabilities: consumer.capabilities.into_iter().map(|capability| RoomReadGrantCapability {
+                capability: capability.capability, allowed: capability.allowed }).collect() }).collect() })
+}
+async fn personal_editor_call(method: &str, request: &[u8]) -> Result<serde_json::Value, String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomPersonalEditorResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no personal editor state".to_string())?;
+    serde_json::from_str(&response.reply_json).map_err(|_| "Dext Core returned invalid personal editor state".to_string())
+}
+async fn personal_lifecycle_call(method: &str, request: &[u8]) -> Result<(), String> {
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, request).await?;
+    let response = payloads.iter().find_map(|payload| RoomPersonalLifecycleResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no personal copy/delete confirmation".to_string())?;
+    if response.status != "accepted" {
+        return Err(format!("{}: {}", response.status, response.message));
+    }
+    Ok(())
+}
+pub async fn copy_room_personal(source_room_id: String, new_room_id: String) -> Result<(), String> {
+    personal_lifecycle_call("CopyRoomPersonal", &RoomPersonalCopyRequest { source_room_id, new_room_id }.encode_to_vec()).await
+}
+pub async fn delete_room_personal(room_id: String, dry_run: bool) -> Result<(), String> {
+    personal_lifecycle_call("DeleteRoomPersonal", &RoomPersonalDeleteRequest { room_id, dry_run }.encode_to_vec()).await
+}
+
+pub async fn get_personal_editor(room_id: String, installation_stamp: String) -> Result<serde_json::Value, String> {
+    personal_editor_call("GetRoomPersonalEditor", &RoomPersonalEditorRequest { room_id, installation_stamp }.encode_to_vec()).await
+}
+pub async fn edit_personal(room_id: String, installation_stamp: String, edit: serde_json::Value) -> Result<serde_json::Value, String> {
+    personal_editor_call("EditRoomPersonal", &RoomPersonalEditRequest { room_id, installation_stamp, edit_json: edit.to_string() }.encode_to_vec()).await
+}
+pub async fn get_read_grants(room_id: String, installation_stamp: String) -> Result<RoomReadGrants, String> {
+    read_grant_call("GetRoomReadGrants", &RoomReadGrantsRequest { room_id, installation_stamp }.encode_to_vec()).await
+}
+pub async fn set_read_grant(room_id: String, installation_stamp: String, consumer_id: String,
+    capabilities: Vec<String>, allow: bool) -> Result<RoomReadGrants, String> {
+    read_grant_call("SetRoomReadGrant", &RoomSetReadGrantRequest { room_id, installation_stamp, consumer_id, capabilities, allow }.encode_to_vec()).await
+}
+
+pub async fn room_dock_status(patch: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    let (method, request) = match patch {
+        Some(value) => ("SetRoomDockPreference", RoomDockPreferenceRequest { patch_json: value.to_string() }.encode_to_vec()),
+        None => ("GetRoomDockStatus", Vec::new()),
+    };
+    let path = format!("/Lively.Grpc.Common.Proto.Desktop.DesktopService/{method}");
+    let payloads = verified_call(&path, &request).await?;
+    let response = payloads.iter().find_map(|payload| RoomDockStatusResponse::decode(&payload[..]).ok())
+        .ok_or_else(|| "Dext Core returned no Dock state".to_string())?;
+    serde_json::from_str(&response.reply_json).map_err(|_| "Dext Core returned invalid Dock state".to_string())
 }
 
 pub async fn room_session_status() -> Result<RoomSessionStatus, String> {
@@ -373,6 +458,14 @@ pub async fn room_session_status() -> Result<RoomSessionStatus, String> {
         transition_id: response.transition_id,
         operable: response.operable,
         player_pid: response.player_pid,
+        deadline_utc: response.deadline_utc,
+        installation_stamp: response.installation_stamp,
+        lifecycle: response.lifecycle.map(|value| RoomLifecycleStatus {
+            stage: value.stage,
+            playback_paused: value.playback_paused,
+            locked: value.locked,
+            revision: value.revision,
+        }),
     })
 }
 
@@ -422,6 +515,16 @@ pub async fn send_message_wallpaper(lively_info_path: &str, msg: &str) -> Result
     .map(|_| ())
 }
 
+pub async fn close_wallpaper_library(folder: &str) -> Result<(), String> {
+    let request = crate::proto::desktop::CloseWallpaperLibraryRequest {
+        lively_info_path: folder.to_string(),
+        ..Default::default()
+    };
+    verified_call(
+        "/Lively.Grpc.Common.Proto.Desktop.DesktopService/CloseWallpaperLibrary",
+        &request.encode_to_vec(),
+    ).await.map(|_| ())
+}
 pub async fn close_all_wallpapers() -> Result<(), String> {
     let request = CloseAllWallpapersRequest::default();
     verified_call(
@@ -732,6 +835,7 @@ mod tests {
             process_id: 42,
             app_data_directory,
             grpc_pipe_name: grpc_pipe_server_name(),
+            is_product_exiting: false,
         }
     }
 

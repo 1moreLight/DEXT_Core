@@ -16,6 +16,14 @@ service DesktopService {
   rpc SendMessageWallpaper(WallpaperMessageRequest) returns (google.protobuf.Empty);
   rpc GetCoreStats (google.protobuf.Empty) returns (GetCoreStatsResponse);
   rpc GetRoomSession (google.protobuf.Empty) returns (RoomSessionStatusResponse);
+  rpc GetRoomDockStatus (google.protobuf.Empty) returns (RoomDockStatusResponse);
+  rpc SetRoomDockPreference (RoomDockPreferenceRequest) returns (RoomDockStatusResponse);
+  rpc GetRoomPersonalEditor (RoomPersonalEditorRequest) returns (RoomPersonalEditorResponse);
+  rpc EditRoomPersonal (RoomPersonalEditRequest) returns (RoomPersonalEditorResponse);
+  rpc CopyRoomPersonal (RoomPersonalCopyRequest) returns (RoomPersonalLifecycleResponse);
+  rpc DeleteRoomPersonal (RoomPersonalDeleteRequest) returns (RoomPersonalLifecycleResponse);
+  rpc GetRoomReadGrants (RoomReadGrantsRequest) returns (RoomReadGrantsResponse);
+  rpc SetRoomReadGrant (RoomSetReadGrantRequest) returns (RoomReadGrantsResponse);
   rpc TakeScreenshot(WallpaperScreenshotRequest) returns (google.protobuf.Empty);
   rpc EditWallpaper(EditWallpaperRequest) returns (EditWallpaperResponse);
   rpc CreateWallpaper(CreateWallpaperRequest) returns (CreateWallpaperResponse);
@@ -154,6 +162,15 @@ message GetCoreStatsResponse {
 	int32 process_id = 6;
 	string app_data_directory = 7;
 	string grpc_pipe_name = 8;
+	// Set only after Core-owned confirmation of a current native exit action.
+	bool is_product_exiting = 9;
+}
+
+message RoomSessionLifecycleStatus {
+  string stage = 1;
+  bool playback_paused = 2;
+  bool locked = 3;
+  int64 revision = 4;
 }
 
 message RoomSessionStatusResponse {
@@ -168,6 +185,9 @@ message RoomSessionStatusResponse {
   string transition_id = 9;
   bool operable = 10;
   int32 player_pid = 11;
+  string deadline_utc = 12;
+  string installation_stamp = 13;
+  RoomSessionLifecycleStatus lifecycle = 14;
 }
 
 message PreviewWallpaperRequest {
@@ -271,4 +291,61 @@ enum UpdateWallpaperCategory {
 	changed = 0;
 	remove = 1;
     done = 2;
+}
+
+// Configurator-only metadata; no private targets or mutable author interface.
+message RoomReadGrantsRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+}
+message RoomSetReadGrantRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+  string consumer_id = 3;
+  repeated string capabilities = 4;
+  bool allow = 5;
+}
+message RoomReadGrantCapabilityStatus {
+  string capability = 1;
+  bool allowed = 2;
+}
+message RoomReadGrantConsumerStatus {
+  string consumer_id = 1;
+  repeated RoomReadGrantCapabilityStatus capabilities = 2;
+}
+message RoomReadGrantsResponse {
+  string status = 1;
+  string room_id = 2;
+  string installation_stamp = 3;
+  repeated RoomReadGrantConsumerStatus consumers = 4;
+}
+
+// Configurator-only personal data, never routed to an author frame.
+message RoomPersonalEditorRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+}
+message RoomPersonalEditRequest {
+  string room_id = 1;
+  string installation_stamp = 2;
+  string edit_json = 3;
+}
+message RoomPersonalEditorResponse {
+  string reply_json = 1;
+}
+
+message RoomDockPreferenceRequest { string patch_json = 1; }
+message RoomDockStatusResponse { string reply_json = 1; }
+
+message RoomPersonalCopyRequest {
+  string source_room_id = 1;
+  string new_room_id = 2;
+}
+message RoomPersonalDeleteRequest {
+  string room_id = 1;
+  bool dry_run = 2;
+}
+message RoomPersonalLifecycleResponse {
+  string status = 1;
+  string message = 2;
 }

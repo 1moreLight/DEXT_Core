@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "roomId": "231db51a-19db-4a3a-9c06-dbb9b3db86f9",
+  "manifestSha256": "9526e36bd03a33e0063fdf1ce5ef59e5fd9ed41f43454b5cc3ba6df7bcd1d952",
+  "resources": [
+    {
+      "path": "assets/background.svg",
+      "sha256": "325995483a2da5c6d828bb995bdc76e84b4f6e669fd4a18024c310170bc5d24d",
+      "size": 332
+    }
+  ]
+}

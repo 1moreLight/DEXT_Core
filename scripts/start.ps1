@@ -1,8 +1,21 @@
-# Dext daily start: exact-path Core validation + configurator dev mode.
+# Dext start: exact-path Core validation; optional portable v3 Release candidate.
+param([string]$ReleaseDirectory)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$identity = Get-Content -Raw -Encoding UTF8 (Join-Path $root "dext-runtime-identity.json") | ConvertFrom-Json
-$coreExe = Join-Path $root "lively-core-separation\src\Lively\Lively\bin\x64\Debug\net9.0-windows10.0.18362.0\Lively.exe"
+$productRoot = $root
+if ($ReleaseDirectory) {
+    $ReleaseDirectory = (Resolve-Path -LiteralPath $ReleaseDirectory -ErrorAction Stop).Path
+    $productRoot = $ReleaseDirectory
+    foreach ($relative in @("dext-configurator.exe", "plugins/webview2/Lively.Player.WebView2.exe", "Plugins/Watchdog/Lively.Watchdog.exe", "wallpapers/dext-room-v3/index.html")) {
+        if (-not (Test-Path -LiteralPath (Join-Path $productRoot $relative) -PathType Leaf)) {
+            throw "Incomplete v3 Release candidate: $relative"
+        }
+    }
+}
+$identity = Get-Content -Raw -Encoding UTF8 (Join-Path $productRoot "dext-runtime-identity.json") | ConvertFrom-Json
+$coreExe = if ($ReleaseDirectory) { Join-Path $productRoot "Lively.exe" } else {
+    Join-Path $root "lively-core-separation\src\Lively\Lively\bin\x64\Debug\net9.0-windows10.0.18362.0\Lively.exe"
+}
 $dextData = Join-Path $env:LOCALAPPDATA $identity.localAppDataDirectory
 $dextLogs = Join-Path $dextData "logs"
 $grpcPipeName = "$($identity.grpcPipePrefix)$($identity.runtimeIdentity)$env:USERNAME"
@@ -53,7 +66,7 @@ function Test-DextCoreBinary($BinaryIdentity) {
     return $BinaryIdentity.Exists -and
         [string]::Equals($BinaryIdentity.ProductName, $identity.productName, [StringComparison]::OrdinalIgnoreCase) -and
         (-not [string]::IsNullOrWhiteSpace($BinaryIdentity.FileDescription)) -and
-        $BinaryIdentity.FileDescription.StartsWith($identity.productName, [StringComparison]::OrdinalIgnoreCase)
+        $BinaryIdentity.FileDescription.StartsWith($(if ($ReleaseDirectory) { "Dext v3" } else { $identity.productName }), [StringComparison]::OrdinalIgnoreCase)
 }
 
 $targetCorePath = Get-NormalizedPath $coreExe
@@ -62,6 +75,7 @@ $initialTargetProcesses = @(Get-LivelyProcesses | Where-Object {
 })
 $coreBinaryIdentity = Get-CoreBinaryIdentity $coreExe
 if (-not (Test-DextCoreBinary $coreBinaryIdentity)) {
+    if ($ReleaseDirectory) { throw "Release candidate Core must be Dext v3: $coreExe" }
     if ($initialTargetProcesses.Count -gt 0) {
         $runningPids = ($initialTargetProcesses | ForEach-Object ProcessId) -join ', '
         throw "The current worktree is running a stale/non-Dext Core binary (PID $runningPids). Exit that process, then run scripts\start.ps1 again."
@@ -87,7 +101,7 @@ $playerSrc = Join-Path $lively "Lively.Player.WebView2\bin\Release\Lively.Player
 $playerDst = Join-Path $coreOut "plugins\webview2\Lively.Player.WebView2.exe"
 $needDeploy = (Test-Path -LiteralPath $playerSrc) -and
     (-not (Test-Path -LiteralPath $playerDst) -or ((Get-Item $playerSrc).LastWriteTime -gt (Get-Item $playerDst).LastWriteTime))
-if ($needDeploy) {
+if ($needDeploy -and -not $ReleaseDirectory) {
     Write-Host "Deploying Dext WebView2 Player..."
     New-Item -ItemType Directory -Force (Split-Path -Parent $playerDst) | Out-Null
     Copy-Item "$(Split-Path -Parent $playerSrc)\*" (Split-Path -Parent $playerDst) -Recurse -Force
@@ -141,6 +155,12 @@ Write-Host "  Core: $coreExe"
 Write-Host "  Pipe: $grpcPipeName"
 Write-Host "  Data: $dextData"
 Write-Host "  Logs: $dextLogs"
+if ($ReleaseDirectory) {
+    Write-Host "Starting v3 Release Configurator..."
+    $configurator = Start-Process -FilePath (Join-Path $productRoot "dext-configurator.exe") -WorkingDirectory $productRoot -WindowStyle Hidden -PassThru
+    Write-Host "Dext v3 Configurator started: PID $($configurator.Id), product=$productRoot"
+    return
+}
 Write-Host "Starting Dext Configurator (npm run tauri dev)..."
 $configuratorRoot = Join-Path $root "tauri-ui"
 $tauriCommand = Join-Path $configuratorRoot "node_modules\.bin\tauri.cmd"

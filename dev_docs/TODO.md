@@ -1,4 +1,4 @@
-﻿# 总任务台账 · 当前（只加不删）
+# 总任务台账 · 当前（只加不删）
 
 > 标记规则：`[ ]` 计划中 · `[~]` 进行中 · `[?]` 待用户验收 · `[x]` 完成/已迁移(日期) · `[!]` 受阻(原因)
 > 新计划一律**追加**；做完立即打标；废弃标 `[x] 已取消(日期)`，不删除。
@@ -1121,3 +1121,808 @@ pm run tauri build 并气泡提示，完成后重试即可。
 - [x] 真实 Player 原生鼠标：`probe-a → probe-b`，修订 `1 → 3`；Core/Player/配置器重启后恢复 `probe-b`；应用 MSIroom 后 v3 状态 inactive、清单已撤销。协议 30/30、Rust 50/50（3 ignored）、完整 Core 构建/前端构建与隔离 Release Player 回归通过。
 - [x] 具名提交 `2e2c290`；按用户要求开发侧完成验证，用户决定合入 master 前保持分支隔离。
 - [x] 用户于 2026-09-30 回复“验收通过 git合并 名字就叫v3FirstTest”；合并提交 `24ac47c` 已入 master。合并后协议 30/30、完整 Core/Player 构建和三进程主 worktree 运行身份检查通过；重新应用 MSIroom 后 Player 页面指向 master。旧 worktree 已归档、工作分支已删除；详见 `TODO-archive.md`。依赖包的专项人工验收状态仍以各自验收卡为准。
+
+## V3-P3-001 正式作品契约与安装校验（2026-10-02，开发中）
+
+> 目标：原生v3 Room可校验、安装和复核全部内容，Core绑定真实Player。范围外：其他v3包按V3_DELIVERY顺序接入，不把最小样例冒充全链。人工验收见acceptance/V3-P3-001-room-contract.md。用户要求连续推进后集中验收，本包提交后继续依赖包，不中途等待。
+
+- [x] 按顺序读取开发入口、路线、台账、错误；确认master=e67cd03且干净。
+- [x] 创建独立worktree/工作分支，冻结16项完整基础版覆盖台账、计划与验收卡。
+- [x] 正式version3/apiVersion1清单与稳定身份、资源路径/引用、便携动作/能力校验；独立Rust11/11、Schema两个原生样包及反例、JS语法和diff检查通过。配置必须是对象的回归先失败后通过（2026-10-02）。
+- [x] 测试先行实现完整资源摘要、事务安装与篡改复核；Rust18/18通过，含真实Windows junction与锁定旧安装保留。掉电恢复/遗留备份协调留在发布收口，不声称本包已覆盖。
+- [ ] Core独立复核并绑定真实Player，Rust接安装链，提交具名文件。
+- [x] Core原生校验/安装入口及同分支启动已接，自动43/43与完整构建通过；真实配置器显示已连接。审查后的回归增至Rust25/Core46，通过范围见ledger。
+- [x] 独立审查5项Important修正完成：资源读取、暂存写入和最终发布均保留已验证原生句柄；发布/暂存外写两项实际RED→GREEN。最新Rust28/28、Core46/46通过；未再次派发审查。
+- [x] 安装基础代码提交并保留工作分支，继续绑定与授权依赖包；原生宿主集成验收仍保持未完成，不把基础代码标成全项就绪。
+- [ ] 后续原生v3渲染器就绪后补真实三进程切页/恢复证据；集中验收前不合并master。
+
+## V3-CORE-006 本机绑定与授权（2026-10-02，开发中）
+
+> 目标：按钮/图标以稳定ID共用本机目标，Core核验安装、来源、权限和真实输入；个人路径不进入作品或公开状态。范围外：其他v3功能按完整台账顺序继续。独立人工步骤见acceptance/V3-CORE-006-binding-authority.md，最终集中验收前不合并。
+
+- [x] 从P3已提交3a9e250建独立worktree/分支，动代码前保存计划、验收卡与ledger。
+- [x] 有界原子个人存储、复制/删除与授权隔离，原生发布错误6/9→9/9，现有协议46/46通过。
+- [x] 原生已验证按钮/消费者目录、版本会话动作权威、一次性输入票据、权限与公开状态；动作23/23、协议46/46、内核10/10。
+- [x] 注册真实Core服务；实际Explorer代启参数丢失RED→GREEN，可见Dock暂停回归23/24→24/24。动作24/24、协议46/46、内核10/10及最新完整build→start/identity全项OK（2026-10-03）。
+- [x] 一次全分支独立审查：0Critical/1Important/0Minor；授权派发竞态8项实际RED→GREEN，新增过期/观察者锁顺序回归，最终动作35/35、协议46/46、内核10/10、实际Explorer启动通过。修复后完整构建/启动门槛另记；保留未合并分支（2026-10-03）。
+- [ ] 后续宿主/界面接入后补真实双入口、脚本拒绝、撤销、恢复和复制验收。
+
+## V3-P5-001 原生持续桌面宿主（2026-10-03，开发中）
+
+> 目标：原生v3直接进入Core/ReleasePlayer，持续实例、同步动画/几何与完整生命周期可独立验收。范围外及人工步骤见acceptance/V3-P5-001-native-runtime.md；用户授权连续推进后最终集中验收。
+
+- [x] 基于CORE-006已审查修复0acaa3d创建独立managed worktree/分支，先写计划、ledger及独立验收卡。
+- [x] Task1：共享模型14/14、作者SDK14/14先RED后GREEN；类型/JS/Schema与Rust28/28通过，连续样包已打包SDK，提交具名实现。原生边界仍Task2–4（2026-10-03）。
+- [ ] Task2：Core/Player原生上下文/生命周期/资源/真实输入、媒体槽能力声明，跨语言/协议/动作与完整构建门槛。
+- [ ] Task3：真实DOM宿主持续实例、同步默认/作者过渡、四类媒体、生产浏览器与ReleasePlayer安全验证。
+- [ ] Task4：个人布局、版本化命中与占用、DPI/缩屏恢复、WorkerW真实闭环及一次独立审查。
+- [ ] 集中人工确认前保持未合并；全16项按实际完整证据记就绪。
+
+- [x] Task2阶段：Content媒体槽声明在Rust/Core/Schema同步校验，实际RED→GREEN31/31、51/51及Schema通过；完整Core/ReleasePlayer构建通过（2026-10-03）。
+- [x] Task2媒体槽声明阶段运行门槛：用户授权退出旧绑定分支后，P5实际启动/identity通过；此前Core67720占用已解除。原生v3生命周期/slot/真实输入仍按Task2待办推进。
+
+- 2026-10-03运行补证：用户明确授权退出；正常关闭绑定分支旧实例后，P5启动成功，Core104084/ReleasePlayer68604/Watchdog116972/配置器102068及mutex/pipe/data/log身份全OK。随后正常退出Core并停止本轮开发监听，进程与1620端口均已释放。此证据为已有v2恢复链，原生v3完整人工门槛仍待执行。
+- [x] Task2阶段：同一已验证清单生成不可变RuntimeContext，私有Player连接读取时复核进程/安装/会话；协议63/63、动作35/35、输入探针编译、完整build→start/identity通过。尚未接到Player IPC/DOM。
+
+- [ ] Task2下一步：生命周期及全局revision、安装动画watchdog、stage-aware媒体消费者与196授权配额；把完整上下文/快照接入原生IPC，再接资源与物理输入边界。
+
+- [x] Task2生命周期/快照阶段：内核stage/paused/locked与双revision原子更新，foreground不得绕过锁屏；可信安装给watchdog/checkpoint戳；Core专属状态入口与生产Player快照投影接通。内核17/17、协议65/65、动作35/35；真实ReleasePlayer字段丢失RED→GREEN。
+
+- [x] C#/proto完整build、Rust cargo check、配置器build、start/identity全项OK；真实gRPC确认当前v2为inactive。验证后正常退出，进程与1620端口归零（2026-10-03）。
+- [ ] 下一步仍属Task2：Windows前台/暂停/锁屏/闲置真实事件接协调者、启动完成仲裁；stage-aware媒体消费者/196授权配额；RuntimeContext原生IPC、资源清单与物理输入边界。完整v3原生桌面未交付。
+
+- [x] Task2媒体权限阶段：从验证清单建立独立slot消费者；按stage/Desk判断活动，锁屏/暂停/前台拒绝实际消费和激活；Dock桌面暂停例外不跨锁屏；个人196消费者和80字符Desk后缀；阶段/前台/私有等待使旧输入失效。
+
+- [x] 媒体权限实际RED36/44→GREEN44/44；内核17/17、协议65/65、完整build与同分支start/identity成功。验证后Core、Player、Watchdog、配置器和1620监听全部为0（2026-10-03）。
+- [ ] Task2继续：Windows完整事实原子接入并在初次Player订阅前同步；启动/闲置控制、上下文IPC、资源边界与物理输入仍待完成。
+
+- [x] Task2 Windows事实：独立记录实际各显示器暂停/锁屏/前台，首个Start/Restore快照即包含完整事实；原子更新避免解锁使用旧前台，失败可重复采样重试。
+
+- [x] Windows事实接口初始缺失CS0246→协议72/72；内核17/17、动作44/44、完整build→start/identity通过。正常退出后Dext进程/1620监听0。真实锁屏/闲置、原生v3页面首帧、物理输入仍按7步最终验收待执行（2026-10-03）。
+- [ ] Task2继续：上下文/撤销IPC、实际资源清单读取边界与物理输入；start完成/idle同Player及暂停恢复最后快照仍待完成。
+
+- [x] Task2上下文传输：已验证context先于首个snapshot；显式撤销覆盖Stop/换会话/失效/Detach，按Player递增代次拒绝迟到消息，生产Json.NET到ReleasePlayer实测并重放暂停期间最后状态。
+
+- [x] 上下文传输实际验证：协议80/80、消息19/19、内核17/17、动作44/44；ReleasePlayer五组原生IPC及旧完整快照探针通过。中文stdout乱码、重复异步恢复丢重放、非对象Desk拒绝三项实际失败后修复。
+- [x] 完整build→start/identity通过，Core123128/Player71384/Watchdog116472/配置器76656；v3-status=inactive符合恢复原有v2。正常退出后进程/1620监听均0。启动时一次WorkerW层级日志有现有纠正调用，最终物理层级仍留Task4验证。
+- [ ] Task2继续：首航前隔离v3资源服务，同句柄验证后提供清单内字节与Range；物理输入、start完成和同Player闲置仍未接通。
+
+- [x] Task2资源服务阶段：独立native首航、官方白名单、代次资源清单、句柄校验与不可变临时缓存；31/31边界检查、真实ReleasePlayer媒体/Range/撤销/重载及策略拒绝启动通过（2026-10-03）。
+
+- [x] 完整build→start/identity通过，Core31152/Player81948/Watchdog89212/配置器2860；现有v2恢复为inactive。Core正常shutdown，开发监听停止，最终Dext进程/1620监听/资源临时缓存均0。
+- [ ] 资源阶段限制：WebView2 153在禁RTC策略下重复初始化RTC会触发mDNS binder杀renderer（#150）；官方能力自检按WebView实例一次已避开本次重载路径，作者恶意重复构造的稳定恢复仍属Task4安全门槛。不得把当前证据写成全网络/全恶意内容验收完成。
+- [ ] Task2继续：物理输入与当前几何绑定、start完成仲裁、同Player闲置展示；再做Task3生产DOM和Task4个人布局/真实DPI/安全恢复，集中验收前不合并。
+
+- [x] Task2原生输入接线阶段：每attachment的不可变几何、Down-Up/Tab/Enter/Space和一次消费已接实际RawInput与私有动作桥；几何/代次/快照/窗口/DPI改变撤销旧证明，导航通知Core失效。动作62/62、消息25/25、运行消息20/20、协议80/80、内核17/17及隐藏Win32窗口5组通过；隔离ReleasePlayer原生输入IPC4组通过（显式scale1.5、实际DPI120）。最终真实物理/DPI验收未代填。
+
+- [x] 原生输入阶段完整build→start/identity通过：Core69160/Player80360/Watchdog95932/配置器124352，日志20261003_045140.txt；当前v2恢复为inactive。已正常退出Core，停止本轮开发监听，Dext进程及1620/1621监听0。
+- [ ] Task2继续：启动完成仲裁和同Player闲置；Task3生产宿主还须落实invalidate→ack→布局→publish→ack的几何协议，随后Task4个人布局/物理输入/DPI/安全故障恢复与包末审查。完整16项准备度仍1/16，最终集中验收前不合并。
+
+- [x] Task2启动仲裁：Core提供当前starting阶段一次性完成和可信新文档重启；保留暂停/锁屏/前台、已提交Desk与最终队列，旧阶段完成不得结束重载后的start。Player私有消息包含当前代次/全局修订/生命周期修订，ready按真实文档去重。之后接同Player闲置及生产DOM的媒体完成/超时。
+
+- [x] 启动仲裁验证：内核21/21、协议83/83、输入消息26/26、动作62/62、运行消息20/20；实际ReleasePlayer五组通过（完成消息、同文档ready去重、重载新ready等）。完整build→start/identity通过：Core102804/Player41456/Watchdog115704/配置器73840，日志20261003_051414.txt；当前v2恢复inactive。正常退出后Dext进程与1620/1621监听0。
+- [ ] Task2继续同Player闲置展示与宿主唤醒；Task3实现生产媒体完成/超时与DOM，Task4补物理输入/DPI/安全恢复。16项就绪仍1/16，最终集中验收前不合并。
+
+- [x] Task2同Player闲置：可信宿主仅切stage并保留Windows事实；原Player临时脱离WorkerW展示idle，唤醒还原父窗/样式/坐标且第一次输入不转发。播放策略保留手动暂停/锁屏/电源规则；还原失败隐藏并关闭本Player。先验证实际原生窗口与权限边界，再完整build/start，生产DOM和最终物理验收后补。
+
+- [x] 同Player闲置阶段验证：内核22/22、协议86/86、动作65/65；真实Win32三组通过。实际ReleasePlayer同HWND/PID的child/popup两分支往返、DPI120、原有五组原生输入/启动/导航验证通过。完整build→start/identity全OK：Core72912/Player63172/Watchdog39464/配置器93232，日志20261003_060229.txt；v2恢复inactive。正常退出后Dext进程、1620/1621监听、资源缓存均0。
+- [ ] Task2/3继续：原生v3生产DOM、start/idle媒体与完成/超时，消费者级数据/动作、几何失效握手；Task4实际Core原生Room闲置/物理输入/DPI/布局/故障恢复与一次完整审查。7项集中人工验收不变，16项就绪仍1/16。
+
+- [x] Task2/3授权查询接线（2026-10-03）：先写生产权限/原生严格消息失败回归，Core按当前安装、消费者、阶段和个人授权原子返回声明能力状态；宿主不以清单声明当成授权。完整原生DOM与最终7项验收继续保留。
+
+- [x] 消费者能力元数据验证：动作77/77、原生输入消息27/27、内核22/22、协议86/86；完整Core/ReleasePlayer构建通过。实际ReleasePlayer新增能力查询/原生回包和伪声明/旧修订拒绝通过，原有同HWND闲置两分支及五组输入/启动/重载边界保持通过。
+- [x] 同分支start/identity全OK：Core123928/Player79032/Watchdog73352/配置器19264，日志20261003_063928.txt；恢复已有v2为inactive。正常退出Core与配置器，开发监听已停；生产DOM/逐次数据授权/几何握手及最终7项仍待继续，16项就绪仍1/16。
+
+- [x] Task3媒体宿主模块：按冻结D11时序测试先行，实现image/GIF/video/HTML槽的持续节点、暂停计时、结束/停滞降级和idle持续；HTML执行委托iframe宿主，完成只通知当前Core阶段。
+
+- [x] Task3媒体模块验证：生产共享模型/SDK/媒体合计40/40（14+14+12）；实际ReleasePlayer加载同一media-host.js，GIF500ms、3sMP4 ended、HTML done一次、同WebM节点暂停后继续前进/静音循环和idle HTML done拒绝通过。原生资源/撤销/重载四组保持通过；完成回调和阶段在该夹具中是模拟Core，生产DOM/iframe/Core联动未据此完成。
+- [x] 最新完整build→start/identity通过：Core54504/Player60004/Watchdog89832/配置器98692，日志20261003_070458.txt；已有v2恢复inactive。验证后正常退出Core/配置器并停止开发监听。
+- [ ] Task3继续：官方index/main/style/LivelyInfo、逐实例iframe/SDK路由、Core逐次数据/动作、默认/作者过渡与几何握手；原生挂起消息的媒体计时暂停及生产Core启动/闲置仍要实际整体验证。Task4/最终7项和16项全景保持未完成。
+
+- [x] Task3 iframe模块：先分离渲染活动与输入operable（Core正常切页仍允许排队，失焦关闭输入不等于播放暂停）；然后生产frame-host以固定WindowProxy/会话/文档token路由SDK、原子Core能力状态、持续节点/订阅和有界请求。原生逐iframe媒体控制及最终页面/Core联动仍须接上实测。
+
+- [x] iframe模块验证（2026-10-03）：模型15/SDK14/媒体12/iframe13=54/54；真实ReleasePlayer运行生产frame-host与完整SDK，固定WindowProxy、能力状态、读数单独拒绝、单订阅暂停恢复、当前消费者动作路由、沙箱直接原生拒绝、重载新token/旧token拒绝通过。能力/数据/激活回复仍由隔离夹具模拟Core；不计实际物理动作或生产Core完整接线。
+- [ ] 原生iframe媒体控制、Player挂起前计时暂停、官方页面/DOM与Core逐次数据/动作、几何握手仍继续；Task4与最终7项人工验收未完成。
+
+- [x] iframe阶段完整build→start/identity成功：Core65052/Player8564/Watchdog50436/配置器59448，日志20261003_080601.txt；实际恢复已有v2，v3-status inactive。用户明确允许退出后核对PID/绝对路径正常关闭Core和配置器，自己的watcher结束；Dext进程、1620/1621监听、资源缓存均0。
+
+- [x] Task3原生暂停计时模块：先建立生产media/frame/playback失败回归，在Player暂停前同步通知官方页，停止媒体期限/订阅；恢复时同步投递最后Core状态后释放播放。保留同文档实例与Core权威，不以夹具代填完整生产页面或物理验收。
+
+- [x] 原生暂停回归：模型15/SDK14/媒体14/iframe14/播放桥5=62/62；原生资源31/31、运行消息20/20。真实ReleasePlayer曾在暂停期间按旧revision完成500ms启动，接入同步播放桥后保持剩余活动计时，恢复先投递最后snapshot revision3，iframe新来源也带revision3。旧暂停缓存/撤销/重载/未知命令五组IPC回归通过；能力/数据/完成回复仍是夹具模拟Core。
+- [ ] 剩余生产页面/DOM、逐次Core数据与动作、原生逐iframe音视频政策、几何握手、Task4实际Core原生Room和最终7项验收继续；暂停模块实测不代表完整页面已安装。
+
+- [x] 暂停阶段最终完整build→start/identity通过：Core91052/Player70888/Watchdog83660/配置器78452，日志20261003_082904.txt；真实状态inactive符合已有v2恢复。正常退出Core/配置器、自己的开发watcher结束，Dext进程/1620/1621监听/资源缓存0。最终7项验收仍保留，不合并。
+
+- [x] Task3 Core消费者数据基础桥：真实授权前后双检查，中间采集在所有授权锁外；严格原生data请求固定consumer/capability/当前revision，数据只保留32KiB/深度24的JSON快照与状态，撤权/换修订/阶段/代次后无旧结果。接入time/hardware/media/audio实际来源，SDK订阅逐值重新授权；独立源码测试和真实ReleasePlayer IPC验证后提交，生产页面/Task4和最终7项不缩减。
+
+- [x] Core数据基础桥验证（2026-10-03）：动作/来源98/98、严格原生消息28/28、内核22/22、协议86/86；实际Windows只读采集时间/硬件/音量通过，当前无媒体会话返回missing。真实ReleasePlayer通过SDK→私有data IPC读数与暂停恢复；该隔离夹具Core回复仍模拟。完整build→start/identity通过：Core60236/Player22844/Watchdog64436，配置器74088为本轮共享D缓存构建；日志20261003_091411.txt，v2恢复inactive。按PID/绝对路径正常退出后Dext进程/1620/1621监听/资源缓存0。
+- [ ] Task3继续正式index/main/style/LivelyInfo与DOM：生产逐值轮询、授权变化恢复、持续组件/默认与作者过渡、当前几何握手、原生逐iframe媒体。当前数据源基础桥不代表原生Room已安装；Task4、7项集中验收、16项范围保持。
+
+- [x] Task3正式原生通信模块：先建立请求作用域/超时/迟到回包、单来源逐值轮询、暂停/销毁取消、同修订撤权和再授权恢复的失败回归；生产native-host只向固定WebView传输发严格请求，Core每值授权，不凭缓存能力放行。接生产frame/media后再补正式DOM及真实Core闭环，7项/16项范围不缩减。
+
+- [x] 正式原生通信模块验证：新10/10、生产组合72/72、资源31/31；实际ReleasePlayer加载native-host/frame/SDK，持续每值私有data IPC，同revision撤权仅隐藏读数、再授权无需重载恢复，原生暂停剩余500ms与最后revision3仍通过。对象传输实际失败后改JSON字符串；夹具Core回包仍模拟，不计生产Core原生Room通过。完整build→start/identity成功：Core104252/Player80696/Watchdog62484/config22424（本轮共享D缓存），日志20261003_093108.txt；v2恢复inactive，正常退出后全部验证进程/端口/资源缓存0。
+- [ ] 下一步正式index/main/style/LivelyInfo及dom-host/input-host：把已验证模块接真正官方页面，持续实例、默认/作者动画与Core提交、每revision几何失效握手；原生逐iframe媒体/布局/Task4和最终7项仍继续。
+
+- [x] Task3正式DOM入口基础：测试先行，建立index/main/style/LivelyInfo与dom-host；只接受当前Core上下文/快照，先invalidate回执再更新DOM、发布当前几何后启用动作；持续frame/media节点不重挂，queue修订重新发布输入但不重播动画，启动/闲置沿用已验证模块。原生逐iframe媒体政策、个人布局/移动中命中与完整真实Core/Task4门槛仍须随后完成。
+
+- [x] 正式入口基础验证（2026-10-03）：DOM12/Main7/既有72，组合91/91；同一正式index/main/style/runtime/dom/native/frame/media/SDK在真实ReleasePlayer通过当前几何回执、持续读数、两个SDK文档保持、Core提交前不改变current、queue不重播、原生暂停/最后revision6、撤销释放。Core能力/数据/状态/提交仍由该隔离夹具模拟，不是实际Core已安装Room或物理输入。
+- [x] 正式入口阶段完整build→start/identity成功：Core105132/Player86420/Watchdog24704/config46308（本轮共享D缓存），日志20261003_100228.txt；原v2恢复inactive。按PID/路径正常退出，最终进程/开发端口/资源缓存0；最新有界几何重试后真实整页回归再次通过。最终7项不申请中途验收。
+- [ ] 必须继续完整Task3/4：实际Core原生Room安装/恢复、四媒体完整生命周期、原生逐iframe音视频暂停，消费者导航/控制/存储与退出确认适配，个人布局/占用/真实DPI/物理输入与故障恢复。当前默认动画只给静止shared按钮发布命中；移动按钮与旋转/斜切输入、遮挡裁剪、多图标同按钮及受控焦点仍须input-host完善，不能把目前保守拒绝当作已满足D16。16项就绪仍1/16。
+
+- [x] Task3原生逐iframe音视频基础：先验证首航前捕获原始媒体方法、默认暂停、宿主私有secret/文档nonce/单调序列、暂停保留播放意图、旧文档/伪请求拒绝和closed Shadow DOM；再嵌入Player，在实际Frame对象上绑定当前消费者/代次及Core渲染事实，暂停屏障先停止所有子文档，恢复只释放当前活动帧。作者SDK token不代表播放策略权限，网络和数据授权保持独立；实际ReleasePlayer与整页回归后提交。
+
+- [x] 原生音视频基础证据：102/102 JS、严格媒体/输入28/运行20/资源31，实际ReleasePlayer WAV/closed Shadow MP4/嵌套音频、默认暂停/意图保留/作者方法覆盖和伪请求拒绝、phase/私有挂起最新状态/根更名/撤销通过；Core回包仍fixture。修复原生Destroyed COM重入崩溃及异步report修订竞态，完整build→start/identity通过（Core50684/Player57196/Watchdog76868/config122420），原v2 inactive、精确正常退出。
+- [ ] 继续完整Task3/4：WebAudio/AudioContext与更完整HTML音频生命周期、实际Core安装原生Room/保存并恢复用户桌面、消费者导航/控制/存储及退出确认、个人布局/移动中精确命中/遮挡/焦点、真实DPI/物理输入/故障恢复。最终7项和全景16项保持，不将本基础提交记为P5完成。
+
+- 最终销毁路径补强：缓存FrameId移除幂等、政策失败先静音再通过UI队列退出原生事件栈、processFailed撤销其余媒体。最新完整build与实际整页媒体回归再通过；最终start/identity Core106108/Player87720/Watchdog75280/config119552（本轮共享D缓存），日志20261003_111305.txt；原v2 inactive，随后按PID/路径正常退出。
+
+
+- [x] Task4真实Core原生Room闭环起步：现有v3-live只检验旧v2 overlay，不作原生证据。新增生产Rust安装CLI与隔离正式宿主探针，先保存WallpaperLayout/checkpoint与原Room哈希，启动精确分支Core并核验身份；临时原生source→生产install→Core复核→实际WorkerW/SDK/宿主状态，可信官方顶部测试导航只计协议回归，绝不代填物理输入。finally重铺原壁纸、正常退出Core后精确恢复布局/checkpoint并复核；任何恢复失败保留可恢复目录并报告。观察使用临时官方页title，不向生产Core发送saveRoom测试消息；原官方脚本/用户Room不改。全部7项/16项仍保留，完成此阶段后继续完整Task3/4。
+
+- [x] 首次实际Core原生证据：生产Rust安装→真实Core复核→GIF start→实际SDK/几何→可信顶部导航→Core home→focus revision2→4，Player63652与两份场景/共享Widget文档UUID保持，实际父窗WorkerW/Progman；正常重铺原壁纸并退出Core后，布局/设置/checkpoint逐字节与用户Room哈希恢复。该导航是协议回归，不是物理输入；当前证据写native-core-live-evidence。
+- [x] 实际宿主诊断修正：Core修订改变取消旧capabilities查询，frame-host旧失败回调却无作用域检查写permissionsUnavailable；先建立旧revision与disposed失败回归，再修当前查询保护，实际Core再验证。
+
+- [x] 实际Core诊断双修复：旧查询/销毁后失败回调先核对当前scope；新快照必须先推进native identity再更新iframe。生产原生桥RED确实返回staleInput，修正后完整JS105/105。真实Core再次验证Player115676、session7d2d80d9、home revision2→focus revision4，两份SDK文档保持、frameError/error均null，MP4实际ready4/time0.576/静音循环播放。生产Rust安装/真实Core复核/WorkerW父窗均通过；该顶部测试导航仍只计协议回归。
+- [x] 本阶段完整build→start/identity通过：Core52976/Player90320/Watchdog95676，配置器54796为本轮共享D缓存构建（identity脚本显示OTHER，绝对路径已核对），日志20261003_115323.txt；原v2恢复inactive。真实探针保存并精确恢复布局/设置/checkpoint和用户Room哈希；正常退出Core/配置器及本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生Room目录均0。
+- [ ] 完整Task3/4继续：WebAudio/AudioContext、四媒体完整生命周期/实际idle与重启、作者导航/控制/存储/退出确认、个人布局/占用/移动与非矩形精确命中/焦点、实际物理输入/DPI/故障恢复。最终7项不申请中途验收，16项开发就绪仍1/16。
+
+- [x] Task4真实Core重启恢复门槛：在c14214f的临时生产安装副本上先由Core提交focus，再正常关闭/重新启动精确Core；不重新安装、不手动请求focus，验证新会话/新Player仍恢复已提交Desk、同安装摘要和两份新SDK文档，GIF start只在新文档播放。finally继续恢复原壁纸和布局/设置/checkpoint。此项只补重启门槛，不代填物理输入/DPI/idle组合或完整P5完成。WebAudio设计需即时输出闸门与异步suspend完成屏障，按实际Runtime验证后实施。
+
+- [x] 同安装副本实际Core正常重启通过：Player83528/session9333ca54先提交focus revision4；正常退出后新Player102184/session540fdca3自动恢复focus revision2，安装stamp不变、测试nav=0，两份SDK文档为新文档。真实GIF starting→desktop观察分别559ms/558ms且各仅一次，MP4恢复ready4/播放time0.253。finally原壁纸、布局/设置/checkpoint与用户Room哈希恢复，临时目录清除。
+- [x] 本阶段build→start/identity完成：Core67896/Player69960/Watchdog8564/config115068（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_121155.txt；原v2 inactive。核对PID/路径正常退出及结束本轮watcher后，Dext进程/1620/1621监听/资源暂存/临时原生目录均0。完整P5/最终7项/全景16项仍继续，开发就绪1/16。
+
+- [x] Task3 WebAudio门槛（BASE3c01bd9）：首航前捕获AudioContext构造/原型、AudioNode连线及原生状态；内部Gain输出闸门不向作者泄露，默认/阶段/暂停/销毁即时静音并保留作者resume/suspend意图。异步挂起回执须等上下文真正suspended/closed，原生Player有界轮询后才挂起renderer；迟到resume不能恢复已关闭输出。先行为RED，再真实ReleasePlayer根/嵌套AudioContext、实际currentTime暂停/恢复与方法覆盖/伪token回归，完整build→start/identity和正常退出后具名提交。其他Task3/4、最终7项和16项范围保持。
+
+- [x] WebAudio实际RED→GREEN：生产JS组合116/116（原95+原生媒体21）；AudioContext私有Gain闸门/原生异步suspend回执、作者暂停意图、迟到resume拒绝、根/嵌套文档销毁均接入。额外行为失败复现并修复：外域上下文/硬件destination借用、Array继承索引setter与species泄露私有记录、Object.toJSON拦截/伪造暂停回执（ERRORS #180–#182）。
+- [x] 实际ReleasePlayer最新整页回归：两根/嵌套AudioContext真实currentTime运行；挂起1.1s后活动时间0.717s，暂停时间未计入时钟；作者实例方法覆盖、作者suspend意图、阶段/私有暂停/最新状态/根更名/撤销通过。实际Array攻击未获私有记录、Object.toJSON拦截次数0；blank-child借用由实际沙箱SecurityError拒绝，新增原生品牌守卫另由生产JS行为测试验证。该夹具Core回包仍模拟。
+- [x] 实际Core WebAudio安装/重启补证：生产安装同副本，Player68788/home→focus revision4后正常Core重启，新Player95068/新session自动恢复focus revision2、安装stamp不变、测试nav=0；两份新SDK文档中AudioContext均running且time>0.05，GIF start各一次554ms/561ms、视频实际解码恢复。首次探针过早读取旧音频观察值失败，改为等待真实作者状态报告后通过（#175追加）；不倒填首次失败为通过。finally原桌面/布局/设置/checkpoint逐字节及用户Room哈希恢复。该实际Core证据早于最后null-prototype回执补强，补强后完整build与实际ReleasePlayer再次通过。
+- [x] 最新完整build→start/identity通过：Core113124/Player109424/Watchdog27212/config65792（本轮共享D缓存，identity显示OTHER并核对精确路径），日志20261003_131909.txt；原v2 inactive。用户已授权正常退出，核对PID/绝对路径关闭Core和配置器，本轮watcher结束；Dext进程/1620与1621监听/资源暂存/临时原生目录均0。
+- [ ] 完整Task3/4继续：作者导航/控制/存储/退出确认，完整四媒体idle/锁屏组合、独立Player故障重建，个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。WebAudio本基础不代填AudioWorklet或完整恶意内容验证；最终7项保持待执行，16项开发就绪仍1/16，不合并master。
+
+- [x] Task3消费者本机存储权威基础（BASEf158bdb）：按Room副本与稳定consumer隔离JSON KV，逐次核验当前连接/安装/session/revision/活动阶段及storage.read/write个人授权；缺键get返回null，每值32KiB/深度24、每消费者128键/64KiB及全局1MiB约束，失败保留原字节。原子准备不等待gateway锁，个人状态发布前不暴露成功；先真实源码RED→GREEN、完整build→start/identity/正常退出后提交。原生IPC/SDK适配随后接通，最终7项不变。导航因原生自动激活与作者请求需合并为同一次受控输入，随input-host完成，未借可信顶部接口放行。
+
+- [x] 消费者存储Core基础验证：生产接口缺失RED→110/110 GREEN（原98+12），读写授权分离、消费者/副本隔离、撤权/旧安装/旧修订/关闭拒绝、暂停/锁屏/前台拒绝、null/持久重读、旧format1兼容、配额和发布失败原字节保留通过。4097项小数组实际Accepted/Denied失败后补递归容器限制（#183）；已关闭私有Player连接不再读写。
+- [x] 本基础最新完整build→start/identity：Core73456/Player112196/Watchdog93060/config51788（本轮共享D缓存，identity OTHER并核对精确路径），日志20261003_135827.txt；原v2 inactive。正常精确PID/路径退出Core和配置器、自己的watcher结束，用户个人快照哈希/不存在状态未变。
+- [ ] 下一步接storageGet/storageSet严格原生消息、Player→Core适配与正式DOM/SDK，按固定消费者和当前scope传输有界JSON并实际ReleasePlayer验证；Core基础未代填已授权作者KV的实际Core端到端。作者导航/系统控制/退出确认、完整idle/锁屏/Player故障、个人布局与精确输入/物理DPI仍继续，最终7项与16项保持。
+
+- [x] Task3消费者存储原生接线（BASE8d929cb）：新增严格storageGet/storageSet消息，固定consumer/key与有界JSON值；Core私有连接逐次检查当前修订/安装/个人授权，官方DOM仅转发所属消费者，SDKget/set保持JSON/null语义。先原生消息与生产JS行为RED→GREEN，再同一正式页面实际ReleasePlayer及真实Core生产安装/当前授权KV/同副本重启持久读取。实机探针仅给新临时Room测试授权，保存个人快照原字节/不存在状态并finally恢复原桌面与全部备份；授权UI与物理输入/其他Task3/4仍继续。完整build→start/identity、正常退出、具名提交，最终7项和16项不减。
+
+- [x] 存储接线阶段验证：严格storageGet/storageSet与正式DOM/SDK通过，生产JS121/121、原生消息30/30、存储/动作110/110。真实Core初次被用户grid覆盖规则正常暂停；只设桌面前台不足以解除最大化可见窗口的覆盖，临时前台算法并finally恢复原设置后，确实复现缺少Core处理导致的denied，再实现有界异步私有适配。
+- [x] 真实生产安装/授权KV端到端：Player46128同文档home→focus revision4，两消费者同key隔离、中文/ISO字符串、实时撤权拒绝/恢复读取、日志不包含KV值通过；正常Core重启后新Player48720/session自动focus revision2，同stamp、新SDK文档读取原值且未覆盖。fixture管理员仅准备新临时Room消费者的测试授权，权限UI未据此完成；所有Core回包/安装复核/Windows事实均真实。
+- [x] 实际日志隐私RED→GREEN：原Core通用IPC日志含ValueJson，marker检查失败；原生请求改为只记method/generation/revision，真实Core再次通过（#184）。夹具读取运行中的NLog须FileShare.ReadWrite（#186），首次原始字符串语法错误不计行为RED（#173追加）。finally原桌面、布局/设置/checkpoint/personal逐字节或不存在状态与用户Room哈希恢复。
+- [x] 最新完整build→start/identity：Core80748/Player113524/Watchdog111664/config88192（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_144755.txt；原v2 inactive。按用户授权精确PID/路径正常退出，自己的watcher自然结束；Dext进程/1620与1621监听/资源暂存/临时原生目录0，个人快照哈希/不存在状态未变。
+- [ ] Task3/4下一步：将原生输入证明与作者desk.navigate/系统控制合并为同一次受控动作，补退出确认；继续完整四媒体idle/锁屏组合、独立Player故障重建、个人布局/占用/移动与非矩形精确命中/遮挡/多图标/焦点、实际物理输入/DPI。最终7项人工步骤不申请中途验收，完整16项开发就绪仍1/16，不合并master。
+
+- [x] Task3作者导航Core适配（BASEdcb8c3d，已由5896f14接通）：从当前原生完成证明取得所属consumer/button，作者仅请求有界desk.next/previous/go，逐次核对用户覆盖后的实际动作，复用当前授权/一次消费/锁外Core仲裁；请求不能改成另一个动作或覆盖个人绑定。先源码行为RED→GREEN，再接输入宿主统一一次性派发及严格消息/正式SDK/真实Core。默认入口与作者请求竞态未解决前不标整个导航接线完成；系统控制、退出确认与其余Task3/4保持。
+
+- [x] 导航Core适配第一组：缺失NavigateNative的源码RED→125/125；三个导航变体、无输入/错consumer、默认动作不匹配、个人应用覆盖、撤权/过期/几何/代次/关闭/暂停/锁屏/失焦通过。完整build和启动身份核验通过，Core创建时间晚于新DLL写入；原v2 inactive，已正常退出。
+- [x] 补无默认动作的动态按钮：已声明入口在真实输入和desk.navigate授权下可由作者选择合法目标；已有默认/个人动作必须匹配。仅TargetId的个人绑定在无作者默认动作时应解析为binding.launch，不能被作者导航越过。先行为失败，再同边界修复；完整原生SDK派发仍后续接通。
+
+- [x] 导航Core适配最终128/128（原110+18）：三个变体、current/target分离、匹配默认或个人动作、无动作入口动态go、TargetId-only个人应用绑定、错consumer/无输入/撤权/过期/几何/代次/关闭/暂停/锁屏/失焦均验证。动态入口三项125/128实际失败后修复；未知Desk拒绝不消费原生证明，默认/个人动作不匹配同样保留正常fallback。
+- [x] 最终完整build→start/identity：Core113280/Player67436/Watchdog4976/config25560（本轮共享D缓存，identity显示OTHER并核对路径），日志20261003_152025.txt；原v2 inactive。正常精确PID/路径退出Core/配置器，自己的watcher终止，用户个人快照哈希/不存在状态未变。
+- [x] 导航生产者历史接线待办已由5896f14完成：严格原生navigate、默认/SDK统一派发及真实Core作者导航通过。系统控制/退出确认、完整生命周期/个人布局/精确输入和最终7项见本台账后续未完成项；readiness1/16。
+
+
+- [x] Task3导航/输入统一派发（BASEac4b0d1，2026-10-03）：目标是严格原生navigate路由与同一次Core输入的作者请求/默认回退，保留个人绑定优先。先写真实生产行为失败回归；Core完成序号、消费回执、viewport复核；官方DOM固定consumer、仅状态公开、有限回退和失效取消；128项基础上验证并完整构建/真实Player与Core验证。范围外仍按本包总计划，最终7项不缩减、不提前验收或合并。
+
+- [x] 严格navigate/私有输入完成序号与消费回执：JS真实RED27/36后36/36；新增同文档修订回执实际RED15/16后修复。最终生产JS132/132（111宿主/SDK+21原生媒体策略）、Core动作132/132、严格原生消息32/32。默认回退100ms，SDK在途时等待，Core仍从实际DOWN计算1500ms期限；旧序号不能消费同按钮的新输入。
+- [x] 实际ReleasePlayer输入/窗口/重载五组保持通过。实际Core原生安装/作者SDK/Windows鼠标注入：无输入timer均inputRequired；scene请求next返回accepted；同一Core证明只消费一次，未用顶层导航驱动，共享文档保持。Core正常重启同安装恢复focus/KV和新SDK文档；最终11项PASS。
+- [x] 探针纠正：operable不在运行诊断对象里，改读真实Core；System.Type与Protobuf.Type冲突先修编译，不计生产RED。WindowFromPoint实见ChatGPT PID42576覆盖测试像素107,56，第二轮暂停是正确拒绝；临时Shell显示桌面、验证真实桌面落点，finally Undo核对全部原窗口最小化/最大化状态并恢复鼠标。重启初期前台实为GameViewer工具窗，待原生初始化后重新聚焦桌面一次，全门槛通过，不改生产暂停策略。
+- [x] 完整build→start/身份：Core22860/Player88968/Watchdog74480/config114160，日志20261003_162208.txt，原v2 inactive。配置器为所属D共享缓存，身份脚本OTHER/exit1，绝对路径独立核对；不写成脚本全OK。按PID/路径正常退出，个人SHA256/原不存在状态不变，watcher终止exit0。
+- [ ] Task3继续：可信Dext退出确认（媒体/音量基础已在本台账后续接通）；Task4四媒体生命周期/移动与遮挡的精确输入、个人布局/故障恢复、最后一次完整P5审查。仍按原16项全景与7项人工门槛，readiness1/16，不中途合并。
+
+- 2026-10-03最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；全部工具会话已终止。
+
+
+- [x] Task3系统控制接线（BASE5896f14，2026-10-03）：一句目标是SDK封闭媒体动作和Windows默认主音量经当前消费者/声明入口的真实一次输入、授权和限频派发。个人默认/绑定存在时拒绝作者替换并保留默认回退；Core准备在私有锁内，Windows执行在锁外并有全局/attachment并发界限、超时和真实消费回执。先生产行为RED，再严格Player消息/官方DOM/真实Core验证并提交。可信Dext退出确认继续下一步骤；本包全Task3/4、16项和最终7项保持，不中途验收或合并。
+
+- [x] 系统控制Core生产者：真实生产源码166/166（132+34），五种媒体/合法音量patch、撤权/旧输入/几何/暂停/锁屏/失焦、个人绑定和默认导航优先、限频与锁外服务失败均通过。严格消息/SDK/Windows实际接线继续，不将生产者测试标为端到端完成。
+
+
+- [x] 严格Player消息/正式SDK接线：先生产RED，最终JS140/140、消息35/35、Core168/168。mediaControl五意图、audioControl非空有限patch，固定consumer/当前identity/geometry/私有sequence；author仅收status。服务失败消费回执取消默认，未消费的限频/个人绑定拒绝保留默认回退。同文档修订保留在途动作，暂停/换代次/会话/销毁取消。
+- [x] Windows派发界限：每attachment1、全Core4个任务，非阻塞admission；4s等待，比私有5s更短，超时槽位直到原任务真正终止才释放。限制可跨Room/Player重建；媒体等锁/解析及音量设备解析后的取消复核已补，实际取消音量请求不改endpoint。错误不包含私有异常/设备身份。
+- [x] 最终完整build后的实际Core控制：官方SDK经Windows鼠标注入音量改动→恢复，五媒体命令均到达本轮拥有的静音WinRT publisher（每次派发前真实Core当前媒体title核验）。8次完成各一次消费/8份accepted、无默认重复；动态导航仍同文档切页，正常重启同安装恢复focus/KV/新SDK文档。最终15项PASS，注入不填物理/DPI/听音人工门槛。
+- [x] 探针纠正：新ManualClock测试错用Now，先改Advance，不计功能RED；同时无输入请求可被单attachment界限拒绝controlUnavailable，有限重试后再要求inputRequired。多次回执扩大标题使观察丢失，改只报告必要字段与精简KV投影，最终2842字符完整JSON；不是生产控制失败。错误参数--v3-status .先失败，改正确inactive后通过；进程筛选改按真实Lively.Player.WebView2.exe名称，不凭错误别名宣称缺失。
+- [x] 最终常规start/identity：Core40928、Player124608、Watchdog99404、config69696，日志20261003_173146.txt；原v2 inactive。配置器仍所属D共享缓存，身份脚本OTHER/exit1，路径独立核验，不宣称全脚本OK。按精确PID/path正常退出Core/配置器，watcher41725终止exit0，个人SHA256/原不存在状态保持。实际Core夹具finally恢复原桌面、数据、窗口最小化/最大化、前台/鼠标与原endpoint音量。
+- [ ] 唯一接续：可信Dext退出确认与彻底退出产品；随后按Task4完整四媒体生命周期/Player故障、移动/遮挡精确输入、个人布局/恢复和最后一次完整P5审查推进。本包全16项/readiness1/16与上方7项集中人工验收保持，不中途合并。
+
+- 2026-10-03系统控制最终清理核对：DextProcesses=0、DevListeners=0、ResourceCacheFiles=0、NativeFixtureDirectories=0；Core/配置器正常退出，全部工具会话已终止。
+
+- [x] Task3可信退出确认基础接线（BASE87e2d65，2026-10-03）：一句目标是真实入口触发Dext原生确认，取消保持运行，确认后正常关闭整个产品并恢复普通Windows桌面。Core先一次消费输入并签发仅内存可用的确认许可；原生UI在锁外展示，确认后按当前安装/连接/消费者/按钮/授权/绑定/锁屏复核，旧文档与许可重放拒绝。当前可信确认造成的失焦/播放暂停不得误拒自身用户决定；例外仅用于exit许可，不能扩展普通动作。配置器通过核验的Core身份接收独立产品退出通知，普通退出Core继续保留配置器。先生产源码RED/GREEN，再严格宿主/原生UI/完整产品实机验证、完整build→start/退出及具名提交。全Task4/16项/readiness1/16和最终7项仍保持。
+
+- [x] 可信退出私有生产者179/179，加入Core确认协调器后185/185：许可仅Core内存，两个JSON序列器均剥离；取消/重放/错owner/旧文档/撤权/绑定/安装/关闭/锁屏/阶段均检查。原生UI在锁外，自己的失焦/播放暂停只对该退出确认续体豁免，普通动作保持原门槛。并发确认全Core仅一窗，UI失败/忙取消许可，不执行退出。
+- [x] 正式DOM/SDK141/141与Rust生命周期7/7：dext.exit声明接到actions.activate，作者只获requiresConfirmation和安全状态，没有确认方法或私有续体；配置器原生侧读独立产品退出标志并核对产品/数据/pipe、当前worktree和实际PID/executable后正常exit(0)。普通退出Core不发布标志，仍保留配置器。严格原生消息中的伪确认字段专项继续最终回归。
+- [x] 原生退出最终整轮实机：最终native-exit-core-live-final 13项PASS；正式Rust安装/实际Core/ReleasePlayer/SDK/OS鼠标中No取消保持Core/Player/configurator，Yes默认否确认后四进程正常退出、壁纸窗口消失。无输入exit timer拒绝；普通Core关闭/同副本重启保留配置器。最终finally原布局/settings/checkpoint/personal字节或缺失状态及用户Room哈希恢复；不代填物理输入/DPI人工验收。
+- [x] 最终完整build→常规start/身份/关闭：Core74912/Player27284/Watchdog27548/config32948，日志20261003_182449.txt；原v2 inactive。配置器为本worktree所属D共享缓存，identity脚本OTHER/exit1，路径独立核对，不宣称全脚本OK。普通Core退出保留配置器，随后正常关本配置器窗口，start watcher62965终止exit0；原四文件SHA256/缺失状态保持。最后检查DextProcesses/DevListeners/ResourceCacheFiles/NativeFixtureDirectories全部0。
+- [ ] 下一接续为Task4：完整四媒体start/idle/私有暂停/锁屏/wake与独立Player故障重建；再个人布局/占用/移动与精确命中/遮挡/多图标/焦点，最终一次整体P5审查。16项开发就绪仍1/16，7项集中人工步骤保留，当前P5仍开发中，不中途合并。
+
+- [ ] Task4完整媒体生命周期与Player故障恢复（BASEb91b0d2，2026-10-03）：一句目标是image/video/gif/localHTML在start/desktop/idle/私有暂停/锁屏/wake组合中按Core状态运行，独立Player故障后正常重建同安装且保留已提交Desk/KV、新文档/新session拒绝旧输入和完成。先核对生产入口并写行为RED，修复必要缺口，再实际Core/ReleasePlayer/SDK与OS注入验证，finally恢复原文件/窗口/鼠标且保持Dext退出；不把私有锁屏事实注入计为实际Windows锁屏、不锁用户账户。单轮代理只读映射，根集中编辑/提交；全Task4个人布局/移动/精确命中、16项就绪1/16和最终7项人工门槛保持，最终集中验收前不合并。
+
+- [x] Task4首批生产缺口已按RED/GREEN修复：无idle桌面图标保留但官方输入几何仍限desktop；Kernel/Core私有Retire保留checkpoint、清易失会话/转场/队列并撤销旧连接/订阅。内核23/23、协议87/87；新协议夹具先误用coordinator导航/默认无存储Kernel，修正真实view与MemoryCheckpointStore后通过，未放宽生产角色。
+- [x] 独立Player故障实机：task4-recovery-exposed整轮通过；OS鼠标→作者SDK提交focus后正常Core重启，再只Kill已核对绝对路径的本轮ReleasePlayer；同Core自动新PID/session/SDK文档恢复focus/stamp/原KV及start/video/audio。主动CloseAll不重生。finally原四文件字节/不存在状态、用户Room及临时showdesktop窗口旗标/前台/鼠标恢复、Core正常退出。前两份未暴露真实桌面的夹具停在重启KV前台拒绝，失败证据保留，不计故障重建RED。
+- [x] 四媒体生命周期首轮image实机通过：task4-lifecycle-image-final；实际Core预暂停start不消耗900ms非活动墙钟、正常启动/同安装Core重启，然后同Player native idle→私有暂停/恢复→OS鼠标wake及再次idle→Core stop，Desk/会话/文档/实例/start次数及原父窗/边界保持。锁屏仅行为测试，不锁账户、不代填真实Windows锁屏人工门槛；GIF动画冻结仍待视觉人工证据。
+
+- [x] Task4补证发现真实GIF问题：task4-lifecycle-gif-visual中owned全屏Player中心OS像素暂停期间仍变化，状态/解码门槛不能代表视觉冻结；finally原数据/桌面恢复。具体修复方案：原生Player暂停先完成媒体/宿主屏障，再只抓当前WebView内存帧、显示原生静帧并隐藏WebView，使用官方TrySuspendAsync；resume先恢复WebView执行并投递最新Core事实/媒体策略，最后才显示原WebView并释放图像。保持同文档/实例，异步步骤核对playbackRevision、渲染操作串行，另补真实GIF像素与HTML/视频时钟/已有原生媒体策略实机。
+
+- [x] Task4四媒体最新实机：task4-lifecycle-image/video/html-suspend与gif-barrier整轮通过，预暂停start/恢复/同副本Core重启/两轮同文档idle/私有暂停/OS唤醒或Core stop/原父窗边界恢复；GIF实际owned Player十次像素变化/固定/变化，视频与HTML AudioContext排除暂停墙钟后继续。同文档/实例/start次数保留，不填实际锁屏/物理DPI。
+- [x] Native Player暂停修复：当前WebView内存静帧、隐藏后官方TrySuspendAsync、恢复先最新事实与媒体策略再显示；串行操作/代次检查/各三秒边界/失败关闭当前Player，图像不落盘。生产JS143/143、Kernel23/23、Protocol87/87、Actions185/185；task4-verified-build成功，实际ReleasePlayer媒体wire通过（Core仍fixture），最新实际Core退出十三PASS。四媒体/故障恢复探针均finally恢复原文件/用户Room/窗口/前台/鼠标，Core退出。
+- [ ] 接续Task4个人布局：先私有Core个人覆盖模型与原子保存，固定官方宿主get/save、编辑拖动/占用非法落点回原位、视口临时移位缩小不写盘；之后移动/精确命中/遮挡/多图标/受控焦点。动代码前补当前分支计划与独立验收卡；最终一次整体P5审查、七项集中人工/十六项范围不减，开发就绪1/16，不中途合并。
+
+- 2026-10-03 Task4常规启动复核：Core121280/Player68580/Watchdog114424/config99916，日志20261003_192301.txt；原v2会话inactive。identity脚本将所属D共享缓存配置器记OTHER/exit1，实际绝对路径已独立核对，没有宣称全脚本OK。按精确PID/path正常退出Core和配置器、watcher95129结束exit0，原四文件SHA256/缺失状态保持；最终DextProcesses/DevListeners/NativeFixtureDirectories均0，保持Dext退出。
+
+## Task4个人布局原子保存与官方接线计划（BASE58cd855，2026-10-03）
+一句目标：Core按Room副本持有普通图标/共享Widget的位置覆盖，官方桌面保存后重启读回；非法落点或保存失败回原位，缩屏产生的临时布局不写盘。
+范围：独立layoutRevision与图标Desk/icon稳定ID、全局widget component ID，固定1920×1080坐标；仅当前安装/DesktopPlayer/session/revision私有read/save，写入限当前可操作desktop且无转场；只读布局可在暂停/starting保留，不返回其他个人数据，不加入iframe/SDK作者能力。Dock/scene/作者固定按钮不走桌面拖动；另存继续只复制按钮/皮肤，不复制布局/KV/授权。占用由视图当前有效报告计算。
+先生产行为RED：重开/独立revision、不认识ID/非widget/非法坐标/旧revision/旧连接及暂停锁屏转场拒绝、阻塞发布保留旧字节；随后严格Player/native-host和私有Core接线，再DOM长按编辑/拖动、占用回滚及响应式临时调整、实际Core保存重启/故障恢复。每小段更新TODO并具名commit，保持Dext退出，最终一次整体P5审查后集中人工验收。
+人工步骤沿独立验收卡第5/6项：长按普通图标/Widget进入桌面编辑并拖动，落占用区回原位；有效落点保存、重启恢复；缩屏临时移位再缩小，恢复尺寸回保存位置；作品/安装摘要不变，故障保存回原位，物理DPI和旧命中继续专项。此计划不代填任何人工通过，完整16项/就绪1/16、七项最终门槛保持。
+
+- [x] Task4个人布局Core/schema/私有接线：新layout字段读取真实RED（185/186），补Core布局及独立revision后通过；身份/数值/当前Desk与Widget限定/CAS/只读脱离/并发单胜者/写故障保留两revision/旧连接与角色及paused/locked/starting/transition门槛，首轮200/200。严格Player新方法36/38实际RED，JS私有入口3项实际RED，再接只读布局+闭合单item保存后38/38与native-host23/23。私有read在暂停可读取安全布局，save/作者数据/动作仍拒绝；未向frame/SDK增加能力。已补桥关闭/旧格式兼容与实际Player wire验证，继续构建/真实链条。
+- [ ] 个人布局尚未接DOM，当前不能宣称拖动/占用/响应式/实际Core重启保存通过。下一段官方DOM长按编辑/拖动回滚及视口临时布局，作者geometry使用有效Widget位置和实际同实例，不写room.json或安装快照。当前最终七项和16项/就绪1/16保持。
+
+- [x] Task4官方视图纯布局计算计划（2026-10-03）：独立layout-model.js将Core保存值与当前CSS视口有效值分开；图标及role=widget稳定ID投影、全局/当前Desk占用过滤，先保留合法原尺寸位置，再移动冲突项，实在放不下才等比缩小。纯函数不发保存、不断言人工完成；拖动候选按同一占用/其他对象规则判断，局部按钮矩形按逻辑尺寸映射有效位置。先几何/不可变/恢复尺寸行为RED→GREEN，再接DOM，保持作者iframe逻辑尺寸及同实例。
+- [x] 个人布局Core/私有IPC基础最终验证：202/202、38/38、JS/SDK/媒体策略146/146，完整build成功；layout-private-wire-green实际ReleasePlayer接线（Core回包fixture）与layout-native-pause-gif-verified真实Core GIF整轮通过。原生controller显式可见性修复、活动回执和附着后DPI测试门槛见ERRORS #198/#199。
+- [x] 本阶段常规build后start：Core110068/Player31972/Watchdog24180/config109340，20261003_205127.txt；原v2 active=False。所属共享配置器路径独立核对，identity OTHER未冒称全脚本OK。正常精确PID/path关闭、watcher81581 exit0、原四文件hash/缺失状态保持，OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。DOM保存与占用/缩屏/实际布局重启仍待接入。
+
+- [x] Task4纯有效布局模块：模块缺失RED、损坏覆盖20/21行为RED后21/21。CSS视口原尺寸保留/移位优先/必要等比缩小/当前Desk占用/不可变/恢复位置/局部按钮映射及仿射逆变换通过，完全无空位placeable=false，不写个人快照。
+- [x] Task4官方DOM读入/呈现基础：新增七项行为RED后35/35，scope/Desk/读取token拒绝迟到、不阻塞新Desk、共享iframe保持逻辑尺寸及父节点、按钮按有效placement重算、resize不保存、占用保留到显式报告、失败保留已确认呈现/拒绝保存准备状态。生产全JS174/174。layout-model.js加入固定官方服务文件及三个实机夹具，最新完整layout-dom-build成功；layout-dom-frame-media-wire实际ReleasePlayer整页/原生媒体/作者策略回归通过（Core回包仍fixture）。
+- [ ] 官方桌面尚无长按编辑/拖动Save入口；正在补实际Core安全布局读取/正常重启验证，随后接长按、官方Widget把手/编辑覆盖层、指针UP原子Save、无效落点/失败回滚。空动作geometry仍保留鼠标转发，Core不会为编辑指针产生动作完成证明；不新增作者动作权限。
+- [x] 官方DOM实际Core读取补证：layout-dom-core-live在实际切页前后/正常Core重启后私有layout0均ready且无错误；原文档/新文档按生命周期保持，focus/KV/GIF/视频恢复，finally原四文件/用户Room恢复。本轮不执行layoutSave、不冒称非空覆盖实际保存通过。
+- [x] 本阶段完整build→常规start Core92228/Player118936/Watchdog70784/config8336、日志20261003_211317.txt，原v2 Player路径核对。identity所属共享配置器OTHER并核对绝对路径；精确正常退出Core/配置器、watcher19473 CtrlC结束exit1、原四文件hash/缺失状态不变；OwnedProcesses/DevListeners/NativeFixtures/ResourceCacheFiles全0。
+
+2026-10-03用户调整：桌面拖动先略过，保留待恢复；当前继续P5精确输入/遮挡/多图标与受控焦点。每次推进报告完整16项开发就绪比例，目前1/16=6.25%（对话约6%），此为交付覆盖率，不能将阶段测试数当百分比。Dext实机探针结束后保持关闭。
+
+- [ ] P5精确输入纯几何计划（BASE88a04ba，2026-10-03）：先为旋转/斜切矩形建立凸多边形、画布裁剪和前层遮挡差集，结果为多块真实可见区域；测试包围框角落不命中、负行列式、完全/部分/多遮挡、边界及不可变。纯geometry.js不调用native、不产生输入证明、不逐帧跨IPC。后续严格私有几何同步、同按钮多图标稳定区域与键盘受控焦点再接Core；移动动画方案先核对真实输入配对，不能靠降低权限或取消动画输入要求。拖动按用户暂缓。当前16项交付就绪1/16≈6%，此基础不独自增加完成比例。
+
+- [ ] P5精确区域/受控焦点接线计划（2026-10-03）：在纯几何基础上，固定官方DOM按实际矩阵生成凸区域，裁剪画布并扣除前层可见wrapper；Core私有entryId（consumer内唯一）区分同按钮多个呈现实例，polygons并集精确命中而包围框只作快速排除。旧矩形协议保持，新增严格有限/凸性/自交/包围框/64片×32点及总65536点预算和全层深复制，不向作者增加字段/票据。Core DOWN/UP仍同呈现实例、当前HWND/DPI/前台/期限/一次消费；Core原生焦点事件映射已ack区域SVG轮廓，失效/暂停清除。先DOM/native-host及Core生产行为RED，再构建和实际Player/Core验证；移动采样/可信作者派发另续，不冒称静止几何已覆盖移动，拖动暂缓。最终人工卡第4/5项仍待用户集中执行，完整16项交付就绪1/16≈6%。
+
+- [x] P5纯几何基础：geometry.js实际模块行为RED0/18，首实现16/18暴露裁剪交点舍入，修正后18/18并补斜向差集/多遮挡具体风险20/20。输入不变、真实凸差集、矩阵反射/旋转/斜切/画布边界已验证，无native或输入证明。
+- [x] P5官方静止精确区域/私有schema/焦点视图：新增8项DOM及3项native行为先RED后GREEN，全部生产JS/SDK/媒体策略205/205。真实z及DOM顺序前层wrapper裁剪、透明层关闭指针拦截、同动作两图标独立entry、ack前/失败/旧scope拒绝焦点及SVG显式hidden已接入。默认移动前层可能遮挡的区域不采用冻结几何签动作，移动取样仍待接线，不删完整要求。
+- [x] P5 Core精确区域与私有消息基础：生产authority扩展实际RED206/237、parser正确夹具65/69，再237/237与69/69。三角形外的bbox点拒绝、多片空隙、同动作不同呈现DOWN/UP/Tab、CW/CCW及strict凸/简单/预算/包围框、深复制和无几何数组公开元数据已验证。完整precise-core-build通过；实际Player/Core与常规启动退出继续。全16项交付就绪1/16≈6%。
+
+- [x] P5实际ReleasePlayer正式页面补证：precise-official-host-wire成功，严格私有DTO的双icon独立凸区域、模拟Core焦点命中第二个SVG且失效清除；同SDK文档/只由Core提交/队列/暂停/最新事实/撤销回归保持，Core回包仍fixture。
+- [ ] P5本阶段实际Core原生动作补证受外部凭据窗影响：前两轮operable/前台不成立，后两轮空白像素安全检查拒绝；最终owned像素诊断Credential Dialog Xaml Host/System CredentialUIBroker.exe。四轮finally原数据/Room/桌面与窗口旗标恢复，未点击凭据窗口、未改生产门槛；恢复条件是用户关闭该窗口。等待时继续派发守卫/运动取样，实现范围保持，整体就绪1/16≈6%。
+- [x] P5本阶段常规build→start/身份核对→正常退出：Core113804/Player46424/Watchdog125196/config80780，20261003_222129.txt；identity共享配置器OTHER/exit1并核对路径。精确PID/path正常关闭、watcher74869 exit0，四原文件hash/缺失不变，OwnedProcesses/本轮DevListeners/NativeFixtures/ResourceCacheFiles全0。
+
+## P5 原生同步作者输入守卫基础计划（2026-10-03，BASE 1d1a6ff）
+一句话目标：在作者脚本之前建立可信事件同步调用边界，固定原始 requestId/method/params 与原生文档；定时器、microtask、合成事件及缓存事件重调不能生成见证。
+范围：独立私有 guardian 模块、受保护的 listener/property/inline 派发包装、关闭/暂停/文档撤销、捕获原语和私有传输；与原生媒体 bootstrap 共用闭合 shadow 发现。先行为 RED 再实现，包含真实 Chromium 事件测试，禁止将模拟 Event.isTrusted 当实机证据。另建 bounded native 请求汇合基础，禁止它自行选最近完成证明或授予动作。
+后续接线：Player 实际 frame/document 注册、Core 物理 gesture/正数序号、运动 DOWN/UP 视觉取样与 source 手势权限必须闭合后，才能切换生产 SDK/动作强制门槛；本基础阶段不宣称上述接线已完成。桌面拖动按用户暂缓，Core 实机补证等待系统凭据窗清除，Dext 保持关闭。
+人工验收：最终验收卡第4项，真实鼠标/Enter/Space可请求受控动作，timer/Promise continuation/伪造 click/缓存真实事件重调均拒绝；第5项验证移动、遮挡、多呈现入口和DPI。只在全包交付时集中执行，7项不打勾。整体交付就绪仍 1/16=6.25%，推进对话报约6%。
+
+- [x] 原生输入bootstrap真实行为RED：组合脚本缺少guardian时报错（guardian-embedded-red.log），补嵌入资源/私有builder后GREEN；固定actual realm、Guid文档nonce、正safe gesture/structural bounds，不经作者globalThis/window别名。
+- [x] bounded原生请求汇合基础：source-link行为RED43/83，正式撤销边界RED83/84后GREEN84/84；完整SDK typed参数、当前native scope、两路乱序/错配/重放、64pending/196frames与固定1500ms半包期限。此期限不替代Core从真实DOWN起的物理期限，不授予动作。
+- [x] 同步guardian本阶段验证：实际Chromium40检查、guardian24/24、完整JS229/229；补原生Window裸调用兼容、onerror五参数、跨文档收养后currentTarget/receiver核对及未知foreign callback getter拒绝。实际ReleasePlayer guardian默认关闭/私有hooks与媒体策略共存通过；Core正数手势和SDK强制接线仍待完成。
+
+- [x] 本阶段完整guardian-core-build-final四阶段成功；正式guardian私有builder/witness闭合消息、native join84/84及native media消息回归通过。guardian-frame-media-wire-green实际ReleasePlayer两个作者文档初始化、输入hooks默认关闭、根/closed-shadow/nested音视频与WebAudio暂停/恢复/最新修订/撤销通过；该wire的Core回包仍fixture，不签发物理gesture。
+- [x] 常规start Core7084/Player121916/Watchdog122856/config100832；identity Core/Player/Watchdog/mutex/pipe/data/log OK，所属D共享缓存配置器OTHER/exit1且绝对路径独立核对。按精确PID/path正常退出Core和配置器，start watcher9524 exit0，原四文件SHA256/缺失状态保持，头部浏览器已关闭、Dext进程0。
+- [ ] 接续本地功能：Player真实frame/document与原始SDK requestId两路汇合、Core正数物理gesture与同UI操作转发，再接运动DOWN/UP即时视觉样本和source动作。尚未替换生产author inputSequence=0路径，不宣称timer/最新完成输入漏洞在整条动作链已修好。实际Core补证仍待凭据窗解除；桌面拖动暂缓。
+- 2026-10-04用户推进偏好：以本地功能接通为主，不继续扩展网络安全测试；当前已有改动只做必要回归。每次推进报告完整16项开发就绪百分比，当前仍1/16=6.25%（约6%），全包最终集中验收与单次P5整体审查保持。
+
+- 最终清理补记：常规日志20261004_003713.txt，本轮1420/1421/1621监听0。git staged check发现新guardian末尾空行，仅修正EOF格式后继续提交，不重跑已充分验证的行为。
+
+## P5 本地原生按下手势关联计划（2026-10-04，BASE eb59348）
+一句话目标：Core在真实RawInput DOWN冻结正数手势序号、文档scope、实际HWND/viewport/DPI和按下时间，UP完成沿用该序号，为移动DOWN/UP视觉样本及Player串行arm/转发准备同一关联。
+本段范围：Core UI适配已调用的native authority按下/松开状态、鼠标/Enter/Space重复、拖动容差、前台/窗口/结构修订撤销与从DOWN起1500ms期限；空静止几何仍可记录实际视口内按下事实但不产生动作证明。静止几何默认动作和受控Tab保持；不新增网络能力/网络安全测试，不把半包/UP时间当新期限。
+先针对生产Core状态写行为RED，再接冻结模型，运行对应动作回归和完整build→start/身份/正常退出，具名提交。Player nativeframe/SDK汇合与同UI转发仍另续，当前author零序号动作路径不在本段宣称修好，桌面拖动暂缓。
+最终人工沿验收卡第4项鼠标/Enter/Space一次消费、长按超时/AltTab取消、第5项移动/遮挡/多图标/DPI；全包集中执行，不新增中途验收。完整16项就绪仍1/16=6.25%（约6%），Dext探针后退出。
+
+- [x] Core真实DOWN正数关联：stub行为RED238/254（16失败）后254/254；真实视口/OS点/DPI/键/时间与scope冻结，UP原序号，空区域不授予动作、重复不续期、容差/结构/窗口/跨键鼠取消和1500ms半开期限。当前RawInput适配自然进入新Core类，Player/SDK关联仍待接线。
+- [x] 本阶段完整build→常规start/身份→正常退出：Core73828/Player123844/Watchdog113464/config24756、日志20261004_010606.txt；共享配置器OTHER/exit1且路径独立核对。原四文件hash/缺失不变、watcher33543 exit0，DextProcesses/1420/1421/1621监听均0。
+- [ ] 下一段本地功能：私有gesture消息和Player同UI arm/Win32输入转发，实际nativeframe witness与原始SDK请求汇合；随后移动按下/松开视觉样本。真实Core输入补证仍待凭据窗解除；网络测试不扩展，桌面拖动暂缓，全16项就绪1/16≈6%。
+
+## P5 Player原生鼠标与作者请求接线计划（2026-10-04，BASE 47319c9）
+一句话目标：Core冻结的DOWN序号经私有IPC进入Player，先对实际直接作者frame arm，再在同UI串行操作转发Win32 DOWN/UP；原始SDK请求与该frame见证汇合后只用同一正数证明执行动作。
+范围：私有指针包、原生UI有界队列（连续move合并）、实际窗口/视口核验、frame/document注册与生命周期撤销、完整requestId/method/params保留、两路汇合与释放后派发，静止作者鼠标入口先贯通。不会把旧Win32与独立arm通道当作有序，也不允许用零序号找最近完成。官方键盘默认动作保留；作者Enter/Space的真实派发、移动视觉样本及source级动作随后接续，全部原要求保留，拖动暂缓。
+先针对队列顺序/释放/期限与SDK原始请求/正式宿主路由写本地行为RED，再实现Core/Player/SDK，实际ReleasePlayer自己的窗口验证trusted鼠标回调及一次原生请求，Core回复夹具与实际Core物理证据分开。只做必要本地功能回归，网络安全专项不扩展。改C#后完整build→start/身份/正常退出，原四文件保持、Dext退出、具名提交。
+人工步骤沿最终卡第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消、异步请求拒绝，第5项移动/遮挡/多入口/DPI；完整全包集中验收，不新增中途验收。当前完整16项就绪1/16≈6%，P5继续开发，不合并master。
+
+- [x] Player原生鼠标队列与实际frame arm：私有Core指针DTO沿冻结DOWN scope/序号/HWND/viewport/DPI/QPC进入同UI有界队列；DOWN等待实际直接作者文档arm完成，连续MOVE合并，UP不越过DOWN，取消先revoke再释放原生按住。队列真实RED2/9→9/9；取消最新点回归RED9/10→10/10，严格消息69/69、Core动作254/254、生产JS229/229。
+- [x] 实际ReleasePlayer本地鼠标：pointer-native-wire-final收到trusted DOWN/UP并同步进入私有request hook；长按超时先撤销再UP。Core指针包为夹具，没有推定实际Core动作已通过。实际媒体回归发现嵌套媒体文档不需要输入guardian描述，修为仅直接作者root描述/注册后pointer-frame-media-wire-final通过，音视频/WebAudio原生暂停恢复/最新修订/撤销保持（ERRORS #209）。
+- [x] 完整pointer-core-build-final四阶段通过；常规start Core76880/Player79976/Watchdog53304/config31928，日志20261004_022256.txt；identity共享配置器OTHER/exit1且精确绝对路径独立核对。正常关闭、watcher90633 exit0，原四文件hash/缺失不变，Dext进程与1420/1421/1621监听0。
+- [ ] 当前仍待SDK原始requestId/private witness两路汇合及正数动作派发，生产author零序号路径未替换；作者真实键盘、移动即时样本/source动作随后接续。无新增网络专项，拖动暂缓，整体16项就绪仍1/16≈6%，最终集中验收保持。
+## P5 SDK原始请求与原生鼠标完成关联（2026-10-04，BASE c73eb83）
+一句话目标：实际作者SDK同步提交完整requestJson，正式宿主保留原始rN与固定instance/consumer，经Player实际root文档双路汇合，只在同一原生UP转发后使用正数gesture执行Core动作。
+范围：SDK四类受控请求、FrameHost原文保留、官方authorInput私有路由、nativeframe两路匹配/释放/撤销与严格正数映射；无需增加网络安全专项。先本地SDK/宿主/汇合行为RED，随后实际ReleasePlayer自己的HWND+正式SDK验证按下请求等待UP、一次对应动作消息，Core回包仍夹具。真实作者键盘、移动取样/source手势后续继续，拖动暂缓。
+完成后仅保存到P5工作分支，完整构建/启动/正常退出；最终人工第4/5项集中执行，不增中途验收。整体16项就绪1/16≈6%。
+- [x] SDK与正式作者路由：四类受控请求在同步调用中将完整SDK envelope提交给原生guardian，再走parent；FrameHost保留rN/requestJson与固定instance，DOM改为authorInput，不再选择completion或inputSequence=0。SDK/FrameHost行为RED31/34（2失败、1等待拒绝超时）→34/34；DOM/native route RED65/70→70/70；完整生产JS232/232。公开回复仅status，正数关联只在Player/Core私有链。
+- [x] 原生关联到UP后的动作：生产delivery真实RED0/6→6/6，两路任意先后、DOWN不执行、同UP释放、下一DOWN清待办但保留文档rN水位、1500ms物理期限、文档撤销和三类typed意图映射；旧join84/84，私有parser RED69/70→70/70。实际native registry按当前direct root/document/instance关联，导航/销毁/暂停/重置撤销；deadline timer只在有本次手势时运行。
+- [x] author-input-native-wire-final实际ReleasePlayer+正式SDK通过：trusted DOWN内actions.activate('open')等待同次UP，原始r1只生成一次Core n1/gesture7/geometry1/scene/open，SDK收到accepted。Core包/回执和该小official route仍fixture，生产DOM路由另由行为回归验证；不冒称实际Core桌面物理证明。首轮功能通过但WebView profile退出后2s仍占用、清理失败；确认仅自建GUID目录后清理、重试预算10s，最终整轮exit0且临时目录0（ERRORS #210）。
+- [x] author-input-core-build-final完整四阶段与实际author-input-frame-media-final回归通过；常规start Core121280/Player81856/Watchdog92464/config54740，日志20261004_025000.txt，identity共享配置器OTHER/exit1且精确路径核验。正常关闭、watcher58787 exit0，原四文件SHA256/缺失状态不变、Dext进程/开发监听/native author fixtures全部0。
+- [ ] 接续本地功能：作者Enter/Space真实派发/受控焦点，再接移动DOWN/UP即时可见区样本与source动作。生产作者鼠标已改为原始请求汇合后的正数关联，但Core内部旧零值查询兼容仍保留待全输入链收口；整体准确性/实际Core物理补证未全交付。拖动暂缓、网络专项不扩展，整体16项就绪仍1/16≈6%，最终集中7项验收与单次P5整体审查不提前勾选。
+## P5 作者Enter/Space与受控frame键盘接线（2026-10-04，BASE dddff64）
+一句话目标：Core受控Tab焦点选定当前consumer/button，真实Enter/Space DOWN的冻结正数关联经Player同UI arm、原生frame焦点路由和Win32键转发，作者SDK请求等待同次UP后执行一次对应动作。
+范围：复用私有有界输入队列，扩展键/scan/extended/固定焦点consumer/button/entry关联；仅选中直接作者root arm并用预先捕获的Window.focus路由，不新增公开作者焦点或输入票据，也不改作者DOM节点的focus/tab顺序。官方图标仍由Core默认激活，legacy opt-in键盘转发保留；作者鼠标链与暂停媒体回归保持。重复按住、过期/切窗/修订取消只做必要本地回归，不扩展网络专项。拖动暂缓，移动即时样本/source随后接续，原范围不减。
+先原生输入DTO/队列及guardian焦点路由行为RED再实现；实际ReleasePlayer自己的HWND与正式SDK验证真实trusted Enter/Space及一次正数动作（Core包/回执仍fixture），随后完整build→start/身份→正常退出和具名commit。最终人工沿卡第4项鼠标/Enter/Space一次消费、长按/AltTab取消及第5项移动/遮挡/DPI集中执行，整体16项就绪仍1/16≈6%。
+- [x] 私有键盘DTO/有界队列：Key/ScanCode/extended/固定consumer/button/entry冻结；取消先撤销再释放同键，鼠标UP不能释放键盘配对。真实行为RED10/13→13/13；guardian只路由当前文档Window，作者覆写focus不生效，RED24/25→25/25，生产JS233/233。
+- [x] Core真实RawInput受控Tab焦点选定后，Enter/Space DOWN冻结正数关联；UP沿用原键/scan/焦点元数据。Player仅选中consumer的直接root arm，NativeViewController.MoveFocus(Programmatic)后捕获Window.focus路由，再转发Win32键；不操作作者DOM节点/Tab顺序，官方入口保持Core默认动作。原生动作delivery8/8（含仅选中consumer）、Core动作254/254。
+- [x] 实际ReleasePlayer+正式SDK：keyboard-enter-controller-focus-wire / keyboard-space-native-wire-final / keyboard-mouse-native-wire-final均exit0，trusted DOWN等待同UP，原r1只生成一次Core n1/gesture7；前台HWND保持不变。Core输入包/回执与小official route仍fixture，不能代填实际Core物理证据。仅Window.focus或WinForms.Focus两轮无keydown，改原生controller后通过（ERRORS #211）；失败日志保留。
+- [x] keyboard-controller-focus-build完整四阶段、实际keyboard-frame-media-wire-final回归通过。常规start Core56016/Player54552/Watchdog106276/config96456，日志20261004_032947.txt；产品/插件/mutex/pipe/data/log正常，D共享配置器OTHER/exit1且绝对路径独立核验。精确正常关闭、watcher91523 exit0，原四文件hash/缺失保持、Dext进程/开发监听/native author fixtures全部0。
+- [ ] 接续本地功能：移动DOWN/UP即时可见区样本与source动作；Core旧零值查询兼容待全输入链收口，实际Core物理输入补证仍待系统凭据窗解除。最终卡第4项真实鼠标/Enter/Space一次动作、长按/AltTab取消，第5项移动/遮挡/多入口/DPI集中执行；拖动暂缓，无新网络专项、中途验收或master合并。完整16项交付就绪仍1/16=6.25%（约6%）。
+
+## P5 移动视觉的原生事件取样（2026-10-04，BASE 3cdbd72）
+一句话目标：默认/作者变换保持运动，原生DOWN与UP读取当时实际可见凸区域，在Core同一冻结物理手势中配对同entry后再允许动作；不通过逐帧IPC补坐标。
+范围：Core两次采样配对、官方DOM按已绘制组矩阵即时裁剪/遮挡、私有Player采样与派发时视觉保持/释放、真实原生窗口/视口/前台/期限检查，后续source手势级授权保持原范围；旧静止路径只在生产接线完成前兼容。先实现必要Core/DOM行为RED和生产基础，再接私有事件屏障与实际Player/Core证据；不能拿基础测试冒称已经可点移动元素。
+不扩展网络专项；桌面拖动按用户暂缓。最终人工仍第4项鼠标/Enter/Space一次动作、长按/AltTab取消和第5项移动/遮挡/多入口/DPI，集中验收，不新增中途确认。每阶段具名commit、改C#后build→start/正常退出、Dext保持关闭，完整16项就绪1/16≈6%。
+
+- [x] Core移动取样配对基础：PublishGeometry增加内部sampleMouse模式，原生DOWN/UP仍独立冻结同一序号、原始QPC和两次OS点；SampleMouse不创建物理输入，只用严格不可变可见区域命中原始点。DOWN/UP任一半不能完成，两半同consumer/button/entry方可完成；重复半包不替换，期限/拖动/视口/DPI/前台/修订变化仍取消。新检查缺少API编译RED后实现，原动作回归加18项本地行为合计272/272。
+- [x] DOM按已绘制visualGroups即时读取readInputSample，当前geometry ack/scope成立才返回独立副本；采样可计算moving元素及moving前层遮挡的真实多边形，无逐帧或采样读取IPC。行为RED43/46（缺API）→45/46（测试归一化宽度精确相等失败）→46/46，改机器误差断言，生产未加命中padding（ERRORS #212）。
+- [x] event-sample-core-build四阶段通过；常规start Core55712/Player82324/Watchdog93260/config65212，日志20261004_034829.txt，Core DLL写入03:48:23早于Core启动03:48:29。identity共享D配置器OTHER/exit1且精确路径独立核验，随后正常关闭、watcher82155 exit0，原四文件SHA256/缺失状态保持，Dext进程/开发监听/author fixtures0。
+- [ ] 这段是移动取样生产基础，Player尚未调用readInputSample、Core生产PublishNativeGeometry尚未启用sampleMouse；原静止路径仍兼容，不能宣称移动点击已接通。接续实现仅Core/Player私有采样消息、原生派发期间视觉保持/释放和两个edge的实际Player/Core证据，再接source手势级授权；全范围保持。拖动暂缓，最终第4/5项集中人工、网络专项不扩展、不合并master，整体16项就绪1/16≈6%。
+
+## P5 Player原生采样与派发屏障（2026-10-04，BASE 8a738f1）
+一句话目标：同一Player UI队列在DOWN/UP派发前读取并保持当前官方可见几何，收到实际文档可信派发回执后释放视觉并通过独立私有IPC交Core；Core样本在作者动作释放前处理，同原始物理边沿配对。
+范围：可取消且有界的采样/派发屏障、直接作者root与官方top真实回执、默认动画在短屏障后按原活动时钟继续、私有样本严格同scope/HWND/viewport/DPI及声明按钮校验，正式geometry启用鼠标采样模式。无逐帧IPC、无公开作者样本入口、不会用固定延时冒充原生回执；键盘与原有静止行为回归保持。source手势级授权随后接，不能削减原范围。
+先本地队列顺序/DOM保持/私有消息行为RED，接线后实际ReleasePlayer+正式宿主验证两个采样与一次SDK动作；Core包/回执fixture与真实Core OS证据分开。完整build→start→正常关闭，Dext保持关闭；只必要本地回归，不新增网络专项。最终第4/5项集中人工、拖动暂缓、不合并master；整体16项就绪1/16≈6%。
+
+- [x] 同UI采样屏障：DOWN arm后prepare、可信dispatch后交样本，UP完成后才释放作者动作；拒绝prepare不转发，异步DOWN receipt阻止后续UP。真实行为RED缺prepare构造参数→15/15；DOM已绘制矩阵begin/end保持当前visualGroups，RAF停止后按原活动时钟继续，失效/暂停/销毁释放hold；RED46/48→48/48。标准geometry现在eventSamples:true，生产Player/Core采样模式已启用，前节“尚未接线”仅为8a738f1历史状态。
+- [x] Core私有msg_room_native_sample只沿拥有的Player stdout进入；同原始scope/HWND/视口/DPI与安装/consumer/button声明重核，再同Core原始DOWN/UP点配对。必要消息71/71、Core动作273/273；缺一半无动作，两半同entry后一次消费，旧原始QPC不刷新。
+- [x] 实际ReleasePlayer+正式SDK event-barrier-sample-native-wire exit0：直接作者root可信DOWN/UP两份私有样本先于一次r1→n1/gesture7动作。小official几何/路由与Core包/回执为fixture。event-barrier-official-top-wire首轮实际正式DOM失败，顶层对象receipt被既有TryGetWebMessageAsString拒绝；补实质RED26/27并改为字符串，GREEN27/27，再完整构建后event-barrier-official-top-wire-final exit0：正式index/main/dom/native/frame/media/SDK的精确图标两边采样、一条官方动作、前台不变，切页/同文档/暂停/最新修订/撤销保持通过。Core包/回执仍fixture，动态几何是生产DOM行为证据48/48，本次实际wire图标静止，不冒称移动/Core OS/DPI全链通过（ERRORS #170补充）。
+- [x] event-barrier-enter-native-wire-final与event-barrier-space-native-wire-final均exit0：新bootstrap/队列下原真实trusted Enter/Space、同UP正数一次作者动作保持。
+- [x] event-barrier-frame-media-wire-final必要回归exit0；event-barrier-core-build-final完整四阶段后常规start Core25536/Player57252/Watchdog30248/config120196，日志20261004_043025.txt。identity共享D配置器OTHER/exit1且精确绝对路径独立核验；正常关闭Core/配置器与watcher73666 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official临时目录0。具名阶段提交后继续source与移动补证。
+- [ ] 接续source手势级准入与移动正式宿主/真实Core OS补证、Core零序号兼容收口；系统凭据窗未解除时不代填Core物理输入。拖动按用户暂缓，本地功能优先，不扩展网络专项、不中途验收/合并master；完整16项就绪1/16≈6%，最终卡第4/5项和全包7项/单次P5审查保持待执行。
+## P5 转场源入口的手势准入（2026-10-04，BASE e56ad2c）
+一句话目标：源Desk仍可见时，正式DOM的原生事件样本包含其按钮；Core只让同一真实sampled mouse完成证明通过源consumer/button scope，继续执行一次已配置应用/导航/控制/可信退出。
+范围：当前source/target声明几何、Core原生proof专用scope、只读按钮/动作能力元数据投影、既有权限/个人动作/一次消费与退出确认重查；来源扩展不授予data/storage或无输入动作。官方源图标和直接作者root仍走实际可信dispatch屏障，无逐帧IPC，后续真正移动/实际Core OS/DPI证据保持完整要求。桌面拖动暂缓，本地功能优先，无新网络专项。
+先Core源应用/导航/控制/退出行为与DOM源可见样本RED再实现，必要回归及正式Player移动图标证据；改C#后完整build→start/身份→正常退出、原四文件保持、具名阶段commit。最终卡第4/5项集中验收，不中途确认或合并master；完整16项就绪1/16≈6%。
+- [x] Core私有sampled mouse完成证明专用source scope已接应用/导航/媒体控制与原生退出确认；导航仍从已有target排最后意图。只读按钮与保护动作能力可投影source，data/storage继续target活动规则，普通无proof票据不能借source。纠正媒体夹具启动阶段与bridge连接后，对已提交生产基线重跑实质RED272/281（8新增+1旧元数据期望），当前GREEN281/281；不降低1500ms/修订/原生一次消费或授权。
+- [x] source声明矩形可进入可见几何，只有物理event sample包含可见source icon/widget；边界发布仍target范围，commit后source卸下。DOM RED48/50→与model合计65/65；source-moving-official-wire实际ReleasePlayer/生产正式宿主：4500ms动画进行中两个边沿多边形X不同、仍包含同一实际点，trusted dispatch后原gesture8只生成一次动作，原前台不变、切页/共享文档/暂停/撤销保持；Core输入包/回执仍fixture。
+- [x] source-action-core-build四阶段通过；实际source-action-native-core-live仍在空桌面点击前命中Credential Dialog Xaml Host而停止，finally原壁纸/四文件/Room哈希/窗口旗标恢复，不计OS输入通过。常规start Core43772/Player72276/Watchdog120536/config119928、日志20261004_050155.txt；identity共享D配置器OTHER/exit1且路径独立核验。正常关闭、watcher2576 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author、official、Core原生GUID目录0。保存具名阶段提交后继续。
+
+- [ ] 下一段：动态键盘焦点当前可见取样与Core零序号兼容收口、实际Core OS/物理DPI/锁屏/还原补证。系统窗仍覆盖真实命中，不能因应用列表漏报重试；拖动暂缓，整体16项就绪1/16≈6%，最终第4/5项和全包集中验收保持。
+
+## P5 受控焦点的 Enter/Space 可见采样（2026-10-04，BASE 59206c1）
+一句话目标：已有 Core 受控焦点在转场/移动时，Enter/Space 的原始 DOWN/UP 各读取当前可见区域，同一入口两边均可见后才执行一次动作。
+范围：复用 Player 同 UI 视觉保持队列、私有键盘采样标记和 Core 冻结键/焦点/QPC；作者等待真实 trusted key 回执，官方默认入口由 Core 原始物理键提供输入并只取样，不伪造 DOM 键事件。移动源入口采用完成的视觉键盘 proof；消失/遮挡/另入口取消。已有 Tab 顺序暂沿边界表，转场中重新 Tab 遍历动态可见入口后续补齐，不宣称已交付。拖动暂缓，无新增网络专项。
+先必要 Core/DTO 与可信键回执 RED，再实际 ReleasePlayer Enter/Space 和正式移动官方入口验证。Core 包/回复 fixture 不替代实际 Core OS；系统凭据宿主阻挡时不重试桌面点击。改 C# 后完整 build→start/身份→正常关闭，原四文件保持，具名提交；整体16项就绪1/16≈6%，最终验收卡第4/5项集中执行，不中途确认或合并。
+- [x] Core 原始 Enter/Space DOWN/UP 冻结键与焦点，采样模式下原始UP不直接完成；两边均含同入口后形成SampledVisual，再允许源动作一次消费。新API编译RED后必要Core功能288/288，作者可信键回执实质RED27/28→28/28，私有DTO/队列16/16；完整build与实际Player继续。
+- [x] Player SampleKeyboard私有标记冻结键/scan/entry；作者trusted键回执后交样本，同UP释放一次SDK原请求。keyboard-visible-enter-wire与space-wire整轮exit0；keyboard-visible-moving-official-wire正式移动源图标两份不同X样本在一次默认动作前、旧鼠标/切页/暂停/撤销保持通过。官方不合成DOM键，Core包/物理键/回复fixture；实际Core OS仍待系统凭据宿主解除。
+- [x] keyboard-visible-core-build完整四阶段通过；常规start Core48472/Player53308/Watchdog97636/config116124，日志20261004_052345.txt。identity共享D配置器OTHER/exit1且精确路径独立核验。正常关闭、watcher58656 exit0，原四文件SHA256/缺失保持，Dext进程/1420/1421/1621监听/author及official GUID目录0；以下改动随本阶段具名提交保存。
+
+- [ ] 下一段：转场动态入口的原生Tab取样和移动焦点显示、Core零序号兼容收口；实际Core OS/物理DPI/锁屏/还原保持待补，系统凭据宿主未解除时不重试桌面点击。拖动暂缓、本地功能优先、无新增网络专项；整体16项就绪仍1/16≈6%，最终第4/5项和七项/单次P5审查集中执行。
+
+## P5 原生Tab当前可见选择与移动焦点（2026-10-04，BASE 34190c5）
+一句话目标：真实Tab/ShiftTab选择按当时可见区域重新计算，官方焦点轮廓随同入口移动/裁剪，隐藏时收起且不丢逻辑焦点，后续Enter/Space沿既有可见配对执行。
+范围：Core单次Tab原始DOWN冻结正数关联/方向/QPC，Player同UI读取并保持当前已绘制source/target区域后回Core选择；Tab不激活动作、不转发作者DOM键、不修改作者DOM焦点。已有键盘/鼠标、暂停与修订规则复用，无逐帧IPC；焦点仅本地RAF更新。拖动暂缓、无新增网络专项，实际Core OS/物理DPI/锁屏/还原保持待补。
+先Core当前顺序/同动作多entry/空表与队列单次采样功能RED、DOM轮廓运动/隐藏RED；正式ReleasePlayer移动源Tab取样/焦点跟随验证，Core包与回复fixture单列。完整build→start/身份→正常关闭、原四文件不变、具名提交。人工最终仍卡第4项Tab与Enter/Space一次动作、长按/切窗取消，第5项移动/遮挡/多入口/DPI集中执行；整体16项就绪仍1/16≈6%，不中途确认或合并。
+- [x] Core raw Tab/ShiftTab冻结原QPC/方向/正数关联，单次SampleFocus只在当时可见表按稳定entry选择，不创建动作proof；原生focus队列先撤销旧作者对、只prepare/complete不arm/转发/释放动作。API编译RED后Core291/291，必要队列17/17。
+- [x] DOM焦点轮廓每个默认动画绘制帧按当前可见多边形刷新，出画布隐藏且保留逻辑entry，commit/失效仍清空；实质RED50/52→52/52，无逐帧IPC。tab-visible-moving-official-wire实际ReleasePlayer/正式宿主整轮exit0：一次私有Tab样本、source同动作第二入口、轮廓真实移动/出画布隐藏、geometry计数/版本与动作计数不增加、前台不变；原鼠标/键盘/切页/暂停/撤销通过，CoreTab/选择包与回复fixture。
+- [x] tab-visible-core-build完整四阶段通过；常规start Core96444/Player49548/Watchdog78756/config31380，日志20261004_054313.txt。identity共享D配置器OTHER/exit1且精确路径核验；正常关闭、watcher25867 exit0，原四文件hash/缺失保持，Dext进程/开发监听/author及official GUID目录0。以下改动随具名阶段提交保存。
+
+- [ ] 接续本地功能：连续Tab及Tab取样尚未返回时立即Enter/Space的Core顺序仲裁；当前单次焦点请求只保留最新gesture，不能把本段宣称为快速键盘全链完成。随后Core零序号兼容收口与持续作者动画/最终组合门槛；实际Core OS/DPI/锁屏/还原仍待系统凭据宿主解除。拖动暂缓、无新增网络专项，完整16项就绪1/16≈6%，最终7项/单次P5审查保持待执行。
+
+## P5 连续Tab与取样待回时激活顺序（2026-10-04，BASE 910b964）
+一句话目标：连续真实Tab/ShiftTab每次意图按原顺序处理，紧接的Enter/Space即使UP先到也等待此前Tab的最终焦点，再沿原始QPC/键/序号发送一对并取样完成。
+范围：Core有界未回Tab队列与焦点屏障、可测试私有键派发协调器及真实WebWebView2接线；两个键边沿保持实际时间，不因等待重新签输入。新鼠标/几何/会话撤销仍取消待办，焦点样本不生成动作；原单个激活手势覆盖语义不扩展为多动作队列。拖动暂缓，无新网络专项。
+先连续Tab/早到UP/屏障截止的生产Core功能RED，再真实ReleasePlayer与生产Core类组合验证；Core原始OS事实/完整Core窗口/动作回复fixture单列，系统凭据宿主未解除时不重复桌面点击。改C#后完整build→start/身份→正常退出、原四文件保持、具名提交；最终卡第4/5项集中，完整16项就绪1/16≈6%，不中途确认或合并。
+- [x] Core有界FIFO保留每次未回Tab，Enter/Space等待此前最终焦点；私有派发协调器在早到UP时发送原QPC/键/序号的一对。API编译RED后实质行为RED291/295→GREEN295/295，过期Tab取消等待键，不续签期限。
+- [x] keys-ordered-moving-official-wire实际ReleasePlayer/正式宿主加生产Core authority/key delivery整轮exit0：两个未回ShiftTab逐一选second→first，早到Enter UP等最终focus再只发原QPC/序号的一对，两份实际可见样本形成生产proof后仅一次动作；前台保持。raw OS边沿/完整Core窗口/动作回复仍fixture，原鼠标/移动键/焦点/切页/暂停/撤销回归通过。
+- [x] Core295/295与实际生产Core类/ReleasePlayer组合通过；keys-ordered-core-build四阶段，常规启动四路径/产品身份核对及正常关闭、watcher51624 exit0，原四文件保持、进程/监听/原生GUID夹具0；本节随具名阶段提交保存。
+
+- [ ] 接续Core零序号兼容收口与持续作者动画组合；实际Core OS/DPI/锁屏/故障还原及最终7项/单次P5审查保持。拖动暂缓，系统凭据窗未解除不重复桌面点击，本地功能优先、无新增网络专项，完整16项就绪1/16≈6%。
+
+## P5 持续作者动画的本地组矩阵（2026-10-04，BASE 471367d）
+一句话目标：作者持续发布source/target/shared矩阵时，官方图标、Widget与焦点同步移动，原生事件样本读取实际已绘制位置，纯视觉帧不反复清焦点或向Core重发几何。
+范围：沿既有scene.publishGeometry API区分视觉组矩阵与按钮/占用/视口结构变化；视觉更新只在Player绘制，结构变化仍撤销并重新确认原生几何。原生sample hold期间保留已绘制位置，新的视觉帧只保留最新值，匹配end后应用；快照/结构/暂停/销毁取消旧保持。共享文档与iframe尺寸持续，不扩大作者公开API或动作权限。Core零序号兼容接续；拖动暂缓，无新增网络专项。
+先新增持续视觉与hold功能RED，再实现并跑必要模型/DOM/SDK回归和实际ReleasePlayer连续仪表盘；原始Core OS边沿/完整Core窗口/动作回复fixture继续单列。只改前端按项目start.ps1启停，原四文件保持，具名阶段提交；最终人工第2项仪表盘跨页实例不变，第4/5项当前焦点/移动命中集中，完整16项就绪1/16≈6%，不中途确认或合并master。
+- [x] 模型区分applyVisualGroups与按钮/占用结构改变，纯视觉仅本地绘制Widget/图标/焦点并保留原生inputVersion；持有样本时只排最后矩阵。实质DOM/模型RED67/70，旧边界断言改读当前事件样本、生命周期失效夹具修正后含SDK必要回归86/86。
+- [x] author-visual-continuous-wire-final实际ReleasePlayer/生产SDK整轮exit0：1920×1080基准同一Widget文档/1600×280内部视口bottom→full→bottom、普通图标/焦点与仪表盘运动、两次作者完成回告、Core fixture提交、实际可见样本，纯帧Core geometry/动作0、前台保持。正式样包Schema/资源通过，已同步原陈旧SDK；Core包/回复/raw OS键仍fixture。补普通图标source组实质RED后必要回归87/87。
+- [x] 必要模型/DOM/SDK87/87、样包Schema/资源/当前SDK一致与两个实际Player整轮通过；完整四阶段构建、常规start身份/四路径核对、正常关闭watcher3287 exit0、原四文件/进程/监听/原生GUID夹具保持；以下随具名阶段提交保存。
+本段实机发现与接续范围：640×480/scale1.5会触发既定CSS像素尺寸保留和临时移位，固定基准面板矩阵不能据此断言满页。样包先采用1920×1080设计基准验证，物理DPI/多尺寸最终门槛保持；普通图标属于current Desk，稳定态也应使用source组，shared只控制共享呈现，避免仪表盘矩阵把普通图标移出画面。新增此组归属的功能回归后实现，样包普通图标保留。
+
+- [ ] 接续Core零序号兼容与作者矩阵/小窗口有效布局组合；系统凭据宿主未解除时不重复桌面点击，实际Core OS/DPI/锁屏/还原与最终七项/单次P5审查待补。拖动暂缓，完整16项就绪1/16≈6%。
+
+
+## P5 作者矩阵与小窗口有效布局（2026-10-04，BASE 490fcbb）
+一句话目标：持续Scene读取官方当前有效组件矩形，仪表盘在小窗口也能从底部展开为整页，并在实际缩小/恢复中保持同一作者文档与逻辑视口。
+范围：SDK session/geometry增加只读placements；Scene只读当前可见组件的组矩阵前矩形，其他消费者只读自身组件矩形，不含保存布局或私人绑定。同版本有效矩形变化按频道序号发布，完全相同不通知，视觉帧不通知。样包矩阵从有效矩形推导，异步publish中收到resize/geometry仍保留待绘制信号。桌面拖动暂缓，Core零序号/实际Core OS/物理DPI/锁屏/还原不在本段完成，无新增网络专项。
+先SDK/Frame/DOM功能RED，再实际ReleasePlayer640×480 scale1.5底部→整页→底部、放大→缩回验证；Core包/回复/raw OS键保持fixture。改C#探针后完整build→start/身份→正常关闭，原四文件保持并具名提交。最终人工卡第2项切页及缩放确认仪表盘不重建，第5项物理DPI集中；16项就绪仍1/16≈6%，不中途确认或合并。
+- [x] SDK/Frame/DOM增加当前有效矩形投影与同版本有效变化；三个实际功能RED后必要模型/DOM/Frame/SDK108/108。纯视觉不发geometry，收缩/恢复保留文档，SDK类型与样包接续。
+- [x] 样包按有效矩形推导矩阵、flight期间保留dirty待绘制；actual effective-layout-author-wire-final整轮exit0：640×480/scale1.5底部→整页→底部、1920×1080放大→缩回，文档/1600×540逻辑视口不变、有效布局恢复；Core包/回复/raw OS键仍fixture。
+- [x] 必要模型/DOM/Frame/SDK108/108、类型/语法、Schema/资源/SDK一致、原正式Player输入整轮回归通过；完整四阶段build、常规start/身份与正常关闭、watcher96341 exit0、原四文件不变及进程/监听/原生GUID目录0；本节随具名阶段提交保存。
+
+- [ ] 接续Core零序号兼容与最终组合；实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次P5审查保持。最终卡第2项新增切页后缩小/恢复，确认仪表盘实例与逻辑尺寸不变、满宽/底部恢复；拖动暂缓，本地功能优先，完整16项就绪1/16≈6%。
+
+
+## P5 原生动作只关联原始正数输入（2026-10-04，BASE 239a16b）
+一句话目标：取消Core“零序号取最近完成”的旧回退，所有原生启动、导航和系统控制必须明确匹配原始DOWN的正数序号，迟到请求不能借后来输入。
+范围：Core proof/bridge签名要求显式序号；私有Player parser消费动作只接受正数。作者公开SDK仍不提交序号，由已有native frame见证/原始request匹配通道补齐。无输入失败回复可保留0，不能用回复0请求消费；不扩大网络专项，桌面拖动暂缓。
+先必要关联功能RED和现有Core/消息夹具迁移，再生产类+实际正式Player正数鼠标/键/焦点组合回归。改C#后完整build→start/身份→正常关闭、原四文件保持、具名提交。实际Core OS/物理DPI/锁屏/还原仍待系统凭据宿主解除，不重复桌面点击；最终卡第4项连续键与一次动作集中执行，16项就绪仍1/16≈6%，不中途验收或合并。
+- [x] proof与三类bridge消费方法必须显式传序号，零不能查询最近完成。实质Core RED295/299→299/299，旧夹具改传实际构造的完成序号；正数但错消费者/几何明确StaleInput。
+- [x] 四类消费消息只接受1..JS安全整数上限。实质消息RED71/72→72/72，作者公开request仍无序号；构建后positive-input-official-wire-final实际正式Player整轮通过，原始OS/完整Core窗口与回复fixture单列。
+- [x] 完整四阶段positive-input-core-build，正常start Core73636/Player39996/Watchdog40208/config96192、日志20261004_071614.txt；共享D配置器identity OTHER/exit1但四精确路径独立核验。正常关闭、watcher94664 exit0、原四文件保持及进程/开发监听/原生GUID目录0；本节随具名阶段提交保存。
+
+- [ ] 接续独立V3-P6-001原生Room创建与节点保存；本分支保留P5实际Core OS/物理DPI/锁屏/故障还原及最终七项/单次审查补证，不将fixture当实机通过。桌面拖动暂缓，完整16项开发就绪1/16≈6%，不中途验收/master合并。
+
+## V3-P6-001 原生Room创建与节点保存（2026-10-04，BASE 99dd8fe）
+一句话目标：配置器创建原生v3 Room，两个Desk与四类本地内容、默认切换/Dock引用可保存重开、撤销重做并实际应用。
+分支feat/V3-P6-001-configurator-create，独立worktree v3-configurator-create；承接未合并P5依赖，最终集中验收前不合并。范围外：Dock模板差异/私人绑定UI/系统AppBar/分享、桌面拖动和新增网络专项。详见plans/V3-P6-001-configurator-create.md。
+- [x] Task1：稳定ID/历史功能RED3/3失败→GREEN；生产Rust创建、四类导入/HTML依赖、原子保存重开、失败原文保持及正式安装RED0/3→GREEN3/3；含原契约必要回归34/34。
+- [x] Task2编辑基础：配置器v3新建/打开入口、独立节点编辑、四类素材/启动待机选择、过渡、Dock引用和默认图标，保存后调用正式apply_room；私人物料不进作者文档。Vitest66/66、npm build和cargo check通过；实际浏览器创建/名称/顺序/起点/图标/撤销重做/草稿重开及深浅绘制通过。浏览器文件/Core仍mock，真实Tauri应用保留Task3。
+- [ ] Task3：真实Tauri/原生安装/Core/Player集成及正常退出，证据和一次最终整体审查。
+- [ ] 用户最终集中验收（与本包独立验收卡一致）；P5真实Core OS/物理DPI/锁屏/还原继续补证，桌面拖动暂缓。完整16项就绪1/16≈6%。
+
+P6本段证据：p6-document-red/policy-red/delete-reference-red、p6-authoring-red/final（34/34）、p6-vitest-full（66/66）、p6-ui-build-final、p6-tauri-check、p6-ui-browser-final及p6-ui-dark/light。工具首次UTF-8/JS插值和首轮主题探针定位失败未算通过。旧v3-continuous重复icon ID修正为detail-view，正式样包检查恢复。
+接续Task3注意：active_room仍仅识别v2安装路径，v3应用状态需接正式Core身份/宿主元数据；v3房间库改名等尚复用v2校验，需在真实入口核对并明确支持边界。四类测试中的视频/GIF仅验证作者文件复制/安装，不声称该字节可实际解码。真实Tauri创建保存重开/应用、真实四媒体播放/切页/重启、用户数据精确保护和最终审查尚未执行。Dext本段未启动，隔离临时文件由测试所有权清理，浏览器Vite停止后提交。完整16项就绪1/16≈6%。
+
+### P6 Task3 接线（2026-10-04，BASE2ba11e5）
+本段目标：真实配置器创建/导入/保存/重开，正式安装应用后由实际Core/Player状态识别当前v3副本；库改名保持身份和资源。先补原生应用来源映射与改名功能RED，再真实Tauri/四媒体实际解码/切页恢复，原用户状态精确保护并正常退出。本地功能优先；凭据宿主遮挡时不重复Core OS点击，输入/DPI最终门槛保持。
+- [x] host私有来源记录匹配当前安装快照，active_room同时识别v3路径；原生库改名保留UUID和资源。两个实际功能RED后生产作者/契约36/36；实际配置器UTF-8改名、立即重开、应用来源匹配通过。
+- [ ] 真实Tauri文件/应用、实际Core/ReleasePlayer四媒体呈现、切页与重启证据；有fixture明确单列。
+- [x] 必要回归/构建与用户文件恢复、正常退出；本节随具名阶段提交保存。最终集中验收/一次整体审查继续。
+
+- [x] 真实Tauri创建/四类导入与HTML目录依赖/Dock、保存重开稳定ID、实际Core/ReleasePlayer应用与运行来源匹配。由配置器设起点→重应用观察四媒体加载/呈现、HTML CSS/JS及Dock运行；prompt/选择文件为输入夹具，其余生产链真实。
+- [x] UTF-8改名后立即打开正确Room，身份/四Desk/Dock/资源与应用来源保持；实际撤销/重做；缺资源保存明确失败，原清单字节不变，未保存状态可见。重复同安装应用等新session/Player，不能拿旧会话或RPC排队回执报告成功。
+- [x] 同安装副本普通Core退出→启动：同Room/Desk/安装戳/来源，新session/Player，HTML/Dock重新运行；Desk恰为配置起点，不冒称非起点checkpoint已由本探针证明。
+- [x] Vitest66/66、生产Rust36/36、两个具名v2库改名/Windows路径回归、npm build和cargo check；此前完整build.ps1四阶段通过。最终start watcher78843/75916 exit0，配置器先正常关再普通Core退出；原四文件字节/缺失和原localStorage恢复，Dext进程/1620/1621/9226/9227监听及自有GUID/安装/观察器0。
+- [ ] 真实桌面默认导航/动画同步及非起点重启、系统选择框操作、一次最终整体审查与集中确认保留。P6本地闭环已贯通，按连续授权接续独立P6-002；完整16项仍1/16≈6%，不合并master。
+
+证据在本线程evidence目录：p6-native-config-live-2初次应用失败、p6-canonical-live、p6-media-native-live/actual-media、p6-save-failure-live、p6-restart-live/actual-restart、p6-final-product-live/native-final-evidence、p6-final-restore。工具选择器/误选房间/作用域/日志失败与产品失败分开记录；最后真实功能和精确恢复单独通过。见ERRORS225–227。拖动暂缓，无新增网络专项，最终本卡五项/P5七项保持。
+
+## V3-P6-002 Dock模板与交互编辑（2026-10-04，BASE6d15d1b）
+一句话目标：配置器选择原生Dock模板后自动识别区域，共享数据/按钮配置与Desk逐字段差异可保存重开，实际Core/Player呈现。
+独立feat/V3-P6-002-dock-template / v3-dock-template；承接未合并P6-001依赖。范围外：AppBar/顶层Dock、私人目标/皮肤、分享；拖动暂缓，无新增网络专项。Native执行与最终集中验收沿用户连续授权；设计/计划在plans，本包人工六项见独立验收卡。
+- [x] 已读当前计划/契约/工作流，创建独立worktree/分支，写设计、实施计划与验收；CodeGraph未初始化，使用rg兜底，不擅自索引。
+- [x] Task1 模板描述/稳定ID/共享差异/删除引用，生产作者文件完整导入与功能RED→GREEN；原生目录/导入/检查命令及Tauri编译通过。
+- [x] Task2 两款官方HTML模板、独立编辑UI/作者公开数据与默认操作；实际浏览器草稿重开/历史/字段继承/删除通过，原生Tauri保存重开随Task4。
+- [x] Task3 当前Core只读授权状态/允许/撤销已贯通配置器/Tauri/生产RPC；限定功能6/6、UI夹具及真实允许/撤销/新安装/重启、完整build→start通过。实际桌面读数仍随Task4。
+- [ ] Task4 真实Tauri/Core/Player/数据/几何/重启证据，原状态保护与正常退出、必要回归及具名提交。
+- [ ] 最终集中本包六项/P5物理门槛和一次整体审查；不合并master，完整16项仍1/16≈6%。
+
+- [x] Task1 模型七项功能RED→GREEN：模板共区组件/按钮稳定身份、只改叶子/共享继承、null与数组、删除引用与新ID、Desk默认动作与引用清理。原生模板目录与完整HTML/CSS/JS/SDK资源导入已接；继续正式保存/安装与构建核对。
+
+- [x] Task2 Dock保留区RED→GREEN；普通图标/Widget避让已引用Dock固定placement，不引用的Desk还原作者位置。原精确遮挡检查改为真实作者shared矩阵移动Dock覆盖图标，继续验证当前可见多片区域，未删除旧门槛。DOM57/57，模型/文档10/10，生产作者5/5+Dock3/3，作者HTML夹具1/1和编辑UI夹具、npm build/cargo check通过。
+- [ ] 接续Task3当前Core只读能力允许/撤销及状态读回，再Task4真实Tauri/Core/Player生产集成。浏览器数据/动作是明确夹具，未冒称活体；本轮不启动Dext、不改用户数据。完整16项仍1/16≈6%。
+
+- [x] 修正复用node_modules junction的Vite本地字体403：只加入依赖真实目录，浏览器资源检查与字体就绪补证；不扩大网络专项。
+
+- [x] Task3开工及接线完成：Core个人只读授权独立集合+当前Coordinator编辑/读回→两份proto与Tauri→配置器四项明确允许/撤销。先跑限定--read-grants功能RED，接完整build.ps1→start.ps1；实际数据/原状态恢复依Task4，不增加网络专项。
+
+### P6-002 Task3授权接线与生产模板集成（2026-10-04，BASE27e9f2a）
+- [x] Core个人readGrants独立保存四种只读授权，当前安装记录优先、旧grants兼容，无关目标/按钮/布局/KV/控制授权保持；当前Coordinator读回/原子编辑，暂停可编辑、实际数据仍遵循桌面规则。限定--read-grants功能0/6→6/6，含真实时间provider、撤销、旧安装不提升、保存失败原字节与无变化不发布。
+- [x] 两份proto/Core RPC/Tauri命令和独立本机授权面板已接；四项逐项允许/撤销不改作者草稿/清单，副本失效清旧状态，失败保留已确认值。UI运输夹具实际RED缺复选框→GREEN，原Dock编辑夹具通过；npm build/cargo check和完整build.ps1四阶段通过。
+- [x] 实际Tauri创建两Desk/模板导入/完整资源/共享与稀疏差异/保存重开；Core应用、当前授权读回/独立允许/撤销和作者字节/已保存状态保持。原生ReleasePlayer/正式SDK三栏六个区域可见、按钮几何accepted；当前Core operable=false，三个读数denied并隐藏，不能计真实读数成功。
+- [x] 真实普通Core退出→启动，同Room/Desk/安装戳/授权，新session/Player，模板与几何重新初始化；替换导航模板保留组件/共有按钮ID和旧资源，新安装授权全false，再允许time不带入hardware。两款生产模板运行已核对。
+- [x] 当前代码完整build→start；配置器JS close/minimize默认权限未开放，不为探针扩权。原localStorage精确恢复后按核对PID/路径正常OS关窗，再普通Core shutdown；start watcher39064 exit0。原四文件字节/缺失精确恢复、自有Temp及安装/前代/source记录清理，Dext/开发与调试监听0；最终只读恢复核对exit0。本节随具名阶段提交保存。
+- [ ] Task4余项：实际桌面可读时的真实值/撤销可见更新、物理默认导航/同实例切页/缩放等集中；凭据宿主未解除不重复Core OS输入。一次最终整体审查和本包六项/P5七项仍保留；接续P6-003本地编辑，完整16项就绪1/16≈6%，不合并master。
+
+本段证据：p6-read-grants-core-final（6/6）、read-grants-ui、dock-ui-with-grants、read-grants-build/tauri-check、dock-native-live、dock-grants-native/native-evidence、dock-before/after-restart、dock-new-install、dock-runtime-start/restored；实际配置器/Player截图在本线程evidence目录。首轮check即时断言、按URL定位不透明沙箱帧、默认window权限和末行日志重定向均为探针问题，按ERRORS #230/#227接续；没有把工具失败算产品RED或扩大网络专项。
+
+## V3-P6-003 统一按钮与个人呈现编辑（2026-10-04，BASE6c32e66）
+一句话目标：发现当前原生Room所有按钮，配置本机动作/目标/皮肤和独立普通图标呈现，不改分享作品的私人边界。
+独立feat/V3-P6-003-personal-editor / v3-personal-editor。范围外：顶层Dock、游戏、分享、完整试验台；拖动后置，无新增网络专项。manual六项见独立验收卡，连续开发/最终集中，完整16项1/16≈6%。
+- [x] 顺序核对README/ROADMAP/TODO/ERRORS及V3_PLAN/D05/本轮Core模型；创建依赖6c32e66的独立worktree/分支，计划和验收先写；CodeGraph目录存在但未初始化，rg兜底，不擅自索引。现有依赖junction复用。
+- [x] Task1：Core个人编辑读回/覆盖/目标管理、限定--personal-editor本地功能RED/GREEN，proto/Tauri接线/完整构建。
+- [ ] Task2：统一按钮搜索与目标/动作/皮肤、普通呈现增删/历史模型和编辑UI；源Room与私人覆盖分开。
+- [ ] Task3：正式Player普通图标皮肤与短时定位；必要模型/渲染/实际Player证据。
+- [ ] Task4：真实Tauri/Core/Player/普通重启与原状态精确恢复/正常退出，具名提交；最终集中本卡/P5物理门槛/单次审查。
+
+- [x] Task1 Core七项本地功能实际RED0/7→GREEN7/7；所有声明/未绑定发现、同目标启动调度、覆盖/皮肤重读重置、全局删除跨Room引用保持、只启用所选动作、失败原字节及无变化不发布。已接Coordinator/proto/Tauri，继续实际构建与配置器UI；不增加网络专项。
+
+### P6-003 本机编辑与正式皮肤集成（2026-10-04）
+- [x] Core个人编辑七项0/7→7/7，官方皮肤/临时定位两项7/9→9/9；Coordinator泛型包装、双proto、RPC/Tauri接线完成，仅旧只读授权必要6/6回归。无新增网络专项。
+- [x] 当前全按钮/未绑定/其他Desk搜索与来源，动作、application/file/url目标库、应用库选择、删改确认/恢复默认和皮肤UI接线。实际配置器创建目标/绑定/皮肤保存，作者原文无目标ID/路径/参数/skin；其余删改/重置UI实际证据继续。
+- [x] 现有按钮独立普通呈现模型3项RED→GREEN，连原文档6/6；实际第二图标、撤销重做和保存应用，新iconId同buttonId，作者入口仍在。删除呈现保留按钮/目标/其他引用；拖动后置。
+- [x] 官方presentationRead→ReleasePlayer→DOM私人皮肤；真实两图标glass→outline，同作者iframe保持、SDK几何accepted。DOM59/59；实际operable=false时定位最初visible=false，ERRORS #232修复视觉读取，针对RED→GREEN2/2且动作采样仍为空。修复后实际定位待继续。
+- [x] npm build、cargo check、Core完整四阶段build→start通过。ActiveRoom来源camelCase错误修正，重新打开实际面板可用（ERRORS #231）。最后纯前端字段/视觉定位收尾待下一轮打包及普通重启核对。
+- [x] 用户将全屏游戏，立即正常关配置器77036、Core100348；watcher30520 exit0。原localStorage/四文件字节和缺失精确恢复，自有Temp/安装/前代/source记录清理，Dext/1620/1621/9226/9227监听0。
+- [ ] 游戏期间不启动Dext/配置器、不编译、不做桌面输入；轻量修复与记录随本轮具名提交。结束游戏后接实际定位/普通重启、Desk改名排序保持、目标删改重置和呈现删除UI；最终本卡六项/P5门槛及一次整体审查，完整16项仍1/16≈6%，不合并master。
+证据：本线程evidence的p6-personal-editor-red/core（9/9）、presentation-red、read-grants-regression、model-red/model（6/6）、ui-build/tauri-check/core-build、dom（59/59）、locator-red/green（2/2）、native首轮（来源字段失败）/native-resume（真实目标/呈现/皮肤）、native-evidence及截图、runtime-start/restored。定位旧visible=false、物理动作未完成单列。
+
+### P6-003 游戏期间轻量选择保持（2026-10-04，BASE e495615）
+一句话目标：目标库保存/删除和视觉定位不丢用户尚未保存的按钮动作/Desk/皮肤选择；显式按钮保存失败仍显示原确认值。范围外：实际Player重启/窗口/构建，继续保持Dext停止。
+- [x] 把当前任何RPC回执都重置按钮表单的问题提取为生产选择更新函数；以几个真实操作序列用Node原生TypeScript执行验证RED→GREEN，不调用TS/Vite编译器或浏览器。
+- [x] 接入UI成功/失败回执，记录坑与验收第5项选择保持步骤；具名提交。实际界面、定位修复和普通重启保留游戏结束后集中。
+
+- [x] 统一按钮列表按Core当前有效动作显示绑定状态；将启动改为导航不再误报未绑定，改为缺目标启动必须显示未绑定。仅同组三个检查加一项本地状态序列。
+
+本轮轻量功能证据：生产TS直接由本机Node执行，选择保持实际0/3→3/3，状态标签3/4→4/4；一轮最终进程约0.25秒，未运行编译器/浏览器/应用，也未触及用户数据。目标元数据保存/定位成功与失败保留待保存动作/Desk/目标/皮肤；明确删除仅清对应目标；显式按钮保存失败回到原确认值，重置失败保待保存选择。列表以Core有效动作标识本机导航和缺目标启动（ERRORS #233）。最后完整打包/实际UI/修复定位/普通重启仍等结束游戏；本轮具名提交，不合并，整体1/16≈6%。
+
+### P6-003 游戏期间目标删除表单收尾（2026-10-04，BASE 2a28dd2）
+一句话目标：明确删除目标成功后关闭该目标的旧编辑表单，避免随后保存无意重建；保存或删除失败保留填写内容。范围外：构建、窗口、实际Player及桌面输入，保持游戏期间低占用。
+- [x] 用生产TS直接Node验证删除/保存后的目标表单状态序列；不启动编译器或应用。
+- [x] 接入成功回执，补验收第5项和错误记录，随本轮具名提交；实际UI留待游戏结束。
+
+轻量证据：旧删除流程提取到生产函数实际5/6→6/6，Node最终约0.14秒。当前表单只有同ID目标保存/删除被Core确认才关闭；失败保留名称/路径/参数/稳定重试ID，无关按钮定位不关闭。真实UI与打包未运行。整体16项1/16≈6%，游戏约束保持；ERRORS #234。
+
+### P6-003 游戏期间普通呈现数量收尾（2026-10-04，BASE cd8b9aa）
+一句话目标：新增普通图标遵守每Desk512图标/Room1024按钮的现有契约，满额时有明确反馈且原作品不被写成无法保存的状态；复用现有按钮不消耗按钮额度。范围外：窗口、构建、真实Core输入，继续游戏期间轻量。
+- [x] 生产TS直接Node限定功能验证数量满额和现有按钮复用，失败前后原文保持。
+- [x] 将同一数量判断接模型和两处新增入口，补验收第3项/错误记录并随本轮具名提交；实际UI待游戏结束。
+
+轻量功能实际6/8→8/8约0.16秒：512图标拒绝两个新增路径且原文不变，511可加最后一项；1024按钮拒绝新声明但可增加现有按钮呈现、不改按钮ID。两UI入口共同采用数量判断，禁用与可见提示。未构建/启动，实际UI及普通重启继续游戏后；完整16项1/16≈6%，ERRORS #235。
+
+## V3-P7-001 试验台与作者诊断（2026-10-04，BASE99c6ea7）
+独立feat/V3-P7-001-workbench / v3-workbench；用户要求少验证优先功能，沿V3_PLAN全范围顺序推进。
+一句话目标：在配置器中用正式宿主/SDK预览当前草稿，多尺寸/Desk/缺数据和权限模拟、按钮及占用区域诊断可定位至资源与ID。
+范围外：真实系统动作/个人数据写入、桌面拖动、顶层Dock/Game/分享；游戏期间不构建/窗口/桌面输入。人工六项见独立卡。
+- [x] Task1 编码：只读草稿预览资源会话/撤销，复用资源校验与正式宿主源码，不改用户磁盘；运行证据待Task4。
+- [x] Task2 编码：独立模拟Core适配器、Desk过渡/生命周期/授权/示例数据及正式渲染/SDK；运行证据待Task4。
+- [x] Task3 编码：编辑器入口、多尺寸、自适应预览、按钮/占用/资源/错误诊断；不混同桌面已应用状态，实际UI待Task4。
+- [ ] Task4 必要构建和一次功能冒烟/实际Tauri资源与SDK闭环，最终集中验收；游戏期间明确待做。
+开工时进度0/4=0%（历史起点）；当前进度见末尾。完整16交付就绪1/16≈6%，未合并master。
+
+P7首轮代码：只读资源会话/协议支持媒体Range，准备/释放命令接线；Vite raw直接打包正式geometry/layout/runtime/frame/media/dom/style，不复制渲染算法。独立iframe/模拟快照、Desk过渡/作者导航、生命周期、内存KV、只读数据状态与系统动作拒绝；多尺寸调整保持iframe身份，实际动态按钮采样/占用/组件覆盖层、资源和SDK/布局错误UI。源接口核对修正SDK params.action/公开buttons.action字符串、区域随当前采样与数据控制不误切Desk（ERRORS #236）。仅node --check与diff --check通过，没有编译/浏览器/应用/攻击矩阵；TS/Rust类型和真实资源/SDK尚未运行验证。编码3/4=75%，完整交付就绪1/16≈6%。随本轮具名提交，不合并。
+
+### P7 创作操作收尾（BASE ec72be7）
+目标：试验台可调整共享组件的公开默认placement、查看实际资源源码、给已开放数据源输入任意JSON示例；预览覆盖层/模拟不写私人状态，布局明确应用到草稿并沿编辑器保存/历史。
+- [x] 同一正式1920×1080placement约束、稳定ID/引用保持，组件布局显式应用到作者草稿；实际保存/历史待Task4。
+- [x] 有界资源源码读取与取消，按钮/消费者可定位对应文件；自定义JSON示例/重置示例接正式SDK模拟通道，实际运行待Task4。
+- [x] 本轮具名提交，实际构建和一次冒烟留Task4/游戏后，不加测试矩阵。
+
+本轮创作代码：共享Dock/Widget placement表单→现有作者history，明确应用草稿后再返回保存；ID/引用不换。消费者资源链接→HTML/CSS/JS/JSON只读源码，Range最多256KiB、长文件标截断、切换/退出取消；空资源416回退空文件GET。任意合法JSON示例可独立保存到模拟设置，解析失败保旧值，恢复默认不改其他数据源；缺失/拒绝状态仍优先。只有JS语法与diff核对，没有编译/浏览器/应用或新测试矩阵。Task1-3编码完成、Task4待，当前仍3/4=75%；完整就绪1/16≈6%。审批超时未执行后一次原参数重试成功，ERRORS #237。
+
+## V3-P2B-001 顶层 Dock 与 AppBar 原型（2026-10-04，BASE7a1f31b）
+独立feat/V3-P2B-001-top-dock / v3-top-dock。目标：普通软件前的HTML Dock、正常原生输入与焦点、触边和AppBar工作区可复现，给P8复用。范围外：正式Core/动作/任务栏替代恢复/游戏覆盖/拖动。
+Ruling：用户少验证优先进度，沿P7依赖继续功能；P7编码3/4=75%/运行待，不称完成。游戏期间不编译/启动/桌面输入。
+- [x] Task1 编码独立原生窗口、底部/DPI高度和正常输入/焦点；实际行为待Task4。
+- [x] Task2 编码AppBar模式/恢复与全屏抑制；实际Windows门槛待Task4。
+- [x] Task3 编码本地交互诊断样包和手动启动脚本；未运行。
+- [ ] Task4 游戏后必要build→start及一次原生功能冒烟，六项人工验收见独立卡；最终集中不合并master。
+开工编码0/4=0%；完整16项仍1/16≈6%。CodeGraph未初始化，rg兜底；不追加网络专项。
+
+P2b首轮代码：ReleasePlayer显式--dext-dock-probe分支，不接Core/WorkerW输入；可复用native HWND宿主、主屏底部/48..240 DIP与20%上限、非激活鼠标及明确键盘/Escape恢复、AppBar两步协商/最终矩形/注销、自动隐藏、全屏及Explorer/DPI重新定位。固定HTML真实事件计数和当前原生前台/窗口/工作区诊断；独立Mutex、临时profile/events日志、30..900秒自动退出（默认180），手动脚本只用当前worktree部署的ReleasePlayer。代码核对修正DPI默认处理改变实际矩形后不能只比较旧缓存、初次跨DPI需再布局、即时工作区用GetMonitorInfo，不计运行通过。node --check与PowerShell仅ParseFile通过，未运行脚本/编译器/应用；C#编译/原生输入/透明/焦点/DPI/AppBar/异常退出均未验证。编码3/4=75%，Task4待；整体16项就绪仍1/16≈6%，本轮具名提交不合并。
+源码收尾：原型先隐藏已Shown的HWND再布局，防止autohide/初始全屏的逻辑false遗漏真实窗口；加入DWM扩展框/黑色client及明确透明空隙诊断，仅记录HRESULT、真实透出仍必须实机验证；注销后即时工作区读取异常不阻止剩余关闭。ERRORS #238。
+
+## V3-P8-001 顶层 Dock 自动隐藏（2026-10-04，BASE2afcfd5）
+独立feat/V3-P8-001-dock-autohide / v3-dock-runtime；目标和五步见plans/V3-P8-001-dock-autohide.md，六项人工步骤见独立卡。范围外：常驻占位产品模式/游戏覆盖/拖动/分享。
+Ruling：沿用户少验证优先功能与集中验收授权推进；游戏期间不编译/启动/桌面输入；P2b原生证据继续保留，不等于产品已就绪。
+- [x] Task1 编码：全局Dock偏好独立原子保存/当前Room可用性与宿主尚未连接状态、proto/Tauri/设置页；编译与实际运行待Task5。
+- [x] Task2 编码：Core单实例Dock Player与绑定/共享会话/关闭重建，真实运行未证。
+- [x] Task3 编码：正式Dock视图/SDK/几何/实际OS输入路由/受控键盘及可见数据已接线，编译与Windows运行未证。
+- [x] Task4 编码：主任务栏替代/原状态恢复、独立看护/落盘记录/进程与心跳失效/Explorer恢复已接线；Windows运行未证。
+- [ ] Task5 游戏后必要build→start/一次原生冒烟、最终集中验收与整体审查。
+开工0/5=0%，完整16项就绪1/16≈6%；CodeGraph未初始化，rg兜底，不扩网络专项。
+
+P8 Task1代码：v3/dock-preferences.json全局独立保存，默认关闭/自动隐藏/128 DIP，48..240校验；读不建文件或重置，具名稀疏patch/重复未知字段拒绝、同值不写、临时文件原子替换和失败已确认值保持。Core查询经过当前安装身份并按正式dockComponentId与当前/目标Desk引用判断原生Dock，尚无宿主明确hostPending/PID0/不可运行，常驻明确unsupportedMode；没把enabled偏好当运行。双proto/RPC→当前Core身份核验Rust调用→Tauri→设置独立卡完整接线，断开/重连拒迟到回执、忙碌序列化、显式保存/刷新不丢待保存草稿，保存失败保已确认行。源码核对修正公共接口类型可见性和不能把任意桌面Dock组件当原生Dock。没有编译/运行/新测试矩阵；Task1编码1/5=20%，Task2-4继续，完整16项就绪仍1/16≈6%；游戏约束不变。本轮具名提交不合并。
+Task1轻量核对：双proto源码逐字一致、具名接线位置和diff核对通过；没有运行编译器、测试矩阵、窗口或桌面输入。
+
+### P8 Task2 Core 独立 Dock Player 接线（2026-10-04）
+- [x] 编码：单个Core所有的Dock Player，正式dock-process PID与当前主Player/安装摘要绑定；角色独立，共用既有gateway/kernel快照，不进WorkerW壁纸集合。
+- [x] 编码：主Player页面就绪、快照/Desk变化与偏好保存排队协调；安装/Room/高度变化、无Dock、禁用和退出先关闭旧Player，旧进程未确认退出不创建替代。启动有界等待，独立退出5..30秒退避重建，关机取消排队并关闭自有进程。
+- [x] 编码：runtime携带desktop/dock视图身份，正式上下文/订阅/重放允许已绑定Dock角色；桌面启动和过渡完成权限保持。Dock窗口目前隐藏等待Task3，不将进程/偏好冒报可运行。
+- [ ] Task3 正式Dock视图、SDK、几何/真实输入与独立可见性接通；Task4任务栏恢复看护、Task5必要构建/实际运行继续游戏后集中。
+当前工作包编码2/5=40%（步骤计数，非工时或已验收功能）。本轮仅源码和差异核对，不编译、不启动应用/窗口、不做桌面输入或新测试矩阵；不合并master。
+源码接线收尾：隐藏窗口不能使用只找可见HWND的旧枚举，改用已知WebView HWND的顶层祖先并核对实际Player PID；协议上下文/订阅/重放原来只许DesktopPlayer，按已绑定Dock角色补齐，Complete/CompleteStartup仍只许桌面。见ERRORS #240。最后构建/Windows与六项人工验收均未执行。
+
+### P8 Task3 视图与窗口部分（2026-10-05）
+- [x] 编码：正式runtime携带Dock视图身份，仅呈现当前Desk引用的dockComponentId，复用作者SDK/按钮发现与绑定；保留作者逻辑画布，通过有效呈现映射到独立Dock窗口，48 DIP高度与官方键盘控件遮挡进入几何。
+- [x] 编码：Core/Player私有窗口状态与策略按generation/session/revision校验；原生宿主与可见性、媒体暂停和只读数据接线。窗口可用须等待实际输入通道及可见性同步，当前显示awaitingInput并保持隐藏。
+- [ ] Task3剩余：接Core真实OS鼠标/受控键盘路由、一次动作与桌面暂停时Dock导航；未把视图/进程存在当作完整可用。
+- [ ] Task4任务栏替代/恢复与Task5必要构建、实际Windows六项验收继续。
+当前包编码约50%（Task1/2完成，Task3部分完成；估算不是整体V3交付比例）。仅五份JS语法、Player csproj XML与具名差异检查通过，未编译C#/Rust/TS、未启动应用或触碰桌面；用户全屏游戏约束保持。不合并master。源码发现及处理见ERRORS #241。
+
+### P8 Task3 真实输入与暂停切页接线（2026-10-05）
+- [x] 编码：WinDesktopCore现有RawInput消息先路由Core自有Dock，按实际HWND命中/窗口可见/全屏与锁屏准入；普通软件前鼠标不要求桌面前台，明确键盘模式才接受Tab/Enter/Space，Esc离开并恢复原前台。
+- [x] 编码：Dock专用预装输入门控，私有样本准备后只接纳一次对应自然/转发边沿与一次click，旧桌面模式保持；作者仍用正式SDK和同一Core物理proof。外围按键不清空闲Dock几何，触边刷新避开尚未完成的动作。
+- [x] 编码：可信Dock导航在桌面暂停/非前台时由同一kernel先保存、直接更新当前Desk，不等暂停视图完成动画；保持真实播放/前台事实，旧过渡完成失效。普通协议请求规则保持。
+- [ ] Task4 原任务栏替代/正常退出与独立故障恢复；Task5游戏后build→start/一次真实原生冒烟及六项集中验收。
+当前包编码3/5=60%（仅编码步骤；整体V3交付不按这个百分比计算）。本轮只有guardian JS语法及diff检查，C#编译、Windows鼠标/键盘/DPI/透明和暂停切页均未运行验证；无应用窗口、无桌面输入或新测试矩阵。保持开发中并提交，不合并。ERRORS #242；上一节“物理输入待接”为此提交前的历史状态。
+
+### P8 Task4 原任务栏替代与独立恢复（2026-10-05）
+- [x] 编码：复用已部署Watchdog的独立Dock模式，与壁纸ADD/CLR名单分开；绑定Core/Dock PID与启动时刻、独立lease及mutex，Core窗口真正就绪才请求隐藏主任务栏。
+- [x] 编码：先原子落盘原自动隐藏/可见状态及Explorer窗口身份，再变更Shell状态并核验；Explorer重建保留原基线，退出恢复，未确认恢复保留记录。全屏恢复只还原Shell策略，不强制把任务栏显示到游戏上。
+- [x] 编码：独立父进程/Player存活与Core心跳看护，断开时关闭精确自有Dock并恢复；Core看护监督/恢复兜底，Player UI心跳过期先恢复任务栏，给恢复唤醒留宽限后才关闭。正常禁用/无Dock/Room变化/退出先恢复、再关闭Dock；故障退避。
+- [x] 编码：配置器区分Dock窗口可用与任务栏实际替代确认；健康心跳不重复核验安装或读取Room文件。
+- [ ] Task5 游戏后必要build.ps1→start.ps1、一次原生功能冒烟、六项人工集中验收与整体审查。尤其保留原自动隐藏、最大化/工作区、DPI/Explorer、全屏退出、Core/Player/看护异常与原用户数据恢复证据。
+当前包编码4/5=80%，不是全V3已验收比例。本轮仅Watchdog csproj XML/源文件包含及diff检查，无C#/TS构建、应用启动、桌面输入、系统任务栏改动或新测试矩阵；不合并master。恢复逻辑是源代码，不冒称已在Windows通过；ERRORS #243/#244。
+
+### P8 高度反馈与原生样包（2026-10-05）
+目标：显示实际DIP/DPI及高度受限状态；正式dockComponentId样包覆盖共享、Desk差异、无Dock返回。范围外：构建/窗口/游戏输入/常驻占位，六项人工步骤保持。
+- [x] 编码：有效输入窗口测量决定可用状态/任务栏替代资格，UI显示实际高度/DPI/约束，不改保存偏好；Windows运行待Task5。
+- [x] 准备：正式三栏模板/当前SDK完整样包，三个Desk共享、稀疏覆盖、无Dock且保留返回入口；JSON/资源/快照核对通过，实际安装/Windows待Task5。
+当前包编码4/5=80%；具名提交，不合并。无构建/应用窗口/桌面输入或新增网络专项。前一工具调用的JavaScript模板字符串含PowerShell换行转义，解析阶段即失败、未执行命令；改为Environment.NewLine后执行，本次不重放任何已执行文件操作。
+提交收尾：新样包受fixtures -text规则影响，初次暂存检查发现复制文件CRLF尾部空白；仅规范新样包UTF8/LF，并核对去CR后与原模板/SDK相同。既有安装摘要夹具未改，最终检查暂存内容，ERRORS #246。
+## V3-P8-002 顶层Dock常驻占位（2026-10-05，BASE9cf1664）
+独立feat/V3-P8-002-dock-reserve / v3-dock-reserve；一句话目标、范围外及六项人工步骤见独立计划/验收卡。
+P8-001编码4/5=80%保留待集成；按连续授权接下一工作包，游戏期间只后台代码，不构建/窗口/桌面输入。
+- [x] Task1 编码：reserve偏好→Core需求/模式切换→正式Player模式参数。
+- [x] Task2 编码：实际AppBar工作区/DPI/Explorer、不可呈现及退出注销；全屏隐藏保持。
+- [x] Task3 编码：私有运行状态与配置器占位反馈。
+- [ ] Task4 游戏后build→start/一次原生冒烟、六项集中验收及整体审查。
+开工0/4=0%；源码阶段不代填Windows证据，CodeGraph未初始化，rg兜底。
+P8-002首轮代码：模式进入DockDemand身份比较及正式启动参数，切模式/高度按既有流程先恢复任务栏并关闭旧Player，再创建单个新宿主；共享SDK/绑定/输入沿用。正式reserve在可呈现时注册AppBar，锁屏/撤销文档等不可呈现时注销，恢复重协商；全屏隐藏保留原注册策略。原型已有DPI/Explorer/ABM回调复用，失去实际工作区排除时重新协商。Player读取真实窗口/主屏工作区后报告AppBarReady，Core再以有效输入窗口和GetMonitorInfo复核，未确认不替代任务栏。设置页可直接选择常驻，不以“已在常驻运行”当选择前提，分别显示偏好、窗口与占位确认。
+当前编码3/4=75%；仅具名调用点/源包含、项目XML和暂存差异检查，无C#/Rust/TS构建、应用/桌面输入/任务栏改动或新网络专项。Task4Windows最大化/工作区/DPI/Explorer/模式切换/故障恢复与六项人工验收完整保留；不合并master。
+## V3-P10-001 原生Room另存与分享（2026-10-05，BASEb0b3be6）
+独立feat/V3-P10-001-room-sharing / v3-room-sharing；目标/范围外见计划，六项人工步骤见独立卡。
+P8-002编码3/4=75%留待集成；按用户连续授权推进，不构建/窗口/桌面输入或扩网络测试。
+- [x] Task1 编码：完整声明资源暂存复制/新Room身份、原生zip导出导入；实际构建/运行待Task4。
+- [x] Task2 编码：Core个人绑定/皮肤复制、Room个人数据删除，保留全局目标；运行待Task4。
+- [x] Task3 编码：Tauri/UI当前草稿另存/库复制、确认后发布、删除与恢复记录；运行待Task4。
+- [ ] Task4 游戏后必要构建/一次全链冒烟、六项集中验收/审查。
+开工0/4=0%，CodeGraph未初始化，rg兜底；另存不复制授权/KV/个人布局，分享只含作者内容。
+Task1源代码：完整作者资源按正式v3读取句柄流式复制，源草稿身份校验、新UUID和稳定节点关联；副本留暂存直到Task2/3私人复制确认。zip仅room.json及声明资源，原生导入全部暂存/清单对照后换新UUID发布，冲突或失败不覆盖已有目标。导出临时zip/noclobber，不递归打包Core私人文件/运行来源；资源上限沿v3每文件1GiB、总资源2GiB。现有v2链保留，其更大清单不被v3探测器1MiB限制误拒。v3分享按钮已开放，另存保持关闭直到Core覆盖复制接线。政策现有测试期望随功能更新，但游戏期间未运行。
+当前包编码1/4=25%，源码/具名差异核对；C#/Rust/TS构建和真实导入导出仍待Task4。无窗口/编译/桌面输入或新增网络测试。
+### P10 Task2/3 编码收尾（2026-10-05）
+当前包编码3/4=75%。Core双proto/RPC新增个人复制和删除，沿用正式个人存储规则：仅复制绑定/皮肤，不复制授权/KV/个人布局，删除保留全局目标；活动Room需先停用。Tauri另存使用编辑器当前草稿，完整声明资源在暂存区生成新UUID，Core复制确认后发布；库复制、原生导出导入沿既有入口接线。
+复制RPC结果不明或发布回滚未确认时保留明确恢复记录；Core串行生命周期与删除标记阻止迟到复制重新生成已清理数据。删除先确认Core可清理，再记录意图并移入回收站；记录租约避免恢复清理抢先执行。中断记录留在库根、不进入作者包；配置器连接Core后重试，源Room已恢复时取消清理，清理未确认有明确提示。
+本轮仅源代码接线与git差异检查，现有政策测试期望更新但未运行；没有C#/Rust/TS编译、窗口、桌面输入或新网络专项。Task4完整构建、一次全链本地冒烟和本卡六项人工步骤/整体审查仍未完成，不合并master。断电/跨进程时序与实际回收站行为保留最终门槛，不声称Windows已验证。
+## V3-P10-002 首发样包与兼容门槛（2026-10-05，BASEd66bf99）
+独立feat/V3-P10-002-release-samples / v3-release-samples；计划和六项人工步骤见独立文件。
+P10-001源码3/4=75%已提交d66bf99，构建与实机集中；继续完整路线，不合并master。
+- [x] Task1 编码：冻结契约/API/能力与四媒体/持续场景/Dock样包，运行待Task4。
+- [x] Task2 编码：正式Rust/Core兼容提示和原件保留，构建/运行待Task4。
+- [x] Task3 编码：库列表兼容反馈与原始清单只读入口，实际UI待Task4。
+- [ ] Task4 游戏后构建/一次全链冒烟、六项集中人工验收与整体审查。
+开工0/4=0%；CodeGraph未初始化，rg兜底；不新增网络专项。
+P10-002编码3/4=75%（2026-10-05）：API1基线冻结既有格式/API/协议/安装与个人版本、能力/动作/媒体/转场/组件词汇；六套完整作者目录及原zip、catalog摘要保留。小视频/GIF以单线程生成约11KiB，样包本轮只准备，不冒称通过Player。
+正式Rust校验前区分版本/能力等要求，未来zip分派在发布前拒绝；共用版本函数阻止未来作品进入v2写入/应用。Core独立拒绝未知格式/能力等。库列表携带兼容原因并禁用编辑/应用/复制/分享，原始清单只读对话框不进入规范化草稿；已运行Room仍可停止。清单改动后打开再次核对，不依赖旧卡片结果。
+只读冻结摘要六套通过，git差异核对；仅增一个政策回归用例、未执行。C#/Rust/TS构建及一次真实全链/六项人工升级验收仍待游戏后，不合并master。没有新增网络矩阵。下一项恢复与发布收口。
+## V3-P10-003 恢复与发布收口（2026-10-05，BASE40165cd）
+独立feat/V3-P10-003-release-closure / v3-release-closure；目标/范围外/五步见计划，六项人工步骤见独立卡。
+P10-002源码3/4=75%留待集成，继续完整路线且不合并。
+- [x] Task1 编码：受保护安装恢复/残留清理；Windows执行待Task5。
+- [x] Task2 编码：设置页维护与Core退出条件；实际UI待Task5。
+- [x] Task3 编码：v3专用Release与已安装产品路径/资产；实际构建待Task5。
+- [x] Task4 编码：实际性能采样/导出，未采数据/未确定阈值，实测待Task5。
+- [ ] Task5 游戏后构建/一次全链、六项集中验收/审查。
+开工0/5=0%；不构建/启动/桌面输入，CodeGraph未初始化，rg兜底。
+P10-003编码4/5=80%（2026-10-05，源码）：新暂存记录Windows目录身份和预期摘要，维护页有界分页/只读元数据。退出Core后选择完整旧代恢复，当前原件保留quarantine；逐句柄清理核对所有剩余字节后才删除，中断有身份记录重试。未认证/不匹配保持；孤立记录可清理，不做路径递归删除或自动重铺。
+v3-release Cargo/MSBuild配置限定官方原生宿主/WebView2，旧入口从发布工厂分派移除、旧Plugin/Bundle内容不发布；Core错误有真实RPC拒绝。原生宿主/活动识别/许可文档路径按产品目录解析，v3配置器要求匹配Dext v3元数据。build-v3-release脚本新目录部署自包含Core、ReleasePlayer/看护和配置器，按精确资产清单/许可/实际文件摘要收口，不覆盖旧包、不启动应用。
+实际成功操作的64项有界计时进入既有诊断，Core切页采用单调钟并在gateway回调锁外异步写日志；资源脚本只读产品路径所属进程的CPU/内存/逐GPU引擎和本轮内核事件。首样本/缺事件/不支持计数均缺失，不填0或假定阈值；会话确认与内核到达不冒充屏幕首帧，渲染帧/普通重启checkpoint恢复及数值仍在Task5。
+本轮仅脚本AST、项目XML和具名差异核对；没有C#/Rust/TS构建、应用/窗口/桌面输入、系统改变、性能采样或新网络矩阵。Win32接口查微软原文核对ABI，不是网络测试。Task5完整Release/一次四媒体与Dock全链/兼容样包/性能数据和六项集中验收/整体审查未完成，不合并或发布；完整16项仍以实际证据为准。
+## V3-INTEGRATION-001 集中集成验收（2026-10-05，BASE0bc4330）
+独立feat/V3-INTEGRATION-001-integration / v3-integration；四步和范围见计划，六项人工步骤见独立卡。
+- [x] Task1 编码：另存先记录恢复意图并持有租约；已有Core连接同样核对v3发布身份。
+- [x] Task2 必要Release构建/同候选身份，Core与配置器实际启动/连接通过。
+- [ ] Task3 一次集中本地全链/恢复/兼容/性能。
+- [ ] Task4 完整16项证据/整体审查和原数据恢复。
+当前实施1/4=25%；游戏是否结束已异步询问，未答复前只源码，不构建/启动/桌面输入。构建与Windows全链仍未验证，后续三步保留。
+Task1源代码收尾：Core私人复制可能先持久化，原先仅RPC失败/发布失败才写清理记录；改为RPC前落盘并全程持有记录租约。恢复重试重新获取并读取租约内容，不能用枚举旧快照抢删另一配置器正在复制的数据。发布成功或回滚确认后移除记录，结果未知保留重试。v3-release复用已有Core和正式RPC同样核对实际PID/路径及Dext v3产品元数据，原纯响应字段校验保持可独立测试。现有元数据用例随编译配置修正期望，未执行。
+本轮只源码调用点与差异核对，无编译/应用窗口/桌面输入/性能采样或网络专项。实施1/4=25%不代表整个v3验收完成，待用户结束游戏后统一构建和本卡六项实际验收。ERRORS #252。
+
+Task1补充：恢复清理按稳定Room UUID检查库内已发布作品，目录改名或原名被其他Room复用后仍保留原作品个人绑定。只读扫描直接子目录的清单，不递归进入暂存内容；无法确认缺失时保留恢复记录。实施仍1/4=25%，不因增加修复抬高比例。真实另存→目录改名→重连恢复归入原人工步骤5，游戏结束后一次集中验证，不新增测试矩阵。
+
+阻塞记录（2026-10-05）：连续三轮核对仍未收到用户结束全屏游戏的答复；当前工作区干净，最后代码af705cd。Task1源码修正已保存，剩余Task2必要Release构建、Task3实机全链/性能、Task4完整证据与审查依赖构建和桌面验收。未启动任何编译/窗口，亦无活构建句柄可等待。恢复条件：用户确认游戏已结束、可以构建和启动验收；随后直接继续Task2，不重做已完成源码或新增测试矩阵。完整V3范围保留，未完成、未合并。
+
+恢复（2026-10-05）：用户明确回复“游戏结束 继续构建”，开始Task2必要Release候选构建；不重做已保存源码或扩测试矩阵。node_modules复用主目录，package-lock哈希一致；Rust缓存和候选输出使用D盘。
+
+Task2完成（2026-10-05）：build-v3-release.ps1完整退出0；Release WebView2 Player/Watchdog/Core及features v3-release的TS/Vite/Rust配置器、六套冻结摘要、精确发布资产/许可/实际inventory全部成功。修正Player C#8双弃置参数、看护finally越作用域变量、工厂#else与switch同一行、Windows FileDescription沿AssemblyTitle而非Description的问题。字体经JS入口加载，重建打包五个woff2，无跨盘残留字体警告。未升级上游依赖或扩网络测试。
+start.ps1增加显式ReleaseDirectory，候选不进入Debug自动构建/开发Player部署。实际启动Core PID55780、配置器PID10280，路径均属于同一候选；Dext v3 Core元数据、Dext mutex/pipe通过。computer-use只读实际配置器tree显示“Dext Core 已连接”；旧v2原件只读/暂不可用，不自动迁移。仅启动未应用样包，无Player呈现、Dock任务栏更改或全链验收证据。Task3/4保留，不合并或发布。
+当前实施2/4=50%，完整v3仍未验收完成。ERRORS #254。
+
+2026-10-06验收修复：用户报告重启后配置器打不开、桌面Dock点击无效和每次应用壁纸慢。保持INTEGRATION同一分支；先恢复同候选启动，复现v3test动作与一次应用耗时，再按具体原因修复并必要build→start。人工验收卡原步骤1/2/3/4涵盖三项，未修复前实施仍2/4=50%，不合并。
+
+2026-10-06修复推进（仍属INTEGRATION Task3，实施2/4=50%）：
+- [x] 恢复同候选Core/配置器并用真实配置器应用用户v3test。诊断：21,142,032字节资源安装267ms，完整应用2232ms；旧Debug日志含旧Player UnknownOptionError，不以当前Release之外的混用构建判定性能。
+- [x] 焦点丢失误清空已发布按钮几何，无新快照时永不恢复：保留同视口几何，只取消输入/焦点/完成回执；视口变化仍失效。针对DesktopPlayer/Dock和普通/事件采样4项回归先失败“fresh desktop DOWN missing after focus return”，修复后4/4通过。
+- [x] v3托盘配置器改查同目录exe，缺件只提示重新解压完整产品；候选携带start-dext.cmd和scripts/start.ps1，显式Release启动。
+- [x] 修复回归项目遗漏共享RoomPersonalLifecycleReply类型：独立源文件并链接，不复制类型到测试。
+- [x] Release Core编译成功；前端node_modules已缺失导致tauri命令不存在，npm ci --offline --no-audit --no-fund从本机缓存恢复471包，未升级锁文件。
+- [ ] 完整新候选构建、同候选启动和用户桌面两类按钮/切焦点/托盘重开/应用耗时人工复验。源Room和个人绑定备份保留，不合并。
+
+- [x] 新候选完整build-v3-release退出0（日志.build/v3-inputfix-build-r2.log）；发布目录.build/v3-candidate-20261006-inputfix-r2，280,202,910字节（约267MiB），含双击入口。先精确路径退出旧Core/配置器，再build→start新候选。
+- [x] 实际Core PID27096、配置器14176、Player34660、Watchdog11456均同候选；真实配置器“Dext Core 已连接”“已应用 v3test”，WallpaperLayout保存新候选路径，原已开启Windows Dext启动项由Core更新为新候选。
+- [ ] 切换发布目录时旧WallpaperLayout指向旧宿主，被新发布Factory拒绝且RestoreWallpaper枚举遇集合变更；本轮重新应用用户v3test已恢复布局到新路径，原件及恢复备份保留。路径升级恢复仍列Task3待修，不把同候选普通重启与目录升级混为一项。
+- [ ] 用户复验两类Dock按钮、切焦点后重复点击、托盘重开配置器和等待时间。当前2/4=50%，代码轮提交后待验收，不合并。
+
+2026-10-06二次验收失败：真实日志已有activate请求，本机v3/personal无personal.json。目标：应用Room时通过已有Coordinator编辑入口启用当前有效导航按钮，仅授予所属消费者desk.navigate；应用目标仍需用户选择，缺绑定明确提示。增加动作结果日志，针对无个人数据的首次应用验证，再build→start。仍INTEGRATION Task3、50%，人工步骤沿用切页/应用/焦点往返。
+
+- [x] 2026-10-06 二次修复：应用后以当前安装戳启用有效导航；缺绑定反馈与动作结果日志已接入。personal-editor 定向10/10、缺绑定提示定向1/1、完整Release构建通过。
+- [x] 新候选 v3-candidate-20261006-navigation 启动 Core26984/配置器29268，真实配置器应用v3test成功；本机导航grant落盘。用户指定ChatGPT经Coordinator EditRoomPersonal保存目标及按钮绑定，两次accepted，采用explorer.exe + 已发现的ChatGPT AppsFolder ID。
+- [ ] 桌面真实切页/ChatGPT启动/焦点往返结果待用户；尚无本轮activate日志，不以配置成功代替点击验收。本工作包仍2/4=50%，不合并。
+2026-10-06用户要求局部回退：本轮三类真实activate均StaleInput，授权和目标补齐后仍不可用。目标：静止按钮恢复已发布几何的原生DOWN/UP命中；只有动态可见几何与静态出版不同的场景保留事件采样，保留正数关联和当前会话检查。范围外：不回退整个v3或作品格式、不扩安全矩阵。先定向静止/运动路径检查，再Release重建并应用原v3test；人工：上一页/下一页/ChatGPT，焦点往返，再应用耗时。加激活前后输入状态诊断核对剩余失效。仍INTEGRATION Task3，2/4=50%。
+- [x] 局部回退源码：当前静态按钮多边形与实时采样一致时，geometry.eventSamples=false，恢复原生已发布区域DOWN/UP；两者不同仍使用事件采样。静止/转场定向1/1、焦点返回4/4通过；激活准入日志记录前后台/测量视口/检查前后完成序号。
+- [x] 完整Release构建退出0，候选.build/v3-candidate-20261006-input-rollback；旧Core经ShutDown正常退出，新Core39596/配置器12268已连接，真实配置器“已应用v3test”；原ChatGPT目标ID/按钮绑定经正式编辑入口复用并确认accepted。
+- [ ] 回退版真实桌面三类按钮及焦点往返待用户。之前候选实际三类activate全部StaleInput，不能把导航授权补齐认定为全部原因。本工作包仍50%。
+- [x] 已取消(2026-10-06)：本轮静态输入回退与临时Trace诊断未解决实际点击。用户要求“停止测试 准备回退”，停止全部测试/构建，正常关闭Core。五个具名源码文件撤销回dbe018c，本轮临时变更不交付。
+- [x] 回退准备：当前Settings/WallpaperLayout/Room会话/个人绑定和v3test原件备份于主目录.build/v3-rollback-backup-20261006；已验收基线tag v3FirstTest确认，合并24ac47c。
+- [ ] 确定回退范围：v3FirstTest为旧临时session.v3契约，不能直接把现在的原生Room v3当作该版作品；完整运行版回退与保留当前v3格式的输入适配回退需明确区分。未切换master、未清理旧候选。当前INTEGRATION50%。
+2026-10-06 旧版点击兼容修复（仍INTEGRATION Task3，2/4=50%）：
+目标：沿用旧版3c42552的持续交互对象原则，保留当前v3内核，修正同一作者文档在焦点/生命周期/布局更新后按钮登记丢失。
+范围外：不整库退回v3FirstTest，不更改作品格式、不扩测试矩阵、不恢复反复人工日志采集。
+- [x] 回退范围已由用户明确：以v3之前修好的桌面点击逻辑适配当前版本；旧版原生鼠标手势保留逻辑已在当前代码。
+- [ ] 作者按钮声明随文档保留，配置改变/文档销毁清除；当前可见区域仍重新投影。
+- [ ] 仅必要本地定向回归；准备与当前源码一致的Release宿主资产并启动，记录未验收限制。
+- [ ] 人工验收留待用户：上一页/下一页、我的应用打开ChatGPT、切其他窗口再回桌面重复点击。未通过不合并。
+
+2026-10-06 本轮交付记录（仍2/4=50%，待实际验收）：
+- [x] 同文档按钮声明在焦点、生命周期、切页和视口更新后保留；配置改变仅清除该消费者声明，换会话/销毁仍清空。每次原生输入作废和可见几何重新投影保持。
+- [x] runtime-model本地定向回归18/18通过（约0.11秒）；旧“缩放清空声明”断言按新生命周期修正。没有继续人工点击采集、没有扩展安全测试。
+- [x] 复用已验证dbe018c导航候选的650项基线inventory，撤掉失败试改的Core/Player/配置器二进制，覆盖全部当前宿主资产；继续使用input-rollback原路径，保持当前恢复布局有效，重生成inventory。未编译Rust/C#。
+- [x] start.ps1完成启动：Core45348，配置器36652；日志已有WebView原生请求，自动恢复启动。旧配置器占用exe，精确路径结束该进程并等待释放后复制成功；非宿主基线文件摘要全部一致。
+- [ ] 人工验收：桌面上一页/下一页实际切换；我的应用打开ChatGPT；切其他窗口后返回桌面重复。此次未代用户点击，不能声称实机故障已解决。保留Task3/4，未合并。
+
+2026-10-07 点击手感试改（INTEGRATION Task3，50%）
+用户确认能够触发但不灵敏，明确要求先取消异步试试。目标：关闭鼠标按下/松开的事件时几何采样，改走Core已发布几何的原生命中路径。仅改变采样开关，保留作者请求关联、位移阈值及其它行为，以便比较；不扩安全测试。
+- [ ] 关闭geometry.eventSamples，定向核对已发布按钮仍可用。
+- [ ] 更新当前Release宿主、退出误启动的旧Debug Core，以同目录Release启动。
+- [ ] 人工：快速单击上一页/下一页、我的应用；切其他窗口后回来再点，比较漏点和等待。转场中的移动按钮不作为本轮验收目标；未通过不合并。
+
+2026-10-07 本轮结果：
+- [x] geometry.eventSamples=false；Player的PrepareNativeSampleAsync/CompleteNativeSampleAsync对普通鼠标直接跳过，Core按已发布区域完成DOWN/UP。作者请求关联仍在，不宣称进程间通信全部同步化。
+- [x] 仅定向按钮发布检查1/1通过，diff --check通过；未改C#/Rust，无需重编译。
+- [x] 已经由正式ShutDown退出误启动的旧Debug Core；同目录候选宿主更新、inventory重生成；start.ps1启动Release Core32488/配置器9548。
+- [ ] 用户比较快速单击切页/我的应用、焦点往返后的漏点与等待；原移动取消阈值未调整。50%，待验收、未合并。
+2026-10-07 启动补记：旧Debug运行失败后WallpaperLayout为空；正式退出Core后恢复20261006备份中同一发布路径的布局，重新start.ps1（Core12516/配置器32676）。实际点击仍待用户验收。
+
+2026-10-07 重复高亮与切页等待（仍Task3，50%）
+用户报告圆角内高亮抖动、实际点击又出现矩形框，且常需两次点击才切页。代码确认矩形为宿主SVG焦点层（pointer-events:none），Dock自带hover/focus-visible；当前日志仍有StaleInput，故不能把矩形外观当作全部漏点原因。
+目标：作者Dock使用自身焦点样式；已有明确desk动作的Dock按钮在Core完成事件到达时立即走默认动作，取消该类按钮的100ms作者等待。保留正在执行的作者请求协调、一次消费与其它按钮行为。450ms作品转场时长不改。
+人工：单击上一页/下一页，比较是否立即开始切页；悬停/点击Dock无额外矩形框；我的应用与焦点往返。未验收不合并。
+
+2026-10-07 本轮交付：
+- [x] 作者Dock不再绘制宿主SVG矩形焦点层，内部焦点记录及其它消费者保持；Dock沿用自有hover/focus-visible。
+- [x] 作者Dock已配置desk.next/previous/go的原生完成事件立即执行默认动作，取消100ms等待；已有作者请求仍等待消费回执，防止重复执行。作品450ms滑动时长保留。
+- [x] 三项定向检查通过：Dock立即分发/去重/焦点样式、其它作者导航协调、先到作者请求协调；diff --check通过。更新同路径宿主和inventory，start.ps1已启动Core25044/配置器8128。
+- [ ] 真实验收：悬停/点击是否仍抖动、单击切页是否立即开始、我的应用及焦点往返。尚未证明全部StaleInput消失，仍Task3/4、50%，未合并。
+
+2026-10-08 用户纠正高亮与再次失效（Task3，50%）
+目标：保留宿主矩形焦点，移除作者Dock圆角hover/focus高亮；撤回ce3d908的立即执行试改，回到80ea518调度。保留关闭异步采样与按钮声明修复。
+范围：模板CSS及用户v3test同源CSS（修改前备份）；正式配置器重新应用以更新安装，不直接改已安装资源。日志仍有StaleInput及后续WebView UtilityProcessExited，重启恢复不等于完整根因修复。
+人工：上一页/下一页单击、我的应用、窗口往返；仅矩形高亮，实际点击结果由用户确认。未通过不合并。
+
+2026-10-08 本轮结果（50%，待验收）：
+- [x] 已取消(2026-10-08)：ce3d908作者Dock隐藏矩形焦点/立即切页试改；宿主和回归文件恢复80ea518。保留关闭事件采样与按钮声明修复。
+- [x] 两套Dock模板及用户v3test导航Dock CSS取消hover边框变色与focus圆角outline，保留外形圆角和宿主矩形焦点；用户CSS原件备份.build/v3-dock-style-before-20261008.css。
+- [x] 焦点/动作协调定向8/8通过；Core49348/配置器34920启动，真实配置器重新应用v3test显示“已应用 v3test”；ChatGPT原目标经正式绑定入口恢复，两次accepted。
+- [ ] 人工：上一页/下一页、我的应用、切窗口返回；只保留矩形高亮。重启与回退尚不证明全部点击故障已修复；旧日志StaleInput和WebView崩溃保留追踪，不合并。
+
+2026-10-08 循环方向/应用入口/经典Dock（Task3，50%）
+目标：修复三页循环next/previous在首尾反向；在v3编辑器顶部恢复添加应用入口，明确后续本机绑定；导航Dock试用旧版底部胶囊栏样式，保留矩形焦点及当前点击链路以对比漏点。范围外：不将外观更换认定为输入根因修复，不改三面板Dock。
+人工：连续下一页绕回首页、连续上一页绕回末页；编辑器添加应用图标并在本机设置绑定；经典Dock单击切页及窗口往返。未验收不合并。
+
+- [x] 首尾相邻Desk的循环方向修正，三页next/previous及普通相邻切页定向1/1通过。
+- [x] 编辑器顶部“添加应用”及原图标区同名入口已补齐，沿用现有本机绑定流程；经典导航Dock胶囊外观已写入模板和用户v3test，原样式备份.build/v3-dock-before-classic-20261008.css。
+- [ ] 配置器Release构建/更新候选/正式重新应用进行中，实际手感待验收。
+
+2026-10-08 交付：循环方向定向1/1通过；tsc/Vite及配置器v3-release构建成功。宿主/配置器/inventory已更新，Core28588/配置器46356启动。真实配置器显示“已应用 v3test”，顶部“添加应用”和右侧“+ 添加应用”均可见；原本机绑定仍在，未覆盖已有编辑草稿。
+人工：连续下一页绕回首Desk、上一页绕回末Desk；选Desk添加应用后保存并应用，再在按钮与本机设置选择程序；经典Dock单击切页/我的应用与窗口往返比较漏点。仅换外观不宣称漏点修复，仍2/4=50%，未合并。
+
+2026-10-08 点击性能修复（Task3，50%）
+目标：生产Bind时完整校验原生安装并保留其目录/资源只读句柄，运行时准入复用验证结果，Unbind/重新Bind/Dispose释放；消除每次点击多次重算整套资源摘要。仍实时检查会话、原生输入和本机授权。仅单项复用/解绑回归及必要Release build→start。
+人工：单击上一页/下一页和我的应用，比较响应；切窗口回来重复；重新应用后仍可点击。待用户验收，不合并。
+
+2026-10-08 [x] 缓存生命周期定向1/1通过：小样包200次准入579.49ms→20.93ms，绑定资源保持只读，Unbind/Dispose释放，替换Player可绑定。补安装文档专用读取，InvalidDataException失败路径释放已打开句柄；未扩安全矩阵。下一步必要Core/Player Release构建并启动。
+
+2026-10-08 缓存接入补充计划：当前安装发布在旧Player退出之前替换content目录，与运行资源只读句柄冲突。apply先按当前宿主库路径关闭并等待旧Player解绑，再原子安装；安装失败尝试重新打开保留的旧宿主。仅必要Rust Release增量构建及真实重新应用复验。
+
+2026-10-08 [x] 点击性能修复交付：缓存生命周期定向1/1通过，小样包200次准入579.49ms→20.93ms。Core/WebView2 Player/Watchdog Release及TS/Vite/Rust v3-release配置器构建退出0；保留既有Vite体积与Rust未读字段警告。候选沿用.build/v3-candidate-20261006-input-rollback，Core42060/配置器27488；真实编辑房间库“重新应用”成功，旧Player33168退出、新Player50584绑定，界面“已应用v3test”，未保存作者草稿。默认450ms转场保持，实际点击延迟未测量，不宣称漏点消除。
+人工验收：①桌面单击上一页、下一页及我的应用，比较响应和漏点；②切到其他窗口再回桌面重复；③编辑→返回房间库→重新应用v3test后重复单击。对应Task3；Task3/4仍未完整验收，工作包2/4=50%，待用户确认，未合并。
+剩余证据：启动/重铺日志仍有Unexpected WorkerW Z-order，启动首条geometry为StaleInput后下一条Accepted；本轮没有新增点击失败样本，不将这些日志当作已解决。需结合上述桌面验收判断。
+
+2026-10-08 用户确认“可以了”：b73c1ae点击响应修复局部验收通过；不据此勾完Task3/4或整包合并。
+Task3实验样包计划（仍2/4=50%）：沿已确认V3路线制作rooms/v3-orbit-lab离线HTML Room，以持续Scene、三Desk作者转场、共享Widget与配置差异、统一应用入口/多呈现、真实数据拒绝/读数、可选消费者KV、HTML start/idle支持集中验收。使用既有SDK，不改内核/配置器接口，不做拖动或额外网络安全矩阵；不更换当前v3test壁纸。
+步骤：[ ] 作者样包与简明验收指南；[ ] JS语法/正式安装检查及可视预览；[ ] zip交付与提交。
+人工：导入样包并应用，连续切页观察同一文档/计数/配置差异；为Widget允许读权限核对真实数据/撤销；应用按钮绑定本机目标；试验台预览/暂停与重启/待机、另存分享与Dock模式按指南分组验收。
+
+2026-10-08 [x] 实验样包13项作者资源及清单已生成：持续Canvas/作者转场、共享Widget读数与状态计数、6个统一按钮/三页Dock、HTML start/idle。指南V3_ORBIT_LAB.md按四组列人工步骤，明确KV授权入口仍待收口及本包不覆盖四媒体/OS全门槛。样包1/3≈33%，集成仍50%。
+2026-10-08 [x] 样包检查：四份JS node --check退出0；生产install_v3正式验证清单和全部13项资源成功；Playwright 1920×1080独立HTML截图可见连续场景、Widget和三页Dock。首次安装检查缺少目标父目录，建目录后成功；浏览器预览只计外观，不替代Core/Player验收。样包2/3≈67%，集成仍50%。
+
+2026-10-08 星轨实验HTML样包交付（Task3，集成仍50%）：
+- [x] 作者样包与简明验收指南：rooms/v3-orbit-lab及V3_ORBIT_LAB.md已完成。
+- [x] 四份JS语法、正式install_v3清单/13资源验证、1920×1080独立预览通过；转场完成的非accepted回执允许后续重试。
+- [x] zip根目录14文件与manifest清单一致，19884字节，SHA256=05a2cce60925f31984cd8b26305caeaa58d380db5ac8af61913cb394e6a49806；本轮具名文件随工作分支提交。
+交付：主项目.build/v3-orbit-lab.zip、.build/v3-orbit-lab/index.html独立预览、.build/v3-orbit-lab-preview.png；源样包与指南纳入版本控制。样包制作3/3=100%，作品桌面验收仍待，集成2/4=50%；当前v3test及运行产品未更换。
+人工步骤（与V3_ORBIT_LAB四组一致）：①导入zip并应用，往返三Desk，检查INSTANCE/运行时长/Widget计数保持，标题01/02/03改变，绑定应用与同按钮多图标；②允许和撤销四项数据读取，对照真实时钟/任务管理器/音量/媒体，本机KV待授权入口收口；③首次启动/暂停恢复/待机唤醒及非首Desk正常退出重启恢复；④试验台尺寸/暂停、Dock自动隐藏/常驻及全屏退出恢复、另存导出再导入。拖动略过。四媒体/OS完整门槛另按原验收卡，未合并。
+
+2026-10-09 Widget数据授权入口修复（V3-INTEGRATION-001 Task3，仍50%）
+目标：将只挂Dock的本机数据授权移到Room编辑器，按实际运行副本列出全部声明只读数据的来源，允许选择Widget/场景/背景/Dock并逐项保存。根因：V3DockEditor只传component.navigation，正式GetReadGrants已包含component.observatory，UI遗漏其他消费者且提示固定写Dock。
+范围外：本轮不增加KV/系统控制授权，不改作者作品或内核校验，不扩网络安全测试。
+步骤：[x] 根因核对；[ ] 界面修复与配置器Release构建；[ ] 更新运行配置器、核对观测台四项授权、具名提交。
+人工：打开已应用星轨实验室，Room编辑器找到“本机数据授权”，来源“Widget · 轨道观测台”有时间/硬件/媒体/音量四项；自行允许后回桌面对照读数，撤销一项检查读数消失。授权不修改作者草稿。
+2026-10-09 [x] UI修复已写：独立Room授权区从实际Core GetReadGrants全部只读来源中选择；Widget/背景/生命周期/持续场景显示对应名称，旧Dock挂载及固定Dock错误提示移除；继续使用同一installationStamp校验和逐项本机保存。下一步必要配置器Release构建。
+
+2026-10-09 [x] Widget授权入口修复交付：TS/Vite和配置器v3-release编译退出0；保留既有Vite体积/Rust未读字段及linker提示。精确路径正常关闭旧配置器27488，备份v3-configurator-before-widget-grants-20261009.exe，新配置器58628启动；start.ps1确认原Core42060已运行并复用，未重铺壁纸。
+真实UI修复前：当前星轨实验室已保存，但授权区只查component.navigation，无可选项。修复后打开同一作品，正式Core回复驱动“数据授权来源=Widget · 轨道观测台”，控件树可见允许时间/硬件/媒体/音量四个复选框，仍显示作者“已保存”。没有代用户勾选权限，未将控件出现记作实际允许/撤销及桌面读数通过。
+修复3/3=100%，INTEGRATION仍2/4=50%，未合并。人工：Room编辑页在Dock外观下面的独立“本机数据授权”选择Widget · 轨道观测台，勾选需要的四项；回桌面核对真实读数，撤销一项后对应读数消失。选择保存于本机，不改作者草稿；KV仍待后续入口。
+辅助UI滚动返回ok=false，未作成功断言；随后新get-app-state正常，控件树含完整四项。截图受到前台其它窗口遮挡，不作配置器视觉证据，临时截图已清理；未继续抢前台或进行多轮测试。
+
+2026-10-09 星轨媒体字段与小窗口只读数据修复（V3-INTEGRATION-001 Task3，50%）
+目标：修正样包media.available误读hasSession、audio误读volume字段；只读数据与硬件采样按实际生命周期暂停/锁屏控制，小窗口导致桌面失焦但未暂停时继续读数。动作和KV保留当前前台规则。
+范围：只读能力元数据、实际data采集两端复核、硬件采样开关、样包字段与相关状态说明；仅定向功能回归/必要Release构建，媒体来源只读查询，不播放或控制用户媒体，不扩网络安全矩阵。
+人工：保持B站视频播放且桌面可见，观测台媒体标题应来自实际系统会话，音量显示当前系统值；出现小窗口但未触发播放暂停时，时间/硬件继续更新；手动暂停/恢复与撤销读权限按既有规则。壁纸源文件更新后重新应用并重新允许当前安装的四项只读权限。
+步骤：[x] 根因核对；[ ] 定向回归和修复；[ ] Release更新/实际应用/提交待验收。
+2026-10-09 [x] 定向visible-data先RED 2/5：小窗口读数NotOperable及硬件missing；拆分CanReadData后GREEN 5/5。暂停/锁屏无采集、非前台撤权仍拒绝，动作/KV元数据仍NotOperable；不扩安全矩阵。硬件来源只跟随真实播放暂停/锁屏，准备修样包字段和Release更新。
+- [x] 2026-10-09：样包媒体按available/title/artist、音量按level/muted；授权区按真实playback_paused/locked提示。官方形状Widget检查与JS语法通过，配置器Release构建退出0；Core Release仍在构建。只读规则决策/API及#264已记录。
+- [x] 2026-10-09：Core/WebView2 Player/Watchdog Release build.ps1与配置器TS/Vite/Rust v3-release成功；五项visible-data最终5/5，官方JSON投影与JS语法通过。实际Windows只读源采样media=available，未控制播放/音量；既有NuGet审计源不可达/Vite体积/Rust未读字段警告保留。
+- [x] 2026-10-09：配置器确认作者已保存后正式退出Core，正常关闭配置器；备份旧二进制/Widget/zip于主项目.build/v3-before-data-fix-20261009。沿用候选路径部署并start.ps1，Core22840/配置器43816启动；仅替换导入样包widget/main.js，保留用户清单。实际“重新应用”成功，当前Player40624，UI已应用且安装Widget摘要与源一致。
+- [x] 2026-10-09：样包zip更新，根目录14文件与清单一致，SHA256=cefebe40a02f419c7fd534361f9f461d2be13aed3b49f0a02e0f8b63d54568b1；预览源与指南同步。未代用户允许新安装权限，未进行桌面点击/媒体播放操作；实现3/3=100%，Task3仍待人工、整包2/4=50%，未合并。
+
+## 2026-10-09 halfV3阶段合入
+- [x] 用户明确授权当前阶段合入master，名称halfV3；范围为当前feat/V3-INTEGRATION-001-integration及已有堆叠依赖。
+- [x] 状态与验收/归档已记录，整体仍2/4=50%；未完成Task3/4留给下一轮独立续项。
+- [x] 主线本机Room状态已备份/暂存并按摘要恢复；halfV3命名合并成功；合并后runtime-model18/18与visible-data5/5通过；已归档本轮worktree并删除已合并分支。
+
+halfV3合并收尾（2026-10-09）：master无冲突命名合并，合并提交由本地halfV3标记定位。合并后只跑必要本地冒烟：runtime-model18/18、visible-data5/5；未重复桌面操作或全部网络/安全矩阵。当前运行候选保持。
+主线原21项Room文件删除和导入的v3-orbit-lab/v3test已完整保留；备份.build/halfV3-local-room-state-20261009与stash e08778387809a44a491a4e72fd6ebdb8517e5ee2均保留。恢复后导入Room仍按原本机清单/字节存在，源目录与提交作者样包的差异属于未提交本机状态，未混入合并。
+本轮v3-integration worktree已通过应用归档为可恢复快照，feat/V3-INTEGRATION-001-integration已安全删除。旧堆叠依赖分支不在本轮清理范围。阶段合并完成，整体集成仍2/4=50%，下一项继续Task3/4集中验收。

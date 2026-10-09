@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export interface AppPickerItem {
@@ -17,6 +18,8 @@ interface AppPickerDialogProps<TApp extends AppPickerItem> {
   onToggle: (app: TApp) => void;
   onClose: () => void;
   emptyMessage?: string;
+  searchQuery?: string;
+  onSearch?: (query:string)=>void;
 }
 
 export function AppPickerDialog<TApp extends AppPickerItem>({
@@ -26,6 +29,8 @@ export function AppPickerDialog<TApp extends AppPickerItem>({
   isSelected,
   onToggle,
   onClose,
+  searchQuery,
+  onSearch,
   emptyMessage = "还没有可用应用。请先关闭此窗口，再到侧栏“应用库”添加或扫描应用。",
 }: AppPickerDialogProps<TApp>) {
   useEffect(() => {
@@ -58,6 +63,7 @@ export function AppPickerDialog<TApp extends AppPickerItem>({
             完成
           </Button>
         </div>
+        {onSearch && <div className="px-5 pt-3"><Input aria-label="搜索应用库" placeholder="搜索应用库" value={searchQuery??""} onChange={event=>onSearch(event.target.value)}/></div>}
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           {apps.length === 0 ? (
             <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border px-6 text-center text-sm text-muted-foreground">

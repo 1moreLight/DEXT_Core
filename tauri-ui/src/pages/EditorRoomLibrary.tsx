@@ -55,7 +55,7 @@ export function EditorRoomLibrary(props: EditorRoomLibraryProps) {
             <Button className="flex-1" variant={selectedRoom.path === appliedRoom ? "secondary" : "outline"} disabled={Boolean(busy) || !roomContractPolicy(selectedRoom.version).apply || (isTauri && !coreIdentity)} title={!roomContractPolicy(selectedRoom.version).apply ? readOnlyRoomMessage(selectedRoom.version) : isTauri && !coreIdentity ? "Dext Core 未连接" : undefined} onClick={() => props.onApply(selectedRoom)}>{selectedRoom.path === appliedRoom ? "重新应用" : "应用"}</Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(selectedRoom.version).edit} onClick={() => props.onDuplicate(selectedRoom)}><Copy className="h-4 w-4" /> 复制</Button>
+            <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(selectedRoom.version).saveAs} onClick={() => props.onDuplicate(selectedRoom)}><Copy className="h-4 w-4" /> 复制</Button>
             <Button variant="outline" disabled={Boolean(busy) || !roomContractPolicy(selectedRoom.version).edit} onClick={() => props.onRename(selectedRoom)}><Pencil className="h-4 w-4" /> 重命名</Button>
           </div>
         </aside>

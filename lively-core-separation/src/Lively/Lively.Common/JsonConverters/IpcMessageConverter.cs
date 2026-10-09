@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Lively.Models.Message;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -49,6 +49,15 @@ namespace Lively.Common.JsonConverters
                 MessageType.msg_room_session_request => jo.ToObject<LivelyMessageRoomSessionRequest>(serializer),
                 MessageType.msg_room_transition_complete => jo.ToObject<LivelyMessageRoomTransitionComplete>(serializer),
                 MessageType.msg_room_session_ready => jo.ToObject<LivelyMessageRoomSessionReady>(serializer),
+                MessageType.cmd_room_runtime => jo.ToObject<LivelyMessageRoomRuntime>(serializer),
+                MessageType.cmd_room_runtime_revoke => jo.ToObject<LivelyMessageRoomRuntimeRevoke>(serializer),
+                MessageType.msg_room_native_request => jo.ToObject<LivelyMessageRoomNativeRequest>(serializer),
+                MessageType.cmd_room_native_response => jo.ToObject<LivelyMessageRoomNativeResponse>(serializer),
+                MessageType.msg_room_native_invalidated => jo.ToObject<LivelyMessageRoomNativeInvalidated>(serializer),
+                MessageType.cmd_room_native_pointer => jo.ToObject<LivelyMessageRoomNativePointer>(serializer),
+                MessageType.msg_room_native_sample => jo.ToObject<LivelyMessageRoomNativeSample>(serializer),
+                MessageType.msg_room_dock_state => jo.ToObject<LivelyMessageRoomDockState>(serializer),
+                MessageType.cmd_room_dock_policy => jo.ToObject<LivelyMessageRoomDockPolicy>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -7,13 +8,30 @@ using System.Text.Json;
 
 namespace Dext.Core.Rooms;
 
-// Temporary v3 session manifest for the existing official visual host. It is
-// deliberately separate from the later, full v3 authoring format.
-internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAuthority
+// Native v3 admission, retaining the accepted v2 development overlay until
+// the complete native runtime replaces its visual host.
+internal sealed class InstalledRoomSessionAuthority : IRoomSessionActionAdmissionAuthority, IDisposable
 {
     private readonly object gate = new();
+    private readonly bool retainNativeInstallation;
+    private VerifiedRoomInstallation? retainedInstallation;
+    private List<IDisposable> retainedResources = new();
+    public InstalledRoomSessionAuthority(bool retainNativeInstallation = false)
+    { this.retainNativeInstallation = retainNativeInstallation; }
+    private void ReleaseInstallation()
+    {
+        retainedInstallation = null;
+        foreach (var resource in retainedResources) resource.Dispose();
+        retainedResources.Clear();
+    }
+    public void Dispose()
+    {
+        lock (gate) { ReleaseInstallation(); packageDirectory = null; playerPid = 0; dockPid = 0; dockStamp = null; }
+    }
     private string? packageDirectory;
     private int playerPid;
+    private int dockPid;
+    private string? dockStamp;
 
     public VerifiedRoomInstallation? Bind(string packageDirectory, int playerPid)
     {
@@ -21,10 +39,37 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
         var directory = Path.GetFullPath(packageDirectory);
         var installation = ReadInstallation(directory);
         if (installation is null) return null;
+        var resources = new List<IDisposable>();
+        if (retainNativeInstallation && installation.RuntimeContext is { } context)
+        {
+            try
+            {
+                resources.Add(RoomV3Installation.RetainDirectory(directory));
+                var root = Directory.Exists(Path.Combine(directory, "content")) ? Path.Combine(directory, "content") : directory;
+                // Keep this verified inventory read-only for the bound Player lifetime.
+                foreach (var path in context.Resources.Select(resource => resource.Path))
+                    resources.Add(RoomV3Installation.OpenResource(root, path));
+                foreach (var name in new[] { "room.json", "installation.json" })
+                    resources.Add(RoomV3Installation.OpenInstallationDocument(root, name));
+                var locked = ReadInstallation(directory);
+                if (locked is null || locked.InstallationStamp != installation.InstallationStamp)
+                    throw new InvalidDataException("Installation changed while binding");
+                installation = locked;
+            }
+            catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or ArgumentException)
+            {
+                foreach (var resource in resources) resource.Dispose();
+                return null;
+            }
+        }
         lock (gate)
         {
+            ReleaseInstallation();
+            retainedResources = resources;
+            retainedInstallation = resources.Count > 0 ? installation : null;
             this.packageDirectory = directory;
             this.playerPid = playerPid;
+            dockPid = 0; dockStamp = null;
         }
         return installation;
     }
@@ -34,8 +79,34 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
         lock (gate)
         {
             if (this.playerPid != playerPid) return;
+            ReleaseInstallation();
             packageDirectory = null;
             this.playerPid = 0;
+            dockPid = 0; dockStamp = null;
+        }
+    }
+
+    // Only the coordinator binds a second Core-created process to the current
+    // desktop installation. This binding never replaces the desktop process.
+    public bool BindDock(int desktopPid, int pid, string installationStamp)
+    {
+        lock (gate)
+        {
+            if (pid <= 0 || desktopPid != playerPid || pid == playerPid ||
+                packageDirectory is null || (dockPid != 0 && dockPid != pid)) return false;
+            var installation = retainedInstallation ?? ReadInstallation(packageDirectory);
+            if (installation?.RuntimeContext is null || installation.InstallationStamp != installationStamp) return false;
+            dockPid = pid; dockStamp = installationStamp;
+            return true;
+        }
+    }
+
+    public void UnbindDock(int pid)
+    {
+        lock (gate)
+        {
+            if (dockPid != pid) return;
+            dockPid = 0; dockStamp = null;
         }
     }
 
@@ -46,19 +117,31 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
             if (packageDirectory is null ||
                 !((peer.TransportId == "core-runtime" && hello.Role == RoomClientRole.Coordinator) ||
                   (peer.TransportId == $"player-process:{playerPid}" &&
-                   hello.Role == RoomClientRole.DesktopPlayer)))
+                   hello.Role == RoomClientRole.DesktopPlayer) ||
+                  (dockPid > 0 && peer.TransportId == $"dock-process:{dockPid}" && hello.Role == RoomClientRole.Dock)))
                 return null;
-            var installation = ReadInstallation(packageDirectory);
-            return installation is null || installation.RoomId != hello.RoomId
+            var installation = retainedInstallation ?? ReadInstallation(packageDirectory);
+            return installation is null || installation.RoomId != hello.RoomId ||
+                (hello.Role == RoomClientRole.Dock && installation.InstallationStamp != dockStamp)
                 ? null
                 : new RoomSessionAdmission(peer.TransportId, hello.Role, installation);
         }
     }
 
+    public T WithAdmission<T>(RoomSessionPeer peer, RoomSessionHello hello, Func<RoomSessionAdmission?, T> prepare)
+    { lock (gate) return prepare(Admit(peer, hello)); }
+
     private static VerifiedRoomInstallation? ReadInstallation(string directory)
     {
         try
         {
+            if (Directory.Exists(Path.Combine(directory, "content")))
+            {
+                if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) return null;
+                return RoomV3Installation.Verify(Path.Combine(directory, "content"));
+            }
+            if (File.Exists(Path.Combine(directory, "installation.json")))
+                return RoomV3Installation.Verify(directory);
             var manifestPath = Path.Combine(directory, "session.v3.json");
             var roomPath = Path.Combine(directory, "room.json");
             if (!File.Exists(manifestPath) || !File.Exists(roomPath) ||
@@ -97,8 +180,8 @@ internal sealed class InstalledRoomSessionAuthority : IRoomSessionAdmissionAutho
             return new VerifiedRoomInstallation(roomGuid.ToString("D"), stamp,
                 deskIds!, startDeskId!);
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or
-            JsonException or InvalidOperationException or ArgumentException or FormatException)
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException or
+            JsonException or InvalidOperationException or ArgumentException or FormatException or KeyNotFoundException or OverflowException)
         {
             return null;
         }

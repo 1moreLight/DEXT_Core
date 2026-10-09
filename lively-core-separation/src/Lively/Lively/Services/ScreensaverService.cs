@@ -1,3 +1,4 @@
+using Dext.Core.Rooms;
 using Lively.Common;
 using Lively.Common.Factories;
 using Lively.Common.Helpers;
@@ -32,7 +33,10 @@ namespace Lively.Services
     public class ScreensaverService : IScreensaverService
     {
         public bool IsRunning { get; private set; } = false;
-        public ScreensaverApplyMode Mode => ScreensaverApplyMode.process;
+        private bool usingNativeRuntime;
+        public ScreensaverApplyMode Mode => usingNativeRuntime ? ScreensaverApplyMode.nativeRuntime : ScreensaverApplyMode.process;
+        public string NativeIdleDisplayId => usingNativeRuntime ? roomSessionRuntime.NativeIdleDisplayId : null;
+        public bool IsNativeIdlePresented => usingNativeRuntime && roomSessionRuntime.IsNativeIdlePresented;
 
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly List<Window> blankWindows = [];
@@ -43,18 +47,22 @@ namespace Lively.Services
         private bool startAsyncExecuting, stopAsyncExecuting;
         private DateTime? startTime;
 
+        private readonly IRoomSessionRuntimeCoordinator roomSessionRuntime;
         private readonly IUserSettingsService userSettings;
         private readonly IDisplayManager displayManager;
         private readonly IWallpaperLibraryFactory wallpaperLibraryFactory;
         private readonly RawInputMsgWindow rawInput;
 
+        public event EventHandler Started;
         public event EventHandler Stopped;
 
         public ScreensaverService(IUserSettingsService userSettings,
             RawInputMsgWindow rawInput,
             IDisplayManager displayManager,
-            IWallpaperLibraryFactory wallpaperLibraryFactory)
+            IWallpaperLibraryFactory wallpaperLibraryFactory,
+            IRoomSessionRuntimeCoordinator roomSessionRuntime)
         {
+            this.roomSessionRuntime = roomSessionRuntime;
             this.userSettings = userSettings;
             this.displayManager = displayManager;
             this.rawInput = rawInput;
@@ -81,6 +89,19 @@ namespace Lively.Services
                 BlankWindow fadeInWindow = null;
                 try
                 {
+                    var native = roomSessionRuntime.EnterNativeIdle();
+                    if (native != RoomNativeIdleResult.NotNative)
+                    {
+                        if (native == RoomNativeIdleResult.Entered)
+                        {
+                            usingNativeRuntime = true;
+                            IsRunning = true;
+                            startTime = DateTime.UtcNow;
+                            StartInputListener();
+                            Started?.Invoke(this, EventArgs.Empty);
+                        }
+                        return;
+                    }
                     if (isFadeIn)
                     {
                         Logger.Info("Showing screensaver transition..");
@@ -123,6 +144,7 @@ namespace Lively.Services
                     Logger.Info("Starting screensaver..");
                     await ShowScreensavers();
                     StartInputListener();
+                    Started?.Invoke(this, EventArgs.Empty);
                 }
                 finally
                 {
@@ -152,6 +174,7 @@ namespace Lively.Services
 
                     IsRunning = false;
                     CloseScreensavers();
+                    usingNativeRuntime = false;
                     Stopped?.Invoke(this, EventArgs.Empty);
                 }
                 finally
@@ -211,6 +234,9 @@ namespace Lively.Services
             {
                 case ScreensaverApplyMode.process:
                     CloseWindowAsScreensaver();
+                    break;
+                case ScreensaverApplyMode.nativeRuntime:
+                    roomSessionRuntime.ExitNativeIdle();
                     break;
                 case ScreensaverApplyMode.dwmThumbnail:
                     CloseDwmThumbnailAsScreensaver();

@@ -1,6 +1,70 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if(args.Length==4&&args[0]=="--v3-author-visual-wire"){await AuthorVisualWireProbe.Run(args[1],args[2],args[3]);return;}
+if(args.Length==4&&args[0]=="--v3-author-key-sample-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],int.Parse(args[3]),sampleKeyboard:true);return;}
+if(args.Length==3&&args[0]=="--v3-author-sample-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],sampleMouse:true);return;}
+if(args.Length==4&&args[0]=="--v3-author-key-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],int.Parse(args[3]));return;}
+if(args.Length==3&&args[0]=="--v3-author-input-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2]);return;}
+if(args.Length>0&&args[0]=="--v3-author-action-delivery"){NativeAuthorActionDeliveryChecks.Run();return;}
+if (args.Length == 8 && args[0] == "--v3-native-lifecycle-live") { await NativeCoreLiveProbe.Run(args[1],args[2],args[3],args[4],args[5],args[6],authoredNavigation:true,lifecycleMedia:args[7]); return; }
+
+if (args.Length == 7 && args[0] == "--v3-native-recovery-live") { await NativeCoreLiveProbe.Run(args[1],args[2],args[3],args[4],args[5],args[6],authoredNavigation:true,playerRecovery:true); return; }
+
+if (args.Length == 8 && args[0] == "--v3-native-exit-live") { await NativeCoreLiveProbe.Run(args[1],args[2],args[3],args[4],args[5],args[6],true,false,true,args[7]); return; }
+
+if (args.Length == 7 && args[0] == "--v3-native-controls-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6], false, true); return; }
+if (args.Length == 7 && args[0] == "--v3-native-navigation-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6], true); return; }
+if (args.Length == 7 && args[0] == "--v3-native-core-live") { await NativeCoreLiveProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6]); return; }
+
+if (args.Length == 1 && args[0] == "--v3-idle-window") { NativeIdleWindowChecks.Run(); return; }
+
+if (args.Length == 2 && args[0] == "--v3-input-wire") { await NativeInputWireProbe.Run(args[1]); return; }
+
+if (args.Length == 1 && args[0] == "--v3-frame-media-messages") { NativeFrameMediaMessageChecks.Run(); return; }
+
+if (args.Length == 1 && args[0] == "--v3-input-request-join") { NativeInputRequestJoinChecks.Run(); return; }
+
+if (args.Length == 1 && args[0] == "--v3-input-guardian-policy") { NativeInputGuardianPolicyChecks.Run(); return; }
+
+if (args.Length == 2 && args[0] == "--v3-pointer-wire") { await NativePointerWireProbe.Run(args[1]); return; }
+
+if (args.Length == 1 && args[0] == "--v3-pointer-delivery") { await NativePointerDeliveryChecks.Run(); return; }
+
+if (args.Length == 1 && args[0] == "--v3-input-messages") { NativeInputMessageChecks.Run(); return; }
+
+if (args.Length == 5 && args[0] == "--v3-frame-media-wire") { await NativeFrameMediaWireProbe.Run(args[1], args[2], args[3], args[4]); return; }
+
+if (args.Length == 4 && args[0] == "--v3-official-host-wire") {
+    await OfficialHostWireProbe.Run(args[1], args[2], args[3]);
+    return;
+}
+
+if (args.Length == 7 && args[0] == "--v3-native-host-wire") {
+    await FrameHostWireProbe.Run(args[1], args[2], args[3], args[4], args[5], args[6]);
+    return;
+}
+
+if (args.Length == 6 && args[0] == "--v3-playback-wire") {
+    await FrameHostWireProbe.Run(args[1], args[2], args[3], args[4], args[5]);
+    return;
+}
+
+if (args.Length == 4 && args[0] == "--v3-frame-host-wire") {
+    await FrameHostWireProbe.Run(args[1], args[2], args[3]);
+    return;
+}
+
+if (args.Length == 4 && args[0] == "--v3-media-host-wire") {
+    await ResourceWireProbe.Run(args[1], args[2], mediaHostFile: args[3]);
+    return;
+}
+
+if (args.Length >= 3 && args[0] == "--v3-resources-reject")
+{
+    await ResourceWireProbe.Run(args[1], args[2], policyUnavailable: true);
+    return;
+}
 if (args.Length == 1 && args[0] == "--workerw-p2a") {
     await WorkerWSceneProbe.Run();
     return;
@@ -14,13 +78,65 @@ if (args.Length == 2 && args[0] == "--v3-status") {
     return;
 }
 
+if (args.Length == 2 && args[0] == "--v3-wire") {
+    await RoomSessionWireProbe.Run(args[1]);
+    return;
+}
+
+if (args.Length == 2 && args[0] == "--v3-runtime-wire") {
+    await RuntimeWireProbe.Run(args[1]);
+    return;
+}
+
+if (args.Length == 1 && args[0] == "--v3-runtime-messages") {
+    RuntimeMessageChecks.Run();
+    return;
+}
+
+if (args.Length == 1 && args[0] == "--v3-resources") {
+    ResourceBoundaryChecks.Run();
+    return;
+}
+
+if (args.Length == 3 && args[0] == "--v3-resources-wire") {
+    await ResourceWireProbe.Run(args[1],args[2]);
+    return;
+}
+
+if (args.Length > 1 || (args.Length == 1 && args[0].StartsWith("--", StringComparison.Ordinal)))
+    throw new ArgumentException("Unknown input probe mode or invalid argument count");
+
 // A hidden native receiver checks the messages actually posted by production code.
 // No browser automation can catch a wrong Win32 wParam before it reaches WebView2.
-var window = Native.CreateWindowExW(0, "STATIC", "Dext input regression", 0,
-    0, 0, 1, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+var window = Native.CreateWindowExW(0, "STATIC", "Dext input regression", 0x80000000,
+    -300, -200, 1, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 if (window == IntPtr.Zero) throw new Exception("Could not create hidden input receiver");
 try
 {
+    var anchor=Native.CreateWindowExW(0,"STATIC","anchor",0x40000000,17,23,80,60,window,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero);
+    var input=Native.CreateWindowExW(0,"STATIC","input",0x40000000,0,0,80,60,anchor,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero);
+    try {
+        var measured=DextNativeInputWindow.TryMeasure(window,anchor,input,Environment.ProcessId,out var rect,out var dpi);
+        if(!measured || rect.X!= -283 || rect.Y!= -177 || rect.Width!=80 || rect.Height!=60 || dpi<=0)throw new Exception($"native child mapping failed: measured={measured}, rect={rect}, dpi={dpi}, anchor={anchor}, input={input}");
+        if(DextNativeInputWindow.TryMeasure(window,anchor,input,Environment.ProcessId+1,out _,out _) || DextNativeInputWindow.TryMeasure(window,input,anchor,Environment.ProcessId,out _,out _))throw new Exception("foreign process/parent accepted");
+        Native.SetWindowPos(input,IntPtr.Zero,1,0,80,60,0x14);
+        if(DextNativeInputWindow.TryMeasure(window,anchor,input,Environment.ProcessId,out _,out _))throw new Exception("offset input viewport accepted");
+        Native.SetWindowPos(input,IntPtr.Zero,0,0,79,60,0x14);
+        if(DextNativeInputWindow.TryMeasure(window,anchor,input,Environment.ProcessId,out _,out _))throw new Exception("different input dimensions accepted");
+        Console.WriteLine("PASS native window ownership, nested origin and dimension/offset rejection");
+    }finally { Native.DestroyWindow(anchor); }
+    // RI_KEY_BREAK is a bit, so E0 | BREAK must still be an UP.
+    if(!InputUtil.RawKeyIsDown(0) || InputUtil.RawKeyIsDown(1) || InputUtil.RawKeyIsDown(3) || !InputUtil.RawKeyIsExtended(3) || InputUtil.RawKeyIsExtended(4))throw new Exception("Raw keyboard flags decoded incorrectly");
+    foreach(var extended in new[]{false,true})
+    foreach(var down in new[]{true,false})
+    {
+        var id=down?0x0100:0x0101;
+        InputUtil.ForwardMessageKeyboard(window,id,(IntPtr)13,0x1c,down,extended);
+        if(!Native.PeekMessageW(out var key,window,(uint)id,(uint)id,1))throw new Exception("Missing forwarded key");
+        var packed=(uint)key.LParam.ToInt64();var expected=1u|(0x1cu<<16)|(extended?1u<<24:0)|(down?0:3u<<30);
+        if(packed!=expected || key.WParam.ToUInt64()!=13)throw new Exception("Wrong extended/break bits");
+    }
+    Console.WriteLine("PASS raw keyboard BREAK/E0 and native key lParam flags");
     InputUtil.MouseMove(window, 12, 23);
     CheckMessage(0x0200, 0, 12, 23);
     InputUtil.MouseLeftButtonDown(window, 12, 23);
@@ -96,6 +212,7 @@ static class Native
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr CreateWindowExW(uint extendedStyle, string className, string title,
         uint style, int x, int y, int width, int height, IntPtr parent, IntPtr menu, IntPtr instance, IntPtr parameter);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hwnd,IntPtr after,int x,int y,int width,int height,uint flags);
     [DllImport("user32.dll")] public static extern bool DestroyWindow(IntPtr window);
     [DllImport("user32.dll")] public static extern bool PeekMessageW(out Message message, IntPtr window, uint min, uint max, uint remove);
 }

@@ -1,6 +1,6 @@
 # Dext 开发入口
 
-> 更新：2026-09-23。本文件只负责快速进入项目和索引接口；不再承载任务状态。
+> 更新：2026-10-04。本文件只负责快速进入项目和索引接口；不再承载任务状态。
 
 ## 零、先看这里
 
@@ -18,7 +18,7 @@
 
 目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
 
-DXT-003 将项目收口为唯一原生 Room v2；v1 与更旧 demo 不兼容、不迁移、不重建。新建、编辑、保存、另存、预览、应用和 zip 全链只接受/产生 v2。
+DXT-003完成了原生Room v2链（历史阶段）；v1与更旧demo不兼容。当前v3按ROADMAP开发：P6新建/编辑/保存接原生v3，已有v2链保留至P10收口；v3另存/分享/试验台由后续包接入。完整进度和实际证据见V3_DELIVERY.md，不能用v2同名功能计作v3交付。
 
 ```
 ① 运行时渲染器  wallpapers/dext-room/{index.html,style.css,main.js}
@@ -63,6 +63,8 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `ROOM_V2_SYSTEM_API.md` | 系统媒体与 Windows 主音量的受控 RPC、权限和手势边界 | 接入系统展示或动作时 |
 | `ROOM_V2_AI_PROMPT.md` | 可直接交给 AI 的 Room v2/Scene/Widget 创作提示词 | AI 生成前端内容时 |
 | `V3_IDEAS.md` | **Room v3 设计想法与候选实现路径**；记录 HTML 创作、常驻层、占用区和 Dock 窗口模式 | 讨论 v3 方向时；非正式运行契约 |
+| `ROOM_V3.md` / `ROOM_V3_RUNTIME_API.md` | 原生v3清单、个人数据边界与版本化作者SDK；完整交付证据见V3_DELIVERY | 实现或创作v3 Room时 |
+| `V3_ORBIT_LAB.md` | 星轨实验HTML壁纸打开方式与四组人工验收；持续状态、读数授权、生命周期、Dock及分享 | 体验v3实验样包时 |
 | `V3_PLAN.md` | **v3 总体设计方案入口**；概念、待确认细节、Core 改写、UI 调整、阶段依赖和验收样例 | v3 工作包开工或讨论前；实际状态只认 ROADMAP |
 | `V3_RUNTIME_MODEL.md` | **Room v3 运行逻辑讨论稿**；持续网页、Desk 切换状态机、图标随画布运动与共享元素生命周期 | 讨论 v3 作品结构和作者切页契约时；非正式运行契约 |
 | `V2_TO_V3_TODO.md` | **v2→v3 设计阶段待办草案**；按依赖整理验证、契约、运行时和创作闭环 | 规划 v3 工作包时；不替代 ROADMAP/TODO |
@@ -202,13 +204,14 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `get_wallpapers` / `set_wallpaper` / `core_stats` | 见 grpc.rs | RPC 封装 |
 | `core_identity` / `start_core` / `exit_core` | `→ CoreIdentity` / `→ CoreIdentity` / `→ ()` | 轮询当前配置器所属 Core 的验证身份；从同一构建启动并等待就绪，或经 RPC 正常退出 Core，配置器保留 |
 | `list_rooms` | `(dir) → {name,path,desks,icons,version,widgets}[]` | 扫房间库；识别版本并统计 Widget，不执行 Widget |
-| `read_room` / `write_room` | `(path[, room_json])` | 写入剥离 `__source`、验证 v2 并原子替换 |
+| `read_room` / `write_room` | `(path[, room_json])` | 写入剥离私有来源；v2验证原子替换，v3走正式作者校验/资源检查/原子保存 |
 | `sync_active_desk_icons` | `(library_dir, room_dir, desk_index, icons, enter_edit, highlight_target?) → {active,saved,liveUpdated,roomJson?,liveError?}` | 仅库内、来源戳匹配的当前 Room 可写；原子更新源 Room 与运行包并发送布局消息，运行时失败仍保留源文件保存结果 |
 | `create_room` | `(dir, name) → path` | 建最小合法 v2 和五个内容目录 |
+| `create_room_v3` / `import_v3_content` | 创建(dir,name,room_json) / 导入(room_dir,src_path,content_type) | 原生v3创建稳定清单；复制image/video/GIF或HTML入口同目录依赖，返回content/resources |
 | `save_room_as` | `(room_dir, dir, name, room_json) → path` | 另存干净 v2，并镜像五类资源；失败不留下半成品 |
 | `duplicate_room` | `(library_dir, room_dir, name) → path` | 仅复制库内直接子 Room，完整镜像 v2 JSON 与五类资源，失败清理目标 |
-| `rename_room` | `(library_dir, room_dir, name) → path` | 仅重命名库内直接子 Room，拒绝非法名称、重名、链接和库外路径；运行中 Room 随后重新应用刷新来源戳 |
-| `apply_room` | `(room_dir)` | 严格验证 v2，镜像五类资源，并仅在运行包注入规范化 `__source` |
+| `rename_room` | (library_dir,room_dir,name) → path | 库内直接子Room；v3更新name保持UUID/资源，返回显示路径；运行中Room重新应用刷新来源 |
+| `apply_room` | (room_dir) | v2镜像并注入私有来源；v3安装快照、规范宿主路径并等Core新会话确认，来源单存source.v3.json |
 | `import_background` | `(room_dir, src_path, slot, content_type) → Content` | 复用既有命令导入 `background/start/switch/idle` 的 image/video/HTML，并返回 `{name,type,src}` |
 | `delete_room` | `(library_dir, room_dir)` | 只接受库内直接子 Room，经完整校验后移入 Windows 回收站 |
 | `export_room_zip` / `import_room_zip` | 见 `lib.rs` | 事务式导出/导入自包含 v2 zip；校验 Widget 声明并防路径穿越、链接、重复项、解压炸弹、重名和残留 |
@@ -217,7 +220,7 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 | `confirm_creator_import` | `(token, room_dir, room_json, desk_index, scene_target?) → Content/Widget` | 用户确认后事务式写入 Scene/Widget；重新执行完整 Room/资源校验 |
 | `get_system_media` / `control_system_media` | 见 `grpc.rs` | 当前系统媒体快照与 play/pause/toggle/next/previous 封闭动作 |
 | `get_system_volume` / `set_system_volume` | 见 `grpc.rs` | Windows 默认输出主音量与 mute，0..1 双边校验 |
-| `active_room` / `stop_wallpapers` | `→ ActiveRoom?` / `→ ()` | 以 Core `GetWallpapers` 和运行包可信 `__source` 为真相；停止 Player 但保留 Core |
+| `active_room` / `stop_wallpapers` | → ActiveRoom? / → () | v2读取运行包来源，v3核对活跃Core/Player及私有来源与安装快照；停止Player保留Core |
 | `get_dext_settings` / `patch_dext_settings` | 白名单设置视图/patch | 经 Settings RPC 执行 Get 全量 → patch → Set，保留未编辑字段；patch 返回保存后的设置和 `not_needed / applied / deferred` 实时投递状态 |
 | `validate_room_library` | `(path) → canonical_path` | 创建并实际读写探测 Room 库，成功后前端才持久化路径 |
 | `diagnostics_json` / `export_diagnostics` | `→ JSON` / `(path)` | 汇总配置器/Core 版本、身份、进程、pipe、目录、运行包与源 Room |
@@ -263,3 +266,16 @@ Dext 随仓库/产品携带自己的 Core fork，不读取用户另装原版 Liv
 - Room v2 编辑与分享：配置器已接通 v2 Room 创建/复制/重命名/删除、Scene/Widget、权限审阅、zip 导入导出、Creator Pack 检查与隔离预览；UI-V2-001 已合并 master。
 - 真桌面 Widget：编辑模式支持长按进入、拖动、缩放和 placement 双写持久化；时间、CPU/GPU、内存、网速等 P1 只读能力链及加载骨架屏已通过真机验收。
 - 待做内容不在这里维护；以 `ROADMAP.md` 为唯一清单。
+
+## v3 作者试验台开发入口
+P7当前分支在原生Room编辑器提供“打开试验台”，独立预览当前草稿、多尺寸/Desk/生命周期、示例数据与权限状态、按钮/占用/组件/资源诊断。直接复用正式v3宿主源码；模拟资源会话与真实Core动作/私人存储隔离。实现状态以ROADMAP及acceptance/V3-P7-001-workbench.md为准，首轮代码未做完整构建或实机验收。
+试验台还提供共享Dock/Widget默认布局应用到草稿、资源源码只读定位、自定义JSON示例；返回编辑器沿原撤销与保存，不用预览修改私人绑定。
+
+P2b顶层Dock原型：scripts/dock-probe.ps1仅供手动原生验收，依当前worktree已构建ReleasePlayer；默认overlay、180秒退出，可明确选择autohide/reserve。原型未接Core/个人数据，不代表P8已启用；正式状态看ROADMAP及acceptance/V3-P2B-001-top-dock.md。
+P8原生Dock设置接线：配置器设置中的独立卡经Core读取/保存全局偏好，显示当前Room/Desk资格与真实运行状态；宿主未接入不会显示已启用。当前范围和下一步见ROADMAP/TODO及acceptance/V3-P8-001-dock-autohide.md。
+
+### v3 首发与升级兼容入口
+- 规则：RELEASE_V3_COMPATIBILITY.md；固定词汇：../room-v3-compatibility.json。
+- 原始样包/分享zip/摘要：fixtures/room-v3/release-api1；只读字节检查：../scripts/verify-release-rooms.ps1。当前发布资格与实机证据仍以ROADMAP和验收卡为准。
+
+- v3候选部署/维护/性能：RELEASE_V3.md；scripts/build-v3-release.ps1只构建到新目录、不启动，游戏期间不得执行。完整状态仍认ROADMAP/验收卡。

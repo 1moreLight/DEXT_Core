@@ -127,6 +127,12 @@
 | #120 | 外置 `CARGO_TARGET_DIR` 让配置器只认内置 target 路径，误判同分支 Core 不可连接 | [backend](errors/backend.md) |
 | #121 | WebView2 的 `msg_wploaded` 可早于异步 `room.json` 加载，过早发送会话快照会被页面重置 | [renderer](errors/renderer.md) |
 | #122 | WorkerW 内的 Player 窗口不是普通顶层窗口，实机探针不能只用 `EnumWindows` 找输入 HWND | [toolchain](errors/toolchain.md) |
+| #123 | JSON Schema 将公开 config 限为对象，但原生递归校验接受数组/字符串，会造成跨入口契约分歧 | [backend](errors/backend.md) |
+| #124 | 原生v3校验抛InvalidDataException而准入边界未捕获，篡改包变成未处理异常 | [backend](errors/backend.md) |
+| #125 | 新worktree不带忽略的CodeGraph索引；CLI文件分页参数是offset/limit | [toolchain](errors/toolchain.md) |
+| #126 | Rust与Core对Unicode资源顺序、重复JSON键和null配置处理不同，安装成功后准入失败 | [backend](errors/backend.md) |
+| #127 | file URI scheme大小写敏感检查漏掉FILE:，公开配置可能携带私人路径 | [backend](errors/backend.md) |
+| #128 | 已安装样包摘要与Git换行过滤冲突，新Windows检出后摘要失效 | [toolchain](errors/toolchain.md) |
 
 ## 分册
 
@@ -140,3 +146,222 @@
 - [toolchain.md](errors/toolchain.md) —— PowerShell / 编码 / 环境
 
 > 排障时：先想这个坑属于哪一层 → 直接翻对应分册 → 没有再看索引找邻近主题。
+
+| #129 | 暂存写入和最终发布先检查路径后操作，链接/目录替换可越过校验 | [backend](errors/backend.md) |
+| #130 | FILE_RENAME_INFO长度不含NUL，但FileName缓冲区必须提供终止符 | [backend](errors/backend.md) |
+
+| #131 | Explorer代启成功分支未传应用arguments，私有绑定启动丢失参数 | [backend](errors/backend.md) |
+| #132 | 桌面暂停状态错误阻止仍可见Dock的绑定动作 | [backend](errors/backend.md) |
+
+| #133 | 动作缓存授权后等待个人读取，关闭/撤权/修改已生效却仍派发旧应用 | [backend](errors/backend.md) |
+
+## P5新增错误索引
+
+| 编号 | 现象 | 分册 |
+|---|---|---|
+| #134 | 消费者重报同一几何仍递增版本，会形成全实例通知/重报循环 | [renderer](errors/renderer.md) |
+| #135 | SDK初始化回调中销毁后仍发ready，已销毁ready返回旧身份 | [renderer](errors/renderer.md) |
+
+| #136 | 输入探针显式链接Protocol源码但遗漏新增依赖，独立编译出现CS0246 | [backend](errors/backend.md) |
+
+| #137 | 新命令未重设CARGO_TARGET_DIR，重复生成本地target且identity误报配置器OTHER | [toolchain](errors/toolchain.md) |
+
+| #138 | Core快照完整但Player两次投影丢queue/deadline/安装/生命周期字段 | [backend](errors/backend.md) |
+| #139 | ReleasePlayer已退出但WebView暂存锁延迟释放，探针清理掩盖原始失败 | [toolchain](errors/toolchain.md) |
+
+| #140 | 媒体槽缺少阶段消费者且前台变化不推进修订，启动/待机输入可能失效后复活 | [backend](errors/backend.md) |
+
+| #141 | 会话首帧默认可操作，事后分别补锁屏和前台会暴露短暂错误状态 | [backend](errors/backend.md) |
+
+| #142 | Framework Player标准输出编码不同，Unicode跨Core管道变成替换字符 | [backend](errors/backend.md) |
+
+| #143 | 重复Resume推进异步修订，首次恢复完成时不再重放最后快照 | [backend](errors/backend.md) |
+
+| #144 | JSON Desk标量/null未先验形状，读取id时抛JValue异常 | [backend](errors/backend.md) |
+
+| #145 | 隔离Player探针误用无效reload命令及未部署的构建路径 | [toolchain](errors/toolchain.md) |
+
+| #146 | 启动时WorkerW层级不符进入现有纠正分支，身份成功不能替代物理验收 | [backend](errors/backend.md) |
+
+| #147 | 合法240字节资源相对路径叠加安装目录超过MAX_PATH，原生CreateFileW需扩展绝对路径 | [backend](errors/backend.md) |
+| #148 | Worker构造成功不代表执行成功，CSP可通过异步error拒绝 | [toolchain](errors/toolchain.md) |
+| #149 | Connection-Allowlist禁止ICE但仍允许RTC构造，SecurityError自检误判Runtime | [backend](errors/backend.md) |
+| #150 | 禁RTC策略不注册mDNS接口而RTC工厂仍请求，WebView2可因bad Mojo终止renderer | [backend](errors/backend.md) |
+
+| #151 | 未跟踪新文件不在git diff --check中，须暂存后再次检查 | [toolchain](errors/toolchain.md) |
+
+| #152 | Json.NET强制转换会接受小数整数、数字字符串及缺省几何字段 | [backend](errors/backend.md) |
+| #153 | RawKeyboardFlags为位集，E0与UP组合误判DOWN，转发不能一律加extended | [backend](errors/backend.md) |
+| #154 | 隔离Player默认最小化且探针DPI模式不同，客户区0或虚拟化尺寸误判输入几何 | [toolchain](errors/toolchain.md) |
+| #155 | 状态探针参数是期望Desk/inactive，工作树路径不能当状态 | [toolchain](errors/toolchain.md) |
+| #156 | PowerShell成功流重定向不保留Write-Host信息流 | [toolchain](errors/toolchain.md) |
+
+| #157 | Python默认GBK读取UTF8失败及多行成员插入点错误，编辑脚本可部分执行 | [toolchain](errors/toolchain.md) |
+
+| #158 | SetParent自动加入WS_CLIPSIBLINGS，原始样式须在重挂后再恢复 | [backend](errors/backend.md) |
+| #159 | GetParent返回popup owner；重挂置顶回执成功但实际TOPMOST缺失 | [backend](errors/backend.md) |
+
+| #160 | 迟到的旧play Promise按旧epoch暂停了新播放意图 | [renderer](errors/renderer.md) |
+| #161 | 非行锚插入失败后仍运行未知探针模式，默认输入PASS冒充媒体 | [toolchain](errors/toolchain.md) |
+
+| #162 | 渲染活动与输入operable耦合，失焦关输入误暂停仍应播放的实例 | [renderer](errors/renderer.md) |
+| #163 | 数据订阅失败先关闭provider，错误回执被当前provider校验丢弃 | [renderer](errors/renderer.md) |
+
+| #164 | Player暂停只缓存Core快照，媒体活动期限未同步停止，恢复前可按旧修订完成 | [backend](errors/backend.md) |
+| #165 | 新官方JS未加入有限资源白名单，模块缺失导致后续测试命令超时 | [backend](errors/backend.md) |
+| #166 | Unicode夹具与同文件期望同时乱码仍通过，独立原生wire期望才能发现 | [toolchain](errors/toolchain.md) |
+
+| #167 | 硬件采样失败仍推零值且跳过等待可能忙循环 | [backend](errors/backend.md) |
+| #168 | 异步数据源恢复的命令回执不表示SDK读数已到达 | [toolchain](errors/toolchain.md) |
+| #169 | Windows媒体SourceAppId可能是绝对可执行路径 | [backend](errors/backend.md) |
+
+| #170 | Player使用TryGetWebMessageAsString，原生postMessage对象会被拒绝（含顶层输入dispatch回执补充） | [backend](errors/backend.md) |
+
+| #171 | 官方页缓存先占用畸形快照修订，后续合法状态会被误判旧 | [renderer](errors/renderer.md) |
+| #172 | Core几何admission忙返回staleInput，单次发布会永久关闭输入 | [renderer](errors/renderer.md) |
+| #173 | 异步宿主替身必须返回Promise；C#闭包使用前先初始化捕获上下文 | [toolchain](errors/toolchain.md) |
+
+
+| #174 | 当前SDK Frame.IsDestroyed返回int，必须用实际签名 | [toolchain](errors/toolchain.md) |
+| #175 | 原生帧异步化后report须等指定Core修订及geometry ready | [toolchain](errors/toolchain.md) |
+| #176 | Frame.Destroyed内注销COM事件造成WebView原生崩溃 | [backend](errors/backend.md) |
+| #177 | 迟到play事件不能恢复作者已pause的播放意图 | [renderer](errors/renderer.md) |
+
+| #178 | 旧修订或销毁后的权限查询失败回调写入当前诊断 | [renderer](errors/renderer.md) |
+| #179 | 新快照先更新iframe再推进原生identity，当前授权请求被拒为staleInput | [renderer](errors/renderer.md) |
+
+| #180 | WebAudio保护方法可被借到未跟踪context或外域硬件destination | [renderer](errors/renderer.md) |
+| #181 | 捕获Array.push/splice仍能经继承索引setter与species泄露私有记录 | [renderer](errors/renderer.md) |
+| #182 | 私有策略普通对象回执被Object.prototype.toJSON拦截或伪造 | [renderer](errors/renderer.md) |
+
+| #183 | 只检查存储JSON字节/深度，4097项小数组仍越过公开容器限制 | [backend](errors/backend.md) |
+
+| #184 | Core通用原生IPC日志把消费者私有KV值写入诊断 | [backend](errors/backend.md) |
+| #185 | 只设置桌面前台不能解除grid算法对最大化可见窗口的暂停 | [toolchain](errors/toolchain.md) |
+| #186 | File.ReadAllText默认共享方式不能读取运行中的NLog写入文件 | [toolchain](errors/toolchain.md) |
+
+| #187 | 无作者默认动作的按钮只有个人TargetId时，解析为空动作且不显示绑定 | [backend](errors/backend.md) |
+
+| #188 | 原生鼠标UP生成完成证明但NotifyNative传false，画布默认按钮不收到激活 | [backend](errors/backend.md) |
+| #189 | 导航先推进Core修订，私有宿主提前取消真实动作回执并误报staleInput | [backend](errors/backend.md) |
+| #190 | 输入探针误用未提供的operable诊断字段；COM Type与Protobuf.Type名称冲突 | [toolchain](errors/toolchain.md) |
+| #191 | 聚焦Progman/应用列表缺项不等于桌面可点击，凭据宿主可覆盖真实命中；重启前台需复核 | [toolchain](errors/toolchain.md) |
+
+
+| #192 | 控制探针并发前置/计时接口/标题容量/参数和真实进程名核对 | [toolchain](errors/toolchain.md) |
+| #193 | Windows控制等锁和解析设备后才取消，写入前必须复核 | [backend](errors/backend.md) |
+
+| #194 | 退出夹具读取未完成展示的确认窗、覆盖窗口命中及恢复异常掩盖主失败 | [toolchain](errors/toolchain.md) |
+
+| #195 | 生命周期探针误用协调器角色/无存储夹具、未暴露桌面与非活动HTML done计时 | [toolchain](errors/toolchain.md) |
+| #196 | Player退出只解绑而不退役会话会覆盖已提交Desk；主动关闭与故障恢复须分开 | [backend](errors/backend.md) |
+
+| #197 | GIF状态暂停并非画面冻结；原生WebView暂停需要可见性与展示完成屏障 | [renderer](errors/renderer.md) |
+
+| #198 | WinForms隐藏不等于原生controller隐藏，暂停可报ERROR_INVALID_STATE | [renderer](errors/renderer.md) |
+| #199 | 布局与暂停探针必须核对真实接口、活动消息与附着后的DPI | [toolchain](errors/toolchain.md) |
+
+| #200 | 显式损坏个人图标覆盖不能回退作者默认值 | [renderer](errors/renderer.md) |
+
+| #201 | 精确多边形不能用包围框签输入；同动作不同呈现实例需分开 | [backend](errors/backend.md) |
+| #202 | 几何交点舍入与SVG焦点隐藏属性 | [renderer](errors/renderer.md) |
+| #203 | 转场deadline/JArray层次与精确几何夹具复制清单 | [toolchain](errors/toolchain.md) |
+
+| #204 | 子文档借用属性getter会暴露父文档隐藏输入wrapper | [renderer](errors/renderer.md) |
+| #205 | 捕获RegExp.test仍会进入作者覆盖的exec | [renderer](errors/renderer.md) |
+| #206 | 新snapshot修订不能复活已撤销的原生文档nonce | [backend](errors/backend.md) |
+
+| #207 | 原生Window默认receiver/onerror多参数与收养节点currentTarget须保持真实派发语义 | [renderer](errors/renderer.md) |
+
+| #208 | UP时分配序号无法在DOWN关联原生frame；长按截止时不能新建完成 | [backend](errors/backend.md) |
+
+| #209 | 输入文档描述误用于嵌套媒体frame；旧Player需显式Compile且无Environment.ProcessId | [backend](errors/backend.md) |
+
+| #210 | 原生SDK wire通过不等于整轮通过；WebView profile退出后仍短暂占用 | [toolchain](errors/toolchain.md) |
+
+| #211 | WinForms.Focus未使非激活Player派发键；先原生controller再路由作者frame | [renderer](errors/renderer.md) |
+
+| #212 | 归一化多边形宽度的机器舍入不能用严格等于测试 | [renderer](errors/renderer.md) |
+
+| #213 | 源动作夹具需进入desktop并沿创建票据的bridge确认；短路out变量不能靠Require推断赋值 | [toolchain](errors/toolchain.md) |
+| #214 | 键盘回执夹具fire需先给receiver；部分文件文本替换失败只接续未写入部分 | [toolchain](errors/toolchain.md) |
+| #215 | SVG焦点若只画边界快照会留在旧坐标；移动轮廓须本地随帧重算 | [renderer](errors/renderer.md) |
+
+| #216 | 单个焦点gesture丢连续Tab；早到键必须等待最终焦点并保留原QPC | [backend](errors/backend.md) |
+
+| #217 | 作者纯矩阵逐帧重发几何并清焦点；取样保持需排最新视觉帧 | [renderer](errors/renderer.md) |
+| #218 | 持续样包旧SDK与小窗口有效布局叠加；设计基准不代替多尺寸 | [toolchain](errors/toolchain.md) |
+
+| #219 | 作者固定矩阵不能叠加小窗口有效布局；publish中geometry信号需保留 | [renderer](errors/renderer.md) |
+| #220 | 探针提前读取尚未挂载组件导致自身轮询中断 | [toolchain](errors/toolchain.md) |
+
+| #221 | 零序号取最近完成的旧回退让迟到动作借用新输入 | [backend](errors/backend.md) |
+| #222 | dotnet run未知参数进入测试程序；部署与实际Player回归须按依赖等待 | [toolchain](errors/toolchain.md) |
+
+| #223 | P6工具脚本默认GBK和JS模板转义导致执行中断；UI主题需等绘制后截图 | [toolchain](errors/toolchain.md) |
+| #224 | 持续样包两Desk重复图标ID，正式Rust契约会拒绝 | [renderer](errors/renderer.md) |
+
+| #225 | 非规范宿主路径使原生主机哈希不同；排队回执冒称应用成功 | [backend](errors/backend.md) |
+| #226 | 原生库改名返回扩展路径，选中状态与库列表不匹配 | [frontend](errors/frontend.md) |
+| #227 | P6原生选择器夹具/诊断cwd/选择器前缀及正常退出顺序 | [toolchain](errors/toolchain.md) |
+
+| #228 | Dock组件只有按钮几何准入，不能按Scene发布occupied；固定框需由官方宿主避让 | [renderer](errors/renderer.md) |
+
+| #229 | worktree复用node_modules junction后Vite字体落在默认fs.allow之外，预览403但构建正常 | [toolchain](errors/toolchain.md) |
+
+| #230 | 配置器授权控件等待真实持久化后确认；不透明Player帧按DOM定位，关窗不为探针扩JS权限 | [toolchain](errors/toolchain.md) |
+
+| #231 | ActiveRoom实际camelCase来源字段错误使本机面板不可用 | [frontend](errors/frontend.md) |
+| #232 | 视觉定位误用桌面动作operable条件；独立可见几何，保留输入规则 | [renderer](errors/renderer.md) |
+
+| #233 | 目标库/定位回执丢未保存按钮选择；绑定状态需采用当前有效动作 | [frontend](errors/frontend.md) |
+
+| #234 | 删除目标成功须关闭同ID旧表单，避免保存意外重建 | [frontend](errors/frontend.md) |
+
+| #235 | 普通图标新增须同时检查Desk图标与Room按钮额度；已有按钮可复用 | [frontend](errors/frontend.md) |
+
+| #236 | 试验台适配须沿正式SDK动作结构，诊断采样需跟随当前视觉帧 | [frontend](errors/frontend.md) |
+
+| #237 | 自动审批检查超时未执行时只重试一次原参数，不重跑已执行写入 | [toolchain](errors/toolchain.md) |
+| #238 | 顶层Dock原型初次Shown窗口不能只凭逻辑visible=false跳过原生隐藏 | [renderer](errors/renderer.md) |
+| #239 | 原生Dock资格必须读取dockComponentId，偏好enabled不等于宿主运行 | [backend](errors/backend.md) |
+| #240 | 隐藏Dock须沿实际WebView祖先取HWND；共享上下文不能仍独占DesktopPlayer角色 | [backend](errors/backend.md) |
+
+| #241 | 独立Dock须保留作者画布/有效几何，实际输入与可见性同步后才报窗口可用 | [renderer](errors/renderer.md) |
+
+| #242 | 原生Dock自然输入与转发须去重，可信Dock切页不能被桌面暂停队列卡住 | [renderer](errors/renderer.md) |
+
+| #243 | 任务栏恢复须独立看护/落盘，ABM_SETSTATE返回TRUE不能证明隐藏或恢复 | [backend](errors/backend.md) |
+| #244 | 批量编辑非终止错误会返回exit0，须Stop/锚点与具名状态核对 | [toolchain](errors/toolchain.md) |
+
+| #245 | Dock窗口回报不代替有效输入窗口，实际高度/DPI需从原生测量读取 | [backend](errors/backend.md) |
+| #246 | room-v3的-text规则保留复制CRLF；新样包固定LF后检查暂存差异 | [toolchain](errors/toolchain.md) |
+| #247 | 常驻选项不能以当前已占位为前提；AppBar注册不证明真实最大化工作区 | [backend](errors/backend.md) |
+| #248 | 原生另存不能复用v2固定资源目录；复制或删除RPC未确认需保留恢复记录 | [backend](errors/backend.md) |
+
+| #249 | 未来Room要求须先兼容判定；只读清单不能进旧编辑器规范化 | [backend](errors/backend.md) |
+
+| #250 | 安装清理不能按前缀路径递归删除；部分删除重试需目录身份与剩余摘要 | [backend](errors/backend.md) |
+| #251 | 可搬移发布版不能沿用编译机宿主/许可路径；配置器和Core须同v3配置 | [toolchain](errors/toolchain.md) |
+
+| #252 | 私人另存恢复记录写在RPC之后留下崩溃空窗；已有Core复用绕过v3发布元数据 | [backend](errors/backend.md) |
+
+| #253 | 恢复清理只按旧目录名找作品，已发布Room改名后误删个人覆盖 | [backend](errors/backend.md) |
+
+| #254 | 集中Release构建暴露C#语言/作用域/预处理行错误，文件描述取AssemblyTitle，跨盘CSS字体导入残留构建路径 | [toolchain](errors/toolchain.md) |
+
+| #255 | 焦点丢失误清按钮几何，回到桌面没有新发布导致点击永久失效 | [backend](errors/backend.md) |
+| #256 | 发布托盘误找旧配置器路径；回归项目遗漏共享回执类型，本机依赖缺失需离线恢复 | [toolchain](errors/toolchain.md) |
+
+| #257 | 应用Room漏启用默认导航，空本机数据使切页被权限拒绝；动作失败缺少用户提示与结果日志 | [backend](errors/backend.md) |
+| #258 | 作者几何去重与宿主焦点清表冲突，保留文档却丢失按钮声明 | [backend](errors/backend.md) |
+
+| #259 | 作者Dock重复焦点外框及已配置导航的额外作者等待影响点击反馈 | [backend](errors/backend.md) |
+
+| #260 | 滑动方向只比较Desk索引导致首尾循环反向；v3添加应用入口过于隐蔽 | [backend](errors/backend.md) |
+
+| #261 | 每次原生点击重复验证整套安装资源；缓存需随Player释放并调整重新应用顺序 | [backend](errors/backend.md) |
+| #262 | Windows编码后命令过长使批量样包写入未启动；安装检查需要已存在的目标父目录 | [toolchain](errors/toolchain.md) |
+| #263 | v3本机数据授权只挂Dock，Widget声明已到Core却无配置器入口 | [frontend](errors/frontend.md) |
+| #264 | 观测台误用内部媒体/音量字段；只读消费误绑桌面前台使小窗口清空读数 | [backend](errors/backend.md) |
+| #265 | 主线导入Room与新样包路径重合，合并前须保存本机文件/删除状态；恢复不混入提交 | [git](errors/git.md) |

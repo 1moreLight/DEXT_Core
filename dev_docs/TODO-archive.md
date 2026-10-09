@@ -351,3 +351,10 @@
 ## V3-CORE-005（2026-09-30 验收归档摘要）
 
 最小 v3 Room 由配置器应用后，Core 校验已安装样包及真实 Player PID，向 Player 下发权威快照；真实桌面切页、重启恢复和回退 v2 均由开发侧验证。用户回复“验收通过 git合并 名字就叫v3FirstTest”；合并提交 `24ac47c`，旧工作分支和 worktree 已清理。合并后协议 30/30、完整 Core/Player 构建及 master 三进程身份核对通过，MSIroom 重新应用后 Player 页面指向 master。V3-CORE-002/003/004 与 V3-P2A-001 的代码因堆叠历史随本次合并入库；尚未完成的独立人工项目仍保留在各自验收卡，不补填为已通过。详细记录见 `acceptance/V3-CORE-005-player-bridge.md`。
+
+## 2026-10-09 halfV3阶段合入记录
+用户明确回复“合并到主线吧 名字叫halfV3”，授权当前集成成果及其堆叠依赖合入master；合并提交与本地标记均命名halfV3。本次不补填尚未执行的完整人工步骤：Task3/4和完整16项保持未完成，进度2/4=50%。最近代码f395e67，五项只读数据回归通过、Release构建和实际重新应用通过；没有把媒体源可用当成具体B站标题验收。后续按ROADMAP集中验收续项恢复。
+
+halfV3合并收尾（2026-10-09）：master无冲突命名合并，合并提交由本地halfV3标记定位。合并后只跑必要本地冒烟：runtime-model18/18、visible-data5/5；未重复桌面操作或全部网络/安全矩阵。当前运行候选保持。
+主线原21项Room文件删除和导入的v3-orbit-lab/v3test已完整保留；备份.build/halfV3-local-room-state-20261009与stash e08778387809a44a491a4e72fd6ebdb8517e5ee2均保留。恢复后导入Room仍按原本机清单/字节存在，源目录与提交作者样包的差异属于未提交本机状态，未混入合并。
+本轮v3-integration worktree已通过应用归档为可恢复快照，feat/V3-INTEGRATION-001-integration已安全删除。旧堆叠依赖分支不在本轮清理范围。阶段合并完成，整体集成仍2/4=50%，下一项继续Task3/4集中验收。

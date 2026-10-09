@@ -1,0 +1,226 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "5e181686-49dd-426b-92cc-3dadc6036c6c",
+  "name": "星轨实验室 · V3",
+  "startDesk": "orbit",
+  "resources": [
+    "assets/dext-sdk.v1.js",
+    "dock/index.html",
+    "dock/main.js",
+    "dock/style.css",
+    "index.html",
+    "lifecycle/index.html",
+    "lifecycle/main.js",
+    "lifecycle/style.css",
+    "scene.css",
+    "scene.js",
+    "widget/index.html",
+    "widget/main.js",
+    "widget/style.css"
+  ],
+  "roomScene": {
+    "entry": "index.html",
+    "capabilities": [
+      "desk.read"
+    ]
+  },
+  "start": {
+    "type": "html",
+    "src": "lifecycle/index.html",
+    "capabilities": []
+  },
+  "idle": {
+    "type": "html",
+    "src": "lifecycle/index.html",
+    "capabilities": []
+  },
+  "transition": {
+    "type": "author",
+    "durationMs": 650
+  },
+  "buttons": [
+    {
+      "id": "previous",
+      "name": "上一页",
+      "scope": "room",
+      "action": {
+        "type": "desk.previous"
+      }
+    },
+    {
+      "id": "next",
+      "name": "下一页",
+      "scope": "room",
+      "action": {
+        "type": "desk.next"
+      }
+    },
+    {
+      "id": "go-orbit",
+      "name": "星轨",
+      "scope": "room",
+      "action": {
+        "type": "desk.go",
+        "deskId": "orbit"
+      }
+    },
+    {
+      "id": "go-spectrum",
+      "name": "信号",
+      "scope": "room",
+      "action": {
+        "type": "desk.go",
+        "deskId": "spectrum"
+      }
+    },
+    {
+      "id": "go-dusk",
+      "name": "静谧",
+      "scope": "room",
+      "action": {
+        "type": "desk.go",
+        "deskId": "dusk"
+      }
+    },
+    {
+      "id": "application",
+      "name": "我的应用",
+      "scope": "room",
+      "action": {
+        "type": "binding.launch"
+      }
+    }
+  ],
+  "desks": [
+    {
+      "id": "orbit",
+      "name": "星轨",
+      "icons": [
+        {
+          "id": "app-orbit",
+          "buttonId": "application",
+          "label": "我的应用",
+          "glyph": "◇",
+          "x": 0,
+          "y": 5
+        }
+      ],
+      "components": [
+        "observatory",
+        "navigation"
+      ]
+    },
+    {
+      "id": "spectrum",
+      "name": "信号",
+      "icons": [
+        {
+          "id": "app-signal",
+          "buttonId": "application",
+          "label": "我的应用",
+          "glyph": "◇",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "id": "app-signal-copy",
+          "buttonId": "application",
+          "label": "同一个入口",
+          "glyph": "↗",
+          "x": 1,
+          "y": 5
+        }
+      ],
+      "components": [
+        "observatory",
+        "navigation"
+      ],
+      "componentOverrides": {
+        "observatory": {
+          "title": "信号观测台",
+          "phase": "02"
+        }
+      }
+    },
+    {
+      "id": "dusk",
+      "name": "静谧",
+      "icons": [
+        {
+          "id": "app-dusk",
+          "buttonId": "application",
+          "label": "我的应用",
+          "glyph": "◇",
+          "x": 0,
+          "y": 5
+        }
+      ],
+      "components": [
+        "observatory",
+        "navigation"
+      ],
+      "componentOverrides": {
+        "observatory": {
+          "title": "静谧观测台",
+          "phase": "03"
+        }
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "observatory",
+      "role": "widget",
+      "entry": "widget/index.html",
+      "placement": {
+        "x": 1410,
+        "y": 150,
+        "width": 414,
+        "height": 568
+      },
+      "capabilities": [
+        "desk.read",
+        "desk.navigate",
+        "time.read",
+        "hardware.read",
+        "media.read",
+        "audio.read",
+        "storage.read",
+        "storage.write"
+      ],
+      "buttonIds": [
+        "next"
+      ],
+      "config": {
+        "title": "轨道观测台",
+        "phase": "01"
+      }
+    },
+    {
+      "id": "navigation",
+      "role": "dock",
+      "entry": "dock/index.html",
+      "placement": {
+        "x": 470,
+        "y": 868,
+        "width": 980,
+        "height": 112
+      },
+      "capabilities": [
+        "desk.read",
+        "desk.navigate",
+        "binding.launch"
+      ],
+      "buttonIds": [
+        "previous",
+        "next",
+        "go-orbit",
+        "go-spectrum",
+        "go-dusk",
+        "application"
+      ]
+    }
+  ],
+  "dockComponentId": "navigation"
+}

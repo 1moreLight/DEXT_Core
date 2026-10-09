@@ -1,6 +1,7 @@
 import path from "node:path"
+import { realpathSync } from "node:fs"
 import tailwindcss from "@tailwindcss/vite"
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import react from "@vitejs/plugin-react";
 
 // @ts-expect-error process is a nodejs global
@@ -21,6 +22,8 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
+    // Worktrees may reuse a local node_modules junction; serve its font assets.
+    fs: { allow: [searchForWorkspaceRoot(__dirname), path.resolve(__dirname, "../wallpapers/dext-room-v3"), realpathSync(path.resolve(__dirname, "node_modules"))] },
     port: 1620,
     strictPort: true,
     host: host || false,

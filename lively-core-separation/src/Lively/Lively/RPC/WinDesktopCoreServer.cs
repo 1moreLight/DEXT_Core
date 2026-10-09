@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Lively.Common;
 using Lively.Common.Exceptions;
@@ -80,6 +80,7 @@ namespace Lively.RPC
                 ProcessId = Process.GetCurrentProcess().Id,
                 AppDataDirectory = Constants.CommonPaths.AppDataDir,
                 GrpcPipeName = Constants.SingleInstance.GrpcPipeServerName,
+                IsProductExiting = App.IsProductExiting,
             });
         }
 
@@ -90,7 +91,7 @@ namespace Lively.RPC
                 ? new RoomSessionStatusResponse { Active = false }
                 : new RoomSessionStatusResponse
                 {
-                    Active = true,
+                    Active = snapshot.IsActive,
                     ProtocolVersion = snapshot.ProtocolVersion,
                     RoomId = snapshot.RoomId,
                     SessionId = snapshot.SessionId.ToString("D"),
@@ -101,7 +102,69 @@ namespace Lively.RPC
                     TransitionId = snapshot.TransitionId?.ToString("D") ?? string.Empty,
                     Operable = snapshot.IsOperable,
                     PlayerPid = roomSessionRuntime.ActivePlayerPid,
+                    DeadlineUtc = snapshot.DeadlineUtc?.ToUniversalTime().ToString("O") ?? string.Empty,
+                    InstallationStamp = snapshot.InstallationStamp,
+                    Lifecycle = new RoomSessionLifecycleStatus
+                    {
+                        Stage = snapshot.Lifecycle.Stage.ToString().ToLowerInvariant(),
+                        PlaybackPaused = snapshot.Lifecycle.PlaybackPaused,
+                        Locked = snapshot.Lifecycle.Locked,
+                        Revision = snapshot.Lifecycle.Revision,
+                    },
                 });
+        }
+
+        public override Task<RoomDockStatusResponse> GetRoomDockStatus(Empty _, ServerCallContext context) =>
+            Task.FromResult(DockResponse(roomSessionRuntime.GetRoomDockStatus()));
+
+        public override Task<RoomDockStatusResponse> SetRoomDockPreference(RoomDockPreferenceRequest request, ServerCallContext context) =>
+            Task.FromResult(DockResponse(roomSessionRuntime.SetRoomDockPreference(request.PatchJson)));
+
+        private static RoomDockStatusResponse DockResponse(RoomDockStatusReply reply) => new()
+        {
+            ReplyJson = System.Text.Json.JsonSerializer.Serialize(reply,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })
+        };
+
+        public override Task<RoomPersonalEditorResponse> GetRoomPersonalEditor(RoomPersonalEditorRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalEditorResponse(roomSessionRuntime.GetRoomPersonalEditor(request.RoomId, request.InstallationStamp)));
+
+        public override Task<RoomPersonalEditorResponse> EditRoomPersonal(RoomPersonalEditRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalEditorResponse(roomSessionRuntime.EditRoomPersonal(request.RoomId, request.InstallationStamp, request.EditJson)));
+
+        public override Task<RoomPersonalLifecycleResponse> CopyRoomPersonal(RoomPersonalCopyRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalLifecycleResponse(roomSessionRuntime.CopyRoomPersonal(request.SourceRoomId, request.NewRoomId)));
+
+        public override Task<RoomPersonalLifecycleResponse> DeleteRoomPersonal(RoomPersonalDeleteRequest request, ServerCallContext context) =>
+            Task.FromResult(PersonalLifecycleResponse(roomSessionRuntime.DeleteRoomPersonal(request.RoomId, request.DryRun)));
+
+        private static RoomPersonalLifecycleResponse PersonalLifecycleResponse(RoomPersonalLifecycleReply reply) => new()
+        { Status = reply.Status, Message = reply.Message ?? string.Empty };
+
+        private static RoomPersonalEditorResponse PersonalEditorResponse(RoomPersonalEditorReply reply) => new()
+        {
+            ReplyJson = System.Text.Json.JsonSerializer.Serialize(reply,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })
+        };
+
+        public override Task<RoomReadGrantsResponse> GetRoomReadGrants(RoomReadGrantsRequest request, ServerCallContext context) =>
+            Task.FromResult(ReadGrantResponse(roomSessionRuntime.GetRoomReadGrants(request.RoomId, request.InstallationStamp)));
+
+        public override Task<RoomReadGrantsResponse> SetRoomReadGrant(RoomSetReadGrantRequest request, ServerCallContext context) =>
+            Task.FromResult(ReadGrantResponse(roomSessionRuntime.SetRoomReadGrant(request.RoomId, request.InstallationStamp,
+                request.ConsumerId, request.Capabilities.ToArray(), request.Allow)));
+
+        private static RoomReadGrantsResponse ReadGrantResponse(RoomReadGrantsReply reply)
+        {
+            var result = new RoomReadGrantsResponse { Status = reply.Status, RoomId = reply.RoomId, InstallationStamp = reply.InstallationStamp };
+            foreach (var consumer in reply.Consumers ?? Array.Empty<RoomReadGrantConsumer>())
+            {
+                var row = new RoomReadGrantConsumerStatus { ConsumerId = consumer.ConsumerId };
+                foreach (var capability in consumer.Capabilities)
+                    row.Capabilities.Add(new RoomReadGrantCapabilityStatus { Capability = capability.Capability, Allowed = capability.Allowed });
+                result.Consumers.Add(row);
+            }
+            return result;
         }
 
         public override Task<SystemMediaSnapshot> GetSystemMedia(Empty _, ServerCallContext context)
@@ -160,6 +223,10 @@ namespace Lively.RPC
             catch (Exception e)
             {
                 Logger.Error(e.ToString());
+#if DEXT_V3_RELEASE
+                throw new global::Grpc.Core.RpcException(new global::Grpc.Core.Status(
+                    global::Grpc.Core.StatusCode.FailedPrecondition, "Dext v3 原生宿主未能启动，请核对安装和作品资源。"));
+#endif
             }
 
             return await Task.FromResult(new Empty());

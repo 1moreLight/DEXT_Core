@@ -8,26 +8,51 @@ public interface IRoomSessionRuntimeCoordinator
     RoomSessionSnapshot? CurrentSnapshot { get; }
     int ActivePlayerPid { get; }
     void OnPageReady(WebWebView2 player);
-    void OnPlayerExited(int? pid);
+    bool OnPlayerExited(int? pid);
+    RoomNativeIdleResult EnterNativeIdle();
+    void ExitNativeIdle();
+    bool IsNativeIdlePresented { get; }
+    string? NativeIdleDisplayId { get; }
+    RoomPersonalEditorReply GetRoomPersonalEditor(string roomId, string installationStamp);
+    RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson);
+    RoomPersonalLifecycleReply CopyRoomPersonal(string sourceRoomId, string newRoomId);
+    RoomPersonalLifecycleReply DeleteRoomPersonal(string roomId, bool dryRun);
+    RoomDockStatusReply GetRoomDockStatus();
+    RoomDockStatusReply SetRoomDockPreference(string patchJson);
+    void RouteDockMouse(int x, int y, string edge, bool blocked) { }
+    void RouteDockKey(int key, bool down, bool reverse, int scanCode, bool extended, bool blocked) { }
+    RoomReadGrantsReply GetRoomReadGrants(string roomId, string installationStamp);
+    RoomReadGrantsReply SetRoomReadGrant(string roomId, string installationStamp, string consumerId, string[] capabilities, bool allow);
 }
 
-internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordinator
+internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordinator, IDisposable
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly object gate = new();
     private readonly InstalledRoomSessionAuthority authority;
     private readonly RoomSessionProtocolGateway gateway;
     private readonly RoomSessionKernel kernel;
+    private readonly RoomRuntimeFactsSource runtimeFacts;
+    private readonly RoomActionAuthority actions;
+    private readonly RoomDockPreferenceStore dockPreferences;
+    private WebWebView2? activePlayer;
+    private bool activeNativeRoom;
+    private string? activeDisplayId;
     private int activePlayerPid;
     private Guid activeSessionId;
     private string? activeInstallationStamp;
 
     public RoomSessionRuntimeCoordinator(InstalledRoomSessionAuthority authority,
-        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel)
+        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences)
     {
         this.authority = authority;
         this.gateway = gateway;
         this.kernel = kernel;
+        this.runtimeFacts = runtimeFacts;
+        this.actions = actions;
+        this.dockPreferences = dockPreferences;
+        runtimeFacts.Sampled += OnRuntimeFactsSampled;
+        InitializeDockTaskbarMaintenance();
     }
 
     public int ActivePlayerPid { get { lock (gate) return activePlayerPid; } }
@@ -53,14 +78,40 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
 
     public void OnPageReady(WebWebView2 player)
     {
+        try { OnDesktopPageReady(player); }
+        finally { QueueDockUpdate(); }
+    }
+
+    private void OnDesktopPageReady(WebWebView2 player)
+    {
         if (!player.IsTrustedDextHost || player.Pid is not { } pid) return;
+        QueueIdleRestoreIfChanged(pid);
         lock (gate)
         {
-            if (activePlayerPid == pid && player.RefreshRoomSession() == RoomProtocolStatus.Accepted)
-                return;
+            if (activePlayerPid == pid)
+            {
+                if (player.RoomDocumentInvalidated && kernel.Snapshot is { IsActive: true } current)
+                {
+                    var peer = new RoomSessionPeer("core-runtime");
+                    var document = gateway.Open(peer, new(1, RoomClientRole.Coordinator, current.RoomId));
+                    if (document.ConnectionId is not { } connection) return;
+                    try
+                    {
+                        var begun = gateway.BeginDocument(connection, peer, current.SessionId);
+                        if (begun.Status != RoomProtocolStatus.Accepted)
+                        { Logger.Warn($"v3 document restart rejected: {begun.Status}"); return; }
+                    }
+                    finally { gateway.Close(connection, peer); }
+                }
+                if (player.RefreshRoomSession() == RoomProtocolStatus.Accepted) return;
+            }
+            if (activePlayer is not null) activePlayer.RoomSnapshotObserved -= OnDockSourceSnapshot;
             player.DetachRoomSession();
-            if (activePlayerPid != 0) authority.Unbind(activePlayerPid);
+            if (activePlayerPid != 0) { gateway.Retire(activeSessionId); authority.Unbind(activePlayerPid); }
             activePlayerPid = 0;
+            activePlayer = null;
+            activeNativeRoom = false;
+            activeDisplayId = null;
             activeInstallationStamp = null;
 
             var installation = authority.Bind(player.RoomPackageDirectory, pid);
@@ -76,9 +127,11 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
             }
             try
             {
-                var session = gateway.Restore(connectionId, coordinator);
+                // No Dispatcher calls under gate: page-ready runs on process stdout.
+                var facts = runtimeFacts.Read(player.Screen.DeviceId);
+                var session = gateway.Restore(connectionId, coordinator, facts);
                 if (session.Status == RoomProtocolStatus.Rejected)
-                    session = gateway.Start(connectionId, coordinator);
+                    session = gateway.Start(connectionId, coordinator, facts);
                 if (session.Status != RoomProtocolStatus.Accepted || session.Snapshot is null)
                 {
                     authority.Unbind(pid);
@@ -86,7 +139,7 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
                     return;
                 }
                 var attached = player.AttachRoomSession(gateway, installation.RoomId,
-                    installation.DeskIds);
+                    installation.DeskIds, actions);
                 if (attached != RoomProtocolStatus.Accepted)
                 {
                     gateway.Stop(connectionId, coordinator, session.Snapshot.SessionId);
@@ -95,6 +148,10 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
                     return;
                 }
                 activePlayerPid = pid;
+                activePlayer = player;
+                player.RoomSnapshotObserved += OnDockSourceSnapshot;
+                activeNativeRoom = installation.RuntimeContext is not null;
+                activeDisplayId = player.Screen.DeviceId;
                 activeSessionId = session.Snapshot.SessionId;
                 activeInstallationStamp = installation.InstallationStamp;
                 Logger.Info($"v3 Room session active | playerPid={pid} | room={installation.RoomId} | " +
@@ -107,17 +164,62 @@ internal sealed class RoomSessionRuntimeCoordinator : IRoomSessionRuntimeCoordin
         }
     }
 
-    public void OnPlayerExited(int? pid)
+    private void OnRuntimeFactsSampled()
     {
-        if (pid is not { } exitedPid) return;
-        lock (gate)
+        try
         {
-            authority.Unbind(exitedPid);
-            if (activePlayerPid == exitedPid)
+            lock (gate)
             {
-                activePlayerPid = 0;
-                activeInstallationStamp = null;
+                var current = kernel.Snapshot;
+                if (activePlayerPid == 0 || activeDisplayId is null || current is not { IsActive: true } ||
+                    current.SessionId != activeSessionId) return;
+                var facts = runtimeFacts.Read(activeDisplayId);
+                if (current.Lifecycle.PlaybackPaused == facts.PlaybackPaused && current.Lifecycle.Locked == facts.Locked &&
+                    current.IsDesktopForeground == facts.DesktopForeground) return;
+                var peer = new RoomSessionPeer("core-runtime");
+                var opened = gateway.Open(peer, new RoomSessionHello(RoomSessionKernel.ProtocolVersion,
+                    RoomClientRole.Coordinator, current.RoomId));
+                if (opened.ConnectionId is not { } connection) return;
+                try
+                {
+                    var result = gateway.SetRuntimeFacts(connection, peer, activeSessionId, facts);
+                    if (result.Status != RoomProtocolStatus.Accepted)
+                        Logger.Warn($"v3 Windows facts rejected: {result.Status}");
+                }
+                finally { gateway.Close(connection, peer); }
             }
         }
+        catch (Exception error) { Logger.Error(error, "v3 Windows facts update failed; next sample will retry"); }
+    }
+
+    public void Dispose()
+    {
+        runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+        DisposeDock();
+        ExitNativeIdle();
+    }
+
+    public bool OnPlayerExited(int? pid)
+    {
+        if (pid is not { } exitedPid) return false;
+        var wasNative = false;
+        lock (gate)
+        {
+            if (activePlayerPid == exitedPid)
+            {
+                wasNative = activeNativeRoom;
+                if (activePlayer is not null) activePlayer.RoomSnapshotObserved -= OnDockSourceSnapshot;
+                gateway.Retire(activeSessionId);
+                activePlayerPid = 0;
+                activePlayer = null;
+                activeNativeRoom = false;
+                activeDisplayId = null;
+                activeInstallationStamp = null;
+            }
+            authority.Unbind(exitedPid);
+        }
+        QueueDockUpdate();
+        ClearExitedNativeIdle(exitedPid);
+        return wasNative;
     }
 }
