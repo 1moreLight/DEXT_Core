@@ -80,7 +80,11 @@ internal sealed partial class ApplicationDockWindow
     {
         previewGroups = groups;
         if (preview?.IsVisible == true)
+        {
             preview.UpdateGroup(groups.FirstOrDefault(g => g.Key == preview.GroupKey));
+            if (previewAnchor?.IsLoaded == true)
+                preview.FollowAnchor(Left + previewAnchor.TranslatePoint(new Point(previewAnchor.ActualWidth / 2, 0), this).X, Top);
+        }
     }
 
     private void ClosePreview()

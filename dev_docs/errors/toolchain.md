@@ -485,3 +485,7 @@ v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/targe
 ## #262 实验样包批量命令过长与安装目标父目录（2026-10-08）
 通过exec_command一次传入全部14份作者文件的PowerShell写入脚本，编码后的命令超过Windows进程命令长度，返回OS206，未执行文件写入。按文件/小批JSON分段落盘，单批约5500字符内；UTF8/LF源码与完整资源列表另行核对。不重放已成功的小批次，自动审批超时也先区分未启动与已有写入。
 首次install_v3检查目标在worktree不存在的.build下，检查父路径报OS2；显式创建检查用父目录、使用完整绝对源/目标路径后正式安装成功。这是检查路径准备问题，不是Room清单失败。静态预览截图只作外观证据，不当作Core/Player实际动作或生命周期通过。
+
+## #268 Replace重载错误后脚本仍继续（2026-10-09）
+用Replace([char]13,'')删除回车误选char,char重载，产生非终止错误；之后构建仍通过但调用点未修改。
+恢复：明确字符串替换并检查锚点存在，设置ErrorActionPreference=Stop；核对实际diff确认FollowAnchor调用接入，再编译提交。
