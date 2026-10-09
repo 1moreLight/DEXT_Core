@@ -489,3 +489,7 @@ v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/targe
 ## #268 Replace重载错误后脚本仍继续（2026-10-09）
 用Replace([char]13,'')删除回车误选char,char重载，产生非终止错误；之后构建仍通过但调用点未修改。
 恢复：明确字符串替换并检查锚点存在，设置ErrorActionPreference=Stop；核对实际diff确认FollowAnchor调用接入，再编译提交。
+
+## #270 PowerShell下rg路径通配符不由shell展开
+- 现象：把RoomSessionRuntimeCoordinator*.cs作为位置路径传给rg，Windows报路径语法错误；猜测RoomDockService.cs文件名也会失败。
+- 修正：先rg --files确认路径，然后rg实际目录 -g 'RoomSessionRuntimeCoordinator*.cs'。检查每条命令退出码，不能因同批其他命令成功忽略失败。
