@@ -79,7 +79,7 @@ internal sealed partial class ApplicationDockWindow : Window
         strip.Children.Clear();
         if (groups.Count == 0)
         {
-            strip.Children.Add(new TextBlock { Text = "在配置器 Dock 页固定应用，或打开一个应用", Foreground = Brushes.LightGray, Margin = new Thickness(12) });
+            strip.Children.Add(new TextBlock { Text = "在配置器“设置 → 系统应用 Dock”固定应用，或打开一个应用", Foreground = Brushes.LightGray, Margin = new Thickness(12) });
             return;
         }
         foreach (var group in groups)
@@ -119,8 +119,11 @@ internal sealed partial class ApplicationDockWindow : Window
             AttachPreview(button, group);
             button.Click += (_, _) =>
             {
-                if (group.Windows.Count > 1) OpenPreview(button, group.Key);
-                else { ClosePreview(); click(group, null); }
+                // Preview/pressed controls stay alive across snapshots; resolve their action now.
+                var current = previewGroups.FirstOrDefault(value => value.Key == group.Key);
+                if (current == null) { ClosePreview(); return; }
+                if (current.Windows.Count > 1) OpenPreview(button, current.Key);
+                else { ClosePreview(); click(current, null); }
             };
             strip.Children.Add(button);
         }

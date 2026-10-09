@@ -11,3 +11,4 @@ Check(DockPreviewGeometry.PageSize(1920) == 6, "wide desktop bounds preview page
 Check(DockPreviewGeometry.PageSize(320) == 1, "small desktop still has a reachable card");
 Check(DockPreviewGeometry.ClampPage(2,2,6) == 0, "window closure clamps stale page");
 Check(DockPreviewGeometry.ClampPage(9,14,6) == 2, "last page remains reachable");
+DockButtonSnapshotTests.Run();

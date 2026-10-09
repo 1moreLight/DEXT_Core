@@ -371,3 +371,4 @@
 | #267 | 预览窗口未Show时DPI尚未初始化，锚点须从已显示Dock的DIP坐标传递 | [frontend](errors/frontend.md) |
 
 | #268 | PowerShell Replace(char,空串)重载错误不会默认终止后续编译/提交 | [toolchain](errors/toolchain.md) |
+| #269 | 预览保留图标但点击闭包捕获旧窗口快照，动作须按稳定key读取最新组 | [frontend](errors/frontend.md) |
