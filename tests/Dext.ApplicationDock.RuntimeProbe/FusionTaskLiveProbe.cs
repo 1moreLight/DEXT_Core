@@ -7,13 +7,15 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         void Enable(bool enabled)=>client.EditApplicationDock(new(){PatchJson=JsonSerializer.Serialize(new{operation="enable",enabled})},deadline:DateTime.UtcNow.AddSeconds(5));
         void Settings(object patch)=>client.SetRoomDockPreference(new(){PatchJson=JsonSerializer.Serialize(patch)},deadline:DateTime.UtcNow.AddSeconds(5));
         var beforeApp=App().GetProperty("enabled").GetBoolean();
+        var beforeTaskbar=App().GetProperty("taskbar").GetProperty("mode").GetString();
+        void Taskbar(string mode)=>client.EditApplicationDock(new(){PatchJson=JsonSerializer.Serialize(new{operation="taskbar",mode})},deadline:DateTime.UtcNow.AddSeconds(5));
         var beforeTheme=Theme().GetProperty("preferences").Clone();
         if(!GetCursorPos(out var cursor))throw new Exception("Cannot preserve cursor");
         var foreground=GetForegroundWindow();
@@ -57,6 +59,17 @@ internal static class FusionTaskLiveProbe
                             var text=new StringBuilder(4096);GetWindowText(window,text,text.Capacity);
                             var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
                         }
+                        if(restoreTaskbar){
+                            Taskbar("visible");
+                            await FusionActionWindow.Wait(()=>{
+                                if(GetWindowRect(window,out var restoredBounds))SetCursorPos((restoredBounds.Left+restoredBounds.Right)/2,restoredBounds.Bottom-1);
+                                return NativeTaskbar.IsWindowVisible(NativeTaskbar.FindWindow("Shell_TrayWnd",null))&&
+                                    !App().GetProperty("taskbar").GetProperty("hidden").GetBoolean()&&
+                                    Theme().GetProperty("runtime").GetProperty("phase").GetString()=="running"&&
+                                    Observe()?.GetProperty("enabled").GetBoolean()==true;
+                            },"Restoring Windows taskbar did not leave official tasks usable");
+                            Console.WriteLine("PASS actual Windows taskbar restored while theme Dock remains enabled");
+                        }
                         if(target is not null){
                             if(menu)await target.VerifyWindowMenu(window,Observe,second);
                             else if(keyboard)await target.VerifyKeyboard(window,Observe);
@@ -65,6 +78,7 @@ internal static class FusionTaskLiveProbe
                         }
                         else if(launcher is not null)await launcher.Verify(window,Observe);
                         else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
+                        if(restoreTaskbar&&!NativeTaskbar.IsWindowVisible(NativeTaskbar.FindWindow("Shell_TrayWnd",null)))throw new Exception("Task actions hid manually restored taskbar");
                         return;
                     }
                 }
@@ -80,7 +94,7 @@ internal static class FusionTaskLiveProbe
                 if(actions||launch)SetForegroundWindow(foreground);
                 SetCursorPos(cursor.X,cursor.Y);
                 try { Settings(new{enabled=beforeTheme.GetProperty("enabled").GetBoolean(),mode=beforeTheme.GetProperty("mode").GetString(),heightDip=beforeTheme.GetProperty("heightDip").GetInt32()}); }
-                finally {Enable(beforeApp);}
+                finally {try{Enable(beforeApp);}finally{if(restoreTaskbar)Taskbar(beforeTaskbar);}}
                 Console.WriteLine("RESTORED Dock preferences and cursor");
             }
         }

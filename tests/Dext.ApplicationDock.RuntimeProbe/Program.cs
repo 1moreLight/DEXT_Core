@@ -17,9 +17,9 @@ if (identity.ProductName != "Dext" || identity.RuntimeIdentity != "DEXT:DESKTOPS
     !Path.GetFullPath(identity.BaseDirectory).TrimEnd('\\').Equals(Path.GetFullPath(args[1]).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
     throw new Exception("Unexpected Core identity; no mutation performed.");
 Console.WriteLine($"Core verified: PID={identity.ProcessId} {identity.BaseDirectory}");
-if(args[0] is "fusion-live" or "fusion-actions-live" or "fusion-launch-live" or "fusion-touch-live" or "fusion-raw-owner-live" or "fusion-keyboard-live" or "fusion-menu-live" or "fusion-startup-live") {
+if(args[0] is "fusion-live" or "fusion-actions-live" or "fusion-launch-live" or "fusion-touch-live" or "fusion-raw-owner-live" or "fusion-keyboard-live" or "fusion-menu-live" or "fusion-startup-live" or "fusion-restored-live") {
     if(args.Length!=3)throw new ArgumentException("fusion-live requires isolated fixture Room ID");
-    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0] is "fusion-actions-live" or "fusion-touch-live" or "fusion-raw-owner-live" or "fusion-keyboard-live" or "fusion-menu-live" or "fusion-startup-live",args[0]=="fusion-launch-live",args[0]=="fusion-touch-live",args[0]=="fusion-raw-owner-live",args[0]=="fusion-keyboard-live",args[0] is "fusion-menu-live" or "fusion-startup-live",args[0]=="fusion-startup-live"));
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0] is "fusion-actions-live" or "fusion-touch-live" or "fusion-raw-owner-live" or "fusion-keyboard-live" or "fusion-menu-live" or "fusion-startup-live" or "fusion-restored-live",args[0]=="fusion-launch-live",args[0]=="fusion-touch-live",args[0]=="fusion-raw-owner-live",args[0]=="fusion-keyboard-live",args[0] is "fusion-menu-live" or "fusion-startup-live" or "fusion-restored-live",args[0]=="fusion-startup-live",args[0]=="fusion-restored-live"));
     return;
 }
 if (args[0] == "shutdown")
