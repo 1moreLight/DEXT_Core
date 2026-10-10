@@ -608,3 +608,9 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 ## #301 普通窗口的触摸兼容鼠标不能代表WebView2 Dock（2026-10-11）
 独立touch-path探针使用Windows InjectTouchInput，自有Form收到pointer/兼容mouse/RawInput各一组；fusion-touch-live触摸真实官方任务区却未激活目标，Core日志没有Dock raw边沿。不能依据前者宣称现有RawInput已覆盖实际Dock触控。下一步核对Chromium子窗口触摸入口；GetPointerInfo需要消息所属线程，不能跨进程补查；禁止用全局RegisterPointerInputTarget改变其他应用触控。
 首次InjectTouchInput参数87，改用ID0+有效接触矩形后通过；按实际观测分别记录API参数失败、输入路径证据和真实Dock失败。方案/来源见plans/V3-P8-013/03-touch-path.md，生产点击链未改。
+
+## #302 Dock位置刷新与自动任务栏隐藏形成反馈（2026-10-11）
+现象：实际Dock鼠标DOWN/UP被收到，但WindowReady反复false，窗口Y在1260/1320之间往返60px，UP时inside=false，点击丢失。日志20261011_022919.txt。
+原因：任务栏隐藏改变workArea；Player刷新Bounds时撤销WindowReady；自动任务栏替代也依赖该状态，于是恢复任务栏，导致下一次位置刷新。
+修复：私有GeometryUpdating只供任务栏替代/实际AppBar占位判断使用，纯几何刷新且之前同步完成时进入，最长2秒；可见性/输入连接/文档变化清除。普通输入仍只接受WindowReady，几何变化仍取消旧手势。不能通过延长物理凭据期限或让旧坐标继续点击掩盖。
+验证：Release通过；同一已失败的fusion-raw-owner-live通过4次点击动作，日志20261011_023219.txt只有一次正常工作区调整。触控日志20261011_023315.txt也无往返，但无原始鼠标边沿且激活失败，触控仍待修。两秒超时/多屏/保留占位模式的专项运行覆盖尚未完成，不将此结果外推为整个工作包通过。

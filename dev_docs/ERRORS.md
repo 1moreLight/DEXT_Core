@@ -412,3 +412,4 @@
 2026-10-11 #300补记：已避开dynamic COM类型扫描，真实首次启动及恢复通过；准备点击到窗口总耗时12.3秒仍待拆分，不能称性能已通过。详见backend末尾。
 2026-10-11 #300最新：首次启动存在间歇失败，最新失败未到ApplicationDockService.Click启动分支；继续追踪输入完成链，不把此前一次PASS当稳定完成。
 | #301 | 普通Form触摸兼容鼠标可达RawInput，但实际WebView2 Dock未触发；不能外推为触控已通 | [backend](errors/backend.md) |
+| #302 | Dock位置刷新撤销就绪触发自动任务栏恢复，工作区往返使点击取消 | [backend](errors/backend.md) |

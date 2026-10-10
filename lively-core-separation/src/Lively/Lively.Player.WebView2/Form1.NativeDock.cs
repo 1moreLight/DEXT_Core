@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Drawing;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,6 +18,7 @@ namespace Lively.Player.WebView2
         private bool nativeDockRendererReady, nativeDockInputConnected;
         private bool nativeDockVisibilitySynchronized, nativeDockSynchronizedVisible;
         private long nativeDockStateVersion;
+        private long nativeDockGeometryStarted;
         private Rectangle nativeDockSynchronizedBounds;
         private readonly SemaphoreSlim nativeDockStateGate = new SemaphoreSlim(1, 1);
 
@@ -60,7 +62,8 @@ namespace Lively.Player.WebView2
         {
             if (policy.ProtocolVersion != 1 || !NativeDockIdentity(policy.RuntimeGeneration, policy.SessionId, policy.Revision)) return;
             // Only private Core stdin sets this. Authors have no input-enable API.
-            if (nativeDockInputConnected != policy.InputConnected) nativeDockVisibilitySynchronized = false;
+            if (nativeDockInputConnected != policy.InputConnected)
+            { nativeDockVisibilitySynchronized = false; nativeDockGeometryStarted = 0; }
             nativeDockInputConnected = policy.InputConnected;
             if (policy.LeaveKeyboard)
             {
@@ -77,6 +80,7 @@ namespace Lively.Player.WebView2
         {
             if (!startArgs.DextDock) return;
             nativeDockVisibilitySynchronized = false;
+            nativeDockGeometryStarted = 0;
             nativeDockRendererReady = false;
             nativeDockInputConnected = false;
             nativeDockWindow?.SetAvailability(false);
@@ -86,6 +90,10 @@ namespace Lively.Player.WebView2
         private void ObserveNativeDockWindow()
         {
             if (IsDisposed || Disposing) return;
+            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible)
+                nativeDockGeometryStarted = 0;
+            else if (nativeDockVisibilitySynchronized && Bounds != nativeDockSynchronizedBounds)
+                nativeDockGeometryStarted = Stopwatch.GetTimestamp();
             if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible || Bounds != nativeDockSynchronizedBounds)
             {
                 if (nativeDockVisibilitySynchronized)
@@ -140,6 +148,7 @@ namespace Lively.Player.WebView2
                 NativeViewController().IsVisible = visible && !runtimeDeliverySuspended;
                 nativeDockSynchronizedVisible = visible;
                 nativeDockVisibilitySynchronized = true;
+                nativeDockGeometryStarted = 0;
                 PublishNativeDockState();
             }
             catch (Exception error)
@@ -166,6 +175,9 @@ namespace Lively.Player.WebView2
                 RuntimeGeneration = roomRuntime.Generation, SessionId = session, Revision = (long)snapshot["revision"],
                 RendererReady = nativeDockRendererReady,
                 WindowReady = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted && nativeDockVisibilitySynchronized,
+                GeometryUpdating = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted &&
+                    nativeDockGeometryStarted != 0 &&
+                    (Stopwatch.GetTimestamp() - nativeDockGeometryStarted) / (double)Stopwatch.Frequency < 2,
                 WindowHwnd = Handle.ToInt64(), Visible = nativeDockWindow.IsVisible,
                 Keyboard = nativeDockWindow.IsKeyboard, Fullscreen = nativeDockWindow.IsFullscreen,
                 Locked = roomRuntime.DockLocked, HeightDip = startArgs.DextDockHeight,

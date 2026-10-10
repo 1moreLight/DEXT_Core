@@ -37,8 +37,8 @@ namespace Lively.Core.Wallpapers
             {
                 var state = RoomDockWindowState;
                 var viewport = ReadNativeViewport();
-                return nativeDockMode == "reserve" && state is { Mode: "reserve", WindowReady: true,
-                    AppBarRegistered: true, AppBarReady: true } && viewport != null &&
+                return nativeDockMode == "reserve" && state is { Mode: "reserve",
+                    AppBarRegistered: true, AppBarReady: true } && (state.WindowReady || state.GeometryUpdating) && viewport != null &&
                     DextNativeInputWindow.TryReadWorkArea(Handle, out var work) &&
                     work.Bottom <= viewport.Y && work.Top < viewport.Y;
             }
@@ -59,7 +59,7 @@ namespace Lively.Core.Wallpapers
                 value.SessionId != current.Session || value.Revision != current.Revision ||
                 value.WindowHwnd != Handle.ToInt64() || value.HeightDip is < 48 or > 240 ||
                 value.Mode != nativeDockMode || value.AppBarReady && (!value.AppBarRegistered || value.Mode != "reserve") ||
-                value.WindowReady && !value.RendererReady || value.Keyboard && !value.Visible ||
+                (value.WindowReady || value.GeometryUpdating) && !value.RendererReady || value.Keyboard && !value.Visible ||
                 NativeMethods.GetWindowThreadProcessId(Handle, out int ownerPid) == 0 || ownerPid != pid)
                 return;
             var previous = Volatile.Read(ref roomDockWindowState);
@@ -69,6 +69,7 @@ namespace Lively.Core.Wallpapers
             if (!expired && previous != null && previous.RuntimeGeneration == value.RuntimeGeneration &&
                 previous.SessionId == value.SessionId && previous.Revision == value.Revision &&
                 previous.RendererReady == value.RendererReady && previous.WindowReady == value.WindowReady &&
+                previous.GeometryUpdating == value.GeometryUpdating &&
                 previous.WindowHwnd == value.WindowHwnd && previous.Visible == value.Visible &&
                 previous.Keyboard == value.Keyboard && previous.Fullscreen == value.Fullscreen &&
                 previous.Locked == value.Locked && previous.HeightDip == value.HeightDip &&

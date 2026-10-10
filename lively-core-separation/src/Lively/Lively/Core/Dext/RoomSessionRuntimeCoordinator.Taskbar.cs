@@ -32,7 +32,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 owned.Demand.Desktop?.IsExited == false && snapshot is { IsActive: true } &&
                 snapshot.SessionId == owned.Demand.Snapshot?.SessionId && !snapshot.Lifecycle.Locked &&
                 snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop &&
-                owned.Player.RoomDockWindowState is { RendererReady: true, WindowReady: true, Locked: false } &&
+                owned.Player.RoomDockWindowState is { RendererReady: true, Locked: false } window && (window.WindowReady || window.GeometryUpdating) &&
                 owned.Player.ReadNativeViewport() is not null &&
                 (owned.Player.NativeDockMode != "reserve" || owned.Player.NativeDockReservationReady));
         }, null, 1000, 1000);
@@ -40,7 +40,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     private async Task EnsureDockTaskbarAsync(DockPlayer owned, DockDemand demand)
     {
         var wanted = !owned.Stopping && Volatile.Read(ref dockDisposed) == 0 && demand.Matches(owned.Demand) &&
-            owned.Attached && owned.Player.RoomDockWindowState is { RendererReady: true, WindowReady: true, Locked: false } &&
+            owned.Attached && owned.Player.RoomDockWindowState is { RendererReady: true, Locked: false } window && (window.WindowReady || window.GeometryUpdating) &&
             owned.Player.ReadNativeViewport() is not null &&
             (owned.Player.NativeDockMode != "reserve" || owned.Player.NativeDockReservationReady) &&
             demand.Snapshot is { IsActive: true } && !demand.Snapshot.Lifecycle.Locked &&

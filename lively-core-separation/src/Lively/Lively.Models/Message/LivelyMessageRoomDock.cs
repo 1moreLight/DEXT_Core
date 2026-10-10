@@ -12,6 +12,8 @@ namespace Lively.Models.Message
         public long Revision { get; set; }
         public bool RendererReady { get; set; }
         public bool WindowReady { get; set; }
+        // Bounded position refresh; only taskbar ownership may use this, never input.
+        public bool GeometryUpdating { get; set; }
         public long WindowHwnd { get; set; }
         public bool Visible { get; set; }
         public bool Keyboard { get; set; }
