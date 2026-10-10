@@ -2303,3 +2303,4 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 从7334286接续desktop-file-drop独立worktree/feat/DESK-SYNC-003-desktop-drop。五步方案与独立验收已写，01真实接收验证开做，其余待做，实施0/5=0%。先确定WorkerW/WebView2实际接收链，再落盘复制/移动/链接；保留原点击/触控，不加全屏透明层。CodeGraph未初始化，rg兜底。001/002待统一验收，未合master。
 2026-10-11 DESK-SYNC-003第01步增量：隐藏OLE注册探针构建/运行退出0，确认父Form、WinForms WebView及本进程Chrome_WidgetWin_0可注册，浏览器Chrome_WidgetWin_1/渲染子窗口属于其他进程。无鼠标移动、文件操作或当前桌面更改。注册成功尚不能证明实际派发，WorkerW接收继续验证，实施0/5=0%。
 2026-10-11 DESK-SYNC-003第01步增量：真实临时文件File→AdditionalObjects→CoreWebView2File.Path通过，CDP浏览器drop同时转交真实文件和目录路径通过；脚本File发送在本机明确拒绝。无OS鼠标或Explorer操作，临时源清理。优先复用官方WebView通道，真实Player/WorkerW/Explorer及源效果仍待，不把浏览器探针算OS拖放完成，实施0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：生产Player新增DextNativeDroppedFiles读取模块并显式编译，隐藏探针直接链接该源码，真实磁盘File和浏览器drop文件/目录对象读取通过。无文件操作/原生输入变动；正式事件、会话及落点接线待继续，WorkerW/Explorer尚未验证，0/5=0%。

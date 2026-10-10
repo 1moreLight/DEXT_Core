@@ -27,3 +27,10 @@
 
 一次探针误假设脚本new File会传入空路径，实际上当前runtime在发送时抛TypeError；ExecuteScriptAsync不直接抛该脚本异常导致等待超时。改为显式返回脚本异常后验证通过，见#319。
 - 完整Core/Player Release构建退出0（.build/drop-file-object-core-build.log），旧Core51648保持，无新配置器。
+
+## 2026-10-11 生产Player读取模块
+
+做完：DextNativeDroppedFiles加入生产Player显式编译项；仅从CoreWebView2File读取本机绝对路径，去重，限制256项和总路径长度，失败不返回部分项目。没有文件写操作，没有新增窗口或改变点击/触控。
+
+同一生产源码链接到隐藏探针，真实磁盘File及浏览器派发的文件+目录两种对象读取通过，退出0（.build/drop-reader.log）。这证明读取模块对真实WebView对象可用；当前尚未接入正式WebMessage事件/会话/落点，也未启用页面拖入入口。真实WorkerW/Explorer门槛保持，01仍开做、0/5=0%。
+- 生产net472 Player及完整Core/Player Release构建退出0（.build/drop-reader-core-build.log）；原Core51648保持，无新配置器。

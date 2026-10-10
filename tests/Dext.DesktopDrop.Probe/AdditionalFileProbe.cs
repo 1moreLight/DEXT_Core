@@ -1,6 +1,7 @@
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using System.Text.Json;
+using Lively.Player.WebView2;
 
 internal static class AdditionalFileProbe
 {
@@ -17,7 +18,8 @@ internal static class AdditionalFileProbe
             try
             {
                 if (args.TryGetWebMessageAsString() != "file-object-probe") return;
-                received.TrySetResult(args.AdditionalObjects.Select(item => item is CoreWebView2File file ? file.Path : "unsupported").ToArray());
+                if (!DextNativeDroppedFiles.TryRead(args.AdditionalObjects, out var paths)) throw new Exception("Production native file reader rejected fixture");
+                received.TrySetResult(paths);
             }
             catch (Exception error) { received.TrySetException(error); }
         };
