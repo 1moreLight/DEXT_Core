@@ -8,7 +8,10 @@ namespace Lively.Services.ApplicationDock;
 
 internal sealed record DockPin(string Name, string Target, string Arguments, string WorkingDirectory);
 internal sealed record DockTask(long Handle, int ProcessId, string Title, string Target);
-internal sealed record DockGroup(string Key, string Name, DockPin Pin, IReadOnlyList<DockTask> Windows);
+internal sealed record DockGroup(string Key, string Name, DockPin Pin, IReadOnlyList<DockTask> Windows)
+{
+    public string PinScope { get; init; }
+}
 internal sealed record DockPreferences(bool Enabled, DockPin[] Pins, bool AutoHide = false, bool ReserveSpace = false)
 {
     public DockPreferences WithAutoHide(bool value) => this with { AutoHide = value, ReserveSpace = value ? false : ReserveSpace };
@@ -35,6 +38,7 @@ internal static class DockModel
                 result.Add(new(pair.Key, Path.GetFileNameWithoutExtension(pair.Value[0].Target), null, pair.Value));
         return result;
     }
+    public static bool CanEditPin(DockGroup group, string scope) => group.PinScope == scope;
     public static DockAction Action(DockGroup group, long foreground) =>
         group.Windows.Count switch
         {

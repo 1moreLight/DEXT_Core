@@ -28,6 +28,8 @@ internal sealed class ApplicationDockService : IDisposable
     private ApplicationDockWindow window;
     private bool updating, disposed, started, loadFailed;
     private string error;
+    private string pinContextKey;
+    private DockPin[] deskPins;
 
     public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms, RoomRuntimeFactsSource facts)
     {
@@ -56,22 +58,65 @@ internal sealed class ApplicationDockService : IDisposable
         _ = Refresh();
     });
 
-    public object Status() => dispatcher.Invoke<object>(() => new
+    private DockPin[] EffectivePins(RoomDockNavigation navigation)
     {
-        enabled = preferences.Enabled,
-        autoHide = preferences.AutoHide,
-        reserveSpace = preferences.ReserveSpace,
-        taskbar = taskbar.Status(),
-        runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
-            waiting = preferences.Enabled && ownership.Owner == DockHost.Theme,
-            reservation = new { registered = window?.ReservationRegistered == true, ready = window?.ReservationReady == true, error = window?.ReservationError },
-            blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
-        navigation = rooms.ReadApplicationDockNavigation(),
-        pins = preferences.Pins,
-        groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
-        error
+        var key = navigation is null ? null : $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}";
+        if (key != pinContextKey)
+        {
+            var stored = navigation is null ? null : rooms.ReadApplicationDockPins(navigation);
+            deskPins = stored?.Select(p => new DockPin(p.Name, p.Target, p.Arguments, p.WorkingDirectory)).ToArray();
+            pinContextKey = key; // Failed reads never cache a different Room/Desk.
+        }
+        return navigation is null ? preferences.Pins : deskPins ?? preferences.Pins;
+    }
+
+    private string PinScope(RoomDockNavigation navigation) => navigation is null ? "global" :
+        $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}/{(deskPins is null ? "global" : "desk")}";
+
+    private IReadOnlyList<DockGroup> GroupForCurrentDesk(IReadOnlyList<DockTask> tasks)
+    {
+        var navigation = rooms.ReadApplicationDockNavigation();
+        var pins = EffectivePins(navigation);
+        var scope = PinScope(navigation);
+        return DockModel.Group(pins, tasks).Select(group => group with { PinScope = scope }).ToArray();
+    }
+
+    public object Status() => dispatcher.Invoke<object>(() =>
+    {
+        var navigation = rooms.ReadApplicationDockNavigation();
+        var effective = EffectivePins(navigation);
+        return new
+        {
+            enabled = preferences.Enabled,
+            autoHide = preferences.AutoHide,
+            reserveSpace = preferences.ReserveSpace,
+            taskbar = taskbar.Status(),
+            runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
+                waiting = preferences.Enabled && ownership.Owner == DockHost.Theme,
+                reservation = new { registered = window?.ReservationRegistered == true, ready = window?.ReservationReady == true, error = window?.ReservationError },
+                blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
+            navigation,
+            pins = preferences.Pins,
+            effectivePins = effective,
+            pinContext = navigation is null ? null : new { sessionId = navigation.SessionId, roomId = navigation.RoomId,
+                deskId = navigation.CurrentDeskId, name = navigation.CurrentName, inherits = deskPins is null,
+                changing = navigation.PendingName is not null },
+            groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
+            error
+        };
     });
 
+    private RoomDockNavigation PinEditContext(JsonElement root)
+    {
+        var scope = root.TryGetProperty("scope", out var value) ? value.GetString() : "global";
+        if (scope == "global") return null;
+        if (scope != "desk") throw new ArgumentException("未知固定范围。");
+        var current = rooms.ReadApplicationDockNavigation();
+        if (!root.TryGetProperty("sessionId", out var session) || !session.TryGetGuid(out var id) ||
+            current?.MatchesPinEdit(id, root.GetProperty("roomId").GetString(), root.GetProperty("deskId").GetString()) != true)
+            throw new InvalidOperationException("当前 Room/Desk 已改变，请重新选择固定应用。");
+        return current;
+    }
     public Task SetTaskbarModeAsync(string mode) => taskbar.SetModeAsync(mode);
 
     public object Edit(string json) => dispatcher.Invoke<object>(() =>
@@ -81,6 +126,10 @@ internal sealed class ApplicationDockService : IDisposable
         var root = document.RootElement;
         var updated = preferences;
         var operation = root.GetProperty("operation").GetString();
+        var editingPins = operation is "pin" or "unpin" or "inheritPins";
+        var context = editingPins ? PinEditContext(root) : null;
+        var selectedPins = context is null ? preferences.Pins : EffectivePins(context);
+        var updatedPins = selectedPins;
         switch (operation)
         {
             case "enable":
@@ -101,20 +150,34 @@ internal sealed class ApplicationDockService : IDisposable
                     value.TryGetProperty("arguments", out var args) ? args.GetString() ?? "" : "",
                     value.TryGetProperty("workingDirectory", out var cwd) ? cwd.GetString() ?? "" : "");
                 if (string.IsNullOrWhiteSpace(pin.Name)) throw new ArgumentException("应用名称不能为空。");
-                if (!preferences.Pins.Any(p => DockModel.Identity(p.Target) == DockModel.Identity(pin.Target)))
-                    updated = preferences with { Pins = preferences.Pins.Append(pin).ToArray() };
+                if (!selectedPins.Any(p => DockModel.Identity(p.Target) == DockModel.Identity(pin.Target)))
+                    updatedPins = selectedPins.Append(pin).ToArray();
                 break;
             case "unpin":
                 var key = DockModel.Identity(root.GetProperty("target").GetString());
-                updated = preferences with { Pins = preferences.Pins.Where(p => DockModel.Identity(p.Target) != key).ToArray() };
+                updatedPins = selectedPins.Where(p => DockModel.Identity(p.Target) != key).ToArray();
+                break;
+            case "inheritPins":
+                if (context is null) throw new ArgumentException("请选择当前 Desk。");
+                updatedPins = null;
                 break;
             default: throw new ArgumentException("未知应用 Dock 操作。");
         }
         // Persist first. A failed save must not falsely acknowledge an in-memory-only change.
-        DockPreferenceFile.Save(path, updated);
-        preferences = updated;
+        if (editingPins && context is not null)
+        {
+            rooms.SetApplicationDockPins(context.SessionId, context.RoomId, context.CurrentDeskId,
+                updatedPins?.Select(p => new PersonalTarget(p.Name, "application", p.Target, p.Arguments, p.WorkingDirectory)).ToArray());
+            pinContextKey = null;
+        }
+        else
+        {
+            if (editingPins) updated = updated with { Pins = updatedPins };
+            DockPreferenceFile.Save(path, updated);
+            preferences = updated;
+        }
         error = null;
-        groups = DockModel.Group(preferences.Pins, groups.SelectMany(g => g.Windows).ToArray());
+        groups = GroupForCurrentDesk(groups.SelectMany(g => g.Windows).ToArray());
         Render();
         _ = Refresh();
         return Status();
@@ -128,7 +191,7 @@ internal sealed class ApplicationDockService : IDisposable
         {
             var tasks = await Task.Run(DockWindows.Enumerate);
             if (disposed) return;
-            groups = DockModel.Group(preferences.Pins, tasks);
+            groups = GroupForCurrentDesk(tasks);
             Render();
         }
         catch (Exception ex) { error = ex.Message; }
@@ -207,9 +270,19 @@ internal sealed class ApplicationDockService : IDisposable
     {
         try
         {
-            Edit(JsonSerializer.Serialize(group.Pin != null
-                ? (object)new { operation = "unpin", target = group.Pin.Target }
-                : new { operation = "pin", app = new { name = group.Name, target = group.Windows[0].Target, arguments = "", workingDirectory = "" } }));
+            var navigation = rooms.ReadApplicationDockNavigation();
+            EffectivePins(navigation);
+            if (!DockModel.CanEditPin(group, PinScope(navigation)))
+                throw new InvalidOperationException("页面或固定范围已改变，请重新打开菜单。");
+            var local = navigation is not null && deskPins is not null;
+            Edit(JsonSerializer.Serialize(new
+            {
+                operation = group.Pin is not null ? "unpin" : "pin",
+                scope = local ? "desk" : "global",
+                sessionId = navigation?.SessionId, roomId = navigation?.RoomId, deskId = navigation?.CurrentDeskId,
+                target = group.Pin?.Target,
+                app = new { name = group.Name, target = group.Pin?.Target ?? group.Windows[0].Target, arguments = "", workingDirectory = "" }
+            }));
         }
         catch (Exception ex) { error = ex.Message; Render(); }
     }

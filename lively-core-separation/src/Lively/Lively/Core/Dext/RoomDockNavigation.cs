@@ -8,6 +8,11 @@ namespace Dext.Core.Rooms;
 internal sealed record RoomDockNavigation(Guid SessionId, string CurrentName, string? PendingName,
     string[] DeskIds, int NavigationIndex, bool CanNavigate)
 {
+    public string RoomId { get; init; } = "";
+    public string CurrentDeskId { get; init; } = "";
+    public bool MatchesPinEdit(Guid sessionId, string roomId, string deskId) =>
+        SessionId == sessionId && RoomId == roomId && CurrentDeskId == deskId && PendingName is null;
+
     public string? Target(int direction) => CanNavigate && direction is -1 or 1
         ? DeskIds[(NavigationIndex + direction + DeskIds.Length) % DeskIds.Length] : null;
 
@@ -26,6 +31,6 @@ internal sealed record RoomDockNavigation(Guid SessionId, string CurrentName, st
         return new(snapshot.SessionId, Name(snapshot.CurrentDeskId),
             snapshot.TargetDeskId is { } pending ? Name(pending) : null,
             ids, position, snapshot.IsActive && !snapshot.Lifecycle.Locked &&
-            snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop && position >= 0 && ids.Length > 1);
+            snapshot.Lifecycle.Stage == RoomLifecycleStage.Desktop && position >= 0 && ids.Length > 1) { RoomId = snapshot.RoomId, CurrentDeskId = snapshot.CurrentDeskId };
     }
 }

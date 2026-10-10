@@ -16,7 +16,9 @@ internal static class DockButtonSnapshotTests
             try
             {
                 DockGroup dispatched = null;
-                window = new ApplicationDockWindow((group, _) => dispatched = group, _ => { }, _ => null);
+                var currentScope = "desk-a";
+                var pinEdits = 0;
+                window = new ApplicationDockWindow((group, _) => dispatched = group, group => { if (DockModel.CanEditPin(group, currentScope)) pinEdits++; }, _ => null);
                 var pin = new DockPin("Test", @"C:\Test.exe", "", "");
                 var idle = DockModel.Group(new[] { pin }, Array.Empty<DockTask>());
                 window.Update(idle, 0, null);
@@ -35,6 +37,18 @@ internal static class DockButtonSnapshotTests
                 retainedButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Require(dispatched == null, "retained button does not dispatch obsolete single-window action after another window opens");
 
+                var scoped = idle.Select(g => g with { PinScope = "desk-a" }).ToArray();
+                window.Update(scoped, 0, null);
+                var oldScopedButton = strip.Children.OfType<Button>().Single();
+                var oldPinMenu = oldScopedButton.ContextMenu.Items.OfType<MenuItem>().Last();
+                currentScope = "desk-b";
+                window.Update(scoped.Select(g => g with { PinScope = "desk-b" }).ToArray(), 0, null);
+                var newScopedButton = strip.Children.OfType<Button>().Single();
+                Require(!ReferenceEquals(oldScopedButton,newScopedButton), "page scope refreshes idle menus even when app list is identical");
+                oldPinMenu.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                Require(pinEdits == 0, "old menu cannot change new Desk or global pins");
+                newScopedButton.ContextMenu.Items.OfType<MenuItem>().Last().RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                Require(pinEdits == 1, "new page menu remains usable");
                 window.Update(Array.Empty<DockGroup>(), 0, null);
                 retainedButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Require(dispatched == null, "removed app cannot dispatch from a retained button");

@@ -40,6 +40,32 @@ internal static class SharingCopyChecks
             Require(!remaining.Rooms.ContainsKey(copy) && remaining.Targets.ContainsKey(target), "delete keeps global target");
             Require(JsonSerializer.Serialize(remaining.Rooms[room]) == before, "delete keeps source values and consent");
         });
+        check("Desk Dock overrides persist, isolate copies, and disappear with the Room", () =>
+        {
+            using var fixture = new Fixture();
+            var store = new RoomPersonalStore(fixture.Path);
+            Require(store.ReadDockPins(room, "home") is null, "missing override inherits global");
+            var pins = new[] { new PersonalTarget("Notes", "application", @"C:\Windows\System32\notepad.exe") };
+            store.SetDockPins(room, "home", pins);
+            var reopened = new RoomPersonalStore(fixture.Path);
+            Require(reopened.ReadDockPins(room, "home")!.SequenceEqual(pins), "pins survive reload");
+            Require(reopened.ReadDockPins(room, "work") is null, "other Desk inherits");
+            store.SetDockPins(room, "empty", Array.Empty<PersonalTarget>());
+            Require(store.ReadDockPins(room, "empty") is { Length: 0 }, "empty differs from inherited");
+            store.CopyRoom(room, copy);
+            Require(store.ReadDockPins(copy, "home")!.SequenceEqual(pins), "save-as copies personal pins");
+            store.SetDockPins(copy, "home", Array.Empty<PersonalTarget>());
+            Require(store.ReadDockPins(room, "home")!.Length == 1, "copy edits isolated");
+            store.SetDockPins(copy, "home", null);
+            Require(store.ReadDockPins(copy, "home") is null, "reset inherits");
+            store.DeleteRoom(copy);
+            Require(store.ReadDockPins(copy, "empty") is null && store.ReadDockPins(room, "home")!.Length == 1,
+                "delete clears only its own pins");
+            store.SetDockPins(room, "home", null);
+            store.SetDockPins(room, "empty", null);
+            Require(!File.ReadAllText(Path.Combine(fixture.Path, "personal.json")).Contains("\"dockPins\""),
+                "unused override field is omitted for older candidate compatibility");
+        });
         check("copy of Room without personal overrides creates an independent empty record", () =>
         {
             using var fixture = new Fixture();

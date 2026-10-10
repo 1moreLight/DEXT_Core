@@ -65,6 +65,18 @@ internal sealed partial class RoomActionAuthority
         { return new("storageUnavailable", error.Message); }
     }
 
+    internal PersonalTarget[]? ReadApplicationDockPins(string roomId, string deskId) =>
+        store.ReadDockPins(roomId, deskId);
+
+    internal void SetApplicationDockPins(string roomId, string deskId, PersonalTarget[]? pins)
+    {
+        lock (roomCopyLifecycleGate)
+        {
+            if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
+            store.SetDockPins(roomId, deskId, pins);
+        }
+    }
+
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)

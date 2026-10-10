@@ -186,3 +186,8 @@ AppDock 原矩形满屏检查会把隐藏任务栏后扩展的普通最大化窗
 ## #282 试验台内置数据与Core字段漂移（2026-10-10）
 时间JSON缺utc；硬件示例只给ramPercent而无totalMemoryMB/availableMemoryMB；音量JSON使用volume而正式只读用level；媒体示例用album/positionMilliseconds而正式为albumTitle/positionMs。作者按正式字段编写会在预览看到缺数据或误学不存在字段。
 四源样本统一为workbench-samples.json，配置器JSON编辑器与adapter共用；运行时仅覆盖当前时钟和滑块值。实际adapter VM先失败再通过；正式DOM/SDK真实浏览器星轨组件显示时钟/16GB内存/音量/媒体，缺失拒绝和恢复通过。Core数据契约未改。
+
+## #283 原生固定菜单跨Desk误写范围（2026-10-10）
+独立审查发现：窗口为保护按下/菜单不重建控件，菜单捕获旧DockGroup；若服务在执行时读取新Desk并生成编辑身份，会把旧菜单的取消固定写到新Desk或全局。
+服务为每组附不可变PinScope（会话/Room/已提交Desk/继承模式），执行菜单先比对当前Scope，变化则提示重新打开。原WPF完整组序列化已包含该字段，可在空闲时刷新相同应用列表的菜单；按键/菜单保护以及左键最新窗口派发保持。
+新增3项WPF检查通过：相同列表跨页会刷新空闲菜单、旧菜单拒绝、新菜单可用。测试构造带Scope组并调用生产范围判断；真实跨页菜单物理交互仍由人工验收确认。

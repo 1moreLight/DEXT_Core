@@ -17,6 +17,17 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         }
     }
 
+    internal PersonalTarget[]? ReadApplicationDockPins(RoomDockNavigation context) =>
+        actions.ReadApplicationDockPins(context.RoomId, context.CurrentDeskId);
+
+    internal void SetApplicationDockPins(Guid sessionId, string roomId, string deskId, PersonalTarget[]? pins)
+    {
+        if (ReadApplicationDockNavigation()?.MatchesPinEdit(sessionId, roomId, deskId) != true)
+            throw new InvalidOperationException("当前 Room/Desk 已改变，请重新选择固定应用。");
+        // Persist to the explicit checked identity. A later page change never redirects this write.
+        actions.SetApplicationDockPins(roomId, deskId, pins);
+    }
+
     // Only the official Core WPF button calls this. No RPC or author SDK entry.
     internal bool NavigateApplicationDock(Guid expectedSession, int direction)
     {

@@ -5,14 +5,17 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import type {AppInfo} from "@/features/runtime/types";
 
+import {dockPinSelection, type DockPinContext} from "@/lib/application-dock-pins";
+
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
 type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
-type State = {autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type State = {effectivePins?:Pin[]; pinContext?:DockPinContext|null;autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
   const [state,setState] = useState<State|null>(null);
   const [apps,setApps] = useState<AppInfo[]>([]);
+  const [scope,setScope] = useState<"global"|"desk">("global");
   const [query,setQuery] = useState("");
   const [picker,setPicker] = useState(false);
   const [busy,setBusy] = useState(false);
@@ -62,16 +65,27 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
   async function chooseFile() {
     const version = epoch.current;
     try {
+      const selection = dockPinSelection(scope,state?.pinContext);
       const path = await open({multiple:false,filters:[{name:"应用与快捷方式",extensions:["exe","lnk"]}]});
       if (!path || version !== epoch.current) return;
       const app = await invoke<AppInfo>("resolve_app",{path});
-      if (version === epoch.current) await pin(app);
+      if (version === epoch.current) await pin(app,selection);
     } catch(reason) {if (version === epoch.current) setError(String(reason));}
   }
-  async function pin(app:AppInfo) {
-    await edit({operation:"pin", app:{name:app.name,target:app.target,arguments:app.arguments,workingDirectory:app.working_dir}});
+  async function pin(app:AppInfo, selection = dockPinSelection(scope,state?.pinContext)) {
+    await edit({operation:"pin", ...selection, app:{name:app.name,target:app.target,arguments:app.arguments,workingDirectory:app.working_dir}});
+  }
+  async function unpin(target:string) {
+    try {await edit({operation:"unpin",...dockPinSelection(scope,state?.pinContext),target});}
+    catch(reason) {setError(String(reason));}
+  }
+  async function inheritPins() {
+    try {await edit({operation:"inheritPins",...dockPinSelection("desk",state?.pinContext)});}
+    catch(reason) {setError(String(reason));}
   }
   const disabled = !connected || busy || !state;
+  const pins = scope === "desk" ? state?.effectivePins ?? [] : state?.pins ?? [];
+  const pinsDisabled = disabled || scope === "desk" && (!state?.pinContext || state.pinContext.changing);
   const matches = apps.filter(app => app.name.toLowerCase().includes(query.toLowerCase()));
   return <section className="mb-8 rounded-xl border border-border p-4 space-y-4">
     <div className="flex items-center justify-between gap-4">
@@ -82,7 +96,7 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="应用 Dock 常驻占位" disabled={disabled} checked={state?.reserveSpace ?? false} onChange={event => void edit({operation:"reserveSpace",reserveSpace:event.target.checked})}/>常驻占位：最大化窗口为 Dock 留出空间</label>
     <p className="text-xs text-muted-foreground">自动隐藏与常驻占位互斥；都不选时，Dock 浮在窗口上方。</p>
     {state?.reserveSpace && <p role="status" className="text-xs text-muted-foreground">{state.runtime?.reservation?.ready ? "Windows 已确认 Dock 工作区占位" : state.runtime?.reservation?.error ?? "等待 Dock 就绪并确认工作区…"}</p>}
-    <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键可固定应用。全屏时隐藏，退出全屏后恢复。</p>
+    <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键修改当前有效列表；Desk 还在跟随全局时，右键修改全局。全屏时隐藏，退出全屏后恢复。</p>
     <p className="text-xs text-muted-foreground">启用系统应用 Dock 时，主题独立 Dock 暂停；关闭后按原主题设置恢复。桌面内的主题内容保持。</p>
     {state?.runtime?.blocked && <p role="status" className="text-xs text-muted-foreground">{state.runtime.blocked === "fullscreen" ? "检测到全屏应用，Dock 暂时隐藏；退出全屏后恢复。" : "锁屏期间 Dock 保持隐藏。"}</p>}
     {state?.runtime?.waiting && <p role="status" className="text-xs text-muted-foreground">正在等待主题 Dock 关闭并释放占位…</p>}
@@ -100,26 +114,37 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
       </p>}
       {state?.taskbar?.error && <p role="alert" className="text-xs text-destructive">{state.taskbar.error}</p>}
     </div>
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm">固定范围
+        <select aria-label="固定应用的范围" className="rounded-md border border-border bg-background p-2" value={scope} disabled={disabled} onChange={event=>setScope(event.target.value as "global"|"desk")}>
+          <option value="global">全局 · 跟随全局的 Desk</option>
+          <option value="desk" disabled={!state?.pinContext}>当前 Desk{state?.pinContext ? " · "+state.pinContext.name : "（未运行 Room）"}</option>
+        </select>
+      </label>
+      {scope === "desk" && <p className="text-xs text-muted-foreground">{!state?.pinContext ? "请先运行一个 Room。" : state.pinContext.changing ? "正在切换 Desk，请稍后操作。" : state.pinContext.inherits ? "当前跟随全局，增删后建立此 Desk 的独立列表。" : "此 Desk 使用独立列表，其他 Desk 不受影响。"}
+        {state?.pinContext && !state.pinContext.inherits && <Button size="sm" variant="ghost" disabled={pinsDisabled} onClick={()=>void inheritPins()}>恢复跟随全局</Button>}
+      </p>}
+    </div>
     <div className="flex gap-2">
-      <Button size="sm" variant="outline" disabled={disabled} onClick={() => void chooseApps()}>{picker ? "收起应用列表" : "从应用列表固定"}</Button>
-      <Button size="sm" variant="outline" disabled={disabled} onClick={() => void chooseFile()}>选择本机程序</Button>
+      <Button size="sm" variant="outline" disabled={pinsDisabled} onClick={() => void chooseApps()}>{picker ? "收起应用列表" : "从应用列表固定"}</Button>
+      <Button size="sm" variant="outline" disabled={pinsDisabled} onClick={() => void chooseFile()}>选择本机程序</Button>
     </div>
     {picker && <div className="space-y-2">
       <Input aria-label="搜索要固定的应用" placeholder="搜索应用" value={query} onChange={event => setQuery(event.target.value)}/>
       <div className="max-h-52 overflow-y-auto divide-y divide-border">{matches.slice(0,100).map(app => {
-        const pinned = state?.pins.some(pin => pin.target.toLowerCase() === app.target.toLowerCase());
+        const pinned = pins.some(pin => pin.target.toLowerCase() === app.target.toLowerCase());
         return <div key={app.target + app.arguments} className="flex items-center gap-2 py-2">
           {app.icon_png && <img src={"data:image/png;base64," + app.icon_png} alt="" className="h-7 w-7"/>}
           <span className="flex-1 truncate text-sm">{app.name}</span>
-          <Button size="sm" variant="ghost" disabled={disabled || pinned} onClick={() => void pin(app)}>{pinned ? "已固定" : "固定"}</Button>
+          <Button size="sm" variant="ghost" disabled={pinsDisabled || pinned} onClick={() => void pin(app)}>{pinned ? "已固定" : "固定"}</Button>
         </div>;
       })}</div>
       {matches.length > 100 && <p className="text-xs text-muted-foreground">显示前 100 个结果，可输入名称缩小范围。</p>}
     </div>}
     <div className="space-y-2">
-      <h3 className="text-xs font-medium">已固定 · {state?.pins.length ?? 0}</h3>
-      {state?.pins.map(pin => <div key={pin.target} className="flex items-center gap-2 text-sm"><span className="flex-1 truncate" title={pin.target}>{pin.name}</span><Button size="sm" variant="ghost" disabled={disabled} onClick={() => void edit({operation:"unpin",target:pin.target})}>取消固定</Button></div>)}
-      {state?.pins.length === 0 && <p className="text-xs text-muted-foreground">尚未固定应用。启用后，已打开的应用也会出现在 Dock 中。</p>}
+      <h3 className="text-xs font-medium">已固定 · {pins.length}</h3>
+      {pins.map(pin => <div key={pin.target} className="flex items-center gap-2 text-sm"><span className="flex-1 truncate" title={pin.target}>{pin.name}</span><Button size="sm" variant="ghost" disabled={pinsDisabled} onClick={() => void unpin(pin.target)}>取消固定</Button></div>)}
+      {pins.length === 0 && <p className="text-xs text-muted-foreground">尚未固定应用。启用后，已打开的应用也会出现在 Dock 中。</p>}
     </div>
     <p className="text-xs text-muted-foreground">{!native ? "浏览器设计预览" : !connected ? "Core 未连接" : state ? (state.enabled ? "已启用" : "已关闭") + " · " + state.groups.filter(group => group.windows.length > 0).length + " 个运行应用" : "正在读取…"}</p>
     <p className="text-xs text-muted-foreground">本机设置会自动保存，关闭配置器后继续运行。当前显示在主屏工作区底部。</p>
