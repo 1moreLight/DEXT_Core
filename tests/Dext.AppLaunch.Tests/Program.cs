@@ -11,6 +11,7 @@ try
     var target = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../Dext.AppLaunch.Target/bin/Release/net9.0/Dext.AppLaunch.Target.exe"));
     if (!File.Exists(target)) throw new Exception("Missing controlled target: " + target);
     var capture = Path.Combine(fixture, "captured.json");
+    var elapsed = System.Diagnostics.Stopwatch.StartNew();
     using var process = new AppCatalogService().Launch(target, "--capture \"" + capture + "\" \"hello space\"", fixture);
     var deadline = DateTime.UtcNow.AddSeconds(5);
     while (!File.Exists(capture) && DateTime.UtcNow < deadline) Thread.Sleep(50);
@@ -21,7 +22,8 @@ try
         throw new Exception("Native target received wrong arguments");
     if (!string.Equals(fixture, document.RootElement.GetProperty("workingDirectory").GetString(), StringComparison.OrdinalIgnoreCase))
         throw new Exception("Native target received wrong working directory");
-    Console.WriteLine("PASS native application launch preserves arguments and working directory; Explorer path=" + (process is null));
+    if(elapsed.Elapsed > TimeSpan.FromSeconds(5)) throw new Exception("Launch blocked for " + elapsed.Elapsed);
+    Console.WriteLine("PASS native application launch preserves arguments and working directory; Explorer path=" + (process is null)+"; elapsed ms="+elapsed.ElapsedMilliseconds);
 }
 catch (Exception failure) { Console.Error.WriteLine("FAIL " + failure.Message); Environment.ExitCode = 1; }
 finally { Directory.Delete(fixture, true); }
