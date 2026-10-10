@@ -255,7 +255,8 @@ internal sealed class ApplicationDockService : IDisposable
                     case "activate" when selected==null&&group.Windows.Count<=1: Click(group,null);break;
                     case "chooseWindow" when selected!=null: Click(group,selected);break;
                     case "togglePin" when selected==null: TogglePin(group);break;
-                    // Opening a window-choice menu has no OS action.
+                    case "openWindows" when selected==null&&group.Windows.Count>1: source.CompleteNativeDockLocalMenu(completion);break;
+                    case "dismissMenu" when selected==null: source.CompleteNativeDockLocalMenu(completion);break;
                 }
                 }
             catch(Exception ex){error="任务区操作失败："+ex.Message;}

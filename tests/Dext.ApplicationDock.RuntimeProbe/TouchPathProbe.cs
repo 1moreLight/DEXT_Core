@@ -57,7 +57,7 @@ internal static class TouchPathProbe
     {
         public void Dispose(){if(!RegisterRawInputDevices(new[]{new RawDevice{Page=1,Usage=2,Flags=1}},1,(uint)Marshal.SizeOf<RawDevice>()))throw new System.ComponentModel.Win32Exception();}
     }
-    internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null,int movePixels=0)=>Task.Run(()=>{
+    internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null,int movePixels=0,bool multiple=false,bool mouseAway=false)=>Task.Run(()=>{
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=ownedRoot||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Touch destination changed; no contact sent");
         var hit=WindowFromPoint(new Point{X=x,Y=y});
@@ -68,13 +68,22 @@ internal static class TouchPathProbe
             Console.WriteLine($"TOUCH TARGET hwnd={window.ToInt64()} class={name} pid={process} tid={thread} root={window==ownedRoot}");
             if(window==ownedRoot)break;
         }
-        if(!InitializeTouchInjection(1,3))throw new System.ComponentModel.Win32Exception();
+        if(multiple&&GetAncestor(WindowFromPoint(new Point{X=x+20,Y=y}),2)!=ownedRoot)throw new Exception("Second contact is outside owned Dock" );
+        if(!InitializeTouchInjection(multiple?2u:1u,3))throw new System.ComponentModel.Win32Exception();
         var touch=new TouchInfo{Pointer=new PointerInfo{Type=2,Id=0,Flags=0x10000|2|4,Pixel=new Point{X=x,Y=y}},
             Mask=1,Contact=new Rect{Left=x-2,Top=y-2,Right=x+2,Bottom=y+2}};
+        var second=touch;second.Pointer.Id=1;second.Pointer.Pixel.X+=20;second.Contact.Left+=20;second.Contact.Right+=20;
+        bool secondDown=false;
+        if(mouseAway)SetCursorPos(80,80);
         mark?.Invoke("beforeDown");
         if(!InjectTouchInput(1,new[]{touch}))throw new System.ComponentModel.Win32Exception();
         try{
             Thread.Sleep(30);
+            if(multiple){
+                touch.Pointer.Flags=0x20000|2|4;
+                if(!InjectTouchInput(2,new[]{touch,second}))throw new System.ComponentModel.Win32Exception();
+                secondDown=true;
+            }
             if(movePixels!=0){
                 touch.Pointer.Pixel.X+=movePixels;touch.Contact.Left+=movePixels;touch.Contact.Right+=movePixels;
                 touch.Pointer.Flags=0x20000|2|4;
@@ -83,11 +92,13 @@ internal static class TouchPathProbe
             Thread.Sleep(60);
         }
         finally{
-            touch.Pointer.Flags=0x40000;
-            if(!InjectTouchInput(1,new[]{touch})){
-                touch.Pointer.Flags|=0x8000;
-                InjectTouchInput(1,new[]{touch});
-                throw new System.ComponentModel.Win32Exception();
+            touch.Pointer.Flags=0x40000;second.Pointer.Flags=0x40000;
+            var release=secondDown?new[]{touch,second}:new[]{touch};
+            if(!InjectTouchInput((uint)release.Length,release)){
+                var error=Marshal.GetLastWin32Error();
+                for(int i=0;i<release.Length;i++)release[i].Pointer.Flags|=0x8000;
+                InjectTouchInput((uint)release.Length,release);
+                throw new System.ComponentModel.Win32Exception(error);
             }
             mark?.Invoke("afterUp");
         }

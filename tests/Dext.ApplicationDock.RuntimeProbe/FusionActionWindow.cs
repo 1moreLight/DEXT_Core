@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -53,8 +53,8 @@ internal sealed class FusionActionWindow : IDisposable
         y=origin.Y+(int)Math.Round(latest.GetProperty("y").GetDouble()*rect.Bottom/latest.GetProperty("height").GetDouble());
         SetCursorPos(x,y);
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
-            throw new Exception("Dock ownership or mouse idle check failed; no click sent");
-        if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
+            throw new Exception($"Dock ownership or mouse idle check failed; no click sent: expected={dock.ToInt64()} actual={GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2).ToInt64()} point={x},{y} origin={origin.X},{origin.Y} size={rect.Right},{rect.Bottom} leftHeld={GetAsyncKeyState(1)<0} rightHeld={GetAsyncKeyState(2)<0}");
+        if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels,multiple,mouseAway);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
         mark?.Invoke("beforeDown");
@@ -75,8 +75,19 @@ internal sealed class FusionActionWindow : IDisposable
             await Click(dock,observe,touch:true,movePixels:40);await Task.Delay(500);
             if(GetForegroundWindow()!=before)throw new Exception("Dragged touch unexpectedly activated a task");
             Console.WriteLine("PASS OS touch drag cancels without activating task");
+            await Click(dock,observe,touch:true,multiple:true);await Task.Delay(500);
+            if(GetForegroundWindow()!=before)throw new Exception("Two contacts unexpectedly activated a task" );
+            Console.WriteLine("PASS two OS touch contacts cancel without activating task" );
+            var menu=observe();
+            if(menu?.TryGetProperty("menuBack",out var back)==true&&back.ValueKind==JsonValueKind.Object){
+                JsonElement? ObserveBack(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["menuBack"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+                Console.WriteLine("Two-finger gesture opened task context menu; closing via actual Back button");
+                await Click(dock,ObserveBack);
+                await Wait(()=>observe()?.GetProperty("target").ValueKind==JsonValueKind.Object,"Task menu did not close after Back click");
+                Console.WriteLine("PASS task menu Back restores icons after two-finger gesture");
+            }
         }
-        await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
+        await Click(dock,observe,touch:touch,mouseAway:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core activates owned test window");
         await Task.Delay(650);
         await Click(dock,observe,touch:touch);await Wait(()=>IsIconic(Handle),"Actual task click did not minimize owned window");

@@ -102,7 +102,7 @@
   function samplePointer(point){
    if(!point||![point.x,point.y].every(Number.isFinite)||point.x<0||point.y<0||point.x>=1||point.y>=1)return null;
    const button=document.elementFromPoint(point.x*root.innerWidth,point.y*root.innerHeight)?.closest('button');
-   const hit=button&&sampleButton(button,point);return hit?.action==='dismissMenu'?null:hit||null;
+   const hit=button&&sampleButton(button,point);return hit||null;
   }
   function sampleTargets(){return [...area.querySelectorAll('button')].map(button=>sampleButton(button)).filter(Boolean);}
   function focusedButton(){return [...area.querySelectorAll('button')].find(button=>{const t=sampleButton(button);return t&&t.itemId===nativeFocus?.button&&targetEntry(t)===nativeFocus.entryId;});}

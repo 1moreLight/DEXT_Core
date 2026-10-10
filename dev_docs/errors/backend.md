@@ -619,3 +619,7 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 
 ## #303 等待就绪后须重新测量注入坐标（2026-10-11）
 触控桥首轮测试在注入前失败：Dock ownership or mouse idle check failed。等待任务区displayReady期间，隐藏Windows任务栏使Dock做了一次正常位置调整；DOM位置未变，但先前读取的屏幕origin已旧。修正探针在目标稳定检查之后重新读取client rect和屏幕origin，再检查WindowFromPoint与空闲按键；没有移除保护或向错误窗口发送触摸。之后实际触摸激活/最小化/恢复与拖动取消、鼠标交接通过。
+
+## #304 官方任务菜单返回缺原生完成链（2026-10-11）
+双指触摸不误激活应用，但Windows会产生contextmenu，官方菜单替代图标列表。原始target=null不能直接解释为图标丢失或浏览器缩放；候选只读menuBack证实菜单存在。实际返回按钮DOWN/UP均到Core，taskHit=false：samplePointer显式排除dismissMenu，原生任务鼠标又不依赖第二次DOM点击，因此Back不能关闭。
+修复：Back参与既有任务采样/配对/当前投影验证；Core完成后通过已有私有activate事件回送dismissMenu/openWindows，本地菜单更新仍由官方宿主处理，键盘路径不重复发。Release通过；实际两指菜单、Back、后续触摸与鼠标交接整链通过。多窗口openWindows分支本轮只编译/代码核对，不能冒充实际多窗口验收。
