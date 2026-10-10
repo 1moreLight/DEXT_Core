@@ -38,7 +38,20 @@ internal sealed class FusionActionWindow : IDisposable
         var x=origin.X+(int)Math.Round(point.GetProperty("x").GetDouble()*rect.Right/point.GetProperty("width").GetDouble());
         var y=origin.Y+(int)Math.Round(point.GetProperty("y").GetDouble()*rect.Bottom/point.GetProperty("height").GetDouble());
         SetCursorPos(x,y);await Task.Delay(150);
-        await Wait(()=>{var data=observe();return data is not null&&data.Value.GetProperty("enabled").GetBoolean()&&data.Value.GetProperty("phase").GetString()=="displayReady";},"Task input not ready after pointer entry");
+        await Wait(()=>{
+            // A Desk change may resize the work area while this non-pressed
+            // pointer is entering. Follow the owned Dock's current position,
+            // and reveal it at its current bottom edge if it auto-hid.
+            var data=observe();
+            if(data is not null&&data.Value.GetProperty("enabled").GetBoolean()&&data.Value.GetProperty("phase").GetString()=="displayReady")return true;
+            var currentOrigin=new Point();
+            if(GetClientRect(dock,out var currentBounds)&&ClientToScreen(dock,ref currentOrigin)){
+                var px=currentOrigin.X+(int)Math.Round(point.GetProperty("x").GetDouble()*currentBounds.Right/point.GetProperty("width").GetDouble());
+                var py=IsWindowVisible(dock)?currentOrigin.Y+(int)Math.Round(point.GetProperty("y").GetDouble()*currentBounds.Bottom/point.GetProperty("height").GetDouble()):currentOrigin.Y+currentBounds.Bottom-1;
+                SetCursorPos(px,py);
+            }
+            return false;
+        },"Task input not ready after pointer entry");
         var fresh=observe();
         if(fresh is null||!fresh.Value.TryGetProperty("target",out var latest)||latest.ValueKind!=JsonValueKind.Object||
             Math.Abs(latest.GetProperty("x").GetDouble()-point.GetProperty("x").GetDouble())>1||
@@ -133,6 +146,25 @@ internal sealed class FusionActionWindow : IDisposable
         var nav=observe().Value.GetProperty("navigation");
         if(nav.GetProperty("rowWidth").GetDouble()>=homeWidth||nav.GetProperty("scrollWidth").GetDouble()<=nav.GetProperty("rowWidth").GetDouble())throw new Exception("Focus did not create an overflowing narrow task area");
         Console.WriteLine("PASS actual author next enters focus once and narrows task area without activating an app");
+        var row=nav.GetProperty("row");
+        if(!GetClientRect(dock,out var bounds))throw new Exception("Dock scroll bounds unavailable");
+        var origin=new Point();if(!ClientToScreen(dock,ref origin))throw new Exception("Dock scroll origin unavailable");
+        var x=origin.X+(int)Math.Round(row.GetProperty("x").GetDouble()*bounds.Right/row.GetProperty("width").GetDouble());
+        var y=origin.Y+(int)Math.Round(row.GetProperty("y").GetDouble()*bounds.Bottom/row.GetProperty("height").GetDouble());
+        SetCursorPos(x,y);await Task.Delay(150);
+        if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)throw new Exception("Scroll target not owned or mouse held; no wheel sent");
+        var beforeScroll=nav.GetProperty("scrollLeft").GetDouble();
+        var wheel=new Input{Type=0,Mouse=new Mouse{Flags=0x1000,Data=120}};
+        if(SendInput(1,new[]{wheel},Marshal.SizeOf<Input>())!=1)throw new Exception("Horizontal wheel refused");
+        await Wait(()=>observe()?.GetProperty("navigation").GetProperty("scrollLeft").GetDouble()>beforeScroll,"Actual horizontal wheel did not scroll narrow task area");
+        await Task.Delay(300);
+        if(!At("focus")||GetForegroundWindow()!=foreground)throw new Exception("Scrolling changed Desk or activated app");
+        Console.WriteLine("PASS actual horizontal wheel scrolls narrow task area without navigation or app activation");
+        if(observe()?.GetProperty("targetVisible").GetBoolean()!=true)throw new Exception("Owned application clipped after scrolling; no application click sent");
+        await Verify(dock,observe);
+        if(!At("focus"))throw new Exception("Narrow task activation triggered authored navigation");
+        Console.WriteLine("PASS scrolled narrow task activates/minimizes/restores only owned application");
+        SetForegroundWindow(foreground);
         await Click(dock,()=>NavigationButton("previous"));
         await Wait(()=>At("home"),"Author previous did not settle on home");
         await Task.Delay(700);
