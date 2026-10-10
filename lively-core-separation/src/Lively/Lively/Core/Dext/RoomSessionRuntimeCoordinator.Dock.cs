@@ -130,7 +130,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, modeReady && !reserve, modeReady && reserve, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained, appBarOccupied), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, modeReady && demand.Settings.Preferences?.Mode == "autohide", modeReady && reserve, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained, appBarOccupied, modeReady && demand.Settings.Preferences?.Mode == "overlay"), result.Message);
         }
     }
 

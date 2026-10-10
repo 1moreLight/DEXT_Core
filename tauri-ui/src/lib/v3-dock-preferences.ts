@@ -1,5 +1,5 @@
-export type V3DockPreferences = {schemaVersion:number; enabled:boolean; mode:"autohide"|"reserve"; heightDip:number};
-export type V3DockRuntime = {phase:string; playerPid:number; roomId:string|null; deskId:string|null; hasDock:boolean; autoHideAvailable:boolean; reserveAvailable:boolean; taskbarReplacementReady:boolean; reason:string|null; effectiveHeightDip?:number|null; displayDpi?:number|null; heightConstrained?:boolean; appBarOccupied?:boolean};
+export type V3DockPreferences = {schemaVersion:number; enabled:boolean; mode:"overlay"|"autohide"|"reserve"; heightDip:number};
+export type V3DockRuntime = {phase:string; playerPid:number; roomId:string|null; deskId:string|null; hasDock:boolean; autoHideAvailable:boolean; overlayAvailable?:boolean; reserveAvailable:boolean; taskbarReplacementReady:boolean; reason:string|null; effectiveHeightDip?:number|null; displayDpi?:number|null; heightConstrained?:boolean; appBarOccupied?:boolean};
 export type V3DockStatus = {status:string; preferences:V3DockPreferences|null; runtime:V3DockRuntime; message:string|null};
 
 export function dockRuntimeLabel(runtime: V3DockRuntime): string {

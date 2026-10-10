@@ -23,7 +23,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     }
     internal void ConfigureApplicationTheme(string? contextKey,long attempt,string? mode)
     {
-        if(mode is not (null or "autohide" or "reserve"))throw new ArgumentException("Unsupported fusion mode.");
+        if(mode is not (null or "overlay" or "autohide" or "reserve"))throw new ArgumentException("Unsupported fusion mode.");
         var next=mode is null?null:new ApplicationThemeRequest(contextKey??throw new ArgumentNullException(nameof(contextKey)),attempt,mode);
         if(Volatile.Read(ref applicationThemeRequest)==next)return;
         Volatile.Write(ref applicationThemeRequest,next);

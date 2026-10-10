@@ -24,9 +24,7 @@ internal sealed partial class ApplicationDockService
         if(theme.Blocked||actual==state.Target&&ready)presentationStarted=DateTime.UtcNow;
         if(state.Target=="theme")
         {
-            // overlay will be connected with the Player mode implementation in step 03.
-            var failure=state.Mode=="overlay"?"overlayNotAvailable":
-                theme.FailedAttempt==state.Attempt?"themeHostFailed":
+            var failure=theme.FailedAttempt==state.Attempt?"themeHostFailed":
                 theme.Attached&&theme.HostAttempt==state.Attempt&&theme.TaskAreaStatus=="unavailable"?"taskAreaUnavailable":
                 !theme.Blocked&&!ready&&DateTime.UtcNow-presentationStarted>TimeSpan.FromSeconds(35)?"themeReadyTimeout":null;
             if(failure!=null&&presentationPolicy.Fail(state.Attempt,failure))state=Observe();

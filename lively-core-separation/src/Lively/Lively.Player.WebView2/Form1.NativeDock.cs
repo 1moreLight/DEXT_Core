@@ -27,7 +27,7 @@ namespace Lively.Player.WebView2
         private void InitializeNativeDockWindow()
         {
             if (!startArgs.DextDock) return;
-            if (startArgs.DextDockMode != "autohide" && startArgs.DextDockMode != "reserve")
+            if (startArgs.DextDockMode != "overlay" && startArgs.DextDockMode != "autohide" && startArgs.DextDockMode != "reserve")
                 throw new ArgumentException("Invalid Core Dock mode.");
             BackColor = Color.Black;
             WindowState = FormWindowState.Normal;
@@ -156,6 +156,7 @@ namespace Lively.Player.WebView2
                 nativeDockWindow.SetAvailability(enabled && roomRuntime.DockCanPresent);
                 if (enabled && !nativeDockWindow.IsStarted)
                     nativeDockWindow.Start(startArgs.DextDockMode == "reserve" ? DextDockWindowHost.DockMode.Reserve :
+                        startArgs.DextDockMode == "overlay" ? DextDockWindowHost.DockMode.Overlay :
                         DextDockWindowHost.DockMode.Autohide, startArgs.DextDockHeight);
                 if (!nativeDockRendererReady || roomRuntime.Generation <= 0) return;
                 var visible = nativeDockWindow.IsVisible && enabled && roomRuntime.DockCanPresent;

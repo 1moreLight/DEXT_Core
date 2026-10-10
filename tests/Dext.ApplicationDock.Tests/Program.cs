@@ -3,6 +3,7 @@ if (args.Contains("--fixture")) { NativeProbe.RunFixture(args.Contains("--intera
 if (args.Contains("--native")) NativeProbe.Run();
 if (args.Contains("--observe")) { Console.WriteLine("foreground=" + DockWindows.Foreground + " fullscreen=" + DockWindows.IsFullscreen()); return; }
 if (args.Length == 2 && args[0] == "--inspect") { NativeProbe.Inspect(int.Parse(args[1])); return; }
+RoomDockModeChecks.Run();
 PresentationChecks.Run();
 ThemeEligibilityChecks.Run();
 var pin = new DockPin("Editor", @"C:\Apps\Editor.exe", "", @"C:\Apps");

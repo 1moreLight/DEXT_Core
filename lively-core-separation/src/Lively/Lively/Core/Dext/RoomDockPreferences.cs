@@ -93,7 +93,7 @@ internal sealed class RoomDockPreferenceStore
     private static void Validate(RoomDockPreferences value)
     {
         if (value.SchemaVersion != 1) throw new ArgumentException("不支持的 Dock 偏好版本。");
-        if (value.Mode is not ("autohide" or "reserve")) throw new ArgumentException("Dock 模式必须是 autohide 或 reserve。");
+        if (value.Mode is not ("overlay" or "autohide" or "reserve")) throw new ArgumentException("Dock 模式必须是 overlay、autohide 或 reserve。");
         if (value.HeightDip is < 48 or > 240) throw new ArgumentException("Dock 高度必须为 48–240 DIP。");
     }
 
@@ -103,6 +103,6 @@ internal sealed class RoomDockPreferenceStore
 
 public sealed record RoomDockRuntimeStatus(string Phase, int PlayerPid, string? RoomId, string? DeskId,
     bool HasDock, bool AutoHideAvailable, bool ReserveAvailable, bool TaskbarReplacementReady, string? Reason,
-    int? EffectiveHeightDip = null, int? DisplayDpi = null, bool HeightConstrained = false, bool AppBarOccupied = false);
+    int? EffectiveHeightDip = null, int? DisplayDpi = null, bool HeightConstrained = false, bool AppBarOccupied = false, bool OverlayAvailable = false);
 public sealed record RoomDockStatusReply(string Status, RoomDockPreferences? Preferences,
     RoomDockRuntimeStatus Runtime, string? Message = null);
