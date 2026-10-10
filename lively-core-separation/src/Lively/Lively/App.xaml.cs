@@ -234,6 +234,21 @@ namespace Lively
                     target => { new Lively.Services.AppCatalogService().Launch(target.Target, target.Arguments, target.WorkingDirectory); }))
                 .AddSingleton<RoomRuntimeFactsSource>()
                 .AddSingleton(_ => new RoomDockPreferenceStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-preferences.json")))
+                .AddSingleton(_ =>
+                {
+                    RoomDockTaskbarGuard.RecoverPrevious();
+                    var controller = new TaskbarController(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "taskbar-mode.json"),
+                        Environment.ProcessId,
+                        async pid => await RoomDockTaskbarGuard.StartAsync(pid, () => { }, System.Threading.CancellationToken.None),
+                        Lively.Common.Helpers.DextDockTaskbarRecovery.IsPrimaryVisible,
+                        () => Task.Run(() =>
+                        {
+                            using var core = System.Diagnostics.Process.GetCurrentProcess();
+                            return Lively.Common.Helpers.DextDockTaskbarRecovery.Recover(null, core.Id, core.StartTime.ToUniversalTime().Ticks);
+                        }));
+                    controller.Start();
+                    return controller;
+                })
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())

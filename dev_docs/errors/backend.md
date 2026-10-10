@@ -548,3 +548,9 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 处理：样包按available/title/artist与level/muted呈现；四种只读能力改用CanReadData，保留活动stage/Desk、锁屏、实际playbackPaused、声明和当前安装授权。硬件源同样跟随实际暂停。动作/KV继续CanConsume。配置器授权提示按实际lifecycle暂停/锁屏判断，不把operable=false当成数据已暂停。
 证据：五项visible-data定向回归先2/5失败，修复后5/5通过；普通小窗口保持四读源/硬件，暂停/锁屏/撤权停止，动作/KV仍NotOperable。样包官方形状媒体/音量呈现检查通过，JS语法通过。临时Node检查初稿少一个闭合括号，修正夹具后通过；未据夹具语法失败判断产品失败。实机B站需Windows提供媒体会话，实际验收另记。
 本轮部署补记：Release build→start成功；同候选目录实际重新应用后安装Widget摘要与源一致，UI授权提示按真实暂停。一次真实Windows来源为media=available；具体B站标题及普通小窗口连续读数仍交用户验收，新安装权限未代用户允许。
+
+## #271 任务栏恢复完成与看护退出不是同一事实
+看护StopAsync有界返回时可能仍有恢复journal；控制器释放租约后保留recoveryPending并用原恢复API重试，确认前显示错误。看护启动失败进入重试等待时也不能每次轮询清错误。定向失败路径复现并修复，错误持续可观察。
+
+## #272 界面线程退出不能捕获自身恢复续体
+TaskbarController.Dispose在WPF线程同步等待TickAsync；StopAsync内层await可能捕获同一Dispatcher，导致界面线程等待自己。用后台任务执行最后释放，保持退出前有界等待。阻塞UI SynchronizationContext测试先失败，修复后通过；不改变鼠标或触控输入链。

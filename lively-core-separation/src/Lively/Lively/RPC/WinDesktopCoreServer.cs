@@ -119,8 +119,16 @@ namespace Lively.RPC
         public override Task<RoomDockStatusResponse> GetApplicationDockStatus(Empty _, ServerCallContext context) =>
             Task.FromResult(ApplicationDockResponse(applicationDock.Status()));
 
-        public override Task<RoomDockStatusResponse> EditApplicationDock(RoomDockPreferenceRequest request, ServerCallContext context) =>
-            Task.FromResult(ApplicationDockResponse(applicationDock.Edit(request.PatchJson)));
+        public override async Task<RoomDockStatusResponse> EditApplicationDock(RoomDockPreferenceRequest request, ServerCallContext context)
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(request.PatchJson);
+            if (document.RootElement.GetProperty("operation").GetString() == "taskbar")
+            {
+                await applicationDock.SetTaskbarModeAsync(document.RootElement.GetProperty("mode").GetString());
+                return ApplicationDockResponse(applicationDock.Status());
+            }
+            return ApplicationDockResponse(applicationDock.Edit(request.PatchJson));
+        }
 
         private static RoomDockStatusResponse ApplicationDockResponse(object reply) => new()
         {

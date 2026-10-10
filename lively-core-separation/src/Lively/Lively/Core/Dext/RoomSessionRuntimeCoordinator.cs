@@ -35,6 +35,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private readonly RoomRuntimeFactsSource runtimeFacts;
     private readonly RoomActionAuthority actions;
     private readonly RoomDockPreferenceStore dockPreferences;
+    private readonly TaskbarController taskbar;
     private WebWebView2? activePlayer;
     private bool activeNativeRoom;
     private string? activeDisplayId;
@@ -43,7 +44,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private string? activeInstallationStamp;
 
     public RoomSessionRuntimeCoordinator(InstalledRoomSessionAuthority authority,
-        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences)
+        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences, TaskbarController taskbar)
     {
         this.authority = authority;
         this.gateway = gateway;
@@ -51,6 +52,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
         this.runtimeFacts = runtimeFacts;
         this.actions = actions;
         this.dockPreferences = dockPreferences;
+        this.taskbar = taskbar;
         runtimeFacts.Sampled += OnRuntimeFactsSampled;
         InitializeDockTaskbarMaintenance();
     }

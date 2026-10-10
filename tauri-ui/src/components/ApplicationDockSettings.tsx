@@ -6,7 +6,8 @@ import {Input} from "@/components/ui/input";
 import type {AppInfo} from "@/features/runtime/types";
 
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
-type State = {enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
+type State = {taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
@@ -45,7 +46,7 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
     try {
       const reply = await invoke<State>("edit_application_dock",{patch});
       if (version !== epoch.current) return;
-      setState(reply); setError(null); setStatus("系统应用 Dock 已保存");
+      setState(reply); setError(null); setStatus((patch as {operation?:string}).operation === "taskbar" ? "任务栏请求已保存，实际状态见下方" : "系统应用 Dock 已保存");
     } catch(reason) {if (version === epoch.current) setError(String(reason));}
     finally {if (version === epoch.current) {pending.current = false; mutation.current = false; setBusy(false);}}
   }
@@ -78,6 +79,20 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="启用系统应用 Dock" disabled={disabled} checked={state?.enabled ?? false} onChange={event => void edit({operation:"enable",enabled:event.target.checked})}/>启用</label>
     </div>
     <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键可固定应用。全屏时隐藏，退出全屏后恢复。</p>
+    <div className="rounded-lg border border-border p-3 space-y-2">
+      <h3 className="text-sm font-medium">Windows 任务栏</h3>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" disabled={!connected || busy} onClick={() => void edit({operation:"taskbar",mode:"hidden"})}>隐藏 Windows 任务栏</Button>
+        <Button size="sm" disabled={!connected || busy} onClick={() => void edit({operation:"taskbar",mode:"visible"})}>恢复 Windows 任务栏</Button>
+        <Button size="sm" variant="ghost" disabled={!connected || busy} onClick={() => void edit({operation:"taskbar",mode:"auto"})}>跟随 Dock</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">开发调试时可点恢复；恢复模式会保持，直到再次选择隐藏或跟随 Dock。退出 Core 后释放 Dext 的任务栏接管。</p>
+      {state?.taskbar && <p role="status" className="text-xs text-muted-foreground">
+        模式：{state.taskbar.mode === "hidden" ? "手动隐藏" : state.taskbar.mode === "visible" ? "保持恢复" : "跟随 Dock"} ·
+        {state.taskbar.hidden ? " Dext 已确认隐藏" : state.taskbar.visible === true ? " Windows 任务栏当前可见" : state.taskbar.visible === false ? " Windows 任务栏当前不可见" : " 暂未找到 Windows 任务栏"}
+      </p>}
+      {state?.taskbar?.error && <p role="alert" className="text-xs text-destructive">{state.taskbar.error}</p>}
+    </div>
     <div className="flex gap-2">
       <Button size="sm" variant="outline" disabled={disabled} onClick={() => void chooseApps()}>{picker ? "收起应用列表" : "从应用列表固定"}</Button>
       <Button size="sm" variant="outline" disabled={disabled} onClick={() => void chooseFile()}>选择本机程序</Button>

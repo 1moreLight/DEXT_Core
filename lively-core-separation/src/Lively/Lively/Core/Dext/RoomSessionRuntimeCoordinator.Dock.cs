@@ -36,8 +36,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         public TaskCompletionSource Exited { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public volatile bool Stopping;
         public volatile bool Attached;
-        public volatile RoomDockTaskbarGuard? Guard;
-        public DateTimeOffset GuardRetryAfter;
+
+
         public long HeartbeatStaleSince;
     }
 
@@ -107,7 +107,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             int? displayDpi = viewport?.Dpi;
             var heightConstrained = effectiveHeight is { } actualHeight &&
                 result.Preferences is { } preferences && actualHeight < preferences.HeightDip;
-            var taskbarReady = current && modeReady && player?.Guard?.Ready == true;
+            var taskbarReady = current && modeReady && taskbar.Hidden;
             var phase = current ? (window is { RendererReady: true } ?
                 !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
                 window!.Fullscreen ? "fullscreen" : reserve && !appBarOccupied ? "awaitingWorkArea" :
@@ -119,7 +119,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
                 phase == "awaitingInput" ? "Dock 输入与窗口状态正在同步。" :
                 current && ready && !taskbarReady && !demand.Snapshot!.Lifecycle.Locked
-                    ? player?.Guard?.Error ?? "Dock 已就绪，正在等待 Windows 任务栏替代看护。"
+                    ? taskbar.Error ?? (taskbar.Mode == "visible" ? "已手动恢复 Windows 任务栏，自动隐藏已暂停。" : "Dock 已就绪，正在等待 Windows 任务栏替代看护。")
                     : current || phase == "faulted" ? dockReason : null;
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,

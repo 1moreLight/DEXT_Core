@@ -374,3 +374,6 @@
 | #269 | 预览保留图标但点击闭包捕获旧窗口快照，动作须按稳定key读取最新组 | [frontend](errors/frontend.md) |
 
 | #270 | PowerShell传给rg的路径通配符不展开，应用真实目录和-g文件过滤 | [toolchain](errors/toolchain.md) |
+
+| #271 | 任务栏租约释放后恢复尚未确认，必须保留恢复状态与错误；重试期不能清错误 | [backend](errors/backend.md) |
+| #272 | WPF退出线程同步等待异步看护释放，内层await捕获Dispatcher导致退出卡住 | [backend](errors/backend.md) |

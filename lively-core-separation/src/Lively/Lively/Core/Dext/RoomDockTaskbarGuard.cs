@@ -10,7 +10,7 @@ namespace Dext.Core.Rooms;
 // Dedicated mode of the bundled Watchdog; not the wallpaper CLR/ADD list.
 // Its durable journal survives either side. No taskbar mutation happens here
 // until the helper has acknowledged the exact lease/process identity.
-internal sealed class RoomDockTaskbarGuard
+internal sealed class RoomDockTaskbarGuard : ITaskbarLease
 {
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     private readonly Process process;
@@ -26,9 +26,9 @@ internal sealed class RoomDockTaskbarGuard
     private long lastWanted, lastReceived;
     private int sending, stopping, faulted;
     private Task recovery = Task.CompletedTask;
-    internal string? Error { get; private set; }
-    internal bool IsAlive { get { try { return !process.HasExited; } catch { return false; } } }
-    internal bool Ready => Volatile.Read(ref stopping) == 0 && wanted && hidden && IsAlive;
+    public string? Error { get; private set; }
+    public bool IsAlive { get { try { return !process.HasExited; } catch { return false; } } }
+    public bool Ready => Volatile.Read(ref stopping) == 0 && wanted && hidden && IsAlive;
 
     private RoomDockTaskbarGuard(int dockPid, Action changed)
     {
@@ -73,7 +73,7 @@ internal sealed class RoomDockTaskbarGuard
         catch (Exception error) { Logger.Error(error, "v3 previous taskbar recovery failed; journal retained"); }
     }
 
-    internal void SetWanted(bool value)
+    public void SetWanted(bool value)
     {
         Interlocked.Exchange(ref lastWanted, Stopwatch.GetTimestamp());
         if (wanted == value) return;
@@ -150,7 +150,7 @@ internal sealed class RoomDockTaskbarGuard
         Error = "Windows 任务栏恢复尚未确认，保留恢复记录供下次启动还原。";
     }
 
-    internal async Task StopAsync()
+    public async Task StopAsync()
     {
         if (Interlocked.Exchange(ref stopping, 1) != 0) { await stopped.Task; return; }
         try

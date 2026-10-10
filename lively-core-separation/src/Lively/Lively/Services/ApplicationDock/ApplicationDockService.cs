@@ -16,14 +16,16 @@ internal sealed class ApplicationDockService : IDisposable
     private readonly Dispatcher dispatcher = Application.Current.Dispatcher;
     private readonly DispatcherTimer timer;
     private readonly AppCatalogService catalog = new();
+    private readonly Dext.Core.Rooms.TaskbarController taskbar;
     private DockPreferences preferences;
     private IReadOnlyList<DockGroup> groups = Array.Empty<DockGroup>();
     private ApplicationDockWindow window;
     private bool updating, disposed, started, loadFailed;
     private string error;
 
-    public ApplicationDockService()
+    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar)
     {
+        this.taskbar = taskbar;
         try { preferences = DockPreferenceFile.Load(path); }
         catch (Exception ex)
         {
@@ -47,10 +49,13 @@ internal sealed class ApplicationDockService : IDisposable
     public object Status() => dispatcher.Invoke<object>(() => new
     {
         enabled = preferences.Enabled,
+        taskbar = taskbar.Status(),
         pins = preferences.Pins,
         groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
         error
     });
+
+    public Task SetTaskbarModeAsync(string mode) => taskbar.SetModeAsync(mode);
 
     public object Edit(string json) => dispatcher.Invoke<object>(() =>
     {
