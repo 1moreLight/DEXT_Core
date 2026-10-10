@@ -13,7 +13,7 @@ internal sealed class RoomDesktopSync
     public string DeskId { get; set; } = "";
     public Dictionary<string, int> Slots { get; set; } = new(StringComparer.Ordinal);
     internal static RoomDesktopSync Reconcile(RoomDesktopSync? previous, string deskId, bool enabled,
-        IReadOnlyCollection<string>? currentIds, bool complete)
+        IReadOnlyCollection<string>? currentIds, bool complete, IReadOnlyDictionary<string, string>? renames = null)
     {
         RoomPersonalStore.Id(deskId);
         Validate(previous);
@@ -24,6 +24,37 @@ internal sealed class RoomDesktopSync
             var ids = currentIds.Distinct(StringComparer.Ordinal).ToArray();
             if (ids.Length > 4096) throw new InvalidDataException("Desktop sync item limit exceeded.");
             foreach (var id in ids) ValidateItemId(id);
+            if (renames is { Count: > 0 })
+            {
+                if (renames.Count > 4096) throw new InvalidDataException("Desktop rename limit exceeded.");
+                foreach (var pair in renames) { ValidateItemId(pair.Key); ValidateItemId(pair.Value); }
+                var present = ids.ToHashSet(StringComparer.Ordinal);
+                var transfers = new List<(string Old, string New, int Slot)>();
+                foreach (var old in next.Slots)
+                {
+                    if (present.Contains(old.Key)) continue;
+                    var destination = old.Key;
+                    var visited = new HashSet<string>(StringComparer.Ordinal) { destination };
+                    var ambiguous = false;
+                    while (renames.TryGetValue(destination, out var renamed))
+                    {
+                        if (!visited.Add(renamed)) { ambiguous = true; break; }
+                        destination = renamed;
+                        // An intermediate name still exists: events cannot establish
+                        // which surviving file owns the old position.
+                        if (present.Contains(destination) && renames.ContainsKey(destination)) { ambiguous = true; break; }
+                    }
+                    if (!ambiguous && present.Contains(destination) && !next.Slots.ContainsKey(destination))
+                        transfers.Add((old.Key, destination, old.Value));
+                }
+                foreach (var group in transfers.GroupBy(item => item.New, StringComparer.Ordinal))
+                {
+                    if (group.Count() != 1) continue;
+                    var move = group.Single();
+                    next.Slots.Remove(move.Old);
+                    next.Slots.Add(move.New, move.Slot);
+                }
+            }
             if (complete)
             {
                 var retained = ids.ToHashSet(StringComparer.Ordinal);

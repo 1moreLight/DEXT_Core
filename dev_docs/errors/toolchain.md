@@ -544,3 +544,7 @@ RuntimeProbe添加UseWPF以使用UIAutomation后，原有File/Path引用报CS010
 ## #317 Timer隐式引用歧义（2026-10-11）
 
 DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用Timer时与System.Threading.Timer发生CS0104。明确using Timer = System.Threading.Timer，保持后台线程池回调；9项监听检查与完整Core Release通过。
+
+## #318 PowerShell单项嵌套替换数组展开（2026-10-11）
+
+批量文档替换用@(@(旧值,新值))存单个替换对时，PowerShell枚举展开成字符串数组，循环索引取到字符，导致ROADMAP表格竖线误替换。git diff --check及时发现。仅从HEAD读回本轮开始时干净的三个受影响文档并逐文件明确Replace重做，diff恢复预期单行改动。以后使用有Old/New属性的对象或明确Replace，修改后核对diff统计和正文；不对有既存改动的文档套用此恢复方法。

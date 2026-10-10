@@ -9,6 +9,19 @@ internal static class DesktopSyncChecks
   var a="desktop-"+new string('a',64);var b="desktop-"+new string('b',64);var c="desktop-"+new string('c',64);
   try
   {
+   var d="desktop-"+new string('d',64);
+   var layout=new RoomDesktopSync{Enabled=true,DeskId="home",Slots=new(){{a,7},{b,2}}};
+   var renamed=RoomDesktopSync.Reconcile(layout,"home",true,new[]{b,c},true,new Dictionary<string,string>{{a,c}});
+   Check(renamed.Slots[c]==7&&renamed.Slots[b]==2&&!renamed.Slots.ContainsKey(a),"rename inherits original slot despite earlier empty positions");
+   Check(layout.Slots.ContainsKey(a)&&!layout.Slots.ContainsKey(c),"rename reconciliation does not mutate confirmed layout");
+   var chain=RoomDesktopSync.Reconcile(layout,"home",true,new[]{b,d},true,new Dictionary<string,string>{{a,c},{c,d}});
+   Check(chain.Slots[d]==7&&chain.Slots[b]==2,"coalesced rename chain preserves starting position");
+   var recreated=RoomDesktopSync.Reconcile(layout,"home",true,new[]{a,b,c},true,new Dictionary<string,string>{{a,c}});
+   Check(recreated.Slots[a]==7&&recreated.Slots[c]!=7,"recreated old path keeps its slot without duplicate assignment");
+   var collision=RoomDesktopSync.Reconcile(layout,"home",true,new[]{b},true,new Dictionary<string,string>{{a,b}});
+   Check(collision.Slots[b]==2,"rename onto existing identity preserves destination position");
+   var cycle=RoomDesktopSync.Reconcile(layout,"home",true,new[]{b,c},true,new Dictionary<string,string>{{a,c},{c,a}});
+   Check(cycle.Slots[c]!=7&&cycle.Slots[b]==2,"ambiguous rename cycle falls back to normal allocation");
    var store=new RoomPersonalStore(directory);
    Check(store.ReadDesktopSync(room)==null,"old/missing private data does not enable desktop sync");
    store.SetDesktopSync(room,"home",true,new[]{a,b,a});
