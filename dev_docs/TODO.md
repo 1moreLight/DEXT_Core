@@ -2103,3 +2103,4 @@ P8-012：03做完，实施3/3=100%。46检查与完整Core/Release Player/Watchd
 P8-013：01做完25%，02开做；八项Node检查通过。网页模型不授权OS动作，原生接线仍未做。
 P8-013：02做完，2/4=50%，03开做。实际headless Edge四组DOM交互与71项Node通过；setTaskAreaOcclusion默认不生效，仅后续官方私有适配调用。未挂接正式页面/Player，未调用OS动作，图标仍首字占位待03。
 P8-013阶段复核：修复新菜单返回按钮重建导致的点击丢失，真实DOM RED→GREEN，最终五组通过；保留50%开发中，03完整接线继续。
+P8-013步骤03增量：Core展示/图标与Player私有消息入口、DOM真实PNG已实现，完整Release构建与72项Node/六组DOM通过；main控制器与原生动作仍未连接，保持2/4=50%。用户窗口避让调查已落research/DOCK_WORKAREA_2026-10-10.md：本机常驻占位未启用，已有AppBar实现待统一实机确认。

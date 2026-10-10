@@ -81,6 +81,30 @@ namespace Lively.Core.Wallpapers
             RoomDockStateChanged?.Invoke();
         }
 
+        // The runtime generation belongs to this exact attachment, not a process-name match.
+        internal string NativeDockTaskEpoch
+        {
+            get
+            {
+                var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
+                return nativeDock && !IsExited && current != null
+                    ? $"{Pid}/{current.Generation}/{current.Session}" : null;
+            }
+        }
+
+        internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson)
+        {
+            var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
+            if (current == null || expectedEpoch == null || expectedEpoch != NativeDockTaskEpoch ||
+                snapshotJson == null || snapshotJson.Length > 4 * 1024 * 1024) return false;
+            SendMessage(new LivelyMessageRoomDockTasks
+            {
+                RuntimeGeneration = current.Generation, SessionId = current.Session,
+                Revision = current.Revision, SnapshotJson = snapshotJson
+            });
+            return true;
+        }
+
         internal void SendNativeDockPolicy(bool inputConnected, bool leaveKeyboard = false, bool refreshGeometry = false)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;

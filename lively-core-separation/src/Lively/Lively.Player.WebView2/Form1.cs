@@ -926,6 +926,9 @@ namespace Lively.Player.WebView2
                     //    });
                     //}
                     break;
+                case MessageType.cmd_room_dock_tasks:
+                    if (startArgs.DextDock) await ApplyNativeDockTasks((LivelyMessageRoomDockTasks)obj);
+                    break;
                 case MessageType.cmd_room_dock_policy:
                     if (startArgs.DextDock) await ApplyNativeDockPolicy((LivelyMessageRoomDockPolicy)obj);
                     break;

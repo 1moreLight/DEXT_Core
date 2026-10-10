@@ -30,9 +30,13 @@ internal sealed class ApplicationDockService : IDisposable
     private string error;
     private string pinContextKey;
     private DockPin[] deskPins;
+    private readonly DockTaskDisplay taskDisplay;
+    private long pinRevision;
+    private static readonly JsonSerializerOptions taskJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms, RoomRuntimeFactsSource facts)
     {
+        taskDisplay = new DockTaskDisplay(Icon);
         this.taskbar = taskbar;
         this.ownership = ownership;
         this.rooms = rooms;
@@ -176,6 +180,7 @@ internal sealed class ApplicationDockService : IDisposable
             DockPreferenceFile.Save(path, updated);
             preferences = updated;
         }
+        if (editingPins) pinRevision++;
         error = null;
         groups = GroupForCurrentDesk(groups.SelectMany(g => g.Windows).ToArray());
         Render();
@@ -198,8 +203,27 @@ internal sealed class ApplicationDockService : IDisposable
         finally { updating = false; }
     }
 
+    private void PublishTaskDisplay()
+    {
+        var host = rooms.ApplicationTaskHost();
+        var epoch = host?.NativeDockTaskEpoch;
+        if (epoch == null || disposed) { taskDisplay.Clear(); return; }
+        // Group scope was captured with the committed Desk when these tasks were grouped.
+        // If the Desk changed since then, regroup before minting any IDs for it.
+        var navigation = rooms.ReadApplicationDockNavigation();
+        EffectivePins(navigation);
+        var scope = PinScope(navigation);
+        if (groups.Any(group => group.PinScope != scope))
+            groups = GroupForCurrentDesk(groups.SelectMany(group => group.Windows).ToArray());
+        var display = taskDisplay.Update($"{epoch}/{scope}/{pinRevision}", groups, DockWindows.Foreground);
+        host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson));
+    }
+
     private void Render()
     {
+        // Display publication never changes ownership or author/native input routing.
+        try { PublishTaskDisplay(); }
+        catch (Exception ex) { taskDisplay.Clear(); error = "任务区数据刷新失败：" + ex.Message; }
         ownership.SetApplicationRequested(preferences.Enabled && !disposed);
         if (!preferences.Enabled || disposed || !ownership.TryAcquire(DockHost.Application))
         {
@@ -290,6 +314,7 @@ internal sealed class ApplicationDockService : IDisposable
     public void Dispose() => dispatcher.Invoke(() =>
     {
         disposed = true;
+        taskDisplay.Clear();
         ownership.Shutdown();
         taskbar.RequestAutomatic(corePid, false);
         timer.Stop();

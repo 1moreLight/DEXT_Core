@@ -7,3 +7,4 @@
 .dext-task-item[data-active="true"]:after{background:var(--task-accent);width:12px;left:calc(50% - 6px)}
 .dext-task-menu>button{flex:0 0 auto;max-width:240px;height:calc(var(--task-iconSizeDip) + 8px);padding:6px 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #ffffff30;border-radius:8px;background:#ffffff10;color:inherit;font:inherit}
 .dext-task-menu>button:hover,.dext-task-menu>button:focus-visible{outline:2px solid var(--task-accent);outline-offset:-2px}
+.dext-task-item>img{width:var(--task-iconSizeDip);height:var(--task-iconSizeDip);object-fit:contain;pointer-events:none;vertical-align:middle}

@@ -25,7 +25,7 @@
  }
  function snapshot(value){
   if(!object(value)||!guid(value.contextId)||!Number.isSafeInteger(value.sequence)||value.sequence<=0||!Array.isArray(value.items)||value.items.length>1024)return null;
-  const items=[],ids=new Set(),windowIds=new Set();
+  const items=[],ids=new Set(),windowIds=new Set();let iconBudget=512*1024;
   for(const item of value.items){
    if(!object(item)||!guid(item.id)||ids.has(item.id)||!text(item.name)||!item.name.trim()||typeof item.pinned!=='boolean'||typeof item.active!=='boolean'||!Array.isArray(item.windows))return null;
    ids.add(item.id);const windows=[];
@@ -33,7 +33,9 @@
     if(!object(window)||!guid(window.id)||windowIds.has(window.id)||!text(window.title)||typeof window.active!=='boolean'||windowIds.size>=4096)return null;
     windowIds.add(window.id);windows.push({id:window.id,title:window.title,active:window.active});
    }
-   items.push({id:item.id,name:item.name,pinned:item.pinned,active:item.active,windows});
+   let iconPng=null;
+   if(typeof item.iconPng==='string'&&item.iconPng.length<=87384&&item.iconPng.length<=iconBudget&&/^iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(item.iconPng)){iconPng=item.iconPng;iconBudget-=iconPng.length;}
+   items.push({id:item.id,name:item.name,pinned:item.pinned,active:item.active,windows,iconPng});
   }
   return frozen({contextId:value.contextId,sequence:value.sequence,items});
  }

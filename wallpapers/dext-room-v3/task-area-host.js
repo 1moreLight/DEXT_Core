@@ -70,7 +70,10 @@
     const item=view.items[index];let button=nodes.get(item.id);
     if(!button){button=document.createElement('button');button.type='button';button.className='dext-task-item';button.dataset.itemId=item.id;wire(button,item.id);
      button.addEventListener('contextmenu',event=>{if(event.isTrusted){event.preventDefault();openMenu(item.id,'pin');}});nodes.set(item.id,button);}
-    button.setAttribute('aria-label',item.name);button.title=item.name;button.textContent=item.name.slice(0,1);button.dataset.running=String(item.windows.length>0);button.dataset.active=String(item.active);button.dataset.pinned=String(item.pinned);
+    button.setAttribute('aria-label',item.name);button.title=item.name;
+    if(item.iconPng){let img=button.querySelector('img');if(!img){img=document.createElement('img');img.alt='';img.draggable=false;button.replaceChildren(img);img.addEventListener('error',()=>{if(img.parentNode===button)button.textContent=item.name.slice(0,1);});}
+     const src='data:image/png;base64,'+item.iconPng;if(img.getAttribute('src')!==src)img.setAttribute('src',src);
+    }else if(button.textContent!==item.name.slice(0,1)||button.querySelector('img'))button.textContent=item.name.slice(0,1);button.dataset.running=String(item.windows.length>0);button.dataset.active=String(item.active);button.dataset.pinned=String(item.pinned);
     if(items.children[index]!==button)items.insertBefore(button,items.children[index]||null);
    }
    if(selection)drawMenu(view);

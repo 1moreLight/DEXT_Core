@@ -502,3 +502,6 @@ ApplicationDockResponse 使用 camelCase；探针用 C# 属性大写导致找不
 
 ## #285 PowerShell双引号字符串内的中文弯引号会成为引号边界
 2026-10-10：批量文档Replace的替换文本含中文弯引号，置于双引号字符串中导致ParserError，整条命令未执行。改用单引号字面量/单引号here-string承载Markdown文本，重跑成功；不要把解析失败当作写入已完成。
+
+## #287 Player 新 partial 文件必须登记显式 Compile（2026-10-10）
+Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 C# 文件，构建提示 ApplyNativeDockTasks 不存在。将文件加入 Compile 列表后完整 Player/Watchdog/Core 构建通过。新增分册时同时检查 csproj，不能只看磁盘有文件。

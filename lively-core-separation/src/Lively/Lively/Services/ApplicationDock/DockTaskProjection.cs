@@ -6,7 +6,7 @@ namespace Lively.Services.ApplicationDock;
 
 // Display-only records: source paths, launch settings and native handles stay in Core.
 internal sealed record DockTaskViewWindow(string Id, string Title, bool Active);
-internal sealed record DockTaskViewItem(string Id, string Name, bool Pinned, bool Active, IReadOnlyList<DockTaskViewWindow> Windows);
+internal sealed record DockTaskViewItem(string Id, string Name, bool Pinned, bool Active, IReadOnlyList<DockTaskViewWindow> Windows) { public string IconPng { get; init; } }
 internal sealed record DockTaskViewSnapshot(string ContextId, long Sequence, IReadOnlyList<DockTaskViewItem> Items);
 
 // Owned by the Core dispatcher. Does not execute actions or attest user input.

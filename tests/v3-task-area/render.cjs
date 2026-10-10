@@ -42,6 +42,12 @@ const {chromium}=require('../../tauri-ui/node_modules/playwright');
   assert.equal(await page.evaluate(()=>{const e=document.querySelector('.dext-task-items');return e.scrollWidth>e.clientWidth;}),true);
   await page.getByRole('button',{name:'App 39',exact:true}).click();assert.equal(await page.evaluate(()=>actions.at(-1).itemId),await page.evaluate(()=>id(41)));
   console.log('PASS multi-window choice and overflow scrolling');
+  await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=2;const c=canvas.getContext('2d');c.fillStyle='red';c.fillRect(0,0,2,2);const s=sample(7,id(9),1);s.items[0].iconPng=canvas.toDataURL('image/png').split(',')[1];window.iconSample=s;host.accept(s);});
+  await page.waitForFunction(()=>document.querySelector('.dext-task-item img')?.naturalWidth===2);
+  await page.evaluate(()=>{window.oldImage=document.querySelector('.dext-task-item img');host.accept({...iconSample,sequence:8});});
+  assert.equal(await page.evaluate(()=>oldImage===document.querySelector('.dext-task-item img')),true);
+  await button.click();assert.equal(await page.evaluate(()=>actions.at(-1).itemId),await page.evaluate(()=>id(2)));
+  console.log('PASS actual PNG renders, retains its node on refresh and does not intercept clicks');
   await page.evaluate(()=>host.dispose());assert.equal(await page.getByRole('button',{name:/^App /}).count(),0);assert.deepEqual(errors,[]);
   console.log('Task-area DOM checks passed; this is not native Player/physical-input evidence.');
  }finally{await browser.close();}

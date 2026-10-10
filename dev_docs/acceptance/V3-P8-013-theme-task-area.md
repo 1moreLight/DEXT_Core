@@ -11,3 +11,4 @@
 
 
 阶段证据（不是验收通过）：71项Node与五组真实headlessEdge DOM交互通过。新模块尚未加载到正式index/main，Core/Player数据/原生动作/图标和融合演示尚待03；不把模拟onAction接收器当成启动应用成功。原dom-host新增方法默认null，不改变现有发布几何。
+2026-10-10增量：Core展示适配、PNG缓存、私有IPC和Player接收入口编译通过；72项Node/六组headless DOM通过。正式main和原生动作仍未接，人工步骤尚未执行，工作包仍50%。

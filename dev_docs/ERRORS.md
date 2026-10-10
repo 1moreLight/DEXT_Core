@@ -393,3 +393,4 @@
 | #284 | 应用Dock关闭最后一个WPF窗口会提前关闭Dispatcher，Core应显式退出 | [backend](errors/backend.md) |
 | #285 | PowerShell替换文本含中文弯引号导致整条命令解析失败 | [toolchain](errors/toolchain.md) |
 | #286 | 官方任务菜单返回按钮在快照刷新时重建，按下/抬起间丢点击 | [frontend](errors/frontend.md) |
+| #287 | 旧式Player项目显式列Compile，新partial文件未加入csproj导致方法不可见 | [toolchain](errors/toolchain.md) |

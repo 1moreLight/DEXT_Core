@@ -47,3 +47,9 @@ test('pointer mismatch hidden state and cancellation produce no action',()=>{
  m.setAvailable(true);m.begin(id(2));m.cancel();assert.equal(m.finish(id(2)),null);
  assert.equal(m.begin(id(2),null,'launchPath'),false);
 });
+test('bounded PNG icons survive projection without exposing source fields',()=>{
+ const m=createTaskAreaState(),s=view();s.items[0].iconPng='iVBORw0KGgo=';s.items[0].target='C:/private/app.exe';
+ assert.equal(m.accept(s),true);assert.equal(m.read().items[0].iconPng,'iVBORw0KGgo=');assert.equal(m.read().items[0].target,undefined);
+ const broken=view(2);broken.items[0].iconPng='https://example.com/icon.png';assert.equal(m.accept(broken),true);assert.equal(m.read().items[0].iconPng,null);
+ const huge=view(3);huge.items[0].iconPng='iVBOR'+'A'.repeat(90000);assert.equal(m.accept(huge),true);assert.equal(m.read().items[0].iconPng,null);
+});
