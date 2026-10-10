@@ -439,3 +439,5 @@
 | #315 | 桌面图标批次可超过Player与JS原1MiB显示回包限额 | [backend](errors/backend.md) |
 
 | #316 | UIA全桌面后代查询无界遍历，且WebView子节点PID不等于Player；夹具恢复须先落盘 | [toolchain](errors/toolchain.md) |
+
+| #317 | 测试项目启用WinForms后Timer隐式引用歧义；目录监听需显式线程池Timer | [toolchain](errors/toolchain.md) |

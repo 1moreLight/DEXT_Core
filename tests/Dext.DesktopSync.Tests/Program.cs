@@ -1,4 +1,5 @@
 using Lively.Services.DesktopSync;
+if(args.Contains("--watch")){await WatcherChecks.Run();return;}
 if(args.Contains("--system"))
 {
  var folders=DesktopDirectoryScanner.SystemFolders();
