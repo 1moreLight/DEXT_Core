@@ -536,3 +536,7 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 RuntimeProbe添加UseWPF以使用UIAutomation后，原有File/Path引用报CS0103；WindowsDesktop的隐式using集合发生变化。项目显式添加Using Include="System.IO"后构建通过。不要为此逐个修改不相关探针逻辑。
 
 2026-10-11 #41复现补记：desktop-sync-import首次npm run build缺tsc；该worktree未安装node_modules。npm ci --prefer-offline --no-audit --no-fund后前端构建通过，锁文件无变化。
+
+## #316 UIA范围与夹具恢复（2026-10-11）
+
+桌面同步实机扫描成功，但RootElement.FindFirst(Descendants, Player PID+按钮名)遍历全桌面且无法命中跨进程WebView节点，35秒外层循环不能限制阻塞的单次UIA调用。首轮正式清理临时Room后终止探针，恢复原Core；内存checkpoint备份无法追溯原字节，保留临时checkpoint副本和差异，不声称完整恢复原字节。修复为按Player PID枚举HWND后仅查该窗口子树、去掉子节点PID条件、5秒Task查询上限；夹具开始前将checkpoint/不存在标记和作用域写磁盘。重跑实际显示/刷新/关闭通过并正常finally恢复。清理RPC路径需用与加载一致的Path.Combine分段结果，混用斜杠会未命中。

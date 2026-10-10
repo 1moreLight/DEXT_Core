@@ -17,6 +17,12 @@ internal static class StorageGrantLiveProbe
             if(await wallpapers.ResponseStream.MoveNext(CancellationToken.None)) throw new Exception("Existing wallpaper found; no mutation performed.");
         var checkpoint=Path.Combine(identity.AppDataDirectory,"v3","room-session.json");
         var original=File.Exists(checkpoint)?File.ReadAllBytes(checkpoint):null;
+        var recovery=Path.Combine(Environment.CurrentDirectory,".build","runtime-recovery-"+Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(recovery);
+        if(original is not null)File.WriteAllBytes(Path.Combine(recovery,"room-session.before.json"),original);
+        else File.WriteAllText(Path.Combine(recovery,"checkpoint-was-absent.txt"),"absent");
+        File.WriteAllText(Path.Combine(recovery,"scope.txt"),identity.BaseDirectory+Environment.NewLine+expectedRoom);
+        Console.WriteLine("Recovery checkpoint saved: "+recovery);
         var personalPath=Path.Combine(identity.AppDataDirectory,"v3","personal","personal.json");
         if(File.Exists(personalPath) && File.ReadAllText(personalPath).Contains(expectedRoom)) throw new Exception("Fixture already has personal data.");
         RoomSessionStatusResponse Session()=>client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5));
@@ -52,6 +58,7 @@ internal static class StorageGrantLiveProbe
             if(deleted.Status!="accepted")throw new Exception("Temporary personal data cleanup: "+deleted.Status);
             if(original is not null)File.WriteAllBytes(checkpoint,original);
             else if(File.Exists(checkpoint))File.Delete(checkpoint);
+            File.WriteAllText(Path.Combine(recovery,"restored.txt"),DateTime.UtcNow.ToString("O"));
             Console.WriteLine("RESTORED empty wallpaper state, original checkpoint, removed temporary Room personal data");
         }
     }

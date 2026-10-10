@@ -437,3 +437,5 @@
 | #314 | 运行探针启用WPF访问UIA后System.IO隐式using消失 | [toolchain](errors/toolchain.md) |
 
 | #315 | 桌面图标批次可超过Player与JS原1MiB显示回包限额 | [backend](errors/backend.md) |
+
+| #316 | UIA全桌面后代查询无界遍历，且WebView子节点PID不等于Player；夹具恢复须先落盘 | [toolchain](errors/toolchain.md) |

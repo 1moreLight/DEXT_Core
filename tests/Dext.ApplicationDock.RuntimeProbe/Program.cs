@@ -17,6 +17,26 @@ if (identity.ProductName != "Dext" || identity.RuntimeIdentity != "DEXT:DESKTOPS
     !Path.GetFullPath(identity.BaseDirectory).TrimEnd('\\').Equals(Path.GetFullPath(args[1]).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
     throw new Exception("Unexpected Core identity; no mutation performed.");
 Console.WriteLine($"Core verified: PID={identity.ProcessId} {identity.BaseDirectory}");
+if(args[0]=="cleanup-desktop-fixture"){
+    if(args.Length!=3)throw new ArgumentException("Expected isolated fixture Room ID");
+    var fixtureHost=Path.Combine(identity.BaseDirectory,"wallpapers","dext-room-v3");
+    using var fixture=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(fixtureHost,"content/room.json")));
+    if(fixture.RootElement.GetProperty("id").GetString()!=args[2]||fixture.RootElement.GetProperty("name").GetString()!="Storage grant acceptance fixture")throw new Exception("Not the isolated fixture");
+    var active=client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5));
+    if(active.Active&&active.RoomId!=args[2])throw new Exception("Another Room is active");
+    client.CloseWallpaperLibrary(new(){LivelyInfoPath=fixtureHost},deadline:DateTime.UtcNow.AddSeconds(5));
+    var deadline=DateTime.UtcNow.AddSeconds(10);
+    while(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).Active){if(DateTime.UtcNow>deadline)throw new Exception("Fixture did not close");await Task.Delay(200);}
+    var deleted=client.DeleteRoomPersonal(new(){RoomId=args[2]},deadline:DateTime.UtcNow.AddSeconds(5));
+    if(deleted.Status!="accepted")throw new Exception("Fixture personal cleanup failed");
+    Console.WriteLine("RESTORED no active Room; isolated fixture personal data removed");return;
+}
+if(args[0]=="session-status"){Console.WriteLine(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)));return;}
+if(args[0]=="desktop-sync-live"){
+    if(args.Length!=3)throw new ArgumentException("desktop-sync-live requires isolated fixture Room ID");
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>DesktopSyncLiveProbe.Run(client));
+    return;
+}
 if(args[0] is "fusion-presentation-live" or "fusion-modes-live" or "fusion-native-preview-live"){
     if(args.Length!=3)throw new ArgumentException("fusion-presentation-live requires isolated fixture Room ID");
     await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionPresentationProbe.Run(client,identity.ProcessId,args[0]=="fusion-modes-live",args[0]=="fusion-native-preview-live"));
