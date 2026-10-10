@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace Lively.Services.DesktopSync;
 
@@ -28,6 +29,37 @@ internal sealed class DesktopSyncCatalog
             ticket = Guid.NewGuid();
             return ticket;
         }
+    }
+    // Merge only against the last published snapshot, never an uncommitted scan.
+    // A root failure is not evidence that its files were deleted.
+    internal DesktopScanResult MergeScan(Guid expected, DesktopScanResult scan)
+    {
+        lock (gate)
+        {
+            if (expected == Guid.Empty || expected != ticket || scope is null)
+                throw new InvalidOperationException("Desktop scan has been superseded.");
+            var merged = new Dictionary<string, DesktopFileItem>(StringComparer.Ordinal);
+            foreach (var old in files.Values)
+                if (scan.Truncated || scan.Issues.Any(issue => Affects(issue, old)))
+                    merged[old.Id] = old;
+            var truncated = scan.Truncated;
+            foreach (var item in scan.Items)
+            {
+                if (!merged.ContainsKey(item.Id) && merged.Count >= 4096) { truncated = true; continue; }
+                merged[item.Id] = item;
+            }
+            return new(Array.AsReadOnly(merged.Values.OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(item => item.FullPath, StringComparer.OrdinalIgnoreCase).ToArray()), scan.Issues, truncated);
+        }
+    }
+    private static bool Affects(DesktopScanIssue issue, DesktopFileItem item)
+    {
+        if (!item.Sources.Contains(issue.Source, StringComparer.Ordinal)) return false;
+        // An unresolved system root can only be associated by its source label.
+        if (string.IsNullOrWhiteSpace(issue.Path) || !Path.IsPathFullyQualified(issue.Path)) return true;
+        return string.Equals(issue.Path, item.FullPath, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Path.TrimEndingDirectorySeparator(issue.Path),
+                Path.GetDirectoryName(item.FullPath), StringComparison.OrdinalIgnoreCase);
     }
     internal bool Publish(Guid expected, DesktopScanResult scan, IReadOnlyList<DesktopShellItem> metadata, IReadOnlyDictionary<string, int> slots)
     {

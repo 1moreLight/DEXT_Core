@@ -49,6 +49,16 @@ try
  Check(catalog.Read(scope)?.ContextId==view.ContextId&&catalog.TryResolve(scope,view.ContextId,scan.Items[0].Id,out _),"same-scope refresh retains confirmed icons and click context while scanning");
  Check(!catalog.Publish(ticket,scan,metadata,slots),"older refresh result cannot replace the latest request");
  Check(catalog.Publish(refresh,scan,metadata,slots)&&catalog.Read(scope)?.ContextId==view.ContextId,"unchanged refresh preserves click context instead of resetting the desktop page");
+ var missingPublic=new DesktopScanResult(scan.Items.Where(i=>!i.Sources.Contains("public")&&i.Kind!="folder").ToArray(),new[]{new DesktopScanIssue("public",common,"temporarily unavailable")},false);
+ var retained=catalog.MergeScan(refresh,missingPublic);
+ Check(retained.Items.Any(i=>i.Sources.Contains("public"))&&!retained.Items.Any(i=>i.Kind=="folder"),"failed root retains confirmed items while healthy-root deletion is respected");
+ var failedItem=scan.Items.First(i=>i.Kind=="folder");
+ var itemFailure=catalog.MergeScan(refresh,new(scan.Items.Where(i=>i.Id!=failedItem.Id).ToArray(),new[]{new DesktopScanIssue("user",failedItem.FullPath,"access denied")},false));
+ Check(itemFailure.Items.Any(i=>i.Id==failedItem.Id),"individual unreadable item retains its previous snapshot");
+ var recovered=catalog.MergeScan(refresh,new(missingPublic.Items,Array.Empty<DesktopScanIssue>(),false));
+ Check(recovered.Items.Count==missingPublic.Items.Count,"successful recovery permits confirmed deletions");
+ var capped=catalog.MergeScan(refresh,new(scan.Items.Take(1).ToArray(),Array.Empty<DesktopScanIssue>(),true));
+ Check(capped.Items.Count==scan.Items.Count&&capped.Truncated,"truncated enumeration keeps last confirmed items");
  var altered=metadata.Select((item,index)=>index==0?item with{Name=item.Name+" updated"}:item).ToArray();
  var changed=catalog.Begin(scope);
  Check(catalog.Publish(changed,scan,altered,slots)&&catalog.Read(scope)?.ContextId!=view.ContextId,"changed visible metadata rotates context");
