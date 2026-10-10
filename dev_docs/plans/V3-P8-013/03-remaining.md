@@ -41,3 +41,9 @@ Core状态变化日志证明右键发生时lease/available/placement均保持tru
 首次下一页被MissingPermission拒绝，隔离夹具原未调用配置器正式enableNavigation；现通过EditRoomPersonal启用该临时Room导航，沿原finally清理，不修改用户Room授权。
 第二次Core45792/Player37084实际下一页Accepted，只进入focus一次，任务区变窄并溢出、前台应用未变化，通过。实际上一页失败：04:15:36.865 DOWN、36.971 UP均到Core且sample=True，Player DOWN arm=True/ready，但没有返回native visible input sample，也没有activate结果。不是已证明的权限失败，不绕过或直接RPC切页。日志20261011_041518.txt、.build/fusion-navigation-live.log、task-navigation-probe-build.log。
 第2项仍开做，下一步定位跨Desk后Player取样回报缺失；滚动与窄栏应用点击尚未执行。原Core与偏好/夹具已恢复，整包2/4=50%。
+
+## 2026-10-11 跨Desk派发边界进一步定位
+
+完整Release诊断构建通过（.build/task-navigation-dispatch-build.log），按流程start CoreOnly；同一导航场景Core40724/Player45408重现下一页通过、上一页失败。Player记录第二次DOWN arm=True、ready、forward-owned，随后completion-await-dispatch，约1.5秒超时并触发已有失败退出路径。证明转发目标仍属当前WebView，不是IsOwnedChild提前拒绝，也不是取样释放/回传后Core拒绝。日志20261011_041900.txt。
+
+下一步只追踪作者帧派发回执生成与接收（guardian gate、frame identity及消息接收），不要扩大权限或将失败超时当成功；此前“取样缺失”的边界已收窄。诊断仅记录阶段/编号，无token、文件路径或作者数据；不更改点击和触摸语义。第2项仍开做，2/4=50%；原运行版与夹具恢复。

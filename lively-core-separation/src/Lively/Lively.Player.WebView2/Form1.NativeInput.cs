@@ -108,12 +108,16 @@ namespace Lively.Player.WebView2
         {
             if(!value.SampleVisual)return;
             var own=nativeVisualSample;
+            var completionStage="sample-owner";
             try{
                 if(own==null||own.Packet!=value)return;
+                completionStage="await-dispatch";
                 // Official defaults use Core's physical key and do not dispatch
                 // a synthetic DOM key. Authored keys still wait for a native receipt.
                 if(value.Kind!="focus"&&!IsOfficialTaskMouseSample(value)&&!(value.SampleKeyboard&&(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer))&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                completionStage="release";
                 var released=await ReleaseNativeSampleAsync();
+                completionStage="released="+released+" current="+CurrentNativePointer(value);
                 if(!released||!CurrentNativePointer(value))return;
                 SendToParent(new LivelyMessageRoomNativeSample{Input=new LivelyMessageRoomNativePointer{
                     RuntimeGeneration=value.RuntimeGeneration,SessionId=value.SessionId,Revision=value.Revision,GeometryVersion=value.GeometryVersion,
@@ -121,7 +125,8 @@ namespace Lively.Player.WebView2
                     OriginX=value.OriginX,OriginY=value.OriginY,PixelWidth=value.PixelWidth,PixelHeight=value.PixelHeight,Dpi=value.Dpi,
                     X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=value.SampleMouse,SampleKeyboard=value.SampleKeyboard,
                     Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons,TaskHit=own.TaskHit,TaskTargets=own.TaskTargets});
-            }finally{if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
+                completionStage="sent";
+            }finally{TraceDockSample(value,"completion-"+completionStage);if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
         }
         private async Task<bool> ReleaseNativeSampleAsync()
         {
@@ -158,7 +163,8 @@ namespace Lively.Player.WebView2
         {
             if(IsOfficialTaskMouseSample(value))return;
             var input=new IntPtr(value.InputHandle);
-            if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid))return;
+            if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid)){TraceDockSample(value,"forward-unowned");return;}
+            TraceDockSample(value,"forward-owned");
             if(value.Key!=0){
                 if(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer)return;
                 var pressed=value.Kind=="down";
