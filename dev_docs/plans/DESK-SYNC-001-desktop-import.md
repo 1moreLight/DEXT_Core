@@ -7,9 +7,9 @@
 
 | 步骤 | 状态 | 文件 |
 |---|---|---|
-| 只读识别 | 开做 | [01](DESK-SYNC-001/01-scan.md) |
-| 本机同步Desk与布局 | 待做 | [02](DESK-SYNC-001/02-personal.md) |
+| 只读识别 | 做完 | [01](DESK-SYNC-001/01-scan.md) |
+| 本机同步Desk与布局 | 开做 | [02](DESK-SYNC-001/02-personal.md) |
 | 图标与配置器入口 | 待做 | [03](DESK-SYNC-001/03-host.md) |
 | 构建交接 | 待做 | [04](DESK-SYNC-001/04-handoff.md) |
 
-实施0/4=0%，验收未开始。CodeGraph目录存在但CLI报告无可用索引，使用rg兜底，不自行索引。
+实施1/4=25%，验收未开始。CodeGraph目录存在但CLI报告无可用索引，使用rg兜底，不自行索引。
