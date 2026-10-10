@@ -71,6 +71,35 @@ internal static class DockTaskInputChecks
         Check(DockTaskInput.IsCurrent(queued,authority.State,viewport,clock),"new valid pair works after republishing geometry");
         authority.CheckNativeViewport(viewport,false);authority.CheckNativeViewport(viewport,true);
         Check(!DockTaskInput.IsCurrent(queued,authority.State,viewport,clock),"hide and reshow cannot revive a queued completion with unchanged geometry");
+        // A held contact and a queued completion must both stay revoked after
+        // navigating away and back, even when the same task occupies the same pixel.
+        var initial=new RoomSessionSnapshot(1,gesture.Session,"room","desk",null,null,null,3,true,null);
+        var switching=new RoomNativeInputAuthority(clock,RoomClientRole.Dock);
+        switching.Initialize(2,initial);
+        switching.PublishGeometry(2,gesture.Session,3,1,viewport,[],true);
+        switching.MouseDown(viewport,0,250,true);
+        var held=switching.State!.Gesture!;
+        var switchingTasks=new DockTaskInput(clock);
+        switchingTasks.Sample(held,Packet(held,"down"),hit,switching.State.CancellationVersion);
+        switching.ObserveSnapshot(initial with {Revision=4,CurrentDeskId="other"});
+        switching.PublishGeometry(2,gesture.Session,4,2,viewport,[],true);
+        switching.MouseUp(viewport,0,250,true);
+        Check(switching.State!.Gesture==null,"Desk change retires held contact before release");
+        Check(switchingTasks.Sample(switching.State.Gesture,Packet(Up(held),"up"),hit,switching.State.CancellationVersion)==null,"late old release after Desk change cannot complete task");
+        switching.ObserveSnapshot(initial with {Revision=5});
+        switching.PublishGeometry(2,gesture.Session,5,3,viewport,[],true);
+        Check(switchingTasks.Sample(switching.State!.Gesture,Packet(Up(held),"up"),hit,switching.State.CancellationVersion)==null,"return to original Desk cannot revive held contact");
+        switching.MouseDown(viewport,0,250,true);
+        var freshDown=switching.State.Gesture!;
+        switchingTasks.Sample(freshDown,Packet(freshDown,"down"),hit,switching.State.CancellationVersion);
+        switching.MouseUp(viewport,0,250,true);
+        var freshUp=switching.State.Gesture!;
+        var freshCompletion=switchingTasks.Sample(freshUp,Packet(freshUp,"up"),hit,switching.State.CancellationVersion)!;
+        Check(DockTaskInput.IsCurrent(freshCompletion,switching.State,viewport,clock),"fresh click works after returning to original Desk");
+        switching.ObserveSnapshot(initial with {Revision=6,CurrentDeskId="other"});
+        switching.ObserveSnapshot(initial with {Revision=7});
+        switching.PublishGeometry(2,gesture.Session,7,4,viewport,[],true);
+        Check(!DockTaskInput.IsCurrent(freshCompletion,switching.State,viewport,clock),"queued completion cannot revive after Desk round trip");
     }
     private sealed class TestClock:TimeProvider
     {
