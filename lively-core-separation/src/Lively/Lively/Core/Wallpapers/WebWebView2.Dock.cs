@@ -17,31 +17,32 @@ namespace Lively.Core.Wallpapers
             Interlocked.Read(ref roomDockStateReceivedAt) > 0 &&
             (Stopwatch.GetTimestamp() - Interlocked.Read(ref roomDockStateReceivedAt)) / (double)Stopwatch.Frequency >= 5;
 
-        internal LivelyMessageRoomDockState RoomDockWindowState
+        internal LivelyMessageRoomDockState RoomDockWindowState => ReadNativeDockState(true);
+
+        // A same-document Desk revision revokes input immediately, but does not
+        // destroy the native window or its taskbar reservation. Keep the existing
+        // heartbeat/attachment checks for this separate host-health observation.
+        internal LivelyMessageRoomDockState RoomDockTaskbarWindowState => ReadNativeDockState(false);
+        private LivelyMessageRoomDockState ReadNativeDockState(bool requireCurrentRevision)
         {
-            get
-            {
-                var value = Volatile.Read(ref roomDockWindowState);
-                var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
-                return nativeDock && !IsExited && current != null && value != null &&
-                    (Stopwatch.GetTimestamp() - Interlocked.Read(ref roomDockStateReceivedAt)) / (double)Stopwatch.Frequency < 5 &&
-                    value.RuntimeGeneration == current.Generation && value.SessionId == current.Session &&
-                    value.Revision == current.Revision && value.WindowHwnd == Handle.ToInt64()
-                    ? value : null;
-            }
+            var value = Volatile.Read(ref roomDockWindowState);
+            var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
+            return nativeDock && !IsExited && current != null && value != null &&
+                (Stopwatch.GetTimestamp() - Interlocked.Read(ref roomDockStateReceivedAt)) / (double)Stopwatch.Frequency < 5 &&
+                value.RuntimeGeneration == current.Generation && value.SessionId == current.Session &&
+                (requireCurrentRevision ? value.Revision == current.Revision : value.Revision <= current.Revision) &&
+                value.WindowHwnd == Handle.ToInt64() ? value : null;
         }
 
-        internal bool NativeDockReservationReady
+        internal bool NativeDockReservationReady => NativeDockReservationMatches(RoomDockWindowState);
+        internal bool NativeDockTaskbarReservationReady => NativeDockReservationMatches(RoomDockTaskbarWindowState);
+        private bool NativeDockReservationMatches(LivelyMessageRoomDockState state)
         {
-            get
-            {
-                var state = RoomDockWindowState;
-                var viewport = ReadNativeViewport();
-                return nativeDockMode == "reserve" && state is { Mode: "reserve",
-                    AppBarRegistered: true, AppBarReady: true } && (state.WindowReady || state.GeometryUpdating) && viewport != null &&
-                    DextNativeInputWindow.TryReadWorkArea(Handle, out var work) &&
-                    work.Bottom <= viewport.Y && work.Top < viewport.Y;
-            }
+            var viewport = ReadNativeViewport();
+            return nativeDockMode == "reserve" && state is { Mode: "reserve",
+                AppBarRegistered: true, AppBarReady: true } && (state.WindowReady || state.GeometryUpdating) && viewport != null &&
+                DextNativeInputWindow.TryReadWorkArea(Handle, out var work) &&
+                work.Bottom <= viewport.Y && work.Top < viewport.Y;
         }
 
         private void ObserveNativeDataSnapshot(RoomNativeDataSource data, RoomSessionSnapshot snapshot, RoomClientRole role)

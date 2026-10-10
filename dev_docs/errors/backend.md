@@ -639,3 +639,9 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 #308修复补记：官方任务ActionsEnabled及完成动作加入TaskbarController三模式就绪校验，并检查实时工作区与Dock原生边界匹配。不能仅等待租约Ready：任务栏先隐藏、Dock下一次重排才完成。24项检查/完整Release通过，跳过探针额外稳定等待的首次可用点击实测通过；此证据不外推为所有设备/启动时序无回归。
 
 #308恢复模式验证补记：恢复Windows任务栏会缩小工作区，自动隐藏Dock跟随上移。光标停在旧屏幕底边时Dock正常收起；探针应按新的原生边界唤出，不能把hidden当actions永久禁用。实际恢复任务栏后，唤出/选窗/单窗口恢复通过；没有改变产品自动隐藏规则。
+
+## #311 同宿主跨Desk短暂恢复任务栏（2026-10-11）
+现象：切页期间任务栏恢复/再隐藏，Dock顶边1260↔1320变化，影响指针位置和连续点击。
+根因：RoomDockWindowState严格匹配当前revision；Core先推进、Player后回报时，同一健康窗口暂时不可见于任务栏管理，自动请求被撤销。
+修复：任务栏独立读取同generation/session/HWND及5秒心跳内的旧revision健康报告；输入/动作仍严格当前revision。锁屏/非desktop/退出/停止及reserve实际AppBar检查保留。
+验证：新增真实轮询回归先红后绿；Core46800/Player52720双向导航/滚动/应用三动作完整成功，25ms观察任务栏保持隐藏且Dock顶边不变，完整Release通过。无Dock/崩溃等完整恢复仍需后续实测。

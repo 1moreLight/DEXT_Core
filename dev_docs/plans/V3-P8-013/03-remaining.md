@@ -60,3 +60,10 @@ Core状态变化日志证明右键发生时lease/available/placement均保持tru
 Core45764/Player44088，fusion-navigation-live完整退出0：实际下一页进focus，原生横向滚轮使scrollLeft增加，不改变Desk/前台；滚动后仍可见的自有任务真实点击激活、最小化、恢复，Desk保持focus；实际上一页回home一次。证据.build/fusion-navigation-live.log、task-scroll-probe-build.log。该组未注入直接JS滚动或RPC应用动作。
 首次尝试在点击前就绪等待失败：切Desk后任务栏恢复/隐藏让Dock移位，探针停旧位置，随后自动隐藏；已让未按下阶段按当前Dock位置唤出，保留最终位置及窗口归属检查。产品切Desk时任务栏短暂恢复/工作区往返仍是已知问题，不能据这组通过称其修复。后续状态取消/生命周期收口须处理同一主题Dock跨Desk的租约稳定性。
 第2项做完，第3/4/5项仍待做；整体03未完，工作包2/4=50%。原Core、偏好、夹具及前台/光标已恢复。
+
+## 2026-10-11 同宿主跨Desk任务栏稳定性修复
+
+新增25ms轮询Shell_TrayWnd实际可见性和原生Dock顶边的回归；旧代码在双向导航/滚动/应用动作均成功时仍因任务栏出现或Dock移动而失败（.build/task-lease-red.log）。根因：RoomDockWindowState把输入revision一致作为宿主健康前提，Core推进Desk revision而Player新状态尚未到达时返回null，Ensure/maintenance撤销任务栏租约。
+修复为独立RoomDockTaskbarWindowState，仅任务栏健康观察允许同generation/session/HWND、5秒心跳内的旧revision；输入的RoomDockWindowState仍严格当前revision。停止/退出/锁屏/非desktop等原有撤销条件保留；reserve仍检查实际AppBar/工作区匹配。
+完整Release通过（task-lease-build.log）。真实Core46800/Player52720同场景全程通过且新增稳定性观察通过，退出0，原运行版/前台/光标/偏好及夹具已恢复。证据fusion-navigation-live.log。该实测覆盖autohide同宿主两Desk，不能外推到无Dock/锁屏/崩溃全部场景；这些由第3/4项继续。
+第2项及这次跨页稳定性修复做完；第3/4/5仍需继续，整包2/4=50%。

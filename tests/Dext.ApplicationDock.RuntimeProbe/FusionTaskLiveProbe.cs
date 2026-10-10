@@ -77,7 +77,22 @@ internal static class FusionTaskLiveProbe
                             Console.WriteLine("PASS actual Windows taskbar restored while theme Dock remains enabled");
                         }
                         if(target is not null){
-                            if(navigation)await target.VerifyNavigation(window,Observe);
+                            if(navigation){
+                                using var watch=new CancellationTokenSource();
+                                GetWindowRect(window,out var initialBounds);
+                                var changed=false;
+                                var monitor=Task.Run(async()=>{
+                                    while(!watch.IsCancellationRequested){
+                                        if(NativeTaskbar.IsWindowVisible(NativeTaskbar.FindWindow("Shell_TrayWnd",null))||
+                                            !GetWindowRect(window,out var currentBounds)||currentBounds.Top!=initialBounds.Top)changed=true;
+                                        try{await Task.Delay(25,watch.Token);}catch(OperationCanceledException){break;}
+                                    }
+                                });
+                                try{await target.VerifyNavigation(window,Observe);}
+                                finally{watch.Cancel();await monitor;}
+                                if(changed)throw new Exception("Taskbar appeared or Dock moved during same-host Desk navigation");
+                                Console.WriteLine("PASS taskbar stays hidden and native Dock position stays stable across both Desk changes");
+                            }
                             else if(pinMenu)await target.VerifyPinMenu(window,Observe);
                             else if(menu)await target.VerifyWindowMenu(window,Observe,second);
                             else if(keyboard)await target.VerifyKeyboard(window,Observe);
