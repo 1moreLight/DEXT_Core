@@ -588,3 +588,6 @@ Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线�
 
 ## #298 Core退出请求后进程残留（2026-10-11，待修）
 旧候选PID39560与669a857开发副本PID47728均在正常ShutDown RPC后超过15秒未退出；旧候选追加状态RPC超时。不是仅观察超时：进程路径确认仍存在，RPC已不响应。尚未定位卡住的dispose/退出阶段，不能宣称关闭正常。新副本测试已先恢复Room/偏好/checkpoint，再发退出；确认精确PID+构建路径后结束残留进程，重新启动原候选PID29792，RPC确认enabled=true/pins=0/groups=11/error空，Room inactive，无Player。后续定位此缺陷，避免让测试清理掩盖产品退出失败。
+
+2026-10-11 #298定位更新：临时在QuitApp记录services start/done、grpc start/done、dispatcher start/done；一次启动立即退出正常，融合探针后既有正常退出也有残留。最后一轮第1次正常、第2次进程超过5秒仍存活且全部6个阶段均完成。因此证据不支持“服务Dispose或RPC Dispose同步卡住”，Application.Shutdown调用也已返回。不能据此替换为异步退出并声称修复。dotnet-stack尝试失败，.build/exit-hang-stack.log为Pipe is broken工具错误，不是成功的目标线程栈；下一定位范围是Shutdown排队后的WPF/CLR/原生退出尾段。尚未确定根因，#298仍待修。
+临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。

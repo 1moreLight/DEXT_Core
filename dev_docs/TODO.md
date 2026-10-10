@@ -2126,3 +2126,7 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11步骤03操作许可增量做完：SendNativeDockTasks现按NativeDockAvailable设置ActionsEnabled；现有500ms刷新会在恢复就绪后补发快照，完成仍检查物理手势/当前窗口/投影。完整Core/Release Player/Watchdog构建通过，20任务、16键盘、17原指针检查通过（.build/task-actions-build.log、task-actions-regression.log）。这三组检查覆盖现有输入关联，不是新增许可门控的真实Core验收。CoreOnly核对仍为旧候选PID39560，没有启动配置器；新代码尚未部署。实际Core启动/激活/最小化和触屏待验证，03仍开做，2/4=50%。
 2026-10-11真实Core融合验证开做：准备独立开发副本，正式资源+融合样包；先检查当前会话为空才临时应用，探针恢复偏好/壁纸/checkpoint。直接读取该Player的诊断标题验证实际Core任务快照与可操作状态；真实OS动作仍单独补证。
 2026-10-11真实Core补证完成一段：独立self-contained副本v3-task-live-20261011，真实Core47728→Player47868收到11应用任务，displayReady、ActionsEnabled=true且未抢前台。证据.build/task-fusion-live.log；夹具49c12d19-9221-4ed5-ae13-4fdabc0bfa01的Room/personal/checkpoint/偏好/鼠标已恢复。仍未验证应用OS动作或触屏，03继续50%。发现并修复发布资源漏4项（#297），新检查RED→GREEN、实际发布目录校验通过。退出RPC两版本均残留进程（#298待修），按精确路径清理后恢复原候选29792，状态/空Room复核通过，无新增配置器。
+2026-10-11 #298退出卡点开做：临时在QuitApp的服务释放、RPC释放与Dispatcher关闭边界记录阶段；只在独立开发副本复现，定位后移除临时日志。当前50%。
+
+2026-10-11 #298定位更新：临时在QuitApp记录services start/done、grpc start/done、dispatcher start/done；一次启动立即退出正常，融合探针后既有正常退出也有残留。最后一轮第1次正常、第2次进程超过5秒仍存活且全部6个阶段均完成。因此证据不支持“服务Dispose或RPC Dispose同步卡住”，Application.Shutdown调用也已返回。不能据此替换为异步退出并声称修复。dotnet-stack尝试失败，.build/exit-hang-stack.log为Pipe is broken工具错误，不是成功的目标线程栈；下一定位范围是Shutdown排队后的WPF/CLR/原生退出尾段。尚未确定根因，#298仍待修。
+临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。
