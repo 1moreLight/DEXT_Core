@@ -18,10 +18,10 @@ internal sealed partial class RoomSessionRuntimeCoordinator
 
     private sealed record DockDemand(RoomDockPreferenceResult Settings, WebWebView2? Desktop,
         RoomSessionSnapshot? Snapshot, VerifiedRoomInstallation? Installation, string? DeskId,
-        bool HasDock, string Phase)
+        bool HasDock, string Phase, long FusionAttempt = 0)
     {
         public bool ShouldRun => Phase == "hostPending";
-        public bool Matches(DockDemand other) => ShouldRun && other.ShouldRun &&
+        public bool Matches(DockDemand other) => ShouldRun && other.ShouldRun && FusionAttempt == other.FusionAttempt &&
             ReferenceEquals(Desktop, other.Desktop) && Snapshot?.SessionId == other.Snapshot?.SessionId &&
             Installation?.InstallationStamp == other.Installation?.InstallationStamp &&
             Settings.Preferences?.HeightDip == other.Settings.Preferences?.HeightDip &&
@@ -39,11 +39,15 @@ internal sealed partial class RoomSessionRuntimeCoordinator
 
 
         public long HeartbeatStaleSince;
+        public volatile bool TasksPresented;
     }
 
     private DockDemand ReadDockDemand(RoomDockPreferenceResult? settings = null)
     {
         settings ??= dockPreferences.Read();
+        var fusion=Volatile.Read(ref applicationThemeRequest);
+        if(fusion is not null&&settings.Preferences is {} original)
+            settings=settings with {Preferences=original with {Enabled=true,Mode=fusion.Mode}};
         lock (gate)
         {
             var snapshot = CurrentSnapshot;
@@ -68,12 +72,12 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                         referenced.Contains(item.GetProperty("id").GetString()));
                 }
             }
-            var phase = settings.Preferences is null ? "settingsUnavailable" :
+            var phase = fusion is not null && fusion.ContextKey!=$"{snapshot?.SessionId}/{snapshot?.InstallationStamp}" ? "fusionContextChanged" : settings.Preferences is null ? "settingsUnavailable" :
                 !settings.Preferences.Enabled ? "disabled" :
                 dockOwnership.ApplicationRequested ? "applicationSelected" :
                 context is null ? "noNativeRoom" : !hasDock ? "noDock" :
                 "hostPending";
-            return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase);
+            return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase,fusion?.Attempt??0);
         }
     }
 
@@ -100,9 +104,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var window = current ? player?.Player.RoomDockWindowState : null;
             var ready = window is { RendererReady: true, WindowReady: true };
             var viewport = ready ? player?.Player.ReadNativeViewport() : null;
-            ready = ready && viewport != null && window!.Mode == result.Preferences?.Mode;
+            ready = ready && viewport != null && window!.Mode == demand.Settings.Preferences?.Mode;
             var appBarOccupied = current && player?.Player.NativeDockReservationReady == true;
-            var reserve = result.Preferences?.Mode == "reserve";
+            var reserve = demand.Settings.Preferences?.Mode == "reserve";
             var modeReady = ready && (!reserve || appBarOccupied);
             int? effectiveHeight = viewport is null ? null : Math.Max(1, (int)Math.Round(viewport.Height * 96.0 / viewport.Dpi));
             int? displayDpi = viewport?.Dpi;
@@ -161,11 +165,13 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             {
                 observed = Volatile.Read(ref dockRequested);
                 if (Volatile.Read(ref dockDisposed) != 0) break;
+                var fusionAttempt=Volatile.Read(ref applicationThemeRequest)?.Attempt??0;
                 try { await ReconcileDockAsync(); }
                 catch (OperationCanceledException) when (dockLifetime.IsCancellationRequested) { break; }
                 catch (Exception error)
                 {
                     Logger.Error(error, "v3 Dock host update failed");
+                    RecordApplicationThemeFailure(fusionAttempt);
                     lock (dockGate)
                     {
                         dockPhase = "faulted";
@@ -231,6 +237,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             owned.Exited.TrySetResult();
             if (!owned.Stopping)
             {
+                RecordApplicationThemeFailure(owned.Demand.FusionAttempt);
                 authority.UnbindDock(player.Pid ?? 0);
                 lock (dockGate)
                 {

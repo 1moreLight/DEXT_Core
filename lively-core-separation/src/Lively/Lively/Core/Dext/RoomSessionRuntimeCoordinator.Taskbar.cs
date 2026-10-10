@@ -7,6 +7,14 @@ namespace Dext.Core.Rooms;
 
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
+    private bool FusionTaskAreaHealthy(DockPlayer owned)
+    {
+        if(owned.Demand.FusionAttempt==0)return true;
+        var status=owned.Player.RoomDockTaskbarWindowState?.TaskAreaStatus;
+        if(status=="ready")owned.TasksPresented=true;
+        if(status=="unavailable")owned.TasksPresented=false;
+        return owned.TasksPresented;
+    }
     private Timer? dockMaintenance;
     private void InitializeDockTaskbarMaintenance()
     {
@@ -27,7 +35,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             owned.HeartbeatStaleSince = 0;
             var snapshot = kernel.Snapshot;
             taskbar.RequestAutomatic(owned.Player.Pid ?? 0,
-                !owned.Stopping && owned.Attached && Volatile.Read(ref dockDisposed) == 0 &&
+                !owned.Stopping && owned.Attached && FusionTaskAreaHealthy(owned) && Volatile.Read(ref dockDisposed) == 0 &&
                 owned.Demand.Desktop?.Pid == Volatile.Read(ref activePlayerPid) &&
                 owned.Demand.Desktop?.IsExited == false && snapshot is { IsActive: true } &&
                 snapshot.SessionId == owned.Demand.Snapshot?.SessionId && !snapshot.Lifecycle.Locked &&
@@ -39,7 +47,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     }
     private async Task EnsureDockTaskbarAsync(DockPlayer owned, DockDemand demand)
     {
-        var wanted = !owned.Stopping && Volatile.Read(ref dockDisposed) == 0 && demand.Matches(owned.Demand) &&
+        var wanted = !owned.Stopping && FusionTaskAreaHealthy(owned) && Volatile.Read(ref dockDisposed) == 0 && demand.Matches(owned.Demand) &&
             owned.Attached && owned.Player.RoomDockTaskbarWindowState is { RendererReady: true, Locked: false } window && (window.WindowReady || window.GeometryUpdating) &&
             owned.Player.ReadNativeViewport() is not null &&
             (owned.Player.NativeDockMode != "reserve" || owned.Player.NativeDockTaskbarReservationReady) &&

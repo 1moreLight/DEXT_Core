@@ -12,7 +12,7 @@ using System.Windows.Threading;
 
 namespace Lively.Services.ApplicationDock;
 
-internal sealed class ApplicationDockService : IDisposable
+internal sealed partial class ApplicationDockService : IDisposable
 {
     private readonly string path = Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "application-dock.json");
     private readonly Dispatcher dispatcher = Application.Current.Dispatcher;
@@ -95,11 +95,15 @@ internal sealed class ApplicationDockService : IDisposable
         return new
         {
             enabled = preferences.Enabled,
+            presentation = preferences.Presentation,
+            presentationState = presentationState is null ? null : new {
+                requested=presentationState.Requested,target=presentationState.Target,actual=presentationState.Actual,
+                mode=presentationState.Mode,phase=presentationState.Phase,reason=presentationState.Reason },
             autoHide = preferences.AutoHide,
             reserveSpace = preferences.ReserveSpace,
             taskbar = taskbar.Status(),
             runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
-                waiting = preferences.Enabled && ownership.Owner == DockHost.Theme,
+                waiting = preferences.Enabled && (presentationState is null || presentationState.Phase is "switching" or "starting"),
                 reservation = new { registered = window?.ReservationRegistered == true, ready = window?.ReservationReady == true, error = window?.ReservationError },
                 blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
             navigation,
@@ -133,6 +137,7 @@ internal sealed class ApplicationDockService : IDisposable
         var root = document.RootElement;
         var updated = preferences;
         var operation = root.GetProperty("operation").GetString();
+        if(operation=="retryPresentation") { presentationPolicy.Retry();Render();_ = Refresh();return Status(); }
         var editingPins = operation is "pin" or "unpin" or "inheritPins";
         var context = editingPins ? PinEditContext(root) : null;
         var selectedPins = context is null ? preferences.Pins : EffectivePins(context);
@@ -141,6 +146,11 @@ internal sealed class ApplicationDockService : IDisposable
         {
             case "enable":
                 updated = preferences with { Enabled = root.GetProperty("enabled").GetBoolean() };
+                break;
+            case "presentation":
+                var presentation=root.GetProperty("presentation").GetString();
+                if(presentation is not ("native" or "theme"))throw new ArgumentException("未知 Dock 呈现方式。");
+                updated=preferences with {Presentation=presentation};
                 break;
             case "autoHide":
                 updated = preferences.WithAutoHide(root.GetProperty("autoHide").GetBoolean());
@@ -264,11 +274,11 @@ internal sealed class ApplicationDockService : IDisposable
     }
     private void Render()
     {
+        UpdatePresentation();
         // Display publication never changes ownership or author/native input routing.
         try { PublishTaskDisplay(); }
         catch (Exception ex) { taskDisplay.Clear(); error = "任务区数据刷新失败：" + ex.Message; }
-        ownership.SetApplicationRequested(preferences.Enabled && !disposed);
-        if (!preferences.Enabled || disposed || !ownership.TryAcquire(DockHost.Application))
+        if (!preferences.Enabled || disposed || presentationState.Target != "native" || !ownership.TryAcquire(DockHost.Application))
         {
             window?.Suspend();
             taskbar.RequestAutomatic(corePid, false);

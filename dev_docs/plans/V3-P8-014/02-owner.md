@@ -21,3 +21,9 @@
 
 2026-10-11官方任务区回执增量：正式顶层新增私有dextNativeTaskReadiness，只返回pending/ready/hidden/unavailable，不返回应用数据。Player在窗口同步及单飞心跳中读取，绑定generation/session/revision与5秒时效；Core候选描述增加TaskAreaStatus。隐藏保留已配置区域的hidden状态，几何不可用/缺区域返回unavailable，待布局不误报失败。该信号尚未驱动服务切换/任务栏租约，不声称回退已通。
 19项main/controller检查通过（新hook先失败再实现），完整Release通过，CoreOnly复核旧Core48280，无新配置器。日志task-readiness-red/tests/build。下一步消费候选状态、配置有效融合模式与attempt故障关联，再开放呈现RPC；第02仍开做，1/6≈17%。
+
+2026-10-11服务接线代码完成一段：ApplicationDockService.Presentation消费候选/策略，Edit支持presentation(native/theme)/retryPresentation，Status区分requested/target/actual/phase/reason。配置先持久化再驱动；重试不写偏好。Coordinator有效融合设置覆盖Enabled/Mode但保留磁盘主题偏好；DockDemand绑定attempt，先旧owner释放再新宿主启动。任务栏融合接管等待首次官方区ready，hidden/短暂pending不撤销已确认区域，unavailable撤销。
+
+失败按单调attempt记录，旧Player退出不会覆盖较新失败。失败锁存保留theme意图，新的会话/安装或手动重试再尝试；静态无Dock/无区域回退。35秒连续未就绪超时，已就绪/锁屏/全屏重置等待，普通切页不因旧启动时间立刻超时。旧宿主attempt不得冒充新尝试已就绪。
+
+限制：overlay尚未实现，当前选择融合常显会以overlayNotAvailable回退原生；第03必须完成后去掉临时保护。实际Core往返/故障恢复尚未执行，第02仍开做。生产策略/资格及10项所有权检查通过；最终完整Release通过，日志fusion-service-policy-tests、fusion-service-owner-tests、fusion-service-build。CoreOnly复核旧Core48280，无新配置器/未部署新包。下一步限定实际Core验证autohide/reserve切换与回退，再接overlay。

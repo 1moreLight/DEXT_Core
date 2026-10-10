@@ -1,11 +1,38 @@
 using System;
+using System.Threading;
 
 namespace Dext.Core.Rooms;
 
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
+    private sealed record ApplicationThemeRequest(string ContextKey,long Attempt,string Mode);
+    private ApplicationThemeRequest? applicationThemeRequest;
+    private long failedApplicationThemeAttempt;
+    private void RecordApplicationThemeFailure(long attempt)
+    {
+        if(attempt<=0)return;
+        // Attempts are monotonic for this Core lifetime. A late old Player exit
+        // must not overwrite a newer failure before the service observes it.
+        var seen=Interlocked.Read(ref failedApplicationThemeAttempt);
+        while(attempt>seen)
+        {
+            var actual=Interlocked.CompareExchange(ref failedApplicationThemeAttempt,attempt,seen);
+            if(actual==seen)return;
+            seen=actual;
+        }
+    }
+    internal void ConfigureApplicationTheme(string? contextKey,long attempt,string? mode)
+    {
+        if(mode is not (null or "autohide" or "reserve"))throw new ArgumentException("Unsupported fusion mode.");
+        var next=mode is null?null:new ApplicationThemeRequest(contextKey??throw new ArgumentNullException(nameof(contextKey)),attempt,mode);
+        if(Volatile.Read(ref applicationThemeRequest)==next)return;
+        Volatile.Write(ref applicationThemeRequest,next);
+        lock(dockGate){dockRetryAfter=default;}
+        QueueDockUpdate();
+    }
+
     internal sealed record ThemeTaskCandidate(string? ContextKey,string? UnavailableReason,
-        string Phase,bool Attached,bool Ready,string TaskAreaStatus);
+        string Phase,bool Attached,bool Ready,string TaskAreaStatus,long FailedAttempt,bool Blocked,long HostAttempt);
 
     internal ThemeTaskCandidate ReadThemeTaskCandidate()
     {
@@ -16,7 +43,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         var reason=context is null ? "noNativeRoom" :
             Lively.Services.ApplicationDock.DockThemeEligibility.Reason(context.Manifest,demand.Snapshot?.CurrentDeskId);
         if(demand.Desktop?.IsExited!=false)reason="noNativeRoom";
-        var key=demand.Snapshot is {} snapshot ? $"{snapshot.SessionId}/{snapshot.InstallationStamp}/{snapshot.CurrentDeskId}" : null;
+        var key=demand.Snapshot is {} snapshot ? $"{snapshot.SessionId}/{snapshot.InstallationStamp}" : null;
         lock(dockGate)
         {
             var host=dockPlayer;
@@ -25,7 +52,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 host.Demand.Snapshot?.SessionId==demand.Snapshot?.SessionId&&
                 host.Demand.Installation?.InstallationStamp==demand.Installation?.InstallationStamp;
             var state=current?host!.Player.RoomDockWindowState:null;
-            return new(key,reason,dockPhase,attached,state is {RendererReady:true,WindowReady:true},state?.TaskAreaStatus??"pending");
+            return new(key,reason,dockPhase,attached,state is {RendererReady:true,WindowReady:true},state?.TaskAreaStatus??"pending",Interlocked.Read(ref failedApplicationThemeAttempt),
+                demand.Snapshot?.Lifecycle.Locked==true||state?.Fullscreen==true,host?.Demand.FusionAttempt??0);
         }
     }
 
