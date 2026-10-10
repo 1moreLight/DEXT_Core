@@ -67,6 +67,51 @@ if (args[0] == "grants-status")
 JsonElement Read() => JsonSerializer.Deserialize<JsonElement>(client.GetApplicationDockStatus(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5)).ReplyJson);
 JsonElement Edit(object patch) => JsonSerializer.Deserialize<JsonElement>(client.EditApplicationDock(
     new RoomDockPreferenceRequest { PatchJson = JsonSerializer.Serialize(patch) }, deadline: DateTime.UtcNow.AddSeconds(5)).ReplyJson);
+if (args[0] == "autohide-probe")
+{
+    if(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).Active)
+        throw new Exception("Requires no active Room for isolated application ownership test");
+    var before=Read();
+    var enabled=before.GetProperty("enabled").GetBoolean();
+    var autoHide=before.GetProperty("autoHide").GetBoolean();
+    var mode=before.GetProperty("taskbar").GetProperty("mode").GetString();
+    async Task Wait(Func<bool> condition,string label) {
+        var until=DateTime.UtcNow.AddSeconds(15);
+        while(DateTime.UtcNow<until) {if(condition()){Console.WriteLine("PASS "+label);return;}await Task.Delay(200);}
+        throw new Exception(label+" not confirmed: "+Read().GetProperty("runtime"));
+    }
+    try {
+        Edit(new{operation="taskbar",mode="visible"});
+        Edit(new{operation="enable",enabled=true});
+        Edit(new{operation="autoHide",autoHide=true});
+        if(!Read().GetProperty("autoHide").GetBoolean())throw new Exception("AutoHide edit not acknowledged");
+        Console.WriteLine("PASS real Core persists auto-hide preference");
+        Edit(new{operation="autoHide",autoHide=false});
+        var runtime=Read().GetProperty("runtime");
+        if(runtime.TryGetProperty("blocked",out var blocked) && blocked.ValueKind==JsonValueKind.String) {
+            if(runtime.GetProperty("visible").GetBoolean())throw new Exception("Blocked Dock unexpectedly visible");
+            Console.WriteLine("PASS real Dock remains hidden during "+blocked.GetString());
+            Console.WriteLine("DEFER visible/edge and automatic taskbar handoff until no fullscreen/lock; preferences restored below");
+            return;
+        }
+        await Wait(()=>Read().GetProperty("runtime").GetProperty("visible").GetBoolean(),"always-visible setting restores real Dock");
+        Edit(new{operation="taskbar",mode="auto"});
+        await Wait(()=>Read().GetProperty("taskbar").GetProperty("hidden").GetBoolean(),"automatic taskbar request confirms active application Dock");
+        Edit(new{operation="enable",enabled=false});
+        await Wait(()=>Read().GetProperty("runtime").GetProperty("owner").GetString()=="none" && !Read().GetProperty("taskbar").GetProperty("hidden").GetBoolean(),"application owner releases after automatic taskbar recovery");
+        Edit(new{operation="enable",enabled=true});
+        Edit(new{operation="taskbar",mode="visible"});
+        await Task.Delay(1200);
+        if(Read().GetProperty("taskbar").GetProperty("hidden").GetBoolean())throw new Exception("Manual restore overridden by application Dock");
+        Console.WriteLine("PASS manual restore overrides application automatic request");
+    } finally {
+        Edit(new{operation="autoHide",autoHide});
+        Edit(new{operation="enable",enabled});
+        Edit(new{operation="taskbar",mode});
+        Console.WriteLine("RESTORED application visibility and taskbar preferences");
+    }
+    return;
+}
 if (args[0] == "taskbar-probe" || args[0] == "taskbar-exit-probe")
 {
     var before = Read().GetProperty("taskbar").GetProperty("mode").GetString();

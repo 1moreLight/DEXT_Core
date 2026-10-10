@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>disable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Navigation.cs" Link="ApplicationDockWindow.Navigation.cs" />
+  <ItemGroup>
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockVisibilityPolicy.cs" Link="DockVisibilityPolicy.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Visibility.cs" Link="ApplicationDockWindow.Visibility.cs" /><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Navigation.cs" Link="ApplicationDockWindow.Navigation.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomDockNavigation.cs" Link="RoomDockNavigation.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockPreviewGeometry.cs" Link="DockPreviewGeometry.cs" />

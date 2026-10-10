@@ -560,3 +560,6 @@ TaskbarController.Dispose在WPF线程同步等待TickAsync；StopAsync内层awai
 
 ## #275 Dock所有权交接（2026-10-10）
 TickAsync容错吞异常且允许恢复待定，不能用其返回作为交出旧Dock所有权的证明。新增串行ReleaseAutomaticAsync明确返回旧PID租约已释放且恢复已确认；旧Player退出但恢复未确认时保留owner并重试。手动Core隐藏租约独立保留。定向18/18及实际主题Player→应用Dock交接通过。
+
+## #278 应用 Dock 与手动租约共用 Core PID（2026-10-10）
+应用栏的自动任务栏请求和用户手动隐藏同为 Core PID。ReleaseAutomaticAsync 原先只看 leasePid 相等会永久阻塞交接；自动请求撤回后，明确的 hidden 模式可以保留独立手动租约。19项控制检查含先失败后通过的同PID条件，原恢复未确认/Stop失败仍禁止交接。

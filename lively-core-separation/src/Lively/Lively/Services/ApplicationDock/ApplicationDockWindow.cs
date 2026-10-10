@@ -62,10 +62,12 @@ internal sealed partial class ApplicationDockWindow : Window
         SizeChanged += (_, _) => Position();
         Loaded += (_, _) => Position();
         InitializePreview();
+        InitializeVisibility();
     }
 
     public void Suspend()
     {
+        StopVisibility();
         foreach (var button in strip.Children.OfType<Button>())
             if (button.ContextMenu is { } menu) menu.IsOpen = false;
         ClosePreview();

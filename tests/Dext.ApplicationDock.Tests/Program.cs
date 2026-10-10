@@ -35,3 +35,28 @@ try {
  try { DockPreferenceFile.Load(path); } catch (System.Text.Json.JsonException) { rejected = true; }
  Check(rejected && File.ReadAllText(path) == "{broken", "invalid preferences are preserved and reported");
 } finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+var visibility=new DockVisibilityPolicy();
+Check(visibility.Update(false,false,false,false,0),"default always visible");
+Check(visibility.Update(true,false,false,false,0),"auto-hide starts with readable grace period");
+Check(visibility.Update(true,false,false,false,699),"hide delay protects pointer crossing");
+Check(!visibility.Update(true,false,false,false,700),"idle auto-hide collapses after delay");
+Check(visibility.Update(true,false,true,false,701),"bottom edge reveals without extra dwell");
+Check(visibility.Update(true,false,false,true,2000),"press menu and preview interaction keeps Dock visible");
+Check(visibility.Update(true,false,false,false,2001),"leaving interaction starts new delay");
+Check(!visibility.Update(true,false,false,false,2701),"leaving interaction eventually hides");
+Check(!visibility.Update(false,true,true,true,3000),"fullscreen and lock override hover and interaction");
+Check(visibility.Update(false,false,false,false,3100),"disabling auto-hide restores immediately");
+var prefPath=Path.Combine(Path.GetTempPath(),"dext-dock-visibility-"+Guid.NewGuid()+".json");
+try {
+ File.WriteAllText(prefPath,"""{"Enabled":true,"Pins":[]}""");
+ Check(!DockPreferenceFile.Load(prefPath).AutoHide,"old preferences keep always-visible default");
+ DockPreferenceFile.Save(prefPath,new DockPreferences(true,Array.Empty<DockPin>(),true));
+ Check(DockPreferenceFile.Load(prefPath).AutoHide,"auto-hide survives preference reload");
+} finally {File.Delete(prefPath);}
+Check(DockVisibilityPolicy.AtRevealEdge(300,1079,200,400,1080),"physical bottom reveals even when taskbar reduces work area");
+Check(!DockVisibilityPolicy.AtRevealEdge(300,1039,200,400,1080),"work-area edge is not substituted for monitor bottom");
+Check(!DockVisibilityPolicy.IsFullscreen(true,true,true),"captioned maximized window is not fullscreen after taskbar hide");
+Check(DockVisibilityPolicy.IsFullscreen(true,true,false),"undecorated maximized fullscreen still blocks Dock");
+Check(DockVisibilityPolicy.IsFullscreen(true,false,false),"borderless fullscreen still blocks Dock");
+Check(DockVisibilityPolicy.TaskbarReady(true,true,false),"active hidden Dock keeps automatic lease while fullscreen");
+Check(!DockVisibilityPolicy.TaskbarReady(true,true,true),"locked session releases automatic lease");

@@ -382,3 +382,5 @@
 | #275 | Dock切换必须等待任务栏租约与恢复确认，Tick正常返回不代表旧看护已释放 | [backend](errors/backend.md) |
 | #276 | 水平 StackPanel 向 ScrollViewer 提供无限宽度，应用多时被裁切而无滚动条 | [frontend](errors/frontend.md) |
 | #277 | 探针需读 camelCase wire 且不能把启动暂停当作导航失败 | [toolchain](errors/toolchain.md) |
+| #278 | 应用Dock与手动隐藏同为Core PID，自动释放不能等待独立手动租约消失 | [backend](errors/backend.md) |
+| #279 | 任务栏工作区变化会误判最大化为全屏；恢复任务栏后唤出区须仍在物理底边 | [frontend](errors/frontend.md) |

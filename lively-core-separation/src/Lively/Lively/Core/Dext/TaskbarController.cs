@@ -113,7 +113,8 @@ internal sealed class TaskbarController : IDisposable
         try
         {
             await ReconcileAsync().ConfigureAwait(false);
-            return (pid <= 0 || leasePid != pid) && !recoveryPending;
+            // Application Dock shares Core PID with manual hide; that independent user request may remain.
+            return (pid <= 0 || leasePid != pid || mode == "hidden" && leasePid == corePid) && !recoveryPending;
         }
         finally { serial.Release(); }
     }

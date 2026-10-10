@@ -53,6 +53,7 @@ try {
  Check(await handoff.ReleaseAutomaticAsync(201),"handoff completes when restoration is confirmed");
  await handoff.SetModeAsync("hidden");
  Check(await handoff.ReleaseAutomaticAsync(201) && handoff.Mode=="hidden" && handoff.ReadyFor(100),"handoff preserves a separate manual Core lease");
+ Check(await handoff.ReleaseAutomaticAsync(100) && handoff.ReadyFor(100),"application owner can release automatic request while same Core manual lease remains");
  var stopLease=new FailingStopLease();
  using var blockedHandoff=new TaskbarController(Path.Combine(dir,"blocked-handoff.json"),100,_=>Task.FromResult<ITaskbarLease>(stopLease),()=>true);
  blockedHandoff.RequestAutomatic(202,true);await blockedHandoff.TickAsync();

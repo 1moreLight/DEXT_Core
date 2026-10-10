@@ -20,17 +20,21 @@ internal sealed class ApplicationDockService : IDisposable
     private readonly Dext.Core.Rooms.TaskbarController taskbar;
     private readonly DockHostOwnership ownership;
     private readonly RoomSessionRuntimeCoordinator rooms;
+    private readonly RoomRuntimeFactsSource facts;
+    private readonly int corePid = Environment.ProcessId;
+    private bool releasingOwner;
     private DockPreferences preferences;
     private IReadOnlyList<DockGroup> groups = Array.Empty<DockGroup>();
     private ApplicationDockWindow window;
     private bool updating, disposed, started, loadFailed;
     private string error;
 
-    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms)
+    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms, RoomRuntimeFactsSource facts)
     {
         this.taskbar = taskbar;
         this.ownership = ownership;
         this.rooms = rooms;
+        this.facts = facts;
         try { preferences = DockPreferenceFile.Load(path); }
         catch (Exception ex)
         {
@@ -55,9 +59,11 @@ internal sealed class ApplicationDockService : IDisposable
     public object Status() => dispatcher.Invoke<object>(() => new
     {
         enabled = preferences.Enabled,
+        autoHide = preferences.AutoHide,
         taskbar = taskbar.Status(),
         runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
-            waiting = preferences.Enabled && ownership.Owner == DockHost.Theme },
+            waiting = preferences.Enabled && ownership.Owner == DockHost.Theme,
+            blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
         navigation = rooms.ReadApplicationDockNavigation(),
         pins = preferences.Pins,
         groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
@@ -77,6 +83,9 @@ internal sealed class ApplicationDockService : IDisposable
         {
             case "enable":
                 updated = preferences with { Enabled = root.GetProperty("enabled").GetBoolean() };
+                break;
+            case "autoHide":
+                updated = preferences with { AutoHide = root.GetProperty("autoHide").GetBoolean() };
                 break;
             case "pin":
                 var value = root.GetProperty("app");
@@ -127,14 +136,29 @@ internal sealed class ApplicationDockService : IDisposable
         if (!preferences.Enabled || disposed || !ownership.TryAcquire(DockHost.Application))
         {
             window?.Suspend();
-            ownership.Release(DockHost.Application);
+            taskbar.RequestAutomatic(corePid, false);
+            if (!releasingOwner) _ = ReleaseOwnerAsync();
             return;
         }
         window ??= new ApplicationDockWindow(Click, TogglePin, Icon, Navigate);
         window.UpdateNavigation(rooms.ReadApplicationDockNavigation());
         window.Update(groups, DockWindows.Foreground, error);
-        if (DockWindows.IsFullscreen()) window.Suspend();
-        else if (!window.IsVisible) window.Show();
+        window.SetVisibilityMode(preferences.AutoHide, () => facts.Read(string.Empty).Locked || DockWindows.IsFullscreen());
+        taskbar.RequestAutomatic(corePid, DockVisibilityPolicy.TaskbarReady(true, window.NativeReady, facts.Read(string.Empty).Locked));
+    }
+
+    private async Task ReleaseOwnerAsync()
+    {
+        releasingOwner = true;
+        try
+        {
+            var released = await taskbar.ReleaseAutomaticAsync(corePid);
+            if (disposed || preferences.Enabled && ownership.Owner == DockHost.Application) return;
+            if (released) ownership.Release(DockHost.Application);
+            else error = taskbar.Error ?? "正在等待任务栏恢复后交接 Dock。";
+        }
+        catch (Exception ex) { error = "Dock 交接失败：" + ex.Message; }
+        finally { releasingOwner = false; }
     }
 
     private void Navigate(Guid session, int direction)
@@ -188,6 +212,7 @@ internal sealed class ApplicationDockService : IDisposable
     {
         disposed = true;
         ownership.Shutdown();
+        taskbar.RequestAutomatic(corePid, false);
         timer.Stop();
         window?.Close();
         window = null;

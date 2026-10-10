@@ -74,8 +74,10 @@ internal static class DockWindows
         if (name.ToString() is "Progman" or "WorkerW") return false;
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         if (!GetMonitorInfo(MonitorFromWindow(handle, 2), ref info) || !GetWindowRect(handle, out var rect)) return false;
-        return rect.Left <= info.Monitor.Left && rect.Top <= info.Monitor.Top &&
+        var coversMonitor = rect.Left <= info.Monitor.Left && rect.Top <= info.Monitor.Top &&
             rect.Right >= info.Monitor.Right && rect.Bottom >= info.Monitor.Bottom;
+        return DockVisibilityPolicy.IsFullscreen(coversMonitor, IsZoomed(handle),
+            (GetWindowLong(handle, -16) & 0x00C00000) != 0);
     }
     private static string ProcessPath(int pid)
     {
@@ -97,6 +99,7 @@ internal static class DockWindows
     [DllImport("user32.dll")] private static extern bool EnumChildWindows(IntPtr parent, EnumProc callback, IntPtr parameter);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr window);
+    [DllImport("user32.dll")] private static extern bool IsZoomed(IntPtr window);
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr window, uint command);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr window, StringBuilder text, int length);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder text, int length);

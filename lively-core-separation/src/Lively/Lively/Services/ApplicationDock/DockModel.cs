@@ -9,7 +9,7 @@ namespace Lively.Services.ApplicationDock;
 internal sealed record DockPin(string Name, string Target, string Arguments, string WorkingDirectory);
 internal sealed record DockTask(long Handle, int ProcessId, string Title, string Target);
 internal sealed record DockGroup(string Key, string Name, DockPin Pin, IReadOnlyList<DockTask> Windows);
-internal sealed record DockPreferences(bool Enabled, DockPin[] Pins);
+internal sealed record DockPreferences(bool Enabled, DockPin[] Pins, bool AutoHide = false);
 internal enum DockAction { Launch, Activate, Minimize, Choose }
 
 internal static class DockModel
