@@ -1,5 +1,5 @@
 # Dext start: exact-path Core validation; optional portable v3 Release candidate.
-param([string]$ReleaseDirectory)
+param([string]$ReleaseDirectory, [switch]$CoreOnly)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $productRoot = $root
@@ -25,6 +25,18 @@ function Get-NormalizedPath([string]$Path) {
     return [IO.Path]::GetFullPath($Path).TrimEnd('\').ToLowerInvariant()
 }
 
+function Test-ConfiguratorLaunch([string]$TargetPath) {
+    $running = @(Get-CimInstance Win32_Process -Filter "Name='dext-configurator.exe'" -ErrorAction Stop)
+    if ($running.Count -eq 0) { return $true }
+    foreach ($process in $running) {
+        if ($TargetPath -and (Get-NormalizedPath $process.ExecutablePath) -eq (Get-NormalizedPath $TargetPath)) {
+            Write-Host "Dext Configurator already running (PID $($process.ProcessId)); keeping the existing window."
+        } else {
+            Write-Host "Configurator already exists at another/unknown product path (PID $($process.ProcessId)): $($process.ExecutablePath). Close that window normally before launching this version." -ForegroundColor Yellow
+        }
+    }
+    return $false
+}
 function Get-LivelyProcesses {
     return @(Get-CimInstance Win32_Process -Filter "Name='Lively.exe'" -ErrorAction SilentlyContinue)
 }
@@ -155,12 +167,30 @@ Write-Host "  Core: $coreExe"
 Write-Host "  Pipe: $grpcPipeName"
 Write-Host "  Data: $dextData"
 Write-Host "  Logs: $dextLogs"
-if ($ReleaseDirectory) {
-    Write-Host "Starting v3 Release Configurator..."
-    $configurator = Start-Process -FilePath (Join-Path $productRoot "dext-configurator.exe") -WorkingDirectory $productRoot -WindowStyle Hidden -PassThru
-    Write-Host "Dext v3 Configurator started: PID $($configurator.Id), product=$productRoot"
+if ($CoreOnly) {
+    Write-Host "Core-only start complete; no configurator was launched."
     return
 }
+if ($ReleaseDirectory) {
+    # Serialize the process check/start across repeated release launchers in this desktop session.
+    $launchMutex = [Threading.Mutex]::new($false, 'Local\DEXT:CONFIGURATOR:START')
+    $ownsLaunch = $false
+    try {
+        try { $ownsLaunch = $launchMutex.WaitOne(10000) }
+        catch [Threading.AbandonedMutexException] { $ownsLaunch = $true }
+        if (-not $ownsLaunch) { throw "Another configurator launch is still in progress; retry after it finishes." }
+        $configuratorExe = Join-Path $productRoot "dext-configurator.exe"
+        if (-not (Test-ConfiguratorLaunch $configuratorExe)) { return }
+        Write-Host "Starting v3 Release Configurator..."
+        $configurator = Start-Process -FilePath $configuratorExe -WorkingDirectory $productRoot -WindowStyle Hidden -PassThru
+        Write-Host "Dext v3 Configurator started: PID $($configurator.Id), product=$productRoot"
+    } finally {
+        if ($ownsLaunch) { $launchMutex.ReleaseMutex() }
+        $launchMutex.Dispose()
+    }
+    return
+}
+if (-not (Test-ConfiguratorLaunch $null)) { return }
 Write-Host "Starting Dext Configurator (npm run tauri dev)..."
 $configuratorRoot = Join-Path $root "tauri-ui"
 $tauriCommand = Join-Path $configuratorRoot "node_modules\.bin\tauri.cmd"
