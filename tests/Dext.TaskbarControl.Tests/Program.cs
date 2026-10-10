@@ -8,15 +8,19 @@ Task<ITaskbarLease> Create(int pid) {events.Add("start:"+pid); var lease=new Fak
 void Check(bool value,string label){if(!value)throw new Exception(label);Console.WriteLine("PASS "+label);}
 try {
  using var controller=new TaskbarController(path,100,Create,()=>true);
+ Check(!controller.DockActionsReady(200),"automatic task actions wait for taskbar handoff");
  controller.RequestAutomatic(200,true);
  await controller.TickAsync();
  Check(leases.Count==1 && leases[0].Pid==200 && leases[0].Wanted,"automatic mode follows ready Dock");
+ Check(controller.DockActionsReady(200)&&!controller.DockActionsReady(201),"automatic actions require the actual Dock owner");
  await controller.SetModeAsync("visible");
  controller.RequestAutomatic(200,true);
  await controller.TickAsync();
  Check(leases.Count==1 && leases[0].Stopped,"manual restore releases lease and overrides automatic request");
+ Check(controller.DockActionsReady(200),"restored taskbar permits Dock actions without hidden lease");
  await controller.SetModeAsync("hidden");
  Check(leases.Count==2 && leases[1].Pid==100 && leases[1].Wanted,"manual hide uses Core lifetime without requiring Room Dock");
+ Check(controller.DockActionsReady(200),"manual Core hiding permits theme Dock actions");
  await controller.SetModeAsync("auto");
  Check(events.IndexOf("stop:100")<events.LastIndexOf("start:200"),"old owner releases before next owner starts");
  controller.RequestAutomatic(999,false);
@@ -42,6 +46,7 @@ try {
  await recovering.SetModeAsync("visible");
  await recovering.TickAsync();
  Check(recovering.Error != null && !recovering.Hidden,"pending recovery survives lease release and remains reported");
+ Check(!recovering.DockActionsReady(200),"pending taskbar restoration does not prematurely enable actions");
  recoverAllowed=true;
  await recovering.TickAsync();
  Check(recovering.Error == null,"pending recovery retries until confirmed");

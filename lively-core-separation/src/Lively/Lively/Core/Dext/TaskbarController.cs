@@ -40,6 +40,11 @@ internal sealed class TaskbarController : IDisposable
     public bool Hidden => lease?.Ready == true;
     public string? Error => error ?? lease?.Error;
     public bool ReadyFor(int pid) => leasePid == pid && Hidden;
+    // Geometry may still move while a taskbar lease is acquired or restored.
+    // A deliberately visible taskbar is a supported settled state as well.
+    public bool DockActionsReady(int pid) => !disposed && !recoveryPending && pid > 0 &&
+        (mode == "visible" ? lease == null : mode == "hidden" ? ReadyFor(corePid) :
+            DesiredPid() == pid && ReadyFor(pid));
     public object Status() => new { mode = Mode, hidden = Hidden, visible = visible(), error = Error };
 
     public TaskbarController(string path, int corePid, Func<int, Task<ITaskbarLease>> acquire, Func<bool?> visible, Func<Task<bool>>? recover = null)

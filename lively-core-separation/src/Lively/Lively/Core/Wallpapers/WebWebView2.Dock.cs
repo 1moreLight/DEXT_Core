@@ -96,9 +96,17 @@ namespace Lively.Core.Wallpapers
             }
         }
 
+        private bool NativeDockTaskPlacementReady()
+        {
+            if(nativeDockMode=="reserve")return NativeDockReservationReady;
+            var viewport=ReadNativeViewport();
+            return viewport!=null&&DextNativeInputWindow.TryReadWorkArea(Handle,out var work)&&
+                viewport.X==work.Left&&viewport.Width==work.Right-work.Left&&
+                viewport.Y+viewport.Height==work.Bottom;
+        }
         internal bool NativeDockTaskIsCurrent(Lively.Services.ApplicationDock.DockTaskCompletion completion)
         {
-            if(completion==null||IsExited||!NativeDockAvailable())return false;
+            if(completion==null||IsExited||!NativeDockAvailable()||!NativeDockTaskPlacementReady())return false;
             var g=completion.Gesture;var current=Volatile.Read(ref roomNativeAttachment)?.Input.State;
             return Lively.Services.ApplicationDock.DockTaskInput.IsCurrent(completion,current,ReadNativeViewport(),TimeProvider.System)&&
                 (g.Key!=0?RoomDockWindowState?.Keyboard==true&&NativeDockForeground():g.ReleaseX is int x&&g.ReleaseY is int y&&NativeDockAt(x,y));
@@ -116,7 +124,7 @@ namespace Lively.Core.Wallpapers
                 inputSequence=completion.Sequence,consumer=DextNativeTaskSample.Consumer,button=completion.ItemId,
                 entryId=completion.ContextId+"/"+completion.ItemId+"/"+completion.Action+"/"+(completion.WindowId??"-")});
         }
-        internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson, Lively.Services.ApplicationDock.DockTaskViewSnapshot display)
+        internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson, Lively.Services.ApplicationDock.DockTaskViewSnapshot display, bool presentationReady)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
             if (current == null || expectedEpoch == null || expectedEpoch != NativeDockTaskEpoch ||
@@ -127,7 +135,7 @@ namespace Lively.Core.Wallpapers
                 RuntimeGeneration = current.Generation, SessionId = current.Session,
                 Revision = current.Revision, SnapshotJson = snapshotJson,
                 // Completion still validates physical input and the current task projection.
-                ActionsEnabled = NativeDockAvailable()
+                ActionsEnabled = presentationReady && NativeDockAvailable() && NativeDockTaskPlacementReady()
             });
             return true;
         }

@@ -221,7 +221,7 @@ internal sealed class ApplicationDockService : IDisposable
             groups = GroupForCurrentDesk(groups.SelectMany(group => group.Windows).ToArray());
         taskDisplayContext = $"{epoch}/{scope}/{pinRevision}";
         var display = taskDisplay.Update(taskDisplayContext, groups, DockWindows.Foreground);
-        host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson), display);
+        host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson), display, taskbar.DockActionsReady(host.Pid ?? 0));
     }
 
     private void AttachTaskHost(WebWebView2 host)
@@ -244,7 +244,7 @@ internal sealed class ApplicationDockService : IDisposable
             try
             {
                 if(disposed||!ReferenceEquals(source,taskHost)||!ReferenceEquals(source,rooms.ApplicationTaskHost())||
-                    !source.NativeDockTaskIsCurrent(completion)){taskLog.Debug("Task completion rejected current host/gesture sequence={0}",completion.Sequence);return;}
+                    !source.NativeDockTaskIsCurrent(completion)||!taskbar.DockActionsReady(source.Pid ?? 0)){taskLog.Debug("Task completion rejected current host/gesture sequence={0}",completion.Sequence);return;}
                 var navigation=rooms.ReadApplicationDockNavigation();
                 EffectivePins(navigation);
                 if(taskDisplayContext!=$"{source.NativeDockTaskEpoch}/{PinScope(navigation)}/{pinRevision}"||

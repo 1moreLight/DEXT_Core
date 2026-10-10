@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -48,7 +48,7 @@ internal static class FusionTaskLiveProbe
                     if(key!=stableWindow){stableWindow=key;stableSince=DateTime.UtcNow;}
                     using var doc=JsonDocument.Parse(title[18..]);
                     var value=doc.RootElement;
-                    if(runtime.GetProperty("phase").GetString()=="running"&&runtime.GetProperty("taskbarReplacementReady").GetBoolean()&&DateTime.UtcNow-stableSince>=TimeSpan.FromMilliseconds(750)&&
+                    if((startup||runtime.GetProperty("phase").GetString()=="running"&&runtime.GetProperty("taskbarReplacementReady").GetBoolean()&&DateTime.UtcNow-stableSince>=TimeSpan.FromMilliseconds(750))&&
                         value.GetProperty("phase").GetString()=="displayReady"&&value.GetProperty("enabled").GetBoolean()&&value.GetProperty("count").GetInt32()>0)
                     {
                         if(GetForegroundWindow()!=foreground)throw new Exception("Probe unexpectedly changed foreground");
