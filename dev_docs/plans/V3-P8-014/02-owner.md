@@ -1,6 +1,6 @@
 # V3-P8-014 唯一宿主接线与失败回退
 
-状态：待做
+状态：开做
 
 实现：连接DockHostOwnership、RoomSessionRuntimeCoordinator.Dock/ApplicationDock和ApplicationDockService。先释放旧主窗/AppBar/租约再接入新owner；启用应用枚举不强制WPF展示。缺Room/区域/失败返回WPF，避免反复抢占。
 
