@@ -2,6 +2,7 @@ using Dext.Core.Rooms;
 using System.Diagnostics;
 using System.Text.Json;
 
+if (args.Length==1 && args[0]=="--desktop-sync") { DesktopSyncChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--foreground-return") { ForegroundReturnChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--native-data-sources") { await NativeDataLiveProbe.Run(); return; }
 if (args.Length!=0 && !(args.Length==1 && args[0] is "--read-grants" or "--personal-editor" or "--visible-data" or "--sharing-copy")) throw new ArgumentException("Unknown action probe mode");

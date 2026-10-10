@@ -1,0 +1,61 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+namespace Dext.Core.Rooms;
+
+// Private ordering slots, independent of viewport size. File paths stay in the
+// Core scanner cache; no source file is copied into the Room or this document.
+internal sealed class RoomDesktopSync
+{
+    public bool Enabled { get; set; }
+    public string DeskId { get; set; } = "";
+    public Dictionary<string, int> Slots { get; set; } = new(StringComparer.Ordinal);
+    internal static RoomDesktopSync Reconcile(RoomDesktopSync? previous, string deskId, bool enabled,
+        IReadOnlyCollection<string>? currentIds, bool complete)
+    {
+        RoomPersonalStore.Id(deskId);
+        Validate(previous);
+        var next = new RoomDesktopSync { DeskId = deskId, Enabled = enabled,
+            Slots = previous is null ? new(StringComparer.Ordinal) : new(previous.Slots, StringComparer.Ordinal) };
+        if (currentIds is not null)
+        {
+            var ids = currentIds.Distinct(StringComparer.Ordinal).ToArray();
+            if (ids.Length > 4096) throw new InvalidDataException("Desktop sync item limit exceeded.");
+            foreach (var id in ids) ValidateItemId(id);
+            if (complete)
+            {
+                var retained = ids.ToHashSet(StringComparer.Ordinal);
+                foreach (var id in next.Slots.Keys.Where(id => !retained.Contains(id)).ToArray()) next.Slots.Remove(id);
+            }
+            var used = next.Slots.Values.ToHashSet();
+            var slot = 0;
+            foreach (var id in ids)
+            {
+                if (next.Slots.ContainsKey(id)) continue;
+                while (used.Contains(slot)) slot++;
+                if (slot >= 4096) throw new InvalidDataException("Desktop sync layout is full.");
+                next.Slots.Add(id, slot); used.Add(slot);
+            }
+        }
+        Validate(next);
+        return next;
+    }
+    internal static void Validate(RoomDesktopSync? value)
+    {
+        if (value is null) return;
+        RoomPersonalStore.Id(value.DeskId);
+        if (value.Slots is null || value.Slots.Count > 4096 ||
+            value.Slots.Values.Any(slot => slot < 0 || slot >= 4096) ||
+            value.Slots.Values.Distinct().Count() != value.Slots.Count)
+            throw new InvalidDataException("Invalid desktop sync slots.");
+        foreach (var id in value.Slots.Keys) ValidateItemId(id);
+    }
+    private static void ValidateItemId(string id)
+    {
+        if (id is null || id.Length != 72 || !id.StartsWith("desktop-", StringComparison.Ordinal) ||
+            !id.Skip(8).All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f'))
+            throw new InvalidDataException("Invalid desktop item identity.");
+    }
+}

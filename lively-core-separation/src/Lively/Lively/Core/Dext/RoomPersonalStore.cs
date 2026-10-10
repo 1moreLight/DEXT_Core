@@ -18,6 +18,8 @@ internal sealed class RoomPersonalData
 {
     public RoomPersonalLayout Layout { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RoomDesktopSync? DesktopSync { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, PersonalTarget[]>? DockPins { get; set; }
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
@@ -144,6 +146,21 @@ internal sealed class RoomPersonalStore
             else (room.DockPins ??= new(StringComparer.Ordinal))[deskId] = pins.ToArray();
         });
     }
+    internal RoomDesktopSync? ReadDesktopSync(string roomId)
+    {
+        Uuid(roomId);
+        return Read().Rooms.GetValueOrDefault(roomId)?.DesktopSync;
+    }
+    internal void SetDesktopSync(string roomId, string deskId, bool enabled,
+        IReadOnlyCollection<string>? currentIds = null, bool complete = true)
+    {
+        Uuid(roomId); Id(deskId);
+        Update(state =>
+        {
+            if (!state.Rooms.TryGetValue(roomId, out var room)) state.Rooms.Add(roomId, room = new());
+            room.DesktopSync = RoomDesktopSync.Reconcile(room.DesktopSync, deskId, enabled, currentIds, complete);
+        });
+    }
     public void DeleteRoom(string roomId) { Uuid(roomId); Update(s => s.Rooms.Remove(roomId)); }
 
     private RoomPersonalState ReadState()
@@ -182,6 +199,7 @@ internal sealed class RoomPersonalStore
         {
             Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.ReadGrants is not null && room.Storage is not null && room.Layout is not null, "Room personal shape");
             RoomPersonalLayout.Validate(room!.Layout);
+            RoomDesktopSync.Validate(room.DesktopSync);
             Require(room.DockPins is null || room.DockPins.Count <= 64, "Desk Dock count");
             foreach (var (desk, pins) in room.DockPins ?? new(StringComparer.Ordinal))
             {

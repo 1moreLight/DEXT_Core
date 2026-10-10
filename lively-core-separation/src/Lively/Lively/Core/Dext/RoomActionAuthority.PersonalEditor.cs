@@ -77,6 +77,18 @@ internal sealed partial class RoomActionAuthority
         }
     }
 
+    internal RoomDesktopSync? ReadDesktopSync(string roomId) => store.ReadDesktopSync(roomId);
+
+    internal void SetDesktopSync(string roomId, string deskId, bool enabled,
+        IReadOnlyCollection<string>? currentIds = null, bool complete = true)
+    {
+        lock (roomCopyLifecycleGate)
+        {
+            if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
+            store.SetDesktopSync(roomId, deskId, enabled, currentIds, complete);
+        }
+    }
+
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)
