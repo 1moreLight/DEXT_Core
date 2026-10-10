@@ -4,7 +4,7 @@ using System.Text.Json;
 
 if (args.Length==1 && args[0]=="--foreground-return") { ForegroundReturnChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--native-data-sources") { await NativeDataLiveProbe.Run(); return; }
-if (args.Length!=0 && !(args.Length==1 && args[0] is "--read-grants" or "--personal-editor" or "--visible-data")) throw new ArgumentException("Unknown action probe mode");
+if (args.Length!=0 && !(args.Length==1 && args[0] is "--read-grants" or "--personal-editor" or "--visible-data" or "--sharing-copy")) throw new ArgumentException("Unknown action probe mode");
 
 var failures = 0;
 var total = 0;
@@ -38,6 +38,11 @@ static void Seed(RoomPersonalStore store)
     });
 }
 
+if(args.Length==1 && args[0]=="--sharing-copy"){
+ SharingCopyChecks.Run(Check);
+ Console.WriteLine($"{total-failures}/{total} sharing copy checks passed");
+ Environment.ExitCode=failures==0?0:1;return;
+}
 if(args.Length==1 && args[0]=="--personal-editor"){
  RoomActionChecks.PersonalEditorChecks(Check);
  Console.WriteLine($"{total-failures}/{total} personal editor checks passed");
