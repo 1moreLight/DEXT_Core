@@ -235,6 +235,8 @@ internal sealed class ApplicationDockService : IDisposable
     private void CompleteTask(WebWebView2 source,DockTaskCompletion completion)
     {
         if(dispatcher.HasShutdownStarted)return;
+        var taskLog=NLog.LogManager.GetLogger("Dext.ApplicationDock.Input");
+        taskLog.Debug("Task completion queued sequence={0}",completion.Sequence);
         // Player receipts arrive off the UI thread. Recheck the host/Desk after
         // queuing; a completed old click may not act on a replacement Desk.
         dispatcher.BeginInvoke((Action)(()=>
@@ -242,11 +244,12 @@ internal sealed class ApplicationDockService : IDisposable
             try
             {
                 if(disposed||!ReferenceEquals(source,taskHost)||!ReferenceEquals(source,rooms.ApplicationTaskHost())||
-                    !source.NativeDockTaskIsCurrent(completion))return;
+                    !source.NativeDockTaskIsCurrent(completion)){taskLog.Debug("Task completion rejected current host/gesture sequence={0}",completion.Sequence);return;}
                 var navigation=rooms.ReadApplicationDockNavigation();
                 EffectivePins(navigation);
                 if(taskDisplayContext!=$"{source.NativeDockTaskEpoch}/{PinScope(navigation)}/{pinRevision}"||
-                    !taskDisplay.TryResolve(completion.ContextId,completion.ItemId,completion.WindowId,out var group,out var selected))return;
+                    !taskDisplay.TryResolve(completion.ContextId,completion.ItemId,completion.WindowId,out var group,out var selected)){taskLog.Debug("Task completion rejected projection sequence={0}",completion.Sequence);return;}
+                taskLog.Debug("Task completion accepted sequence={0} action={1}",completion.Sequence,completion.Action);
                 switch(completion.Action)
                 {
                     case "activate" when selected==null&&group.Windows.Count<=1: Click(group,null);break;
@@ -311,7 +314,7 @@ internal sealed class ApplicationDockService : IDisposable
         catch { return null; }
     }
 
-    private void Click(DockGroup group, DockTask selected)
+    private async void Click(DockGroup group, DockTask selected)
     {
         try
         {
@@ -321,7 +324,10 @@ internal sealed class ApplicationDockService : IDisposable
                 var launchClock = System.Diagnostics.Stopwatch.StartNew();
                 var launchLog = NLog.LogManager.GetLogger("Dext.ApplicationDock.Launch");
                 launchLog.Info("Application launch begin");
-                try { catalog.Launch(group.Pin.Target, group.Pin.Arguments, group.Pin.WorkingDirectory)?.Dispose(); }
+                // The physical gesture and projection have already been validated.
+                // Shell COM may wait for Explorer; never hold the UI/input dispatcher.
+                var pin = group.Pin;
+                try { await Task.Run(() => catalog.Launch(pin.Target, pin.Arguments, pin.WorkingDirectory)?.Dispose()); }
                 finally { launchLog.Info("Application launch call returned after {0} ms", launchClock.ElapsedMilliseconds); }
             }
             else if (action is DockAction.Activate or DockAction.Minimize)

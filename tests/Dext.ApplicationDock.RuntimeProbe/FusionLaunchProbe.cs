@@ -49,6 +49,9 @@ internal sealed class FusionLaunchProbe : IDisposable
             if(phase=="afterUp")upMs=elapsed.ElapsedMilliseconds;
             Console.WriteLine($"TIMING {phase} elapsedMs={elapsed.ElapsedMilliseconds} utc={DateTime.UtcNow:O}");
         });
+        var responseClock=Stopwatch.StartNew();
+        _=Read();
+        Console.WriteLine("TIMING Core status response during launch ms="+responseClock.ElapsedMilliseconds);
         int started=0;
         var seen=new HashSet<int>();
         await FusionActionWindow.Wait(()=>{

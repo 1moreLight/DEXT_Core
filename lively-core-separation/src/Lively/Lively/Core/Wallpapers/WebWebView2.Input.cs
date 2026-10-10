@@ -47,10 +47,14 @@ namespace Lively.Core.Wallpapers
             try{packet=new(sample.Input);}catch(ArgumentException){return;}
             if(!packet.SampleVisual || packet.Kind!="down"&&packet.Kind!="up"&&packet.Kind!="focus")return;
             var measured=ReadNativeViewport();var foreground=NativeInputIsForeground?.Invoke()==true;
+            if(nativeDock)Logger.Debug($"Task sample received kind={packet.Kind} sequence={packet.GestureId} hit={sample.TaskHit!=null} foreground={foreground} raw={before.Gesture?.Sequence} released={before.Gesture?.Released} geometry={before.GeometryVersion}/{packet.GeometryVersion}");
             a.Input.CheckNativeViewport(measured,foreground);
             if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
                 measured.Width!=packet.PixelWidth || measured.Height!=packet.PixelHeight || measured.Dpi!=packet.Dpi ||
-                sample.Buttons.Any(b=>b==null))return;
+                sample.Buttons.Any(b=>b==null)){
+                if(nativeDock)Logger.Debug($"Task sample rejected viewport sequence={packet.GestureId}");
+                return;
+            }
             // Read the raw gesture before the author's empty hit retires it. A task
             // receipt stays separate and cannot mint an authored button proof.
             DockTaskCompletion task=null;
@@ -60,8 +64,12 @@ namespace Lively.Core.Wallpapers
             {
                 var raw=a.Input.State;
                 task=a.Tasks.Sample(raw?.Gesture,packet,sample.TaskHit,raw?.CancellationVersion??-1);
+                Logger.Debug($"Task sample paired kind={packet.Kind} sequence={packet.GestureId} complete={task!=null} raw={raw?.Gesture?.Sequence}");
             }
-            else a.Tasks.Clear();
+            else {
+                a.Tasks.Clear();
+                if(nativeDock)Logger.Debug($"Task sample rejected eligibility kind={packet.Kind} sequence={packet.GestureId}");
+            }
             System.Collections.Generic.IReadOnlyList<RoomNativeButton> taskKeys=null;
             if(nativeDock&&packet.Key!=0&&!a.TaskKeyboard.TryRegions(sample.TaskTargets,out taskKeys))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
@@ -69,8 +77,9 @@ namespace Lively.Core.Wallpapers
                 packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse,taskKeys)){
                 NotifyNative(a,before,packet.Kind!="focus");
                 if(packet.Kind=="focus")NativeKeys(a).Flush();
-                if(task!=null)NativeDockTaskCompleted?.Invoke(this,task);
+                if(task!=null){Logger.Debug($"Task sample completed sequence={packet.GestureId}");NativeDockTaskCompleted?.Invoke(this,task);}
             }
+            else if(nativeDock)Logger.Debug($"Task sample rejected geometry kind={packet.Kind} sequence={packet.GestureId}");
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
