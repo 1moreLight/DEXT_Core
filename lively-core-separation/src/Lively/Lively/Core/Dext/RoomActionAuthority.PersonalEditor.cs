@@ -93,7 +93,7 @@ internal sealed partial class RoomActionAuthority
     // Called only by the Core scan worker; the configurator cannot supply item IDs.
     internal RoomDesktopSync? CommitDesktopScan(Guid connection, RoomSessionPeer peer, Guid session,
         string roomId, string stamp, long expectedRevision, string deskId,
-        IReadOnlyCollection<string> itemIds, bool complete)
+        IReadOnlyCollection<string> itemIds, bool complete, IReadOnlyDictionary<string, string>? renames = null)
     {
         var spin = new SpinWait();
         while (true)
@@ -106,7 +106,7 @@ internal sealed partial class RoomActionAuthority
                         state.Revision != expectedRevision || !context!.Installation.DeskIds.Contains(deskId, StringComparer.Ordinal) ||
                         !state.Rooms.TryGetValue(roomId, out var room) || room.DesktopSync is not { Enabled: true } previous || previous.DeskId != deskId)
                         return (Publish: false, Settings: (RoomDesktopSync?)null);
-                    var next = RoomDesktopSync.Reconcile(previous, deskId, true, itemIds, complete);
+                    var next = RoomDesktopSync.Reconcile(previous, deskId, true, itemIds, complete, renames);
                     var changed = previous.Slots.Count != next.Slots.Count || previous.Slots.Any(p => !next.Slots.TryGetValue(p.Key, out var slot) || slot != p.Value);
                     if (changed) room.DesktopSync = next;
                     return (Publish: changed, Settings: (RoomDesktopSync?)next);

@@ -43,6 +43,14 @@ static partial class RoomActionChecks
    revision=Editor(Read(f)).Revision;
    Editor(Edit(f,new{operation="refreshDesktopSync"}));Eq(revision,Editor(Read(f)).Revision);
   });
+  check("Core scan commit carries rename slots through private storage",()=>{
+   using var f=new ActionFixture();var old="desktop-"+new string('a',64);var renamed="desktop-"+new string('b',64);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),Editor(Read(f)).Revision,"home",new[]{old},true);
+   var slot=f.Store.ReadDesktopSync(Room)!.Slots[old];
+   var next=f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),Editor(Read(f)).Revision,"home",new[]{renamed},true,new Dictionary<string,string>{{old,renamed}});
+   Eq(slot,next!.Slots[renamed]);Eq(false,next.Slots.ContainsKey(old));Eq(slot,f.Store.ReadDesktopSync(Room)!.Slots[renamed]);
+  });
   check("official desktop presentation transfers icons once and clears disabled or replaced contexts",()=>{
    using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
    var item=new RoomDesktopViewItem("desktop-"+new string('a',64),"File.txt","file",0,null);

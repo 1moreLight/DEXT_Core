@@ -24,7 +24,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         if (reply.Status == "accepted")
         {
             using var document = JsonDocument.Parse(editJson);
-            if (document.RootElement.GetProperty("operation").GetString() is "setDesktopSync" or "refreshDesktopSync") QueueDesktopScan();
+            var operation = document.RootElement.GetProperty("operation").GetString();
+            if (operation is "setDesktopSync" or "refreshDesktopSync") QueueDesktopScan(reset: operation == "setDesktopSync");
         }
         return reply;
     }

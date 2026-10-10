@@ -59,7 +59,7 @@ internal static class DesktopDirectoryScanner
                         var extension = Path.GetExtension(name);
                         var kind = (attributes & FileAttributes.Directory) != 0 ? "folder" :
                             extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) || extension.Equals(".url", StringComparison.OrdinalIgnoreCase) ? "shortcut" : "file";
-                        var id = "desktop-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fullPath.ToUpperInvariant()))).ToLowerInvariant();
+                        var id = IdentityForPath(fullPath);
                         items.Add(fullPath, new(id, fullPath, kind == "shortcut" ? Path.GetFileNameWithoutExtension(name) : name,
                             kind, Array.AsReadOnly(new[] { folder.Source })));
                     }
@@ -75,6 +75,9 @@ internal static class DesktopDirectoryScanner
             .ThenBy(item => item.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
         return new(Array.AsReadOnly(ordered), issues.AsReadOnly(), truncated);
     }
+
+    internal static string IdentityForPath(string path) => "desktop-" + Convert.ToHexString(SHA256.HashData(
+        Encoding.UTF8.GetBytes(Path.GetFullPath(path).ToUpperInvariant()))).ToLowerInvariant();
 
     private static bool ReadFailure(Exception error) => error is IOException or UnauthorizedAccessException or
         System.Security.SecurityException or ArgumentException or NotSupportedException;
