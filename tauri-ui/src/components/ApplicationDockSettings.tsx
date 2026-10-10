@@ -7,7 +7,7 @@ import type {AppInfo} from "@/features/runtime/types";
 
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
 type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
-type State = {autoHide?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type State = {autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
@@ -79,6 +79,9 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="启用系统应用 Dock" disabled={disabled} checked={state?.enabled ?? false} onChange={event => void edit({operation:"enable",enabled:event.target.checked})}/>启用</label>
     </div>
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="自动隐藏应用 Dock" disabled={disabled} checked={state?.autoHide ?? false} onChange={event => void edit({operation:"autoHide",autoHide:event.target.checked})}/>自动隐藏：移到主屏底部中央唤出</label>
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="应用 Dock 常驻占位" disabled={disabled} checked={state?.reserveSpace ?? false} onChange={event => void edit({operation:"reserveSpace",reserveSpace:event.target.checked})}/>常驻占位：最大化窗口为 Dock 留出空间</label>
+    <p className="text-xs text-muted-foreground">自动隐藏与常驻占位互斥；都不选时，Dock 浮在窗口上方。</p>
+    {state?.reserveSpace && <p role="status" className="text-xs text-muted-foreground">{state.runtime?.reservation?.ready ? "Windows 已确认 Dock 工作区占位" : state.runtime?.reservation?.error ?? "等待 Dock 就绪并确认工作区…"}</p>}
     <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键可固定应用。全屏时隐藏，退出全屏后恢复。</p>
     <p className="text-xs text-muted-foreground">启用系统应用 Dock 时，主题独立 Dock 暂停；关闭后按原主题设置恢复。桌面内的主题内容保持。</p>
     {state?.runtime?.blocked && <p role="status" className="text-xs text-muted-foreground">{state.runtime.blocked === "fullscreen" ? "检测到全屏应用，Dock 暂时隐藏；退出全屏后恢复。" : "锁屏期间 Dock 保持隐藏。"}</p>}

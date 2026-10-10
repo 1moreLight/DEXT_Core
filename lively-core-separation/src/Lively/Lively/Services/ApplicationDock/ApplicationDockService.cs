@@ -60,9 +60,11 @@ internal sealed class ApplicationDockService : IDisposable
     {
         enabled = preferences.Enabled,
         autoHide = preferences.AutoHide,
+        reserveSpace = preferences.ReserveSpace,
         taskbar = taskbar.Status(),
         runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
             waiting = preferences.Enabled && ownership.Owner == DockHost.Theme,
+            reservation = new { registered = window?.ReservationRegistered == true, ready = window?.ReservationReady == true, error = window?.ReservationError },
             blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
         navigation = rooms.ReadApplicationDockNavigation(),
         pins = preferences.Pins,
@@ -85,7 +87,10 @@ internal sealed class ApplicationDockService : IDisposable
                 updated = preferences with { Enabled = root.GetProperty("enabled").GetBoolean() };
                 break;
             case "autoHide":
-                updated = preferences with { AutoHide = root.GetProperty("autoHide").GetBoolean() };
+                updated = preferences.WithAutoHide(root.GetProperty("autoHide").GetBoolean());
+                break;
+            case "reserveSpace":
+                updated = preferences.WithReserveSpace(root.GetProperty("reserveSpace").GetBoolean());
                 break;
             case "pin":
                 var value = root.GetProperty("app");
@@ -141,10 +146,11 @@ internal sealed class ApplicationDockService : IDisposable
             return;
         }
         window ??= new ApplicationDockWindow(Click, TogglePin, Icon, Navigate);
+        window.SetReservationMode(preferences.ReserveSpace);
         window.UpdateNavigation(rooms.ReadApplicationDockNavigation());
         window.Update(groups, DockWindows.Foreground, error);
         window.SetVisibilityMode(preferences.AutoHide, () => facts.Read(string.Empty).Locked || DockWindows.IsFullscreen());
-        taskbar.RequestAutomatic(corePid, DockVisibilityPolicy.TaskbarReady(true, window.NativeReady, facts.Read(string.Empty).Locked));
+        taskbar.RequestAutomatic(corePid, DockVisibilityPolicy.TaskbarReady(true, window.NativeReady && (!preferences.ReserveSpace || window.ReservationReady), facts.Read(string.Empty).Locked));
     }
 
     private async Task ReleaseOwnerAsync()

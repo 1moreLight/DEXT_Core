@@ -9,7 +9,11 @@ namespace Lively.Services.ApplicationDock;
 internal sealed record DockPin(string Name, string Target, string Arguments, string WorkingDirectory);
 internal sealed record DockTask(long Handle, int ProcessId, string Title, string Target);
 internal sealed record DockGroup(string Key, string Name, DockPin Pin, IReadOnlyList<DockTask> Windows);
-internal sealed record DockPreferences(bool Enabled, DockPin[] Pins, bool AutoHide = false);
+internal sealed record DockPreferences(bool Enabled, DockPin[] Pins, bool AutoHide = false, bool ReserveSpace = false)
+{
+    public DockPreferences WithAutoHide(bool value) => this with { AutoHide = value, ReserveSpace = value ? false : ReserveSpace };
+    public DockPreferences WithReserveSpace(bool value) => this with { ReserveSpace = value, AutoHide = value ? false : AutoHide };
+}
 internal enum DockAction { Launch, Activate, Minimize, Choose }
 
 internal static class DockModel
@@ -46,7 +50,7 @@ internal static class DockPreferenceFile
     {
         if (!File.Exists(path)) return new(false, Array.Empty<DockPin>());
         var value = JsonSerializer.Deserialize<DockPreferences>(File.ReadAllText(path));
-        if (value == null || value.Pins == null || value.Pins.Any(p => p == null || string.IsNullOrWhiteSpace(p.Target) || string.IsNullOrWhiteSpace(p.Name)))
+        if (value == null || value.AutoHide && value.ReserveSpace || value.Pins == null || value.Pins.Any(p => p == null || string.IsNullOrWhiteSpace(p.Target) || string.IsNullOrWhiteSpace(p.Name)))
             throw new JsonException("Application Dock preferences are invalid.");
         return value;
     }

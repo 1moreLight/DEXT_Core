@@ -384,3 +384,4 @@
 | #277 | 探针需读 camelCase wire 且不能把启动暂停当作导航失败 | [toolchain](errors/toolchain.md) |
 | #278 | 应用Dock与手动隐藏同为Core PID，自动释放不能等待独立手动租约消失 | [backend](errors/backend.md) |
 | #279 | 任务栏工作区变化会误判最大化为全屏；恢复任务栏后唤出区须仍在物理底边 | [frontend](errors/frontend.md) |
+| #280 | 原生屏幕查询异常须同步使AppBar就绪失效，不能仅显示错误并保留旧Ready | [backend](errors/backend.md) |

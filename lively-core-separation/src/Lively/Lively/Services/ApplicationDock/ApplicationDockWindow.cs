@@ -63,11 +63,13 @@ internal sealed partial class ApplicationDockWindow : Window
         Loaded += (_, _) => Position();
         InitializePreview();
         InitializeVisibility();
+        Closed += (_, _) => appBar?.Dispose();
     }
 
     public void Suspend()
     {
         StopVisibility();
+        appBar?.Reservation.Release();
         foreach (var button in strip.Children.OfType<Button>())
             if (button.ContextMenu is { } menu) menu.IsOpen = false;
         ClosePreview();
@@ -78,8 +80,9 @@ internal sealed partial class ApplicationDockWindow : Window
     {
         var work = SystemParameters.WorkArea;
         MaxWidth = Math.Max(120, work.Width - 32);
-        Left = work.Left + Math.Max(0, (work.Width - ActualWidth) / 2);
-        Top = work.Bottom - ActualHeight - 8;
+        var placement = ReservedPlacement() ?? work;
+        Left = placement.Left + Math.Max(0, (placement.Width - ActualWidth) / 2);
+        Top = placement.Bottom - ActualHeight - 8;
     }
 
     public void Update(IReadOnlyList<DockGroup> groups, long foreground, string error)

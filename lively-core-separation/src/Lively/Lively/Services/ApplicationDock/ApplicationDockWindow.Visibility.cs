@@ -43,6 +43,7 @@ internal sealed partial class ApplicationDockWindow
     private void UpdatePresentation()
     {
         if (!visibilityActive) return;
+        UpdateReservation();
         Position();
         var blocked = presentationBlocked?.Invoke() == true;
         var pointer = false;
