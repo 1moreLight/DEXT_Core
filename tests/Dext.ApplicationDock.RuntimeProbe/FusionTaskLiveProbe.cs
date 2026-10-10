@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false,bool closeTarget=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false,bool closeTarget=false,bool fullscreen=false,bool noDock=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -25,7 +25,7 @@ internal static class FusionTaskLiveProbe
         string last="waiting";
         try
         {
-            if(navigation){
+            if(navigation||noDock){
                 var session=client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5));
                 var reply=client.EditRoomPersonal(new(){RoomId=session.RoomId,InstallationStamp=session.InstallationStamp,EditJson="{\"operation\":\"enableNavigation\"}"},deadline:DateTime.UtcNow.AddSeconds(5));
                 using var enabled=JsonDocument.Parse(reply.ReplyJson);
@@ -93,6 +93,8 @@ internal static class FusionTaskLiveProbe
                                 if(changed)throw new Exception("Taskbar appeared or Dock moved during same-host Desk navigation");
                                 Console.WriteLine("PASS taskbar stays hidden and native Dock position stays stable across both Desk changes");
                             }
+                            else if(noDock)await target.VerifyNoDock(window,Observe,()=>client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).CurrentDeskId);
+                            else if(fullscreen)await target.VerifyFullscreen(window,Observe);
                             else if(closeTarget)await target.VerifyClosedTarget(window,Observe);
                             else if(pinMenu)await target.VerifyPinMenu(window,Observe);
                             else if(menu)await target.VerifyWindowMenu(window,Observe,second);

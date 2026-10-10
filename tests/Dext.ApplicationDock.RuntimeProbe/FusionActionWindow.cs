@@ -131,6 +131,52 @@ internal sealed class FusionActionWindow : IDisposable
         await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not restore after group shrank: "+observe()?.GetRawText());
         Console.WriteLine("PASS closing one grouped window refreshes task and remaining minimized window restores");
     }
+    internal async Task VerifyNoDock(IntPtr dock,Func<JsonElement?> observe,Func<string> currentDesk)
+    {
+        JsonElement? Next(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["navigation"]?["next"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+        await Click(dock,Next);
+        await Wait(()=>currentDesk()=="focus"&&observe()?.GetProperty("navigation").GetProperty("transition").ValueKind==JsonValueKind.Null,"Next did not settle on focus before no-Dock test");
+        string stableTarget=null;var stableSince=DateTime.UtcNow;
+        await Wait(()=>{
+            var v=observe();if(v is null||!v.Value.GetProperty("enabled").GetBoolean())return false;
+            var current=v.Value.GetProperty("target");if(current.ValueKind!=JsonValueKind.Object)return false;
+            var key=current.GetRawText();if(key!=stableTarget){stableTarget=key;stableSince=DateTime.UtcNow;}
+            return DateTime.UtcNow-stableSince>=TimeSpan.FromMilliseconds(300);
+        },"Task layout did not settle after entering focus");
+        await Click(dock,observe,right:true);
+        await Wait(()=>observe()?.GetProperty("menuPin").ValueKind==JsonValueKind.Object,"Task menu did not open before leaving Dock Desk");
+        await Click(dock,Next);
+        await Wait(()=>currentDesk()=="quiet","Author next did not enter no-Dock Desk");
+        await Wait(()=>!IsWindow(dock),"Old Dock window remained on no-Dock Desk");
+        await Wait(()=>NativeTaskbar.IsWindowVisible(NativeTaskbar.FindWindow("Shell_TrayWnd",null)),"Windows taskbar did not recover on no-Dock Desk");
+        Console.WriteLine("PASS actual navigation to no-Dock Desk closes native Dock/menu and restores Windows taskbar");
+    }
+    internal async Task VerifyFullscreen(IntPtr dock,Func<JsonElement?> observe)
+    {
+        var foreground=GetForegroundWindow();
+        await Click(dock,observe,right:true);
+        await Wait(()=>observe()?.GetProperty("menuPin").ValueKind==JsonValueKind.Object,"Pin menu did not open before fullscreen");
+        var previousBounds=System.Drawing.Rectangle.Empty;
+        var previousBorder=FormBorderStyle.Sizable;
+        try {
+            form.Invoke(()=>{previousBounds=form.Bounds;previousBorder=form.FormBorderStyle;form.FormBorderStyle=FormBorderStyle.None;form.Bounds=Screen.FromHandle(dock).Bounds;});
+            SetForegroundWindow(Handle);
+            await Wait(()=>GetForegroundWindow()==Handle,"Owned fullscreen window did not become foreground");
+            await Wait(()=>!IsWindowVisible(dock),"Dock remained visible over owned fullscreen window");
+            await Wait(()=>observe()?.GetProperty("menuBack").ValueKind==JsonValueKind.Null,"Task menu survived fullscreen hiding");
+            Console.WriteLine("PASS owned fullscreen hides native Dock and clears open task menu");
+        } finally {
+            form.Invoke(()=>{form.FormBorderStyle=previousBorder;if(!previousBounds.IsEmpty)form.Bounds=previousBounds;});
+            SetForegroundWindow(foreground);
+        }
+        await Wait(()=>{
+            var origin=new Point();
+            if(GetClientRect(dock,out var rect)&&ClientToScreen(dock,ref origin))SetCursorPos(origin.X+rect.Right/2,origin.Y+rect.Bottom-1);
+            return IsWindowVisible(dock)&&observe()?.GetProperty("enabled").GetBoolean()==true;
+        },"Dock did not recover after leaving fullscreen");
+        if(observe()?.GetProperty("menuBack").ValueKind!=JsonValueKind.Null)throw new Exception("Old menu reappeared after fullscreen");
+        Console.WriteLine("PASS leaving fullscreen restores usable Dock without stale menu");
+    }
     internal async Task VerifyClosedTarget(IntPtr dock,Func<JsonElement?> observe)
     {
         var foreground=GetForegroundWindow();
