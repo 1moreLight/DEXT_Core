@@ -36,6 +36,7 @@ internal static class Program
                 view.NavigationCompleted += (_, args) => { if (args.IsSuccess) loaded.TrySetResult(); else loaded.TrySetException(new Exception(args.WebErrorStatus.ToString())); };
                 view.NavigateToString("<!doctype html><html><body>Registration-only probe</body></html>");
                 await loaded.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                await AdditionalFileProbe.Run(view);
                 Inspect(form, view, "default");
                 view.AllowExternalDrop = false;
                 await Task.Delay(200);

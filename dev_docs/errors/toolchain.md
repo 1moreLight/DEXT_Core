@@ -548,3 +548,7 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 ## #318 PowerShell单项嵌套替换数组展开（2026-10-11）
 
 批量文档替换用@(@(旧值,新值))存单个替换对时，PowerShell枚举展开成字符串数组，循环索引取到字符，导致ROADMAP表格竖线误替换。git diff --check及时发现。仅从HEAD读回本轮开始时干净的三个受影响文档并逐文件明确Replace重做，diff恢复预期单行改动。以后使用有Old/New属性的对象或明确Replace，修改后核对diff统计和正文；不对有既存改动的文档套用此恢复方法。
+
+## #319 WebView脚本异常未导致C#调用失败（2026-10-11）
+
+拖放探针假设new File会作为空路径的CoreWebView2File抵达原生；本机WebView154实际在postMessageWithAdditionalObjects立即抛TypeError，ExecuteScriptAsync却正常返回，随后等待WebMessage超时。修复：脚本try/catch显式返回posted/error对象，只有posted才等事件。真实磁盘File和目录的浏览器drop→原生路径检查通过；此结果不证明OS/Explorer实际拖入。不要把ExecuteScriptAsync任务完成当作页面脚本成功。
