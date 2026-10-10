@@ -2,7 +2,7 @@
   'use strict';
   const transport=globalThis.chrome?.webview,container=document.getElementById('runtime');
   if(!transport||!container)return;
-  let context=null,snapshot=null,host=null,retired=0,disposed=false,paused=false,lastError=null,candidate=0;
+  let context=null,snapshot=null,host=null,tasks=null,retired=0,disposed=false,paused=false,lastError=null,candidate=0;
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const text=v=>typeof v==='string'&&v.length>0&&v.length<=128&&!/[\u0000-\u001f]/.test(v);
   const positive=v=>Number.isSafeInteger(v)&&v>0;
@@ -24,7 +24,7 @@
       (value.targetDeskId===null?value.transitionId===null&&value.deadlineUtc===null:text(value.transitionId)&&typeof value.deadlineUtc==='string'&&Number.isFinite(Date.parse(value.deadlineUtc)))&&typeof value.active==='boolean'&&typeof value.operable==='boolean'&&object(life)&&
       ['starting','desktop','idle'].includes(life.stage)&&typeof life.playbackPaused==='boolean'&&typeof life.locked==='boolean'&&Number.isSafeInteger(life.revision)&&life.revision>=0&&(!snapshot||life.revision>=snapshot.lifecycle.revision);
   }
-  function disposeHost(){host?.dispose();host=null;snapshot=null;}
+  function disposeHost(){tasks?.dispose();tasks=null;host?.dispose();host=null;snapshot=null;}
   function mount(){
     if(host||!context||!snapshot)return;
     let native;
@@ -34,7 +34,14 @@
       host=DextDomHost.createDomHost({context,initialSnapshot:snapshot,document,container,native,getViewport:viewport,sendControl,initialPlaybackSuspended:paused,
         applyFrameState:(frame,value)=>sendControl({type:'dext:v3-frame-policy',protocolVersion:1,runtimeGeneration:value.identity.runtimeGeneration,
           sessionId:value.identity.sessionId,revision:value.identity.revision,frameName:frame.name,consumer:value.consumerId,instanceId:value.instanceId,active:value.state==='active'})});
-      host.ready.then(announceDockReady,()=>{lastError={code:'renderUnavailable'};});
+      if(context.viewKind==='dock')tasks=DextTaskAreaController.createTaskAreaController({
+        createArea:()=>DextTaskAreaHost.createTaskAreaHost({document,container,onAction:value=>{
+          if(context&&snapshot)sendControl({type:'dext:v3-task-action',protocolVersion:1,runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision,...value});
+        }}),
+        getState:()=>({context,snapshot,dom:host,viewport:viewport(),visible:!paused}),
+        onError:()=>{lastError={code:'taskAreaUnavailable'};}
+      });
+      host.ready.then(ready=>{tasks?.refresh();announceDockReady(ready);},()=>{lastError={code:'renderUnavailable'};});
     }catch(_){native?.dispose();lastError={code:'renderUnavailable'};}
   }
   function runtimeMessage(value){
@@ -51,11 +58,11 @@
     }
     if(value.type==='dext:v3-session'){
       if(!validSnapshot(value))return;snapshot=copy(value);if(!snapshot.active){retired=Math.max(retired,context.runtimeGeneration);disposeHost();context=null;return;}
-      if(host)host.acceptSnapshot(snapshot).then(announceDockReady,()=>{lastError={code:'renderUnavailable'};});else mount();
+      tasks?.suspend();if(host)host.acceptSnapshot(snapshot).then(ready=>{tasks?.refresh();announceDockReady(ready);},()=>{lastError={code:'renderUnavailable'};});else mount();
     }
   }
   const playback=DextPlaybackHost.createPlaybackHost({matchesRuntime:generation=>generation===context?.runtimeGeneration||generation===candidate,
-    setSuspended:value=>{paused=value;host?.setPlaybackSuspended(value);},onRuntimeMessage:runtimeMessage});
+    setSuspended:value=>{paused=value;tasks?.suspend();host?.setPlaybackSuspended(value);if(!value)tasks?.refresh();},onRuntimeMessage:runtimeMessage});
   // The Player invokes this function only on the fixed official document.
   // A cached new context can legitimately replace the current generation.
   globalThis.dextNativePlaybackChanged=value=>{
@@ -78,12 +85,16 @@
   // included in the author SDK or forwarded from an author frame.
   globalThis.dextNativeDockVisibility=value=>{
     if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||typeof value.visible!=='boolean')return false;
-    paused=!value.visible;host?.setPlaybackSuspended(paused);return true;
+    paused=!value.visible;tasks?.suspend();host?.setPlaybackSuspended(paused);tasks?.refresh();return true;
+  };
+  globalThis.dextNativeTaskSnapshot=value=>{
+    if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||!tasks)return false;
+    return tasks.accept(value.snapshot,value.actionsEnabled===true);
   };
   globalThis.dextNativeDockRefresh=()=>context?.viewKind==='dock'&&host?host.refreshGeometry():Promise.resolve(false);
   const receive=event=>runtimeMessage(event.data);
   transport.addEventListener('message',receive);
-  const resize=()=>{host?.resize().catch(()=>{lastError={code:'viewportUnavailable'};});};
+  const resize=()=>{tasks?.suspend();host?.resize().then(()=>tasks?.refresh()).catch(()=>{lastError={code:'viewportUnavailable'};});};
   addEventListener('resize',resize);
   function dispose(){if(disposed)return;disposed=true;playback.dispose();disposeHost();context=null;transport.removeEventListener('message',receive);removeEventListener('resize',resize);}
   addEventListener('pagehide',dispose,{once:true});
@@ -95,6 +106,6 @@
     return host.beginNativeInputSample({runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision},value.geometryVersion,value.sampleId);
   };
   function scopeForInput(value){return context&&snapshot&&value.runtimeGeneration===context.runtimeGeneration&&value.sessionId===snapshot.sessionId&&value.revision===snapshot.revision;}
-  globalThis.dextRuntimeDiagnostics=()=>({disposed,paused,runtimeGeneration:context?.runtimeGeneration||retired,sessionId:context?.sessionId||null,revision:snapshot?.revision||0,lastError:lastError&&{...lastError},runtime:host?.readDiagnostics()||null});
+  globalThis.dextRuntimeDiagnostics=()=>({disposed,paused,runtimeGeneration:context?.runtimeGeneration||retired,sessionId:context?.sessionId||null,revision:snapshot?.revision||0,lastError:lastError&&{...lastError},runtime:host?.readDiagnostics()||null,taskArea:tasks?.read()||null});
   sendControl({type:'dext:v3-page-ready'});
 })();

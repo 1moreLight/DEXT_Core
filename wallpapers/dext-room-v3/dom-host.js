@@ -393,7 +393,7 @@
         if(disposed||!dockView)return Promise.resolve(false);
         if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return Promise.resolve(false);
         const next=value===null?null:{x:value.x,y:value.y,width:value.width,height:value.height};
-        if(JSON.stringify(next)===JSON.stringify(taskAreaOcclusion))return Promise.resolve(inputReady);
+        if(JSON.stringify(next)===JSON.stringify(taskAreaOcclusion))return inputReady?Promise.resolve(true):render();
         taskAreaOcclusion=next;return render();
       },
       refreshGeometry(){return disposed?Promise.resolve(false):render();},

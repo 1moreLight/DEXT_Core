@@ -21,7 +21,9 @@
   }
   const rect={x:r.x/logical.width*viewport.width,y:r.y/logical.height*viewport.height,width:r.width/logical.width*viewport.width,height:r.height/logical.height*viewport.height};
   if(rect.width<style.iconSizeDip+32||rect.height<style.iconSizeDip+16)return null;
-  return frozen({rect,style,occlusion:{x:r.x/logical.width*1920,y:r.y/logical.height*1080,width:r.width/logical.width*1920,height:r.height/logical.height*1080}});
+  const x=r.x/logical.width*1920,y=r.y/logical.height*1080;
+  // Edge-aligned logical rectangles must stay within the exact canvas bounds.
+  return frozen({rect,style,occlusion:{x,y,width:Math.min(r.width/logical.width*1920,1920-x),height:Math.min(r.height/logical.height*1080,1080-y)}});
  }
  function snapshot(value){
   if(!object(value)||!guid(value.contextId)||!Number.isSafeInteger(value.sequence)||value.sequence<=0||!Array.isArray(value.items)||value.items.length>1024)return null;

@@ -1,4 +1,4 @@
-状态：开做。前两步模块/几何已具备，当前尚未加载到正式index/main，尚无Core数据/图标/动作通道；完整私有接线、真实Player输入和演示仍必做。
+状态：开做。正式index/main、Core展示/图标与Player私有通道已接；原生任务动作、真实Player输入和演示仍必做。以下按时间保留接线历史，最新状态见文末。
 
 ## 03 接线继续入口（已核对，尚未实现）
 - 官方DOM加载入口：wallpapers/dext-room-v3/index.html/main.js；目前新model/host/css尚未加载，只有后台测试加载。接线时先Core允许，再挂官方区并await setTaskAreaOcclusion的几何确认，最后允许动作；停用顺序相反。不能把onOccupied通知发送当作Core已确认。
@@ -19,3 +19,16 @@
 本轮增量：Core DockTaskDisplay + 已附着 Player 的私有快照发送、Player 身份核对后的顶层调用入口已写；PNG 缓存/缺图后备与 DOM 图标已写。完整 Release 构建通过。main 尚未定义 dextNativeTaskSnapshot，因而不会激活未接完动作的区域；完整输入/页面控制器仍开做，不宣称任务区已能实际操作应用。
 验证：应用原46项+展示适配检查通过；Node72项、headless Edge六组（含真实PNG渲染、节点保留和点击）通过。运行候选未替换。
 用户补充占位要求与 BewlyCat 调查见 ../../research/DOCK_WORKAREA_2026-10-10.md；P8-014继续复用原生工作区占位，普通拖动越界与最大化分开验收。
+
+### 正式页面控制器（开做）
+- 使用 dom-host.readDiagnostics 中已经合并 Desk 覆盖的实际 dock 实例，不再另写一套合并算法。
+- 壁纸只读数据刷新不反复发布几何。布局/可见性改变时立即取消按下，串行等待旧区域清理和新 occlusion 确认，再显示区域；过期异步结果不能重新显示已隐藏区。
+- 新 Core 私有快照携带 ActionsEnabled；原生动作链尚未完成时始终 false，页面只显示图标且按钮禁用。主控制器不能把数据到达当作获得操作权限。
+- 官方脚本/CSS加入固定资源白名单并由正式index加载。desktop视图完全不创建任务区，旧主题没有声明不显示。
+
+正式控制器增量：index/main已加载task-area模块，Player私有快照现在到达dextNativeTaskSnapshot；controller从实际实例读取有效config，串行确认occlusion后显示，隐藏/撤销立即取消。数据更新不重发几何；Core ActionsEnabled默认false，原生动作尚未实现，显示区按钮保持禁用。86项Node、七组headless DOM、完整Release构建通过；未部署。
+
+原生输入接续调查：WebWebView2.Input.cs 的 NativeMouseDown/Up 已为当前 RawInput 边沿生成 RoomNativeInputGesture，再由 Form1.NativeInput.cs 的 PrepareNativeSampleAsync/CompleteNativeSampleAsync 在真实投递前后采样。作者几何经 RoomSessionPlayerBridge.Input.cs 的manifest catalog验证，新任务ID不能放进作者buttons。下一次可给专用任务采样增加独立字段和对应完成关联，复用同一次物理边沿与实际窗口，不新增hook；同时处理键盘官方任务焦点与触摸，不能只实现鼠标就把03做完。main当前dext:v3-task-action尚无Core接收器，ActionsEnabled不得先置true。
+启动复核：task-controller-runtime-preserved.log确认旧候选Core39560复用，-CoreOnly未启动配置器；该复核不代表新展示区部署。
+生命周期补证：新控制器误用desktop operable已通过定向RED→GREEN修正，普通应用取得前台/桌面播放暂停不隐藏仍可见的Dock。最终Node87项通过；见ERRORS #289。
+最终本轮状态：正式展示通道与页面控制器已接；原生动作仍待做，Core ActionsEnabled=false。独立review发现的浮点边界/几何回退问题已两项RED→GREEN修复，最终89项Node、七组DOM通过。旧阶段“main未接”等语句仅为增量历史，不是当前状态。四步进度仍2/4=50%。

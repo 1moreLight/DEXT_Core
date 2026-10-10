@@ -677,3 +677,9 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 ## #242 原生Dock自然输入不能与Core转发重复；暂停桌面不应卡住Dock导航（2026-10-05）
 源码接线发现：原生顶层WebView会自然收到输入，既有Core私有链又会转发同一边沿。Dock专用预装门控现在在样本准备后允许一次对应边沿及一次click，阻止未准备和重复边沿；桌面默认不开该门控。外围按键只记录本地held，避免误清空闲Dock几何；触边刷新避开未完成的鼠标/键盘动作，鼠标准入读取真实Dock HWND而非要求桌面前台。
 同一次接线发现kernel普通Request在桌面不可操作时只排队，Dock普通软件前导航会等桌面恢复。已消费真实输入的Dock内部请求现在先持久化并直接提交Desk，保留原播放/前台事实，锁屏和非Desktop阶段仍拒绝；旧过渡完成不再匹配。以上为源码处理，只有JS语法/diff检查，不宣称C#编译或真实Windows点击/导航已通过，实际门槛集中游戏后执行。
+
+## #289 官方任务区误用桌面 operable 条件（2026-10-10）
+接线检查发现 task-area-controller 要求 snapshot.operable；内核该字段依赖桌面前台，普通应用激活后即可能为false。既有Dock作者几何和数据刻意不使用这个条件。新增“Dock可见但desktop operable=false/playbackPaused=true”检查先复现失败，再去掉任务区对该字段的依赖，保留active、desktop阶段、locked和独立窗口visible条件，回归通过。顶层Dock不得继承壁纸的前台/暂停策略。
+
+## #290 任务区几何确认不得由普通刷新替代（2026-10-10）
+独立review发现：1000逻辑宽度中的x=70,width=930换算为1920画布后，右端可能成为1920.0000000000002，dom-host正确拒绝但controller以refreshGeometry成功替代确认，导致区域显示而底层作者命中未被扣除。两项回归先RED：实际dom-host无法接受此边界、controller错误回退。修复为归一化宽高不超过剩余画布；移除controller普通刷新回退；同区域尚未inputReady时由setTaskAreaOcclusion自身重新render确认。最终89项Node与七组DOM通过。

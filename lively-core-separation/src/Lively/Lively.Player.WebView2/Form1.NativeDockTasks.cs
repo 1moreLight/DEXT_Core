@@ -19,7 +19,7 @@ namespace Lively.Player.WebView2
             {
                 ["runtimeGeneration"] = value.RuntimeGeneration,
                 ["sessionId"] = value.SessionId.ToString(), ["revision"] = value.Revision,
-                ["snapshot"] = JObject.Parse(value.SnapshotJson)
+                ["snapshot"] = JObject.Parse(value.SnapshotJson), ["actionsEnabled"] = value.ActionsEnabled
             };
             await webView.CoreWebView2.ExecuteScriptAsync(
                 "this.dextNativeTaskSnapshot&&this.dextNativeTaskSnapshot(" + payload.ToString(Formatting.None) + ")");

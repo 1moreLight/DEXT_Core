@@ -505,3 +505,6 @@ ApplicationDockResponse 使用 camelCase；探针用 C# 属性大写导致找不
 
 ## #287 Player 新 partial 文件必须登记显式 Compile（2026-10-10）
 Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 C# 文件，构建提示 ApplyNativeDockTasks 不存在。将文件加入 Compile 列表后完整 Player/Watchdog/Core 构建通过。新增分册时同时检查 csproj，不能只看磁盘有文件。
+
+## #288 main VM 夹具缺少已有 Dock DOM 依赖（2026-10-10）
+本轮运行 main.test.js 时，旧夹具 document 只有 getElementById，已有 main.js 会访问 documentElement.classList，并区分 runtime/键盘按钮。先补齐这些最小DOM接口，再检查业务断言。修复后原八项及新任务快照作用域检查均通过；这不是生产页面的 classList 缺失问题。

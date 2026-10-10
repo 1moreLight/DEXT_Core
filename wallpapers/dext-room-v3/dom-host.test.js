@@ -585,3 +585,15 @@ test('task occlusion rejects desktop host and malformed regions',async()=>{
  const f=fixture();try{await f.host.ready;assert.equal(await f.host.setTaskAreaOcclusion({x:0,y:0,width:50,height:50}),false);}finally{f.host.dispose();}
  const d=fixture({viewKind:'dock'});try{await d.host.ready;for(const r of [{x:-1,y:0,width:10,height:10},{x:0,y:0,width:Infinity,height:10},{x:0,y:0,width:2000,height:10}])assert.equal(await d.host.setTaskAreaOcclusion(r),false);}finally{d.host.dispose();}
 });
+test('fractional task area touching viewport edge is acknowledged and excludes underlying author hits',async()=>{
+ const component={id:'shared',role:'dock',entry:'widget.html',placement:{x:0,y:900,width:1000,height:120},config:{dextTaskArea:{version:1,rect:{x:70,y:0,width:930,height:120}}},capabilities:[],buttonIds:['next']};
+ const f=fixture({viewKind:'dock',room:{dockComponentId:'shared',components:[component]}});
+ try{
+  await f.host.ready;
+  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:1000,height:120}]});
+  const {resolveTaskArea}=require('./task-area-model.js');const region=resolveTaskArea(component,{width:1000,height:120}).occlusion;
+  assert.equal(await f.host.setTaskAreaOcclusion(region),true);
+  const sample=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion);
+  assert.equal(sample.buttons.some(entry=>entry.polygons.some(p=>geometry.containsPoint(p,{x:.5,y:.5},{includeBoundary:false}))),false);
+ }finally{f.host.dispose();}
+});

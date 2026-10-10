@@ -2105,3 +2105,5 @@ P8-013：02做完，2/4=50%，03开做。实际headless Edge四组DOM交互与71
 P8-013阶段复核：修复新菜单返回按钮重建导致的点击丢失，真实DOM RED→GREEN，最终五组通过；保留50%开发中，03完整接线继续。
 P8-013步骤03增量：Core展示/图标与Player私有消息入口、DOM真实PNG已实现，完整Release构建与72项Node/六组DOM通过；main控制器与原生动作仍未连接，保持2/4=50%。用户窗口避让调查已落research/DOCK_WORKAREA_2026-10-10.md：本机常驻占位未启用，已有AppBar实现待统一实机确认。
 2026-10-10用户补充DeskMakeover调查：固定源码版本核对图标分析/缓存/Explorer扫描与布局，结论落research/DESKMAKEOVER_ICONS_2026-10-10.md；借鉴项挂已有远期CORE-004，未改当前下一项，P8-013仍50%。未移植外部代码、未动桌面输入。
+P8-013步骤03页面接线增量：正式index/main及资源白名单接入官方任务区，Core→Player→主页面展示贯通；几何确认与隐藏生命周期检查通过。ActionsEnabled仍false，原生操作和融合演示待做；86项Node/七组后台DOM与Release通过，50%保持。
+P8-013页面接线复核收敛：普通窗口前台不应隐藏Dock、浮点贴边遮挡确认两处问题均RED→GREEN修复；最终89项Node/七组DOM，Release通过。原生任务动作/演示继续，50%。

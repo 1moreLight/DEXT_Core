@@ -48,7 +48,22 @@ const {chromium}=require('../../tauri-ui/node_modules/playwright');
   assert.equal(await page.evaluate(()=>oldImage===document.querySelector('.dext-task-item img')),true);
   await button.click();assert.equal(await page.evaluate(()=>actions.at(-1).itemId),await page.evaluate(()=>id(2)));
   console.log('PASS actual PNG renders, retains its node on refresh and does not intercept clicks');
-  await page.evaluate(()=>host.dispose());assert.equal(await page.getByRole('button',{name:/^App /}).count(),0);assert.deepEqual(errors,[]);
+  await page.addScriptTag({path:path.join(root,'wallpapers/dext-room-v3/task-area-controller.js')});
+  await page.evaluate(()=>{
+   host.dispose();window.controllerVisible=true;window.barriers=[];
+   const dom={readDiagnostics:()=>({instances:[{...component,consumerId:'component.dock',kind:'dock',state:'active'}]}),setTaskAreaOcclusion:rect=>new Promise(resolve=>barriers.push({rect,resolve})),refreshGeometry:async()=>true};
+   window.controller=DextTaskAreaController.createTaskAreaController({createArea:()=>{window.host=DextTaskAreaHost.createTaskAreaHost({document,container:document.getElementById('area'),onAction:value=>actions.push(value)});return host;},getState:()=>({dom,context:{viewKind:'dock',manifest:{dockComponentId:'dock'}},snapshot:{active:true,operable:true,lifecycle:{stage:'desktop',locked:false}},viewport:{width:1000,height:120},visible:controllerVisible})});
+   window.pending=controller.refresh();controller.accept(sample(1,id(10),1),false);
+  });
+  await page.waitForFunction(()=>barriers.length===1);assert.equal(await button.isVisible(),false);
+  await page.evaluate(async()=>{barriers.shift().resolve(true);await pending;});assert.equal(await button.isVisible(),true);assert.equal(await button.isDisabled(),true);
+  await page.evaluate(()=>controller.accept(sample(2,id(10),1),true));assert.equal(await button.isEnabled(),true);
+  await button.click();assert.equal(await page.evaluate(()=>actions.at(-1).contextId),await page.evaluate(()=>id(10)));
+  await page.evaluate(()=>{window.pending=controller.refresh();});await page.waitForFunction(()=>barriers.length===1);
+  await page.evaluate(()=>{controllerVisible=false;window.hide=controller.refresh();barriers.shift().resolve(true);});
+  await page.waitForFunction(()=>barriers.length===1);await page.evaluate(async()=>{barriers.shift().resolve(true);await hide;});assert.equal(await button.isVisible(),false);
+  await page.evaluate(()=>controller.dispose());
+  console.log('PASS production controller waits for geometry, gates native actions and rejects stale re-show');assert.equal(await page.getByRole('button',{name:/^App /}).count(),0);assert.deepEqual(errors,[]);
   console.log('Task-area DOM checks passed; this is not native Player/physical-input evidence.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

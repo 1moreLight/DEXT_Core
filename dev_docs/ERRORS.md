@@ -394,3 +394,6 @@
 | #285 | PowerShell替换文本含中文弯引号导致整条命令解析失败 | [toolchain](errors/toolchain.md) |
 | #286 | 官方任务菜单返回按钮在快照刷新时重建，按下/抬起间丢点击 | [frontend](errors/frontend.md) |
 | #287 | 旧式Player项目显式列Compile，新partial文件未加入csproj导致方法不可见 | [toolchain](errors/toolchain.md) |
+| #288 | main页面VM夹具未跟随Dock DOM依赖更新，缺documentElement而在业务断言前失败 | [toolchain](errors/toolchain.md) |
+| #289 | 顶层Dock不能用桌面operable控制显示，否则普通应用取得前台就丢任务区 | [renderer](errors/renderer.md) |
+| #290 | 任务区浮点边界被拒绝后，普通geometry刷新不能替代指定occlusion确认 | [renderer](errors/renderer.md) |
