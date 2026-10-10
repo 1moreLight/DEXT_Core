@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false,bool closeTarget=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -93,6 +93,7 @@ internal static class FusionTaskLiveProbe
                                 if(changed)throw new Exception("Taskbar appeared or Dock moved during same-host Desk navigation");
                                 Console.WriteLine("PASS taskbar stays hidden and native Dock position stays stable across both Desk changes");
                             }
+                            else if(closeTarget)await target.VerifyClosedTarget(window,Observe);
                             else if(pinMenu)await target.VerifyPinMenu(window,Observe);
                             else if(menu)await target.VerifyWindowMenu(window,Observe,second);
                             else if(keyboard)await target.VerifyKeyboard(window,Observe);

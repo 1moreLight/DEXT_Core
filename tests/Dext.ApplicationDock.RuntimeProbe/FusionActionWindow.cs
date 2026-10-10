@@ -72,7 +72,7 @@ internal sealed class FusionActionWindow : IDisposable
         var up=new Input{Type=0,Mouse=new Mouse{Flags=right?16u:4u}};
         mark?.Invoke("beforeDown");
         if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
-        try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
+        try{await Task.Delay(90);held?.Invoke();}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
     }
     public async Task Verify(IntPtr dock,Func<JsonElement?> observe,bool touch=false,bool competingRaw=false)
     {
@@ -131,6 +131,23 @@ internal sealed class FusionActionWindow : IDisposable
         await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not restore after group shrank: "+observe()?.GetRawText());
         Console.WriteLine("PASS closing one grouped window refreshes task and remaining minimized window restores");
     }
+    internal async Task VerifyClosedTarget(IntPtr dock,Func<JsonElement?> observe)
+    {
+        var foreground=GetForegroundWindow();
+        if(foreground==Handle)throw new Exception("Close cancellation requires owned target not in foreground");
+        var elapsed=System.Diagnostics.Stopwatch.StartNew();
+        await Click(dock,observe,mark:edge=>{if(edge=="beforeDown")elapsed.Restart();},held:()=>{
+            Dispose();
+            if(IsWindow(Handle))throw new Exception("Owned window did not close while mouse held");
+            if(elapsed.ElapsedMilliseconds>=1000)throw new Exception("Close took too long to distinguish cancellation from gesture expiry");
+            Console.WriteLine("Owned window closed while mouse held after "+elapsed.ElapsedMilliseconds+"ms");
+        });
+        await Wait(()=>observe()?.GetProperty("target").ValueKind==JsonValueKind.Null,"Closed task remained in projection");
+        await Task.Delay(500);
+        if(GetForegroundWindow()!=foreground||IsWindow(Handle))throw new Exception("Release after closing target changed foreground or revived target");
+        Console.WriteLine("PASS actual mouse release after target closes neither activates another app nor revives the closed task");
+    }
+    [DllImport("user32.dll")]private static extern bool IsWindow(IntPtr window);
     internal async Task VerifyNavigation(IntPtr dock,Func<JsonElement?> observe)
     {
         JsonElement? NavigationButton(string button){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["navigation"]?[button]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
