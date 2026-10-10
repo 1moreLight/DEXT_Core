@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Lively.Services.DesktopSync;
 
-internal sealed record DesktopShellItem(string Id, string Name, string? IconPng);
+internal sealed record DesktopShellItem(string Id, string Name, string? IconPng, bool Success = true);
 internal static class DesktopShellMetadata
 {
     private static readonly SemaphoreSlim serial = new(1, 1);
@@ -59,7 +59,7 @@ internal static class DesktopShellMetadata
         try
         {
             if (SHGetFileInfo(file.FullPath, 0, ref info, (uint)Marshal.SizeOf<ShellFileInfo>(), 0x100 | 0x200) == UIntPtr.Zero)
-                return new(file.Id, file.Name, null);
+                return new(file.Id, file.Name, null, false);
             var name = string.IsNullOrWhiteSpace(info.DisplayName) ? file.Name : info.DisplayName;
             if (info.Icon == IntPtr.Zero) return new(file.Id, name, null);
             using var icon = Icon.FromHandle(info.Icon);
@@ -69,7 +69,7 @@ internal static class DesktopShellMetadata
             return new(file.Id, name, stream.Length <= 65536 ? Convert.ToBase64String(stream.ToArray()) : null);
         }
         catch (Exception error) when (error is ExternalException or ArgumentException or IOException)
-        { return new(file.Id, file.Name, null); }
+        { return new(file.Id, file.Name, null, false); }
         finally { if (info.Icon != IntPtr.Zero) DestroyIcon(info.Icon); }
     }
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
