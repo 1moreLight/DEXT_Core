@@ -14,3 +14,8 @@ Check(DockPreviewGeometry.ClampPage(2,2,6) == 0, "window closure clamps stale pa
 Check(DockPreviewGeometry.ClampPage(9,14,6) == 2, "last page remains reachable");
 DockButtonSnapshotTests.Run();
 DockNavigationTests.Run();
+
+var anchor = DockPreviewGeometry.NativeAnchor(100, 1200, 1000, 120, .25);
+Check(anchor is { Center: 280, Top: 960 }, "native client origin and fractional anchor convert physical pixels at 125 percent DPI");
+Check(DockPreviewGeometry.NativeAnchor(0,1200,1000,144,1.5)?.Center == 1000 / 1.5, "native anchor clamps to client edge at 150 percent DPI");
+Check(DockPreviewGeometry.NativeAnchor(0,0,0,96,.5) is null && DockPreviewGeometry.NativeAnchor(0,0,100,0,.5) is null && DockPreviewGeometry.NativeAnchor(0,0,100,96,double.NaN) is null,"invalid native geometry does not place preview");

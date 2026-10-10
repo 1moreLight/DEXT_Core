@@ -58,6 +58,46 @@ internal sealed class DockPreviewWindow : Window
         Closed += (_, _) => ReleaseThumbnails();
     }
 
+    // Caller supplies an admitted Player HWND and owns scope/lifecycle validation.
+    // Physical client coordinates are read here; author CSS cannot position a native window.
+    public bool ShowForNative(DockGroup value, IntPtr owner, double horizontalFraction)
+    {
+        var anchor = ReadNativeAnchor(owner, horizontalFraction);
+        if (anchor == null) { HidePreview(); return false; }
+        new WindowInteropHelper(this).Owner = owner;
+        ShowFor(value, anchor.Value.Center, anchor.Value.Top);
+        return IsVisible;
+    }
+
+    public bool FollowNativeAnchor(IntPtr owner, double horizontalFraction)
+    {
+        var anchor = ReadNativeAnchor(owner, horizontalFraction);
+        if (anchor == null) { HidePreview(); return false; }
+        FollowAnchor(anchor.Value.Center, anchor.Value.Top);
+        return IsVisible;
+    }
+
+    private static (double Center, double Top)? ReadNativeAnchor(IntPtr owner, double fraction)
+    {
+        if (owner == IntPtr.Zero || !NativeIsWindowVisible(owner) ||
+            !NativeGetClientRect(owner, out var bounds)) return null;
+        var origin = new NativePoint();
+        if (!NativeClientToScreen(owner, ref origin)) return null;
+        return DockPreviewGeometry.NativeAnchor(origin.X, origin.Y, bounds.Right - bounds.Left, NativeGetDpiForWindow(owner), fraction);
+    }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct NativePoint { public int X, Y; }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="IsWindowVisible")]
+    private static extern bool NativeIsWindowVisible(IntPtr hwnd);
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="GetClientRect")]
+    private static extern bool NativeGetClientRect(IntPtr hwnd, out NativeRect rect);
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="ClientToScreen")]
+    private static extern bool NativeClientToScreen(IntPtr hwnd, ref NativePoint point);
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint="GetDpiForWindow")]
+    private static extern uint NativeGetDpiForWindow(IntPtr hwnd);
+
     private double anchorCenter, anchorTop;
     public void ShowFor(DockGroup value, double centerInDip, double dockTop)
     {

@@ -6,6 +6,13 @@ internal readonly record struct DockPreviewRect(int Left, int Top, int Width, in
 
 internal static class DockPreviewGeometry
 {
+    public static (double Center, double Top)? NativeAnchor(int left, int top, int width, uint dpi, double fraction)
+    {
+        if (width <= 0 || dpi == 0 || !double.IsFinite(fraction)) return null;
+        var scale = dpi / 96d;
+        return ((left + width * Math.Clamp(fraction, 0, 1)) / scale, top / scale);
+    }
+
     public static DockPreviewRect Fit(int sourceWidth, int sourceHeight, int width, int height)
     {
         if (sourceWidth <= 0 || sourceHeight <= 0 || width <= 0 || height <= 0) return default;
