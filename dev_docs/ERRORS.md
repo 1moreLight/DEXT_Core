@@ -431,3 +431,5 @@
 | #311 | 任务栏健康复用输入revision检查，同宿主切Desk时短暂撤销租约导致工作区往返 | [backend](errors/backend.md) |
 
 | #312 | 隔离融合夹具仅复制room.json/resources而漏installation.json，Core安装验证失败 | [toolchain](errors/toolchain.md) |
+
+| #313 | Dock模式切换时异步任务栏恢复尚未完成被误判失败 | [backend](errors/backend.md) |

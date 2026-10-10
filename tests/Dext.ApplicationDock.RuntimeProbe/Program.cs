@@ -17,9 +17,9 @@ if (identity.ProductName != "Dext" || identity.RuntimeIdentity != "DEXT:DESKTOPS
     !Path.GetFullPath(identity.BaseDirectory).TrimEnd('\\').Equals(Path.GetFullPath(args[1]).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
     throw new Exception("Unexpected Core identity; no mutation performed.");
 Console.WriteLine($"Core verified: PID={identity.ProcessId} {identity.BaseDirectory}");
-if(args[0]=="fusion-presentation-live"){
+if(args[0] is "fusion-presentation-live" or "fusion-modes-live"){
     if(args.Length!=3)throw new ArgumentException("fusion-presentation-live requires isolated fixture Room ID");
-    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionPresentationProbe.Run(client,identity.ProcessId));
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionPresentationProbe.Run(client,identity.ProcessId,args[0]=="fusion-modes-live"));
     return;
 }
 if(args[0]=="fusion-exit-live"){

@@ -645,3 +645,6 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 根因：RoomDockWindowState严格匹配当前revision；Core先推进、Player后回报时，同一健康窗口暂时不可见于任务栏管理，自动请求被撤销。
 修复：任务栏独立读取同generation/session/HWND及5秒心跳内的旧revision健康报告；输入/动作仍严格当前revision。锁屏/非desktop/退出/停止及reserve实际AppBar检查保留。
 验证：新增真实轮询回归先红后绿；Core46800/Player52720双向导航/滚动/应用三动作完整成功，25ms观察任务栏保持隐藏且Dock顶边不变，完整Release通过。无Dock/崩溃等完整恢复仍需后续实测。
+
+## #313 模式交接误判异步任务栏恢复（2026-10-11）
+Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻塞Reconcile，在recover任务仍进行时返回false，Coordinator将短暂恢复中视为宿主失败并回退。修复仅让显式释放等待当前已发起恢复任务（最多5秒），随后核对恢复和租约；普通Tick保持非阻塞、真实失败仍拒绝交接。新增异步成功恢复检查先红后绿；原有失败恢复/手动隐藏/停止失败检查通过，完整Release通过。Core50820三模式实际切换通过，原偏好恢复。

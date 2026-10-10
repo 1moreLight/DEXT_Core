@@ -118,6 +118,15 @@ internal sealed class TaskbarController : IDisposable
         try
         {
             await ReconcileAsync().ConfigureAwait(false);
+            // Polling is non-blocking, but a host handoff needs the result of the
+            // recovery already in flight before classifying the old owner as failed.
+            if (recoveryPending && recovery is { IsCompleted: false } pending)
+            {
+                try { await pending.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false); }
+                catch (TimeoutException) { return false; }
+                catch { return false; }
+                await ReconcileAsync().ConfigureAwait(false);
+            }
             // Application Dock shares Core PID with manual hide; that independent user request may remain.
             return (pid <= 0 || leasePid != pid || mode == "hidden" && leasePid == corePid) && !recoveryPending;
         }

@@ -1,6 +1,6 @@
 # V3-P8-014 主题宿主原生窗口预览
 
-状态：待做
+状态：开做
 
 实现：从ApplicationDockWindow.Preview和DockPreviewWindow提取可附着主题HWND的预览入口。Core验证官方任务当前身份，原生客户区/DPI转换锚点；生命周期和固定作用域一起撤销。
 
