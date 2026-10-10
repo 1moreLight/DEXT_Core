@@ -30,6 +30,14 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
+    internal static async Task ClickPoint(int x,int y)
+    {
+        SetCursorPos(x,y);await Task.Delay(150);
+        var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
+        var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
+        if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
+        try {await Task.Delay(90);} finally {if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");}
+    }
     internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false,Action held=null,bool right=false){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");

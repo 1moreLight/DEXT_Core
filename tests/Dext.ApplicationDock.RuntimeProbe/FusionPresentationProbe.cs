@@ -7,7 +7,7 @@ using System.Text.Json;
 
 internal static class FusionPresentationProbe
 {
-    internal static async Task Run(DesktopService.DesktopServiceClient client,int corePid,bool modesOnly=false)
+    internal static async Task Run(DesktopService.DesktopServiceClient client,int corePid,bool modesOnly=false,bool previewOnly=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -26,6 +26,7 @@ internal static class FusionPresentationProbe
             await Wait(()=>At("native","ready")&&ThemePid()==0,"native host ready with standalone theme disabled");
             Edit(new{operation="presentation",presentation="theme"});
             await Wait(()=>At("theme","ready")&&ThemePid()>0&&!NativeVisible(),"real fused host ready and native main window hidden");
+            if(previewOnly){await FusionNativePreviewProbe.Run(App,Theme,corePid);return;}
             if(modesOnly)
             {
                 await FusionModeProbe.Run(App,Theme,patch=>Edit(patch),()=>At("theme","ready"));

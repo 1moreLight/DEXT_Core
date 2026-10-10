@@ -531,3 +531,6 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 ## #312 临时Room夹具必须带安装清单（2026-10-11）
 
 症状：Core34852在RoomV3Installation.Verify报Cannot lock installed path，测试尚未进入Dock切换。原因：复制rooms/v3-fusion-lab后仅替换UUID/name，没有生成content/installation.json。修复：按修改后的manifest字节生成manifestSha256，resources按UTF-8顺序列path/sha256/size，与正式验证契约一致。同场景Core39792随后通过；未降低Core验证。临时资料仅在隔离候选，正式发行不能带夹具。
+
+## #314 UIA探针启用WPF后的隐式using（2026-10-11）
+RuntimeProbe添加UseWPF以使用UIAutomation后，原有File/Path引用报CS0103；WindowsDesktop的隐式using集合发生变化。项目显式添加Using Include="System.IO"后构建通过。不要为此逐个修改不相关探针逻辑。

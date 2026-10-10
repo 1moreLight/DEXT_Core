@@ -92,6 +92,7 @@ internal sealed partial class ApplicationDockService : IDisposable
     {
         var navigation = rooms.ReadApplicationDockNavigation();
         var effective = EffectivePins(navigation);
+        var themeWindow = presentationState?.Actual == "theme" ? rooms.ApplicationTaskHost()?.RoomDockWindowState : null;
         return new
         {
             enabled = preferences.Enabled,
@@ -102,9 +103,9 @@ internal sealed partial class ApplicationDockService : IDisposable
             autoHide = preferences.AutoHide,
             reserveSpace = preferences.ReserveSpace,
             taskbar = taskbar.Status(),
-            runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
+            runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = presentationState?.Actual == "theme" ? themeWindow?.Visible == true : window?.IsVisible == true,
                 waiting = preferences.Enabled && (presentationState is null || presentationState.Phase is "switching" or "starting"),
-                reservation = new { registered = window?.ReservationRegistered == true, ready = window?.ReservationReady == true, error = window?.ReservationError },
+                reservation = new { registered = presentationState?.Actual == "theme" ? themeWindow?.AppBarRegistered == true : window?.ReservationRegistered == true, ready = presentationState?.Actual == "theme" ? rooms.ApplicationTaskHost()?.NativeDockReservationReady == true : window?.ReservationReady == true, error = presentationState?.Actual == "theme" ? null : window?.ReservationError },
                 blocked = facts.Read(string.Empty).Locked ? "locked" : DockWindows.IsFullscreen() ? "fullscreen" : null },
             navigation,
             pins = preferences.Pins,

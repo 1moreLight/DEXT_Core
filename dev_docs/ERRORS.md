@@ -433,3 +433,5 @@
 | #312 | 隔离融合夹具仅复制room.json/resources而漏installation.json，Core安装验证失败 | [toolchain](errors/toolchain.md) |
 
 | #313 | Dock模式切换时异步任务栏恢复尚未完成被误判失败 | [backend](errors/backend.md) |
+
+| #314 | 运行探针启用WPF访问UIA后System.IO隐式using消失 | [toolchain](errors/toolchain.md) |

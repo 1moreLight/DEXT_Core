@@ -7,9 +7,11 @@ import type {AppInfo} from "@/features/runtime/types";
 
 import {dockPinSelection, type DockPinContext} from "@/lib/application-dock-pins";
 
+import {dockPresentationLabel, dockPresentationReason, type DockPresentation, type DockPresentationState} from "@/lib/application-dock-presentation";
+
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
 type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
-type State = {effectivePins?:Pin[]; pinContext?:DockPinContext|null;autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type State = {presentation?:DockPresentation; presentationState?:DockPresentationState|null;effectivePins?:Pin[]; pinContext?:DockPinContext|null;autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
@@ -49,7 +51,7 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
     try {
       const reply = await invoke<State>("edit_application_dock",{patch});
       if (version !== epoch.current) return;
-      setState(reply); setError(null); setStatus((patch as {operation?:string}).operation === "taskbar" ? "任务栏请求已保存，实际状态见下方" : "系统应用 Dock 已保存");
+      setState(reply); setError(null); setStatus((patch as {operation?:string}).operation === "taskbar" ? "任务栏请求已保存，实际状态见下方" : (patch as {operation?:string}).operation === "retryPresentation" ? "已请求重试，实际状态见下方" : "系统应用 Dock 已保存");
     } catch(reason) {if (version === epoch.current) setError(String(reason));}
     finally {if (version === epoch.current) {pending.current = false; mutation.current = false; setBusy(false);}}
   }
@@ -92,14 +94,26 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
       <div><h2 className="text-sm font-semibold">系统应用 Dock</h2><p className="mt-1 text-xs text-muted-foreground">固定常用应用，查看和切换正在运行的窗口。</p></div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="启用系统应用 Dock" disabled={disabled} checked={state?.enabled ?? false} onChange={event => void edit({operation:"enable",enabled:event.target.checked})}/>启用</label>
     </div>
+    <div className="rounded-lg border border-border p-3 space-y-2">
+      <label className="flex items-center gap-2 text-sm">显示位置
+        <select aria-label="应用 Dock 显示位置" className="rounded-md border border-border bg-background p-2" disabled={disabled} value={state?.presentation ?? "native"} onChange={event=>void edit({operation:"presentation",presentation:event.target.value})}>
+          <option value="native">独立原生 Dock</option>
+          <option value="theme">融入当前主题 Dock</option>
+        </select>
+      </label>
+      <p className="text-xs text-muted-foreground">融合需要主题提供应用任务区；不可用时自动回退，保留你的选择。</p>
+      <p role="status" className="text-xs text-muted-foreground">实际状态：{dockPresentationLabel(state?.presentationState)}</p>
+      {state?.presentationState?.reason && <p className="text-xs text-amber-600">{dockPresentationReason(state.presentationState.reason)}</p>}
+      {state?.presentation === "theme" && state?.presentationState?.phase === "fallback" && <Button size="sm" variant="outline" disabled={disabled} onClick={()=>void edit({operation:"retryPresentation"})}>重试主题融合</Button>}
+    </div>
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="自动隐藏应用 Dock" disabled={disabled} checked={state?.autoHide ?? false} onChange={event => void edit({operation:"autoHide",autoHide:event.target.checked})}/>自动隐藏：移到主屏底部中央唤出</label>
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="应用 Dock 常驻占位" disabled={disabled} checked={state?.reserveSpace ?? false} onChange={event => void edit({operation:"reserveSpace",reserveSpace:event.target.checked})}/>常驻占位：最大化窗口为 Dock 留出空间</label>
     <p className="text-xs text-muted-foreground">自动隐藏与常驻占位互斥；都不选时，Dock 浮在窗口上方。</p>
     {state?.reserveSpace && <p role="status" className="text-xs text-muted-foreground">{state.runtime?.reservation?.ready ? "Windows 已确认 Dock 工作区占位" : state.runtime?.reservation?.error ?? "等待 Dock 就绪并确认工作区…"}</p>}
     <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键修改当前有效列表；Desk 还在跟随全局时，右键修改全局。全屏时隐藏，退出全屏后恢复。</p>
-    <p className="text-xs text-muted-foreground">启用系统应用 Dock 时，主题独立 Dock 暂停；关闭后按原主题设置恢复。桌面内的主题内容保持。</p>
+    <p className="text-xs text-muted-foreground">独立模式使用原生栏，融合模式使用主题栏。关闭应用 Dock 后，按原先保存的主题 Dock 设置恢复。</p>
     {state?.runtime?.blocked && <p role="status" className="text-xs text-muted-foreground">{state.runtime.blocked === "fullscreen" ? "检测到全屏应用，Dock 暂时隐藏；退出全屏后恢复。" : "锁屏期间 Dock 保持隐藏。"}</p>}
-    {state?.runtime?.waiting && <p role="status" className="text-xs text-muted-foreground">正在等待主题 Dock 关闭并释放占位…</p>}
+    {state?.runtime?.waiting && <p role="status" className="text-xs text-muted-foreground">正在切换 Dock 宿主，请稍候…</p>}
     <div className="rounded-lg border border-border p-3 space-y-2">
       <h3 className="text-sm font-medium">Windows 任务栏</h3>
       <div className="flex flex-wrap gap-2">

@@ -648,3 +648,5 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 
 ## #313 模式交接误判异步任务栏恢复（2026-10-11）
 Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻塞Reconcile，在recover任务仍进行时返回false，Coordinator将短暂恢复中视为宿主失败并回退。修复仅让显式释放等待当前已发起恢复任务（最多5秒），随后核对恢复和租约；普通Tick保持非阻塞、真实失败仍拒绝交接。新增异步成功恢复检查先红后绿；原有失败恢复/手动隐藏/停止失败检查通过，完整Release通过。Core50820三模式实际切换通过，原偏好恢复。
+
+#308 原生预览验证补记（2026-10-11）：Core50508探针仅等待宿主ready就点击，在按钮启用/任务栏接管确认前发出，输入分发无回执；改为等UIA实际按钮IsEnabled和taskbar确认状态，再点击。Core45248原生预览选窗成功，生产输入规则不变。不能把宿主ready等同动作已就绪。
