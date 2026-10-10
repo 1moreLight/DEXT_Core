@@ -10,3 +10,7 @@
 - [ ] 更新本步骤状态、TODO并提交。
 
 完成证据：切换只存在一个主栏；旧宿主退出确认前不授予新owner；关闭Core不会新建回退；任务栏手动恢复优先。
+
+2026-10-11交接原语增量：DockHostOwnership增加Request(Theme/Application/None)及IsRequested，默认Theme兼容旧行为；选择仅改变请求，旧owner显式释放前新宿主不可取得。None可暂缓接管，Shutdown后请求失效且不可复活。ApplicationDockService.ReleaseOwnerAsync以当前宿主请求而非应用Enabled判断是否保留原生owner，支持后续应用仍启用但改用融合。
+
+新增4项检查先因缺API失败，补实现后10/10所有权检查通过；完整Release通过、CoreOnly保留旧Core48280，无新配置器。日志.build/fusion-owner-red.log、fusion-owner-tests.log、fusion-owner-build.log。本步骤仍开做：策略还没有接到Render/Coordinator demand，不能称融合切换已经可用。下一步读取主题可用性/实际状态并连接DockPresentationPolicy，再加入失败锁存及RPC呈现操作。

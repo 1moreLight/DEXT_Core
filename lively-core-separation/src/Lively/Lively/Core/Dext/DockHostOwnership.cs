@@ -7,20 +7,24 @@ internal sealed class DockHostOwnership
 {
     private readonly object gate = new();
     private DockHost owner;
-    private bool applicationRequested, stopping;
+    private DockHost requested = DockHost.Theme;
+    private bool stopping;
     public event Action? Changed;
     public DockHost Owner { get { lock(gate) return owner; } }
-    public bool ApplicationRequested { get { lock(gate) return applicationRequested; } }
-    public void SetApplicationRequested(bool value)
+    public bool ApplicationRequested => IsRequested(DockHost.Application);
+    public bool IsRequested(DockHost host) { lock(gate) return !stopping && host != DockHost.None && requested == host; }
+    public void SetApplicationRequested(bool value) => Request(value ? DockHost.Application : DockHost.Theme);
+    public void Request(DockHost host)
     {
-        lock(gate) { if(stopping || applicationRequested==value)return; applicationRequested=value; }
+        if(host is not (DockHost.None or DockHost.Theme or DockHost.Application))throw new ArgumentOutOfRangeException(nameof(host));
+        lock(gate) { if(stopping || requested==host)return; requested=host; }
         Changed?.Invoke();
     }
     public bool TryAcquire(DockHost host)
     {
         lock(gate)
         {
-            if(stopping || host==DockHost.None || (host==DockHost.Application)!=applicationRequested ||
+            if(stopping || host==DockHost.None || host!=requested ||
                 owner!=DockHost.None && owner!=host) return false;
             owner=host;return true;
         }

@@ -289,7 +289,7 @@ internal sealed class ApplicationDockService : IDisposable
         try
         {
             var released = await taskbar.ReleaseAutomaticAsync(corePid);
-            if (disposed || preferences.Enabled && ownership.Owner == DockHost.Application) return;
+            if (disposed || ownership.IsRequested(DockHost.Application) && ownership.Owner == DockHost.Application) return;
             if (released) ownership.Release(DockHost.Application);
             else error = taskbar.Error ?? "正在等待任务栏恢复后交接 Dock。";
         }
