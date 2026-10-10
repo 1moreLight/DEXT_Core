@@ -45,5 +45,6 @@ namespace Lively.Models.Message
         msg_room_dock_state,
         cmd_room_dock_policy,
         cmd_room_dock_tasks,
+        msg_room_dock_touch,
     }
 }

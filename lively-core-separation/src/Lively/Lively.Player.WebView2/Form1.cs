@@ -266,6 +266,18 @@ namespace Lively.Player.WebView2
                     var webMessage = e.TryGetWebMessageAsString();
                     if (nativeResources != null && Encoding.UTF8.GetByteCount(webMessage) > 1024 * 1024) return;
                     var o = JsonConvert.DeserializeObject<dynamic>(webMessage);
+                    if (startArgs.DextDock && (string)o.type == "dext:v3-official-touch")
+                    {
+                        var touch = nativeFrameMedia?.ReadOfficialTouch(webMessage);
+                        if (touch != null && nativeDockInputConnected && nativeDockRendererReady && nativeDockVisibilitySynchronized &&
+                            NativeDockIdentity(touch.RuntimeGeneration, touch.SessionId, touch.Revision))
+                        {
+                            touch.WindowHwnd = Handle.ToInt64();
+                            touch.IssuedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                            SendToParent(touch);
+                        }
+                        return;
+                    }
                     if (startArgs.DextDock && ((string)o.type == "dext:v3-dock-ready" || (string)o.type == "dext:v3-dock-keyboard"))
                     {
                         var control = JObject.Parse(webMessage);

@@ -35,8 +35,9 @@
 2026-10-11守卫入口诊断结果：新增私有diagnostics计数查询与Player差异日志，实机Core49620/Player49636记录touchDown=1、touchUp=1、touchBlocked=3（含兼容click），官方页也记录trusted touchstart/end。因此浏览器确已收到真实触摸；Core依赖鼠标RawInput未建立对应手势，守卫按当前规则拦截。无需据后置监听为空直接换CompositionController。下一步设计并接入守卫可信触摸→Player→Core的专用配对通道，仍须保留真实顶层文档/会话/坐标/按下抬起/取消检查，不能直接DOM onAction放行。当前触控激活仍失败。最终Release构建与29项现有守卫测试通过；证据.build/touch-gate-build.log、touch-gate-tests.log、fusion-touch-live.log和20261011_024500.txt。原候选Core25612恢复，无新增配置器；03仍开做2/4=50%。
 
 ## 专用触摸通道实施步骤（2026-10-11）
-- 开做：预注入观察器读取原生PointerEvent getter及isTrusted，单指DOWN/UP，6 CSS像素移动取消，多指/取消/页面离开撤销；仅私有原生握手启用。
-- 待做：Player验证私有token、当前documentNonce及递增序列，把归一化触点转换成实际原生窗口坐标，带当前会话发送Core。
-- 待做：Core分别持有触摸与鼠标所有权；触摸经过现有可见窗口/几何/任务投影/取消校验，不依赖当前鼠标游标位置或鼠标物理按键；禁止用全局触摸重定向。
-- 待做：实际单指激活/最小化/恢复与移动、多指、隐藏、切Desk取消；原鼠标回归。官方任务触控先接通，作者区域必须继续排除，作者按钮触控另按已有契约验证，不能把一个子用例当全包完成。
+- 做完：预注入观察器读取原生PointerEvent getter及isTrusted，单指DOWN/UP，6 CSS像素移动取消，多指/取消/页面离开撤销；仅私有原生握手启用。
+- 做完：Player验证私有token、当前documentNonce及递增序列，带当前会话发送归一化触点；Core读取实时原生窗口后换算坐标。
+- 开做：Core分别持有触摸与鼠标所有权；触摸经过现有可见窗口/几何/任务投影/取消校验，不依赖当前鼠标游标位置或鼠标物理按键；禁止用全局触摸重定向。
+- 开做：实际单指激活/最小化/恢复与移动、多指、隐藏、切Desk取消；原鼠标回归。官方任务触控先接通，作者区域必须继续排除，作者按钮触控另按已有契约验证，不能把一个子用例当全包完成。
 2026-10-11触摸观察器增量：observeOfficialTouch捕获原生Event/PointerEvent/MouseEvent getter，默认关闭，私有touchEnable/touchDisable启停；真实单指DOWN/UP递增序列，6 CSS像素外移动、多指、pointercancel、lostpointercapture、pagehide、尺寸变化取消。消息仅含触点/视口/序列和私有文档标识，不直接调用动作。新增7项行为检查，与已有29项守卫检查合计36通过；最终7项复核及Release通过，证据.build/touch-observer-tests.log、touch-observer-final-tests.log、touch-observer-build.log。尚未启用：Player接收验证和Core触摸所有权/配对仍待接，不能称实际触控已通；旧Core25612保留，03仍开做2/4=50%。
+2026-10-11触摸端到端接通：私有握手绑定当前generation/session/revision/documentNonce，Player解析并过滤旧序列，独立IPC去掉私有token后进入Core。Core按实时HWND/视口换算触点坐标，独立持有触摸联系并复用现有DOWN/UP采样、任务投影及动作完成；隐藏/未就绪/断连/会话变化/过期清除。首轮探针因等待就绪后仍用旧窗口origin而未注入，修正为注入前重测，归属检查保留。最终Release及探针构建通过；实际Core40296/Player45652的Windows注入触摸：拖动取消、激活、最小化、恢复、随后第一下鼠标点击均通过。证据.build/touch-bridge-build.log、touch-bridge-probe-build.log、touch-bridge-observer-tests.log、fusion-touch-live.log。物理触屏、多指/隐藏/切Desk实机取消、鼠标游标远离时触控及作者区域仍待验收；不能把Windows注入成功称为物理触屏通过，03仍开做、工作包2/4=50%。原运行候选/偏好/夹具已恢复，无新增配置器。

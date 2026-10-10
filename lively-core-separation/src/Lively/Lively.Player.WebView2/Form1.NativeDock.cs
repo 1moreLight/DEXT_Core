@@ -58,6 +58,8 @@ namespace Lively.Player.WebView2
             if (!NativeDockIdentity(generation, session, revision)) return;
             nativeDockRendererReady = true;
             await SynchronizeNativeDockWindow();
+            if (NativeDockIdentity(generation, session, revision) && nativeFrameMedia != null)
+                await nativeFrameMedia.EnableOfficialTouchAsync(generation, session, revision);
         }
 
         private async Task ApplyNativeDockPolicy(LivelyMessageRoomDockPolicy policy)

@@ -494,6 +494,9 @@ namespace Lively.Core.Wallpapers
                         break;
                     case MessageType.msg_room_native_sample:
                         HandleNativeSample((LivelyMessageRoomNativeSample)obj);break;
+                    case MessageType.msg_room_dock_touch:
+                        AcceptNativeDockTouch((LivelyMessageRoomDockTouch)obj);
+                        break;
                     case MessageType.msg_room_dock_state:
                         AcceptNativeDockState((LivelyMessageRoomDockState)obj);
                         break;

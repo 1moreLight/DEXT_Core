@@ -304,3 +304,6 @@ Dock enabled/mode/heightDip保存为Dext全局v3/dock-preferences.json，与Room
 
 ### 2026-10-11 桌面文件同步方向
 用户提出一键识别原Windows桌面内容和从窗口拖文件到桌面。采用真实桌面目录驱动官方图标层的规划：文件仍由Windows管理，本机路径/身份/布局不随Room分享；默认每Room选择一个同步Desk，其他Desk继续自定义。枚举、监听、外部拖入、Shell常用操作拆成四个排队包，见plans/DESK-SYNC-desktop-integration.md；尚未实现，不变更当前ROOM_V3契约。此范围恢复外部文件拖入需求，不恢复已取消的Dock拖入或暂缓的内部排序。
+
+### 2026-10-11 主题Dock官方区的触摸输入来源
+实际WebView2子窗口属于Chromium进程；触摸已进入浏览器，但默认不会形成现有Core RawInput鼠标手势。采用预注入官方顶层守卫捕获原生isTrusted/PointerEvent getter、私有启用握手和原生WebMessage接收身份，绑定文档nonce与会话后经Player私有IPC送Core。Core持有独立触摸序列并复用实际HWND/坐标/任务投影/按下抬起及取消校验。SDK或作者DOM onAction不能自行铸造触摸；无需全局触控重定向，也不切换CompositionController。当前仅已验证官方任务区的Windows注入触摸与鼠标交接；物理触屏及完整取消场景仍待统一验收。

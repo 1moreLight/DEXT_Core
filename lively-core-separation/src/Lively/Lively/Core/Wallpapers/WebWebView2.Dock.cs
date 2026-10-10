@@ -78,7 +78,10 @@ namespace Lively.Core.Wallpapers
             var snapshot = attached.Bridge.Read().Snapshot;
             if (snapshot != null) attached.Data.ObserveSnapshot(snapshot, true, value.WindowReady && value.Visible);
             if (!value.WindowReady || !value.Visible || value.Locked)
+            {
+                CancelNativeDockTouch();
                 attached.Input.CheckNativeViewport(ReadNativeViewport(), false);
+            }
             RoomDockStateChanged?.Invoke();
         }
 

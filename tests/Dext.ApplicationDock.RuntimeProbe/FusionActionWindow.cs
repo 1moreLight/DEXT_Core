@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -44,9 +44,17 @@ internal sealed class FusionActionWindow : IDisposable
             Math.Abs(latest.GetProperty("x").GetDouble()-point.GetProperty("x").GetDouble())>1||
             Math.Abs(latest.GetProperty("y").GetDouble()-point.GetProperty("y").GetDouble())>1)
             throw new Exception("Owned task moved before click; no click sent");
+        // Waiting for task readiness can include the one-time taskbar/work-area
+        // relocation. Resolve the screen origin again before ownership checks.
+        origin=new Point();
+        if(!GetClientRect(dock,out rect)||!ClientToScreen(dock,ref origin))
+            throw new Exception("Dock final bounds unavailable");
+        x=origin.X+(int)Math.Round(latest.GetProperty("x").GetDouble()*rect.Right/latest.GetProperty("width").GetDouble());
+        y=origin.Y+(int)Math.Round(latest.GetProperty("y").GetDouble()*rect.Bottom/latest.GetProperty("height").GetDouble());
+        SetCursorPos(x,y);
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Dock ownership or mouse idle check failed; no click sent");
-        if(touch){await TouchPathProbe.Tap(dock,x,y,mark);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
+        if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
         mark?.Invoke("beforeDown");
@@ -62,6 +70,12 @@ internal sealed class FusionActionWindow : IDisposable
             Console.WriteLine("PASS Dock receives click while foreground app owns raw mouse input");
             await Task.Delay(650);
         }
+        if(touch){
+            var before=GetForegroundWindow();
+            await Click(dock,observe,touch:true,movePixels:40);await Task.Delay(500);
+            if(GetForegroundWindow()!=before)throw new Exception("Dragged touch unexpectedly activated a task");
+            Console.WriteLine("PASS OS touch drag cancels without activating task");
+        }
         await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core activates owned test window");
         await Task.Delay(650);
@@ -70,6 +84,7 @@ internal sealed class FusionActionWindow : IDisposable
         await Task.Delay(650);
         await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not restore owned window");
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core restores owned test window");
+        if(touch){await Click(dock,observe);await Wait(()=>IsIconic(Handle),"Mouse click after touch was lost" );Console.WriteLine("PASS immediate mouse click after touch minimizes task" );}
     }
     [StructLayout(LayoutKind.Sequential)]private struct Point{public int X,Y;}
     [StructLayout(LayoutKind.Sequential)]private struct Rect{public int Left,Top,Right,Bottom;}

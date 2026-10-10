@@ -616,3 +616,6 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 验证：Release通过；同一已失败的fusion-raw-owner-live通过4次点击动作，日志20261011_023219.txt只有一次正常工作区调整。触控日志20261011_023315.txt也无往返，但无原始鼠标边沿且激活失败，触控仍待修。两秒超时/多屏/保留占位模式的专项运行覆盖尚未完成，不将此结果外推为整个工作包通过。
 
 2026-10-11 #301补记：守卫入口计数确认系统触摸到达WebView2（DOWN/UP各1），被没有Core expected手势的gate拦截。后置DOM监听空不代表浏览器未收到。核查触摸必须先定位预注入守卫，不能只靠作者/宿主后加事件监听。
+
+## #303 等待就绪后须重新测量注入坐标（2026-10-11）
+触控桥首轮测试在注入前失败：Dock ownership or mouse idle check failed。等待任务区displayReady期间，隐藏Windows任务栏使Dock做了一次正常位置调整；DOM位置未变，但先前读取的屏幕origin已旧。修正探针在目标稳定检查之后重新读取client rect和屏幕origin，再检查WindowFromPoint与空闲按键；没有移除保护或向错误窗口发送触摸。之后实际触摸激活/最小化/恢复与拖动取消、鼠标交接通过。

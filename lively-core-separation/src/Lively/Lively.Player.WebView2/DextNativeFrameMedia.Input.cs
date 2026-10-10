@@ -90,6 +90,23 @@ namespace Lively.Player.WebView2
             try{await Execute(frame,DextNativeInputGuardianPolicy.RevokeScript(secret,nonce));}
             catch(Exception){if(!disposed&&!failed&&frames.ContainsKey(frame.Id))throw;}
         }
+        private Guid officialTouchNonce;
+        private long officialTouchSequence;
+        public async Task EnableOfficialTouchAsync(long generation,Guid session,long revision)
+        {
+            var command=new JObject{["token"]=secret,["kind"]="touchEnable",["runtimeGeneration"]=generation,["sessionId"]=session.ToString("D"),["revision"]=revision};
+            var reply=await core.ExecuteScriptAsync("this.__dextNativeOfficialInputDispatchV1&&this.__dextNativeOfficialInputDispatchV1("+command.ToString(Newtonsoft.Json.Formatting.None)+")");
+            var value=JObject.Parse(reply);
+            if((bool?)value["available"]==true&&Guid.TryParse((string)value["documentNonce"],out var nonce)&&nonce!=officialTouchNonce)
+            {officialTouchNonce=nonce;officialTouchSequence=0;}
+        }
+        public Lively.Models.Message.LivelyMessageRoomDockTouch ReadOfficialTouch(string json)
+        {
+            if(disposed||failed||suspended)return null;
+            var value=DextOfficialTouchMessage.Parse(json,secret,officialTouchNonce);
+            if(value==null||value.Sequence<=officialTouchSequence)return null;
+            officialTouchSequence=value.Sequence;return value;
+        }
         private DextNativePointerPacket dispatchPacket;
         private string dispatchConsumer;
         private Guid officialDispatchNonce;

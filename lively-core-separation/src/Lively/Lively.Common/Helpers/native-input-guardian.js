@@ -293,9 +293,10 @@
     const stop=root.Event.prototype.stopImmediatePropagation,prevent=root.Event.prototype.preventDefault;
     const composedPath=root.Event.prototype.composedPath,now=root.performance?.now;
     let clickTime=0,touchDown=0,touchUp=0,touchBlocked=0;
-    const touchAssign=Object.assign,touchCreate=Object.create;
+    const touchAssign=Object.assign,touchCreate=Object.create;let touchScope=null;
     const touchObserver=controlledDockInput?observeOfficialTouch(root,value=>{
-      const message=touchAssign(touchCreate(null),value,{type:'dext:v3-official-touch',protocolVersion:1,token:secret,documentNonce:nonce});
+      if(!touchScope)return;
+      const message=touchAssign(touchCreate(null),value,touchScope,{type:'dext:v3-official-touch',protocolVersion:1,token:secret,documentNonce:nonce});
       apply(post,root.chrome.webview,[apply(stringify,JSON,[message])]);
     }):null;
     function gate(event){
@@ -328,8 +329,12 @@
     define(root,'__dextNativeOfficialInputDispatchV1',{configurable:false,writable:false,value:value=>{
       if(!value||value.token!==secret)return null;
       if(value.kind==='diagnostics')return{touchDown,touchUp,touchBlocked};
-      if(value.kind==='touchEnable'){touchObserver?.enable();return{documentNonce:nonce,available:!!touchObserver};}
-      if(value.kind==='touchDisable'){touchObserver?.disable();return{documentNonce:nonce,available:!!touchObserver};}
+      if(value.kind==='touchEnable'){
+        if(!Number.isSafeInteger(value.runtimeGeneration)||value.runtimeGeneration<=0||!Number.isSafeInteger(value.revision)||value.revision<=0||typeof value.sessionId!=='string')return null;
+        touchObserver?.disable();touchScope={runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision};
+        touchObserver?.enable();return{documentNonce:nonce,available:!!touchObserver};
+      }
+      if(value.kind==='touchDisable'){touchObserver?.disable();touchScope=null;return{documentNonce:nonce,available:!!touchObserver};}
       if(value.kind==='revoke'){expected=null;clickTarget=null;return{documentNonce:nonce,armed:false};}
       if(value.kind!=='arm'||!Number.isSafeInteger(value.gestureId)||value.gestureId<=0||
         !Number.isSafeInteger(value.structuralVersion)||value.structuralVersion<=0||!['down','up'].includes(value.edge))return null;
