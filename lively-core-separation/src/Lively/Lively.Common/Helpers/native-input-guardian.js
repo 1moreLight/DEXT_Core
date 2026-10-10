@@ -254,12 +254,15 @@
     const stringify=JSON.stringify,nonce=root.crypto.randomUUID();let expected=null,clickTarget=null;
     const stop=root.Event.prototype.stopImmediatePropagation,prevent=root.Event.prototype.preventDefault;
     const composedPath=root.Event.prototype.composedPath,now=root.performance?.now;
-    let clickTime=0;
+    let clickTime=0,touchDown=0,touchUp=0,touchBlocked=0;
     function gate(event){
       if(!controlledDockInput||!apply(get,event,[]))return true;
       const entries=apply(composedPath,event,[]);
       if(entries.some(node=>node?.id==='dext-dock-keyboard'))return true;
       const type=event.type;
+      const touch=event.pointerType==='touch';
+      if(touch&&type==='pointerdown')touchDown++;
+      if(touch&&type==='pointerup')touchUp++;
       if(type==='keydown'||type==='keyup'){
         if(!['Tab','Enter',' ','Escape'].includes(event.key))return true;
         apply(prevent,event,[]);apply(stop,event,[]);return false;
@@ -275,12 +278,13 @@
           if(type==='mouseup'){clickTarget=entries[0];clickTime=apply(now,root.performance,[]);}
         }
       }
-      if(!allowed){apply(prevent,event,[]);apply(stop,event,[]);}
+      if(!allowed){if(touch)touchBlocked++;apply(prevent,event,[]);apply(stop,event,[]);}
       return allowed;
     }
     if(!get||!button)return false;
     define(root,'__dextNativeOfficialInputDispatchV1',{configurable:false,writable:false,value:value=>{
       if(!value||value.token!==secret)return null;
+      if(value.kind==='diagnostics')return{touchDown,touchUp,touchBlocked};
       if(value.kind==='revoke'){expected=null;clickTarget=null;return{documentNonce:nonce,armed:false};}
       if(value.kind!=='arm'||!Number.isSafeInteger(value.gestureId)||value.gestureId<=0||
         !Number.isSafeInteger(value.structuralVersion)||value.structuralVersion<=0||!['down','up'].includes(value.edge))return null;

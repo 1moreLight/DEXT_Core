@@ -19,6 +19,8 @@ namespace Lively.Player.WebView2
         private bool nativeDockVisibilitySynchronized, nativeDockSynchronizedVisible;
         private long nativeDockStateVersion;
         private long nativeDockGeometryStarted;
+        private bool nativeDockTouchTracePending;
+        private string nativeDockTouchTrace;
         private Rectangle nativeDockSynchronizedBounds;
         private readonly SemaphoreSlim nativeDockStateGate = new SemaphoreSlim(1, 1);
 
@@ -44,7 +46,7 @@ namespace Lively.Player.WebView2
             };
             DextDockWindowHost.ExtendTransparentFrame(Handle);
             nativeDockHeartbeat = new System.Windows.Forms.Timer { Interval = 1000 };
-            nativeDockHeartbeat.Tick += (sender, args) => PublishNativeDockState();
+            nativeDockHeartbeat.Tick += (sender, args) => { PublishNativeDockState(); _ = TraceNativeDockTouchAsync(); };
             nativeDockHeartbeat.Start();
         }
 
@@ -184,6 +186,23 @@ namespace Lively.Player.WebView2
                 Mode = startArgs.DextDockMode, AppBarRegistered = nativeDockWindow.IsAppBarRegistered,
                 AppBarReady = nativeDockWindow.IsAppBarReady
             });
+        }
+
+        private async Task TraceNativeDockTouchAsync()
+        {
+            if (nativeDockTouchTracePending || nativeFrameMedia == null || !nativeDockRendererReady || IsDisposed || Disposing) return;
+            nativeDockTouchTracePending = true;
+            try
+            {
+                var value = await nativeFrameMedia.ReadOfficialInputDiagnosticsAsync();
+                if (value != nativeDockTouchTrace && !IsDisposed && !Disposing)
+                {
+                    nativeDockTouchTrace = value;
+                    SendToParent(new LivelyMessageConsole { Category = ConsoleMessageType.log, Message = "Dock touch gate " + value });
+                }
+            }
+            catch (Exception) { /* Diagnostic polling must not change input behavior during navigation/exit. */ }
+            finally { nativeDockTouchTracePending = false; }
         }
 
         private void DisposeNativeDockWindow()

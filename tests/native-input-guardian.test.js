@@ -141,3 +141,17 @@ test('native sampled Enter/Space receipts precede authored key callbacks',()=>{
   assert.deepEqual(f.sent.map(v=>[v.type,v.kind]),[['dext:v3-input-dispatched','down'],['dext:v3-input-dispatched','up']]);
  }
 });
+
+test('official diagnostics observe unpaired touch without authorizing an action',()=>{
+ const f=fixture();f.root.top=f.root;
+ let stopped=0;f.root.Event.prototype.stopImmediatePropagation=function(){stopped++;};
+ f.root.Event.prototype.preventDefault=function(){};
+ Object.defineProperty(f.root.Event.prototype,'pointerType',{get(){return 'touch';}});
+ assert.equal(require(target).installOfficial(f.root,SECRET,true),true);
+ const hook=f.root.__dextNativeOfficialInputDispatchV1;
+ f.fire(f.node,'pointerdown',{pointerType:'touch'});
+ f.fire(f.node,'pointerup',{pointerType:'touch'});
+ assert.deepEqual(hook({token:SECRET,kind:'diagnostics'}),{touchDown:1,touchUp:1,touchBlocked:2});
+ assert.equal(stopped,2);
+ assert.equal(f.sent.length,0);
+});

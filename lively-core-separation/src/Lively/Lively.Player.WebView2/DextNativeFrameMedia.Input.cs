@@ -94,6 +94,9 @@ namespace Lively.Player.WebView2
         private string dispatchConsumer;
         private Guid officialDispatchNonce;
         private TaskCompletionSource<bool> dispatchReceipt;
+        public Task<string> ReadOfficialInputDiagnosticsAsync() => core.ExecuteScriptAsync(
+            "this.__dextNativeOfficialInputDispatchV1&&this.__dextNativeOfficialInputDispatchV1(" +
+            new JObject { ["token"] = secret, ["kind"] = "diagnostics" }.ToString(Newtonsoft.Json.Formatting.None) + ")");
         public string OfficialDispatchScript(DextNativePointerPacket value)=>DextNativeInputGuardianPolicy.OfficialArmScript(secret,value.GestureId,value.GeometryVersion,value.Kind);
         public void ExpectInputDispatch(DextNativePointerPacket value,string consumer,Guid officialNonce)
         {
