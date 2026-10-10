@@ -33,3 +33,10 @@
 2026-10-11触点归属与观测边界：探针记录实际命中Chrome_RenderWidgetHostHWND属于Chromium PID46936/TID49504，其父Chrome_WidgetWin_0及Form属于Player25508/TID1316。候选专用main.js记录DOM touchEvents，最新为空且inputEnabled=false；代码复核installOfficial在预注入capture gate对无expected事件preventDefault/stopImmediatePropagation，故后置监听为空不能证明浏览器未收到触摸。下一步在守卫入口添加只读诊断，保留配对判定，不直接放行DOM、不据此重写CompositionController。探针构建通过；fusion-touch-live仍失败并完成清理，证据.build/touch-target-build.log、.build/fusion-touch-live.log、Core日志20261011_023904.txt。生产代码本轮未改，03仍2/4=50%。
 参考已核对：Microsoft ICoreWebView2Environment3说明CompositionController由parent HWND接收指针并转发；这只提供候选架构，不证明当前控制器无法实现。https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2environment3
 2026-10-11守卫入口诊断结果：新增私有diagnostics计数查询与Player差异日志，实机Core49620/Player49636记录touchDown=1、touchUp=1、touchBlocked=3（含兼容click），官方页也记录trusted touchstart/end。因此浏览器确已收到真实触摸；Core依赖鼠标RawInput未建立对应手势，守卫按当前规则拦截。无需据后置监听为空直接换CompositionController。下一步设计并接入守卫可信触摸→Player→Core的专用配对通道，仍须保留真实顶层文档/会话/坐标/按下抬起/取消检查，不能直接DOM onAction放行。当前触控激活仍失败。最终Release构建与29项现有守卫测试通过；证据.build/touch-gate-build.log、touch-gate-tests.log、fusion-touch-live.log和20261011_024500.txt。原候选Core25612恢复，无新增配置器；03仍开做2/4=50%。
+
+## 专用触摸通道实施步骤（2026-10-11）
+- 开做：预注入观察器读取原生PointerEvent getter及isTrusted，单指DOWN/UP，6 CSS像素移动取消，多指/取消/页面离开撤销；仅私有原生握手启用。
+- 待做：Player验证私有token、当前documentNonce及递增序列，把归一化触点转换成实际原生窗口坐标，带当前会话发送Core。
+- 待做：Core分别持有触摸与鼠标所有权；触摸经过现有可见窗口/几何/任务投影/取消校验，不依赖当前鼠标游标位置或鼠标物理按键；禁止用全局触摸重定向。
+- 待做：实际单指激活/最小化/恢复与移动、多指、隐藏、切Desk取消；原鼠标回归。官方任务触控先接通，作者区域必须继续排除，作者按钮触控另按已有契约验证，不能把一个子用例当全包完成。
+2026-10-11触摸观察器增量：observeOfficialTouch捕获原生Event/PointerEvent/MouseEvent getter，默认关闭，私有touchEnable/touchDisable启停；真实单指DOWN/UP递增序列，6 CSS像素外移动、多指、pointercancel、lostpointercapture、pagehide、尺寸变化取消。消息仅含触点/视口/序列和私有文档标识，不直接调用动作。新增7项行为检查，与已有29项守卫检查合计36通过；最终7项复核及Release通过，证据.build/touch-observer-tests.log、touch-observer-final-tests.log、touch-observer-build.log。尚未启用：Player接收验证和Core触摸所有权/配对仍待接，不能称实际触控已通；旧Core25612保留，03仍开做2/4=50%。

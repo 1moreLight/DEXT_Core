@@ -525,3 +525,5 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 正式index.html引用task-area-model/host/controller.js和task-area.css，v3-release-assets.json未包含；以前只验证源资源/运行白名单不足以证明发布包完整。新增verify-release-host.ps1逐一核对HTML src/href和清单文件存在，build-v3-release在构建前调用。RED报task-area.css未包含；补4项后GREEN，实际独立发布目录同样通过。冻结6样包字节检查保持通过。该检查只覆盖直接HTML依赖，不冒充整个运行验收。
 
 2026-10-11批量替换补记：同一JS含作者与官方两套gate，相同if(!allowed)文本一次替换会误改另一作用域，产生未定义touch变量；diff审查发现后恢复作者gate。以后修改同名局部代码按函数范围定位；本轮修正后29项守卫测试及Release构建通过。
+
+2026-10-11原生事件测试夹具补记：模拟isTrusted getter若使用箭头函数，会捕获构造时this，无法通过Reflect.apply绑定事件，导致synthetic事件测试误判；改普通getter后真实/合成事件区分测试通过。

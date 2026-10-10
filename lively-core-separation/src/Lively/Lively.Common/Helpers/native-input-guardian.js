@@ -246,6 +246,44 @@
     define(root,'__dextNativeInputRequestV1',{configurable:false,writable:false,value:send});
     return true;
   }
+  // Own native pointer getters are captured before authored code. This observer
+  // reports contacts only; Core still owns hit testing and action completion.
+  function observeOfficialTouch(root,emit){
+    if(!root.PointerEvent)return null;
+    const apply=Reflect.apply,describe=Object.getOwnPropertyDescriptor,proto=Object.getPrototypeOf;
+    function getter(type,name){for(let p=type.prototype;p;p=proto(p)){const d=describe(p,name);if(d?.get)return d.get;}return null;}
+    const trust=describe(new root.Event('dext-touch'),'isTrusted')?.get;
+    const type=getter(root.Event,'type'),pointerType=getter(root.PointerEvent,'pointerType'),id=getter(root.PointerEvent,'pointerId');
+    const primary=getter(root.PointerEvent,'isPrimary'),cx=getter(root.MouseEvent,'clientX'),cy=getter(root.MouseEvent,'clientY');
+    if(!trust||!type||!pointerType||!id||!primary||!cx||!cy)return null;
+    const add=root.EventTarget.prototype.addEventListener;
+    const contacts=new Set();let enabled=false,active=null,sequence=0;
+    function send(kind,p){emit({kind,pointerId:p.id,x:p.x,y:p.y,width:p.width,height:p.height,sequence:++sequence});}
+    function cancel(){if(active){const p=active;active=null;send('cancel',p);}}
+    function disable(){cancel();enabled=false;contacts.clear();}
+    function event(e){
+      if(!enabled||!apply(trust,e,[])||apply(pointerType,e,[])!=='touch')return;
+      const kind=apply(type,e,[]),key=apply(id,e,[]),x=apply(cx,e,[]),y=apply(cy,e,[]);
+      if(kind==='pointerdown'){
+        if(contacts.has(key)){cancel();return;}
+        contacts.add(key);
+        if(contacts.size!==1||!apply(primary,e,[])){cancel();return;}
+        const width=root.innerWidth,height=root.innerHeight;
+        if(!Number.isFinite(x)||!Number.isFinite(y)||!(width>0&&height>0)||x<0||y<0||x>=width||y>=height)return;
+        active={id:key,x,y,width,height};send('down',active);return;
+      }
+      if(active?.id===key){
+        if(kind==='pointercancel'||kind==='lostpointercapture'||!Number.isFinite(x)||!Number.isFinite(y)||
+          root.innerWidth!==active.width||root.innerHeight!==active.height||
+          (x-active.x)**2+(y-active.y)**2>36||x<0||y<0||x>=active.width||y>=active.height)cancel();
+        else if(kind==='pointerup'){const p={...active,x,y};active=null;send('up',p);}
+      }
+      if(kind==='pointerup'||kind==='pointercancel'||kind==='lostpointercapture')contacts.delete(key);
+    }
+    for(const name of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture'])apply(add,root,[name,event,true]);
+    apply(add,root,['pagehide',disable,true]);
+    return{enable(){enabled=true;},disable};
+  }
   function installOfficial(root,secret,controlledDockInput=false){
     if(root!==root.top||!root.chrome?.webview||typeof secret!=='string')return false;
     const define=Object.defineProperty,apply=Reflect.apply,add=root.EventTarget.prototype.addEventListener;
@@ -255,6 +293,11 @@
     const stop=root.Event.prototype.stopImmediatePropagation,prevent=root.Event.prototype.preventDefault;
     const composedPath=root.Event.prototype.composedPath,now=root.performance?.now;
     let clickTime=0,touchDown=0,touchUp=0,touchBlocked=0;
+    const touchAssign=Object.assign,touchCreate=Object.create;
+    const touchObserver=controlledDockInput?observeOfficialTouch(root,value=>{
+      const message=touchAssign(touchCreate(null),value,{type:'dext:v3-official-touch',protocolVersion:1,token:secret,documentNonce:nonce});
+      apply(post,root.chrome.webview,[apply(stringify,JSON,[message])]);
+    }):null;
     function gate(event){
       if(!controlledDockInput||!apply(get,event,[]))return true;
       const entries=apply(composedPath,event,[]);
@@ -285,6 +328,8 @@
     define(root,'__dextNativeOfficialInputDispatchV1',{configurable:false,writable:false,value:value=>{
       if(!value||value.token!==secret)return null;
       if(value.kind==='diagnostics')return{touchDown,touchUp,touchBlocked};
+      if(value.kind==='touchEnable'){touchObserver?.enable();return{documentNonce:nonce,available:!!touchObserver};}
+      if(value.kind==='touchDisable'){touchObserver?.disable();return{documentNonce:nonce,available:!!touchObserver};}
       if(value.kind==='revoke'){expected=null;clickTarget=null;return{documentNonce:nonce,armed:false};}
       if(value.kind!=='arm'||!Number.isSafeInteger(value.gestureId)||value.gestureId<=0||
         !Number.isSafeInteger(value.structuralVersion)||value.structuralVersion<=0||!['down','up'].includes(value.edge))return null;
@@ -303,6 +348,6 @@
     apply(add,root,['mousedown',dispatch,true]);apply(add,root,['mouseup',dispatch,true]);
     apply(add,root,['pagehide',()=>{expected=null;},true]);return true;
   }
-  if(typeof module==='object'&&module.exports)module.exports=Object.freeze({install,installOfficial});
+  if(typeof module==='object'&&module.exports)module.exports=Object.freeze({install,installOfficial,observeOfficialTouch});
   else if(this===this.top)installOfficial(this,'__DEXT_INPUT_GUARDIAN_TOKEN__','__DEXT_DOCK_INPUT_GATE__'==='true');else install(this,'__DEXT_INPUT_GUARDIAN_TOKEN__','__DEXT_DOCK_INPUT_GATE__'==='true');
 }).call(this);
