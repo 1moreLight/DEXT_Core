@@ -10,8 +10,9 @@ type Board = { stamp:string; consumers:Consumer[]; paused:boolean };
 const sources = [
   ["time.read", "时间数据"], ["hardware.read", "硬件数据"],
   ["media.read", "媒体数据"], ["audio.read", "音量数据"],
+  ["storage.read", "读取本机记忆"], ["storage.write", "保存本机记忆"],
 ] as const;
-const appliedHint = "保存并应用这个 Room 后，可为当前运行副本允许数据读取。";
+const appliedHint = "保存并应用这个 Room 后，可为当前运行副本允许数据读取或本机记忆。";
 
 function capabilities(reply:Grants, roomId:string, stamp:string):Consumer[]|undefined {
   if (reply.status !== "accepted" || reply.roomId !== roomId || reply.installationStamp !== stamp) return;
@@ -48,7 +49,7 @@ export function V3ReadGrantPanel(props:Props) {
         if (!current()) return;
         const declared = capabilities(reply, props.roomId, session.installation_stamp);
         if (!declared?.length) {
-          setBoard(null); setNotice(reply.status === "accepted" ? "当前已应用作品没有声明数据读取；作品新增数据源后，请保存并重新应用。" : appliedHint);
+          setBoard(null); setNotice(reply.status === "accepted" ? "当前已应用作品没有声明数据或本机记忆；作品新增数据源后，请保存并重新应用。" : appliedHint);
           return;
         }
         const paused = Boolean(session.lifecycle?.playback_paused || session.lifecycle?.locked);
@@ -91,7 +92,7 @@ export function V3ReadGrantPanel(props:Props) {
 
   return <section aria-label="本机数据授权" className="space-y-2 rounded-lg border p-3">
     <h3 className="text-sm font-medium">本机数据授权</h3>
-    <p className="text-xs text-muted-foreground">这些选择保存在本机，作品更新后需重新允许。</p>
+    <p className="text-xs text-muted-foreground">这些选择保存在本机，作品更新后需重新允许。本机记忆只保存此作品的数据；撤销不会删除已有记录，分享不携带记录。</p>
     {consumer && <div className="space-y-1">
       <label htmlFor="v3-grant-consumer" className="text-xs text-muted-foreground">数据授权来源</label>
       <select id="v3-grant-consumer" aria-label="数据授权来源" disabled={props.disabled || pending} value={consumer.consumerId}

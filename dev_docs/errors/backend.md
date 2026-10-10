@@ -554,3 +554,6 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 
 ## #272 界面线程退出不能捕获自身恢复续体
 TaskbarController.Dispose在WPF线程同步等待TickAsync；StopAsync内层await可能捕获同一Dispatcher，导致界面线程等待自己。用后台任务执行最后释放，保持退出前有界等待。阻塞UI SynchronizationContext测试先失败，修复后通过；不改变鼠标或触控输入链。
+
+## #273 partial静态初始化顺序（2026-10-10）
+新增可编辑能力集合引用另一partial文件的ReadableData，测试首次构造触发TypeInitializationException。改为独立常量集合，不依赖编译文件次序；9/9定向检查通过。

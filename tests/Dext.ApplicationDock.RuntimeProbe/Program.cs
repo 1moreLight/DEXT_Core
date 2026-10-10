@@ -3,7 +3,7 @@ using GrpcDotNetNamedPipes;
 using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Commands;
 using System.Text.Json;
-if (args.Length < 2) throw new ArgumentException("Usage: status|enable|disable|shutdown|probe|restart-probe|taskbar-probe|taskbar-exit-probe EXPECTED_CORE_DIRECTORY");
+if (args.Length < 2) throw new ArgumentException("Usage: status|enable|disable|shutdown|probe|restart-probe|taskbar-probe|taskbar-exit-probe|grants-status EXPECTED_CORE_DIRECTORY");
 var channel = new NamedPipeChannel(".", "Grpc_DEXT:DESKTOPSHELL" + Environment.UserName);
 var client = new DesktopService.DesktopServiceClient(channel);
 var identity = client.GetCoreStats(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5));
@@ -15,6 +15,23 @@ if (args[0] == "shutdown")
 {
     try { new CommandsService.CommandsServiceClient(channel).ShutDown(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5)); }
     catch (Grpc.Core.RpcException) { /* Pipe can close during normal shutdown; caller verifies exit. */ }
+    return;
+}
+if (args[0] == "grants-live") { if(args.Length!=3)throw new ArgumentException("grants-live requires fixture Room ID"); await StorageGrantLiveProbe.Run(client,channel,identity,args[2]); return; }
+if (args[0] == "grants-status")
+{
+    var session = client.GetRoomSession(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5));
+    if (!session.Active || session.PlayerPid <= 0) throw new Exception("No active Room; no grant evidence available.");
+    var grants = client.GetRoomReadGrants(new RoomReadGrantsRequest {
+        RoomId = session.RoomId, InstallationStamp = session.InstallationStamp
+    }, deadline: DateTime.UtcNow.AddSeconds(5));
+    if (grants.Status != "accepted" || grants.RoomId != session.RoomId || grants.InstallationStamp != session.InstallationStamp)
+        throw new Exception("Grant response does not match active Room.");
+    var storage = grants.Consumers.Where(c => c.Capabilities.Any(x => x.Capability is "storage.read" or "storage.write")).ToArray();
+    if (storage.Length == 0) throw new Exception("Active Room declares no storage consumer; this is not storage UI evidence.");
+    foreach (var consumer in storage)
+        Console.WriteLine($"PASS real Core exposes {consumer.ConsumerId}: " + string.Join(", ", consumer.Capabilities.Select(x => $"{x.Capability}={x.Allowed}")));
+    Console.WriteLine("Read-only probe; no permission or personal value changed.");
     return;
 }
 JsonElement Read() => JsonSerializer.Deserialize<JsonElement>(client.GetApplicationDockStatus(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5)).ReplyJson);

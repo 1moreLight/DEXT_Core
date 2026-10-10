@@ -377,3 +377,5 @@
 
 | #271 | 任务栏租约释放后恢复尚未确认，必须保留恢复状态与错误；重试期不能清错误 | [backend](errors/backend.md) |
 | #272 | WPF退出线程同步等待异步看护释放，内层await捕获Dispatcher导致退出卡住 | [backend](errors/backend.md) |
+| #273 | partial类静态字段跨文件初始化次序不可靠，不能依赖另一分册字段先完成 | [backend](errors/backend.md) |
+| #274 | 异步保存期间计数改变，旧回执不能宣称最新值已保存，成功后须补写最新值 | [frontend](errors/frontend.md) |
