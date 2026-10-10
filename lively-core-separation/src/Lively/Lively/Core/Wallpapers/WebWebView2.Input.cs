@@ -256,6 +256,7 @@ namespace Lively.Core.Wallpapers
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
             a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null);
             var after=a.Input.State;
+            if(nativeDock)Logger.Debug($"Dock down gesture before={before?.Gesture?.Sequence} after={after?.Gesture?.Sequence} foreground={foreground} viewport={v!=null} geometry={after?.GeometryVersion}");
             if(after?.Gesture is{Key:0,Released:false} gesture&&gesture.Sequence!=before?.Gesture?.Sequence){
                 a.PointerGesture=gesture;SendNativePointer(gesture,"down",x,y);
             }
@@ -282,6 +283,7 @@ namespace Lively.Core.Wallpapers
         private void SendNativePointer(RoomNativeInputGesture gesture,string kind,int x,int y)
         {
             var v=gesture.Viewport;
+            if(nativeDock&&(kind=="down"||kind=="up"||kind=="cancel"))Logger.Debug($"Dock packet kind={kind} sequence={gesture.Sequence} sample={gesture.SampleMouse}");
             SendMessage(new LivelyMessageRoomNativePointer{
                 RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,

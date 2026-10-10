@@ -24,6 +24,7 @@ namespace Lively.Player.WebView2
                     // author frame. Core still owns the physical button focus.
                     if(packet.Key!=0&&packet.Consumer!="official"&&packet.Consumer!=DextNativeTaskSample.Consumer)NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
                     var accepted=await nativeFrameMedia.ArmInputAsync(packet);
+                    TraceDockSample(packet,"arm="+accepted);
                     if(accepted)nativeAuthorDeadline.Start();return accepted;
                 },async()=>{await nativeFrameMedia.RevokeInputAsync();await ReleaseNativeSampleAsync();},
                 ForwardNativePointer,CurrentNativePointer,packet=>nativeFrameMedia.ReleasedInputAsync(packet),
@@ -38,10 +39,18 @@ namespace Lively.Player.WebView2
             internal LivelyRoomNativeTaskHit[] TaskTargets;
         }
         private NativeVisualSample nativeVisualSample;
+        private void TraceDockSample(DextNativePointerPacket value,string stage)
+        {
+            if(startArgs.DextDock)SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,
+                Message=$"Dock sample kind={value.Kind} sequence={value.GestureId} stage={stage}"});
+        }
         private async Task<bool> PrepareNativeSampleAsync(DextNativePointerPacket value)
         {
             if(!value.SampleVisual)return true;
+            var stage="current-before";
+            try {
             if(!CurrentNativePointer(value)||!IsOfficialDextDocument(webView.CoreWebView2.Source))return false;
+            stage="release-previous";
             await ReleaseNativeSampleAsync();
             var id=Guid.NewGuid().ToString("D");
             // One renderer task reads the painted matrices and stops further
@@ -54,8 +63,11 @@ namespace Lively.Player.WebView2
             var script="(()=>{const sample=this.dextNativeInputSample&&this.dextNativeInputSample("+begin+");if(!sample)return null;"+
                 (value.Kind=="focus"?"return sample;})()":
                     "const receipt="+nativeFrameMedia.OfficialDispatchScript(value)+";if(!receipt||!receipt.armed)return null;sample.dispatchNonce=receipt.documentNonce;return sample;})()");
+            stage="script";
             var json=await webView.CoreWebView2.ExecuteScriptAsync(script);
+            stage="current-after";
             if(!CurrentNativePointer(value))return false;
+            stage="nonce";
             var sample=Newtonsoft.Json.Linq.JObject.Parse(json);
             var nonce=Guid.Empty;
             if((string)sample["sampleId"]!=id||value.Kind!="focus"&&!Guid.TryParseExact((string)sample["dispatchNonce"],"D",out nonce))return false;
@@ -63,9 +75,11 @@ namespace Lively.Player.WebView2
                 ["type"]="dext:v3-native-request",["protocolVersion"]=1,["requestId"]=id,["method"]="geometry",
                 ["runtimeGeneration"]=value.RuntimeGeneration,["sessionId"]=value.SessionId.ToString(),["revision"]=value.Revision,
                 ["geometryVersion"]=sample["geometryVersion"],["viewport"]=sample["viewport"],["buttons"]=sample["buttons"],["eventSamples"]=true};
+            stage="geometry";
             var parsed=DextNativeInputProtocol.Parse(geometry.ToString(Newtonsoft.Json.Formatting.None),roomRuntime,value.PixelWidth,value.PixelHeight);
             if(parsed==null||parsed.GeometryVersion!=value.GeometryVersion||!DextNativeGeometry.TryCreate(parsed.Buttons,out var entries))return false;
             nativeVisualSample.Buttons=parsed.Buttons;
+            stage="task-hit";
             if(startArgs.DextDock&&value.Key==0)
             {
                 if(!DextNativeTaskSample.TryParse(sample["taskHit"],out var taskHit))return false;
@@ -83,9 +97,12 @@ namespace Lively.Player.WebView2
             }
             if(value.SampleKeyboard&&!taskKey&&hit==null)return false;
             if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"&&!taskKey))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            stage="dock-edge";
             if (startArgs.DextDock && value.Kind != "focus" &&
                 !await nativeFrameMedia.PrepareDockEdgeAsync(value,taskKey?DextNativeTaskSample.Consumer:hit?.Consumer)) return false;
+            stage="ready";
             return true;
+            } finally { TraceDockSample(value,stage); }
         }
         private async Task CompleteNativeSampleAsync(DextNativePointerPacket value)
         {

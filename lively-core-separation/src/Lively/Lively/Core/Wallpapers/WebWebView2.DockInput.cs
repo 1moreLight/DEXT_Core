@@ -74,6 +74,7 @@ namespace Lively.Core.Wallpapers
         {
             if (!nativeDock || !Volatile.Read(ref nativeDockRouteConnected)) return;
             var inside = !blocked && NativeDockAt(x, y);
+            if(edge=="down"||edge=="up")Logger.Debug($"Dock raw edge={edge} inside={inside} blocked={blocked} available={NativeDockAvailable()} owned={nativeDockMouseOwned}");
             if (edge == "down")
             {
                 // Outside presses must not clear an idle Dock's current geometry.
