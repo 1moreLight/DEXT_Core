@@ -585,3 +585,6 @@ Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线�
 - 证据：新增实际input HWND可见断言先RED；修复后无临时guardian日志的完整Release、实际鼠标DOWN/UP同窗口目标回执、键盘取样/菜单、隐藏及再次显示通过。原生指针下变为Chrome_RenderWidgetHostHWND。Core快照与边沿仍是探针夹具，不宣称真实RawInput或应用启动已验收。
 - 探针恢复后必须像Core一样重发任务快照：控制器暂停会撤销ActionsEnabled；displayReady不代表重新获得操作许可。最初恢复检查因未补快照超时，补sequence3后通过，无需放宽生产控制器。
 - 临时日志已撤回；还需触屏与真实Core动作门槛，不能据此将P8-013整体标完成。
+
+## #298 Core退出请求后进程残留（2026-10-11，待修）
+旧候选PID39560与669a857开发副本PID47728均在正常ShutDown RPC后超过15秒未退出；旧候选追加状态RPC超时。不是仅观察超时：进程路径确认仍存在，RPC已不响应。尚未定位卡住的dispose/退出阶段，不能宣称关闭正常。新副本测试已先恢复Room/偏好/checkpoint，再发退出；确认精确PID+构建路径后结束残留进程，重新启动原候选PID29792，RPC确认enabled=true/pins=0/groups=11/error空，Room inactive，无Player。后续定位此缺陷，避免让测试清理掩盖产品退出失败。

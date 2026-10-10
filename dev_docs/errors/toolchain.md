@@ -520,3 +520,6 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 - 探针在窗口就绪后先验证任务快照私有通道；全屏时核对区域不可用，再明确输出SKIP鼠标/键盘可见分支。SKIP不算输入通过，也不推动03完成。
 - Player主进程退出后，WebView用户数据文件仍可能被子进程短暂持有。原4秒清理不足，改为最多15秒等待且清理失败抛错；只清自己创建且确认位于Temp内的目录。首个遗留目录在确认无引用进程后精确删除。
 - 编译过程中TaskJson匿名对象少一层闭括号，编译直接阻止运行；补齐后通过，没有改生产代码。
+
+## #297 发布清单遗漏任务区依赖（2026-10-11，已修）
+正式index.html引用task-area-model/host/controller.js和task-area.css，v3-release-assets.json未包含；以前只验证源资源/运行白名单不足以证明发布包完整。新增verify-release-host.ps1逐一核对HTML src/href和清单文件存在，build-v3-release在构建前调用。RED报task-area.css未包含；补4项后GREEN，实际独立发布目录同样通过。冻结6样包字节检查保持通过。该检查只覆盖直接HTML依赖，不冒充整个运行验收。

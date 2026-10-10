@@ -9,6 +9,7 @@ $assets = Get-Content -LiteralPath (Join-Path $root 'v3-release-assets.json') -R
 foreach ($asset in $assets.hostAssets) {
     if (-not (Test-Path -LiteralPath (Join-Path $root "$($assets.hostDirectory)/$asset") -PathType Leaf)) { throw "Native asset missing: $asset" }
 }
+& (Join-Path $PSScriptRoot 'verify-release-host.ps1') -RepositoryRoot $root
 & (Join-Path $PSScriptRoot 'verify-release-rooms.ps1') -RepositoryRoot $root
 [IO.Directory]::CreateDirectory($output) | Out-Null
 # Core is self-contained .NET 9; Player/Watchdog are Release. No legacy plugin or Bundle content is published.

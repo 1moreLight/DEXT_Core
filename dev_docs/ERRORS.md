@@ -403,3 +403,5 @@
 | #294 | 原生Dock实机探针遇全屏不能等待可见成功；Player退出后WebView仍可能短暂持有临时目录 | [toolchain](errors/toolchain.md) |
 | #295 | 恢复布局覆盖任务区遮挡确认，须等同区域最新render且保持拒绝保护 | [renderer](errors/renderer.md) |
 | #296 | Dock外层显示未恢复WebView2控制器，真实Chromium输入HWND仍隐藏 | [backend](errors/backend.md) |
+| #297 | 正式HTML新增任务区脚本/样式但发布清单漏项，源码运行正常而便携包缺资源 | [toolchain](errors/toolchain.md) |
+| #298 | 真实Core收到ShutDown后RPC停止响应但进程未退出，旧候选及新测试副本均复现；待定位 | [backend](errors/backend.md) |

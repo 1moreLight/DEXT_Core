@@ -36,3 +36,12 @@
 2026-10-11已知结果：全屏解除后快照、显示、键盘取样及官方菜单通过；鼠标回执仍会超时，探针当前在该阶段报失败。不要用前两项PASS声称整条输入通过。已修复恢复遮挡确认竞态（#295），实际Core的ActionsEnabled仍为false。
 
 2026-10-11鼠标回执问题已定向修复（#296）：外层Dock与WebView anchor可见，但Chromium实际input HWND隐藏；页面DOM取样成功不能证明真实显示/点击。同步controller.IsVisible后，最终无临时guardian日志的Release构建、隔离实际Player鼠标DOWN/UP同目标回执、Tab/Enter及官方菜单、隐藏/再次显示、无抢前台通过。恢复时探针补发新Core任务快照，保持暂停撤销操作许可的规则。证据：.build/task-visibility-red.log、task-visibility-final-build.log、task-visibility-final.log。旧“鼠标回执未定位”条目为历史，本次解决该故障。实际Core RawInput/OS动作及触屏仍待做，ActionsEnabled生产仍false，03开做、2/4=50%。CoreOnly复核旧候选39560，未更换用户运行版、未新增配置器。
+
+## 实际Core就绪探针（2026-10-11）
+`tests/Dext.ApplicationDock.RuntimeProbe`的`fusion-live EXPECTED_CORE_DIRECTORY FIXTURE_ID`只接受隔离夹具，先核对Core产品/路径；复用StorageGrantLiveProbe要求当前无Room/壁纸，结束恢复偏好、原checkpoint与清除夹具个人数据。
+本次开发副本：D:/use/Orca/DEXT/DEXT_Core/.build/v3-task-live-20261011。Core/Player从669a857发布，配置器沿用旧候选且未启动；正式宿主资源按修正清单复制。content来自fusion-sample-installed，改独立UUID和名称Storage grant acceptance fixture，并重算installation.json的manifestSha256。不使用用户实际Room目录。
+仅在开发副本main.js末尾追加标题观察器（不修改生产宿主源码）：
+```js
+setInterval(()=>{const t=globalThis.dextRuntimeDiagnostics?.().taskArea;document.title='DEXT_FUSION_PROBE:'+JSON.stringify({phase:t?.phase||'waiting',enabled:t?.inputEnabled===true,count:t?.snapshot?.items?.length||0});},250);
+```
+探针读取RPC确定的Player PID所属窗口标题，仅报告阶段/可操作性/条目数，恢复鼠标；不发送应用点击。实测11项、displayReady、enabled通过。必须另做真实OS启动/切换/最小化和触屏。退出仍有#298进程残留问题，不能将探针成功当退出验收通过。

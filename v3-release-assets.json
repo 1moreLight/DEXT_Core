@@ -14,6 +14,10 @@
     "media-host.js",
     "playback-host.js",
     "dom-host.js",
+    "task-area-model.js",
+    "task-area-host.js",
+    "task-area-controller.js",
+    "task-area.css",
     "main.js"
   ]
 }
