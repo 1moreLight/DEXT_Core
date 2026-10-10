@@ -69,6 +69,7 @@ namespace Lively.Player.WebView2
             if (nativeDockInputConnected != policy.InputConnected)
             { nativeDockVisibilitySynchronized = false; nativeDockGeometryStarted = 0; }
             nativeDockInputConnected = policy.InputConnected;
+            if (policy.PreviewHoldMilliseconds is int hold) nativeDockWindow?.HoldPreview(hold);
             if (policy.LeaveKeyboard)
             {
                 nativeDockWindow?.LeaveKeyboard(true);

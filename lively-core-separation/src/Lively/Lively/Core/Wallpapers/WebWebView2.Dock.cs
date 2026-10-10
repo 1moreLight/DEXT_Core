@@ -152,6 +152,26 @@ namespace Lively.Core.Wallpapers
             return true;
         }
 
+        internal bool NativeDockPreviewIsCurrent(Lively.Services.ApplicationDock.DockTaskCompletion completion)
+        {
+            var state = Volatile.Read(ref roomNativeAttachment)?.Input.State;
+            var gesture = completion?.Gesture;
+            return state != null && gesture != null && !IsExited && NativeDockAvailable() &&
+                state.Generation == gesture.Generation && state.Session == gesture.Session && state.Revision == gesture.Revision;
+        }
+
+        internal void SetNativeDockPreview(bool hold, bool opening = false)
+        {
+            var state = Volatile.Read(ref roomNativeAttachment)?.Input.State;
+            if (!nativeDock || state == null || IsExited) return;
+            SendMessage(new LivelyMessageRoomDockPolicy
+            {
+                RuntimeGeneration = state.Generation, SessionId = state.Session, Revision = state.Revision,
+                InputConnected = Volatile.Read(ref nativeDockRouteConnected),
+                PreviewHoldMilliseconds = hold ? 1200 : 0, LeaveKeyboard = opening
+            });
+        }
+
         internal void SendNativeDockPolicy(bool inputConnected, bool leaveKeyboard = false, bool refreshGeometry = false)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;

@@ -19,6 +19,9 @@ namespace Lively.Player.WebView2
         private bool registered, arranging, arrangeQueued, disposed, started;
         private bool keyboard, expanded, fullscreen, shellFullscreen, arrangingWindows;
         private bool visible, available = true;
+        private long previewHoldUntil;
+        internal void HoldPreview(int milliseconds) => previewHoldUntil = milliseconds <= 0 ? 0 :
+            Stopwatch.GetTimestamp() + (long)(Math.Min(milliseconds, 1500) / 1000d * Stopwatch.Frequency);
         private readonly string role;
         internal bool IsStarted => started;
         internal bool IsVisible => visible;
@@ -82,7 +85,7 @@ namespace Lively.Player.WebView2
         {
             if (disposed || available == value) return;
             available = value;
-            if (!value) { expanded = false; LeaveKeyboard(false); }
+            if (!value) { previewHoldUntil = 0; expanded = false; LeaveKeyboard(false); }
             if (started && mode == DockMode.Reserve && role == "native-dock")
             {
                 if (!value) Unregister();
@@ -237,7 +240,7 @@ namespace Lively.Player.WebView2
                 if (nextFullscreen != fullscreen)
                 {
                     fullscreen = nextFullscreen;
-                    if (fullscreen) { expanded = false; LeaveKeyboard(false); }
+                    if (fullscreen) { previewHoldUntil = 0; expanded = false; LeaveKeyboard(false); }
                     else if (mode != DockMode.Autohide) expanded = true;
                 }
                 if (available && mode == DockMode.Autohide && !fullscreen && !arrangingWindows)
@@ -248,7 +251,7 @@ namespace Lively.Player.WebView2
                         var work = ReadPrimaryWorkArea();
                         var edge = new Rectangle(work.Left, work.Bottom - 3, work.Width, 4);
                         var inside = expanded && lastBounds.Contains(cursor);
-                        if (edge.Contains(cursor) || inside || keyboard)
+                        if (edge.Contains(cursor) || inside || keyboard || Stopwatch.GetTimestamp() < previewHoldUntil)
                         {
                             expanded = true;
                             lastInside = Stopwatch.GetTimestamp();

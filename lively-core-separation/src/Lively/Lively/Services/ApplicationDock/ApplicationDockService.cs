@@ -237,6 +237,7 @@ internal sealed partial class ApplicationDockService : IDisposable
     private void AttachTaskHost(WebWebView2 host)
     {
         if(ReferenceEquals(taskHost,host))return;
+        CloseThemePreview();
         if(taskHost!=null)taskHost.NativeDockTaskCompleted-=CompleteTask;
         taskDisplay.Clear();taskDisplayContext=null;taskHost=host;
         if(taskHost!=null)taskHost.NativeDockTaskCompleted+=CompleteTask;
@@ -260,12 +261,13 @@ internal sealed partial class ApplicationDockService : IDisposable
                 if(taskDisplayContext!=$"{source.NativeDockTaskEpoch}/{PinScope(navigation)}/{pinRevision}"||
                     !taskDisplay.TryResolve(completion.ContextId,completion.ItemId,completion.WindowId,out var group,out var selected)){taskLog.Debug("Task completion rejected projection sequence={0}",completion.Sequence);return;}
                 taskLog.Debug("Task completion accepted sequence={0} action={1}",completion.Sequence,completion.Action);
+                if(completion.Action!="openWindows")CloseThemePreview();
                 switch(completion.Action)
                 {
                     case "activate" when selected==null&&group.Windows.Count<=1: Click(group,null);break;
                     case "chooseWindow" when selected!=null: source.CompleteNativeDockTaskPresentation(completion);Click(group,selected);break;
                     case "togglePin" when selected==null: source.CompleteNativeDockTaskPresentation(completion);TogglePin(group);break;
-                    case "openWindows" when selected==null&&group.Windows.Count>1: source.CompleteNativeDockTaskPresentation(completion);break;
+                    case "openWindows" when selected==null&&group.Windows.Count>1: OpenThemePreview(source,completion);break;
                     case "dismissMenu" when selected==null: source.CompleteNativeDockTaskPresentation(completion);break;
                 }
                 }

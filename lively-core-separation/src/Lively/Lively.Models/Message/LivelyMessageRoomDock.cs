@@ -36,6 +36,7 @@ namespace Lively.Models.Message
         public bool InputConnected { get; set; }
         public bool LeaveKeyboard { get; set; }
         public bool RefreshGeometry { get; set; }
+        public int? PreviewHoldMilliseconds { get; set; }
         public LivelyMessageRoomDockPolicy() : base(MessageType.cmd_room_dock_policy) { }
     }
 }
