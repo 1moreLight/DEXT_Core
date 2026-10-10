@@ -6,7 +6,7 @@
 
 - 开发分支：feat/V3-P8-013-theme-task-area。当前用户运行目录为 `.build/v3-core-exit-20261010`，不是本分支候选。
 - 隔离候选：主项目 `.build/v3-task-live-20261011`；含候选专用只读观测，不可原样作为正式分发包。
-- 最新生产修复：8e97bca（启动就绪门控）；最新实际恢复任务栏验证：bca002f。
+- 本次核查代码基线：9bb2a88。最新生产修复为37f122f（同宿主跨Desk保持任务栏租约），另含d26359a（重复可见性通知去重）及6ff48bc（作者鼠标兼容事件修复）。正常退出恢复证据已更新到9bb2a88。
 - 接续开发先读 [剩余操作清单](03-remaining.md)，不要从下方旧记录重复恢复已完成的接线。
 
 ## 已核对的证据及边界
@@ -18,11 +18,25 @@
 | 启动未运行应用 | fusion-launch-live.log：真实点击启动自有子进程 | 启动性能已优化完成；旧测量UP到窗口约4953ms |
 | 鼠标/注入触摸激活、最小化、恢复及交接 | touch-bridge-actions-passed.log | 物理触屏验收通过 |
 | 多应用键盘Tab/Enter | fusion-keyboard-live.log，d2ae04e修复后12应用通过 | 所有作者按钮键盘行为已验收 |
-| 多窗口菜单与缩减到单窗口 | task-menu-complete-passed.log | 固定菜单已走过实际操作 |
+| 多窗口菜单与缩减到单窗口 | task-menu-complete-passed.log | 最新HEAD所有菜单场景已重复验证 |
+| 实际固定/取消固定 | fusion-pin-live.log：Core47612/Player22924，两次菜单收起并恢复投影 | 物理触屏固定菜单已验收 |
 | 首次产品允许点击 | fusion-startup-live.log：移除额外稳定等待后通过 | 所有显示器/启动竞态均已排除 |
 | 手动恢复任务栏后继续操作 | fusion-restored-live.log：实际可见任务栏＋选窗/恢复通过 | 所有任务栏模式均完成实机矩阵 |
 | 切Desk撤销旧手势 | task-desk-cancel-tests.log：25项生产输入逻辑检查 | 按住物理触点并真实切Desk已验收 |
-| 完整构建 | task-startup-gate-build.log，退出0 | 当前用户已运行本分支 |
+| 同栏导航、窄栏滚动及应用操作 | fusion-navigation-live.log：Core46800/Player52720，双向切页、实际横向滚动及激活/最小化/恢复；25ms观察任务栏隐藏且Dock位置不变 | 按住跨Desk取消已实际验证 |
+| 按住时关闭目标 | fusion-close-live.log：Core25504/Player51580，DOWN后121ms关闭自有窗口，UP后无误激活/重开 | 旧完成一定在输入配对层被拒绝；实际还由DockWindows拒绝已关闭HWND |
+| 全屏隐藏和恢复 | fusion-fullscreen-live.log：Core44152/Player16632，原生Dock隐藏、菜单清空、恢复可操作 | 所有游戏/显示器组合已验证 |
+| 切无Dock页 | fusion-no-dock-live.log：Core49376/Player53244，正式导航进入quiet，旧宿主销毁且系统任务栏可见 | 所有异常退出都恢复成功 |
+| 正常退出Core | fusion-exit-live.log：Core46892和两个Player正常退出，系统任务栏恢复；51144仅为夹具清理重启 | 强杀/崩溃故障回退已完成；该范围由014继续 |
+| 完整构建 | task-lease-build.log，37f122f生产修复的完整Release通过；其后为探针/记录提交 | 当前用户已运行本分支；诊断候选可以直接分发 |
+
+## 本轮核对结论
+
+2026-10-11只读复核上述五份最新实机日志与提交记录，均保留PASS和原偏好/夹具恢复记录。未重复运行实机、未改变用户桌面。03剩余清单第1/2/4项已有证据，第3项实际按住跨Desk、第5项最终核对仍未完。
+
+候选不能直接交付：包含标题观察和临时夹具。正式候选须从生产源独立构建，核对不含这些诊断内容；不把当前旧运行版视为新候选。
+
+按住跨Desk的下一条验证路径必须能独立触发真实Desk revision变化。已检查RoomNativeInputAuthority.MouseDown/Key：鼠标按下会重置焦点/取样，键盘按下会先清除mouse/gesture。因此“按住应用再按Enter切页”即使通过，也无法隔离Desk变化取消，不能填补该证据缺口；不为测试新增绕过物理证明的生产导航接口。
 
 ## 04剩余交付
 
