@@ -5,7 +5,7 @@ namespace Dext.Core.Rooms;
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
     internal sealed record ThemeTaskCandidate(string? ContextKey,string? UnavailableReason,
-        string Phase,bool Attached,bool Ready);
+        string Phase,bool Attached,bool Ready,string TaskAreaStatus);
 
     internal ThemeTaskCandidate ReadThemeTaskCandidate()
     {
@@ -25,7 +25,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                 host.Demand.Snapshot?.SessionId==demand.Snapshot?.SessionId&&
                 host.Demand.Installation?.InstallationStamp==demand.Installation?.InstallationStamp;
             var state=current?host!.Player.RoomDockWindowState:null;
-            return new(key,reason,dockPhase,attached,state is {RendererReady:true,WindowReady:true});
+            return new(key,reason,dockPhase,attached,state is {RendererReady:true,WindowReady:true},state?.TaskAreaStatus??"pending");
         }
     }
 

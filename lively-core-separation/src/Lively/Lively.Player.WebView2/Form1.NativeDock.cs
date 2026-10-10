@@ -46,7 +46,7 @@ namespace Lively.Player.WebView2
             };
             DextDockWindowHost.ExtendTransparentFrame(Handle);
             nativeDockHeartbeat = new System.Windows.Forms.Timer { Interval = 1000 };
-            nativeDockHeartbeat.Tick += (sender, args) => { PublishNativeDockState(); _ = TraceNativeDockTouchAsync(); };
+            nativeDockHeartbeat.Tick += (sender, args) => { PublishNativeDockState(); _ = RefreshNativeTaskAreaStatusAsync(); _ = TraceNativeDockTouchAsync(); };
             nativeDockHeartbeat.Start();
         }
 
@@ -111,6 +111,39 @@ namespace Lively.Player.WebView2
             _ = SynchronizeNativeDockWindow();
         }
 
+        private string nativeTaskAreaStatus = "pending";
+        private long nativeTaskAreaGeneration, nativeTaskAreaRevision, nativeTaskAreaSampleAt;
+        private Guid nativeTaskAreaSession;
+        private bool nativeTaskAreaReading;
+
+        private async Task RefreshNativeTaskAreaStatusAsync()
+        {
+            if(nativeTaskAreaReading || !nativeDockRendererReady || IsDisposed || Disposing ||
+                webView.CoreWebView2 == null || !IsOfficialDextDocument(webView.CoreWebView2.Source))return;
+            nativeTaskAreaReading = true;
+            try
+            {
+                var generation=roomRuntime.Generation;
+                var messages=roomRuntime.Replay();
+                var snapshot=messages.Count==0?null:messages[messages.Count-1];
+                if((string)snapshot?["type"]!="dext:v3-session")return;
+                var session=Guid.Parse((string)snapshot["sessionId"]);var revision=(long)snapshot["revision"];
+                var scope=new JObject { ["runtimeGeneration"]=generation,["sessionId"]=session,["revision"]=revision };
+                var reply=await webView.CoreWebView2.ExecuteScriptAsync(
+                    "this.dextNativeTaskReadiness?this.dextNativeTaskReadiness("+scope.ToString(Formatting.None)+"):null");
+                if(IsDisposed || Disposing || generation!=roomRuntime.Generation)return;
+                var latest=roomRuntime.Replay();var current=latest.Count==0?null:latest[latest.Count-1];
+                if((string)current?["sessionId"]!=session.ToString() || (long?)current?["revision"]!=revision)return;
+                var status=JsonConvert.DeserializeObject<string>(reply);
+                nativeTaskAreaStatus=status=="ready"||status=="hidden"||status=="unavailable"?status:"pending";
+                nativeTaskAreaGeneration=generation;nativeTaskAreaSession=session;nativeTaskAreaRevision=revision;
+                nativeTaskAreaSampleAt=Stopwatch.GetTimestamp();
+                PublishNativeDockState();
+            }
+            catch { nativeTaskAreaSampleAt=0; }
+            finally { nativeTaskAreaReading=false; }
+        }
+
         private async Task SynchronizeNativeDockWindow()
         {
             if (!startArgs.DextDock || nativeDockWindow == null || IsDisposed || Disposing) return;
@@ -145,6 +178,8 @@ namespace Lively.Player.WebView2
                 if (visible && bounds != nativeDockSynchronizedBounds)
                     await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockRefresh&&this.dextNativeDockRefresh()");
                 if (version != nativeDockStateVersion) return;
+                await RefreshNativeTaskAreaStatusAsync();
+                if (version != nativeDockStateVersion) return;
                 nativeDockSynchronizedBounds = bounds;
                 // Native show/hide of the Form does not restore the WebView2
                 // controller visibility cached while its parent was hidden.
@@ -178,6 +213,10 @@ namespace Lively.Player.WebView2
             {
                 RuntimeGeneration = roomRuntime.Generation, SessionId = session, Revision = (long)snapshot["revision"],
                 RendererReady = nativeDockRendererReady,
+                TaskAreaStatus = nativeTaskAreaGeneration == roomRuntime.Generation && nativeTaskAreaSession == session &&
+                    nativeTaskAreaRevision == (long)snapshot["revision"] && nativeTaskAreaSampleAt != 0 &&
+                    (Stopwatch.GetTimestamp() - nativeTaskAreaSampleAt) / (double)Stopwatch.Frequency < 5
+                    ? nativeTaskAreaStatus : "pending",
                 WindowReady = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted && nativeDockVisibilitySynchronized,
                 GeometryUpdating = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted &&
                     nativeDockGeometryStarted != 0 &&

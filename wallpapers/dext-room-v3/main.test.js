@@ -94,3 +94,17 @@ test('duplicate Dock visibility preserves task input while real visibility chang
  hook({...scope,visible:false});assert.equal(cancels,shown.cancels+1);
  assert.equal(hook({...scope,revision:2,visible:true}),false);
 });
+
+test('private task readiness distinguishes pending, configured hidden and absent area without exposing tasks',async()=>{
+ const f=fixture();let view={phase:'waiting',occlusion:null,snapshot:{items:[{name:'private'}]}};
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({refresh:async()=>{},suspend(){},dispose(){},read:()=>view})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());await Promise.resolve();
+ const scope={runtimeGeneration:1,sessionId:'session',revision:1},read=()=>f.sandbox.dextNativeTaskReadiness(scope);
+ assert.equal(read(),'pending');
+ view={phase:'displayReady',occlusion:{x:0,y:0,width:100,height:100}};assert.equal(read(),'ready');
+ view={...view,phase:'hidden'};assert.equal(read(),'hidden');
+ view={phase:'hidden',occlusion:null};assert.equal(read(),'unavailable');
+ view={phase:'geometryUnavailable',occlusion:{}};assert.equal(read(),'unavailable');
+ assert.equal(f.sandbox.dextNativeTaskReadiness({...scope,revision:2}),null);
+ f.send({type:'dext:v3-runtime-revoked',runtimeGeneration:1,sessionId:'session'});assert.equal(read(),null);
+});

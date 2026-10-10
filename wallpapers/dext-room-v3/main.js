@@ -87,6 +87,15 @@
     if(paused===!value.visible)return true;
     paused=!value.visible;tasks?.suspend();host?.setPlaybackSuspended(paused);tasks?.refresh();return true;
   };
+  // Fixed official document only: no titles, IDs or task payload leave this hook.
+  globalThis.dextNativeTaskReadiness=value=>{
+    if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||!tasks)return null;
+    const state=tasks.read();
+    if(state.phase==='geometryUnavailable')return 'unavailable';
+    if(state.phase==='waiting'||state.phase==='awaitingGeometry'||state.phase==='suspended')return 'pending';
+    if(!state.occlusion)return 'unavailable';
+    return state.phase==='displayReady'?'ready':state.phase==='hidden'?'hidden':'pending';
+  };
   globalThis.dextNativeTaskSnapshot=value=>{
     if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||!tasks)return false;
     return tasks.accept(value.snapshot,value.actionsEnabled===true);

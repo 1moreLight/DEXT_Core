@@ -11,6 +11,7 @@ namespace Lively.Models.Message
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
         public bool RendererReady { get; set; }
+        public string TaskAreaStatus { get; set; } = "pending";
         public bool WindowReady { get; set; }
         // Bounded position refresh; only taskbar ownership may use this, never input.
         public bool GeometryUpdating { get; set; }
