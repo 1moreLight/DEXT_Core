@@ -95,7 +95,7 @@ namespace Lively.Player.WebView2
                 if(own==null||own.Packet!=value)return;
                 // Official defaults use Core's physical key and do not dispatch
                 // a synthetic DOM key. Authored keys still wait for a native receipt.
-                if(value.Kind!="focus"&&!(value.SampleKeyboard&&(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer))&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                if(value.Kind!="focus"&&!IsOfficialTaskMouseSample(value)&&!(value.SampleKeyboard&&(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer))&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
                 var released=await ReleaseNativeSampleAsync();
                 if(!released||!CurrentNativePointer(value))return;
                 SendToParent(new LivelyMessageRoomNativeSample{Input=new LivelyMessageRoomNativePointer{
@@ -129,8 +129,17 @@ namespace Lively.Player.WebView2
             return DextNativeInputWindow.TryMeasure(Handle,webView.Handle,input,NativePointerPid,out var bounds,out var dpi)&&
                 bounds.X==value.OriginX&&bounds.Y==value.OriginY&&bounds.Width==value.PixelWidth&&bounds.Height==value.PixelHeight&&dpi==value.Dpi;
         }
+        // Native Dock mouse events already reach Chromium. Official tasks resolve
+        // the private visual sample against Core's original raw DOWN/UP pair;
+        // replaying those events would depend on a duplicate DOM mouse edge.
+        private bool IsOfficialTaskMouseSample(DextNativePointerPacket value) =>
+            startArgs.DextDock && value.Key == 0 && value.SampleMouse &&
+            (value.Kind == "down" || value.Kind == "up") &&
+            nativeVisualSample?.Packet == value && nativeVisualSample.TaskHit != null;
+
         private void ForwardNativePointer(DextNativePointerPacket value)
         {
+            if(IsOfficialTaskMouseSample(value))return;
             var input=new IntPtr(value.InputHandle);
             if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid))return;
             if(value.Key!=0){

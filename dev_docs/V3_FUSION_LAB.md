@@ -48,3 +48,4 @@ setInterval(()=>{const t=globalThis.dextRuntimeDiagnostics?.().taskArea;document
 
 ### 真实OS鼠标用例（当前失败门槛）
 模式`fusion-actions-live EXPECTED_CORE_DIRECTORY FIXTURE_ID`创建专用测试窗口，尝试激活/最小化/恢复；当前第一项激活尚未通过。正式版不含观察器。开发副本标题观察器额外输出`target`：从taskArea.snapshot.items按windows.title精确匹配`Dext Fusion Action Probe`，在`.dext-task-item`中按dataset.itemId找对应按钮，用getBoundingClientRect中心输出`{x,y,width:innerWidth,height:innerHeight}`；没有则null。测试依据比例换算原生坐标并检查当前Dock根窗口归属、鼠标键未按下、目标没移动。源码：FusionActionWindow.cs / FusionTaskLiveProbe.cs。不能把就绪探针成功算OS操作成功。
+2026-10-11更新：上节的fusion-actions-live现已在无诊断Release上通过专用窗口激活/最小化/恢复；保留旧失败记录追溯，证据task-direct-actions-passed.log。仅测试进程OS鼠标注入，物理触屏、首次启动和完整统一验收仍待做。

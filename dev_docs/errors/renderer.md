@@ -703,3 +703,6 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 发现2：该gesture的SampleMouse=False，因此Player不会回传任务视觉命中。dom-host一直发布eventSamples:false。现仅dockView且官方任务占用区非null时启用，移除时恢复false；桌面/无任务区保持原配置。新增测试先RED（false!==true），修正后68项dom-host通过。
 两处修正后完整Release构建成功（.build/task-actions-final-build.log），但最终无诊断代码的fusion-actions-live仍失败于激活专用窗口（.build/fusion-actions-live.log）。不能称为“任务点击已通”。下一步重看取样回执/物理完成/动作回调，不再以DOM存在或fixtures通过代替实际OS动作。普通作者按钮的融合取样路径与触屏仍须验收。
 临时TASKTRACE/viewport-trace代码已撤回；候选仍独立开发目录v3-task-live-20261011，原运行版已恢复14912（enabled=true/11组/error空/Room inactive），没有新增配置器。OS测试注入可被Core RawInput看到（down/up inside=true），不是“SendInput未产生输入”的假设。
+
+2026-10-11 #299鼠标激活/最小化/恢复已贯通（取代上面这三项尚未通过的口径）：最新诊断确认SampleMouse=true且原点匹配，Player在CompleteNativeSampleAsync等待重复合成边沿的DOM回执时超时并关闭。官方任务没有作者动作，实际鼠标本来就进入独立Dock；因此按现有官方键盘路径的分工，任务鼠标使用私有视觉取样+Core原始DOWN/UP配对，跳过重复ForwardNativePointer及该重复边沿的dispatch等待。条件仅DextDock、Key0、SampleMouse、当前packet与私有TaskHit非null；Core仍核对物理pair、时限、上下文、可见HWND、作者区域互斥及投影，作者按钮转发逻辑不改。
+临时输入/完成日志已撤回。无诊断代码的完整Core/Release Player/Watchdog构建成功；fusion-actions-live真实Core18052/Player45612、12任务（含专用窗口）通过实际OS鼠标激活→最小化→恢复。证据.build/task-direct-actions-passed.log，原53项输入/任务/键盘回归通过（task-direct-regression.log）。这是测试进程SendInput进入真实RawInput/窗口操作的证据，不等于人工物理触屏或应用首次启动验证。测试偏好/鼠标/Room/checkpoint已恢复，原候选15620 enabled=true/11组/error空/Room inactive，CoreOnly无新配置器。P8-013仍50%，接续首次启动、菜单/键盘/触屏等未完范围。

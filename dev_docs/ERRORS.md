@@ -407,3 +407,4 @@
 | #298 | 真实Core收到ShutDown后RPC停止响应但进程未退出，旧候选及新测试副本均复现；待定位 | [backend](errors/backend.md) |
 2026-10-11更新：#298已定位为WinForms SystemEvents同步上下文退出死锁，建立WPF启动上下文后真实融合生命周期/退出3轮通过；详见backend末尾补记。
 | #299 | 融合任务实机动作：工作区移动留下旧原点、正式宿主仍关闭eventSamples；两处已改但实际激活仍待定位 | [renderer](errors/renderer.md) |
+2026-10-11更新：#299真实鼠标激活/最小化/恢复通过；官方任务避免重复转发已进入Dock的鼠标事件，保留Core物理配对；其余统一门槛继续。
