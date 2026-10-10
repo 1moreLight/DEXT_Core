@@ -118,6 +118,27 @@ internal sealed class FusionActionWindow : IDisposable
         await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not restore after group shrank: "+observe()?.GetRawText());
         Console.WriteLine("PASS closing one grouped window refreshes task and remaining minimized window restores");
     }
+    internal async Task VerifyNavigation(IntPtr dock,Func<JsonElement?> observe)
+    {
+        JsonElement? NavigationButton(string button){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["navigation"]?[button]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+        bool At(string desk){var v=observe();return v?.GetProperty("navigation").GetProperty("desk").GetString()==desk&&v?.GetProperty("navigation").GetProperty("transition").ValueKind==JsonValueKind.Null;}
+        await Wait(()=>At("home"),"Fusion navigation must start at home");
+        var foreground=GetForegroundWindow();
+        var homeWidth=observe().Value.GetProperty("navigation").GetProperty("rowWidth").GetDouble();
+        await Click(dock,()=>NavigationButton("next"));
+        try{await Wait(()=>At("focus"),"Author next did not settle on focus");}
+        catch{Console.WriteLine("NAVIGATION OBSERVATION "+observe()?.GetRawText());throw;}
+        await Task.Delay(700);
+        if(!At("focus")||GetForegroundWindow()!=foreground)throw new Exception("Author next double-triggered or activated an application");
+        var nav=observe().Value.GetProperty("navigation");
+        if(nav.GetProperty("rowWidth").GetDouble()>=homeWidth||nav.GetProperty("scrollWidth").GetDouble()<=nav.GetProperty("rowWidth").GetDouble())throw new Exception("Focus did not create an overflowing narrow task area");
+        Console.WriteLine("PASS actual author next enters focus once and narrows task area without activating an app");
+        await Click(dock,()=>NavigationButton("previous"));
+        await Wait(()=>At("home"),"Author previous did not settle on home");
+        await Task.Delay(700);
+        if(!At("home")||GetForegroundWindow()!=foreground)throw new Exception("Author previous double-triggered or activated an application");
+        Console.WriteLine("PASS actual author previous returns home once without activating an app");
+    }
     internal async Task VerifyPinMenu(IntPtr dock,Func<JsonElement?> observe)
     {
         var original=observe()?.GetProperty("targetPinned").GetBoolean();

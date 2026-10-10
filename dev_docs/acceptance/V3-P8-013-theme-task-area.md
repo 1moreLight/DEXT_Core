@@ -58,3 +58,5 @@
 2026-10-11手动恢复任务栏实测：fusion-restored-live先等主题Dock实际接管，再通过EditApplicationDock(taskbar,visible)恢复，核对Shell_TrayWnd实际可见、看护hidden=false、主题Dock重新可操作；随后真实选第二窗、关闭第二窗、恢复剩余最小化窗通过，任务操作没有重新隐藏Windows任务栏。首次探针把恢复后的自动隐藏误判为禁用：工作区缩小时鼠标停在旧底边，改为按当前原生Dock位置唤出再判定。实际Core33260/Player28800退出0；.build/task-restored-probe-build.log、fusion-restored-live.log为证据。finally恢复原taskbar模式/两种Dock偏好/前台/光标，外层按字节备份taskbar-mode.json；原运行版恢复，无新增配置器。仅增加探针，无生产改动。03继续开做，整包2/4=50%；物理触屏/作者区域及完整统一验收不外推。
 
 2026-10-11固定菜单补证：重复可见性通知导致本地输入撤销已修复，18项入口/controller回归通过；真实Core47612/Player22924右键固定及取消固定均完成，菜单收起。用户统一验收仍按上方四步；第4步固定菜单细项为右键一个运行应用→固定→再次右键取消固定，观察菜单收起与固定状态更新。原运行候选未替换，整包2/4=50%。
+
+2026-10-11导航部分证据：Core45792/Player37084实际下一页进入focus窄区一次且不误激活应用通过；上一页原生取样回报缺失而失败，不能认定人工第1/3/4项完成。详见03-remaining，原运行版恢复。
