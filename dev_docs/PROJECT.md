@@ -298,3 +298,6 @@ Dock enabled/mode/heightDip保存为Dext全局v3/dock-preferences.json，与Room
 
 ### 2026-10-10 应用Dock固定项的Desk覆盖
 按用户持续推进本地功能的授权实现：默认沿用全局列表；Desk可建立完整独立列表（允许空），恢复继承删除覆盖。覆盖以Room/Desk稳定ID写Core个人数据，随Room删除，另存复制且独立，分享不带出。旧全局设置与作者HTML契约不变；仅切页提交后更新有效列表。
+
+### 2026-10-10 主题Dock官方应用区接续设计
+沿既有WebView2主题主窗口增加官方DOM应用区，Core保持应用/窗口与私人固定项所有权。公共config.dextTaskArea仅声明有界区域/样式；未识别约定的旧API1作品保持现状，六冻结样包不改。默认WPF呈现保留至物理输入统一验收；融合只有一个owner/AppBar，官方任务遮挡参与作者命中裁减。按P8-012投影、P8-013区域与私有接线、P8-014生命周期/预览推进；本条是实施方向，尚未实现。见plans/V3-P8-011/02-design.md。
