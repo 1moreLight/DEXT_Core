@@ -1,6 +1,6 @@
 # V3-P8-014 唯一宿主接线与失败回退
 
-状态：开做
+状态：做完（当前autohide接线/回退；三模式由03完成）
 
 实现：连接DockHostOwnership、RoomSessionRuntimeCoordinator.Dock/ApplicationDock和ApplicationDockService。先释放旧主窗/AppBar/租约再接入新owner；启用应用枚举不强制WPF展示。缺Room/区域/失败返回WPF，避免反复抢占。
 
@@ -27,3 +27,7 @@
 失败按单调attempt记录，旧Player退出不会覆盖较新失败。失败锁存保留theme意图，新的会话/安装或手动重试再尝试；静态无Dock/无区域回退。35秒连续未就绪超时，已就绪/锁屏/全屏重置等待，普通切页不因旧启动时间立刻超时。旧宿主attempt不得冒充新尝试已就绪。
 
 限制：overlay尚未实现，当前选择融合常显会以overlayNotAvailable回退原生；第03必须完成后去掉临时保护。实际Core往返/故障恢复尚未执行，第02仍开做。生产策略/资格及10项所有权检查通过；最终完整Release通过，日志fusion-service-policy-tests、fusion-service-owner-tests、fusion-service-build。CoreOnly复核旧Core48280，无新配置器/未部署新包。下一步限定实际Core验证autohide/reserve切换与回退，再接overlay。
+
+2026-10-11实际Core验证通过：Core39792，正式无标题诊断宿主，临时融合夹具。原生就绪→融合ready且WPF主窗隐藏→原主题Player退出后原生ready→再次融合→仅终止当前临时主题Player46924→native/fallback且无主题Player；等待6秒无自动重试，theme偏好保留；retryPresentation恢复融合。独立主题enabled=false始终未被覆盖。probe退出0，正式RPC清理夹具与checkpoint，外层恢复三类偏好原字节并重启原Core，没有启动新配置器。证据.build/fusion-presentation-live.log、fusion-presentation-probe-build.log。
+
+首轮失败仅因临时样包缺installation.json，补标准清单后同场景通过；旧运行版退出RPC后残留需按精确路径清理，不计作新候选正常退出通过。只覆盖此autohide临时Room的往返/退出故障/重试，reserve/overlay实际行为由03，物理触屏仍统一验收。本步骤做完，2/6≈33%。

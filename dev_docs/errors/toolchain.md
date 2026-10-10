@@ -527,3 +527,7 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 2026-10-11批量替换补记：同一JS含作者与官方两套gate，相同if(!allowed)文本一次替换会误改另一作用域，产生未定义touch变量；diff审查发现后恢复作者gate。以后修改同名局部代码按函数范围定位；本轮修正后29项守卫测试及Release构建通过。
 
 2026-10-11原生事件测试夹具补记：模拟isTrusted getter若使用箭头函数，会捕获构造时this，无法通过Reflect.apply绑定事件，导致synthetic事件测试误判；改普通getter后真实/合成事件区分测试通过。
+
+## #312 临时Room夹具必须带安装清单（2026-10-11）
+
+症状：Core34852在RoomV3Installation.Verify报Cannot lock installed path，测试尚未进入Dock切换。原因：复制rooms/v3-fusion-lab后仅替换UUID/name，没有生成content/installation.json。修复：按修改后的manifest字节生成manifestSha256，resources按UTF-8顺序列path/sha256/size，与正式验证契约一致。同场景Core39792随后通过；未降低Core验证。临时资料仅在隔离候选，正式发行不能带夹具。

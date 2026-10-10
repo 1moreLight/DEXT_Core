@@ -1,6 +1,6 @@
 # V3-P8-014 overlay常显与占位模式
 
-状态：待做
+状态：开做
 
 实现：贯通RoomDockPreferences、Player Form1.NativeDock、消息/启动参数验证，增加overlay。不注册AppBar、不因离开自动隐藏，全屏/锁屏仍隐藏。融合使用应用模式及主题高度，禁用融合保留原主题设置。
 
