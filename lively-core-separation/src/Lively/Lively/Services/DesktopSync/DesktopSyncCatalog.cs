@@ -19,7 +19,15 @@ internal sealed class DesktopSyncCatalog
     private Dictionary<string, DesktopFileItem> files = new(StringComparer.Ordinal);
     internal Guid Begin(DesktopSyncScope next)
     {
-        lock (gate) { scope = next; ticket = Guid.NewGuid(); view = null; files.Clear(); return ticket; }
+        lock (gate)
+        {
+            // A refresh of the same desktop keeps its last confirmed presentation.
+            // Changing session/installation/Desk immediately revokes the old paths.
+            if (scope != next) { view = null; files.Clear(); }
+            scope = next;
+            ticket = Guid.NewGuid();
+            return ticket;
+        }
     }
     internal bool Publish(Guid expected, DesktopScanResult scan, IReadOnlyList<DesktopShellItem> metadata, IReadOnlyDictionary<string, int> slots)
     {
@@ -42,6 +50,14 @@ internal sealed class DesktopSyncCatalog
         lock (gate)
         {
             if (expected != ticket || current != scope) return false;
+            // Health scans with identical content must not reset pagination or invalidate
+            // an in-flight native click. Still replace the private file snapshot.
+            if (view is not null && view.IssueCount == next.IssueCount &&
+                view.Truncated == next.Truncated && view.Items.SequenceEqual(next.Items) &&
+                files.Count == nextFiles.Count && nextFiles.All(pair =>
+                    files.TryGetValue(pair.Key, out var old) &&
+                    string.Equals(old.FullPath, pair.Value.FullPath, StringComparison.OrdinalIgnoreCase)))
+                next = next with { ContextId = view.ContextId };
             files = nextFiles; view = next; return true;
         }
     }

@@ -45,6 +45,14 @@ try
  var view=catalog.Read(scope)!;
  Check(view.Items.Count==5&&!System.Text.Json.JsonSerializer.Serialize(view).Contains(user.Replace("\\","\\\\")),"official view carries names and slots without local paths");
  Check(catalog.TryResolve(scope,view.ContextId,scan.Items[0].Id,out var resolved)&&resolved!.FullPath==scan.Items[0].FullPath,"Core resolves current official item to its exact source file");
+ var refresh=catalog.Begin(scope);
+ Check(catalog.Read(scope)?.ContextId==view.ContextId&&catalog.TryResolve(scope,view.ContextId,scan.Items[0].Id,out _),"same-scope refresh retains confirmed icons and click context while scanning");
+ Check(!catalog.Publish(ticket,scan,metadata,slots),"older refresh result cannot replace the latest request");
+ Check(catalog.Publish(refresh,scan,metadata,slots)&&catalog.Read(scope)?.ContextId==view.ContextId,"unchanged refresh preserves click context instead of resetting the desktop page");
+ var altered=metadata.Select((item,index)=>index==0?item with{Name=item.Name+" updated"}:item).ToArray();
+ var changed=catalog.Begin(scope);
+ Check(catalog.Publish(changed,scan,altered,slots)&&catalog.Read(scope)?.ContextId!=view.ContextId,"changed visible metadata rotates context");
+ Check(!catalog.TryResolve(scope,view.ContextId,scan.Items[0].Id,out _),"changed presentation revokes previous click context");
  var other=scope with{DeskId="other"};var newer=catalog.Begin(other);
  Check(!catalog.Publish(ticket,scan,metadata,slots)&&catalog.Read(other)==null,"late scan cannot publish into a replacement Desk");
  Check(!catalog.TryResolve(other,view.ContextId,scan.Items[0].Id,out _),"old context cannot open files while replacement scan is pending");
