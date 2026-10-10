@@ -46,7 +46,7 @@ internal sealed class FusionActionWindow : IDisposable
             throw new Exception("Owned task moved before click; no click sent");
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Dock ownership or mouse idle check failed; no click sent");
-        if(touch){await TouchPathProbe.Tap(dock,x,y,mark);return;}
+        if(touch){await TouchPathProbe.Tap(dock,x,y,mark);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
         mark?.Invoke("beforeDown");

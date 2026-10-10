@@ -60,6 +60,14 @@ internal static class TouchPathProbe
     internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null)=>Task.Run(()=>{
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=ownedRoot||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Touch destination changed; no contact sent");
+        var hit=WindowFromPoint(new Point{X=x,Y=y});
+        for(var window=hit;window!=IntPtr.Zero;window=GetParent(window)) {
+            var name=new System.Text.StringBuilder(256);
+            GetClassName(window,name,name.Capacity);
+            var thread=GetWindowThreadProcessId(window,out var process);
+            Console.WriteLine($"TOUCH TARGET hwnd={window.ToInt64()} class={name} pid={process} tid={thread} root={window==ownedRoot}");
+            if(window==ownedRoot)break;
+        }
         if(!InitializeTouchInjection(1,3))throw new System.ComponentModel.Win32Exception();
         var touch=new TouchInfo{Pointer=new PointerInfo{Type=2,Id=0,Flags=0x10000|2|4,Pixel=new Point{X=x,Y=y}},
             Mask=1,Contact=new Rect{Left=x-2,Top=y-2,Right=x+2,Bottom=y+2}};
@@ -119,5 +127,8 @@ internal static class TouchPathProbe
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")]private static extern IntPtr WindowFromPoint(Point point);
+    [DllImport("user32.dll")]private static extern IntPtr GetParent(IntPtr window);
+    [DllImport("user32.dll",CharSet=CharSet.Unicode)]private static extern int GetClassName(IntPtr window,System.Text.StringBuilder name,int size);
+    [DllImport("user32.dll")]private static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
     [DllImport("user32.dll")]private static extern IntPtr GetAncestor(IntPtr window,uint flags);
 }

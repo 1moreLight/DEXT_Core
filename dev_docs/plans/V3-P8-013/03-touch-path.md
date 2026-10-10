@@ -30,3 +30,5 @@
 2026-10-11：鼠标EXINPUTSINK改INPUTSINK后，实际前台RawInput注册窗口的Dock最小化已通过；后续激活被工作区反馈循环打断。触控同例仍未收到RawInput边沿，不能将鼠标修正计为触控接通。
 
 2026-10-11几何反馈修复后复核：实际Dock位置不再往返，但触摸激活仍失败，Core原始鼠标边沿0；因此下一步继续追踪WebView2窗口/线程原生触摸入口，不能再归因任务栏抖动。日志20261011_023315.txt。
+2026-10-11触点归属与观测边界：探针记录实际命中Chrome_RenderWidgetHostHWND属于Chromium PID46936/TID49504，其父Chrome_WidgetWin_0及Form属于Player25508/TID1316。候选专用main.js记录DOM touchEvents，最新为空且inputEnabled=false；代码复核installOfficial在预注入capture gate对无expected事件preventDefault/stopImmediatePropagation，故后置监听为空不能证明浏览器未收到触摸。下一步在守卫入口添加只读诊断，保留配对判定，不直接放行DOM、不据此重写CompositionController。探针构建通过；fusion-touch-live仍失败并完成清理，证据.build/touch-target-build.log、.build/fusion-touch-live.log、Core日志20261011_023904.txt。生产代码本轮未改，03仍2/4=50%。
+参考已核对：Microsoft ICoreWebView2Environment3说明CompositionController由parent HWND接收指针并转发；这只提供候选架构，不证明当前控制器无法实现。https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2environment3
