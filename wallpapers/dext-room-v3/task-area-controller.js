@@ -25,6 +25,7 @@
    tail=operation;return operation.catch(error=>{if(!disposed&&own===epoch){phase='geometryUnavailable';area.setAvailable(false);options.onError?.(error);}return false;});
   }
   return Object.freeze({refresh,suspend,
+   samplePointer:point=>!disposed&&phase==='displayReady'?area.samplePointer(point):null,
    accept(snapshot,actionsEnabled){if(disposed)return false;const accepted=area.accept(snapshot);if(accepted)area.setInputEnabled(actionsEnabled===true&&phase==='displayReady');return accepted;},
    read:()=>({phase,...area.read()}),
    dispose(){if(disposed)return;suspend();disposed=true;area.dispose();phase='disposed';}

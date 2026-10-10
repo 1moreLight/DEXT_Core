@@ -1,3 +1,4 @@
+using Lively.Core.Wallpapers;
 using Lively.Common;
 using Dext.Core.Rooms;
 using System;
@@ -32,6 +33,8 @@ internal sealed class ApplicationDockService : IDisposable
     private DockPin[] deskPins;
     private readonly DockTaskDisplay taskDisplay;
     private long pinRevision;
+    private WebWebView2 taskHost;
+    private string taskDisplayContext;
     private static readonly JsonSerializerOptions taskJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms, RoomRuntimeFactsSource facts)
@@ -206,6 +209,7 @@ internal sealed class ApplicationDockService : IDisposable
     private void PublishTaskDisplay()
     {
         var host = rooms.ApplicationTaskHost();
+        AttachTaskHost(host);
         var epoch = host?.NativeDockTaskEpoch;
         if (epoch == null || disposed) { taskDisplay.Clear(); return; }
         // Group scope was captured with the committed Desk when these tasks were grouped.
@@ -215,10 +219,45 @@ internal sealed class ApplicationDockService : IDisposable
         var scope = PinScope(navigation);
         if (groups.Any(group => group.PinScope != scope))
             groups = GroupForCurrentDesk(groups.SelectMany(group => group.Windows).ToArray());
-        var display = taskDisplay.Update($"{epoch}/{scope}/{pinRevision}", groups, DockWindows.Foreground);
+        taskDisplayContext = $"{epoch}/{scope}/{pinRevision}";
+        var display = taskDisplay.Update(taskDisplayContext, groups, DockWindows.Foreground);
         host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson));
     }
 
+    private void AttachTaskHost(WebWebView2 host)
+    {
+        if(ReferenceEquals(taskHost,host))return;
+        if(taskHost!=null)taskHost.NativeDockTaskCompleted-=CompleteTask;
+        taskDisplay.Clear();taskDisplayContext=null;taskHost=host;
+        if(taskHost!=null)taskHost.NativeDockTaskCompleted+=CompleteTask;
+    }
+
+    private void CompleteTask(WebWebView2 source,DockTaskCompletion completion)
+    {
+        if(dispatcher.HasShutdownStarted)return;
+        // Player receipts arrive off the UI thread. Recheck the host/Desk after
+        // queuing; a completed old click may not act on a replacement Desk.
+        dispatcher.BeginInvoke((Action)(()=>
+        {
+            try
+            {
+                if(disposed||!ReferenceEquals(source,taskHost)||!ReferenceEquals(source,rooms.ApplicationTaskHost())||
+                    !source.NativeDockTaskIsCurrent(completion))return;
+                var navigation=rooms.ReadApplicationDockNavigation();
+                EffectivePins(navigation);
+                if(taskDisplayContext!=$"{source.NativeDockTaskEpoch}/{PinScope(navigation)}/{pinRevision}"||
+                    !taskDisplay.TryResolve(completion.ContextId,completion.ItemId,completion.WindowId,out var group,out var selected))return;
+                switch(completion.Action)
+                {
+                    case "activate" when selected==null&&group.Windows.Count<=1: Click(group,null);break;
+                    case "chooseWindow" when selected!=null: Click(group,selected);break;
+                    case "togglePin" when selected==null: TogglePin(group);break;
+                    // Opening a window-choice menu has no OS action.
+                }
+                }
+            catch(Exception ex){error="任务区操作失败："+ex.Message;}
+        }));
+    }
     private void Render()
     {
         // Display publication never changes ownership or author/native input routing.
@@ -314,6 +353,7 @@ internal sealed class ApplicationDockService : IDisposable
     public void Dispose() => dispatcher.Invoke(() =>
     {
         disposed = true;
+        AttachTaskHost(null);
         taskDisplay.Clear();
         ownership.Shutdown();
         taskbar.RequestAutomatic(corePid, false);

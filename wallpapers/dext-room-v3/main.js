@@ -35,9 +35,7 @@
         applyFrameState:(frame,value)=>sendControl({type:'dext:v3-frame-policy',protocolVersion:1,runtimeGeneration:value.identity.runtimeGeneration,
           sessionId:value.identity.sessionId,revision:value.identity.revision,frameName:frame.name,consumer:value.consumerId,instanceId:value.instanceId,active:value.state==='active'})});
       if(context.viewKind==='dock')tasks=DextTaskAreaController.createTaskAreaController({
-        createArea:()=>DextTaskAreaHost.createTaskAreaHost({document,container,onAction:value=>{
-          if(context&&snapshot)sendControl({type:'dext:v3-task-action',protocolVersion:1,runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision,...value});
-        }}),
+        createArea:()=>DextTaskAreaHost.createTaskAreaHost({document,container}),
         getState:()=>({context,snapshot,dom:host,viewport:viewport(),visible:!paused}),
         onError:()=>{lastError={code:'taskAreaUnavailable'};}
       });
@@ -103,7 +101,9 @@
     if(disposed||!host||!object(value)||typeof value.sampleId!=='string')return null;
     if(value.operation==='end')return host.endNativeInputSample(value.sampleId);
     if(value.operation!=='begin'||!scopeForInput(value)||!positive(value.geometryVersion))return null;
-    return host.beginNativeInputSample({runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision},value.geometryVersion,value.sampleId);
+    const sample=host.beginNativeInputSample({runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision},value.geometryVersion,value.sampleId);
+    if(sample&&context.viewKind==='dock')sample.taskHit=tasks?.samplePointer(value.taskPoint)||null;
+    return sample;
   };
   function scopeForInput(value){return context&&snapshot&&value.runtimeGeneration===context.runtimeGeneration&&value.sessionId===snapshot.sessionId&&value.revision===snapshot.revision;}
   globalThis.dextRuntimeDiagnostics=()=>({disposed,paused,runtimeGeneration:context?.runtimeGeneration||retired,sessionId:context?.sessionId||null,revision:snapshot?.revision||0,lastError:lastError&&{...lastError},runtime:host?.readDiagnostics()||null,taskArea:tasks?.read()||null});

@@ -397,3 +397,5 @@
 | #288 | main页面VM夹具未跟随Dock DOM依赖更新，缺documentElement而在业务断言前失败 | [toolchain](errors/toolchain.md) |
 | #289 | 顶层Dock不能用桌面operable控制显示，否则普通应用取得前台就丢任务区 | [renderer](errors/renderer.md) |
 | #290 | 任务区浮点边界被拒绝后，普通geometry刷新不能替代指定occlusion确认 | [renderer](errors/renderer.md) |
+| #291 | 新worktree独立测试项目未还原，Core已构建不代表具备其assets | [toolchain](errors/toolchain.md) |
+| #292 | 任务完成排队期间几何撤销不改GeometryVersion，须独立撤销版本 | [backend](errors/backend.md) |

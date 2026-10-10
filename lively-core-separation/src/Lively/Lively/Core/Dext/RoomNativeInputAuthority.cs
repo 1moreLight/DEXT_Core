@@ -15,7 +15,7 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
     RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false,bool Reverse=false);
-internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null,bool KeyReady=true);
+internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null,bool KeyReady=true,long CancellationVersion=0);
 
 internal sealed class RoomNativeInputProof
 {
@@ -39,7 +39,7 @@ internal sealed class RoomNativeInputProof
 internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRole role = RoomClientRole.DesktopPlayer)
 {
     private readonly object gate=new();
-    private long generation, geometryVersion, inputSequence;
+    private long generation, geometryVersion, inputSequence, cancellationVersion;
     private RoomSessionSnapshot? snapshot;
     private RoomNativeViewport? viewport;
     private AcceptedEntry[] buttons=Array.Empty<AcceptedEntry>();
@@ -63,7 +63,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     {
         get {
             var now=clock.GetTimestamp();
-            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture,keyFocusBarrier==0);}
+            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture,keyFocusBarrier==0,cancellationVersion);}
         }
     }
     internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
@@ -361,6 +361,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     }
     private void ClearInput()
     {
+        cancellationVersion++; // Retire native task completions queued outside this leaf lock.
         // Focus changes cancel physical input but keep the unchanged published regions.
         focused=null;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
         // Preserve held edges until UP. Auto-repeat after refresh/geometry change

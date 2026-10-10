@@ -94,10 +94,23 @@ namespace Lively.Models.Message
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeRequest() : base(MessageType.msg_room_native_request) { }
     }
+    // Private official task target, sampled separately from author button geometry.
+    public sealed class LivelyRoomNativeTaskHit
+    {
+        public string ContextId { get; set; }
+        public string ItemId { get; set; }
+        public string WindowId { get; set; }
+        public string Action { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
     // Native Player -> owning Core only. Never parsed from an authored web message.
     public sealed class LivelyMessageRoomNativeSample : IpcMessage
     {
         public LivelyMessageRoomNativePointer Input { get; set; }
+        public LivelyRoomNativeTaskHit TaskHit { get; set; }
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeSample() : base(MessageType.msg_room_native_sample) { }
     }

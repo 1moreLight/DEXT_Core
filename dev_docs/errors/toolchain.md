@@ -508,3 +508,8 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 
 ## #288 main VM 夹具缺少已有 Dock DOM 依赖（2026-10-10）
 本轮运行 main.test.js 时，旧夹具 document 只有 getElementById，已有 main.js 会访问 documentElement.classList，并区分 runtime/键盘按钮。先补齐这些最小DOM接口，再检查业务断言。修复后原八项及新任务快照作用域检查均通过；这不是生产页面的 classList 缺失问题。
+
+## #291 新worktree首次运行输入检查要先还原该测试项目
+- 现象：P8-013直接用dotnet run --no-restore跑Dext.Input.Tests，NETSDK1004缺project.assets.json；Core构建过不意味着所有独立测试项目都还原过。
+- 处理：dotnet restore tests/Dext.Input.Tests -p:NuGetAudit=false --ignore-failed-sources，随后原检查进入预期缺实现RED，再完成实现运行GREEN。
+- 下次：检查该测试项目自己的obj资产；已有缓存可复用，无需重新安装依赖或把此失败误记为业务回归。

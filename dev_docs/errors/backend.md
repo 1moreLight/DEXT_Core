@@ -571,3 +571,9 @@ P8-010升级期间两次观察到：先正常关闭配置器，再RPC退出Core�
 Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线程释放服务，ApplicationDockService.Dispose在Dispatcher关闭Dock窗口；若它是最后窗口，WPF会先排队关闭Dispatcher，剩余服务/显式退出还可能需要该线程。
 定向实际WPF实验读取生产App.xaml，以不可见非激活测试窗口重现同一顺序：默认模式exitBeforeCleanup=True，后续Dispatcher清理失败；设OnExplicitShutdown后相同实验通过。保留原QuitApp服务→管道→显式Shutdown顺序，不修改输入或任务栏恢复。
 依赖排除：已核对[当前NuGet commit的ServerStreamPool.Dispose](https://github.com/cyanfish/grpc-dotnet-namedpipes/blob/da307b551a9d56b62f5780e91a2d95a699f32430/GrpcDotNetNamedPipes/Internal/ServerStreamPool.cs)，它只取消监听，不是等待当前RPC完成；早期“等自己”假设不成立。真实修正版退出记录见OPS-006验收卡。
+
+## #292 原生任务已排队完成仍须响应几何/可见性撤销
+- 现象：复核发现任务点击完成后排入Dispatcher，如果执行前InvalidateGeometry，原GeometryVersion不变，旧完成仍可能通过版本比较。
+- 原因：ClearGeometry清空当前输入而不增加版本，作者空命中又会自然清掉gesture，不能仅靠gesture是否存在区分正常完成与撤销。
+- 修复：RoomNativeInputAuthority在ClearInput递增CancellationVersion；任务的两次取样和延迟执行都检查同一撤销版本。它不改变既有作者输入或几何版本语义。
+- 证据：用真实生产authority完成按下/抬起、作者空命中，然后撤销几何，旧检查RED；修复后GREEN，并确认隐藏后恢复不会复活旧动作、重新发布后的新点击正常。

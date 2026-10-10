@@ -33,6 +33,7 @@ namespace Lively.Player.WebView2
             internal DextNativePointerPacket Packet;
             internal string Id;
             internal LivelyRoomNativeButton[] Buttons;
+            internal LivelyRoomNativeTaskHit TaskHit;
         }
         private NativeVisualSample nativeVisualSample;
         private async Task<bool> PrepareNativeSampleAsync(DextNativePointerPacket value)
@@ -45,7 +46,8 @@ namespace Lively.Player.WebView2
             // official animation painting until the native dispatch receipt.
             nativeVisualSample=new NativeVisualSample{Packet=value,Id=id};
             var begin=Newtonsoft.Json.JsonConvert.SerializeObject(new{operation="begin",sampleId=id,runtimeGeneration=value.RuntimeGeneration,
-                sessionId=value.SessionId,revision=value.Revision,geometryVersion=value.GeometryVersion});
+                sessionId=value.SessionId,revision=value.Revision,geometryVersion=value.GeometryVersion,
+                taskPoint=startArgs.DextDock&&value.Key==0?new{x=((double)value.X-value.OriginX)/value.PixelWidth,y=((double)value.Y-value.OriginY)/value.PixelHeight}:null});
             var script="(()=>{const sample=this.dextNativeInputSample&&this.dextNativeInputSample("+begin+");if(!sample)return null;"+
                 (value.Kind=="focus"?"return sample;})()":
                     "const receipt="+nativeFrameMedia.OfficialDispatchScript(value)+";if(!receipt||!receipt.armed)return null;sample.dispatchNonce=receipt.documentNonce;return sample;})()");
@@ -61,6 +63,11 @@ namespace Lively.Player.WebView2
             var parsed=DextNativeInputProtocol.Parse(geometry.ToString(Newtonsoft.Json.Formatting.None),roomRuntime,value.PixelWidth,value.PixelHeight);
             if(parsed==null||parsed.GeometryVersion!=value.GeometryVersion||!DextNativeGeometry.TryCreate(parsed.Buttons,out var entries))return false;
             nativeVisualSample.Buttons=parsed.Buttons;
+            if(startArgs.DextDock&&value.Key==0)
+            {
+                if(!DextNativeTaskSample.TryParse(sample["taskHit"],out var taskHit))return false;
+                nativeVisualSample.TaskHit=taskHit;
+            }
             var hit=System.Linq.Enumerable.FirstOrDefault(entries,entry=>value.Key==0?
                 entry.Contains(((double)value.X-value.OriginX)/value.PixelWidth,((double)value.Y-value.OriginY)/value.PixelHeight):
                 entry.Consumer==value.Consumer&&entry.Button==value.Button&&entry.EntryId==value.EntryId);
@@ -86,7 +93,7 @@ namespace Lively.Player.WebView2
                     GestureId=value.GestureId,IssuedAt=value.IssuedAt,InputHandle=value.InputHandle,Kind=value.Kind,
                     OriginX=value.OriginX,OriginY=value.OriginY,PixelWidth=value.PixelWidth,PixelHeight=value.PixelHeight,Dpi=value.Dpi,
                     X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=value.SampleMouse,SampleKeyboard=value.SampleKeyboard,
-                    Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons});
+                    Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons,TaskHit=own.TaskHit});
             }finally{if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
         }
         private async Task<bool> ReleaseNativeSampleAsync()

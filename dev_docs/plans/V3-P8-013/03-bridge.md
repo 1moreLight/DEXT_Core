@@ -32,3 +32,15 @@
 启动复核：task-controller-runtime-preserved.log确认旧候选Core39560复用，-CoreOnly未启动配置器；该复核不代表新展示区部署。
 生命周期补证：新控制器误用desktop operable已通过定向RED→GREEN修正，普通应用取得前台/桌面播放暂停不隐藏仍可见的Dock。最终Node87项通过；见ERRORS #289。
 最终本轮状态：正式展示通道与页面控制器已接；原生动作仍待做，Core ActionsEnabled=false。独立review发现的浮点边界/几何回退问题已两项RED→GREEN修复，最终89项Node、七组DOM通过。旧阶段“main未接”等语句仅为增量历史，不是当前状态。四步进度仍2/4=50%。
+
+### 原生任务取样与完成关联（开做）
+- 在同一次官方顶层 beginNativeInputSample 中读取任务按钮的当前可见矩形、上下文与不透明 ID；独立 taskHit 字段，不加入作者 buttons/catalog。
+- Player 只从固定主文档取得该字段，随原生投递回执返回 Core。沿原有 DOWN/UP 顺序；实际被遮挡、滚动裁切、隐藏或未启用的按钮不能取样为目标。
+- Core 用现有 RawInput 生成的 gesture、实际 HWND/视口及同一次序号关联两个取样；上下文或目标变化取消，完成至多一次。快照轮询序号增加不使同一目标点击失效。
+- 本增量先完成鼠标取样/完成关联及专用检查；键盘焦点/触摸、操作派发与真实 Player 演示继续在03，不提前开启 ActionsEnabled。
+
+本增量已实现：samplePointer读取顶层可见且裁切后的实际目标，Player将taskHit随同一次原生投递回执回送；Core DockTaskInput使用原RawInput序号/起始时间/HWND/视口关联同一对边沿。作者几何在该点有命中时不生成任务动作，旧作者点击没有额外任务几何开销。
+ApplicationDockService已订阅实际主题宿主完成事件，在Dispatcher复核当前宿主、已提交Desk、固定修订及不透明ID后走原Click/TogglePin；移除未实现的网页dext:v3-task-action消息。新通道仍ActionsEnabled=false，尚未实际派发OS操作。
+自动证据：16项任务完成关联检查、17项原输入投递回归、90项Node、原七组DOM与新增四组真实DOM取样检查通过；完整Release构建通过。CoreOnly保留旧候选39560，没有启动配置器。这些不算真实Player/触控/应用启动验收。
+接续：键盘不能直接沿DOM keydown，因为既有官方Dock guardian有意拦截这些键；应由原生RawInput和专用官方任务焦点完成关联接线，避免双重执行。触摸须核对实际Windows输入路径；不能把后台浏览器click通过当触控通过。随后制作独立融合样包并在实际Player验证，完成后才开启动作并进入04。
+复核收敛：独立review唯一P2为排队完成跨几何撤销；已用生产RoomNativeInputAuthority复现RED并加入CancellationVersion，正常完成、撤销、重新发布、隐藏再恢复四项GREEN。最终任务20项，原输入17项，Node90项，DOM11组；最终Release通过。新操作仍未启用，键盘/触摸/实际Player演示继续。

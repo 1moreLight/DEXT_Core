@@ -26,4 +26,4 @@
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
-</Project>
+<ItemGroup><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockTaskInput.cs" Link="DockTaskInput.cs" /></ItemGroup></Project>

@@ -1,3 +1,4 @@
+using Lively.Services.ApplicationDock;
 using Dext.Core.Rooms;
 using Lively.Common.Helpers;
 using Lively.Models.Message;
@@ -22,7 +23,9 @@ namespace Lively.Core.Wallpapers
             internal RoomNativeControlQueue Controls { get; } = new();
             internal RoomNativeInputGesture PointerGesture { get; set; }
             internal RoomNativeKeyDelivery KeyDelivery;
+            internal DockTaskInput Tasks { get; } = new(TimeProvider.System);
         }
+        internal event Action<WebWebView2,DockTaskCompletion> NativeDockTaskCompleted;
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
         internal Func<bool> NativeInputIsForeground { private get; set; }
@@ -47,11 +50,23 @@ namespace Lively.Core.Wallpapers
             if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
                 measured.Width!=packet.PixelWidth || measured.Height!=packet.PixelHeight || measured.Dpi!=packet.Dpi ||
                 sample.Buttons.Any(b=>b==null))return;
+            // Read the raw gesture before the author's empty hit retires it. A task
+            // receipt stays separate and cannot mint an authored button proof.
+            DockTaskCompletion task=null;
+            if(sample.TaskHit!=null&&nativeDock&&foreground&&NativeDockAvailable()&&packet.Key==0&&
+                DextNativeGeometry.TryCreate(sample.Buttons,out var regions)&&
+                !regions.Any(region=>region.Contains(((double)packet.X-packet.OriginX)/packet.PixelWidth,((double)packet.Y-packet.OriginY)/packet.PixelHeight)))
+            {
+                var raw=a.Input.State;
+                task=a.Tasks.Sample(raw?.Gesture,packet,sample.TaskHit,raw?.CancellationVersion??-1);
+            }
+            else a.Tasks.Clear();
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
                 packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse)){
                 NotifyNative(a,before,packet.Kind!="focus");
                 if(packet.Kind=="focus")NativeKeys(a).Flush();
+                if(task!=null)NativeDockTaskCompleted?.Invoke(this,task);
             }
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)

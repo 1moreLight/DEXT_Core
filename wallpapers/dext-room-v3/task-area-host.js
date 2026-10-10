@@ -5,7 +5,7 @@
   const area=document.createElement('section'),items=document.createElement('div'),menu=document.createElement('div');
   area.className='dext-task-area';area.setAttribute('aria-label','应用任务栏');area.hidden=true;
   items.className='dext-task-items';menu.className='dext-task-menu';menu.setAttribute('role','menu');menu.hidden=true;area.append(items,menu);options.container.append(area);
-  const nodes=new Map();let layout=null,available=false,inputEnabled=true,disposed=false,rendered=null,selection=null,press=null;
+  const targets=new WeakMap(),nodes=new Map();let layout=null,available=false,inputEnabled=true,disposed=false,rendered=null,selection=null,press=null;
   state.setAvailable(false);
   const active=()=>!disposed&&available&&layout!==null;
   const interactive=()=>active()&&inputEnabled;
@@ -26,6 +26,7 @@
    draw();
   }
   function wire(button,itemId,windowId=null,action='activate'){
+   targets.set(button,{itemId,windowId,action});
    button.addEventListener('pointerdown',event=>{
     if(!event.isTrusted||event.button!==0||!interactive())return;
     if(press){cancel();draw();return;}
@@ -79,9 +80,25 @@
    }
    if(selection)drawMenu(view);
   }
+  // Private event-time sample. These targets never enter the author button catalog.
+  function samplePointer(point){
+   if(!interactive()||area.hidden||!point||![point.x,point.y].every(Number.isFinite)||point.x<0||point.y<0||point.x>=1||point.y>=1)return null;
+   const width=root.innerWidth,height=root.innerHeight,x=point.x*width,y=point.y*height;
+   const button=document.elementFromPoint(x,y)?.closest('button'),target=button&&targets.get(button),view=state.read();
+   if(!target||button.disabled||!area.contains(button)||!view)return null;
+   const item=view.items.find(item=>item.id===target.itemId);
+   if(!item||target.windowId!==null&&!item.windows.some(window=>window.id===target.windowId))return null;
+   const bounds=[button,button.parentElement,area].map(node=>node.getBoundingClientRect());
+   const left=Math.max(0,...bounds.map(r=>r.left)),top=Math.max(0,...bounds.map(r=>r.top));
+   const right=Math.min(width,...bounds.map(r=>r.right)),bottom=Math.min(height,...bounds.map(r=>r.bottom));
+   if(right<=left||bottom<=top||x<left||x>=right||y<top||y>=bottom)return null;
+   const nx=left/width,ny=top/height;
+   return Object.freeze({contextId:view.contextId,...target,action:target.action==='activate'&&item.windows.length>1?'openWindows':target.action,
+    x:nx,y:ny,width:Math.min(1-nx,(right-left)/width),height:Math.min(1-ny,(bottom-top)/height)});
+  }
   const escape=event=>{if(event.key==='Escape'){cancel();closeMenu();draw();}};
   const blur=()=>{cancel();closeMenu();draw();};area.addEventListener('keydown',escape);root.addEventListener('blur',blur);
-  return Object.freeze({
+  return Object.freeze({samplePointer,
    configure(component,viewport){if(disposed)return false;const next=api.resolveTaskArea(component,viewport);if(JSON.stringify(next)===JSON.stringify(layout))return next!==null;
     cancel();closeMenu();layout=next;state.setAvailable(interactive());
     if(layout){const r=layout.rect;Object.assign(area.style,{left:r.x+'px',top:r.y+'px',width:r.width+'px',height:r.height+'px'});

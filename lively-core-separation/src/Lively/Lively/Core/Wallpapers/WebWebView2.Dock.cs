@@ -92,6 +92,13 @@ namespace Lively.Core.Wallpapers
             }
         }
 
+        internal bool NativeDockTaskIsCurrent(Lively.Services.ApplicationDock.DockTaskCompletion completion)
+        {
+            if(completion==null||IsExited||!NativeDockAvailable())return false;
+            var g=completion.Gesture;var current=Volatile.Read(ref roomNativeAttachment)?.Input.State;
+            return Lively.Services.ApplicationDock.DockTaskInput.IsCurrent(completion,current,ReadNativeViewport(),TimeProvider.System)&&
+                g.ReleaseX is int x&&g.ReleaseY is int y&&NativeDockAt(x,y);
+        }
         internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
