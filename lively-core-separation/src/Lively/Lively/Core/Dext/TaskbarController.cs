@@ -105,6 +105,18 @@ internal sealed class TaskbarController : IDisposable
         try { await ReconcileAsync().ConfigureAwait(false); }
         finally { serial.Release(); }
     }
+    // Releasing a request is not proof that its watchdog or recovery journal is gone.
+    public async Task<bool> ReleaseAutomaticAsync(int pid)
+    {
+        RequestAutomatic(pid, false);
+        await serial.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            await ReconcileAsync().ConfigureAwait(false);
+            return (pid <= 0 || leasePid != pid) && !recoveryPending;
+        }
+        finally { serial.Release(); }
+    }
     private async Task ReconcileAsync()
     {
         try

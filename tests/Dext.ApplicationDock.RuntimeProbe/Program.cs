@@ -17,6 +17,7 @@ if (args[0] == "shutdown")
     catch (Grpc.Core.RpcException) { /* Pipe can close during normal shutdown; caller verifies exit. */ }
     return;
 }
+if (args[0] == "dock-owner-live") { if(args.Length!=3)throw new ArgumentException("dock-owner-live requires fixture Room ID"); await StorageGrantLiveProbe.Run(client,channel,identity,args[2],dockOwnership:true); return; }
 if (args[0] == "grants-live") { if(args.Length!=3)throw new ArgumentException("grants-live requires fixture Room ID"); await StorageGrantLiveProbe.Run(client,channel,identity,args[2]); return; }
 if (args[0] == "grants-status")
 {

@@ -100,7 +100,7 @@ export function V3DockSettings({corePid,setStatus}:Props) {
       {confirmed?.preferences?.enabled && (confirmed.runtime.autoHideAvailable || confirmed.runtime.reserveAvailable) && <p className="text-xs text-muted-foreground">Windows 主任务栏替代：{confirmed.runtime.taskbarReplacementReady ? "已接管，退出时恢复" : "尚未确认就绪"}</p>}
       {confirmed?.preferences?.enabled && confirmed.preferences.mode === "reserve" && <p className="text-xs text-muted-foreground">Windows 工作区占位：{confirmed.runtime.appBarOccupied ? "已确认最大化避让" : "尚未确认"} · 禁用或退出后释放</p>}
       {confirmed?.runtime.reason && corePid !== null && <p className="text-xs text-muted-foreground">{confirmed.runtime.reason}</p>}
-      {confirmed?.preferences?.enabled && !(confirmed.runtime.autoHideAvailable || confirmed.runtime.reserveAvailable) && <p className="text-xs text-amber-500">启用偏好已保存，Dock 当前尚不可运行。</p>}
+      {confirmed?.preferences?.enabled && confirmed.runtime.phase !== "applicationSelected" && !(confirmed.runtime.autoHideAvailable || confirmed.runtime.reserveAvailable) && <p className="text-xs text-amber-500">启用偏好已保存，Dock 当前尚不可运行。</p>}
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </div>
   </section>;

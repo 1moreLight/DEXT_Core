@@ -557,3 +557,6 @@ TaskbarController.Dispose在WPF线程同步等待TickAsync；StopAsync内层awai
 
 ## #273 partial静态初始化顺序（2026-10-10）
 新增可编辑能力集合引用另一partial文件的ReadableData，测试首次构造触发TypeInitializationException。改为独立常量集合，不依赖编译文件次序；9/9定向检查通过。
+
+## #275 Dock所有权交接（2026-10-10）
+TickAsync容错吞异常且允许恢复待定，不能用其返回作为交出旧Dock所有权的证明。新增串行ReleaseAutomaticAsync明确返回旧PID租约已释放且恢复已确认；旧Player退出但恢复未确认时保留owner并重试。手动Core隐藏租约独立保留。定向18/18及实际主题Player→应用Dock交接通过。

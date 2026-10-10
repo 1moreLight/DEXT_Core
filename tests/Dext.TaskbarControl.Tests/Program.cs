@@ -45,6 +45,20 @@ try {
  recoverAllowed=true;
  await recovering.TickAsync();
  Check(recovering.Error == null,"pending recovery retries until confirmed");
+ var releaseAllowed=true;
+ using var handoff=new TaskbarController(Path.Combine(dir,"handoff.json"),100,Create,()=>true,()=>Task.FromResult(releaseAllowed));
+ handoff.RequestAutomatic(201,true);await handoff.TickAsync();releaseAllowed=false;
+ Check(!await handoff.ReleaseAutomaticAsync(201),"handoff waits for taskbar restoration after lease is gone");
+ releaseAllowed=true;
+ Check(await handoff.ReleaseAutomaticAsync(201),"handoff completes when restoration is confirmed");
+ await handoff.SetModeAsync("hidden");
+ Check(await handoff.ReleaseAutomaticAsync(201) && handoff.Mode=="hidden" && handoff.ReadyFor(100),"handoff preserves a separate manual Core lease");
+ var stopLease=new FailingStopLease();
+ using var blockedHandoff=new TaskbarController(Path.Combine(dir,"blocked-handoff.json"),100,_=>Task.FromResult<ITaskbarLease>(stopLease),()=>true);
+ blockedHandoff.RequestAutomatic(202,true);await blockedHandoff.TickAsync();
+ Check(!await blockedHandoff.ReleaseAutomaticAsync(202),"handoff stays blocked when watchdog stop throws");
+ stopLease.Fail=false;
+ Check(await blockedHandoff.ReleaseAutomaticAsync(202),"handoff can retry watchdog release");
  var disposing=new TaskbarController(Path.Combine(dir,"dispose.json"),100,
      _=>Task.FromResult<ITaskbarLease>(new SlowLease()),()=>true);
  await disposing.SetModeAsync("hidden");
@@ -70,4 +84,9 @@ sealed class SlowLease:ITaskbarLease {
 }
 sealed class BlockedUiContext:SynchronizationContext {
  public override void Post(SendOrPostCallback action,object? state){}
+}sealed class FailingStopLease:ITaskbarLease {
+ public bool Fail=true;
+ public bool IsAlive=>true;public bool Ready=>false;public string? Error=>null;
+ public void SetWanted(bool value){}
+ public Task StopAsync()=>Fail?Task.FromException(new IOException("stop unavailable")):Task.CompletedTask;
 }

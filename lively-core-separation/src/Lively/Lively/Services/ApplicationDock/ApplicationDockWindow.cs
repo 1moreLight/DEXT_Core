@@ -57,6 +57,14 @@ internal sealed partial class ApplicationDockWindow : Window
         InitializePreview();
     }
 
+    public void Suspend()
+    {
+        foreach (var button in strip.Children.OfType<Button>())
+            if (button.ContextMenu is { } menu) menu.IsOpen = false;
+        ClosePreview();
+        Hide();
+    }
+
     private void Position()
     {
         var work = SystemParameters.WorkArea;

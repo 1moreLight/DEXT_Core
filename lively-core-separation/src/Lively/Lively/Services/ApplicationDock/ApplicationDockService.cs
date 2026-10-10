@@ -1,4 +1,5 @@
 using Lively.Common;
+using Dext.Core.Rooms;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,15 +18,17 @@ internal sealed class ApplicationDockService : IDisposable
     private readonly DispatcherTimer timer;
     private readonly AppCatalogService catalog = new();
     private readonly Dext.Core.Rooms.TaskbarController taskbar;
+    private readonly DockHostOwnership ownership;
     private DockPreferences preferences;
     private IReadOnlyList<DockGroup> groups = Array.Empty<DockGroup>();
     private ApplicationDockWindow window;
     private bool updating, disposed, started, loadFailed;
     private string error;
 
-    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar)
+    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership)
     {
         this.taskbar = taskbar;
+        this.ownership = ownership;
         try { preferences = DockPreferenceFile.Load(path); }
         catch (Exception ex)
         {
@@ -33,6 +36,7 @@ internal sealed class ApplicationDockService : IDisposable
             loadFailed = true;
             error = "无法读取应用 Dock 设置，原文件已保留：" + ex.Message;
         }
+        ownership.SetApplicationRequested(preferences.Enabled);
         timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background,
             async (_, _) => await Refresh(), dispatcher);
         timer.Stop();
@@ -50,6 +54,8 @@ internal sealed class ApplicationDockService : IDisposable
     {
         enabled = preferences.Enabled,
         taskbar = taskbar.Status(),
+        runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
+            waiting = preferences.Enabled && ownership.Owner == DockHost.Theme },
         pins = preferences.Pins,
         groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
         error
@@ -114,14 +120,16 @@ internal sealed class ApplicationDockService : IDisposable
 
     private void Render()
     {
-        if (!preferences.Enabled || disposed)
+        ownership.SetApplicationRequested(preferences.Enabled && !disposed);
+        if (!preferences.Enabled || disposed || !ownership.TryAcquire(DockHost.Application))
         {
-            window?.Hide();
+            window?.Suspend();
+            ownership.Release(DockHost.Application);
             return;
         }
         window ??= new ApplicationDockWindow(Click, TogglePin, Icon);
         window.Update(groups, DockWindows.Foreground, error);
-        if (DockWindows.IsFullscreen()) window.Hide();
+        if (DockWindows.IsFullscreen()) window.Suspend();
         else if (!window.IsVisible) window.Show();
     }
 
@@ -163,8 +171,10 @@ internal sealed class ApplicationDockService : IDisposable
     public void Dispose() => dispatcher.Invoke(() =>
     {
         disposed = true;
+        ownership.Shutdown();
         timer.Stop();
         window?.Close();
         window = null;
+        ownership.Release(DockHost.Application);
     });
 }

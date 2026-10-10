@@ -7,7 +7,7 @@ import type {AppInfo} from "@/features/runtime/types";
 
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
 type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
-type State = {taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type State = {runtime?:{owner:string;visible:boolean;waiting:boolean}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
@@ -79,6 +79,8 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="启用系统应用 Dock" disabled={disabled} checked={state?.enabled ?? false} onChange={event => void edit({operation:"enable",enabled:event.target.checked})}/>启用</label>
     </div>
     <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键可固定应用。全屏时隐藏，退出全屏后恢复。</p>
+    <p className="text-xs text-muted-foreground">启用系统应用 Dock 时，主题独立 Dock 暂停；关闭后按原主题设置恢复。桌面内的主题内容保持。</p>
+    {state?.runtime?.waiting && <p role="status" className="text-xs text-muted-foreground">正在等待主题 Dock 关闭并释放占位…</p>}
     <div className="rounded-lg border border-border p-3 space-y-2">
       <h3 className="text-sm font-medium">Windows 任务栏</h3>
       <div className="flex flex-wrap gap-2">

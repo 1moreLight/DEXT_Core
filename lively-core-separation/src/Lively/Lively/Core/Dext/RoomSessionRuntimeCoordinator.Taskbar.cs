@@ -48,9 +48,6 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         taskbar.RequestAutomatic(owned.Player.Pid ?? 0, wanted);
         await taskbar.TickAsync();
     }
-    private async Task StopDockTaskbarAsync(DockPlayer owned)
-    {
-        taskbar.RequestAutomatic(owned.Player.Pid ?? 0, false);
-        await taskbar.TickAsync();
-    }
+    private Task<bool> StopDockTaskbarAsync(DockPlayer owned) =>
+        taskbar.ReleaseAutomaticAsync(owned.Player.Pid ?? 0);
 }

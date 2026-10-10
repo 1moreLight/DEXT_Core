@@ -249,6 +249,7 @@ namespace Lively
                     controller.Start();
                     return controller;
                 })
+                .AddSingleton<DockHostOwnership>()
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())
