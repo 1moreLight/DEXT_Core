@@ -17,3 +17,7 @@
 2026-10-11 DESK-SYNC-001第03步本机接口增量：现有EditRoomPersonal JSON通道新增setDesktopSync(deskId,enabled)，沿用当前会话/安装的原子编辑；编辑器快照返回本机同步选择与保存条目数。真实Desk校验、相同设置不写盘、切Desk及关闭保留槽位/原应用绑定，12项个人编辑检查通过（新增用例先红后绿）。完整Release退出0，CoreOnly复核旧Core49448，无新配置器。扫描服务发布、刷新、UI及桌面渲染/打开仍待接，实施2/4=50%。
 
 接口复用：Tauri `edit_v3_personal` → 既有gRPC `EditRoomPersonal` → `RoomActionAuthority.EditPersonal`；无需新增proto。证据：`.build/desktop-editor-red.log`、`desktop-editor-green.log`、`desktop-editor-core-build.log`。设置入口未挂UI，不能据此宣称一键导入已可用。
+
+2026-10-11 DESK-SYNC-001第03步运行时扫描接线：Room就绪与setDesktopSync/refreshDesktopSync本机编辑触发后台扫描、Shell元数据和私有快照发布；新请求取消旧请求，退出取消并清空。扫描提交复核当前会话/安装、设置版本、启用状态与同步Desk，过期扫描不写排列；现有13项个人编辑检查及完整Core Release通过。CoreOnly复核旧Core49448，无新配置器，尚无新版真实Room导入实测。官方桌面快照输送/图标层/打开与配置器按钮仍待，实施2/4=50%。
+
+检查日志：`.build/desktop-scan-commit.log`、`.build/desktop-worker-core-build.log`。当前版本在扫描期间个人设置被其他写操作更新时会拒绝本次结果，显式刷新可重试；后续UI接线需呈现刷新状态，不能把无结果当导入成功。

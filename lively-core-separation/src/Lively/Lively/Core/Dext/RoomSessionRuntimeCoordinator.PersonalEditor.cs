@@ -1,3 +1,4 @@
+using System.Text.Json;
 namespace Dext.Core.Rooms;
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
@@ -16,7 +17,15 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     public RoomPersonalEditorReply GetRoomPersonalEditor(string roomId, string installationStamp) =>
         WithCoordinatorSession(roomId, installationStamp, () => new RoomPersonalEditorReply("staleSession"),
             (connection, peer, session) => actions.GetPersonalEditor(connection, peer, session, roomId, installationStamp));
-    public RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson) =>
-        WithCoordinatorSession(roomId, installationStamp, () => new RoomPersonalEditorReply("staleSession"),
+    public RoomPersonalEditorReply EditRoomPersonal(string roomId, string installationStamp, string editJson)
+    {
+        var reply = WithCoordinatorSession(roomId, installationStamp, () => new RoomPersonalEditorReply("staleSession"),
             (connection, peer, session) => actions.EditPersonal(connection, peer, session, roomId, installationStamp, editJson));
+        if (reply.Status == "accepted")
+        {
+            using var document = JsonDocument.Parse(editJson);
+            if (document.RootElement.GetProperty("operation").GetString() is "setDesktopSync" or "refreshDesktopSync") QueueDesktopScan();
+        }
+        return reply;
+    }
 }

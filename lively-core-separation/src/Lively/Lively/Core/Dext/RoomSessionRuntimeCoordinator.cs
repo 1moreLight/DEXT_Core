@@ -84,7 +84,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     public void OnPageReady(WebWebView2 player)
     {
         try { OnDesktopPageReady(player); }
-        finally { QueueDockUpdate(); }
+        finally { QueueDockUpdate(); QueueDesktopScan(); }
     }
 
     private void OnDesktopPageReady(WebWebView2 player)
@@ -200,6 +200,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     public void Dispose()
     {
         runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+        StopDesktopScan();
         DisposeDock();
         ExitNativeIdle();
     }
@@ -224,6 +225,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
             authority.Unbind(exitedPid);
         }
         QueueDockUpdate();
+        if (wasNative) QueueDesktopScan();
         ClearExitedNativeIdle(exitedPid);
         return wasNative;
     }

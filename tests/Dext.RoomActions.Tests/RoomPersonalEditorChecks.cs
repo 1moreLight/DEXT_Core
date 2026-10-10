@@ -29,6 +29,20 @@ static partial class RoomActionChecks
     Eq("denied",Edit(f,edit).Status);
    Eq(before,f.Store.Read().Revision);
   });
+  check("Core scan commit preserves current selection and refuses an obsolete scan",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('b',64);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   var revision=Editor(Read(f)).Revision;
+   var slots=f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),revision,"home",new[]{id},true);
+   Eq(1,slots!.Slots.Count);Eq(1,Editor(Read(f)).DesktopSync!.ItemCount);
+   Eq<RoomDesktopSync?>(null,f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),revision,"home",Array.Empty<string>(),true));
+   revision=Editor(Read(f)).Revision;
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));
+   Eq<RoomDesktopSync?>(null,f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),revision,"home",Array.Empty<string>(),true));
+   Eq("focus",f.Store.ReadDesktopSync(Room)!.DeskId);Eq(1,f.Store.ReadDesktopSync(Room)!.Slots.Count);
+   revision=Editor(Read(f)).Revision;
+   Editor(Edit(f,new{operation="refreshDesktopSync"}));Eq(revision,Editor(Read(f)).Revision);
+  });
   check("applying fresh Room enables navigation without granting application launch",()=>{
    using var f=new ActionFixture();f.Store.Update(s=>{s.Rooms.Clear();s.Targets.Clear();});
    Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));
