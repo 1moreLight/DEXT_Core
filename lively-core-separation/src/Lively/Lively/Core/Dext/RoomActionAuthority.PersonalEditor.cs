@@ -18,7 +18,7 @@ public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEdito
 public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
 
 internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
-internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator);
+internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator,RoomDesktopView? Desktop=null);
 internal sealed record RoomPresentationReply(RoomActionStatus Status,RoomPresentationSnapshot? Presentation=null);
 
 internal sealed partial class RoomActionAuthority
@@ -120,7 +120,13 @@ internal sealed partial class RoomActionAuthority
 
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
-    internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    private sealed record DesktopPresentation(Guid Session,string Room,string Stamp,RoomDesktopView View);
+    private DesktopPresentation? desktopPresentation;
+    internal void PublishDesktopPresentation(Guid session,string room,string stamp,RoomDesktopView view) =>
+        Volatile.Write(ref desktopPresentation,new(session,room,stamp,view));
+    internal void ClearDesktopPresentation() => Volatile.Write(ref desktopPresentation,null);
+
+    internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)
     {
         var initial=gateway.ReadActionContext(connection,peer,session,out var early);
         if(initial!=RoomProtocolStatus.Accepted)return new(Status(initial));
@@ -142,7 +148,12 @@ internal sealed partial class RoomActionAuthority
                         var locator=Volatile.Read(ref personalLocator);
                         var valid=locator is not null&&locator.Session==session&&locator.Stamp==context.Installation.InstallationStamp&&
                             locator.Room==context.Installation.RoomId&&clock.GetElapsedTime(locator.IssuedAt,clock.GetTimestamp())<TimeSpan.FromSeconds(3);
-                        return new(RoomActionStatus.Accepted,new(state.Revision,skins,valid?new(locator!.Request,locator.Button):null));
+                        var desktop=Volatile.Read(ref desktopPresentation);
+                        var desktopValid=desktop is not null&&desktop.Session==session&&desktop.Room==context.Installation.RoomId&&
+                            desktop.Stamp==context.Installation.InstallationStamp&&room?.DesktopSync is {Enabled:true} sync&&sync.DeskId==desktop.View.DeskId;
+                        var desktopView=desktopValid?desktop!.View:null;
+                        if(desktopView?.ContextId==desktopContextId&&desktopView is not null)desktopView=desktopView with{Items=null};
+                        return new(RoomActionStatus.Accepted,new(state.Revision,skins,valid?new(locator!.Request,locator.Button):null,desktopView));
                     },out RoomPresentationReply reply);
                     return(completed,reply);
                 });

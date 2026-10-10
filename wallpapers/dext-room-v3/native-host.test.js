@@ -201,3 +201,15 @@ test('official author route retains the original SDK envelope while Player selec
  const p=f.host.request('authorInput',params);assert.equal(f.sent.length,1);assert.equal('inputSequence' in f.sent[0],false);
  f.answer(f.sent[0],{inputSequence:7,inputConsumed:true});assert.equal((await p).inputSequence,7);f.host.dispose();
 });
+test('desktop presentation accepts a full snapshot then a context-only cache reply',async()=>{
+ const f=fixture(),desktop={contextId:'scan1',deskId:'home',items:[{id:'desktop-'+'a'.repeat(64),name:'File.txt',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ try{
+  let promise=f.host.request('presentationRead',{});
+  f.answer(f.sent.at(-1),{presentation:{revision:1,skins:{},locator:null,desktop}});
+  assert.equal((await promise).presentation.desktop.items[0].name,'File.txt');
+  promise=f.host.request('presentationRead',{desktopContextId:'scan1'});
+  assert.equal(f.sent.at(-1).desktopContextId,'scan1');
+  f.answer(f.sent.at(-1),{presentation:{revision:1,skins:{},locator:null,desktop:{...desktop,items:null}}});
+  assert.equal((await promise).presentation.desktop.items,null);
+ }finally{f.host.dispose();}
+});

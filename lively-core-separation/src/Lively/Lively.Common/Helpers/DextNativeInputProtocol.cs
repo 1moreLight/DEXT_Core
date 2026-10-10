@@ -35,6 +35,9 @@ namespace Lively.Common.Helpers
                             !state.CanFinishStartup(request.RuntimeGeneration,request.SessionId,request.Revision,(long)o["lifecycleRevision"]))return null;
                         request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
                     case "presentationRead":
+                        if(Shape(o,IdentityFields))return request;
+                        if(!Shape(o,IdentityFields.Concat(new[]{"desktopContextId"}).ToArray()) || !Id(Text(o["desktopContextId"]),128))return null;
+                        request.DesktopContextId=Text(o["desktopContextId"]);return request;
                     case "layoutRead": return Shape(o,IdentityFields)?request:null;
                     case "layoutSave":
                         if(!Shape(o,IdentityFields.Concat(new[]{"layoutRevision","change"}).ToArray()) || !Integer(o["layoutRevision"],0) ||

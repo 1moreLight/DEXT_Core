@@ -1062,7 +1062,7 @@ namespace Lively.Player.WebView2
                     }
                     if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || nativeReply.Method == "layoutRead") &&
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
-                        nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= 1024*1024 &&
+                        nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= (nativeReply.Method == "presentationRead" ? 4 : 1)*1024*1024 &&
                         IsOfficialDextDocument(webView.CoreWebView2.Source))
                         webView.CoreWebView2.PostWebMessageAsJson(nativeReply.PayloadJson);
                     break;

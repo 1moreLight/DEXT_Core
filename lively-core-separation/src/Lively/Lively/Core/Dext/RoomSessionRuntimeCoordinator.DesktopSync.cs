@@ -20,6 +20,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (desktopScanStopped) return;
             desktopScanCancellation?.Cancel();
             desktopCatalog.Clear();
+            actions.ClearDesktopPresentation();
             var cancellation = new CancellationTokenSource();
             desktopScanCancellation = cancellation;
             _ = Task.Run(() => ScanDesktopAsync(cancellation));
@@ -53,7 +54,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                         scope.RoomId, scope.InstallationStamp, editor.Editor.Revision, scope.DeskId,
                         scan.Items.Select(item => item.Id).ToArray(), scan.Issues.Count == 0 && !scan.Truncated));
                 if (confirmed is null) return;
-                desktopCatalog.Publish(ticket, scan, metadata, confirmed.Slots);
+                if (desktopCatalog.Publish(ticket, scan, metadata, confirmed.Slots) && desktopCatalog.Read(scope) is { } view)
+                    actions.PublishDesktopPresentation(scope.Session,scope.RoomId,scope.InstallationStamp,
+                        new(view.ContextId,view.DeskId,view.Items.Select(item=>new RoomDesktopViewItem(item.Id,item.Name,item.Kind,item.Slot,item.IconPng)).ToArray(),view.IssueCount,view.Truncated));
                 Logger.Info($"v3 desktop sync scanned | items={scan.Items.Count} | issues={scan.Issues.Count} | truncated={scan.Truncated}");
             }
         }
@@ -76,6 +79,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             desktopScanStopped = true;
             desktopScanCancellation?.Cancel();
             desktopCatalog.Clear();
+            actions.ClearDesktopPresentation();
         }
     }
 }

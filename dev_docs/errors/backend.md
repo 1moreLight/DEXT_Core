@@ -650,3 +650,7 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻塞Reconcile，在recover任务仍进行时返回false，Coordinator将短暂恢复中视为宿主失败并回退。修复仅让显式释放等待当前已发起恢复任务（最多5秒），随后核对恢复和租约；普通Tick保持非阻塞、真实失败仍拒绝交接。新增异步成功恢复检查先红后绿；原有失败恢复/手动隐藏/停止失败检查通过，完整Release通过。Core50820三模式实际切换通过，原偏好恢复。
 
 #308 原生预览验证补记（2026-10-11）：Core50508探针仅等待宿主ready就点击，在按钮启用/任务栏接管确认前发出，输入分发无回执；改为等UIA实际按钮IsEnabled和taskbar确认状态，再点击。Core45248原生预览选窗成功，生产输入规则不变。不能把宿主ready等同动作已就绪。
+
+## #315 桌面图标显示回包大小不匹配（2026-10-11）
+
+代码核对发现Shell图标预算2MiB，但Player转发和JS解析原上限1MiB，较多图标会被静默丢弃。只将官方presentationRead响应上限统一为4MiB，保留请求及其他响应原限额；用desktopContextId缓存避免轮询重复传图。14项接口/97项Node检查和完整构建通过，真实用户桌面大批次显示仍需后续端到端验证。

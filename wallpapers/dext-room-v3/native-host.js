@@ -78,13 +78,27 @@
     if(v.consumer===null||v.button===null)return v.kind==='focus'&&v.consumer===null&&v.button===null&&entry===null;
     return id(v.consumer)&&id(v.button,80)&&(entry===null||id(entry,192));
   }
+  function desktopValid(value){
+    if(value===null)return true;
+    if(!shape(value,['contextId','deskId','items','issueCount','truncated'])||!id(value.contextId)||!stableKey(value.deskId)||!integer(value.issueCount,0)||typeof value.truncated!=='boolean')return false;
+    if(value.items===null)return true;
+    if(!Array.isArray(value.items)||value.items.length>4096)return false;
+    const ids=new Set(),slots=new Set();
+    return value.items.every(item=>{
+      if(!shape(item,['id','name','kind','slot','iconPng'])||!/^desktop-[a-f0-9]{64}$/.test(item.id)||ids.has(item.id)||
+        typeof item.name!=='string'||item.name.length>1024||!['file','folder','shortcut'].includes(item.kind)||!integer(item.slot,0,4095)||slots.has(item.slot)||
+        item.iconPng!==null&&(typeof item.iconPng!=='string'||item.iconPng.length>87384||!/^iVBOR[A-Za-z0-9+/]*={0,2}$/.test(item.iconPng)))return false;
+      ids.add(item.id);slots.add(item.slot);return true;
+    });
+  }
   function paramsValid(method,p){
     switch(method){
       case'capabilities':case'buttons':return shape(p,['consumer'])&&id(p.consumer);
       case'data':return shape(p,['consumer','capability'])&&id(p.consumer)&&DATA.has(p.capability);
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
-      case'invalidateGeometry':case'layoutRead':case'presentationRead':return shape(p,[]);
+      case'invalidateGeometry':case'layoutRead':return shape(p,[]);
+      case'presentationRead':return shape(p,[])||shape(p,['desktopContextId'])&&id(p.desktopContextId);
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'authorInput':return shape(p,['consumer','instanceId','requestJson','geometryVersion'])&&id(p.consumer)&&id(p.instanceId,160)&&typeof p.requestJson==='string'&&new root.TextEncoder().encode(p.requestJson).length<=32768&&integer(p.geometryVersion);
@@ -124,7 +138,7 @@
       if(ok)entry.resolve(value);else entry.reject(failure(value));
     }
     function receive(event){
-      if(disposed)return;let reply;try{reply=copy(event.data);}catch(_){diagnose('invalidPayload');return;}
+      if(disposed)return;let reply;try{reply=copy(event.data,pending.get(event.data?.requestId)?.method==='presentationRead'?4*1048576:1048576);}catch(_){diagnose('invalidPayload');return;}
       if(reply?.type==='dext:v3-native-event'){
         if(!suspended&&same(reply,identity)&&inputEventValid(reply)){try{options.onInput?.(reply);}catch(_){diagnose('inputUnavailable');}}return;
       }
@@ -136,7 +150,7 @@
       const action=['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
       if(['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
-      if(entry.method==='presentationRead'&&reply.status==='accepted'&&(!shape(reply.presentation,['revision','skins','locator'])||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
+      if(entry.method==='presentationRead'&&reply.status==='accepted'&&((!shape(reply.presentation,['revision','skins','locator'])&&!shape(reply.presentation,['revision','skins','locator','desktop']))||Object.hasOwn(reply.presentation,'desktop')&&!desktopValid(reply.presentation.desktop)||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
       if(['layoutRead','layoutSave'].includes(entry.method)&&reply.status==='accepted'&&!layoutValid(reply.layout)){finish(entry,false,'invalidPayload');return;}
       finish(entry,true,reply);
     }

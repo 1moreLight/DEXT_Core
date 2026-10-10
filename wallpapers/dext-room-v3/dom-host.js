@@ -22,6 +22,7 @@
     const actionFlights=new Set(),localButtons=new Map();
     let taskAreaOcclusion=null;
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
+    let desktopView=null;
     let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
@@ -355,10 +356,14 @@
       if(disposed||presentationRunning)return;presentationRunning=true;
       const identity=scope();
       try{
-        const reply=await native.request('presentationRead',{},identity);
+        const reply=await native.request('presentationRead',desktopView?{desktopContextId:desktopView.contextId}:{},identity);
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
           presentationSkins=copy(reply.presentation.skins);
+          const desktop=reply.presentation.desktop;
+          if(!desktop)desktopView=null;
+          else if(desktop.items!==null)desktopView=copy(desktop);
+          else if(desktopView?.contextId!==desktop.contextId||desktopView?.deskId!==desktop.deskId)desktopView=null;
           for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
           const locator=reply.presentation.locator;
           if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}
@@ -437,7 +442,7 @@
           return true;
         }return false;},
       dispose(){if(disposed)return;disposed=true;clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

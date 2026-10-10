@@ -72,6 +72,7 @@ namespace Lively.Models.Message
         public long RuntimeGeneration { get; set; }
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
+        public string DesktopContextId { get; set; }
         public long LayoutRevision { get; set; }
         public LivelyRoomNativeLayoutChange LayoutChange { get; set; }
         public long GeometryVersion { get; set; }

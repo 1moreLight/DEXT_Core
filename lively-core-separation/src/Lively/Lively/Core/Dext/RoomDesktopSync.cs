@@ -59,3 +59,6 @@ internal sealed class RoomDesktopSync
             throw new InvalidDataException("Invalid desktop item identity.");
     }
 }
+
+internal sealed record RoomDesktopViewItem(string Id, string Name, string Kind, int Slot, string? IconPng);
+internal sealed record RoomDesktopView(string ContextId, string DeskId, IReadOnlyList<RoomDesktopViewItem>? Items, int IssueCount, bool Truncated);

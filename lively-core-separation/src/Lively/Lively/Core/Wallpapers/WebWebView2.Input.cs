@@ -104,7 +104,7 @@ namespace Lively.Core.Wallpapers
                     }
                     break;
                 case "presentationRead":
-                    var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision));
+                    var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision,request.DesktopContextId));
                     status=view.Status;
                     if(view.Presentation is{} present)presentation=JObject.Parse(System.Text.Json.JsonSerializer.Serialize(present,
                         new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase}));

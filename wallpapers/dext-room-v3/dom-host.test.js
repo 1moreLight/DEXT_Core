@@ -642,3 +642,18 @@ test('official task region enables event samples and removing it restores direct
   await f.host.setTaskAreaOcclusion(null);assert.equal(latest(),false);
  }finally{f.host.dispose();}
 });
+
+test('official desktop snapshot is cached across polls and cleared on disable',async()=>{
+ const timers=new Map();let timer=0,reads=0;
+ const desktop={contextId:'scan1',deskId:'home',items:[{id:'desktop-'+'a'.repeat(64),name:'File.txt',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({setTimeout:(cb,ms)=>{timers.set(++timer,{cb,ms});return timer;},clearTimeout:id=>timers.delete(id),request:(method)=>{
+  if(method==='presentationRead')return Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop:++reads===1?desktop:reads===2?{...desktop,items:null}:null}});
+ }});
+ const poll=async()=>{const found=[...timers].find(([,t])=>t.ms===750);assert.ok(found);timers.delete(found[0]);found[1].cb();await flush();};
+ try{
+  await f.host.ready;await flush();assert.equal(f.host.readDiagnostics().presentation.desktop.count,1);
+  await poll();assert.equal(f.calls.filter(c=>c.method==='presentationRead').at(-1).params.desktopContextId,'scan1');
+  assert.equal(f.host.readDiagnostics().presentation.desktop.count,1);
+  await poll();assert.equal(f.host.readDiagnostics().presentation.desktop,null);
+ }finally{f.host.dispose();}
+});

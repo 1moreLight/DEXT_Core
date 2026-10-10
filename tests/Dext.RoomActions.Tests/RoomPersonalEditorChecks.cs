@@ -43,6 +43,16 @@ static partial class RoomActionChecks
    revision=Editor(Read(f)).Revision;
    Editor(Edit(f,new{operation="refreshDesktopSync"}));Eq(revision,Editor(Read(f)).Revision);
   });
+  check("official desktop presentation transfers icons once and clears disabled or replaced contexts",()=>{
+   using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   var item=new RoomDesktopViewItem("desktop-"+new string('a',64),"File.txt","file",0,null);
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("context","home",new[]{item},0,false));
+   RoomDesktopView? View(string? cached=null)=>f.Actions.ReadPresentation(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,cached).Presentation!.Desktop;
+   Eq(1,View()!.Items!.Count);Eq<IReadOnlyList<RoomDesktopViewItem>?>(null,View("context")!.Items);Eq("context",View("context")!.ContextId);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=false}));Eq<RoomDesktopView?>(null,View());
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));Eq<RoomDesktopView?>(null,View());
+   f.Actions.ClearDesktopPresentation();Eq<RoomDesktopView?>(null,View());
+  });
   check("applying fresh Room enables navigation without granting application launch",()=>{
    using var f=new ActionFixture();f.Store.Update(s=>{s.Rooms.Clear();s.Targets.Clear();});
    Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));

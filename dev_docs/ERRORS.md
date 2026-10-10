@@ -435,3 +435,5 @@
 | #313 | Dock模式切换时异步任务栏恢复尚未完成被误判失败 | [backend](errors/backend.md) |
 
 | #314 | 运行探针启用WPF访问UIA后System.IO隐式using消失 | [toolchain](errors/toolchain.md) |
+
+| #315 | 桌面图标批次可超过Player与JS原1MiB显示回包限额 | [backend](errors/backend.md) |
