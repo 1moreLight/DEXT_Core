@@ -20,6 +20,7 @@
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
+    let taskAreaOcclusion=null;
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
     let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
@@ -181,7 +182,7 @@
       // A boundary publication cannot track a moving foreground cover. Such
       // entries wait for the separate physical-event sampling mechanism.
       if(!sampled&&(node.moving||front.some(other=>other.moving)))return null;
-      const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:[...front.map(other=>other.polygon),...(dockView?[geometry.rectPolygon({x:1920-36/model.readDiagnostics().viewport.width*1920,y:0,width:36/model.readDiagnostics().viewport.width*1920,height:32/model.readDiagnostics().viewport.height*1080})]:[])]});
+      const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:[...front.map(other=>other.polygon),...(dockView&&taskAreaOcclusion?[geometry.rectPolygon(taskAreaOcclusion)]:[]),...(dockView?[geometry.rectPolygon({x:1920-36/model.readDiagnostics().viewport.width*1920,y:0,width:36/model.readDiagnostics().viewport.width*1920,height:32/model.readDiagnostics().viewport.height*1080})]:[])]});
       if(!pieces.length)return null;
       if(pieces.length>64||pieces.some(p=>p.length>32))throw failure('geometryBudget');
       const polygons=pieces.map(p=>p.map(v=>({x:v.x/1920,y:v.y/1080}))),points=polygons.flat();
@@ -388,6 +389,13 @@
     const ready=acceptSnapshot(snapshot);
     if(!dockView)ready.then(()=>refreshPresentation());
     return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,
+      setTaskAreaOcclusion(value){
+        if(disposed||!dockView)return Promise.resolve(false);
+        if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return Promise.resolve(false);
+        const next=value===null?null:{x:value.x,y:value.y,width:value.width,height:value.height};
+        if(JSON.stringify(next)===JSON.stringify(taskAreaOcclusion))return Promise.resolve(inputReady);
+        taskAreaOcclusion=next;return render();
+      },
       refreshGeometry(){return disposed?Promise.resolve(false):render();},
       readInputSample(identity,version){
         if(!identity||!sameActionScope(identity,version))return null;

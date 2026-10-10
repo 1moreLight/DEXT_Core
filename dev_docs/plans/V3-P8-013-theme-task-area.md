@@ -1,0 +1,19 @@
+# V3-P8-013 官方HTML任务区与演示
+目标：接入同一主题Player主窗口的官方应用区域，具备展示/稳定点击/窗口选择，并有独立融合演示。
+基线71966f1；分支feat/V3-P8-013-theme-task-area；设计继承V3-P8-011/02-design.md。
+执行：executing-plans/TDD。持续推进，无阶段审批；状态逐步留档。
+范围外：014负责最终呈现设置、自动回退、overlay模式与附属原生缩略图；本包不替换当前WPF默认或改主工作区Room。
+
+| 步骤 | 独立文件 | 状态 |
+|---|---|---|
+| 01 公共区域与官方展示状态 | V3-P8-013/01-model.md | 做完 |
+| 02 DOM区域、按下保持与作者命中避让 | V3-P8-013/02-dom.md | 做完 |
+| 03 Core/Player私有接线与演示 | V3-P8-013/03-bridge.md | 开做 |
+| 04 构建、复核与交接 | V3-P8-013/04-handoff.md | 待做 |
+
+进度2/4=50%；接线完整范围保留，不以模块检查替代生产接入。
+
+01：新建wallpapers/dext-room-v3/task-area-model.js及node测试。消费verified组件config.dextTaskArea/placement/当前viewport，返回CSS像素区域和官方画布遮挡；消费camelCase的012展示快照，当前context/sequence检查、按下冻结、结构更新暂存、上下文/移除取消、隐藏清除。
+02：新建task-area-host.js和样式；按钮/运行点/横向滚动/窗口标题选择、固定菜单；同节点按下不重建。后续接入dom-host命中扣除与main私有入口。先模型RED→GREEN，再后台真实浏览器检查，不打开桌面窗口。
+03：专用私有消息与数据/图标接线，仅固定官方顶层文档可用；复用Core物理输入事实与当前owner，不向作者开放启动路径或窗口列表；添加新融合演示，不改冻结样包。
+04：必要Node/真实Player检查、Core/Release构建、一次diff复核、具名提交；没有产品接线前不把模拟点击写成实机通过。

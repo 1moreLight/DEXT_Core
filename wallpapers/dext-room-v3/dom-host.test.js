@@ -19,7 +19,7 @@ function fixture(options={}){
  const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
  const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
- const host=createDomHost({document,container,context:{runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
+ const host=createDomHost({document,container,context:{viewKind:options.viewKind,runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
    layoutModel,geometry,createRuntime,createFrameHost:frameFactory,createMediaHost:mediaFactory,sendControl:v=>controls.push(v),getViewport:options.getViewport||(()=>({width:1920,height:1080,dpr:1})),now:()=>now,
    requestAnimationFrame:cb=>{raf.set(++id,cb);return id;},cancelAnimationFrame:id=>raf.delete(id),setTimeout:options.setTimeout,clearTimeout:options.clearTimeout});
  async function advance(ms){now+=ms;const tasks=[...raf];raf.clear();for(const [,cb]of tasks)cb(now);await flush();}
@@ -561,4 +561,27 @@ test('three Desk wraparound keeps next and previous slide directions',async()=>{
   assert.equal(source.style.transform,'matrix(1,0,0,1,'+(-direction*960)+',0)');
   f.host.dispose();
  }
+});
+
+
+test('official task area is excluded from author boundary and sampled hits and clears without remount',async()=>{
+ const component={id:'shared',role:'dock',entry:'widget.html',placement:{x:0,y:900,width:1000,height:120},capabilities:[],buttonIds:['next']};
+ const f=fixture({viewKind:'dock',room:{dockComponentId:'shared',components:[component]}});
+ try{
+  await f.host.ready;const node=[...f.frames.values()][0].node;
+  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:1000,height:120}]});
+  const covered=entry=>entry.polygons.some(p=>geometry.containsPoint(p,{x:500/1920,y:500/1080},{includeBoundary:false}));
+  assert.equal(covered(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons[0]),true);
+  assert.equal(await f.host.setTaskAreaOcclusion({x:192,y:180,width:1536,height:720}),true);
+  const last=f.calls.filter(v=>v.method==='geometry').at(-1);assert.equal(last.params.buttons.some(covered),false);
+  const sampled=f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion);assert.equal(sampled.buttons.some(covered),false);
+  const count=f.calls.filter(v=>v.method==='geometry').length;
+  assert.equal(await f.host.setTaskAreaOcclusion({x:192,y:180,width:1536,height:720}),true);assert.equal(f.calls.filter(v=>v.method==='geometry').length,count);
+  assert.equal(await f.host.setTaskAreaOcclusion(null),true);assert.equal(covered(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons[0]),true);
+  assert.equal([...f.frames.values()][0].node,node);
+ }finally{f.host.dispose();}
+});
+test('task occlusion rejects desktop host and malformed regions',async()=>{
+ const f=fixture();try{await f.host.ready;assert.equal(await f.host.setTaskAreaOcclusion({x:0,y:0,width:50,height:50}),false);}finally{f.host.dispose();}
+ const d=fixture({viewKind:'dock'});try{await d.host.ready;for(const r of [{x:-1,y:0,width:10,height:10},{x:0,y:0,width:Infinity,height:10},{x:0,y:0,width:2000,height:10}])assert.equal(await d.host.setTaskAreaOcclusion(r),false);}finally{d.host.dispose();}
 });
