@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false,Action held=null){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false,Action held=null,bool right=false){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -55,8 +55,8 @@ internal sealed class FusionActionWindow : IDisposable
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception($"Dock ownership or mouse idle check failed; no click sent: expected={dock.ToInt64()} actual={GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2).ToInt64()} point={x},{y} origin={origin.X},{origin.Y} size={rect.Right},{rect.Bottom} leftHeld={GetAsyncKeyState(1)<0} rightHeld={GetAsyncKeyState(2)<0}");
         if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels,multiple,mouseAway,held);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
-        var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
-        var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
+        var down=new Input{Type=0,Mouse=new Mouse{Flags=right?8u:2u}};
+        var up=new Input{Type=0,Mouse=new Mouse{Flags=right?16u:4u}};
         mark?.Invoke("beforeDown");
         if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
         try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
@@ -117,6 +117,20 @@ internal sealed class FusionActionWindow : IDisposable
         await Click(dock,observe);
         await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not restore after group shrank: "+observe()?.GetRawText());
         Console.WriteLine("PASS closing one grouped window refreshes task and remaining minimized window restores");
+    }
+    internal async Task VerifyPinMenu(IntPtr dock,Func<JsonElement?> observe)
+    {
+        var original=observe()?.GetProperty("targetPinned").GetBoolean();
+        if(original!=false)throw new Exception("Owned test app already pinned; no pin change performed");
+        JsonElement? PinButton(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["menuPin"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+        foreach(var expected in new[]{true,false}){
+            await Click(dock,observe,right:true);
+            try { await Wait(()=>observe()?.TryGetProperty("menuPin",out var value)==true&&value.ValueKind==JsonValueKind.Object,"Right click did not open pin menu"); }
+            catch { Console.WriteLine("PIN MENU OBSERVATION "+observe()?.GetRawText()); throw; }
+            await Click(dock,PinButton);
+            await Wait(()=>observe()?.GetProperty("targetPinned").GetBoolean()==expected&&observe()?.GetProperty("target").ValueKind==JsonValueKind.Object,"Pin menu action did not update pin state and close menu");
+            Console.WriteLine("PASS actual context menu "+(expected?"pins":"unpins")+" owned app and restores task row");
+        }
     }
     internal async Task VerifyKeyboard(IntPtr dock,Func<JsonElement?> observe)
     {

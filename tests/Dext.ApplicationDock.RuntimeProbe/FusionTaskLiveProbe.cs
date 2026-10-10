@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -71,7 +71,8 @@ internal static class FusionTaskLiveProbe
                             Console.WriteLine("PASS actual Windows taskbar restored while theme Dock remains enabled");
                         }
                         if(target is not null){
-                            if(menu)await target.VerifyWindowMenu(window,Observe,second);
+                            if(pinMenu)await target.VerifyPinMenu(window,Observe);
+                            else if(menu)await target.VerifyWindowMenu(window,Observe,second);
                             else if(keyboard)await target.VerifyKeyboard(window,Observe);
                             else await target.Verify(window,Observe,touch,competingRaw);
                             if(touch)await target.VerifyDisabledContact(window,Observe,()=>Settings(new{enabled=false}));

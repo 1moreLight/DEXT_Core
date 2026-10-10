@@ -2182,3 +2182,5 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11手动恢复任务栏实测：fusion-restored-live先等主题Dock实际接管，再通过EditApplicationDock(taskbar,visible)恢复，核对Shell_TrayWnd实际可见、看护hidden=false、主题Dock重新可操作；随后真实选第二窗、关闭第二窗、恢复剩余最小化窗通过，任务操作没有重新隐藏Windows任务栏。首次探针把恢复后的自动隐藏误判为禁用：工作区缩小时鼠标停在旧底边，改为按当前原生Dock位置唤出再判定。实际Core33260/Player28800退出0；.build/task-restored-probe-build.log、fusion-restored-live.log为证据。finally恢复原taskbar模式/两种Dock偏好/前台/光标，外层按字节备份taskbar-mode.json；原运行版恢复，无新增配置器。仅增加探针，无生产改动。03继续开做，整包2/4=50%；物理触屏/作者区域及完整统一验收不外推。
 
 2026-10-11交接核查做完：核对实际日志后建立03-remaining五项接续清单，04开始证据复核，更新V3_CURRENT/融合样包说明的陈旧禁用描述。正式包仍2/4=50%；下一实际操作为自有程序右键固定/取消固定，保留同栏作者导航、窄栏、取消和统一验收全部范围。不增加网络测试、不更换运行版、不宣称整包通过。
+
+2026-10-11实际固定菜单开做：新增独立fusion-pin-live及实际右键/固定/取消固定探针，构建通过。Core49636/Player2352实机失败证据确认右键DOWN到正确按钮时可用，61ms后UP/contextmenu同按钮disabled=true，随后恢复；未到固定操作，未宣称通过。记录03-remaining，下一步定位租约/原生可用/工作区门控撤销。原Core28588及偏好恢复，未启动配置器；生产代码未改，2/4=50%。
