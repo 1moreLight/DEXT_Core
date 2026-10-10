@@ -13,7 +13,7 @@ public sealed record RoomPersonalEditorButton(string Id, string Name, string Sco
     string? EffectiveAction, string? EffectiveDeskId, bool IsBound, RoomPersonalButtonSettings? Personal);
 public sealed record RoomPersonalEditorTarget(string Id, string Name, string Kind, string Target, string Arguments, string WorkingDirectory, int UseCount);
 public sealed record RoomPersonalSkin(string Id, string Name);
-public sealed record RoomDesktopSyncSettings(bool Enabled, string DeskId, int ItemCount);
+public sealed record RoomDesktopSyncSettings(bool Enabled, string DeskId, int ItemCount, string ScanState = "pending", int IssueCount = 0);
 public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins, RoomDesktopSyncSettings? DesktopSync = null);
 public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
 
@@ -120,11 +120,59 @@ internal sealed partial class RoomActionAuthority
 
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
-    private sealed record DesktopPresentation(Guid Session,string Room,string Stamp,RoomDesktopView View);
+    private sealed record DesktopPresentation(Guid Session,string Room,string Stamp,RoomDesktopView View,IReadOnlyDictionary<string,PersonalTarget> Targets);
     private DesktopPresentation? desktopPresentation;
-    internal void PublishDesktopPresentation(Guid session,string room,string stamp,RoomDesktopView view) =>
-        Volatile.Write(ref desktopPresentation,new(session,room,stamp,view));
-    internal void ClearDesktopPresentation() => Volatile.Write(ref desktopPresentation,null);
+    private sealed record DesktopProgress(string Room,string Desk,string State,int Issues);
+    private DesktopProgress? desktopProgress;
+    internal void SetDesktopProgress(string room,string desk,string state,int issues=0) => Volatile.Write(ref desktopProgress,new(room,desk,state,issues));
+    internal void PublishDesktopPresentation(Guid session,string room,string stamp,RoomDesktopView view,IReadOnlyDictionary<string,PersonalTarget>? targets=null) =>
+        Volatile.Write(ref desktopPresentation,new(session,room,stamp,view,new Dictionary<string,PersonalTarget>(targets??new Dictionary<string,PersonalTarget>(),StringComparer.Ordinal)));
+    internal const string DesktopConsumer = "official.desktop";
+    internal bool IsDesktopEntry(RoomActionContext context,RoomNativeButton entry)
+    {
+        return IsDesktopEntry(context,entry,Volatile.Read(ref desktopPresentation));
+    }
+    private static bool IsDesktopEntry(RoomActionContext context,RoomNativeButton entry,DesktopPresentation? value)
+    {
+        var snapshot=context.Snapshot;
+        return value is not null&&context.Role==RoomClientRole.DesktopPlayer&&snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&
+            snapshot.TransitionId is null&&snapshot.SessionId==value.Session&&context.Installation.RoomId==value.Room&&
+            context.Installation.InstallationStamp==value.Stamp&&snapshot.CurrentDeskId==value.View.DeskId&&
+            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next");
+    }
+    internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        var now=clock.GetTimestamp();
+        if(Expired(proof.IssuedAt,now))return new(RoomActionStatus.ExpiredInput);
+        (RoomActionStatus Status,PersonalTarget? Target) prepared;
+        try
+        {
+            var spin=new SpinWait();
+            while(true)
+            {
+                var attempt=store.ReadForDispatch(state=>{
+                    var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
+                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget?)null);
+                        var value=Volatile.Read(ref desktopPresentation);
+                        if(!IsDesktopEntry(context!,proof.Button,value)||value is null||
+                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget?)null);
+                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget?)null);
+                        value.Targets.TryGetValue(proof.Button.Button,out var target);
+                        return(RoomActionStatus.Accepted,(PersonalTarget?)target);
+                    },out (RoomActionStatus Status,PersonalTarget? Target) result);
+                    return(admitted,result);
+                });
+                if(attempt.admitted){prepared=attempt.result;break;}spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        if(Expired(proof.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
+        try{if(prepared.Target is not null)launch(prepared.Target);return new(RoomActionStatus.Accepted);}
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+        {return new(RoomActionStatus.LaunchFailed);}
+    }
+    internal void ClearDesktopPresentation() { Volatile.Write(ref desktopPresentation,null); Volatile.Write(ref desktopProgress,null); }
 
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)
     {
@@ -325,7 +373,7 @@ internal sealed partial class RoomActionAuthority
         return(changed,new("accepted",installed.RoomId,installed.InstallationStamp,ProjectEditor(state,installed,changed)));
     }
 
-    private static RoomPersonalEditorSnapshot ProjectEditor(RoomPersonalState state,VerifiedRoomInstallation installed,bool publish)
+    private RoomPersonalEditorSnapshot ProjectEditor(RoomPersonalState state,VerifiedRoomInstallation installed,bool publish)
     {
         state.Rooms.TryGetValue(installed.RoomId,out var room);
         var buttons=installed.ActionCatalog!.Buttons.Values.OrderBy(b=>b.Id,StringComparer.Ordinal).Select(b=>{
@@ -338,7 +386,9 @@ internal sealed partial class RoomActionAuthority
             .ToDictionary(group=>group.Key,group=>group.Count(),StringComparer.Ordinal);
         var targets=state.Targets.OrderBy(pair=>pair.Value.Name,StringComparer.Ordinal).ThenBy(pair=>pair.Key,StringComparer.Ordinal)
             .Select(pair=>new RoomPersonalEditorTarget(pair.Key,pair.Value.Name,pair.Value.Kind,pair.Value.Target,pair.Value.Arguments,pair.Value.WorkingDirectory,uses.GetValueOrDefault(pair.Key))).ToArray();
+        var progress=Volatile.Read(ref desktopProgress);
+        var matching=progress?.Room==installed.RoomId&&progress?.Desk==room?.DesktopSync?.DeskId;
         return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray(),
-            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count) : null);
+            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count,!sync.Enabled?"disabled":matching?progress!.State:"pending",matching?progress!.Issues:0) : null);
     }
 }

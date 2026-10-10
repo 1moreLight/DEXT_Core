@@ -18,6 +18,11 @@ internal sealed partial class RoomSessionPlayerBridge
         if(current==null || current.Generation!=generation || current.Session!=session || current.Revision!=revision)return new(RoomActionStatus.StaleInput);
         var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
         if(proof==null)return new(inputSequence==0?RoomActionStatus.InputRequired:RoomActionStatus.StaleInput);
+        if(consumer==RoomActionAuthority.DesktopConsumer)
+        {
+            var desktop=actions.InvokeDesktop(connectionId,peer,session,proof);
+            return new(desktop.Status,proof.Sequence,proof.IsConsumed);
+        }
         var issued=actions.IssueHostInput(connectionId,peer,session,consumer,button,proof);
         var reply=issued.Status==RoomActionStatus.Accepted?actions.InvokeButton(connectionId,peer,session,consumer,button,issued.Ticket):new(issued.Status);
         return new(reply.Status,proof.Sequence,proof.IsConsumed,reply.Exit);
@@ -87,7 +92,7 @@ internal sealed partial class RoomSessionPlayerBridge
         disposed?new(RoomActionStatus.StaleSession):actions.SaveLayout(connectionId,peer,session,revision,layoutRevision,change);
 
     internal bool PublishNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
-        long version,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool sampleMouse=false)
+        long version,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool sampleMouse=false,RoomActionAuthority? actions=null)
     {
         if(disposed || entries==null || entries.Count>4096)return false;
         return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>
@@ -95,6 +100,7 @@ internal sealed partial class RoomSessionPlayerBridge
             if(status!=RoomProtocolStatus.Accepted || context!.Snapshot.Revision!=revision || context.Installation.ActionCatalog is not{} catalog)return false;
             foreach(var entry in entries)
             {
+                if(entry is not null&&actions?.IsDesktopEntry(context,entry)==true)continue;
                 if(entry==null || entry.Consumer==null || entry.Button==null || !catalog.Consumers.TryGetValue(entry.Consumer,out var owner) ||
                     !owner.IsActive(context.Role,context.Snapshot) || !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
                     button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId))return false;
@@ -104,12 +110,13 @@ internal sealed partial class RoomSessionPlayerBridge
     }
     internal bool SampleNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
         long version,long sequence,string edge,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool foreground,
-        int key=0,string? consumer=null,string? buttonId=null,string? entryId=null,bool reverse=false,IReadOnlyList<RoomNativeButton>? officialTaskEntries=null)
+        int key=0,string? consumer=null,string? buttonId=null,string? entryId=null,bool reverse=false,IReadOnlyList<RoomNativeButton>? officialTaskEntries=null,RoomActionAuthority? actions=null)
     {
         if(disposed || entries==null || entries.Count>4096)return false;
         return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>{
             if(status!=RoomProtocolStatus.Accepted || context!.Snapshot.Revision!=revision || context.Installation.ActionCatalog is not{} catalog)return false;
             foreach(var entry in entries){
+                if(entry is not null&&actions?.IsDesktopEntry(context,entry)==true)continue;
                 if(entry==null || entry.Consumer==null || entry.Button==null || !catalog.Consumers.TryGetValue(entry.Consumer,out var owner) ||
                     (!owner.IsActive(context.Role,context.Snapshot) && !(context.Role==RoomClientRole.DesktopPlayer && context.Snapshot.TargetDeskId!=null &&
                         owner.IsActive(context.Role,context.Snapshot,context.Snapshot.CurrentDeskId))) ||

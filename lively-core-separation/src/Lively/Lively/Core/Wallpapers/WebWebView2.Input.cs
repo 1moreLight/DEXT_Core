@@ -74,7 +74,7 @@ namespace Lively.Core.Wallpapers
             if(nativeDock&&packet.Key!=0&&!a.TaskKeyboard.TryRegions(sample.TaskTargets,out taskKeys))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse,taskKeys)){
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse,taskKeys,a.Actions)){
                 NotifyNative(a,before,packet.Kind!="focus");
                 if(packet.Kind=="focus")NativeKeys(a).Flush();
                 if(task!=null){Logger.Debug($"Task sample completed sequence={packet.GestureId}");NativeDockTaskCompleted?.Invoke(this,task);}
@@ -100,7 +100,7 @@ namespace Lively.Core.Wallpapers
                     if(viewport!=null && request.PixelWidth==viewport.Width && request.PixelHeight==viewport.Height && request.Buttons is{} entries && entries.Length<=4096 && entries.All(b=>b!=null))
                     {
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
-                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
+                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
                     break;
                 case "presentationRead":

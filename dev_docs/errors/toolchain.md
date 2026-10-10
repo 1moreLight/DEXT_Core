@@ -534,3 +534,5 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 
 ## #314 UIA探针启用WPF后的隐式using（2026-10-11）
 RuntimeProbe添加UseWPF以使用UIAutomation后，原有File/Path引用报CS0103；WindowsDesktop的隐式using集合发生变化。项目显式添加Using Include="System.IO"后构建通过。不要为此逐个修改不相关探针逻辑。
+
+2026-10-11 #41复现补记：desktop-sync-import首次npm run build缺tsc；该worktree未安装node_modules。npm ci --prefer-offline --no-audit --no-fund后前端构建通过，锁文件无变化。

@@ -22,7 +22,7 @@
     const actionFlights=new Set(),localButtons=new Map();
     let taskAreaOcclusion=null;
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
-    let desktopView=null;
+    let desktopView=null,desktopPage=0,desktopPages=1,desktopSignature=null;
     let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
@@ -78,6 +78,8 @@
       if(dockView){effectiveLayouts=next;return;}
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
+        for(const record of icons.values())if(record.desktop&&record.deskId===deskId)items.push({key:'icon:'+deskId+'/'+record.icon.id,kind:'icon',id:record.icon.id,
+          savedRect:record.desktopRect,logicalSize:{width:96,height:104}});
         // Dock geometry belongs to the official host. A component author can
         // publish its buttons, while only roomScene can publish occupied areas.
         const referenced=new Set(desks.get(deskId).components);
@@ -134,9 +136,30 @@
       return matches.length===1?matches[0]:null;
     }
     function ensureRoot(){if(rootNode)return;rootNode=document.createElement('div');rootNode.className='dext-v3-canvas';container.append(rootNode);}
+    function reconcileDesktop(viewport){
+      if(dockView)return;
+      const columns=Math.max(1,Math.floor((viewport.width-64)/112)),rows=Math.max(1,Math.floor((viewport.height-64)/120)),capacity=Math.max(1,columns*rows-2);
+      desktopPages=Math.max(1,Math.ceil(((desktopView?.items.reduce((max,item)=>Math.max(max,item.slot),-1)??-1)+1)/capacity));desktopPage=Math.min(desktopPage,desktopPages-1);
+      const signature=desktopView?[desktopView.contextId,desktopPage,viewport.width,viewport.height].join('/'):'none';
+      if(signature===desktopSignature)return;desktopSignature=signature;
+      for(const [key,record]of [...icons])if(record.desktop){record.element.remove();icons.delete(key);}
+      if(!desktopView||!desks.has(desktopView.deskId))return;
+      const items=desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>({...item,cell:item.slot%capacity}));
+      if(desktopPages>1)items.push({id:'desktop.page.previous',name:'上一组 '+(desktopPage+1)+'/'+desktopPages,iconPng:null,cell:capacity},{id:'desktop.page.next',name:'下一组',iconPng:null,cell:capacity+1});
+      items.forEach(item=>{
+        const index=item.cell;
+        const element=document.createElement('button');element.type='button';element.className='dext-v3-icon dext-v3-desktop-icon';element.setAttribute('aria-label',item.name);
+        if(item.iconPng){const image=document.createElement('img');image.src='data:image/png;base64,'+item.iconPng;image.alt='';image.draggable=false;element.append(image);}
+        else{const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
+        const label=document.createElement('span');label.className='dext-v3-desktop-label';label.textContent=item.name;element.append(label);rootNode.append(element);
+        const icon={id:item.id,buttonId:item.id},deskId=desktopView.deskId;
+        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,contextId:desktopView.contextId,
+          desktopRect:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
+      });
+    }
     function reconcile(){
       ensureRoot();const state=model.readDiagnostics();const viewport=state.viewport;
-      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';recomputeLayouts(state);
+      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';reconcileDesktop(viewport);recomputeLayouts(state);
       for(const definition of state.instances){
         let record=records.get(definition.instanceId);
         if(!record){
@@ -158,6 +181,7 @@
         record.element.dataset.skin=presentationSkins[icon.buttonId]||'classic';
         const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'source'];layoutIcon(record,group);
       }
+      for(const record of icons.values())if(record.desktop)layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
       const placements=Object.fromEntries([...records.values()].filter(record=>
         record.definition.consumerId.startsWith('component.')&&visible(record.definition)).map(record=>[record.definition.consumerId,copy(recordPlacement(record))]));
       media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
@@ -211,9 +235,10 @@
         }
       }
       for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&inputDesks(sampled).includes(record.deskId)){
-        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
+        if(record.desktop&&snapshot.transitionId)continue;
+        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry(record.desktop?'official.desktop':'official',record.icon.buttonId,record.desktop?'desktop.'+record.contextId+'/'+record.icon.id:'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
       }
-      return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
+      return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||['official','official.desktop'].includes(b.consumer)&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||['official','official.desktop'].includes(a.consumer)&&n.record.icon).record));
     }
     async function render(){
       const ownEpoch=++epoch;releaseNativeHold(false);cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
@@ -306,7 +331,12 @@
         f.identity.sessionId===own.identity.sessionId&&f.identity.revision===own.identity.revision))return;
       pendingDefault=null;
       native.request('activate',{consumer:own.consumer,button:own.button,geometryVersion:own.geometryVersion,inputSequence:own.inputSequence},own.identity)
-        .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion))consumeReceipt(reply);},()=>diagnose('activationUnavailable'));
+        .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion)){
+          consumeReceipt(reply);
+          if(reply.status==='accepted'&&own.consumer==='official.desktop'&&['desktop.page.previous','desktop.page.next'].includes(own.button)){
+            desktopPage=(desktopPage+(own.button==='desktop.page.next'?1:-1)+desktopPages)%desktopPages;render();
+          }
+        }},()=>diagnose('activationUnavailable'));
     }
     async function authorAction(value){
       const {consumerId:consumer,identity,instanceId,requestJson,method}=value;
@@ -360,10 +390,11 @@
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
           presentationSkins=copy(reply.presentation.skins);
-          const desktop=reply.presentation.desktop;
+          const before=desktopView?.contextId,desktop=reply.presentation.desktop;
           if(!desktop)desktopView=null;
           else if(desktop.items!==null)desktopView=copy(desktop);
           else if(desktopView?.contextId!==desktop.contextId||desktopView?.deskId!==desktop.deskId)desktopView=null;
+          if(before!==desktopView?.contextId){desktopPage=0;await render();}
           for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
           const locator=reply.presentation.locator;
           if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}
@@ -437,7 +468,7 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
-          const own={...completion,identity:scope(),due:value.consumer==='official'};pendingDefault=own;
+          const own={...completion,identity:scope(),due:['official','official.desktop'].includes(value.consumer)};pendingDefault=own;
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},

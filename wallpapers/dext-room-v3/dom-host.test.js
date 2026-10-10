@@ -657,3 +657,30 @@ test('official desktop snapshot is cached across polls and cleared on disable',a
   await poll();assert.equal(f.host.readDiagnostics().presentation.desktop,null);
  }finally{f.host.dispose();}
 });
+
+test('desktop files render as official native targets and DOM clicks cannot open them',async()=>{
+ const id='desktop-'+'c'.repeat(64),desktop={contextId:'scan1',deskId:'home',items:[{id,name:'Original file.txt',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();
+  const icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='Original file.txt');assert.ok(icon);assert.equal(icon.hidden,false);
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1);const entry=q.params.buttons.find(b=>b.consumer==='official.desktop');
+  assert.equal(entry.button,id);assert.equal(entry.entryId,'desktop.scan1/'+id);assert.equal(icon.handlers.click,undefined);
+  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1});await flush();
+  assert.equal(f.calls.filter(c=>c.method==='activate').at(-1).params.button,id);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(icon.hidden,true);
+ }finally{f.host.dispose();}
+});
+
+test('desktop overflow pages retain saved slots and use native page activation',async()=>{
+ const items=[0,130].map(slot=>({id:'desktop-'+(slot?'b':'a').repeat(64),name:'Slot '+slot,kind:'file',slot,iconPng:null}));
+ const desktop={contextId:'paged',deskId:'home',items,issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const children=()=>f.container.children[0].children;
+  assert.ok(children().find(n=>n.attrs['aria-label']==='Slot 0'));assert.equal(children().some(n=>n.attrs['aria-label']==='Slot 130'),false);
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button==='desktop.page.next');assert.ok(entry);
+  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:entry.button,entryId:entry.entryId,inputSequence:1});await flush();
+  assert.ok(children().find(n=>n.attrs['aria-label']==='Slot 130'));assert.equal(children().some(n=>n.attrs['aria-label']==='Slot 0'),false);
+ }finally{f.host.dispose();}
+});

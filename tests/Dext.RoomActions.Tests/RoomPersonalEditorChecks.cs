@@ -53,6 +53,23 @@ static partial class RoomActionChecks
    Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));Eq<RoomDesktopView?>(null,View());
    f.Actions.ClearDesktopPresentation();Eq<RoomDesktopView?>(null,View());
   });
+  check("real desktop native pairing opens the mapped file once and old contexts stop opening",()=>{
+   using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   var id="desktop-"+new string('c',64);var view=new RoomDesktopView("scan1","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false);
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),view,new Dictionary<string,PersonalTarget>{{id,new("File.txt","file",@"C:\Users\Public\Desktop\File.txt")}});
+   var input=f.Actions.CreateNativeInput();input.Initialize(1,f.Kernel.Snapshot!);
+   Eq(RoomProtocolStatus.Accepted,RoomSessionPlayerBridge.Connect(f.Gateway,f.Peer,Room,input.ObserveSnapshot,out var bridge));
+   using(bridge){
+    var viewport=new RoomNativeViewport((nint)10,100,200,1000,1000,8);var revision=f.Kernel.Snapshot!.Revision;
+    var entries=new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.2,0,"desktop.scan1/"+id)};
+    Eq(true,bridge!.PublishNativeGeometry(input,1,f.Session,revision,1,viewport,entries,actions:f.Actions));
+    input.MouseDown(viewport,300,400,true);input.MouseUp(viewport,300,400,true);var sequence=input.State!.Completed!.Sequence;
+    Eq(RoomActionStatus.Accepted,bridge.ActivateNative(f.Actions,input,1,f.Session,revision,1,"official.desktop",id,sequence).Status);
+    Eq(1,f.Launched.Count);Eq(@"C:\Users\Public\Desktop\File.txt",f.Launched[0].Target);
+    Eq(RoomActionStatus.StaleInput,bridge.ActivateNative(f.Actions,input,1,f.Session,revision,1,"official.desktop",id,sequence).Status);
+    f.Actions.ClearDesktopPresentation();Eq(false,bridge.PublishNativeGeometry(input,1,f.Session,revision,2,viewport,entries,actions:f.Actions));
+   }
+  });
   check("applying fresh Room enables navigation without granting application launch",()=>{
    using var f=new ActionFixture();f.Store.Update(s=>{s.Rooms.Clear();s.Targets.Clear();});
    Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));
