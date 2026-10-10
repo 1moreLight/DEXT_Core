@@ -3,6 +3,11 @@ using GrpcDotNetNamedPipes;
 using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Commands;
 using System.Text.Json;
+if(args.Length==1 && args[0]=="--owned-launch-window") {
+    using var owned=await FusionActionWindow.Create();
+    await Task.WhenAny(owned.Closed,Task.Delay(TimeSpan.FromSeconds(45))); // Bounded even if the parent probe is interrupted.
+    return;
+}
 if (args.Length < 2) throw new ArgumentException("Usage: status|enable|disable|shutdown|probe|restart-probe|taskbar-probe|taskbar-exit-probe|grants-status EXPECTED_CORE_DIRECTORY");
 var channel = new NamedPipeChannel(".", "Grpc_DEXT:DESKTOPSHELL" + Environment.UserName);
 var client = new DesktopService.DesktopServiceClient(channel);
@@ -11,9 +16,9 @@ if (identity.ProductName != "Dext" || identity.RuntimeIdentity != "DEXT:DESKTOPS
     !Path.GetFullPath(identity.BaseDirectory).TrimEnd('\\').Equals(Path.GetFullPath(args[1]).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
     throw new Exception("Unexpected Core identity; no mutation performed.");
 Console.WriteLine($"Core verified: PID={identity.ProcessId} {identity.BaseDirectory}");
-if(args[0] is "fusion-live" or "fusion-actions-live") {
+if(args[0] is "fusion-live" or "fusion-actions-live" or "fusion-launch-live") {
     if(args.Length!=3)throw new ArgumentException("fusion-live requires isolated fixture Room ID");
-    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0]=="fusion-actions-live"));
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0]=="fusion-actions-live",args[0]=="fusion-launch-live"));
     return;
 }
 if (args[0] == "shutdown")

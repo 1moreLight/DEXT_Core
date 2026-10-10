@@ -595,3 +595,8 @@ Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线�
 2026-10-11 #298已修复并完成本轮复测（上面的待修为历史）：成功的非侵入原生栈.exit-native-stack.log确认Finalizer→SystemEvents.Shutdown→Thread.Join；SOS补充.exit-sos-stack.log明确SystemEvents线程→WindowsFormsSynchronizationContext.Send→Control.Invoke→WaitForWaitHandle。SOS组合命令因无托管栈的原生线程返回HRESULT错误，但上述两条完整托管调用链实际已输出，不把整个命令称为全成功。证据文件实际位于.build/目录。
 Core为WPF主循环，启动期间Systray的WinForms控件先自动安装了隐藏Control同步上下文；退出工作区/任务栏变化触发SystemEvents同步投递到消息循环已结束的线程，终结线程又等SystemEvents退出。与官方上游 https://github.com/dotnet/winforms/issues/9721 的等待链一致。修复在App构造最早建立DispatcherSynchronizationContext，确保所有早期托盘/系统事件订阅捕获WPF上下文；不改Player消息循环，不加超时杀进程、不改输入链。
 完整Release构建/发布通过（.build/exit-context-build.log）。修复前已多次复现；修复后三轮真实融合Dock的打开、11任务就绪、恢复偏好/Room/checkpoint、退出均在10秒门槛内自行结束，PID31972/50080/5372，无强杀（.build/exit-context-live.log）。这是本机三轮退出证据，不冒充所有系统配置或人工触屏验收。恢复原候选5924、enabled=true/11组/error空/Room inactive，CoreOnly未启动配置器。调试工具仅.build临时目录，没有系统服务安装；临时App日志未保留。后续回到真实OS任务动作与触屏，P8-013仍2/4=50%。
+
+## #300 首次启动实机探针延迟，清理RPC超时（2026-10-11，待定位）
+P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成功，私有观察器确认任务无窗口后发送OS点击；8秒/30秒均未确认窗口，结束后观察到Explorer父进程启动--owned-launch-window。ApplicationDock编辑及恢复RPC亦有DeadlineExceeded，当前尚不能证明为输入故障或Shell阻塞。
+证据：.build/fusion-launch-first-failure.log、fusion-launch-second-failure.log、fusion-launch-live.log。只将探针编译记通过，首次启动仍失败。下一步定位AppCatalogService.Launch内ExplorerShellLaunchService.TryOpen同步链及耗时。
+探针补嵌套finally，即使自有窗口/固定项清理失败也尝试偏好与光标恢复；但RPC失败仍须外层恢复后核对，不能称自动恢复完整成功。本轮原候选49468已手动恢复enabled=true、pins=0、groups=11、error空；迟到子程序43900已按精确PID+路径关闭。原Room/checkpoint恢复，无新增配置器。

@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -18,6 +18,7 @@ internal static class FusionTaskLiveProbe
         if(!GetCursorPos(out var cursor))throw new Exception("Cannot preserve cursor");
         var foreground=GetForegroundWindow();
         using var target=actions?await FusionActionWindow.Create():null;
+        var launcher=launch?new FusionLaunchProbe(client):null;
         string last="waiting";
         try
         {
@@ -45,10 +46,12 @@ internal static class FusionTaskLiveProbe
                     {
                         if(GetForegroundWindow()!=foreground)throw new Exception("Probe unexpectedly changed foreground");
                         Console.WriteLine("PASS real Core task projection reaches actual Player, geometry ready and actions enabled; items="+value.GetProperty("count")+", PID="+pid);
-                        if(target is not null)await target.Verify(window,()=>{
+                        JsonElement? Observe(){
                             var text=new StringBuilder(4096);GetWindowText(window,text,text.Capacity);
                             var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
-                        });
+                        }
+                        if(target is not null)await target.Verify(window,Observe);
+                        else if(launcher is not null)await launcher.Verify(window,Observe);
                         else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
                         return;
                     }
@@ -57,14 +60,17 @@ internal static class FusionTaskLiveProbe
             }
             throw new Exception("Fusion readiness not confirmed: "+last);
         }
+        catch(Exception ex){Console.Error.WriteLine("Fusion probe failure: "+ex);throw;}
         finally
         {
-            target?.Dispose();
-            if(actions)SetForegroundWindow(foreground);
-            SetCursorPos(cursor.X,cursor.Y);
-            try { Settings(new{enabled=beforeTheme.GetProperty("enabled").GetBoolean(),mode=beforeTheme.GetProperty("mode").GetString(),heightDip=beforeTheme.GetProperty("heightDip").GetInt32()}); }
-            finally {Enable(beforeApp);}
-            Console.WriteLine("RESTORED Dock preferences and cursor");
+            try { target?.Dispose();launcher?.Dispose(); }
+            finally {
+                if(actions||launch)SetForegroundWindow(foreground);
+                SetCursorPos(cursor.X,cursor.Y);
+                try { Settings(new{enabled=beforeTheme.GetProperty("enabled").GetBoolean(),mode=beforeTheme.GetProperty("mode").GetString(),heightDip=beforeTheme.GetProperty("heightDip").GetInt32()}); }
+                finally {Enable(beforeApp);}
+                Console.WriteLine("RESTORED Dock preferences and cursor");
+            }
         }
     }
     private delegate bool EnumCallback(IntPtr window,IntPtr param);

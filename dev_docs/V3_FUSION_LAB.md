@@ -49,3 +49,8 @@ setInterval(()=>{const t=globalThis.dextRuntimeDiagnostics?.().taskArea;document
 ### 真实OS鼠标用例（当前失败门槛）
 模式`fusion-actions-live EXPECTED_CORE_DIRECTORY FIXTURE_ID`创建专用测试窗口，尝试激活/最小化/恢复；当前第一项激活尚未通过。正式版不含观察器。开发副本标题观察器额外输出`target`：从taskArea.snapshot.items按windows.title精确匹配`Dext Fusion Action Probe`，在`.dext-task-item`中按dataset.itemId找对应按钮，用getBoundingClientRect中心输出`{x,y,width:innerWidth,height:innerHeight}`；没有则null。测试依据比例换算原生坐标并检查当前Dock根窗口归属、鼠标键未按下、目标没移动。源码：FusionActionWindow.cs / FusionTaskLiveProbe.cs。不能把就绪探针成功算OS操作成功。
 2026-10-11更新：上节的fusion-actions-live现已在无诊断Release上通过专用窗口激活/最小化/恢复；保留旧失败记录追溯，证据task-direct-actions-passed.log。仅测试进程OS鼠标注入，物理触屏、首次启动和完整统一验收仍待做。
+
+### 首次启动专用探针（开做，尚未通过）
+`fusion-launch-live EXPECTED_CORE_DIRECTORY FIXTURE_ID`临时固定当前探针apphost，参数`--owned-launch-window`。子程序只打开自有窗口，关闭或45秒后退出；主探针拒绝覆盖既有同路径固定项，点击前要求任务窗口数为零，点击后核对新PID、精确路径与窗口标题。30秒仅用于定位延迟，不代表启动性能验收标准。
+开发副本标题观察器需优先选择`i.name === 'Dext Fusion Launch Probe'`的任务，否则沿用按测试窗口标题查找；额外输出`launchStopped: item?.name === 'Dext Fusion Launch Probe' && item.windows.length === 0`，保留target/phase/enabled/count。
+2026-10-11实测：未在8秒或30秒内确认窗口，之后观察到Explorer启动专用子程序；首次启动仍失败。编辑/清理RPC有超时，不能把命令退出等同完整恢复；外层必须finally恢复原Core，再确认enabled/pins以及迟到子程序已退出。下次应先诊断同步Shell启动，不重复盲点。无正式宿主/运行版部署。
