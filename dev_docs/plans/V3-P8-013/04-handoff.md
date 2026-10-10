@@ -62,3 +62,5 @@
 654个清单文件重新计算SHA256均匹配；16项hostAssets与源码哈希一致，HTML引用检查通过。wallpapers内未检出DEXT_FUSION_PROBE、__fusionNavigation、测试Room UUID及夹具名称。全新目录没有复制旧诊断候选；融合样包源在rooms/v3-fusion-lab，尚未导入/应用。
 
 未启动新候选/配置器、未修改用户数据。核查时旧Core48280/配置器19704仍在。实际启动验收和03跨Desk取消缺口保留，整包50%。构建工具只改变Cargo.toml换行，内容核对相同后恢复原字节。
+
+只读复核命令：scripts/verify-v3-release-candidate.ps1 -CandidateDirectory D:/use/Orca/DEXT/DEXT_Core/.build/v3-fusion-clean-20261011。脚本核对全部清单尺寸/哈希、拒绝清单外文件、逐项比对当前源码宿主、检查HTML引用与已知诊断标记。本轮实际执行PASS：654文件、16宿主资源。后续生产源改变时旧候选可能按预期不匹配，需要新构建；该脚本不声明运行验收通过。
