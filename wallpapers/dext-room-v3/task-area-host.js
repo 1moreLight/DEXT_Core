@@ -83,7 +83,7 @@
    if(selection)drawMenu(view);
    if(nativeFocus){const button=focusedButton();if(button)button.focus({preventScroll:true});else clearNativeFocus();}
   }
-  const targetEntry=target=>target.contextId+'/'+target.action+'/'+(target.windowId||'-');
+  const targetEntry=target=>target.contextId+'/'+target.itemId+'/'+target.action+'/'+(target.windowId||'-');
   function sampleButton(button,point=null){
    const target=targets.get(button),view=state.read();
    if(!interactive()||area.hidden||!target||button.disabled||!area.contains(button)||!view)return null;

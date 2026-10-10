@@ -626,3 +626,6 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 
 ## #305 长按注入探针须持续更新触点（2026-10-11）
 关闭Dock的同步RPC耗时883ms，探针DOWN后停止更新，UP返回1460，无法证明产品取消成功。将RPC放到任务中等待，注入线程每16ms发送同坐标UPDATE，finally仍释放触点；再次关闭928ms后UP成功，旧任务未激活。仅修探针，不放宽生产1.5秒时限。构建成功、隔离实际运行通过；初次日志.build/touch-disable-first-failure.log。
+
+## #306 多应用键盘目标身份冲突（2026-10-11）
+真实Tab到达Core但焦点停留BODY；单应用后台测试通过不能代表多应用。DockTaskKeyboard允许item/entry组合去重，DextNativeGeometry则以consumer/entry去重，原context/action/window没有item导致多个activate同ID。统一私有ID为context/item/action/window，保持几何唯一性校验；Core解析时检查嵌入item与证明按钮一致，官方宿主和本地菜单回送同步。两个应用生产映射回归RED→GREEN，18键盘/8DOM组及Release通过，实际12应用Tab/Enter激活自有窗口通过。候选诊断脚本初次用系统默认GBK读取UTF-8失败，改明确encoding=utf-8；后续多命令构建须检查退出码再进入运行。

@@ -417,3 +417,5 @@
 | #304 | 双指触发官方任务菜单，返回按钮被排除原生采样而无法关闭 | [backend](errors/backend.md) |
 
 | #305 | 长按注入等待RPC不发UPDATE导致UP超时；持续更新触点后再判断取消 | [backend](errors/backend.md) |
+
+| #306 | 官方任务键盘entryId缺item，多应用几何重复而整组拒绝 | [backend](errors/backend.md) |

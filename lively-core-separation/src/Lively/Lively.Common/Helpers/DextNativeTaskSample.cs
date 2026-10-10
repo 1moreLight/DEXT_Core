@@ -9,7 +9,7 @@ namespace Lively.Common.Helpers
     public static class DextNativeTaskSample
     {
         public const string Consumer="official-task";
-        public static string EntryId(LivelyRoomNativeTaskHit hit)=>hit.ContextId+"/"+hit.Action+"/"+(hit.WindowId??"-");
+        public static string EntryId(LivelyRoomNativeTaskHit hit)=>hit.ContextId+"/"+hit.ItemId+"/"+hit.Action+"/"+(hit.WindowId??"-");
         public static bool TryParseTargets(JToken token,out LivelyRoomNativeTaskHit[] targets)
         {
             targets=Array.Empty<LivelyRoomNativeTaskHit>();

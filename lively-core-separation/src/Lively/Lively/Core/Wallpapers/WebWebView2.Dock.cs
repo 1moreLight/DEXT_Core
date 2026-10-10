@@ -113,7 +113,7 @@ namespace Lively.Core.Wallpapers
             SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,
                 sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,
                 inputSequence=completion.Sequence,consumer=DextNativeTaskSample.Consumer,button=completion.ItemId,
-                entryId=completion.ContextId+"/"+completion.Action+"/"+(completion.WindowId??"-")});
+                entryId=completion.ContextId+"/"+completion.ItemId+"/"+completion.Action+"/"+(completion.WindowId??"-")});
         }
         internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson, Lively.Services.ApplicationDock.DockTaskViewSnapshot display)
         {

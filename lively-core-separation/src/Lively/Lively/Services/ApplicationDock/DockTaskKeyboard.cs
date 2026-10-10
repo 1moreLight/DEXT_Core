@@ -43,9 +43,9 @@ internal sealed class DockTaskKeyboard
         if(proof==null||proof.IsConsumed||proof.Button.Consumer!=DextNativeTaskSample.Consumer||g is not{Released:true}||
             g.Key!=13&&g.Key!=32||proof.Sequence!=g.Sequence)return null;
         var parts=proof.Button.EntryId?.Split('/');
-        if(parts?.Length!=3)return null;
-        var window=parts[2]=="-"?null:parts[2];
-        if(!Allowed(Volatile.Read(ref snapshot),parts[0],proof.Button.Button,window,parts[1]))return null;
-        return new(g.Sequence,parts[0],proof.Button.Button,window,parts[1],g,state.CancellationVersion);
+        if(parts?.Length!=4||parts[1]!=proof.Button.Button)return null;
+        var window=parts[3]=="-"?null:parts[3];
+        if(!Allowed(Volatile.Read(ref snapshot),parts[0],proof.Button.Button,window,parts[2]))return null;
+        return new(g.Sequence,parts[0],proof.Button.Button,window,parts[2],g,state.CancellationVersion);
     }
 }

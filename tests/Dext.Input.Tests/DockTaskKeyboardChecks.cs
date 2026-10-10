@@ -15,6 +15,16 @@ internal static class DockTaskKeyboardChecks
         var target=new LivelyRoomNativeTaskHit{ContextId=context,ItemId=item,Action="activate",X=.1,Y=.2,Width=.1,Height=.5};
         Check(model.TryRegions([target],out var entries)&&entries.Count==1&&entries[0].Consumer==DextNativeTaskSample.Consumer,"maps current Core task to separate official focus namespace");
         Check(!model.TryRegions([target,target],out _),"duplicate focus entry rejected");
+        var secondItem=Guid.NewGuid().ToString("N");
+        model.Update(new(context,2,[new(item,"Editor",true,false,[]),new(secondItem,"Browser",false,false,[])]));
+        var secondTarget=new LivelyRoomNativeTaskHit{ContextId=context,ItemId=secondItem,Action="activate",X=.3,Y=.2,Width=.1,Height=.5};
+        Check(model.TryRegions([target,secondTarget],out var multi),"multiple apps map to official targets");
+        var multiInput=new RoomNativeInputAuthority(TimeProvider.System,RoomClientRole.Dock);
+        var multiSnapshot=new RoomSessionSnapshot(1,Guid.NewGuid(),"room","desk",null,null,null,1,true,null);
+        multiInput.Initialize(1,multiSnapshot);
+        Check(multiInput.PublishGeometry(1,multiSnapshot.SessionId,1,1,new RoomNativeViewport((nint)15,0,0,1000,200,4),multi,true),"distinct apps sharing an action have distinct native entry identities");
+        model.Update(View(context,3));
+
         target.Action="chooseWindow";target.WindowId=Guid.NewGuid().ToString("N");
         Check(!model.TryRegions([target],out _),"closed or unrelated window cannot become focus target");
         target.Action="activate";target.WindowId=null;

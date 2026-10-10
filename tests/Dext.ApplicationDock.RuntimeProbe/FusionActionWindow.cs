@@ -97,6 +97,31 @@ internal sealed class FusionActionWindow : IDisposable
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core restores owned test window");
         if(touch){await Click(dock,observe);await Wait(()=>IsIconic(Handle),"Mouse click after touch was lost" );Console.WriteLine("PASS immediate mouse click after touch minimizes task" );}
     }
+    internal async Task VerifyKeyboard(IntPtr dock,Func<JsonElement?> observe)
+    {
+        JsonElement? KeyboardButton(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["keyboardButton"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+        await Click(dock,KeyboardButton);
+        await Wait(()=>GetAncestor(GetForegroundWindow(),2)==dock,"Official keyboard button did not activate Dock");
+        Console.WriteLine("PASS actual keyboard entry button activates Dock");
+        async Task Key(ushort key){
+            if(GetAncestor(GetForegroundWindow(),2)!=dock)throw new Exception("Dock lost keyboard ownership; no key sent");
+            var down=new Input{Type=1,Keyboard=new Keyboard{Key=key}};
+            var up=new Input{Type=1,Keyboard=new Keyboard{Key=key,Flags=2}};
+            if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Key DOWN refused");
+            try{await Task.Delay(60);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Key UP refused");}
+            await Task.Delay(200);
+        }
+        var focused=false;
+        for(int i=0;i<40;i++){
+            await Key(9);
+            Console.WriteLine("TAB "+i+" "+observe()?.GetRawText());
+            if(observe()?.TryGetProperty("targetFocused",out var value)==true&&value.GetBoolean()){focused=true;break;}
+        }
+        if(!focused)throw new Exception("Tab did not reach owned task in bounded navigation");
+        await Key(13);
+        await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Keyboard Enter did not activate owned task");
+        Console.WriteLine("PASS real Tab and Enter through Core activate owned task");
+    }
     internal async Task VerifyDisabledContact(IntPtr dock,Func<JsonElement?> observe,Action disableDock)
     {
         if(!IsIconic(Handle))throw new Exception("Cancellation test requires minimized owned target");
@@ -117,8 +142,9 @@ internal sealed class FusionActionWindow : IDisposable
     [DllImport("user32.dll")]private static extern bool IsWindowVisible(IntPtr window);
     [StructLayout(LayoutKind.Sequential)]private struct Point{public int X,Y;}
     [StructLayout(LayoutKind.Sequential)]private struct Rect{public int Left,Top,Right,Bottom;}
+    [StructLayout(LayoutKind.Sequential)]private struct Keyboard{public ushort Key,Scan;public uint Flags,Time;public UIntPtr Extra;}
     [StructLayout(LayoutKind.Sequential)]private struct Mouse{public int X,Y;public uint Data,Flags,Time;public UIntPtr Extra;}
-    [StructLayout(LayoutKind.Explicit)]private struct Input{[FieldOffset(0)]public uint Type;[FieldOffset(8)]public Mouse Mouse;}
+    [StructLayout(LayoutKind.Explicit)]private struct Input{[FieldOffset(0)]public uint Type;[FieldOffset(8)]public Mouse Mouse;[FieldOffset(8)]public Keyboard Keyboard;}
     [DllImport("user32.dll")]private static extern bool GetClientRect(IntPtr window,out Rect rect);
     [DllImport("user32.dll")]private static extern bool ClientToScreen(IntPtr window,ref Point point);
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);

@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -51,7 +51,8 @@ internal static class FusionTaskLiveProbe
                             var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
                         }
                         if(target is not null){
-                            await target.Verify(window,Observe,touch,competingRaw);
+                            if(keyboard)await target.VerifyKeyboard(window,Observe);
+                            else await target.Verify(window,Observe,touch,competingRaw);
                             if(touch)await target.VerifyDisabledContact(window,Observe,()=>Settings(new{enabled=false}));
                         }
                         else if(launcher is not null)await launcher.Verify(window,Observe);
