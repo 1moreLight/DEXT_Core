@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -48,8 +48,9 @@ internal sealed class FusionActionWindow : IDisposable
             throw new Exception("Dock ownership or mouse idle check failed; no click sent");
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
+        mark?.Invoke("beforeDown");
         if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
-        try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");}
+        try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
     }
     public async Task Verify(IntPtr dock,Func<JsonElement?> observe)
     {

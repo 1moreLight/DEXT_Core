@@ -43,15 +43,22 @@ internal sealed class FusionLaunchProbe : IDisposable
             var d=observe();return d is not null&&d.Value.TryGetProperty("launchStopped",out var stopped)&&stopped.GetBoolean();
         },"Pinned task must have zero running windows before launch");
         var elapsed=Stopwatch.StartNew();
-        await FusionActionWindow.Click(dock,observe);
+        long upMs=0;
+        var origin=DateTime.UtcNow;
+        await FusionActionWindow.Click(dock,observe,phase=>{
+            if(phase=="afterUp")upMs=elapsed.ElapsedMilliseconds;
+            Console.WriteLine($"TIMING {phase} elapsedMs={elapsed.ElapsedMilliseconds} utc={DateTime.UtcNow:O}");
+        });
         int started=0;
+        var seen=new HashSet<int>();
         await FusionActionWindow.Wait(()=>{
             foreach(var p in OwnedProcesses())using(p) {
+                if(!baseline.Contains(p.Id)&&seen.Add(p.Id))Console.WriteLine($"TIMING process PID={p.Id} createdAfterOriginMs={(p.StartTime.ToUniversalTime()-origin).TotalMilliseconds:F0} observedMs={elapsed.ElapsedMilliseconds}");
                 if(!baseline.Contains(p.Id)&&p.MainWindowHandle!=IntPtr.Zero&&p.MainWindowTitle==FusionActionWindow.Title){started=p.Id;return true;}
             }
             return false;
         },"Actual task click did not launch owned apphost window",30);
-        Console.WriteLine("PASS actual OS Dock click launches previously stopped pinned application; new PID="+started+", click-to-window ms="+elapsed.ElapsedMilliseconds);
+        Console.WriteLine("PASS actual OS Dock click launches previously stopped pinned application; new PID="+started+", preparation-and-start ms="+elapsed.ElapsedMilliseconds+", after-UP-to-window ms="+(elapsed.ElapsedMilliseconds-upMs));
     }
     public void Dispose()
     {

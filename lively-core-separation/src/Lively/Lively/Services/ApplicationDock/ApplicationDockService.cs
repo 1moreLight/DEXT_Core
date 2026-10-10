@@ -317,7 +317,13 @@ internal sealed class ApplicationDockService : IDisposable
         {
             var action = selected == null ? DockModel.Action(group, DockWindows.Foreground) : DockAction.Activate;
             if (action == DockAction.Launch && group.Pin != null)
-                catalog.Launch(group.Pin.Target, group.Pin.Arguments, group.Pin.WorkingDirectory)?.Dispose();
+            {
+                var launchClock = System.Diagnostics.Stopwatch.StartNew();
+                var launchLog = NLog.LogManager.GetLogger("Dext.ApplicationDock.Launch");
+                launchLog.Info("Application launch begin");
+                try { catalog.Launch(group.Pin.Target, group.Pin.Arguments, group.Pin.WorkingDirectory)?.Dispose(); }
+                finally { launchLog.Info("Application launch call returned after {0} ms", launchClock.ElapsedMilliseconds); }
+            }
             else if (action is DockAction.Activate or DockAction.Minimize)
             {
                 if (!DockWindows.Perform(selected ?? group.Windows[0], action == DockAction.Minimize))
