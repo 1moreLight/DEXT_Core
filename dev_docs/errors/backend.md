@@ -623,3 +623,6 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 ## #304 官方任务菜单返回缺原生完成链（2026-10-11）
 双指触摸不误激活应用，但Windows会产生contextmenu，官方菜单替代图标列表。原始target=null不能直接解释为图标丢失或浏览器缩放；候选只读menuBack证实菜单存在。实际返回按钮DOWN/UP均到Core，taskHit=false：samplePointer显式排除dismissMenu，原生任务鼠标又不依赖第二次DOM点击，因此Back不能关闭。
 修复：Back参与既有任务采样/配对/当前投影验证；Core完成后通过已有私有activate事件回送dismissMenu/openWindows，本地菜单更新仍由官方宿主处理，键盘路径不重复发。Release通过；实际两指菜单、Back、后续触摸与鼠标交接整链通过。多窗口openWindows分支本轮只编译/代码核对，不能冒充实际多窗口验收。
+
+## #305 长按注入探针须持续更新触点（2026-10-11）
+关闭Dock的同步RPC耗时883ms，探针DOWN后停止更新，UP返回1460，无法证明产品取消成功。将RPC放到任务中等待，注入线程每16ms发送同坐标UPDATE，finally仍释放触点；再次关闭928ms后UP成功，旧任务未激活。仅修探针，不放宽生产1.5秒时限。构建成功、隔离实际运行通过；初次日志.build/touch-disable-first-failure.log。

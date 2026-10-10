@@ -415,3 +415,5 @@
 | #302 | Dock位置刷新撤销就绪触发自动任务栏恢复，工作区往返使点击取消 | [backend](errors/backend.md) |
 | #303 | 探针等待Dock就绪后原生窗口已移动，旧origin导致归属检查拒绝注入 | [backend](errors/backend.md) |
 | #304 | 双指触发官方任务菜单，返回按钮被排除原生采样而无法关闭 | [backend](errors/backend.md) |
+
+| #305 | 长按注入等待RPC不发UPDATE导致UP超时；持续更新触点后再判断取消 | [backend](errors/backend.md) |

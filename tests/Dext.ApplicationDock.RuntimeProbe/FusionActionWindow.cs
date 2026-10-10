@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false,int movePixels=0,bool multiple=false,bool mouseAway=false,Action held=null){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -54,7 +54,7 @@ internal sealed class FusionActionWindow : IDisposable
         SetCursorPos(x,y);
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception($"Dock ownership or mouse idle check failed; no click sent: expected={dock.ToInt64()} actual={GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2).ToInt64()} point={x},{y} origin={origin.X},{origin.Y} size={rect.Right},{rect.Bottom} leftHeld={GetAsyncKeyState(1)<0} rightHeld={GetAsyncKeyState(2)<0}");
-        if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels,multiple,mouseAway);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
+        if(touch){await TouchPathProbe.Tap(dock,x,y,mark,movePixels,multiple,mouseAway,held);await Task.Delay(350);Console.WriteLine("TOUCH DOM "+observe()?.GetRawText());return;}
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
         mark?.Invoke("beforeDown");
@@ -97,6 +97,24 @@ internal sealed class FusionActionWindow : IDisposable
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core restores owned test window");
         if(touch){await Click(dock,observe);await Wait(()=>IsIconic(Handle),"Mouse click after touch was lost" );Console.WriteLine("PASS immediate mouse click after touch minimizes task" );}
     }
+    internal async Task VerifyDisabledContact(IntPtr dock,Func<JsonElement?> observe,Action disableDock)
+    {
+        if(!IsIconic(Handle))throw new Exception("Cancellation test requires minimized owned target");
+        var foreground=GetForegroundWindow();
+        var elapsed=System.Diagnostics.Stopwatch.StartNew();
+        await Click(dock,observe,touch:true,held:()=>{
+            elapsed.Restart();
+            disableDock();
+            while(IsWindowVisible(dock)&&elapsed.ElapsedMilliseconds<1000)Thread.Sleep(10);
+            if(IsWindowVisible(dock))throw new Exception("Dock did not hide during held contact");
+            if(elapsed.ElapsedMilliseconds>=1000)throw new Exception("Disable was too slow to distinguish cancellation from gesture expiry");
+            Console.WriteLine("Dock hidden during contact after "+elapsed.ElapsedMilliseconds+"ms");
+        });
+        await Task.Delay(500);
+        if(!IsIconic(Handle)||GetForegroundWindow()!=foreground)throw new Exception("Released contact activated task after Dock disabled");
+        Console.WriteLine("PASS disabling Dock during OS touch cancels old task activation");
+    }
+    [DllImport("user32.dll")]private static extern bool IsWindowVisible(IntPtr window);
     [StructLayout(LayoutKind.Sequential)]private struct Point{public int X,Y;}
     [StructLayout(LayoutKind.Sequential)]private struct Rect{public int Left,Top,Right,Bottom;}
     [StructLayout(LayoutKind.Sequential)]private struct Mouse{public int X,Y;public uint Data,Flags,Time;public UIntPtr Extra;}

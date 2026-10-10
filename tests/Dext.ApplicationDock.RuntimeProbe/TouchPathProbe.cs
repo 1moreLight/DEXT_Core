@@ -57,7 +57,7 @@ internal static class TouchPathProbe
     {
         public void Dispose(){if(!RegisterRawInputDevices(new[]{new RawDevice{Page=1,Usage=2,Flags=1}},1,(uint)Marshal.SizeOf<RawDevice>()))throw new System.ComponentModel.Win32Exception();}
     }
-    internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null,int movePixels=0,bool multiple=false,bool mouseAway=false)=>Task.Run(()=>{
+    internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null,int movePixels=0,bool multiple=false,bool mouseAway=false,Action held=null)=>Task.Run(()=>{
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=ownedRoot||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Touch destination changed; no contact sent");
         var hit=WindowFromPoint(new Point{X=x,Y=y});
@@ -88,6 +88,15 @@ internal static class TouchPathProbe
                 touch.Pointer.Pixel.X+=movePixels;touch.Contact.Left+=movePixels;touch.Contact.Right+=movePixels;
                 touch.Pointer.Flags=0x20000|2|4;
                 if(!InjectTouchInput(1,new[]{touch}))throw new System.ComponentModel.Win32Exception();
+            }
+            if(held is not null){
+                var pending=Task.Run(held);
+                touch.Pointer.Flags=0x20000|2|4;
+                while(!pending.IsCompleted){
+                    if(!InjectTouchInput(1,new[]{touch}))throw new System.ComponentModel.Win32Exception();
+                    Thread.Sleep(16);
+                }
+                pending.GetAwaiter().GetResult();
             }
             Thread.Sleep(60);
         }

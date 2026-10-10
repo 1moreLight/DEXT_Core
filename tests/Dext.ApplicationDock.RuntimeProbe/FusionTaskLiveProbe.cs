@@ -50,7 +50,10 @@ internal static class FusionTaskLiveProbe
                             var text=new StringBuilder(4096);GetWindowText(window,text,text.Capacity);
                             var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
                         }
-                        if(target is not null)await target.Verify(window,Observe,touch,competingRaw);
+                        if(target is not null){
+                            await target.Verify(window,Observe,touch,competingRaw);
+                            if(touch)await target.VerifyDisabledContact(window,Observe,()=>Settings(new{enabled=false}));
+                        }
                         else if(launcher is not null)await launcher.Verify(window,Observe);
                         else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
                         return;
