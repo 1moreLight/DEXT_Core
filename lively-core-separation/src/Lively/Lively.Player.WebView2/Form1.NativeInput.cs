@@ -21,7 +21,7 @@ namespace Lively.Player.WebView2
                 async packet=>{
                     // Establish native control focus before routing to its owned
                     // author frame. Core still owns the physical button focus.
-                    if(packet.Key!=0&&packet.Consumer!="official")NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
+                    if(packet.Key!=0&&packet.Consumer!="official"&&packet.Consumer!=DextNativeTaskSample.Consumer)NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
                     var accepted=await nativeFrameMedia.ArmInputAsync(packet);
                     if(accepted)nativeAuthorDeadline.Start();return accepted;
                 },async()=>{await nativeFrameMedia.RevokeInputAsync();await ReleaseNativeSampleAsync();},
@@ -34,6 +34,7 @@ namespace Lively.Player.WebView2
             internal string Id;
             internal LivelyRoomNativeButton[] Buttons;
             internal LivelyRoomNativeTaskHit TaskHit;
+            internal LivelyRoomNativeTaskHit[] TaskTargets;
         }
         private NativeVisualSample nativeVisualSample;
         private async Task<bool> PrepareNativeSampleAsync(DextNativePointerPacket value)
@@ -47,6 +48,7 @@ namespace Lively.Player.WebView2
             nativeVisualSample=new NativeVisualSample{Packet=value,Id=id};
             var begin=Newtonsoft.Json.JsonConvert.SerializeObject(new{operation="begin",sampleId=id,runtimeGeneration=value.RuntimeGeneration,
                 sessionId=value.SessionId,revision=value.Revision,geometryVersion=value.GeometryVersion,
+                taskKeyboard=startArgs.DextDock&&value.Key!=0,taskTab=value.Key==9,reverse=value.Reverse,
                 taskPoint=startArgs.DextDock&&value.Key==0?new{x=((double)value.X-value.OriginX)/value.PixelWidth,y=((double)value.Y-value.OriginY)/value.PixelHeight}:null});
             var script="(()=>{const sample=this.dextNativeInputSample&&this.dextNativeInputSample("+begin+");if(!sample)return null;"+
                 (value.Kind=="focus"?"return sample;})()":
@@ -71,10 +73,17 @@ namespace Lively.Player.WebView2
             var hit=System.Linq.Enumerable.FirstOrDefault(entries,entry=>value.Key==0?
                 entry.Contains(((double)value.X-value.OriginX)/value.PixelWidth,((double)value.Y-value.OriginY)/value.PixelHeight):
                 entry.Consumer==value.Consumer&&entry.Button==value.Button&&entry.EntryId==value.EntryId);
-            if(value.SampleKeyboard&&hit==null)return false;
-            if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            var taskKey=startArgs.DextDock&&value.Consumer==DextNativeTaskSample.Consumer;
+            if(startArgs.DextDock&&value.Key!=0)
+            {
+                if(!DextNativeTaskSample.TryParseTargets(sample["taskTargets"],out var targets))return false;
+                nativeVisualSample.TaskTargets=targets;
+                if(taskKey&&!System.Linq.Enumerable.Any(targets,target=>target.ItemId==value.Button&&DextNativeTaskSample.EntryId(target)==value.EntryId))return false;
+            }
+            if(value.SampleKeyboard&&!taskKey&&hit==null)return false;
+            if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"&&!taskKey))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
             if (startArgs.DextDock && value.Kind != "focus" &&
-                !await nativeFrameMedia.PrepareDockEdgeAsync(value,hit?.Consumer)) return false;
+                !await nativeFrameMedia.PrepareDockEdgeAsync(value,taskKey?DextNativeTaskSample.Consumer:hit?.Consumer)) return false;
             return true;
         }
         private async Task CompleteNativeSampleAsync(DextNativePointerPacket value)
@@ -85,7 +94,7 @@ namespace Lively.Player.WebView2
                 if(own==null||own.Packet!=value)return;
                 // Official defaults use Core's physical key and do not dispatch
                 // a synthetic DOM key. Authored keys still wait for a native receipt.
-                if(value.Kind!="focus"&&!(value.SampleKeyboard&&value.Consumer=="official")&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                if(value.Kind!="focus"&&!(value.SampleKeyboard&&(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer))&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
                 var released=await ReleaseNativeSampleAsync();
                 if(!released||!CurrentNativePointer(value))return;
                 SendToParent(new LivelyMessageRoomNativeSample{Input=new LivelyMessageRoomNativePointer{
@@ -93,7 +102,7 @@ namespace Lively.Player.WebView2
                     GestureId=value.GestureId,IssuedAt=value.IssuedAt,InputHandle=value.InputHandle,Kind=value.Kind,
                     OriginX=value.OriginX,OriginY=value.OriginY,PixelWidth=value.PixelWidth,PixelHeight=value.PixelHeight,Dpi=value.Dpi,
                     X=value.X,Y=value.Y,Modifiers=value.Modifiers,SampleMouse=value.SampleMouse,SampleKeyboard=value.SampleKeyboard,
-                    Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons,TaskHit=own.TaskHit});
+                    Reverse=value.Reverse,Key=value.Key,ScanCode=value.ScanCode,IsExtended=value.IsExtended,Consumer=value.Consumer,Button=value.Button,EntryId=value.EntryId},Buttons=own.Buttons,TaskHit=own.TaskHit,TaskTargets=own.TaskTargets});
             }finally{if(nativeVisualSample==own)await ReleaseNativeSampleAsync();}
         }
         private async Task<bool> ReleaseNativeSampleAsync()
@@ -124,7 +133,7 @@ namespace Lively.Player.WebView2
             var input=new IntPtr(value.InputHandle);
             if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid))return;
             if(value.Key!=0){
-                if(value.Consumer=="official")return;
+                if(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer)return;
                 var pressed=value.Kind=="down";
                 InputUtil.ForwardMessageKeyboard(input,pressed?0x100:0x101,new IntPtr(value.Key),value.ScanCode,pressed,value.IsExtended);
                 return;

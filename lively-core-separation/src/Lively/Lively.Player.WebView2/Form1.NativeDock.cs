@@ -61,7 +61,12 @@ namespace Lively.Player.WebView2
             // Only private Core stdin sets this. Authors have no input-enable API.
             if (nativeDockInputConnected != policy.InputConnected) nativeDockVisibilitySynchronized = false;
             nativeDockInputConnected = policy.InputConnected;
-            if (policy.LeaveKeyboard) nativeDockWindow?.LeaveKeyboard(true);
+            if (policy.LeaveKeyboard)
+            {
+                nativeDockWindow?.LeaveKeyboard(true);
+                if(webView.CoreWebView2!=null&&IsOfficialDextDocument(webView.CoreWebView2.Source))
+                    await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockKeyboardExit&&this.dextNativeDockKeyboardExit()");
+            }
             await SynchronizeNativeDockWindow();
             if (policy.RefreshGeometry && nativeDockInputConnected && IsOfficialDextDocument(webView.CoreWebView2.Source))
                 await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockRefresh&&this.dextNativeDockRefresh()");

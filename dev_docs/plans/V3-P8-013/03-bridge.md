@@ -44,3 +44,12 @@ ApplicationDockService已订阅实际主题宿主完成事件，在Dispatcher复
 自动证据：16项任务完成关联检查、17项原输入投递回归、90项Node、原七组DOM与新增四组真实DOM取样检查通过；完整Release构建通过。CoreOnly保留旧候选39560，没有启动配置器。这些不算真实Player/触控/应用启动验收。
 接续：键盘不能直接沿DOM keydown，因为既有官方Dock guardian有意拦截这些键；应由原生RawInput和专用官方任务焦点完成关联接线，避免双重执行。触摸须核对实际Windows输入路径；不能把后台浏览器click通过当触控通过。随后制作独立融合样包并在实际Player验证，完成后才开启动作并进入04。
 复核收敛：独立review唯一P2为排队完成跨几何撤销；已用生产RoomNativeInputAuthority复现RED并加入CancellationVersion，正常完成、撤销、重新发布、隐藏再恢复四项GREEN。最终任务20项，原输入17项，Node90项，DOM11组；最终Release通过。新操作仍未启用，键盘/触摸/实际Player演示继续。
+
+### 键盘接线（开做）
+- 官方任务区通过独立taskTargets提供可见目标顺序与实际裁切矩形；Core按自己的任务投影核验context/item/window/action，再映射到输入叶层的official-task焦点。作者buttons仍单独通过原catalog校验，不向作者协议添加任务目标。
+- 先完成正式DOM的原生焦点/菜单操作、Player私有取样回传和Core目标映射。Tab/Enter/Space将继续由已有RawInput与RoomNativeKeyDelivery生成，不能把DOM键盘事件当成动作证据。
+- 后续把经核验的任务焦点与作者Tab顺序组合，官方任务键盘不向作者frame或DOM转发合成键；两个事件时刻取样后才完成动作。原生菜单返回由官方私有事件处理。
+- 窄区键盘滚动、触摸及实际Player仍是03完整验收条件；本阶段不启用ActionsEnabled。
+键盘接线增量：正式DOM的独立taskTargets、Player私有回传、Core投影校验和现有RawInput/KeyDelivery已贯通；Tab/Shift+Tab、Enter/Space与本地菜单返回/Esc已接线。原生任务键不合成转发给作者frame。窄栏焦点滚出后回跳作者、作者重新进入跳过应用两处问题均RED→GREEN修复（ERRORS #293）。
+证据：16项Core键盘、20项鼠标任务、17项原输入、90项Node、七组原DOM和八组取样/键盘DOM通过；完整Release构建通过。独立复核只有上述边界进入问题，已修复。CoreOnly确认旧Core39560继续运行，没有启动配置器；不是新代码实机验收。
+当前03仍开做，2/4=50%。ActionsEnabled=false，真实Player/触控、独立融合样包仍待做；上述旧阶段缺少键盘接线的说明仅为历史。统一人工四步未执行，继续后续工作，不合并master。

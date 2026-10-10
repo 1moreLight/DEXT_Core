@@ -683,3 +683,9 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 
 ## #290 任务区几何确认不得由普通刷新替代（2026-10-10）
 独立review发现：1000逻辑宽度中的x=70,width=930换算为1920画布后，右端可能成为1920.0000000000002，dom-host正确拒绝但controller以refreshGeometry成功替代确认，导致区域显示而底层作者命中未被扣除。两项回归先RED：实际dom-host无法接受此边界、controller错误回退。修复为归一化宽高不超过剩余画布；移除controller普通刷新回退；同区域尚未inputReady时由setTaskAreaOcclusion自身重新render确认。最终89项Node与七组DOM通过。
+
+## #293 窄任务栏原生Tab应维持任务顺序并处理边界进入（2026-10-10）
+- 现象：准备下一项时滚动会把旧焦点完全移出采样；Core找不到旧焦点便回到作者导航。任务行滚到末尾后从作者重新进入，DOM因nativeFocus为空直接返回，又只能采到末尾应用。Shift+Tab首次进入存在镜像问题。
+- 原因：可见几何集合不是完整逻辑列表；焦点离开后的scrollLeft仍保留。
+- 修复：Dock官方任务焦点暂时离开可见列表时，Core按方向选择当前任务采样边界；旧焦点仍在列表且位于末项时保留正常循环。DOM从作者进入时按Tab方向滚到任务行首/尾，再提供实际裁切几何。
+- 证据：生产authority焦点用例和headless Edge重新进入用例各先失败后通过。16项键盘Core与八组任务取样DOM通过。真实Player及触摸仍待独立验收。

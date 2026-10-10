@@ -97,13 +97,14 @@ namespace Lively.Core.Wallpapers
             if(completion==null||IsExited||!NativeDockAvailable())return false;
             var g=completion.Gesture;var current=Volatile.Read(ref roomNativeAttachment)?.Input.State;
             return Lively.Services.ApplicationDock.DockTaskInput.IsCurrent(completion,current,ReadNativeViewport(),TimeProvider.System)&&
-                g.ReleaseX is int x&&g.ReleaseY is int y&&NativeDockAt(x,y);
+                (g.Key!=0?RoomDockWindowState?.Keyboard==true&&NativeDockForeground():g.ReleaseX is int x&&g.ReleaseY is int y&&NativeDockAt(x,y));
         }
-        internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson)
+        internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson, Lively.Services.ApplicationDock.DockTaskViewSnapshot display)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
             if (current == null || expectedEpoch == null || expectedEpoch != NativeDockTaskEpoch ||
                 snapshotJson == null || snapshotJson.Length > 4 * 1024 * 1024) return false;
+            Volatile.Read(ref roomNativeAttachment)?.TaskKeyboard.Update(display);
             SendMessage(new LivelyMessageRoomDockTasks
             {
                 RuntimeGeneration = current.Generation, SessionId = current.Session,

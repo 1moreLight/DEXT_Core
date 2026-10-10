@@ -26,4 +26,8 @@
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.1.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
-<ItemGroup><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockTaskInput.cs" Link="DockTaskInput.cs" /></ItemGroup></Project>
+<ItemGroup><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockTaskInput.cs" Link="DockTaskInput.cs" /></ItemGroup><ItemGroup>
+<Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockTaskKeyboard.cs" Link="DockTaskKeyboard.cs" />
+<Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockTaskProjection.cs" Link="DockTaskProjection.cs" />
+<Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockModel.cs" Link="DockModel.cs" />
+</ItemGroup></Project>

@@ -225,6 +225,14 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         var order=visible.Where(b=>b.Button.TabIndex>=0).OrderBy(b=>b.Button.TabIndex).ToArray();
         if(order.Length==0){focused=null;return;}
         var index=focused==null?-1:Array.FindIndex(order,value=>SameEntry(value,focused));
+        // The official task row may scroll its next item into view before Tab is
+        // sampled. If the old task is now clipped away, continue within that row
+        // instead of jumping to the first authored navigation button.
+        if(index<0&&role==RoomClientRole.Dock&&focused?.Button.Consumer==DextNativeTaskSample.Consumer)
+        {
+            var tasks=order.Where(value=>value.Button.Consumer==DextNativeTaskSample.Consumer).ToArray();
+            if(tasks.Length>0){focused=tasks[reverse?tasks.Length-1:0];return;}
+        }
         var next=index<0?(reverse?order.Length-1:0):(index+(reverse?-1:1)+order.Length)%order.Length;
         focused=order[next];
     }

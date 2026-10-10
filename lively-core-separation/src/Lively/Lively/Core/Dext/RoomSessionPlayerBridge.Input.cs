@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -103,7 +104,7 @@ internal sealed partial class RoomSessionPlayerBridge
     }
     internal bool SampleNativeGeometry(RoomNativeInputAuthority native,long generation,Guid session,long revision,
         long version,long sequence,string edge,RoomNativeViewport viewport,IReadOnlyList<RoomNativeButton> entries,bool foreground,
-        int key=0,string? consumer=null,string? buttonId=null,string? entryId=null,bool reverse=false)
+        int key=0,string? consumer=null,string? buttonId=null,string? entryId=null,bool reverse=false,IReadOnlyList<RoomNativeButton>? officialTaskEntries=null)
     {
         if(disposed || entries==null || entries.Count>4096)return false;
         return gateway.TryWithActionContext(connectionId,peer,session,(status,context)=>{
@@ -115,6 +116,17 @@ internal sealed partial class RoomSessionPlayerBridge
                     !owner.HasButton(entry.Button) || !catalog.Buttons.TryGetValue(entry.Button,out var button) ||
                     button.Scope!="room" && button.Scope!=(context.Snapshot.TargetDeskId??context.Snapshot.CurrentDeskId) &&
                         !(context.Role==RoomClientRole.DesktopPlayer && context.Snapshot.TargetDeskId!=null && button.Scope==context.Snapshot.CurrentDeskId))return false;
+            }
+            if(officialTaskEntries is {Count:>0})
+            {
+                // Only private Core-validated task targets enter the input leaf.
+                // Author entries above still pass their original manifest catalog.
+                if(context.Role!=RoomClientRole.Dock||key==0||entries.Count+officialTaskEntries.Count>4096||
+                    officialTaskEntries.Any(entry=>entry.Consumer!=Lively.Common.Helpers.DextNativeTaskSample.Consumer))return false;
+                var authorOrder=entries.OrderBy(entry=>entry.TabIndex);
+                var menu=officialTaskEntries.Any(entry=>entry.EntryId?.Contains("/dismissMenu/")==true);
+                entries=(menu?officialTaskEntries.Concat(authorOrder):authorOrder.Concat(officialTaskEntries))
+                    .Select((entry,index)=>entry with{TabIndex=entry.TabIndex<0?-1:index}).ToArray();
             }
             if(key==9)return native.SampleFocus(generation,session,revision,version,sequence,viewport,entries,foreground,reverse);
             return key==0?native.SampleMouse(generation,session,revision,version,sequence,edge,viewport,entries,foreground):

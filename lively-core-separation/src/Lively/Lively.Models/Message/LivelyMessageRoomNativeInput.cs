@@ -111,6 +111,7 @@ namespace Lively.Models.Message
     {
         public LivelyMessageRoomNativePointer Input { get; set; }
         public LivelyRoomNativeTaskHit TaskHit { get; set; }
+        public LivelyRoomNativeTaskHit[] TaskTargets { get; set; }
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeSample() : base(MessageType.msg_room_native_sample) { }
     }

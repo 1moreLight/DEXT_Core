@@ -24,6 +24,7 @@ namespace Lively.Core.Wallpapers
             internal RoomNativeInputGesture PointerGesture { get; set; }
             internal RoomNativeKeyDelivery KeyDelivery;
             internal DockTaskInput Tasks { get; } = new(TimeProvider.System);
+            internal DockTaskKeyboard TaskKeyboard { get; } = new();
         }
         internal event Action<WebWebView2,DockTaskCompletion> NativeDockTaskCompleted;
         private NativeAttachment roomNativeAttachment;
@@ -61,9 +62,11 @@ namespace Lively.Core.Wallpapers
                 task=a.Tasks.Sample(raw?.Gesture,packet,sample.TaskHit,raw?.CancellationVersion??-1);
             }
             else a.Tasks.Clear();
+            System.Collections.Generic.IReadOnlyList<RoomNativeButton> taskKeys=null;
+            if(nativeDock&&packet.Key!=0&&!a.TaskKeyboard.TryRegions(sample.TaskTargets,out taskKeys))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse)){
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse,taskKeys)){
                 NotifyNative(a,before,packet.Kind!="focus");
                 if(packet.Kind=="focus")NativeKeys(a).Flush();
                 if(task!=null)NativeDockTaskCompleted?.Invoke(this,task);
@@ -228,7 +231,16 @@ namespace Lively.Core.Wallpapers
             var state=a.Input.State;if(state==null)return;
             if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button,entryId=state.Focus?.EntryId});
             if(activate && state.Completed is{} proof && !ReferenceEquals(before?.Completed,proof))
-                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+            {
+                if(proof.Button.Consumer==DextNativeTaskSample.Consumer)
+                {
+                    var task=a.TaskKeyboard.Complete(state);var snapshot=a.Bridge.Read().Snapshot;
+                    if(!nativeDock||task==null||snapshot==null||!proof.Validate(snapshot,proof.Button.Consumer,proof.Button.Button,true))return;
+                    SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+                    NativeDockTaskCompleted?.Invoke(this,task);
+                }
+                else SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+            }
         }
         internal void NativeMouseDown(int x,int y,bool foreground)
         {

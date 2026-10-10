@@ -16,3 +16,6 @@
 本轮最终自动证据：89项Node、七组DOM及Release构建；独立review提出的遮挡回退问题已复现并修复。运行仍旧候选；四项统一人工步骤未执行。
 本轮原生取样增量：16项Core任务关联、17项原输入回归、90项Node、七组原DOM+四组原生目标取样DOM通过，完整Release通过。应用操作回调已接但ActionsEnabled仍false；人工四步全部保留，未执行真实Player输入。
 最终复核：任务检查扩至20项，包含生产authority的排队后撤销与重新发布；独立review问题已RED→GREEN，最终Release通过。统一人工四步仍未执行。
+键盘接线增量：正式DOM的独立taskTargets、Player私有回传、Core投影校验和现有RawInput/KeyDelivery已贯通；Tab/Shift+Tab、Enter/Space与本地菜单返回/Esc已接线。原生任务键不合成转发给作者frame。窄栏焦点滚出后回跳作者、作者重新进入跳过应用两处问题均RED→GREEN修复（ERRORS #293）。
+证据：16项Core键盘、20项鼠标任务、17项原输入、90项Node、七组原DOM和八组取样/键盘DOM通过；完整Release构建通过。独立复核只有上述边界进入问题，已修复。CoreOnly确认旧Core39560继续运行，没有启动配置器；不是新代码实机验收。
+当前03仍开做，2/4=50%。ActionsEnabled=false，真实Player/触控、独立融合样包仍待做；上述旧阶段缺少键盘接线的说明仅为历史。统一人工四步未执行，继续后续工作，不合并master。

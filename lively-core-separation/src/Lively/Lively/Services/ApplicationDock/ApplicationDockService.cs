@@ -221,7 +221,7 @@ internal sealed class ApplicationDockService : IDisposable
             groups = GroupForCurrentDesk(groups.SelectMany(group => group.Windows).ToArray());
         taskDisplayContext = $"{epoch}/{scope}/{pinRevision}";
         var display = taskDisplay.Update(taskDisplayContext, groups, DockWindows.Foreground);
-        host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson));
+        host.SendNativeDockTasks(epoch, JsonSerializer.Serialize(display, taskJson), display);
     }
 
     private void AttachTaskHost(WebWebView2 host)

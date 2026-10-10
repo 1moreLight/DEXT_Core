@@ -25,7 +25,11 @@
    tail=operation;return operation.catch(error=>{if(!disposed&&own===epoch){phase='geometryUnavailable';area.setAvailable(false);options.onError?.(error);}return false;});
   }
   return Object.freeze({refresh,suspend,
+   exitKeyboard:()=>{if(!disposed)area.exitKeyboard();},
    samplePointer:point=>!disposed&&phase==='displayReady'?area.samplePointer(point):null,
+   sampleTargets:()=>!disposed&&phase==='displayReady'?area.sampleTargets():[],
+   prepareNativeFocus:reverse=>{if(!disposed&&phase==='displayReady')area.prepareNativeFocus(reverse);},
+   nativeInput:value=>!disposed&&phase==='displayReady'&&value.geometryVersion===options.getState().dom.readDiagnostics().inputVersion?area.nativeInput(value):false,
    accept(snapshot,actionsEnabled){if(disposed)return false;const accepted=area.accept(snapshot);if(accepted)area.setInputEnabled(actionsEnabled===true&&phase==='displayReady');return accepted;},
    read:()=>({phase,...area.read()}),
    dispose(){if(disposed)return;suspend();disposed=true;area.dispose();phase='disposed';}

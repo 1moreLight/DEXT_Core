@@ -399,3 +399,4 @@
 | #290 | 任务区浮点边界被拒绝后，普通geometry刷新不能替代指定occlusion确认 | [renderer](errors/renderer.md) |
 | #291 | 新worktree独立测试项目未还原，Core已构建不代表具备其assets | [toolchain](errors/toolchain.md) |
 | #292 | 任务完成排队期间几何撤销不改GeometryVersion，须独立撤销版本 | [backend](errors/backend.md) |
+| #293 | 窄任务栏滚动使焦点离开可见采样，重新从作者区进入又保留旧滚动位置而跳项 | [renderer](errors/renderer.md) |

@@ -30,7 +30,7 @@
     let native;
     try{
       native=DextNativeHost.createNativeHost({transport,initialIdentity:{runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision},initialSuspended:paused,
-        onInput:value=>host?.handleNativeInput(value),onPermissionChanged:consumer=>host?.refreshPermissions(consumer)});
+        onInput:value=>{tasks?.nativeInput(value);if(value.consumer==='official-task'){if(value.kind==='focus')host?.handleNativeInput({...value,consumer:null,button:null,entryId:null});}else host?.handleNativeInput(value);},onPermissionChanged:consumer=>host?.refreshPermissions(consumer)});
       host=DextDomHost.createDomHost({context,initialSnapshot:snapshot,document,container,native,getViewport:viewport,sendControl,initialPlaybackSuspended:paused,
         applyFrameState:(frame,value)=>sendControl({type:'dext:v3-frame-policy',protocolVersion:1,runtimeGeneration:value.identity.runtimeGeneration,
           sessionId:value.identity.sessionId,revision:value.identity.revision,frameName:frame.name,consumer:value.consumerId,instanceId:value.instanceId,active:value.state==='active'})});
@@ -89,6 +89,7 @@
     if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||!tasks)return false;
     return tasks.accept(value.snapshot,value.actionsEnabled===true);
   };
+  globalThis.dextNativeDockKeyboardExit=()=>{if(disposed||context?.viewKind!=='dock')return false;tasks?.exitKeyboard();return true;};
   globalThis.dextNativeDockRefresh=()=>context?.viewKind==='dock'&&host?host.refreshGeometry():Promise.resolve(false);
   const receive=event=>runtimeMessage(event.data);
   transport.addEventListener('message',receive);
@@ -102,7 +103,10 @@
     if(value.operation==='end')return host.endNativeInputSample(value.sampleId);
     if(value.operation!=='begin'||!scopeForInput(value)||!positive(value.geometryVersion))return null;
     const sample=host.beginNativeInputSample({runtimeGeneration:value.runtimeGeneration,sessionId:value.sessionId,revision:value.revision},value.geometryVersion,value.sampleId);
-    if(sample&&context.viewKind==='dock')sample.taskHit=tasks?.samplePointer(value.taskPoint)||null;
+    if(sample&&context.viewKind==='dock'){
+      sample.taskHit=tasks?.samplePointer(value.taskPoint)||null;
+      if(value.taskKeyboard){if(value.taskTab)tasks?.prepareNativeFocus(value.reverse===true);sample.taskTargets=tasks?.sampleTargets()||[];}
+    }
     return sample;
   };
   function scopeForInput(value){return context&&snapshot&&value.runtimeGeneration===context.runtimeGeneration&&value.sessionId===snapshot.sessionId&&value.revision===snapshot.revision;}

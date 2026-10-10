@@ -2110,3 +2110,5 @@ P8-013页面接线复核收敛：普通窗口前台不应隐藏Dock、浮点贴�
 P8-013步骤03继续：开做原生任务取样及物理按下/抬起关联，复用现有投递回执，独立于作者按钮目录；键盘/触摸和真实Player演示仍必做，50%。
 P8-013步骤03原生增量：任务区实际目标取样→Player私有回执→Core物理边沿关联→原应用操作回调已接，ActionsEnabled仍false。16任务/17原输入/90Node/七旧DOM+四新DOM通过，Release通过；键盘触摸与实机演示继续，2/4=50%。
 P8-013原生增量最终复核：排队旧点击跨几何撤销问题已RED→GREEN修复（ERRORS #292），任务20项及最终Release通过；其余17输入/90Node/11DOM证据保留。原生键盘与触摸仍待接，03开做，50%。
+P8-013步骤03键盘开做：先提供独立原生任务焦点取样/映射及官方菜单操作，再接既有RawInput/KeyDelivery；保持ActionsEnabled=false，50%。
+P8-013键盘增量：Tab/Enter/Space与官方菜单/Esc已接；16键盘/20任务/17输入/90Node/15DOM及Release通过。独立review发现窄栏重新进入跳项，已RED→GREEN修复（#293）。仍50%，真实Player/触控/融合样包待做，ActionsEnabled=false；保留Core39560，无新增配置器。

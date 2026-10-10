@@ -38,7 +38,7 @@ namespace Lively.Player.WebView2
             await RevokeInputAsync();
             if(!InputCurrent(value))return false;
             var selected=frames.Values.Where(InputFrame).Where(f=>value.Key==0||desired[f.Name].Consumer==value.Consumer).ToArray();
-            if(value.Key!=0&&value.Consumer!="official"&&selected.Length!=1)return false;
+            if(value.Key!=0&&value.Consumer!="official"&&value.Consumer!=DextNativeTaskSample.Consumer&&selected.Length!=1)return false;
             currentInput=value;inputActions?.Begin(value);var operation=++inputOperation;var accepted=true;
             await Task.WhenAll(selected.Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=value.GestureId;
@@ -63,7 +63,7 @@ namespace Lively.Player.WebView2
             if (!controlledDockInput || value.Kind == "focus") return true;
             if (!InputCurrent(value) || currentInput?.GestureId != value.GestureId) return false;
             var selected=frames.Values.Where(InputFrame).Where(frame=>consumer==null||desired[frame.Name].Consumer==consumer).ToArray();
-            if (consumer!=null && consumer!="official" && selected.Length!=1) return false;
+            if (consumer!=null && consumer!="official" && consumer!=DextNativeTaskSample.Consumer && selected.Length!=1) return false;
             foreach (var frame in selected)
             {
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;
