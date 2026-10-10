@@ -2305,3 +2305,4 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11 DESK-SYNC-003第01步增量：真实临时文件File→AdditionalObjects→CoreWebView2File.Path通过，CDP浏览器drop同时转交真实文件和目录路径通过；脚本File发送在本机明确拒绝。无OS鼠标或Explorer操作，临时源清理。优先复用官方WebView通道，真实Player/WorkerW/Explorer及源效果仍待，不把浏览器探针算OS拖放完成，实施0/5=0%。
 2026-10-11 DESK-SYNC-003第01步增量：生产Player新增DextNativeDroppedFiles读取模块并显式编译，隐藏探针直接链接该源码，真实磁盘File和浏览器drop文件/目录对象读取通过。无文件操作/原生输入变动；正式事件、会话及落点接线待继续，WorkerW/Explorer尚未验证，0/5=0%。
 2026-10-11 DESK-SYNC-003第01步增量：正式Player WebMessage分支接desktopDrop会话/Desk/落点/修饰键/源效果，路径只能来自原生AdditionalObjects再填入私有IPC。新增3项检查及原有消息共75/75通过。Core目前仍拒绝新方法、页面入口未启用，下一步接同步页资格和操作反馈，0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：Core新增当前同步页/会话/呈现context/锁屏转场核对与Player桥入口；允许Explorer前台导致的壁纸普通暂停下接收外部拖放，不改变原点击门槛。2项新增先红后绿，18项个人接口通过；文件操作执行和DOM入口仍待接，0/5=0%。

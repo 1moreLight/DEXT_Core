@@ -334,7 +334,7 @@ namespace Lively.Player.WebView2
                             NativeMethods.GetClientRect(webView.Handle, out var client))
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
-                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")){
+                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead" || request.Method == "desktopDrop")){
                                 if(request.Method=="desktopDrop")
                                 {
                                     if(startArgs.DextDock || !nativeRuntimeSeen || request.DesktopDrop==null ||

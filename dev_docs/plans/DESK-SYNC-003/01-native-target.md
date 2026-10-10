@@ -43,3 +43,12 @@
 
 尚未完成：官方页面拖入事件及Core同步Desk资格/文件操作；当前Core对新方法仍返回denied，未显示可拖入或允许写盘。真实Player/WorkerW/Explorer验收保持，实施0/5=0%。
 - 完整Core/Player Release构建退出0（.build/drop-envelope-core-build.log）；原Core51648保持，无新配置器。
+
+## 2026-10-11 Core同步页核对
+
+做完：CheckDesktopDrop与Player桥入口核对当前会话/安装、确切呈现context、当前Desk及本机同步启用、锁屏/转场/生命周期；文件操作开始前必须调用。新增2项实际Core类检查先红后绿，共18项个人接口通过。
+
+外部拖动时Explorer通常占前台，壁纸可能因规则暂停；因此不能照搬布局写入的IsDesktopForeground/PlaybackPaused限制。Player允许desktopDrop消息穿过普通播放暂停门槛，Core仍核对同步页/锁屏/转场。真实命中及来源由后续Player/OS验证继续承担，未放宽现有点击/触控动作。
+
+待接：WebWebView2操作执行分支、官方DOM事件、实际Shell写盘结果；核对函数尚未用于执行文件操作。01保持开做、0/5=0%。
+- 完整Core/Player Release构建退出0（.build/drop-scope-core-build.log）；旧Core51648保持，无新配置器。

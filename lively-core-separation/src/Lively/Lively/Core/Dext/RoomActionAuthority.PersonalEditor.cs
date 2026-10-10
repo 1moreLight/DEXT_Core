@@ -172,6 +172,42 @@ internal sealed partial class RoomActionAuthority
         catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
         {return new(RoomActionStatus.LaunchFailed);}
     }
+    // Recheck immediately before starting a native file operation. Explorer owns
+    // foreground during an external drag; wallpaper playback pause is not a veto.
+    internal RoomActionStatus CheckDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session,
+        long revision, string desktopContextId, string deskId)
+    {
+        try
+        {
+            var spin = new SpinWait();
+            while (true)
+            {
+                var attempt = store.ReadForDispatch(state =>
+                {
+                    var admitted = gateway.TryWithActionContext(connection, peer, session, (status, context) =>
+                    {
+                        if (status != RoomProtocolStatus.Accepted) return Status(status);
+                        var eligibility = LayoutEligibility(context!, revision, false);
+                        if (eligibility != RoomActionStatus.Accepted) return eligibility;
+                        var snapshot = context!.Snapshot;
+                        var desktop = Volatile.Read(ref desktopPresentation);
+                        if (!snapshot.IsActive || snapshot.Lifecycle.Locked || snapshot.TransitionId is not null ||
+                            snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.CurrentDeskId != deskId ||
+                            desktop is null || desktop.Session != session || desktop.Room != context.Installation.RoomId ||
+                            desktop.Stamp != context.Installation.InstallationStamp || desktop.View.ContextId != desktopContextId ||
+                            desktop.View.DeskId != deskId || !state.Rooms.TryGetValue(desktop.Room, out var room) ||
+                            room.DesktopSync is not { Enabled: true } sync || sync.DeskId != deskId)
+                            return RoomActionStatus.NotOperable;
+                        return RoomActionStatus.Accepted;
+                    }, out RoomActionStatus result);
+                    return (admitted, result);
+                });
+                if (attempt.admitted) return attempt.result;
+                spin.SpinOnce();
+            }
+        }
+        catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
+    }
     internal void ClearDesktopPresentation() { Volatile.Write(ref desktopPresentation,null); Volatile.Write(ref desktopProgress,null); }
 
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)

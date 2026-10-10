@@ -51,6 +51,23 @@ static partial class RoomActionChecks
    var next=f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),Editor(Read(f)).Revision,"home",new[]{renamed},true,new Dictionary<string,string>{{old,renamed}});
    Eq(slot,next!.Slots[renamed]);Eq(false,next.Slots.ContainsKey(old));Eq(slot,f.Store.ReadDesktopSync(Room)!.Slots[renamed]);
   });
+  check("desktop drop checks current sync page while Explorer owns foreground",()=>{
+   using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("drop-view","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   RoomActionStatus Drop(string context="drop-view",string desk="home")=>f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,context,desk);
+   Eq(RoomActionStatus.Accepted,Drop());
+   f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(true,false,false));
+   Eq(RoomActionStatus.Accepted,Drop());
+   Eq(RoomActionStatus.NotOperable,Drop("old-view"));Eq(RoomActionStatus.NotOperable,Drop(desk:"focus"));
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=false}));Eq(RoomActionStatus.NotOperable,Drop());
+  });
+  check("desktop drop refuses locked desktop and stale snapshot",()=>{
+   using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("drop-view","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   var before=f.Kernel.Snapshot!.Revision;f.Gateway.SetRuntimeFacts(f.Coordinator,f.CorePeer,f.Session,new(false,true,true));
+   Eq(RoomActionStatus.StaleInput,f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,before,"drop-view","home"));
+   Eq(RoomActionStatus.NotOperable,f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"drop-view","home"));
+  });
   check("official desktop presentation transfers icons once and clears disabled or replaced contexts",()=>{
    using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
    var item=new RoomDesktopViewItem("desktop-"+new string('a',64),"File.txt","file",0,null);
