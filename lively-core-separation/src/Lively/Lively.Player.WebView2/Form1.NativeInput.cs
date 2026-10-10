@@ -1,3 +1,4 @@
+using Lively.Common.Extensions;
 using Lively.Common.Helpers;
 using Lively.Common.Helpers.Pinvoke;
 using Lively.Models.Message;
@@ -26,7 +27,7 @@ namespace Lively.Player.WebView2
                     if(accepted)nativeAuthorDeadline.Start();return accepted;
                 },async()=>{await nativeFrameMedia.RevokeInputAsync();await ReleaseNativeSampleAsync();},
                 ForwardNativePointer,CurrentNativePointer,packet=>nativeFrameMedia.ReleasedInputAsync(packet),
-                ()=>BeginInvoke((Action)(()=>{if(!IsDisposed&&!Disposing)Close();})),prepare:PrepareNativeSampleAsync,dispatched:CompleteNativeSampleAsync);
+                ()=>BeginInvoke((Action)(()=>{if(!IsDisposed&&!Disposing){nativePointerDelivery.LastFailure?.SendError(SendToParent,"Native input delivery failed");Close();}})),prepare:PrepareNativeSampleAsync,dispatched:CompleteNativeSampleAsync);
         }
         private sealed class NativeVisualSample
         {

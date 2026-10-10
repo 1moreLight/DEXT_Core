@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if(args.Length==4&&args[0]=="--v3-task-wire"){await NativeTaskWireProbe.Run(args[1],args[2],args[3]);return;}
 if(args.Length==1&&args[0]=="--v3-task-keyboard"){DockTaskKeyboardChecks.Run();return;}
 if(args.Length==1&&args[0]=="--v3-task-input"){DockTaskInputChecks.Run();return;}
 if(args.Length==4&&args[0]=="--v3-author-visual-wire"){await AuthorVisualWireProbe.Run(args[1],args[2],args[3]);return;}

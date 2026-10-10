@@ -389,12 +389,21 @@
     const ready=acceptSnapshot(snapshot);
     if(!dockView)ready.then(()=>refreshPresentation());
     return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,
-      setTaskAreaOcclusion(value){
-        if(disposed||!dockView)return Promise.resolve(false);
-        if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return Promise.resolve(false);
+      async setTaskAreaOcclusion(value){
+        if(disposed||!dockView)return false;
+        if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return false;
         const next=value===null?null:{x:value.x,y:value.y,width:value.width,height:value.height};
-        if(JSON.stringify(next)===JSON.stringify(taskAreaOcclusion))return inputReady?Promise.resolve(true):render();
-        taskAreaOcclusion=next;return render();
+        const requested=JSON.stringify(next),revision=snapshot.revision;
+        if(requested===JSON.stringify(taskAreaOcclusion)&&inputReady)return true;
+        taskAreaOcclusion=next;let pending=render();
+        // Resume layout and author geometry can supersede this render. Their
+        // publication still includes this exact region; wait for its real ack.
+        for(;;){
+          const confirmed=await pending;
+          if(disposed||privatePaused||snapshot.revision!==revision||requested!==JSON.stringify(taskAreaOcclusion))return false;
+          if(pending===serial)return confirmed&&inputReady;
+          pending=serial;
+        }
       },
       refreshGeometry(){return disposed?Promise.resolve(false):render();},
       readInputSample(identity,version){

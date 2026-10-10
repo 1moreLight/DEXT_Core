@@ -514,3 +514,9 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 - 处理：dotnet restore tests/Dext.Input.Tests -p:NuGetAudit=false --ignore-failed-sources，随后原检查进入预期缺实现RED，再完成实现运行GREEN。
 - 下次：检查该测试项目自己的obj资产；已有缓存可复用，无需重新安装依赖或把此失败误记为业务回归。
 #291补记：本轮ProtocolTests首次执行同样缺assets；单独restore该项目后生产样包安装校验通过。
+
+## #294 Dock探针尊重全屏，并等待WebView释放临时文件（2026-10-10）
+- 首次真实任务链探针中，Player已报告WindowReady但Visible=false、Fullscreen=true，等待可见会超时。只读原生信息确认前台WeChatAppEx无标题栏、IsZoomed=false、矩形覆盖2560×1440；这不是普通有标题栏最大化，不能为测试更改产品全屏策略。
+- 探针在窗口就绪后先验证任务快照私有通道；全屏时核对区域不可用，再明确输出SKIP鼠标/键盘可见分支。SKIP不算输入通过，也不推动03完成。
+- Player主进程退出后，WebView用户数据文件仍可能被子进程短暂持有。原4秒清理不足，改为最多15秒等待且清理失败抛错；只清自己创建且确认位于Temp内的目录。首个遗留目录在确认无引用进程后精确删除。
+- 编译过程中TaskJson匿名对象少一层闭括号，编译直接阻止运行；补齐后通过，没有改生产代码。

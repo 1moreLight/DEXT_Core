@@ -24,3 +24,13 @@
 ## 后续统一人工步骤
 
 沿用 `acceptance/V3-P8-013-theme-task-area.md`：同栏导航/应用操作；按下刷新或切页不误触；遮挡及鼠标/触摸/键盘；菜单/窄栏/全屏隐藏/退出恢复。该样包提供操作场景，四项均尚未记录通过。
+
+## 真实 Release Player 边界探针
+
+`dotnet run --project tests/Dext.Input.Tests -c Release --no-restore -- --v3-task-wire <ReleasePlayer.exe绝对路径> wallpapers/dext-room-v3 rooms/v3-fusion-lab`
+
+使用正式宿主/样包及Player代码；Core快照、几何回执和物理边沿由测试进程模拟，不执行操作系统应用动作。非全屏时会短暂唤出隔离的autohide栏，再关闭并恢复鼠标；不注册AppBar、不改本机Room、不启动配置器。
+
+若当前前台全屏，只验证私有快照到达及任务区不可用，并明确SKIP可见鼠标/键盘分支。该输出不能计作输入验收。全屏窗口由用户决定何时退出，测试不主动切换前台。
+
+2026-10-11已知结果：全屏解除后快照、显示、键盘取样及官方菜单通过；鼠标回执仍会超时，探针当前在该阶段报失败。不要用前两项PASS声称整条输入通过。已修复恢复遮挡确认竞态（#295），实际Core的ActionsEnabled仍为false。

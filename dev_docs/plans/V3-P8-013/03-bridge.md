@@ -60,3 +60,10 @@ ApplicationDockService已订阅实际主题宿主完成事件，在Dispatcher复
 独立样包已写：rooms/v3-fusion-lab，三Desk与config覆盖，作者导航和官方任务区共用同一栏背景。四种真实DOM布局（1440/960×共享/窄区）及无Dock隐藏检查通过；生产RoomV3Installation接受完整安装快照。复现见../../V3_FUSION_LAB.md。未部署/未应用，测试图中的应用数据仅是后台夹具。
 触屏依据补充：Microsoft Raw Input说明WM_INPUT为设备相关原始数据，不能用DOM事件推定Core收到了Mouse注册对应事件（https://learn.microsoft.com/en-us/windows/win32/inputdev/about-raw-input）。本机源码尚无触屏专用边沿入口，保留待做。下一步在真实Player核对任务取样/回执，并补触屏来源与去重，之后才开启应用动作。进度保持2/4=50%。
 样包增量收口：完整Release构建通过；CoreOnly复用旧Core39560，没有启动配置器。独立样包尚未应用。
+
+### 真实Player任务链检查（开做）
+隔离临时目录复制正式宿主与融合样包，启动独立Release Dock Player，生产布局/任务DOM/取样/IPC不替换。测试进程模拟Core快照和几何确认，不启动实际应用；短暂autohide唤出、不注册AppBar、不启动配置器，结束恢复鼠标及关闭该测试Player。检查私有任务快照、Tab目标、Enter双边沿与本地多窗口菜单、鼠标双边沿。此证据只覆盖Player边界；完整Core原始输入/触屏/所有权与真实应用动作仍另外验收。
+真实Player首次证据：正式Release Player已接收私有任务快照并经过正式main/controller/DOM留存不透明ID；当前前台为无边框全屏WeChatAppEx，原生Dock按规则隐藏且官方任务区不可操作。首次等可见超时后探针改成先验证快照再明确SKIP可见输入，未修改全屏规则。鼠标/键盘实际取样分支已写但尚未执行，触屏仍待接，03保持开做50%。见ERRORS #294。
+实机继续：全屏结束后发现任务区遮挡确认被恢复布局的新render覆盖，已定向RED→GREEN修复，并在真实Player显示与键盘菜单链通过；鼠标投递导致Player主动关闭但原错误被吞，先补失败原因日志以定位，不猜测修改点击路由。
+
+2026-10-11最新补证（替代前面仅全屏SKIP的当前口径）：前台全屏结束后，隔离实际Release Player任务区显示、Tab/Enter私有取样及完成打开窗口菜单均通过；Core消息仍为夹具，不算实际RawInput或OS操作。恢复render覆盖遮挡确认的缺陷已三项RED→GREEN修复，独立review无具体回归；最终93项Node、17项原输入及完整Release通过。鼠标阶段仍失败：Native input dispatch not observed，尚未定位，不记通过。曾用OS鼠标边沿辅助诊断，仍失败，已移除该诊断注入；临时guardian日志也已撤回并重建。探针仍可复现未解决的鼠标门槛。触屏未接、真实应用动作未启用；03继续开做，工作包2/4=50%。CoreOnly复核保留Core39560，没有启动配置器，也未更换用户运行候选。

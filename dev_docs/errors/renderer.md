@@ -689,3 +689,10 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 - 原因：可见几何集合不是完整逻辑列表；焦点离开后的scrollLeft仍保留。
 - 修复：Dock官方任务焦点暂时离开可见列表时，Core按方向选择当前任务采样边界；旧焦点仍在列表且位于末项时保留正常循环。DOM从作者进入时按Tab方向滚到任务行首/尾，再提供实际裁切几何。
 - 证据：生产authority焦点用例和headless Edge重新进入用例各先失败后通过。16项键盘Core与八组任务取样DOM通过。真实Player及触摸仍待独立验收。
+
+## #295 恢复布局覆盖任务区遮挡确认，不能永久停在geometryUnavailable（2026-10-11）
+- 实际Release Player中inputReady已恢复但任务区phase仍为geometryUnavailable，几何版本已前进；原遮挡render被恢复布局/作者几何的后续render替代。
+- setTaskAreaOcclusion原先只返回首次render结果，该结果在被替代时为false；控制器因此不承认最终已确认的同一区域。
+- 修复：保持同一请求region和snapshot revision，跟随serial至最新render，必须最新发布成功且inputReady才返回true。更换region/revision、暂停/销毁或最新几何拒绝仍失败，不绕过#290的确认条件。
+- 三项回归先RED后GREEN：同区域替代成功、最新几何拒绝、请求区域替换。最终93项Node和17项原输入通过，独立diff无具体回归；完整Release成功。真实Player显示、Tab/Enter取样及私有完成打开菜单通过，但Core消息为夹具，不能记为真实RawInput或应用操作验收。
+- 剩余：鼠标投递等待Native input dispatch not observed超时，Player按既有失败路径关闭；错误现已可见。没有据此放宽输入或启用新Core动作，继续单独定位。

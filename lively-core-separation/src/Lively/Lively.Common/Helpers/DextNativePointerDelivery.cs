@@ -110,6 +110,7 @@ namespace Lively.Common.Helpers
             }
             pending.Add(new Entry(packet,epoch));Start();return true;
         }
+        public Exception LastFailure { get; private set; }
         public Task WhenIdle()=>running?idle.Task:Task.CompletedTask;
         public Task InvalidateAsync()
         {
@@ -169,8 +170,9 @@ namespace Lively.Common.Helpers
                     else held=packet;
                 }
             }
-            catch(Exception)
+            catch(Exception error)
             {
+                LastFailure=error;
                 terminal=true;pending.Clear();
                 try{await Cancel();}catch(Exception){}
                 failed();

@@ -597,3 +597,35 @@ test('fractional task area touching viewport edge is acknowledged and excludes u
   assert.equal(sample.buttons.some(entry=>entry.polygons.some(p=>geometry.containsPoint(p,{x:.5,y:.5},{includeBoundary:false}))),false);
  }finally{f.host.dispose();}
 });
+
+test('task occlusion waits for a superseding render of the same region',async()=>{
+ let block=false;const waits=[];
+ const f=fixture({viewKind:'dock',request:method=>block&&method==='invalidateGeometry'?new Promise(resolve=>waits.push(resolve)):undefined});
+ try{
+  await f.host.ready;block=true;
+  const confirm=f.host.setTaskAreaOcclusion({x:300,y:100,width:1000,height:800});await flush();
+  const newer=f.host.refreshGeometry();waits.shift()({status:'accepted'});await flush();
+  waits.shift()({status:'accepted'});assert.equal(await newer,true);
+  assert.equal(await confirm,true);assert.equal(f.host.readDiagnostics().inputReady,true);
+ }finally{f.host.dispose();}
+});
+test('superseding geometry rejection cannot acknowledge task occlusion',async()=>{
+ let block=false,reject=false;const waits=[];
+ const f=fixture({viewKind:'dock',request:method=>block&&method==='invalidateGeometry'?new Promise(resolve=>waits.push(resolve)):reject&&method==='geometry'?Promise.resolve({status:'denied'}):undefined});
+ try{
+  await f.host.ready;block=true;
+  const confirm=f.host.setTaskAreaOcclusion({x:300,y:100,width:1000,height:800});await flush();
+  reject=true;const newer=f.host.refreshGeometry();waits.shift()({status:'accepted'});await flush();waits.shift()({status:'accepted'});
+  assert.equal(await newer,false);assert.equal(await confirm,false);
+ }finally{f.host.dispose();}
+});
+test('replacement task region never acknowledges the retired region',async()=>{
+ let block=false;const waits=[];
+ const f=fixture({viewKind:'dock',request:method=>block&&method==='invalidateGeometry'?new Promise(resolve=>waits.push(resolve)):undefined});
+ try{
+  await f.host.ready;block=true;
+  const old=f.host.setTaskAreaOcclusion({x:300,y:100,width:1000,height:800});await flush();
+  const next=f.host.setTaskAreaOcclusion(null);waits.shift()({status:'accepted'});await flush();waits.shift()({status:'accepted'});
+  assert.equal(await next,true);assert.equal(await old,false);
+ }finally{f.host.dispose();}
+});
