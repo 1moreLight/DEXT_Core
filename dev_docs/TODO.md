@@ -2218,3 +2218,7 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11全屏子项实测通过，继续无Dock子项：实际点击下一页home→focus，打开任务菜单后再点下一页到quiet；核对原Dock HWND消失及Windows任务栏真实可见，finally恢复原版/偏好。
 
 2026-10-11全屏/无Dock子项做完：Core44152/Player16632自有全屏使Dock/menu隐藏，恢复无残留菜单；Core49376/Player53244实际下一页到quiet销毁Dock窗口并恢复Windows任务栏，两组退出0且恢复原版/偏好。首次无Dock前置因布局变化未发点击，探针等待位置稳定后通过。两组探针构建通过；退出Core当前候选显式恢复及按住跨Desk仍待，整包50%。
+
+2026-10-11开做：融合Dock自动接管状态下正常退出Core，核对Core/两Player退出和系统任务栏可见；随后仅重启隔离候选执行既有夹具清理，再恢复用户原运行版。
+
+2026-10-11正常退出恢复做完：Core46892融合Dock自动接管后正式ShutDown，Core/两Player正常退出且系统任务栏实际恢复，候选51144重启供正式RPC清理并停止，原运行版恢复，probe退出0。task-fusion-exit-probe-build/fusion-exit-live日志为证据；03-remaining第4项做完，剩余实际按住跨Desk和最终核对，整包50%。

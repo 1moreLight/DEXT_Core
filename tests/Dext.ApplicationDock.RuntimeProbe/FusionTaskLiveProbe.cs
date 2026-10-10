@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false,bool closeTarget=false,bool fullscreen=false,bool noDock=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false,bool keyboard=false,bool menu=false,bool startup=false,bool restoreTaskbar=false,bool pinMenu=false,bool navigation=false,bool closeTarget=false,bool fullscreen=false,bool noDock=false,Func<Task> exitCheck=null)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -103,6 +103,7 @@ internal static class FusionTaskLiveProbe
                             if(touch)await target.VerifyDisabledContact(window,Observe,()=>Settings(new{enabled=false}));
                         }
                         else if(launcher is not null)await launcher.Verify(window,Observe);
+                        else if(exitCheck is not null)await exitCheck();
                         else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
                         if(restoreTaskbar&&!NativeTaskbar.IsWindowVisible(NativeTaskbar.FindWindow("Shell_TrayWnd",null)))throw new Exception("Task actions hid manually restored taskbar");
                         return;
