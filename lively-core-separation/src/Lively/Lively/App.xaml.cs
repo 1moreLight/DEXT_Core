@@ -59,6 +59,11 @@ namespace Lively
 
         public App()
         {
+            // Core owns a WPF message loop. Establish its context before the
+            // WinForms tray controls can install one tied to a hidden Control.
+            // That Control can otherwise deadlock SystemEvents during shutdown.
+            SynchronizationContext.SetSynchronizationContext(
+                new System.Windows.Threading.DispatcherSynchronizationContext(Dispatcher));
             // Commandline args, first element is application path.
             var commandArgs = Environment.GetCommandLineArgs().Skip(1).ToArray();
             try

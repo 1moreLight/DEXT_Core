@@ -405,3 +405,4 @@
 | #296 | Dock外层显示未恢复WebView2控制器，真实Chromium输入HWND仍隐藏 | [backend](errors/backend.md) |
 | #297 | 正式HTML新增任务区脚本/样式但发布清单漏项，源码运行正常而便携包缺资源 | [toolchain](errors/toolchain.md) |
 | #298 | 真实Core收到ShutDown后RPC停止响应但进程未退出，旧候选及新测试副本均复现；待定位 | [backend](errors/backend.md) |
+2026-10-11更新：#298已定位为WinForms SystemEvents同步上下文退出死锁，建立WPF启动上下文后真实融合生命周期/退出3轮通过；详见backend末尾补记。

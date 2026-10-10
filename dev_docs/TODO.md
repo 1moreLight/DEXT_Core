@@ -2130,3 +2130,5 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 
 2026-10-11 #298定位更新：临时在QuitApp记录services start/done、grpc start/done、dispatcher start/done；一次启动立即退出正常，融合探针后既有正常退出也有残留。最后一轮第1次正常、第2次进程超过5秒仍存活且全部6个阶段均完成。因此证据不支持“服务Dispose或RPC Dispose同步卡住”，Application.Shutdown调用也已返回。不能据此替换为异步退出并声称修复。dotnet-stack尝试失败，.build/exit-hang-stack.log为Pipe is broken工具错误，不是成功的目标线程栈；下一定位范围是Shutdown排队后的WPF/CLR/原生退出尾段。尚未确定根因，#298仍待修。
 临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。
+2026-10-11 #298根因与修复开做：原生/SOS栈确认Finalizer→SystemEvents.Shutdown→Join，同时SystemEvents→WindowsFormsSynchronizationContext.Send→Control.Invoke等已退出UI；对应dotnet/winforms#9721。在App构造最早建立WPF DispatcherSynchronizationContext，阻止托盘WinForms抢先安装同步上下文；构建后做真实融合开关与退出复测。
+2026-10-11 #298退出修复做完：原生+SOS栈定位SystemEvents→WinForms Control.Invoke等待已停止UI，App启动前建立WPF同步上下文；完整Release与真实融合生命周期/退出3轮通过，无强杀新Core。原候选5924已恢复且RPC/空Room复核正常。实际OS应用操作及触屏未验收，03仍开做、2/4=50%；详见errors/backend #298和.build/exit-context-live.log。
