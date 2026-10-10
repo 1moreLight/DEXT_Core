@@ -1,6 +1,6 @@
 # 04 复核与交接
 
-状态：开做（2026-10-11）。03实现收口，工作包实施3/4=75%；统一人工验收没有通过，未合主线。
+状态：做完（实施交接，2026-10-11）。工作包实施4/4=100%，待统一人工验收；没有验收通过、主线合并或替换用户运行版。
 
 ## 当前事实
 
@@ -70,3 +70,11 @@
 遵循用户先推进、统一验收的指令，03代码实现记做完，实际按住跨Desk和物理触屏仍为待验收，未豁免。现有MouseDown/Key以及RouteNativeDockMouse的原生互斥会提前取消手势，混合输入不作为纯revision取消证据；不为通过探针更改生产触控。
 
 本次针对既有生产输入执行--v3-task-input通过（含跨Desk后旧UP拒绝、返回原Desk不能复活、全新点击恢复），27项模型/controller/main Node检查通过。日志task-input-handoff.log、task-host-handoff.log；git diff 71966f1..HEAD --check通过。04剩余为聚焦diff复核及候选运行交接，所有四项人工要求仍在独立验收卡。
+
+## 最终聚焦复核与交接
+
+2026-10-11核对生产task-area-model/host/controller/main与ApplicationDockService.CompleteTask、WebWebView2.Dock完成/展示门控及37f122f租约变更。按下冻结快照、隐藏/上下文改变取消、过期几何确认不能重新显示、UI线程派发后二次校验宿主/投影/固定作用域、输入revision严格而任务栏健康允许同宿主旧revision，各自边界保留。本次未发现新阻断缺陷；这不是所有平台/时序无缺陷的保证。
+
+执行node tests/v3-task-area/render.cjs退出0，7组后台真实Edge DOM检查通过，覆盖按下刷新、上下文取消、返回菜单、键盘/固定、多窗口/溢出、PNG及异步几何门控。与此前输入检查、完整构建、实际Core增量证据共同作为实施交接依据，不把DOM结果当物理触控证明。
+
+04实施交接做完，包状态待统一验收；接续014继续最终呈现设置、唯一owner交接、overlay常显、失败回退及原生缩略图。现有新候选没有启动/应用，用户运行版保留。四项人工要求见acceptance/V3-P8-013-theme-task-area.md；按住跨Desk实机与物理触屏仍明确未验证，之后统一验收前不合master。
