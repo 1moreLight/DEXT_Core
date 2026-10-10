@@ -102,7 +102,7 @@ internal sealed class FusionActionWindow : IDisposable
         await Wait(()=>observe()?.TryGetProperty("targetWindowCount",out var count)==true&&count.GetInt32()==2,"Two owned windows were not grouped into one task");
         var foreground=GetForegroundWindow();
         await Click(dock,observe);
-        await Wait(()=>observe()?.TryGetProperty("menuSecond",out var value)==true&&value.ValueKind==JsonValueKind.Object,"Task click did not open actual window list");
+        await Wait(()=>observe()?.TryGetProperty("menuSecond",out var value)==true&&value.ValueKind==JsonValueKind.Object,"Task click did not open actual window list: "+observe()?.GetRawText());
         if(GetForegroundWindow()!=foreground)throw new Exception("Opening window list unexpectedly activated an app");
         JsonElement? Choice(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["menuSecond"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
         await Click(dock,Choice);
@@ -110,12 +110,13 @@ internal sealed class FusionActionWindow : IDisposable
         Console.WriteLine("PASS actual task click opens grouped window list and choice activates exact second window");
         second.Dispose();
         await Wait(()=>observe()?.TryGetProperty("targetWindowCount",out var count)==true&&count.GetInt32()==1,"Closed second window remained in task projection");
-        // Windows may activate the remaining window when its sibling closes.
-        // In that case the product's next click must minimize it.
-        var alreadyActive=GetForegroundWindow()==Handle&&!IsIconic(Handle);
+        // Sibling close can asynchronously transfer foreground between threads.
+        // Establish an explicit minimized state on this owned test Form first.
+        form.Invoke(()=>form.WindowState=FormWindowState.Minimized);
+        await Wait(()=>IsIconic(Handle)&&GetForegroundWindow()!=Handle,"Owned remaining window did not minimize before restore test");
         await Click(dock,observe);
-        await Wait(()=>alreadyActive?IsIconic(Handle):GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not follow normal task toggle after group shrank");
-        Console.WriteLine("PASS closing one grouped window refreshes task; remaining window "+(alreadyActive?"minimizes":"activates"));
+        await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not restore after group shrank: "+observe()?.GetRawText());
+        Console.WriteLine("PASS closing one grouped window refreshes task and remaining minimized window restores");
     }
     internal async Task VerifyKeyboard(IntPtr dock,Func<JsonElement?> observe)
     {

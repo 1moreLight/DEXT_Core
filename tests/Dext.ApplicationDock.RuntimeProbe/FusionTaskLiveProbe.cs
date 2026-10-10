@@ -25,6 +25,7 @@ internal static class FusionTaskLiveProbe
         {
             Enable(false);Settings(new{enabled=true,mode="autohide",heightDip=96});
             var until=DateTime.UtcNow.AddSeconds(40);
+            string stableWindow=null;DateTime stableSince=DateTime.UtcNow;
             while(DateTime.UtcNow<until)
             {
                 var runtime=Theme().GetProperty("runtime");
@@ -41,9 +42,14 @@ internal static class FusionTaskLiveProbe
                 if(window!=IntPtr.Zero&&GetWindowRect(window,out var rect))
                 {
                     SetCursorPos((rect.Left+rect.Right)/2,rect.Bottom-1);
+                    // Page diagnostics update asynchronously. A first ready title
+                    // may precede taskbar handoff and a native work-area move.
+                    var key=$"{window}/{rect.Left}/{rect.Top}/{rect.Right}/{rect.Bottom}/{runtime.GetProperty("phase").GetString()}/{runtime.GetProperty("taskbarReplacementReady").GetBoolean()}";
+                    if(key!=stableWindow){stableWindow=key;stableSince=DateTime.UtcNow;}
                     using var doc=JsonDocument.Parse(title[18..]);
                     var value=doc.RootElement;
-                    if(value.GetProperty("phase").GetString()=="displayReady"&&value.GetProperty("enabled").GetBoolean()&&value.GetProperty("count").GetInt32()>0)
+                    if(runtime.GetProperty("phase").GetString()=="running"&&runtime.GetProperty("taskbarReplacementReady").GetBoolean()&&DateTime.UtcNow-stableSince>=TimeSpan.FromMilliseconds(750)&&
+                        value.GetProperty("phase").GetString()=="displayReady"&&value.GetProperty("enabled").GetBoolean()&&value.GetProperty("count").GetInt32()>0)
                     {
                         if(GetForegroundWindow()!=foreground)throw new Exception("Probe unexpectedly changed foreground");
                         Console.WriteLine("PASS real Core task projection reaches actual Player, geometry ready and actions enabled; items="+value.GetProperty("count")+", PID="+pid);

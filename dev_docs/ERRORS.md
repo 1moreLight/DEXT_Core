@@ -421,3 +421,5 @@
 | #306 | 官方任务键盘entryId缺item，多应用几何重复而整组拒绝 | [backend](errors/backend.md) |
 
 | #307 | 鼠标/触摸选择窗口或固定应用缺页面完成回送，菜单持续遮住图标 | [backend](errors/backend.md) |
+
+| #308 | 页面displayReady先于任务栏接管完成，启动点击与工作区移动竞争 | [backend](errors/backend.md) |
