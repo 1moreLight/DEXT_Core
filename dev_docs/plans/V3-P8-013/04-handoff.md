@@ -42,7 +42,7 @@
 
 - 待做：完成03剩余操作后，对最终diff进行一次聚焦复核，修具体缺陷；不重新跑广泛安全/网络矩阵。
 - 待做：整理最终构建、来源、可复现命令和四项统一人工步骤，清楚区分旧用户候选与新验收候选。
-- 待做：正式验收候选排除临时标题观测/探针夹具；保持用户Room与私人绑定。
+- 做完（打包核对）：正式候选排除临时标题观测/探针夹具；未应用或修改用户Room与私人绑定。实际启动/统一验收仍待完成。
 - 待做：提交待统一验收。用户明确通过前不合master；物理触屏和完整人工四步不得倒填通过。
 
 ## 历史记录（不代表当前实现状态）
@@ -54,3 +54,11 @@
 
 阶段提交：01/02通过必要检查并修复一次独立复核发现；03仍开做，04未完成。未改C#/proto，未运行完整Release构建；start.ps1 -CoreOnly只复核并保留旧候选，日志task-area-runtime-preserved.log，不代表新模块实际挂接。
 下一次从03-bridge.md接续同一worktree/分支，禁止把前两步提交标成整包待验收。
+
+## 2026-10-11 无诊断正式候选
+
+来源76252ac（本轮仅追加记录，生产源不变）。执行 `scripts/build-v3-release.ps1 -OutputDirectory D:/use/Orca/DEXT/DEXT_Core/.build/v3-fusion-clean-20261011`，完整Core/Release Player/Watchdog/配置器构建退出0；日志 `.build/task-fusion-clean-release.log`。配置器编译2项警告，无错误。
+
+654个清单文件重新计算SHA256均匹配；16项hostAssets与源码哈希一致，HTML引用检查通过。wallpapers内未检出DEXT_FUSION_PROBE、__fusionNavigation、测试Room UUID及夹具名称。全新目录没有复制旧诊断候选；融合样包源在rooms/v3-fusion-lab，尚未导入/应用。
+
+未启动新候选/配置器、未修改用户数据。核查时旧Core48280/配置器19704仍在。实际启动验收和03跨Desk取消缺口保留，整包50%。构建工具只改变Cargo.toml换行，内容核对相同后恢复原字节。
