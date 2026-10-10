@@ -13,7 +13,8 @@ public sealed record RoomPersonalEditorButton(string Id, string Name, string Sco
     string? EffectiveAction, string? EffectiveDeskId, bool IsBound, RoomPersonalButtonSettings? Personal);
 public sealed record RoomPersonalEditorTarget(string Id, string Name, string Kind, string Target, string Arguments, string WorkingDirectory, int UseCount);
 public sealed record RoomPersonalSkin(string Id, string Name);
-public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins);
+public sealed record RoomDesktopSyncSettings(bool Enabled, string DeskId, int ItemCount);
+public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins, RoomDesktopSyncSettings? DesktopSync = null);
 public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
 
 internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
@@ -124,7 +125,7 @@ internal sealed partial class RoomActionAuthority
     }
     private sealed record PersonalEdit(string Operation, string? ButtonId = null, string? Action = null, string? DeskId = null,
         string? TargetId = null, string? Skin = null, string? Name = null, string? Kind = null, string? Target = null,
-        string? Arguments = null, string? WorkingDirectory = null);
+        string? Arguments = null, string? WorkingDirectory = null, bool? Enabled = null);
     private static readonly JsonSerializerOptions EditorJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 24 };
     private static readonly RoomPersonalSkin[] EditorSkins = { new("classic","经典"), new("glass","玻璃"), new("outline","描边") };
@@ -146,6 +147,7 @@ internal sealed partial class RoomActionAuthority
             edit=JsonSerializer.Deserialize<PersonalEdit>(editJson,EditorJson) ?? throw new InvalidDataException();
             string[] keys=edit.Operation switch {
                 "enableNavigation"=>new[]{"operation"},
+                "setDesktopSync"=>new[]{"operation","deskId","enabled"},
                 "setButton"=>new[]{"operation","buttonId","action","deskId","targetId","skin"},
                 "resetButton" or "locateButton"=>new[]{"operation","buttonId"},
                 "upsertTarget"=>new[]{"operation","targetId","name","kind","target","arguments","workingDirectory"},
@@ -153,6 +155,11 @@ internal sealed partial class RoomActionAuthority
                 _=>Array.Empty<string>() };
             if(keys.Length==0 || root.EnumerateObject().Any(p=>!keys.Contains(p.Name,StringComparer.Ordinal))) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation is "setButton" or "resetButton" or "locateButton") RoomPersonalStore.Id(edit.ButtonId!);
+            if(edit.Operation=="setDesktopSync")
+            {
+                RoomPersonalStore.Id(edit.DeskId!);
+                if(edit.Enabled is null)return EditorFailure(RoomActionStatus.Denied);
+            }
             if(edit.TargetId is not null) RoomPersonalStore.Uuid(edit.TargetId);
             if(edit.Operation is "upsertTarget" or "removeTarget" && edit.TargetId is null) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation=="upsertTarget") RoomPersonalStore.ValidateTarget(EditTarget(edit));
@@ -203,7 +210,17 @@ internal sealed partial class RoomActionAuthority
     private (bool Publish,RoomPersonalEditorReply Reply) PrepareEditor(RoomPersonalState state,VerifiedRoomInstallation installed,RoomSessionSnapshot snapshot,PersonalEdit? edit)
     {
         var changed=false;
-        if(edit?.Operation=="enableNavigation")
+        if(edit?.Operation=="setDesktopSync")
+        {
+            if(!installed.DeskIds.Contains(edit.DeskId!,StringComparer.Ordinal))return(false,EditorFailure(RoomActionStatus.Denied));
+            state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
+            if(room.DesktopSync is not { } old || old.DeskId!=edit.DeskId || old.Enabled!=edit.Enabled)
+            {
+                room.DesktopSync=RoomDesktopSync.Reconcile(room.DesktopSync,edit.DeskId!,edit.Enabled!.Value,null,false);
+                state.Rooms[installed.RoomId]=room;changed=true;
+            }
+        }
+        else if(edit?.Operation=="enableNavigation")
         {
             state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
             foreach(var button in installed.ActionCatalog!.Buttons.Values)
@@ -282,6 +299,7 @@ internal sealed partial class RoomActionAuthority
             .ToDictionary(group=>group.Key,group=>group.Count(),StringComparer.Ordinal);
         var targets=state.Targets.OrderBy(pair=>pair.Value.Name,StringComparer.Ordinal).ThenBy(pair=>pair.Key,StringComparer.Ordinal)
             .Select(pair=>new RoomPersonalEditorTarget(pair.Key,pair.Value.Name,pair.Value.Kind,pair.Value.Target,pair.Value.Arguments,pair.Value.WorkingDirectory,uses.GetValueOrDefault(pair.Key))).ToArray();
-        return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray());
+        return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray(),
+            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count) : null);
     }
 }

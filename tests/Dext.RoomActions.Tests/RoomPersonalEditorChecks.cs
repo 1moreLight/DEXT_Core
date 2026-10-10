@@ -8,6 +8,27 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("desktop sync editor selects one real Desk and disable preserves private slots",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('a',64);
+   f.Store.SetDesktopSync(Room,"home",false,new[]{id});
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));
+   var saved=new RoomPersonalStore(f.PersonalPath).ReadDesktopSync(Room)!;
+   Eq(true,saved.Enabled);Eq("focus",saved.DeskId);Eq(1,saved.Slots.Count);
+   var projected=Editor(Read(f)).DesktopSync!;Eq(true,projected.Enabled);Eq("focus",projected.DeskId);Eq(1,projected.ItemCount);
+   var revision=f.Store.Read().Revision;
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));
+   Eq(revision,f.Store.Read().Revision);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=false}));
+   Eq(false,f.Store.ReadDesktopSync(Room)!.Enabled);Eq(1,f.Store.ReadDesktopSync(Room)!.Slots.Count);
+   Eq(true,Editor(Read(f)).Buttons.Single(b=>b.Id=="open").IsBound);
+  });
+  check("desktop sync editor rejects missing setting or nonexistent Desk without writing",()=>{
+   using var f=new ActionFixture();var before=f.Store.Read().Revision;
+   foreach(var edit in new object[]{new{operation="setDesktopSync",deskId="missing",enabled=true},
+      new{operation="setDesktopSync",deskId="home"},new{operation="setDesktopSync",enabled=true}})
+    Eq("denied",Edit(f,edit).Status);
+   Eq(before,f.Store.Read().Revision);
+  });
   check("applying fresh Room enables navigation without granting application launch",()=>{
    using var f=new ActionFixture();f.Store.Update(s=>{s.Rooms.Clear();s.Targets.Clear();});
    Eq(RoomActionStatus.MissingPermission,f.Actions.AuthorizeCapability(f.View,f.Peer,f.Session,"scene","desk.navigate"));
