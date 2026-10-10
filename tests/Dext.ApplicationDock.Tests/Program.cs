@@ -67,3 +67,4 @@ Check(reserved.ReserveSpace && !reserved.AutoHide,"reserve disables auto-hide");
 var hidden=reserved.WithAutoHide(true);
 Check(hidden.AutoHide && !hidden.ReserveSpace,"auto-hide releases reserve preference");
 Check(reserved.WithAutoHide(false).ReserveSpace,"disabling auto-hide preserves reserve choice");
+TaskProjectionChecks.Run();
