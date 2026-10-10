@@ -3,6 +3,13 @@ using System.Collections;
 using System.IO;
 using System.Reflection;
 
+// Validate a packaged sample with the same manifest/resource verifier used by Core.
+if (args.Length == 2 && args[0] == "--verify-install")
+{
+    var verified = RoomV3Installation.Verify(Path.GetFullPath(args[1]));
+    Console.WriteLine($"PASS Core verified installation: {verified.RoomId}");
+    return;
+}
 var failures = 0;
 var total = 0;
 

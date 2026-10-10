@@ -513,3 +513,4 @@ Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 
 - 现象：P8-013直接用dotnet run --no-restore跑Dext.Input.Tests，NETSDK1004缺project.assets.json；Core构建过不意味着所有独立测试项目都还原过。
 - 处理：dotnet restore tests/Dext.Input.Tests -p:NuGetAudit=false --ignore-failed-sources，随后原检查进入预期缺实现RED，再完成实现运行GREEN。
 - 下次：检查该测试项目自己的obj资产；已有缓存可复用，无需重新安装依赖或把此失败误记为业务回归。
+#291补记：本轮ProtocolTests首次执行同样缺assets；单独restore该项目后生产样包安装校验通过。

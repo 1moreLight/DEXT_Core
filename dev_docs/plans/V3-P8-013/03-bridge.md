@@ -53,3 +53,10 @@ ApplicationDockService已订阅实际主题宿主完成事件，在Dispatcher复
 键盘接线增量：正式DOM的独立taskTargets、Player私有回传、Core投影校验和现有RawInput/KeyDelivery已贯通；Tab/Shift+Tab、Enter/Space与本地菜单返回/Esc已接线。原生任务键不合成转发给作者frame。窄栏焦点滚出后回跳作者、作者重新进入跳过应用两处问题均RED→GREEN修复（ERRORS #293）。
 证据：16项Core键盘、20项鼠标任务、17项原输入、90项Node、七组原DOM和八组取样/键盘DOM通过；完整Release构建通过。独立复核只有上述边界进入问题，已修复。CoreOnly确认旧Core39560继续运行，没有启动配置器；不是新代码实机验收。
 当前03仍开做，2/4=50%。ActionsEnabled=false，真实Player/触控、独立融合样包仍待做；上述旧阶段缺少键盘接线的说明仅为历史。统一人工四步未执行，继续后续工作，不合并master。
+
+### 独立融合样包（开做）
+新建rooms/v3-fusion-lab，API1、独立ID、三个Desk：共享应用区、窄应用区、无Dock。作者HTML只实现上一页/下一页和Desk选择，在config.dextTaskArea声明的空区由官方宿主叠加真实应用；不在作者代码模拟应用列表或绑定路径。保留冻结六样包及本机Room。先检查资源闭包和官方布局，再用正式DOM在后台浏览器查看遮挡、窄区和导航几何。实际Player/OS输入单列，ActionsEnabled暂不变。
+触屏核对：RawInputMsgWindow只注册Mouse/Keyboard且仅处理对应两类RawInputData，未发现WM_TOUCH/WM_POINTER接线。不能据此认定任何设备的兼容鼠标事件一定到达Core，更不能把浏览器tap当原生通过。触屏边沿来源和重复抑制仍待03，不改当前鼠标路径。
+独立样包已写：rooms/v3-fusion-lab，三Desk与config覆盖，作者导航和官方任务区共用同一栏背景。四种真实DOM布局（1440/960×共享/窄区）及无Dock隐藏检查通过；生产RoomV3Installation接受完整安装快照。复现见../../V3_FUSION_LAB.md。未部署/未应用，测试图中的应用数据仅是后台夹具。
+触屏依据补充：Microsoft Raw Input说明WM_INPUT为设备相关原始数据，不能用DOM事件推定Core收到了Mouse注册对应事件（https://learn.microsoft.com/en-us/windows/win32/inputdev/about-raw-input）。本机源码尚无触屏专用边沿入口，保留待做。下一步在真实Player核对任务取样/回执，并补触屏来源与去重，之后才开启应用动作。进度保持2/4=50%。
+样包增量收口：完整Release构建通过；CoreOnly复用旧Core39560，没有启动配置器。独立样包尚未应用。

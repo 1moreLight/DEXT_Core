@@ -1,0 +1,191 @@
+{
+  "version": 3,
+  "apiVersion": 1,
+  "id": "4df04f4e-68d6-4c4c-a52f-013f0510a001",
+  "name": "融合实验室 · V3",
+  "startDesk": "home",
+  "resources": [
+    "assets/dext-sdk.v1.js",
+    "assets/focus.svg",
+    "assets/home.svg",
+    "assets/quiet.svg",
+    "dock/index.html",
+    "dock/main.js",
+    "dock/style.css"
+  ],
+  "transition": {
+    "type": "slide",
+    "durationMs": 350
+  },
+  "dockComponentId": "fusion",
+  "buttons": [
+    {
+      "action": {
+        "type": "desk.previous"
+      },
+      "id": "previous",
+      "scope": "room",
+      "name": "上一页"
+    },
+    {
+      "action": {
+        "type": "desk.next"
+      },
+      "id": "next",
+      "scope": "room",
+      "name": "下一页"
+    },
+    {
+      "action": {
+        "type": "desk.go",
+        "deskId": "home"
+      },
+      "id": "go-home",
+      "scope": "room",
+      "name": "共享"
+    },
+    {
+      "action": {
+        "type": "desk.go",
+        "deskId": "focus"
+      },
+      "id": "go-focus",
+      "scope": "room",
+      "name": "专注"
+    },
+    {
+      "action": {
+        "type": "desk.go",
+        "deskId": "quiet"
+      },
+      "id": "go-quiet",
+      "scope": "room",
+      "name": "留白"
+    }
+  ],
+  "desks": [
+    {
+      "background": {
+        "type": "image",
+        "src": "assets/home.svg"
+      },
+      "icons": [
+        {
+          "id": "next-home",
+          "buttonId": "next",
+          "x": 0,
+          "label": "下一页",
+          "glyph": "→",
+          "y": 5
+        }
+      ],
+      "name": "共享",
+      "id": "home",
+      "components": [
+        "fusion"
+      ]
+    },
+    {
+      "background": {
+        "type": "image",
+        "src": "assets/focus.svg"
+      },
+      "icons": [
+        {
+          "id": "next-focus",
+          "buttonId": "next",
+          "x": 0,
+          "label": "下一页",
+          "glyph": "→",
+          "y": 5
+        }
+      ],
+      "name": "专注",
+      "id": "focus",
+      "componentOverrides": {
+        "fusion": {
+          "dextTaskArea": {
+            "version": 1,
+            "style": {
+              "iconSizeDip": 36,
+              "gapDip": 8,
+              "surface": "#17251f00",
+              "radiusDip": 8,
+              "accent": "#cadf9b"
+            },
+            "rect": {
+              "width": 360,
+              "y": 12,
+              "height": 96,
+              "x": 396
+            }
+          }
+        }
+      },
+      "components": [
+        "fusion"
+      ]
+    },
+    {
+      "background": {
+        "type": "image",
+        "src": "assets/quiet.svg"
+      },
+      "icons": [
+        {
+          "id": "next-quiet",
+          "buttonId": "next",
+          "x": 0,
+          "label": "下一页",
+          "glyph": "→",
+          "y": 5
+        }
+      ],
+      "id": "quiet",
+      "name": "留白",
+      "components": []
+    }
+  ],
+  "components": [
+    {
+      "id": "fusion",
+      "role": "dock",
+      "capabilities": [
+        "desk.read",
+        "desk.navigate"
+      ],
+      "config": {
+        "dextTaskArea": {
+          "version": 1,
+          "style": {
+            "iconSizeDip": 36,
+            "gapDip": 8,
+            "surface": "#101b2400",
+            "radiusDip": 8,
+            "accent": "#b4f2df"
+          },
+          "rect": {
+            "width": 948,
+            "y": 12,
+            "height": 96,
+            "x": 396
+          }
+        }
+      },
+      "buttonIds": [
+        "previous",
+        "next",
+        "go-home",
+        "go-focus",
+        "go-quiet"
+      ],
+      "placement": {
+        "width": 1440,
+        "y": 924,
+        "height": 120,
+        "x": 240
+      },
+      "entry": "dock/index.html"
+    }
+  ]
+}
