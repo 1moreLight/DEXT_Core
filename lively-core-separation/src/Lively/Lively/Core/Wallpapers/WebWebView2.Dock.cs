@@ -108,7 +108,9 @@ namespace Lively.Core.Wallpapers
             SendMessage(new LivelyMessageRoomDockTasks
             {
                 RuntimeGeneration = current.Generation, SessionId = current.Session,
-                Revision = current.Revision, SnapshotJson = snapshotJson
+                Revision = current.Revision, SnapshotJson = snapshotJson,
+                // Completion still validates physical input and the current task projection.
+                ActionsEnabled = NativeDockAvailable()
             });
             return true;
         }

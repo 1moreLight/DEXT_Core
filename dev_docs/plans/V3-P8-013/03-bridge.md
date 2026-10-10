@@ -70,3 +70,5 @@ ApplicationDockService已订阅实际主题宿主完成事件，在Dispatcher复
 
 2026-10-11鼠标回执问题已定向修复（#296）：外层Dock与WebView anchor可见，但Chromium实际input HWND隐藏；页面DOM取样成功不能证明真实显示/点击。同步controller.IsVisible后，最终无临时guardian日志的Release构建、隔离实际Player鼠标DOWN/UP同目标回执、Tab/Enter及官方菜单、隐藏/再次显示、无抢前台通过。恢复时探针补发新Core任务快照，保持暂停撤销操作许可的规则。证据：.build/task-visibility-red.log、task-visibility-final-build.log、task-visibility-final.log。旧“鼠标回执未定位”条目为历史，本次解决该故障。实际Core RawInput/OS动作及触屏仍待做，ActionsEnabled生产仍false，03开做、2/4=50%。CoreOnly复核旧候选39560，未更换用户运行版、未新增配置器。
 本次visibility修复独立静态复核无具体缺陷；核对了版本淘汰、dispose和暂停/恢复相邻路径，review未独立运行实机。按最终Release与探针证据提交增量，03整体继续。
+2026-10-11步骤03操作许可开做：复用NativeDockAvailable给真实Core快照设置ActionsEnabled，仅当前输入路由已连接、窗口就绪可见且未锁屏/全屏时启用；完成动作继续经过现有物理手势和投影校验。先做Release构建与原输入/任务/键盘回归，实际Core应用操作另补证；50%。
+2026-10-11步骤03操作许可增量做完：SendNativeDockTasks现按NativeDockAvailable设置ActionsEnabled；现有500ms刷新会在恢复就绪后补发快照，完成仍检查物理手势/当前窗口/投影。完整Core/Release Player/Watchdog构建通过，20任务、16键盘、17原指针检查通过（.build/task-actions-build.log、task-actions-regression.log）。这三组检查覆盖现有输入关联，不是新增许可门控的真实Core验收。CoreOnly核对仍为旧候选PID39560，没有启动配置器；新代码尚未部署。实际Core启动/激活/最小化和触屏待验证，03仍开做，2/4=50%。
