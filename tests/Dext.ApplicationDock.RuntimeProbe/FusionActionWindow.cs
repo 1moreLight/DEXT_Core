@@ -53,8 +53,15 @@ internal sealed class FusionActionWindow : IDisposable
         if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
         try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
     }
-    public async Task Verify(IntPtr dock,Func<JsonElement?> observe,bool touch=false)
+    public async Task Verify(IntPtr dock,Func<JsonElement?> observe,bool touch=false,bool competingRaw=false)
     {
+        using var raw=competingRaw?TouchPathProbe.RegisterForegroundMouse(Handle):null;
+        if(competingRaw){SetForegroundWindow(Handle);await Wait(()=>GetForegroundWindow()==Handle,"Owned raw-input window could not become foreground");}
+        if(competingRaw){
+            await Click(dock,observe,touch:touch);await Wait(()=>IsIconic(Handle),"Raw-input foreground owner prevented Dock minimize");
+            Console.WriteLine("PASS Dock receives click while foreground app owns raw mouse input");
+            await Task.Delay(650);
+        }
         await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core activates owned test window");
         await Task.Delay(650);
@@ -75,6 +82,7 @@ internal sealed class FusionActionWindow : IDisposable
     [DllImport("user32.dll")]private static extern IntPtr GetAncestor(IntPtr window,uint flags);
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]private static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")]private static extern bool IsIconic(IntPtr window);
     [DllImport("user32.dll",SetLastError=true)]private static extern uint SendInput(uint count,Input[] inputs,int size);
 }

@@ -39,13 +39,14 @@ namespace Lively.Views.WindowMsg
                     this.Close();
                     break;
                 case InputForwardMode.mouse:
-                    //ExInputSink flag makes it work even when not in foreground and async..
+                    // A no-activate Dock still needs edges when the foreground app
+                    // registers raw input. EXINPUTSINK deliberately suppresses them.
                     RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse,
-                        RawInputDeviceFlags.ExInputSink, hwnd);
+                        RawInputDeviceFlags.InputSink, hwnd);
                     break;
                 case InputForwardMode.mousekeyboard:
                     RawInputDevice.RegisterDevice(HidUsageAndPage.Mouse,
-                        RawInputDeviceFlags.ExInputSink, hwnd);
+                        RawInputDeviceFlags.InputSink, hwnd);
                     RawInputDevice.RegisterDevice(HidUsageAndPage.Keyboard,
                         RawInputDeviceFlags.ExInputSink, hwnd);
                     break;

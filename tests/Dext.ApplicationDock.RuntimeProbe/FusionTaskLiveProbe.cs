@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false,bool launch=false,bool touch=false,bool competingRaw=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -50,7 +50,7 @@ internal static class FusionTaskLiveProbe
                             var text=new StringBuilder(4096);GetWindowText(window,text,text.Capacity);
                             var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
                         }
-                        if(target is not null)await target.Verify(window,Observe,touch);
+                        if(target is not null)await target.Verify(window,Observe,touch,competingRaw);
                         else if(launcher is not null)await launcher.Verify(window,Observe);
                         else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
                         return;

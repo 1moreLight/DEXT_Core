@@ -86,7 +86,15 @@ namespace Lively.Player.WebView2
         private void ObserveNativeDockWindow()
         {
             if (IsDisposed || Disposing) return;
-            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible || Bounds != nativeDockSynchronizedBounds) nativeDockVisibilitySynchronized = false;
+            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible || Bounds != nativeDockSynchronizedBounds)
+            {
+                if (nativeDockVisibilitySynchronized)
+                    SendToParent(new LivelyMessageConsole { Category = ConsoleMessageType.log,
+                        Message = "Dock synchronization invalidated previousBounds=" + nativeDockSynchronizedBounds +
+                            " actualBounds=" + Bounds + " previousVisible=" + nativeDockSynchronizedVisible +
+                            " state=" + JsonConvert.SerializeObject(nativeDockWindow.Snapshot()) });
+                nativeDockVisibilitySynchronized = false;
+            }
             PublishNativeDockState();
             _ = SynchronizeNativeDockWindow();
         }

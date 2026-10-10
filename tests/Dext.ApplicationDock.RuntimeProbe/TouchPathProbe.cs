@@ -48,6 +48,15 @@ internal static class TouchPathProbe
         }){IsBackground=true};
         thread.SetApartmentState(ApartmentState.STA);thread.Start();return done.Task;
     }
+    internal static IDisposable RegisterForegroundMouse(IntPtr owner)
+    {
+        if(!RegisterRawInputDevices(new[]{new RawDevice{Page=1,Usage=2,Target=owner}},1,(uint)Marshal.SizeOf<RawDevice>()))throw new System.ComponentModel.Win32Exception();
+        return new RawClaim();
+    }
+    private sealed class RawClaim:IDisposable
+    {
+        public void Dispose(){if(!RegisterRawInputDevices(new[]{new RawDevice{Page=1,Usage=2,Flags=1}},1,(uint)Marshal.SizeOf<RawDevice>()))throw new System.ComponentModel.Win32Exception();}
+    }
     internal static Task Tap(IntPtr ownedRoot,int x,int y,Action<string> mark=null)=>Task.Run(()=>{
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=ownedRoot||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Touch destination changed; no contact sent");

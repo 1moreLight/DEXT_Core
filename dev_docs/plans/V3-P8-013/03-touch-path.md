@@ -26,3 +26,5 @@
 - [Windows Touch兼容鼠标事件说明](https://learn.microsoft.com/en-us/windows/win32/wintouch/troubleshooting-applications)
 
 首次探针注入参数返回87；调整为pointerId=0并提供有效接触矩形后通过，不能将先前参数失败解释为系统不支持触控。曾有一次执行命令自动审批超时而未执行，按工具允许重试一次成功，没有绕过拒绝。
+
+2026-10-11：鼠标EXINPUTSINK改INPUTSINK后，实际前台RawInput注册窗口的Dock最小化已通过；后续激活被工作区反馈循环打断。触控同例仍未收到RawInput边沿，不能将鼠标修正计为触控接通。
