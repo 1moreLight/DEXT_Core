@@ -47,3 +47,10 @@ Core状态变化日志证明右键发生时lease/available/placement均保持tru
 完整Release诊断构建通过（.build/task-navigation-dispatch-build.log），按流程start CoreOnly；同一导航场景Core40724/Player45408重现下一页通过、上一页失败。Player记录第二次DOWN arm=True、ready、forward-owned，随后completion-await-dispatch，约1.5秒超时并触发已有失败退出路径。证明转发目标仍属当前WebView，不是IsOwnedChild提前拒绝，也不是取样释放/回传后Core拒绝。日志20261011_041900.txt。
 
 下一步只追踪作者帧派发回执生成与接收（guardian gate、frame identity及消息接收），不要扩大权限或将失败超时当成功；此前“取样缺失”的边界已收窄。诊断仅记录阶段/编号，无token、文件路径或作者数据；不更改点击和触摸语义。第2项仍开做，2/4=50%；原运行版与夹具恢复。
+
+## 2026-10-11 双向作者导航修复通过
+
+作者帧诊断定位：第二次物理pointerdown未授权时被preventDefault，Chromium抑制这一接触的兼容mousedown；随后已准备好的转发只有pointerdown，没有mousedown派发回执，1.5秒超时。诊断中当前帧/gesture有效，第一轮postedEdges=2、第二轮不增加，事件历史明确显示这一顺序。原始证据20261011_042206.txt及04:24:05错误记录。
+修复仅针对作者帧中鼠标pointerdown：未授权时仍stopImmediatePropagation阻止作者回调，但不preventDefault；独立mousedown门控仍阻断默认操作，触摸pointerdown保持preventDefault。没有放宽Core手势或改变触控协议。
+真实Core30708/Player48244同一fusion-navigation-live完整通过：下一页进入focus一次、任务区缩窄并溢出、上一页回home一次，全程未激活应用，退出0并恢复原运行版/偏好。30项guardian检查通过，含鼠标未授权事件不触发作者、触摸仍取消、兼容mousedown仍阻断；完整Release通过。根因确认后移除临时事件计数与超时读取，再次30项及最终Release通过（task-author-pointer-tests.log、task-author-pointer-final-build.log）。候选页面标题观察仍仅测试用。
+第2项仍开做：双向导航完成，剩余原生横向滚动及窄区应用点击。整包2/4=50%，统一人工四步保持。

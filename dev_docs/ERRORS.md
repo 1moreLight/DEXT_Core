@@ -425,3 +425,5 @@
 | #308 | 页面displayReady先于任务栏接管完成，启动点击与工作区移动竞争 | [backend](errors/backend.md) |
 
 | #309 | 重复Dock可见性通知无条件suspend/refresh，按下后按钮短暂禁用，右键菜单丢失 | [renderer](errors/renderer.md) |
+
+| #310 | 未授权鼠标pointerdown的preventDefault抑制兼容mousedown，作者Dock转发回执超时 | [renderer](errors/renderer.md) |

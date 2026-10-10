@@ -17,6 +17,7 @@
     const sample=new root.Event('dext-guardian'),trusted=describe(sample,'isTrusted')?.get;
     function accessor(proto,name){for(let p=proto;p;p=getProto(p)){const value=describe(p,name);if(value?.get)return value.get;}return null;}
     const key=accessor(root.KeyboardEvent?.prototype||eventProto,'key'),button=accessor(root.MouseEvent?.prototype||eventProto,'button');
+    const pointerType=accessor(root.PointerEvent?.prototype,'pointerType');
     if(typeof add!=='function'||typeof remove!=='function'||!type||!phase||!currentTarget||!path||!trusted||!key||!button)return false;
     const document=root.document,ownerDocument=describe(root.Node?.prototype,'ownerDocument')?.get;
     const windowDocument=accessor(root.Window?.prototype,'document')||describe(root,'document')?.get;
@@ -80,7 +81,13 @@
             dockClick={time,targets:entries};
         }
       }
-      if(!allowed){apply(prevent,event,[]);apply(stop,event,[]);}
+      if(!allowed){
+        // Cancelling a mouse pointerdown suppresses Chromium's compatibility
+        // mousedown for the whole physical contact, including the armed replay.
+        // Stop author delivery here; the separate mouse gate cancels defaults.
+        if(!(kind==='pointerdown'&&pointerType&&apply(pointerType,event,[])==='mouse'))apply(prevent,event,[]);
+        apply(stop,event,[]);
+      }
       return allowed;
     }
     const lookup=(map,value)=>apply(mapGet,map,[value]),has=(map,value)=>apply(mapHas,map,[value]);

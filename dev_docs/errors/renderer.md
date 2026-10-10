@@ -713,3 +713,10 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 根因：main.js的dextNativeDockVisibility收到相同visible状态仍调用tasks.suspend/refresh，重建几何并禁用输入，等待下一任务快照才恢复。
 修复：先验证当前作用域，再在paused与目标状态相同时直接返回；真实隐藏/恢复继续取消/刷新。新增main入口回归先红后绿，18项入口/controller检查通过。实际Core47612/Player22924完成固定/取消固定、菜单收起，原运行版恢复。
 下次：对重复通知检查幂等性，结合Core门控和DOM事件记录定位，不以重试点击/强制enabled掩盖失效。
+
+## #310 作者Dock跨页后鼠标派发回执超时（2026-10-11）
+
+现象：下一页成功，上一页DOWN arm/prepare/forward-owned均成功，却1.5秒没有作者帧派发回执，Player退出。
+证据：帧/当前gesture有效；第二次只有pointerdown没有兼容mousedown，postedEdges仍为第一次2条。原始未授权pointerdown被preventDefault后，Chromium抑制该接触的兼容鼠标事件，影响后续转发。
+修复：捕获原生PointerEvent.pointerType getter，仅未授权鼠标pointerdown不preventDefault，仍stopImmediatePropagation；未授权mousedown继续preventDefault/stop，触摸不变。不要延长手势期限或伪造回执。
+验证：Core30708/Player48244真实双向导航成功，无应用误触，窄栏缩小/溢出；30项guardian检查、最终Release通过。临时事件计数已删除。物理触屏及窄栏滚动仍独立验收。
