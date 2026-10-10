@@ -696,3 +696,10 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 - 修复：保持同一请求region和snapshot revision，跟随serial至最新render，必须最新发布成功且inputReady才返回true。更换region/revision、暂停/销毁或最新几何拒绝仍失败，不绕过#290的确认条件。
 - 三项回归先RED后GREEN：同区域替代成功、最新几何拒绝、请求区域替换。最终93项Node和17项原输入通过，独立diff无具体回归；完整Release成功。真实Player显示、Tab/Enter取样及私有完成打开菜单通过，但Core消息为夹具，不能记为真实RawInput或应用操作验收。
 - 剩余：鼠标投递等待Native input dispatch not observed超时，Player按既有失败路径关闭；错误现已可见。没有据此放宽输入或启用新Core动作，继续单独定位。
+
+## #299 融合任务真实OS点击补证（2026-10-11，整体未解决）
+新增fusion-actions-live，专用WinForms窗口Dext Fusion Action Probe；Core枚举真实窗口、正式任务DOM识别标题并给中心坐标，SendInput真实OS DOWN/UP经RawInput进入Core。仅点击本进程窗口任务，命中窗口归属/物理键空闲/目标未移位检查后发送，finally恢复偏好/checkpoint/原Room状态/光标并关闭测试窗。夹具消息探针此前没有覆盖此链。
+发现1：登记viewport Y1260，实测Y1320，宽高/DPI相同；RawInput inside=true但CheckNativeViewport清掉几何，未建立手势。Player窗口因工作区变化平移、DOM未resize；Form1.NativeDock现比较已同步Bounds，平移时标未就绪并调用正式refreshGeometry。修正后临时日志观察到鼠标gesture Sequence1，GeometryVersion4，实测Y1320，证明此次按下原点匹配。
+发现2：该gesture的SampleMouse=False，因此Player不会回传任务视觉命中。dom-host一直发布eventSamples:false。现仅dockView且官方任务占用区非null时启用，移除时恢复false；桌面/无任务区保持原配置。新增测试先RED（false!==true），修正后68项dom-host通过。
+两处修正后完整Release构建成功（.build/task-actions-final-build.log），但最终无诊断代码的fusion-actions-live仍失败于激活专用窗口（.build/fusion-actions-live.log）。不能称为“任务点击已通”。下一步重看取样回执/物理完成/动作回调，不再以DOM存在或fixtures通过代替实际OS动作。普通作者按钮的融合取样路径与触屏仍须验收。
+临时TASKTRACE/viewport-trace代码已撤回；候选仍独立开发目录v3-task-live-20261011，原运行版已恢复14912（enabled=true/11组/error空/Room inactive），没有新增配置器。OS测试注入可被Core RawInput看到（down/up inside=true），不是“SendInput未产生输入”的假设。

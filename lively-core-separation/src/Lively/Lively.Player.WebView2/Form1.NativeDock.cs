@@ -17,6 +17,7 @@ namespace Lively.Player.WebView2
         private bool nativeDockRendererReady, nativeDockInputConnected;
         private bool nativeDockVisibilitySynchronized, nativeDockSynchronizedVisible;
         private long nativeDockStateVersion;
+        private Rectangle nativeDockSynchronizedBounds;
         private readonly SemaphoreSlim nativeDockStateGate = new SemaphoreSlim(1, 1);
 
         private void InitializeNativeDockWindow()
@@ -85,7 +86,7 @@ namespace Lively.Player.WebView2
         private void ObserveNativeDockWindow()
         {
             if (IsDisposed || Disposing) return;
-            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible) nativeDockVisibilitySynchronized = false;
+            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible || Bounds != nativeDockSynchronizedBounds) nativeDockVisibilitySynchronized = false;
             PublishNativeDockState();
             _ = SynchronizeNativeDockWindow();
         }
@@ -105,6 +106,7 @@ namespace Lively.Player.WebView2
                         DextDockWindowHost.DockMode.Autohide, startArgs.DextDockHeight);
                 if (!nativeDockRendererReady || roomRuntime.Generation <= 0) return;
                 var visible = nativeDockWindow.IsVisible && enabled && roomRuntime.DockCanPresent;
+                var bounds = Bounds;
                 var identity = roomRuntime.Replay();
                 var snapshot = identity.Count == 0 ? null : identity[identity.Count - 1];
                 if ((string)snapshot?["type"] != "dext:v3-session") return;
@@ -118,6 +120,12 @@ namespace Lively.Player.WebView2
                 if (IsDisposed || Disposing || version != nativeDockStateVersion) return;
                 await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockVisibility&&this.dextNativeDockVisibility(" + value.ToString(Formatting.None) + ")");
                 if (version != nativeDockStateVersion) return;
+                // A work-area change can move the native HWND without resizing the
+                // DOM. Republish geometry so Core does not retain the old origin.
+                if (visible && bounds != nativeDockSynchronizedBounds)
+                    await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockRefresh&&this.dextNativeDockRefresh()");
+                if (version != nativeDockStateVersion) return;
+                nativeDockSynchronizedBounds = bounds;
                 // Native show/hide of the Form does not restore the WebView2
                 // controller visibility cached while its parent was hidden.
                 // Publish ready only after the actual browser can receive input.

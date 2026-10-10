@@ -45,3 +45,6 @@
 setInterval(()=>{const t=globalThis.dextRuntimeDiagnostics?.().taskArea;document.title='DEXT_FUSION_PROBE:'+JSON.stringify({phase:t?.phase||'waiting',enabled:t?.inputEnabled===true,count:t?.snapshot?.items?.length||0});},250);
 ```
 探针读取RPC确定的Player PID所属窗口标题，仅报告阶段/可操作性/条目数，恢复鼠标；不发送应用点击。实测11项、displayReady、enabled通过。必须另做真实OS启动/切换/最小化和触屏。退出仍有#298进程残留问题，不能将探针成功当退出验收通过。
+
+### 真实OS鼠标用例（当前失败门槛）
+模式`fusion-actions-live EXPECTED_CORE_DIRECTORY FIXTURE_ID`创建专用测试窗口，尝试激活/最小化/恢复；当前第一项激活尚未通过。正式版不含观察器。开发副本标题观察器额外输出`target`：从taskArea.snapshot.items按windows.title精确匹配`Dext Fusion Action Probe`，在`.dext-task-item`中按dataset.itemId找对应按钮，用getBoundingClientRect中心输出`{x,y,width:innerWidth,height:innerHeight}`；没有则null。测试依据比例换算原生坐标并检查当前Dock根窗口归属、鼠标键未按下、目标没移动。源码：FusionActionWindow.cs / FusionTaskLiveProbe.cs。不能把就绪探针成功算OS操作成功。

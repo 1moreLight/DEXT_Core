@@ -7,7 +7,7 @@ using System.Text.Json;
 // The title observer is installed only in an isolated development candidate.
 internal static class FusionTaskLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client)
+    public static async Task Run(DesktopService.DesktopServiceClient client, bool actions=false)
     {
         JsonElement App()=>JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
         JsonElement Theme()=>JsonDocument.Parse(client.GetRoomDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.Clone();
@@ -17,6 +17,7 @@ internal static class FusionTaskLiveProbe
         var beforeTheme=Theme().GetProperty("preferences").Clone();
         if(!GetCursorPos(out var cursor))throw new Exception("Cannot preserve cursor");
         var foreground=GetForegroundWindow();
+        using var target=actions?await FusionActionWindow.Create():null;
         string last="waiting";
         try
         {
@@ -44,7 +45,11 @@ internal static class FusionTaskLiveProbe
                     {
                         if(GetForegroundWindow()!=foreground)throw new Exception("Probe unexpectedly changed foreground");
                         Console.WriteLine("PASS real Core task projection reaches actual Player, geometry ready and actions enabled; items="+value.GetProperty("count")+", PID="+pid);
-                        Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
+                        if(target is not null)await target.Verify(window,()=>{
+                            var text=new StringBuilder(4096);GetWindowText(window,text,text.Capacity);
+                            var title=text.ToString();return title.StartsWith("DEXT_FUSION_PROBE:")?JsonDocument.Parse(title[18..]).RootElement.Clone():(JsonElement?)null;
+                        });
+                        else Console.WriteLine("No application action or touch was simulated; those remain separate acceptance.");
                         return;
                     }
                 }
@@ -54,6 +59,8 @@ internal static class FusionTaskLiveProbe
         }
         finally
         {
+            target?.Dispose();
+            if(actions)SetForegroundWindow(foreground);
             SetCursorPos(cursor.X,cursor.Y);
             try { Settings(new{enabled=beforeTheme.GetProperty("enabled").GetBoolean(),mode=beforeTheme.GetProperty("mode").GetString(),heightDip=beforeTheme.GetProperty("heightDip").GetInt32()}); }
             finally {Enable(beforeApp);}
@@ -68,6 +75,7 @@ internal static class FusionTaskLiveProbe
     [DllImport("user32.dll")]private static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")]private static extern bool SetCursorPos(int x,int y);
     [DllImport("user32.dll")]private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]private static extern bool SetForegroundWindow(IntPtr window);
     [StructLayout(LayoutKind.Sequential)]private struct Point{public int X,Y;}
     [StructLayout(LayoutKind.Sequential)]private struct Rect{public int Left,Top,Right,Bottom;}
 }

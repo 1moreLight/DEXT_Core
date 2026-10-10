@@ -223,7 +223,7 @@
           syncAnimation();reconcile();const state=model.readDiagnostics(),entries=buttonGeometry();let published;
           for(let attempt=0;attempt<8;attempt++){
             if(disposed||ownEpoch!==epoch)return false;
-            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries,eventSamples:false},ownScope);
+            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries,eventSamples:dockView&&taskAreaOcclusion!==null},ownScope);
             if(published.status!=='staleInput'||attempt===7)break;await yieldRetry();
           }
           if(disposed||ownEpoch!==epoch)return false;inputReady=published.status==='accepted';if(inputReady)inputEntries=copy(entries);if(!inputReady)diagnose('geometryUnavailable');return inputReady;

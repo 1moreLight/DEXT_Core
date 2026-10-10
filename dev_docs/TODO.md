@@ -2132,3 +2132,5 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。
 2026-10-11 #298根因与修复开做：原生/SOS栈确认Finalizer→SystemEvents.Shutdown→Join，同时SystemEvents→WindowsFormsSynchronizationContext.Send→Control.Invoke等已退出UI；对应dotnet/winforms#9721。在App构造最早建立WPF DispatcherSynchronizationContext，阻止托盘WinForms抢先安装同步上下文；构建后做真实融合开关与退出复测。
 2026-10-11 #298退出修复做完：原生+SOS栈定位SystemEvents→WinForms Control.Invoke等待已停止UI，App启动前建立WPF同步上下文；完整Release与真实融合生命周期/退出3轮通过，无强杀新Core。原候选5924已恢复且RPC/空Room复核正常。实际OS应用操作及触屏未验收，03仍开做、2/4=50%；详见errors/backend #298和.build/exit-context-live.log。
+2026-10-11步骤03真实OS动作开做：隔离测试进程创建不抢前台的专用窗口；正式Core枚举后仅点击其官方任务按钮，验证激活/最小化/再次恢复。按钮坐标来自开发副本观察器，点击前核对当前命中属于Dock；不对用户应用发动作，结束关闭测试窗并恢复前台/光标/偏好。
+2026-10-11真实OS任务动作增量：专用窗口探针已建立并实际运行，暴露旧原点与eventSamples关闭；Player平移刷新和仅官方任务区启用取样已改，68项宿主回归、完整Release通过。实际激活仍未通过，不标完成；后续追踪取样/完成回调。临时诊断已撤回，原候选14912恢复正常。#299详述证据，03继续开做、2/4=50%。

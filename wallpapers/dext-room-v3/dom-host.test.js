@@ -629,3 +629,16 @@ test('replacement task region never acknowledges the retired region',async()=>{
   assert.equal(await next,true);assert.equal(await old,false);
  }finally{f.host.dispose();}
 });
+
+test('official task region enables event samples and removing it restores direct author input',async()=>{
+ const f=fixture({viewKind:'dock'});
+ try{
+  await f.host.ready;
+  const latest=()=>f.calls.filter(v=>v.method==='geometry').at(-1).params.eventSamples;
+  assert.equal(latest(),false);
+  await f.host.setTaskAreaOcclusion({x:300,y:100,width:1000,height:800});
+  assert.equal(latest(),true);
+  await f.host.refreshGeometry();assert.equal(latest(),true);
+  await f.host.setTaskAreaOcclusion(null);assert.equal(latest(),false);
+ }finally{f.host.dispose();}
+});
