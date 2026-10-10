@@ -380,3 +380,5 @@
 | #273 | partial类静态字段跨文件初始化次序不可靠，不能依赖另一分册字段先完成 | [backend](errors/backend.md) |
 | #274 | 异步保存期间计数改变，旧回执不能宣称最新值已保存，成功后须补写最新值 | [frontend](errors/frontend.md) |
 | #275 | Dock切换必须等待任务栏租约与恢复确认，Tick正常返回不代表旧看护已释放 | [backend](errors/backend.md) |
+| #276 | 水平 StackPanel 向 ScrollViewer 提供无限宽度，应用多时被裁切而无滚动条 | [frontend](errors/frontend.md) |
+| #277 | 探针需读 camelCase wire 且不能把启动暂停当作导航失败 | [toolchain](errors/toolchain.md) |

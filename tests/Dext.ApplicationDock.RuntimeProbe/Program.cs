@@ -17,6 +17,35 @@ if (args[0] == "shutdown")
     catch (Grpc.Core.RpcException) { /* Pipe can close during normal shutdown; caller verifies exit. */ }
     return;
 }
+if (args[0] == "navigation-live")
+{
+    if(args.Length!=3)throw new ArgumentException("navigation-live requires fixture Room ID");
+    JsonElement Navigation() => JsonDocument.Parse(client.GetApplicationDockStatus(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).ReplyJson).RootElement.GetProperty("navigation").Clone();
+    if(Navigation().ValueKind!=JsonValueKind.Null)throw new Exception("Expected no Room navigation before fixture");
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:async()=>{
+        var until=DateTime.UtcNow.AddSeconds(15);
+        while(DateTime.UtcNow<until) {
+            var value=Navigation();
+            var session=client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5));
+            if(value.ValueKind==JsonValueKind.Object) {
+                if(value.GetProperty("deskIds").GetArrayLength()!=3 || value.GetProperty("sessionId").GetString()!=session.SessionId)
+                    throw new Exception("Navigation does not match Core session");
+                using var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(identity.BaseDirectory,"wallpapers/dext-room-v3/content/room.json")));
+                var name=manifest.RootElement.GetProperty("desks").EnumerateArray().Single(d=>d.GetProperty("id").GetString()==session.CurrentDeskId).GetProperty("name").GetString();
+                if(value.GetProperty("currentName").GetString()!=name)throw new Exception("Navigation name mismatches installed Desk");
+                var shouldNavigate=session.Lifecycle.Stage=="desktop" && !session.Lifecycle.Locked;
+                if(value.GetProperty("canNavigate").GetBoolean()!=shouldNavigate)throw new Exception("Navigation lifecycle differs from Core");
+                Console.WriteLine("PASS real Core navigation session, three Desks, installed current name and lifecycle="+session.Lifecycle.Stage+", paused="+session.Lifecycle.PlaybackPaused);
+                return;
+            }
+            await Task.Delay(200);
+        }
+        throw new Exception("Navigation did not become ready: " + Navigation() + " / " + client.GetRoomSession(new Empty()));
+    });
+    if(Navigation().ValueKind!=JsonValueKind.Null)throw new Exception("Closed Room retained navigation");
+    Console.WriteLine("PASS closing Room clears navigation; physical clicks remain manual acceptance");
+    return;
+}
 if (args[0] == "dock-owner-live") { if(args.Length!=3)throw new ArgumentException("dock-owner-live requires fixture Room ID"); await StorageGrantLiveProbe.Run(client,channel,identity,args[2],dockOwnership:true); return; }
 if (args[0] == "grants-live") { if(args.Length!=3)throw new ArgumentException("grants-live requires fixture Room ID"); await StorageGrantLiveProbe.Run(client,channel,identity,args[2]); return; }
 if (args[0] == "grants-status")

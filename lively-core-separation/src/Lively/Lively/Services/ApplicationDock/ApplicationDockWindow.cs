@@ -21,7 +21,7 @@ internal sealed partial class ApplicationDockWindow : Window
     private readonly TextBlock message = new() { Foreground = Brushes.LightSalmon, FontSize = 11, MaxWidth = 460, TextWrapping = TextWrapping.Wrap };
     private string signature;
 
-    public ApplicationDockWindow(Action<DockGroup, DockTask> click, Action<DockGroup> pin, Func<string, byte[]> icon)
+    public ApplicationDockWindow(Action<DockGroup, DockTask> click, Action<DockGroup> pin, Func<string, byte[]> icon, Action<Guid, int> navigate = null)
     {
         this.click = click; this.pin = pin; this.icon = icon;
         Title = "Dext 系统应用 Dock";
@@ -34,11 +34,18 @@ internal sealed partial class ApplicationDockWindow : Window
         Topmost = true;
         SizeToContent = SizeToContent.WidthAndHeight;
         var stack = new StackPanel();
-        stack.Children.Add(new ScrollViewer
+        var row = new Grid();
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.Children.Add(CreateNavigation(navigate));
+        var applicationScroll = new ScrollViewer
         {
             Content = strip, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled
-        });
+        };
+        Grid.SetColumn(applicationScroll, 1);
+        row.Children.Add(applicationScroll);
+        stack.Children.Add(row);
         stack.Children.Add(message);
         Content = new Border
         {

@@ -21,7 +21,7 @@ internal static class DockButtonSnapshotTests
                 var idle = DockModel.Group(new[] { pin }, Array.Empty<DockTask>());
                 window.Update(idle, 0, null);
                 var root = (StackPanel)((Border)window.Content).Child;
-                var strip = (StackPanel)((ScrollViewer)root.Children[0]).Content;
+                var strip = (StackPanel)((ScrollViewer)((Panel)root.Children[0]).Children[1]).Content;
                 // Retain the same button as a press or open preview does in the real window.
                 var retainedButton = strip.Children.OfType<Button>().Single();
                 var task = new DockTask(123, 9, "New window", pin.Target);

@@ -177,3 +177,6 @@ rename_room返回display_path；原生作者rename更新name并保持UUID/资源
 
 ## #274 观测台尾次计数遗漏（2026-10-10）
 旧set在途时后续save因savePending退出；旧set成功后needsSave=true却显示已保存且未调度补写。改为成功后仅在值相同显示已保存，否则排一次最新值写入；失败不循环。延迟传输先RED再GREEN，下一文档读回最新值。
+
+## #276 原生 Dock 导航旁的应用滚动区（2026-10-10）
+新增横向导航后，StackPanel 对 ScrollViewer 无限宽度测量，图标超过屏幕时外层裁切且无滚动。改用 Auto 导航列与星号应用列 Grid；20 项应用有限宽度 WPF Measure/Arrange 先失败后通过。原应用点击与预览未改。

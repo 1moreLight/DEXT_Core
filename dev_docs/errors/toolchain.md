@@ -493,3 +493,6 @@ v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/targe
 ## #270 PowerShell下rg路径通配符不由shell展开
 - 现象：把RoomSessionRuntimeCoordinator*.cs作为位置路径传给rg，Windows报路径语法错误；猜测RoomDockService.cs文件名也会失败。
 - 修正：先rg --files确认路径，然后rg实际目录 -g 'RoomSessionRuntimeCoordinator*.cs'。检查每条命令退出码，不能因同批其他命令成功忽略失败。
+
+## #277 导航探针条件（2026-10-10）
+ApplicationDockResponse 使用 camelCase；探针用 C# 属性大写导致找不到键。修正后仍要求 canNavigate=true，样包处于 starting+paused 则合理禁用，不能强迫为可点。正式检查改为与 Core lifecycle/安装名称/会话一致，临时状态恢复通过；没有把此证据冒称物理点击通过。

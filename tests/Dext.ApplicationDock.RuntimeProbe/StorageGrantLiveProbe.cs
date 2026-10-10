@@ -6,7 +6,7 @@ using System.Text.Json;
 
 internal static class StorageGrantLiveProbe
 {
-    public static async Task Run(DesktopService.DesktopServiceClient client, NamedPipeChannel channel, GetCoreStatsResponse identity, string expectedRoom, bool dockOwnership = false)
+    public static async Task Run(DesktopService.DesktopServiceClient client, NamedPipeChannel channel, GetCoreStatsResponse identity, string expectedRoom, bool dockOwnership = false, Func<Task>? runtimeCheck = null)
     {
         var host=Path.Combine(identity.BaseDirectory,"wallpapers","dext-room-v3");
         using var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(host,"content","room.json")));
@@ -28,6 +28,7 @@ internal static class StorageGrantLiveProbe
         {
             client.SetWallpaper(new(){LivelyInfoPath=host},deadline:DateTime.UtcNow.AddSeconds(5));
             await Wait(()=>{var s=Session();return s.Active && s.RoomId==expectedRoom && s.PlayerPid>0;});
+            if(runtimeCheck is not null) { await runtimeCheck(); return; }
             if(dockOwnership) { await DockOwnershipLiveProbe.Run(client); return; }
             if(Allowed("storage.read")||Allowed("storage.write"))throw new Exception("New fixture unexpectedly pre-authorized.");
             Edit(true,"storage.read","storage.write");

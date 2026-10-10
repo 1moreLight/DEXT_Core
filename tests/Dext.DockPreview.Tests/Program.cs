@@ -13,3 +13,4 @@ Check(DockPreviewGeometry.PageSize(320) == 1, "small desktop still has a reachab
 Check(DockPreviewGeometry.ClampPage(2,2,6) == 0, "window closure clamps stale page");
 Check(DockPreviewGeometry.ClampPage(9,14,6) == 2, "last page remains reachable");
 DockButtonSnapshotTests.Run();
+DockNavigationTests.Run();

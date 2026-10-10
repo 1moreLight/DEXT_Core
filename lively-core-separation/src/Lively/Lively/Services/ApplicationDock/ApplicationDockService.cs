@@ -19,16 +19,18 @@ internal sealed class ApplicationDockService : IDisposable
     private readonly AppCatalogService catalog = new();
     private readonly Dext.Core.Rooms.TaskbarController taskbar;
     private readonly DockHostOwnership ownership;
+    private readonly RoomSessionRuntimeCoordinator rooms;
     private DockPreferences preferences;
     private IReadOnlyList<DockGroup> groups = Array.Empty<DockGroup>();
     private ApplicationDockWindow window;
     private bool updating, disposed, started, loadFailed;
     private string error;
 
-    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership)
+    public ApplicationDockService(Dext.Core.Rooms.TaskbarController taskbar, DockHostOwnership ownership, RoomSessionRuntimeCoordinator rooms)
     {
         this.taskbar = taskbar;
         this.ownership = ownership;
+        this.rooms = rooms;
         try { preferences = DockPreferenceFile.Load(path); }
         catch (Exception ex)
         {
@@ -56,6 +58,7 @@ internal sealed class ApplicationDockService : IDisposable
         taskbar = taskbar.Status(),
         runtime = new { owner = ownership.Owner.ToString().ToLowerInvariant(), visible = window?.IsVisible == true,
             waiting = preferences.Enabled && ownership.Owner == DockHost.Theme },
+        navigation = rooms.ReadApplicationDockNavigation(),
         pins = preferences.Pins,
         groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
         error
@@ -127,10 +130,23 @@ internal sealed class ApplicationDockService : IDisposable
             ownership.Release(DockHost.Application);
             return;
         }
-        window ??= new ApplicationDockWindow(Click, TogglePin, Icon);
+        window ??= new ApplicationDockWindow(Click, TogglePin, Icon, Navigate);
+        window.UpdateNavigation(rooms.ReadApplicationDockNavigation());
         window.Update(groups, DockWindows.Foreground, error);
         if (DockWindows.IsFullscreen()) window.Suspend();
         else if (!window.IsVisible) window.Show();
+    }
+
+    private void Navigate(Guid session, int direction)
+    {
+        if (disposed || !preferences.Enabled || window?.IsVisible != true ||
+            ownership.Owner != DockHost.Application || DockWindows.IsFullscreen()) return;
+        try
+        {
+            error = rooms.NavigateApplicationDock(session, direction) ? null : "当前无法切换 Desk，请稍后重试。";
+        }
+        catch (Exception ex) { error = "切换 Desk 失败：" + ex.Message; }
+        Render();
     }
 
     private byte[] Icon(string target)
