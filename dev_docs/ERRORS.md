@@ -386,3 +386,4 @@
 | #279 | 任务栏工作区变化会误判最大化为全屏；恢复任务栏后唤出区须仍在物理底边 | [frontend](errors/frontend.md) |
 | #280 | 原生屏幕查询异常须同步使AppBar就绪失效，不能仅显示错误并保留旧Ready | [backend](errors/backend.md) |
 | #281 | 切换候选时start脚本无条件新开配置器导致多窗口/身份冲突；后台验证必须CoreOnly | [toolchain](errors/toolchain.md) |
+| #282 | 试验台示例字段漂移让正式组件读不到时间/内存/音量；预置JSON与运行样本须共用Core形状 | [frontend](errors/frontend.md) |

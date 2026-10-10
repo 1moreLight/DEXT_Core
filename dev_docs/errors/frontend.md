@@ -183,3 +183,6 @@ rename_room返回display_path；原生作者rename更新name并保持UUID/资源
 
 ## #279 自动隐藏的屏幕边界（2026-10-10）
 AppDock 原矩形满屏检查会把隐藏任务栏后扩展的普通最大化窗口当全屏，若因此撤销租约又会反复恢复/隐藏。保留有标题栏的 IsZoomed 窗口，仍阻止无边框全屏；任务栏就绪与可见性分开，锁屏仍撤回。唤出区用主屏底边，摆放仍用工作区；避免手动恢复任务栏后用户找不到底边。策略29项/任务栏19项/WPF18项通过。真实前台B站全屏，最终探针确认隐藏及设置持久化；可见/边缘/自动交接延期，不改变全屏窗口。
+## #282 试验台内置数据与Core字段漂移（2026-10-10）
+时间JSON缺utc；硬件示例只给ramPercent而无totalMemoryMB/availableMemoryMB；音量JSON使用volume而正式只读用level；媒体示例用album/positionMilliseconds而正式为albumTitle/positionMs。作者按正式字段编写会在预览看到缺数据或误学不存在字段。
+四源样本统一为workbench-samples.json，配置器JSON编辑器与adapter共用；运行时仅覆盖当前时钟和滑块值。实际adapter VM先失败再通过；正式DOM/SDK真实浏览器星轨组件显示时钟/16GB内存/音量/媒体，缺失拒绝和恢复通过。Core数据契约未改。

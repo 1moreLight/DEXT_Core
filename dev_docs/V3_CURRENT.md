@@ -63,3 +63,8 @@
 
 ## 配置器重复启动修复（OPS-005）
 当前候选的scripts/start.ps1已补同路径复用和其他版本报告；后台使用-CoreOnly。现场8进程清到1，保留30336/当前Core42912。之后的自动Core验证不要再启动配置器。二进制仍224dce5，脚本补丁来源见release-inventory。
+
+## P7-002预览增量
+配置器已更新为试验台四数据样本修复版，Core仍224dce5。当前唯一配置器40096，脚本仍OPS-005；组件代码来源分开记入候选inventory。
+两项adapter VM、正式DOM/SDK真实headless星轨组件的读数/缩放/缺失拒绝恢复/Desk与暂停四组通过。资源传输为fixture，原P7真实Tauri与人工门槛保留。
+第一次冷启动三frame未ready，未改产品的诊断重跑通过，尚无根因，不宣称初始化问题修复。下一项由ROADMAP继续P10-004。

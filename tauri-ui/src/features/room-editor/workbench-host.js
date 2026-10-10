@@ -24,11 +24,12 @@
     if(status!=='available')return {status};
     if(Object.hasOwn(settings.samples||{},capability))return{status:'available',value:copy(settings.samples[capability])};
     const now=Date.now(),iso=new Date(now).toISOString();
+    const defaults=globalThis.DextWorkbenchSamples;
     const values={
-      'time.read':{unixMilliseconds:now,utc:iso,local:iso,timeZone:'UTC',offsetMinutes:0},
-      'hardware.read':{cpuPercent:settings.cpuPercent,gpuPercent:settings.gpuPercent,ramPercent:48,memoryPercent:48,cpuTemperature:52,gpuTemperature:47},
-      'media.read':{title:'试验台示例歌曲',artist:'Dext',album:'预览',isPlaying:true,playbackStatus:'playing',positionMilliseconds:30000,durationMilliseconds:180000},
-      'audio.read':{volume:settings.audioLevel,level:settings.audioLevel,muted:false}
+      ...defaults,
+      'time.read':{...defaults['time.read'],unixMilliseconds:now,utc:iso},
+      'hardware.read':{...defaults['hardware.read'],cpuPercent:settings.cpuPercent,gpuPercent:settings.gpuPercent},
+      'audio.read':{...defaults['audio.read'],level:settings.audioLevel}
     };
     return Object.hasOwn(values,capability)?{status:'available',value:values[capability]}:{status:'unsupported'};
   }

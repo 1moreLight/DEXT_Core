@@ -341,3 +341,4 @@ v3-release Cargo/MSBuild配置限定官方原生宿主/WebView2，旧入口从�
 
 ## 2026-10-10 INTEGRATION-002核对
 224dce5候选650文件摘要一致；六套API1原件不变且正式安装/重读通过，独立证据.build/api1-install-evidence-20261010，未应用桌面。不把安装成功当实际播放/动作/兼容全链通过。16项差距见V3_CURRENT。
+2026-10-10 P7-002：试验台四源样本按Core字段统一，JSON编辑器共用。两项adapter回归、真实浏览器正式DOM/SDK星轨四组通过，Release配置器替换且只保留一份；Core未重启。完整P7人工和真实Tauri协议仍待，冷启动一次超时未解释。
