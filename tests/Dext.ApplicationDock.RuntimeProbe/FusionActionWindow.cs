@@ -30,7 +30,7 @@ internal sealed class FusionActionWindow : IDisposable
         while(DateTime.UtcNow<end){if(condition())return;await Task.Delay(100);}
         throw new Exception(description);
     }
-    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null){
+    internal static async Task Click(IntPtr dock,Func<JsonElement?> observe,Action<string> mark=null,bool touch=false){
         JsonElement point=default;
         await Wait(()=>{var data=observe();if(data is null||!data.Value.TryGetProperty("target",out var p)||p.ValueKind!=JsonValueKind.Object)return false;point=p.Clone();return true;},"Owned task target not visible");
         if(!GetClientRect(dock,out var rect))throw new Exception("Dock client bounds unavailable");
@@ -46,22 +46,23 @@ internal sealed class FusionActionWindow : IDisposable
             throw new Exception("Owned task moved before click; no click sent");
         if(GetAncestor(WindowFromPoint(new Point{X=x,Y=y}),2)!=dock||GetAsyncKeyState(1)<0||GetAsyncKeyState(2)<0)
             throw new Exception("Dock ownership or mouse idle check failed; no click sent");
+        if(touch){await TouchPathProbe.Tap(dock,x,y,mark);return;}
         var down=new Input{Type=0,Mouse=new Mouse{Flags=2}};
         var up=new Input{Type=0,Mouse=new Mouse{Flags=4}};
         mark?.Invoke("beforeDown");
         if(SendInput(1,new[]{down},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse DOWN refused");
         try{await Task.Delay(90);}finally{if(SendInput(1,new[]{up},Marshal.SizeOf<Input>())!=1)throw new Exception("Mouse UP refused");mark?.Invoke("afterUp");}
     }
-    public async Task Verify(IntPtr dock,Func<JsonElement?> observe)
+    public async Task Verify(IntPtr dock,Func<JsonElement?> observe,bool touch=false)
     {
-        await Click(dock,observe);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
-        Console.WriteLine("PASS actual OS mouse click through Core activates owned test window");
+        await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not activate owned window");
+        Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core activates owned test window");
         await Task.Delay(650);
-        await Click(dock,observe);await Wait(()=>IsIconic(Handle),"Actual task click did not minimize owned window");
-        Console.WriteLine("PASS actual OS mouse click through Core minimizes owned test window");
+        await Click(dock,observe,touch:touch);await Wait(()=>IsIconic(Handle),"Actual task click did not minimize owned window");
+        Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core minimizes owned test window");
         await Task.Delay(650);
-        await Click(dock,observe);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not restore owned window");
-        Console.WriteLine("PASS actual OS mouse click through Core restores owned test window");
+        await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not restore owned window");
+        Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core restores owned test window");
     }
     [StructLayout(LayoutKind.Sequential)]private struct Point{public int X,Y;}
     [StructLayout(LayoutKind.Sequential)]private struct Rect{public int Left,Top,Right,Bottom;}

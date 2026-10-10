@@ -3,6 +3,7 @@ using GrpcDotNetNamedPipes;
 using Lively.Grpc.Common.Proto.Desktop;
 using Lively.Grpc.Common.Proto.Commands;
 using System.Text.Json;
+if(args.Length==1 && args[0]=="touch-path") { try { await TouchPathProbe.Run(); } catch(Exception ex){Console.Error.WriteLine(ex);Environment.ExitCode=1;} return; }
 if(args.Length==1 && args[0]=="--owned-launch-window") {
     using var owned=await FusionActionWindow.Create();
     await Task.WhenAny(owned.Closed,Task.Delay(TimeSpan.FromSeconds(45))); // Bounded even if the parent probe is interrupted.
@@ -16,9 +17,9 @@ if (identity.ProductName != "Dext" || identity.RuntimeIdentity != "DEXT:DESKTOPS
     !Path.GetFullPath(identity.BaseDirectory).TrimEnd('\\').Equals(Path.GetFullPath(args[1]).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
     throw new Exception("Unexpected Core identity; no mutation performed.");
 Console.WriteLine($"Core verified: PID={identity.ProcessId} {identity.BaseDirectory}");
-if(args[0] is "fusion-live" or "fusion-actions-live" or "fusion-launch-live") {
+if(args[0] is "fusion-live" or "fusion-actions-live" or "fusion-launch-live" or "fusion-touch-live") {
     if(args.Length!=3)throw new ArgumentException("fusion-live requires isolated fixture Room ID");
-    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0]=="fusion-actions-live",args[0]=="fusion-launch-live"));
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>FusionTaskLiveProbe.Run(client,args[0] is "fusion-actions-live" or "fusion-touch-live",args[0]=="fusion-launch-live",args[0]=="fusion-touch-live"));
     return;
 }
 if (args[0] == "shutdown")
