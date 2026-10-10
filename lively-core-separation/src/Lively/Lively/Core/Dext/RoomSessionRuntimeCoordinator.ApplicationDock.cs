@@ -4,6 +4,31 @@ namespace Dext.Core.Rooms;
 
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
+    internal sealed record ThemeTaskCandidate(string? ContextKey,string? UnavailableReason,
+        string Phase,bool Attached,bool Ready);
+
+    internal ThemeTaskCandidate ReadThemeTaskCandidate()
+    {
+        // ReadDockDemand releases the session lock before taking dockGate, matching
+        // reconciliation lock order. Eligibility does not depend on current owner.
+        var demand=ReadDockDemand();
+        var context=demand.Installation?.RuntimeContext;
+        var reason=context is null ? "noNativeRoom" :
+            Lively.Services.ApplicationDock.DockThemeEligibility.Reason(context.Manifest,demand.Snapshot?.CurrentDeskId);
+        if(demand.Desktop?.IsExited!=false)reason="noNativeRoom";
+        var key=demand.Snapshot is {} snapshot ? $"{snapshot.SessionId}/{snapshot.InstallationStamp}/{snapshot.CurrentDeskId}" : null;
+        lock(dockGate)
+        {
+            var host=dockPlayer;
+            var attached=host is {Attached:true,Stopping:false}&&!host.Player.IsExited;
+            var current=attached&&ReferenceEquals(host!.Demand.Desktop,demand.Desktop)&&
+                host.Demand.Snapshot?.SessionId==demand.Snapshot?.SessionId&&
+                host.Demand.Installation?.InstallationStamp==demand.Installation?.InstallationStamp;
+            var state=current?host!.Player.RoomDockWindowState:null;
+            return new(key,reason,dockPhase,attached,state is {RendererReady:true,WindowReady:true});
+        }
+    }
+
     internal RoomDockNavigation? ReadApplicationDockNavigation()
     {
         lock (gate)
