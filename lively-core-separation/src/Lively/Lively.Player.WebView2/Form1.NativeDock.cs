@@ -118,6 +118,10 @@ namespace Lively.Player.WebView2
                 if (IsDisposed || Disposing || version != nativeDockStateVersion) return;
                 await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockVisibility&&this.dextNativeDockVisibility(" + value.ToString(Formatting.None) + ")");
                 if (version != nativeDockStateVersion) return;
+                // Native show/hide of the Form does not restore the WebView2
+                // controller visibility cached while its parent was hidden.
+                // Publish ready only after the actual browser can receive input.
+                NativeViewController().IsVisible = visible && !runtimeDeliverySuspended;
                 nativeDockSynchronizedVisible = visible;
                 nativeDockVisibilitySynchronized = true;
                 PublishNativeDockState();

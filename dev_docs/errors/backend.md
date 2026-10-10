@@ -577,3 +577,11 @@ Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线�
 - 原因：ClearGeometry清空当前输入而不增加版本，作者空命中又会自然清掉gesture，不能仅靠gesture是否存在区分正常完成与撤销。
 - 修复：RoomNativeInputAuthority在ClearInput递增CancellationVersion；任务的两次取样和延迟执行都检查同一撤销版本。它不改变既有作者输入或几何版本语义。
 - 证据：用真实生产authority完成按下/抬起、作者空命中，然后撤销几何，旧检查RED；修复后GREEN，并确认隐藏后恢复不会复活旧动作、重新发布后的新点击正常。
+
+## #296 Dock外层可见不代表Chromium输入窗口可见（2026-10-11）
+- 现象：隔离实际Release Player能经ExecuteScript读取任务DOM与菜单目标，但鼠标DOWN回执超时，门控也没收到事件。不能把DOM存在称为实际绘制或可点击。
+- 定位：原生窗口查询为root=True、browser anchor=True、Chrome_WidgetWin_1=False；指针下是Form本身。启动OnShown.Hide以及后续原生SetWindowPos显示外层，未恢复WebView2控制器的缓存可见性。
+- 修复：SynchronizeNativeDockWindow在当前版本的页面可见状态同步后，设置controller.IsVisible = visible && !runtimeDeliverySuspended，再发布同步完成。保留原鼠标转发、回执和普通暂停逻辑。
+- 证据：新增实际input HWND可见断言先RED；修复后无临时guardian日志的完整Release、实际鼠标DOWN/UP同窗口目标回执、键盘取样/菜单、隐藏及再次显示通过。原生指针下变为Chrome_RenderWidgetHostHWND。Core快照与边沿仍是探针夹具，不宣称真实RawInput或应用启动已验收。
+- 探针恢复后必须像Core一样重发任务快照：控制器暂停会撤销ActionsEnabled；displayReady不代表重新获得操作许可。最初恢复检查因未补快照超时，补sequence3后通过，无需放宽生产控制器。
+- 临时日志已撤回；还需触屏与真实Core动作门槛，不能据此将P8-013整体标完成。

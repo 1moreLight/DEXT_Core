@@ -35,9 +35,6 @@ internal static class NativeTaskWireProbe
                 return new LivelyRoomRuntimeResource{Path=p!,Size=bytes.Length,Sha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()};
             }).ToArray();
             File.AppendAllText(Path.Combine(root.FullName,"main.js"),"""
-                ;for(const type of ['pointerdown','mousedown','pointerup','mouseup','blur'])addEventListener(type,event=>{
-                  chrome.webview.postMessage(JSON.stringify({type:'saveRoom',room:{pointerReport:true,event:type,trusted:event.isTrusted,x:event.clientX,y:event.clientY,target:event.target?.tagName}}));
-                },true);
                 ;chrome.webview.addEventListener('message',event=>{
                   const command=event.data?.permissions?.command;if(event.data.type!=='dext:system-control-result'||!command)return;
                   const area=document.querySelector('.dext-task-area'),menu=area?.querySelector('.dext-task-menu');
@@ -89,7 +86,9 @@ internal static class NativeTaskWireProbe
                 var middle=NativeMethods.FindWindowEx(anchor,IntPtr.Zero,"Chrome_WidgetWin_0",null);
                 var input=NativeMethods.FindWindowEx(middle,IntPtr.Zero,"Chrome_WidgetWin_1",null);
                 Require(DextNativeInputWindow.TryMeasure(window,anchor,input,process.Id,out var bounds,out var dpi),"owned native input viewport");
-                Console.WriteLine("PASS actual Player renders Core private task snapshot in official fusion area");
+                Console.WriteLine("PASS actual Player builds official fusion DOM from Core private task snapshot");
+                Require(NativeMethods.IsWindowVisible(input),"visible Dock must expose its actual Chromium input window");
+                Console.WriteLine("PASS visible Dock exposes its actual Chromium input window");
                 long sequence=1;
                 LivelyMessageRoomNativePointer Packet(string kind,long issued,int key=0,LivelyRoomNativeTaskHit? hit=null)=>new(){RuntimeGeneration=1,SessionId=session,Revision=1,GeometryVersion=inputVersion,
                     GestureId=sequence,IssuedAt=issued,InputHandle=input.ToInt64(),Kind=kind,OriginX=bounds.X,OriginY=bounds.Y,PixelWidth=bounds.Width,PixelHeight=bounds.Height,Dpi=dpi,
@@ -124,6 +123,15 @@ internal static class NativeTaskWireProbe
                 Console.WriteLine("PASS actual Player mouse DOWN/UP receipts return the same official window choice");
                 await Send(new LivelyMessageRoomDockPolicy{RuntimeGeneration=1,SessionId=session,Revision=1,InputConnected=false});
                 await InspectUntil(r=>(bool?)r["diagnostics"]?["taskArea"]?["available"]==false);
+                Require(!NativeMethods.IsWindowVisible(input),"hidden Dock hides actual Chromium input");
+                await Send(new LivelyMessageRoomDockPolicy{RuntimeGeneration=1,SessionId=session,Revision=1,InputConnected=true});
+                Require(SetCursorPos(work.Left+work.Width/2,work.Bottom-1),"reveal probe Dock again");
+                await Next(v=>(int?)v["Type"]==(int)MessageType.msg_room_dock_state&&(bool?)v["WindowReady"]==true&&(bool?)v["Visible"]==true);
+                await InspectUntil(r=>(string?)r["diagnostics"]?["taskArea"]?["phase"]=="displayReady");
+                await Send(new LivelyMessageRoomDockTasks{RuntimeGeneration=1,SessionId=session,Revision=1,ActionsEnabled=true,SnapshotJson=TaskJson(3)});
+                await InspectUntil(r=>(bool?)r["enabled"]==true);
+                Require(NativeMethods.IsWindowVisible(input),"revealed Dock restores actual Chromium input");
+                Console.WriteLine("PASS hide/reveal keeps actual Chromium visibility in sync with Dock readiness");
                 Require(NativeMethods.GetForegroundWindow()==foreground,"probe did not steal foreground");
                 Console.WriteLine("PASS native hide disables official area; no OS app action or real RawInput proof claimed");
             }
@@ -144,7 +152,6 @@ internal static class NativeTaskWireProbe
                     await Send(new LivelyMessageRoomNativeResponse{Method=method,RuntimeGeneration=1,SessionId=session,PayloadJson=JsonConvert.SerializeObject(new{
                         type="dext:v3-native-response",requestId=(string?)value["RequestId"],runtimeGeneration=1,sessionId=session,revision=1,status="accepted",inputSequence=0,inputConsumed=false,
                         capabilities=new Dictionary<string,string>{{"desk.read","accepted"},{"desk.navigate","accepted"}},layout=method=="layoutRead"?new{revision=0,icons=new{},components=new{}}:null})});continue;}
-                if(value["RoomJson"] is{} reportJson){var report=JObject.Parse((string)reportJson!);if((bool?)report["pointerReport"]==true){Console.WriteLine("Player event: "+report.ToString(Formatting.None));continue;}}
                 if(predicate(value))return value;continue;}
                 if(process.HasExited)throw new Exception("Player exited: "+await errors+"; "+string.Join("\n",log.Where(line=>line.Contains("Native input delivery failed")).Concat(log.TakeLast(2))));await Task.Delay(15);
             }throw new TimeoutException("Task wire: "+string.Join("\n",log.TakeLast(8)));}
