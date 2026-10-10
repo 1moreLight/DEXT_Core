@@ -253,10 +253,10 @@ internal sealed class ApplicationDockService : IDisposable
                 switch(completion.Action)
                 {
                     case "activate" when selected==null&&group.Windows.Count<=1: Click(group,null);break;
-                    case "chooseWindow" when selected!=null: Click(group,selected);break;
-                    case "togglePin" when selected==null: TogglePin(group);break;
-                    case "openWindows" when selected==null&&group.Windows.Count>1: source.CompleteNativeDockLocalMenu(completion);break;
-                    case "dismissMenu" when selected==null: source.CompleteNativeDockLocalMenu(completion);break;
+                    case "chooseWindow" when selected!=null: source.CompleteNativeDockTaskPresentation(completion);Click(group,selected);break;
+                    case "togglePin" when selected==null: source.CompleteNativeDockTaskPresentation(completion);TogglePin(group);break;
+                    case "openWindows" when selected==null&&group.Windows.Count>1: source.CompleteNativeDockTaskPresentation(completion);break;
+                    case "dismissMenu" when selected==null: source.CompleteNativeDockTaskPresentation(completion);break;
                 }
                 }
             catch(Exception ex){error="任务区操作失败："+ex.Message;}

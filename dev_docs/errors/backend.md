@@ -629,3 +629,6 @@ P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成
 
 ## #306 多应用键盘目标身份冲突（2026-10-11）
 真实Tab到达Core但焦点停留BODY；单应用后台测试通过不能代表多应用。DockTaskKeyboard允许item/entry组合去重，DextNativeGeometry则以consumer/entry去重，原context/action/window没有item导致多个activate同ID。统一私有ID为context/item/action/window，保持几何唯一性校验；Core解析时检查嵌入item与证明按钮一致，官方宿主和本地菜单回送同步。两个应用生产映射回归RED→GREEN，18键盘/8DOM组及Release通过，实际12应用Tab/Enter激活自有窗口通过。候选诊断脚本初次用系统默认GBK读取UTF-8失败，改明确encoding=utf-8；后续多命令构建须检查退出码再进入运行。
+
+## #307 官方任务菜单动作后残留（2026-10-11）
+实际多窗口选择确实激活第二个窗口，但未发送官方页面activate完成，非激活Dock本来就可能没有blur，菜单不会自行收起。Core统一鼠标/触摸的openWindows、dismissMenu、chooseWindow、togglePin呈现回送，仍先校验当前手势/投影，键盘不重复。完整Release与DOM检查通过；实际第二次运行确认选窗后图标恢复。探针关闭第二窗后可能由Windows自动激活第一窗，应按点击前真实前台判断激活或最小化。最终复核另遇首点击按下取样无命中、抬起有命中，保持未通过并继续定位，勿用菜单修复掩盖输入时序问题。

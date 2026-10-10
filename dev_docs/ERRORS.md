@@ -419,3 +419,5 @@
 | #305 | 长按注入等待RPC不发UPDATE导致UP超时；持续更新触点后再判断取消 | [backend](errors/backend.md) |
 
 | #306 | 官方任务键盘entryId缺item，多应用几何重复而整组拒绝 | [backend](errors/backend.md) |
+
+| #307 | 鼠标/触摸选择窗口或固定应用缺页面完成回送，菜单持续遮住图标 | [backend](errors/backend.md) |

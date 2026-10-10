@@ -12,12 +12,12 @@ internal sealed class FusionActionWindow : IDisposable
     internal Task Closed=>closed.Task;
     private FusionActionWindow(Form value){form=value;Handle=value.Handle;value.FormClosed+=(_,_)=>closed.TrySetResult();}
     private sealed class ProbeForm : Form {protected override bool ShowWithoutActivation=>true;}
-    public static Task<FusionActionWindow> Create()
+    public static Task<FusionActionWindow> Create(string title=Title)
     {
         var ready=new TaskCompletionSource<FusionActionWindow>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread=new Thread(()=>{
             try {
-                using var form=new ProbeForm {Text=Title,Width=320,Height=160,StartPosition=FormStartPosition.Manual,Left=60,Top=80};
+                using var form=new ProbeForm {Text=title,Width=320,Height=160,StartPosition=FormStartPosition.Manual,Left=60,Top=80};
                 form.Shown+=(_,_)=>ready.TrySetResult(new FusionActionWindow(form));
                 Application.Run(form);
             } catch(Exception ex){ready.TrySetException(ex);}
@@ -96,6 +96,26 @@ internal sealed class FusionActionWindow : IDisposable
         await Click(dock,observe,touch:touch);await Wait(()=>GetForegroundWindow()==Handle&&!IsIconic(Handle),"Actual task click did not restore owned window");
         Console.WriteLine("PASS actual OS "+(touch?"injected touch":"mouse click")+" through Core restores owned test window");
         if(touch){await Click(dock,observe);await Wait(()=>IsIconic(Handle),"Mouse click after touch was lost" );Console.WriteLine("PASS immediate mouse click after touch minimizes task" );}
+    }
+    internal async Task VerifyWindowMenu(IntPtr dock,Func<JsonElement?> observe,FusionActionWindow second)
+    {
+        await Wait(()=>observe()?.TryGetProperty("targetWindowCount",out var count)==true&&count.GetInt32()==2,"Two owned windows were not grouped into one task");
+        var foreground=GetForegroundWindow();
+        await Click(dock,observe);
+        await Wait(()=>observe()?.TryGetProperty("menuSecond",out var value)==true&&value.ValueKind==JsonValueKind.Object,"Task click did not open actual window list");
+        if(GetForegroundWindow()!=foreground)throw new Exception("Opening window list unexpectedly activated an app");
+        JsonElement? Choice(){var v=observe();if(v is null)return null;var n=System.Text.Json.Nodes.JsonNode.Parse(v.Value.GetRawText());n["target"]=n["menuSecond"]?.DeepClone();return JsonSerializer.SerializeToElement(n);}
+        await Click(dock,Choice);
+        await Wait(()=>GetForegroundWindow()==second.Handle&&!IsIconic(second.Handle),"Window choice did not activate the selected second window");
+        Console.WriteLine("PASS actual task click opens grouped window list and choice activates exact second window");
+        second.Dispose();
+        await Wait(()=>observe()?.TryGetProperty("targetWindowCount",out var count)==true&&count.GetInt32()==1,"Closed second window remained in task projection");
+        // Windows may activate the remaining window when its sibling closes.
+        // In that case the product's next click must minimize it.
+        var alreadyActive=GetForegroundWindow()==Handle&&!IsIconic(Handle);
+        await Click(dock,observe);
+        await Wait(()=>alreadyActive?IsIconic(Handle):GetForegroundWindow()==Handle&&!IsIconic(Handle),"Remaining window did not follow normal task toggle after group shrank");
+        Console.WriteLine("PASS closing one grouped window refreshes task; remaining window "+(alreadyActive?"minimizes":"activates"));
     }
     internal async Task VerifyKeyboard(IntPtr dock,Func<JsonElement?> observe)
     {

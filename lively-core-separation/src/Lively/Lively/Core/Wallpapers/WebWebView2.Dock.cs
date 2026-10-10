@@ -103,12 +103,13 @@ namespace Lively.Core.Wallpapers
             return Lively.Services.ApplicationDock.DockTaskInput.IsCurrent(completion,current,ReadNativeViewport(),TimeProvider.System)&&
                 (g.Key!=0?RoomDockWindowState?.Keyboard==true&&NativeDockForeground():g.ReleaseX is int x&&g.ReleaseY is int y&&NativeDockAt(x,y));
         }
-        internal void CompleteNativeDockLocalMenu(Lively.Services.ApplicationDock.DockTaskCompletion completion)
+        internal void CompleteNativeDockTaskPresentation(Lively.Services.ApplicationDock.DockTaskCompletion completion)
         {
             // Keyboard completion already sends this private event. Mouse/touch
             // must not depend on a second DOM click after native sampling.
             if(completion.Gesture.Key!=0||!NativeDockTaskIsCurrent(completion)||
-                completion.Action!="openWindows"&&completion.Action!="dismissMenu")return;
+                completion.Action!="openWindows"&&completion.Action!="dismissMenu"&&
+                completion.Action!="chooseWindow"&&completion.Action!="togglePin")return;
             var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;if(state==null)return;
             SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,
                 sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,
