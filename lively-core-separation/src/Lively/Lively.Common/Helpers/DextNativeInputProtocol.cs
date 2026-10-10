@@ -34,6 +34,17 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"lifecycleRevision"}).ToArray()) || !Integer(o["lifecycleRevision"],1) ||
                             !state.CanFinishStartup(request.RuntimeGeneration,request.SessionId,request.Revision,(long)o["lifecycleRevision"]))return null;
                         request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
+                    case "desktopDrop":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"desktopContextId","deskId","x","y","modifiers","allowedEffects"}).ToArray()) ||
+                            !Id(Text(o["desktopContextId"]),128) || !Id(Text(o["deskId"]),80) ||
+                            !Number(o["x"],out var dropX) || !Number(o["y"],out var dropY) || dropX<0 || dropX>1 || dropY<0 || dropY>1 ||
+                            !Integer(o["modifiers"],0,7) || pixelWidth<=0 || pixelHeight<=0)return null;
+                        var effects=Text(o["allowedEffects"]);
+                        if(!new[]{"all","uninitialized","copy","move","link","copyMove","copyLink","linkMove"}.Contains(effects))return null;
+                        request.DesktopContextId=Text(o["desktopContextId"]);
+                        request.DesktopDrop=new LivelyRoomNativeDesktopDrop{DeskId=Text(o["deskId"]),X=dropX,Y=dropY,
+                            Modifiers=(int)o["modifiers"],AllowedEffects=effects};
+                        return request;
                     case "presentationRead":
                         if(Shape(o,IdentityFields))return request;
                         if(!Shape(o,IdentityFields.Concat(new[]{"desktopContextId"}).ToArray()) || !Id(Text(o["desktopContextId"]),128))return null;

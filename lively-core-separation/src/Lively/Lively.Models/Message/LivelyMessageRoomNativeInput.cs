@@ -64,6 +64,17 @@ namespace Lively.Models.Message
         public string EntryId { get; set; }
         public LivelyMessageRoomNativePointer() : base(MessageType.cmd_room_native_pointer) { }
     }
+    // Private Player -> Core payload. Files are populated from native WebView
+    // objects after parsing the page envelope, not from page JSON.
+    public sealed class LivelyRoomNativeDesktopDrop
+    {
+        public string DeskId { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public int Modifiers { get; set; }
+        public string AllowedEffects { get; set; }
+        public string[] Files { get; set; }
+    }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage
     {
         public int ProtocolVersion { get; set; } = 1;
@@ -73,6 +84,7 @@ namespace Lively.Models.Message
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
         public string DesktopContextId { get; set; }
+        public LivelyRoomNativeDesktopDrop DesktopDrop { get; set; }
         public long LayoutRevision { get; set; }
         public LivelyRoomNativeLayoutChange LayoutChange { get; set; }
         public long GeometryVersion { get; set; }

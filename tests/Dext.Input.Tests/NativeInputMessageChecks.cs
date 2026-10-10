@@ -15,6 +15,16 @@ internal static class NativeInputMessageChecks
             ["viewport"]=new JObject{["width"]=800,["height"]=600,["dpr"]=1.5},["buttons"]=new JArray(new JObject{["consumer"]="scene",["button"]="open",["x"]=.1,["y"]=.2,["width"]=.2,["height"]=.3,["tabIndex"]=0})};
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
+        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
+        Check("desktop drop carries current scope and normalized landing point without JSON paths",()=>{
+            var parsed=Parse(Drop());Require(parsed?.DesktopDrop?.DeskId=="home"&&parsed.DesktopDrop.X==.25&&parsed.DesktopDrop.Y==.5&&parsed.DesktopDrop.Modifiers==1&&parsed.DesktopDrop.Files==null);
+            parsed!.DesktopDrop.Files=new[]{@"C:\fixture\one.txt"};var wire=RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest;
+            Require(wire?.DesktopDrop?.Files?.Length==1&&wire.DesktopDrop.AllowedEffects=="copyMove");
+        });
+        Check("desktop drop rejects out of viewport landing and invalid effects",()=>{
+            var r=Drop();r["x"]=-.01;Require(Parse(r)==null);r=Drop();r["y"]=1.01;Require(Parse(r)==null);r=Drop();r["allowedEffects"]="none";Require(Parse(r)==null);
+        });
+        Check("desktop drop does not take source files from page JSON",()=>{var r=Drop();r["files"]=new JArray(@"C:\fixture\one.txt");Require(Parse(r)==null);});
         Check("private polygon geometry accepts separate presentations for one action",()=>{
             var r=Request();var b=(JObject)r["buttons"]![0]!;b["entryId"]="icon.home/one";
             b["polygons"]=new JArray { new JArray(new JObject{["x"]=.1,["y"]=.2},new JObject{["x"]=.3,["y"]=.2},new JObject{["x"]=.1,["y"]=.5}) };

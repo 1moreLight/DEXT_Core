@@ -34,3 +34,12 @@
 
 同一生产源码链接到隐藏探针，真实磁盘File及浏览器派发的文件+目录两种对象读取通过，退出0（.build/drop-reader.log）。这证明读取模块对真实WebView对象可用；当前尚未接入正式WebMessage事件/会话/落点，也未启用页面拖入入口。真实WorkerW/Explorer门槛保持，01仍开做、0/5=0%。
 - 生产net472 Player及完整Core/Player Release构建退出0（.build/drop-reader-core-build.log）；原Core51648保持，无新配置器。
+
+## 2026-10-11 Player私有消息接线
+
+做完：既有dext:v3-native-request新增desktopDrop消息，严格解析当前generation/session/revision、已确认desktopContextId、Desk、归一化落点、修饰键和源允许效果。页面JSON不接受files字段；Player正式WebMessage入口在顶层官方文档/原生运行态校验后从AdditionalObjects填入私有IPC字段，独立Dock不接收。
+
+证据：新增3项消息检查，含实际IPC序列化往返；75/75输入消息检查通过。原点击/触控的证明与派发路径未改。
+
+尚未完成：官方页面拖入事件及Core同步Desk资格/文件操作；当前Core对新方法仍返回denied，未显示可拖入或允许写盘。真实Player/WorkerW/Explorer验收保持，实施0/5=0%。
+- 完整Core/Player Release构建退出0（.build/drop-envelope-core-build.log）；原Core51648保持，无新配置器。

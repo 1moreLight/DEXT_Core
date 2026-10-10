@@ -335,6 +335,12 @@ namespace Lively.Player.WebView2
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
                             if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")){
+                                if(request.Method=="desktopDrop")
+                                {
+                                    if(startArgs.DextDock || !nativeRuntimeSeen || request.DesktopDrop==null ||
+                                        !DextNativeDroppedFiles.TryRead(e.AdditionalObjects,out var droppedFiles))return;
+                                    request.DesktopDrop.Files=droppedFiles;
+                                }
                                 if(request.Method=="authorInput")nativeFrameMedia.AcceptInputRequest(request);
                                 else SendToParent(request);
                             }
