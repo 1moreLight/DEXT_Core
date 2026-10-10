@@ -83,6 +83,8 @@
   // included in the author SDK or forwarded from an author frame.
   globalThis.dextNativeDockVisibility=value=>{
     if(disposed||context?.viewKind!=='dock'||!object(value)||!scopeForInput(value)||typeof value.visible!=='boolean')return false;
+    // Repeated native state reports must not interrupt a held task gesture.
+    if(paused===!value.visible)return true;
     paused=!value.visible;tasks?.suspend();host?.setPlaybackSuspended(paused);tasks?.refresh();return true;
   };
   globalThis.dextNativeTaskSnapshot=value=>{

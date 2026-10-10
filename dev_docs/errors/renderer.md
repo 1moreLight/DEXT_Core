@@ -706,3 +706,10 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 
 2026-10-11 #299鼠标激活/最小化/恢复已贯通（取代上面这三项尚未通过的口径）：最新诊断确认SampleMouse=true且原点匹配，Player在CompleteNativeSampleAsync等待重复合成边沿的DOM回执时超时并关闭。官方任务没有作者动作，实际鼠标本来就进入独立Dock；因此按现有官方键盘路径的分工，任务鼠标使用私有视觉取样+Core原始DOWN/UP配对，跳过重复ForwardNativePointer及该重复边沿的dispatch等待。条件仅DextDock、Key0、SampleMouse、当前packet与私有TaskHit非null；Core仍核对物理pair、时限、上下文、可见HWND、作者区域互斥及投影，作者按钮转发逻辑不改。
 临时输入/完成日志已撤回。无诊断代码的完整Core/Release Player/Watchdog构建成功；fusion-actions-live真实Core18052/Player45612、12任务（含专用窗口）通过实际OS鼠标激活→最小化→恢复。证据.build/task-direct-actions-passed.log，原53项输入/任务/键盘回归通过（task-direct-regression.log）。这是测试进程SendInput进入真实RawInput/窗口操作的证据，不等于人工物理触屏或应用首次启动验证。测试偏好/鼠标/Room/checkpoint已恢复，原候选15620 enabled=true/11组/error空/Room inactive，CoreOnly无新配置器。P8-013仍50%，接续首次启动、菜单/键盘/触屏等未完范围。
+
+## #309 重复可见性通知取消官方任务输入（2026-10-11）
+
+现象：实际右键pointerdown按钮可用，约60ms后pointerup/contextmenu同按钮disabled，稍后恢复；菜单不打开。Core门控日志同期lease/available/placement均true，不能归因于输入丢失或任务栏租约。
+根因：main.js的dextNativeDockVisibility收到相同visible状态仍调用tasks.suspend/refresh，重建几何并禁用输入，等待下一任务快照才恢复。
+修复：先验证当前作用域，再在paused与目标状态相同时直接返回；真实隐藏/恢复继续取消/刷新。新增main入口回归先红后绿，18项入口/controller检查通过。实际Core47612/Player22924完成固定/取消固定、菜单收起，原运行版恢复。
+下次：对重复通知检查幂等性，结合Core门控和DOM事件记录定位，不以重试点击/强制enabled掩盖失效。

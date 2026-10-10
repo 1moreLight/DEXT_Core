@@ -80,3 +80,17 @@ test('private task hit travels beside author geometry in the same native sample'
  const desktop=fixture();desktop.send(desktop.context());desktop.send(desktop.snapshot());desktop.hosts[0].beginNativeInputSample=()=>({buttons:[]});
  assert.equal(desktop.sandbox.dextNativeInputSample({operation:'begin',sampleId:'sample',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:3}).taskHit,undefined);
 });
+
+test('duplicate Dock visibility preserves task input while real visibility changes cancel it',async()=>{
+ const f=fixture();let cancels=0,refreshes=0;
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({refresh:async()=>{refreshes++;},suspend(){cancels++;},dispose(){}})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());await Promise.resolve();
+ const hook=f.sandbox.dextNativeDockVisibility,scope={runtimeGeneration:1,sessionId:'session',revision:1};
+ hook({...scope,visible:false});const hidden={cancels,refreshes};
+ hook({...scope,visible:false});assert.deepEqual({cancels,refreshes},hidden,'repeated hidden notification is idempotent');
+ hook({...scope,visible:true});assert.equal(cancels,hidden.cancels+1);assert.equal(refreshes,hidden.refreshes+1);
+ const shown={cancels,refreshes};hook({...scope,visible:true});
+ assert.deepEqual({cancels,refreshes},shown,'visible heartbeat must not cancel held task input');
+ hook({...scope,visible:false});assert.equal(cancels,shown.cancels+1);
+ assert.equal(hook({...scope,revision:2,visible:true}),false);
+});

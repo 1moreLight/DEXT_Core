@@ -124,18 +124,29 @@ namespace Lively.Core.Wallpapers
                 inputSequence=completion.Sequence,consumer=DextNativeTaskSample.Consumer,button=completion.ItemId,
                 entryId=completion.ContextId+"/"+completion.ItemId+"/"+completion.Action+"/"+(completion.WindowId??"-")});
         }
+        private string nativeDockTaskReadiness;
+
         internal bool SendNativeDockTasks(string expectedEpoch, string snapshotJson, Lively.Services.ApplicationDock.DockTaskViewSnapshot display, bool presentationReady)
         {
             var current = Volatile.Read(ref roomNativeAttachment)?.Input.State;
             if (current == null || expectedEpoch == null || expectedEpoch != NativeDockTaskEpoch ||
                 snapshotJson == null || snapshotJson.Length > 4 * 1024 * 1024) return false;
             Volatile.Read(ref roomNativeAttachment)?.TaskKeyboard.Update(display);
+            var available = NativeDockAvailable();
+            var placementReady = NativeDockTaskPlacementReady();
+            var readiness = $"{presentationReady}/{available}/{placementReady}";
+            if (readiness != nativeDockTaskReadiness)
+            {
+                nativeDockTaskReadiness = readiness;
+                var window = RoomDockWindowState;
+                Logger.Debug($"Dock task readiness lease={presentationReady} available={available} placement={placementReady} route={Volatile.Read(ref nativeDockRouteConnected)} ready={window?.WindowReady} visible={window?.Visible} locked={window?.Locked} fullscreen={window?.Fullscreen} geometryUpdating={window?.GeometryUpdating}");
+            }
             SendMessage(new LivelyMessageRoomDockTasks
             {
                 RuntimeGeneration = current.Generation, SessionId = current.Session,
                 Revision = current.Revision, SnapshotJson = snapshotJson,
                 // Completion still validates physical input and the current task projection.
-                ActionsEnabled = presentationReady && NativeDockAvailable() && NativeDockTaskPlacementReady()
+                ActionsEnabled = presentationReady && available && placementReady
             });
             return true;
         }
