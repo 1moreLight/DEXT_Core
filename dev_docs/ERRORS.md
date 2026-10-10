@@ -389,3 +389,5 @@
 | #282 | 试验台示例字段漂移让正式组件读不到时间/内存/音量；预置JSON与运行样本须共用Core形状 | [frontend](errors/frontend.md) |
 
 | #283 | 原生右键菜单跨Desk保留时不得用执行时的新页面重签固定范围 | [frontend](errors/frontend.md) |
+
+| #284 | 应用Dock关闭最后一个WPF窗口会提前关闭Dispatcher，Core应显式退出 | [backend](errors/backend.md) |

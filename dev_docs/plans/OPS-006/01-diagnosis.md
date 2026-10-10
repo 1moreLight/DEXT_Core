@@ -1,0 +1,8 @@
+# 01 退出定位
+状态：开做
+比较App.QuitApp、DI释放、NamedPipeServer.Dispose；用明确证据判定阻塞位置。现有现场无调用栈，不能把RPC自身等待假设写成根因。
+
+状态更新：做完。实际复测：保留配置器时Core41528正常退出；关闭配置器后Core508再现残留，诊断管道已中断不能取得managed stack。
+根因实验：实际App.xaml未指定ShutdownMode；WPF默认OnLastWindowClose。背景RPC退出依次Dispose服务，其中ApplicationDock.Dispose在Dispatcher关闭最后窗口，Dispatcher在其余服务完成前自动退出。读取真实App.xaml的WPF顺序实验稳定RED：exitBeforeCleanup=True，Dispatcher已开始关闭。
+依赖排除：已按NuGet锁定commit核对GrpcDotNetNamedPipes3.1.0 ServerStreamPool.Dispose仅取消监听，没有等待自身RPC；不采用先前“RPC等待自己”假设。
+修复：App.xaml明确OnExplicitShutdown，已有QuitApp在服务/管道释放后才Application.Shutdown。相同实验GREEN。

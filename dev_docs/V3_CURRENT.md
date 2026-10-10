@@ -4,10 +4,10 @@
 
 ## 可运行候选
 
-- 代码224dce55a878b979d9ad99798edf9d42b2e8c738，分支feat/V3-P8-009-app-dock-reserve。
-- 目录D:/use/Orca/DEXT/DEXT_Core/.build/v3-app-reserve-20261010；双击其中start-dext.cmd启动。包内脚本按精确产品路径检查，主工作区旧二进制不能代表此候选。
-- 本轮启动身份：Core42912，配置器30336（PID只描述当时，以后应重新读精确路径）。650个文件尺寸/SHA256与release-inventory一致。
-- 回退候选：.build/v3-app-autohide-ready-20261010，代码9506c71；正常退出当前Core后用旧包入口启动，不删除个人数据。
+- 当前源分支fix/OPS-006-core-exit，含cf28008及退出模式修复；完整来源见候选release-inventory.json。
+- 目录D:/use/Orca/DEXT/DEXT_Core/.build/v3-core-exit-20261010；双击其中start-dext.cmd启动。包内脚本按精确产品路径检查，主工作区旧二进制不能代表此候选。
+- 本轮启动身份：Core39560，配置器19704（PID只描述当时，以后应重新读精确路径）。650个文件尺寸/SHA256与release-inventory一致。
+- 旧候选保留：.build/v3-desk-dock-pins-20261010（cf28008），存在退出竞态；更早候选不认识Desk固定覆盖，回退方法见P8-010交接，不能直接丢弃个人数据。
 - 未应用测试壁纸，未替用户开启常驻占位。前台全屏期间不切DPI、重启Explorer或改变工作区。
 - master保持halfV3，后续代码待统一验收；主工作区用户Room改动保持。
 
@@ -57,11 +57,13 @@
 ## 未实现与暂缓
 
 - HTML主题内嵌官方应用任务区仍未实现。当前互斥选择主题Dock或WPF应用Dock，后者已有导航，不能称外观与应用区融合完成。
-- 全局/Desk专用固定项合并规则未产品化，需要独立范围和持久化方案。
+- 全局/Desk专用固定项已由P8-010接入，75%待统一人工验收。
 - 拖动按用户暂缓；游戏覆盖、多屏、云工坊、安装器是原计划后续，不计作本轮完成。
 - 下一项只认ROADMAP；记录缺口是为了继续推进，不是宣布停工。
 
-## 配置器重复启动修复（OPS-005）
+## 以下为历史增量记录（运行候选以顶部为准）
+
+### 配置器重复启动修复（OPS-005）
 当前候选的scripts/start.ps1已补同路径复用和其他版本报告；后台使用-CoreOnly。现场8进程清到1，保留30336/当前Core42912。之后的自动Core验证不要再启动配置器。二进制仍224dce5，脚本补丁来源见release-inventory。
 
 ## P7-002预览增量
@@ -79,3 +81,6 @@ Core个人存储定向两项通过：只复制绑定/皮肤，权限/计数/布�
 全局/当前Desk固定项、恢复继承已接；私人3、导航13、应用33、UI2、WPF21及完整Release通过。独立审查跨页旧右键菜单问题已修复，原输入路由保持。人工统一验收见[P8-010](acceptance/V3-P8-010-desk-dock-pins.md)，进度75%。
 旧Core退出残留另记OPS-006；本次实际启动与状态通过不等于退出路径通过。升级前私人数据备份与回退限制见[交接](plans/V3-P8-010/04-handoff.md)。
 全局/Desk专用固定项缺口由本包补齐（待人工），HTML主题内嵌任务区仍未实现。
+
+## OPS-006退出收敛
+Core明确采用OnExplicitShutdown；服务释放前关闭最后Dock窗口不再提前退出Dispatcher。WPF顺序检查与完整Release、配置器关闭/打开两种真实RPC退出均通过，重启身份正常。进度75%，人工见[退出卡](acceptance/OPS-006-core-exit.md)。只改App.xaml退出模式，没有触控改动。

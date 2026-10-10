@@ -565,3 +565,9 @@ TickAsync容错吞异常且允许恢复待定，不能用其返回作为交出�
 应用栏的自动任务栏请求和用户手动隐藏同为 Core PID。ReleaseAutomaticAsync 原先只看 leasePid 相等会永久阻塞交接；自动请求撤回后，明确的 hidden 模式可以保留独立手动租约。19项控制检查含先失败后通过的同PID条件，原恢复未确认/Stop失败仍禁止交接。
 ## #280 原生屏幕查询失败留下旧占位就绪（2026-10-10）
 P8-009独立审查：屏幕/DPI包装层抛错时只设置展示错误，内部上一次Ready仍true，自动任务栏策略会误认占位有效。失败必须使控制器Ready=false，外层错误也阻止就绪；下一次成功采样才恢复。新增成功→失败→恢复回归通过。保留既有注册以便重试和正常释放，不把未确认状态当作成功。
+
+## #284 Core退出与最后一个WPF窗口（2026-10-10）
+P8-010升级期间两次观察到：先正常关闭配置器，再RPC退出Core；Dock/看护/任务栏恢复日志已清理，但Core进程残留且RPC超时。dotnet-stack在残留进程上的诊断管道也已中断，未获得现场托管栈。
+Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线程释放服务，ApplicationDockService.Dispose在Dispatcher关闭Dock窗口；若它是最后窗口，WPF会先排队关闭Dispatcher，剩余服务/显式退出还可能需要该线程。
+定向实际WPF实验读取生产App.xaml，以不可见非激活测试窗口重现同一顺序：默认模式exitBeforeCleanup=True，后续Dispatcher清理失败；设OnExplicitShutdown后相同实验通过。保留原QuitApp服务→管道→显式Shutdown顺序，不修改输入或任务栏恢复。
+依赖排除：已核对[当前NuGet commit的ServerStreamPool.Dispose](https://github.com/cyanfish/grpc-dotnet-namedpipes/blob/da307b551a9d56b62f5780e91a2d95a699f32430/GrpcDotNetNamedPipes/Internal/ServerStreamPool.cs)，它只取消监听，不是等待当前RPC完成；早期“等自己”假设不成立。真实修正版退出记录见OPS-006验收卡。
