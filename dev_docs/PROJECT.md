@@ -301,3 +301,6 @@ Dock enabled/mode/heightDip保存为Dext全局v3/dock-preferences.json，与Room
 
 ### 2026-10-10 主题Dock官方应用区接续设计
 沿既有WebView2主题主窗口增加官方DOM应用区，Core保持应用/窗口与私人固定项所有权。公共config.dextTaskArea仅声明有界区域/样式；未识别约定的旧API1作品保持现状，六冻结样包不改。默认WPF呈现保留至物理输入统一验收；融合只有一个owner/AppBar，官方任务遮挡参与作者命中裁减。按P8-012投影、P8-013区域与私有接线、P8-014生命周期/预览推进；本条是实施方向，尚未实现。见plans/V3-P8-011/02-design.md。
+
+### 2026-10-11 桌面文件同步方向
+用户提出一键识别原Windows桌面内容和从窗口拖文件到桌面。采用真实桌面目录驱动官方图标层的规划：文件仍由Windows管理，本机路径/身份/布局不随Room分享；默认每Room选择一个同步Desk，其他Desk继续自定义。枚举、监听、外部拖入、Shell常用操作拆成四个排队包，见plans/DESK-SYNC-desktop-integration.md；尚未实现，不变更当前ROOM_V3契约。此范围恢复外部文件拖入需求，不恢复已取消的Dock拖入或暂缓的内部排序。
