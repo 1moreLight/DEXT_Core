@@ -141,7 +141,7 @@
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
     function clearFocus(){focus=null;paintFocus(null);}
     function paintFocus(entry){
-      if(editMode)entry=null;
+      if(editMode||entry?.consumer==='official.desktop')entry=null;
       if(!entry){if(focusNode){focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();}return;}
       if(!focusNode){focusNode=svg('svg');focusNode.classList?.add('dext-v3-focus');if(!focusNode.classList)focusNode.className='dext-v3-focus';
         focusNode.setAttribute('viewBox','0 0 1920 1080');focusNode.setAttribute('aria-hidden','true');rootNode.append(focusNode);}
@@ -547,7 +547,7 @@
         }
       }
       if(!item.invalid){const saved=personalLayout;personalLayout=item.preview||provisionalLayout(item,rect);recomputeLayouts(model.readDiagnostics());personalLayout=saved;paintVisuals();}
-      // The picked icon follows the hand continuously; the outline marks its snapped slot.
+      // The picked icon follows the hand continuously.
       if(item.kind==='icon'){
         const node=item.record.element,x=item.rect.x+dx,y=item.rect.y+dy,logical=item.record.logicalSize||{width:96,height:104};
         node.style.left=x+'px';node.style.top=y+'px';transform(node,x,y,visualGroups.shared.matrix,item.rect.width/logical.width,item.rect.height/logical.height);
