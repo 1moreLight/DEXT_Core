@@ -311,6 +311,32 @@ internal sealed partial class RoomActionAuthority
         }
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
     }
+    // Presentation belongs to the Room; file-drop admission remains Desk-scoped.
+    internal RoomActionStatus CheckDesktopSurface(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    {
+        try
+        {
+            var spin=new SpinWait();
+            while(true)
+            {
+                var attempt=store.ReadForDispatch(state=>{
+                    var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
+                        if(status!=RoomProtocolStatus.Accepted)return Status(status);
+                        var eligible=LayoutEligibility(context!,revision,false);
+                        if(eligible!=RoomActionStatus.Accepted)return eligible;
+                        var snapshot=context!.Snapshot;
+                        return snapshot.IsActive && !snapshot.Lifecycle.Locked && snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop &&
+                            state.Rooms.TryGetValue(context.Installation.RoomId,out var room) && room.DesktopSync is {Enabled:true}
+                            ? RoomActionStatus.Accepted : RoomActionStatus.NotOperable;
+                    },out RoomActionStatus result);
+                    return(admitted,result);
+                });
+                if(attempt.admitted)return attempt.result;
+                spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)){return RoomActionStatus.StorageUnavailable;}
+    }
     internal void ClearDesktopPresentation() { Volatile.Write(ref desktopPresentation,null); Volatile.Write(ref desktopProgress,null); }
 
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)

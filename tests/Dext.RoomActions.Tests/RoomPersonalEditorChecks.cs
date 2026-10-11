@@ -191,6 +191,18 @@ static partial class RoomActionChecks
    var next=f.Actions.CommitDesktopScan(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),Editor(Read(f)).Revision,"home",new[]{renamed},true,new Dictionary<string,string>{{old,renamed}});
    Eq(slot,next!.Slots[renamed]);Eq(false,next.Slots.ContainsKey(old));Eq(slot,f.Store.ReadDesktopSync(Room)!.Slots[renamed]);
   });
+  check("desktop surface spans Room desks while file drops stay on the synced desk",()=>{
+   using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("drop-view","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   RoomActionStatus Surface()=>f.Actions.CheckDesktopSurface(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision);
+   Eq(RoomActionStatus.Accepted,Surface());
+   Eq(RoomProtocolStatus.Accepted,f.Gateway.Request(f.View,f.Peer,f.Session,"focus").Status);
+   Eq(RoomActionStatus.Accepted,Surface());
+   Eq(true,f.Kernel.Complete(f.Session,f.Kernel.Snapshot!.TransitionId!.Value));
+   Eq(RoomActionStatus.Accepted,Surface());
+   Eq(RoomActionStatus.NotOperable,f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"drop-view","focus"));
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=false}));Eq(RoomActionStatus.NotOperable,Surface());
+  });
   check("desktop drop checks current sync page while Explorer owns foreground",()=>{
    using var f=new ActionFixture();Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
    f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("drop-view","home",Array.Empty<RoomDesktopViewItem>(),0,false));

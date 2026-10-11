@@ -21,11 +21,7 @@ public partial class WebWebView2
             var attachment=Volatile.Read(ref roomNativeAttachment);
             var state=attachment?.Input.State;
             if(state==null)return false;
-            var result=attachment.Bridge.NativeReadPresentation(attachment.Actions,state.Session,state.Revision);
-            var desktop=result.Presentation?.Desktop;
-            return result.Status==RoomActionStatus.Accepted && desktop!=null &&
-                attachment.Bridge.NativeCheckDesktopDrop(attachment.Actions,state.Session,state.Revision,
-                    desktop.ContextId,desktop.DeskId)==RoomActionStatus.Accepted;
+            return attachment.Bridge.NativeCheckDesktopSurface(attachment.Actions,state.Session,state.Revision)==RoomActionStatus.Accepted;
         }
     }
     private async Task<(RoomActionStatus Status, object Data)> ExecuteDesktopDropAsync(
