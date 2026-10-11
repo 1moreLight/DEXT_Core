@@ -501,3 +501,5 @@ SetForegroundWindow成功后立即GetForegroundWindow不保证已完成跨输入
 
 ## 2026-10-12 背景菜单与空闲轮询
 背景Shell菜单弹出不等于Explorer整套桌面命令已接入：本机CreateViewObject查询提供系统/第三方扩展，未提供paste。添加独立ID的Dext粘贴项，回到已有文件传输，不能冒充Shell自动带齐。50ms输入offer只能取内存提示，不能反复ReadPresentation/CheckDesktopDrop读取personal.json；实际操作仍检查当前配置。用夹具锁文件证明提示不做IO、派发仍拒绝不可读配置。两份Watchdog分别为壁纸监护和--dext-dock-guard任务栏恢复，不能按同名进程数量误杀。
+
+背景粘贴续查：DesktopSyncCatalog只有内容相同才保留ContextId，复制文件会使其变更。菜单初始配对可固定ContextId，开始多文件粘贴后应在同会话/Desk内检查当前同步状态，不能把自己的文件刷新当切页取消。新增同Desk刷新、错Desk及关闭同步用例；原生弹窗已加入scope退休自动关闭的实际检查。

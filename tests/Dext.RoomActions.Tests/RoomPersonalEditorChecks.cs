@@ -17,6 +17,17 @@ static partial class RoomActionChecks
    }
    f.Actions.ClearDesktopPresentation();Eq<RoomDesktopMenuScope?>(null,f.Actions.CaptureDesktopMenuScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision));
   });
+  check("background paste follows refresh on same Desk but stops when sync is disabled",()=>{
+   using var f=new ActionFixture();f.Store.SetDesktopSync(Room,"home",true,Array.Empty<string>());
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("before","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   Eq(RoomActionStatus.Accepted,f.Actions.CheckDesktopTransferScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"home"));
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("after","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   Eq(RoomActionStatus.NotOperable,f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"before","home"));
+   Eq(RoomActionStatus.Accepted,f.Actions.CheckDesktopTransferScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"home"));
+   Eq(RoomActionStatus.NotOperable,f.Actions.CheckDesktopTransferScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"other"));
+   f.Store.SetDesktopSync(Room,"home",false);
+   Eq(RoomActionStatus.NotOperable,f.Actions.CheckDesktopTransferScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"home"));
+  });
   check("synced desktop file layout persists and disabled sync rejects movement",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('a',64);
    f.Store.SetDesktopSync(Room,"home",true,new[]{id});

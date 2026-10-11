@@ -278,8 +278,15 @@ internal sealed partial class RoomActionAuthority
         }
         catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
     }
+    // A paste changes the catalog itself. After native menu selection, follow
+    // fresh scans on the same Desk without retaining an obsolete ContextId.
+    internal RoomActionStatus CheckDesktopTransferScope(Guid connection,RoomSessionPeer peer,Guid session,long revision,string deskId)
+        => CheckDesktopScope(connection,peer,session,revision,null,deskId);
     internal RoomActionStatus CheckDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session,
         long revision, string desktopContextId, string deskId)
+        => CheckDesktopScope(connection,peer,session,revision,desktopContextId??string.Empty,deskId);
+    private RoomActionStatus CheckDesktopScope(Guid connection,RoomSessionPeer peer,Guid session,
+        long revision,string? desktopContextId,string deskId)
     {
         try
         {
@@ -298,7 +305,7 @@ internal sealed partial class RoomActionAuthority
                         if (!snapshot.IsActive || snapshot.Lifecycle.Locked || snapshot.TransitionId is not null ||
                             snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.CurrentDeskId != deskId ||
                             desktop is null || desktop.Session != session || desktop.Room != context.Installation.RoomId ||
-                            desktop.Stamp != context.Installation.InstallationStamp || desktop.View.ContextId != desktopContextId ||
+                            desktop.Stamp != context.Installation.InstallationStamp || (desktopContextId is not null && desktop.View.ContextId != desktopContextId) ||
                             desktop.View.DeskId != deskId || !state.Rooms.TryGetValue(desktop.Room, out var room) ||
                             room.DesktopSync is not { Enabled: true } sync || sync.DeskId != deskId)
                             return RoomActionStatus.NotOperable;
