@@ -481,3 +481,5 @@
 2026-10-11 用户拒收补记：仅同步Desk提升接收层会导致切页露出原生图标，不能将9点命中视为完整桌面交互验收。改为同Room同步开启期间保持层级，实际拖放仍限指定Desk。旧v2长按编辑入口没有迁到v3，需明确记未完成；不能把布局读写接口当作编辑UI交付。
 
 2026-10-11 长按编辑迁移：原生点击权限流会在超过移动阈值时取消，不能直接将其move/up用于长距离编辑。Player新增独立只观察位置/松手的流，继续用原Room layoutSave检查会话、前台、当前Desk及版本；不放宽点击权限或接管触控。构建前必须把新Form1 partial文件加入旧格式csproj的Compile列表。verify-v3-release-candidate参数为CandidateDirectory，非start.ps1的ReleaseDirectory；首次参数错误后正确重跑656/18通过。
+
+2026-10-11 黑屏根因：press-edit.js仅加入v3-release-assets，遗漏DextNativeResourceServer.OfficialFiles；实际加载403，Node测试require兜底绕过浏览器加载，故160项通过仍黑屏。补--v3-host-assets使用真实服务器读取全部HTML依赖（先403失败，后16项通过），verify-release-host同时核对服务器清单。会话active和文件存在不代表渲染成功。

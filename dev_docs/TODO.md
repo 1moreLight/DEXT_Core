@@ -2520,3 +2520,8 @@ r2核对655文件/17资源成功；校验器成功后外层读取遗留LASTEXITC
 新候选D:/use/Orca/DEXT/DEXT_Core/.build/longpress-edit-20261011，Core32892、Player19232、配置器16076，同一目录恰好一组；恢复Room231db51a-19db-4a3a-9c06-dbb9b3db86f9/home。启动前备份longpress-checkpoint-20261011；旧包保留可回退。
 证据：longpress-host-tests.log 90/90；longpress-input-tests.log 70/70；longpress-build.log完整构建成功（两项既有Rust警告）；发布前656/18来源核对通过。用户内容安装后不再是空内容发布目录。只验证启动与会话，未声称物理鼠标/触控验收通过。
 人工按验收卡三组：短按与Room图标长按保存；小组件长按移动/Esc或切页取消；触控及既有Dock/Windows文件点击。桌面同步路线历史75%，本包实施100%，最终交付待用户验收。
+
+2026-10-11 黑屏拒收，修复开做：press-edit.js已打包但未加入DextNativeResourceServer官方文件清单；补真实资源加载检查、清单修复、重建部署。上轮100%仅实施，当前交付不通过。
+
+2026-10-11 黑屏修复候选r2已启动：.build/longpress-edit-20261011-r2，Core27224 / Player19180 / 配置器5504，原v3 Basic/home恢复。真实资源服务器测试先复现press-edit.js 403，修复后16项HTML依赖成功加载；完整构建成功，发布656/18来源校验通过。新运行日志确认geometry Accepted（version2）和持续presentationRead，宿主初始化恢复；实际画面仍待用户确认。修复步骤3/3=100%，整包人工验收仍未通过，旧r1黑屏包不再用。
+本次人工只需确认：当前Room画面及同步的本地桌面图标是否恢复。恢复后再执行原长按三组，不重复所有测试。

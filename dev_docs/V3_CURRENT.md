@@ -124,3 +124,6 @@ P8-013真实Player边界已确认任务快照到达和全屏禁用；前台微�
 运行目录 `.build/longpress-edit-20261011`；Core32892 / Player19232 / 配置器16076，v3 Basic已恢复。
 来源分支feat/DESK-EDIT-V3-001-long-press，基于bd124bb，实施3/3，待人工验收；主线未合。
 验收入口：[长按编辑](acceptance/DESK-EDIT-V3-001-long-press.md)。Windows同步文件排序未包含，触控长按待真实验证。
+
+2026-10-11 黑屏修复候选r2已启动：.build/longpress-edit-20261011-r2，Core27224 / Player19180 / 配置器5504，原v3 Basic/home恢复。真实资源服务器测试先复现press-edit.js 403，修复后16项HTML依赖成功加载；完整构建成功，发布656/18来源校验通过。新运行日志确认geometry Accepted（version2）和持续presentationRead，宿主初始化恢复；实际画面仍待用户确认。修复步骤3/3=100%，整包人工验收仍未通过，旧r1黑屏包不再用。
+本次人工只需确认：当前Room画面及同步的本地桌面图标是否恢复。恢复后再执行原长按三组，不重复所有测试。

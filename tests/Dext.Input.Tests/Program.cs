@@ -1,6 +1,18 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length == 2 && args[0] == "--v3-host-assets") {
+    var index=Path.Combine(Path.GetFullPath(args[1]),"wallpapers","dext-room-v3","index.html");
+    using var server=new DextNativeResourceServer(index);
+    var html=File.ReadAllText(index);var count=0;
+    foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(html,"(?:src|href)=[\"']([^\"']+)[\"']")) {
+        var path=match.Groups[1].Value;
+        using var response=server.Prepare(server.Origin+"/"+path,"GET",null);
+        if(response.StatusCode!=200||response.Content==null||response.Content.Length==0)throw new Exception(path+" failed to load: "+response.StatusCode);
+        count++;
+    }
+    Console.WriteLine($"PASS {count} official HTML dependencies served with bytes");return;
+}
 if(args.Length==1&&args[0]=="--desktop-context-hook-lifecycle"){DesktopFileContextHookChecks.Run();return;}
 if(args.Length==1&&args[0]=="--desktop-context-ownership"){DesktopFileContextOwnershipChecks.Run();return;}
 if(args.Length==1&&args[0]=="--desktop-key-hook-lifecycle"){DesktopFileKeyboardHookChecks.Run();return;}
