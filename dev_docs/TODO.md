@@ -2345,3 +2345,7 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 
 2026-10-11 实机重试未进入拖放：Explorer正常窗口525492可读；将当前003框架依赖Release输出覆盖到原自包含测试副本后启动Core28888，但35秒内RPC身份未就绪，也无本次Core启动日志。该混合输出不是可验收候选，根因尚未确认，禁止复用为正式包。启动脚本finally中的正常退出RPC也超时并提前中断恢复；随后核对PID28888精确路径，仅结束本轮失败测试进程，恢复原Debug Core36228。session-status为空，Settings/WallpaperLayout/room-session/personal四项SHA256均与本轮启动前一致；未启动Player/配置器、未产生新ready或拖动文件。
 证据：.build/desktop-drop-live-diagnostics.log；备份 .build/drop-return-19c6d1d01f5146f2abdba8bfe31ba453/recovery.json。下一步先构建独立空目录的完整publish候选，不能再覆盖旧发布目录混用依赖；修复测试编排的finally，保证停止测试副本失败不会无记录地跳过原Core恢复。实机0/5，路线3/4=75%。
+
+2026-10-11 干净候选恢复做完：build-v3-release.ps1从全新目录构建，生产源de16333/记录644098e，输出D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-clean-20261011。完整构建退出0，既有Rust两项警告；654文件清单和16项宿主来源核对通过。runtimeconfig为includedFrameworks 9.0.19，区别于失败副本被覆盖成frameworks 9.0.0；不能将两类产物直接覆盖混用。
+候选Core15732实际RPC身份及空session通过，正常退出后原Core9696恢复；四项checkpoint文件SHA256全一致，无壁纸应用/新配置器。日志.build/drop-diagnostics-clean-build.log、.build/clean-core-start.log；恢复备份drop-return-0c73c456b0ef484da30bbdfbaad190d5。测试编排副本增加失败停止的精确路径回收，再恢复原Core；本轮正常退出，未触发强制回收。Cargo.toml构建产生的纯换行变化核对后恢复。
+下一步仍是从干净包复制独立夹具副本并关联真实Explorer拖入，不在干净候选中写夹具、不覆盖框架依赖输出。打包/启动障碍解除，实际拖放0/5门槛保持，路线3/4=75%；原五项人工验收未变。

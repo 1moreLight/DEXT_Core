@@ -449,3 +449,5 @@
 | #323 | IFileOperation的GetAnyOperationsAborted可在回调取消后仍为false，须合并回调状态与HRESULT | [backend](errors/backend.md) |
 
 | #324 | C盘空间耗尽使npm ci解包失败；仅清理本轮失败依赖，打包改用有空间的目录 | [toolchain](errors/toolchain.md) |
+
+2026-10-11 工具链补记：普通build输出不可覆盖self-contained发布包；本轮混合副本RPC未就绪，独立空目录publish后启动/退出通过。详见errors/toolchain.md日期补记。

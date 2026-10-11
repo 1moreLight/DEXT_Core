@@ -569,3 +569,6 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在，失败后仅清理已校验的当前worktree/tauri-ui/node_modules，释放约146MB。未清理已有缓存、候选或用户文件。完整构建未运行，不能记作通过。后续先检查依赖、TEMP与编译输出所在盘空间，安排D盘路径后再重试。
 
 #324恢复补记：独立D盘目录安装锁定依赖，当前node_modules使用junction；仅迁移当前worktree未运行Core bin到D盘并链接，TEMP/TMP/npm缓存及CargoTargetDirectory均指向D盘。完整候选构建与654文件/16资产来源核对成功；没有清理其他worktree或系统文件。
+
+## 2026-10-11 普通build输出覆盖自包含候选后无法就绪
+现象：混合副本进程存在但无新日志、RPC超时；runtimeconfig从includedFrameworks变为frameworks。精确结束本轮失败进程后恢复原Core。处理：全新目录build-v3-release.ps1，清单核对后真实RPC启动/正常退出通过，四项数据哈希不变。结论限于打包方式差异，未追到混合副本具体初始化阻塞点。后续禁止覆盖混用；测试finally需保证失败停止不会静默跳过恢复。
