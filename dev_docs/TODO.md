@@ -2319,3 +2319,5 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11 DESK-SYNC-003实机尝试：修复开发输出缺宿主预检问题后，真实Core47700/Player33976隔离Room和同步ready；Explorer窗口接口不可操作，未进行拖动。主动取消已清临时文件/夹具并恢复旧Core52420、原配置器19704，checkpoint字节一致且session-status无活动Room。新增夹具Release构建通过；实机拖入未通过，0/5，整体2/4=50%。
 2026-10-11 DESK-SYNC-003反馈漏接修复：Player两端暂停白名单统一，避免文件已处理却无完成反馈；呈现读取也可在普通暂停下更新。77/77定向检查、完整Core/Player Release通过；旧Core52420复用、无新配置器。实际OS拖入仍待，0/5，整体2/4=50%。
 2026-10-11 DESK-SYNC-003取消证据：修复Shell已取消但回报failed的状态归并，新增实际进度取消及首项移动后取消检查，23项通过，完整Core/Player Release退出0；旧Core52420复用，不改当前桌面。重名UI/OS拖入仍待，0/5，整体2/4=50%。
+
+2026-10-11 完整候选打包受阻：npm ci --prefer-offline --no-audit --no-fund 报 ENOSPC，C盘剩余0字节；已核对绝对路径并仅删除本轮新建且安装失败的 tauri-ui/node_modules，释放146161664字节。正式 desktop-drop-clean-20261011 尚未创建，未启动/替换Core或配置器。恢复条件：将依赖和临时构建目录安排到D盘（当时可用246813810688字节），或释放足够C盘空间后重跑完整打包及来源检查。真实Explorer拖入门槛仍待；实施0/5，桌面同步路线2/4=50%。日志 .build/drop-npm-ci.log。

@@ -447,3 +447,5 @@
 | #321 | build.ps1只部署Core/插件，不带官方宿主；实机切换前须按资源白名单预检夹具目录 | [toolchain](errors/toolchain.md) |
 | #322 | Player暂停请求与回包白名单不一致，会丢失文件拖入完成结果和呈现读取 | [backend](errors/backend.md) |
 | #323 | IFileOperation的GetAnyOperationsAborted可在回调取消后仍为false，须合并回调状态与HRESULT | [backend](errors/backend.md) |
+
+| #324 | C盘空间耗尽使npm ci解包失败；仅清理本轮失败依赖，打包改用有空间的目录 | [toolchain](errors/toolchain.md) |

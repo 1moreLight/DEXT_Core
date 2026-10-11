@@ -564,3 +564,6 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 首轮desktop-drop-live在读取content/room.json之前失败，未应用Room。build.ps1只部署Core与Player/Watchdog；缺失的host目录上Copy-Item会把content目录内容复制为host根目录，不能假设content子目录存在。
 解决：按v3-release-assets.json的16项hostAssets逐个部署官方文件，显式建立content再复制夹具子项并检查room.json；第二轮实际Player/扫描就绪。测试候选含夹具，只供开发探针，正式交付仍须全新目录与清单核对。
 执行前应完成此预检再停止旧Core。首次失败恢复旧Core49672；第二轮主动取消后恢复52420，checkpoint摘要与备份一致，原配置器19704保留。
+
+## #324 候选打包磁盘空间不足（2026-10-11）
+npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在，失败后仅清理已校验的当前worktree/tauri-ui/node_modules，释放约146MB。未清理已有缓存、候选或用户文件。完整构建未运行，不能记作通过。后续先检查依赖、TEMP与编译输出所在盘空间，安排D盘路径后再重试。
