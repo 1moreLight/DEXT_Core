@@ -1,12 +1,13 @@
 # DESK-SYNC-004 构建与统一验收交接
 
-状态：开做
+状态：做完（代码实施、完整候选与交接；真实Windows交互待统一验收）
 
 所有入口只对同步Desk生效；串行文件操作与退场取消，不因单个文件失败清空整个桌面。修改C#/proto后运行scripts/build.ps1再scripts/start.ps1；非验收时仅复用旧版CoreOnly，不多开配置器。完整候选在D盘新目录用build-v3-release.ps1生成、verify-v3-release-candidate.ps1核对。按独立验收卡验证真实关联打开/改名/剪贴板/回收恢复/右键/原输入；自动检查与用户验收分开。003尚缺门槛继续保留，未获通过不合master。
 
-- [ ] 失败用例与实现
-- [ ] 实际接线及必要检查
-- [ ] 记录证据并提交
+- [x] 失败用例与实现
+- [x] 生产接线、针对性回归及完整候选核对
+- [x] 记录证据并提交
+- 实机菜单/文件交互/触控仍在独立验收卡待验收，不计为通过。
 
 2026-10-11开工：第05步代码完成。先检查D盘依赖/构建缓存和17项宿主白名单，在全新desktop-shell-actions-clean-20261011候选目录执行build-v3-release.ps1，核对inventory与当前源；候选完整后再核对启动身份。现有Core26668保留，未部署的新输入与全部人工门槛明确交接；不在后台重复打开配置器。
 
@@ -24,3 +25,7 @@ start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后�
 
 2026-10-11 F2纠错代码实施做完：整条链路改为Windows VK_F2=0x71（113），F3=0x72（114）不接管。先只修夹具，真实F2复现“did not create a file command gesture”（f2-keycode-red.log），再修改生产代码；最终F2六组合、个人编辑25/25、键盘所有权11/11（含F2成对接管/F3放行）、指针传递18/18、dom/native宿主113/113通过。#330间歇存储问题仍未消除。下一步r3完整构建/哈希核对。
 r2核对655文件/17资源成功；校验器成功后外层读取遗留LASTEXITCODE导致提前退出，r2启动检查并未执行（没有candidate-r2-start.log），不得宣称已调用启动。以后PowerShell脚本以终止异常/成功输出判断，LASTEXITCODE仅紧跟原生命令。
+
+2026-10-11 第06步做完（实施与交接，实机未验收）：最新生产提交0ed6d12，完整候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011-r3；build-v3-release.ps1完成Core/Release Player/Watchdog/配置器打包，保留两项既有Rust警告。verify-v3-release-candidate.ps1确认655个inventory文件及17项官方宿主与源码匹配，日志.build/candidate-r3-verify.log；完整构建日志desktop-shell-actions-build-env/release-r3-build.log。start.ps1对r3完成产品元数据检查后因Core26668占用DEXT身份退出1（.build/candidate-r3-start.log和工具异常输出）；候选未启动，未新增配置器。Cargo.toml规范化逐字确认仅换行变化后恢复。
+当前分支feat/DESK-SYNC-004-shell-actions；代码6/6=100%，桌面同步路线实施3/4=75%，用户验收与master合并未完成。旧r1/r2保留追溯，不作为当前候选。下一项按ROADMAP回补003实机门槛：重新核对Explorer可操作窗口与运行环境，不能继续用旧1×1窗口或身份冲突代替新检查；如切换运行候选，先保存当前数据/布局并准备原版恢复，然后执行有范围的真实Explorer拖入与输入回归。
+统一人工步骤（仅唯一临时文件）：1单/Ctrl/Shift选择与切页清除；2双击/Enter打开、真实F2改名与Esc取消、F3不误改名；3Explorer双向复制剪切粘贴只执行一次；4Delete进回收站并恢复、Shift+Delete不永久删除；5右键/菜单键、多选、属性、Esc与外点、首次从应用右击后文件焦点；6原Dock/作者按钮、鼠标/触控/DPI、切页/停用/退出后旧操作失效。当前运行版不含新代码，这些门槛均不标通过。

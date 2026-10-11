@@ -1,6 +1,6 @@
 # DESK-SYNC-004 独立验收
 
-状态：开做，代码实施5/6≈83%；人工验收待确认，未实施功能不能记通过。
+状态：待统一验收；代码实施与候选交接6/6=100%，人工验收尚未通过，未合并。
 目标：同步Desk提供Windows式真实文件交互。范围外：永久删除、虚拟Shell项、内部自由排序、Dock拖入。
 
 1. 单击选中、Ctrl多选/反选、Shift范围，监听刷新保留仍存在项，换Desk/Room清空；其他窗口打字不操作桌面文件。
@@ -72,3 +72,7 @@
 start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后因主目录Debug Core26668占用mutex/pipe退出1（.build/shell-actions-candidate-start.log及工具输出）；没有启动本轮候选，当前没有额外配置器。构建改写的Cargo.toml经HEAD文本逐字规范化比较确认仅换行差异后恢复，未改变依赖声明。
 下一执行先复核菜单退出的焦点：DesktopContextMenuWindow目前在菜单owner仍前台时恢复弹出前窗口；从其他应用首次右击时，这可能使菜单取消后键盘仍交给原应用，需要按Windows桌面交互预期处理并验证。随后核对原生菜单实际窗口、取消/属性/DPI与触控，不用构建结果替代OS证明。第06步继续开做，代码实施仍5/6≈83%、路线2/4=50%；用户统一验收/合并均未完成。
 人工步骤仍为本卡1至6项；额外检查从其他应用首次右击文件后Esc关闭菜单，再按文件操作键时的焦点归属，避免将按键交给原应用。仅用唯一临时文件，现运行版未含本候选，无需用户现在操作。
+
+2026-10-11 第06步做完（实施与交接，实机未验收）：最新生产提交0ed6d12，完整候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011-r3；build-v3-release.ps1完成Core/Release Player/Watchdog/配置器打包，保留两项既有Rust警告。verify-v3-release-candidate.ps1确认655个inventory文件及17项官方宿主与源码匹配，日志.build/candidate-r3-verify.log；完整构建日志desktop-shell-actions-build-env/release-r3-build.log。start.ps1对r3完成产品元数据检查后因Core26668占用DEXT身份退出1（.build/candidate-r3-start.log和工具异常输出）；候选未启动，未新增配置器。Cargo.toml规范化逐字确认仅换行变化后恢复。
+当前分支feat/DESK-SYNC-004-shell-actions；代码6/6=100%，桌面同步路线实施3/4=75%，用户验收与master合并未完成。旧r1/r2保留追溯，不作为当前候选。下一项按ROADMAP回补003实机门槛：重新核对Explorer可操作窗口与运行环境，不能继续用旧1×1窗口或身份冲突代替新检查；如切换运行候选，先保存当前数据/布局并准备原版恢复，然后执行有范围的真实Explorer拖入与输入回归。
+统一人工步骤（仅唯一临时文件）：1单/Ctrl/Shift选择与切页清除；2双击/Enter打开、真实F2改名与Esc取消、F3不误改名；3Explorer双向复制剪切粘贴只执行一次；4Delete进回收站并恢复、Shift+Delete不永久删除；5右键/菜单键、多选、属性、Esc与外点、首次从应用右击后文件焦点；6原Dock/作者按钮、鼠标/触控/DPI、切页/停用/退出后旧操作失效。当前运行版不含新代码，这些门槛均不标通过。
