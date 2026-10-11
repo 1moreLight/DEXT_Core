@@ -11,6 +11,17 @@ internal static class DesktopSyncChecks
   {
    var d="desktop-"+new string('d',64);
    var layout=new RoomDesktopSync{Enabled=true,DeskId="home",Slots=new(){{a,7},{b,2}}};
+   var dropped=RoomDesktopSync.PlaceDropped(layout,new[]{c,d},7,4,10);
+   Check(dropped.Slots[a]==7&&dropped.Slots[b]==2&&dropped.Slots[c]==3&&dropped.Slots[d]==6,"drop finds nearest free cells without moving existing icons");
+   Check(!layout.Slots.ContainsKey(c),"drop placement does not mutate previous layout");
+   var scanned=RoomDesktopSync.Reconcile(layout,"home",true,new[]{a,b,c},true);
+   var placed=RoomDesktopSync.PlaceDropped(scanned,new[]{c},9,4,10);
+   Check(placed.Slots[c]==9&&placed.Slots[a]==7,"drop overrides only its new file's provisional watcher slot");
+   var page=RoomDesktopSync.PlaceDropped(layout,new[]{c},19,4,10);
+   Check(page.Slots[c]==19,"drop preserves requested overflow page");
+   var fullPage=new RoomDesktopSync{Enabled=true,DeskId="home",Slots=new(){{a,0},{b,1}}};
+   var spill=RoomDesktopSync.PlaceDropped(fullPage,new[]{c},1,2,2);
+   Check(spill.Slots[c]==3&&spill.Slots[a]==0&&spill.Slots[b]==1,"full page spills into nearest cell on another page");
    var renamed=RoomDesktopSync.Reconcile(layout,"home",true,new[]{b,c},true,new Dictionary<string,string>{{a,c}});
    Check(renamed.Slots[c]==7&&renamed.Slots[b]==2&&!renamed.Slots.ContainsKey(a),"rename inherits original slot despite earlier empty positions");
    Check(layout.Slots.ContainsKey(a)&&!layout.Slots.ContainsKey(c),"rename reconciliation does not mutate confirmed layout");

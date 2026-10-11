@@ -8,7 +8,15 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
-  check("desktop sync editor selects one real Desk and disable preserves private slots",()=>{
+  check("completed drop placement persists and disabled Desk rejects late placement",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('e',64);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));
+   Eq(RoomActionStatus.Accepted,f.Actions.PlaceDesktopDrop(f.View,f.Peer,f.Session,"home",new[]{id},19,4,10));
+   Eq(19,new RoomPersonalStore(f.PersonalPath).ReadDesktopSync(Room)!.Slots[id]);
+   Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=false}));var revision=f.Store.Read().Revision;
+   Eq(RoomActionStatus.NotOperable,f.Actions.PlaceDesktopDrop(f.View,f.Peer,f.Session,"home",new[]{id},2,4,10));
+   Eq(revision,f.Store.Read().Revision);Eq(19,f.Store.ReadDesktopSync(Room)!.Slots[id]);
+  });  check("desktop sync editor selects one real Desk and disable preserves private slots",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('a',64);
    f.Store.SetDesktopSync(Room,"home",false,new[]{id});
    Editor(Edit(f,new{operation="setDesktopSync",deskId="focus",enabled=true}));

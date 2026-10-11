@@ -73,6 +73,33 @@ internal sealed class RoomDesktopSync
         Validate(next);
         return next;
     }
+    internal static RoomDesktopSync PlaceDropped(RoomDesktopSync previous, IReadOnlyCollection<string> ids,
+        int targetSlot, int columns, int capacity)
+    {
+        Validate(previous);
+        if (targetSlot < 0 || targetSlot >= 4096 || columns < 1 || columns > 4096 || capacity < 1 || capacity > 4096)
+            throw new InvalidDataException("Invalid desktop drop grid.");
+        var requested = ids.Distinct(StringComparer.Ordinal).ToArray();
+        if (requested.Length > 256) throw new InvalidDataException("Too many dropped items.");
+        foreach (var id in requested) ValidateItemId(id);
+        var next = new RoomDesktopSync { Enabled = previous.Enabled, DeskId = previous.DeskId,
+            Slots = new(previous.Slots, StringComparer.Ordinal) };
+        // The watcher may already have allocated these new files at the first
+        // free cells. Only the caller's confirmed new drop IDs are repositioned.
+        foreach (var id in requested) next.Slots.Remove(id);
+        if (next.Slots.Count + requested.Length > 4096) throw new InvalidDataException("Desktop sync layout is full.");
+        var used = next.Slots.Values.ToHashSet();
+        var page = targetSlot / capacity;
+        var cell = targetSlot % capacity;
+        var x = cell % columns; var y = cell / columns;
+        var free = Enumerable.Range(0, 4096).Where(slot => !used.Contains(slot))
+            .OrderBy(slot => Math.Abs(slot / capacity - page))
+            .ThenBy(slot => Math.Pow(slot % capacity % columns - x, 2) + Math.Pow(slot % capacity / columns - y, 2))
+            .ThenBy(slot => slot).Take(requested.Length).ToArray();
+        for (var index = 0; index < requested.Length; index++) next.Slots.Add(requested[index], free[index]);
+        Validate(next);
+        return next;
+    }
     internal static void Validate(RoomDesktopSync? value)
     {
         if (value is null) return;

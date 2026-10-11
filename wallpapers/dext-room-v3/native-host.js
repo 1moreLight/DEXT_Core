@@ -98,7 +98,7 @@
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
       case'invalidateGeometry':case'layoutRead':return shape(p,[]);
-      case'desktopDrop':return shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects'])&&id(p.desktopContextId)&&id(p.deskId,80)&&finite(p.x,0,1)&&finite(p.y,0,1)&&integer(p.modifiers,0,7)&&['all','uninitialized','copy','move','link','copyMove','copyLink','linkMove'].includes(p.allowedEffects);
+      case'desktopDrop':return (shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects'])||shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects','page'])&&integer(p.page,0,4095))&&id(p.desktopContextId)&&id(p.deskId,80)&&finite(p.x,0,1)&&finite(p.y,0,1)&&integer(p.modifiers,0,7)&&['all','uninitialized','copy','move','link','copyMove','copyLink','linkMove'].includes(p.allowedEffects);
       case'presentationRead':return shape(p,[])||shape(p,['desktopContextId'])&&id(p.desktopContextId);
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);

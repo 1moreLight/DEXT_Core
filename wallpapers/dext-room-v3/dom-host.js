@@ -349,7 +349,7 @@
       if(effect==='none'||files.length===0||files.length>256||rect.width<=0||rect.height<=0)return;
       const x=(event.clientX-rect.left)/rect.width,y=(event.clientY-rect.top)/rect.height;
       if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1)return;
-      const identity=scope(),params={desktopContextId:desktopView.contextId,deskId:desktopView.deskId,x,y,
+      const identity=scope(),params={desktopContextId:desktopView.contextId,deskId:desktopView.deskId,x,y,page:desktopPage,
         modifiers:(event.ctrlKey?1:0)|(event.shiftKey?2:0)|(event.altKey?4:0),allowedEffects:transfer.effectAllowed};
       dropRunning=true;dropNotice('正在处理拖入的文件…');
       let operation;
@@ -357,7 +357,7 @@
       Promise.resolve(operation).then(reply=>{
         if(disposed||identity.sessionId!==snapshot.sessionId)return;
         const items=Array.isArray(reply?.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
-        dropNotice(reply?.status==='accepted'?`已完成 ${completed} 项，未处理 ${items.length-completed} 项。`:
+        dropNotice(reply?.status==='accepted'?`已完成 ${completed} 项，未处理 ${items.length-completed} 项。${reply.data?.placementStatus&&reply.data.placementStatus!=='accepted'?'文件已处理，图标位置未保存。':''}`:
           reply?.status==='cancelled'?`操作已取消，已完成 ${completed} 项。`:'未能完成拖入，请检查目标桌面或稍后重试。');
       },()=>{if(!disposed)dropNotice('未收到操作结果，请先检查桌面文件，避免重复拖入。');}).finally(()=>{dropRunning=false;});
     }
@@ -435,11 +435,11 @@
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
           presentationSkins=copy(reply.presentation.skins);
-          const before=desktopView?.contextId,desktop=reply.presentation.desktop;
+          const before=desktopView?.contextId,beforeDesk=desktopView?.deskId,desktop=reply.presentation.desktop;
           if(!desktop)desktopView=null;
           else if(desktop.items!==null)desktopView=copy(desktop);
           else if(desktopView?.contextId!==desktop.contextId||desktopView?.deskId!==desktop.deskId)desktopView=null;
-          if(before!==desktopView?.contextId){desktopPage=0;await render();}
+          if(before!==desktopView?.contextId){if(beforeDesk!==desktopView?.deskId)desktopPage=0;await render();}
           for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
           const locator=reply.presentation.locator;
           if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}

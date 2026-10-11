@@ -83,6 +83,9 @@ internal sealed partial class RoomSessionPlayerBridge
     internal RoomActionReply NativeWriteStorage(RoomActionAuthority actions,Guid session,long revision,string consumer,string key,System.Text.Json.JsonElement value) =>
         disposed?new(RoomActionStatus.StaleSession):actions.WriteStorage(connectionId,peer,session,revision,consumer,key,value);
 
+    internal RoomActionStatus NativePlaceDesktopDrop(RoomActionAuthority actions, Guid session, string deskId,
+        IReadOnlyCollection<string> ids, int slot, int columns, int capacity) =>
+        disposed ? RoomActionStatus.StaleSession : actions.PlaceDesktopDrop(connectionId, peer, session, deskId, ids, slot, columns, capacity);
     internal RoomActionStatus NativeCheckDesktopDrop(RoomActionAuthority actions, Guid session, long revision, string contextId, string deskId) =>
         disposed ? RoomActionStatus.StaleSession : actions.CheckDesktopDrop(connectionId, peer, session, revision, contextId, deskId);
     internal RoomPresentationReply NativeReadPresentation(RoomActionAuthority actions,Guid session,long revision,string? desktopContextId=null) =>

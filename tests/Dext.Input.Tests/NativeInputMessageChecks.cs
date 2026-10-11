@@ -21,7 +21,11 @@ internal static class NativeInputMessageChecks
             parsed!.DesktopDrop.Files=new[]{@"C:\fixture\one.txt"};var wire=RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest;
             Require(wire?.DesktopDrop?.Files?.Length==1&&wire.DesktopDrop.AllowedEffects=="copyMove");
         });
-        Check("desktop drop rejects out of viewport landing and invalid effects",()=>{
+        Check("desktop drop page roundtrips and invalid pages are rejected",()=>{
+            var r=Drop();r["page"]=3;var parsed=Parse(r);Require(parsed?.DesktopDrop?.Page==3);
+            Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.DesktopDrop?.Page==3);
+            foreach(var value in new[]{-1.0,.5,4096}){r["page"]=value;Require(Parse(r)==null);}
+        });        Check("desktop drop rejects out of viewport landing and invalid effects",()=>{
             var r=Drop();r["x"]=-.01;Require(Parse(r)==null);r=Drop();r["y"]=1.01;Require(Parse(r)==null);r=Drop();r["allowedEffects"]="none";Require(Parse(r)==null);
         });
         Check("desktop drop does not take source files from page JSON",()=>{var r=Drop();r["files"]=new JArray(@"C:\fixture\one.txt");Require(Parse(r)==null);});

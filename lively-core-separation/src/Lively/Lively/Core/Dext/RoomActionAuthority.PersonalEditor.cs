@@ -174,6 +174,49 @@ internal sealed partial class RoomActionAuthority
     }
     // Recheck immediately before starting a native file operation. Explorer owns
     // foreground during an external drag; wallpaper playback pause is not a veto.
+    internal RoomActionStatus PlaceDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session, string deskId,
+        IReadOnlyCollection<string> ids, int targetSlot, int columns, int capacity)
+    {
+        try
+        {
+            var spin = new SpinWait();
+            while (true)
+            {
+                var result = store.UpdateForDispatch(state =>
+                {
+                    var admitted = gateway.TryWithActionContext(connection, peer, session, (status, context) =>
+                    {
+                        if (status != RoomProtocolStatus.Accepted) return (Status(status), (RoomDesktopSync?)null);
+                        var snapshot = context!.Snapshot;
+                        var eligibility = LayoutEligibility(context, snapshot.Revision, false);
+                        if (eligibility != RoomActionStatus.Accepted) return (eligibility, (RoomDesktopSync?)null);
+                        if (!snapshot.IsActive || snapshot.Lifecycle.Locked || snapshot.TransitionId is not null ||
+                            snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.CurrentDeskId != deskId ||
+                            !state.Rooms.TryGetValue(context.Installation.RoomId, out var room) ||
+                            room.DesktopSync is not { Enabled: true } previous || previous.DeskId != deskId)
+                            return (RoomActionStatus.NotOperable, (RoomDesktopSync?)null);
+                        var next = RoomDesktopSync.PlaceDropped(previous, ids, targetSlot, columns, capacity);
+                        room.DesktopSync = next;
+                        return (RoomActionStatus.Accepted, (RoomDesktopSync?)next);
+                    }, out (RoomActionStatus Status, RoomDesktopSync? Settings) response);
+                    return (admitted && response.Settings is not null, (admitted, response));
+                });
+                if (!result.admitted) { spin.SpinOnce(); continue; }
+                if (result.response.Settings is { } saved)
+                {
+                    var current = Volatile.Read(ref desktopPresentation);
+                    if (current is not null && current.Session == session && current.View.DeskId == deskId && current.View.Items is { } items)
+                    {
+                        var updated = current with { View = current.View with { ContextId = Guid.NewGuid().ToString("N"),
+                            Items = items.Select(item => saved.Slots.TryGetValue(item.Id, out var slot) ? item with { Slot = slot } : item).ToArray() } };
+                        Interlocked.CompareExchange(ref desktopPresentation, updated, current);
+                    }
+                }
+                return result.response.Status;
+            }
+        }
+        catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
+    }
     internal RoomActionStatus CheckDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session,
         long revision, string desktopContextId, string deskId)
     {

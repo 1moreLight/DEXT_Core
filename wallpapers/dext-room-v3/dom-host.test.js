@@ -695,7 +695,7 @@ test('desktop drop sends real file objects while paused and retires listeners on
   const event={isTrusted:true,clientX:960,clientY:540,ctrlKey:true,dataTransfer,preventDefault(){prevented++;},stopPropagation(){}};
   f.container.handlers.dragover(event);assert.equal(dataTransfer.dropEffect,'copy');
   f.container.handlers.drop(event);await flush();assert.equal(sent.length,1);assert.equal(sent[0].files[0],file);
-  assert.deepEqual(sent[0].params,{desktopContextId:'scan1',deskId:'home',x:.5,y:.5,modifiers:1,allowedEffects:'all'});
+  assert.deepEqual(sent[0].params,{desktopContextId:'scan1',deskId:'home',x:.5,y:.5,page:0,modifiers:1,allowedEffects:'all'});
   assert.equal(dataTransfer.dropEffect,'none');assert.equal(prevented,2);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.container.handlers.drop(event);assert.equal(sent.length,1);
  }finally{f.host.dispose();}

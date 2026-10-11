@@ -68,6 +68,7 @@ namespace Lively.Models.Message
     // objects after parsing the page envelope, not from page JSON.
     public sealed class LivelyRoomNativeDesktopDrop
     {
+        public int Page { get; set; }
         public string DeskId { get; set; }
         public double X { get; set; }
         public double Y { get; set; }

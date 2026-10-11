@@ -13,3 +13,6 @@ Core当前同步Desk授权目标和操作结果，落点附近空槽摆放；002
 待做：落点槽位保存；作者iframe覆盖区的真实拖放命中；Explorer/OLE最终效果与源文件责任验证。DOM drop主动置none只是实现意图，不能据此断言OS源收到none。默认光标提示暂沿用浏览器效果，Core实际同卷判断不能由这个提示测试替代。
 参考：[WebView2文件对象通道](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/javascript/webview)、[Shell拖放完成责任](https://learn.microsoft.com/en-us/windows/win32/shell/dataobject)。
 2026-10-11：隐藏WebView2沙盒iframe命中→顶层drop→生产native-host.dropFiles→AdditionalObjects→生产Player文件读取贯通，路径与临时源一致。只验证浏览器CDP路径，实际OLE及落点仍待。
+
+2026-10-11落点保存接通：新增RoomDesktopSync.PlaceDropped按目标分页优先、格心距离选空槽，保留原图标，允许纠正监听先分配给本次新文件的临时槽位。Core按原生视口/DPI与页面归一化落点计算槽位，实际Shell成功的目标路径转私有ID；排除拖入前已存在ID。当前会话/同步Desk原子写入personal存储，停用或切页拒绝迟到位置；已显示视图换context刷新，新项由目录监听补齐。页面携带分页并保留同Desk刷新后的当前组；位置失败与文件完成分别反馈。
+验证：槽位20项、个人编辑19项、私有IPC76项、宿主101项通过；完整Core/Player Release成功。日志drop-placement-green/drop-placement-store-green/drop-page-message/drop-page-host/drop-placement-core-build。高DPI实机落点、多屏、真实Explorer/OLE效果未验证，本步仍开做，0/5。
