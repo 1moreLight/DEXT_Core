@@ -2574,3 +2574,5 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 07增量：用户确认首次弹出，后续失败。日志每次proof/viewport均true、Prepare Accepted、permitted true，后续22–46ms返回Cancelled，定位弹窗阶段。已修正SetForegroundWindow后立即读取前台的已知时序缺陷：只申请一次，UI异步有界确认，作用域失效立即取消；系统拒绝不重试、不合并输入队列。定向用例先失败后4项通过，Release构建成功；Core32368恢复同目录r5，唯一配置器保留。新增activation/tracked日志区分系统拒绝与菜单关闭，待用户连续两次右键确认；不能据此认定该时序缺陷就是实机唯一原因。空白菜单仍未实现，07进度1/3=33%。
 
 07再次拒收后定位：第三次起activation requested=false/confirmed=false，证明系统拒绝前台请求，单纯异步等待不足。物理右键由Core钩子消费后，Windows最后输入队列仍可在Explorer；菜单申请前台失败时，仅在此次显式用户菜单请求内，对已响应WM_NULL的前台队列临时AttachThreadInput，SetForegroundWindow后finally立即解除，菜单循环不保持队列关联。实测生产菜单窗口/Shell实现：唯一临时文件连续5次弹出、测试进程菜单前台时发送Esc，5/5都关闭，未触发3秒EndMenu兜底；测试文件清理。完整Release成功并部署，Core31776，同目录r5及原配置器保留。此证据为独立真实原生菜单循环，用户桌面最终体验未补填；文件菜单修复候选完成，空白菜单仍待做，07进度2/3≈67%。
+
+用户确认文件右键修复“可以了合并”，4a86dd8已合master；文件菜单修复3/3=100%。空白菜单另列DESK-SYNC-005，不将其记为已通过。
