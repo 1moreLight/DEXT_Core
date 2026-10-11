@@ -682,3 +682,8 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 
 DESK-SYNC-004使用SHCreateDefaultContextMenu产生真实跨目录菜单，Properties/copy等查询通过；将WM_INITMENUPOPUP检查强化为“必须被处理”时失败。定向诊断确认IContextMenu2和3均支持，根与静态填充的7zip子菜单返回E_FAIL。并非接口缺失，也不能把菜单还存在当作真实消息转发/动态子菜单已通过。
 修正：只对处理器返回S_OK的消息认领；其余返回false让owner继续系统处理。保留诊断失败记录，查询检查仅证明菜单与资源保持；实际owner绘制、动态子菜单、WM_MENUCHAR和取消另列真实桌面门槛。后台STA测试要等临时文件清理完再完成Task，避免测试进程先退导致夹具残留。
+
+## #336 原生桌面菜单的返回焦点（2026-10-11）
+
+从其他应用首次右击桌面时，菜单owner保存的previous是原应用。菜单取消后恢复previous会让后续文件快捷键进入原应用；仅SetForegroundWindow桌面也不够，前台生命周期修订会清空Core文件几何和焦点。
+修复：owner仍前台才交回当前有效桌面窗口；新窗口或外点应用已有前台时不抢焦点。实际返回成功后记录一次同代次/会话/Desk/视口/文件的短时焦点恢复，等待当前几何并且原生桌面仍前台才生效；新输入和作用域变化取消，只恢复焦点，不生成动作。代码7/7、右键8/8、指针57/57、Core Release构建通过；Windows弹窗/属性/触控实机门槛仍未通过。

@@ -4,6 +4,7 @@ using System.Text.Json;
 
 if (args.Length==1 && args[0]=="--desktop-sync") { DesktopSyncChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-clipboard-keys") { DesktopClipboardKeyChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-menu-focus") { DesktopMenuFocusChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-context-input") { DesktopContextInputChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-menu-keys") { DesktopMenuKeyChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-f2") { DesktopF2Checks.Run(); return; }

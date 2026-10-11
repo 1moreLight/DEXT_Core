@@ -15,17 +15,16 @@ internal static class DesktopContextMenuWindow
     private static DesktopShellContextMenu active;
     private static Exception messageError;
 
-    internal static async Task<string> ShowAsync(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted)
+    internal static async Task<string> ShowAsync(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
     {
         var app = Application.Current;
         if (app is null || app.Dispatcher.HasShutdownStarted) return "cancelled";
-        return await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted));
+        return await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted, desktopTarget, returnedToDesktop));
     }
-    private static string Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted)
+    private static string Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
     {
         if (!permitted()) return "cancelled";
         if (active is not null) throw new InvalidOperationException("A desktop context menu is already open.");
-        var previous = GetForegroundWindow();
         if (owner is null)
         {
             owner = new HwndSource(new HwndSourceParameters("Dext Desktop File Menu")
@@ -54,7 +53,12 @@ internal static class DesktopContextMenuWindow
             if (owner is not null)
             {
                 PostMessage(owner.Handle, 0, IntPtr.Zero, IntPtr.Zero);
-                if (GetForegroundWindow() == owner.Handle && IsWindow(previous)) SetForegroundWindow(previous);
+                if (GetForegroundWindow() == owner.Handle)
+                {
+                    var target = desktopTarget?.Invoke() ?? IntPtr.Zero;
+                    if (target != IntPtr.Zero && IsWindow(target) && SetForegroundWindow(target) && GetForegroundWindow() == target && permitted())
+                        returnedToDesktop?.Invoke();
+                }
             }
         }
     }

@@ -43,7 +43,11 @@ public partial class WebWebView2
             var y = checked(viewport.Y + Math.Clamp((int)Math.Round((proof.Button.Y + proof.Button.Height) * viewport.Height), 0, viewport.Height - 1));
             if(proof.ContextMenu){x=proof.X;y=proof.Y;}
             var paths = prepared.Targets.Select(target => target.Target).ToArray();
-            var verb = await DesktopContextMenuWindow.ShowAsync(paths, x, y, Permitted);
+            var verb = await DesktopContextMenuWindow.ShowAsync(paths, x, y, Permitted, NativeDesktopMenuTarget, () => {
+                if (!Permitted()) return;
+                attachment.Input.QueueDesktopMenuFocus(state.Generation, state.Session, initial.DeskId, viewport, proof);
+                RestoreDesktopMenuFocus(attachment);
+            });
             if (verb == "cancelled" || !Permitted()) return (new(RoomActionStatus.Cancelled, receipt.InputSequence, receipt.InputConsumed), null);
             if (verb is "copy" or "cut")
             {

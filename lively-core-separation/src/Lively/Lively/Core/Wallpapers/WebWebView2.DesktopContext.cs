@@ -9,6 +9,14 @@ namespace Lively.Core.Wallpapers;
 public partial class WebWebView2
 {
     internal Func<int,int,bool> NativeContextIsDesktop { private get; set; }
+    internal Func<IntPtr> NativeDesktopMenuTarget { private get; set; }
+    private void RestoreDesktopMenuFocus(NativeAttachment attachment)
+    {
+        var before=attachment.Input.State;
+        if(!IsExited&&ReferenceEquals(Volatile.Read(ref roomNativeAttachment),attachment)&&
+            attachment.Input.TryRestoreDesktopMenuFocus(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true))
+            NotifyNative(attachment,before,false);
+    }
     internal DesktopFileContextOffer CaptureDesktopContextOffer(IntPtr[] roots,long expires)
     {
         var a=Volatile.Read(ref roomNativeAttachment);var state=a?.Input.State;

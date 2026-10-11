@@ -469,6 +469,8 @@ namespace Lively.Core
             if (sender is WebWebView2 webWallpaper)
             {
                 webWallpaper.NativeInputIsForeground = () => userSettings.Settings.InputForward != InputForwardMode.off && IsDesktop();
+                webWallpaper.NativeDesktopMenuTarget = () => disposedValue || screenSaver.IsRunning || userSettings.Settings.InputForward == InputForwardMode.off
+                    ? IntPtr.Zero : original_WorkerW != IntPtr.Zero && NativeMethods.IsWindow(original_WorkerW) ? original_WorkerW : progman;
                 webWallpaper.NativeDesktopKeyboardChanged -= RefreshDesktopFileKeyboardOffer;
                 webWallpaper.NativeDesktopKeyboardChanged += RefreshDesktopFileKeyboardOffer;
                 roomSessionRuntime.OnPageReady(webWallpaper);

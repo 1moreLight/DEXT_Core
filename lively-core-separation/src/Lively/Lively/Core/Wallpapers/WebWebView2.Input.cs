@@ -102,6 +102,7 @@ namespace Lively.Core.Wallpapers
                     {
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
+                        if(status==RoomActionStatus.Accepted)RestoreDesktopMenuFocus(a);
                     }
                     break;
                 case "desktopMenu":

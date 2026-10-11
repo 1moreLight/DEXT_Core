@@ -51,6 +51,8 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     private AcceptedEntry? focused;
     private RoomNativeInputProof? completed,contextCompleted;
     private Press? contextPress;
+    private MenuFocus? menuFocus;
+    private sealed record MenuFocus(long Generation,Guid Session,string Desk,RoomNativeViewport Viewport,RoomNativeButton Button,long At);
     private RoomNativeInputGesture? gesture;
     private Press? mouse, keyboard;
     private bool mouseHeld;
@@ -82,7 +84,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         lock(gate)
         {
             if(nextGeneration<=generation || nextGeneration<=0)return;
-            generation=nextGeneration;geometryVersion=0;snapshot=next;ClearGeometry();
+            menuFocus=null;generation=nextGeneration;geometryVersion=0;snapshot=next;ClearGeometry();
         }
     }
     internal void ObserveSnapshot(RoomSessionSnapshot next)
@@ -92,10 +94,10 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             if(snapshot==null)return;
             if(next.SessionId!=snapshot.SessionId || next.InstallationStamp!=snapshot.InstallationStamp){Revoke();return;}
             if(next.Revision<=snapshot.Revision)return;
-            snapshot=next;ClearGeometry();
+            snapshot=next;if(!MenuFocusScope())menuFocus=null;ClearGeometry();
         }
     }
-    internal void Revoke(){lock(gate){snapshot=null;ClearGeometry();}}
+    internal void Revoke(){lock(gate){menuFocus=null;snapshot=null;ClearGeometry();}}
     internal bool InvalidateGeometry(long document,Guid session,long revision)
     {lock(gate){if(!Identity(document,session,revision))return false;ClearGeometry();return true;}}
 
@@ -112,6 +114,35 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             viewport=nativeViewport;buttons=accepted;sampledMouse=sampleMouse;return true;
         }
     }
+    // Called only after a consumed native menu has returned OS foreground to
+    // the desktop. Revision/geometry refresh may arrive after that handoff.
+    internal void QueueDesktopMenuFocus(long document,Guid session,string desk,RoomNativeViewport current,RoomNativeInputProof proof)
+    {
+        lock(gate){
+            menuFocus=null;
+            if(role!=RoomClientRole.DesktopPlayer||inputSequence!=proof.Sequence||!proof.IsConsumed||proof.Button.Consumer!="official.desktop"||
+                !proof.Button.Button.StartsWith("desktop-",StringComparison.Ordinal)||generation!=document||snapshot?.SessionId!=session)return;
+            menuFocus=new(document,session,desk,current,proof.Button,clock.GetTimestamp());
+            if(!MenuFocusScope())menuFocus=null;
+        }
+    }
+    private bool MenuFocusScope()=>menuFocus is{} pending&&generation==pending.Generation&&snapshot is{IsActive:true,TransitionId:null}&&
+        snapshot.SessionId==pending.Session&&snapshot.CurrentDeskId==pending.Desk&&snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&
+        !snapshot.Lifecycle.Locked&&!Expired(pending.At,clock.GetTimestamp());
+    internal bool TryRestoreDesktopMenuFocus(RoomNativeViewport? current,bool foreground)
+    {
+        lock(gate){
+            if(menuFocus is not{} pending)return false;
+            if(!foreground||!MenuFocusScope()||current!=pending.Viewport){menuFocus=null;return false;}
+            if(!CanInput()||viewport is null)return false; // Wait for current foreground geometry.
+            menuFocus=null;
+            if(sampledMouse||viewport!=current)return false;
+            var target=buttons.FirstOrDefault(value=>value.Button.Consumer==pending.Button.Consumer&&
+                value.Button.Button==pending.Button.Button&&value.Button.EntryId==pending.Button.EntryId);
+            if(target is null)return false;
+            ClearInput();focused=target;return true; // Focus only, never a new proof.
+        }
+    }
     // Context input is independently proven by the actual desktop window below
     // the OS pointer. It need not already own foreground before the first click.
     private bool CanContext()=>role==RoomClientRole.DesktopPlayer&&snapshot is{IsActive:true,TransitionId:null}&&
@@ -126,7 +157,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             var target=Hit(x,y);
             if(target?.Button.Consumer!="official.desktop"||!target.Button.Button.StartsWith("desktop-",StringComparison.Ordinal)||
                 target.Button.Button!=button||target.Button.EntryId!=entry)return 0;
-            ClearInput();contextPress=new(target,issuedAt,++inputSequence,x,y);return inputSequence;
+            menuFocus=null;ClearInput();contextPress=new(target,issuedAt,++inputSequence,x,y);return inputSequence;
         }
     }
     internal void ContextUp(RoomNativeViewport current,long sequence,int x,int y,bool nativeDesktop,bool cancelled)
@@ -146,7 +177,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         lock(gate)
         {
             ExpireGesture(now);
-            contextPress=null;contextCompleted=null;
+            menuFocus=null;contextPress=null;contextCompleted=null;
             if(mouseHeld)return;
             mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
             if(!Available(current,foreground) || !Inside(current,x,y)){focused=null;return;}
@@ -303,6 +334,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             ExpireGesture(now);
             if(down)
             {
+                menuFocus=null;
                 if(DextNativePointerPacket.IsDesktopFileKey(key)&&(role!=RoomClientRole.DesktopPlayer||!DextNativePointerPacket.IsDesktopKeyTarget(key,focused?.Button.Consumer,focused?.Button.Button)))return;
                 if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&modifiers!=1)return;
                 if(key==46&&modifiers is not (0 or 2))return;
