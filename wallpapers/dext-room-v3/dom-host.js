@@ -317,6 +317,51 @@
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
+    let dropRunning=false;
+    function dropEligible(event){
+      return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
+        snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
+        desktopView?.deskId===snapshot.currentDeskId&&Array.from(event.dataTransfer?.types||[]).includes('Files');
+    }
+    function dropIntent(event){
+      const allowed={all:['copy','move','link'],uninitialized:['copy','move','link'],copy:['copy'],move:['move'],link:['link'],copyMove:['copy','move'],copyLink:['copy','link'],linkMove:['link','move']}[event.dataTransfer.effectAllowed]||[];
+      const requested=event.altKey||event.ctrlKey&&event.shiftKey?'link':event.ctrlKey?'copy':event.shiftKey?'move':null;
+      return requested?(allowed.includes(requested)?requested:'none'):
+        allowed.includes(event.dataTransfer.dropEffect)?event.dataTransfer.dropEffect:allowed[0]||'none';
+    }
+    function desktopDragOver(event){
+      if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect=dropEligible(event)?dropIntent(event):'none';
+    }
+    function dropNotice(message){
+      clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
+      actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
+      actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopDrop(event){
+      if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();event.stopPropagation();
+      if(!dropEligible(event)){event.dataTransfer.dropEffect='none';return;}
+      const transfer=event.dataTransfer,effect=dropIntent(event),files=Array.from(transfer.files||[]),rect=container.getBoundingClientRect();
+      // Core owns file movement. Never tell the source to delete files merely
+      // because an asynchronous request was posted. Actual OLE return is a probe gate.
+      transfer.dropEffect='none';
+      if(effect==='none'||files.length===0||files.length>256||rect.width<=0||rect.height<=0)return;
+      const x=(event.clientX-rect.left)/rect.width,y=(event.clientY-rect.top)/rect.height;
+      if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1)return;
+      const identity=scope(),params={desktopContextId:desktopView.contextId,deskId:desktopView.deskId,x,y,
+        modifiers:(event.ctrlKey?1:0)|(event.shiftKey?2:0)|(event.altKey?4:0),allowedEffects:transfer.effectAllowed};
+      dropRunning=true;dropNotice('正在处理拖入的文件…');
+      let operation;
+      try{operation=native.dropFiles(params,files,identity);}catch(error){operation=Promise.reject(error);}
+      Promise.resolve(operation).then(reply=>{
+        if(disposed||identity.sessionId!==snapshot.sessionId)return;
+        const items=Array.isArray(reply?.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
+        dropNotice(reply?.status==='accepted'?`已完成 ${completed} 项，未处理 ${items.length-completed} 项。`:
+          reply?.status==='cancelled'?`操作已取消，已完成 ${completed} 项。`:'未能完成拖入，请检查目标桌面或稍后重试。');
+      },()=>{if(!disposed)dropNotice('未收到操作结果，请先检查桌面文件，避免重复拖入。');}).finally(()=>{dropRunning=false;});
+    }
+    if(!dockView){container.addEventListener('dragover',desktopDragOver);container.addEventListener('drop',desktopDrop);}
     function consumeReceipt(reply){
       showActionResult(reply.status);
       if(reply.inputConsumed!==true||!Number.isSafeInteger(reply.inputSequence)||reply.inputSequence<=0)return;
@@ -472,7 +517,7 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      dispose(){if(disposed)return;disposed=true;container.removeEventListener('dragover',desktopDragOver);container.removeEventListener('drop',desktopDrop);clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
       readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }

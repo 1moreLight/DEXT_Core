@@ -4,7 +4,7 @@
 })(globalThis,function(root){
   'use strict';
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
-  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited']);
+  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited','cancelled']);
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f\u007f-\u009f]/.test(v);
   const shape=(v,keys)=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
@@ -98,6 +98,7 @@
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
       case'invalidateGeometry':case'layoutRead':return shape(p,[]);
+      case'desktopDrop':return shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects'])&&id(p.desktopContextId)&&id(p.deskId,80)&&finite(p.x,0,1)&&finite(p.y,0,1)&&integer(p.modifiers,0,7)&&['all','uninitialized','copy','move','link','copyMove','copyLink','linkMove'].includes(p.allowedEffects);
       case'presentationRead':return shape(p,[])||shape(p,['desktopContextId'])&&id(p.desktopContextId);
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
@@ -120,15 +121,15 @@
     let identity=copy(options.initialIdentity),counter=0,disposed=false,suspended=options.initialSuspended===true,lastError=null;
     const pending=new Map(),capQueries=new Map(),sources=new Map(),watches=new Map();
     const diagnose=code=>{lastError={code};};
-    function dispatch(method,params,scope=identity){
+    function dispatch(method,params,scope=identity,files=null){
       let entry;
       const promise=new Promise((resolve,reject)=>{
-        if(disposed){reject(failure('disposed'));return;}if(suspended&&!['layoutRead','presentationRead'].includes(method)){reject(failure('notOperable'));return;}
+        if(disposed){reject(failure('disposed'));return;}if(suspended&&!['layoutRead','presentationRead','desktopDrop'].includes(method)){reject(failure('notOperable'));return;}
         if(!scopeValid(scope)||!same(scope,identity)){reject(failure('staleInput'));return;}
-        if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
+        if(method==='desktopDrop'&&(!files||!integer(files.length,1,256)||typeof transport.postMessageWithAdditionalObjects!=='function')){reject(failure('invalidArgument'));return;}if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
         const requestId='n'+(++counter);entry={requestId,method,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
-        entry.timer=later(()=>finish(entry,false,'timeout'),5000);
-        try{transport.postMessage(JSON.stringify(copy({type:'dext:v3-native-request',protocolVersion:1,requestId,method,...scope,...params})));}
+        entry.timer=later(()=>finish(entry,false,'timeout'),method==='desktopDrop'?1800000:5000);
+        try{const message=JSON.stringify(copy({type:'dext:v3-native-request',protocolVersion:1,requestId,method,...scope,...params}));if(method==='desktopDrop')transport.postMessageWithAdditionalObjects(message,files);else transport.postMessage(message);}
         catch(_){finish(entry,false,'transportUnavailable');}
       });
       return{promise,cancel(code='staleInput'){if(entry)finish(entry,false,code);}};
@@ -146,8 +147,8 @@
       const entry=pending.get(reply.requestId);if(!entry||!same(reply,entry.scope)||!STATUS.has(reply.status))return;
       // An authoritative action may synchronously publish its new revision
       // before its receipt. Deliver that existing result in this same document;
-      // generation/session replacement and pause still cancel all requests.
-      const action=['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method);
+      // Generation/session replacement cancels requests; ordinary pause keeps file transfers.
+      const action=['activate','navigate','mediaControl','audioControl','authorInput','desktopDrop'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
       if(['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
       if(entry.method==='presentationRead'&&reply.status==='accepted'&&((!shape(reply.presentation,['revision','skins','locator'])&&!shape(reply.presentation,['revision','skins','locator','desktop']))||Object.hasOwn(reply.presentation,'desktop')&&!desktopValid(reply.presentation.desktop)||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
@@ -213,9 +214,10 @@
       watch.listeners.add(listener);if(created)refreshWatch(watch);let released=false;
       return()=>{if(released)return;released=true;watch.listeners.delete(listener);if(watch.listeners.size===0){stopWatch(watch);watches.delete(consumer);}};
     }
-    function cancelPending(code,retainActions=false){for(const entry of [...pending.values()])if(!retainActions||!['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method))finish(entry,false,code);capQueries.clear();}
+    function cancelPending(code,retainActions=false,retainDrops=false){for(const entry of [...pending.values()])if(!(retainDrops&&entry.method==='desktopDrop')&&(!retainActions||!['activate','navigate','mediaControl','audioControl','authorInput','desktopDrop'].includes(entry.method)))finish(entry,false,code);capQueries.clear();}
     return Object.freeze({
-      request:(method,params,scope)=>dispatch(method,params,scope).promise,readCapabilities,subscribeData,watchCapabilities,
+      request:(method,params,scope)=>dispatch(method,params,scope).promise,
+      dropFiles:(params,files,scope)=>dispatch('desktopDrop',params,scope,files).promise,readCapabilities,subscribeData,watchCapabilities,
       acceptIdentity(next){
         if(disposed||!scopeValid(next)||next.runtimeGeneration<identity.runtimeGeneration||next.runtimeGeneration===identity.runtimeGeneration&&
           (next.sessionId!==identity.sessionId||next.revision<identity.revision))return false;
@@ -224,7 +226,7 @@
       },
       setSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===suspended)return true;suspended=value;
-        if(value){cancelPending('notOperable');for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);}
+        if(value){cancelPending('notOperable',false,true);for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);}
         else for(const watch of watches.values())refreshWatch(watch);return true;
       },
       dispose(){if(disposed)return;disposed=true;cancelPending('disposed');for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);watches.clear();transport.removeEventListener('message',receive);},

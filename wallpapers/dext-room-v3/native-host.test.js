@@ -213,3 +213,18 @@ test('desktop presentation accepts a full snapshot then a context-only cache rep
   assert.equal((await promise).presentation.desktop.items,null);
  }finally{f.host.dispose();}
 });
+
+test('desktop drop uses native additional objects and survives ordinary pause and revision changes',async()=>{
+ const sent=[],objects=[],listeners=new Set(),timers=new Map();let serial=0;
+ const host=createNativeHost({initialIdentity:identity,transport:{postMessage:()=>assert.fail('plain JSON transport'),
+  postMessageWithAdditionalObjects:(json,files)=>{sent.push(JSON.parse(json));objects.push(files);},
+  addEventListener:(_,cb)=>listeners.add(cb),removeEventListener:(_,cb)=>listeners.delete(cb)},
+  setTimeout:(cb)=>{timers.set(++serial,cb);return serial;},clearTimeout:id=>timers.delete(id)});
+ host.setSuspended(true);
+ const files=[{name:'one.txt'}],params={desktopContextId:'ctx',deskId:'home',x:.2,y:.3,modifiers:1,allowedEffects:'all'};
+ const result=host.dropFiles(params,files);
+ assert.equal(sent.length,1);assert.equal(objects[0],files);assert.equal(Object.hasOwn(sent[0],'files'),false);
+ host.setSuspended(false);host.setSuspended(true);host.acceptIdentity({...identity,revision:2});
+ for(const cb of listeners)cb({data:{type:'dext:v3-native-response',requestId:sent[0].requestId,...identity,status:'cancelled',data:null}});
+ assert.equal((await result).status,'cancelled');assert.equal(timers.size,0);host.dispose();
+});

@@ -16,7 +16,7 @@ function fixture(options={}){
  const calls=[],controls=[],frames=new Map(),medias=new Map(),raf=new Map();let now=0,id=0;
  const node=tag=>({tag,style:{},dataset:{},children:[],attrs:{},handlers:{},hidden:false,setAttribute(k,v){this.attrs[k]=v;},removeAttribute(k){delete this.attrs[k];},addEventListener(k,cb){this.handlers[k]=cb;},removeEventListener(k){delete this.handlers[k];},append(child){child.parent=this;this.children.push(child);},remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);},getBoundingClientRect(){return{left:0,top:0,width:1920,height:1080};}});
  const document={createElement:node,createElementNS:(_ns,tag)=>node(tag)};const container=node('root');
- const bridge=options.native||{identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
+ const bridge=options.native||{dropFiles:(params,files,scope)=>options.dropFiles?.(params,files,scope),identity:null,acceptIdentity(v){this.identity=v;return true;},setSuspended(v){calls.push({method:'suspended',value:v});},request(method,params,scope){calls.push({method,params,scope});return options.request?.(method,params,scope)??Promise.resolve({status:'accepted',buttons:[],...(method==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})});},readCapabilities:async()=>({status:'accepted',capabilities:{'desk.read':'accepted'}}),subscribeData:()=>()=>{},watchCapabilities:()=>()=>{},dispose(){calls.push({method:'dispose'});},readDiagnostics:()=>({})};
  const frameFactory=opts=>({mount(def,parent){const old=frames.get(def.instanceId);if(old)return old.node;const value={def,node:node('iframe'),state:def.state,opts};frames.set(def.instanceId,value);parent.append(value.node);return value.node;},setState(id,state){frames.get(id).state=state;},updateConfig(id,config){frames.get(id).config=config;},acceptSnapshot:v=>{calls.push({method:'frameSnapshot',revision:v.revision});options.onFrameSnapshot?.(v,opts);},setGeometry:v=>calls.push({method:'frameGeometry',value:v}),setPlaybackSuspended:v=>calls.push({method:'framePause',value:v}),refreshPermissions(){},disposeInstance(id){frames.get(id)?.node.remove();frames.delete(id);},dispose(){frames.clear();},readDiagnostics:()=>({count:frames.size})});
  const mediaFactory=opts=>({mount(def,parent){if(medias.has(def.instanceId))return medias.get(def.instanceId).node;const value={def,node:def.content.type==='html'?opts.mountHTML(def,parent):node('img'),opts,state:def.state};if(def.content.type!=='html')parent.append(value.node);medias.set(def.instanceId,value);return value.node;},setState(id,state){medias.get(id).state=state;},refresh(){},completeHTML:id=>medias.has(id),setPlaybackSuspended:v=>calls.push({method:'mediaPause',value:v}),disposeInstance:id=>medias.delete(id),dispose(){medias.clear();},readDiagnostics:()=>({count:medias.size})});
  const host=createDomHost({document,container,context:{viewKind:options.viewKind,runtimeGeneration:1,sessionId:'session',roomId:'room',installationStamp:'stamp',manifest:room,resources:room.resources.map(path=>({path})),resourceBasePath:'/content/1/'},initialSnapshot:options.initialSnapshot||snap(),native:bridge,
@@ -683,4 +683,21 @@ test('desktop overflow pages retain saved slots and use native page activation',
   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:entry.button,entryId:entry.entryId,inputSequence:1});await flush();
   assert.ok(children().find(n=>n.attrs['aria-label']==='Slot 130'));assert.equal(children().some(n=>n.attrs['aria-label']==='Slot 0'),false);
  }finally{f.host.dispose();}
+});
+
+test('desktop drop sends real file objects while paused and retires listeners on dispose',async()=>{
+ const sent=[],desktop={contextId:'scan1',deskId:'home',items:[],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined,
+  dropFiles:(params,files,scope)=>{sent.push({params,files,scope});return Promise.resolve({status:'accepted',data:{items:[{status:'completed'}]}});}});
+ try{
+  await f.host.ready;await flush();f.host.setPlaybackSuspended(true);
+  const file={name:'example.txt'},dataTransfer={types:['Files'],effectAllowed:'all',dropEffect:'move',files:[file]};let prevented=0;
+  const event={isTrusted:true,clientX:960,clientY:540,ctrlKey:true,dataTransfer,preventDefault(){prevented++;},stopPropagation(){}};
+  f.container.handlers.dragover(event);assert.equal(dataTransfer.dropEffect,'copy');
+  f.container.handlers.drop(event);await flush();assert.equal(sent.length,1);assert.equal(sent[0].files[0],file);
+  assert.deepEqual(sent[0].params,{desktopContextId:'scan1',deskId:'home',x:.5,y:.5,modifiers:1,allowedEffects:'all'});
+  assert.equal(dataTransfer.dropEffect,'none');assert.equal(prevented,2);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.container.handlers.drop(event);assert.equal(sent.length,1);
+ }finally{f.host.dispose();}
+ assert.equal(f.container.handlers.drop,undefined);assert.equal(f.container.handlers.dragover,undefined);
 });
