@@ -34,6 +34,8 @@
     }
     function desktopActivation(value){
       const input=value.desktopInput;
+      // Command keys must not mutate the selection used to resolve their targets.
+      if(input?.key===114){desktopClick=null;return false;}
       if(!input||!desktopSelection.select(value.button,{ctrl:(input.modifiers&1)!==0,shift:(input.modifiers&2)!==0}))return false;
       paintDesktopSelection();
       const previous=desktopClick;desktopClick=null;

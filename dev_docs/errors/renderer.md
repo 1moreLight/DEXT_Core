@@ -720,3 +720,6 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 证据：帧/当前gesture有效；第二次只有pointerdown没有兼容mousedown，postedEdges仍为第一次2条。原始未授权pointerdown被preventDefault后，Chromium抑制该接触的兼容鼠标事件，影响后续转发。
 修复：捕获原生PointerEvent.pointerType getter，仅未授权鼠标pointerdown不preventDefault，仍stopImmediatePropagation；未授权mousedown继续preventDefault/stop，触摸不变。不要延长手势期限或伪造回执。
 验证：Core30708/Player48244真实双向导航成功，无应用误触，窄栏缩小/溢出；30项guardian检查、最终Release通过。临时事件计数已删除。物理触屏及窄栏滚动仍独立验收。
+
+## #327 F2误修改多选（2026-10-11）
+现象：原生F2进入desktopActivation，select先执行导致多选缩成焦点项。修复：F2在select之前分流并清空待双击；后续改名必须读取已有单选状态。证据：宿主真实事件回归先红后绿，111项通过。人工：Ctrl选中两个文件后按F2，应保留两个选中项且不打开文件；实际改名窗口另待接线。

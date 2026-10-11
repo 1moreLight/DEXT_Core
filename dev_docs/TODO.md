@@ -2344,3 +2344,6 @@ Ruling：改名编辑器对已存在目标直接显示冲突，取代原计划�
 2026-10-11 第02步F2输入链：Core仅给DesktopPlayer的official.desktop/desktop-*焦点接收114按键，沿用原生配对与当前可见几何采样；Player私有pointer允许该范围的F2，官方宿主事件校验接收114。6项Core配对检查（sampled/direct × 文件/官方按钮/作者场景）通过；Player pointer18项通过；Node111项通过；完整Core/Player/Watchdog Release退出0，日志desktop-shell-actions-build-env/f2-input-core-build.log。start.ps1 CoreOnly保持原Core52420。
 同时修正实际代码中的官方桌面输入漏接：ArmInputAsync将official.desktop键盘错误要求匹配作者iframe；Form1等待作者DOM回执/转发模拟按键、鼠标ReceiveOfficialInputDispatch也只认official。统一IsOfficialConsumer/UsesOfficialKeyboard，官方桌面键盘走已有物理采样路径，鼠标保留顶层实际派发回执。没有绕过原生配对或新增覆盖层。上述证据是生产类/消息与构建，不是实机鼠标或触控验收。
 F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私有命令，按F2尚不能实际改名，不能标第02步完成。下一步原生证明绑定当前文件ID→改名窗口→Shell服务→结果刷新；保持1/6≈17%，路线2/4=50%。
+2026-10-11 第02步继续：先修复F2事件误调用select导致多选缩成单选的问题；补充多选/单选F2不改变选择且不启动文件的回归，再继续私有改名命令和窗口接线。状态开做，1/6≈17%。
+
+2026-10-11 F2选择副作用已修复：命令键在选择操作前分流并清空待双击，不再把多选缩成单选，不触发文件打开。新增实际宿主断言先失败（少一个选中项）再通过，相关111项通过，日志.build/f2-selection-red.log与f2-selection-green.log。start.ps1 CoreOnly确认原Core52420，不启动配置器、不部署新宿主。改名私有命令与窗口仍待接，02开做，1/6≈17%，整体50%。

@@ -453,3 +453,5 @@
 | #325 | Shell静默错误标志不保证重名不等待确认；目录改名后清理旧子路径需先检查存在 | [backend](errors/backend.md) |
 
 | #326 | official.desktop未加入Player官方输入分类，键盘等作者iframe/回执、鼠标官方回执被忽略 | [backend](errors/backend.md) |
+
+| #327 | 桌面命令键复用点击选择逻辑，F2把多选缩成单选 | [renderer](errors/renderer.md) |
