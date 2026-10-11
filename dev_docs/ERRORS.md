@@ -466,3 +466,5 @@
 | #333 | 静态Shell菜单初始化可能未处理；查询成功不能当作真实弹窗消息验收 | [backend](errors/backend.md) |
 
 | #334 | Windows Python默认GBK读取UTF-8源码失败；读写都必须显式UTF-8并在失败后止步 | [toolchain](errors/toolchain.md) |
+
+| #335 | 仅Core允许后台右键仍不够：宿主operable=false时发布空文件区域 | [renderer](errors/renderer.md) |

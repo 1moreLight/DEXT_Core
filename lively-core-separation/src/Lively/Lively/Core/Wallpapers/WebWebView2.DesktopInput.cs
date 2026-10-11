@@ -14,7 +14,7 @@ public partial class WebWebView2
     }
     private static object DesktopInputDetails(RoomNativeInputProof proof) => new
     {
-        key = proof.Key, modifiers = proof.Modifiers, x = proof.X, y = proof.Y,
+        contextMenu = proof.ContextMenu, key = proof.Key, modifiers = proof.Modifiers, x = proof.X, y = proof.Y,
         at = proof.IssuedAt * (1000d / Stopwatch.Frequency),
         doubleClickTime = GetDoubleClickTime(),
         doubleClickWidth = Math.Max(1, DesktopGetSystemMetrics(36)),

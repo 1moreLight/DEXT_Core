@@ -1,6 +1,6 @@
 # DESK-SYNC-004 原生右键与属性
 
-状态：开做
+状态：做完（代码实施，真实菜单/属性/触控统一验收待做）
 
 新增DesktopShellContextMenu.cs：IShellFolder/GetUIObjectOf/IContextMenu菜单在STA且具备消息转发窗口；IContextMenu2/3消息正确转发，支持Unicode InvokeCommand、取消关闭、属性和混合公共/用户目录选择。位置来自Player当前真实窗口/DPI，不使用作者坐标作为任意系统点击。右键未选中项先单选，已选中项保留多选；键盘菜单键/Shift+F10同路径。右键输入扩展独立于既有左键/触控，作用域退休关闭菜单；Shell扩展异常返回可重试错误。
 
@@ -41,3 +41,7 @@ Core24/24、原生菜单键12组、键盘所有权10/10、宿主117/117、消息
 详细证据见独立验收卡“第05步右键输入组件增量”。代码已有但监听尚未接入产品启动，不把组件通过记作右键功能完成。start.ps1对本轮开发输出明确报告缺配置器，打包仍待第06步；运行Core26668保持。
 
 原生接口依据：[LowLevelMouseProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelmouseproc)、[MSLLHOOKSTRUCT](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msllhookstruct)、[区分笔与触控提升](https://learn.microsoft.com/en-us/windows/win32/tablet/system-events-and-mouse-messages)。回调只做有界命中和异步入队；WH_MOUSE_LL超时可能被系统静默移除，实际接入后不能把Active属性当持续健康证明。
+
+### 右键接线实施做完
+
+WinDesktopCore已创建/退休监听并发布最新文件几何；生产Core与官方宿主的后台首次右击、真实坐标、多选/单选及菜单专用证明接线完成。完整Release及120项宿主/25项文件动作/57项原指针采样/8项右键证明/15项所有权检查通过。证据和实际Windows未验收事项见独立验收卡同日“右键实际接线”。上文未勾项为历史增量状态；真实弹窗/动态子菜单/属性/外点和Esc/DPI/触控仍未验收，不因代码做完倒填。

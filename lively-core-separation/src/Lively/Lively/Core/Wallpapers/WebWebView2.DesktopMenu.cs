@@ -21,7 +21,7 @@ public partial class WebWebView2
             var viewport = ReadNativeViewport();
             attachment.Input.CheckNativeViewport(viewport, NativeInputIsForeground?.Invoke() == true);
             var proof = attachment.Input.GetProof(state.Generation, request.GeometryVersion, request.Consumer, request.Button, request.InputSequence);
-            if (proof is null || viewport is null) return (new(RoomActionStatus.StaleInput), null);
+            if (proof is null || viewport is null || proof.ContextMenu && NativeContextIsDesktop?.Invoke(proof.X,proof.Y)!=true) return (new(RoomActionStatus.StaleInput), null);
             var prepared = attachment.Bridge.PrepareNativeMenu(attachment.Actions, attachment.Input, state.Generation, state.Session, state.Revision,
                 request.GeometryVersion, request.Consumer, request.Button, request.InputSequence, request.SelectedIds);
             receipt = prepared.Reply;
@@ -41,6 +41,7 @@ public partial class WebWebView2
             // cannot nominate a screen point or a path for the menu owner.
             var x = checked(viewport.X + Math.Clamp((int)Math.Round((proof.Button.X + proof.Button.Width / 2) * viewport.Width), 0, viewport.Width - 1));
             var y = checked(viewport.Y + Math.Clamp((int)Math.Round((proof.Button.Y + proof.Button.Height) * viewport.Height), 0, viewport.Height - 1));
+            if(proof.ContextMenu){x=proof.X;y=proof.Y;}
             var paths = prepared.Targets.Select(target => target.Target).ToArray();
             var verb = await DesktopContextMenuWindow.ShowAsync(paths, x, y, Permitted);
             if (verb == "cancelled" || !Permitted()) return (new(RoomActionStatus.Cancelled, receipt.InputSequence, receipt.InputConsumed), null);

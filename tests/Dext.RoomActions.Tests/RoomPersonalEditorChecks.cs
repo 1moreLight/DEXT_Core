@@ -51,6 +51,18 @@ static partial class RoomActionChecks
    Eq(93,input.State!.Completed!.Key);
    Eq(RoomActionStatus.Accepted,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,input.State.Completed,new[]{id}).Status);
   });
+  check("right pointer proof prepares menu once without permitting file launch",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('e',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});var target=new PersonalTarget("File.txt","file",@"C:\Temp\File.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);var v=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,v,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   var sequence=input.ContextDown(v,1,f.Kernel.Snapshot.Revision,1,f.Clock.GetTimestamp(),200,100,id,"desktop.scan/"+id,true);
+   input.ContextUp(v,sequence,200,100,true,false);var proof=input.State!.Completed!;
+   Eq(true,proof.ContextMenu);Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   var reply=f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id});Eq(RoomActionStatus.Accepted,reply.Status);Eq(target,reply.Targets!.Single());
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id}).Status);Eq(0,f.Launched.Count);
+  });
   check("Delete prepares the selected files once and Shift Delete cannot prepare deletion",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('d',64);
    f.Store.SetDesktopSync(Room,"home",true,new[]{id});

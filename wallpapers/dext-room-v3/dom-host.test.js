@@ -825,3 +825,33 @@ test('native menu keys preserve multi-selection and cannot launch files',async()
   assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
  }finally{f.host.dispose();}
 });
+
+test('native right click retains selected files and selects an unselected target without launch',async()=>{
+ const ids=['a','b','c'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'right',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,sequence,ctrl=false,contextMenu=false)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.right/'+id,inputSequence:sequence,desktopInput:{key:0,contextMenu,modifiers:ctrl?1:0,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],1);send(ids[1],2,true);await flush();send(ids[1],3,false,true);await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,ids.slice(0,2));
+  send(ids[2],4,false,true);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,[ids[2]]);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[ids[2]]);
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+ }finally{f.host.dispose();}
+});
+
+test('background desktop still publishes only visible file regions for the first right click',async()=>{
+ const id='desktop-'+'f'.repeat(64),desktop={contextId:'background',deskId:'home',items:[{id,name:'File',kind:'file',slot:3,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();await f.host.acceptSnapshot(f.snap(2,{operable:false}));await flush();
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  assert.deepEqual(q.params.buttons.map(b=>[b.consumer,b.button]),[['official.desktop',id]]);
+  const entry=q.params.buttons[0];
+  assert.equal(f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:0,contextMenu:true,modifiers:0,x:0,y:0,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}}),true);
+  await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,[id]);
+  await f.host.acceptSnapshot(f.snap(3,{operable:false,lifecycle:{stage:'desktop',playbackPaused:false,locked:true,revision:2}}));await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='geometry').at(-1).params.buttons,[]);
+ }finally{f.host.dispose();}
+});

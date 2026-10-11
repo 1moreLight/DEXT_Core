@@ -246,8 +246,12 @@
     }
     function buttonGeometry(sampled=false){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.locked||dockView&&snapshot.lifecycle.stage!=="desktop"||
-        !dockView&&(snapshot.lifecycle.stage==="desktop"&&!snapshot.operable||snapshot.lifecycle.playbackPaused))return[];
-      return visibleButtonGeometry(sampled);
+        !dockView&&snapshot.lifecycle.playbackPaused)return[];
+      const visible=visibleButtonGeometry(sampled);
+      // Keep the clipped file regions available for a native right click while
+      // an ordinary app owns foreground. Core still rejects normal activation.
+      return !dockView&&snapshot.lifecycle.stage==="desktop"&&!snapshot.operable
+        ?visible.filter(entry=>entry.consumer==='official.desktop'&&entry.button.startsWith('desktop-')):visible;
     }
     function visibleButtonGeometry(sampled=false){
       const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
@@ -594,6 +598,11 @@
             completion=null;desktopClick=null;
             if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
             return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.contextMenu===true){
+            completion=null;desktopClick=null;
+            if(!desktopSelection.read().selectedIds.includes(value.button))desktopSelection.select(value.button);
+            paintDesktopSelection();desktopMenu(value);return true;
           }
           if(value.consumer==='official.desktop'&&[93,121].includes(value.desktopInput?.key)){
             completion=null;desktopClick=null;

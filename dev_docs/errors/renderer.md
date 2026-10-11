@@ -731,3 +731,7 @@ Enter复用desktopActivation.select会把多选缩成焦点项；新desktopOpen�
 初稿data-cut使用opacity:.45，但applyIcon的内联style.opacity取切页组值，优先级覆盖CSS。改用filter:opacity(.45)，与原切页透明度相乘；不改变原动画/命中。DOM状态断言通过不等于实际CSS显示，统一验收需核对变淡及切页。
 
 2026-10-11 #327续：接Delete时同样要在通用desktopActivation选择逻辑前分流。失败用例发现Shift+Delete把两项选择缩成单项；现在Delete/Shift+Delete均保留选择，只有无修饰Delete提交desktopDelete，宿主116项通过。
+
+## #335 后台首次右击需要宿主仍发布可见文件几何（2026-10-11）
+
+实现独立Core右键证明后，dom-host.buttonGeometry仍在desktop且operable=false时返回空数组，钩子没有目标，首次右击仍会漏到Explorer。补真实宿主非前台快照用例取得空区域失败；仅在活动、非锁定、非暂停的Desktop保留经过遮挡裁剪的official.desktop文件区域，其他按钮不开放；Core普通左键/作者激活仍要求原前台条件。context-background-red.log到context-host-final.log 120/120。此为代码/宿主证据，实际OS焦点和菜单仍需验收。

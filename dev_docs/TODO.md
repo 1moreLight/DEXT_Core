@@ -2425,3 +2425,11 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 本增量尚未由WinDesktopCore创建/发布目标，未连接Core右键证明或宿主菜单请求，不能宣称桌面右键已经可用。下一段必须处理：其他应用前台时首次右击桌面的焦点交接；播放暂停/修订变化后的当前可见几何；成对事件到菜单证明，已选项保留多选/未选项单选；之后真实菜单/DPI/触控回归。
 启动检查这次指向本轮desktop-shell-actions-dev-20261011，start.ps1在缺少dext-configurator.exe处退出1（.build/context-hook-start.log），未走到Core启动；完整打包仍属第06步。读取仍为主目录Debug Core26668，原运行版保留。当前4/6≈67%，路线2/4=50%，第05步继续开做，未合并。
 人工步骤（完整候选部署后统一）：在其他应用前台时首次右击同步Desk临时文件；已选中多项上右击保留选择，未选项上右击改单选；检查菜单打开/属性/Esc/外点取消，拖远后不弹菜单、切Desk后旧命令失效；回归原Dock、作者按钮、左键/触控与DPI。当前运行版不包含本增量，无需现在操作。
+
+2026-10-11 第05步右键实际接线开做：以指针下真实桌面root+当前官方静态几何确认右键，独立Core上下沿证明允许其他应用保持前台，由Shell菜单owner随后取得焦点；不要求先左击桌面。证明只允许菜单，普通左键启动/键盘/作者输入条件不放宽。后台普通移动不取消该右键，但实际几何/Desk/会话变化与交错左键取消。页面右击已选项保持多选，未选项单选。暂停/锁定/转场或未发布当前几何仍不接管，真实首次右击和菜单焦点列入统一验收。
+
+2026-10-11 第05步右键实际接线实施做完：Core定时发布当前官方文件的裁剪几何与Progman/WorkerW原生root，独立右键线程按实际窗口命中接管一次物理按下/抬起。Core独立ContextMenu证明使用原按下时间、当前会话/修订/几何及实际文件，允许其他应用保持前台；菜单owner随后取得焦点，不要求先左击桌面。普通左键、键盘和作者输入前台条件保持，右键证明不能调用普通文件启动。普通后台移动不清除右键意图；左键交错、会话/几何变化、拖动取消与超时则拒绝。
+宿主补齐后台桌面只发布可见同步文件几何（原先operable=false全部为空）；右击已选项保留多选，未选项改为单选，私有contextMenu标记进入既有desktopMenu请求，原生菜单位置取真实右键坐标。菜单键仍用文件区域下缘。应用覆盖点、锁定/暂停/转场、尚未发布当前几何与采样模式不接管右键；触控/笔提升走旧链，本次没有扩大到触控长按菜单。
+证据：Core上下沿失败→8/8（context-input-red.log、context-input-final.log），动作误走启动的失败→25/25个人编辑（context-menu-authority-red/green.log），宿主缺请求/标记失败及后台空区域失败→120/120（context-host-red.log、context-background-red.log、context-host-final.log）；原有鼠标/键盘采样57/57（context-pointer-regression.log）、原菜单键12组合（context-menu-key-regression.log）、多root与原所有权15/15（context-ownership-wire.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-wire-build.log）。本次通过不消除#330存储间歇问题。
+实际Shell菜单、外点/Esc、扩展/属性、DPI和物理触控尚未统一验证；首次右击的证据目前为生产Core类与宿主检查，不宣称Windows活体验收通过。start.ps1对开发输出在缺dext-configurator.exe处退出1（context-wire-start.log），未启动或替换Core26668。代码实施5/6≈83%，路线仍2/4=50%，第06步完整候选/交接开做，未合并master。
+人工步骤（完整候选后统一）：其他应用在前台时首次右击同步Desk的唯一临时文件；多选文件上右击保留选择，未选项上右击改单选；打开/属性、Esc/外点取消不出现第二份Explorer菜单；核对DPI、原Dock/作者按钮、左键/触控、切Desk/停用后的旧请求取消。

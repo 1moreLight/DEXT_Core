@@ -95,6 +95,12 @@ internal static class DesktopFileContextOwnershipChecks
    var own=new DesktopFileContextOwnership(1000);
    Require(!own.Process(0x204,-850,200,1,42,false,Offer(),Enqueue,otherButtonHeld:true));Require(sent.Count==0);
   });
+  Check("desktop parent roots share a pair but unrelated application windows do not",()=>{
+   var offer=new DesktopFileContextOffer(1000,42,-1000,100,1000,500,6,Regions(),e=>sent.Add(("roots",e)),new[]{(IntPtr)43,(IntPtr)44});
+   var own=new DesktopFileContextOwnership(1000);Require(own.Process(0x204,-850,200,1,43,false,offer,Enqueue));
+   Require(own.Process(0x205,-850,200,10,44,false,offer,Enqueue));Require(!sent[1].Edge.Cancelled);
+   Require(!own.Process(0x204,-850,200,20,45,false,offer,Enqueue));
+  });
   Console.WriteLine($"{count}/{count} desktop context ownership checks passed");
  }
 }

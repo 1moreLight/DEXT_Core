@@ -8,6 +8,7 @@ static partial class RoomActionChecks
     private const string Room = "d390f9c9-8136-4c56-a00b-afabbac4db2c";
     private const string Target = "ee0760c2-a1e3-4094-b002-81b6ab22a7d5";
     static void Eq<T>(T expected, T actual) { if (!EqualityComparer<T>.Default.Equals(expected, actual)) throw new Exception($"Expected {expected}, got {actual}"); }
+    public static void PointerRegressionChecks(Action<string,Action> check){GestureChecks(check);SourceInputChecks(check);}
     public static void Run(Action<string, Action> check)
     {
         LayoutChecks(check);

@@ -30,9 +30,10 @@ public partial class WinDesktopCore
             }catch{Interlocked.Decrement(ref desktopFileKeyQueue);return false;}
         },error=>Logger.Error(error,"Desktop file keyboard hook unavailable"));
         desktopFileKeyboardTimer=new DispatcherTimer(DispatcherPriority.Background,Application.Current.Dispatcher){Interval=TimeSpan.FromMilliseconds(50)};
+        StartDesktopContext();
         desktopFileKeyboardTimer.Tick+=DesktopFileKeyboardTick;desktopFileKeyboardTimer.Start();
     }
-    private void DesktopFileKeyboardTick(object sender,EventArgs e)=>RefreshDesktopFileKeyboardOffer();
+    private void DesktopFileKeyboardTick(object sender,EventArgs e){RefreshDesktopFileKeyboardOffer();RefreshDesktopContextOffer();}
     private void RefreshDesktopFileKeyboardOffer()
     {
         if(disposedValue||desktopFileKeyboard is null)return;
@@ -56,6 +57,7 @@ public partial class WinDesktopCore
     private void StopDesktopFileKeyboard()
     {
         desktopFileKeyboardTimer?.Stop();
+        StopDesktopContext();
         if(desktopFileKeyboardTimer is not null)desktopFileKeyboardTimer.Tick-=DesktopFileKeyboardTick;
         foreach(var player in Wallpapers.OfType<WebWebView2>())player.NativeDesktopKeyboardChanged-=RefreshDesktopFileKeyboardOffer;
         desktopFileKeyboard?.Dispose();desktopFileKeyboard=null;

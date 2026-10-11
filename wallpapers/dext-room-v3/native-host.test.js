@@ -261,3 +261,10 @@ test('desktop open sends selected IDs and retains the native action receipt acro
   }finally{f.host.dispose();}
  }
 });
+
+test('desktop right-button completion preserves its native context marker',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',desktopInput:{key:0,contextMenu:true,modifiers:0,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});

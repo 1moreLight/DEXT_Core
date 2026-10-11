@@ -8,10 +8,10 @@ internal sealed record DesktopFileContextEdge(bool Down,int X,int Y,long At,stri
 internal sealed class DesktopFileContextOffer
 {
     internal DesktopFileContextOffer(long expiresAt,IntPtr root,int x,int y,int width,int height,int tolerance,
-        IEnumerable<DextNativeGeometryEntry> regions,Action<DesktopFileContextEdge> deliver)
-    {ExpiresAt=expiresAt;Root=root;X=x;Y=y;Width=width;Height=height;Tolerance=tolerance;Regions=Array.AsReadOnly(regions.ToArray());Deliver=deliver;}
+        IEnumerable<DextNativeGeometryEntry> regions,Action<DesktopFileContextEdge> deliver,IEnumerable<IntPtr>? otherRoots=null)
+    {ExpiresAt=expiresAt;Roots=Array.AsReadOnly(new[]{root}.Concat(otherRoots??Array.Empty<IntPtr>()).Where(value=>value!=IntPtr.Zero).Distinct().ToArray());X=x;Y=y;Width=width;Height=height;Tolerance=tolerance;Regions=Array.AsReadOnly(regions.ToArray());Deliver=deliver;}
     internal long ExpiresAt{get;}
-    internal IntPtr Root{get;}
+    internal IReadOnlyList<IntPtr> Roots{get;}
     internal int X{get;} internal int Y{get;} internal int Width{get;} internal int Height{get;} internal int Tolerance{get;}
     internal IReadOnlyList<DextNativeGeometryEntry> Regions{get;}
     internal Action<DesktopFileContextEdge> Deliver{get;}
@@ -48,7 +48,7 @@ internal sealed class DesktopFileContextOwnership(long frequency)
         }
         if(held)return owner is not null;
         held=true;
-        if(otherButtonHeld||offer is null||at>offer.ExpiresAt||root==IntPtr.Zero||root!=offer.Root||frequency<=0||
+        if(otherButtonHeld||offer is null||at>offer.ExpiresAt||root==IntPtr.Zero||!offer.Roots.Contains(root)||frequency<=0||
             offer.Regions.Count>4096||offer.Width<=0||offer.Height<=0||offer.Tolerance<1||offer.Tolerance>256)return false;
         var target=Hit(offer,x,y);
         if(target?.Consumer!="official.desktop"||!target.Button.StartsWith("desktop-",StringComparison.Ordinal))return false;
@@ -56,7 +56,7 @@ internal sealed class DesktopFileContextOwnership(long frequency)
         try{if(!enqueue(offer,edge))return false;}catch{return false;}
         owner=offer;down=edge;cancelled=false;return true;
     }
-    private bool WithinPress(int x,int y,long at,IntPtr root)=>owner is not null&&down is not null&&root==owner.Root&&
+    private bool WithinPress(int x,int y,long at,IntPtr root)=>owner is not null&&down is not null&&owner.Roots.Contains(root)&&
         (decimal)at-down.At>=0&&((decimal)at-down.At)/frequency<1.5m&&
         Math.Abs((double)x-down.X)<=owner.Tolerance&&Math.Abs((double)y-down.Y)<=owner.Tolerance;
     private static DextNativeGeometryEntry? Hit(DesktopFileContextOffer offer,int x,int y)

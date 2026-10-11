@@ -26,6 +26,7 @@ internal sealed class RoomNativeInputProof
     internal long Sequence { get; }
     internal int X { get; }
     internal int Y { get; }
+    internal bool ContextMenu { get; init; }
     internal int Key { get; }
     internal int Modifiers { get; }
     internal bool SampledMouse { get; }
@@ -48,7 +49,8 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     private RoomNativeViewport? viewport;
     private AcceptedEntry[] buttons=Array.Empty<AcceptedEntry>();
     private AcceptedEntry? focused;
-    private RoomNativeInputProof? completed;
+    private RoomNativeInputProof? completed,contextCompleted;
+    private Press? contextPress;
     private RoomNativeInputGesture? gesture;
     private Press? mouse, keyboard;
     private bool mouseHeld;
@@ -67,12 +69,12 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     {
         get {
             var now=clock.GetTimestamp();
-            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,completed,gesture,keyFocusBarrier==0,cancellationVersion);}
+            lock(gate){ExpireGesture(now);return snapshot==null?null:new(generation,snapshot.SessionId,snapshot.Revision,geometryVersion,focused?.Button,contextCompleted??completed,gesture,keyFocusBarrier==0,cancellationVersion);}
         }
     }
     internal void InvalidateDocument(long document){lock(gate){if(document==generation)Revoke();}}
     internal void CheckNativeViewport(RoomNativeViewport? current,bool foreground)
-    {lock(gate){if(current==null || viewport!=null && current!=viewport)ClearGeometry();else if(!foreground)ClearInput();}}
+    {lock(gate){if(current==null || viewport!=null && current!=viewport)ClearGeometry();else if(!foreground)ClearInput(preserveContext:true);}}
     internal RoomNativeButton? FocusedButton { get {lock(gate)return focused?.Button;} }
 
     internal void Initialize(long nextGeneration,RoomSessionSnapshot next)
@@ -110,12 +112,41 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             viewport=nativeViewport;buttons=accepted;sampledMouse=sampleMouse;return true;
         }
     }
+    // Context input is independently proven by the actual desktop window below
+    // the OS pointer. It need not already own foreground before the first click.
+    private bool CanContext()=>role==RoomClientRole.DesktopPlayer&&snapshot is{IsActive:true,TransitionId:null}&&
+        snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&!snapshot.Lifecycle.Locked&&!snapshot.Lifecycle.PlaybackPaused&&!sampledMouse;
+    internal DextNativeGeometryEntry[]? CaptureContextGeometry(RoomNativeViewport current)
+    {lock(gate)return CanContext()&&viewport==current?buttons.Select(value=>value.Region).ToArray():null;}
+    internal long ContextDown(RoomNativeViewport current,long document,long revision,long version,long issuedAt,int x,int y,string button,string? entry,bool nativeDesktop)
+    {
+        lock(gate){
+            if(!nativeDesktop||!CanContext()||viewport!=current||generation!=document||snapshot!.Revision!=revision||geometryVersion!=version||
+                Expired(issuedAt,clock.GetTimestamp())||!Inside(current,x,y)||inputSequence>=9007199254740991)return 0;
+            var target=Hit(x,y);
+            if(target?.Button.Consumer!="official.desktop"||!target.Button.Button.StartsWith("desktop-",StringComparison.Ordinal)||
+                target.Button.Button!=button||target.Button.EntryId!=entry)return 0;
+            ClearInput();contextPress=new(target,issuedAt,++inputSequence,x,y);return inputSequence;
+        }
+    }
+    internal void ContextUp(RoomNativeViewport current,long sequence,int x,int y,bool nativeDesktop,bool cancelled)
+    {
+        lock(gate){
+            var press=contextPress;if(press is null||press.Sequence!=sequence)return;contextPress=null;
+            if(cancelled||!nativeDesktop||!CanContext()||viewport!=current||Expired(press.IssuedAt,clock.GetTimestamp())||
+                !Inside(current,x,y)||Math.Abs((double)x-press.X)>current.DragTolerance||Math.Abs((double)y-press.Y)>current.DragTolerance||
+                Hit(x,y)!=press.Entry)return;
+            focused=press.Entry;
+            contextCompleted=new(this,press.Entry!.Button,press.IssuedAt,sequence,x:x,y:y){ContextMenu=true};
+        }
+    }
     internal void MouseDown(RoomNativeViewport current,int x,int y,bool foreground,int modifiers=0)
     {
         var now=clock.GetTimestamp();
         lock(gate)
         {
             ExpireGesture(now);
+            contextPress=null;contextCompleted=null;
             if(mouseHeld)return;
             mouseHeld=true;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
             if(!Available(current,foreground) || !Inside(current,x,y)){focused=null;return;}
@@ -133,7 +164,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         {
             ExpireGesture(now);
             if(viewport!=null && viewport!=current){ClearGeometry();return;}
-            if(!foreground){ClearInput();return;}
+            if(!foreground){ClearInput(preserveContext:true);return;}
             if(gesture is not{Key:0,Released:false} down)return;
             if(!Available(current,foreground) || Math.Abs((double)x-down.X)>current.DragTolerance || Math.Abs((double)y-down.Y)>current.DragTolerance)
             {mouse=null;gesture=null;completed=null;}
@@ -276,6 +307,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
                 if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&modifiers!=1)return;
                 if(key==46&&modifiers is not (0 or 2))return;
                 if(key is 93 or 121 && modifiers!=(key==93?0:2))return;
+                contextPress=null;contextCompleted=null;
                 if(!keysHeld.Add(key))return;
                 completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();
                 if(!Available(current,foreground)){focusRequests.Clear();return;}
@@ -309,7 +341,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     // Every action must name its original positive edge; zero never selects a recent proof.
     internal RoomNativeInputProof? GetProof(long document,long version,string consumer,string button,long sequence)
     {
-        lock(gate)return generation==document && geometryVersion==version && completed is{} proof &&
+        lock(gate)return generation==document && geometryVersion==version && (contextCompleted??completed) is{} proof &&
             sequence>0 && sequence==proof.Sequence &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
     }
@@ -350,10 +382,10 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     {
         lock(gate)
         {
-            if(completed!=proof || viewport==null || snapshot==null || !CanInput() ||
+            if((proof.ContextMenu?contextCompleted:completed)!=proof || viewport==null || snapshot==null || !(proof.ContextMenu?CanContext():CanInput()) ||
                 current.SessionId!=snapshot.SessionId || current.RoomId!=snapshot.RoomId || current.InstallationStamp!=snapshot.InstallationStamp || current.Revision!=snapshot.Revision ||
                 proof.Button.Consumer!=consumer || proof.Button.Button!=button)return false;
-            if(consume){proof.MarkConsumed();completed=null;gesture=null;ResetSamples();}
+            if(consume){proof.MarkConsumed();contextCompleted=null;completed=null;gesture=null;ResetSamples();}
             return true;
         }
     }
@@ -375,8 +407,9 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     {
         viewport=null;buttons=Array.Empty<AcceptedEntry>();sampledMouse=false;ClearInput();
     }
-    private void ClearInput()
+    private void ClearInput(bool preserveContext=false)
     {
+        if(!preserveContext){contextPress=null;contextCompleted=null;}
         cancellationVersion++; // Retire native task completions queued outside this leaf lock.
         // Focus changes cancel physical input but keep the unchanged published regions.
         focused=null;completed=null;mouse=null;keyboard=null;gesture=null;focusRequests.Clear();ResetSamples();
