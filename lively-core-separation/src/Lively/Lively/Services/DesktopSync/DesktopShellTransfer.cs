@@ -27,6 +27,11 @@ internal static class DesktopShellTransfer
     {
         if (sources.Count == 0 || sources.Count > 256) throw new ArgumentOutOfRangeException(nameof(sources));
         var copy = sources.ToArray();
+        return RunStaAsync(() => Execute(copy, destination, selectEffect, cancellation, interactive, owner, permitted), cancellation, permitted);
+    }
+    internal static Task<DesktopTransferResult> RunStaAsync(Func<DesktopTransferResult> execute,
+        CancellationToken cancellation, Func<bool>? permitted = null)
+    {
         var completed = new TaskCompletionSource<DesktopTransferResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
@@ -36,7 +41,7 @@ internal static class DesktopShellTransfer
                 cancellation.ThrowIfCancellationRequested();
                 if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
                 Marshal.ThrowExceptionForHR(CoInitializeEx(IntPtr.Zero, 2)); initialized = true;
-                completed.TrySetResult(Execute(copy, destination, selectEffect, cancellation, interactive, owner, permitted));
+                completed.TrySetResult(execute());
             }
             catch (OperationCanceledException) { completed.TrySetCanceled(cancellation); }
             catch (Exception error) { completed.TrySetException(error); }
@@ -59,7 +64,7 @@ internal static class DesktopShellTransfer
             var operation = (IDesktopFileOperation)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("3ad05575-8857-4850-9277-11b85bdb8e09"), true)!)!;
             resources.Add(operation);
             // Native conflict/cancel UI stays enabled for user operations. Probe
-            // mode suppresses UI and fails instead of approving replacements.
+            // mode suppresses progress/errors, not every conflict prompt.
             operation.SetOperationFlags(interactive ? 0x200u : 0x100604u);
             if (owner != IntPtr.Zero) operation.SetOwnerWindow(owner);
             var target = CreateItem(destination); resources.Add(target);
@@ -121,7 +126,7 @@ internal static class DesktopShellTransfer
             }
         }
     }
-    private static IDesktopShellItem CreateItem(string path)
+    internal static IDesktopShellItem CreateItem(string path)
     {
         var iid = typeof(IDesktopShellItem).GUID;
         Marshal.ThrowExceptionForHR(SHCreateItemFromParsingName(path, IntPtr.Zero, ref iid, out var item));

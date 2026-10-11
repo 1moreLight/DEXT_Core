@@ -2338,3 +2338,6 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11 第01步实施接线做完：官方图标层加载desktop-selection模块，原生Ctrl/Shift支持单选/多选/范围选择，矩形选中样式与aria-pressed同步；同Desk刷新保留存在项，换Desk/分页清空。Core仅为official.desktop发布按下时修饰键/Key/坐标/单调时间及Windows双击时间/矩形参数；私有桥严格接收，普通DOM click不能启动文件。同步文件单击选择、双击/Enter打开、Space选择；作者按钮、分页导航和Dock保留单击。暂停、修订与图标上下文变化清理待双击。
 定向证据：DOM单击旧行为1次启动的失败断言→修复通过；私有桥原丢弃事件失败→修复通过；选择/宿主/桥111项通过，包含双击超时/偏移/暂停及三击只打开一次；foreground-return四组通过并校验原生位置/键盘修饰键。正式Core/Player/Watchdog Release退出0，verify-release-host确认新增资源引用在白名单；start.ps1 CoreOnly复用旧Core52420，无新配置器。当前运行版未更换，实际鼠标/触控/DPI仍留统一验收。
 第01步实施1/6≈17%，路线2/4=50%。第02步双击/Enter基础随接线实现，F2改名与多选打开细节待继续；未称整个02完成。候选尚非完整004交付；人工验收按独立卡：单击/Ctrl/Shift、双击/Enter、切Desk、作者/Dock单击与触控回归。
+2026-10-11 第02步改名后端：新增DesktopShellActions.RenameAsync，复用抽出的STA执行器/正式IFileOperation接口和逐项结果；校验单个文件名、实际路径、取消与当前scope，返回真实Unicode目标，目录内容保留。已存在目标返回conflict供编辑器重输，同名原样返回unchanged。用户交互操作保留Shell撤销与冲突界面，路径竞态仍由Shell裁决，不自动覆盖。
+7项真实临时文件检查通过：中文、同名不变、非法路径、已存在目标保留双方、预取消、退场取消、目录改名；共用执行器原23项拖入检查通过。第一次测试清理因旧父目录已改名而抛异常，已改为存在检查并仅清理本轮唯一夹具；真实重名Shell尝试停在PerformOperations，精确停止测试PID50612并清理残留，未记通过。正式Core/Player/Watchdog Release退出0，日志desktop-shell-actions-build-env/rename-core-build.log，start.ps1 CoreOnly保持旧Core52420。
+Ruling：改名编辑器对已存在目标直接显示冲突，取代原计划全部冲突交Shell的做法；原因是静默Shell仍可能等待冲突确认，用户可在原输入框重新命名；不允许自动覆盖，竞态与权限错误仍交Shell。F2/输入框/私有Core命令尚未接线，本步继续开做；当前包1/6≈17%，路线2/4=50%。
