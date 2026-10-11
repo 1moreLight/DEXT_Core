@@ -485,3 +485,5 @@
 2026-10-11 黑屏根因：press-edit.js仅加入v3-release-assets，遗漏DextNativeResourceServer.OfficialFiles；实际加载403，Node测试require兜底绕过浏览器加载，故160项通过仍黑屏。补--v3-host-assets使用真实服务器读取全部HTML依赖（先403失败，后16项通过），verify-release-host同时核对服务器清单。会话active和文件存在不代表渲染成功。
 
 2026-10-11 Home输入回归：事后currentDesk=focus不能推断用户失败操作发生在focus，用户已确认是在Home。同步文件被editHit排除，后端LayoutItem也只认manifest；两端和布局读取需一起补，存储仍以本机opaque文件ID限定。另发现播放暂停用PictureBox覆盖并隐藏WebView，会失去OLE接收面；同步页应只暂停媒体/作者状态，保留真实WebView，不宣称该代码检查已证明本次禁止符号的唯一根因，实机待验收。
+
+2026-10-11 编辑模式迁移：exitEdit在初始snapshot调用也设置250ms动作静默，会误拦普通作者按钮（8个原点击用例失败）；只在确实退出编辑时设置静默后94项通过。Player异步up回调必须核对同一gesture，不能把下一手势清掉；松手后保留idle观察才能无焦点Esc退出。一次拖动保存不等于旧版持续编辑模式迁移完成。

@@ -214,7 +214,7 @@
       for(const record of icons.values())if(record.desktop)layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
       const placements=Object.fromEntries([...records.values()].filter(record=>
         record.definition.consumerId.startsWith('component.')&&visible(record.definition)).map(record=>[record.definition.consumerId,copy(recordPlacement(record))]));
-      media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
+      paintEditing();media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
     }
     function inputLayer(record){
       const consumer=record.definition?.consumerId;
@@ -319,7 +319,7 @@
     function paintVisuals(){
       for(const record of records.values())layout(record);
       for(const record of icons.values())layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
-      refreshFocus();
+      refreshFocus();paintEditing();
     }
     function applyVisualGroups(next){
       if(nativeHold){pendingVisualGroups=next;return;}
@@ -463,7 +463,7 @@
     }
     async function authorAction(value){
       const {consumerId:consumer,identity,instanceId,requestJson,method}=value;
-      if(now()<ignoreAuthorUntil||editSaving)throw failure('inputRequired');
+      if(editMode||now()<ignoreAuthorUntil||editSaving)throw failure('inputRequired');
       if(!sameActionScope(identity,inputVersion))throw failure('staleInput');
       if(typeof instanceId!=='string'||typeof requestJson!=='string')throw failure('inputRequired');
       if(actionFlights.size>=64)throw failure('requestLimit');
@@ -477,20 +477,57 @@
     }
 
     const pressApi=options.pressEdit||root.DextPressEdit||(typeof require==='function'?require('./press-edit.js'):null);
-    let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0;
+    let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null;
     const editEligible=()=>!disposed&&!dockView&&!privatePaused&&layoutReady&&!editSaving&&snapshot.active&&snapshot.operable&&
       snapshot.lifecycle.stage==='desktop'&&!snapshot.lifecycle.locked&&!snapshot.lifecycle.playbackPaused&&!snapshot.transitionId;
-    function editRect(item,dx,dy){return {...item.rect,x:Math.max(0,Math.min(1920-Math.max(item.rect.width,item.kind==='icon'?96:0),item.rect.x+dx)),y:Math.max(0,Math.min(1080-Math.max(item.rect.height,item.kind==='icon'?104:0),item.rect.y+dy))};}
-    function clearEditPaint(){ignoreAuthorUntil=now()+250;editNode?.remove();editNode=null;paintVisuals();}
+    function paintEditing(){
+      if(!rootNode)return;rootNode.dataset.editing=String(editMode);
+      for(const record of icons.values()){
+        record.element.dataset.editable=String(!record.desktop||record.icon.id.startsWith('desktop-'));
+        record.element.dataset.dragging=String(dragItem?.record===record);
+      }
+      for(const record of records.values())if(record.definition.kind==='widget'){
+        if(editMode&&!record.editOverlay){const layer=document.createElement('div');layer.className='dext-v3-widget-editor';
+          const label=document.createElement('span');label.textContent='拖动小组件';layer.append(label);
+          const handle=document.createElement('span');handle.className='dext-v3-widget-resize';handle.textContent='↘';handle.setAttribute('title','拖动缩放');layer.append(handle);
+          record.wrapper.append(layer);record.editOverlay=layer;}
+        if(record.editOverlay)record.editOverlay.hidden=!editMode;
+      }
+      if(editMode&&!editToolbar){editToolbar=document.createElement('button');editToolbar.className='dext-v3-edit-done';editToolbar.textContent='完成';
+        editToolbar.addEventListener('click',e=>{if(e.isTrusted)exitEdit();});rootNode.append(editToolbar);}
+      if(editToolbar){editToolbar.hidden=!editMode;editToolbar.textContent=editSaving?'保存中…':'完成';}
+    }
+    function enterEdit(){if(editMode)return;editMode=true;paintEditing();dropNotice('编辑模式：拖动图标／小组件，右下角缩放；Esc 或“完成”退出。');}
+    function exitEdit(){const wasEditing=editMode;press.cancel();editMode=false;dragItem=null;if(wasEditing)ignoreAuthorUntil=now()+250;paintEditing();}
+    function editRect(item,dx,dy){
+      if(item.resize)return{...item.rect,width:Math.max(64,Math.min(1920-item.rect.x,item.rect.width+dx)),height:Math.max(48,Math.min(1080-item.rect.y,item.rect.height+dy))};
+      let x=item.rect.x+dx,y=item.rect.y+dy;
+      if(item.kind==='icon'&&(dx!==0||dy!==0)){
+        const viewport=model.readDiagnostics().viewport,sx=item.record.desktop?1920/viewport.width:1,sy=item.record.desktop?1080/viewport.height:1;
+        x=32*sx+Math.round((x-32*sx)/(112*sx))*112*sx;y=32*sy+Math.round((y-32*sy)/(120*sy))*120*sy;
+      }
+      return{...item.rect,x:Math.max(0,Math.min(1920-Math.max(item.rect.width,item.kind==='icon'?96:0),x)),y:Math.max(0,Math.min(1080-Math.max(item.rect.height,item.kind==='icon'?104:0),y))};
+    }
+    function validEdit(item,rect){
+      const overlap=r=>rect.x<r.x+r.width&&r.x<rect.x+rect.width&&rect.y<r.y+r.height&&r.y<rect.y+rect.height;
+      const deskId=activeDesk(),reserved=[...layoutOccupied.filter(r=>!r.deskId||r.deskId===deskId),...(room.components||[]).filter(c=>c.role==='dock'&&desks.get(deskId).components.includes(c.id)).map(c=>c.placement)];
+      if(reserved.some(overlap))return false;
+      return item.kind!=='widget'||![...records.values()].some(r=>r!==item.record&&r.definition.kind==='widget'&&!r.wrapper.hidden&&overlap(recordPlacement(r)));
+    }
+    function provisionalLayout(item,rect){const value=copy(personalLayout);
+      if(item.kind==='icon'){value.icons[activeDesk()]={...value.icons[activeDesk()],[item.id]:{x:rect.x,y:rect.y}};}
+      else value.components[item.id]=rect;return value;}
+    function clearEditPaint(){ignoreAuthorUntil=now()+250;editNode?.remove();editNode=null;dragItem=null;recomputeLayouts(model.readDiagnostics());paintVisuals();paintEditing();}
     function previewEdit(item,dx,dy){
-      const rect=editRect(item,dx,dy),element=item.record.element||item.record.wrapper;
-      element.style.left=rect.x+'px';element.style.top=rect.y+'px';
-      if(editNode){editNode.style.left=rect.x+'px';editNode.style.top=rect.y+'px';}
+      const rect=editRect(item,dx,dy);item.invalid=!validEdit(item,rect);
+      if(!item.invalid){const saved=personalLayout;personalLayout=provisionalLayout(item,rect);recomputeLayouts(model.readDiagnostics());personalLayout=saved;paintVisuals();}
+      if(editNode){Object.assign(editNode.style,{left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'});editNode.dataset.invalid=String(item.invalid);}
     }
     async function saveEdit(item,dx,dy){
       const identity=scope(),deskId=activeDesk(),token=layoutReadEpoch,rect=editRect(item,dx,dy);
       if(!editEligible()){clearEditPaint();return;}
-      editSaving=true;editError=null;
+      if((dx===0&&dy===0)||item.invalid||!validEdit(item,rect)){clearEditPaint();if(item.invalid)dropNotice('该位置被占用，已恢复原位。');return;}
+      editSaving=true;editError=null;paintEditing();
       const change=item.kind==='icon'?{kind:'icon',id:item.id,deskId,x:rect.x,y:rect.y}:
         {kind:'widget',id:item.id,x:rect.x,y:rect.y,width:rect.width,height:rect.height};
       try{
@@ -501,27 +538,28 @@
       }catch(error){if(sameLayoutScope(identity,deskId,token)){editError=error.code||'storageUnavailable';dropNotice('位置未保存，已恢复；请重试。');}}
       finally{editSaving=false;clearEditPaint();if(sameLayoutScope(identity,deskId,token))await renderWithLayout();}
     }
-    const press=pressApi.createPressEdit({setTimeout:later,clearTimeout:cancelTimer,eligible:editEligible,
-      begin:item=>{ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();editNode=document.createElement('div');editNode.className='dext-v3-edit-outline';
+    const press=pressApi.createPressEdit({setTimeout:later,clearTimeout:cancelTimer,eligible:editEligible,isEditing:()=>editMode,
+      begin:item=>{enterEdit();dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();editNode=document.createElement('div');editNode.className='dext-v3-edit-outline';
         Object.assign(editNode.style,{left:item.rect.x+'px',top:item.rect.y+'px',width:item.rect.width+'px',height:item.rect.height+'px'});
-        editNode.textContent='拖动后松手保存 · Esc 取消';rootNode.append(editNode);},
+        editNode.textContent=item.resize?'缩放 · Esc 取消':'拖动 · Esc 取消';rootNode.append(editNode);},
       preview:previewEdit,cancel:clearEditPaint,commit:saveEdit});
     function editHit(x,y){
       const node=paintNodes().sort((a,b)=>b.layer-a.layer||b.order-a.order).find(n=>geometry.containsPoint(n.polygon,{x,y}));
       if(!node)return null;const record=node.record;
       // Native desktop file positions have their own model, not Room manifest icons.
       if(record.icon&&(!record.desktop||record.icon.id.startsWith('desktop-')))return{kind:'icon',id:record.icon.id,record,rect:{...record.rect}};
-      if(record.definition?.kind==='widget')return{kind:'widget',id:record.definition.consumerId.slice(10),record,rect:{...recordPlacement(record)}};
+      if(record.definition?.kind==='widget'){const rect=recordPlacement(record);return{kind:'widget',id:record.definition.consumerId.slice(10),record,rect:{...rect},resize:editMode&&x>=rect.x+rect.width-32&&y>=rect.y+rect.height-32};}
       return null;
     }
     function handleEditPointer(value){
       if(!value||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision)return false;
-      if(value.kind==='cancel'){press.cancel();return false;}
+      if(value.kind==='cancel'){exitEdit();return false;}
+      if(value.kind==='idle')return editMode;
       if(!editEligible()){press.cancel();return false;}
       const viewport=model.readDiagnostics().viewport,point={id:value.gestureId,x:value.x*1920/viewport.width,y:value.y*1080/viewport.height};
-      if(value.kind==='down'){ignoreAuthorUntil=0;return press.down(point,editHit(point.x,point.y));}
-      if(value.kind==='move')return press.move(point);
-      if(value.kind==='up')return press.up(point);
+      if(value.kind==='down'){ignoreAuthorUntil=0;if(editMode&&point.x>=1740&&point.x<=1896&&point.y>=24&&point.y<=80){blockedEditSequence=value.gestureId;exitEdit();return false;}return press.down(point,editHit(point.x,point.y))||editMode;}
+      if(value.kind==='move')return press.move(point)||editMode;
+      if(value.kind==='up'){if(point.x<0||point.y<0||point.x>1920||point.y>1080)press.cancel();else press.up(point);return editMode;}
       return false;
     }
 
@@ -583,7 +621,7 @@
 
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
-      press.cancel();clearLocator();desktopClick=null;snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
+      exitEdit();clearLocator();desktopClick=null;snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
       native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return renderWithLayout();
     }
     function publishGeometry(consumer,report){
@@ -598,6 +636,9 @@
       if(result.effects.every(effect=>effect.type==='applyVisualGroups')){applyVisualGroups(nextGroups);return Promise.resolve(true);}
       visualGroups=nextGroups;return render();
     }
+    const editKey=e=>{if(e.isTrusted&&e.key==='Escape')exitEdit();};
+    const editDouble=e=>{if(e.isTrusted&&editMode&&(e.target===container||e.target===rootNode))exitEdit();};
+    container.addEventListener('keydown',editKey);container.addEventListener('dblclick',editDouble);
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
     if(!dockView)ready.then(()=>refreshPresentation());
@@ -633,7 +674,7 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){press.cancel();desktopClick=null;clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){exitEdit();desktopClick=null;clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -642,7 +683,7 @@
           const entry=eventEntry(value);if(!entry)return false;showFocus(entry);return true;
         }
         if(value.kind==='activate'){
-          if(press.suppresses(value.inputSequence))return true;
+          if(editMode||press.suppresses(value.inputSequence)||value.inputSequence===blockedEditSequence)return true;
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
@@ -704,8 +745,8 @@
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;press.cancel();disposed=true;container.removeEventListener('dragover',desktopDragOver);container.removeEventListener('drop',desktopDrop);clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,desktopSelection:desktopSelection.read(),presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},edit:{...press.read(),saving:editSaving,error:editError},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      dispose(){if(disposed)return;exitEdit();container.removeEventListener('keydown',editKey);container.removeEventListener('dblclick',editDouble);disposed=true;container.removeEventListener('dragover',desktopDragOver);container.removeEventListener('drop',desktopDrop);clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,desktopSelection:desktopSelection.read(),presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},edit:{...press.read(),mode:editMode,saving:editSaving,error:editError},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

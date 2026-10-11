@@ -10,25 +10,26 @@ namespace Lively.Player.WebView2
     {
         private System.Windows.Forms.Timer editPointerTimer;
         private DextNativePointerPacket editPointer;
-        private bool editPointerBusy;
+        private bool editPointerBusy, editPointerReleased;
         [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
         [DllImport("user32.dll")] private static extern bool GetCursorPos(out EditPoint point);
         [StructLayout(LayoutKind.Sequential)] private struct EditPoint { public int X; public int Y; }
         private async Task ObserveEditDownAsync(LivelyMessageRoomNativePointer message)
         {
             if(message.Kind=="up"&&editPointer is DextNativePointerPacket held&&held.GestureId==message.GestureId){
-                editPointer=null;editPointerTimer?.Stop();
-                await SendEditPointerAsync(held,"up",message.X,message.Y);return;
+                editPointerReleased=true;
+                var keep=await SendEditPointerAsync(held,"up",message.X,message.Y);
+                if(editPointer==held&&keep!="true"){editPointer=null;editPointerTimer?.Stop();}return;
             }
             if(startArgs.DextDock || message.Key!=0 || message.Kind!="down")return;
             DextNativePointerPacket packet;
             try{packet=new DextNativePointerPacket(message);}catch(ArgumentException){return;}
             if(!CurrentNativePointer(packet)||!IsOfficialDextDocument(webView.CoreWebView2.Source))return;
-            editPointerTimer?.Stop();editPointer=packet;
+            editPointerTimer?.Stop();editPointer=packet;editPointerReleased=false;
             var accepted=await SendEditPointerAsync(packet,"down",packet.X,packet.Y);
             SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop edit down accepted="+accepted+" gesture="+packet.GestureId});
             if(editPointer!=packet||accepted!="true"){if(editPointer==packet)editPointer=null;return;}
-            if(editPointerTimer==null){editPointerTimer=new System.Windows.Forms.Timer{Interval=16};editPointerTimer.Tick+=async(sender,args)=>await PollEditPointerAsync();}
+            if(editPointerTimer==null){editPointerTimer=new System.Windows.Forms.Timer{Interval=25};editPointerTimer.Tick+=async(sender,args)=>await PollEditPointerAsync();}
             editPointerTimer.Start();
         }
         private async Task<string> SendEditPointerAsync(DextNativePointerPacket packet,string kind,int x,int y)
@@ -45,9 +46,10 @@ namespace Lively.Player.WebView2
                 EditPoint point=new EditPoint{X=own.X,Y=own.Y};
                 var valid=CurrentNativePointer(own)&&IsOfficialDextDocument(webView.CoreWebView2.Source)&&GetCursorPos(out point);
                 if(!valid)point=new EditPoint{X=own.X,Y=own.Y};
-                var kind=!valid||(GetAsyncKeyState(0x1B)&0x8000)!=0?"cancel":(GetAsyncKeyState(1)&0x8000)==0?"up":"move";
+                var kind=!valid||(GetAsyncKeyState(0x1B)&0x8000)!=0?"cancel":editPointerReleased?"idle":(GetAsyncKeyState(1)&0x8000)==0?"up":"move";
                 var result=await SendEditPointerAsync(own,kind,point.X,point.Y);
-                if(editPointer==own&&(kind!="move"||result!="true")){
+                if(editPointer==own&&kind=="up")editPointerReleased=true;
+                if(editPointer==own&&(kind=="cancel"||result!="true")){
                     SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop edit end kind="+kind+" accepted="+result+" gesture="+own.GestureId});editPointer=null;editPointerTimer.Stop();}
             }catch(Exception){if(editPointer==own){editPointer=null;editPointerTimer?.Stop();}}
             finally{editPointerBusy=false;}

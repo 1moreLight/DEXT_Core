@@ -8,6 +8,7 @@
     function down(value,item){
       cancel();suppressed=null;if(!point(value)||!item)return false;
       const own=gesture={id:value.id,item,start:{x:value.x,y:value.y},point:{x:value.x,y:value.y},editing:false};
+      if(options.isEditing?.()){own.editing=true;suppressed=own.id;options.begin(own.item);return true;}
       timer=options.setTimeout(()=>{timer=null;if(gesture!==own||!options.eligible()){cancel();return;}
         own.editing=true;suppressed=own.id;options.begin(own.item);
       },500);return true;

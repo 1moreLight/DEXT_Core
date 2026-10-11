@@ -875,7 +875,7 @@ function editFixture(status='accepted',desktop=null){
 test('Room icon hold saves one local move and never activates its button',async()=>{
  const f=editFixture();await f.host.ready;assert.equal(f.pointer('down',50,60),true);f.hold();f.pointer('move',250,260);f.pointer('up',250,260);
  f.host.handleNativeInput({kind:'activate',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,inputSequence:1,consumer:'official',button:'next'});
- await flush();const writes=f.calls.filter(c=>c.method==='layoutSave');assert.equal(writes.length,1);assert.deepEqual(writes[0].params.change,{kind:'icon',id:'icon',deskId:'home',x:232,y:232});
+ await flush();const writes=f.calls.filter(c=>c.method==='layoutSave');assert.equal(writes.length,1);assert.deepEqual(writes[0].params.change,{kind:'icon',id:'icon',deskId:'home',x:256,y:272});
  assert.equal(f.calls.filter(c=>c.method==='activate').length,0);assert.equal(f.host.readDiagnostics().layout.revision,1);f.host.dispose();
 });
 test('Widget drag saves size and movement, short press writes nothing',async()=>{
@@ -894,5 +894,31 @@ test('synced file long press saves and reloads its personal position',async()=>{
  const f=editFixture('accepted',desktop);await f.host.ready;await flush();
  assert.equal(f.pointer('down',50,60),true);f.hold();f.pointer('up',250,260);await flush();
  assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,1);assert.equal(f.calls.find(c=>c.method==='layoutSave').params.change.id,id);
- const item=f.host.readDiagnostics().layout.items.find(v=>v.id===id);assert.equal(item.savedRect.x,232);assert.equal(item.savedRect.y,232);f.host.dispose();
+ const item=f.host.readDiagnostics().layout.items.find(v=>v.id===id);assert.equal(item.savedRect.x,256);assert.equal(item.savedRect.y,272);f.host.dispose();
+});
+
+test('hold and release keeps editing, second drag starts immediately, Done exits',async()=>{
+ const f=editFixture();await f.host.ready;
+ f.pointer('down',50,60);f.hold();f.pointer('up',50,60);await flush();
+ assert.equal(f.host.readDiagnostics().edit.mode,true);
+ assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,0);
+ assert.equal(f.pointer('down',1200,800,2),true,'blank press keeps Esc observer alive');
+ assert.equal(f.pointer('move',1200,800,2),true);f.pointer('up',1200,800,2);
+ f.pointer('down',50,60,3);f.pointer('up',250,260,3);await flush();
+ assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,1);
+ assert.equal(f.host.readDiagnostics().edit.mode,true);
+ f.pointer('down',1800,50,4);assert.equal(f.host.readDiagnostics().edit.mode,false);f.host.dispose();
+});
+test('cancel restores preview without saving and exits edit mode',async()=>{
+ const f=editFixture();await f.host.ready;f.pointer('down',50,60);f.hold();f.pointer('move',250,260);
+ f.pointer('cancel',250,260);f.pointer('up',250,260);await flush();
+ assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,0);
+ assert.equal(f.host.readDiagnostics().edit.mode,false);
+ assert.equal(f.host.readDiagnostics().layout.revision,0);f.host.dispose();
+});
+test('widget corner resizes in persistent edit mode without moving its origin',async()=>{
+ const f=editFixture();await f.host.ready;f.pointer('down',450,80);f.hold();f.pointer('up',450,80);await flush();
+ f.pointer('down',590,140,2);f.pointer('up',650,180,2);await flush();
+ assert.deepEqual(f.calls.find(c=>c.method==='layoutSave').params.change,{kind:'widget',id:'shared',x:400,y:50,width:260,height:140});
+ assert.equal(f.host.readDiagnostics().edit.mode,true);f.host.dispose();
 });
