@@ -2354,3 +2354,5 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 已cancel，cleaned.txt与restored.txt存在；唯一源目录和桌面目标均不存在，原Debug Core28084恢复、空session。证据.build/clean-drop-live.log、drop-live-ee24667baca547abb7f16cce8d0e1e9e、drop-return-b50a2bc6cff44e99ab430a7b4a466e88。正常退出恢复完成，不需强制退出。干净发布包未写入夹具；独立副本为D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-live-20261011。完整实机门槛仍0/5，路线实施3/4=75%；不得因工具限制宣称通过，原生桌面图标可见性保持用户当前设置。
 
 2026-10-11 后台差异核查：检查Shell传输取消/逐项回调、Core放置资格和既有真实临时文件测试，未发现新增确定缺陷，不为同一代码重复构建/扩大测试。修正当前分支ROADMAP/V3_CURRENT/总步骤表的过期004待做状态；明确003候选不含独立004修复，不能误认为最新集成版。真正剩余为跨窗口实机与五项人工门槛，当前工具限制不变。
+
+2026-10-11 用户要求再查GlassDesk拖入方案：公开源码仍不可用；已对照DeskBox实际HWND/OLE接收与微软派发规则，结论和下一步命中诊断写入003/05-handoff。用户当前反馈前提为同步未启用，不能据此直接宣称层级根因。仅调研未改输入，路线75%。

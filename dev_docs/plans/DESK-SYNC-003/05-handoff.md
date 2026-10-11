@@ -37,3 +37,15 @@ Orca UI接口仅列出Explorer14388的1×1窗口，新启动Explorer50264没有�
 
 2026-10-11 干净夹具进入真实运行：Core27680/Player37996、session d3c577f1-0c64-4681-8174-70bd8d0f1d4e、home同步已ready，Explorer525492显示唯一临时文本文件。Windows computer-use的sky.drag拒绝窗口外落点：point (1500, -300) is outside window bounds { originX: 0, originY: 0, width: 1126, height: 634 }。错误发生在输入执行前，未完成Explorer→桌面拖动；不是Dext拖放失败证据。当前工具跨窗口拖动不可用，不再通过反复切Core重试同一限制；实际拖放留给统一人工验收或支持跨窗口拖动的工具。
 已cancel，cleaned.txt与restored.txt存在；唯一源目录和桌面目标均不存在，原Debug Core28084恢复、空session。证据.build/clean-drop-live.log、drop-live-ee24667baca547abb7f16cce8d0e1e9e、drop-return-b50a2bc6cff44e99ab430a7b4a466e88。正常退出恢复完成，不需强制退出。干净发布包未写入夹具；独立副本为D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-live-20261011。完整实机门槛仍0/5，路线实施3/4=75%；不得因工具限制宣称通过，原生桌面图标可见性保持用户当前设置。
+
+## 2026-10-11 用户反馈原生桌面接收后的方案复核
+
+状态：资料核对做完；实际窗口命中诊断待做；原生接收改动待做（尚未决定替换现有链）。
+
+- 用户报告拖入只显示“移动到桌面”，隐藏原生图标后看不到文件。当前004 r3已有活动Room，三个已保存Room的desktopSync均未配置；当前运行日志未找到desktopDrop。启用目录同步能解决文件显示，但不能证明Dext接收了拖放，也不能据此判断窗口层级已正确。
+- 重新读取 https://github.com/everlosttime/glassdesk-updates ：公开目录仍仅README，说明明确是安装包和发布记录、源码单独维护。因此没有可核查的GlassDesk拖放实现；本轮Releases/API抓取失败，不以旧版本说明冒充最新核查。
+- 只读核对本地DeskBox提交22d29480bdcac98f636b94b2990ceff2b8f2a0de：ContentWidgetWindow.NativeDragDrop.cs在实际HWnd挂WM_DROPFILES桥和NativeDropTarget(HWnd).Register；Helpers/NativeDropTarget.cs调用RegisterDragDrop；Helpers/ShellDesktopDropTarget.cs通过WindowFromPoint、祖先类名、Explorer身份排除普通窗口/任务栏。这是可参考的原生窗口接收与命中识别，不等于已解决Dext WorkerW层级。
+- 微软依据：https://learn.microsoft.com/en-us/windows/win32/api/ole2/nf-ole2-registerdragdrop ：拖放按实际未被遮挡的目标窗口派发；仅在后台窗口注册接收器不足以保证收到事件。
+- 下一诊断：同步Desk开启后，记录外部拖动落点的实际窗口/祖先与Player窗口，区分Shell接收、Dext页面未收到、页面收到但资格拒绝。确认接收层后再决定复用WebView通道或为正确的Dext窗口增加原生IDropTarget；不以全屏拦截层修补，不改变已验收触控/点击。
+
+本轮仅研究，未安装GlassDesk、未改运行程序。路线实施仍3/4=75%，实机0/5；不能因参考项目有接口就计Dext完成。
