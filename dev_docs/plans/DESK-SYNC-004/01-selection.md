@@ -7,3 +7,5 @@
 - [ ] 失败用例与实现
 - [ ] 实际接线及必要检查
 - [ ] 记录证据并提交
+
+2026-10-11 第01步增量：新增desktop-selection.js，提供update/select/clear/read，单选、Ctrl切换、Shift范围、Ctrl+Shift追加、同scope刷新保留/裁剪、换scope清空、未知项拒绝与快照隔离7项通过。首次运行因模块缺失明确失败，实现后7/7通过，日志.build/selection-red.log与selection-green.log。尚未接DOM/原生输入，不能称多选已可用；后续需同时更新index.html、v3-release-assets.json及DextNativeResourceServer.cs官方资源白名单。原Core与配置器未启动或更换。01仍开做，0/6，整体2/4=50%。
