@@ -7,14 +7,19 @@ internal static class Program {
  var file=Path.Combine(Path.GetTempPath(),"Dext-menu-repeat-"+Guid.NewGuid()+".txt");File.WriteAllText(file,"temporary menu test");
  try {for(var i=0;i<5;i++){
   bool escaped=false;var before=GetForegroundWindow();
-  var close=Task.Run(async()=>{await Task.Delay(450);var foreground=GetForegroundWindow();GetWindowThreadProcessId(foreground,out var pid);
-   if(pid==(uint)Environment.ProcessId){keybd_event(27,0,0,UIntPtr.Zero);keybd_event(27,0,2,UIntPtr.Zero);escaped=true;}
+  var close=Task.Run(async()=>{for(var attempt=0;attempt<100;attempt++){
+    await Task.Delay(40);var foreground=GetForegroundWindow();var thread=GetWindowThreadProcessId(foreground,out var pid);
+    var info=new GuiInfo{Size=Marshal.SizeOf<GuiInfo>()};
+    if(pid==(uint)Environment.ProcessId&&GetGUIThreadInfo(thread,ref info)&&(info.Flags&4)!=0){keybd_event(27,0,0,UIntPtr.Zero);keybd_event(27,0,2,UIntPtr.Zero);escaped=true;break;}
+   }
   });
-  bool timedOut=false;var timer=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromSeconds(3)};timer.Tick+=(_,_)=>{timedOut=true;EndMenu();};timer.Start();
-  var result=await DesktopContextMenuWindow.ShowAsync(new[]{file},80,80,()=>true,()=>before,()=>{});
+  bool timedOut=false;var timer=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromSeconds(5)};timer.Tick+=(_,_)=>{timedOut=true;EndMenu();};timer.Start();
+  var result=await DesktopContextMenuWindow.ShowAsync(new[]{file},80,80,()=>true,()=>before,()=>{},background:i%2==1);
   timer.Stop();await close;if(timedOut||!escaped||result!="cancelled")throw new Exception("Cycle "+i+" failed to open and close by Escape");
   Console.WriteLine("PASS native menu cycle "+(i+1)+" Escape closed");await Task.Delay(200);
  }}catch(Exception e){Console.Error.WriteLine(e);Environment.ExitCode=1;}finally{File.Delete(file);app.Shutdown();}};app.Run();}
+ [StructLayout(LayoutKind.Sequential)]struct GuiInfo{public int Size;public uint Flags;public IntPtr Active,Focus,Capture,MenuOwner,MoveSize,Caret;public int Left,Top,Right,Bottom;}
+ [DllImport("user32.dll")]static extern bool GetGUIThreadInfo(uint thread,ref GuiInfo info);
  [DllImport("user32.dll")]static extern bool EndMenu();
  [DllImport("user32.dll")]static extern IntPtr GetForegroundWindow();
  [DllImport("user32.dll")]static extern uint GetWindowThreadProcessId(IntPtr h,out uint p);

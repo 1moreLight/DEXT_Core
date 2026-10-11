@@ -101,6 +101,19 @@ internal static class DesktopFileContextOwnershipChecks
    Require(own.Process(0x205,-850,200,10,44,false,offer,Enqueue));Require(!sent[1].Edge.Cancelled);
    Require(!own.Process(0x204,-850,200,20,45,false,offer,Enqueue));
   });
+  Check("opt-in blank pair opens only when both edges remain blank",()=>{
+   var own=new DesktopFileContextOwnership(1000);var offer=new DesktopFileContextOffer(1000,42,-1000,100,1000,500,6,Regions(),e=>sent.Add(("blank",e)),allowBackground:true);
+   Require(own.Process(0x204,-950,200,1,42,false,offer,Enqueue));
+   Require(own.Process(0x205,-949,200,20,42,false,offer,Enqueue));
+   Require(sent.Count==2&&sent[1].Edge.Button=="desktop.background"&&!sent[1].Edge.Cancelled);
+  });
+  Check("blank release on a file or outside viewport cancels",()=>{
+   foreach(var points in new[]{(-905,-899),(-1000,-1001)}){
+    var own=new DesktopFileContextOwnership(1000);var offer=new DesktopFileContextOffer(1000,42,-1000,100,1000,500,6,Regions(),e=>sent.Add(("blank",e)),allowBackground:true);
+    Require(own.Process(0x204,points.Item1,200,1,42,false,offer,Enqueue));
+    Require(own.Process(0x205,points.Item2,200,20,42,false,offer,Enqueue));Require(sent.Last().Edge.Cancelled);
+   }
+  });
   Console.WriteLine($"{count}/{count} desktop context ownership checks passed");
  }
 }

@@ -15,13 +15,13 @@ internal static class DesktopContextMenuWindow
     private static DesktopShellContextMenu active;
     private static Exception messageError;
 
-    internal static async Task<string> ShowAsync(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
+    internal static async Task<string> ShowAsync(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop, bool background = false)
     {
         var app = Application.Current;
         if (app is null || app.Dispatcher.HasShutdownStarted) return "cancelled";
-        return await (await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted, desktopTarget, returnedToDesktop)));
+        return await (await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted, desktopTarget, returnedToDesktop, background)));
     }
-    private static async Task<string> Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
+    private static async Task<string> Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop, bool background = false)
     {
         if (!permitted()) return "cancelled";
         if (active is not null) throw new InvalidOperationException("A desktop context menu is already open.");
@@ -37,7 +37,7 @@ internal static class DesktopContextMenuWindow
         }
         try
         {
-            using var menu = DesktopShellContextMenu.Create(paths, owner.Handle);
+            using var menu = background ? DesktopShellContextMenu.CreateBackground(owner.Handle) : DesktopShellContextMenu.Create(paths, owner.Handle);
             active = menu; messageError = null;
             if (!permitted()) return "cancelled";
             // A foreground owner makes Escape and outside clicks dismiss the

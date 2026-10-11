@@ -2576,3 +2576,8 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 07再次拒收后定位：第三次起activation requested=false/confirmed=false，证明系统拒绝前台请求，单纯异步等待不足。物理右键由Core钩子消费后，Windows最后输入队列仍可在Explorer；菜单申请前台失败时，仅在此次显式用户菜单请求内，对已响应WM_NULL的前台队列临时AttachThreadInput，SetForegroundWindow后finally立即解除，菜单循环不保持队列关联。实测生产菜单窗口/Shell实现：唯一临时文件连续5次弹出、测试进程菜单前台时发送Esc，5/5都关闭，未触发3秒EndMenu兜底；测试文件清理。完整Release成功并部署，Core31776，同目录r5及原配置器保留。此证据为独立真实原生菜单循环，用户桌面最终体验未补填；文件菜单修复候选完成，空白菜单仍待做，07进度2/3≈67%。
 
 用户确认文件右键修复“可以了合并”，4a86dd8已合master；文件菜单修复3/3=100%。空白菜单另列DESK-SYNC-005，不将其记为已通过。
+
+## DESK-SYNC-005 当前
+独立desktop-background-menu工作区、feat/DESK-SYNC-005-background-menu，基线71d4c33。计划三步0/3；只接同步接收面空白区域，保留文件配对和原输入。
+
+005步骤1/2做完2/3≈67%：Shell原生背景菜单查询通过；空白配对新增用例先失败再通过，文件/背景交替真实菜单5次Esc通过。首次固定450ms发Esc抢在背景初始化前，改为读取GUI_INMENUMODE后发送；并非把失败结果改为跳过。完整Release构建成功，部署步骤开做。

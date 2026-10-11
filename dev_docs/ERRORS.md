@@ -495,3 +495,6 @@ SetForegroundWindow成功后立即GetForegroundWindow不保证已完成跨输入
 
 ### 右键前台确认补充：系统拒绝不是异步延迟
 用户第三次失败；activation日志requested=false。原单次等待修正不足。新增临时队列交接（激活前100ms响应检查，finally解除；不在菜单循环保持关联）；真实原生菜单5次Esc循环通过。前条“不使用AttachThreadInput”为该阶段历史方案，现已按实机证据调整。不能把纯确认状态机4项通过当成Windows激活授权通过。
+
+## DESK-SYNC-005 背景菜单实测时机
+首次Shell背景扩展初始化可能超过450ms；测试仅凭owner前台发送Esc，会在TrackPopupMenu之前发出，导致误判不能关闭。改为测试进程前台且GetGUIThreadInfo标记GUI_INMENUMODE后发Esc，5秒EndMenu作为失败收尾；文件/背景交替5次都由Esc关闭。不要用固定睡眠冒充菜单已显示。

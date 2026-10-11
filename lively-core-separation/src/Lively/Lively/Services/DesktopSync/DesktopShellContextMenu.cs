@@ -10,7 +10,7 @@ namespace Lively.Services.DesktopSync;
 
 // A menu and its COM handlers belong to one STA. The native owner forwards menu
 // messages for lazy submenus; callers must dispose on the creating thread.
-internal sealed class DesktopShellContextMenu : IDisposable
+internal sealed partial class DesktopShellContextMenu : IDisposable
 {
     private const uint FirstCommand = 1, LastCommand = 0x7fff;
     private readonly int thread = Environment.CurrentManagedThreadId;
@@ -139,7 +139,7 @@ internal sealed class DesktopShellContextMenu : IDisposable
         var selected = Commands().FirstOrDefault(item => item.Id == command && item.Enabled);
         if (selected is null) throw new ArgumentOutOfRangeException(nameof(command), "Command is absent or disabled.");
         var verb = selected.Verb.ToLowerInvariant();
-        if (verb is "delete" or "rename" or "cut" or "copy") return verb;
+        if (!background && verb is ("delete" or "rename" or "cut" or "copy")) return verb;
         if (!IsWindow(owner)) throw new ArgumentException("A live native owner is required.", nameof(owner));
         var offset = (IntPtr)(command - FirstCommand);
         var info = new InvokeInfo

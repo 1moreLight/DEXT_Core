@@ -15,6 +15,7 @@ internal static class ContextMenuChecks
    Exception? failure=null;
    try
    {
+    using(var background=DesktopShellContextMenu.CreateBackground()){Check(background.Commands().Count>0,"native desktop background exposes commands without a selected file");}
     foreach(var paths in new[]{new[]{a},new[]{a,b},new[]{a,c}})
     {
      using var menu=DesktopShellContextMenu.Create(paths);

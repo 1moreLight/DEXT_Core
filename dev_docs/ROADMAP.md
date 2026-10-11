@@ -2,7 +2,7 @@
 
 - 主线d498f04；v3DesktopFlow包含桌面同步、编辑迁移及融合Dock实现。
 - 本轮P8-014当前证据收尾3/3做完；INTEGRATION-002发布入口3/3做完。
-- **唯一下一项：V3-INTEGRATION-002统一验收与反馈修复**，见[V3_CURRENT](V3_CURRENT.md)及[三组短清单](acceptance/V3-INTEGRATION-002-short.md)。
+- **唯一下一项：DESK-SYNC-005桌面空白右键菜单（开做）**，见[V3_CURRENT](V3_CURRENT.md)及[三组短清单](acceptance/V3-INTEGRATION-002-short.md)。
 - 下方旧控制台和带日期的“下一项”为历史过程，不再用于派发当前任务。多屏/工坊/安装器仍排队。
 
 ---
