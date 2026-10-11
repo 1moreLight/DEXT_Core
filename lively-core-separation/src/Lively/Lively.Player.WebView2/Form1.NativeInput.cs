@@ -22,7 +22,7 @@ namespace Lively.Player.WebView2
                 async packet=>{
                     // Establish native control focus before routing to its owned
                     // author frame. Core still owns the physical button focus.
-                    if(packet.Key!=0&&packet.Consumer!="official"&&packet.Consumer!=DextNativeTaskSample.Consumer)NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
+                    if(packet.Key!=0&&!packet.UsesOfficialKeyboard)NativeViewController().MoveFocus(Microsoft.Web.WebView2.Core.CoreWebView2MoveFocusReason.Programmatic);
                     var accepted=await nativeFrameMedia.ArmInputAsync(packet);
                     TraceDockSample(packet,"arm="+accepted);
                     if(accepted)nativeAuthorDeadline.Start();return accepted;
@@ -96,7 +96,7 @@ namespace Lively.Player.WebView2
                 if(taskKey&&!System.Linq.Enumerable.Any(targets,target=>target.ItemId==value.Button&&DextNativeTaskSample.EntryId(target)==value.EntryId))return false;
             }
             if(value.SampleKeyboard&&!taskKey&&hit==null)return false;
-            if(value.Kind!="focus"&&(!value.SampleKeyboard||value.Consumer!="official"&&!taskKey))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
+            if(value.Kind!="focus"&&(!value.SampleKeyboard||!value.UsesOfficialKeyboard))nativeFrameMedia.ExpectInputDispatch(value,hit?.Consumer,nonce);
             stage="dock-edge";
             if (startArgs.DextDock && value.Kind != "focus" &&
                 !await nativeFrameMedia.PrepareDockEdgeAsync(value,taskKey?DextNativeTaskSample.Consumer:hit?.Consumer)) return false;
@@ -114,7 +114,7 @@ namespace Lively.Player.WebView2
                 completionStage="await-dispatch";
                 // Official defaults use Core's physical key and do not dispatch
                 // a synthetic DOM key. Authored keys still wait for a native receipt.
-                if(value.Kind!="focus"&&!IsOfficialTaskMouseSample(value)&&!(value.SampleKeyboard&&(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer))&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
+                if(value.Kind!="focus"&&!IsOfficialTaskMouseSample(value)&&!(value.SampleKeyboard&&value.UsesOfficialKeyboard)&&!await nativeFrameMedia.WaitInputDispatchAsync(value))return;
                 completionStage="release";
                 var released=await ReleaseNativeSampleAsync();
                 completionStage="released="+released+" current="+CurrentNativePointer(value);
@@ -166,7 +166,7 @@ namespace Lively.Player.WebView2
             if(!DextNativeInputWindow.IsOwnedChild(Handle,webView.Handle,input,NativePointerPid)){TraceDockSample(value,"forward-unowned");return;}
             TraceDockSample(value,"forward-owned");
             if(value.Key!=0){
-                if(value.Consumer=="official"||value.Consumer==DextNativeTaskSample.Consumer)return;
+                if(value.UsesOfficialKeyboard)return;
                 var pressed=value.Kind=="down";
                 InputUtil.ForwardMessageKeyboard(input,pressed?0x100:0x101,new IntPtr(value.Key),value.ScanCode,pressed,value.IsExtended);
                 return;

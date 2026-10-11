@@ -451,3 +451,5 @@
 | #324 | C盘空间耗尽使npm ci解包失败；仅清理本轮失败依赖，打包改用有空间的目录 | [toolchain](errors/toolchain.md) |
 
 | #325 | Shell静默错误标志不保证重名不等待确认；目录改名后清理旧子路径需先检查存在 | [backend](errors/backend.md) |
+
+| #326 | official.desktop未加入Player官方输入分类，键盘等作者iframe/回执、鼠标官方回执被忽略 | [backend](errors/backend.md) |

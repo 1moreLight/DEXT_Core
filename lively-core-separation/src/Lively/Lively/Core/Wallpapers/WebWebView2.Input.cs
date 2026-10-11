@@ -307,7 +307,9 @@ namespace Lively.Core.Wallpapers
         }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
         {
-            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32)return false;
+            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && key!=114)return false;
+            var desktopFocus=a.Input.FocusedButton;
+            if(key==114&&down&&(nativeDock||desktopFocus?.Consumer!=RoomActionAuthority.DesktopConsumer||!desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)))return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
             a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,DesktopInputModifiers());
             var after=a.Input.State;

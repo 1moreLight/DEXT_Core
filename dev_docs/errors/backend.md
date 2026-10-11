@@ -669,3 +669,6 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 真实RenameItem遇已存在目标时，0x100604（SILENT/NOERRORUI/EARLYFAILURE等）仍未返回；测试日志停在该调用前，精确终止本轮测试进程50612，不能把此尝试记为通过。已存在的改名目标现提前返回conflict供输入框改名重试；没有自动覆盖或自动同意冲突，实际竞态的Shell交互保留人工验证。
 微软参数文档区分进度UI、错误UI与确认，不应把SILENT/NOERRORUI解释为绝对无对话框：https://learn.microsoft.com/zh-cn/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags 。同步修正原拖入代码的注释，未修改其正式冲突策略。
 另一个已解决错误：File.Delete在父目录已经被改名时会抛DirectoryNotFoundException。夹具记录旧/新子文件路径，清理前检查存在，随后仅删除本次空目录。两轮残留唯一夹具已逐文件清理，复跑7项通过，末次无Dext-rename-*残留。源文件从未是用户文件。
+## #326 官方桌面输入分类遗漏（2026-10-11）
+定位F2时发现DextNativeFrameMedia.ArmInputAsync仅豁免official和任务栏consumer，official.desktop因没有作者iframe而不能通过键盘arm；Form1还会把它当作者按键去MoveFocus/Forward/等待DOM回执。鼠标路径ReceiveOfficialInputDispatch同样只接受official，遗漏官方文件图标。
+统一DextNativePointerPacket.IsOfficialConsumer和UsesOfficialKeyboard：官方文件键盘复用原生完成采样，顶层鼠标仍须真实dispatch receipt，作者输入保持原有路径；F2仅为官方文件的原生packet与Core焦点接收。Core F2新增失败断言后6项通过，Player分类/串行输入18项、Node111项、正式Release通过。没有进行OS物理输入，统一验收仍待。以后新增官方consumer必须检查arm、forward、wait、receipt全部四处，单独Core/DOM检查不能证明Player中间层已接通。

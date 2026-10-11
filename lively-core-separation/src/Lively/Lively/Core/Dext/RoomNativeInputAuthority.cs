@@ -265,13 +265,14 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     }
     internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground,int modifiers=0)
     {
-        if(key!=9 && key!=13 && key!=32)return;
+        if(key!=9 && key!=13 && key!=32 && key!=114)return;
         var now=clock.GetTimestamp();
         lock(gate)
         {
             ExpireGesture(now);
             if(down)
             {
+                if(key==114&&(role!=RoomClientRole.DesktopPlayer||focused?.Button.Consumer!="official.desktop"||!focused.Button.Button.StartsWith("desktop-",StringComparison.Ordinal)))return;
                 if(!keysHeld.Add(key))return;
                 completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();
                 if(!Available(current,foreground)){focusRequests.Clear();return;}
