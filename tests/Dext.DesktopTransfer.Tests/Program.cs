@@ -14,8 +14,20 @@ Check(DesktopDropPolicy.Select("none",0,true)==DesktopDropEffect.None&&DesktopDr
 
  var source=Directory.CreateDirectory(Path.Combine(root,"source")).FullName;
  var destination=Directory.CreateDirectory(Path.Combine(root,"destination")).FullName;
+ Check(DesktopDropVolume.SameVolume(source,destination),"native volume identity recognizes sibling directories");
+ Check(!DesktopDropVolume.SameVolume("relative-file",destination),"unknown volume cannot select default move");
  var file=Path.Combine(source,"one.txt");File.WriteAllText(file,"original content");
- var copied=await DesktopShellTransfer.RunAsync(new[]{file},destination,false,default,false);
+ var revoked=false;
+ try { await DesktopShellTransfer.RunAsync(new[]{file},destination,"all",2,default,false,default,()=>false); }
+ catch(OperationCanceledException){revoked=true;}
+ Check(revoked&&File.Exists(file)&&!File.Exists(Path.Combine(destination,"one.txt")),"revoked drop scope cannot start a transfer");
+ var checks=0;var retired=false;
+ try { await DesktopShellTransfer.RunAsync(new[]{file},destination,"all",2,default,false,default,()=>++checks<3); }
+ catch(OperationCanceledException){retired=true;}
+ Check(retired&&checks==3&&File.Exists(file)&&!File.Exists(Path.Combine(destination,"one.txt")),"scope revocation after Shell queueing prevents execution");
+ var rejected=await DesktopShellTransfer.RunAsync(new[]{file},destination,"copy",2,default,false);
+ Check(rejected.Items.Single().Status=="failed"&&File.Exists(file)&&!File.Exists(Path.Combine(destination,"one.txt")),"unsupported explicit move cannot copy or move a file");
+ var copied=await DesktopShellTransfer.RunAsync(new[]{file},destination,"all",1,default,false);
  Check(copied.Items.Single().Status=="completed"&&File.ReadAllText(Path.Combine(destination,"one.txt"))=="original content"&&File.Exists(file),"Shell copy reports actual completion and preserves source");
  var folder=Directory.CreateDirectory(Path.Combine(source,"Folder")).FullName;File.WriteAllText(Path.Combine(folder,"nested.txt"),"nested");
  var moved=await DesktopShellTransfer.RunAsync(new[]{folder},destination,true,default,false);

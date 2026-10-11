@@ -23,3 +23,6 @@ STA Shell文件操作，复制/移动/快捷方式；重名交互、取消、部
 
 2026-10-11快捷方式底层做完：IShellLinkW/IPersistFile在传输STA生成独立暂存lnk，IFileOperation负责目标复制/冲突/取消；回调关联暂存源但结果返回用户原始源。允许同目录生成快捷方式，原文件不移动。暂存仅删除自产文件和唯一空目录。
 新增真实lnk存在/源保留、独立WScript.Shell解析目标2项先红后绿，连同已有策略和Shell检查16项通过（.build/drop-link-green.log）；完整Core/Player Release退出0（.build/drop-link-core-build.log）。未对用户桌面执行拖放，实际冲突UI/运行时接线仍待，03保持开做。
+
+2026-10-11 Core执行入口已接：desktopDrop私有IPC进入独立处理器，拒绝Dock/无效坐标/并发请求；系统Known Folder决定目标，STA入场复核原始context，排队与Shell回调复核当前会话/同步Desk。自己的文件更新可刷新context，不误用旧context取消自身操作。每项结果只回名称/状态/HRESULT，不把路径返回页面。
+21项定向检查通过（.build/drop-execution-checks.log），新增原生卷识别、来源禁止移动、入场失效、排队后失效保源。完整Core/Player Release成功（.build/drop-execution-core-build.log）。Core处理器目前仅构建验证，尚无页面入口与真实Player调用证据，不能将此记为端到端完成；落点摆放和冲突/取消实机仍待。

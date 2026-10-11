@@ -13,15 +13,18 @@ internal sealed record DesktopTransferResult(IReadOnlyList<DesktopTransferItem> 
 internal static class DesktopShellTransfer
 {
     internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
+        string allowedEffects, int modifiers, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default, Func<bool>? permitted = null)
+        => RunCoreAsync(sources, destination, source => DesktopDropPolicy.Select(allowedEffects, modifiers,
+            modifiers == 0 && DesktopDropVolume.SameVolume(source, destination)), cancellation, interactive, owner, permitted);
+    internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
         DesktopDropEffect effect, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default)
-        => RunCoreAsync(sources, destination, effect, cancellation, interactive, owner);
+        => RunCoreAsync(sources, destination, _ => effect, cancellation, interactive, owner);
     internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
         bool move, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default)
-        => RunCoreAsync(sources, destination, move ? DesktopDropEffect.Move : DesktopDropEffect.Copy, cancellation, interactive, owner);
+        => RunCoreAsync(sources, destination, _ => move ? DesktopDropEffect.Move : DesktopDropEffect.Copy, cancellation, interactive, owner);
     private static Task<DesktopTransferResult> RunCoreAsync(IReadOnlyList<string> sources, string destination,
-        DesktopDropEffect effect, CancellationToken cancellation, bool interactive, IntPtr owner)
+        Func<string, DesktopDropEffect> selectEffect, CancellationToken cancellation, bool interactive, IntPtr owner, Func<bool>? permitted = null)
     {
-        if (effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move or DesktopDropEffect.Link)) throw new ArgumentOutOfRangeException(nameof(effect));
         if (sources.Count == 0 || sources.Count > 256) throw new ArgumentOutOfRangeException(nameof(sources));
         var copy = sources.ToArray();
         var completed = new TaskCompletionSource<DesktopTransferResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -31,8 +34,9 @@ internal static class DesktopShellTransfer
             try
             {
                 cancellation.ThrowIfCancellationRequested();
+                if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
                 Marshal.ThrowExceptionForHR(CoInitializeEx(IntPtr.Zero, 2)); initialized = true;
-                completed.TrySetResult(Execute(copy, destination, effect, cancellation, interactive, owner));
+                completed.TrySetResult(Execute(copy, destination, selectEffect, cancellation, interactive, owner, permitted));
             }
             catch (OperationCanceledException) { completed.TrySetCanceled(cancellation); }
             catch (Exception error) { completed.TrySetException(error); }
@@ -41,8 +45,8 @@ internal static class DesktopShellTransfer
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
         return completed.Task;
     }
-    private static DesktopTransferResult Execute(string[] sources, string destination, DesktopDropEffect effect,
-        CancellationToken cancellation, bool interactive, IntPtr owner)
+    private static DesktopTransferResult Execute(string[] sources, string destination, Func<string, DesktopDropEffect> selectEffect,
+        CancellationToken cancellation, bool interactive, IntPtr owner, Func<bool>? permitted)
     {
         if (!Path.IsPathFullyQualified(destination) || !Directory.Exists(destination)) throw new DirectoryNotFoundException("Desktop destination unavailable.");
         destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destination));
@@ -62,8 +66,11 @@ internal static class DesktopShellTransfer
             foreach (var input in sources.Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 cancellation.ThrowIfCancellationRequested();
+                if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
                 try
                 {
+                    var effect = selectEffect(input);
+                    if (effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move or DesktopDropEffect.Link)) throw new ArgumentException("Requested drop effect is not allowed by the source.");
                     if (!Path.IsPathFullyQualified(input)) throw new ArgumentException("Source must be absolute.");
                     var source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
                     if (!File.Exists(source) && !Directory.Exists(source)) throw new FileNotFoundException("Dropped source no longer exists.", source);
@@ -83,7 +90,7 @@ internal static class DesktopShellTransfer
                         DesktopShellShortcut.Create(source, transferPath);
                     }
                     var item = CreateItem(transferPath); resources.Add(item);
-                    var sink = new TransferSink(source, cancellation, transferPath);
+                    var sink = new TransferSink(source, cancellation, transferPath, permitted);
                     if (effect == DesktopDropEffect.Move) operation.MoveItem(item, target, null, sink);
                     else operation.CopyItem(item, target, null, sink);
                     pending.Add(sink);
@@ -92,6 +99,7 @@ internal static class DesktopShellTransfer
                 { results.Add(new(input, null, "failed", error.HResult)); }
             }
             cancellation.ThrowIfCancellationRequested();
+                if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
             var result = pending.Count == 0 ? 0 : operation.PerformOperations();
             operation.GetAnyOperationsAborted(out var aborted);
             foreach (var sink in pending)
@@ -138,9 +146,14 @@ public sealed class TransferSink : IDesktopTransferProgress
     internal DesktopTransferItem? Result { get; private set; }
     private readonly CancellationToken cancellation;
     private readonly string callbackSource;
-    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null)
-    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; }
-    private int Continue() => cancellation.IsCancellationRequested ? unchecked((int)0x800704C7) : 0;
+    private readonly Func<bool>? permitted;
+    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null, Func<bool>? permitted = null)
+    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; }
+    private int Continue()
+    {
+        try { return cancellation.IsCancellationRequested || permitted?.Invoke() == false ? unchecked((int)0x800704C7) : 0; }
+        catch { return unchecked((int)0x800704C7); }
+    }
     private int Complete(IDesktopShellItem item, IDesktopShellItem? created, int result)
     {
         // A folder operation can report children too. Only its top-level source

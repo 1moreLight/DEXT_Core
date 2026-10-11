@@ -20,6 +20,7 @@ namespace Lively.Core.Wallpapers
             // Never wait for admission on the Core/UI event thread. At most 16
             // consumer storage operations are in flight per private attachment.
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
+            internal SemaphoreSlim DesktopTransfers { get; } = new(1,1);
             internal RoomNativeControlQueue Controls { get; } = new();
             internal RoomNativeInputGesture PointerGesture { get; set; }
             internal RoomNativeKeyDelivery KeyDelivery;
@@ -102,6 +103,10 @@ namespace Lively.Core.Wallpapers
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
+                    break;
+                case "desktopDrop":
+                    var transfer = await ExecuteDesktopDropAsync(a, state, request);
+                    status = transfer.Status; data = transfer.Data;
                     break;
                 case "presentationRead":
                     var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision,request.DesktopContextId));
