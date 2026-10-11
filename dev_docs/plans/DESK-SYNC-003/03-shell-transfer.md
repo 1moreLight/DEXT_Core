@@ -20,3 +20,6 @@ STA Shell文件操作，复制/移动/快捷方式；重名交互、取消、部
 
 接口声明顺序及GUID核对本机Windows SDK shobjidl_core.h；[IFileOperation说明](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ifileoperation)、[逐项结果回调](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ifileoperationprogresssink)。
 - 完整Core/Player Release构建退出0（.build/drop-transfer-core-build.log），旧Core51648保持，无新配置器。
+
+2026-10-11快捷方式底层做完：IShellLinkW/IPersistFile在传输STA生成独立暂存lnk，IFileOperation负责目标复制/冲突/取消；回调关联暂存源但结果返回用户原始源。允许同目录生成快捷方式，原文件不移动。暂存仅删除自产文件和唯一空目录。
+新增真实lnk存在/源保留、独立WScript.Shell解析目标2项先红后绿，连同已有策略和Shell检查16项通过（.build/drop-link-green.log）；完整Core/Player Release退出0（.build/drop-link-core-build.log）。未对用户桌面执行拖放，实际冲突UI/运行时接线仍待，03保持开做。

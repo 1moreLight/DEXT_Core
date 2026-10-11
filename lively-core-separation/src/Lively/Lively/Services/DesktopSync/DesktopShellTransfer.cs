@@ -13,8 +13,15 @@ internal sealed record DesktopTransferResult(IReadOnlyList<DesktopTransferItem> 
 internal static class DesktopShellTransfer
 {
     internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
+        DesktopDropEffect effect, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default)
+        => RunCoreAsync(sources, destination, effect, cancellation, interactive, owner);
+    internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
         bool move, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default)
+        => RunCoreAsync(sources, destination, move ? DesktopDropEffect.Move : DesktopDropEffect.Copy, cancellation, interactive, owner);
+    private static Task<DesktopTransferResult> RunCoreAsync(IReadOnlyList<string> sources, string destination,
+        DesktopDropEffect effect, CancellationToken cancellation, bool interactive, IntPtr owner)
     {
+        if (effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move or DesktopDropEffect.Link)) throw new ArgumentOutOfRangeException(nameof(effect));
         if (sources.Count == 0 || sources.Count > 256) throw new ArgumentOutOfRangeException(nameof(sources));
         var copy = sources.ToArray();
         var completed = new TaskCompletionSource<DesktopTransferResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -25,7 +32,7 @@ internal static class DesktopShellTransfer
             {
                 cancellation.ThrowIfCancellationRequested();
                 Marshal.ThrowExceptionForHR(CoInitializeEx(IntPtr.Zero, 2)); initialized = true;
-                completed.TrySetResult(Execute(copy, destination, move, cancellation, interactive, owner));
+                completed.TrySetResult(Execute(copy, destination, effect, cancellation, interactive, owner));
             }
             catch (OperationCanceledException) { completed.TrySetCanceled(cancellation); }
             catch (Exception error) { completed.TrySetException(error); }
@@ -34,7 +41,7 @@ internal static class DesktopShellTransfer
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
         return completed.Task;
     }
-    private static DesktopTransferResult Execute(string[] sources, string destination, bool move,
+    private static DesktopTransferResult Execute(string[] sources, string destination, DesktopDropEffect effect,
         CancellationToken cancellation, bool interactive, IntPtr owner)
     {
         if (!Path.IsPathFullyQualified(destination) || !Directory.Exists(destination)) throw new DirectoryNotFoundException("Desktop destination unavailable.");
@@ -42,6 +49,7 @@ internal static class DesktopShellTransfer
         var results = new List<DesktopTransferItem>();
         var resources = new List<object>();
         var pending = new List<TransferSink>();
+        var staged = new List<(string Directory, string Path)>();
         try
         {
             var operation = (IDesktopFileOperation)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("3ad05575-8857-4850-9277-11b85bdb8e09"), true)!)!;
@@ -59,14 +67,24 @@ internal static class DesktopShellTransfer
                     if (!Path.IsPathFullyQualified(input)) throw new ArgumentException("Source must be absolute.");
                     var source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
                     if (!File.Exists(source) && !Directory.Exists(source)) throw new FileNotFoundException("Dropped source no longer exists.", source);
-                    if (string.Equals(Path.GetDirectoryName(source), destination, StringComparison.OrdinalIgnoreCase))
+                    if (effect != DesktopDropEffect.Link && string.Equals(Path.GetDirectoryName(source), destination, StringComparison.OrdinalIgnoreCase))
                     { results.Add(new(source, source, "unchanged", 0)); continue; }
-                    if (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase) ||
-                        Directory.Exists(source) && destination.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    if (effect != DesktopDropEffect.Link && (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase) ||
+                        Directory.Exists(source) && destination.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
                         throw new IOException("Cannot transfer a folder into itself.");
-                    var item = CreateItem(source); resources.Add(item);
-                    var sink = new TransferSink(source, cancellation);
-                    if (move) operation.MoveItem(item, target, null, sink);
+                    var transferPath = source;
+                    if (effect == DesktopDropEffect.Link)
+                    {
+                        var directory = Directory.CreateTempSubdirectory("Dext-desktop-link-").FullName;
+                        var name = Path.GetFileName(source);
+                        if (string.IsNullOrEmpty(name)) name = "Drive";
+                        transferPath = Path.Combine(directory, name + ".lnk");
+                        staged.Add((directory, transferPath));
+                        DesktopShellShortcut.Create(source, transferPath);
+                    }
+                    var item = CreateItem(transferPath); resources.Add(item);
+                    var sink = new TransferSink(source, cancellation, transferPath);
+                    if (effect == DesktopDropEffect.Move) operation.MoveItem(item, target, null, sink);
                     else operation.CopyItem(item, target, null, sink);
                     pending.Add(sink);
                 }
@@ -85,6 +103,13 @@ internal static class DesktopShellTransfer
             for (var index = resources.Count - 1; index >= 0; index--)
                 if (Marshal.IsComObject(resources[index])) Marshal.ReleaseComObject(resources[index]);
             GC.KeepAlive(pending);
+            foreach (var entry in staged)
+            {
+                // Remove only our generated file and its unique empty directory.
+                try { File.Delete(entry.Path); Directory.Delete(entry.Directory); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
         }
     }
     private static IDesktopShellItem CreateItem(string path)
@@ -112,13 +137,15 @@ public sealed class TransferSink : IDesktopTransferProgress
     internal string Source { get; }
     internal DesktopTransferItem? Result { get; private set; }
     private readonly CancellationToken cancellation;
-    internal TransferSink(string source, CancellationToken cancellation) { Source = source; this.cancellation = cancellation; }
+    private readonly string callbackSource;
+    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null)
+    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; }
     private int Continue() => cancellation.IsCancellationRequested ? unchecked((int)0x800704C7) : 0;
     private int Complete(IDesktopShellItem item, IDesktopShellItem? created, int result)
     {
         // A folder operation can report children too. Only its top-level source
         // determines the result returned for this requested item.
-        if (string.Equals(DesktopShellTransfer.ItemPath(item), Source, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(DesktopShellTransfer.ItemPath(item), callbackSource, StringComparison.OrdinalIgnoreCase))
         {
             var destination = DesktopShellTransfer.ItemPath(created);
             Result = new(Source, destination, result >= 0 && destination is not null ? "completed" : result >= 0 ? "skipped" : "failed", result);

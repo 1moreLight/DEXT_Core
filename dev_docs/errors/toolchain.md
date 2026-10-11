@@ -552,3 +552,8 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 ## #319 WebView脚本异常未导致C#调用失败（2026-10-11）
 
 拖放探针假设new File会作为空路径的CoreWebView2File抵达原生；本机WebView154实际在postMessageWithAdditionalObjects立即抛TypeError，ExecuteScriptAsync却正常返回，随后等待WebMessage超时。修复：脚本try/catch显式返回posted/error对象，只有posted才等事件。真实磁盘File和目录的浏览器drop→原生路径检查通过；此结果不证明OS/Explorer实际拖入。不要把ExecuteScriptAsync任务完成当作页面脚本成功。
+
+## #320 多行替换换行差异（2026-10-11）
+现象：PowerShell按Environment.NewLine插入策略用例未命中源文件；仅旧用例运行成功。快捷方式接口抽取同样因CRLF/LF边界匹配失败而主动中止。
+修复：先统一内存字符串换行为LF，或使用已校验索引插入；重新运行新增断言，观察明确失败后再实现。策略用例实际red/green及快捷方式真实文件red/green均已确认。
+规则：批量文本编辑必须检查命中数量或diff，测试输出必须出现新增用例；仅命令退出0不能证明新增用例执行。

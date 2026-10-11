@@ -20,6 +20,21 @@ Check(DesktopDropPolicy.Select("none",0,true)==DesktopDropEffect.None&&DesktopDr
  var folder=Directory.CreateDirectory(Path.Combine(source,"Folder")).FullName;File.WriteAllText(Path.Combine(folder,"nested.txt"),"nested");
  var moved=await DesktopShellTransfer.RunAsync(new[]{folder},destination,true,default,false);
  Check(moved.Items.Single().Status=="completed"&&!Directory.Exists(folder)&&File.ReadAllText(Path.Combine(destination,"Folder","nested.txt"))=="nested","Shell move transfers directory contents before reporting success");
+ var linked=await DesktopShellTransfer.RunAsync(new[]{file},source,DesktopDropEffect.Link,default,false);
+ Check(linked.Items.Single().Status=="completed"&&File.Exists(file)&&File.Exists(linked.Items.Single().Destination),"same-directory shortcut is created without moving source");
+ var shell=Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+ object? shortcut=null;
+ try
+ {
+  shortcut=shell.GetType().InvokeMember("CreateShortcut",System.Reflection.BindingFlags.InvokeMethod,null,shell,new object[]{linked.Items.Single().Destination!});
+  var target=(string)shortcut!.GetType().InvokeMember("TargetPath",System.Reflection.BindingFlags.GetProperty,null,shortcut,null)!;
+  Check(string.Equals(target,file,StringComparison.OrdinalIgnoreCase),"created shortcut resolves to the original file");
+ }
+ finally
+ {
+  if(shortcut is not null)System.Runtime.InteropServices.Marshal.ReleaseComObject(shortcut);
+  System.Runtime.InteropServices.Marshal.ReleaseComObject(shell);
+ }
  var same=await DesktopShellTransfer.RunAsync(new[]{file},source,true,default,false);
  Check(same.Items.Single().Status=="unchanged"&&File.Exists(file),"same-directory drop leaves source unchanged");
  var missing=await DesktopShellTransfer.RunAsync(new[]{Path.Combine(source,"missing.txt")},destination,false,default,false);
