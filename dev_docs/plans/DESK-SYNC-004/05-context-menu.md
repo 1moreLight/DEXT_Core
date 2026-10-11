@@ -29,3 +29,15 @@
 - [ ] 真实菜单焦点/属性/动态子菜单/外点和Esc取消/退休/DPI统一验收。
 
 Core24/24、原生菜单键12组、键盘所有权10/10、宿主117/117、消息79/79、指针18/18。当前Core26668保留，新候选未部署；完整证据与人工步骤见验收卡同日菜单键增量。
+
+### 鼠标右键输入增量（开做）
+
+先写独立右键配对和原生监听，只有最新官方文件区域且实际指针下窗口root匹配才可接管；未命中、覆盖窗口、队列拒绝、启动前按住全部放行。左键/触控提升事件不接管，右键移动超过容差或交错左键取消菜单意图。随后接Core证明和宿主选择；必须覆盖其他应用前台时首次右击桌面，不以旧IsDesktop前台条件要求先左击。原生监听生命周期可无目标验证，不发送实际鼠标输入。
+
+- [x] 独立右键所有权与WH_MOUSE_LL组件、14项定向检查、无目标原生监听生命周期2轮、完整Release构建。
+- [ ] WinDesktopCore创建/发布目标、首次右击焦点交接、Core右键证明与宿主选择/菜单请求。
+- [ ] 实际Windows菜单、双菜单排除、触控与DPI统一验收。
+
+详细证据见独立验收卡“第05步右键输入组件增量”。代码已有但监听尚未接入产品启动，不把组件通过记作右键功能完成。start.ps1对本轮开发输出明确报告缺配置器，打包仍待第06步；运行Core26668保持。
+
+原生接口依据：[LowLevelMouseProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelmouseproc)、[MSLLHOOKSTRUCT](https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-msllhookstruct)、[区分笔与触控提升](https://learn.microsoft.com/en-us/windows/win32/tablet/system-events-and-mouse-messages)。回调只做有界命中和异步入队；WH_MOUSE_LL超时可能被系统静默移除，实际接入后不能把Active属性当持续健康证明。

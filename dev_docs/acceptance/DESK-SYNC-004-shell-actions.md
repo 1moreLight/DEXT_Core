@@ -55,3 +55,9 @@
 证据：Core原Expected121 got0失败→个人编辑24/24（menu-key-core-red/green.log）；原生菜单键静态/采样与作者不接管12组（menu-native-keys.log）；按键所有权10/10（menu-key-ownership.log）；DOM缺请求失败→宿主/桥/选择117/117（menu-key-dom-red.log、menu-host-final.log），含多选保持和暂停回执；私有消息79/79（menu-input-messages.log）、原生指针/键盘18/18（menu-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-key-build.log）。本次24/24不消除#330此前间歇存储失败。
 运行：start.ps1仍仅核对旧已部署v3-core-exit-20261010，因主目录Debug Core26668占用退出1（menu-key-start-identity.log）；没有启动本轮候选或额外配置器。进度保持4/6≈67%，路线2/4=50%。下一执行鼠标右键（只接同步文件，避免与Explorer双菜单；保持原左键/触控），然后实际菜单窗口与完整候选交接。
 人工步骤（部署后统一）：临时文件多选后Apps键/Shift+F10，试复制/剪切/重命名/回收及属性；Escape/点击外部取消，切Desk/停用取消旧菜单；核对DPI位置和原Dock、作者按钮、鼠标、触控。当前运行版本不包含本轮变更，无需现在验收。
+
+2026-10-11 第05步右键输入组件增量：DesktopFileContextOwnership与DesktopFileContextHook已实现；独立WH_MOUSE_LL线程只认当前指针下原生root和最新官方几何中的同步文件。保留完整前后顺序和裁剪多边形，作者覆盖/非文件控制不穿透；按下成功入队才接管，原接收者持有至抬起，重复按下去重、启动已按住不抢占、队列拒绝整对放行。移动超过容差后返回原处仍取消菜单，跨窗口/长按超时/交错左键取消；左键、移动、滚轮、中键、触控/笔提升及注入事件不拦截，其他鼠标键已按住时不开始接管。
+证据：首个右键配对RED见.build/context-ownership-red.log；补其他键已按住的RED见context-chord-red.log；最终14/14（context-ownership-final.log），含裁剪多边形空角、负屏幕坐标、覆盖元素、原接收者释放及失败队列。真实Windows钩子在无任何目标发布的情况下安装/卸载两轮通过（context-hook-lifecycle.log），没有发送系统输入。最后完整Core/Player/Watchdog Release退出0，日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-build-env/context-hook-build.log。
+本增量尚未由WinDesktopCore创建/发布目标，未连接Core右键证明或宿主菜单请求，不能宣称桌面右键已经可用。下一段必须处理：其他应用前台时首次右击桌面的焦点交接；播放暂停/修订变化后的当前可见几何；成对事件到菜单证明，已选项保留多选/未选项单选；之后真实菜单/DPI/触控回归。
+启动检查这次指向本轮desktop-shell-actions-dev-20261011，start.ps1在缺少dext-configurator.exe处退出1（.build/context-hook-start.log），未走到Core启动；完整打包仍属第06步。读取仍为主目录Debug Core26668，原运行版保留。当前4/6≈67%，路线2/4=50%，第05步继续开做，未合并。
+人工步骤（完整候选部署后统一）：在其他应用前台时首次右击同步Desk临时文件；已选中多项上右击保留选择，未选项上右击改单选；检查菜单打开/属性/Esc/外点取消，拖远后不弹菜单、切Desk后旧命令失效；回归原Dock、作者按钮、左键/触控与DPI。当前运行版不包含本增量，无需现在操作。
