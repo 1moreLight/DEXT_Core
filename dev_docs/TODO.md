@@ -2415,3 +2415,5 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 证据：Core原Expected121 got0失败→个人编辑24/24（menu-key-core-red/green.log）；原生菜单键静态/采样与作者不接管12组（menu-native-keys.log）；按键所有权10/10（menu-key-ownership.log）；DOM缺请求失败→宿主/桥/选择117/117（menu-key-dom-red.log、menu-host-final.log），含多选保持和暂停回执；私有消息79/79（menu-input-messages.log）、原生指针/键盘18/18（menu-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-key-build.log）。本次24/24不消除#330此前间歇存储失败。
 运行：start.ps1仍仅核对旧已部署v3-core-exit-20261010，因主目录Debug Core26668占用退出1（menu-key-start-identity.log）；没有启动本轮候选或额外配置器。进度保持4/6≈67%，路线2/4=50%。下一执行鼠标右键（只接同步文件，避免与Explorer双菜单；保持原左键/触控），然后实际菜单窗口与完整候选交接。
 人工步骤（部署后统一）：临时文件多选后Apps键/Shift+F10，试复制/剪切/重命名/回收及属性；Escape/点击外部取消，切Desk/停用取消旧菜单；核对DPI位置和原Dock、作者按钮、鼠标、触控。当前运行版本不包含本轮变更，无需现在验收。
+
+2026-10-11 GlassDesk用户指定调研做完（3/3=100%）：确认everlosttime/glassdesk-updates，核对固定提交树只有README、12条发布记录至1.2.2。借鉴点及限制写入research/GLASSDESK_2026-10-11.md并从桌面同步计划链接。未安装、运行或迁移第三方代码；资料没有提供桌面同步/Shell菜单/AppBar源码证据。004实施仍4/6≈67%，路线2/4=50%；下一执行仍鼠标右键，运行版未更换。此次文档核对无需桌面验收；004原独立人工验收步骤保持。
