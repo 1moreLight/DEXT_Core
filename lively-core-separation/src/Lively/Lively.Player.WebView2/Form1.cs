@@ -1059,7 +1059,10 @@ namespace Lively.Player.WebView2
                     break;
                 case MessageType.cmd_room_native_pointer:
                     if(nativePointerDelivery!=null&&nativeNetworkReady&&!runtimeDeliverySuspended)
+                    {
+                        await ObserveEditDownAsync((LivelyMessageRoomNativePointer)obj);
                         nativePointerDelivery.Submit((LivelyMessageRoomNativePointer)obj);
+                    }
                     break;
                 case MessageType.cmd_room_native_response:
                     var nativeReply = (LivelyMessageRoomNativeResponse)obj;
@@ -1290,6 +1293,7 @@ namespace Lively.Player.WebView2
         {
             DisposeNativeDockWindow();
             DisposeNativePausedPicture();
+            editPointerTimer?.Stop();editPointerTimer?.Dispose();editPointer=null;
             nativeAuthorDeadline?.Stop();nativeAuthorDeadline?.Dispose();
             nativeFrameMedia?.Dispose();
             nativeResources?.Dispose();

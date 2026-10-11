@@ -121,6 +121,7 @@
     return sample;
   };
   function scopeForInput(value){return context&&snapshot&&value.runtimeGeneration===context.runtimeGeneration&&value.sessionId===snapshot.sessionId&&value.revision===snapshot.revision;}
+  globalThis.dextNativeEditPointer=value=>!disposed&&host&&object(value)&&scopeForInput(value)?host.handleEditPointer(value):false;
   globalThis.dextRuntimeDiagnostics=()=>({disposed,paused,runtimeGeneration:context?.runtimeGeneration||retired,sessionId:context?.sessionId||null,revision:snapshot?.revision||0,lastError:lastError&&{...lastError},runtime:host?.readDiagnostics()||null,taskArea:tasks?.read()||null});
   sendControl({type:'dext:v3-page-ready'});
 })();

@@ -855,3 +855,35 @@ test('background desktop still publishes only visible file regions for the first
   assert.deepEqual(f.calls.filter(c=>c.method==='geometry').at(-1).params.buttons,[]);
  }finally{f.host.dispose();}
 });
+
+function editFixture(status='accepted'){
+ let id=0;const timers=new Map();let saved={revision:0,icons:{},components:{}};
+ const f=fixture({setTimeout:(cb,ms)=>{timers.set(++id,{cb,ms});return id;},clearTimeout:id=>timers.delete(id),request:(method,params)=>{
+  if(method==='layoutRead')return Promise.resolve({status:'accepted',layout:saved});
+  if(method==='layoutSave'){
+   if(status!=='accepted')return Promise.resolve({status});
+   const c=params.change;saved={...saved,revision:saved.revision+1};
+   if(c.kind==='icon')saved.icons={...saved.icons,[c.deskId]:{[c.id]:{x:c.x,y:c.y}}};
+   else saved.components={...saved.components,[c.id]:{x:c.x,y:c.y,width:c.width,height:c.height}};
+   return Promise.resolve({status,layout:saved});
+  }
+ }});
+ f.pointer=(kind,x,y,gestureId=1)=>f.host.handleEditPointer({kind,x,y,gestureId,runtimeGeneration:1,sessionId:'session',revision:1});
+ f.hold=()=>{for(const [key,v] of [...timers])if(v.ms===500){timers.delete(key);v.cb();}};return f;
+}
+test('Room icon hold saves one local move and never activates its button',async()=>{
+ const f=editFixture();await f.host.ready;assert.equal(f.pointer('down',50,60),true);f.hold();f.pointer('move',250,260);f.pointer('up',250,260);
+ f.host.handleNativeInput({kind:'activate',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:f.host.readDiagnostics().inputVersion,inputSequence:1,consumer:'official',button:'next'});
+ await flush();const writes=f.calls.filter(c=>c.method==='layoutSave');assert.equal(writes.length,1);assert.deepEqual(writes[0].params.change,{kind:'icon',id:'icon',deskId:'home',x:232,y:232});
+ assert.equal(f.calls.filter(c=>c.method==='activate').length,0);assert.equal(f.host.readDiagnostics().layout.revision,1);f.host.dispose();
+});
+test('Widget drag saves size and movement, short press writes nothing',async()=>{
+ const f=editFixture();await f.host.ready;f.pointer('down',450,80);f.pointer('up',450,80);assert.equal(f.calls.some(c=>c.method==='layoutSave'),false);
+ f.pointer('down',450,80,2);f.hold();f.pointer('up',550,180,2);await flush();assert.deepEqual(f.calls.find(c=>c.method==='layoutSave').params.change,{kind:'widget',id:'shared',x:500,y:150,width:200,height:100});f.host.dispose();
+});
+test('Rejected save retains old layout and reports failure',async()=>{
+ const f=editFixture('staleInput');await f.host.ready;f.pointer('down',50,60);f.hold();f.pointer('up',250,260);await flush();assert.equal(f.host.readDiagnostics().layout.revision,0);assert.equal(f.host.readDiagnostics().edit.error,'staleInput');f.host.dispose();
+});
+test('Desk changes cancel held edits and no old release can save',async()=>{
+ const f=editFixture();await f.host.ready;f.pointer('down',50,60);f.hold();await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.pointer('up',250,260);await flush();assert.equal(f.calls.some(c=>c.method==='layoutSave'),false);assert.equal(f.host.readDiagnostics().edit.phase,'idle');f.host.dispose();
+});

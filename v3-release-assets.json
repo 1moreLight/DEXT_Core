@@ -14,6 +14,7 @@
     "media-host.js",
     "playback-host.js",
     "desktop-selection.js",
+    "press-edit.js",
     "dom-host.js",
     "task-area-model.js",
     "task-area-host.js",
