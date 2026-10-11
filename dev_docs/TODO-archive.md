@@ -361,3 +361,5 @@ halfV3合并收尾（2026-10-09）：master无冲突命名合并，合并提交�
 
 ## 2026-10-11 DESK-EDIT-V3-001 / v3DesktopFlow
 当前实施及修复已提交37bcb68；用户授权阶段合并。06迁移、07实时排序/双击退出、08拖动提示清理、09选中蓝框清理均实施100%。证据与逐步记录保留于对应plans与acceptance；人工未报告项目不伪称通过。运行r5保留在主项目.build，后续唯一下一项DESK-SYNC-003实机拖入闭环。
+
+合并收尾：90e9aa6及标签v3DesktopFlow；主线145项冒烟通过。37项本机Room状态按SHA256/存在性恢复，备份.build/v3DesktopFlow-local-rooms和同名Git stash保留，未混入提交。原r5运行包位于主项目.build，独立于归档工作区。
