@@ -71,8 +71,14 @@
   }
   function inputEventValid(v){
     const keys=['type','runtimeGeneration','sessionId','revision','geometryVersion','kind','consumer','button'];
-    if(!object(v)||Object.keys(v).some(k=>!keys.includes(k)&&k!=='entryId'&&k!=='inputSequence')||!keys.every(k=>Object.hasOwn(v,k))||
+    if(!object(v)||Object.keys(v).some(k=>!keys.includes(k)&&k!=='entryId'&&k!=='inputSequence'&&k!=='desktopInput')||!keys.every(k=>Object.hasOwn(v,k))||
       !integer(v.runtimeGeneration)||!id(v.sessionId)||!integer(v.revision)||!integer(v.geometryVersion)||!['focus','activate'].includes(v.kind))return false;
+    if(Object.hasOwn(v,'desktopInput')){
+      const p=v.desktopInput;
+      if(v.kind!=='activate'||v.consumer!=='official.desktop'||!shape(p,['key','modifiers','x','y','at','doubleClickTime','doubleClickWidth','doubleClickHeight'])||
+        ![0,13,32].includes(p.key)||!integer(p.modifiers,0,3)||!integer(p.x,-2147483648,2147483647)||!integer(p.y,-2147483648,2147483647)||
+        !finite(p.at,0,Number.MAX_SAFE_INTEGER)||!integer(p.doubleClickTime,1,5000)||!integer(p.doubleClickWidth,1,32768)||!integer(p.doubleClickHeight,1,32768))return false;
+    }
     const entry=Object.hasOwn(v,'entryId')?v.entryId:null;
     if(v.kind==='focus'&&Object.hasOwn(v,'inputSequence')||v.kind==='activate'&&!integer(v.inputSequence))return false;
     if(v.consumer===null||v.button===null)return v.kind==='focus'&&v.consumer===null&&v.button===null&&entry===null;

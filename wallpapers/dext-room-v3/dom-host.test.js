@@ -666,7 +666,7 @@ test('desktop files render as official native targets and DOM clicks cannot open
   const icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='Original file.txt');assert.ok(icon);assert.equal(icon.hidden,false);
   const q=f.calls.filter(c=>c.method==='geometry').at(-1);const entry=q.params.buttons.find(b=>b.consumer==='official.desktop');
   assert.equal(entry.button,id);assert.equal(entry.entryId,'desktop.scan1/'+id);assert.equal(icon.handlers.click,undefined);
-  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1});await flush();
+  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:13,modifiers:0,x:0,y:0,at:0,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});await flush();
   assert.equal(f.calls.filter(c=>c.method==='activate').at(-1).params.button,id);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(icon.hidden,true);
  }finally{f.host.dispose();}
@@ -700,4 +700,39 @@ test('desktop drop sends real file objects while paused and retires listeners on
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.container.handlers.drop(event);assert.equal(sent.length,1);
  }finally{f.host.dispose();}
  assert.equal(f.container.handlers.drop,undefined);assert.equal(f.container.handlers.dragover,undefined);
+});
+
+test('desktop native single click selects, double click opens, Ctrl extends selection',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'scan1',deskId:'home',items:ids.map((id,slot)=>({id,name:'File '+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function click(index,at,modifiers=0,key=0){
+   const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===ids[index]);
+   return f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:entry.button,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key,modifiers,x:100,y:100,at,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  }
+  click(0,100);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  let icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='File 0');assert.equal(icon.attrs['aria-pressed'],'true');
+  click(0,250);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1,800,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1,1000,0,13);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,2);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
+ }finally{f.host.dispose();}
+});
+test('desktop double click requires native time and position and resets after pause',async()=>{
+ const id='desktop-'+'a'.repeat(64),desktop={contextId:'scan1',deskId:'home',items:[{id,name:'File',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function click(at,x=100){const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===id);
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key:0,modifiers:0,x,y:100,at,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});}
+  click(0);click(600);click(700,110);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  f.host.setPlaybackSuspended(true);f.host.setPlaybackSuspended(false);await flush();click(800,110);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  click(900,111);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1000,111);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+ }finally{f.host.dispose();}
 });

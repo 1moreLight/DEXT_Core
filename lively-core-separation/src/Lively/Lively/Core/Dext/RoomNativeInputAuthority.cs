@@ -21,9 +21,11 @@ internal sealed class RoomNativeInputProof
 {
     private readonly RoomNativeInputAuthority owner;
     private int consumed;
-    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false,bool sampledKeyboard=false,int key=0,int modifiers=0)
-    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; SampledVisual=sampledMouse||sampledKeyboard; Key=key; Modifiers=modifiers; }
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false,bool sampledKeyboard=false,int key=0,int modifiers=0,int x=0,int y=0)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; SampledVisual=sampledMouse||sampledKeyboard; Key=key; Modifiers=modifiers; X=x; Y=y; }
     internal long Sequence { get; }
+    internal int X { get; }
+    internal int Y { get; }
     internal int Key { get; }
     internal int Modifiers { get; }
     internal bool SampledMouse { get; }
@@ -261,7 +263,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
         if(!DextNativeGeometry.TryCreate(input,out var accepted))return false;
         result=accepted.Select(region=>new AcceptedEntry(region)).ToArray();return true;
     }
-    internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground)
+    internal void Key(RoomNativeViewport current,int key,bool down,bool reverse,bool foreground,int modifiers=0)
     {
         if(key!=9 && key!=13 && key!=32)return;
         var now=clock.GetTimestamp();
@@ -282,7 +284,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
                     else SelectFocus(buttons,reverse);
                     return;
                 }
-                if((focused!=null||focusRequests.Count>0) && BeginGesture(now,0,0,key)){
+                if((focused!=null||focusRequests.Count>0) && BeginGesture(now,0,0,key,modifiers:modifiers & 3)){
                     keyboard=new(focused,now,gesture!.Sequence,Key:key);
                     if(focusRequests.Count>0)keyFocusBarrier=focusRequests.Last().Sequence;
                     else keyTarget=focused;
@@ -316,7 +318,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
     private void Complete(Press press,long now)
     {
         if(press.Entry==null || gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
-        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard,current.Key,current.Modifiers);
+        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard,current.Key,current.Modifiers,current.X,current.Y);
     }
     private bool Expired(long issued,long now)
     {

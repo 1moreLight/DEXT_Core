@@ -253,13 +253,15 @@ namespace Lively.Core.Wallpapers
                     SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
                     NativeDockTaskCompleted?.Invoke(this,task);
                 }
+                else if(proof.Button.Consumer==RoomActionAuthority.DesktopConsumer)
+                    SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId,desktopInput=DesktopInputDetails(proof)});
                 else SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
             }
         }
         internal void NativeMouseDown(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null,((InputUtil.MouseModifiers&8)!=0?1:0)|((InputUtil.MouseModifiers&4)!=0?2:0));
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null,DesktopInputModifiers());
             var after=a.Input.State;
             if(nativeDock)Logger.Debug($"Dock down gesture before={before?.Gesture?.Sequence} after={after?.Gesture?.Sequence} foreground={foreground} viewport={v!=null} geometry={after?.GeometryVersion}");
             if(after?.Gesture is{Key:0,Released:false} gesture&&gesture.Sequence!=before?.Gesture?.Sequence){
@@ -307,7 +309,7 @@ namespace Lively.Core.Wallpapers
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
-            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);
+            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,DesktopInputModifiers());
             var after=a.Input.State;
             if(down&&key==9&&after?.Gesture is{Key:9} tab&&tab.Sequence!=before?.Gesture?.Sequence){
                 NativeKeys(a).FocusRequested();SendNativeFocus(tab);

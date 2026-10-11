@@ -13,6 +13,7 @@
     "frame-host.js",
     "media-host.js",
     "playback-host.js",
+    "desktop-selection.js",
     "dom-host.js",
     "task-area-model.js",
     "task-area-host.js",

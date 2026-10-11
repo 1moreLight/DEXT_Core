@@ -228,3 +228,11 @@ test('desktop drop uses native additional objects and survives ordinary pause an
  for(const cb of listeners)cb({data:{type:'dext:v3-native-response',requestId:sent[0].requestId,...identity,status:'cancelled',data:null}});
  assert.equal((await result).status,'cancelled');assert.equal(timers.size,0);host.dispose();
 });
+
+test('desktop activation preserves native key modifiers and system double-click settings',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',
+  desktopInput:{key:0,modifiers:3,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});
