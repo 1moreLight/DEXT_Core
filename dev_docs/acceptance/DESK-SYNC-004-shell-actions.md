@@ -67,3 +67,8 @@
 证据：Core上下沿失败→8/8（context-input-red.log、context-input-final.log），动作误走启动的失败→25/25个人编辑（context-menu-authority-red/green.log），宿主缺请求/标记失败及后台空区域失败→120/120（context-host-red.log、context-background-red.log、context-host-final.log）；原有鼠标/键盘采样57/57（context-pointer-regression.log）、原菜单键12组合（context-menu-key-regression.log）、多root与原所有权15/15（context-ownership-wire.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-wire-build.log）。本次通过不消除#330存储间歇问题。
 实际Shell菜单、外点/Esc、扩展/属性、DPI和物理触控尚未统一验证；首次右击的证据目前为生产Core类与宿主检查，不宣称Windows活体验收通过。start.ps1对开发输出在缺dext-configurator.exe处退出1（context-wire-start.log），未启动或替换Core26668。代码实施5/6≈83%，路线仍2/4=50%，第06步完整候选/交接开做，未合并master。
 人工步骤（完整候选后统一）：其他应用在前台时首次右击同步Desk的唯一临时文件；多选文件上右击保留选择，未选项上右击改单选；打开/属性、Esc/外点取消不出现第二份Explorer菜单；核对DPI、原Dock/作者按钮、左键/触控、切Desk/停用后的旧请求取消。
+
+2026-10-11 第06步完整候选已生成，交接仍开做：来源提交830e785，目录D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011。package.json与package-lock.json分别核对与desktop-drop-build-env/deps完全一致，当前node_modules以junction复用该D盘依赖；TEMP/TMP/npm缓存与Cargo目标在D盘，未重新下载整套依赖。build-v3-release.ps1退出0，包含配置器、Core、Release Player/Watchdog、17项官方宿主；保留Rust原两项警告。655个inventory文件哈希及17项宿主和当前源码匹配、无已知夹具标记（.build/shell-actions-candidate-verify.log）。完整日志desktop-shell-actions-build-env/release-build.log。
+start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后因主目录Debug Core26668占用mutex/pipe退出1（.build/shell-actions-candidate-start.log及工具输出）；没有启动本轮候选，当前没有额外配置器。构建改写的Cargo.toml经HEAD文本逐字规范化比较确认仅换行差异后恢复，未改变依赖声明。
+下一执行先复核菜单退出的焦点：DesktopContextMenuWindow目前在菜单owner仍前台时恢复弹出前窗口；从其他应用首次右击时，这可能使菜单取消后键盘仍交给原应用，需要按Windows桌面交互预期处理并验证。随后核对原生菜单实际窗口、取消/属性/DPI与触控，不用构建结果替代OS证明。第06步继续开做，代码实施仍5/6≈83%、路线2/4=50%；用户统一验收/合并均未完成。
+人工步骤仍为本卡1至6项；额外检查从其他应用首次右击文件后Esc关闭菜单，再按文件操作键时的焦点归属，避免将按键交给原应用。仅用唯一临时文件，现运行版未含本候选，无需用户现在操作。
