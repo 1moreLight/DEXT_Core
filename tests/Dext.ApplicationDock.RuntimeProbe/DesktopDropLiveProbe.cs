@@ -56,11 +56,15 @@ internal static class DesktopDropLiveProbe
                 await Task.Delay(250);
             }
             if (slot < 0) throw new Exception("Transferred file has no persisted desktop slot");
-            var result = new { destinationExists = true, sourceExists = File.Exists(source), slot, id };
+            // File watching can observe a native Explorer transfer too; this is not proof of the Dext drop route.
+            var result = new { destinationExists = true, sourceExists = File.Exists(source), slot, id, dextDropRouteVerified = false };
             File.WriteAllText(Path.Combine(run, "result.json"), JsonSerializer.Serialize(result));
-            Console.WriteLine("PASS actual transferred content and saved slot " + JsonSerializer.Serialize(result));
-            // Allow a short read-only observation before the surrounding fixture restores the desktop.
-            await Task.Delay(3000);
+            Console.WriteLine("OBSERVED transferred content and saved slot; Dext route still unverified " + JsonSerializer.Serialize(result));
+            // Leave time to observe the actual icon through Windows computer-use.
+            // An explicit marker ends observation; even a lost UI session is bounded.
+            deadline = DateTime.UtcNow.AddSeconds(45);
+            while (DateTime.UtcNow < deadline && !File.Exists(Path.Combine(run, "observed")) && !File.Exists(Path.Combine(run, "cancel")))
+                await Task.Delay(250);
         }
         finally
         {

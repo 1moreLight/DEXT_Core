@@ -2327,3 +2327,13 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11 跨卷证据开做：在现有DesktopTransfer测试新增显式双目录入口；仅创建唯一临时目录/文件，核对两侧卷身份可解析且不同，再验证默认复制保源和Shift移动完成后删源。只验证正式Shell后端，不冒充Explorer/OLE源完成或物理验收。
 
 2026-10-11 跨卷后端验证通过：DesktopTransfer显式--cross-volume入口使用C/D唯一临时目录，正式卷GUID两侧均可解析且不同；默认复制校验两侧完整内容、Shift移动校验目标内容与源消失，3/3通过。临时文件与空目录全部清理，无测试目录残留。日志.build/drop-cross-volume.log；旧Core52420/配置器19704保留。本轮只新增测试，不改生产代码/候选；物理Explorer拖放、鼠标提示和OLE源效果仍待，02保持开做，路线2/4=50%。
+
+2026-10-11 DESK-SYNC-003实机补证恢复开做：004在其分支完成实施与r3候选交接（1f13850，生产0ed6d12）；路线实施3/4=75%，本分支早期“004下一项/2/4”仅历史。复用当前003分支与独立验收文件，先核对当前Explorer窗口，再准备唯一临时文件与磁盘恢复清单；候选切换前记录当前Core精确路径、布局与个人状态，测试后恢复。仅真实Explorer→原生宿主→Shell文件结果→可见图标全链计通过，不用后台文件复制替代拖放。禁止覆盖现有文件、重复打开配置器或更换原点击/触控链。
+环境核对：Orca CLI当前不存在，按computer-use技能停止该CLI尝试；改用已安装Windows computer-use插件。最新list_windows未列Explorer，并非沿用旧1×1窗口结论，下一步正常启动Explorer后重新选择窗口。CodeGraph显示Not initialized，源码定位使用rg兜底，不新建索引。
+
+2026-10-11 用户要求后续不用Orca技能，已改用Windows computer-use。Explorer现已返回正常主文件夹窗口及文件列表，旧1×1障碍解除。Core26668无活跃Room/Player/配置器，WallpaperLayout为空。实机夹具成功后的观察窗口由3秒改为最多45秒，observed/cancel可提前结束，便于验证实际图标而非仅磁盘落地。只改探针不改生产输入。
+
+2026-10-11 实机补证本轮结果：Windows computer-use 能读取正常 Explorer 文件列表；隔离 Core31808/Player38976 已 ready，但实际拖动前检测到用户输入及窗口最小化，主动取消，未发生本轮自动拖动，未产生 result.json。日志 .build/desktop-drop-live-r3.log；drop-live-223fc78615044e6092ae84a6dc43d581/cleaned.txt 和 drop-return-f3b4cc5dc7f94f0c84c3c2a28645e41d/restored.txt 记录清理恢复。原 Debug Core 恢复为34196，无活动Room；Settings/WallpaperLayout/room-session字节一致，personal仅revision变化。桌面原生图标由用户主动关闭，不作为故障，不擅自修改。
+进度：桌面同步路线实施3/4=75%，003完整实机门槛0/5；未通过的测试不计完成。本轮探针观察窗口延长到45秒并可用observed/cancel提前结束。发现磁盘文件和私有槽位也可能由Explorer原生落盘+监听产生，因此将探针PASS改为OBSERVED，结果明确dextDropRouteVerified=false。
+下一步（待做）：为唯一临时文件关联真实Player接收、Core执行和页面回执证据，再做一次Explorer拖入；其后按独立验收卡核对效果、取消/重名、生命周期和原输入。当前记录整理做完；真实链路补证仍开做。用户已要求不用Orca技能。
+任务栏请求记录：新探针taskbar-visible已构建，但旧Debug Core返回Unimplemented，未确认恢复；Windows设置自动操作被工具拒绝（Computer Use was not approved to use systemsettings）。用户随后改为只需操作说明，已提供，不再继续修改任务栏。

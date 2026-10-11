@@ -14,3 +14,5 @@
 2026-10-11 正式候选打包恢复：锁定package.json/package-lock.json复制至D盘独立构建环境，npm ci退出0；当前worktree node_modules链接到该依赖，未运行的Core bin搬到D盘并保留目录链接。TEMP/TMP/npm缓存及Rust目标均位于D盘；构建后C盘剩余391573504字节。完整build-v3-release.ps1退出0，候选 D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-clean-20261011；来源c73d153（生产代码42d7add），654文件哈希核对、16项官方宿主与源码一致、已知夹具标记检查通过。保留Rust既有两项警告。日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-build-env/release-build.log。
 候选未启动；旧Core52420/配置器19704路径仍为v3-core-exit-20261010。构建造成的Cargo.toml纯换行变化经HEAD内容比较后恢复；工作区无代码变更。真实Explorer/WorkerW拖入、OLE源效果、重名/取消UI、落点及原触控仍待，05状态继续开做，实施0/5（完整门槛），路线2/4=50%。下一步补实际OS拖入证据，不重复打包或切换Core来代替鼠标验收。
 2026-10-11 跨卷后端验证通过：DesktopTransfer显式--cross-volume入口使用C/D唯一临时目录，正式卷GUID两侧均可解析且不同；默认复制校验两侧完整内容、Shift移动校验目标内容与源消失，3/3通过。临时文件与空目录全部清理，无测试目录残留。日志.build/drop-cross-volume.log；旧Core52420/配置器19704保留。本轮只新增测试，不改生产代码/候选；物理Explorer拖放、鼠标提示和OLE源效果仍待，02保持开做，路线2/4=50%。
+
+2026-10-11 补证约束：文件落盘与保存槽位不单独证明Dext拖放链，必须同时关联Player/Core处理及页面结果。最新尝试因用户输入冲突主动取消，0/5门槛保持；路线实施3/4=75%。人工步骤仍按上面五项统一验收。

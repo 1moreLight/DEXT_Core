@@ -17,3 +17,10 @@ Orca UI接口仅列出Explorer14388的1×1窗口，新启动Explorer50264没有�
 
 2026-10-11 正式候选打包恢复：锁定package.json/package-lock.json复制至D盘独立构建环境，npm ci退出0；当前worktree node_modules链接到该依赖，未运行的Core bin搬到D盘并保留目录链接。TEMP/TMP/npm缓存及Rust目标均位于D盘；构建后C盘剩余391573504字节。完整build-v3-release.ps1退出0，候选 D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-clean-20261011；来源c73d153（生产代码42d7add），654文件哈希核对、16项官方宿主与源码一致、已知夹具标记检查通过。保留Rust既有两项警告。日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-build-env/release-build.log。
 候选未启动；旧Core52420/配置器19704路径仍为v3-core-exit-20261010。构建造成的Cargo.toml纯换行变化经HEAD内容比较后恢复；工作区无代码变更。真实Explorer/WorkerW拖入、OLE源效果、重名/取消UI、落点及原触控仍待，05状态继续开做，实施0/5（完整门槛），路线2/4=50%。下一步补实际OS拖入证据，不重复打包或切换Core来代替鼠标验收。
+2026-10-11 DESK-SYNC-003实机补证恢复开做：004在其分支完成实施与r3候选交接（1f13850，生产0ed6d12）；路线实施3/4=75%，本分支早期“004下一项/2/4”仅历史。复用当前003分支与独立验收文件，先核对当前Explorer窗口，再准备唯一临时文件与磁盘恢复清单；候选切换前记录当前Core精确路径、布局与个人状态，测试后恢复。仅真实Explorer→原生宿主→Shell文件结果→可见图标全链计通过，不用后台文件复制替代拖放。禁止覆盖现有文件、重复打开配置器或更换原点击/触控链。
+环境核对：Orca CLI当前不存在，按computer-use技能停止该CLI尝试；改用已安装Windows computer-use插件。最新list_windows未列Explorer，并非沿用旧1×1窗口结论，下一步正常启动Explorer后重新选择窗口。CodeGraph显示Not initialized，源码定位使用rg兜底，不新建索引。
+
+2026-10-11 实机补证本轮结果：Windows computer-use 能读取正常 Explorer 文件列表；隔离 Core31808/Player38976 已 ready，但实际拖动前检测到用户输入及窗口最小化，主动取消，未发生本轮自动拖动，未产生 result.json。日志 .build/desktop-drop-live-r3.log；drop-live-223fc78615044e6092ae84a6dc43d581/cleaned.txt 和 drop-return-f3b4cc5dc7f94f0c84c3c2a28645e41d/restored.txt 记录清理恢复。原 Debug Core 恢复为34196，无活动Room；Settings/WallpaperLayout/room-session字节一致，personal仅revision变化。桌面原生图标由用户主动关闭，不作为故障，不擅自修改。
+进度：桌面同步路线实施3/4=75%，003完整实机门槛0/5；未通过的测试不计完成。本轮探针观察窗口延长到45秒并可用observed/cancel提前结束。发现磁盘文件和私有槽位也可能由Explorer原生落盘+监听产生，因此将探针PASS改为OBSERVED，结果明确dextDropRouteVerified=false。
+下一步（待做）：为唯一临时文件关联真实Player接收、Core执行和页面回执证据，再做一次Explorer拖入；其后按独立验收卡核对效果、取消/重名、生命周期和原输入。当前记录整理做完；真实链路补证仍开做。用户已要求不用Orca技能。
+任务栏请求记录：新探针taskbar-visible已构建，但旧Debug Core返回Unimplemented，未确认恢复；Windows设置自动操作被工具拒绝（Computer Use was not approved to use systemsettings）。用户随后改为只需操作说明，已提供，不再继续修改任务栏。

@@ -112,6 +112,19 @@ if (args[0] == "grants-status")
 JsonElement Read() => JsonSerializer.Deserialize<JsonElement>(client.GetApplicationDockStatus(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5)).ReplyJson);
 JsonElement Edit(object patch) => JsonSerializer.Deserialize<JsonElement>(client.EditApplicationDock(
     new RoomDockPreferenceRequest { PatchJson = JsonSerializer.Serialize(patch) }, deadline: DateTime.UtcNow.AddSeconds(5)).ReplyJson);
+if (args[0] == "taskbar-visible")
+{
+    Console.WriteLine(Edit(new { operation = "taskbar", mode = "visible" }));
+    var deadline = DateTime.UtcNow.AddSeconds(10);
+    while (DateTime.UtcNow < deadline)
+    {
+        var taskbarVisibility = Read().GetProperty("taskbar");
+        if (taskbarVisibility.GetProperty("mode").GetString() == "visible" && taskbarVisibility.GetProperty("visible").ValueKind == JsonValueKind.True && !taskbarVisibility.GetProperty("hidden").GetBoolean())
+        { Console.WriteLine("RESTORED persistent visible Windows taskbar: " + taskbarVisibility); return; }
+        await Task.Delay(200);
+    }
+    throw new Exception("Taskbar restore was requested but visibility was not confirmed.");
+}
 if (args[0] == "autohide-probe")
 {
     if(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).Active)
