@@ -78,7 +78,7 @@ internal sealed partial class DesktopShellContextMenu : IDisposable
                 var child = GetSubMenu(current, i);
                 if (child != IntPtr.Zero) Visit(child, depth + 1);
                 var id = GetMenuItemID(current, i);
-                if (id < FirstCommand || id > LastCommand || id - FirstCommand >= commandCount) continue;
+                if (!(background && id == BackgroundPasteCommand) && (id < FirstCommand || id > LastCommand || id - FirstCommand >= commandCount)) continue;
                 var state = GetMenuState(current, (uint)i, 0x400); // MF_BYPOSITION
                 commands.Add(new(id, Verb(id), (state & 3) == 0));
             }
@@ -90,6 +90,7 @@ internal sealed partial class DesktopShellContextMenu : IDisposable
     internal string Verb(uint command)
     {
         CheckThread();
+        if (background && command == BackgroundPasteCommand) return "dext.paste";
         if (command < FirstCommand || command > LastCommand || command - FirstCommand >= commandCount) return string.Empty;
         var buffer = Marshal.AllocCoTaskMem(1024);
         try
@@ -139,6 +140,7 @@ internal sealed partial class DesktopShellContextMenu : IDisposable
         var selected = Commands().FirstOrDefault(item => item.Id == command && item.Enabled);
         if (selected is null) throw new ArgumentOutOfRangeException(nameof(command), "Command is absent or disabled.");
         var verb = selected.Verb.ToLowerInvariant();
+        if (background && verb == "dext.paste") return verb;
         if (!background && verb is ("delete" or "rename" or "cut" or "copy")) return verb;
         if (!IsWindow(owner)) throw new ArgumentException("A live native owner is required.", nameof(owner));
         var offset = (IntPtr)(command - FirstCommand);

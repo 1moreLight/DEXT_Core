@@ -51,7 +51,16 @@ public partial class WebWebView2
         if(!a.DesktopTransfers.Wait(0))return;
         bool Permitted(){var current=a.Input.State;return !IsExited&&ReferenceEquals(Volatile.Read(ref roomNativeAttachment),a)&&current is not null&&
             current.Generation==initial.Generation&&current.Session==initial.Session&&a.Bridge.NativeCheckDesktopDrop(a.Actions,current.Session,current.Revision,context,desk)==RoomActionStatus.Accepted;}
-        try {await DesktopContextMenuWindow.ShowAsync(Array.Empty<string>(),x,y,Permitted,NativeDesktopMenuTarget,()=>{},background:true);}
+        try {
+            bool canPaste=false;
+            try {var clipboard=await DesktopShellClipboard.ReadAsync();canPaste=clipboard?.Effect is DesktopDropEffect.Copy or DesktopDropEffect.Move;}
+            catch(Exception error){Logger.Warn(error,"Desktop background clipboard availability unavailable");}
+            var command=await DesktopContextMenuWindow.ShowAsync(Array.Empty<string>(),x,y,Permitted,NativeDesktopMenuTarget,()=>{},background:true,canPaste:canPaste);
+            if(command=="dext.paste"){
+                var result=await PerformDesktopPasteAsync(Permitted);
+                Logger.Info($"Desktop background paste | status={result.Status}");
+            }
+        }
         catch(Exception error){Logger.Error(error,"Desktop background menu failed");}
         finally{a.DesktopTransfers.Release();}
     }

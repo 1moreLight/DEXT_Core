@@ -15,7 +15,16 @@ internal static class ContextMenuChecks
    Exception? failure=null;
    try
    {
-    using(var background=DesktopShellContextMenu.CreateBackground()){Check(background.Commands().Count>0,"native desktop background exposes commands without a selected file");}
+    using(var background=DesktopShellContextMenu.CreateBackground()){Check(background.Commands().Count>0,"native desktop background exposes commands without a selected file");Console.WriteLine("INFO background verbs: "+string.Join(", ",background.Commands().Select(c=>$"{c.Id}:{c.Verb}:{c.Enabled}")));}
+    using(var background=DesktopShellContextMenu.CreateBackground(canPaste:true)){
+     var paste=background.Commands().Single(c=>c.Verb=="dext.paste");
+     Check(paste.Enabled&&background.Dispatch(paste.Id,IntPtr.Zero,0,0,()=>true)=="dext.paste","background paste returns to Dext transfer without Shell invocation");
+    }
+    using(var background=DesktopShellContextMenu.CreateBackground(canPaste:false)){
+     var paste=background.Commands().Single(c=>c.Verb=="dext.paste");var denied=false;
+     try{background.Dispatch(paste.Id,IntPtr.Zero,0,0,()=>true);}catch(ArgumentOutOfRangeException){denied=true;}
+     Check(!paste.Enabled&&denied,"background paste is disabled when clipboard has no supported files");
+    }
     foreach(var paths in new[]{new[]{a},new[]{a,b},new[]{a,c}})
     {
      using var menu=DesktopShellContextMenu.Create(paths);

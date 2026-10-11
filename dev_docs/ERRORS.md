@@ -498,3 +498,6 @@ SetForegroundWindow成功后立即GetForegroundWindow不保证已完成跨输入
 
 ## DESK-SYNC-005 背景菜单实测时机
 首次Shell背景扩展初始化可能超过450ms；测试仅凭owner前台发送Esc，会在TrackPopupMenu之前发出，导致误判不能关闭。改为测试进程前台且GetGUIThreadInfo标记GUI_INMENUMODE后发Esc，5秒EndMenu作为失败收尾；文件/背景交替5次都由Esc关闭。不要用固定睡眠冒充菜单已显示。
+
+## 2026-10-12 背景菜单与空闲轮询
+背景Shell菜单弹出不等于Explorer整套桌面命令已接入：本机CreateViewObject查询提供系统/第三方扩展，未提供paste。添加独立ID的Dext粘贴项，回到已有文件传输，不能冒充Shell自动带齐。50ms输入offer只能取内存提示，不能反复ReadPresentation/CheckDesktopDrop读取personal.json；实际操作仍检查当前配置。用夹具锁文件证明提示不做IO、派发仍拒绝不可读配置。两份Watchdog分别为壁纸监护和--dext-dock-guard任务栏恢复，不能按同名进程数量误杀。

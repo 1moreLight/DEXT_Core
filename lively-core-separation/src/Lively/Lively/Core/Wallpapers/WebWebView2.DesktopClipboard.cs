@@ -34,17 +34,8 @@ public partial class WebWebView2
                     current.Session,current.Revision,view.ContextId,initial.DeskId)==RoomActionStatus.Accepted;
             }
             if(!Permitted())return (new(RoomActionStatus.Cancelled,receipt.InputSequence,receipt.InputConsumed),null);
-            var clipboard=await DesktopShellClipboard.ReadAsync();
-            if(clipboard is null||clipboard.Effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move))
-                return (new(RoomActionStatus.NotOperable,receipt.InputSequence,receipt.InputConsumed),new{reason="noFiles"});
-            var destination=Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory,Environment.SpecialFolderOption.DoNotVerify);
-            var result=await DesktopShellTransfer.PasteAsync(clipboard.Files,destination,clipboard.Effect,interactive:true,owner:Handle,permitted:Permitted);
-            var clipboardUpdated=false;
-            try{clipboardUpdated=await DesktopShellClipboard.CompleteMoveAsync(clipboard,result);}
-            catch(Exception error){Logger.Warn(error,"Files were processed but clipboard completion could not be updated");}
-            var data=new{aborted=result.Aborted,clipboardUpdated,clipboardSequence=DesktopShellClipboard.CurrentSequence,
-                items=result.Items.Select(item=>new{name=System.IO.Path.GetFileName(item.Source),status=item.Status,hresult=item.HResult}).ToArray()};
-            return (new(result.Aborted?RoomActionStatus.Cancelled:RoomActionStatus.Accepted,receipt.InputSequence,receipt.InputConsumed),data);
+            var result=await PerformDesktopPasteAsync(Permitted);
+            return (new(result.Status,receipt.InputSequence,receipt.InputConsumed),result.Data);
         }
         catch(OperationCanceledException){return (new(RoomActionStatus.Cancelled,receipt.InputSequence,receipt.InputConsumed),null);}
         catch(Exception error)
@@ -53,6 +44,23 @@ public partial class WebWebView2
             return (new(RoomActionStatus.StorageUnavailable,receipt.InputSequence,receipt.InputConsumed),null);
         }
         finally{attachment.DesktopTransfers.Release();}
+    }
+    // Callers hold DesktopTransfers and supply their own native input scope.
+    // Re-read the clipboard at dispatch so a later user copy wins over menu creation.
+    private async Task<(RoomActionStatus Status,object Data)> PerformDesktopPasteAsync(Func<bool> permitted)
+    {
+        if(!permitted())throw new OperationCanceledException();
+        var clipboard=await DesktopShellClipboard.ReadAsync();
+        if(clipboard is null||clipboard.Effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move))
+            return (RoomActionStatus.NotOperable,new{reason="noFiles"});
+        var destination=Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory,Environment.SpecialFolderOption.DoNotVerify);
+        var result=await DesktopShellTransfer.PasteAsync(clipboard.Files,destination,clipboard.Effect,interactive:true,owner:Handle,permitted:permitted);
+        var clipboardUpdated=false;
+        try{clipboardUpdated=await DesktopShellClipboard.CompleteMoveAsync(clipboard,result);}
+        catch(Exception error){Logger.Warn(error,"Files were processed but clipboard completion could not be updated");}
+        var data=new{aborted=result.Aborted,clipboardUpdated,clipboardSequence=DesktopShellClipboard.CurrentSequence,
+            items=result.Items.Select(item=>new{name=System.IO.Path.GetFileName(item.Source),status=item.Status,hresult=item.HResult}).ToArray()};
+        return (result.Aborted?RoomActionStatus.Cancelled:RoomActionStatus.Accepted,data);
     }
     private async Task<(RoomNativeActionReply Reply,object Data)> ExecuteDesktopCopyAsync(NativeAttachment attachment,
         RoomNativeInputState state,LivelyMessageRoomNativeRequest request)
