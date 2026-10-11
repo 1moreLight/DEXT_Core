@@ -27,3 +27,6 @@ Orca UI接口仅列出Explorer14388的1×1窗口，新启动Explorer50264没有�
 
 2026-10-11 关联诊断实施做完：Core现有desktopDrop分支记录received/result，Shell完成后记录transfer；三者以session/request/player关联，transfer仅记录哈希newIds、逐项状态/HRESULT和placement，不记录源/目标绝对路径。received代表已通过会话校验到达Core，不代表Shell成功；result代表Core处理结果，不代表页面已呈现，须观察官方完成提示。全量build.ps1 -V3Release通过；start.ps1 -CoreOnly自动补Debug构建后因旧Core34196占用同身份按设计拒绝启动（退出1），未停止旧Core、未打开配置器。诊断未部署到运行版，实机门槛保持0/5，路线3/4=75%。
 下次证据：ready.json的SessionId/PlayerPid与received匹配；同一request的transfer.newIds必须含唯一目标文件的desktop-ID且对应completed、placement accepted、aborted false；result accepted；最后观察官方已完成提示及落点图标。缺任何一环均不能把文件监听当Dext拖放成功。后续仍需五项独立验收，未合并master。
+
+2026-10-11 实机重试未进入拖放：Explorer正常窗口525492可读；将当前003框架依赖Release输出覆盖到原自包含测试副本后启动Core28888，但35秒内RPC身份未就绪，也无本次Core启动日志。该混合输出不是可验收候选，根因尚未确认，禁止复用为正式包。启动脚本finally中的正常退出RPC也超时并提前中断恢复；随后核对PID28888精确路径，仅结束本轮失败测试进程，恢复原Debug Core36228。session-status为空，Settings/WallpaperLayout/room-session/personal四项SHA256均与本轮启动前一致；未启动Player/配置器、未产生新ready或拖动文件。
+证据：.build/desktop-drop-live-diagnostics.log；备份 .build/drop-return-19c6d1d01f5146f2abdba8bfe31ba453/recovery.json。下一步先构建独立空目录的完整publish候选，不能再覆盖旧发布目录混用依赖；修复测试编排的finally，保证停止测试副本失败不会无记录地跳过原Core恢复。实机0/5，路线3/4=75%。
