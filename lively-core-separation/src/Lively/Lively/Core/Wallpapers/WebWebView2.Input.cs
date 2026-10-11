@@ -259,7 +259,7 @@ namespace Lively.Core.Wallpapers
         internal void NativeMouseDown(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null,((InputUtil.MouseModifiers&8)!=0?1:0)|((InputUtil.MouseModifiers&4)!=0?2:0));
             var after=a.Input.State;
             if(nativeDock)Logger.Debug($"Dock down gesture before={before?.Gesture?.Sequence} after={after?.Gesture?.Sequence} foreground={foreground} viewport={v!=null} geometry={after?.GeometryVersion}");
             if(after?.Gesture is{Key:0,Released:false} gesture&&gesture.Sequence!=before?.Gesture?.Sequence){

@@ -14,16 +14,18 @@ internal sealed record RoomNativeButton(string Consumer, string Button, double X
     double Width, double Height, int TabIndex, string? EntryId=null, LivelyRoomNativePoint[][]? Polygons=null);
 
 internal sealed record RoomNativeInputGesture(long Sequence,long Generation,Guid Session,long Revision,long GeometryVersion,
-    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false,bool Reverse=false);
+    RoomNativeViewport Viewport,long IssuedAt,int X,int Y,int Key,bool Released=false,int? ReleaseX=null,int? ReleaseY=null,bool SampleMouse=false,bool SampleKeyboard=false,bool Reverse=false,int Modifiers=0);
 internal sealed record RoomNativeInputState(long Generation, Guid Session, long Revision, long GeometryVersion, RoomNativeButton? Focus, RoomNativeInputProof? Completed,RoomNativeInputGesture? Gesture=null,bool KeyReady=true,long CancellationVersion=0);
 
 internal sealed class RoomNativeInputProof
 {
     private readonly RoomNativeInputAuthority owner;
     private int consumed;
-    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false,bool sampledKeyboard=false)
-    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; SampledVisual=sampledMouse||sampledKeyboard; }
+    internal RoomNativeInputProof(RoomNativeInputAuthority owner, RoomNativeButton button, long issuedAt,long sequence,bool sampledMouse=false,bool sampledKeyboard=false,int key=0,int modifiers=0)
+    { this.owner=owner; Button=button; IssuedAt=issuedAt; Sequence=sequence; SampledMouse=sampledMouse; SampledVisual=sampledMouse||sampledKeyboard; Key=key; Modifiers=modifiers; }
     internal long Sequence { get; }
+    internal int Key { get; }
+    internal int Modifiers { get; }
     internal bool SampledMouse { get; }
     internal bool SampledVisual { get; }
     internal bool IsConsumed => Volatile.Read(ref consumed)!=0;
@@ -106,7 +108,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             viewport=nativeViewport;buttons=accepted;sampledMouse=sampleMouse;return true;
         }
     }
-    internal void MouseDown(RoomNativeViewport current,int x,int y,bool foreground)
+    internal void MouseDown(RoomNativeViewport current,int x,int y,bool foreground,int modifiers=0)
     {
         var now=clock.GetTimestamp();
         lock(gate)
@@ -118,7 +120,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             focused=sampledMouse?null:Hit(x,y);
             // A raw point can later be resolved against an event-time visual
             // sample. Recording it alone never creates an action completion.
-            if(!BeginGesture(now,x,y,0))return;
+            if(!BeginGesture(now,x,y,0,modifiers:modifiers & 3))return;
             if(focused!=null)mouse=new(focused,now,gesture!.Sequence,x,y);
         }
     }
@@ -305,16 +307,16 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             sequence>0 && sequence==proof.Sequence &&
             proof.Button.Consumer==consumer && proof.Button.Button==button ? proof : null;
     }
-    private bool BeginGesture(long now,int x,int y,int key,bool reverse=false)
+    private bool BeginGesture(long now,int x,int y,int key,bool reverse=false,int modifiers=0)
     {
         if(inputSequence>=9007199254740991){ClearGeometry();return false;}
-        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse,SampleKeyboard:key!=0&&key!=9&&sampledMouse,Reverse:reverse);
+        gesture=new(++inputSequence,generation,snapshot!.SessionId,snapshot.Revision,geometryVersion,viewport!,now,x,y,key,SampleMouse:key==0&&sampledMouse,SampleKeyboard:key!=0&&key!=9&&sampledMouse,Reverse:reverse,Modifiers:modifiers);
         return true;
     }
     private void Complete(Press press,long now)
     {
         if(press.Entry==null || gesture is not{Released:true} current || current.Sequence!=press.Sequence || Expired(press.IssuedAt,now))return;
-        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard);
+        completed=new(this,press.Entry.Button,press.IssuedAt,press.Sequence,current.SampleMouse,current.SampleKeyboard,current.Key,current.Modifiers);
     }
     private bool Expired(long issued,long now)
     {
