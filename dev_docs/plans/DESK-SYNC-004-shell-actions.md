@@ -17,7 +17,7 @@
 |---|---|---|
 | 01 选择状态与焦点 | 做完（实施） | [01](DESK-SYNC-004/01-selection.md) |
 | 02 双击/键盘打开与F2改名 | 做完（实施） | [02](DESK-SYNC-004/02-open-rename.md) |
-| 03 系统剪贴板复制剪切粘贴 | 待做 | [03](DESK-SYNC-004/03-clipboard.md) |
+| 03 系统剪贴板复制剪切粘贴 | 开做 | [03](DESK-SYNC-004/03-clipboard.md) |
 | 04 删除到回收站 | 待做 | [04](DESK-SYNC-004/04-recycle.md) |
 | 05 原生右键与属性 | 待做 | [05](DESK-SYNC-004/05-context-menu.md) |
 | 06 完整接线/候选/交接 | 待做 | [06](DESK-SYNC-004/06-handoff.md) |

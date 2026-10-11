@@ -2359,3 +2359,9 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 2026-10-11 第02步代码实施做完（待统一实机验收）：Enter不再改写选择，desktopOpen携带当前所选ID，Core一次核对整组扫描目标并消费原生Enter证明，再逐项打开；单项失败继续其余项，切换会话/同步Desk停用时停止剩余项。单击/Ctrl/Shift与F2单选规则保留，双击走原单项打开。首个应用获取前台导致暂停时保留本次动作回执，避免已打开却报失败。
 证据：宿主多选丢失断言先失败后通过；Core新检查先20/21失败后21/21通过，覆盖整组解析/缺失项不启动/一次消费/中途取消；113项宿主检查、79项私有消息检查、最终完整Release均通过。日志open-selection-core-red/green.log、open-selection-dom-red/green.log、open-selection-host-green.log、open-selection-messages.log及D盘desktop-shell-actions-build-env/open-selection-build.log。改名真实临时文件7项证据沿用此前后端检查；没有新增实机验收结论。
 运行：start.ps1依然报告其他路径Core26668占用产品身份并退出1，未更换该Debug实例、未启动配置器。当前02做完仅指代码实施，窗口焦点/Enter/Esc/触控/DPI留统一验收，整个工作包尚未验收。实施2/6≈33%，路线仍2/4=50%，下一执行步骤03剪贴板。
+
+2026-10-11 第03步剪贴板开做：官方Shell格式调研完成，采用CF_HDROP+Preferred DropEffect；先独立HGLOBAL互操作测试，再接STA/序列号保护和原生快捷键。全局剪贴板不用于自动测试。实施2/6≈33%，路线50%。
+
+2026-10-11 第03步后端增量：新增DesktopShellClipboardData和DesktopShellClipboard。CF_HDROP使用20字节DROPFILES+Unicode双NUL路径列表，Preferred DropEffect发布COPY/MOVE；独立STA读取/发布，后台message-only所有者窗口不显示。部分移动仅移除实际completed源项，失败/未处理项保留；完成更新在OpenClipboard锁内核对原序列号，后来复制的内容不覆盖。没有自动化调用系统剪贴板读写。
+证据：独立HGLOBAL交由真实DragQueryFile读取中文/空格/UNC路径，先因数量不匹配失败再10/10通过，含复制/剪切标记、部分失败与相对路径检查；日志.build/clipboard-data-red.log及clipboard-data-green.log。完整Core/Player/Watchdog Release成功（desktop-shell-actions-build-env/clipboard-backend-build.log）；start.ps1继续因主目录Debug Core26668持有产品身份退出1，未替换运行桌面。
+剩余：Ctrl+C/X/V原生按键证明、私有命令/Core目标解析/粘贴执行、同目录副本、剪切变淡及实际系统剪贴板验收。03仍开做，实施2/6≈33%，路线2/4=50%。
