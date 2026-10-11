@@ -16,3 +16,4 @@ Core当前同步Desk授权目标和操作结果，落点附近空槽摆放；002
 
 2026-10-11落点保存接通：新增RoomDesktopSync.PlaceDropped按目标分页优先、格心距离选空槽，保留原图标，允许纠正监听先分配给本次新文件的临时槽位。Core按原生视口/DPI与页面归一化落点计算槽位，实际Shell成功的目标路径转私有ID；排除拖入前已存在ID。当前会话/同步Desk原子写入personal存储，停用或切页拒绝迟到位置；已显示视图换context刷新，新项由目录监听补齐。页面携带分页并保留同Desk刷新后的当前组；位置失败与文件完成分别反馈。
 验证：槽位20项、个人编辑19项、私有IPC76项、宿主101项通过；完整Core/Player Release成功。日志drop-placement-green/drop-placement-store-green/drop-page-message/drop-page-host/drop-placement-core-build。高DPI实机落点、多屏、真实Explorer/OLE效果未验证，本步仍开做，0/5。
+2026-10-11反馈链修复：发现Player暂停时只发出desktopDrop却丢弃其结果，统一请求/回包允许集合为layoutRead、presentationRead、desktopDrop。新增检查先失败后通过，77/77消息检查和完整Release成功；未切当前运行Core。真实暂停拖放待验收，见ERRORS #322。

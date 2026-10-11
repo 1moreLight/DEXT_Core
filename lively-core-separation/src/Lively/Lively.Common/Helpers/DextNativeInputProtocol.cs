@@ -10,6 +10,8 @@ namespace Lively.Common.Helpers
 {
     public static class DextNativeInputProtocol
     {
+        // Shared by both Player request admission and response delivery.
+        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop";
         private static readonly string[] IdentityFields={"type","protocolVersion","requestId","method","runtimeGeneration","sessionId","revision"};
         // Only the official top document reaches this parser. It can request
         // consumption of native facts, never create a proof or name a target path.

@@ -654,3 +654,8 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 ## #315 桌面图标显示回包大小不匹配（2026-10-11）
 
 代码核对发现Shell图标预算2MiB，但Player转发和JS解析原上限1MiB，较多图标会被静默丢弃。只将官方presentationRead响应上限统一为4MiB，保留请求及其他响应原限额；用desktopContextId缓存避免轮询重复传图。14项接口/97项Node检查和完整构建通过，真实用户桌面大批次显示仍需后续端到端验证。
+
+## #322 暂停期间拖入回包被Player丢弃（2026-10-11）
+代码核查发现Form1请求端放行desktopDrop，响应端仅放行layoutRead；即使Core完成文件操作、JS保留在途请求，Explorer前台导致播放暂停时响应仍被丢弃。presentationRead在JS允许暂停读取，但Player双向均遗漏。
+修复：DextNativeInputProtocol.AllowsWhileSuspended统一两端规则，仅layoutRead/presentationRead/desktopDrop可继续；原生点击、作者动作、布局写入等原有暂停规则保持。实际会话、页面身份和Core资格检查仍执行。
+定向检查先76/77（新增失败）后77/77，完整Core/Player Release成功。此次是生产代码路径与编译/单元证据，真实暂停Explorer拖入仍待验证。

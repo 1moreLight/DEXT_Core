@@ -15,7 +15,10 @@ internal static class NativeInputMessageChecks
             ["viewport"]=new JObject{["width"]=800,["height"]=600,["dpr"]=1.5},["buttons"]=new JArray(new JObject{["consumer"]="scene",["button"]="open",["x"]=.1,["y"]=.2,["width"]=.2,["height"]=.3,["tabIndex"]=0})};
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
-        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
+        Check("paused Player permits desktop metadata and drop receipts but not input actions",()=>{
+            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
+            foreach(var method in new[]{"activate","geometry","authorInput","layoutSave","storageSet"})Require(!DextNativeInputProtocol.AllowsWhileSuspended(method));
+        });        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
         Check("desktop drop carries current scope and normalized landing point without JSON paths",()=>{
             var parsed=Parse(Drop());Require(parsed?.DesktopDrop?.DeskId=="home"&&parsed.DesktopDrop.X==.25&&parsed.DesktopDrop.Y==.5&&parsed.DesktopDrop.Modifiers==1&&parsed.DesktopDrop.Files==null);
             parsed!.DesktopDrop.Files=new[]{@"C:\fixture\one.txt"};var wire=RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest;

@@ -334,7 +334,7 @@ namespace Lively.Player.WebView2
                             NativeMethods.GetClientRect(webView.Handle, out var client))
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
-                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead" || request.Method == "desktopDrop")){
+                            if (request != null && (!runtimeDeliverySuspended || DextNativeInputProtocol.AllowsWhileSuspended(request.Method))){
                                 if(request.Method=="desktopDrop")
                                 {
                                     if(startArgs.DextDock || !nativeRuntimeSeen || request.DesktopDrop==null ||
@@ -1066,7 +1066,7 @@ namespace Lively.Player.WebView2
                         if((string)privatePayload["type"]=="dext:v3-native-event"&&(string)privatePayload["kind"]=="activate")
                             await nativePointerDelivery.WhenIdle();
                     }
-                    if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || nativeReply.Method == "layoutRead") &&
+                    if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || DextNativeInputProtocol.AllowsWhileSuspended(nativeReply.Method)) &&
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
                         nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= (nativeReply.Method == "presentationRead" ? 4 : 1)*1024*1024 &&
                         IsOfficialDextDocument(webView.CoreWebView2.Source))
