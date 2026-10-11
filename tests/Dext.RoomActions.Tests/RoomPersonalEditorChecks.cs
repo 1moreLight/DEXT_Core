@@ -8,6 +8,25 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("F2 resolves current desktop file without launching and consumes its proof",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('a',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   var target=new PersonalTarget("Notes.txt","file",@"C:\Temp\Notes.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"Notes.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   var mouse=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,mouse).Status);
+   input.Key(viewport,114,true,false,true);input.Key(viewport,114,false,false,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   Eq(false,proof.IsConsumed);
+   var prepared=f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,proof);
+   Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Target);Eq(0,f.Launched.Count);Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,proof).Status);
+  });
   check("completed drop placement persists and disabled Desk rejects late placement",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('e',64);
    Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));

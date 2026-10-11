@@ -2347,3 +2347,5 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 2026-10-11 第02步继续：先修复F2事件误调用select导致多选缩成单选的问题；补充多选/单选F2不改变选择且不启动文件的回归，再继续私有改名命令和窗口接线。状态开做，1/6≈17%。
 
 2026-10-11 F2选择副作用已修复：命令键在选择操作前分流并清空待双击，不再把多选缩成单选，不触发文件打开。新增实际宿主断言先失败（少一个选中项）再通过，相关111项通过，日志.build/f2-selection-red.log与f2-selection-green.log。start.ps1 CoreOnly确认原Core52420，不启动配置器、不部署新宿主。改名私有命令与窗口仍待接，02开做，1/6≈17%，整体50%。
+
+2026-10-11 第02步Core改名目标解析已实现：PrepareDesktopRename要求F2原生证明，复用当前会话/安装/同步Desk/扫描ID/原生消费校验，返回私有PersonalTarget且不启动文件；InvokeDesktop拒绝F2误走打开入口。新增检查从19/20失败到20/20通过，覆盖鼠标证明拒绝、F2目标解析、消费后不能重放、无应用启动。完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/rename-prepare-build.log）；start.ps1 CoreOnly仍复用原Core52420。未部署新版本。私有IPC、改名窗口与Shell执行尚未接通；02继续开做，当前包1/6≈17%，整体2/4=50%。
