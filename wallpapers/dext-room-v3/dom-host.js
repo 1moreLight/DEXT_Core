@@ -36,7 +36,7 @@
     function desktopActivation(value){
       const input=value.desktopInput;
       // Command keys must not mutate the selection used to resolve their targets.
-      if(input?.key===114){desktopClick=null;return false;}
+      if(input?.key===113){desktopClick=null;return false;}
       if(!input||!desktopSelection.select(value.button,{ctrl:(input.modifiers&1)!==0,shift:(input.modifiers&2)!==0}))return false;
       paintDesktopSelection();
       const previous=desktopClick;desktopClick=null;
@@ -638,7 +638,7 @@
               .then(reply=>consumeReceipt(reply),()=>diagnose('openUnavailable'));
             return true;
           }
-          if(value.consumer==='official.desktop'&&value.desktopInput?.key===114){
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===113){
             completion=null;desktopClick=null;
             const selected=desktopSelection.read().selectedIds;
             if(selected.length===1&&selected[0]===value.button){

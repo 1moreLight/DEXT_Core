@@ -11,6 +11,14 @@ internal static class DesktopFileKeyboardOwnershipChecks
    name=="paste"?"desktop.paste":"desktop-aaa",e=>sent.Add((name,e)));
   bool Enqueue(DesktopFileKeyboardOffer offer,DesktopFileKeyEdge edge){offer.Deliver(edge);return true;}
   DesktopFileKeyEdge Edge(int key=86,bool down=true,int mods=1)=>new(key,down,mods,47,false);
+  Check("Windows VK_F2 owns rename while VK_F3 passes through",()=>{
+   foreach(var key in new[]{0x71,0x72}){
+    sent.Clear();var owner=new DesktopFileKeyboardOwnership();
+    Require(owner.Process(Edge(key:key,mods:0),false,1,42,20,20,Offer(),Enqueue)==(key==0x71));
+    Require(owner.Process(Edge(key:key,down:false,mods:0),false,2,42,20,20,Offer(),Enqueue)==(key==0x71));
+    Require(sent.Count==(key==0x71?2:0));
+   }
+  });
   Check("owned press suppresses both edges and repeats only deliver once",()=>{
    sent.Clear();var owner=new DesktopFileKeyboardOwnership();var offer=Offer();
    Require(owner.Process(Edge(),false,1,42,20,20,offer,Enqueue));
@@ -40,7 +48,7 @@ internal static class DesktopFileKeyboardOwnershipChecks
    }
   });
   Check("paste control accepts paste Enter Space but not copy cut rename",()=>{
-   foreach(var key in new[]{13,32,86,67,88,114}){
+   foreach(var key in new[]{13,32,86,67,88,113}){
     var owner=new DesktopFileKeyboardOwnership();
     Require(owner.Process(Edge(key:key,mods:key is 67 or 88 or 86?1:0),false,1,42,20,20,Offer("paste"),Enqueue)==(key is 13 or 32 or 86));
    }

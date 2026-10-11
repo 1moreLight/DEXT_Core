@@ -19,3 +19,8 @@ start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后�
 
 2026-10-11 第06步菜单焦点代码收口：不再恢复弹出前的应用窗口；仅菜单owner仍为前台时交回当前有效的原生桌面root，Shell新窗口/外点应用已取得前台则不抢回。原Desk仍有效且确实交回桌面后，最多1.5秒等待同会话/Desk/视口的当前文件几何，恢复文件键盘焦点；不创建动作证明。新点击/按键、切页/锁定/转场/文档更换、文件消失、视口变化及超时均取消恢复。取消退场菜单也释放owner焦点，但不恢复已失效文件。
 证据：缺失实现编译失败见menu-focus-red.log，夹具按键编码校正后最终7/7（menu-focus-final.log）；右键上下沿8/8（menu-focus-context.log）、原有指针/采样/键盘57/57（menu-focus-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-focus-build.log）。实际Windows弹窗/Esc/外点/属性/触控尚未验证，不能把类级回归当实机通过。当前83%，06继续开做，下一步将新源码打包到全新r2候选，旧830e785候选保留但不再代表最新实现。
+
+2026-10-11 第06步F2键码纠错开做：diff检查发现原实现与测试把F2统一写成114，Windows VK_F2实际0x71=113，114是F3。修正钩子、公共输入判断、Core动作、宿主路由与夹具，并新增F3放行检查。r2候选b87e75f已构建且655/17校验通过，但包含此旧缺陷，不作为最终验收包；最终重建r3。来源：https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes 。
+
+2026-10-11 F2纠错代码实施做完：整条链路改为Windows VK_F2=0x71（113），F3=0x72（114）不接管。先只修夹具，真实F2复现“did not create a file command gesture”（f2-keycode-red.log），再修改生产代码；最终F2六组合、个人编辑25/25、键盘所有权11/11（含F2成对接管/F3放行）、指针传递18/18、dom/native宿主113/113通过。#330间歇存储问题仍未消除。下一步r3完整构建/哈希核对。
+r2核对655文件/17资源成功；校验器成功后外层读取遗留LASTEXITCODE导致提前退出，r2启动检查并未执行（没有candidate-r2-start.log），不得宣称已调用启动。以后PowerShell脚本以终止异常/成功输出判断，LASTEXITCODE仅紧跟原生命令。

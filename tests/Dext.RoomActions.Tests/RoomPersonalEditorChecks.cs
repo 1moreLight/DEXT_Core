@@ -94,7 +94,7 @@ static partial class RoomActionChecks
    input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
    var mouse=input.State!.Completed!;
    Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,mouse).Status);
-   input.Key(viewport,114,true,false,true);input.Key(viewport,114,false,false,true);
+   input.Key(viewport,113,true,false,true);input.Key(viewport,113,false,false,true);
    var proof=input.State!.Completed!;
    Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
    Eq(false,proof.IsConsumed);

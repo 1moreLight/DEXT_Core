@@ -142,7 +142,7 @@ internal sealed partial class RoomActionAuthority
     }
     internal (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopRename(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
-        if(proof.Key!=114)return (RoomActionStatus.NotOperable,null);
+        if(proof.Key!=113)return (RoomActionStatus.NotOperable,null);
         var prepared=PrepareDesktopTarget(connection,peer,session,proof);
         if(prepared.Status==RoomActionStatus.Accepted&&prepared.Target is null)return (RoomActionStatus.NotOperable,null);
         return prepared;
@@ -224,7 +224,7 @@ internal sealed partial class RoomActionAuthority
     internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
         // File command proofs must never fall through to application launch.
-        if(proof.ContextMenu||proof.Key is 46 or 114 or 67 or 88 or 86 or 93 or 121)return new(RoomActionStatus.NotOperable);
+        if(proof.ContextMenu||proof.Key is 46 or 113 or 67 or 88 or 86 or 93 or 121)return new(RoomActionStatus.NotOperable);
         var prepared=PrepareDesktopTarget(connection,peer,session,proof);
         if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
         if(Expired(proof.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);

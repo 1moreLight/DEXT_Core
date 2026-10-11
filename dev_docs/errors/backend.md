@@ -687,3 +687,8 @@ DESK-SYNC-004使用SHCreateDefaultContextMenu产生真实跨目录菜单，Prope
 
 从其他应用首次右击桌面时，菜单owner保存的previous是原应用。菜单取消后恢复previous会让后续文件快捷键进入原应用；仅SetForegroundWindow桌面也不够，前台生命周期修订会清空Core文件几何和焦点。
 修复：owner仍前台才交回当前有效桌面窗口；新窗口或外点应用已有前台时不抢焦点。实际返回成功后记录一次同代次/会话/Desk/视口/文件的短时焦点恢复，等待当前几何并且原生桌面仍前台才生效；新输入和作用域变化取消，只恢复焦点，不生成动作。代码7/7、右键8/8、指针57/57、Core Release构建通过；Windows弹窗/属性/触控实机门槛仍未通过。
+
+## #337 F2误用F3的Windows键码（2026-10-11）
+
+F2改名从钩子、公共私有输入包、Core权限到宿主均误用了114，夹具复制同一个值造成同源盲区。Windows VK_F2是0x71=113，VK_F3是0x72=114。先仅改测试为真实F2，复现原链路没有文件手势；再统一修复生产链，新增F3成对放行断言。F2六组合、Core25/25、键盘所有权11/11、指针18/18、dom/native宿主113/113通过；实体键盘仍需验收。历史“F2六组合通过”仅证明当时错误键码链路，不能当F2实机证据。
+来源：[Microsoft Virtual-Key Codes](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)。

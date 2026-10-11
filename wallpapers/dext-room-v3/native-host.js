@@ -77,7 +77,7 @@
       const p=v.desktopInput;
       if(v.kind!=='activate'||v.consumer!=='official.desktop'||!object(p)||!shape(p,['key','modifiers','x','y','at','doubleClickTime','doubleClickWidth','doubleClickHeight',...(Object.hasOwn(p,'contextMenu')?['contextMenu']:[])])||
         Object.hasOwn(p,'contextMenu')&&(typeof p.contextMenu!=='boolean'||p.contextMenu&&p.key!==0)||
-        ![0,13,32,46,114,67,88,86,93,121].includes(p.key)||!integer(p.modifiers,0,3)||!integer(p.x,-2147483648,2147483647)||!integer(p.y,-2147483648,2147483647)||
+        ![0,13,32,46,113,67,88,86,93,121].includes(p.key)||!integer(p.modifiers,0,3)||!integer(p.x,-2147483648,2147483647)||!integer(p.y,-2147483648,2147483647)||
         !finite(p.at,0,Number.MAX_SAFE_INTEGER)||!integer(p.doubleClickTime,1,5000)||!integer(p.doubleClickWidth,1,32768)||!integer(p.doubleClickHeight,1,32768))return false;
     }
     const entry=Object.hasOwn(v,'entryId')?v.entryId:null;

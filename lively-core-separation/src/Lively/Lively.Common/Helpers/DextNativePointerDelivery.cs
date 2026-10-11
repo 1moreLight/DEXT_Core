@@ -33,7 +33,8 @@ namespace Lively.Common.Helpers
         private static bool Text(string value,int max){if(string.IsNullOrEmpty(value)||value.Length>max)return false;foreach(var c in value)if(char.IsControl(c))return false;return true;}
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
         public static bool IsDesktopClipboardKey(int key) => key==67||key==88||key==86;
-        public static bool IsDesktopFileKey(int key) => key==114||key==46||key==93||key==121||IsDesktopClipboardKey(key);
+        // Win32 VK_F2 = 0x71 (113); 0x72 is F3 and must remain unclaimed.
+        public static bool IsDesktopFileKey(int key) => key==113||key==46||key==93||key==121||IsDesktopClipboardKey(key);
         public static bool IsDesktopKeyTarget(int key,string consumer,string button) => consumer=="official.desktop"&&button!=null&&
             (button.StartsWith("desktop-",StringComparison.Ordinal)||key==86&&button=="desktop.paste");
         private static bool IsActivationKey(int key) => key==13||key==32||IsDesktopFileKey(key);

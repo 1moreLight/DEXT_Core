@@ -470,3 +470,5 @@
 | #335 | 仅Core允许后台右键仍不够：宿主operable=false时发布空文件区域 | [renderer](errors/renderer.md) |
 
 | #336 | 桌面原生菜单恢复弹出前应用，且前台修订会清空文件焦点 | [backend](errors/backend.md) |
+
+| #337 | F2整条链与夹具误用F3键码114，内部测试全绿不代表真实键有效 | [backend](errors/backend.md) |

@@ -8,7 +8,7 @@ internal sealed record DesktopFileKeyboardOffer(long ExpiresAt,IntPtr Foreground
 // Used only on the hook thread. A physical press keeps its original owner until UP.
 internal sealed class DesktopFileKeyboardOwnership
 {
-    internal static bool IsCommandKey(int key)=>key is 13 or 32 or 46 or 67 or 88 or 86 or 114 or 93 or 121;
+    internal static bool IsCommandKey(int key)=>key is 13 or 32 or 46 or 67 or 88 or 86 or 113 or 93 or 121;
     private readonly HashSet<int> held=new();
     private readonly Dictionary<int,(DesktopFileKeyboardOffer Offer,int Modifiers)> owners=new();
     internal void IgnoreHeld(int key){if(IsCommandKey(key))held.Add(key);}

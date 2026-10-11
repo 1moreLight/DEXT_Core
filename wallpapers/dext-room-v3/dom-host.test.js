@@ -720,7 +720,7 @@ test('desktop native single click selects, double click opens, Ctrl extends sele
   click(1,800,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
   assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
   const beforeF2=f.host.readDiagnostics().desktopSelection;
-  click(1,900,0,114);await flush();
+  click(1,900,0,113);await flush();
   assert.deepEqual(f.host.readDiagnostics().desktopSelection,beforeF2,'F2 must preserve multi-selection');
   assert.equal(f.calls.filter(c=>c.method==='activate').length,1,'F2 must not open a file');
   click(1,1000,0,13);await flush();
@@ -728,7 +728,7 @@ test('desktop native single click selects, double click opens, Ctrl extends sele
   assert.deepEqual(f.calls.filter(c=>c.method==='desktopOpen').at(-1).params.selectedIds,ids);
   assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
   click(1,1050);await flush();
-  click(1,1100,0,114);await flush();
+  click(1,1100,0,113);await flush();
   assert.equal(f.calls.filter(c=>c.method==='desktopRename').length,1);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
  }finally{f.host.dispose();}
