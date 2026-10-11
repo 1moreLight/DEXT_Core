@@ -31,6 +31,14 @@ if(args[0]=="cleanup-desktop-fixture"){
     if(deleted.Status!="accepted")throw new Exception("Fixture personal cleanup failed");
     Console.WriteLine("RESTORED no active Room; isolated fixture personal data removed");return;
 }
+if(args[0]=="restore-installed-room"){
+    if(args.Length!=3 || client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)).Active)throw new Exception("Expected Room ID and no active Room required");
+    var host=Path.Combine(identity.BaseDirectory,"wallpapers","dext-room-v3");
+    using var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(host,"content","room.json")));
+    if(manifest.RootElement.GetProperty("id").GetString()!=args[2])throw new Exception("Installed Room mismatch");
+    client.SetWallpaper(new(){LivelyInfoPath=host},deadline:DateTime.UtcNow.AddSeconds(5));return;
+}
+if(args[0]=="desktop-surface-check"){try{await DesktopSurfaceLiveProbe.Run(client);}catch(Exception error){Console.Error.WriteLine(error);Environment.ExitCode=1;}return;}
 if(args[0]=="session-status"){Console.WriteLine(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)));return;}
 if(args[0]=="desktop-drop-live"){
     if(args.Length!=3)throw new ArgumentException("desktop-drop-live requires isolated fixture Room ID");
