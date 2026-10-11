@@ -268,3 +268,9 @@ test('desktop right-button completion preserves its native context marker',()=>{
  const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',desktopInput:{key:0,contextMenu:true,modifiers:0,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
  receive({data:value});assert.deepEqual(events,[value]);host.dispose();
 });
+
+test('layout reorder sends one main change and peer positions',async()=>{
+ const f=fixture(),change={kind:'icon',id:'a',deskId:'home',x:144,y:32,peers:[{kind:'icon',id:'b',deskId:'home',x:32,y:32}]};
+ const pending=f.host.request('layoutSave',{layoutRevision:0,change});assert.deepEqual(f.sent[0].change,change);
+ f.answer(f.sent[0],{layout:{revision:1,icons:{home:{a:{x:144,y:32},b:{x:32,y:32}}},components:{}}});assert.equal((await pending).status,'accepted');f.host.dispose();
+});

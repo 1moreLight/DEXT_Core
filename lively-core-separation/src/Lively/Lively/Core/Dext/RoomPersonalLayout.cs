@@ -8,7 +8,7 @@ namespace Dext.Core.Rooms;
 
 internal sealed record RoomLayoutPosition(double X, double Y);
 internal sealed record RoomLayoutRectangle(double X, double Y, double Width, double Height);
-internal sealed record RoomLayoutChange(string Kind, string Id, string? DeskId, double X, double Y, double? Width = null, double? Height = null);
+internal sealed record RoomLayoutChange(string Kind, string Id, string? DeskId, double X, double Y, double? Width = null, double? Height = null, RoomLayoutChange[]? Peers = null);
 
 // Saved design-canvas coordinates only. Viewport fitting and authored occupancy
 // belong to the official view and must never overwrite this persisted snapshot.

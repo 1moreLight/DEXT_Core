@@ -47,7 +47,9 @@ internal sealed partial class RoomActionAuthority
         if (initial != RoomProtocolStatus.Accepted) return new(Status(initial));
         var eligibility = LayoutEligibility(early!, revision, true);
         if (eligibility != RoomActionStatus.Accepted) return new(eligibility);
-        if (!LayoutItem(early!, change)) return new(RoomActionStatus.Denied);
+        var changes=new[]{change}.Concat(change.Peers??Array.Empty<RoomLayoutChange>()).ToArray();
+        if(changes.Length>1025 || changes.Skip(1).Any(c=>c is null||c.Kind!="icon"||c.Peers is not null) ||
+            changes.Select(c=>(c.Kind,c.Id)).Distinct().Count()!=changes.Length || changes.Any(c=>!LayoutItem(early!,c)))return new(RoomActionStatus.Denied);
         try
         {
             var spin = new SpinWait();
@@ -61,28 +63,32 @@ internal sealed partial class RoomActionAuthority
                         if (admitted != RoomProtocolStatus.Accepted) return new RoomLayoutReply(Status(admitted));
                         var status = LayoutEligibility(context!, revision, true);
                         if (status != RoomActionStatus.Accepted) return new(status);
-                        if (!LayoutItem(context!, change)) return new(RoomActionStatus.Denied);
+                        if (changes.Any(c=>!LayoutItem(context!, c))) return new(RoomActionStatus.Denied);
                         var roomId = context!.Installation.RoomId;
                         var room = state.Rooms.TryGetValue(roomId, out var saved) ? saved : new RoomPersonalData();
                         var layout = room.Layout;
-                        if(change.Kind=="icon"&&change.Id.StartsWith("desktop-",StringComparison.Ordinal)&&
-                            (room.DesktopSync is not {Enabled:true} sync || sync.DeskId!=change.DeskId || !sync.Slots.ContainsKey(change.Id)))
+                        if(changes.Any(c=>c.Kind=="icon"&&c.Id.StartsWith("desktop-",StringComparison.Ordinal)&&
+                            (room.DesktopSync is not {Enabled:true} sync || sync.DeskId!=c.DeskId || !sync.Slots.ContainsKey(c.Id))))
                             return new(RoomActionStatus.Denied);
                         if (layout.Revision != expectedLayoutRevision) return new(RoomActionStatus.StaleInput);
                         var changed = false;
-                        if (change.Kind == "icon")
+                        foreach(var entry in changes){
+                        if (entry.Kind == "icon")
                         {
-                            var position = new RoomLayoutPosition(change.X, change.Y);
-                            if (!layout.Icons.TryGetValue(change.DeskId!, out var icons))
-                            { icons = new(StringComparer.Ordinal); layout.Icons[change.DeskId!] = icons; }
-                            changed = !icons.TryGetValue(change.Id, out var old) || old != position;
-                            if (changed) icons[change.Id] = position;
+                            var position = new RoomLayoutPosition(entry.X, entry.Y);
+                            if (!layout.Icons.TryGetValue(entry.DeskId!, out var icons))
+                            { icons = new(StringComparer.Ordinal); layout.Icons[entry.DeskId!] = icons; }
+                            var itemChanged = !icons.TryGetValue(entry.Id, out var old) || old != position;
+                            changed |= itemChanged;
+                            if (itemChanged) icons[entry.Id] = position;
                         }
                         else
                         {
-                            var rect = new RoomLayoutRectangle(change.X, change.Y, change.Width!.Value, change.Height!.Value);
-                            changed = !layout.Components.TryGetValue(change.Id, out var old) || old != rect;
-                            if (changed) layout.Components[change.Id] = rect;
+                            var rect = new RoomLayoutRectangle(entry.X, entry.Y, entry.Width!.Value, entry.Height!.Value);
+                            var itemChanged = !layout.Components.TryGetValue(entry.Id, out var old) || old != rect;
+                            changed |= itemChanged;
+                            if (itemChanged) layout.Components[entry.Id] = rect;
+                        }
                         }
                         if (changed)
                         {

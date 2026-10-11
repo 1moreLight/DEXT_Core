@@ -36,7 +36,8 @@ namespace Lively.Player.WebView2
         {
             if(IsDisposed||Disposing||webView?.CoreWebView2==null)return "false";
             var value=JsonConvert.SerializeObject(new{runtimeGeneration=packet.RuntimeGeneration,sessionId=packet.SessionId,
-                revision=packet.Revision,gestureId=packet.GestureId,kind,x=(x-packet.OriginX)*96.0/packet.Dpi,y=(y-packet.OriginY)*96.0/packet.Dpi});
+                revision=packet.Revision,gestureId=packet.GestureId,kind,doubleClickTime=System.Windows.Forms.SystemInformation.DoubleClickTime,
+                doubleClickWidth=System.Windows.Forms.SystemInformation.DoubleClickSize.Width*96.0/packet.Dpi,doubleClickHeight=System.Windows.Forms.SystemInformation.DoubleClickSize.Height*96.0/packet.Dpi,x=(x-packet.OriginX)*96.0/packet.Dpi,y=(y-packet.OriginY)*96.0/packet.Dpi});
             return await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeEditPointer?this.dextNativeEditPointer("+value+"):false");
         }
         private async Task PollEditPointerAsync()

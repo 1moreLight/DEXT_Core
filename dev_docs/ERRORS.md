@@ -487,3 +487,5 @@
 2026-10-11 Home输入回归：事后currentDesk=focus不能推断用户失败操作发生在focus，用户已确认是在Home。同步文件被editHit排除，后端LayoutItem也只认manifest；两端和布局读取需一起补，存储仍以本机opaque文件ID限定。另发现播放暂停用PictureBox覆盖并隐藏WebView，会失去OLE接收面；同步页应只暂停媒体/作者状态，保留真实WebView，不宣称该代码检查已证明本次禁止符号的唯一根因，实机待验收。
 
 2026-10-11 编辑模式迁移：exitEdit在初始snapshot调用也设置250ms动作静默，会误拦普通作者按钮（8个原点击用例失败）；只在确实退出编辑时设置静默后94项通过。Player异步up回调必须核对同一gesture，不能把下一手势清掉；松手后保留idle观察才能无焦点Esc退出。一次拖动保存不等于旧版持续编辑模式迁移完成。
+
+2026-10-11 reorder补齐：v3通用packing预览只按固定ID布局，不具备旧版占位插入语义；必须复用旧resolveIconReorder并在移动过程中重排同伴，拖拽图标单独跟手。仅存主图标会在重开后丢失让位顺序，改为同一个layoutSave携带peers，在一次存储事务中先验证全部项再写，布局版本只递增一次。作者iframe空白DOM不冒泡，双击退出必须从原生down/up识别，不依赖网页dblclick。

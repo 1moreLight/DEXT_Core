@@ -856,16 +856,17 @@ test('background desktop still publishes only visible file regions for the first
  }finally{f.host.dispose();}
 });
 
-function editFixture(status='accepted',desktop=null){
+function editFixture(status='accepted',desktop=null,room){
  let id=0;const timers=new Map();let saved={revision:0,icons:{},components:{}};
- const f=fixture({setTimeout:(cb,ms)=>{timers.set(++id,{cb,ms});return id;},clearTimeout:id=>timers.delete(id),request:(method,params)=>{
+ const f=fixture({room,setTimeout:(cb,ms)=>{timers.set(++id,{cb,ms});return id;},clearTimeout:id=>timers.delete(id),request:(method,params)=>{
   if(method==='presentationRead'&&desktop)return Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}});
   if(method==='layoutRead')return Promise.resolve({status:'accepted',layout:saved});
   if(method==='layoutSave'){
    if(status!=='accepted')return Promise.resolve({status});
    const c=params.change;saved={...saved,revision:saved.revision+1};
-   if(c.kind==='icon')saved.icons={...saved.icons,[c.deskId]:{[c.id]:{x:c.x,y:c.y}}};
+   if(c.kind==='icon')saved.icons={...saved.icons,[c.deskId]:{...saved.icons[c.deskId],[c.id]:{x:c.x,y:c.y}}};
    else saved.components={...saved.components,[c.id]:{x:c.x,y:c.y,width:c.width,height:c.height}};
+   for(const p of c.peers||[])saved.icons={...saved.icons,[p.deskId]:{...saved.icons[p.deskId],[p.id]:{x:p.x,y:p.y}}};
    return Promise.resolve({status,layout:saved});
   }
  }});
@@ -921,4 +922,26 @@ test('widget corner resizes in persistent edit mode without moving its origin',a
  f.pointer('down',590,140,2);f.pointer('up',650,180,2);await flush();
  assert.deepEqual(f.calls.find(c=>c.method==='layoutSave').params.change,{kind:'widget',id:'shared',x:400,y:50,width:260,height:140});
  assert.equal(f.host.readDiagnostics().edit.mode,true);f.host.dispose();
+});
+
+test('native blank double click exits, single click and a drag across blank do not',async()=>{
+ const f=editFixture();await f.host.ready;f.pointer('down',50,60);f.hold();f.pointer('up',50,60);
+ f.pointer('down',1200,800,2);f.pointer('up',1200,800,2);assert.equal(f.host.readDiagnostics().edit.mode,true);
+ await f.advance(100);f.pointer('down',1200,800,3);f.pointer('up',1200,800,3);assert.equal(f.host.readDiagnostics().edit.mode,false);
+ f.pointer('down',50,60,4);f.hold();f.pointer('up',50,60,4);
+ f.pointer('down',1200,800,5);f.pointer('up',1250,800,5);
+ f.pointer('down',1250,800,6);f.pointer('up',1250,800,6);assert.equal(f.host.readDiagnostics().edit.mode,true);f.host.dispose();
+});
+test('reorder moves peers before release and saves all positions in one revision',async()=>{
+ const room={desks:[{id:'home',name:'Home',icons:['a','b','c'].map((id,x)=>({id,buttonId:'next',x,y:0,label:id})),components:[]},{id:'focus',name:'Focus',icons:[],components:[]}]};
+ const f=editFixture('accepted',null,room);await f.host.ready;
+ const icon=id=>f.container.children[0].children.find(n=>n.attrs['aria-label']===id);
+ f.pointer('down',50,60);f.hold();f.pointer('move',274,60);
+ assert.equal(icon('b').style.left,'32px');assert.equal(icon('c').style.left,'144px');
+ assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,0);
+ f.pointer('up',274,60);await flush();
+ const writes=f.calls.filter(c=>c.method==='layoutSave');assert.equal(writes.length,1);assert.equal(writes[0].params.change.peers.length,2);
+ assert.equal(f.host.readDiagnostics().layout.revision,1);assert.equal(icon('a').style.left,'256px');assert.equal(icon('b').style.left,'32px');
+ f.pointer('down',274,60,2);f.pointer('move',50,60,2);f.pointer('cancel',50,60,2);
+ assert.equal(icon('a').style.left,'256px');assert.equal(icon('b').style.left,'32px');assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,1);f.host.dispose();
 });

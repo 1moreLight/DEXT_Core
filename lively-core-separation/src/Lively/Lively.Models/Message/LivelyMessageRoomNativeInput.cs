@@ -32,6 +32,7 @@ namespace Lively.Models.Message
         public double Y { get; set; }
         public double? Width { get; set; }
         public double? Height { get; set; }
+        public LivelyRoomNativeLayoutChange[] Peers { get; set; }
     }
     // Core private transport only; this is never parsed from a web message.
     public sealed class LivelyMessageRoomNativePointer : IpcMessage

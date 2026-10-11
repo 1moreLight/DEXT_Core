@@ -477,7 +477,7 @@
     }
 
     const pressApi=options.pressEdit||root.DextPressEdit||(typeof require==='function'?require('./press-edit.js'):null);
-    let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null;
+    let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null,blankPress=null,lastBlankClick=null;
     const editEligible=()=>!disposed&&!dockView&&!privatePaused&&layoutReady&&!editSaving&&snapshot.active&&snapshot.operable&&
       snapshot.lifecycle.stage==='desktop'&&!snapshot.lifecycle.locked&&!snapshot.lifecycle.playbackPaused&&!snapshot.transitionId;
     function paintEditing(){
@@ -498,7 +498,7 @@
       if(editToolbar){editToolbar.hidden=!editMode;editToolbar.textContent=editSaving?'保存中…':'完成';}
     }
     function enterEdit(){if(editMode)return;editMode=true;paintEditing();dropNotice('编辑模式：拖动图标／小组件，右下角缩放；Esc 或“完成”退出。');}
-    function exitEdit(){const wasEditing=editMode;press.cancel();editMode=false;dragItem=null;if(wasEditing)ignoreAuthorUntil=now()+250;paintEditing();}
+    function exitEdit(){blankPress=null;lastBlankClick=null;const wasEditing=editMode;press.cancel();editMode=false;dragItem=null;if(wasEditing)ignoreAuthorUntil=now()+250;paintEditing();}
     function editRect(item,dx,dy){
       if(item.resize)return{...item.rect,width:Math.max(64,Math.min(1920-item.rect.x,item.rect.width+dx)),height:Math.max(48,Math.min(1080-item.rect.y,item.rect.height+dy))};
       let x=item.rect.x+dx,y=item.rect.y+dy;
@@ -518,10 +518,41 @@
       if(item.kind==='icon'){value.icons[activeDesk()]={...value.icons[activeDesk()],[item.id]:{x:rect.x,y:rect.y}};}
       else value.components[item.id]=rect;return value;}
     function clearEditPaint(){ignoreAuthorUntil=now()+250;editNode?.remove();editNode=null;dragItem=null;recomputeLayouts(model.readDiagnostics());paintVisuals();paintEditing();}
+    function prepareReorder(item){
+      const viewport=model.readDiagnostics().viewport,sx=1920/viewport.width,sy=1080/viewport.height;
+      const grid={offsetX:32*sx,offsetY:32*sy,cellWidth:112*sx,cellHeight:120*sy,footprintWidth:96*sx,footprintHeight:104*sy,
+        columns:Math.max(1,Math.floor((Math.min(1824,1920-96*sx)-32*sx)/(112*sx))+1),rows:Math.max(1,Math.floor((Math.min(976,1080-104*sy)-32*sy)/(120*sy))+1)};
+      const peers=[...icons.values()].filter(r=>r.deskId===activeDesk()&&!r.element.hidden&&(!r.desktop||r.icon.id.startsWith('desktop-')));
+      const source=peers.map(r=>({id:r.icon.id,x:Math.round((r.rect.x-grid.offsetX)/grid.cellWidth),y:Math.round((r.rect.y-grid.offsetY)/grid.cellHeight)}));
+      const occupied=[...layoutOccupied.filter(r=>!r.deskId||r.deskId===activeDesk()),...[...records.values()].filter(r=>!r.wrapper.hidden&&r.definition.kind==='dock').map(recordPlacement)];
+      const widgets=[...records.values()].filter(r=>r!==item.record&&!r.wrapper.hidden&&r.definition.kind==='widget').map(recordPlacement);
+      const normalized=layoutModel.resolveWidgetIconAvoidance(source,widgets,grid,occupied);
+      item.reorder={grid,peers,before:Object.fromEntries(peers.map(r=>[r.icon.id,{x:r.rect.x,y:r.rect.y}])),source:normalized.committed?normalized.icons:source,occupied,widgets};
+    }
     function previewEdit(item,dx,dy){
-      const rect=editRect(item,dx,dy);item.invalid=!validEdit(item,rect);
-      if(!item.invalid){const saved=personalLayout;personalLayout=provisionalLayout(item,rect);recomputeLayouts(model.readDiagnostics());personalLayout=saved;paintVisuals();}
-      if(editNode){Object.assign(editNode.style,{left:rect.x+'px',top:rect.y+'px',width:rect.width+'px',height:rect.height+'px'});editNode.dataset.invalid=String(item.invalid);}
+      const rect=editRect(item,dx,dy);item.invalid=!validEdit(item,rect);item.preview=null;
+      const tx=item.reorder;
+      if(!item.invalid&&tx&&(dx!==0||dy!==0)){
+        const {grid,source,occupied,widgets}=tx;
+        const result=item.kind==='icon'?layoutModel.resolveIconReorder(source,source.findIndex(v=>v.id===item.id),
+          {x:Math.round((rect.x-grid.offsetX)/grid.cellWidth),y:Math.round((rect.y-grid.offsetY)/grid.cellHeight)},grid,widgets,occupied):
+          layoutModel.resolveWidgetIconAvoidance(source,[...widgets,rect],grid,occupied);
+        item.invalid=!result.committed;
+        if(result.committed){
+          item.preview=provisionalLayout(item,rect);
+          const positions={...item.preview.icons[activeDesk()]};
+          for(const icon of result.icons)positions[icon.id]={x:grid.offsetX+icon.x*grid.cellWidth,y:grid.offsetY+icon.y*grid.cellHeight};
+          item.preview.icons[activeDesk()]=positions;
+        }
+      }
+      if(!item.invalid){const saved=personalLayout;personalLayout=item.preview||provisionalLayout(item,rect);recomputeLayouts(model.readDiagnostics());personalLayout=saved;paintVisuals();}
+      // The picked icon follows the hand continuously; the outline marks its snapped slot.
+      if(item.kind==='icon'){
+        const node=item.record.element,x=item.rect.x+dx,y=item.rect.y+dy,logical=item.record.logicalSize||{width:96,height:104};
+        node.style.left=x+'px';node.style.top=y+'px';transform(node,x,y,visualGroups.shared.matrix,item.rect.width/logical.width,item.rect.height/logical.height);
+      }
+      const target=item.preview?.icons[activeDesk()]?.[item.id];
+      if(editNode){Object.assign(editNode.style,{left:(item.kind==='icon'&&target?target.x:rect.x)+'px',top:(item.kind==='icon'&&target?target.y:rect.y)+'px',width:rect.width+'px',height:rect.height+'px'});editNode.dataset.invalid=String(item.invalid);}
     }
     async function saveEdit(item,dx,dy){
       const identity=scope(),deskId=activeDesk(),token=layoutReadEpoch,rect=editRect(item,dx,dy);
@@ -530,6 +561,15 @@
       editSaving=true;editError=null;paintEditing();
       const change=item.kind==='icon'?{kind:'icon',id:item.id,deskId,x:rect.x,y:rect.y}:
         {kind:'widget',id:item.id,x:rect.x,y:rect.y,width:rect.width,height:rect.height};
+      if(item.preview){
+        const positions=item.preview.icons[deskId]||{},peers=[];
+        for(const [id,p] of Object.entries(positions)){
+          if(item.kind==='icon'&&id===item.id){change.x=p.x;change.y=p.y;continue;}
+          const old=personalLayout.icons[deskId]?.[id]||item.reorder?.before[id];
+          if(!old||old.x!==p.x||old.y!==p.y)peers.push({kind:'icon',id,deskId,x:p.x,y:p.y});
+        }
+        if(peers.length)change.peers=peers;
+      }
       try{
         const reply=await native.request('layoutSave',{layoutRevision:personalLayout.revision,change},identity);
         if(!sameLayoutScope(identity,deskId,token))return;
@@ -539,7 +579,7 @@
       finally{editSaving=false;clearEditPaint();if(sameLayoutScope(identity,deskId,token))await renderWithLayout();}
     }
     const press=pressApi.createPressEdit({setTimeout:later,clearTimeout:cancelTimer,eligible:editEligible,isEditing:()=>editMode,
-      begin:item=>{enterEdit();dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();editNode=document.createElement('div');editNode.className='dext-v3-edit-outline';
+      begin:item=>{enterEdit();prepareReorder(item);dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();editNode=document.createElement('div');editNode.className='dext-v3-edit-outline';
         Object.assign(editNode.style,{left:item.rect.x+'px',top:item.rect.y+'px',width:item.rect.width+'px',height:item.rect.height+'px'});
         editNode.textContent=item.resize?'缩放 · Esc 取消':'拖动 · Esc 取消';rootNode.append(editNode);},
       preview:previewEdit,cancel:clearEditPaint,commit:saveEdit});
@@ -557,8 +597,24 @@
       if(value.kind==='idle')return editMode;
       if(!editEligible()){press.cancel();return false;}
       const viewport=model.readDiagnostics().viewport,point={id:value.gestureId,x:value.x*1920/viewport.width,y:value.y*1080/viewport.height};
-      if(value.kind==='down'){ignoreAuthorUntil=0;if(editMode&&point.x>=1740&&point.x<=1896&&point.y>=24&&point.y<=80){blockedEditSequence=value.gestureId;exitEdit();return false;}return press.down(point,editHit(point.x,point.y))||editMode;}
+      if(value.kind==='down'){
+        ignoreAuthorUntil=0;
+        if(editMode&&point.x>=1740&&point.x<=1896&&point.y>=24&&point.y<=80){blockedEditSequence=value.gestureId;exitEdit();return false;}
+        const hit=editHit(point.x,point.y);
+        const blocked=hit||inputEntries.some(e=>(e.polygons||[]).some(poly=>geometry.containsPoint(poly,{x:point.x/1920,y:point.y/1080})))||
+          [...records.values()].some(r=>!r.wrapper.hidden&&['widget','dock'].includes(r.definition.kind)&&geometry.containsPoint(geometry.rectPolygon(recordPlacement(r)),point));
+        blankPress=editMode&&!blocked?{...point,at:now()}:null;if(blocked)lastBlankClick=null;
+        return press.down(point,hit)||editMode;
+      }
       if(value.kind==='move')return press.move(point)||editMode;
+      if(value.kind==='up'&&blankPress?.id===point.id){
+        const held=blankPress;blankPress=null;const at=now(),limit=value.doubleClickTime||500;
+        const toleranceX=(value.doubleClickWidth||4)*1920/viewport.width,toleranceY=(value.doubleClickHeight||4)*1080/viewport.height;
+        if(at-held.at<=limit&&Math.abs(point.x-held.x)<=toleranceX&&Math.abs(point.y-held.y)<=toleranceY){
+          if(lastBlankClick&&at-lastBlankClick.at<=limit&&Math.abs(point.x-lastBlankClick.x)<=toleranceX&&Math.abs(point.y-lastBlankClick.y)<=toleranceY){exitEdit();return false;}
+          lastBlankClick={...point,at};
+        }else lastBlankClick=null;
+      }
       if(value.kind==='up'){if(point.x<0||point.y<0||point.x>1920||point.y>1080)press.cancel();else press.up(point);return editMode;}
       return false;
     }

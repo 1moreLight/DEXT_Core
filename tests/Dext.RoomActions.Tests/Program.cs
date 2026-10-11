@@ -2,6 +2,7 @@ using Dext.Core.Rooms;
 using System.Diagnostics;
 using System.Text.Json;
 
+if(args.Length==1 && args[0]=="--layout"){int layoutFailures=0,layoutTotal=0;RoomActionChecks.LayoutChecks((name,body)=>{layoutTotal++;try{body();Console.WriteLine("PASS "+name);}catch(Exception e){layoutFailures++;Console.WriteLine("FAIL "+name+": "+e);}});Console.WriteLine($"{layoutTotal-layoutFailures}/{layoutTotal} layout checks passed");Environment.ExitCode=layoutFailures==0?0:1;return;}
 if (args.Length==1 && args[0]=="--desktop-sync") { DesktopSyncChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-clipboard-keys") { DesktopClipboardKeyChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-menu-focus") { DesktopMenuFocusChecks.Run(); return; }

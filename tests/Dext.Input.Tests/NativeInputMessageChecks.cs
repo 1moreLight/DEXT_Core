@@ -129,6 +129,10 @@ internal static class NativeInputMessageChecks
             var r=Request();r["method"]="layoutSave";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["layoutRevision"]=0;
             r["change"]=new JObject{["kind"]="icon",["id"]="icon-1",["deskId"]="home",["x"]=240,["y"]=360};
             var parsed=Parse(r);Require(parsed?.Method=="layoutSave");Require(RuntimeMessageChecks.Roundtrip(parsed!) is LivelyMessageRoomNativeRequest);
+            r["change"]!["peers"]=new JArray(new JObject{["kind"]="icon",["id"]="icon-2",["deskId"]="home",["x"]=32,["y"]=32});
+            var batch=Parse(r);Require(batch?.LayoutChange?.Peers?.Length==1);
+            var roundtrip=(LivelyMessageRoomNativeRequest)RuntimeMessageChecks.Roundtrip(batch!);Require(roundtrip.LayoutChange.Peers[0].Id=="icon-2");
+            ((JObject)r["change"]!).Remove("peers");
             foreach(var invalid in new JToken[]{-1,1.5,"1"}){r["layoutRevision"]=invalid;Require(Parse(r)==null);}r["layoutRevision"]=0;
             foreach(var field in new[]{"target","consumer","proof","approved"}){r[field]="fake";Require(Parse(r)==null);r.Remove(field);}
             r["change"]!["x"]=1825;Require(Parse(r)==null);

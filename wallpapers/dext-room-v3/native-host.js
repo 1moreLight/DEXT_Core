@@ -25,6 +25,10 @@
   const stableKey=v=>typeof v==='string'&&/^[A-Za-z0-9_.-]{1,80}$/.test(v);
   function storageValue(v){try{copy(v,32768);return true;}catch(_){return false;}}
   function layoutChange(p){
+    if(object(p)&&Object.hasOwn(p,'peers')){
+      const {peers,...main}=p;const ids=new Set(main.kind==='icon'?[main.id]:[]);
+      return Array.isArray(peers)&&peers.length<=1024&&layoutChange(main)&&peers.every(v=>object(v)&&!Object.hasOwn(v,'peers')&&v.kind==='icon'&&layoutChange(v)&&!ids.has(v.id)&&!!ids.add(v.id));
+    }
     if(!object(p)||!stableKey(p.id))return false;
     return p.kind==='icon'?shape(p,['kind','id','deskId','x','y'])&&stableKey(p.deskId)&&finite(p.x,0,1824)&&finite(p.y,0,976):
       p.kind==='widget'&&shape(p,['kind','id','x','y','width','height'])&&finite(p.x,0,1920)&&finite(p.y,0,1080)&&finite(p.width,Number.EPSILON,1920)&&finite(p.height,Number.EPSILON,1080)&&p.x+p.width<=1920&&p.y+p.height<=1080;

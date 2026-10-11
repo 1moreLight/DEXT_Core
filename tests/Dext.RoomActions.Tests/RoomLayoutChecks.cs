@@ -3,7 +3,7 @@ using System.Text.Json;
 
 static partial class RoomActionChecks
 {
-    private static void LayoutChecks(Action<string, Action> check)
+    public static void LayoutChecks(Action<string, Action> check)
     {
         static long Revision(ActionFixture f) => f.Kernel.Snapshot!.Revision;
         static RoomLayoutChange Icon(double x=240,double y=360) => new("icon","icon-1","home",x,y);
@@ -12,6 +12,16 @@ static partial class RoomActionChecks
         static RoomLayoutReply Save(ActionFixture f,long expected,RoomLayoutChange? change=null) =>
             f.Actions.SaveLayout(f.View,f.Peer,f.Session,Revision(f),expected,change??Icon());
 
+        check("layout reorder saves widget and peers atomically and invalid peer leaves all unchanged",()=>{
+            using var f=new ActionFixture();var change=Widget() with {Peers=new[]{Icon()}};
+            Eq(RoomActionStatus.Accepted,Save(f,0,change).Status);Eq(1L,Read(f).Layout!.Revision);
+            Eq(new RoomLayoutPosition(240,360),Read(f).Layout!.Icons["home"]["icon-1"]);
+            Eq(new RoomLayoutRectangle(500,200,300,180),Read(f).Layout!.Components["widget"]);
+            var before=JsonSerializer.Serialize(Read(f).Layout);
+            Eq(RoomActionStatus.Denied,Save(f,1,change with {X=700,Peers=new[]{Icon() with{Id="missing"}}}).Status);
+            Eq(before,JsonSerializer.Serialize(Read(f).Layout));
+            Eq(RoomActionStatus.StaleInput,Save(f,0,change with{X=700}).Status);Eq(before,JsonSerializer.Serialize(Read(f).Layout));
+        });
         check("private layout saves icon and shared Widget and reopens independent revision",()=>{
             using var f=new ActionFixture();Eq(0L,Read(f).Layout!.Revision);var original=f.Store.Read().Revision;
             Eq(RoomActionStatus.Accepted,Save(f,0).Status);Eq(RoomActionStatus.Accepted,Save(f,1,Widget()).Status);

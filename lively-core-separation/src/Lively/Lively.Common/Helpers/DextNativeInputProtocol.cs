@@ -167,6 +167,17 @@ namespace Lively.Common.Helpers
         }
         private static bool ParseLayoutChange(JObject item,out LivelyRoomNativeLayoutChange result)
         {
+            if(item.Property("peers")!=null){
+                result=null;if(item["peers"] is not JArray peers || peers.Count>1024)return false;
+                var primary=(JObject)item.DeepClone();primary.Remove("peers");
+                if(!ParseLayoutChange(primary,out var main))return false;
+                var list=new List<LivelyRoomNativeLayoutChange>();var ids=new HashSet<string>();
+                foreach(var token in peers){
+                    if(token is not JObject peer || peer.Property("peers")!=null || !ParseLayoutChange(peer,out var value) || value.Kind!="icon" || !ids.Add(value.Id) || main.Kind=="icon"&&main.Id==value.Id)return false;
+                    list.Add(value);
+                }
+                main.Peers=list.ToArray();result=main;return true;
+            }
             result=null;var kind=Text(item["kind"]);var id=Text(item["id"]);
             if(!StableKey(id) || !Number(item["x"],out var x)||!Number(item["y"],out var y)||x<0||y<0)return false;
             if(kind=="icon")

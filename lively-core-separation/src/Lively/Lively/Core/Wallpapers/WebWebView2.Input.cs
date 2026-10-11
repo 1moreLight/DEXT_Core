@@ -168,7 +168,7 @@ namespace Lively.Core.Wallpapers
                         var read=await Task.Run(()=> {
                             if(!saving)return a.Bridge.NativeReadLayout(a.Actions,state.Session,state.Revision);
                             var c=request.LayoutChange;
-                            return a.Bridge.NativeSaveLayout(a.Actions,state.Session,state.Revision,request.LayoutRevision,new(c.Kind,c.Id,c.DeskId,c.X,c.Y,c.Width,c.Height));
+                            return a.Bridge.NativeSaveLayout(a.Actions,state.Session,state.Revision,request.LayoutRevision,new(c.Kind,c.Id,c.DeskId,c.X,c.Y,c.Width,c.Height,c.Peers?.Select(p=>new RoomLayoutChange(p.Kind,p.Id,p.DeskId,p.X,p.Y,p.Width,p.Height)).ToArray()));
                         });
                         status=read.Status;
                         if(status==RoomActionStatus.Accepted && read.Layout!=null) {
