@@ -22,7 +22,31 @@
     const actionFlights=new Set(),localButtons=new Map();
     let taskAreaOcclusion=null;
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
-    let desktopView=null,desktopPage=0,desktopPages=1,desktopSignature=null;
+    let desktopView=null,desktopPage=0,desktopPages=1,desktopSignature=null,desktopClick=null;
+    const selectionApi=options.desktopSelection||root.DextDesktopSelection||(typeof require==='function'?require('./desktop-selection.js'):null);
+    if(!selectionApi)throw failure('desktopSelectionUnavailable');
+    const desktopSelection=selectionApi.createDesktopSelection();
+    let cutSequence=null,cutIds=new Set();
+    function paintDesktopSelection(){
+      const selected=new Set(desktopSelection.read().selectedIds);
+      for(const record of icons.values())if(record.desktop&&!record.icon.id.startsWith('desktop.page.')){
+        const value=selected.has(record.icon.id);record.element.dataset.selected=String(value);record.element.setAttribute('aria-pressed',String(value));record.element.dataset.cut=String(cutIds.has(record.icon.id));
+      }
+    }
+    function desktopActivation(value){
+      const input=value.desktopInput;
+      // Command keys must not mutate the selection used to resolve their targets.
+      if(input?.key===113){desktopClick=null;return false;}
+      if(!input||!desktopSelection.select(value.button,{ctrl:(input.modifiers&1)!==0,shift:(input.modifiers&2)!==0}))return false;
+      paintDesktopSelection();
+      const previous=desktopClick;desktopClick=null;
+      if(input.key===13)return true;
+      if(input.key!==0||input.modifiers!==0)return false;
+      if(previous&&previous.button===value.button&&previous.entryId===value.entryId&&previous.geometryVersion===value.geometryVersion&&
+        input.at>=previous.input.at&&input.at-previous.input.at<=input.doubleClickTime&&
+        Math.abs(input.x-previous.input.x)<=input.doubleClickWidth/2&&Math.abs(input.y-previous.input.y)<=input.doubleClickHeight/2)return true;
+      desktopClick={button:value.button,entryId:value.entryId,geometryVersion:value.geometryVersion,input};return false;
+    }
     let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
@@ -79,7 +103,7 @@
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
         for(const record of icons.values())if(record.desktop&&record.deskId===deskId)items.push({key:'icon:'+deskId+'/'+record.icon.id,kind:'icon',id:record.icon.id,
-          savedRect:record.desktopRect,logicalSize:{width:96,height:104}});
+          savedRect:record.desktopRect,logicalSize:record.logicalSize||{width:96,height:104}});
         // Dock geometry belongs to the official host. A component author can
         // publish its buttons, while only roomScene can publish occupied areas.
         const referenced=new Set(desks.get(deskId).components);
@@ -109,9 +133,9 @@
     function layoutIcon(record,group){
       const item=effectiveLayouts.get('icon:'+record.deskId+'/'+record.icon.id);
       record.rect=item?(item.placeable?item.effectiveRect:null):{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104};
-      const rect=record.rect;
+      const rect=record.rect,logical=record.logicalSize||{width:96,height:104};
       record.element.hidden=!rect||![snapshot.currentDeskId,snapshot.targetDeskId].includes(record.deskId)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
-      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/96,rect.height/104);}
+      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/logical.width,rect.height/logical.height);}
       record.element.style.opacity=String(group.opacity);record.element.style.pointerEvents=group.opacity<=0?'none':'';
     }
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
@@ -141,25 +165,31 @@
       const columns=Math.max(1,Math.floor((viewport.width-64)/112)),rows=Math.max(1,Math.floor((viewport.height-64)/120)),capacity=Math.max(1,columns*rows-2);
       desktopPages=Math.max(1,Math.ceil(((desktopView?.items.reduce((max,item)=>Math.max(max,item.slot),-1)??-1)+1)/capacity));desktopPage=Math.min(desktopPage,desktopPages-1);
       const signature=desktopView?[desktopView.contextId,desktopPage,viewport.width,viewport.height].join('/'):'none';
-      if(signature===desktopSignature)return;desktopSignature=signature;
+      const visible=desktopView?.deskId===snapshot.currentDeskId&&!snapshot.transitionId?
+        desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>item.id):[];
+      desktopSelection.update(JSON.stringify([snapshot.sessionId,snapshot.currentDeskId,desktopPage]),visible);
+      if(signature===desktopSignature){paintDesktopSelection();return;}desktopSignature=signature;desktopClick=null;
       for(const [key,record]of [...icons])if(record.desktop){record.element.remove();icons.delete(key);}
       if(!desktopView||!desks.has(desktopView.deskId))return;
       const items=desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>({...item,cell:item.slot%capacity}));
       if(desktopPages>1)items.push({id:'desktop.page.previous',name:'上一组 '+(desktopPage+1)+'/'+desktopPages,iconPng:null,cell:capacity},{id:'desktop.page.next',name:'下一组',iconPng:null,cell:capacity+1});
+      items.push({id:'desktop.paste',name:'粘贴到桌面',command:true});
       items.forEach(item=>{
         const index=item.cell;
         const element=document.createElement('button');element.type='button';element.className='dext-v3-icon dext-v3-desktop-icon';element.setAttribute('aria-label',item.name);
+        const logicalSize=item.command?{width:Math.max(1,Math.min(136,viewport.width-16)),height:24}:null;
+        if(logicalSize){element.className+=' dext-v3-desktop-command';element.style.width=logicalSize.width+'px';element.style.height=logicalSize.height+'px';}
         if(item.iconPng){const image=document.createElement('img');image.src='data:image/png;base64,'+item.iconPng;image.alt='';image.draggable=false;element.append(image);}
-        else{const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
+        else if(!item.command){const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
         const label=document.createElement('span');label.className='dext-v3-desktop-label';label.textContent=item.name;element.append(label);rootNode.append(element);
         const icon={id:item.id,buttonId:item.id},deskId=desktopView.deskId;
-        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,contextId:desktopView.contextId,
-          desktopRect:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
+        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,logicalSize,contextId:desktopView.contextId,
+          desktopRect:item.command?{x:Math.max(8,viewport.width-144)*1920/viewport.width,y:4*1080/viewport.height,width:logicalSize.width,height:logicalSize.height}:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
       });
     }
     function reconcile(){
       ensureRoot();const state=model.readDiagnostics();const viewport=state.viewport;
-      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';reconcileDesktop(viewport);recomputeLayouts(state);
+      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';reconcileDesktop(viewport);paintDesktopSelection();recomputeLayouts(state);
       for(const definition of state.instances){
         let record=records.get(definition.instanceId);
         if(!record){
@@ -216,8 +246,12 @@
     }
     function buttonGeometry(sampled=false){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.locked||dockView&&snapshot.lifecycle.stage!=="desktop"||
-        !dockView&&(snapshot.lifecycle.stage==="desktop"&&!snapshot.operable||snapshot.lifecycle.playbackPaused))return[];
-      return visibleButtonGeometry(sampled);
+        !dockView&&snapshot.lifecycle.playbackPaused)return[];
+      const visible=visibleButtonGeometry(sampled);
+      // Keep the clipped file regions available for a native right click while
+      // an ordinary app owns foreground. Core still rejects normal activation.
+      return !dockView&&snapshot.lifecycle.stage==="desktop"&&!snapshot.operable
+        ?visible.filter(entry=>entry.consumer==='official.desktop'&&entry.button.startsWith('desktop-')):visible;
     }
     function visibleButtonGeometry(sampled=false){
       const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
@@ -310,14 +344,14 @@
     function showActionResult(status){
       const messages={missingBinding:'这个按钮还未绑定应用，请在配置器的“本机按钮”中选择目标。',
         missingPermission:'这个按钮尚未启用，请重新应用 Room 或在配置器中保存本机动作。',
-        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机按钮配置暂时无法读取，请检查配置器诊断。'};
+        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机操作暂时无法完成，请稍后重试或查看配置器诊断。'};
       if(status==='accepted'||status==='queued'){clearActionNotice();return;}
       if(!messages[status])return;
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
-    let dropRunning=false;
+    let dropRunning=false,pasteRunning=false,deleteRunning=false,menuRunning=false;
     function dropEligible(event){
       return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
         snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
@@ -337,6 +371,50 @@
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopMenu(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(menuRunning||!selected.includes(value.button))return;
+      const identity=scope();menuRunning=true;
+      native.request('desktopMenu',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(reply.status==='accepted'&&['copy','cut'].includes(reply.data?.verb)&&Number.isSafeInteger(reply.data.clipboardSequence)&&reply.data.clipboardSequence>0){
+            cutSequence=reply.data.verb==='cut'?reply.data.clipboardSequence:null;cutIds=new Set(reply.data.verb==='cut'?selected:[]);paintDesktopSelection();
+          }
+          if(reply.data?.verb==='delete'){
+            const items=Array.isArray(reply.data.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
+            dropNotice(`已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。`);
+          }else if(!['accepted','cancelled'].includes(reply.status))dropNotice('菜单操作未完成，请稍后重试。');
+        },()=>{if(!disposed)dropNotice('未收到菜单操作结果，请先检查文件。');}).finally(()=>{menuRunning=false;});
+    }
+    function desktopDelete(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(deleteRunning||!selected.includes(value.button))return;
+      const identity=scope();deleteRunning=true;dropNotice('正在移入回收站…');
+      native.request('desktopDelete',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unsupported=items.filter(item=>item.status==='notRecyclable').length;
+          dropNotice(['accepted','cancelled'].includes(reply.status)?`${reply.status==='cancelled'?'操作已停止。':''}已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。${unsupported?' 部分项目不能回收，已保留原文件。':''}`:'未能完成回收，请检查原文件和回收站后重试。');
+        },()=>{if(!disposed)dropNotice('未收到回收结果，请先检查原文件和回收站。');}).finally(()=>{deleteRunning=false;});
+    }
+    function desktopPaste(value){
+      if(pasteRunning)return;
+      const identity=scope(),observedCutSequence=cutSequence;pasteRunning=true;dropNotice('正在粘贴文件…');
+      native.request('desktopPaste',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unchanged=items.filter(item=>item.status==='unchanged').length;
+          dropNotice(reply.data?.reason==='noFiles'?'剪贴板没有可粘贴的文件。':reply.status==='accepted'?`已粘贴 ${completed} 项，保留原位置 ${unchanged} 项，未完成 ${items.length-completed-unchanged} 项。`:
+            reply.status==='cancelled'?`粘贴已取消，已完成 ${completed} 项。`:'未能完成粘贴，请检查桌面文件后重试。');
+        },()=>{if(!disposed)dropNotice('未收到粘贴结果，请先检查桌面文件，避免重复粘贴。');}).finally(()=>{pasteRunning=false;});
     }
     function desktopDrop(event){
       if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
@@ -429,11 +507,14 @@
     }
     async function refreshPresentation(){
       if(disposed||presentationRunning)return;presentationRunning=true;
-      const identity=scope();
+      const identity=scope(),observedCutSequence=cutSequence;
       try{
         const reply=await native.request('presentationRead',desktopView?{desktopContextId:desktopView.contextId}:{},identity);
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
           presentationSkins=copy(reply.presentation.skins);
           const before=desktopView?.contextId,beforeDesk=desktopView?.deskId,desktop=reply.presentation.desktop;
           if(!desktop)desktopView=null;
@@ -451,7 +532,7 @@
 
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
-      clearLocator();snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
+      clearLocator();desktopClick=null;snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
       native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return renderWithLayout();
     }
     function publishGeometry(consumer,report){
@@ -501,7 +582,7 @@
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){desktopClick=null;clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -513,12 +594,66 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          if(value.consumer==='official.desktop'&&value.button==='desktop.paste'){
+            completion=null;desktopClick=null;
+            if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.contextMenu===true){
+            completion=null;desktopClick=null;
+            if(!desktopSelection.read().selectedIds.includes(value.button))desktopSelection.select(value.button);
+            paintDesktopSelection();desktopMenu(value);return true;
+          }
+          if(value.consumer==='official.desktop'&&[93,121].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===(value.desktopInput.key===93?0:2))desktopMenu(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===46){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===0)desktopDelete(value);
+            else dropNotice('仅支持移入回收站，请使用 Delete。');
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds,key=value.desktopInput.key,identity=scope();
+            if(value.desktopInput.modifiers===1&&key===86)desktopPaste(value);
+            if(value.desktopInput.modifiers===1&&key!==86&&selected.includes(value.button)){
+              native.request(key===88?'desktopCut':'desktopCopy',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+                .then(reply=>{
+                  if(disposed||identity.sessionId!==snapshot.sessionId)return;
+                  consumeReceipt(reply);
+                  if(reply.status==='accepted'&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0){
+                    cutSequence=key===88?reply.data.clipboardSequence:null;cutIds=new Set(key===88?selected:[]);paintDesktopSelection();
+                  }
+                },()=>diagnose('clipboardUnavailable'));
+            }
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===13&&!value.button.startsWith('desktop.page.')){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.includes(value.button))native.request('desktopOpen',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+              .then(reply=>consumeReceipt(reply),()=>diagnose('openUnavailable'));
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===113){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.length===1&&selected[0]===value.button){
+              native.request('desktopRename',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+                .then(reply=>consumeReceipt(reply),()=>diagnose('renameUnavailable'));
+            }
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&!value.button.startsWith('desktop.page.')&&!desktopActivation(value)){completion=null;return true;}
           const own={...completion,identity:scope(),due:['official','official.desktop'].includes(value.consumer)};pendingDefault=own;
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
       dispose(){if(disposed)return;disposed=true;container.removeEventListener('dragover',desktopDragOver);container.removeEventListener('drop',desktopDrop);clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,desktopSelection:desktopSelection.read(),presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

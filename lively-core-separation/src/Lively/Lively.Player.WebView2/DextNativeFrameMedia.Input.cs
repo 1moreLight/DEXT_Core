@@ -38,7 +38,7 @@ namespace Lively.Player.WebView2
             await RevokeInputAsync();
             if(!InputCurrent(value))return false;
             var selected=frames.Values.Where(InputFrame).Where(f=>value.Key==0||desired[f.Name].Consumer==value.Consumer).ToArray();
-            if(value.Key!=0&&value.Consumer!="official"&&value.Consumer!=DextNativeTaskSample.Consumer&&selected.Length!=1)return false;
+            if(value.Key!=0&&!value.UsesOfficialKeyboard&&selected.Length!=1)return false;
             currentInput=value;inputActions?.Begin(value);var operation=++inputOperation;var accepted=true;
             await Task.WhenAll(selected.Select(async frame=>{
                 var epoch=frame.Epoch;var nonce=frame.InputNonce;frame.InputGesture=value.GestureId;
@@ -131,7 +131,7 @@ namespace Lively.Player.WebView2
         public void ReceiveOfficialInputDispatch(string json)
         {
             var value=dispatchPacket;
-            if(value==null||!InputCurrent(value)||dispatchConsumer!=null&&dispatchConsumer!="official")return;
+            if(value==null||!InputCurrent(value)||dispatchConsumer!=null&&!DextNativePointerPacket.IsOfficialConsumer(dispatchConsumer))return;
             if(DextNativeInputGuardianPolicy.ParseDispatch(json,secret,officialDispatchNonce,value.GestureId,value.GeometryVersion,value.Kind))
                 dispatchReceipt?.TrySetResult(true);
         }

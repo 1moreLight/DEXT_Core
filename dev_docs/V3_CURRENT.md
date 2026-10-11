@@ -1,13 +1,22 @@
 # v3 当前交接入口（2026-10-11）
 
-> 2026-10-11最新：桌面同步路线实施3/4=75%。004在独立分支feat/DESK-SYNC-004-shell-actions（1f13850）完成实施与候选交接，尚未合并到本003分支。003诊断源de16333，干净候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-clean-20261011，654文件/16宿主核对、真实Core启动与正常退出通过；不包含004新增操作及F2修复，不能当作两分支集成包。唯一下一项是003实际Explorer跨窗口拖入与五项验收，当前Windows工具拒绝窗口外拖动，暂不重复切Core。最后恢复主目录Debug Core28084、空session；未新增配置器。下面的旧PID、“004下一项”和旧候选段为历史记录，不代表当前运行或最新计划。
+> 2026-10-11最新：路线实施3/4=75%。003接收面修复32ec31e，004依赖1f13850现已集成到003工作分支；统一候选构建中，尚未替换当前004-r3运行版。下一项为实际原生拖入与原输入回归，五项人工门槛未通过；下方PID/旧分支隔离描述均为历史。
 计划只认 [ROADMAP](ROADMAP.md)，历史过程见 [V3_DELIVERY](V3_DELIVERY.md)。
 
-## 当前开发入口
+## 历史开发记录（当前状态见上方）
 
 P8-013/014实施完成，待统一验收；DESK-SYNC-001实施4/4=100%待统一验收，927bff8正式候选desktop-sync-clean-20261011完整构建/来源核对通过，隔离Core52052扫描/显示/刷新/关闭冒烟通过（不含实际文件打开/触控）；DESK-SYNC-002实施4/4=100%待统一验收，自动变化冒烟通过，9e52c17正式候选desktop-sync-watch-clean-20261011构建/654文件与16宿主资源来源核对通过，当前DESK-SYNC-003原生接收验证开做（0/5=0%），下一项DESK-SYNC-004。014正式候选v3-fusion-lifecycle-clean-20261011来自14f40b1，完整Release、654文件/16宿主资源核对通过，未启动/应用。实际宿主往返、故障回退、三模式、原生预览选窗证据和人工缺口见[014交接](plans/V3-P8-014/06-handoff.md)。用户当前仍运行v3-core-exit-20261010（Core51648、配置器19704为本次观察），master未合。
 
-## 可运行候选
+## DESK-SYNC-004 新候选（尚未启动）
+
+- 源码0ed6d12：D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011-r3。
+- 完整Release及655文件/17项宿主来源核对通过；两项既有Rust警告保留。
+- start.ps1识别Dext v3元数据后因现有Debug Core26668身份占用退出1，未替换当前桌面。
+- 004实施与交接6/6=100%，不是用户验收通过；实际菜单/Esc/属性/DPI、Explorer剪贴板/回收站、原Dock与鼠标/触控仍待。
+- 原830e785候选和b87e75f的r2仅供追溯，含旧F2键码，不作为最新验收包。
+- [独立验收](acceptance/DESK-SYNC-004-shell-actions.md)；[第06步交接](plans/DESK-SYNC-004/06-handoff.md)。
+
+## 历史运行候选
 
 - 当前源分支fix/OPS-006-core-exit，含cf28008及退出模式修复；完整来源见候选release-inventory.json。
 - 目录D:/use/Orca/DEXT/DEXT_Core/.build/v3-core-exit-20261010；双击其中start-dext.cmd启动。包内脚本按精确产品路径检查，主工作区旧二进制不能代表此候选。

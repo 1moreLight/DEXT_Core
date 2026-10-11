@@ -228,3 +228,43 @@ test('desktop drop uses native additional objects and survives ordinary pause an
  for(const cb of listeners)cb({data:{type:'dext:v3-native-response',requestId:sent[0].requestId,...identity,status:'cancelled',data:null}});
  assert.equal((await result).status,'cancelled');assert.equal(timers.size,0);host.dispose();
 });
+
+test('desktop activation preserves native key modifiers and system double-click settings',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',
+  desktopInput:{key:0,modifiers:3,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});
+test('native rename waits through its dialog pause and revision until receipt',async()=>{
+ for(const method of ['desktopRename','desktopPaste']){
+  const f=fixture();
+  try{
+   const result=f.host.request(method,{consumer:'official.desktop',button:method==='desktopPaste'?'desktop.paste':'desktop-a',geometryVersion:1,inputSequence:1}).catch(e=>({error:e.code}));
+   await flush();assert.equal(f.sent.length,1);
+   f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});await f.advance(6000);
+   assert.equal(f.host.readDiagnostics().pendingRequests,1);
+   f.answer(f.sent[0],{inputSequence:1,inputConsumed:true,data:{completed:1}});
+   assert.equal((await result).data.completed,1);
+  }finally{f.host.dispose();}
+ }
+});
+
+test('desktop open sends selected IDs and retains the native action receipt across revision',async()=>{
+ for(const method of ['desktopOpen','desktopCopy','desktopCut','desktopDelete','desktopMenu']){
+  const f=fixture();const params={consumer:'official.desktop',button:'desktop-a',selectedIds:['desktop-a','desktop-b'],geometryVersion:1,inputSequence:2};
+  try{
+   const promise=f.host.request(method,params).catch(e=>({error:e.code}));await flush();
+   assert.deepEqual(f.sent[0]?.selectedIds,params.selectedIds);
+   f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});f.answer(f.sent[0],{inputSequence:2,inputConsumed:true});
+   assert.equal((await promise).inputConsumed,true);
+  }finally{f.host.dispose();}
+ }
+});
+
+test('desktop right-button completion preserves its native context marker',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',desktopInput:{key:0,contextMenu:true,modifiers:0,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});

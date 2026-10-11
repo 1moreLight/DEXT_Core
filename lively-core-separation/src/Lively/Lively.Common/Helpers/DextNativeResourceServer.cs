@@ -19,7 +19,7 @@ namespace Lively.Common.Helpers
     public sealed class DextNativeResourceServer : IDisposable
     {
         private static readonly HashSet<string> OfficialFiles = new HashSet<string>(StringComparer.Ordinal)
-        { "index.html", "main.js", "style.css", "layout-model.js","runtime-model.js", "dom-host.js", "frame-host.js", "media-host.js", "playback-host.js", "native-host.js", "geometry.js", "input-host.js", "task-area.css", "task-area-model.js", "task-area-host.js", "task-area-controller.js" };
+        { "index.html", "main.js", "style.css", "layout-model.js","runtime-model.js", "dom-host.js", "desktop-selection.js", "frame-host.js", "media-host.js", "playback-host.js", "native-host.js", "geometry.js", "input-host.js", "task-area.css", "task-area-model.js", "task-area-host.js", "task-area-controller.js" };
         private static readonly Dictionary<string, string> MimeTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             [".html"]="text/html; charset=utf-8",[".css"]="text/css; charset=utf-8",[".js"]="text/javascript; charset=utf-8",[".mjs"]="text/javascript; charset=utf-8",

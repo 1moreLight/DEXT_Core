@@ -1,4 +1,9 @@
 using Lively.Services.DesktopSync;
+if(args.Length==1&&args[0]=="--context-menu"){await ContextMenuChecks.Run();return;}
+if(args.Length==1&&args[0]=="--recycle"){await RecycleChecks.Run();return;}
+if(args.Length==1&&args[0]=="--paste"){await PasteChecks.Run();return;}
+if(args.Length==1&&args[0]=="--clipboard-data"){ClipboardChecks.Run();return;}
+if(args.Length==1&&args[0]=="--rename"){await RenameChecks.Run();return;}
 if (args.Length == 3 && args[0] == "--cross-volume") { await CrossVolumeChecks.Run(args[1], args[2]); return; }
 var root=Directory.CreateTempSubdirectory("Dext-shell-transfer-").FullName;
 void Check(bool value,string text){if(!value)throw new Exception(text);Console.WriteLine("PASS "+text);}

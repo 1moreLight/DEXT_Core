@@ -12,6 +12,52 @@ internal sealed record DesktopTransferItem(string Source, string? Destination, s
 internal sealed record DesktopTransferResult(IReadOnlyList<DesktopTransferItem> Items, bool Aborted, int HResult);
 internal static class DesktopShellTransfer
 {
+    internal static Task<DesktopTransferResult> PasteAsync(IReadOnlyList<string> sources,string destination,
+        DesktopDropEffect effect,CancellationToken cancellation=default,bool interactive=true,IntPtr owner=default,Func<bool>? permitted=null)
+    {
+        if(sources.Count is <1 or >256)throw new ArgumentOutOfRangeException(nameof(sources));
+        if(effect is not (DesktopDropEffect.Copy or DesktopDropEffect.Move))throw new ArgumentException("Clipboard effect must be copy or move.",nameof(effect));
+        var copy=sources.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        return RunStaAsync(()=>ExecutePaste(copy,destination,effect,cancellation,interactive,owner,permitted),cancellation,permitted);
+    }
+    private static DesktopTransferResult ExecutePaste(string[] sources,string destination,DesktopDropEffect effect,
+        CancellationToken cancellation,bool interactive,IntPtr owner,Func<bool>? permitted)
+    {
+        if(!Path.IsPathFullyQualified(destination)||!Directory.Exists(destination))throw new DirectoryNotFoundException("Desktop destination unavailable.");
+        destination=Path.TrimEndingDirectorySeparator(Path.GetFullPath(destination));
+        bool InPlace(string source)
+        {
+            try{return effect==DesktopDropEffect.Copy&&Path.IsPathFullyQualified(source)&&string.Equals(Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(source))),destination,StringComparison.OrdinalIgnoreCase);}
+            catch(ArgumentException){return false;}
+        }
+        // Rename-on-collision is reserved for same-folder copies. Other collisions
+        // retain the normal Shell prompt instead of silently changing names.
+        var groups=sources.GroupBy(InPlace).Select(group=>(InPlace:group.Key,Files:group.ToArray())).ToArray();
+        var results=new List<DesktopTransferItem>();var hresult=0;
+        for(var index=0;index<groups.Length;index++)
+        {
+            var group=groups[index];
+            try
+            {
+                var flags=(interactive?0x40u:0u)|(group.InPlace?8u:0u);
+                var result=Execute(group.Files,destination,_=>effect,cancellation,interactive,owner,permitted,flags);
+                results.AddRange(result.Items);if(result.HResult!=0)hresult=result.HResult;
+                if(!result.Aborted)continue;
+            }
+            catch(OperationCanceledException)
+            {
+                results.AddRange(group.Files.Select(source=>new DesktopTransferItem(source,null,"cancelled",unchecked((int)0x800704C7))));
+            }
+            catch(Exception error) when(error is IOException or UnauthorizedAccessException or COMException or ArgumentException)
+            {
+                hresult=error.HResult;results.AddRange(group.Files.Select(source=>new DesktopTransferItem(source,null,"failed",error.HResult)));continue;
+            }
+            foreach(var remaining in groups.Skip(index+1).SelectMany(next=>next.Files))
+                results.Add(new(remaining,null,"cancelled",unchecked((int)0x800704C7)));
+            return new(results.AsReadOnly(),true,hresult==0?unchecked((int)0x800704C7):hresult);
+        }
+        return new(results.AsReadOnly(),false,hresult);
+    }
     internal static Task<DesktopTransferResult> RunAsync(IReadOnlyList<string> sources, string destination,
         string allowedEffects, int modifiers, CancellationToken cancellation = default, bool interactive = true, IntPtr owner = default, Func<bool>? permitted = null)
         => RunCoreAsync(sources, destination, source => DesktopDropPolicy.Select(allowedEffects, modifiers,
@@ -27,6 +73,11 @@ internal static class DesktopShellTransfer
     {
         if (sources.Count == 0 || sources.Count > 256) throw new ArgumentOutOfRangeException(nameof(sources));
         var copy = sources.ToArray();
+        return RunStaAsync(() => Execute(copy, destination, selectEffect, cancellation, interactive, owner, permitted), cancellation, permitted);
+    }
+    internal static Task<DesktopTransferResult> RunStaAsync(Func<DesktopTransferResult> execute,
+        CancellationToken cancellation, Func<bool>? permitted = null)
+    {
         var completed = new TaskCompletionSource<DesktopTransferResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
@@ -36,7 +87,7 @@ internal static class DesktopShellTransfer
                 cancellation.ThrowIfCancellationRequested();
                 if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
                 Marshal.ThrowExceptionForHR(CoInitializeEx(IntPtr.Zero, 2)); initialized = true;
-                completed.TrySetResult(Execute(copy, destination, selectEffect, cancellation, interactive, owner, permitted));
+                completed.TrySetResult(execute());
             }
             catch (OperationCanceledException) { completed.TrySetCanceled(cancellation); }
             catch (Exception error) { completed.TrySetException(error); }
@@ -46,7 +97,7 @@ internal static class DesktopShellTransfer
         return completed.Task;
     }
     private static DesktopTransferResult Execute(string[] sources, string destination, Func<string, DesktopDropEffect> selectEffect,
-        CancellationToken cancellation, bool interactive, IntPtr owner, Func<bool>? permitted)
+        CancellationToken cancellation, bool interactive, IntPtr owner, Func<bool>? permitted, uint extraFlags=0)
     {
         if (!Path.IsPathFullyQualified(destination) || !Directory.Exists(destination)) throw new DirectoryNotFoundException("Desktop destination unavailable.");
         destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destination));
@@ -59,8 +110,8 @@ internal static class DesktopShellTransfer
             var operation = (IDesktopFileOperation)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("3ad05575-8857-4850-9277-11b85bdb8e09"), true)!)!;
             resources.Add(operation);
             // Native conflict/cancel UI stays enabled for user operations. Probe
-            // mode suppresses UI and fails instead of approving replacements.
-            operation.SetOperationFlags(interactive ? 0x200u : 0x100604u);
+            // mode suppresses progress/errors, not every conflict prompt.
+            operation.SetOperationFlags((interactive ? 0x200u : 0x100604u) | extraFlags);
             if (owner != IntPtr.Zero) operation.SetOwnerWindow(owner);
             var target = CreateItem(destination); resources.Add(target);
             foreach (var input in sources.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -74,7 +125,7 @@ internal static class DesktopShellTransfer
                     if (!Path.IsPathFullyQualified(input)) throw new ArgumentException("Source must be absolute.");
                     var source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
                     if (!File.Exists(source) && !Directory.Exists(source)) throw new FileNotFoundException("Dropped source no longer exists.", source);
-                    if (effect != DesktopDropEffect.Link && string.Equals(Path.GetDirectoryName(source), destination, StringComparison.OrdinalIgnoreCase))
+                    if (effect != DesktopDropEffect.Link && !(effect == DesktopDropEffect.Copy && (extraFlags & 8) != 0) && string.Equals(Path.GetDirectoryName(source), destination, StringComparison.OrdinalIgnoreCase))
                     { results.Add(new(source, source, "unchanged", 0)); continue; }
                     if (effect != DesktopDropEffect.Link && (string.Equals(source, destination, StringComparison.OrdinalIgnoreCase) ||
                         Directory.Exists(source) && destination.StartsWith(source + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
@@ -121,7 +172,7 @@ internal static class DesktopShellTransfer
             }
         }
     }
-    private static IDesktopShellItem CreateItem(string path)
+    internal static IDesktopShellItem CreateItem(string path)
     {
         var iid = typeof(IDesktopShellItem).GUID;
         Marshal.ThrowExceptionForHR(SHCreateItemFromParsingName(path, IntPtr.Zero, ref iid, out var item));
@@ -143,14 +194,16 @@ internal static class DesktopShellTransfer
 [ComVisible(true), ClassInterface(ClassInterfaceType.None)]
 public sealed class TransferSink : IDesktopTransferProgress
 {
+    internal const int RecycleUnavailable=unchecked((int)0x80070032);
+    private readonly bool recycleOnly;
     internal string Source { get; }
     internal DesktopTransferItem? Result { get; private set; }
     internal bool Cancelled { get; private set; }
     private readonly CancellationToken cancellation;
     private readonly string callbackSource;
     private readonly Func<bool>? permitted;
-    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null, Func<bool>? permitted = null)
-    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; }
+    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null, Func<bool>? permitted = null, bool recycleOnly=false)
+    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; this.recycleOnly=recycleOnly; }
     private int Continue()
     {
         try { if (cancellation.IsCancellationRequested || permitted?.Invoke() == false) Cancelled = true; }
@@ -176,8 +229,20 @@ public sealed class TransferSink : IDesktopTransferProgress
     public int PostMoveItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name, int result, IDesktopShellItem? created) => Complete(item, created, result);
     public int PreCopyItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name) => Continue();
     public int PostCopyItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name, int result, IDesktopShellItem? created) => Complete(item, created, result);
-    public int PreDeleteItem(uint flags, IDesktopShellItem item) => Continue();
-    public int PostDeleteItem(uint flags, IDesktopShellItem item, int result, IDesktopShellItem? created) => 0;
+    public int PreDeleteItem(uint flags, IDesktopShellItem item)
+    {
+        var allowed=Continue();if(allowed<0)return allowed;
+        if(recycleOnly&&(flags&0x80)==0){Result=new(Source,null,"notRecyclable",RecycleUnavailable);return RecycleUnavailable;}
+        return 0;
+    }
+    public int PostDeleteItem(uint flags, IDesktopShellItem item, int result, IDesktopShellItem? created)
+    {
+        if(!recycleOnly||Result?.Status=="notRecyclable")return 0;
+        if(string.Equals(DesktopShellTransfer.ItemPath(item),callbackSource,StringComparison.OrdinalIgnoreCase))
+            Result=new(Source,DesktopShellTransfer.ItemPath(created),result>=0&&created is not null?"completed":
+                Cancelled||result==unchecked((int)0x800704C7)?"cancelled":"failed",result);
+        return 0;
+    }
     public int PreNewItem(uint flags, IDesktopShellItem destination, string name) => Continue();
     public int PostNewItem(uint flags, IDesktopShellItem destination, string name, string template, uint attributes, int result, IDesktopShellItem? created) => 0;
     public int UpdateProgress(uint total, uint completed) => Continue();

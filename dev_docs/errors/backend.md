@@ -664,3 +664,31 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 真实临时文件测试在原生进度回调撤销资格后，PerformOperations返回0x800704C7，源存在、目标未创建，但GetAnyOperationsAborted=false，旧实现回报failed且总状态未取消。
 修复：进度sink锁存Cancelled（撤销后不恢复），批次合并Shell标志、令牌、取消HRESULT和sink取消状态；未处理项目标cancelled，已经完成项目保留completed。
 22项检查验证上述路径，随后新增首项移动完成后撤销的批次：首项目标内容正确且源移除，第二项源内容保持/目标不存在，保留首项完成回执；共23项通过。重名冲突UI与Explorer Esc未由此覆盖。
+
+## #325 改名碰撞与测试清理（2026-10-11）
+真实RenameItem遇已存在目标时，0x100604（SILENT/NOERRORUI/EARLYFAILURE等）仍未返回；测试日志停在该调用前，精确终止本轮测试进程50612，不能把此尝试记为通过。已存在的改名目标现提前返回conflict供输入框改名重试；没有自动覆盖或自动同意冲突，实际竞态的Shell交互保留人工验证。
+微软参数文档区分进度UI、错误UI与确认，不应把SILENT/NOERRORUI解释为绝对无对话框：https://learn.microsoft.com/zh-cn/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags 。同步修正原拖入代码的注释，未修改其正式冲突策略。
+另一个已解决错误：File.Delete在父目录已经被改名时会抛DirectoryNotFoundException。夹具记录旧/新子文件路径，清理前检查存在，随后仅删除本次空目录。两轮残留唯一夹具已逐文件清理，复跑7项通过，末次无Dext-rename-*残留。源文件从未是用户文件。
+## #326 官方桌面输入分类遗漏（2026-10-11）
+定位F2时发现DextNativeFrameMedia.ArmInputAsync仅豁免official和任务栏consumer，official.desktop因没有作者iframe而不能通过键盘arm；Form1还会把它当作者按键去MoveFocus/Forward/等待DOM回执。鼠标路径ReceiveOfficialInputDispatch同样只接受official，遗漏官方文件图标。
+统一DextNativePointerPacket.IsOfficialConsumer和UsesOfficialKeyboard：官方文件键盘复用原生完成采样，顶层鼠标仍须真实dispatch receipt，作者输入保持原有路径；F2仅为官方文件的原生packet与Core焦点接收。Core F2新增失败断言后6项通过，Player分类/串行输入18项、Node111项、正式Release通过。没有进行OS物理输入，统一验收仍待。以后新增官方consumer必须检查arm、forward、wait、receipt全部四处，单独Core/DOM检查不能证明Player中间层已接通。
+
+## #331 RawInput文件命令不能独占Explorer按键（2026-10-11）
+发现：WinDesktopCore用RawInput_KeyboardClickRaw把Ctrl+V交Core时，没有阻止Explorer接收同一原生键；构建/私有协议通过不足以证明不会双粘贴。
+代码处理：限定同步文件或粘贴按钮焦点，WH_KEYBOARD_LL成功接收入队后抑制原按键。按下确定归属，抬起不重选目标；已有按住键和自动重复不产生新操作，非文件焦点保持原链。回调只做快照核对/排队，Core执行时仍核对当前作用域；RawInput文件默认入口停用以免双执行。分支完整Release及8项配对/3轮无接管目标安装卸载通过，尚未部署。
+回归：必须在实际WorkerW/Explorer里用唯一临时文件核对每次Ctrl+V只有一份、焦点切换不操作其他文件、Core退出后Windows键盘正常；屏幕键盘、分页Enter、Dock及触控另验。无目标的钩子生命周期检查不代表实际抑制/文件互通通过。
+
+## #333 静态Shell菜单初始化返回未处理，不代表COM接口不存在（2026-10-11）
+
+DESK-SYNC-004使用SHCreateDefaultContextMenu产生真实跨目录菜单，Properties/copy等查询通过；将WM_INITMENUPOPUP检查强化为“必须被处理”时失败。定向诊断确认IContextMenu2和3均支持，根与静态填充的7zip子菜单返回E_FAIL。并非接口缺失，也不能把菜单还存在当作真实消息转发/动态子菜单已通过。
+修正：只对处理器返回S_OK的消息认领；其余返回false让owner继续系统处理。保留诊断失败记录，查询检查仅证明菜单与资源保持；实际owner绘制、动态子菜单、WM_MENUCHAR和取消另列真实桌面门槛。后台STA测试要等临时文件清理完再完成Task，避免测试进程先退导致夹具残留。
+
+## #336 原生桌面菜单的返回焦点（2026-10-11）
+
+从其他应用首次右击桌面时，菜单owner保存的previous是原应用。菜单取消后恢复previous会让后续文件快捷键进入原应用；仅SetForegroundWindow桌面也不够，前台生命周期修订会清空Core文件几何和焦点。
+修复：owner仍前台才交回当前有效桌面窗口；新窗口或外点应用已有前台时不抢焦点。实际返回成功后记录一次同代次/会话/Desk/视口/文件的短时焦点恢复，等待当前几何并且原生桌面仍前台才生效；新输入和作用域变化取消，只恢复焦点，不生成动作。代码7/7、右键8/8、指针57/57、Core Release构建通过；Windows弹窗/属性/触控实机门槛仍未通过。
+
+## #337 F2误用F3的Windows键码（2026-10-11）
+
+F2改名从钩子、公共私有输入包、Core权限到宿主均误用了114，夹具复制同一个值造成同源盲区。Windows VK_F2是0x71=113，VK_F3是0x72=114。先仅改测试为真实F2，复现原链路没有文件手势；再统一修复生产链，新增F3成对放行断言。F2六组合、Core25/25、键盘所有权11/11、指针18/18、dom/native宿主113/113通过；实体键盘仍需验收。历史“F2六组合通过”仅证明当时错误键码链路，不能当F2实机证据。
+来源：[Microsoft Virtual-Key Codes](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)。

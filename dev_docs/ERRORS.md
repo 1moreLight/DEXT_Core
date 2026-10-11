@@ -453,3 +453,25 @@
 2026-10-11 工具链补记：普通build输出不可覆盖self-contained发布包；本轮混合副本RPC未就绪，独立空目录publish后启动/退出通过。详见errors/toolchain.md日期补记。
 
 2026-10-11 接收面排障：OLE注册成功不证明实际派发；现有Player处于Explorer DefView下方，WindowFromPoint命中ListView。必须让已有可见窗口实际位于接收层；不向背景HWND反复注册，也不更改用户桌面图标显示设置。新增DesktopSurfaceWindow隐藏原生层级恢复检查。首次构建引用NativeMethods不存在的IsChild，已改为该类独立P/Invoke并构建通过。
+| #325 | Shell静默错误标志不保证重名不等待确认；目录改名后清理旧子路径需先检查存在 | [backend](errors/backend.md) |
+
+| #326 | official.desktop未加入Player官方输入分类，键盘等作者iframe/回执、鼠标官方回执被忽略 | [backend](errors/backend.md) |
+
+| #327 | 桌面命令键复用点击选择逻辑，F2把多选缩成单选 | [renderer](errors/renderer.md) |
+
+| #328 | 多选Enter误缩成单选；打开应用引起暂停丢失动作回执 | [renderer](errors/renderer.md) |
+
+| #329 | 剪切CSS opacity被切页内联透明度覆盖，需叠加filter | [renderer](errors/renderer.md) |
+| #330 | 个人编辑测试间歇原子发布拒绝访问；同构建复查通过，根因未定 | [toolchain](errors/toolchain.md) |
+| #331 | RawInput旁听不能阻止Explorer文件快捷键重复执行，需确定单一OS接收者 | [backend](errors/backend.md) |
+| #332 | C# switch各case共享局部作用域，复制异步分支时同名变量使完整Core构建失败 | [toolchain](errors/toolchain.md) |
+
+| #333 | 静态Shell菜单初始化可能未处理；查询成功不能当作真实弹窗消息验收 | [backend](errors/backend.md) |
+
+| #334 | Windows Python默认GBK读取UTF-8源码失败；读写都必须显式UTF-8并在失败后止步 | [toolchain](errors/toolchain.md) |
+
+| #335 | 仅Core允许后台右键仍不够：宿主operable=false时发布空文件区域 | [renderer](errors/renderer.md) |
+
+| #336 | 桌面原生菜单恢复弹出前应用，且前台修订会清空文件焦点 | [backend](errors/backend.md) |
+
+| #337 | F2整条链与夹具误用F3键码114，内部测试全绿不代表真实键有效 | [backend](errors/backend.md) |

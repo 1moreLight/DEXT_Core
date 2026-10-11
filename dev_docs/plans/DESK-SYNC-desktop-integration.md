@@ -1,7 +1,7 @@
 # Windows 桌面同步与原生文件交互
 
-日期：2026-10-11。状态：方案做完；001/002实施做完待验收、003开做、004待做，实施工作包2/4=50%。
-来源：用户希望一键识别原桌面已有应用，并让从窗口拖到桌面的文件直接显示，减少逐个配置。当前P8-013/014已转待统一验收，002独立分支已交接，下一项003，002证据见DESK-SYNC-002-desktop-watch.md。
+日期：2026-10-11。状态：方案做完；001/002/004实施做完待统一验收、003实机门槛仍待回补，实施工作包3/4=75%。
+来源：用户希望一键识别原桌面已有应用，并让从窗口拖到桌面的文件直接显示，减少逐个配置。当前P8-013/014已转待统一验收，002独立分支已交接，004已完成常用操作实施与候选交接，下一项回补003实际OS门槛；002证据见DESK-SYNC-002-desktop-watch.md。
 
 ## 推荐体验
 
@@ -50,3 +50,7 @@
 来源：[DeskBox仓库](https://github.com/Tianyu199509/DeskBox)；[监听源码](https://github.com/Tianyu199509/DeskBox/blob/22d29480bdcac98f636b94b2990ceff2b8f2a0de/src/DeskBox/Services/FolderWatcherService.cs)。项目为 GPL-3.0-only，直接复用时按项目现有上游归属规则保留来源/许可；此方案仅借鉴结构。
 
 Windows依据：[Known Folders](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid)、[IDropTarget](https://learn.microsoft.com/en-us/windows/win32/api/oleidl/nn-oleidl-idroptarget)、[IFileOperation](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ifileoperation)。
+
+## GlassDesk 补充参考（2026-10-11）
+
+用户确认 everlosttime/glassdesk-updates；[调查记录](../research/GLASSDESK_2026-10-11.md)已做完。公开树仅README，发布记录可借鉴Dock逐帧动画、背景重建过滤、缓冲复用与取消恢复；没有公开桌面同步、Shell菜单或AppBar实现证据。当前桌面文件路线与唯一下一项不变。

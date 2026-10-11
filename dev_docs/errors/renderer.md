@@ -720,3 +720,18 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 证据：帧/当前gesture有效；第二次只有pointerdown没有兼容mousedown，postedEdges仍为第一次2条。原始未授权pointerdown被preventDefault后，Chromium抑制该接触的兼容鼠标事件，影响后续转发。
 修复：捕获原生PointerEvent.pointerType getter，仅未授权鼠标pointerdown不preventDefault，仍stopImmediatePropagation；未授权mousedown继续preventDefault/stop，触摸不变。不要延长手势期限或伪造回执。
 验证：Core30708/Player48244真实双向导航成功，无应用误触，窄栏缩小/溢出；30项guardian检查、最终Release通过。临时事件计数已删除。物理触屏及窄栏滚动仍独立验收。
+
+## #327 F2误修改多选（2026-10-11）
+现象：原生F2进入desktopActivation，select先执行导致多选缩成焦点项。修复：F2在select之前分流并清空待双击；后续改名必须读取已有单选状态。证据：宿主真实事件回归先红后绿，111项通过。人工：Ctrl选中两个文件后按F2，应保留两个选中项且不打开文件；实际改名窗口另待接线。
+
+## #328 多选Enter及打开后的暂停回执（2026-10-11）
+Enter复用desktopActivation.select会把多选缩成焦点项；新desktopOpen在select之前读取所选ID，由Core一次消费Enter证明后整组解析。打开的首个应用获得前台可能先推送暂停，私有桥原先取消请求且Player丢回应，导致实际打开后报失败。现有已发desktopOpen回执允许跨同会话修订/暂停，新的暂停态请求仍由宿主拒绝且Core要求原生证明；会话替换仍取消。DOM与回执定向断言先红后绿，113项宿主及79项消息检查通过。实机仍待统一验收。
+
+## #329 剪切视觉被切页内联透明度覆盖（2026-10-11）
+初稿data-cut使用opacity:.45，但applyIcon的内联style.opacity取切页组值，优先级覆盖CSS。改用filter:opacity(.45)，与原切页透明度相乘；不改变原动画/命中。DOM状态断言通过不等于实际CSS显示，统一验收需核对变淡及切页。
+
+2026-10-11 #327续：接Delete时同样要在通用desktopActivation选择逻辑前分流。失败用例发现Shift+Delete把两项选择缩成单项；现在Delete/Shift+Delete均保留选择，只有无修饰Delete提交desktopDelete，宿主116项通过。
+
+## #335 后台首次右击需要宿主仍发布可见文件几何（2026-10-11）
+
+实现独立Core右键证明后，dom-host.buttonGeometry仍在desktop且operable=false时返回空数组，钩子没有目标，首次右击仍会漏到Explorer。补真实宿主非前台快照用例取得空区域失败；仅在活动、非锁定、非暂停的Desktop保留经过遮挡裁剪的official.desktop文件区域，其他按钮不开放；Core普通左键/作者激活仍要求原前台条件。context-background-red.log到context-host-final.log 120/120。此为代码/宿主证据，实际OS焦点和菜单仍需验收。

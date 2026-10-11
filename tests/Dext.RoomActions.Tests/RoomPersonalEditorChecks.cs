@@ -8,6 +8,138 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("empty desktop paste command accepts only native activation in the current enabled scope",()=>{
+   using var f=new ActionFixture();const string id="desktop.paste";
+   f.Store.SetDesktopSync(Room,"home",true,Array.Empty<string>());
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("empty","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.empty/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,proof));Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,proof));
+   foreach(var key in new[]{13,32,86}){
+    input.Key(viewport,key,true,false,true,key==86?1:0);input.Key(viewport,key,false,false,true,0);
+    Eq(key,input.State!.Completed!.Key);
+    Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,input.State.Completed));
+   }
+   f.Store.SetDesktopSync(Room,"home",false);
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   Eq(RoomActionStatus.NotOperable,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,input.State!.Completed!));
+   Eq(0,f.Launched.Count);
+  });
+  check("Menu key and Shift F10 prepare current files once without launching",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('d',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   var target=new PersonalTarget("File.txt","file",@"C:\Temp\File.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   input.Key(viewport,121,true,false,true,0);input.Key(viewport,121,false,false,true,0);
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,input.State!.Completed!,new[]{id}).Status);
+   input.Key(viewport,121,true,false,true,2);input.Key(viewport,121,false,false,true,0);
+   Eq(121,input.State!.Completed!.Key);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   var prepared=f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id});
+   Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Targets!.Single());Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id}).Status);Eq(0,f.Launched.Count);
+   input.Key(viewport,93,true,false,true,0);input.Key(viewport,93,false,false,true,0);
+   Eq(93,input.State!.Completed!.Key);
+   Eq(RoomActionStatus.Accepted,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,input.State.Completed,new[]{id}).Status);
+  });
+  check("right pointer proof prepares menu once without permitting file launch",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('e',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});var target=new PersonalTarget("File.txt","file",@"C:\Temp\File.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);var v=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,v,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   var sequence=input.ContextDown(v,1,f.Kernel.Snapshot.Revision,1,f.Clock.GetTimestamp(),200,100,id,"desktop.scan/"+id,true);
+   input.ContextUp(v,sequence,200,100,true,false);var proof=input.State!.Completed!;
+   Eq(true,proof.ContextMenu);Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   var reply=f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id});Eq(RoomActionStatus.Accepted,reply.Status);Eq(target,reply.Targets!.Single());
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopMenu(f.View,f.Peer,f.Session,proof,new[]{id}).Status);Eq(0,f.Launched.Count);
+  });
+  check("Delete prepares the selected files once and Shift Delete cannot prepare deletion",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('d',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   var target=new PersonalTarget("File.txt","file",@"C:\Temp\File.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   input.Key(viewport,46,true,false,true,2);input.Key(viewport,46,false,false,true,0);
+   Eq(46,input.State!.Completed!.Key);Eq(2,input.State.Completed.Modifiers);
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,input.State.Completed,new[]{id}).Status);
+   Eq(false,input.State.Completed.IsConsumed);
+   input.Key(viewport,46,true,false,true,0);input.Key(viewport,46,false,false,true,0);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   var prepared=f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,proof,new[]{id});
+   Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Targets!.Single());Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,proof,new[]{id}).Status);Eq(0,f.Launched.Count);
+  });
+  check("F2 resolves current desktop file without launching and consumes its proof",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('a',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   var target=new PersonalTarget("Notes.txt","file",@"C:\Temp\Notes.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"Notes.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   var mouse=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,mouse).Status);
+   input.Key(viewport,113,true,false,true);input.Key(viewport,113,false,false,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   Eq(false,proof.IsConsumed);
+   var prepared=f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,proof);
+   Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Target);Eq(0,f.Launched.Count);Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,proof).Status);
+  });
+  check("native Enter opens all current selected files once with one consumed proof",()=>{
+   using var f=new ActionFixture();var ids=new[]{"desktop-"+new string('a',64),"desktop-"+new string('b',64)};
+   f.Store.SetDesktopSync(Room,"home",true,ids);
+   var targets=ids.Select((id,i)=>new PersonalTarget("File"+i,"file",@"C:\Temp\File"+i+".txt")).ToArray();
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",ids.Select((id,i)=>new RoomDesktopViewItem(id,"File"+i,"file",i,null)).ToArray(),0,false),ids.Select((id,i)=>(id,i)).ToDictionary(x=>x.id,x=>targets[x.i]));
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",ids[1],.1,.1,.2,.3,0,"desktop.scan/"+ids[1])});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   input.Key(viewport,13,true,false,true);input.Key(viewport,13,false,false,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,new[]{ids[1],"desktop-missing"}).Status);
+   Eq(0,f.Launched.Count);Eq(false,proof.IsConsumed);
+   Eq(RoomActionStatus.Accepted,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,ids).Status);
+   Eq(2,f.Launched.Count);Eq(targets[0],f.Launched[0]);Eq(targets[1],f.Launched[1]);Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,ids).Status);Eq(2,f.Launched.Count);
+   input.Key(viewport,13,true,false,true);input.Key(viewport,13,false,false,true);
+   var next=input.State!.Completed!;
+   Eq(RoomActionStatus.Cancelled,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,next,ids,()=>f.Launched.Count<3).Status);
+   Eq(3,f.Launched.Count);Eq(targets[0],f.Launched[2]);
+   input.Key(viewport,67,true,false,true,1);input.Key(viewport,67,false,false,true,0);
+   var copyProof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,copyProof,ids,true).Status);
+   Eq(false,copyProof.IsConsumed);
+   var copy=f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,copyProof,ids,false);
+   Eq(RoomActionStatus.Accepted,copy.Status);Eq(2,copy.Targets!.Length);Eq(targets[1],copy.Targets[1]);Eq(3,f.Launched.Count);
+   input.Key(viewport,88,true,false,true,1);input.Key(viewport,88,false,false,true,0);
+   var cut=f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,input.State!.Completed!,ids,true);
+   Eq(RoomActionStatus.Accepted,cut.Status);Eq(2,cut.Targets!.Length);Eq(3,f.Launched.Count);
+   input.Key(viewport,86,true,false,true,1);input.Key(viewport,86,false,false,true,0);
+   var pasteProof=input.State!.Completed!;
+   Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,pasteProof));
+   Eq(true,pasteProof.IsConsumed);Eq(3,f.Launched.Count);
+
+
+
+
+  });
   check("completed drop placement persists and disabled Desk rejects late placement",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('e',64);
    Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));

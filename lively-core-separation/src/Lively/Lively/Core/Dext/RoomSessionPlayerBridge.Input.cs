@@ -10,6 +10,87 @@ internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputS
 
 internal sealed partial class RoomSessionPlayerBridge
 {
+    internal (RoomNativeActionReply Reply, PersonalTarget? Target) PrepareNativeRename(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopRename(connectionId,peer,session,proof);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Target);
+    }
+    internal (RoomNativeActionReply Reply, PersonalTarget[]? Targets) PrepareNativeClipboard(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence,string[] ids,bool cut)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopClipboard(connectionId,peer,session,proof,ids,cut);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Targets);
+    }
+    internal (RoomNativeActionReply Reply, PersonalTarget[]? Targets) PrepareNativeMenu(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence,string[] ids)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopMenu(connectionId,peer,session,proof,ids);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Targets);
+    }
+    internal (RoomNativeActionReply Reply, PersonalTarget[]? Targets) PrepareNativeDelete(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence,string[] ids)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopDelete(connectionId,peer,session,proof,ids);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Targets);
+    }
+    internal RoomNativeActionReply PrepareNativePaste(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
+    {
+        if(disposed)return new(RoomActionStatus.StaleSession);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return new(RoomActionStatus.StaleInput);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return new(RoomActionStatus.NotOperable);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return new(RoomActionStatus.StaleInput);
+        return new(actions.AuthorizeDesktopPaste(connectionId,peer,session,proof),proof.Sequence,proof.IsConsumed);
+    }
+    internal RoomNativeActionReply OpenNativeDesktop(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence,string[] selectedIds)
+    {
+        if(disposed)return new(RoomActionStatus.StaleSession);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return new(RoomActionStatus.StaleInput);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return new(RoomActionStatus.NotOperable);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return new(RoomActionStatus.StaleInput);
+        var initial=NativeReadPresentation(actions,session,revision).Presentation?.Desktop;
+        if(initial is null)return new(RoomActionStatus.StaleInput);
+        bool Permitted()
+        {
+            var active=native.State;
+            if(disposed||active is null||active.Generation!=generation||active.Session!=session)return false;
+            var view=NativeReadPresentation(actions,session,active.Revision).Presentation?.Desktop;
+            return view is not null&&view.DeskId==initial.DeskId&&
+                NativeCheckDesktopDrop(actions,session,active.Revision,view.ContextId,initial.DeskId)==RoomActionStatus.Accepted;
+        }
+        var reply=actions.OpenDesktopSelection(connectionId,peer,session,proof,selectedIds,Permitted);
+        return new(reply.Status,proof.Sequence,proof.IsConsumed);
+    }
     internal RoomNativeActionReply ActivateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
         long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
     {

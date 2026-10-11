@@ -666,8 +666,9 @@ test('desktop files render as official native targets and DOM clicks cannot open
   const icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='Original file.txt');assert.ok(icon);assert.equal(icon.hidden,false);
   const q=f.calls.filter(c=>c.method==='geometry').at(-1);const entry=q.params.buttons.find(b=>b.consumer==='official.desktop');
   assert.equal(entry.button,id);assert.equal(entry.entryId,'desktop.scan1/'+id);assert.equal(icon.handlers.click,undefined);
-  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1});await flush();
-  assert.equal(f.calls.filter(c=>c.method==='activate').at(-1).params.button,id);
+  const event={kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:0,modifiers:0,x:0,y:0,at:0,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+  f.host.handleNativeInput(event);f.host.handleNativeInput({...event,inputSequence:2,desktopInput:{...event.desktopInput,key:13}});await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopOpen').at(-1).params.selectedIds,[id]);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(icon.hidden,true);
  }finally{f.host.dispose();}
 });
@@ -700,4 +701,157 @@ test('desktop drop sends real file objects while paused and retires listeners on
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.container.handlers.drop(event);assert.equal(sent.length,1);
  }finally{f.host.dispose();}
  assert.equal(f.container.handlers.drop,undefined);assert.equal(f.container.handlers.dragover,undefined);
+});
+
+test('desktop native single click selects, double click opens, Ctrl extends selection',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'scan1',deskId:'home',items:ids.map((id,slot)=>({id,name:'File '+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function click(index,at,modifiers=0,key=0){
+   const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===ids[index]);
+   return f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:entry.button,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key,modifiers,x:100,y:100,at,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  }
+  click(0,100);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  let icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='File 0');assert.equal(icon.attrs['aria-pressed'],'true');
+  click(0,250);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1,800,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  const beforeF2=f.host.readDiagnostics().desktopSelection;
+  click(1,900,0,113);await flush();
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection,beforeF2,'F2 must preserve multi-selection');
+  assert.equal(f.calls.filter(c=>c.method==='activate').length,1,'F2 must not open a file');
+  click(1,1000,0,13);await flush();
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopOpen').at(-1).params.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1,1050);await flush();
+  click(1,1100,0,113);await flush();
+  assert.equal(f.calls.filter(c=>c.method==='desktopRename').length,1);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
+ }finally{f.host.dispose();}
+});
+test('desktop double click requires native time and position and resets after pause',async()=>{
+ const id='desktop-'+'a'.repeat(64),desktop={contextId:'scan1',deskId:'home',items:[{id,name:'File',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function click(at,x=100){const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===id);
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key:0,modifiers:0,x,y:100,at,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});}
+  click(0);click(600);click(700,110);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  f.host.setPlaybackSuspended(true);f.host.setPlaybackSuspended(false);await flush();click(800,110);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,0);
+  click(900,111);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1000,111);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+ }finally{f.host.dispose();}
+});
+test('Ctrl copy and cut preserve selection and cut styling follows clipboard sequence',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64)),timers=new Map();let timer=0,clipboardSequence=10;
+ const desktop={contextId:'scan1',deskId:'home',items:ids.map((id,slot)=>({id,name:'Clipboard '+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({setTimeout:(cb,ms)=>{timers.set(++timer,{cb,ms});return timer;},clearTimeout:id=>timers.delete(id),
+  request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',data:{clipboardSequence},presentation:{revision:1,skins:{},locator:null,desktop}}):
+   ['desktopCopy','desktopCut'].includes(method)?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence}}):method==='desktopPaste'?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence,items:[{status:'unchanged'}]}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function press(index,key,modifiers){const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===ids[index]);
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:entry.button,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key,modifiers,x:100,y:100,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});}
+  press(0,0,0);press(1,0,1);press(1,67,1);await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopCopy').at(-1)?.params.selectedIds,ids);
+  press(1,88,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  const icons=()=>f.container.children[0].children.filter(n=>n.attrs['aria-label']?.startsWith('Clipboard '));
+  assert.ok(icons().every(n=>n.dataset.cut==='true'));
+  press(1,86,1);await flush();
+  assert.equal(f.calls.filter(c=>c.method==='desktopPaste').length,1);
+  assert.equal(f.calls.filter(c=>c.method==='desktopPaste')[0].params.selectedIds,undefined);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.ok(icons().every(n=>n.dataset.cut==='false'));
+  press(1,88,1);await flush();assert.ok(icons().every(n=>n.dataset.cut==='true'));
+  clipboardSequence++;for(const t of [...timers.values()].filter(t=>t.ms===750))t.cb();await flush();
+  assert.ok(icons().every(n=>n.dataset.cut==='false'));
+ }finally{f.host.dispose();}
+});
+
+
+test('empty synced desktop exposes native paste without a file selection',async()=>{
+ const desktop={contextId:'empty',deskId:'home',items:[],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();
+  const button=f.container.children[0].children.find(n=>n.attrs['aria-label']==='粘贴到桌面');assert.ok(button);
+  assert.equal(button.handlers.click,undefined);assert.equal(button.style.height,'24px');assert.equal(button.style.width,'136px');
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button==='desktop.paste');assert.ok(entry);
+  for(const [i,key]of [0,13,32,86].entries()){
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:entry.button,entryId:entry.entryId,inputSequence:i+1,desktopInput:{key,modifiers:key===86?1:0,x:0,y:0,at:i*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});await flush();
+   assert.equal(f.calls.filter(c=>c.method==='desktopPaste').length,i+1);
+   assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
+  }
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(button.hidden,true);
+ }finally{f.host.dispose();}
+});
+
+
+test('Delete preserves selected IDs and Shift Delete cannot send a file command',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'delete',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,key,mods,sequence)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.delete/'+id,inputSequence:sequence,desktopInput:{key,modifiers:mods,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],0,0,1);send(ids[1],0,1,2);await flush();
+  send(ids[1],46,2,3);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopDelete').length,0);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  send(ids[1],46,0,4);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopDelete').at(-1)?.params.selectedIds,ids);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+ }finally{f.host.dispose();}
+});
+
+
+test('native menu keys preserve multi-selection and cannot launch files',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'menu',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,key,mods,sequence)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.menu/'+id,inputSequence:sequence,desktopInput:{key,modifiers:mods,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],0,0,1);send(ids[1],0,1,2);await flush();
+  send(ids[1],121,0,3);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopMenu').length,0);
+  send(ids[1],121,2,4);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,ids);
+  send(ids[1],93,0,5);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopMenu').length,2);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+ }finally{f.host.dispose();}
+});
+
+test('native right click retains selected files and selects an unselected target without launch',async()=>{
+ const ids=['a','b','c'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'right',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,sequence,ctrl=false,contextMenu=false)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.right/'+id,inputSequence:sequence,desktopInput:{key:0,contextMenu,modifiers:ctrl?1:0,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],1);send(ids[1],2,true);await flush();send(ids[1],3,false,true);await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,ids.slice(0,2));
+  send(ids[2],4,false,true);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,[ids[2]]);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[ids[2]]);
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+ }finally{f.host.dispose();}
+});
+
+test('background desktop still publishes only visible file regions for the first right click',async()=>{
+ const id='desktop-'+'f'.repeat(64),desktop={contextId:'background',deskId:'home',items:[{id,name:'File',kind:'file',slot:3,iconPng:null}],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();await f.host.acceptSnapshot(f.snap(2,{operable:false}));await flush();
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  assert.deepEqual(q.params.buttons.map(b=>[b.consumer,b.button]),[['official.desktop',id]]);
+  const entry=q.params.buttons[0];
+  assert.equal(f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:0,contextMenu:true,modifiers:0,x:0,y:0,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}}),true);
+  await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,[id]);
+  await f.host.acceptSnapshot(f.snap(3,{operable:false,lifecycle:{stage:'desktop',playbackPaused:false,locked:true,revision:2}}));await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='geometry').at(-1).params.buttons,[]);
+ }finally{f.host.dispose();}
 });

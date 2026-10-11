@@ -138,13 +138,45 @@ internal sealed partial class RoomActionAuthority
         return value is not null&&context.Role==RoomClientRole.DesktopPlayer&&snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&
             snapshot.TransitionId is null&&snapshot.SessionId==value.Session&&context.Installation.RoomId==value.Room&&
             context.Installation.InstallationStamp==value.Stamp&&snapshot.CurrentDeskId==value.View.DeskId&&
-            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next");
+            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next" or "desktop.paste");
     }
-    internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    internal (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopRename(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        if(proof.Key!=113)return (RoomActionStatus.NotOperable,null);
+        var prepared=PrepareDesktopTarget(connection,peer,session,proof);
+        if(prepared.Status==RoomActionStatus.Accepted&&prepared.Target is null)return (RoomActionStatus.NotOperable,null);
+        return prepared;
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopClipboard(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids,bool cut)
+    {
+        if(proof.Key!=(cut?88:67)||proof.Modifiers!=1||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopMenu(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
+    {
+        if(!(proof.ContextMenu||proof.Key==93&&proof.Modifiers==0||proof.Key==121&&proof.Modifiers==2)||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopDelete(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
+    {
+        if(proof.Key!=46||proof.Modifiers!=0||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal RoomActionStatus AuthorizeDesktopPaste(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        if(!(proof.Key==86&&proof.Modifiers==1)&&!(proof.Button.Button=="desktop.paste"&&proof.Key is 0 or 13 or 32))return RoomActionStatus.NotOperable;
+        return PrepareDesktopTargets(connection,peer,session,proof).Status;
+    }
+    private (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopTarget(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof);
+        return (prepared.Status,prepared.Targets?.FirstOrDefault());
+    }
+    private (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopTargets(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[]? selection=null)
     {
         var now=clock.GetTimestamp();
-        if(Expired(proof.IssuedAt,now))return new(RoomActionStatus.ExpiredInput);
-        (RoomActionStatus Status,PersonalTarget? Target) prepared;
+        if(Expired(proof.IssuedAt,now))return (RoomActionStatus.ExpiredInput,null);
+        (RoomActionStatus Status,PersonalTarget[]? Targets) prepared;
         try
         {
             var spin=new SpinWait();
@@ -152,20 +184,48 @@ internal sealed partial class RoomActionAuthority
             {
                 var attempt=store.ReadForDispatch(state=>{
                     var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
-                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget?)null);
+                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget[]?)null);
                         var value=Volatile.Read(ref desktopPresentation);
                         if(!IsDesktopEntry(context!,proof.Button,value)||value is null||
-                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget?)null);
-                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget?)null);
-                        value.Targets.TryGetValue(proof.Button.Button,out var target);
-                        return(RoomActionStatus.Accepted,(PersonalTarget?)target);
-                    },out (RoomActionStatus Status,PersonalTarget? Target) result);
+                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                        PersonalTarget[] targets;
+                        if(selection is not null){
+                            if(selection.Length is <1 or >256 || selection.Distinct(StringComparer.Ordinal).Count()!=selection.Length ||
+                                !selection.Contains(proof.Button.Button,StringComparer.Ordinal) || selection.Any(id=>id is null || !value.Targets.ContainsKey(id)))
+                                return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                            targets=selection.Select(id=>value.Targets[id]).ToArray();
+                        }else targets=value.Targets.TryGetValue(proof.Button.Button,out var target)?new[]{target}:Array.Empty<PersonalTarget>();
+                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget[]?)null);
+                        return(RoomActionStatus.Accepted,(PersonalTarget[]?)targets);
+                    },out (RoomActionStatus Status,PersonalTarget[]? Targets) result);
                     return(admitted,result);
                 });
                 if(attempt.admitted){prepared=attempt.result;break;}spin.SpinOnce();
             }
         }
-        catch(Exception error) when(StorageFailure(error)){return new(RoomActionStatus.StorageUnavailable);}
+        catch(Exception error) when(StorageFailure(error)){return (RoomActionStatus.StorageUnavailable,null);}
+        if(prepared.Status==RoomActionStatus.Accepted&&Expired(proof.IssuedAt,clock.GetTimestamp()))return (RoomActionStatus.ExpiredInput,null);
+        return prepared;
+    }
+    internal RoomActionReply OpenDesktopSelection(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] selectedIds,Func<bool>? permitted=null)
+    {
+        if(proof.Key!=13||selectedIds is null)return new(RoomActionStatus.NotOperable);
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof,selectedIds);
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        var result=RoomActionStatus.Accepted;
+        foreach(var target in prepared.Targets!){
+            if(permitted?.Invoke()==false)return new(RoomActionStatus.Cancelled);
+            try{launch(target);}
+            catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+            {result=RoomActionStatus.LaunchFailed;}
+        }
+        return new(result);
+    }
+    internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        // File command proofs must never fall through to application launch.
+        if(proof.ContextMenu||proof.Key is 46 or 113 or 67 or 88 or 86 or 93 or 121)return new(RoomActionStatus.NotOperable);
+        var prepared=PrepareDesktopTarget(connection,peer,session,proof);
         if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
         if(Expired(proof.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
         try{if(prepared.Target is not null)launch(prepared.Target);return new(RoomActionStatus.Accepted);}

@@ -11,6 +11,18 @@ internal static class NativePointerDeliveryChecks
         LivelyMessageRoomNativePointer Packet(string kind,long gesture=1,int x=300)=>new(){
             RuntimeGeneration=1,SessionId=session,Revision=1,GeometryVersion=1,GestureId=gesture,IssuedAt=0,InputHandle=42,
             Kind=kind,OriginX=100,OriginY=200,PixelWidth=1000,PixelHeight=1000,Dpi=144,X=x,Y=400,Modifiers=4};
+        await Check("official desktop keys stay on the physical keyboard path",()=>{
+            foreach(var key in new[]{13,32,46,113,67,88,86,93,121}){
+                var raw=Packet("down");raw.Key=key;raw.SampleKeyboard=true;raw.Consumer="official.desktop";raw.Button="desktop-"+new string('a',64);raw.EntryId="desktop.scan/"+raw.Button;
+                var value=new DextNativePointerPacket(raw);
+                Require(value.UsesOfficialKeyboard,"official desktop keyboard treated as author input");
+                Require(DextNativePointerPacket.IsOfficialConsumer("official.desktop"),"desktop mouse receipt is not official");
+            }
+            var paste=Packet("down");paste.Key=86;paste.SampleKeyboard=true;paste.Consumer="official.desktop";paste.Button="desktop.paste";paste.EntryId="desktop.scan/desktop.paste";
+            Require(new DextNativePointerPacket(paste).UsesOfficialKeyboard,"empty desktop paste lost physical input");
+            foreach(var key in new[]{67,88,113,93,121})Require(!DextNativePointerPacket.IsDesktopKeyTarget(key,"official.desktop","desktop.paste"),"file command admitted on paste control");
+            Require(!DextNativePointerPacket.IsOfficialConsumer("scene"),"author input bypassed dispatch");return Task.CompletedTask;
+        });
         await Check("pointer IPC preserves private DOWN scope and native metrics",()=>{
             var p=RuntimeMessageChecks.Roundtrip(Packet("down")) as LivelyMessageRoomNativePointer;
             Require(p!=null&&p.GestureId==1&&p.InputHandle==42&&p.Dpi==144&&p.OriginX==100&&p.X==300,"private pointer roundtrip");return Task.CompletedTask;

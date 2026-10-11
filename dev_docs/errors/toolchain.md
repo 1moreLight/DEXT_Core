@@ -572,3 +572,18 @@ npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在
 
 ## 2026-10-11 普通build输出覆盖自包含候选后无法就绪
 现象：混合副本进程存在但无新日志、RPC超时；runtimeconfig从includedFrameworks变为frameworks。精确结束本轮失败进程后恢复原Core。处理：全新目录build-v3-release.ps1，清单核对后真实RPC启动/正常退出通过，四项数据哈希不变。结论限于打包方式差异，未追到混合副本具体初始化阻塞点。后续禁止覆盖混用；测试finally需保证失败停止不会静默跳过恢复。
+#320补记（2026-10-11）：输入测试插入脚本再次因PowerShell双引号字符串中反斜杠转义引号解析失败，未执行写入；改为单引号here-string后插入并确认预期编译失败/实现后四组通过。后续源码片段统一here-string。
+
+## #330 个人编辑夹具间歇原子发布失败（2026-10-11，未定位根因）
+clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish/SetFileInformationByHandle报Win32 5拒绝访问；随后完整21/21。补新剪切断言后的运行又在旧drop placement存储返回storageUnavailable，20/21；保留clipboard-copy-core-storage-failure.log，同一二进制仅复查一次21/21于clipboard-copy-core-recheck.log。TEMP为D盘专用build-env/temp，每夹具独立GUID。没有证据认定杀软或其他进程，不通过放松文件共享/发布规则掩盖它；下次复现需保留确切路径与错误原因。绿色重跑不代表此问题已修复。本轮复制/剪切新断言在20/21运行中也通过。
+
+2026-10-11 #330续：粘贴接线个人编辑组20/21，新增Ctrl+V证明断言通过；旧explicit action检查期望accepted而实际storageUnavailable。证据.build/paste-core-green.log，未修改存储生产逻辑、未重跑掩盖该失败，根因保持未定。
+
+## #332 C# switch复制分支的变量作用域（2026-10-11）
+现象：独立Core类/协议测试通过，完整WPF Core编译报CS0128/CS0170。desktopDelete和desktopPaste的case共享switch作用域，都声明var pasted。
+修复：新回收分支使用recycled并保持回执赋值一致，重新完整Release成功；失败日志desktop-shell-actions-build-env/recycle-build-failed.log保留。复制case时使用独立变量或独立花括号；不能用链接少量Core类的测试代替产品构建。
+同轮测试修正：DesktopShellTransfer.RunStaAsync返回专用DesktopTransferResult，回收站还原夹具的回调不能return bool；改成空结果后取得功能失败断言，再实际实现。文本替换断言未命中时保留原文件，精确读取后替换，并在PowerShell检查Python退出码再继续构建。
+
+## #334 Windows Python默认GBK不能用于UTF-8源码（2026-10-11）
+
+菜单键计划/用例编辑脚本使用Path.read_text()默认编码，读取含中文的生产源码时UnicodeDecodeError；先前TODO和测试文件已写入，后续实现/测试未运行。按退出码止步，先git diff核对已写范围，再对所有read_text/write_text指定encoding='utf-8'后继续，避免重复追加测试或错误宣称RED已跑。生产源码失败点未写入；后续实际失败断言和GREEN均有日志。
