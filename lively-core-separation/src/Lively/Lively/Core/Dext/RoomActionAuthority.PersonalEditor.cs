@@ -19,6 +19,7 @@ public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", 
 
 internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
 internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator,RoomDesktopView? Desktop=null);
+internal sealed record RoomDesktopMenuScope(string ContextId,string DeskId);
 internal sealed record RoomPresentationReply(RoomActionStatus Status,RoomPresentationSnapshot? Presentation=null);
 
 internal sealed partial class RoomActionAuthority
@@ -339,6 +340,20 @@ internal sealed partial class RoomActionAuthority
     }
     internal void ClearDesktopPresentation() { Volatile.Write(ref desktopPresentation,null); Volatile.Write(ref desktopProgress,null); }
 
+    internal RoomDesktopMenuScope? CaptureDesktopMenuScope(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    {
+        // An offer is only a hit-test hint, never permission to execute. The
+        // actual menu still calls CheckDesktopDrop against current personal data.
+        if(gateway.ReadActionContext(connection,peer,session,out var context)!=RoomProtocolStatus.Accepted ||
+            context!.Role!=RoomClientRole.DesktopPlayer || context.Snapshot.Revision!=revision)return null;
+        var snapshot=context.Snapshot;
+        var desktop=Volatile.Read(ref desktopPresentation);
+        if(desktop is null || desktop.Session!=session || desktop.Room!=context.Installation.RoomId ||
+            desktop.Stamp!=context.Installation.InstallationStamp || snapshot.CurrentDeskId!=desktop.View.DeskId ||
+            !snapshot.IsActive || snapshot.TransitionId is not null || snapshot.Lifecycle.Stage!=RoomLifecycleStage.Desktop ||
+            snapshot.Lifecycle.Locked || snapshot.Lifecycle.PlaybackPaused)return null;
+        return new(desktop.View.ContextId,desktop.View.DeskId);
+    }
     internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)
     {
         var initial=gateway.ReadActionContext(connection,peer,session,out var early);

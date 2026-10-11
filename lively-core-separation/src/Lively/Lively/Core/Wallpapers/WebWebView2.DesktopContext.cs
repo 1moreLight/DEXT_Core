@@ -24,8 +24,8 @@ public partial class WebWebView2
         var viewport=ReadNativeViewport();if(viewport is null)return null;
         var regions=a.Input.CaptureContextGeometry(viewport);
         if(regions is null)return null;
-        var view=a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision).Presentation?.Desktop;
-        var blankAllowed=view is not null&&a.Bridge.NativeCheckDesktopDrop(a.Actions,state.Session,state.Revision,view.ContextId,view.DeskId)==RoomActionStatus.Accepted;
+        var view=a.Bridge.CaptureDesktopMenuScope(a.Actions,state.Session,state.Revision);
+        var blankAllowed=view is not null;
         if(!blankAllowed&&!regions.Any(value=>value.Consumer=="official.desktop"&&value.Button.StartsWith("desktop-",StringComparison.Ordinal)))return null;
         bool blankDown=false;
         long sequence=0;

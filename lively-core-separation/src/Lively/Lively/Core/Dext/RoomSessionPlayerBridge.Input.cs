@@ -171,6 +171,8 @@ internal sealed partial class RoomSessionPlayerBridge
         disposed ? RoomActionStatus.StaleSession : actions.CheckDesktopSurface(connectionId, peer, session, revision);
     internal RoomActionStatus NativeCheckDesktopDrop(RoomActionAuthority actions, Guid session, long revision, string contextId, string deskId) =>
         disposed ? RoomActionStatus.StaleSession : actions.CheckDesktopDrop(connectionId, peer, session, revision, contextId, deskId);
+    internal RoomDesktopMenuScope? CaptureDesktopMenuScope(RoomActionAuthority actions,Guid session,long revision) =>
+        disposed?null:actions.CaptureDesktopMenuScope(connectionId,peer,session,revision);
     internal RoomPresentationReply NativeReadPresentation(RoomActionAuthority actions,Guid session,long revision,string? desktopContextId=null) =>
         disposed?new(RoomActionStatus.StaleSession):actions.ReadPresentation(connectionId,peer,session,revision,desktopContextId);
 

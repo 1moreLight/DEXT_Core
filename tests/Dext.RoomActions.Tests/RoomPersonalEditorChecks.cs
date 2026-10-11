@@ -8,6 +8,15 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("context polling does not read private file but dispatch still rechecks it",()=>{
+   using var f=new ActionFixture();f.Store.SetDesktopSync(Room,"home",true,Array.Empty<string>());
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new("poll","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   using(var held=new FileStream(Path.Combine(f.PersonalPath,"personal.json"),FileMode.Open,FileAccess.ReadWrite,FileShare.None)){
+    Eq("poll",f.Actions.CaptureDesktopMenuScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision)?.ContextId);
+    Eq(RoomActionStatus.StorageUnavailable,f.Actions.CheckDesktopDrop(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,"poll","home"));
+   }
+   f.Actions.ClearDesktopPresentation();Eq<RoomDesktopMenuScope?>(null,f.Actions.CaptureDesktopMenuScope(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision));
+  });
   check("synced desktop file layout persists and disabled sync rejects movement",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('a',64);
    f.Store.SetDesktopSync(Room,"home",true,new[]{id});
