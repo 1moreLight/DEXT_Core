@@ -574,3 +574,5 @@ npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在
 
 ## #330 个人编辑夹具间歇原子发布失败（2026-10-11，未定位根因）
 clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish/SetFileInformationByHandle报Win32 5拒绝访问；随后完整21/21。补新剪切断言后的运行又在旧drop placement存储返回storageUnavailable，20/21；保留clipboard-copy-core-storage-failure.log，同一二进制仅复查一次21/21于clipboard-copy-core-recheck.log。TEMP为D盘专用build-env/temp，每夹具独立GUID。没有证据认定杀软或其他进程，不通过放松文件共享/发布规则掩盖它；下次复现需保留确切路径与错误原因。绿色重跑不代表此问题已修复。本轮复制/剪切新断言在20/21运行中也通过。
+
+2026-10-11 #330续：粘贴接线个人编辑组20/21，新增Ctrl+V证明断言通过；旧explicit action检查期望accepted而实际storageUnavailable。证据.build/paste-core-green.log，未修改存储生产逻辑、未重跑掩盖该失败，根因保持未定。

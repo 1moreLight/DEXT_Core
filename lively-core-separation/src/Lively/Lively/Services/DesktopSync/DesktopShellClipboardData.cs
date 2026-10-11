@@ -38,7 +38,7 @@ internal static class DesktopShellClipboardData
     internal static string[] RemainingAfterMove(DesktopClipboardSnapshot snapshot,DesktopTransferResult result)
     {
         if(snapshot.Effect!=DesktopDropEffect.Move)return snapshot.Files.ToArray();
-        var moved=result.Items.Where(item=>item.Status=="completed").Select(item=>Path.GetFullPath(item.Source))
+        var moved=result.Items.Where(item=>item.Status=="completed"||item.Status=="unchanged"&&item.HResult>=0&&string.Equals(item.Source,item.Destination,StringComparison.OrdinalIgnoreCase)).Select(item=>Path.GetFullPath(item.Source))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         return snapshot.Files.Where(path=>!moved.Contains(Path.GetFullPath(path))).ToArray();
     }

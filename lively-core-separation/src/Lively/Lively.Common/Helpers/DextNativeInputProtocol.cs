@@ -11,7 +11,7 @@ namespace Lively.Common.Helpers
     public static class DextNativeInputProtocol
     {
         // Shared by both Player request admission and response delivery.
-        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop" || method == "desktopRename" || method == "desktopOpen" || method == "desktopCopy" || method == "desktopCut";
+        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop" || method == "desktopRename" || method == "desktopOpen" || method == "desktopCopy" || method == "desktopCut" || method == "desktopPaste";
         private static readonly string[] IdentityFields={"type","protocolVersion","requestId","method","runtimeGeneration","sessionId","revision"};
         // Only the official top document reaches this parser. It can request
         // consumption of native facts, never create a proof or name a target path.
@@ -73,6 +73,7 @@ namespace Lively.Common.Helpers
                         if(ids.Any(id=>!Id(id,80)||!id.StartsWith("desktop-",StringComparison.Ordinal)) || ids.Distinct(StringComparer.Ordinal).Count()!=ids.Length || !ids.Contains(Text(o["button"]),StringComparer.Ordinal))return null;
                         request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.SelectedIds=ids;
                         request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
+                    case "desktopPaste":
                     case "desktopRename":
                         if(Text(o["consumer"])!="official.desktop" || Text(o["button"])?.StartsWith("desktop-",StringComparison.Ordinal)!=true)return null;
                         goto case "activate";

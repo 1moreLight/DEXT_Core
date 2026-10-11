@@ -344,7 +344,7 @@
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
-    let dropRunning=false;
+    let dropRunning=false,pasteRunning=false;
     function dropEligible(event){
       return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
         snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
@@ -364,6 +364,21 @@
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopPaste(value){
+      if(pasteRunning)return;
+      const identity=scope(),observedCutSequence=cutSequence;pasteRunning=true;dropNotice('正在粘贴文件…');
+      native.request('desktopPaste',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unchanged=items.filter(item=>item.status==='unchanged').length;
+          dropNotice(reply.data?.reason==='noFiles'?'剪贴板没有可粘贴的文件。':reply.status==='accepted'?`已粘贴 ${completed} 项，保留原位置 ${unchanged} 项，未完成 ${items.length-completed-unchanged} 项。`:
+            reply.status==='cancelled'?`粘贴已取消，已完成 ${completed} 项。`:'未能完成粘贴，请检查桌面文件后重试。');
+        },()=>{if(!disposed)dropNotice('未收到粘贴结果，请先检查桌面文件，避免重复粘贴。');}).finally(()=>{pasteRunning=false;});
     }
     function desktopDrop(event){
       if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
@@ -546,6 +561,7 @@
           if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){
             completion=null;desktopClick=null;
             const selected=desktopSelection.read().selectedIds,key=value.desktopInput.key,identity=scope();
+            if(value.desktopInput.modifiers===1&&key===86)desktopPaste(value);
             if(value.desktopInput.modifiers===1&&key!==86&&selected.includes(value.button)){
               native.request(key===88?'desktopCut':'desktopCopy',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
                 .then(reply=>{

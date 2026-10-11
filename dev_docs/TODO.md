@@ -2371,3 +2371,9 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 2026-10-11 第03步复制/剪切接线增量：Ctrl+C/X/V由Core按下时Ctrl+当前official.desktop文件焦点产生配对证明，普通字母拒绝；Player官方物理采样识别这些按键。复制/剪切通过desktopCopy/desktopCut只提交当前所选ID，Core校验整组并消费证明后调用DesktopShellClipboard，路径留Core。剪切变淡采用filter:opacity(.45)与切页内联opacity相乘；presentationRead附带剪贴板序列元数据，用户后来复制新内容则恢复图标，避免迟到旧读取清除刚完成的剪切。Ctrl+V仅原生证明已接，页面暂不派发粘贴，不能称粘贴已可用。
 证据：快捷键用例先失败后6/6 sampled/direct通过（clipboard-keys-red/green.log）；Player pointer18项、原生消息79项、宿主114项通过，含保持多选/剪切状态/外部新剪贴板恢复。Core当前所选目标解析检查通过，个人编辑组先一次21/21，补切目标后一次20/21（旧drop placement返回storageUnavailable），保存失败为clipboard-copy-core-storage-failure.log；相同构建仅复查一次21/21（clipboard-copy-core-recheck.log）。第一次RED另有旧fixture原子发布Win32拒绝访问，未改存储实现、未宣称该间歇问题修复。F2原6组合通过。完整Core/Player/Watchdog Release成功（desktop-shell-actions-build-env/clipboard-copy-build.log）；start.ps1因现有Debug Core26668产品身份占用退出1，未替换运行版、未启动额外配置器。
 剩余：Ctrl+V粘贴/同目录副本/成功项完成回执、空同步Desk的粘贴焦点入口、实机Explorer双向互通及触控。接粘贴时需核对原生桌面也收到Ctrl+V是否引起双执行，不能仅凭RawInput观察与消息用例认定实机无重复。系统剪贴板未在本轮自动测试中读写；实际复制/剪切与视觉效果仍待统一验收。03保持开做，实施2/6≈33%，路线2/4=50%。
+
+2026-10-11 第03步粘贴执行开做：同目录复制需生成副本，原拖放同目录仍保持不操作；同目录剪切不删除源。给粘贴增加独立Shell入口，同目录副本使用FOF_RENAMEONCOLLISION并只作用于该组，其余冲突保留Shell确认。先真实临时文件/文件夹验证，再接Ctrl+V及剪贴板完成状态。
+
+2026-10-11 第03步粘贴执行增量：Ctrl+V私有命令贯通Core原生证明、真实剪贴板读取、Shell粘贴与逐项反馈。同目录复制单独使用FOF_RENAMEONCOLLISION生成副本，普通目标冲突继续Shell确认；同目录剪切保留源，并清除已无须移动的对应剪切引用。部分失败保留真实成功项，完成剪切更新仍核对原剪贴板序列；暂停和同会话修订保留在途回执。
+证据：实际临时文件/文件夹粘贴先红后绿6/6，剪贴板独立内存与完成状态11/11，原拖放回归通过，宿主114/114、私有消息79/79；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-paste-build.log）。Core新增Ctrl+V目标检查通过，但个人编辑整组20/21，旧explicit action检查再次出现storageUnavailable，保留paste-core-green.log并继续记为#330未解决；不将该组报告全绿。
+运行核对：start.ps1仍因Debug Core26668占用mutex/pipe退出1；未替换运行桌面、未新增配置器。真实全局剪贴板、Explorer双向互通、原生快捷键是否双执行及触控未验收。空同步Desk粘贴入口仍待补，03继续开做，当前工作包2/6≈33%，路线2/4=50%。

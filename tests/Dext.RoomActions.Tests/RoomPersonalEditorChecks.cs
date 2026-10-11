@@ -56,6 +56,11 @@ static partial class RoomActionChecks
    input.Key(viewport,88,true,false,true,1);input.Key(viewport,88,false,false,true,0);
    var cut=f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,input.State!.Completed!,ids,true);
    Eq(RoomActionStatus.Accepted,cut.Status);Eq(2,cut.Targets!.Length);Eq(3,f.Launched.Count);
+   input.Key(viewport,86,true,false,true,1);input.Key(viewport,86,false,false,true,0);
+   var pasteProof=input.State!.Completed!;
+   Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,pasteProof));
+   Eq(true,pasteProof.IsConsumed);Eq(3,f.Launched.Count);
+
 
 
 

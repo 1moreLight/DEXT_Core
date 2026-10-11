@@ -27,9 +27,11 @@ internal static class ClipboardChecks
         var partial=new DesktopTransferResult(new[]{new DesktopTransferItem(files[0],@"D:\target\one.txt","completed",0),new DesktopTransferItem(files[1],null,"failed",-1)},true,-1);
         Check(DesktopShellClipboardData.RemainingAfterMove(snapshot,partial).SequenceEqual(files.Skip(1)),"partial move retains failed and unprocessed clipboard paths");
         Check(DesktopShellClipboardData.RemainingAfterMove(snapshot with{Effect=DesktopDropEffect.Copy},partial).SequenceEqual(files),"copy never removes source paths from clipboard");
+        var noMove=new DesktopTransferResult(new[]{new DesktopTransferItem(files[0],files[0],"unchanged",0)},false,0);
+        Check(DesktopShellClipboardData.RemainingAfterMove(snapshot,noMove).SequenceEqual(files.Skip(1)),"same-folder completed no-op ends cut state without deleting the original");
         var invalid=false;try{DesktopShellClipboardData.EncodeFiles(new[]{"relative.txt"});}catch(ArgumentException){invalid=true;}
         Check(invalid,"relative paths cannot become native file clipboard data");
-        Console.WriteLine("10/10 clipboard data checks passed; system clipboard untouched");
+        Console.WriteLine("11/11 clipboard data checks passed; system clipboard untouched");
     }
     [DllImport("kernel32.dll")] private static extern IntPtr GlobalAlloc(uint flags,nuint bytes);
     [DllImport("kernel32.dll")] private static extern IntPtr GlobalLock(IntPtr memory);

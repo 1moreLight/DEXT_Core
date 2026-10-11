@@ -152,6 +152,11 @@ internal sealed partial class RoomActionAuthority
         if(proof.Key!=(cut?88:67)||proof.Modifiers!=1||ids is null)return (RoomActionStatus.NotOperable,null);
         return PrepareDesktopTargets(connection,peer,session,proof,ids);
     }
+    internal RoomActionStatus AuthorizeDesktopPaste(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        if(proof.Key!=86||proof.Modifiers!=1)return RoomActionStatus.NotOperable;
+        return PrepareDesktopTargets(connection,peer,session,proof).Status;
+    }
     private (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopTarget(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
         var prepared=PrepareDesktopTargets(connection,peer,session,proof);

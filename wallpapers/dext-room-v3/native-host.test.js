@@ -237,15 +237,17 @@ test('desktop activation preserves native key modifiers and system double-click 
  receive({data:value});assert.deepEqual(events,[value]);host.dispose();
 });
 test('native rename waits through its dialog pause and revision until receipt',async()=>{
- const f=fixture();
- try{
-  const result=f.host.request('desktopRename',{consumer:'official.desktop',button:'desktop-a',geometryVersion:1,inputSequence:1}).catch(e=>({error:e.code}));
-  await flush();assert.equal(f.sent.length,1);
-  f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});await f.advance(6000);
-  assert.equal(f.host.readDiagnostics().pendingRequests,1);
-  f.answer(f.sent[0],{inputSequence:1,inputConsumed:true,data:{renamed:true}});
-  assert.equal((await result).data.renamed,true);
- }finally{f.host.dispose();}
+ for(const method of ['desktopRename','desktopPaste']){
+  const f=fixture();
+  try{
+   const result=f.host.request(method,{consumer:'official.desktop',button:'desktop-a',geometryVersion:1,inputSequence:1}).catch(e=>({error:e.code}));
+   await flush();assert.equal(f.sent.length,1);
+   f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});await f.advance(6000);
+   assert.equal(f.host.readDiagnostics().pendingRequests,1);
+   f.answer(f.sent[0],{inputSequence:1,inputConsumed:true,data:{completed:1}});
+   assert.equal((await result).data.completed,1);
+  }finally{f.host.dispose();}
+ }
 });
 
 test('desktop open sends selected IDs and retains the native action receipt across revision',async()=>{

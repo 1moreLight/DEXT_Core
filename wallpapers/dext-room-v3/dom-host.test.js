@@ -752,7 +752,7 @@ test('Ctrl copy and cut preserve selection and cut styling follows clipboard seq
  const desktop={contextId:'scan1',deskId:'home',items:ids.map((id,slot)=>({id,name:'Clipboard '+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
  const f=fixture({setTimeout:(cb,ms)=>{timers.set(++timer,{cb,ms});return timer;},clearTimeout:id=>timers.delete(id),
   request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',data:{clipboardSequence},presentation:{revision:1,skins:{},locator:null,desktop}}):
-   ['desktopCopy','desktopCut'].includes(method)?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence}}):undefined});
+   ['desktopCopy','desktopCut'].includes(method)?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence}}):method==='desktopPaste'?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence,items:[{status:'unchanged'}]}}):undefined});
  try{
   await f.host.ready;await flush();let sequence=0;
   function press(index,key,modifiers){const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===ids[index]);
@@ -763,6 +763,12 @@ test('Ctrl copy and cut preserve selection and cut styling follows clipboard seq
   press(1,88,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
   const icons=()=>f.container.children[0].children.filter(n=>n.attrs['aria-label']?.startsWith('Clipboard '));
   assert.ok(icons().every(n=>n.dataset.cut==='true'));
+  press(1,86,1);await flush();
+  assert.equal(f.calls.filter(c=>c.method==='desktopPaste').length,1);
+  assert.equal(f.calls.filter(c=>c.method==='desktopPaste')[0].params.selectedIds,undefined);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.ok(icons().every(n=>n.dataset.cut==='false'));
+  press(1,88,1);await flush();assert.ok(icons().every(n=>n.dataset.cut==='true'));
   clipboardSequence++;for(const t of [...timers.values()].filter(t=>t.ms===750))t.cb();await flush();
   assert.ok(icons().every(n=>n.dataset.cut==='false'));
  }finally{f.host.dispose();}
