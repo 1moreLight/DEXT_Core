@@ -1,5 +1,6 @@
 # v3 当前交接入口（2026-10-11）
 
+> 2026-10-11最新：桌面同步路线实施3/4=75%。004在独立分支feat/DESK-SYNC-004-shell-actions（1f13850）完成实施与候选交接，尚未合并到本003分支。003诊断源de16333，干净候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-clean-20261011，654文件/16宿主核对、真实Core启动与正常退出通过；不包含004新增操作及F2修复，不能当作两分支集成包。唯一下一项是003实际Explorer跨窗口拖入与五项验收，当前Windows工具拒绝窗口外拖动，暂不重复切Core。最后恢复主目录Debug Core28084、空session；未新增配置器。下面的旧PID、“004下一项”和旧候选段为历史记录，不代表当前运行或最新计划。
 计划只认 [ROADMAP](ROADMAP.md)，历史过程见 [V3_DELIVERY](V3_DELIVERY.md)。
 
 ## 当前开发入口

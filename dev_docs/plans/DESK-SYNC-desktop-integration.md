@@ -31,9 +31,9 @@
 | 顺序 | 工作包 | 状态 | 独立步骤 |
 |---|---|---|---|
 | 1 | DESK-SYNC-001 一键识别并显示真实桌面 | 做完（待验收） | [01-import](DESK-SYNC/01-import.md) |
-| 2 | DESK-SYNC-002 文件变化自动同步 | 开做 | [02-watch](DESK-SYNC/02-watch.md) |
-| 3 | DESK-SYNC-003 从资源管理器拖入 | 待做 | [03-drop](DESK-SYNC/03-drop.md) |
-| 4 | DESK-SYNC-004 原生文件常用操作 | 待做 | [04-shell-actions](DESK-SYNC/04-shell-actions.md) |
+| 2 | DESK-SYNC-002 文件变化自动同步 | 做完（待验收） | [02-watch](DESK-SYNC/02-watch.md) |
+| 3 | DESK-SYNC-003 从资源管理器拖入 | 开做（实机0/5待补证） | [03-drop](DESK-SYNC/03-drop.md) |
+| 4 | DESK-SYNC-004 原生文件常用操作 | 做完（独立分支1f13850，待验收） | [04-shell-actions](DESK-SYNC/04-shell-actions.md) |
 
 每包开工建立自己的 worktree/分支和 acceptance，步骤改“开做”；自测与交接完成后记录“做完”，用户验收/合并另记，不能用代码提交代替验收。拖入能力先覆盖资源管理器真实文件；浏览器/聊天软件虚拟文件另列扩展。
 
