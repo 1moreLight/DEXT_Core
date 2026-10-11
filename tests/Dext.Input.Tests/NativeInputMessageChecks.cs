@@ -16,9 +16,17 @@ internal static class NativeInputMessageChecks
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
         Check("paused Player permits desktop metadata and drop receipts but not input actions",()=>{
-            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
+            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
             foreach(var method in new[]{"activate","geometry","authorInput","layoutSave","storageSet"})Require(!DextNativeInputProtocol.AllowsWhileSuspended(method));
         });        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
+        Check("desktop rename carries only a native file proof and survives wire serialization",()=>{
+            var r=Request();r["method"]="desktopRename";r.Remove("viewport");r.Remove("buttons");
+            r["consumer"]="official.desktop";r["button"]="desktop-"+new string('a',64);r["inputSequence"]=7;
+            var parsed=Parse(r);Require(parsed?.Method=="desktopRename"&&parsed.InputSequence==7);
+            Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.Button==(string?)r["button"]);
+            r["consumer"]="scene";Require(Parse(r)==null);
+            r["consumer"]="official.desktop";r["button"]="desktop.page.next";Require(Parse(r)==null);
+        });
         Check("desktop drop carries current scope and normalized landing point without JSON paths",()=>{
             var parsed=Parse(Drop());Require(parsed?.DesktopDrop?.DeskId=="home"&&parsed.DesktopDrop.X==.25&&parsed.DesktopDrop.Y==.5&&parsed.DesktopDrop.Modifiers==1&&parsed.DesktopDrop.Files==null);
             parsed!.DesktopDrop.Files=new[]{@"C:\fixture\one.txt"};var wire=RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest;

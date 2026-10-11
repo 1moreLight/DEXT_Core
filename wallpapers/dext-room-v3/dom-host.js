@@ -539,6 +539,15 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===114){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.length===1&&selected[0]===value.button){
+              native.request('desktopRename',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+                .then(reply=>consumeReceipt(reply),()=>diagnose('renameUnavailable'));
+            }
+            return true;
+          }
           if(value.consumer==='official.desktop'&&!value.button.startsWith('desktop.page.')&&!desktopActivation(value)){completion=null;return true;}
           const own={...completion,identity:scope(),due:['official','official.desktop'].includes(value.consumer)};pendingDefault=own;
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);

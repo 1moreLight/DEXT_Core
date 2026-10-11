@@ -236,3 +236,14 @@ test('desktop activation preserves native key modifiers and system double-click 
   desktopInput:{key:0,modifiers:3,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
  receive({data:value});assert.deepEqual(events,[value]);host.dispose();
 });
+test('native rename waits through its dialog pause and revision until receipt',async()=>{
+ const f=fixture();
+ try{
+  const result=f.host.request('desktopRename',{consumer:'official.desktop',button:'desktop-a',geometryVersion:1,inputSequence:1}).catch(e=>({error:e.code}));
+  await flush();assert.equal(f.sent.length,1);
+  f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});await f.advance(6000);
+  assert.equal(f.host.readDiagnostics().pendingRequests,1);
+  f.answer(f.sent[0],{inputSequence:1,inputConsumed:true,data:{renamed:true}});
+  assert.equal((await result).data.renamed,true);
+ }finally{f.host.dispose();}
+});

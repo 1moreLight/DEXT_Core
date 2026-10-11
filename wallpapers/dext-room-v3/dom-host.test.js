@@ -723,6 +723,8 @@ test('desktop native single click selects, double click opens, Ctrl extends sele
   assert.deepEqual(f.host.readDiagnostics().desktopSelection,beforeF2,'F2 must preserve multi-selection');
   assert.equal(f.calls.filter(c=>c.method==='activate').length,1,'F2 must not open a file');
   click(1,1000,0,13);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,2);
+  click(1,1100,0,114);await flush();
+  assert.equal(f.calls.filter(c=>c.method==='desktopRename').length,1);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
  }finally{f.host.dispose();}
 });

@@ -10,6 +10,18 @@ internal sealed record RoomNativeActionReply(RoomActionStatus Status,long InputS
 
 internal sealed partial class RoomSessionPlayerBridge
 {
+    internal (RoomNativeActionReply Reply, PersonalTarget? Target) PrepareNativeRename(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopRename(connectionId,peer,session,proof);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Target);
+    }
     internal RoomNativeActionReply ActivateNative(RoomActionAuthority actions,RoomNativeInputAuthority native,
         long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
     {

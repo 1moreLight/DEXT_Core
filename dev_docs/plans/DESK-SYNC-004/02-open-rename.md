@@ -17,3 +17,7 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 2026-10-11 F2选择副作用已修复：命令键在选择操作前分流并清空待双击，不再把多选缩成单选，不触发文件打开。新增实际宿主断言先失败（少一个选中项）再通过，相关111项通过，日志.build/f2-selection-red.log与f2-selection-green.log。start.ps1 CoreOnly确认原Core52420，不启动配置器、不部署新宿主。改名私有命令与窗口仍待接，02开做，1/6≈17%，整体50%。
 
 2026-10-11 第02步Core改名目标解析已实现：PrepareDesktopRename要求F2原生证明，复用当前会话/安装/同步Desk/扫描ID/原生消费校验，返回私有PersonalTarget且不启动文件；InvokeDesktop拒绝F2误走打开入口。新增检查从19/20失败到20/20通过，覆盖鼠标证明拒绝、F2目标解析、消费后不能重放、无应用启动。完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/rename-prepare-build.log）；start.ps1 CoreOnly仍复用原Core52420。未部署新版本。私有IPC、改名窗口与Shell执行尚未接通；02继续开做，当前包1/6≈17%，整体2/4=50%。
+
+2026-10-11 第02步F2完整接线增量：官方宿主仅当前单选与原生焦点一致时发desktopRename，私有协议/Player序列化/Core桥解析并消费F2证明；原生WPF窗口Enter提交、Esc/取消关闭，文件默认选中不含扩展名，目录选全名，重名留在窗口提示。IFileOperation在后台STA执行，当前Room/同步Desk失效取消，执行期间关闭先请求取消并等待结果；与拖入共用串行门。路径仅留Core，成功由既有目录监听刷新。暂停/修订保留已发改名回执，替换会话取消。
+证据：DOM与native-host新增用例先失败后112/112通过（rename-wire-red/green.log）；原生协议78/78通过（rename-messages.log）；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/rename-dialog-build.log）。尚未实机操作改名窗口，不能以构建替代焦点/触控验收；多选打开细节仍待，第02步保持开做，1/6≈17%，整体50%。
+启动核对：start.ps1 CoreOnly发现运行Core已变为主目录Debug路径PID26668，非先前PID52420；mutex/pipe被该实例占用，脚本拒绝启动目标候选。未停止该进程，未启动配置器或部署新宿主；后续先核对运行身份再安排集中验收。
