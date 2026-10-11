@@ -6,3 +6,9 @@
 3. 做完：构建并恢复当前Room、提交与简短人工验收。
 
 实现/构建部署3/3=100%，用户验收待做。17/17输入所有权，真实文件/背景菜单交替5次Esc通过；完整Release及start.ps1成功。Core27992，同目录r5，旧文件备份主项目.build/before-background-menu；源53c1d48。
+
+## 2026-10-12 增量
+4. 做完：[轮询优化](DESK-SYNC-005-04-polling.md)。
+5. 做完：[菜单命令与退出复核](DESK-SYNC-005-05-command-review.md)。
+6. 做完：[背景粘贴](DESK-SYNC-005-06-background-paste.md)。
+当前生产源c74095b；上方27992/53c1d48为第一次部署的历史观察，最新运行身份与两项人工步骤见独立验收文件。

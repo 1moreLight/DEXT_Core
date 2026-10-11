@@ -1,8 +1,8 @@
 # 当前控制台覆盖（2026-10-11 收尾）
 
-- 主线d498f04；v3DesktopFlow包含桌面同步、编辑迁移及融合Dock实现。
+- 主线71d4c33（文件右键已获用户验收合入）；v3DesktopFlow包含桌面同步、编辑迁移及融合Dock实现。
 - 本轮P8-014当前证据收尾3/3做完；INTEGRATION-002发布入口3/3做完。
-- **唯一下一项：DESK-SYNC-005桌面空白右键菜单（开做）**，见[V3_CURRENT](V3_CURRENT.md)及[三组短清单](acceptance/V3-INTEGRATION-002-short.md)。
+- **唯一下一项：DESK-SYNC-005桌面空白右键菜单与粘贴（待验收）**，见[V3_CURRENT](V3_CURRENT.md)及[三组短清单](acceptance/V3-INTEGRATION-002-short.md)。
 - 下方旧控制台和带日期的“下一项”为历史过程，不再用于派发当前任务。多屏/工坊/安装器仍排队。
 
 ---
