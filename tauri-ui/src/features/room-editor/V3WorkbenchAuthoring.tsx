@@ -1,3 +1,5 @@
+import builtInSamples from "./workbench-samples.json";
+const examples:Record<string,unknown>=builtInSamples;
 import {useEffect,useState} from "react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -25,12 +27,6 @@ export function ComponentLayoutEditor(props:{room:RoomV3;onChange:(room:RoomV3)=
   <p className="mt-2 text-xs text-muted-foreground">使用 1920 × 1080 设计坐标，影响所有引用该组件的 Desk。个人已保存位置仍优先。</p>
  </details>;
 }
-const examples:Record<string,unknown>={
- "time.read":{unixMilliseconds:Date.now()},
- "hardware.read":{cpuPercent:32,gpuPercent:19,ramPercent:48},
- "media.read":{title:"试验台示例歌曲",artist:"Dext",isPlaying:true},
- "audio.read":{volume:.5,muted:false}
-};
 const names=[["time.read","时间"],["hardware.read","硬件"],["media.read","媒体"],["audio.read","音量"]] as const;
 export function SampleJsonEditor(props:{samples:Record<string,unknown>;onChange:(samples:Record<string,unknown>)=>void;onMessage:(message:string)=>void}){
  const [cap,setCap]=useState<string>("hardware.read"),[text,setText]=useState(JSON.stringify(examples["hardware.read"],null,2));

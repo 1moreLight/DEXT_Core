@@ -4,9 +4,10 @@ const install=fs.existsSync(require('node:path').resolve(__dirname,target))?requ
 const OWNERS=new WeakMap(),EVENT_STATES=new WeakMap(),NATIVE_HANDLERS=new WeakMap();
 const SECRET='a'.repeat(64),NONCE='11111111-1111-4111-8111-111111111111';
 const request=(number=1,method='actions.activate',params={buttonId:'open'})=>JSON.stringify({type:'dext:runtime:request',apiVersion:1,instanceId:'widget.one',sessionId:NONCE,token:'route-token',requestId:'r'+number,method,params});
-function fixture(){
+function fixture(controlledDock=false){
  const events=EVENT_STATES,bags=new WeakMap(),attributes=new WeakMap(),handlers=NATIVE_HANDLERS,owners=OWNERS,sent=[];let document=null;
- class Evt{constructor(type,{trusted=false,key='',path=[],button=0}={}){events.set(this,{type,trusted,key,path,button,phase:0,currentTarget:null});Object.defineProperty(this,'isTrusted',{get(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.trusted;}});}
+ class Evt{constructor(type,{trusted=false,key='',path=[],button=0,pointerType='mouse'}={}){events.set(this,{type,trusted,key,path,button,pointerType,phase:0,currentTarget:null});Object.defineProperty(this,'isTrusted',{get(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.trusted;}});}
+  preventDefault(){events.get(this).prevented=true;}stopImmediatePropagation(){events.get(this).stopped=true;}get pointerType(){return events.get(this).pointerType;}
   get type(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.type;}get eventPhase(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.phase;}
   get currentTarget(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.currentTarget;}get key(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.key;}get button(){const s=events.get(this);if(!s)throw TypeError('Event brand');return s.button;}composedPath(){return events.get(this).path.slice();}}
  class Target{addEventListener(name,callback,options){if(!callback)return;const receiver=this==null?root:this;const capture=typeof options==='boolean'?options:!!options?.capture;
@@ -21,12 +22,12 @@ function fixture(){
  let focusCalls=0;class Html extends Element{} class Svg extends Element{} class Document extends Node{} class Window extends Target{focus(){focusCalls++;}} class Shadow extends Node{}
  for(const proto of [Html.prototype,Svg.prototype,Document.prototype,Window.prototype])for(const name of ['onclick','onmousedown','onmouseup','onkeydown','onkeyup','onerror'])Object.defineProperty(proto,name,{configurable:true,enumerable:true,get(){return handlers.get(this)?.[name]??null;},set(value){let h=handlers.get(this);if(!h){h={};handlers.set(this,h);}h[name]=typeof value==='function'?value:null;}});
  const root=new Window();document=new Document();
- Object.defineProperty(Window.prototype,'window',{configurable:true,get(){'use strict';if(this==null)return root;if(this instanceof Window)return this;throw TypeError('Window brand');}});Object.assign(root,{top:{},document,Window,Document,Node,DOMException,Function,Event:Evt,EventTarget:Target,Element,HTMLElement:Html,SVGElement:Svg,ShadowRoot:Shadow,KeyboardEvent:Evt,MouseEvent:Evt,crypto:{randomUUID:()=>NONCE},chrome:{webview:{postMessage(payload){Object.defineProperty(sent,sent.length,{value:JSON.parse(JSON.stringify(payload)),writable:true,configurable:true,enumerable:true});}}}});
+ Object.defineProperty(Window.prototype,'window',{configurable:true,get(){'use strict';if(this==null)return root;if(this instanceof Window)return this;throw TypeError('Window brand');}});Object.assign(root,{top:{},document,Window,Document,Node,DOMException,Function,Event:Evt,EventTarget:Target,Element,HTMLElement:Html,SVGElement:Svg,ShadowRoot:Shadow,KeyboardEvent:Evt,MouseEvent:Evt,PointerEvent:Evt,performance:{now:()=>0},crypto:{randomUUID:()=>NONCE},chrome:{webview:{postMessage(payload){Object.defineProperty(sent,sent.length,{value:JSON.parse(JSON.stringify(payload)),writable:true,configurable:true,enumerable:true});}}}});
  const node=new Html();let activeEvent=null;
- function invoke(target,ev,capture,phase){events.get(ev).phase=phase;events.get(ev).currentTarget=target;activeEvent=ev;for(const item of [...(bags.get(target)||[])]){if(item.removed||item.name!==ev.type||item.capture!==capture)continue;if(item.once)item.removed=true;typeof item.callback==='function'?item.callback.call(target,ev):item.callback.handleEvent.call(item.callback,ev);}
-  if(!capture){const cb=handlers.get(target)?.['on'+ev.type];if(cb)cb.call(target,ev);}}
+ function invoke(target,ev,capture,phase){events.get(ev).phase=phase;events.get(ev).currentTarget=target;activeEvent=ev;for(const item of [...(bags.get(target)||[])]){if(events.get(ev).stopped)break;if(item.removed||item.name!==ev.type||item.capture!==capture)continue;if(item.once)item.removed=true;typeof item.callback==='function'?item.callback.call(target,ev):item.callback.handleEvent.call(item.callback,ev);}
+  if(!capture&&!events.get(ev).stopped){const cb=handlers.get(target)?.['on'+ev.type];if(cb)cb.call(target,ev);}}
  function fire(target=node,type='click',options={}){const path=options.path||(target===root?[root]:target===document?[document,root]:[target,document,root]);const ev=new Evt(type,{trusted:true,...options,path});for(let i=path.length-1;i>0;i--)invoke(path[i],ev,true,1);invoke(path[0],ev,true,2);invoke(path[0],ev,false,2);for(let i=1;i<path.length;i++)invoke(path[i],ev,false,3);events.get(ev).phase=0;events.get(ev).currentTarget=null;activeEvent=null;return ev;}
- const installed=install(root,SECRET);assert.equal(installed,true,'input guardian must install into the controlled native realm');
+ const installed=install(root,SECRET,controlledDock);assert.equal(installed,true,'input guardian must install into the controlled native realm');
  const hook=root.__dextNativeInputGuardianV1,send=root.__dextNativeInputRequestV1;
  const arm=(gestureId=1,structuralVersion=1)=>hook({token:SECRET,kind:'arm',documentNonce:NONCE,gestureId,structuralVersion});
  const nativeProperty=(target,name,...args)=>Reflect.apply(handlers.get(target)?.[name],target,args);return{root,node,document,Html,Svg,Shadow,hook,send,arm,fire,sent,events,nativeProperty,focusCalls:()=>focusCalls};
@@ -140,4 +141,28 @@ test('native sampled Enter/Space receipts precede authored key callbacks',()=>{
   f.fire(f.node,'keydown',{key});f.fire(f.node,'keyup',{key});
   assert.deepEqual(f.sent.map(v=>[v.type,v.kind]),[['dext:v3-input-dispatched','down'],['dext:v3-input-dispatched','up']]);
  }
+});
+
+test('official diagnostics observe unpaired touch without authorizing an action',()=>{
+ const f=fixture();f.root.top=f.root;
+ let stopped=0;f.root.Event.prototype.stopImmediatePropagation=function(){stopped++;};
+ f.root.Event.prototype.preventDefault=function(){};
+ Object.defineProperty(f.root.Event.prototype,'pointerType',{get(){return 'touch';}});
+ assert.equal(require(target).installOfficial(f.root,SECRET,true),true);
+ const hook=f.root.__dextNativeOfficialInputDispatchV1;
+ f.fire(f.node,'pointerdown',{pointerType:'touch'});
+ f.fire(f.node,'pointerup',{pointerType:'touch'});
+ assert.deepEqual(hook({token:SECRET,kind:'diagnostics'}),{touchDown:1,touchUp:1,touchBlocked:2});
+ assert.equal(stopped,2);
+ assert.equal(f.sent.length,0);
+});
+
+test('unarmed mouse pointerdown blocks author handlers without suppressing compatibility mouse; touch still cancels',()=>{
+ const f=fixture(true);let calls=0;
+ f.node.addEventListener('pointerdown',()=>calls++);
+ const mouse=f.fire(f.node,'pointerdown',{pointerType:'mouse'});
+ assert.equal(calls,0);assert.equal(f.events.get(mouse).stopped,true);assert.notEqual(f.events.get(mouse).prevented,true);
+ const touch=f.fire(f.node,'pointerdown',{pointerType:'touch'});
+ assert.equal(calls,0);assert.equal(f.events.get(touch).prevented,true);
+ const compatibility=f.fire(f.node,'mousedown');assert.equal(f.events.get(compatibility).prevented,true);
 });

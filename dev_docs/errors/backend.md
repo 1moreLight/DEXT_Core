@@ -548,3 +548,147 @@ v2固定五类目录镜像不覆盖v3声明资源，另存不能仅换清单版�
 处理：样包按available/title/artist与level/muted呈现；四种只读能力改用CanReadData，保留活动stage/Desk、锁屏、实际playbackPaused、声明和当前安装授权。硬件源同样跟随实际暂停。动作/KV继续CanConsume。配置器授权提示按实际lifecycle暂停/锁屏判断，不把operable=false当成数据已暂停。
 证据：五项visible-data定向回归先2/5失败，修复后5/5通过；普通小窗口保持四读源/硬件，暂停/锁屏/撤权停止，动作/KV仍NotOperable。样包官方形状媒体/音量呈现检查通过，JS语法通过。临时Node检查初稿少一个闭合括号，修正夹具后通过；未据夹具语法失败判断产品失败。实机B站需Windows提供媒体会话，实际验收另记。
 本轮部署补记：Release build→start成功；同候选目录实际重新应用后安装Widget摘要与源一致，UI授权提示按真实暂停。一次真实Windows来源为media=available；具体B站标题及普通小窗口连续读数仍交用户验收，新安装权限未代用户允许。
+
+## #271 任务栏恢复完成与看护退出不是同一事实
+看护StopAsync有界返回时可能仍有恢复journal；控制器释放租约后保留recoveryPending并用原恢复API重试，确认前显示错误。看护启动失败进入重试等待时也不能每次轮询清错误。定向失败路径复现并修复，错误持续可观察。
+
+## #272 界面线程退出不能捕获自身恢复续体
+TaskbarController.Dispose在WPF线程同步等待TickAsync；StopAsync内层await可能捕获同一Dispatcher，导致界面线程等待自己。用后台任务执行最后释放，保持退出前有界等待。阻塞UI SynchronizationContext测试先失败，修复后通过；不改变鼠标或触控输入链。
+
+## #273 partial静态初始化顺序（2026-10-10）
+新增可编辑能力集合引用另一partial文件的ReadableData，测试首次构造触发TypeInitializationException。改为独立常量集合，不依赖编译文件次序；9/9定向检查通过。
+
+## #275 Dock所有权交接（2026-10-10）
+TickAsync容错吞异常且允许恢复待定，不能用其返回作为交出旧Dock所有权的证明。新增串行ReleaseAutomaticAsync明确返回旧PID租约已释放且恢复已确认；旧Player退出但恢复未确认时保留owner并重试。手动Core隐藏租约独立保留。定向18/18及实际主题Player→应用Dock交接通过。
+
+## #278 应用 Dock 与手动租约共用 Core PID（2026-10-10）
+应用栏的自动任务栏请求和用户手动隐藏同为 Core PID。ReleaseAutomaticAsync 原先只看 leasePid 相等会永久阻塞交接；自动请求撤回后，明确的 hidden 模式可以保留独立手动租约。19项控制检查含先失败后通过的同PID条件，原恢复未确认/Stop失败仍禁止交接。
+## #280 原生屏幕查询失败留下旧占位就绪（2026-10-10）
+P8-009独立审查：屏幕/DPI包装层抛错时只设置展示错误，内部上一次Ready仍true，自动任务栏策略会误认占位有效。失败必须使控制器Ready=false，外层错误也阻止就绪；下一次成功采样才恢复。新增成功→失败→恢复回归通过。保留既有注册以便重试和正常释放，不把未确认状态当作成功。
+
+## #284 Core退出与最后一个WPF窗口（2026-10-10）
+P8-010升级期间两次观察到：先正常关闭配置器，再RPC退出Core；Dock/看护/任务栏恢复日志已清理，但Core进程残留且RPC超时。dotnet-stack在残留进程上的诊断管道也已中断，未获得现场托管栈。
+Core App.xaml未设置ShutdownMode，默认OnLastWindowClose。QuitApp在RPC线程释放服务，ApplicationDockService.Dispose在Dispatcher关闭Dock窗口；若它是最后窗口，WPF会先排队关闭Dispatcher，剩余服务/显式退出还可能需要该线程。
+定向实际WPF实验读取生产App.xaml，以不可见非激活测试窗口重现同一顺序：默认模式exitBeforeCleanup=True，后续Dispatcher清理失败；设OnExplicitShutdown后相同实验通过。保留原QuitApp服务→管道→显式Shutdown顺序，不修改输入或任务栏恢复。
+依赖排除：已核对[当前NuGet commit的ServerStreamPool.Dispose](https://github.com/cyanfish/grpc-dotnet-namedpipes/blob/da307b551a9d56b62f5780e91a2d95a699f32430/GrpcDotNetNamedPipes/Internal/ServerStreamPool.cs)，它只取消监听，不是等待当前RPC完成；早期“等自己”假设不成立。真实修正版退出记录见OPS-006验收卡。
+
+## #292 原生任务已排队完成仍须响应几何/可见性撤销
+- 现象：复核发现任务点击完成后排入Dispatcher，如果执行前InvalidateGeometry，原GeometryVersion不变，旧完成仍可能通过版本比较。
+- 原因：ClearGeometry清空当前输入而不增加版本，作者空命中又会自然清掉gesture，不能仅靠gesture是否存在区分正常完成与撤销。
+- 修复：RoomNativeInputAuthority在ClearInput递增CancellationVersion；任务的两次取样和延迟执行都检查同一撤销版本。它不改变既有作者输入或几何版本语义。
+- 证据：用真实生产authority完成按下/抬起、作者空命中，然后撤销几何，旧检查RED；修复后GREEN，并确认隐藏后恢复不会复活旧动作、重新发布后的新点击正常。
+
+## #296 Dock外层可见不代表Chromium输入窗口可见（2026-10-11）
+- 现象：隔离实际Release Player能经ExecuteScript读取任务DOM与菜单目标，但鼠标DOWN回执超时，门控也没收到事件。不能把DOM存在称为实际绘制或可点击。
+- 定位：原生窗口查询为root=True、browser anchor=True、Chrome_WidgetWin_1=False；指针下是Form本身。启动OnShown.Hide以及后续原生SetWindowPos显示外层，未恢复WebView2控制器的缓存可见性。
+- 修复：SynchronizeNativeDockWindow在当前版本的页面可见状态同步后，设置controller.IsVisible = visible && !runtimeDeliverySuspended，再发布同步完成。保留原鼠标转发、回执和普通暂停逻辑。
+- 证据：新增实际input HWND可见断言先RED；修复后无临时guardian日志的完整Release、实际鼠标DOWN/UP同窗口目标回执、键盘取样/菜单、隐藏及再次显示通过。原生指针下变为Chrome_RenderWidgetHostHWND。Core快照与边沿仍是探针夹具，不宣称真实RawInput或应用启动已验收。
+- 探针恢复后必须像Core一样重发任务快照：控制器暂停会撤销ActionsEnabled；displayReady不代表重新获得操作许可。最初恢复检查因未补快照超时，补sequence3后通过，无需放宽生产控制器。
+- 临时日志已撤回；还需触屏与真实Core动作门槛，不能据此将P8-013整体标完成。
+
+## #298 Core退出请求后进程残留（2026-10-11，待修）
+旧候选PID39560与669a857开发副本PID47728均在正常ShutDown RPC后超过15秒未退出；旧候选追加状态RPC超时。不是仅观察超时：进程路径确认仍存在，RPC已不响应。尚未定位卡住的dispose/退出阶段，不能宣称关闭正常。新副本测试已先恢复Room/偏好/checkpoint，再发退出；确认精确PID+构建路径后结束残留进程，重新启动原候选PID29792，RPC确认enabled=true/pins=0/groups=11/error空，Room inactive，无Player。后续定位此缺陷，避免让测试清理掩盖产品退出失败。
+
+2026-10-11 #298定位更新：临时在QuitApp记录services start/done、grpc start/done、dispatcher start/done；一次启动立即退出正常，融合探针后既有正常退出也有残留。最后一轮第1次正常、第2次进程超过5秒仍存活且全部6个阶段均完成。因此证据不支持“服务Dispose或RPC Dispose同步卡住”，Application.Shutdown调用也已返回。不能据此替换为异步退出并声称修复。dotnet-stack尝试失败，.build/exit-hang-stack.log为Pipe is broken工具错误，不是成功的目标线程栈；下一定位范围是Shutdown排队后的WPF/CLR/原生退出尾段。尚未确定根因，#298仍待修。
+临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。
+
+2026-10-11 #298已修复并完成本轮复测（上面的待修为历史）：成功的非侵入原生栈.exit-native-stack.log确认Finalizer→SystemEvents.Shutdown→Thread.Join；SOS补充.exit-sos-stack.log明确SystemEvents线程→WindowsFormsSynchronizationContext.Send→Control.Invoke→WaitForWaitHandle。SOS组合命令因无托管栈的原生线程返回HRESULT错误，但上述两条完整托管调用链实际已输出，不把整个命令称为全成功。证据文件实际位于.build/目录。
+Core为WPF主循环，启动期间Systray的WinForms控件先自动安装了隐藏Control同步上下文；退出工作区/任务栏变化触发SystemEvents同步投递到消息循环已结束的线程，终结线程又等SystemEvents退出。与官方上游 https://github.com/dotnet/winforms/issues/9721 的等待链一致。修复在App构造最早建立DispatcherSynchronizationContext，确保所有早期托盘/系统事件订阅捕获WPF上下文；不改Player消息循环，不加超时杀进程、不改输入链。
+完整Release构建/发布通过（.build/exit-context-build.log）。修复前已多次复现；修复后三轮真实融合Dock的打开、11任务就绪、恢复偏好/Room/checkpoint、退出均在10秒门槛内自行结束，PID31972/50080/5372，无强杀（.build/exit-context-live.log）。这是本机三轮退出证据，不冒充所有系统配置或人工触屏验收。恢复原候选5924、enabled=true/11组/error空/Room inactive，CoreOnly未启动配置器。调试工具仅.build临时目录，没有系统服务安装；临时App日志未保留。后续回到真实OS任务动作与触屏，P8-013仍2/4=50%。
+
+## #300 首次启动实机探针延迟，清理RPC超时（2026-10-11，待定位）
+P8-013的fusion-launch-live新增专用apphost自有窗口。正式Core固定成功，私有观察器确认任务无窗口后发送OS点击；8秒/30秒均未确认窗口，结束后观察到Explorer父进程启动--owned-launch-window。ApplicationDock编辑及恢复RPC亦有DeadlineExceeded，当前尚不能证明为输入故障或Shell阻塞。
+证据：.build/fusion-launch-first-failure.log、fusion-launch-second-failure.log、fusion-launch-live.log。只将探针编译记通过，首次启动仍失败。下一步定位AppCatalogService.Launch内ExplorerShellLaunchService.TryOpen同步链及耗时。
+探针补嵌套finally，即使自有窗口/固定项清理失败也尝试偏好与光标恢复；但RPC失败仍须外层恢复后核对，不能称自动恢复完整成功。本轮原候选49468已手动恢复enabled=true、pins=0、groups=11、error空；迟到子程序43900已按精确PID+路径关闭。原Room/checkpoint恢复，无新增配置器。
+2026-10-11 #300增量修复：失败现场dotnet-stack证明UI线程停于Microsoft.CSharp ComMethodDesc/EnsureScanDefinedMethods→ExplorerShellLaunchService.TryOpen→CompleteTask；以Type.InvokeMember/ParameterModifier调用所需IDispatch成员，避免dynamic枚举类型信息。受控应用参数/工作目录检查通过（Explorer path=true，411ms），完整Release通过。相同真实Core47028/Player43644的Dock首次启动专用程序45860通过，临时固定项/偏好/夹具/checkpoint均自动恢复，RPC未再超时。注意探针12313ms包含准备点击时间，不能称为纯启动耗时或响应速度通过；后续拆分时间定位。证据.build/fusion-launch-stack.log、shell-dispatch-launch.log、shell-dispatch-build.log、shell-dispatch-live-passed.log。03仍开做，工作包2/4=50%，触屏/完整统一验收继续；未更换用户运行候选。
+2026-10-11启动耗时拆分增量：探针新增实际DOWN/UP UTC及子进程创建时刻，纠正旧click-to-window包含准备时间的标签。一次实机成功：UP497ms，进程创建13827ms、窗口确认15933ms（.build/launch-timing-live.log）；另一次无抓栈的实机失败，UP293ms，30秒未创建进程，Core日志无Application launch begin（.build/launch-boundary-live-failure.log及20261011_015440.txt）。不能宣称首次启动稳定。Core Click现记录启动调用进入/返回耗时，不含用户路径。完整Release与探针构建通过。下一步追踪HandleNativeSample到CompleteTask的完成/拒绝，暂不继续假设剩余延迟在Shell内部。原运行候选恢复、enabled=true pins=0 groups=11 error空、无测试子程序，03仍开做2/4=50%。
+2026-10-11输入完成链证据与启动线程修复：取样DOWN/UP配对成功，UP后约8ms进入Launch；同步Launch实际耗时11386ms，见.build/task-completion-before-worker-core.log。仅将已确认的启动请求放至Task.Run，Click以async void保留UI异常处理和刷新，激活/最小化不走后台。完整Release与探针构建通过；真实Core6272/Player38696启动49568通过，UP到窗口5266ms、进程创建在准备起点4097ms、UP后状态RPC2ms（不代表整个启动期间持续采样）。偏好/固定项/夹具/原checkpoint自动恢复，原候选复核正常，无测试子程序。证据.build/task-launch-worker-live.log、task-launch-worker-build.log。间歇丢点击尚未抓到拒绝原因，剩余启动耗时仍在，不能把本轮单次成功称稳定完成；03继续开做、2/4=50%。
+2026-10-11原始边沿及Player阶段诊断增量：首次复现失败没有任何Task sample（.build/task-no-sample-failure.log），任务投影刷新不是已证实根因。补Core原始边沿/手势/投递日志和Player arm/prepare阶段日志；未改现有判定条件。完整Release通过，最新实际Core/Player串联日志覆盖down→arm=True→ready→up→配对→动作接受，首次启动成功，UP至窗口4895ms；清理/恢复通过。证据.build/task-player-stage-build.log、task-player-stage-live.log、task-player-stage-core.log。间歇失败的具体Player阶段仍未抓到，不能称修复；下次沿这些日志复现，勿继续重复审查投影ID。03开做，工作包2/4=50%，原候选恢复，无新增配置器。
+
+## #301 普通窗口的触摸兼容鼠标不能代表WebView2 Dock（2026-10-11）
+独立touch-path探针使用Windows InjectTouchInput，自有Form收到pointer/兼容mouse/RawInput各一组；fusion-touch-live触摸真实官方任务区却未激活目标，Core日志没有Dock raw边沿。不能依据前者宣称现有RawInput已覆盖实际Dock触控。下一步核对Chromium子窗口触摸入口；GetPointerInfo需要消息所属线程，不能跨进程补查；禁止用全局RegisterPointerInputTarget改变其他应用触控。
+首次InjectTouchInput参数87，改用ID0+有效接触矩形后通过；按实际观测分别记录API参数失败、输入路径证据和真实Dock失败。方案/来源见plans/V3-P8-013/03-touch-path.md，生产点击链未改。
+
+## #302 Dock位置刷新与自动任务栏隐藏形成反馈（2026-10-11）
+现象：实际Dock鼠标DOWN/UP被收到，但WindowReady反复false，窗口Y在1260/1320之间往返60px，UP时inside=false，点击丢失。日志20261011_022919.txt。
+原因：任务栏隐藏改变workArea；Player刷新Bounds时撤销WindowReady；自动任务栏替代也依赖该状态，于是恢复任务栏，导致下一次位置刷新。
+修复：私有GeometryUpdating只供任务栏替代/实际AppBar占位判断使用，纯几何刷新且之前同步完成时进入，最长2秒；可见性/输入连接/文档变化清除。普通输入仍只接受WindowReady，几何变化仍取消旧手势。不能通过延长物理凭据期限或让旧坐标继续点击掩盖。
+验证：Release通过；同一已失败的fusion-raw-owner-live通过4次点击动作，日志20261011_023219.txt只有一次正常工作区调整。触控日志20261011_023315.txt也无往返，但无原始鼠标边沿且激活失败，触控仍待修。两秒超时/多屏/保留占位模式的专项运行覆盖尚未完成，不将此结果外推为整个工作包通过。
+
+2026-10-11 #301补记：守卫入口计数确认系统触摸到达WebView2（DOWN/UP各1），被没有Core expected手势的gate拦截。后置DOM监听空不代表浏览器未收到。核查触摸必须先定位预注入守卫，不能只靠作者/宿主后加事件监听。
+
+## #303 等待就绪后须重新测量注入坐标（2026-10-11）
+触控桥首轮测试在注入前失败：Dock ownership or mouse idle check failed。等待任务区displayReady期间，隐藏Windows任务栏使Dock做了一次正常位置调整；DOM位置未变，但先前读取的屏幕origin已旧。修正探针在目标稳定检查之后重新读取client rect和屏幕origin，再检查WindowFromPoint与空闲按键；没有移除保护或向错误窗口发送触摸。之后实际触摸激活/最小化/恢复与拖动取消、鼠标交接通过。
+
+## #304 官方任务菜单返回缺原生完成链（2026-10-11）
+双指触摸不误激活应用，但Windows会产生contextmenu，官方菜单替代图标列表。原始target=null不能直接解释为图标丢失或浏览器缩放；候选只读menuBack证实菜单存在。实际返回按钮DOWN/UP均到Core，taskHit=false：samplePointer显式排除dismissMenu，原生任务鼠标又不依赖第二次DOM点击，因此Back不能关闭。
+修复：Back参与既有任务采样/配对/当前投影验证；Core完成后通过已有私有activate事件回送dismissMenu/openWindows，本地菜单更新仍由官方宿主处理，键盘路径不重复发。Release通过；实际两指菜单、Back、后续触摸与鼠标交接整链通过。多窗口openWindows分支本轮只编译/代码核对，不能冒充实际多窗口验收。
+
+## #305 长按注入探针须持续更新触点（2026-10-11）
+关闭Dock的同步RPC耗时883ms，探针DOWN后停止更新，UP返回1460，无法证明产品取消成功。将RPC放到任务中等待，注入线程每16ms发送同坐标UPDATE，finally仍释放触点；再次关闭928ms后UP成功，旧任务未激活。仅修探针，不放宽生产1.5秒时限。构建成功、隔离实际运行通过；初次日志.build/touch-disable-first-failure.log。
+
+## #306 多应用键盘目标身份冲突（2026-10-11）
+真实Tab到达Core但焦点停留BODY；单应用后台测试通过不能代表多应用。DockTaskKeyboard允许item/entry组合去重，DextNativeGeometry则以consumer/entry去重，原context/action/window没有item导致多个activate同ID。统一私有ID为context/item/action/window，保持几何唯一性校验；Core解析时检查嵌入item与证明按钮一致，官方宿主和本地菜单回送同步。两个应用生产映射回归RED→GREEN，18键盘/8DOM组及Release通过，实际12应用Tab/Enter激活自有窗口通过。候选诊断脚本初次用系统默认GBK读取UTF-8失败，改明确encoding=utf-8；后续多命令构建须检查退出码再进入运行。
+
+## #307 官方任务菜单动作后残留（2026-10-11）
+实际多窗口选择确实激活第二个窗口，但未发送官方页面activate完成，非激活Dock本来就可能没有blur，菜单不会自行收起。Core统一鼠标/触摸的openWindows、dismissMenu、chooseWindow、togglePin呈现回送，仍先校验当前手势/投影，键盘不重复。完整Release与DOM检查通过；实际第二次运行确认选窗后图标恢复。探针关闭第二窗后可能由Windows自动激活第一窗，应按点击前真实前台判断激活或最小化。最终复核另遇首点击按下取样无命中、抬起有命中，保持未通过并继续定位，勿用菜单修复掩盖输入时序问题。
+
+## #308 菜单验证的启动前置状态（2026-10-11）
+页面标题是100ms异步快照，displayReady不等于整个原生窗口及任务栏接管已完成。实测下/上取样之间工作区变化移动Dock，旧手势正确撤销；另一轮窗口先变不可用而标题仍旧。隔离菜单探针需读取正式taskbarReplacementReady及原生边界稳定，再测试正常菜单；最终双窗口选择和分组缩减后恢复通过。产品首次启动按钮可见/可用状态仍需收口，等待探针不能当产品修复。关闭第二个同进程窗口还会异步改变前台，测试恢复时应在自有Form明确最小化；不要推定关闭后的前台。候选only取样wrapper未产生有效trace，不以空trace断言未取样；Core实际日志有完整边沿和取样证据。
+
+#308修复补记：官方任务ActionsEnabled及完成动作加入TaskbarController三模式就绪校验，并检查实时工作区与Dock原生边界匹配。不能仅等待租约Ready：任务栏先隐藏、Dock下一次重排才完成。24项检查/完整Release通过，跳过探针额外稳定等待的首次可用点击实测通过；此证据不外推为所有设备/启动时序无回归。
+
+#308恢复模式验证补记：恢复Windows任务栏会缩小工作区，自动隐藏Dock跟随上移。光标停在旧屏幕底边时Dock正常收起；探针应按新的原生边界唤出，不能把hidden当actions永久禁用。实际恢复任务栏后，唤出/选窗/单窗口恢复通过；没有改变产品自动隐藏规则。
+
+## #311 同宿主跨Desk短暂恢复任务栏（2026-10-11）
+现象：切页期间任务栏恢复/再隐藏，Dock顶边1260↔1320变化，影响指针位置和连续点击。
+根因：RoomDockWindowState严格匹配当前revision；Core先推进、Player后回报时，同一健康窗口暂时不可见于任务栏管理，自动请求被撤销。
+修复：任务栏独立读取同generation/session/HWND及5秒心跳内的旧revision健康报告；输入/动作仍严格当前revision。锁屏/非desktop/退出/停止及reserve实际AppBar检查保留。
+验证：新增真实轮询回归先红后绿；Core46800/Player52720双向导航/滚动/应用三动作完整成功，25ms观察任务栏保持隐藏且Dock顶边不变，完整Release通过。无Dock/崩溃等完整恢复仍需后续实测。
+
+## #313 模式交接误判异步任务栏恢复（2026-10-11）
+Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻塞Reconcile，在recover任务仍进行时返回false，Coordinator将短暂恢复中视为宿主失败并回退。修复仅让显式释放等待当前已发起恢复任务（最多5秒），随后核对恢复和租约；普通Tick保持非阻塞、真实失败仍拒绝交接。新增异步成功恢复检查先红后绿；原有失败恢复/手动隐藏/停止失败检查通过，完整Release通过。Core50820三模式实际切换通过，原偏好恢复。
+
+#308 原生预览验证补记（2026-10-11）：Core50508探针仅等待宿主ready就点击，在按钮启用/任务栏接管确认前发出，输入分发无回执；改为等UIA实际按钮IsEnabled和taskbar确认状态，再点击。Core45248原生预览选窗成功，生产输入规则不变。不能把宿主ready等同动作已就绪。
+
+## #315 桌面图标显示回包大小不匹配（2026-10-11）
+
+代码核对发现Shell图标预算2MiB，但Player转发和JS解析原上限1MiB，较多图标会被静默丢弃。只将官方presentationRead响应上限统一为4MiB，保留请求及其他响应原限额；用desktopContextId缓存避免轮询重复传图。14项接口/97项Node检查和完整构建通过，真实用户桌面大批次显示仍需后续端到端验证。
+
+## #322 暂停期间拖入回包被Player丢弃（2026-10-11）
+代码核查发现Form1请求端放行desktopDrop，响应端仅放行layoutRead；即使Core完成文件操作、JS保留在途请求，Explorer前台导致播放暂停时响应仍被丢弃。presentationRead在JS允许暂停读取，但Player双向均遗漏。
+修复：DextNativeInputProtocol.AllowsWhileSuspended统一两端规则，仅layoutRead/presentationRead/desktopDrop可继续；原生点击、作者动作、布局写入等原有暂停规则保持。实际会话、页面身份和Core资格检查仍执行。
+定向检查先76/77（新增失败）后77/77，完整Core/Player Release成功。此次是生产代码路径与编译/单元证据，真实暂停Explorer拖入仍待验证。
+
+## #323 Shell取消返回标志不能单独作为依据（2026-10-11）
+真实临时文件测试在原生进度回调撤销资格后，PerformOperations返回0x800704C7，源存在、目标未创建，但GetAnyOperationsAborted=false，旧实现回报failed且总状态未取消。
+修复：进度sink锁存Cancelled（撤销后不恢复），批次合并Shell标志、令牌、取消HRESULT和sink取消状态；未处理项目标cancelled，已经完成项目保留completed。
+22项检查验证上述路径，随后新增首项移动完成后撤销的批次：首项目标内容正确且源移除，第二项源内容保持/目标不存在，保留首项完成回执；共23项通过。重名冲突UI与Explorer Esc未由此覆盖。
+
+## #325 改名碰撞与测试清理（2026-10-11）
+真实RenameItem遇已存在目标时，0x100604（SILENT/NOERRORUI/EARLYFAILURE等）仍未返回；测试日志停在该调用前，精确终止本轮测试进程50612，不能把此尝试记为通过。已存在的改名目标现提前返回conflict供输入框改名重试；没有自动覆盖或自动同意冲突，实际竞态的Shell交互保留人工验证。
+微软参数文档区分进度UI、错误UI与确认，不应把SILENT/NOERRORUI解释为绝对无对话框：https://learn.microsoft.com/zh-cn/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags 。同步修正原拖入代码的注释，未修改其正式冲突策略。
+另一个已解决错误：File.Delete在父目录已经被改名时会抛DirectoryNotFoundException。夹具记录旧/新子文件路径，清理前检查存在，随后仅删除本次空目录。两轮残留唯一夹具已逐文件清理，复跑7项通过，末次无Dext-rename-*残留。源文件从未是用户文件。
+## #326 官方桌面输入分类遗漏（2026-10-11）
+定位F2时发现DextNativeFrameMedia.ArmInputAsync仅豁免official和任务栏consumer，official.desktop因没有作者iframe而不能通过键盘arm；Form1还会把它当作者按键去MoveFocus/Forward/等待DOM回执。鼠标路径ReceiveOfficialInputDispatch同样只接受official，遗漏官方文件图标。
+统一DextNativePointerPacket.IsOfficialConsumer和UsesOfficialKeyboard：官方文件键盘复用原生完成采样，顶层鼠标仍须真实dispatch receipt，作者输入保持原有路径；F2仅为官方文件的原生packet与Core焦点接收。Core F2新增失败断言后6项通过，Player分类/串行输入18项、Node111项、正式Release通过。没有进行OS物理输入，统一验收仍待。以后新增官方consumer必须检查arm、forward、wait、receipt全部四处，单独Core/DOM检查不能证明Player中间层已接通。
+
+## #331 RawInput文件命令不能独占Explorer按键（2026-10-11）
+发现：WinDesktopCore用RawInput_KeyboardClickRaw把Ctrl+V交Core时，没有阻止Explorer接收同一原生键；构建/私有协议通过不足以证明不会双粘贴。
+代码处理：限定同步文件或粘贴按钮焦点，WH_KEYBOARD_LL成功接收入队后抑制原按键。按下确定归属，抬起不重选目标；已有按住键和自动重复不产生新操作，非文件焦点保持原链。回调只做快照核对/排队，Core执行时仍核对当前作用域；RawInput文件默认入口停用以免双执行。分支完整Release及8项配对/3轮无接管目标安装卸载通过，尚未部署。
+回归：必须在实际WorkerW/Explorer里用唯一临时文件核对每次Ctrl+V只有一份、焦点切换不操作其他文件、Core退出后Windows键盘正常；屏幕键盘、分页Enter、Dock及触控另验。无目标的钩子生命周期检查不代表实际抑制/文件互通通过。
+
+## #333 静态Shell菜单初始化返回未处理，不代表COM接口不存在（2026-10-11）
+
+DESK-SYNC-004使用SHCreateDefaultContextMenu产生真实跨目录菜单，Properties/copy等查询通过；将WM_INITMENUPOPUP检查强化为“必须被处理”时失败。定向诊断确认IContextMenu2和3均支持，根与静态填充的7zip子菜单返回E_FAIL。并非接口缺失，也不能把菜单还存在当作真实消息转发/动态子菜单已通过。
+修正：只对处理器返回S_OK的消息认领；其余返回false让owner继续系统处理。保留诊断失败记录，查询检查仅证明菜单与资源保持；实际owner绘制、动态子菜单、WM_MENUCHAR和取消另列真实桌面门槛。后台STA测试要等临时文件清理完再完成Task，避免测试进程先退导致夹具残留。
+
+## #336 原生桌面菜单的返回焦点（2026-10-11）
+
+从其他应用首次右击桌面时，菜单owner保存的previous是原应用。菜单取消后恢复previous会让后续文件快捷键进入原应用；仅SetForegroundWindow桌面也不够，前台生命周期修订会清空Core文件几何和焦点。
+修复：owner仍前台才交回当前有效桌面窗口；新窗口或外点应用已有前台时不抢焦点。实际返回成功后记录一次同代次/会话/Desk/视口/文件的短时焦点恢复，等待当前几何并且原生桌面仍前台才生效；新输入和作用域变化取消，只恢复焦点，不生成动作。代码7/7、右键8/8、指针57/57、Core Release构建通过；Windows弹窗/属性/触控实机门槛仍未通过。
+
+## #337 F2误用F3的Windows键码（2026-10-11）
+
+F2改名从钩子、公共私有输入包、Core权限到宿主均误用了114，夹具复制同一个值造成同源盲区。Windows VK_F2是0x71=113，VK_F3是0x72=114。先仅改测试为真实F2，复现原链路没有文件手势；再统一修复生产链，新增F3成对放行断言。F2六组合、Core25/25、键盘所有权11/11、指针18/18、dom/native宿主113/113通过；实体键盘仍需验收。历史“F2六组合通过”仅证明当时错误键码链路，不能当F2实机证据。
+来源：[Microsoft Virtual-Key Codes](https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)。

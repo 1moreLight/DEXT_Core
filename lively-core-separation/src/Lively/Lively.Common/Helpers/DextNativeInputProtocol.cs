@@ -10,6 +10,8 @@ namespace Lively.Common.Helpers
 {
     public static class DextNativeInputProtocol
     {
+        // Shared by both Player request admission and response delivery.
+        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop" || method == "desktopRename" || method == "desktopOpen" || method == "desktopCopy" || method == "desktopCut" || method == "desktopPaste" || method == "desktopDelete" || method == "desktopMenu";
         private static readonly string[] IdentityFields={"type","protocolVersion","requestId","method","runtimeGeneration","sessionId","revision"};
         // Only the official top document reaches this parser. It can request
         // consumption of native facts, never create a proof or name a target path.
@@ -34,7 +36,21 @@ namespace Lively.Common.Helpers
                         if(!Shape(o,IdentityFields.Concat(new[]{"lifecycleRevision"}).ToArray()) || !Integer(o["lifecycleRevision"],1) ||
                             !state.CanFinishStartup(request.RuntimeGeneration,request.SessionId,request.Revision,(long)o["lifecycleRevision"]))return null;
                         request.LifecycleRevision=(long)o["lifecycleRevision"];return request;
+                    case "desktopDrop":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"desktopContextId","deskId","x","y","modifiers","allowedEffects"}).Concat(o["page"] is null ? Array.Empty<string>() : new[]{"page"}).ToArray()) ||
+                            !Id(Text(o["desktopContextId"]),128) || !Id(Text(o["deskId"]),80) ||
+                            !Number(o["x"],out var dropX) || !Number(o["y"],out var dropY) || dropX<0 || dropX>1 || dropY<0 || dropY>1 ||
+                            !Integer(o["modifiers"],0,7) || o["page"] is not null && !Integer(o["page"],0,4095) || pixelWidth<=0 || pixelHeight<=0)return null;
+                        var effects=Text(o["allowedEffects"]);
+                        if(!new[]{"all","uninitialized","copy","move","link","copyMove","copyLink","linkMove"}.Contains(effects))return null;
+                        request.DesktopContextId=Text(o["desktopContextId"]);
+                        request.DesktopDrop=new LivelyRoomNativeDesktopDrop{DeskId=Text(o["deskId"]),X=dropX,Y=dropY,
+                            Page=o["page"] is null?0:(int)o["page"],Modifiers=(int)o["modifiers"],AllowedEffects=effects};
+                        return request;
                     case "presentationRead":
+                        if(Shape(o,IdentityFields))return request;
+                        if(!Shape(o,IdentityFields.Concat(new[]{"desktopContextId"}).ToArray()) || !Id(Text(o["desktopContextId"]),128))return null;
+                        request.DesktopContextId=Text(o["desktopContextId"]);return request;
                     case "layoutRead": return Shape(o,IdentityFields)?request:null;
                     case "layoutSave":
                         if(!Shape(o,IdentityFields.Concat(new[]{"layoutRevision","change"}).ToArray()) || !Integer(o["layoutRevision"],0) ||
@@ -47,6 +63,24 @@ namespace Lively.Common.Helpers
                             o["requestJson"]?.Type!=JTokenType.String || Encoding.UTF8.GetByteCount((string)o["requestJson"])>32768)return null;
                         request.Consumer=Text(o["consumer"]);request.AuthorInstance=Text(o["instanceId"]);request.SdkRequestJson=(string)o["requestJson"];
                         request.GeometryVersion=(long)o["geometryVersion"];return request;
+                    case "desktopMenu":
+                    case "desktopDelete":
+                    case "desktopCopy":
+                    case "desktopCut":
+                    case "desktopOpen":
+                        if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","selectedIds","geometryVersion","inputSequence"}).ToArray()) ||
+                            Text(o["consumer"])!="official.desktop" || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1) ||
+                            o["selectedIds"] is not JArray selected || selected.Count is <1 or >256)return null;
+                        var ids=selected.Select(Text).ToArray();
+                        if(ids.Any(id=>!Id(id,80)||!id.StartsWith("desktop-",StringComparison.Ordinal)) || ids.Distinct(StringComparer.Ordinal).Count()!=ids.Length || !ids.Contains(Text(o["button"]),StringComparer.Ordinal))return null;
+                        request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.SelectedIds=ids;
+                        request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
+                    case "desktopPaste":
+                        if(Text(o["consumer"])!="official.desktop" || !(Text(o["button"])=="desktop.paste" || Text(o["button"])?.StartsWith("desktop-",StringComparison.Ordinal)==true))return null;
+                        goto case "activate";
+                    case "desktopRename":
+                        if(Text(o["consumer"])!="official.desktop" || Text(o["button"])?.StartsWith("desktop-",StringComparison.Ordinal)!=true)return null;
+                        goto case "activate";
                     case "activate":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","geometryVersion","inputSequence"}).ToArray()) ||
                             !Id(Text(o["consumer"]),128) || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1))return null;
@@ -133,6 +167,17 @@ namespace Lively.Common.Helpers
         }
         private static bool ParseLayoutChange(JObject item,out LivelyRoomNativeLayoutChange result)
         {
+            if(item.Property("peers")!=null){
+                result=null;if(item["peers"] is not JArray peers || peers.Count>1024)return false;
+                var primary=(JObject)item.DeepClone();primary.Remove("peers");
+                if(!ParseLayoutChange(primary,out var main))return false;
+                var list=new List<LivelyRoomNativeLayoutChange>();var ids=new HashSet<string>();
+                foreach(var token in peers){
+                    if(token is not JObject peer || peer.Property("peers")!=null || !ParseLayoutChange(peer,out var value) || value.Kind!="icon" || !ids.Add(value.Id) || main.Kind=="icon"&&main.Id==value.Id)return false;
+                    list.Add(value);
+                }
+                main.Peers=list.ToArray();result=main;return true;
+            }
             result=null;var kind=Text(item["kind"]);var id=Text(item["id"]);
             if(!StableKey(id) || !Number(item["x"],out var x)||!Number(item["y"],out var y)||x<0||y<0)return false;
             if(kind=="icon")

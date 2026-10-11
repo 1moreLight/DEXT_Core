@@ -1,6 +1,25 @@
 using System.Runtime.InteropServices;
 using Lively.Common.Helpers;
 
+if (args.Length == 2 && args[0] == "--v3-host-assets") {
+    var index=Path.Combine(Path.GetFullPath(args[1]),"wallpapers","dext-room-v3","index.html");
+    using var server=new DextNativeResourceServer(index);
+    var html=File.ReadAllText(index);var count=0;
+    foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(html,"(?:src|href)=[\"']([^\"']+)[\"']")) {
+        var path=match.Groups[1].Value;
+        using var response=server.Prepare(server.Origin+"/"+path,"GET",null);
+        if(response.StatusCode!=200||response.Content==null||response.Content.Length==0)throw new Exception(path+" failed to load: "+response.StatusCode);
+        count++;
+    }
+    Console.WriteLine($"PASS {count} official HTML dependencies served with bytes");return;
+}
+if(args.Length==1&&args[0]=="--desktop-context-hook-lifecycle"){DesktopFileContextHookChecks.Run();return;}
+if(args.Length==1&&args[0]=="--desktop-context-ownership"){DesktopFileContextOwnershipChecks.Run();return;}
+if(args.Length==1&&args[0]=="--desktop-key-hook-lifecycle"){DesktopFileKeyboardHookChecks.Run();return;}
+if(args.Length==1&&args[0]=="--desktop-key-ownership"){DesktopFileKeyboardOwnershipChecks.Run();return;}
+if(args.Length==4&&args[0]=="--v3-task-wire"){await NativeTaskWireProbe.Run(args[1],args[2],args[3]);return;}
+if(args.Length==1&&args[0]=="--v3-task-keyboard"){DockTaskKeyboardChecks.Run();return;}
+if(args.Length==1&&args[0]=="--v3-task-input"){DockTaskInputChecks.Run();return;}
 if(args.Length==4&&args[0]=="--v3-author-visual-wire"){await AuthorVisualWireProbe.Run(args[1],args[2],args[3]);return;}
 if(args.Length==4&&args[0]=="--v3-author-key-sample-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],int.Parse(args[3]),sampleKeyboard:true);return;}
 if(args.Length==3&&args[0]=="--v3-author-sample-wire"){await NativeAuthorInputWireProbe.Run(args[1],args[2],sampleMouse:true);return;}

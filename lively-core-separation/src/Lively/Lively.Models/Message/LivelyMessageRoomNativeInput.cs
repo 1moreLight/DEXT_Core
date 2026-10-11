@@ -32,6 +32,7 @@ namespace Lively.Models.Message
         public double Y { get; set; }
         public double? Width { get; set; }
         public double? Height { get; set; }
+        public LivelyRoomNativeLayoutChange[] Peers { get; set; }
     }
     // Core private transport only; this is never parsed from a web message.
     public sealed class LivelyMessageRoomNativePointer : IpcMessage
@@ -64,6 +65,18 @@ namespace Lively.Models.Message
         public string EntryId { get; set; }
         public LivelyMessageRoomNativePointer() : base(MessageType.cmd_room_native_pointer) { }
     }
+    // Private Player -> Core payload. Files are populated from native WebView
+    // objects after parsing the page envelope, not from page JSON.
+    public sealed class LivelyRoomNativeDesktopDrop
+    {
+        public int Page { get; set; }
+        public string DeskId { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public int Modifiers { get; set; }
+        public string AllowedEffects { get; set; }
+        public string[] Files { get; set; }
+    }
     public sealed class LivelyMessageRoomNativeRequest : IpcMessage
     {
         public int ProtocolVersion { get; set; } = 1;
@@ -72,6 +85,9 @@ namespace Lively.Models.Message
         public long RuntimeGeneration { get; set; }
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
+        public string DesktopContextId { get; set; }
+        public LivelyRoomNativeDesktopDrop DesktopDrop { get; set; }
+        public string[] SelectedIds { get; set; }
         public long LayoutRevision { get; set; }
         public LivelyRoomNativeLayoutChange LayoutChange { get; set; }
         public long GeometryVersion { get; set; }
@@ -94,10 +110,24 @@ namespace Lively.Models.Message
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeRequest() : base(MessageType.msg_room_native_request) { }
     }
+    // Private official task target, sampled separately from author button geometry.
+    public sealed class LivelyRoomNativeTaskHit
+    {
+        public string ContextId { get; set; }
+        public string ItemId { get; set; }
+        public string WindowId { get; set; }
+        public string Action { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
     // Native Player -> owning Core only. Never parsed from an authored web message.
     public sealed class LivelyMessageRoomNativeSample : IpcMessage
     {
         public LivelyMessageRoomNativePointer Input { get; set; }
+        public LivelyRoomNativeTaskHit TaskHit { get; set; }
+        public LivelyRoomNativeTaskHit[] TaskTargets { get; set; }
         public LivelyRoomNativeButton[] Buttons { get; set; }
         public LivelyMessageRoomNativeSample() : base(MessageType.msg_room_native_sample) { }
     }

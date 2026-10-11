@@ -2,7 +2,7 @@ import type {RoomV3,V3Button} from "./v3-document";
 export type ButtonSettings={action:string|null;deskId:string|null;targetId:string|null;skin:string|null};
 export type PersonalButton={id:string;name:string;scope:string;defaultAction:string|null;defaultDeskId:string|null;effectiveAction:string|null;effectiveDeskId:string|null;isBound:boolean;personal:ButtonSettings|null};
 export type PersonalTarget={id:string;name:string;kind:"application"|"file"|"url";target:string;arguments:string;workingDirectory:string;useCount:number};
-export type PersonalSnapshot={revision:number;buttons:PersonalButton[];targets:PersonalTarget[];skins:{id:string;name:string}[]};
+export type PersonalSnapshot={revision:number;buttons:PersonalButton[];targets:PersonalTarget[];skins:{id:string;name:string}[];desktopSync?:{enabled:boolean;deskId:string;itemCount:number;scanState?:string;issueCount?:number}|null};
 export type PersonalReply={status:string;roomId:string;installationStamp:string;editor:PersonalSnapshot|null};
 export function discoverV3Buttons(room:RoomV3):(V3Button&{sources:string[]})[] {
   return (room.buttons??[]).map(button=>{
@@ -22,6 +22,8 @@ export function discoverV3Buttons(room:RoomV3):(V3Button&{sources:string[]})[] {
 export const sameSource=(a:string,b:string)=>a.replace(/^\\\\\?\\/,"").replace(/\//g,"\\").replace(/\\+$/,"").toLowerCase()===b.replace(/^\\\\\?\\/,"").replace(/\//g,"\\").replace(/\\+$/,"").toLowerCase();
 
 export type PersonalEditCommand =
+  | {operation:"setDesktopSync";deskId:string;enabled:boolean}
+  | {operation:"refreshDesktopSync"}
   | ({operation:"setButton";buttonId:string}&ButtonSettings)
   | {operation:"resetButton"|"locateButton";buttonId:string}
   | {operation:"upsertTarget";targetId:string;name:string;kind:PersonalTarget["kind"];target:string;arguments:string;workingDirectory:string}

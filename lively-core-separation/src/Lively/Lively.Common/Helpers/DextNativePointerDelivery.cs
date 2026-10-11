@@ -12,11 +12,12 @@ namespace Lively.Common.Helpers
                 !Positive(value.Revision) || !Positive(value.GeometryVersion) || !Positive(value.GestureId) ||
                 value.IssuedAt<0 || value.InputHandle==0 || value.Dpi<1 || value.Dpi>1536 ||
                 value.PixelWidth<1 || value.PixelHeight<1 || value.PixelWidth>65535 || value.PixelHeight>65535 ||
-                value.SampleMouse&&value.Key!=0 || value.SampleKeyboard&&value.Key!=13&&value.Key!=32 || (value.Key!=0&&value.Key!=9&&value.Key!=13&&value.Key!=32) || value.ScanCode<0 || value.ScanCode>255 ||
+                value.SampleMouse&&value.Key!=0 || value.SampleKeyboard&&!IsActivationKey(value.Key) || (value.Key!=0&&value.Key!=9&&!IsActivationKey(value.Key)) || value.ScanCode<0 || value.ScanCode>255 ||
                 value.Key==0&&(value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
                 value.Key==9&&(value.Kind!="focus"||value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
                 value.Kind=="focus"&&value.Key!=9 || value.Reverse&&value.Key!=9 ||
-                (value.Key==13||value.Key==32)&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
+                IsActivationKey(value.Key)&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
+                (IsDesktopFileKey(value.Key)&&!IsDesktopKeyTarget(value.Key,value.Consumer,value.Button)) ||
                 (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel"&&value.Kind!="focus" ||
                 (double)value.X-value.OriginX<short.MinValue || (double)value.X-value.OriginX>short.MaxValue ||
                 (double)value.Y-value.OriginY<short.MinValue || (double)value.Y-value.OriginY>short.MaxValue ||
@@ -31,6 +32,14 @@ namespace Lively.Common.Helpers
         }
         private static bool Text(string value,int max){if(string.IsNullOrEmpty(value)||value.Length>max)return false;foreach(var c in value)if(char.IsControl(c))return false;return true;}
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
+        public static bool IsDesktopClipboardKey(int key) => key==67||key==88||key==86;
+        // Win32 VK_F2 = 0x71 (113); 0x72 is F3 and must remain unclaimed.
+        public static bool IsDesktopFileKey(int key) => key==113||key==46||key==93||key==121||IsDesktopClipboardKey(key);
+        public static bool IsDesktopKeyTarget(int key,string consumer,string button) => consumer=="official.desktop"&&button!=null&&
+            (button.StartsWith("desktop-",StringComparison.Ordinal)||key==86&&button=="desktop.paste");
+        private static bool IsActivationKey(int key) => key==13||key==32||IsDesktopFileKey(key);
+        public static bool IsOfficialConsumer(string consumer) => consumer=="official"||consumer=="official.desktop"||consumer==DextNativeTaskSample.Consumer;
+        public bool UsesOfficialKeyboard => Key!=0&&IsOfficialConsumer(Consumer);
         public bool SampleMouse {get;}
         public bool SampleKeyboard {get;}
         public bool Reverse {get;}
@@ -110,6 +119,7 @@ namespace Lively.Common.Helpers
             }
             pending.Add(new Entry(packet,epoch));Start();return true;
         }
+        public Exception LastFailure { get; private set; }
         public Task WhenIdle()=>running?idle.Task:Task.CompletedTask;
         public Task InvalidateAsync()
         {
@@ -169,8 +179,9 @@ namespace Lively.Common.Helpers
                     else held=packet;
                 }
             }
-            catch(Exception)
+            catch(Exception error)
             {
+                LastFailure=error;
                 terminal=true;pending.Clear();
                 try{await Cancel();}catch(Exception){}
                 failed();

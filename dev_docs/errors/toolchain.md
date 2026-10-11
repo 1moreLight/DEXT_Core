@@ -485,3 +485,105 @@ v3 Core目录已有配置器，但Systray只沿祖先查tauri-ui/src-tauri/targe
 ## #262 实验样包批量命令过长与安装目标父目录（2026-10-08）
 通过exec_command一次传入全部14份作者文件的PowerShell写入脚本，编码后的命令超过Windows进程命令长度，返回OS206，未执行文件写入。按文件/小批JSON分段落盘，单批约5500字符内；UTF8/LF源码与完整资源列表另行核对。不重放已成功的小批次，自动审批超时也先区分未启动与已有写入。
 首次install_v3检查目标在worktree不存在的.build下，检查父路径报OS2；显式创建检查用父目录、使用完整绝对源/目标路径后正式安装成功。这是检查路径准备问题，不是Room清单失败。静态预览截图只作外观证据，不当作Core/Player实际动作或生命周期通过。
+
+## #268 Replace重载错误后脚本仍继续（2026-10-09）
+用Replace([char]13,'')删除回车误选char,char重载，产生非终止错误；之后构建仍通过但调用点未修改。
+恢复：明确字符串替换并检查锚点存在，设置ErrorActionPreference=Stop；核对实际diff确认FollowAnchor调用接入，再编译提交。
+
+## #270 PowerShell下rg路径通配符不由shell展开
+- 现象：把RoomSessionRuntimeCoordinator*.cs作为位置路径传给rg，Windows报路径语法错误；猜测RoomDockService.cs文件名也会失败。
+- 修正：先rg --files确认路径，然后rg实际目录 -g 'RoomSessionRuntimeCoordinator*.cs'。检查每条命令退出码，不能因同批其他命令成功忽略失败。
+
+## #277 导航探针条件（2026-10-10）
+ApplicationDockResponse 使用 camelCase；探针用 C# 属性大写导致找不到键。修正后仍要求 canNavigate=true，样包处于 starting+paused 则合理禁用，不能强迫为可点。正式检查改为与 Core lifecycle/安装名称/会话一致，临时状态恢复通过；没有把此证据冒称物理点击通过。
+## #281 候选启动累积配置器（2026-10-10）
+本轮连续推进时每次start.ps1均新开配置器，积累8个进程，旧产品路径连新Core又显示身份冲突。用户指出后，读旧窗口UI确认房间库，正常关闭5个，精确路径结束2个早期空窗口残留，保留最新配置器与Core。
+修复：后台Core检查用-CoreOnly；常规启动先按进程真实路径检查，同产品复用、其他/未知路径报告且不新开，Release检查/启动串行。不能以保护草稿为由无限累积窗口，也不能全局按名称强杀。新候选切换前只正常关闭本轮拥有且无未保存编辑的旧UI。
+
+## #285 PowerShell双引号字符串内的中文弯引号会成为引号边界
+2026-10-10：批量文档Replace的替换文本含中文弯引号，置于双引号字符串中导致ParserError，整条命令未执行。改用单引号字面量/单引号here-string承载Markdown文本，重跑成功；不要把解析失败当作写入已完成。
+
+## #287 Player 新 partial 文件必须登记显式 Compile（2026-10-10）
+Form1.NativeDockTasks.cs 已存在，但传统 Player csproj 不自动收集新 C# 文件，构建提示 ApplyNativeDockTasks 不存在。将文件加入 Compile 列表后完整 Player/Watchdog/Core 构建通过。新增分册时同时检查 csproj，不能只看磁盘有文件。
+
+## #288 main VM 夹具缺少已有 Dock DOM 依赖（2026-10-10）
+本轮运行 main.test.js 时，旧夹具 document 只有 getElementById，已有 main.js 会访问 documentElement.classList，并区分 runtime/键盘按钮。先补齐这些最小DOM接口，再检查业务断言。修复后原八项及新任务快照作用域检查均通过；这不是生产页面的 classList 缺失问题。
+
+## #291 新worktree首次运行输入检查要先还原该测试项目
+- 现象：P8-013直接用dotnet run --no-restore跑Dext.Input.Tests，NETSDK1004缺project.assets.json；Core构建过不意味着所有独立测试项目都还原过。
+- 处理：dotnet restore tests/Dext.Input.Tests -p:NuGetAudit=false --ignore-failed-sources，随后原检查进入预期缺实现RED，再完成实现运行GREEN。
+- 下次：检查该测试项目自己的obj资产；已有缓存可复用，无需重新安装依赖或把此失败误记为业务回归。
+#291补记：本轮ProtocolTests首次执行同样缺assets；单独restore该项目后生产样包安装校验通过。
+
+## #294 Dock探针尊重全屏，并等待WebView释放临时文件（2026-10-10）
+- 首次真实任务链探针中，Player已报告WindowReady但Visible=false、Fullscreen=true，等待可见会超时。只读原生信息确认前台WeChatAppEx无标题栏、IsZoomed=false、矩形覆盖2560×1440；这不是普通有标题栏最大化，不能为测试更改产品全屏策略。
+- 探针在窗口就绪后先验证任务快照私有通道；全屏时核对区域不可用，再明确输出SKIP鼠标/键盘可见分支。SKIP不算输入通过，也不推动03完成。
+- Player主进程退出后，WebView用户数据文件仍可能被子进程短暂持有。原4秒清理不足，改为最多15秒等待且清理失败抛错；只清自己创建且确认位于Temp内的目录。首个遗留目录在确认无引用进程后精确删除。
+- 编译过程中TaskJson匿名对象少一层闭括号，编译直接阻止运行；补齐后通过，没有改生产代码。
+
+## #297 发布清单遗漏任务区依赖（2026-10-11，已修）
+正式index.html引用task-area-model/host/controller.js和task-area.css，v3-release-assets.json未包含；以前只验证源资源/运行白名单不足以证明发布包完整。新增verify-release-host.ps1逐一核对HTML src/href和清单文件存在，build-v3-release在构建前调用。RED报task-area.css未包含；补4项后GREEN，实际独立发布目录同样通过。冻结6样包字节检查保持通过。该检查只覆盖直接HTML依赖，不冒充整个运行验收。
+
+2026-10-11批量替换补记：同一JS含作者与官方两套gate，相同if(!allowed)文本一次替换会误改另一作用域，产生未定义touch变量；diff审查发现后恢复作者gate。以后修改同名局部代码按函数范围定位；本轮修正后29项守卫测试及Release构建通过。
+
+2026-10-11原生事件测试夹具补记：模拟isTrusted getter若使用箭头函数，会捕获构造时this，无法通过Reflect.apply绑定事件，导致synthetic事件测试误判；改普通getter后真实/合成事件区分测试通过。
+
+## #312 临时Room夹具必须带安装清单（2026-10-11）
+
+症状：Core34852在RoomV3Installation.Verify报Cannot lock installed path，测试尚未进入Dock切换。原因：复制rooms/v3-fusion-lab后仅替换UUID/name，没有生成content/installation.json。修复：按修改后的manifest字节生成manifestSha256，resources按UTF-8顺序列path/sha256/size，与正式验证契约一致。同场景Core39792随后通过；未降低Core验证。临时资料仅在隔离候选，正式发行不能带夹具。
+
+## #314 UIA探针启用WPF后的隐式using（2026-10-11）
+RuntimeProbe添加UseWPF以使用UIAutomation后，原有File/Path引用报CS0103；WindowsDesktop的隐式using集合发生变化。项目显式添加Using Include="System.IO"后构建通过。不要为此逐个修改不相关探针逻辑。
+
+2026-10-11 #41复现补记：desktop-sync-import首次npm run build缺tsc；该worktree未安装node_modules。npm ci --prefer-offline --no-audit --no-fund后前端构建通过，锁文件无变化。
+
+## #316 UIA范围与夹具恢复（2026-10-11）
+
+桌面同步实机扫描成功，但RootElement.FindFirst(Descendants, Player PID+按钮名)遍历全桌面且无法命中跨进程WebView节点，35秒外层循环不能限制阻塞的单次UIA调用。首轮正式清理临时Room后终止探针，恢复原Core；内存checkpoint备份无法追溯原字节，保留临时checkpoint副本和差异，不声称完整恢复原字节。修复为按Player PID枚举HWND后仅查该窗口子树、去掉子节点PID条件、5秒Task查询上限；夹具开始前将checkpoint/不存在标记和作用域写磁盘。重跑实际显示/刷新/关闭通过并正常finally恢复。清理RPC路径需用与加载一致的Path.Combine分段结果，混用斜杠会未命中。
+
+## #317 Timer隐式引用歧义（2026-10-11）
+
+DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用Timer时与System.Threading.Timer发生CS0104。明确using Timer = System.Threading.Timer，保持后台线程池回调；9项监听检查与完整Core Release通过。
+
+## #318 PowerShell单项嵌套替换数组展开（2026-10-11）
+
+批量文档替换用@(@(旧值,新值))存单个替换对时，PowerShell枚举展开成字符串数组，循环索引取到字符，导致ROADMAP表格竖线误替换。git diff --check及时发现。仅从HEAD读回本轮开始时干净的三个受影响文档并逐文件明确Replace重做，diff恢复预期单行改动。以后使用有Old/New属性的对象或明确Replace，修改后核对diff统计和正文；不对有既存改动的文档套用此恢复方法。
+
+## #319 WebView脚本异常未导致C#调用失败（2026-10-11）
+
+拖放探针假设new File会作为空路径的CoreWebView2File抵达原生；本机WebView154实际在postMessageWithAdditionalObjects立即抛TypeError，ExecuteScriptAsync却正常返回，随后等待WebMessage超时。修复：脚本try/catch显式返回posted/error对象，只有posted才等事件。真实磁盘File和目录的浏览器drop→原生路径检查通过；此结果不证明OS/Explorer实际拖入。不要把ExecuteScriptAsync任务完成当作页面脚本成功。
+
+## #320 多行替换换行差异（2026-10-11）
+现象：PowerShell按Environment.NewLine插入策略用例未命中源文件；仅旧用例运行成功。快捷方式接口抽取同样因CRLF/LF边界匹配失败而主动中止。
+修复：先统一内存字符串换行为LF，或使用已校验索引插入；重新运行新增断言，观察明确失败后再实现。策略用例实际red/green及快捷方式真实文件red/green均已确认。
+规则：批量文本编辑必须检查命中数量或diff，测试输出必须出现新增用例；仅命令退出0不能证明新增用例执行。
+2026-10-11补充#320：PowerShell单引号字符串不能用反斜杠转义单引号；该写入脚本在解析阶段失败，未改文件。改用双引号外层或here-string后执行成功，并核对新增测试实际运行。
+2026-10-11补充#320：JS模板字符串里嵌套空字符串时，PowerShell单引号替换少了一枚引号，node测试在加载阶段明确报SyntaxError；改用here-string精确替换，101项宿主测试恢复通过。
+
+## #321 开发Core输出不等于完整宿主候选（2026-10-11）
+首轮desktop-drop-live在读取content/room.json之前失败，未应用Room。build.ps1只部署Core与Player/Watchdog；缺失的host目录上Copy-Item会把content目录内容复制为host根目录，不能假设content子目录存在。
+解决：按v3-release-assets.json的16项hostAssets逐个部署官方文件，显式建立content再复制夹具子项并检查room.json；第二轮实际Player/扫描就绪。测试候选含夹具，只供开发探针，正式交付仍须全新目录与清单核对。
+执行前应完成此预检再停止旧Core。首次失败恢复旧Core49672；第二轮主动取消后恢复52420，checkpoint摘要与备份一致，原配置器19704保留。
+
+## #324 候选打包磁盘空间不足（2026-10-11）
+npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在，失败后仅清理已校验的当前worktree/tauri-ui/node_modules，释放约146MB。未清理已有缓存、候选或用户文件。完整构建未运行，不能记作通过。后续先检查依赖、TEMP与编译输出所在盘空间，安排D盘路径后再重试。
+
+#324恢复补记：独立D盘目录安装锁定依赖，当前node_modules使用junction；仅迁移当前worktree未运行Core bin到D盘并链接，TEMP/TMP/npm缓存及CargoTargetDirectory均指向D盘。完整候选构建与654文件/16资产来源核对成功；没有清理其他worktree或系统文件。
+
+## 2026-10-11 普通build输出覆盖自包含候选后无法就绪
+现象：混合副本进程存在但无新日志、RPC超时；runtimeconfig从includedFrameworks变为frameworks。精确结束本轮失败进程后恢复原Core。处理：全新目录build-v3-release.ps1，清单核对后真实RPC启动/正常退出通过，四项数据哈希不变。结论限于打包方式差异，未追到混合副本具体初始化阻塞点。后续禁止覆盖混用；测试finally需保证失败停止不会静默跳过恢复。
+#320补记（2026-10-11）：输入测试插入脚本再次因PowerShell双引号字符串中反斜杠转义引号解析失败，未执行写入；改为单引号here-string后插入并确认预期编译失败/实现后四组通过。后续源码片段统一here-string。
+
+## #330 个人编辑夹具间歇原子发布失败（2026-10-11，未定位根因）
+clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish/SetFileInformationByHandle报Win32 5拒绝访问；随后完整21/21。补新剪切断言后的运行又在旧drop placement存储返回storageUnavailable，20/21；保留clipboard-copy-core-storage-failure.log，同一二进制仅复查一次21/21于clipboard-copy-core-recheck.log。TEMP为D盘专用build-env/temp，每夹具独立GUID。没有证据认定杀软或其他进程，不通过放松文件共享/发布规则掩盖它；下次复现需保留确切路径与错误原因。绿色重跑不代表此问题已修复。本轮复制/剪切新断言在20/21运行中也通过。
+
+2026-10-11 #330续：粘贴接线个人编辑组20/21，新增Ctrl+V证明断言通过；旧explicit action检查期望accepted而实际storageUnavailable。证据.build/paste-core-green.log，未修改存储生产逻辑、未重跑掩盖该失败，根因保持未定。
+
+## #332 C# switch复制分支的变量作用域（2026-10-11）
+现象：独立Core类/协议测试通过，完整WPF Core编译报CS0128/CS0170。desktopDelete和desktopPaste的case共享switch作用域，都声明var pasted。
+修复：新回收分支使用recycled并保持回执赋值一致，重新完整Release成功；失败日志desktop-shell-actions-build-env/recycle-build-failed.log保留。复制case时使用独立变量或独立花括号；不能用链接少量Core类的测试代替产品构建。
+同轮测试修正：DesktopShellTransfer.RunStaAsync返回专用DesktopTransferResult，回收站还原夹具的回调不能return bool；改成空结果后取得功能失败断言，再实际实现。文本替换断言未命中时保留原文件，精确读取后替换，并在PowerShell检查Python退出码再继续构建。
+
+## #334 Windows Python默认GBK不能用于UTF-8源码（2026-10-11）
+
+菜单键计划/用例编辑脚本使用Path.read_text()默认编码，读取含中文的生产源码时UnicodeDecodeError；先前TODO和测试文件已写入，后续实现/测试未运行。按退出码止步，先git diff核对已写范围，再对所有read_text/write_text指定encoding='utf-8'后继续，避免重复追加测试或错误宣称RED已跑。生产源码失败点未写入；后续实际失败断言和GREEN均有日志。

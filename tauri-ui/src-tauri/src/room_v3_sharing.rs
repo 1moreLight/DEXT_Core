@@ -345,3 +345,6 @@ pub fn cleanup_source_restored(library: &Path, intent: &PersonalCleanupIntent) -
     }
     Ok(false)
 }
+#[cfg(all(test, windows))]
+#[path = "room_v3_sharing_tests.rs"]
+mod tests;

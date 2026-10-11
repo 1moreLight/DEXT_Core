@@ -13,11 +13,12 @@ public sealed record RoomPersonalEditorButton(string Id, string Name, string Sco
     string? EffectiveAction, string? EffectiveDeskId, bool IsBound, RoomPersonalButtonSettings? Personal);
 public sealed record RoomPersonalEditorTarget(string Id, string Name, string Kind, string Target, string Arguments, string WorkingDirectory, int UseCount);
 public sealed record RoomPersonalSkin(string Id, string Name);
-public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins);
+public sealed record RoomDesktopSyncSettings(bool Enabled, string DeskId, int ItemCount, string ScanState = "pending", int IssueCount = 0);
+public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins, RoomDesktopSyncSettings? DesktopSync = null);
 public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
 
 internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
-internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator);
+internal sealed record RoomPresentationSnapshot(long Revision,Dictionary<string,string?> Skins,RoomButtonLocator? Locator,RoomDesktopView? Desktop=null);
 internal sealed record RoomPresentationReply(RoomActionStatus Status,RoomPresentationSnapshot? Presentation=null);
 
 internal sealed partial class RoomActionAuthority
@@ -65,9 +66,280 @@ internal sealed partial class RoomActionAuthority
         { return new("storageUnavailable", error.Message); }
     }
 
+    internal PersonalTarget[]? ReadApplicationDockPins(string roomId, string deskId) =>
+        store.ReadDockPins(roomId, deskId);
+
+    internal void SetApplicationDockPins(string roomId, string deskId, PersonalTarget[]? pins)
+    {
+        lock (roomCopyLifecycleGate)
+        {
+            if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
+            store.SetDockPins(roomId, deskId, pins);
+        }
+    }
+
+    internal RoomDesktopSync? ReadDesktopSync(string roomId) => store.ReadDesktopSync(roomId);
+
+    internal void SetDesktopSync(string roomId, string deskId, bool enabled,
+        IReadOnlyCollection<string>? currentIds = null, bool complete = true)
+    {
+        lock (roomCopyLifecycleGate)
+        {
+            if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
+            store.SetDesktopSync(roomId, deskId, enabled, currentIds, complete);
+        }
+    }
+
+    // Called only by the Core scan worker; the configurator cannot supply item IDs.
+    internal RoomDesktopSync? CommitDesktopScan(Guid connection, RoomSessionPeer peer, Guid session,
+        string roomId, string stamp, long expectedRevision, string deskId,
+        IReadOnlyCollection<string> itemIds, bool complete, IReadOnlyDictionary<string, string>? renames = null)
+    {
+        var spin = new SpinWait();
+        while (true)
+        {
+            var attempt = store.UpdateForDispatch(state =>
+            {
+                var admitted = gateway.TryWithCoordinatorContext(connection, peer, session, (status, context) =>
+                {
+                    if (status != RoomProtocolStatus.Accepted || GrantIdentity(context!, roomId, stamp) != RoomActionStatus.Accepted ||
+                        state.Revision != expectedRevision || !context!.Installation.DeskIds.Contains(deskId, StringComparer.Ordinal) ||
+                        !state.Rooms.TryGetValue(roomId, out var room) || room.DesktopSync is not { Enabled: true } previous || previous.DeskId != deskId)
+                        return (Publish: false, Settings: (RoomDesktopSync?)null);
+                    var next = RoomDesktopSync.Reconcile(previous, deskId, true, itemIds, complete, renames);
+                    var changed = previous.Slots.Count != next.Slots.Count || previous.Slots.Any(p => !next.Slots.TryGetValue(p.Key, out var slot) || slot != p.Value);
+                    if (changed) room.DesktopSync = next;
+                    return (Publish: changed, Settings: (RoomDesktopSync?)next);
+                }, out (bool Publish, RoomDesktopSync? Settings) result);
+                return (admitted && result.Publish, (Admitted: admitted, Settings: result.Settings));
+            });
+            if (attempt.Admitted) return attempt.Settings;
+            spin.SpinOnce();
+        }
+    }
+
     private sealed record PersonalLocator(Guid Session,string Stamp,string Room,string Button,string Request,long IssuedAt);
     private PersonalLocator? personalLocator;
-    internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    private sealed record DesktopPresentation(Guid Session,string Room,string Stamp,RoomDesktopView View,IReadOnlyDictionary<string,PersonalTarget> Targets);
+    private DesktopPresentation? desktopPresentation;
+    private sealed record DesktopProgress(string Room,string Desk,string State,int Issues);
+    private DesktopProgress? desktopProgress;
+    internal void SetDesktopProgress(string room,string desk,string state,int issues=0) => Volatile.Write(ref desktopProgress,new(room,desk,state,issues));
+    internal void PublishDesktopPresentation(Guid session,string room,string stamp,RoomDesktopView view,IReadOnlyDictionary<string,PersonalTarget>? targets=null) =>
+        Volatile.Write(ref desktopPresentation,new(session,room,stamp,view,new Dictionary<string,PersonalTarget>(targets??new Dictionary<string,PersonalTarget>(),StringComparer.Ordinal)));
+    internal const string DesktopConsumer = "official.desktop";
+    internal bool IsDesktopEntry(RoomActionContext context,RoomNativeButton entry)
+    {
+        return IsDesktopEntry(context,entry,Volatile.Read(ref desktopPresentation));
+    }
+    private static bool IsDesktopEntry(RoomActionContext context,RoomNativeButton entry,DesktopPresentation? value)
+    {
+        var snapshot=context.Snapshot;
+        return value is not null&&context.Role==RoomClientRole.DesktopPlayer&&snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&
+            snapshot.TransitionId is null&&snapshot.SessionId==value.Session&&context.Installation.RoomId==value.Room&&
+            context.Installation.InstallationStamp==value.Stamp&&snapshot.CurrentDeskId==value.View.DeskId&&
+            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next" or "desktop.paste");
+    }
+    internal (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopRename(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        if(proof.Key!=113)return (RoomActionStatus.NotOperable,null);
+        var prepared=PrepareDesktopTarget(connection,peer,session,proof);
+        if(prepared.Status==RoomActionStatus.Accepted&&prepared.Target is null)return (RoomActionStatus.NotOperable,null);
+        return prepared;
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopClipboard(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids,bool cut)
+    {
+        if(proof.Key!=(cut?88:67)||proof.Modifiers!=1||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopMenu(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
+    {
+        if(!(proof.ContextMenu||proof.Key==93&&proof.Modifiers==0||proof.Key==121&&proof.Modifiers==2)||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopDelete(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
+    {
+        if(proof.Key!=46||proof.Modifiers!=0||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
+    internal RoomActionStatus AuthorizeDesktopPaste(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        if(!(proof.Key==86&&proof.Modifiers==1)&&!(proof.Button.Button=="desktop.paste"&&proof.Key is 0 or 13 or 32))return RoomActionStatus.NotOperable;
+        return PrepareDesktopTargets(connection,peer,session,proof).Status;
+    }
+    private (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopTarget(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof);
+        return (prepared.Status,prepared.Targets?.FirstOrDefault());
+    }
+    private (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopTargets(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[]? selection=null)
+    {
+        var now=clock.GetTimestamp();
+        if(Expired(proof.IssuedAt,now))return (RoomActionStatus.ExpiredInput,null);
+        (RoomActionStatus Status,PersonalTarget[]? Targets) prepared;
+        try
+        {
+            var spin=new SpinWait();
+            while(true)
+            {
+                var attempt=store.ReadForDispatch(state=>{
+                    var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
+                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget[]?)null);
+                        var value=Volatile.Read(ref desktopPresentation);
+                        if(!IsDesktopEntry(context!,proof.Button,value)||value is null||
+                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                        PersonalTarget[] targets;
+                        if(selection is not null){
+                            if(selection.Length is <1 or >256 || selection.Distinct(StringComparer.Ordinal).Count()!=selection.Length ||
+                                !selection.Contains(proof.Button.Button,StringComparer.Ordinal) || selection.Any(id=>id is null || !value.Targets.ContainsKey(id)))
+                                return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                            targets=selection.Select(id=>value.Targets[id]).ToArray();
+                        }else targets=value.Targets.TryGetValue(proof.Button.Button,out var target)?new[]{target}:Array.Empty<PersonalTarget>();
+                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget[]?)null);
+                        return(RoomActionStatus.Accepted,(PersonalTarget[]?)targets);
+                    },out (RoomActionStatus Status,PersonalTarget[]? Targets) result);
+                    return(admitted,result);
+                });
+                if(attempt.admitted){prepared=attempt.result;break;}spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)){return (RoomActionStatus.StorageUnavailable,null);}
+        if(prepared.Status==RoomActionStatus.Accepted&&Expired(proof.IssuedAt,clock.GetTimestamp()))return (RoomActionStatus.ExpiredInput,null);
+        return prepared;
+    }
+    internal RoomActionReply OpenDesktopSelection(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] selectedIds,Func<bool>? permitted=null)
+    {
+        if(proof.Key!=13||selectedIds is null)return new(RoomActionStatus.NotOperable);
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof,selectedIds);
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        var result=RoomActionStatus.Accepted;
+        foreach(var target in prepared.Targets!){
+            if(permitted?.Invoke()==false)return new(RoomActionStatus.Cancelled);
+            try{launch(target);}
+            catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+            {result=RoomActionStatus.LaunchFailed;}
+        }
+        return new(result);
+    }
+    internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
+    {
+        // File command proofs must never fall through to application launch.
+        if(proof.ContextMenu||proof.Key is 46 or 113 or 67 or 88 or 86 or 93 or 121)return new(RoomActionStatus.NotOperable);
+        var prepared=PrepareDesktopTarget(connection,peer,session,proof);
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        if(Expired(proof.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
+        try{if(prepared.Target is not null)launch(prepared.Target);return new(RoomActionStatus.Accepted);}
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+        {return new(RoomActionStatus.LaunchFailed);}
+    }
+    // Recheck immediately before starting a native file operation. Explorer owns
+    // foreground during an external drag; wallpaper playback pause is not a veto.
+    internal RoomActionStatus PlaceDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session, string deskId,
+        IReadOnlyCollection<string> ids, int targetSlot, int columns, int capacity)
+    {
+        try
+        {
+            var spin = new SpinWait();
+            while (true)
+            {
+                var result = store.UpdateForDispatch(state =>
+                {
+                    var admitted = gateway.TryWithActionContext(connection, peer, session, (status, context) =>
+                    {
+                        if (status != RoomProtocolStatus.Accepted) return (Status(status), (RoomDesktopSync?)null);
+                        var snapshot = context!.Snapshot;
+                        var eligibility = LayoutEligibility(context, snapshot.Revision, false);
+                        if (eligibility != RoomActionStatus.Accepted) return (eligibility, (RoomDesktopSync?)null);
+                        if (!snapshot.IsActive || snapshot.Lifecycle.Locked || snapshot.TransitionId is not null ||
+                            snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.CurrentDeskId != deskId ||
+                            !state.Rooms.TryGetValue(context.Installation.RoomId, out var room) ||
+                            room.DesktopSync is not { Enabled: true } previous || previous.DeskId != deskId)
+                            return (RoomActionStatus.NotOperable, (RoomDesktopSync?)null);
+                        var next = RoomDesktopSync.PlaceDropped(previous, ids, targetSlot, columns, capacity);
+                        room.DesktopSync = next;
+                        return (RoomActionStatus.Accepted, (RoomDesktopSync?)next);
+                    }, out (RoomActionStatus Status, RoomDesktopSync? Settings) response);
+                    return (admitted && response.Settings is not null, (admitted, response));
+                });
+                if (!result.admitted) { spin.SpinOnce(); continue; }
+                if (result.response.Settings is { } saved)
+                {
+                    var current = Volatile.Read(ref desktopPresentation);
+                    if (current is not null && current.Session == session && current.View.DeskId == deskId && current.View.Items is { } items)
+                    {
+                        var updated = current with { View = current.View with { ContextId = Guid.NewGuid().ToString("N"),
+                            Items = items.Select(item => saved.Slots.TryGetValue(item.Id, out var slot) ? item with { Slot = slot } : item).ToArray() } };
+                        Interlocked.CompareExchange(ref desktopPresentation, updated, current);
+                    }
+                }
+                return result.response.Status;
+            }
+        }
+        catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
+    }
+    internal RoomActionStatus CheckDesktopDrop(Guid connection, RoomSessionPeer peer, Guid session,
+        long revision, string desktopContextId, string deskId)
+    {
+        try
+        {
+            var spin = new SpinWait();
+            while (true)
+            {
+                var attempt = store.ReadForDispatch(state =>
+                {
+                    var admitted = gateway.TryWithActionContext(connection, peer, session, (status, context) =>
+                    {
+                        if (status != RoomProtocolStatus.Accepted) return Status(status);
+                        var eligibility = LayoutEligibility(context!, revision, false);
+                        if (eligibility != RoomActionStatus.Accepted) return eligibility;
+                        var snapshot = context!.Snapshot;
+                        var desktop = Volatile.Read(ref desktopPresentation);
+                        if (!snapshot.IsActive || snapshot.Lifecycle.Locked || snapshot.TransitionId is not null ||
+                            snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || snapshot.CurrentDeskId != deskId ||
+                            desktop is null || desktop.Session != session || desktop.Room != context.Installation.RoomId ||
+                            desktop.Stamp != context.Installation.InstallationStamp || desktop.View.ContextId != desktopContextId ||
+                            desktop.View.DeskId != deskId || !state.Rooms.TryGetValue(desktop.Room, out var room) ||
+                            room.DesktopSync is not { Enabled: true } sync || sync.DeskId != deskId)
+                            return RoomActionStatus.NotOperable;
+                        return RoomActionStatus.Accepted;
+                    }, out RoomActionStatus result);
+                    return (admitted, result);
+                });
+                if (attempt.admitted) return attempt.result;
+                spin.SpinOnce();
+            }
+        }
+        catch (Exception error) when (StorageFailure(error)) { return RoomActionStatus.StorageUnavailable; }
+    }
+    // Presentation belongs to the Room; file-drop admission remains Desk-scoped.
+    internal RoomActionStatus CheckDesktopSurface(Guid connection,RoomSessionPeer peer,Guid session,long revision)
+    {
+        try
+        {
+            var spin=new SpinWait();
+            while(true)
+            {
+                var attempt=store.ReadForDispatch(state=>{
+                    var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
+                        if(status!=RoomProtocolStatus.Accepted)return Status(status);
+                        var eligible=LayoutEligibility(context!,revision,false);
+                        if(eligible!=RoomActionStatus.Accepted)return eligible;
+                        var snapshot=context!.Snapshot;
+                        return snapshot.IsActive && !snapshot.Lifecycle.Locked && snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop &&
+                            state.Rooms.TryGetValue(context.Installation.RoomId,out var room) && room.DesktopSync is {Enabled:true}
+                            ? RoomActionStatus.Accepted : RoomActionStatus.NotOperable;
+                    },out RoomActionStatus result);
+                    return(admitted,result);
+                });
+                if(attempt.admitted)return attempt.result;
+                spin.SpinOnce();
+            }
+        }
+        catch(Exception error) when(StorageFailure(error)){return RoomActionStatus.StorageUnavailable;}
+    }
+    internal void ClearDesktopPresentation() { Volatile.Write(ref desktopPresentation,null); Volatile.Write(ref desktopProgress,null); }
+
+    internal RoomPresentationReply ReadPresentation(Guid connection,RoomSessionPeer peer,Guid session,long revision,string? desktopContextId=null)
     {
         var initial=gateway.ReadActionContext(connection,peer,session,out var early);
         if(initial!=RoomProtocolStatus.Accepted)return new(Status(initial));
@@ -89,7 +361,12 @@ internal sealed partial class RoomActionAuthority
                         var locator=Volatile.Read(ref personalLocator);
                         var valid=locator is not null&&locator.Session==session&&locator.Stamp==context.Installation.InstallationStamp&&
                             locator.Room==context.Installation.RoomId&&clock.GetElapsedTime(locator.IssuedAt,clock.GetTimestamp())<TimeSpan.FromSeconds(3);
-                        return new(RoomActionStatus.Accepted,new(state.Revision,skins,valid?new(locator!.Request,locator.Button):null));
+                        var desktop=Volatile.Read(ref desktopPresentation);
+                        var desktopValid=desktop is not null&&desktop.Session==session&&desktop.Room==context.Installation.RoomId&&
+                            desktop.Stamp==context.Installation.InstallationStamp&&room?.DesktopSync is {Enabled:true} sync&&sync.DeskId==desktop.View.DeskId;
+                        var desktopView=desktopValid?desktop!.View:null;
+                        if(desktopView?.ContextId==desktopContextId&&desktopView is not null)desktopView=desktopView with{Items=null};
+                        return new(RoomActionStatus.Accepted,new(state.Revision,skins,valid?new(locator!.Request,locator.Button):null,desktopView));
                     },out RoomPresentationReply reply);
                     return(completed,reply);
                 });
@@ -100,7 +377,7 @@ internal sealed partial class RoomActionAuthority
     }
     private sealed record PersonalEdit(string Operation, string? ButtonId = null, string? Action = null, string? DeskId = null,
         string? TargetId = null, string? Skin = null, string? Name = null, string? Kind = null, string? Target = null,
-        string? Arguments = null, string? WorkingDirectory = null);
+        string? Arguments = null, string? WorkingDirectory = null, bool? Enabled = null);
     private static readonly JsonSerializerOptions EditorJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 24 };
     private static readonly RoomPersonalSkin[] EditorSkins = { new("classic","经典"), new("glass","玻璃"), new("outline","描边") };
@@ -121,7 +398,8 @@ internal sealed partial class RoomActionAuthority
             RoomV3Installation.CheckUniqueJson(root);
             edit=JsonSerializer.Deserialize<PersonalEdit>(editJson,EditorJson) ?? throw new InvalidDataException();
             string[] keys=edit.Operation switch {
-                "enableNavigation"=>new[]{"operation"},
+                "enableNavigation" or "refreshDesktopSync"=>new[]{"operation"},
+                "setDesktopSync"=>new[]{"operation","deskId","enabled"},
                 "setButton"=>new[]{"operation","buttonId","action","deskId","targetId","skin"},
                 "resetButton" or "locateButton"=>new[]{"operation","buttonId"},
                 "upsertTarget"=>new[]{"operation","targetId","name","kind","target","arguments","workingDirectory"},
@@ -129,6 +407,11 @@ internal sealed partial class RoomActionAuthority
                 _=>Array.Empty<string>() };
             if(keys.Length==0 || root.EnumerateObject().Any(p=>!keys.Contains(p.Name,StringComparer.Ordinal))) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation is "setButton" or "resetButton" or "locateButton") RoomPersonalStore.Id(edit.ButtonId!);
+            if(edit.Operation=="setDesktopSync")
+            {
+                RoomPersonalStore.Id(edit.DeskId!);
+                if(edit.Enabled is null)return EditorFailure(RoomActionStatus.Denied);
+            }
             if(edit.TargetId is not null) RoomPersonalStore.Uuid(edit.TargetId);
             if(edit.Operation is "upsertTarget" or "removeTarget" && edit.TargetId is null) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation=="upsertTarget") RoomPersonalStore.ValidateTarget(EditTarget(edit));
@@ -179,7 +462,17 @@ internal sealed partial class RoomActionAuthority
     private (bool Publish,RoomPersonalEditorReply Reply) PrepareEditor(RoomPersonalState state,VerifiedRoomInstallation installed,RoomSessionSnapshot snapshot,PersonalEdit? edit)
     {
         var changed=false;
-        if(edit?.Operation=="enableNavigation")
+        if(edit?.Operation=="setDesktopSync")
+        {
+            if(!installed.DeskIds.Contains(edit.DeskId!,StringComparer.Ordinal))return(false,EditorFailure(RoomActionStatus.Denied));
+            state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
+            if(room.DesktopSync is not { } old || old.DeskId!=edit.DeskId || old.Enabled!=edit.Enabled)
+            {
+                room.DesktopSync=RoomDesktopSync.Reconcile(room.DesktopSync,edit.DeskId!,edit.Enabled!.Value,null,false);
+                state.Rooms[installed.RoomId]=room;changed=true;
+            }
+        }
+        else if(edit?.Operation=="enableNavigation")
         {
             state.Rooms.TryGetValue(installed.RoomId,out var existing);var room=existing??new RoomPersonalData();
             foreach(var button in installed.ActionCatalog!.Buttons.Values)
@@ -245,7 +538,7 @@ internal sealed partial class RoomActionAuthority
         return(changed,new("accepted",installed.RoomId,installed.InstallationStamp,ProjectEditor(state,installed,changed)));
     }
 
-    private static RoomPersonalEditorSnapshot ProjectEditor(RoomPersonalState state,VerifiedRoomInstallation installed,bool publish)
+    private RoomPersonalEditorSnapshot ProjectEditor(RoomPersonalState state,VerifiedRoomInstallation installed,bool publish)
     {
         state.Rooms.TryGetValue(installed.RoomId,out var room);
         var buttons=installed.ActionCatalog!.Buttons.Values.OrderBy(b=>b.Id,StringComparer.Ordinal).Select(b=>{
@@ -258,6 +551,9 @@ internal sealed partial class RoomActionAuthority
             .ToDictionary(group=>group.Key,group=>group.Count(),StringComparer.Ordinal);
         var targets=state.Targets.OrderBy(pair=>pair.Value.Name,StringComparer.Ordinal).ThenBy(pair=>pair.Key,StringComparer.Ordinal)
             .Select(pair=>new RoomPersonalEditorTarget(pair.Key,pair.Value.Name,pair.Value.Kind,pair.Value.Target,pair.Value.Arguments,pair.Value.WorkingDirectory,uses.GetValueOrDefault(pair.Key))).ToArray();
-        return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray());
+        var progress=Volatile.Read(ref desktopProgress);
+        var matching=progress?.Room==installed.RoomId&&progress?.Desk==room?.DesktopSync?.DeskId;
+        return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray(),
+            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count,!sync.Enabled?"disabled":matching?progress!.State:"pending",matching?progress!.Issues:0) : null);
     }
 }

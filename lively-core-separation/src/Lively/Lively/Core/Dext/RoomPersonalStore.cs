@@ -17,6 +17,10 @@ internal sealed record RoomCapabilityGrant(string InstallationStamp, string[] Ca
 internal sealed class RoomPersonalData
 {
     public RoomPersonalLayout Layout { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RoomDesktopSync? DesktopSync { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, PersonalTarget[]>? DockPins { get; set; }
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> ReadGrants { get; set; } = new(StringComparer.Ordinal);
@@ -114,8 +118,47 @@ internal sealed class RoomPersonalStore
             Require(sourceId != newId && !s.Rooms.ContainsKey(newId), "copy must have a new identity");
             var copy = new RoomPersonalData();
             if (s.Rooms.TryGetValue(sourceId, out var source))
+            {
                 foreach (var (id, button) in source.Buttons) copy.Buttons.Add(id, button);
+                if (source.DockPins is not null) copy.DockPins = source.DockPins.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), StringComparer.Ordinal);
+            }
             s.Rooms.Add(newId, copy); // Permission is never inherited by a new Room copy.
+        });
+    }
+    // Null means inherit the global list; an empty array is an explicit empty list.
+    public PersonalTarget[]? ReadDockPins(string roomId, string deskId)
+    {
+        Uuid(roomId); Id(deskId);
+        return Read().Rooms.GetValueOrDefault(roomId)?.DockPins?.GetValueOrDefault(deskId);
+    }
+    public void SetDockPins(string roomId, string deskId, PersonalTarget[]? pins)
+    {
+        Uuid(roomId); Id(deskId);
+        Update(state =>
+        {
+            if (!state.Rooms.TryGetValue(roomId, out var room))
+                state.Rooms.Add(roomId, room = new RoomPersonalData());
+            if (pins is null)
+            {
+                room.DockPins?.Remove(deskId);
+                if (room.DockPins?.Count == 0) room.DockPins = null;
+            }
+            else (room.DockPins ??= new(StringComparer.Ordinal))[deskId] = pins.ToArray();
+        });
+    }
+    internal RoomDesktopSync? ReadDesktopSync(string roomId)
+    {
+        Uuid(roomId);
+        return Read().Rooms.GetValueOrDefault(roomId)?.DesktopSync;
+    }
+    internal void SetDesktopSync(string roomId, string deskId, bool enabled,
+        IReadOnlyCollection<string>? currentIds = null, bool complete = true)
+    {
+        Uuid(roomId); Id(deskId);
+        Update(state =>
+        {
+            if (!state.Rooms.TryGetValue(roomId, out var room)) state.Rooms.Add(roomId, room = new());
+            room.DesktopSync = RoomDesktopSync.Reconcile(room.DesktopSync, deskId, enabled, currentIds, complete);
         });
     }
     public void DeleteRoom(string roomId) { Uuid(roomId); Update(s => s.Rooms.Remove(roomId)); }
@@ -156,6 +199,19 @@ internal sealed class RoomPersonalStore
         {
             Uuid(roomId); Require(room is not null && room.Buttons is not null && room.Grants is not null && room.ReadGrants is not null && room.Storage is not null && room.Layout is not null, "Room personal shape");
             RoomPersonalLayout.Validate(room!.Layout);
+            RoomDesktopSync.Validate(room.DesktopSync);
+            Require(room.DockPins is null || room.DockPins.Count <= 64, "Desk Dock count");
+            foreach (var (desk, pins) in room.DockPins ?? new(StringComparer.Ordinal))
+            {
+                Id(desk); Require(pins is not null && pins.Length <= 256, "Desk Dock pins");
+                var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var pin in pins!)
+                {
+                    Require(pin is not null && pin.Kind == "application", "Desk Dock application");
+                    ValidateTarget(pin!);
+                    Require(targets.Add(pin.Target.Trim().Replace('/', '\\')), "duplicate Desk Dock target");
+                }
+            }
             Require(room.Buttons.Count <= 1024 && room.Grants.Count <= 196 && room.ReadGrants.Count <= 196 && room.Storage.Count <= 196, "Room personal count");
             foreach (var (id, button) in room.Buttons)
             {

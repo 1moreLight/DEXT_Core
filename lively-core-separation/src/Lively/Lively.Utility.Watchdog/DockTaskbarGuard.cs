@@ -111,7 +111,7 @@ namespace Lively.Utility.Watchdog
                 // Parent failure/heartbeat loss must not leave an orphan top
                 // window above the restored Windows taskbar. Only this exact
                 // Dock identity is eligible; normal release leaves closure to Core.
-                if (!normalQuit && DextDockTaskbarRecovery.IsProcessAlive(dockPid, dockStarted))
+                if (!normalQuit && dockPid != corePid && DextDockTaskbarRecovery.IsProcessAlive(dockPid, dockStarted))
                 {
                     try { using (var dock = Process.GetProcessById(dockPid)) dock.Kill(); } catch { }
                 }

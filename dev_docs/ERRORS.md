@@ -365,3 +365,127 @@
 | #263 | v3本机数据授权只挂Dock，Widget声明已到Core却无配置器入口 | [frontend](errors/frontend.md) |
 | #264 | 观测台误用内部媒体/音量字段；只读消费误绑桌面前台使小窗口清空读数 | [backend](errors/backend.md) |
 | #265 | 主线导入Room与新样包路径重合，合并前须保存本机文件/删除状态；恢复不混入提交 | [git](errors/git.md) |
+
+| #266 | 原生应用Dock刷新不得在按下/抬起之间替换按钮；状态轮询不能吞掉配置点击 | [frontend](errors/frontend.md) |
+
+| #267 | 预览窗口未Show时DPI尚未初始化，锚点须从已显示Dock的DIP坐标传递 | [frontend](errors/frontend.md) |
+
+| #268 | PowerShell Replace(char,空串)重载错误不会默认终止后续编译/提交 | [toolchain](errors/toolchain.md) |
+| #269 | 预览保留图标但点击闭包捕获旧窗口快照，动作须按稳定key读取最新组 | [frontend](errors/frontend.md) |
+
+| #270 | PowerShell传给rg的路径通配符不展开，应用真实目录和-g文件过滤 | [toolchain](errors/toolchain.md) |
+
+| #271 | 任务栏租约释放后恢复尚未确认，必须保留恢复状态与错误；重试期不能清错误 | [backend](errors/backend.md) |
+| #272 | WPF退出线程同步等待异步看护释放，内层await捕获Dispatcher导致退出卡住 | [backend](errors/backend.md) |
+| #273 | partial类静态字段跨文件初始化次序不可靠，不能依赖另一分册字段先完成 | [backend](errors/backend.md) |
+| #274 | 异步保存期间计数改变，旧回执不能宣称最新值已保存，成功后须补写最新值 | [frontend](errors/frontend.md) |
+| #275 | Dock切换必须等待任务栏租约与恢复确认，Tick正常返回不代表旧看护已释放 | [backend](errors/backend.md) |
+| #276 | 水平 StackPanel 向 ScrollViewer 提供无限宽度，应用多时被裁切而无滚动条 | [frontend](errors/frontend.md) |
+| #277 | 探针需读 camelCase wire 且不能把启动暂停当作导航失败 | [toolchain](errors/toolchain.md) |
+| #278 | 应用Dock与手动隐藏同为Core PID，自动释放不能等待独立手动租约消失 | [backend](errors/backend.md) |
+| #279 | 任务栏工作区变化会误判最大化为全屏；恢复任务栏后唤出区须仍在物理底边 | [frontend](errors/frontend.md) |
+| #280 | 原生屏幕查询异常须同步使AppBar就绪失效，不能仅显示错误并保留旧Ready | [backend](errors/backend.md) |
+| #281 | 切换候选时start脚本无条件新开配置器导致多窗口/身份冲突；后台验证必须CoreOnly | [toolchain](errors/toolchain.md) |
+| #282 | 试验台示例字段漂移让正式组件读不到时间/内存/音量；预置JSON与运行样本须共用Core形状 | [frontend](errors/frontend.md) |
+
+| #283 | 原生右键菜单跨Desk保留时不得用执行时的新页面重签固定范围 | [frontend](errors/frontend.md) |
+
+| #284 | 应用Dock关闭最后一个WPF窗口会提前关闭Dispatcher，Core应显式退出 | [backend](errors/backend.md) |
+| #285 | PowerShell替换文本含中文弯引号导致整条命令解析失败 | [toolchain](errors/toolchain.md) |
+| #286 | 官方任务菜单返回按钮在快照刷新时重建，按下/抬起间丢点击 | [frontend](errors/frontend.md) |
+| #287 | 旧式Player项目显式列Compile，新partial文件未加入csproj导致方法不可见 | [toolchain](errors/toolchain.md) |
+| #288 | main页面VM夹具未跟随Dock DOM依赖更新，缺documentElement而在业务断言前失败 | [toolchain](errors/toolchain.md) |
+| #289 | 顶层Dock不能用桌面operable控制显示，否则普通应用取得前台就丢任务区 | [renderer](errors/renderer.md) |
+| #290 | 任务区浮点边界被拒绝后，普通geometry刷新不能替代指定occlusion确认 | [renderer](errors/renderer.md) |
+| #291 | 新worktree独立测试项目未还原，Core已构建不代表具备其assets | [toolchain](errors/toolchain.md) |
+| #292 | 任务完成排队期间几何撤销不改GeometryVersion，须独立撤销版本 | [backend](errors/backend.md) |
+| #293 | 窄任务栏滚动使焦点离开可见采样，重新从作者区进入又保留旧滚动位置而跳项 | [renderer](errors/renderer.md) |
+| #294 | 原生Dock实机探针遇全屏不能等待可见成功；Player退出后WebView仍可能短暂持有临时目录 | [toolchain](errors/toolchain.md) |
+| #295 | 恢复布局覆盖任务区遮挡确认，须等同区域最新render且保持拒绝保护 | [renderer](errors/renderer.md) |
+| #296 | Dock外层显示未恢复WebView2控制器，真实Chromium输入HWND仍隐藏 | [backend](errors/backend.md) |
+| #297 | 正式HTML新增任务区脚本/样式但发布清单漏项，源码运行正常而便携包缺资源 | [toolchain](errors/toolchain.md) |
+| #298 | 真实Core收到ShutDown后RPC停止响应但进程未退出，旧候选及新测试副本均复现；待定位 | [backend](errors/backend.md) |
+2026-10-11更新：#298已定位为WinForms SystemEvents同步上下文退出死锁，建立WPF启动上下文后真实融合生命周期/退出3轮通过；详见backend末尾补记。
+| #299 | 融合任务实机动作：工作区移动留下旧原点、正式宿主仍关闭eventSamples；两处已改但实际激活仍待定位 | [renderer](errors/renderer.md) |
+2026-10-11更新：#299真实鼠标激活/最小化/恢复通过；官方任务避免重复转发已进入Dock的鼠标事件，保留Core物理配对；其余统一门槛继续。
+| #300 | 首次启动探针未在期限内确认窗口，随后Explorer启动子程序；编辑及清理RPC超时，待定位 | [backend](errors/backend.md) |
+2026-10-11 #300补记：已避开dynamic COM类型扫描，真实首次启动及恢复通过；准备点击到窗口总耗时12.3秒仍待拆分，不能称性能已通过。详见backend末尾。
+2026-10-11 #300最新：首次启动存在间歇失败，最新失败未到ApplicationDockService.Click启动分支；继续追踪输入完成链，不把此前一次PASS当稳定完成。
+| #301 | 普通Form触摸兼容鼠标可达RawInput，但实际WebView2 Dock未触发；不能外推为触控已通 | [backend](errors/backend.md) |
+| #302 | Dock位置刷新撤销就绪触发自动任务栏恢复，工作区往返使点击取消 | [backend](errors/backend.md) |
+| #303 | 探针等待Dock就绪后原生窗口已移动，旧origin导致归属检查拒绝注入 | [backend](errors/backend.md) |
+| #304 | 双指触发官方任务菜单，返回按钮被排除原生采样而无法关闭 | [backend](errors/backend.md) |
+
+| #305 | 长按注入等待RPC不发UPDATE导致UP超时；持续更新触点后再判断取消 | [backend](errors/backend.md) |
+
+| #306 | 官方任务键盘entryId缺item，多应用几何重复而整组拒绝 | [backend](errors/backend.md) |
+
+| #307 | 鼠标/触摸选择窗口或固定应用缺页面完成回送，菜单持续遮住图标 | [backend](errors/backend.md) |
+
+| #308 | 页面displayReady先于任务栏接管完成，启动点击与工作区移动竞争 | [backend](errors/backend.md) |
+
+| #309 | 重复Dock可见性通知无条件suspend/refresh，按下后按钮短暂禁用，右键菜单丢失 | [renderer](errors/renderer.md) |
+
+| #310 | 未授权鼠标pointerdown的preventDefault抑制兼容mousedown，作者Dock转发回执超时 | [renderer](errors/renderer.md) |
+
+| #311 | 任务栏健康复用输入revision检查，同宿主切Desk时短暂撤销租约导致工作区往返 | [backend](errors/backend.md) |
+
+| #312 | 隔离融合夹具仅复制room.json/resources而漏installation.json，Core安装验证失败 | [toolchain](errors/toolchain.md) |
+
+| #313 | Dock模式切换时异步任务栏恢复尚未完成被误判失败 | [backend](errors/backend.md) |
+
+| #314 | 运行探针启用WPF访问UIA后System.IO隐式using消失 | [toolchain](errors/toolchain.md) |
+
+| #315 | 桌面图标批次可超过Player与JS原1MiB显示回包限额 | [backend](errors/backend.md) |
+
+| #316 | UIA全桌面后代查询无界遍历，且WebView子节点PID不等于Player；夹具恢复须先落盘 | [toolchain](errors/toolchain.md) |
+
+| #317 | 测试项目启用WinForms后Timer隐式引用歧义；目录监听需显式线程池Timer | [toolchain](errors/toolchain.md) |
+| #318 | PowerShell单项嵌套替换数组展开导致逐字符替换；用明确成对字段并审查diff | [toolchain](errors/toolchain.md) |
+| #319 | ExecuteScriptAsync不会直接抛页面脚本异常；AdditionalObjects拒绝非磁盘File时应读取脚本结果 | [toolchain](errors/toolchain.md) |
+| #320 | 精确多行替换前须统一CRLF/LF并确认命中；测试插入未命中不能当作验证通过 | [toolchain](errors/toolchain.md) |
+| #321 | build.ps1只部署Core/插件，不带官方宿主；实机切换前须按资源白名单预检夹具目录 | [toolchain](errors/toolchain.md) |
+| #322 | Player暂停请求与回包白名单不一致，会丢失文件拖入完成结果和呈现读取 | [backend](errors/backend.md) |
+| #323 | IFileOperation的GetAnyOperationsAborted可在回调取消后仍为false，须合并回调状态与HRESULT | [backend](errors/backend.md) |
+
+| #324 | C盘空间耗尽使npm ci解包失败；仅清理本轮失败依赖，打包改用有空间的目录 | [toolchain](errors/toolchain.md) |
+
+2026-10-11 工具链补记：普通build输出不可覆盖self-contained发布包；本轮混合副本RPC未就绪，独立空目录publish后启动/退出通过。详见errors/toolchain.md日期补记。
+
+2026-10-11 接收面排障：OLE注册成功不证明实际派发；现有Player处于Explorer DefView下方，WindowFromPoint命中ListView。必须让已有可见窗口实际位于接收层；不向背景HWND反复注册，也不更改用户桌面图标显示设置。新增DesktopSurfaceWindow隐藏原生层级恢复检查。首次构建引用NativeMethods不存在的IsChild，已改为该类独立P/Invoke并构建通过。
+| #325 | Shell静默错误标志不保证重名不等待确认；目录改名后清理旧子路径需先检查存在 | [backend](errors/backend.md) |
+
+| #326 | official.desktop未加入Player官方输入分类，键盘等作者iframe/回执、鼠标官方回执被忽略 | [backend](errors/backend.md) |
+
+| #327 | 桌面命令键复用点击选择逻辑，F2把多选缩成单选 | [renderer](errors/renderer.md) |
+
+| #328 | 多选Enter误缩成单选；打开应用引起暂停丢失动作回执 | [renderer](errors/renderer.md) |
+
+| #329 | 剪切CSS opacity被切页内联透明度覆盖，需叠加filter | [renderer](errors/renderer.md) |
+| #330 | 个人编辑测试间歇原子发布拒绝访问；同构建复查通过，根因未定 | [toolchain](errors/toolchain.md) |
+| #331 | RawInput旁听不能阻止Explorer文件快捷键重复执行，需确定单一OS接收者 | [backend](errors/backend.md) |
+| #332 | C# switch各case共享局部作用域，复制异步分支时同名变量使完整Core构建失败 | [toolchain](errors/toolchain.md) |
+
+| #333 | 静态Shell菜单初始化可能未处理；查询成功不能当作真实弹窗消息验收 | [backend](errors/backend.md) |
+
+| #334 | Windows Python默认GBK读取UTF-8源码失败；读写都必须显式UTF-8并在失败后止步 | [toolchain](errors/toolchain.md) |
+
+| #335 | 仅Core允许后台右键仍不够：宿主operable=false时发布空文件区域 | [renderer](errors/renderer.md) |
+
+| #336 | 桌面原生菜单恢复弹出前应用，且前台修订会清空文件焦点 | [backend](errors/backend.md) |
+
+| #337 | F2整条链与夹具误用F3键码114，内部测试全绿不代表真实键有效 | [backend](errors/backend.md) |
+
+2026-10-11 发布目录切换补记：官方原生宿主受当前发布根约束，旧WallpaperLayout指向旧发布目录时会拒绝加载；新候选需带入同一已安装content，再通过新官方宿主路径应用。运行目录安装content后严格发布inventory校验会报告额外文件，不能误称二进制损坏；独立核对原655项哈希未变。普通配置器CloseMainWindow只是隐藏，不能当作进程退出成功，也不能接着重复启动配置器。
+
+2026-10-11 用户拒收补记：仅同步Desk提升接收层会导致切页露出原生图标，不能将9点命中视为完整桌面交互验收。改为同Room同步开启期间保持层级，实际拖放仍限指定Desk。旧v2长按编辑入口没有迁到v3，需明确记未完成；不能把布局读写接口当作编辑UI交付。
+
+2026-10-11 长按编辑迁移：原生点击权限流会在超过移动阈值时取消，不能直接将其move/up用于长距离编辑。Player新增独立只观察位置/松手的流，继续用原Room layoutSave检查会话、前台、当前Desk及版本；不放宽点击权限或接管触控。构建前必须把新Form1 partial文件加入旧格式csproj的Compile列表。verify-v3-release-candidate参数为CandidateDirectory，非start.ps1的ReleaseDirectory；首次参数错误后正确重跑656/18通过。
+
+2026-10-11 黑屏根因：press-edit.js仅加入v3-release-assets，遗漏DextNativeResourceServer.OfficialFiles；实际加载403，Node测试require兜底绕过浏览器加载，故160项通过仍黑屏。补--v3-host-assets使用真实服务器读取全部HTML依赖（先403失败，后16项通过），verify-release-host同时核对服务器清单。会话active和文件存在不代表渲染成功。
+
+2026-10-11 Home输入回归：事后currentDesk=focus不能推断用户失败操作发生在focus，用户已确认是在Home。同步文件被editHit排除，后端LayoutItem也只认manifest；两端和布局读取需一起补，存储仍以本机opaque文件ID限定。另发现播放暂停用PictureBox覆盖并隐藏WebView，会失去OLE接收面；同步页应只暂停媒体/作者状态，保留真实WebView，不宣称该代码检查已证明本次禁止符号的唯一根因，实机待验收。
+
+2026-10-11 编辑模式迁移：exitEdit在初始snapshot调用也设置250ms动作静默，会误拦普通作者按钮（8个原点击用例失败）；只在确实退出编辑时设置静默后94项通过。Player异步up回调必须核对同一gesture，不能把下一手势清掉；松手后保留idle观察才能无焦点Esc退出。一次拖动保存不等于旧版持续编辑模式迁移完成。
+
+2026-10-11 reorder补齐：v3通用packing预览只按固定ID布局，不具备旧版占位插入语义；必须复用旧resolveIconReorder并在移动过程中重排同伴，拖拽图标单独跟手。仅存主图标会在重开后丢失让位顺序，改为同一个layoutSave携带peers，在一次存储事务中先验证全部项再写，布局版本只递增一次。作者iframe空白DOM不冒泡，双击退出必须从原生down/up识别，不依赖网页dblclick。

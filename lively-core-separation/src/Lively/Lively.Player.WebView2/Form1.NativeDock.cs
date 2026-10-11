@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Drawing;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,12 +18,16 @@ namespace Lively.Player.WebView2
         private bool nativeDockRendererReady, nativeDockInputConnected;
         private bool nativeDockVisibilitySynchronized, nativeDockSynchronizedVisible;
         private long nativeDockStateVersion;
+        private long nativeDockGeometryStarted;
+        private bool nativeDockTouchTracePending;
+        private string nativeDockTouchTrace;
+        private Rectangle nativeDockSynchronizedBounds;
         private readonly SemaphoreSlim nativeDockStateGate = new SemaphoreSlim(1, 1);
 
         private void InitializeNativeDockWindow()
         {
             if (!startArgs.DextDock) return;
-            if (startArgs.DextDockMode != "autohide" && startArgs.DextDockMode != "reserve")
+            if (startArgs.DextDockMode != "overlay" && startArgs.DextDockMode != "autohide" && startArgs.DextDockMode != "reserve")
                 throw new ArgumentException("Invalid Core Dock mode.");
             BackColor = Color.Black;
             WindowState = FormWindowState.Normal;
@@ -41,7 +46,7 @@ namespace Lively.Player.WebView2
             };
             DextDockWindowHost.ExtendTransparentFrame(Handle);
             nativeDockHeartbeat = new System.Windows.Forms.Timer { Interval = 1000 };
-            nativeDockHeartbeat.Tick += (sender, args) => PublishNativeDockState();
+            nativeDockHeartbeat.Tick += (sender, args) => { PublishNativeDockState(); _ = RefreshNativeTaskAreaStatusAsync(); _ = TraceNativeDockTouchAsync(); };
             nativeDockHeartbeat.Start();
         }
 
@@ -53,15 +58,24 @@ namespace Lively.Player.WebView2
             if (!NativeDockIdentity(generation, session, revision)) return;
             nativeDockRendererReady = true;
             await SynchronizeNativeDockWindow();
+            if (NativeDockIdentity(generation, session, revision) && nativeFrameMedia != null)
+                await nativeFrameMedia.EnableOfficialTouchAsync(generation, session, revision);
         }
 
         private async Task ApplyNativeDockPolicy(LivelyMessageRoomDockPolicy policy)
         {
             if (policy.ProtocolVersion != 1 || !NativeDockIdentity(policy.RuntimeGeneration, policy.SessionId, policy.Revision)) return;
             // Only private Core stdin sets this. Authors have no input-enable API.
-            if (nativeDockInputConnected != policy.InputConnected) nativeDockVisibilitySynchronized = false;
+            if (nativeDockInputConnected != policy.InputConnected)
+            { nativeDockVisibilitySynchronized = false; nativeDockGeometryStarted = 0; }
             nativeDockInputConnected = policy.InputConnected;
-            if (policy.LeaveKeyboard) nativeDockWindow?.LeaveKeyboard(true);
+            if (policy.PreviewHoldMilliseconds is int hold) nativeDockWindow?.HoldPreview(hold);
+            if (policy.LeaveKeyboard)
+            {
+                nativeDockWindow?.LeaveKeyboard(true);
+                if(webView.CoreWebView2!=null&&IsOfficialDextDocument(webView.CoreWebView2.Source))
+                    await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockKeyboardExit&&this.dextNativeDockKeyboardExit()");
+            }
             await SynchronizeNativeDockWindow();
             if (policy.RefreshGeometry && nativeDockInputConnected && IsOfficialDextDocument(webView.CoreWebView2.Source))
                 await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockRefresh&&this.dextNativeDockRefresh()");
@@ -71,6 +85,7 @@ namespace Lively.Player.WebView2
         {
             if (!startArgs.DextDock) return;
             nativeDockVisibilitySynchronized = false;
+            nativeDockGeometryStarted = 0;
             nativeDockRendererReady = false;
             nativeDockInputConnected = false;
             nativeDockWindow?.SetAvailability(false);
@@ -80,9 +95,54 @@ namespace Lively.Player.WebView2
         private void ObserveNativeDockWindow()
         {
             if (IsDisposed || Disposing) return;
-            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible) nativeDockVisibilitySynchronized = false;
+            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible)
+                nativeDockGeometryStarted = 0;
+            else if (nativeDockVisibilitySynchronized && Bounds != nativeDockSynchronizedBounds)
+                nativeDockGeometryStarted = Stopwatch.GetTimestamp();
+            if (nativeDockWindow.IsVisible != nativeDockSynchronizedVisible || Bounds != nativeDockSynchronizedBounds)
+            {
+                if (nativeDockVisibilitySynchronized)
+                    SendToParent(new LivelyMessageConsole { Category = ConsoleMessageType.log,
+                        Message = "Dock synchronization invalidated previousBounds=" + nativeDockSynchronizedBounds +
+                            " actualBounds=" + Bounds + " previousVisible=" + nativeDockSynchronizedVisible +
+                            " state=" + JsonConvert.SerializeObject(nativeDockWindow.Snapshot()) });
+                nativeDockVisibilitySynchronized = false;
+            }
             PublishNativeDockState();
             _ = SynchronizeNativeDockWindow();
+        }
+
+        private string nativeTaskAreaStatus = "pending";
+        private long nativeTaskAreaGeneration, nativeTaskAreaRevision, nativeTaskAreaSampleAt;
+        private Guid nativeTaskAreaSession;
+        private bool nativeTaskAreaReading;
+
+        private async Task RefreshNativeTaskAreaStatusAsync()
+        {
+            if(nativeTaskAreaReading || !nativeDockRendererReady || IsDisposed || Disposing ||
+                webView.CoreWebView2 == null || !IsOfficialDextDocument(webView.CoreWebView2.Source))return;
+            nativeTaskAreaReading = true;
+            try
+            {
+                var generation=roomRuntime.Generation;
+                var messages=roomRuntime.Replay();
+                var snapshot=messages.Count==0?null:messages[messages.Count-1];
+                if((string)snapshot?["type"]!="dext:v3-session")return;
+                var session=Guid.Parse((string)snapshot["sessionId"]);var revision=(long)snapshot["revision"];
+                var scope=new JObject { ["runtimeGeneration"]=generation,["sessionId"]=session,["revision"]=revision };
+                var reply=await webView.CoreWebView2.ExecuteScriptAsync(
+                    "this.dextNativeTaskReadiness?this.dextNativeTaskReadiness("+scope.ToString(Formatting.None)+"):null");
+                if(IsDisposed || Disposing || generation!=roomRuntime.Generation)return;
+                var latest=roomRuntime.Replay();var current=latest.Count==0?null:latest[latest.Count-1];
+                if((string)current?["sessionId"]!=session.ToString() || (long?)current?["revision"]!=revision)return;
+                var status=JsonConvert.DeserializeObject<string>(reply);
+                nativeTaskAreaStatus=status=="ready"||status=="hidden"||status=="unavailable"?status:"pending";
+                nativeTaskAreaGeneration=generation;nativeTaskAreaSession=session;nativeTaskAreaRevision=revision;
+                nativeTaskAreaSampleAt=Stopwatch.GetTimestamp();
+                PublishNativeDockState();
+            }
+            catch { nativeTaskAreaSampleAt=0; }
+            finally { nativeTaskAreaReading=false; }
         }
 
         private async Task SynchronizeNativeDockWindow()
@@ -97,9 +157,11 @@ namespace Lively.Player.WebView2
                 nativeDockWindow.SetAvailability(enabled && roomRuntime.DockCanPresent);
                 if (enabled && !nativeDockWindow.IsStarted)
                     nativeDockWindow.Start(startArgs.DextDockMode == "reserve" ? DextDockWindowHost.DockMode.Reserve :
+                        startArgs.DextDockMode == "overlay" ? DextDockWindowHost.DockMode.Overlay :
                         DextDockWindowHost.DockMode.Autohide, startArgs.DextDockHeight);
                 if (!nativeDockRendererReady || roomRuntime.Generation <= 0) return;
                 var visible = nativeDockWindow.IsVisible && enabled && roomRuntime.DockCanPresent;
+                var bounds = Bounds;
                 var identity = roomRuntime.Replay();
                 var snapshot = identity.Count == 0 ? null : identity[identity.Count - 1];
                 if ((string)snapshot?["type"] != "dext:v3-session") return;
@@ -113,8 +175,21 @@ namespace Lively.Player.WebView2
                 if (IsDisposed || Disposing || version != nativeDockStateVersion) return;
                 await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockVisibility&&this.dextNativeDockVisibility(" + value.ToString(Formatting.None) + ")");
                 if (version != nativeDockStateVersion) return;
+                // A work-area change can move the native HWND without resizing the
+                // DOM. Republish geometry so Core does not retain the old origin.
+                if (visible && bounds != nativeDockSynchronizedBounds)
+                    await webView.CoreWebView2.ExecuteScriptAsync("this.dextNativeDockRefresh&&this.dextNativeDockRefresh()");
+                if (version != nativeDockStateVersion) return;
+                await RefreshNativeTaskAreaStatusAsync();
+                if (version != nativeDockStateVersion) return;
+                nativeDockSynchronizedBounds = bounds;
+                // Native show/hide of the Form does not restore the WebView2
+                // controller visibility cached while its parent was hidden.
+                // Publish ready only after the actual browser can receive input.
+                NativeViewController().IsVisible = visible && !runtimeDeliverySuspended;
                 nativeDockSynchronizedVisible = visible;
                 nativeDockVisibilitySynchronized = true;
+                nativeDockGeometryStarted = 0;
                 PublishNativeDockState();
             }
             catch (Exception error)
@@ -140,13 +215,37 @@ namespace Lively.Player.WebView2
             {
                 RuntimeGeneration = roomRuntime.Generation, SessionId = session, Revision = (long)snapshot["revision"],
                 RendererReady = nativeDockRendererReady,
+                TaskAreaStatus = nativeTaskAreaGeneration == roomRuntime.Generation && nativeTaskAreaSession == session &&
+                    nativeTaskAreaRevision == (long)snapshot["revision"] && nativeTaskAreaSampleAt != 0 &&
+                    (Stopwatch.GetTimestamp() - nativeTaskAreaSampleAt) / (double)Stopwatch.Frequency < 5
+                    ? nativeTaskAreaStatus : "pending",
                 WindowReady = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted && nativeDockVisibilitySynchronized,
+                GeometryUpdating = nativeDockRendererReady && nativeDockInputConnected && nativeDockWindow.IsStarted &&
+                    nativeDockGeometryStarted != 0 &&
+                    (Stopwatch.GetTimestamp() - nativeDockGeometryStarted) / (double)Stopwatch.Frequency < 2,
                 WindowHwnd = Handle.ToInt64(), Visible = nativeDockWindow.IsVisible,
                 Keyboard = nativeDockWindow.IsKeyboard, Fullscreen = nativeDockWindow.IsFullscreen,
                 Locked = roomRuntime.DockLocked, HeightDip = startArgs.DextDockHeight,
                 Mode = startArgs.DextDockMode, AppBarRegistered = nativeDockWindow.IsAppBarRegistered,
                 AppBarReady = nativeDockWindow.IsAppBarReady
             });
+        }
+
+        private async Task TraceNativeDockTouchAsync()
+        {
+            if (nativeDockTouchTracePending || nativeFrameMedia == null || !nativeDockRendererReady || IsDisposed || Disposing) return;
+            nativeDockTouchTracePending = true;
+            try
+            {
+                var value = await nativeFrameMedia.ReadOfficialInputDiagnosticsAsync();
+                if (value != nativeDockTouchTrace && !IsDisposed && !Disposing)
+                {
+                    nativeDockTouchTrace = value;
+                    SendToParent(new LivelyMessageConsole { Category = ConsoleMessageType.log, Message = "Dock touch gate " + value });
+                }
+            }
+            catch (Exception) { /* Diagnostic polling must not change input behavior during navigation/exit. */ }
+            finally { nativeDockTouchTracePending = false; }
         }
 
         private void DisposeNativeDockWindow()

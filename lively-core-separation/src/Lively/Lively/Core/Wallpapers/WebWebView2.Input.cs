@@ -1,3 +1,4 @@
+using Lively.Services.ApplicationDock;
 using Dext.Core.Rooms;
 using Lively.Common.Helpers;
 using Lively.Models.Message;
@@ -19,10 +20,14 @@ namespace Lively.Core.Wallpapers
             // Never wait for admission on the Core/UI event thread. At most 16
             // consumer storage operations are in flight per private attachment.
             internal SemaphoreSlim StorageRequests { get; } = new(16,16);
+            internal SemaphoreSlim DesktopTransfers { get; } = new(1,1);
             internal RoomNativeControlQueue Controls { get; } = new();
             internal RoomNativeInputGesture PointerGesture { get; set; }
             internal RoomNativeKeyDelivery KeyDelivery;
+            internal DockTaskInput Tasks { get; } = new(TimeProvider.System);
+            internal DockTaskKeyboard TaskKeyboard { get; } = new();
         }
+        internal event Action<WebWebView2,DockTaskCompletion> NativeDockTaskCompleted;
         private NativeAttachment roomNativeAttachment;
         private IntPtr nativeBrowserHandle;
         internal Func<bool> NativeInputIsForeground { private get; set; }
@@ -43,16 +48,39 @@ namespace Lively.Core.Wallpapers
             try{packet=new(sample.Input);}catch(ArgumentException){return;}
             if(!packet.SampleVisual || packet.Kind!="down"&&packet.Kind!="up"&&packet.Kind!="focus")return;
             var measured=ReadNativeViewport();var foreground=NativeInputIsForeground?.Invoke()==true;
+            if(nativeDock)Logger.Debug($"Task sample received kind={packet.Kind} sequence={packet.GestureId} hit={sample.TaskHit!=null} foreground={foreground} raw={before.Gesture?.Sequence} released={before.Gesture?.Released} geometry={before.GeometryVersion}/{packet.GeometryVersion}");
             a.Input.CheckNativeViewport(measured,foreground);
             if(measured==null || measured.Handle.ToInt64()!=packet.InputHandle || measured.X!=packet.OriginX || measured.Y!=packet.OriginY ||
                 measured.Width!=packet.PixelWidth || measured.Height!=packet.PixelHeight || measured.Dpi!=packet.Dpi ||
-                sample.Buttons.Any(b=>b==null))return;
+                sample.Buttons.Any(b=>b==null)){
+                if(nativeDock)Logger.Debug($"Task sample rejected viewport sequence={packet.GestureId}");
+                return;
+            }
+            // Read the raw gesture before the author's empty hit retires it. A task
+            // receipt stays separate and cannot mint an authored button proof.
+            DockTaskCompletion task=null;
+            if(sample.TaskHit!=null&&nativeDock&&foreground&&NativeDockAvailable()&&packet.Key==0&&
+                DextNativeGeometry.TryCreate(sample.Buttons,out var regions)&&
+                !regions.Any(region=>region.Contains(((double)packet.X-packet.OriginX)/packet.PixelWidth,((double)packet.Y-packet.OriginY)/packet.PixelHeight)))
+            {
+                var raw=a.Input.State;
+                task=a.Tasks.Sample(raw?.Gesture,packet,sample.TaskHit,raw?.CancellationVersion??-1);
+                Logger.Debug($"Task sample paired kind={packet.Kind} sequence={packet.GestureId} complete={task!=null} raw={raw?.Gesture?.Sequence}");
+            }
+            else {
+                a.Tasks.Clear();
+                if(nativeDock)Logger.Debug($"Task sample rejected eligibility kind={packet.Kind} sequence={packet.GestureId}");
+            }
+            System.Collections.Generic.IReadOnlyList<RoomNativeButton> taskKeys=null;
+            if(nativeDock&&packet.Key!=0&&!a.TaskKeyboard.TryRegions(sample.TaskTargets,out taskKeys))return;
             var copy=sample.Buttons.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
             if(a.Bridge.SampleNativeGeometry(a.Input,packet.RuntimeGeneration,packet.SessionId,packet.Revision,packet.GeometryVersion,
-                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse)){
+                packet.GestureId,packet.Kind,measured,copy,foreground,packet.Key,packet.Consumer,packet.Button,packet.EntryId,packet.Reverse,taskKeys,a.Actions)){
                 NotifyNative(a,before,packet.Kind!="focus");
                 if(packet.Kind=="focus")NativeKeys(a).Flush();
+                if(task!=null){Logger.Debug($"Task sample completed sequence={packet.GestureId}");NativeDockTaskCompleted?.Invoke(this,task);}
             }
+            else if(nativeDock)Logger.Debug($"Task sample rejected geometry kind={packet.Kind} sequence={packet.GestureId}");
         }
         private async Task HandleNativeRequest(LivelyMessageRoomNativeRequest request)
         {
@@ -73,12 +101,43 @@ namespace Lively.Core.Wallpapers
                     if(viewport!=null && request.PixelWidth==viewport.Width && request.PixelHeight==viewport.Height && request.Buttons is{} entries && entries.Length<=4096 && entries.All(b=>b!=null))
                     {
                         var copy=entries.Select(b=>new RoomNativeButton(b.Consumer,b.Button,b.X,b.Y,b.Width,b.Height,b.TabIndex,b.EntryId,b.Polygons)).ToArray();
-                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
+                        status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
+                        if(status==RoomActionStatus.Accepted)RestoreDesktopMenuFocus(a);
                     }
                     break;
+                case "desktopMenu":
+                    var menuResult = await ExecuteDesktopMenuAsync(a, state, request);
+                    actionReply = menuResult.Reply; status = actionReply.Status; data = menuResult.Data;
+                    break;
+                case "desktopDelete":
+                    var recycled = await ExecuteDesktopDeleteAsync(a, state, request);
+                    actionReply = recycled.Reply; status = actionReply.Status; data = recycled.Data;
+                    break;
+                case "desktopPaste":
+                    var pasted = await ExecuteDesktopPasteAsync(a, state, request);
+                    actionReply = pasted.Reply; status = actionReply.Status; data = pasted.Data;
+                    break;
+                case "desktopCopy":
+                case "desktopCut":
+                    var clipboard = await ExecuteDesktopCopyAsync(a, state, request);
+                    actionReply = clipboard.Reply; status = actionReply.Status; data = clipboard.Data;
+                    break;
+                case "desktopRename":
+                    actionReply = await ExecuteDesktopRenameAsync(a, state, request);
+                    status = actionReply.Status;
+                    break;
+                case "desktopDrop":
+                    Logger.Info("DesktopDrop " + JsonConvert.SerializeObject(new { stage = "received", session = state.Session,
+                        request = request.RequestId, player = Pid, count = request.DesktopDrop?.Files?.Length ?? 0 }));
+                    var transfer = await ExecuteDesktopDropAsync(a, state, request);
+                    status = transfer.Status; data = transfer.Data;
+                    Logger.Info("DesktopDrop " + JsonConvert.SerializeObject(new { stage = "result", session = state.Session,
+                        request = request.RequestId, player = Pid, status = WireStatus(status) }));
+                    break;
                 case "presentationRead":
-                    var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision));
+                    var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision,request.DesktopContextId));
                     status=view.Status;
+                    data=new{clipboardSequence=Lively.Services.DesktopSync.DesktopShellClipboard.CurrentSequence};
                     if(view.Presentation is{} present)presentation=JObject.Parse(System.Text.Json.JsonSerializer.Serialize(present,
                         new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase}));
                     break;
@@ -109,7 +168,7 @@ namespace Lively.Core.Wallpapers
                         var read=await Task.Run(()=> {
                             if(!saving)return a.Bridge.NativeReadLayout(a.Actions,state.Session,state.Revision);
                             var c=request.LayoutChange;
-                            return a.Bridge.NativeSaveLayout(a.Actions,state.Session,state.Revision,request.LayoutRevision,new(c.Kind,c.Id,c.DeskId,c.X,c.Y,c.Width,c.Height));
+                            return a.Bridge.NativeSaveLayout(a.Actions,state.Session,state.Revision,request.LayoutRevision,new(c.Kind,c.Id,c.DeskId,c.X,c.Y,c.Width,c.Height,c.Peers?.Select(p=>new RoomLayoutChange(p.Kind,p.Id,p.DeskId,p.X,p.Y,p.Width,p.Height)).ToArray()));
                         });
                         status=read.Status;
                         if(status==RoomActionStatus.Accepted && read.Layout!=null) {
@@ -148,6 +207,10 @@ namespace Lively.Core.Wallpapers
                             new RoomSystemControl(request.Method=="mediaControl"?"media.control":"audio.control",request.MediaAction,request.Volume,request.Muted),
                             control=>DispatchNativeControl(control,token),request.InputSequence,proof=>Interlocked.Exchange(ref attempted,proof));
                     },Unavailable);
+                    status=actionReply.Status;break;
+                case "desktopOpen":
+                    a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
+                    actionReply=a.Bridge.OpenNativeDesktop(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button,request.InputSequence,request.SelectedIds);
                     status=actionReply.Status;break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
@@ -211,15 +274,28 @@ namespace Lively.Core.Wallpapers
         private void NotifyNative(NativeAttachment a,RoomNativeInputState before,bool activate)
         {
             var state=a.Input.State;if(state==null)return;
+            if(before?.Focus!=state.Focus)NativeDesktopKeyboardChanged?.Invoke();
             if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button,entryId=state.Focus?.EntryId});
             if(activate && state.Completed is{} proof && !ReferenceEquals(before?.Completed,proof))
-                SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+            {
+                if(proof.Button.Consumer==DextNativeTaskSample.Consumer)
+                {
+                    var task=a.TaskKeyboard.Complete(state);var snapshot=a.Bridge.Read().Snapshot;
+                    if(!nativeDock||task==null||snapshot==null||!proof.Validate(snapshot,proof.Button.Consumer,proof.Button.Button,true))return;
+                    SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+                    NativeDockTaskCompleted?.Invoke(this,task);
+                }
+                else if(proof.Button.Consumer==RoomActionAuthority.DesktopConsumer)
+                    SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId,desktopInput=DesktopInputDetails(proof)});
+                else SendNative(a,state,new{type="dext:v3-native-event",kind="activate",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,inputSequence=proof.Sequence,consumer=proof.Button.Consumer,button=proof.Button.Button,entryId=proof.Button.EntryId});
+            }
         }
         internal void NativeMouseDown(int x,int y,bool foreground)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null)return;var before=a.Input.State;var v=ReadNativeViewport();
-            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null);
+            a.Input.CheckNativeViewport(v,foreground);a.Input.MouseDown(v??MissingViewport,x,y,foreground&&v!=null,DesktopInputModifiers());
             var after=a.Input.State;
+            if(nativeDock)Logger.Debug($"Dock down gesture before={before?.Gesture?.Sequence} after={after?.Gesture?.Sequence} foreground={foreground} viewport={v!=null} geometry={after?.GeometryVersion}");
             if(after?.Gesture is{Key:0,Released:false} gesture&&gesture.Sequence!=before?.Gesture?.Sequence){
                 a.PointerGesture=gesture;SendNativePointer(gesture,"down",x,y);
             }
@@ -246,6 +322,7 @@ namespace Lively.Core.Wallpapers
         private void SendNativePointer(RoomNativeInputGesture gesture,string kind,int x,int y)
         {
             var v=gesture.Viewport;
+            if(nativeDock&&(kind=="down"||kind=="up"||kind=="cancel"))Logger.Debug($"Dock packet kind={kind} sequence={gesture.Sequence} sample={gesture.SampleMouse}");
             SendMessage(new LivelyMessageRoomNativePointer{
                 RuntimeGeneration=gesture.Generation,SessionId=gesture.Session,Revision=gesture.Revision,GeometryVersion=gesture.GeometryVersion,
                 GestureId=gesture.Sequence,IssuedAt=gesture.IssuedAt,InputHandle=v.Handle.ToInt64(),Kind=kind,
@@ -260,11 +337,20 @@ namespace Lively.Core.Wallpapers
             });
             return Interlocked.CompareExchange(ref a.KeyDelivery,created,null)??created;
         }
-        internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
+        internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false,bool exclusiveDesktop=false,int? modifiers=null)
         {
-            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32)return false;
+            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && !DextNativePointerPacket.IsDesktopFileKey(key))return false;
+            var desktopFocus=a.Input.FocusedButton;
+            // File commands must have one OS owner; RawInput only observes and
+            // cannot prevent Explorer from running the same command.
+            if(!exclusiveDesktop&&desktopFocus?.Consumer==RoomActionAuthority.DesktopConsumer&&
+                (desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)||desktopFocus.Button=="desktop.paste")&&
+                (DextNativePointerPacket.IsDesktopFileKey(key)||key is 13 or 32))return true;
+            var keyModifiers=modifiers??DesktopInputModifiers();
+            if(DextNativePointerPacket.IsDesktopFileKey(key)&&down&&(nativeDock||!DextNativePointerPacket.IsDesktopKeyTarget(key,desktopFocus?.Consumer,desktopFocus?.Button)))return false;
+            if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&down&&keyModifiers!=1)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
-            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null);
+            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,keyModifiers);
             var after=a.Input.State;
             if(down&&key==9&&after?.Gesture is{Key:9} tab&&tab.Sequence!=before?.Gesture?.Sequence){
                 NativeKeys(a).FocusRequested();SendNativeFocus(tab);

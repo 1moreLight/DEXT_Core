@@ -677,3 +677,61 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 ## #242 原生Dock自然输入不能与Core转发重复；暂停桌面不应卡住Dock导航（2026-10-05）
 源码接线发现：原生顶层WebView会自然收到输入，既有Core私有链又会转发同一边沿。Dock专用预装门控现在在样本准备后允许一次对应边沿及一次click，阻止未准备和重复边沿；桌面默认不开该门控。外围按键只记录本地held，避免误清空闲Dock几何；触边刷新避开未完成的鼠标/键盘动作，鼠标准入读取真实Dock HWND而非要求桌面前台。
 同一次接线发现kernel普通Request在桌面不可操作时只排队，Dock普通软件前导航会等桌面恢复。已消费真实输入的Dock内部请求现在先持久化并直接提交Desk，保留原播放/前台事实，锁屏和非Desktop阶段仍拒绝；旧过渡完成不再匹配。以上为源码处理，只有JS语法/diff检查，不宣称C#编译或真实Windows点击/导航已通过，实际门槛集中游戏后执行。
+
+## #289 官方任务区误用桌面 operable 条件（2026-10-10）
+接线检查发现 task-area-controller 要求 snapshot.operable；内核该字段依赖桌面前台，普通应用激活后即可能为false。既有Dock作者几何和数据刻意不使用这个条件。新增“Dock可见但desktop operable=false/playbackPaused=true”检查先复现失败，再去掉任务区对该字段的依赖，保留active、desktop阶段、locked和独立窗口visible条件，回归通过。顶层Dock不得继承壁纸的前台/暂停策略。
+
+## #290 任务区几何确认不得由普通刷新替代（2026-10-10）
+独立review发现：1000逻辑宽度中的x=70,width=930换算为1920画布后，右端可能成为1920.0000000000002，dom-host正确拒绝但controller以refreshGeometry成功替代确认，导致区域显示而底层作者命中未被扣除。两项回归先RED：实际dom-host无法接受此边界、controller错误回退。修复为归一化宽高不超过剩余画布；移除controller普通刷新回退；同区域尚未inputReady时由setTaskAreaOcclusion自身重新render确认。最终89项Node与七组DOM通过。
+
+## #293 窄任务栏原生Tab应维持任务顺序并处理边界进入（2026-10-10）
+- 现象：准备下一项时滚动会把旧焦点完全移出采样；Core找不到旧焦点便回到作者导航。任务行滚到末尾后从作者重新进入，DOM因nativeFocus为空直接返回，又只能采到末尾应用。Shift+Tab首次进入存在镜像问题。
+- 原因：可见几何集合不是完整逻辑列表；焦点离开后的scrollLeft仍保留。
+- 修复：Dock官方任务焦点暂时离开可见列表时，Core按方向选择当前任务采样边界；旧焦点仍在列表且位于末项时保留正常循环。DOM从作者进入时按Tab方向滚到任务行首/尾，再提供实际裁切几何。
+- 证据：生产authority焦点用例和headless Edge重新进入用例各先失败后通过。16项键盘Core与八组任务取样DOM通过。真实Player及触摸仍待独立验收。
+
+## #295 恢复布局覆盖任务区遮挡确认，不能永久停在geometryUnavailable（2026-10-11）
+- 实际Release Player中inputReady已恢复但任务区phase仍为geometryUnavailable，几何版本已前进；原遮挡render被恢复布局/作者几何的后续render替代。
+- setTaskAreaOcclusion原先只返回首次render结果，该结果在被替代时为false；控制器因此不承认最终已确认的同一区域。
+- 修复：保持同一请求region和snapshot revision，跟随serial至最新render，必须最新发布成功且inputReady才返回true。更换region/revision、暂停/销毁或最新几何拒绝仍失败，不绕过#290的确认条件。
+- 三项回归先RED后GREEN：同区域替代成功、最新几何拒绝、请求区域替换。最终93项Node和17项原输入通过，独立diff无具体回归；完整Release成功。真实Player显示、Tab/Enter取样及私有完成打开菜单通过，但Core消息为夹具，不能记为真实RawInput或应用操作验收。
+- 剩余：鼠标投递等待Native input dispatch not observed超时，Player按既有失败路径关闭；错误现已可见。没有据此放宽输入或启用新Core动作，继续单独定位。
+
+## #299 融合任务真实OS点击补证（2026-10-11，整体未解决）
+新增fusion-actions-live，专用WinForms窗口Dext Fusion Action Probe；Core枚举真实窗口、正式任务DOM识别标题并给中心坐标，SendInput真实OS DOWN/UP经RawInput进入Core。仅点击本进程窗口任务，命中窗口归属/物理键空闲/目标未移位检查后发送，finally恢复偏好/checkpoint/原Room状态/光标并关闭测试窗。夹具消息探针此前没有覆盖此链。
+发现1：登记viewport Y1260，实测Y1320，宽高/DPI相同；RawInput inside=true但CheckNativeViewport清掉几何，未建立手势。Player窗口因工作区变化平移、DOM未resize；Form1.NativeDock现比较已同步Bounds，平移时标未就绪并调用正式refreshGeometry。修正后临时日志观察到鼠标gesture Sequence1，GeometryVersion4，实测Y1320，证明此次按下原点匹配。
+发现2：该gesture的SampleMouse=False，因此Player不会回传任务视觉命中。dom-host一直发布eventSamples:false。现仅dockView且官方任务占用区非null时启用，移除时恢复false；桌面/无任务区保持原配置。新增测试先RED（false!==true），修正后68项dom-host通过。
+两处修正后完整Release构建成功（.build/task-actions-final-build.log），但最终无诊断代码的fusion-actions-live仍失败于激活专用窗口（.build/fusion-actions-live.log）。不能称为“任务点击已通”。下一步重看取样回执/物理完成/动作回调，不再以DOM存在或fixtures通过代替实际OS动作。普通作者按钮的融合取样路径与触屏仍须验收。
+临时TASKTRACE/viewport-trace代码已撤回；候选仍独立开发目录v3-task-live-20261011，原运行版已恢复14912（enabled=true/11组/error空/Room inactive），没有新增配置器。OS测试注入可被Core RawInput看到（down/up inside=true），不是“SendInput未产生输入”的假设。
+
+2026-10-11 #299鼠标激活/最小化/恢复已贯通（取代上面这三项尚未通过的口径）：最新诊断确认SampleMouse=true且原点匹配，Player在CompleteNativeSampleAsync等待重复合成边沿的DOM回执时超时并关闭。官方任务没有作者动作，实际鼠标本来就进入独立Dock；因此按现有官方键盘路径的分工，任务鼠标使用私有视觉取样+Core原始DOWN/UP配对，跳过重复ForwardNativePointer及该重复边沿的dispatch等待。条件仅DextDock、Key0、SampleMouse、当前packet与私有TaskHit非null；Core仍核对物理pair、时限、上下文、可见HWND、作者区域互斥及投影，作者按钮转发逻辑不改。
+临时输入/完成日志已撤回。无诊断代码的完整Core/Release Player/Watchdog构建成功；fusion-actions-live真实Core18052/Player45612、12任务（含专用窗口）通过实际OS鼠标激活→最小化→恢复。证据.build/task-direct-actions-passed.log，原53项输入/任务/键盘回归通过（task-direct-regression.log）。这是测试进程SendInput进入真实RawInput/窗口操作的证据，不等于人工物理触屏或应用首次启动验证。测试偏好/鼠标/Room/checkpoint已恢复，原候选15620 enabled=true/11组/error空/Room inactive，CoreOnly无新配置器。P8-013仍50%，接续首次启动、菜单/键盘/触屏等未完范围。
+
+## #309 重复可见性通知取消官方任务输入（2026-10-11）
+
+现象：实际右键pointerdown按钮可用，约60ms后pointerup/contextmenu同按钮disabled，稍后恢复；菜单不打开。Core门控日志同期lease/available/placement均true，不能归因于输入丢失或任务栏租约。
+根因：main.js的dextNativeDockVisibility收到相同visible状态仍调用tasks.suspend/refresh，重建几何并禁用输入，等待下一任务快照才恢复。
+修复：先验证当前作用域，再在paused与目标状态相同时直接返回；真实隐藏/恢复继续取消/刷新。新增main入口回归先红后绿，18项入口/controller检查通过。实际Core47612/Player22924完成固定/取消固定、菜单收起，原运行版恢复。
+下次：对重复通知检查幂等性，结合Core门控和DOM事件记录定位，不以重试点击/强制enabled掩盖失效。
+
+## #310 作者Dock跨页后鼠标派发回执超时（2026-10-11）
+
+现象：下一页成功，上一页DOWN arm/prepare/forward-owned均成功，却1.5秒没有作者帧派发回执，Player退出。
+证据：帧/当前gesture有效；第二次只有pointerdown没有兼容mousedown，postedEdges仍为第一次2条。原始未授权pointerdown被preventDefault后，Chromium抑制该接触的兼容鼠标事件，影响后续转发。
+修复：捕获原生PointerEvent.pointerType getter，仅未授权鼠标pointerdown不preventDefault，仍stopImmediatePropagation；未授权mousedown继续preventDefault/stop，触摸不变。不要延长手势期限或伪造回执。
+验证：Core30708/Player48244真实双向导航成功，无应用误触，窄栏缩小/溢出；30项guardian检查、最终Release通过。临时事件计数已删除。物理触屏及窄栏滚动仍独立验收。
+
+## #327 F2误修改多选（2026-10-11）
+现象：原生F2进入desktopActivation，select先执行导致多选缩成焦点项。修复：F2在select之前分流并清空待双击；后续改名必须读取已有单选状态。证据：宿主真实事件回归先红后绿，111项通过。人工：Ctrl选中两个文件后按F2，应保留两个选中项且不打开文件；实际改名窗口另待接线。
+
+## #328 多选Enter及打开后的暂停回执（2026-10-11）
+Enter复用desktopActivation.select会把多选缩成焦点项；新desktopOpen在select之前读取所选ID，由Core一次消费Enter证明后整组解析。打开的首个应用获得前台可能先推送暂停，私有桥原先取消请求且Player丢回应，导致实际打开后报失败。现有已发desktopOpen回执允许跨同会话修订/暂停，新的暂停态请求仍由宿主拒绝且Core要求原生证明；会话替换仍取消。DOM与回执定向断言先红后绿，113项宿主及79项消息检查通过。实机仍待统一验收。
+
+## #329 剪切视觉被切页内联透明度覆盖（2026-10-11）
+初稿data-cut使用opacity:.45，但applyIcon的内联style.opacity取切页组值，优先级覆盖CSS。改用filter:opacity(.45)，与原切页透明度相乘；不改变原动画/命中。DOM状态断言通过不等于实际CSS显示，统一验收需核对变淡及切页。
+
+2026-10-11 #327续：接Delete时同样要在通用desktopActivation选择逻辑前分流。失败用例发现Shift+Delete把两项选择缩成单项；现在Delete/Shift+Delete均保留选择，只有无修饰Delete提交desktopDelete，宿主116项通过。
+
+## #335 后台首次右击需要宿主仍发布可见文件几何（2026-10-11）
+
+实现独立Core右键证明后，dom-host.buttonGeometry仍在desktop且operable=false时返回空数组，钩子没有目标，首次右击仍会漏到Explorer。补真实宿主非前台快照用例取得空区域失败；仅在活动、非锁定、非暂停的Desktop保留经过遮挡裁剪的official.desktop文件区域，其他按钮不开放；Core普通左键/作者激活仍要求原前台条件。context-background-red.log到context-host-final.log 120/120。此为代码/宿主证据，实际OS焦点和菜单仍需验收。

@@ -31,4 +31,4 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.cs" Link="RoomSessionPlayerBridge.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionPlayerBridge.Input.cs" Link="RoomSessionPlayerBridge.Input.cs" />
   </ItemGroup>
-</Project>
+<ItemGroup><Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomDesktopSync.cs" Link="RoomDesktopSync.cs" /></ItemGroup></Project>

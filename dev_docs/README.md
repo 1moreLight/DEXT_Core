@@ -5,6 +5,7 @@
 ## 零、先看这里
 
 - 全局计划和**唯一下一项**：`ROADMAP.md`
+- 当前候选和统一验收入口：[V3_CURRENT](V3_CURRENT.md)
 - 当前分支做到哪：`TODO.md` 最后一节
 - 一轮任务怎么开分支、提交、验收、合并：`WORKFLOW.md`
 - 本轮怎么验收：`acceptance/<工作包ID>-<名称>.md`

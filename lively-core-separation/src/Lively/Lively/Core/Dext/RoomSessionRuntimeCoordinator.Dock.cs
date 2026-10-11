@@ -18,10 +18,10 @@ internal sealed partial class RoomSessionRuntimeCoordinator
 
     private sealed record DockDemand(RoomDockPreferenceResult Settings, WebWebView2? Desktop,
         RoomSessionSnapshot? Snapshot, VerifiedRoomInstallation? Installation, string? DeskId,
-        bool HasDock, string Phase)
+        bool HasDock, string Phase, long FusionAttempt = 0)
     {
         public bool ShouldRun => Phase == "hostPending";
-        public bool Matches(DockDemand other) => ShouldRun && other.ShouldRun &&
+        public bool Matches(DockDemand other) => ShouldRun && other.ShouldRun && FusionAttempt == other.FusionAttempt &&
             ReferenceEquals(Desktop, other.Desktop) && Snapshot?.SessionId == other.Snapshot?.SessionId &&
             Installation?.InstallationStamp == other.Installation?.InstallationStamp &&
             Settings.Preferences?.HeightDip == other.Settings.Preferences?.HeightDip &&
@@ -36,14 +36,18 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         public TaskCompletionSource Exited { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public volatile bool Stopping;
         public volatile bool Attached;
-        public volatile RoomDockTaskbarGuard? Guard;
-        public DateTimeOffset GuardRetryAfter;
+
+
         public long HeartbeatStaleSince;
+        public volatile bool TasksPresented;
     }
 
     private DockDemand ReadDockDemand(RoomDockPreferenceResult? settings = null)
     {
         settings ??= dockPreferences.Read();
+        var fusion=Volatile.Read(ref applicationThemeRequest);
+        if(fusion is not null&&settings.Preferences is {} original)
+            settings=settings with {Preferences=original with {Enabled=true,Mode=fusion.Mode}};
         lock (gate)
         {
             var snapshot = CurrentSnapshot;
@@ -68,11 +72,12 @@ internal sealed partial class RoomSessionRuntimeCoordinator
                         referenced.Contains(item.GetProperty("id").GetString()));
                 }
             }
-            var phase = settings.Preferences is null ? "settingsUnavailable" :
+            var phase = fusion is not null && fusion.ContextKey!=$"{snapshot?.SessionId}/{snapshot?.InstallationStamp}" ? "fusionContextChanged" : settings.Preferences is null ? "settingsUnavailable" :
                 !settings.Preferences.Enabled ? "disabled" :
+                dockOwnership.ApplicationRequested ? "applicationSelected" :
                 context is null ? "noNativeRoom" : !hasDock ? "noDock" :
                 "hostPending";
-            return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase);
+            return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase,fusion?.Attempt??0);
         }
     }
 
@@ -99,32 +104,33 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             var window = current ? player?.Player.RoomDockWindowState : null;
             var ready = window is { RendererReady: true, WindowReady: true };
             var viewport = ready ? player?.Player.ReadNativeViewport() : null;
-            ready = ready && viewport != null && window!.Mode == result.Preferences?.Mode;
+            ready = ready && viewport != null && window!.Mode == demand.Settings.Preferences?.Mode;
             var appBarOccupied = current && player?.Player.NativeDockReservationReady == true;
-            var reserve = result.Preferences?.Mode == "reserve";
+            var reserve = demand.Settings.Preferences?.Mode == "reserve";
             var modeReady = ready && (!reserve || appBarOccupied);
             int? effectiveHeight = viewport is null ? null : Math.Max(1, (int)Math.Round(viewport.Height * 96.0 / viewport.Dpi));
             int? displayDpi = viewport?.Dpi;
             var heightConstrained = effectiveHeight is { } actualHeight &&
                 result.Preferences is { } preferences && actualHeight < preferences.HeightDip;
-            var taskbarReady = current && modeReady && player?.Guard?.Ready == true;
+            var taskbarReady = current && modeReady && taskbar.Hidden;
             var phase = current ? (window is { RendererReady: true } ?
                 !ready ? "awaitingInput" : demand.Snapshot!.Lifecycle.Locked ? "locked" :
                 window!.Fullscreen ? "fullscreen" : reserve && !appBarOccupied ? "awaitingWorkArea" :
                 window.Visible ? "running" : "hidden" : dockPhase) : demand.Phase;
             if (player is not null && !current) phase = "stopping";
             else if (demand.ShouldRun && player is null && dockPhase == "faulted") phase = "faulted";
-            var reason = phase == "awaitingWorkArea" ? "正在等待 Windows 确认 Dock 占位工作区。" :
+            var reason = phase == "applicationSelected" ? "系统应用 Dock 已启用，主题独立 Dock 暂停；关闭应用 Dock 后按原设置恢复。" :
+                phase == "awaitingWorkArea" ? "正在等待 Windows 确认 Dock 占位工作区。" :
                 phase == "hostPending" ? "Dock 宿主正在等待启动。" :
                 phase == "stopping" ? "正在关闭上一份 Dock。" :
                 phase == "awaitingInput" ? "Dock 输入与窗口状态正在同步。" :
                 current && ready && !taskbarReady && !demand.Snapshot!.Lifecycle.Locked
-                    ? player?.Guard?.Error ?? "Dock 已就绪，正在等待 Windows 任务栏替代看护。"
+                    ? taskbar.Error ?? (taskbar.Mode == "visible" ? "已手动恢复 Windows 任务栏，自动隐藏已暂停。" : "Dock 已就绪，正在等待 Windows 任务栏替代看护。")
                     : current || phase == "faulted" ? dockReason : null;
             // A connected process is not proof of an initialized visible window.
             return new(result.Status, result.Preferences,
                 new(phase, player?.Player.IsExited == false ? player.Player.Pid ?? 0 : 0,
-                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, modeReady && !reserve, modeReady && reserve, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained, appBarOccupied), result.Message);
+                    demand.Snapshot?.RoomId, demand.DeskId, demand.HasDock, modeReady && demand.Settings.Preferences?.Mode == "autohide", modeReady && reserve, taskbarReady, reason, effectiveHeight, displayDpi, heightConstrained, appBarOccupied, modeReady && demand.Settings.Preferences?.Mode == "overlay"), result.Message);
         }
     }
 
@@ -159,11 +165,13 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             {
                 observed = Volatile.Read(ref dockRequested);
                 if (Volatile.Read(ref dockDisposed) != 0) break;
+                var fusionAttempt=Volatile.Read(ref applicationThemeRequest)?.Attempt??0;
                 try { await ReconcileDockAsync(); }
                 catch (OperationCanceledException) when (dockLifetime.IsCancellationRequested) { break; }
                 catch (Exception error)
                 {
                     Logger.Error(error, "v3 Dock host update failed");
+                    RecordApplicationThemeFailure(fusionAttempt);
                     lock (dockGate)
                     {
                         dockPhase = "faulted";
@@ -217,7 +225,10 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (DateTimeOffset.UtcNow < dockRetryAfter) return;
         if (Volatile.Read(ref dockDisposed) != 0) return;
 
-        var player = demand.Desktop!.CreateDockPlayer(demand.Settings.Preferences!.HeightDip, demand.Settings.Preferences.Mode);
+        if (!dockOwnership.TryAcquire(DockHost.Theme)) return;
+        WebWebView2 player;
+        try { player = demand.Desktop!.CreateDockPlayer(demand.Settings.Preferences!.HeightDip, demand.Settings.Preferences.Mode); }
+        catch { dockOwnership.Release(DockHost.Theme); throw; }
         owned = new DockPlayer(player, demand);
         player.RoomDockStateChanged += QueueDockUpdate;
         player.RoomPageReady += (_, _) => { owned.PageReady.TrySetResult(); QueueDockUpdate(); };
@@ -226,6 +237,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             owned.Exited.TrySetResult();
             if (!owned.Stopping)
             {
+                RecordApplicationThemeFailure(owned.Demand.FusionAttempt);
                 authority.UnbindDock(player.Pid ?? 0);
                 lock (dockGate)
                 {
@@ -274,7 +286,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             owned.Stopping = true;
             dockPhase = "stopping"; dockReason = null;
         }
-        await StopDockTaskbarAsync(owned);
+        var taskbarReleased = await StopDockTaskbarAsync(owned);
         var player = owned.Player;
         player.DisconnectNativeDockInput();
         authority.UnbindDock(player.Pid ?? 0);
@@ -288,7 +300,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if (await Task.WhenAny(owned.Exited.Task, Task.Delay(2000)) != owned.Exited.Task && !player.IsExited)
                 throw new InvalidOperationException("Previous Dock process is still alive; replacement withheld");
         }
+        if (!taskbarReleased) throw new InvalidOperationException(taskbar.Error ?? "Previous Dock taskbar recovery is not confirmed; replacement withheld");
         lock (dockGate) { if (ReferenceEquals(dockPlayer, owned)) dockPlayer = null; }
+        dockOwnership.Release(DockHost.Theme);
     }
 
     private async Task RetryDockLaterAsync()
@@ -306,6 +320,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     private void DisposeDock()
     {
         if (Interlocked.Exchange(ref dockDisposed, 1) != 0) return;
+        dockOwnership.Changed -= QueueDockUpdate;
+        dockOwnership.Shutdown();
         dockLifetime.Cancel();
         dockMaintenance?.Dispose();
         DockPlayer? owned;

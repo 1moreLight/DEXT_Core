@@ -1926,3 +1926,629 @@ Task3实验样包计划（仍2/4=50%）：沿已确认V3路线制作rooms/v3-orb
 halfV3合并收尾（2026-10-09）：master无冲突命名合并，合并提交由本地halfV3标记定位。合并后只跑必要本地冒烟：runtime-model18/18、visible-data5/5；未重复桌面操作或全部网络/安全矩阵。当前运行候选保持。
 主线原21项Room文件删除和导入的v3-orbit-lab/v3test已完整保留；备份.build/halfV3-local-room-state-20261009与stash e08778387809a44a491a4e72fd6ebdb8517e5ee2均保留。恢复后导入Room仍按原本机清单/字节存在，源目录与提交作者样包的差异属于未提交本机状态，未混入合并。
 本轮v3-integration worktree已通过应用归档为可恢复快照，feat/V3-INTEGRATION-001-integration已安全删除。旧堆叠依赖分支不在本轮清理范围。阶段合并完成，整体集成仍2/4=50%，下一项继续Task3/4集中验收。
+
+## V3-P8-003 系统应用Dock（2026-10-09）
+目标：固定应用、真实运行窗口和点击启动/切换/最小化，完成配置器入口与重启恢复。范围/人工步骤见plans/V3-P8-003-app-taskbar.md及对应验收卡。
+- [x] Task1 做完：模型/本机偏好与窗口枚举/动作，定向验证。
+- [x] Task2 做完：原生Dock呈现与Core生命周期；物理交互验收见Task4。
+- [x] Task3 做完：配置器/RPC/来源与Release；界面人工操作见Task4。
+- [ ] Task4 开做：实际验证、提交待验收。
+进度0/4=0%；原集成包50%。
+
+### 2026-10-09 用户新增规划格式
+之后先规划再开工；步骤统一标记“待做 / 开做 / 做完”，每步独立文件，工作包计划提供索引。
+本包已补齐 plans/V3-P8-003/01–04；Task1 做完（14项定向检查通过）；Task2/3 开做；Task4 待做。
+已完成步骤1/4=25%；之前约50%为工程估计，今后统一用完成步骤比例。
+
+### V3-P8-003 本轮交付
+Task1/2/3 做完；Task4 开做，3/4=75%。四步文件记录细节，索引 plans/V3-P8-003-app-taskbar.md。
+14项定向检查、Core/Player/Watchdog/Tauri Release、实际Core RPC固定/启用/取消固定及启用偏好重启恢复通过。
+候选版 .build/v3-app-taskbar-ready-20261009 已启动；设置 → 系统应用Dock。
+人工点击/多窗口/配置器选择/全屏与关闭配置器存活待用户验收；工具初始化受阻详见第04步。未合并。
+
+### 交接记录口径澄清（2026-10-09）
+用户要求上述规划/三态记录用于交接，无需交给用户审核；执行者自行维护并继续已授权事项。
+当前代码提交a6c7701，工作区C:\Users\JAN\.codex\worktrees\v3-app-taskbar\DEXT_Core，分支feat/V3-P8-003-app-taskbar。
+步骤状态仍为做完/做完/做完/开做（75%），本次仅明确文档维护规则，不新增功能完成证据。
+接手先读plans/V3-P8-003/04-integration-delivery.md；下一动作是补齐尚缺的实际鼠标/配置器交互证据，具体缺项及工具阻碍已记录。
+
+### V3-P8-003 固定项运行时恢复补证
+受控固定项在实际Core正常退出/重启后保持完整列表顺序及启用状态；测试项已移除，原状态恢复。RuntimeProbe新增显式restart-probe模式，默认不执行重启。
+代码/运行证据有实质新增；总体仍3/4=75%，实际交互缺项不变。
+
+### 桌面操作通道已恢复（2026-10-09）
+启动Orca后computer capabilities及窗口列表成功；旧runtime_unavailable已解除。当前检测到游戏全屏尺寸窗口，已询问测试时机，未切换桌面。后续按第04步文件继续真实交互，进度75%。
+
+### V3-P8-003 用户实测补证（2026-10-09）
+用户确认Dock可以点击、可以显示打开状态。已写入第04步与验收卡；其余窗口交互/生命周期项不推断为通过。整体75%，不再重复要求验证这两项已确认行为。
+
+## V3-P8-004 窗口预览（2026-10-09）
+用户要求先继续别的功能，P8-003剩余交互证据挂起不阻塞本包编码。
+三步独立记录见plans/V3-P8-004-window-preview.md：01开做，02/03待做，0%。
+游戏期间仅代码和轻量无窗口检查；运行候选保持P8-003。
+
+### V3-P8-004 本轮编码交付
+01缩略图/布局做完；02悬停选择接线做完；03完整构建/桌面验证待做，2/3=67%。
+新增DockThumbnail/DockPreviewGeometry/DockPreviewWindow及ApplicationDockWindow.Preview接线。
+悬停300ms展开、离开250ms收起；最多6张一页、分页可到全部窗口；实时DWM内容不落盘；标题替代、点击复用原身份核验。
+链接实际WPF源码的轻量Release编译、8项几何/分页检查及diff检查通过。未做正式Core构建/启动，当前桌面候选仍为P8-003。
+接手下一步：游戏结束后scripts/build.ps1（Release）再scripts/start.ps1，在独立候选验证预览及清理；步骤03文件是唯一续作入口。
+
+### V3-P8-004 预览位置补充
+已展开预览会跟随Dock当前锚点并限制到工作区，避免屏幕工作区变化后停在旧位置；不重置分页或重建DWM句柄。轻量编译通过，运行版本未更换，进度67%。
+
+### V3-P8-004 夜间续项（2026-10-09 23:55）
+- [x] 完整Core/Player/Watchdog Release构建并以独立候选启动；原P8-003产物保留回退。
+- [x] 实际Core状态和原生Dock可见检查；工具窗口未进入Orca应用列表，不能冒称交互通过。
+- [ ] 开做：代码diff审查，重点保持点击与资源释放；结果记独立步骤文件。
+- [ ] 待做：补齐预览四项实机交互证据。步骤03仍开做，总进度67%。
+- 用户明确要求继续自主推进、不提问；若需人工则做diff/设计文档；2026-10-10 00:59北京时间停止并暂停目标。
+
+### P8-004 diff审查修复
+- [x] 旧快照图标点击问题先复现后局部修复；8项几何+3项WPF事件检查通过，旧桌面输入链无修改。
+- [x] 空列表设置入口提示改正；补充设计建议做完。
+- [ ] 完整Release重建新候选并核对身份；实际预览四项仍待验收，包进度67%。
+
+### 2026-10-10 夜间收口记录
+- [x] 修复版1137ec5完整Release/start.ps1/实际Core状态通过，当前候选v3-dock-preview-reviewed-20261010。
+- [x] 独立diff复核及设计建议/回退交接已完成。
+- [x] 受控宿主确定Orca工具窗口过滤边界；测试进程结束，正式Dock已恢复启用，无测试固定项残留。
+- [ ] 正式预览四项实机验收，保持67%；不合并master。
+- 当前停止时点仍为00:59；本条不是用户验收或目标完成记录。
+
+### 2026-10-10 继续核对总路线
+- [x] 对照V3_PLAN第35行识别同屏单Dock与当前两个独立宿主之间的整合缺口。
+- [x] 第07步设计记录已完成：源码职责映射、唯一宿主移交、官方应用区整合、任务栏恢复及六项后续验收；未改变当前开关或输入实现。
+- 包进度仍2/3=67%；设计文档不计作实机验收；ROADMAP唯一下一项不变。
+
+### 2026-10-10 00:59 用户指定停止
+本轮已停止；交接见plans/V3-P8-004/06-release-handoff.md末尾。分支feat/V3-P8-004-window-preview，进度67%，实机预览待验收，未合并。下一轮须由用户恢复推进。
+
+## V3-P8-005 任务栏隐藏/恢复（2026-10-10）
+用户授权持续推进ROADMAP并统一验收；先实现明确新增的隐藏任务栏与开发恢复按钮。P8-004保留67%待补验收。
+计划：01统一控制开做；02 UI待做；03构建待做；04交接待做。每步独立文件见plans/V3-P8-005-taskbar-controls.md；进度0/4。
+
+P8-005：01 Core/02配置器做完；03 Release开做，进度2/4=50%。12项控制检查及前端构建通过；第一轮CoreRelease通过后追加恢复错误处理，须重建最终版。用户统一验收，不因UI工具受限暂停后续路线。
+
+### P8-005 最终候选与交接
+01/02/03做完，04开做；3/4=75%。13项控制检查、前后端Release及最终候选真实任务栏隐藏/退出恢复/重启模式保持/恢复保持10秒通过。运行v3-taskbar-controls-ready-20261010，旧候选保留。未改原桌面触控路由；五项人工留统一验收，不合并。下一项继续ROADMAP集中验收续项的可自动完成部分。
+
+## V3-INTEGRATION-001 续项（2026-10-10）
+用户明确不要阶段交付后停下。独立v3-integration-resume从22ed4e9继续，先补本机KV授权；四步见plans/V3-INTEGRATION-001-resume.md，0/4，原集成50%。
+
+续项01做完：Core授权9/9；02开做，续项25%。保留现有私人格式和原ReadData四项语义。
+
+续项02做完：UI夹具/TS构建通过，授权指南更新；03开做，续项50%。
+
+续项03做完、04开做，75%；真实Core隔离样包授权/撤销/重启保持通过，恢复原空壁纸与checkpoint。独立审查尾次保存缺陷已RED→GREEN修复，提供新zip但不覆盖用户作品。接续P8-006单Dock协调。
+
+## V3-P8-006（2026-10-10）
+承接419a16d开工，同屏唯一独立宿主；先应用优先，保留既有点击。四步文件plans/V3-P8-006-dock-owner.md，01开做，其余待做，0%。
+
+P8-006步骤01做完，6/6；步骤02开做，25%。主题仅在真实进程退出后释放，应用先隐藏菜单/预览再释放；原点击代码保持。
+
+P8-006步骤02做完，原预览11项/前端构建通过，50%；03完整Release与临时宿主切换开做。
+
+P8-006步骤03做完，实际临时Dock切换/释放完成；04开做，75%。审查恢复顺序缺陷已修复并重建，原状态恢复。接续P8-007官方应用Dock导航，不在此停下等验收。
+
+## V3-P8-007（2026-10-10）
+从 cb5bab3 独立分支继续；01 开做、02/03/04 待做，0/4。计划 plans/V3-P8-007-dock-navigation.md。统一验收，不阶段停工。
+P8-007：01 做完，10/10；02 开做，25%。
+P8-007：02 做完，原预览/应用11项和新增导航5项通过；03 开做，50%。
+P8-007：03 做完，04 开做，75%。真实探针与恢复通过，代码提交后接 P8-008 自动隐藏；不停止等待验收。
+
+## V3-P8-008（2026-10-10）
+独立分支从53bdbc7继续；四步计划见 plans/V3-P8-008-app-dock-autohide.md。01开做，0/4。
+P8-008：01/02做完、03开做，50%。应用策略/偏好22项、任务栏19项、WPF18项通过；一次diff审查与Release进行中。
+P8-008：03做完，04开做，75%；修正版构建启动，实际全屏隐藏/偏好通过，物理可见及自动交接待统一验收。继续P8-009常驻占位。
+
+## V3-P8-009（2026-10-10）
+从9506c71独立分支继续，计划与四步文件已建；01开做，0/4。前台全屏时仅编码构建，不改用户工作区。
+P8-009：01/02做完，03开做，50%；占位控制10/应用偏好33/WPF18通过，完整构建及独立diff进行中。
+P8-009：03做完、04开做，75%；最终Core Release和精确身份启动通过，PID42912。占位12项（含审查发现的失败就绪失效与恢复）、应用33项、WPF18项。当前全屏，不切用户占位设置；实际工作区留统一验收。接续INTEGRATION-002。
+
+## V3-INTEGRATION-002（2026-10-10）
+从224dce5继续；计划与三步文件已建，01开做，0/3。用户持续推进，无阶段停工；当前全屏仅做后台文件/代码工作。
+INTEGRATION-002三步文档与核对做完，实施3/3=100%；统一功能验收保留。650文件及六样包通过；下一项P7-002继续试验台运行闭环。
+
+## OPS-005（2026-10-10 用户指出配置器重复）
+先修启动流程再继续P7-002；计划三步，01做完、02开做，33%。8进程已清到1，Core仍42912。
+OPS-005三步做完，实施100%；六项脚本检查和真实CoreOnly/重复启动都保持唯一配置器30336，Core42912不重启。清理8→1，无用户作者文件变更。继续P7-002。
+
+## V3-P7-002（2026-10-10）
+从69ae82c继续；当前具体缺口是四只读示例与正式字段漂移。四步独立文件已建，01开做0%。只后台构建，不增加配置器窗口。
+P7-002：01/02做完，03开做，50%；四正式字段样本共用、两项RED→GREEN通过。后台浏览器检查与Release继续。
+P7-002：03做完、04开做，75%；正式DOM/SDK四组与Release通过、独立diff无重要发现。当前唯一配置器40096，Core42912保持。冷启动首次超时未解释，不能称已修复。继续P10-004本地另存分享。
+
+## V3-P10-004（2026-10-10）
+承接4487285开工，四步已建，01开做0%；临时文件夹具和生产模块本地闭环，不改用户作品或桌面。
+
+P10-004：01/02/03做完，04开做，75%。Rust四项（六样包）与Core私人复制两项通过，未发现需要修改运行逻辑的缺陷；继续独立diff和交接。
+
+P10-004独立复核结束：补导入/另存名称断言后4/4重跑通过。保持75%待人工，提交后继续P8-010；运行仍Core42912/唯一配置器40096。
+
+## V3-P8-010（2026-10-10）
+承接683c8fa，四步计划与独立验收已建；01开做0%。采用本机Room个人数据保存Desk覆盖，避免Room删除遗留目标；不修改现有鼠标派发。
+
+P8-010：01做完25%，02开做。私人存储3项通过，Core有效列表与上下文保护接线进行中。
+
+P8-010：02做完50%，03开做。旧文件缺DockPins按继承；未使用覆盖时不写新字段。完整Release与独立diff进行中。
+
+P8-010：03做完、04开做，75%。私人3/导航13/应用33/UI2/WPF最终21通过；Release及实际Core41528状态正常，唯一配置器38444。独立审查的跨页旧右键菜单作用域已修复并重建；原WPF输入不改。
+升级过程：旧UI正常关闭，旧Core42912收到RPC退出后已清理Dock/看护与恢复日志但进程残留、RPC超时；精确路径核对后结束该残留，再启动新候选。不是正常退出通过，下一项OPS-006单独排查。
+
+## OPS-006（2026-10-10）
+从cf28008继续，四步计划/验收已建；01开做0%。当前候选Core41528、唯一配置器38444；先确定退出阻塞位置。
+
+OPS-006：01/02做完50%，03开做。真实App.xaml的WPF最后窗口实验确定Dispatcher提前退出，明确OnExplicitShutdown后通过；完整Release及实机退出验证继续。
+
+OPS-006：03做完、04开做75%。配置器关闭/打开两次真实RPC退出均结束Core且恢复journal无残留，重启Core39560/唯一UI19704；进入独立审查与提交。
+
+## V3-P8-011（2026-10-10）
+从c3e168c建独立设计分支；三步文件与验收已建，01开做0%。用户授权直接规划接续实施，无审批停点；维持当前唯一配置器，不改运行桌面。
+
+P8-011：01/02做完，设计2/3=67%；已把同宿主布局、稳定动作ID、按下冻结与旧模式回退落到接口设计。03开做，拆分下一代码包与复核。
+
+P8-011：03做完，设计3/3=100%。下一项012生产任务投影，随后013区域与014融合生命周期；当前候选不改。独立复核进行中。
+P8-011独立复核无阻断项，内部上下文文案已澄清。十个源码锚点核对与diff检查通过，设计3/3=100%，接续P8-012。
+
+## V3-P8-012（2026-10-10）
+基线cc5609a；三步计划与验收已建。01开做0%。输入未挂接；本包生产模型为013接线准备。
+P8-012：01做完33%，02开做。七项新增RED→GREEN，原33项通过；暂无运行接线。
+P8-012：02做完，2/3=67%。13新增与33原检查通过；独立复核无阻断，Core/Release Player构建进行中。
+P8-012：03做完，实施3/3=100%。46检查与完整Core/Release Player/Watchdog构建通过，独立diff无阻断。启动仅CoreOnly复核旧候选，未部署未挂接模型；仍Core39560/唯一UI19704。下一项013接线，人工门槛不填通过。
+
+## V3-P8-013（2026-10-10）
+基线71966f1，四步计划与验收已建；01开做0%。当前Core39560/唯一配置器19704候选保留。Player完整接线和演示仍是本包必做项。
+P8-013：01做完25%，02开做；八项Node检查通过。网页模型不授权OS动作，原生接线仍未做。
+P8-013：02做完，2/4=50%，03开做。实际headless Edge四组DOM交互与71项Node通过；setTaskAreaOcclusion默认不生效，仅后续官方私有适配调用。未挂接正式页面/Player，未调用OS动作，图标仍首字占位待03。
+P8-013阶段复核：修复新菜单返回按钮重建导致的点击丢失，真实DOM RED→GREEN，最终五组通过；保留50%开发中，03完整接线继续。
+P8-013步骤03增量：Core展示/图标与Player私有消息入口、DOM真实PNG已实现，完整Release构建与72项Node/六组DOM通过；main控制器与原生动作仍未连接，保持2/4=50%。用户窗口避让调查已落research/DOCK_WORKAREA_2026-10-10.md：本机常驻占位未启用，已有AppBar实现待统一实机确认。
+2026-10-10用户补充DeskMakeover调查：固定源码版本核对图标分析/缓存/Explorer扫描与布局，结论落research/DESKMAKEOVER_ICONS_2026-10-10.md；借鉴项挂已有远期CORE-004，未改当前下一项，P8-013仍50%。未移植外部代码、未动桌面输入。
+P8-013步骤03页面接线增量：正式index/main及资源白名单接入官方任务区，Core→Player→主页面展示贯通；几何确认与隐藏生命周期检查通过。ActionsEnabled仍false，原生操作和融合演示待做；86项Node/七组后台DOM与Release通过，50%保持。
+P8-013页面接线复核收敛：普通窗口前台不应隐藏Dock、浮点贴边遮挡确认两处问题均RED→GREEN修复；最终89项Node/七组DOM，Release通过。原生任务动作/演示继续，50%。
+P8-013步骤03继续：开做原生任务取样及物理按下/抬起关联，复用现有投递回执，独立于作者按钮目录；键盘/触摸和真实Player演示仍必做，50%。
+P8-013步骤03原生增量：任务区实际目标取样→Player私有回执→Core物理边沿关联→原应用操作回调已接，ActionsEnabled仍false。16任务/17原输入/90Node/七旧DOM+四新DOM通过，Release通过；键盘触摸与实机演示继续，2/4=50%。
+P8-013原生增量最终复核：排队旧点击跨几何撤销问题已RED→GREEN修复（ERRORS #292），任务20项及最终Release通过；其余17输入/90Node/11DOM证据保留。原生键盘与触摸仍待接，03开做，50%。
+P8-013步骤03键盘开做：先提供独立原生任务焦点取样/映射及官方菜单操作，再接既有RawInput/KeyDelivery；保持ActionsEnabled=false，50%。
+P8-013键盘增量：Tab/Enter/Space与官方菜单/Esc已接；16键盘/20任务/17输入/90Node/15DOM及Release通过。独立review发现窄栏重新进入跳项，已RED→GREEN修复（#293）。仍50%，真实Player/触控/融合样包待做，ActionsEnabled=false；保留Core39560，无新增配置器。
+P8-013步骤03独立融合样包开做：三个Desk覆盖正常任务区/窄区/无Dock，API1新目录；触屏尚无独立原生入口，保持未完成，不以后台tap代替。
+P8-013独立融合样包做完：API1三Desk新样包、开发复现文档、后台四种布局与无Dock隐藏通过，生产安装校验通过。03整体仍开做50%；实际Player与触屏待做，未替换候选。
+P8-013真实Player任务链开做：正式宿主+融合样包，隔离临时Player验证任务快照及输入取样；不把模拟Core消息记为实际应用操作。
+P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏下任务区不可用已验证；当前微信无边框全屏，因此可见鼠标/键盘分支SKIP，不能标通过。探针及清理已补，触屏仍待做，50%。
+2026-10-11需求补记：DeskBox桌面文件同步方向已写方案与四个独立待做步骤，挂ROADMAP的DESK-SYNC-001至004；当前P8-013/014顺序保持。无文件迁移、没有改用户桌面或点击链。
+
+2026-10-11最新补证（替代前面仅全屏SKIP的当前口径）：前台全屏结束后，隔离实际Release Player任务区显示、Tab/Enter私有取样及完成打开窗口菜单均通过；Core消息仍为夹具，不算实际RawInput或OS操作。恢复render覆盖遮挡确认的缺陷已三项RED→GREEN修复，独立review无具体回归；最终93项Node、17项原输入及完整Release通过。鼠标阶段仍失败：Native input dispatch not observed，尚未定位，不记通过。曾用OS鼠标边沿辅助诊断，仍失败，已移除该诊断注入；临时guardian日志也已撤回并重建。探针仍可复现未解决的鼠标门槛。触屏未接、真实应用动作未启用；03继续开做，工作包2/4=50%。CoreOnly复核保留Core39560，没有启动配置器，也未更换用户运行候选。
+2026-10-11原生鼠标继续开做：临时记录guardian收到的边沿与arm状态，区分窗口投递丢失、门控拒绝或回执接收失败；诊断代码不进正式提交。50%。
+
+2026-10-11鼠标回执问题已定向修复（#296）：外层Dock与WebView anchor可见，但Chromium实际input HWND隐藏；页面DOM取样成功不能证明真实显示/点击。同步controller.IsVisible后，最终无临时guardian日志的Release构建、隔离实际Player鼠标DOWN/UP同目标回执、Tab/Enter及官方菜单、隐藏/再次显示、无抢前台通过。恢复时探针补发新Core任务快照，保持暂停撤销操作许可的规则。证据：.build/task-visibility-red.log、task-visibility-final-build.log、task-visibility-final.log。旧“鼠标回执未定位”条目为历史，本次解决该故障。实际Core RawInput/OS动作及触屏仍待做，ActionsEnabled生产仍false，03开做、2/4=50%。CoreOnly复核旧候选39560，未更换用户运行版、未新增配置器。
+2026-10-11步骤03操作许可开做：复用NativeDockAvailable给真实Core快照设置ActionsEnabled，仅当前输入路由已连接、窗口就绪可见且未锁屏/全屏时启用；完成动作继续经过现有物理手势和投影校验。先做Release构建与原输入/任务/键盘回归，实际Core应用操作另补证；50%。
+2026-10-11步骤03操作许可增量做完：SendNativeDockTasks现按NativeDockAvailable设置ActionsEnabled；现有500ms刷新会在恢复就绪后补发快照，完成仍检查物理手势/当前窗口/投影。完整Core/Release Player/Watchdog构建通过，20任务、16键盘、17原指针检查通过（.build/task-actions-build.log、task-actions-regression.log）。这三组检查覆盖现有输入关联，不是新增许可门控的真实Core验收。CoreOnly核对仍为旧候选PID39560，没有启动配置器；新代码尚未部署。实际Core启动/激活/最小化和触屏待验证，03仍开做，2/4=50%。
+2026-10-11真实Core融合验证开做：准备独立开发副本，正式资源+融合样包；先检查当前会话为空才临时应用，探针恢复偏好/壁纸/checkpoint。直接读取该Player的诊断标题验证实际Core任务快照与可操作状态；真实OS动作仍单独补证。
+2026-10-11真实Core补证完成一段：独立self-contained副本v3-task-live-20261011，真实Core47728→Player47868收到11应用任务，displayReady、ActionsEnabled=true且未抢前台。证据.build/task-fusion-live.log；夹具49c12d19-9221-4ed5-ae13-4fdabc0bfa01的Room/personal/checkpoint/偏好/鼠标已恢复。仍未验证应用OS动作或触屏，03继续50%。发现并修复发布资源漏4项（#297），新检查RED→GREEN、实际发布目录校验通过。退出RPC两版本均残留进程（#298待修），按精确路径清理后恢复原候选29792，状态/空Room复核通过，无新增配置器。
+2026-10-11 #298退出卡点开做：临时在QuitApp的服务释放、RPC释放与Dispatcher关闭边界记录阶段；只在独立开发副本复现，定位后移除临时日志。当前50%。
+
+2026-10-11 #298定位更新：临时在QuitApp记录services start/done、grpc start/done、dispatcher start/done；一次启动立即退出正常，融合探针后既有正常退出也有残留。最后一轮第1次正常、第2次进程超过5秒仍存活且全部6个阶段均完成。因此证据不支持“服务Dispose或RPC Dispose同步卡住”，Application.Shutdown调用也已返回。不能据此替换为异步退出并声称修复。dotnet-stack尝试失败，.build/exit-hang-stack.log为Pipe is broken工具错误，不是成功的目标线程栈；下一定位范围是Shutdown排队后的WPF/CLR/原生退出尾段。尚未确定根因，#298仍待修。
+临时日志源码已从备份精确恢复，git diff App.xaml.cs为空；无诊断版完整Release重建/发布通过（.build/exit-trace-clean-build.log）。每次复现finally清理测试进程并恢复原候选；最终原路径Core4648、enabled=true、11组、error空、Room inactive；未新增配置器。一次缺finally的诊断命令被自动审批拒绝，已改成有恢复保障的流程执行，未绕过拒绝。P8-013继续50%。
+2026-10-11 #298根因与修复开做：原生/SOS栈确认Finalizer→SystemEvents.Shutdown→Join，同时SystemEvents→WindowsFormsSynchronizationContext.Send→Control.Invoke等已退出UI；对应dotnet/winforms#9721。在App构造最早建立WPF DispatcherSynchronizationContext，阻止托盘WinForms抢先安装同步上下文；构建后做真实融合开关与退出复测。
+2026-10-11 #298退出修复做完：原生+SOS栈定位SystemEvents→WinForms Control.Invoke等待已停止UI，App启动前建立WPF同步上下文；完整Release与真实融合生命周期/退出3轮通过，无强杀新Core。原候选5924已恢复且RPC/空Room复核正常。实际OS应用操作及触屏未验收，03仍开做、2/4=50%；详见errors/backend #298和.build/exit-context-live.log。
+2026-10-11步骤03真实OS动作开做：隔离测试进程创建不抢前台的专用窗口；正式Core枚举后仅点击其官方任务按钮，验证激活/最小化/再次恢复。按钮坐标来自开发副本观察器，点击前核对当前命中属于Dock；不对用户应用发动作，结束关闭测试窗并恢复前台/光标/偏好。
+2026-10-11真实OS任务动作增量：专用窗口探针已建立并实际运行，暴露旧原点与eventSamples关闭；Player平移刷新和仅官方任务区启用取样已改，68项宿主回归、完整Release通过。实际激活仍未通过，不标完成；后续追踪取样/完成回调。临时诊断已撤回，原候选14912恢复正常。#299详述证据，03继续开做、2/4=50%。
+2026-10-11 #299继续：在最新eventSamples开启版本临时记录原始手势、Player任务取样和CompleteTask入口；继续用同一专用窗口失败用例，定位后撤回诊断。50%。
+2026-10-11真实Core任务鼠标三步做完：定位到重复合成DOM边沿回执超时；官方任务改用私有视觉取样与Core原始物理pair，不重复转发。完整Release、53输入回归、实际Core专用窗口激活/最小化/恢复通过，.build/task-direct-actions-passed.log。临时日志已撤，原候选15620恢复，未部署用户运行版。首次应用启动、触屏/其他统一门槛仍待做，03继续开做2/4=50%。
+2026-10-11首次启动验证开做：增加专用子进程模式，临时固定探针程序；通过正式Dock实际鼠标点击启动，核对新PID/路径/窗口，finally关闭子进程并移除临时固定项。范围仅P8-013步骤03，统一人工四步保持，工作包50%。
+2026-10-11首次启动探针增量：新增fusion-launch-live及45秒自动退出专用子程序，构建通过。真实Core固定/未运行任务可见，点击后8秒与30秒均未确认新窗口；随后观察到Explorer启动子程序，尚不能归因或记通过。清理RPC也发生超时，已补finally嵌套恢复且人工核对恢复原候选49468、enabled=true、pins=0、groups=11、error空，测试子程序已清理；Room夹具/原checkpoint恢复。证据.build/fusion-launch-first-failure.log、fusion-launch-second-failure.log、fusion-launch-live.log。下一步定位AppCatalogService/ExplorerShellLaunchService同步启动与延迟关系，避免继续重复输入测试。03仍开做，2/4=50%。
+2026-10-11 #300根因修复开做：真实失败期间dotnet-stack确认Core UI停在Microsoft.CSharp COM EnsureScanDefinedMethods→ExplorerShellLaunchService.TryOpen→CompleteTask；改为InvokeMember直接IDispatch调用并保留FindWindowSW引用参数。修复后同一实际启动用例复测，不移动点击链。
+2026-10-11 #300增量修复：失败现场dotnet-stack证明UI线程停于Microsoft.CSharp ComMethodDesc/EnsureScanDefinedMethods→ExplorerShellLaunchService.TryOpen→CompleteTask；以Type.InvokeMember/ParameterModifier调用所需IDispatch成员，避免dynamic枚举类型信息。受控应用参数/工作目录检查通过（Explorer path=true，411ms），完整Release通过。相同真实Core47028/Player43644的Dock首次启动专用程序45860通过，临时固定项/偏好/夹具/checkpoint均自动恢复，RPC未再超时。注意探针12313ms包含准备点击时间，不能称为纯启动耗时或响应速度通过；后续拆分时间定位。证据.build/fusion-launch-stack.log、shell-dispatch-launch.log、shell-dispatch-build.log、shell-dispatch-live-passed.log。03仍开做，工作包2/4=50%，触屏/完整统一验收继续；未更换用户运行候选。
+2026-10-11启动耗时拆分开做：在探针记录实际DOWN/UP、子进程创建及窗口确认时刻，区分点击准备、Shell启动和窗口枚举延迟；不改生产点击链，03仍50%。
+2026-10-11启动耗时拆分增量：探针新增实际DOWN/UP UTC及子进程创建时刻，纠正旧click-to-window包含准备时间的标签。一次实机成功：UP497ms，进程创建13827ms、窗口确认15933ms（.build/launch-timing-live.log）；另一次无抓栈的实机失败，UP293ms，30秒未创建进程，Core日志无Application launch begin（.build/launch-boundary-live-failure.log及20261011_015440.txt）。不能宣称首次启动稳定。Core Click现记录启动调用进入/返回耗时，不含用户路径。完整Release与探针构建通过。下一步追踪HandleNativeSample到CompleteTask的完成/拒绝，暂不继续假设剩余延迟在Shell内部。原运行候选恢复、enabled=true pins=0 groups=11 error空、无测试子程序，03仍开做2/4=50%。
+2026-10-11输入完成诊断开做：在官方任务取样及队列执行边界记录手势编号、几何校验/完成状态和拒绝类别；不改授权、点击或触控条件。先同一首次启动用例抓对应证据，再决定修复点。
+2026-10-11启动线程修复开做：实机抬起后8ms即完成输入配对并进入Launch，但同步Launch返回耗时11386ms。仅将已确认的应用启动放入后台Task，Click保留UI异常回报/刷新；激活/最小化和输入判定保持同步。以同一实机用例确认启动及RPC响应，不通过放宽1.5秒物理凭据时限掩盖问题。
+2026-10-11输入完成链证据与启动线程修复：取样DOWN/UP配对成功，UP后约8ms进入Launch；同步Launch实际耗时11386ms，见.build/task-completion-before-worker-core.log。仅将已确认的启动请求放至Task.Run，Click以async void保留UI异常处理和刷新，激活/最小化不走后台。完整Release与探针构建通过；真实Core6272/Player38696启动49568通过，UP到窗口5266ms、进程创建在准备起点4097ms、UP后状态RPC2ms（不代表整个启动期间持续采样）。偏好/固定项/夹具/原checkpoint自动恢复，原候选复核正常，无测试子程序。证据.build/task-launch-worker-live.log、task-launch-worker-build.log。间歇丢点击尚未抓到拒绝原因，剩余启动耗时仍在，不能把本轮单次成功称稳定完成；03继续开做、2/4=50%。
+2026-10-11丢点击复现：最新首次启动失败未收到任何Task sample日志，改追踪RawInput路由→手势→投递边界；任务投影代码保留，不按猜测更改刷新行为。
+2026-10-11原始边沿及Player阶段诊断增量：首次复现失败没有任何Task sample（.build/task-no-sample-failure.log），任务投影刷新不是已证实根因。补Core原始边沿/手势/投递日志和Player arm/prepare阶段日志；未改现有判定条件。完整Release通过，最新实际Core/Player串联日志覆盖down→arm=True→ready→up→配对→动作接受，首次启动成功，UP至窗口4895ms；清理/恢复通过。证据.build/task-player-stage-build.log、task-player-stage-live.log、task-player-stage-core.log。间歇失败的具体Player阶段仍未抓到，不能称修复；下次沿这些日志复现，勿继续重复审查投影ID。03开做，工作包2/4=50%，原候选恢复，无新增配置器。
+2026-10-11触控入口开做：现有官方任务依赖RawInput鼠标；先在专用无激活WinForms窗口用Windows InjectTouchInput观测WM_POINTER/WM_MOUSE/WM_INPUT，验证能否沿原通道接入。只操作自有窗口，finally释放触点/注销本进程注册并恢复焦点光标，不使用全局触控重定向；测试不等于实机物理触屏验收。
+2026-10-11触控路径探针做完一段：新增touch-path和fusion-touch-live。普通自有窗口的Windows注入触摸产生真实pointer消息及兼容鼠标/RawInput各一对；实际WebView2官方任务激活失败且未记录到Dock raw鼠标边沿，触控功能仍未接通。证据/接入约束/下一步见plans/V3-P8-013/03-touch-path.md。探针编译通过，原候选/偏好/Room/checkpoint恢复；不新增全局重定向、不改生产点击链，03继续开做2/4=50%。鼠标间歇失败保留未解决，不继续反复跑同一成功样本。
+2026-10-11触控/丢边沿注册差异修复开做：Core鼠标使用EXINPUTSINK（当前台注册RawInput时不接收），独立触控探针使用INPUTSINK。先将鼠标注册改INPUTSINK保留现有命中/屏保/所有权门控，以同一fusion-touch-live失败用例核验；键盘本轮不改，不新增hook或全局触摸重定向。
+2026-10-11工作区反馈排查开做：原运行Core45396已恢复，上次raw-owner探针失败终止。失败日志显示真实DOWN/UP已送达，Player ready后WindowReady=false并失效几何；源码表明Bounds变化会撤销WindowReady，而自动任务栏隐藏依赖该值。增加同步失效时的前后Bounds/宿主工作区日志验证循环；尚未认定根因，不放宽点击凭据期限。03仍2/4=50%。
+2026-10-11反馈循环实证：Release构建通过；fusion-raw-owner-live中前台窗口注册RawInput后第一次Dock点击成功最小化，随后激活失败。Core日志20261011_022919.txt显示实际Bounds在Y1260/1320反复变化，workArea高度1380/1440反复变化；失败UP时inside=False、available=False。确认自动任务栏隐藏与几何刷新撤销WindowReady形成反馈，下一步分离替代宿主就绪和输入几何就绪，保留几何变化取消旧手势。INPUTSINK仅鼠标注册，键盘不变；触控仍未通过。探针已结束并恢复原候选；03继续开做，2/4=50%。
+2026-10-11反馈循环修复开做：增加私有GeometryUpdating状态，仅已同步宿主的位置刷新可进入，最多保留2秒任务栏替代资格；可见性/连接/文档变化立即清除。输入仍要求WindowReady，不接受刷新期间旧坐标；用已失败raw-owner实机序列验证。
+2026-10-11几何/任务栏反馈循环修复：新增私有GeometryUpdating，仅已同步窗口的纯位置刷新可短暂维持任务栏替代资格，2秒截止；输入仍要求WindowReady，位置变化继续取消旧手势。可见性、连接、文档变化清除刷新状态；Core保持PID/会话/心跳/工作区验证。Release构建通过（.build/task-geometry-lease-build.log）。同一raw-owner实机序列Core49284/Player21764通过前台RawInput占用下点击、激活、最小化、恢复；20261011_023219.txt只有1260→1320一次正常位置调整，8个鼠标边沿，无往返。触控Core47640/Player48584仍失败，20261011_023315.txt同样无往返但RawInput边沿0，转查WebView2触控入口；不称触控通过。原候选Core37820恢复，无新增配置器。03仍开做，2/4=50%，待统一人工验收。
+2026-10-11触点窗口归属核查开做：仅在已有Tap探针注入前记录命中HWND及父链的class/PID/TID，确认触控接收窗口归属；不挂跨进程钩子、不改变触摸投递，不改生产输入。
+2026-10-11触点归属与观测边界：探针记录实际命中Chrome_RenderWidgetHostHWND属于Chromium PID46936/TID49504，其父Chrome_WidgetWin_0及Form属于Player25508/TID1316。候选专用main.js记录DOM touchEvents，最新为空且inputEnabled=false；代码复核installOfficial在预注入capture gate对无expected事件preventDefault/stopImmediatePropagation，故后置监听为空不能证明浏览器未收到触摸。下一步在守卫入口添加只读诊断，保留配对判定，不直接放行DOM、不据此重写CompositionController。探针构建通过；fusion-touch-live仍失败并完成清理，证据.build/touch-target-build.log、.build/fusion-touch-live.log、Core日志20261011_023904.txt。生产代码本轮未改，03仍2/4=50%。
+2026-10-11守卫入口诊断开做：定向测试先验证未配对touch计数，生产只加私有只读查询和Player心跳差异日志；不新增动作入口、不改gate判定。
+2026-10-11守卫入口诊断结果：新增私有diagnostics计数查询与Player差异日志，实机Core49620/Player49636记录touchDown=1、touchUp=1、touchBlocked=3（含兼容click），官方页也记录trusted touchstart/end。因此浏览器确已收到真实触摸；Core依赖鼠标RawInput未建立对应手势，守卫按当前规则拦截。无需据后置监听为空直接换CompositionController。下一步设计并接入守卫可信触摸→Player→Core的专用配对通道，仍须保留真实顶层文档/会话/坐标/按下抬起/取消检查，不能直接DOM onAction放行。当前触控激活仍失败。最终Release构建与29项现有守卫测试通过；证据.build/touch-gate-build.log、touch-gate-tests.log、fusion-touch-live.log和20261011_024500.txt。原候选Core25612恢复，无新增配置器；03仍开做2/4=50%。
+2026-10-11触摸观察器增量：observeOfficialTouch捕获原生Event/PointerEvent/MouseEvent getter，默认关闭，私有touchEnable/touchDisable启停；真实单指DOWN/UP递增序列，6 CSS像素外移动、多指、pointercancel、lostpointercapture、pagehide、尺寸变化取消。消息仅含触点/视口/序列和私有文档标识，不直接调用动作。新增7项行为检查，与已有29项守卫检查合计36通过；最终7项复核及Release通过，证据.build/touch-observer-tests.log、touch-observer-final-tests.log、touch-observer-build.log。尚未启用：Player接收验证和Core触摸所有权/配对仍待接，不能称实际触控已通；旧Core25612保留，03仍开做2/4=50%。
+2026-10-11触摸接线开做：将私有enable握手绑定generation/session/revision/documentNonce；Player验证后发独立触摸IPC，Core持有单指/序列/坐标并沿现有原生采样配对完成任务动作。以已失败fusion-touch-live作端到端回归；鼠标不改为异步，触摸不取当前鼠标游标。
+2026-10-11触摸端到端接通：私有握手绑定当前generation/session/revision/documentNonce，Player解析并过滤旧序列，独立IPC去掉私有token后进入Core。Core按实时HWND/视口换算触点坐标，独立持有触摸联系并复用现有DOWN/UP采样、任务投影及动作完成；隐藏/未就绪/断连/会话变化/过期清除。首轮探针因等待就绪后仍用旧窗口origin而未注入，修正为注入前重测，归属检查保留。最终Release及探针构建通过；实际Core40296/Player45652的Windows注入触摸：拖动取消、激活、最小化、恢复、随后第一下鼠标点击均通过。证据.build/touch-bridge-build.log、touch-bridge-probe-build.log、touch-bridge-observer-tests.log、fusion-touch-live.log。物理触屏、多指/隐藏/切Desk实机取消、鼠标游标远离时触控及作者区域仍待验收；不能把Windows注入成功称为物理触屏通过，03仍开做、工作包2/4=50%。原运行候选/偏好/夹具已恢复，无新增配置器。
+2026-10-11触摸边界验收开做：增加两指接触取消、鼠标游标离开Dock后的单指激活；继续使用真实Windows注入和自有目标窗口，所有已按下触点在finally释放，不改生产代码。
+2026-10-11返回菜单修复开做：两指已确认打开官方任务菜单；实际鼠标Back DOWN/UP均到Core，但samplePointer排除dismissMenu，故无法配对。将Back纳入既有任务采样，并在Core当前投影验证完成后通过已有私有activate事件回送本地菜单动作；键盘已有回送不重复。
+2026-10-11触摸边界与菜单返回增量：新增双触点注入（finally释放全部触点）及注入前SetCursorPos(80,80)移开鼠标的单指激活场景。双指没有启动应用，但Windows触发官方contextmenu并隐藏图标列表；只读menuBack观测确认，不误删正常菜单行为。发现实际Back鼠标DOWN/UP到Core而taskHit=false：samplePointer排除了dismissMenu，且鼠标/触摸菜单完成缺私有activate回送。已纳入Back采样，当前投影通过后Core回送openWindows/dismissMenu，键盘原有回送不重复。最终Release通过；实际Core12916/Player36856通过拖动取消、双指不激活、Back返回、游标预先移开后的触摸激活/最小化/恢复、第一下鼠标交接。证据.build/task-menu-back-failure.log、task-menu-back-build.log、fusion-touch-live.log、touch-boundary-probe-build.log。未证明物理触屏、隐藏/切Desk取消或Windows注入期间不改变系统游标位置；不外推。03仍开做2/4=50%，原候选/偏好/夹具恢复，无新增配置器。
+
+2026-10-11关闭Dock期间触摸取消：探针以真实OS触点DOWN后通过SetRoomDockPreference(enabled=false)关闭官方Dock，保持16ms触点UPDATE，在窗口已隐藏后UP。实际Core13252/Player45184，关闭耗时928ms，目标保持最小化且前台不变；此前拖动/双指取消、菜单Back、触摸激活/最小化/恢复、随后鼠标点击通过。证据.build/touch-disable-probe-build.log、fusion-touch-live.log；原运行候选、偏好、夹具恢复。首次长按无UPDATE导致InjectTouchInput UP超时1460，修正探针后通过；不视为产品点击故障。该项覆盖显式关闭Dock，不等于自动隐藏或切Desk取消；物理触屏仍待验收。03开做，整包仍2/4=50%。
+
+2026-10-11切Desk取消复核：正式导航来自原生按钮，NavigateApplicationDock明确无RPC且只接受Application所有权，不能拿该入口伪造主题Dock的OS操作。生产RoomNativeInputAuthority.ObserveSnapshot在修订增加时ClearGeometry，DockTouchAvailable同时核对旧触点revision。新增5项行为回归：按住后切页清手势、旧UP无动作、回原Desk不复活、回页后新点击可用、已排队完成跨往返切页失效；task-input全部25项通过（.build/task-desk-cancel-tests.log）。这是生产权威/任务完成逻辑证据，未覆盖真实Player在按住期间收到切页事件的全链路，不标实机通过。未更换运行版。下一步以融合样包真实导航/键盘入口验证，不添加测试专用生产RPC。03仍开做，整包2/4=50%。
+
+2026-10-11真实键盘多应用修复：新增fusion-keyboard-live，实际点击官方⌨入口，真实SendInput Tab/Enter，仅激活探针自有窗口。首轮Core收到focus取样但反复拒绝geometry；根因私有entryId只有context/action/window，多个应用activate共享ID，DextNativeGeometry按consumer/entryId拒绝重复。统一改为context/item/action/window，Core完成时再次核对item与proof.Button一致；鼠标/触摸本地菜单回送同格式。新增双应用映射→生产几何回归先失败后通过，键盘18项及DOM8组通过；修正上一轮遗留的Back不可命中旧断言。完整Release build→start CoreOnly成功。最终实际Core29584/Player50408，12应用显示，Tab进入官方应用区，Enter激活自有窗口通过；原候选/偏好/夹具恢复，无新增配置器。证据.build/task-keyboard-first-failure.log、task-keyboard-identity-red.log、task-keyboard-identity-green.log、task-keyboard-identity-dom.log、task-keyboard-identity-build.log、fusion-keyboard-live.log。物理触屏、按住期间真实切Desk与完整菜单/滚动仍待统一验收，03继续开做、2/4=50%。
+
+2026-10-11多窗口菜单增量：新增fusion-menu-live，两个同进程自有窗口形成同一官方任务；实际点击列表选第二窗口成功。复现菜单残留：鼠标/触摸chooseWindow和togglePin缺官方私有activate回送，仅openWindows/dismissMenu有；现统一CompleteNativeDockTaskPresentation，在当前宿主/手势/投影校验后回送，键盘保持原路径不重复。DOM窗口选择完成收起菜单检查及完整Release通过，按流程start CoreOnly保留原版。实际Core47400/Player14584已通过选第二窗，菜单恢复图标；后续探针错误假设剩余窗口一定非前台，已改按点击前状态验证激活或最小化。最终重跑Core47564/Player46572在首次点击出现间歇down taskHit=false/up=true，未产生完成，故整个多窗口流程仍未通过，不能标03做完。日志20261011_0338时段及.build/task-menu-choice-first-click-failure.log；下一步检查displayReady到按下取样之间的可用状态变化。证据.build/task-menu-choice-red.log、task-menu-choice-toggle-observation.log、task-menu-choice-dom.log、task-menu-choice-build.log。原候选/偏好/夹具恢复，无新增配置器；工作包仍2/4=50%。
+
+2026-10-11多窗口实测完成、启动状态问题定位：此前仅依赖页面displayReady会在任务栏接管前启动点击。保存日志证明工作区由1380到1440改变后Dock移动，按下命中而抬起取样被撤销；另一次原生状态已不可用但标题观察仍旧。探针改为正式runtime.phase=running、taskbarReplacementReady=true及同一原生窗口边界稳定750ms后才进入菜单测试，条件用于隔离自动任务栏场景，不代表手动显示任务栏模式不可用。关闭同进程第二窗会异步改变前台，恢复检查先在自有Form明确最小化。最终Core30552/Player48996，真实鼠标打开双窗口列表、选择准确第二窗、菜单收起、关闭第二窗投影缩为1、点击恢复剩余最小化窗口全部通过；进程退出0并恢复原候选/偏好/夹具。证据.build/fusion-menu-live.log、task-menu-probe-build.log、menu-toggle-*.txt、stable-click-*.txt。启动可见图标提前可点与任务栏接管状态尚需产品收口，未改生产门控、未宣称首次点击问题已修；下一步明确初始化呈现/输入就绪策略，避免用固定延时掩盖。03仍开做，2/4=50%。
+
+2026-10-11 开做：03启动任务区输入门控。按任务栏实际模式判断就绪：auto须当前主题Player租约确认、hidden须Core手动租约确认、visible须恢复完成；与原生几何可用共同控制官方任务按钮及最终动作，避免先可点后移位。范围仅融合任务区，不重写作者点击或全局输入；验证三模式和隔离首次点击，记录失败回退待014。
+
+2026-10-11启动官方任务区门控修复：新增TaskbarController.DockActionsReady，auto须当前Player租约确认、hidden须Core手动租约确认、visible须租约释放与恢复完成；官方快照ActionsEnabled与最终动作均核对它。另在WebWebView2检查实际原生窗口匹配当前工作区底边/宽度；reserve沿用AppBar确认，防止任务栏隐藏已确认但Dock尚未移位的短暂误启用。不改RawInput/触控配对及超时。24项任务栏行为检查通过（含5项新增三模式/待恢复检查）；测试项目缺obj资产首次no-restore失败，正常还原后通过。完整Release build→start CoreOnly成功。新增fusion-startup-live跳过探针额外taskbarReplacementReady和750ms等待，直接在产品第一次ActionsEnabled时沿既有点击准备路径操作；实际Core50628/Player37064，打开双窗口列表、选择第二窗、关闭后恢复剩余最小化窗全部通过，退出0。证据.build/task-startup-gate-tests.log、task-startup-gate-build.log、task-startup-probe-build.log、fusion-startup-live.log。一次实际通过支持本次根因修复，不代表所有启动/显示器/手动模式均实测；任务栏看护失败的呈现回退仍由014收口。原运行版/偏好/夹具恢复，无配置器新增，03仍开做，2/4=50%。
+
+2026-10-11手动恢复任务栏实测：fusion-restored-live先等主题Dock实际接管，再通过EditApplicationDock(taskbar,visible)恢复，核对Shell_TrayWnd实际可见、看护hidden=false、主题Dock重新可操作；随后真实选第二窗、关闭第二窗、恢复剩余最小化窗通过，任务操作没有重新隐藏Windows任务栏。首次探针把恢复后的自动隐藏误判为禁用：工作区缩小时鼠标停在旧底边，改为按当前原生Dock位置唤出再判定。实际Core33260/Player28800退出0；.build/task-restored-probe-build.log、fusion-restored-live.log为证据。finally恢复原taskbar模式/两种Dock偏好/前台/光标，外层按字节备份taskbar-mode.json；原运行版恢复，无新增配置器。仅增加探针，无生产改动。03继续开做，整包2/4=50%；物理触屏/作者区域及完整统一验收不外推。
+
+2026-10-11交接核查做完：核对实际日志后建立03-remaining五项接续清单，04开始证据复核，更新V3_CURRENT/融合样包说明的陈旧禁用描述。正式包仍2/4=50%；下一实际操作为自有程序右键固定/取消固定，保留同栏作者导航、窄栏、取消和统一验收全部范围。不增加网络测试、不更换运行版、不宣称整包通过。
+
+2026-10-11实际固定菜单开做：新增独立fusion-pin-live及实际右键/固定/取消固定探针，构建通过。Core49636/Player2352实机失败证据确认右键DOWN到正确按钮时可用，61ms后UP/contextmenu同按钮disabled=true，随后恢复；未到固定操作，未宣称通过。记录03-remaining，下一步定位租约/原生可用/工作区门控撤销。原Core28588及偏好恢复，未启动配置器；生产代码未改，2/4=50%。
+
+2026-10-11开做：固定菜单瞬间禁用的Core边界诊断。仅在租约/原生可用/工作区就绪组合变化时记录，不改变判定；构建后同一独立右键场景取证。
+
+2026-10-11固定菜单做完：Core三门控始终true，根因是页面相同visible通知仍suspend/refresh，DOWN后本地短暂disabled。main.js增加实际paused变化判断，保留作用域校验/真正隐藏取消。新增回归先红后绿，入口与controller18项通过；完整诊断Release构建通过，Core47612/Player22924实机右键固定/取消固定及菜单收起全部通过，退出0并恢复原运行版/偏好。03-remaining第1项做完，下一项作者导航/窄区；整包2/4=50%。
+
+2026-10-11开做：03剩余第2项同栏导航/窄区。仅使用隔离融合样包和自有测试窗口，实际下一页进入focus、上一页返回home，读取正式几何定位；窄区滚动和应用操作随后接续，不能将直接RPC切页当导航通过。
+
+2026-10-11同栏导航增量：fusion-navigation-live构建通过，夹具补齐正式enableNavigation后Core45792/Player37084实际下一页进入focus一次、窄区溢出且不误激活应用。上一页DOWN/UP均到Core，但Player未回传可见取样，仍失败。记录03-remaining及20261011_041518.txt，滚动/应用点击未执行，原运行版恢复，2/4=50%。
+
+2026-10-11开做：跨Desk返回失败补充派发边界诊断，日志已确认WaitInputDispatchAsync超时并退出Player；检查转发目标归属、派发等待和释放，不更改输入授权或重试策略。
+
+2026-10-11跨Desk派发诊断增量：完整Release通过；Core40724/Player45408同场景再次确认下一页成功、上一页失败。第二次DOWN已arm/ready且forward-owned，等待作者帧派发回执1.5秒超时；取样尚未释放/回传。保留现有输入语义，下一步定位帧回执生成/接收，记录03-remaining及20261011_041900.txt；恢复原运行版/偏好，整包50%。
+
+2026-10-11开做：作者帧只读派发计数，记录门控前事件/通过事件/已发回执及native接收计数，超时时读取以定位回执失踪，不改变输入判定。
+
+2026-10-11双向导航修复：实机事件顺序确认未授权鼠标pointerdown的preventDefault抑制后续兼容mousedown，使转发回执超时。仅鼠标pointerdown保留stop但不prevent；鼠标默认操作仍由mousedown门控，触摸不变。Core30708/Player48244真实下一页/上一页、窄区溢出和无应用误触全部通过，30项检查/最终Release通过。移除临时计数，原运行版恢复；下一步窄区滚动/应用点击，第2项未全完，整包50%。
+
+2026-10-11开做：实际横向滚轮移动窄任务区，再点击仍可见的自有应用验证激活/最小化/恢复，检查仍停在focus；最后上一页返回，保留原前台/鼠标/偏好恢复。
+
+2026-10-11窄栏组做完：Core45764/Player44088原生横向滚轮、滚动后自有应用激活/最小化/恢复、双向作者导航全部通过且不双触发，退出0并恢复原版/偏好。探针首次因切页工作区变化停在旧位置，现按当前Dock位置唤出；产品跨Desk租约波动仍需收口，不宣称修复。03-remaining第2项做完，整包2/4=50%。
+
+2026-10-11开做：同宿主跨Desk的任务栏稳定性。RoomDockWindowState严格匹配revision，在Core先更新而Player尚未回报新revision时返回null，任务栏请求被撤销；先在实际双向导航期间观察任务栏可见/原生Dock位置作为回归，再分离任务栏宿主健康与交互revision检查。
+
+2026-10-11跨Desk任务栏稳定性修复做完：新增真实25ms任务栏/位置观察先红；分离任务栏同宿主健康与输入revision校验，保持心跳/会话/退出/生命周期条件。Core46800/Player52720双向导航、滚动和应用三动作及任务栏保持隐藏/Dock位置稳定均通过，完整Release通过，原运行版恢复。下一项按住期间切Desk/窗口关闭取消及无Dock退出恢复，整包50%。
+
+2026-10-11开做：03剩余第3项窗口关闭取消。真实鼠标DOWN后关闭自有非前台窗口，1秒内抬起，确认原前台不变且投影移除该任务；finally保证UP与原配置恢复。
+
+2026-10-11关闭取消实测做完：Core25504/Player51580鼠标DOWN后121ms关闭自有目标，UP后投影移除、前台不变、未重开目标；原运行版与偏好恢复。旧投影activate进入完成队列后由窗口有效性拒绝，未启动程序，不虚称配对提前取消。第3项仍缺按住跨Desk真实链路，整包50%。
+
+2026-10-11开做：03剩余第4项全屏菜单恢复。自有Form进入当前Dock屏幕全屏，检查原生Dock不可见及菜单清空；finally退出全屏恢复前台，底边唤出后菜单不残留、任务重新可用。
+
+2026-10-11全屏子项实测通过，继续无Dock子项：实际点击下一页home→focus，打开任务菜单后再点下一页到quiet；核对原Dock HWND消失及Windows任务栏真实可见，finally恢复原版/偏好。
+
+2026-10-11全屏/无Dock子项做完：Core44152/Player16632自有全屏使Dock/menu隐藏，恢复无残留菜单；Core49376/Player53244实际下一页到quiet销毁Dock窗口并恢复Windows任务栏，两组退出0且恢复原版/偏好。首次无Dock前置因布局变化未发点击，探针等待位置稳定后通过。两组探针构建通过；退出Core当前候选显式恢复及按住跨Desk仍待，整包50%。
+
+2026-10-11开做：融合Dock自动接管状态下正常退出Core，核对Core/两Player退出和系统任务栏可见；随后仅重启隔离候选执行既有夹具清理，再恢复用户原运行版。
+
+2026-10-11正常退出恢复做完：Core46892融合Dock自动接管后正式ShutDown，Core/两Player正常退出且系统任务栏实际恢复，候选51144重启供正式RPC清理并停止，原运行版恢复，probe退出0。task-fusion-exit-probe-build/fusion-exit-live日志为证据；03-remaining第4项做完，剩余实际按住跨Desk和最终核对，整包50%。
+
+2026-10-11交接证据核对做完：以9bb2a88及现有实际日志校正04-handoff遗漏的固定菜单、导航/滚动、窗口关闭、全屏、无Dock和正常退出证据；修正03清单两处陈旧说明。未重复实机或替换用户候选。代码检查确认混合键盘/鼠标会先清除旧手势，不能冒充Desk revision取消实测；此项仍开做。工作包2/4=50%，03剩余1/2/4做完，3/5未完，正式无诊断候选仍待制作。
+
+2026-10-11正式候选制作开做：使用build-v3-release.ps1从生产源生成全新v3-fusion-clean-20261011目录，包含Core/Release Player/配置器/正式宿主及哈希清单；不复制旧诊断候选、不启动配置器、不应用用户Room。构建后核对临时标题标记和夹具未进入包。整包仍50%，实际按住跨Desk缺口保持。
+
+2026-10-11正式候选打包核对做完：v3-fusion-clean-20261011完整构建退出0，654文件清单SHA256及16项宿主源哈希一致，未检出诊断标记。日志task-fusion-clean-release.log；新候选未启动或应用，原进程保留。Cargo.toml仅换行变化核对后恢复。04打包子项做完，03缺口及统一验收仍在，整包50%。
+
+2026-10-11候选核对脚本开做：固化本轮已执行的清单哈希、正式宿主来源、诊断标记排除检查；只读候选，不启动运行时。供04交接复现，不替代实际功能验收。
+
+2026-10-11候选核对脚本做完：verify-v3-release-candidate.ps1对新正式候选实际执行通过（654清单文件、16宿主源资源），补齐未列入清单文件检测，交接记录给出直接命令。只读检查，无新窗口、无用户数据改变；整包50%，跨Desk按住实际证据仍未补齐。
+
+2026-10-11实施/验收分账：03生产接线与融合演示实现做完，04开做，实施3/4=75%。遵循用户连续开发后统一验收，按住跨Desk全链路和物理触屏继续列人工未验证，不填通过、不取消要求。复核混合鼠标触摸会先取消手势，未为探针放松生产互斥。生产输入检查及27项Node检查通过，diff --check通过；现有实机证据与干净正式候选见04。下一步聚焦最终diff复核，之后顺序进入014；未合主线。
+
+2026-10-11 V3-P8-013实施交接做完：聚焦model/host/controller、动作完成后二次校验、租约revision分离复核未见新阻断；7组后台Edge DOM检查退出0。04做完，实施4/4=100%，转待统一验收；不等于物理触屏/实际按住跨Desk通过，四项人工要求保留，正式候选未启动/应用，master未合。下一包唯一014融合宿主生命周期/预览，独立worktree/分支接续。
+
+## V3-P8-014 融合宿主生命周期与预览（2026-10-11）
+
+基线e38af19，独立worktree v3-fusion-lifecycle、分支feat/V3-P8-014-fusion-lifecycle。目标、范围外和五项人工步骤见独立验收卡；总计划和六个独立步骤已建立。01宿主偏好/状态策略开做，其余待做，0/6=0%。接续013的生产实现但未合master、不启动新配置器或替换用户运行版。唯一下一项DESK-SYNC-001。
+
+2026-10-11 P8-014第01步做完：Presentation本机偏好默认native；纯宿主选择策略含三模式、期望/实际状态分离、失败锁存、attempt迟到拒绝与不可逆停止。18项新增检查/既有应用检查通过，完整Release通过；CoreOnly复核旧Core48280保留，无新配置器。策略未接服务，不能称实际回退可用。第02接线开做，实施1/6≈17%。
+
+2026-10-11 P8-014第02步增量：唯一owner新增显式Theme/Application/None请求与请求状态检查；异步原生释放根据宿主请求而非Enabled保留，避免后续融合选择仍被原生owner占住。10/10所有权检查、完整Release通过，CoreOnly保留旧Core48280。Render与Coordinator接线仍待继续，第02开做、整包1/6≈17%；未切用户宿主。
+
+2026-10-11 P8-014第02步继续：主题任务区声明读取/深合并校验与Coordinator候选描述已写，区分当前会话附着和窗口就绪，不将静态声明当实际输入就绪。7项新检查/既有应用检查、完整Release通过，CoreOnly复核旧Core48280保留。服务Render驱动、有效偏好与失败回退仍待接；第02开做，实施1/6≈17%。
+
+2026-10-11 P8-014第02步继续：补正式任务区私有状态回执及Player/Core字段，解决“窗口ready不等于官方区ready”的接线前提。取样身份/修订/时效核对，单飞心跳避免累计请求；不改变触摸配对或当前owner。19项入口/controller检查与完整Release通过，旧运行版保留。实际切换/回退尚未接完，整包17%。
+
+2026-10-11 P8-014第02步实际服务接线：新增Presentation分册，RPC保存/重试与实际状态、有效主题偏好、按attempt重建/失败锁存、任务区ready后任务栏接管、异步owner释放已接代码。修正旧宿主假就绪、正常切页超时、迟到失败覆盖新失败边界。策略/资格/owner检查与最终完整Release通过；尚无本轮真实Core切换证据，overlay仍显式回退待03，02开做、整包17%。旧运行版不变。
+
+2026-10-11 P8-014第02步做完：新增fusion-presentation-live，Core39792实际原生/融合往返、主题Player46924故障回退、保留theme意图且无自动循环、重试恢复、独立主题偏好保留通过，退出0。原设置/夹具/checkpoint清理恢复，原Core重启，无新配置器。03三模式开做，实施2/6≈33%。临时夹具缺安装清单首轮失败已修，旧版Core残留精确路径清理不算新功能通过。
+
+2026-10-11 P8-014第03步增量：overlay正式参数/偏好/Player选择和配置器显示贯通，移除临时回退，新增overlayAvailable避免误报自动隐藏。三模式偏好往返先红后绿，应用检查、Core Release、前端build通过；CoreOnly确认旧Core52004无新配置器。三模式实机工作区验证待继续，实施仍2/6≈33%。
+
+2026-10-11 P8-014第03步实施做完：真实Core50820三模式定向检查退出0，overlay离开常显不占位、reserve工作区缩小、autohide释放工作区/收起/触边展开通过。首轮暴露异步任务栏恢复被误判失败，ReleaseAutomaticAsync等待已发起恢复结果（5秒上限），先红后绿且完整Release通过。原运行版和全部探针偏好已恢复。物理锁屏/各模式全屏/最大化窗口列统一验收。第04原生缩略图开做，实施3/6=50%。
+
+2026-10-11 P8-014第04步增量：原生预览支持附着主题Player HWND，锚点从原生客户区/DPI换算；三项缩放/非法几何检查先红后绿、既有预览检查及完整Release通过。CoreOnly确认原Core52692，无新配置器。任务动作、自动隐藏保持与预览生命周期接线待继续，04开做，整包3/6=50%。
+
+2026-10-11 P8-014第04步接线：多窗任务已接Core原生预览、当前Desk/宿主/投影二次校验、生命周期关闭和Player有期限展开续约。现有预览/输入/19项官方入口检查与完整Release通过，原运行版未替换；真实双窗口选窗/跨Desk清理待下一步，实施仍3/6=50%。
+
+2026-10-11 P8-014第04/05实施做完：Core45248无诊断标题候选真实点击打开原生预览、悬停保持、精确选第二窗并关闭通过。首轮50508点击早于实际可操作，等待按钮启用与接管后通过，未改输入。配置器选择/实际状态/原因/重试已接，融合占位状态修正，两项状态检查先红后绿及前后端构建通过。原运行版49448/偏好恢复，无新配置器。UI实际点击、预览跨Desk等剩余项保留统一验收，06交接开做，实施5/6≈83%。
+
+2026-10-11 P8-014第06步实施交接做完：14f40b1生产源完整正式候选v3-fusion-lifecycle-clean-20261011构建退出0，654文件/16宿主资源来源及诊断标记核对通过。唯一owner/回退attempt/预览当前上下文/展开到期等聚焦diff无新阻断。候选未启动，原Core49448/配置器19704保留。实施6/6=100%转待统一验收，五项人工缺口保留，未合master；下一项DESK-SYNC-001。
+
+## DESK-SYNC-001 一键识别Windows桌面（2026-10-11）
+
+从bb4d61a接续独立worktree desktop-sync-import / feat/DESK-SYNC-001-desktop-import。四步计划和独立验收卡已写；01只读识别开做，其余待做，实施0/4=0%。本轮只实现识别/个人同步页/官方图标与打开，不混入后续监听/拖放/文件写操作。CodeGraph无可用索引，按提示rg兜底。014已待统一验收，未合master。
+
+2026-10-11 DESK-SYNC-001第01步做完：Core系统桌面扫描及9项混合/同名/路径去重/失败保留/取消/截断/原文件保留检查通过；本机只读扫描用户88+公共28=116项，无错误/截断；完整Release通过，原Core49448保留。未接显示/导入。02本机同步Desk与布局开做，实施1/4=25%。
+
+2026-10-11 DESK-SYNC-001第02步做完：私人同步Desk/稳定排列槽位与原子保存、生命周期入口实现；重复保序、部分扫描保留、关闭保留、新副本不继承、删除清理。9项新检查先红后绿，3项既有复制检查、Input项目编译和完整Release通过，原Core49448保留，未写用户personal.json。03官方显示/动作/RPC/配置器接线开做，实施2/4=50%。
+
+2026-10-11 DESK-SYNC-001第03步增量：后台STA读取Windows Shell名称/PNG图标；Core私有路径映射与官方显示快照分离，以会话/Room/安装/Desk及扫描票据拒绝迟到结果。16项扫描/快照检查、真实临时文件与文件夹Shell图标检查、完整Release构建通过；CoreOnly确认原Core49448仍运行，无新配置器。运行时服务、配置器按钮和官方桌面显示/打开尚未接完，03保持开做，实施2/4=50%。
+
+2026-10-11 DESK-SYNC-001第03步本机接口增量：现有EditRoomPersonal JSON通道新增setDesktopSync(deskId,enabled)，沿用当前会话/安装的原子编辑；编辑器快照返回本机同步选择与保存条目数。真实Desk校验、相同设置不写盘、切Desk及关闭保留槽位/原应用绑定，12项个人编辑检查通过（新增用例先红后绿）。完整Release退出0，CoreOnly复核旧Core49448，无新配置器。扫描服务发布、刷新、UI及桌面渲染/打开仍待接，实施2/4=50%。
+
+2026-10-11 DESK-SYNC-001第03步运行时扫描接线：Room就绪与setDesktopSync/refreshDesktopSync本机编辑触发后台扫描、Shell元数据和私有快照发布；新请求取消旧请求，退出取消并清空。扫描提交复核当前会话/安装、设置版本、启用状态与同步Desk，过期扫描不写排列；现有13项个人编辑检查及完整Core Release通过。CoreOnly复核旧Core49448，无新配置器，尚无新版真实Room导入实测。官方桌面快照输送/图标层/打开与配置器按钮仍待，实施2/4=50%。
+
+2026-10-11 DESK-SYNC-001第03步显示通道：扫描结果接入官方presentationRead私有回包，按会话/安装/同步Desk/启用状态过滤；desktopContextId命中时不重复传图片，官方页面缓存结果并在关闭时清理。14项个人接口检查和97项Node检查通过，Core/Player完整Release通过。修正Player原1MiB回包限额与图标批次不匹配，仅presentationRead允许4MiB；其余请求保持原限额。原Core49448保留，无新配置器。当前只是通道与缓存，不是图标已绘制/可点击；图标层、物理动作和UI仍待，实施2/4=50%。
+
+2026-10-11 DESK-SYNC-001第03步实施做完：官方图标层绘制真实名称/PNG、按保存槽位排列，超出屏幕分组；分组按钮与文件打开共用原生按下/抬起证明，Core按当前扫描上下文/同步Desk/本机设置解析私有路径后调用既有Shell打开器。转场期间不接受桌面文件动作，原作者按钮验证保留。配置器接入/刷新/关闭及扫描状态已接。15项个人接口（含实际原生配对到模拟启动器）、99项Node（显示/分组/跨Desk隐藏）、72项输入消息检查、Core/Player Release和前端构建通过。未启动新版实机或实际打开用户文件，物理触控仍待统一验收；原Core49448保留，无新配置器。实施3/4=75%，04构建交接开做，含一次实际冒烟/正式候选仍待。
+
+2026-10-11 DESK-SYNC-001第04步实施交接做完：927bff8生产源完整候选desktop-sync-clean-20261011构建通过，654文件/16宿主资源来源核对通过；候选本身未应用。隔离开发候选Core52052实际扫描117项，UIA限定Player窗口后确认临时文件夹图标显示、手动刷新数量保持、关闭后图标消失且源目录仍在，probe退出0。随后清理临时Room/目录，恢复原Core45136及原配置器19704，当前无活动Room。首轮全桌面UIA遍历卡住被终止，恢复流程和检查边界见04交接及#316。15项个人接口/99项Node/72项输入消息等前序证据仍有效；文件/快捷方式真实打开、重启配置及物理触控保留统一验收。实施4/4=100%待统一验收，未合master，唯一下一项DESK-SYNC-002。
+
+## DESK-SYNC-002 文件变化自动同步（2026-10-11）
+
+从0cdc78d接续独立desktop-sync-watch worktree / feat/DESK-SYNC-002-desktop-watch。四步计划和独立验收已写；01目录监听与事件合并开做，其余待做，实施0/4=0%。001实施完成待统一验收，未合master；本轮不启动新配置器。CodeGraph未初始化，使用rg兜底。
+
+2026-10-11 DESK-SYNC-002第01步做完：FileSystemWatcher双目录去重监听，新增/删除/改名/属性变更合并，250ms静默窗口与2秒最长等待，最多4096路径积压，错误/溢出与15秒健康核对触发完整复核。缺失/删除重建目录可重连，Dispose释放监听。9项真实临时目录检查通过（新增、改名双路径、删除、连续写入、停止、缺失恢复、删除重建），完整Core Release通过，原Core45136保留。监听类尚未接入运行时，不能称用户桌面已自动更新；02增量刷新/失败保留开做，实施1/4=25%。
+2026-10-11 DESK-SYNC-002第02步增量：目录快照同上下文刷新保留确认视图，内容相同保持context以免分页/点击被健康扫描重置，换会话/Desk清空且拒绝迟到扫描。新增5项先红后绿，共21项检查通过，完整Core/Player Release退出0；旧Core45136保持，无新配置器。Shell缓存/部分失败合并/改名槽位与运行时仍待，02开做，实施1/4=25%。
+2026-10-11 DESK-SYNC-002第02步增量：新增最近确认扫描的部分失败合并，失败目录/单个路径保留，健康目录删除正常生效，恢复后清理，截断保留并限制4096项。四项新增检查通过，共25项；完整Core/Player Release退出0，CoreOnly保持旧运行版且无新配置器。合并尚未接运行时，图标缓存/改名保位继续，实施1/4=25%。
+2026-10-11 DESK-SYNC-002第02步增量：Shell元数据缓存按文件指纹和事件路径刷新，未变图标复用；Shell失败显式保留已确认数据并重试，确认删除清缓存，合并图标预算2MiB。9项定向检查及真实临时文件/文件夹Shell检查通过，完整Core/Player Release退出0；旧Core45136保持。尚未接运行时，改名保位与第03接线继续，实施1/4=25%。
+2026-10-11 DESK-SYNC-002第02步做完：改名继承原槽位，连续改名归并，冲突/循环/旧路径重建保留已有图标位置，6项新增和既有存储共15项检查通过；完整Core/Player Release退出0，旧Core45136保持。本步缓存/失败合并/位置算法完成，03运行时监听和扫描提交接线开做，实施2/4=50%，尚未上线自动同步。
+2026-10-11 DESK-SYNC-002第03步接线增量：单一后台循环串行消费目录变化，代次拒绝旧回调，关闭/退出取消并释放监听；扫描合并/缓存/改名槽位/私有发布贯通，共享私有修订冲突复读重试。16项个人接口与9项临时目录监听检查、完整Release通过；旧Core45136保持，无新配置器。真实Core自动变化和生命周期仍待，实施2/4=50%。
+2026-10-11 DESK-SYNC-002第03步做完：Core31652实际Player自动新增/删除/改名/改回、关闭隐藏与原目录保留、停用期间变化后再启用补齐通过，desktop-watch-live退出0。恢复本轮checkpoint/清夹具数据及目录，原Core51648和原配置器19704保留，无活动Room。旧Core45136退出超时精确清理属于既有问题；新版候选正常退出。04正式候选与交接开做，实施3/4=75%，物理触控/重启等仍待统一验收。
+2026-10-11 DESK-SYNC-002第04步实施交接做完：9e52c17生产源正式候选desktop-sync-watch-clean-20261011完整Release退出0，654文件/16宿主资源来源与探针标记核对通过，候选未启动。聚焦diff和25项快照/9项缓存复核通过，既有真实Core自动变化证据有效。原Core51648/配置器19704保持。实施4/4=100%待统一验收，未合master，唯一下一项DESK-SYNC-003。
+
+## DESK-SYNC-003 Explorer原生文件拖入（2026-10-11）
+
+从7334286接续desktop-file-drop独立worktree/feat/DESK-SYNC-003-desktop-drop。五步方案与独立验收已写，01真实接收验证开做，其余待做，实施0/5=0%。先确定WorkerW/WebView2实际接收链，再落盘复制/移动/链接；保留原点击/触控，不加全屏透明层。CodeGraph未初始化，rg兜底。001/002待统一验收，未合master。
+2026-10-11 DESK-SYNC-003第01步增量：隐藏OLE注册探针构建/运行退出0，确认父Form、WinForms WebView及本进程Chrome_WidgetWin_0可注册，浏览器Chrome_WidgetWin_1/渲染子窗口属于其他进程。无鼠标移动、文件操作或当前桌面更改。注册成功尚不能证明实际派发，WorkerW接收继续验证，实施0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：真实临时文件File→AdditionalObjects→CoreWebView2File.Path通过，CDP浏览器drop同时转交真实文件和目录路径通过；脚本File发送在本机明确拒绝。无OS鼠标或Explorer操作，临时源清理。优先复用官方WebView通道，真实Player/WorkerW/Explorer及源效果仍待，不把浏览器探针算OS拖放完成，实施0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：生产Player新增DextNativeDroppedFiles读取模块并显式编译，隐藏探针直接链接该源码，真实磁盘File和浏览器drop文件/目录对象读取通过。无文件操作/原生输入变动；正式事件、会话及落点接线待继续，WorkerW/Explorer尚未验证，0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：正式Player WebMessage分支接desktopDrop会话/Desk/落点/修饰键/源效果，路径只能来自原生AdditionalObjects再填入私有IPC。新增3项检查及原有消息共75/75通过。Core目前仍拒绝新方法、页面入口未启用，下一步接同步页资格和操作反馈，0/5=0%。
+2026-10-11 DESK-SYNC-003第01步增量：Core新增当前同步页/会话/呈现context/锁屏转场核对与Player桥入口；允许Explorer前台导致的壁纸普通暂停下接收外部拖放，不改变原点击门槛。2项新增先红后绿，18项个人接口通过；文件操作执行和DOM入口仍待接，0/5=0%。
+2026-10-11 DESK-SYNC-003独立后端增量：03 Shell复制/移动底层开做，独立STA/IFileOperation/逐项回调与COM释放实现；六项真实临时文件检查通过，包括复制保源、移动目录、同目录、混合失败、去重及预取消。01实际接收门槛保持，先推进不依赖HWND的后端，页面未开放写入；链接/修饰键/执行接线待继续，实施0/5=0%。
+2026-10-11 DESK-SYNC-003第02步开做：先实现源允许效果与修饰键/同卷策略，定向用例验证后再接实际执行和鼠标提示；不改变点击/触控。
+2026-10-11 DESK-SYNC-003第02步增量：DesktopDropPolicy实现修饰键与允许效果判定，缺失文件编译失败后以可编译占位得到实际断言失败，再实现通过8项策略及6项Shell检查。完整Release成功。策略尚未接入运行路径，链接创建、卷识别和OLE完成责任仍待；实施0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003第03步增量：实际快捷方式创建和Shell传输结果接线完成，2项新增真实lnk检查先红后绿，共16项通过，完整Release退出0。start.ps1 CoreOnly保留原Core，无新配置器。跨卷判断、DOM/执行入口和实机拖入继续；0/5，路线2/4=50%。
+2026-10-11 DESK-SYNC-003第02/03步执行接线：原生卷GUID与效果策略用于真实Shell批次；Core desktopDrop入口单批准入、STA及执行期资格核对、结构化逐项反馈完成。21项定向检查通过，正式Release退出0，旧Core51648保留，无新配置器。真实Core处理器调用、页面/OLE完成责任和落点仍待；0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003第04步开做：官方宿主文件对象专用请求、拖入反馈与生命周期清理；随后接落点槽位。先验证文件对象不会进入JSON，普通播放暂停不取消在途文件操作；真实OLE完成效果另行验证。
+2026-10-11 DESK-SYNC-003第04步增量：官方顶层拖放/原生文件对象请求/完成提示接通，暂停与同会话修订保留回执，切页拒绝与解绑有测试。宿主101项通过，start.ps1 CoreOnly复用51648。真实Player与iframe命中、OLE完成效果、落点未验证；0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003接收补证：真实隐藏WebView2覆盖iframe的顶层拖放事件可达，生产JS/Player读取链保留准确磁盘路径，探针退出0，源内容保留、临时文件清理。无需新增透明输入层。WorkerW/Explorer最终效果与落点仍待，0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003第04步落点接线：成功新文件→私有ID→当前同步页空槽→原子保存贯通，保留原图标/当前分页，实际完成与位置失败分开反馈。20项槽位、19项个人编辑、76项IPC、101项宿主通过，完整Release退出0；最后提示文案引号错误经语法定位修复后宿主重跑通过。实际高DPI/Explorer验收待，0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003实机门槛开做：当前旧Core无活动Room已确认；独立RuntimeProbe新增desktop-drop-live，记录ready/result与临时源，借现有磁盘checkpoint恢复流程；8分钟上限、只清理唯一临时文件。准备短暂切开发候选，禁止新增配置器。
+2026-10-11 DESK-SYNC-003实机尝试：修复开发输出缺宿主预检问题后，真实Core47700/Player33976隔离Room和同步ready；Explorer窗口接口不可操作，未进行拖动。主动取消已清临时文件/夹具并恢复旧Core52420、原配置器19704，checkpoint字节一致且session-status无活动Room。新增夹具Release构建通过；实机拖入未通过，0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003反馈漏接修复：Player两端暂停白名单统一，避免文件已处理却无完成反馈；呈现读取也可在普通暂停下更新。77/77定向检查、完整Core/Player Release通过；旧Core52420复用、无新配置器。实际OS拖入仍待，0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003取消证据：修复Shell已取消但回报failed的状态归并，新增实际进度取消及首项移动后取消检查，23项通过，完整Core/Player Release退出0；旧Core52420复用，不改当前桌面。重名UI/OS拖入仍待，0/5，整体2/4=50%。
+
+2026-10-11 完整候选打包受阻：npm ci --prefer-offline --no-audit --no-fund 报 ENOSPC，C盘剩余0字节；已核对绝对路径并仅删除本轮新建且安装失败的 tauri-ui/node_modules，释放146161664字节。正式 desktop-drop-clean-20261011 尚未创建，未启动/替换Core或配置器。恢复条件：将依赖和临时构建目录安排到D盘（当时可用246813810688字节），或释放足够C盘空间后重跑完整打包及来源检查。真实Explorer拖入门槛仍待；实施0/5，桌面同步路线2/4=50%。日志 .build/drop-npm-ci.log。
+
+2026-10-11 正式候选打包恢复：锁定package.json/package-lock.json复制至D盘独立构建环境，npm ci退出0；当前worktree node_modules链接到该依赖，未运行的Core bin搬到D盘并保留目录链接。TEMP/TMP/npm缓存及Rust目标均位于D盘；构建后C盘剩余391573504字节。完整build-v3-release.ps1退出0，候选 D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-clean-20261011；来源c73d153（生产代码42d7add），654文件哈希核对、16项官方宿主与源码一致、已知夹具标记检查通过。保留Rust既有两项警告。日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-build-env/release-build.log。
+候选未启动；旧Core52420/配置器19704路径仍为v3-core-exit-20261010。构建造成的Cargo.toml纯换行变化经HEAD内容比较后恢复；工作区无代码变更。真实Explorer/WorkerW拖入、OLE源效果、重名/取消UI、落点及原触控仍待，05状态继续开做，实施0/5（完整门槛），路线2/4=50%。下一步补实际OS拖入证据，不重复打包或切换Core来代替鼠标验收。
+2026-10-11 跨卷证据开做：在现有DesktopTransfer测试新增显式双目录入口；仅创建唯一临时目录/文件，核对两侧卷身份可解析且不同，再验证默认复制保源和Shift移动完成后删源。只验证正式Shell后端，不冒充Explorer/OLE源完成或物理验收。
+
+2026-10-11 跨卷后端验证通过：DesktopTransfer显式--cross-volume入口使用C/D唯一临时目录，正式卷GUID两侧均可解析且不同；默认复制校验两侧完整内容、Shift移动校验目标内容与源消失，3/3通过。临时文件与空目录全部清理，无测试目录残留。日志.build/drop-cross-volume.log；旧Core52420/配置器19704保留。本轮只新增测试，不改生产代码/候选；物理Explorer拖放、鼠标提示和OLE源效果仍待，02保持开做，路线2/4=50%。
+
+2026-10-11 DESK-SYNC-003实机补证恢复开做：004在其分支完成实施与r3候选交接（1f13850，生产0ed6d12）；路线实施3/4=75%，本分支早期“004下一项/2/4”仅历史。复用当前003分支与独立验收文件，先核对当前Explorer窗口，再准备唯一临时文件与磁盘恢复清单；候选切换前记录当前Core精确路径、布局与个人状态，测试后恢复。仅真实Explorer→原生宿主→Shell文件结果→可见图标全链计通过，不用后台文件复制替代拖放。禁止覆盖现有文件、重复打开配置器或更换原点击/触控链。
+环境核对：Orca CLI当前不存在，按computer-use技能停止该CLI尝试；改用已安装Windows computer-use插件。最新list_windows未列Explorer，并非沿用旧1×1窗口结论，下一步正常启动Explorer后重新选择窗口。CodeGraph显示Not initialized，源码定位使用rg兜底，不新建索引。
+
+2026-10-11 用户要求后续不用Orca技能，已改用Windows computer-use。Explorer现已返回正常主文件夹窗口及文件列表，旧1×1障碍解除。Core26668无活跃Room/Player/配置器，WallpaperLayout为空。实机夹具成功后的观察窗口由3秒改为最多45秒，observed/cancel可提前结束，便于验证实际图标而非仅磁盘落地。只改探针不改生产输入。
+
+2026-10-11 实机补证本轮结果：Windows computer-use 能读取正常 Explorer 文件列表；隔离 Core31808/Player38976 已 ready，但实际拖动前检测到用户输入及窗口最小化，主动取消，未发生本轮自动拖动，未产生 result.json。日志 .build/desktop-drop-live-r3.log；drop-live-223fc78615044e6092ae84a6dc43d581/cleaned.txt 和 drop-return-f3b4cc5dc7f94f0c84c3c2a28645e41d/restored.txt 记录清理恢复。原 Debug Core 恢复为34196，无活动Room；Settings/WallpaperLayout/room-session字节一致，personal仅revision变化。桌面原生图标由用户主动关闭，不作为故障，不擅自修改。
+进度：桌面同步路线实施3/4=75%，003完整实机门槛0/5；未通过的测试不计完成。本轮探针观察窗口延长到45秒并可用observed/cancel提前结束。发现磁盘文件和私有槽位也可能由Explorer原生落盘+监听产生，因此将探针PASS改为OBSERVED，结果明确dextDropRouteVerified=false。
+下一步（待做）：为唯一临时文件关联真实Player接收、Core执行和页面回执证据，再做一次Explorer拖入；其后按独立验收卡核对效果、取消/重名、生命周期和原输入。当前记录整理做完；真实链路补证仍开做。用户已要求不用Orca技能。
+任务栏请求记录：新探针taskbar-visible已构建，但旧Debug Core返回Unimplemented，未确认恢复；Windows设置自动操作被工具拒绝（Computer Use was not approved to use systemsettings）。用户随后改为只需操作说明，已提供，不再继续修改任务栏。
+
+2026-10-11 DESK-SYNC-003关联证据开做：只在现有Core桌面拖放处理路径增加结构化received/result/transfer记录，关联session/request及成功目标的desktop哈希ID，不记录绝对路径、不调整输入。构建验证后提交；页面可见回执仍需实机观察。范围外：新权限、原点击/触控、切运行版。
+
+2026-10-11 关联诊断实施做完：Core现有desktopDrop分支记录received/result，Shell完成后记录transfer；三者以session/request/player关联，transfer仅记录哈希newIds、逐项状态/HRESULT和placement，不记录源/目标绝对路径。received代表已通过会话校验到达Core，不代表Shell成功；result代表Core处理结果，不代表页面已呈现，须观察官方完成提示。全量build.ps1 -V3Release通过；start.ps1 -CoreOnly自动补Debug构建后因旧Core34196占用同身份按设计拒绝启动（退出1），未停止旧Core、未打开配置器。诊断未部署到运行版，实机门槛保持0/5，路线3/4=75%。
+下次证据：ready.json的SessionId/PlayerPid与received匹配；同一request的transfer.newIds必须含唯一目标文件的desktop-ID且对应completed、placement accepted、aborted false；result accepted；最后观察官方已完成提示及落点图标。缺任何一环均不能把文件监听当Dext拖放成功。后续仍需五项独立验收，未合并master。
+
+2026-10-11 实机重试未进入拖放：Explorer正常窗口525492可读；将当前003框架依赖Release输出覆盖到原自包含测试副本后启动Core28888，但35秒内RPC身份未就绪，也无本次Core启动日志。该混合输出不是可验收候选，根因尚未确认，禁止复用为正式包。启动脚本finally中的正常退出RPC也超时并提前中断恢复；随后核对PID28888精确路径，仅结束本轮失败测试进程，恢复原Debug Core36228。session-status为空，Settings/WallpaperLayout/room-session/personal四项SHA256均与本轮启动前一致；未启动Player/配置器、未产生新ready或拖动文件。
+证据：.build/desktop-drop-live-diagnostics.log；备份 .build/drop-return-19c6d1d01f5146f2abdba8bfe31ba453/recovery.json。下一步先构建独立空目录的完整publish候选，不能再覆盖旧发布目录混用依赖；修复测试编排的finally，保证停止测试副本失败不会无记录地跳过原Core恢复。实机0/5，路线3/4=75%。
+
+2026-10-11 干净候选恢复做完：build-v3-release.ps1从全新目录构建，生产源de16333/记录644098e，输出D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-clean-20261011。完整构建退出0，既有Rust两项警告；654文件清单和16项宿主来源核对通过。runtimeconfig为includedFrameworks 9.0.19，区别于失败副本被覆盖成frameworks 9.0.0；不能将两类产物直接覆盖混用。
+候选Core15732实际RPC身份及空session通过，正常退出后原Core9696恢复；四项checkpoint文件SHA256全一致，无壁纸应用/新配置器。日志.build/drop-diagnostics-clean-build.log、.build/clean-core-start.log；恢复备份drop-return-0c73c456b0ef484da30bbdfbaad190d5。测试编排副本增加失败停止的精确路径回收，再恢复原Core；本轮正常退出，未触发强制回收。Cargo.toml构建产生的纯换行变化核对后恢复。
+下一步仍是从干净包复制独立夹具副本并关联真实Explorer拖入，不在干净候选中写夹具、不覆盖框架依赖输出。打包/启动障碍解除，实际拖放0/5门槛保持，路线3/4=75%；原五项人工验收未变。
+
+2026-10-11 干净夹具进入真实运行：Core27680/Player37996、session d3c577f1-0c64-4681-8174-70bd8d0f1d4e、home同步已ready，Explorer525492显示唯一临时文本文件。Windows computer-use的sky.drag拒绝窗口外落点：point (1500, -300) is outside window bounds { originX: 0, originY: 0, width: 1126, height: 634 }。错误发生在输入执行前，未完成Explorer→桌面拖动；不是Dext拖放失败证据。当前工具跨窗口拖动不可用，不再通过反复切Core重试同一限制；实际拖放留给统一人工验收或支持跨窗口拖动的工具。
+已cancel，cleaned.txt与restored.txt存在；唯一源目录和桌面目标均不存在，原Debug Core28084恢复、空session。证据.build/clean-drop-live.log、drop-live-ee24667baca547abb7f16cce8d0e1e9e、drop-return-b50a2bc6cff44e99ab430a7b4a466e88。正常退出恢复完成，不需强制退出。干净发布包未写入夹具；独立副本为D:/use/Orca/DEXT/DEXT_Core/.build/desktop-drop-diagnostics-live-20261011。完整实机门槛仍0/5，路线实施3/4=75%；不得因工具限制宣称通过，原生桌面图标可见性保持用户当前设置。
+
+2026-10-11 后台差异核查：检查Shell传输取消/逐项回调、Core放置资格和既有真实临时文件测试，未发现新增确定缺陷，不为同一代码重复构建/扩大测试。修正当前分支ROADMAP/V3_CURRENT/总步骤表的过期004待做状态；明确003候选不含独立004修复，不能误认为最新集成版。真正剩余为跨窗口实机与五项人工门槛，当前工具限制不变。
+
+2026-10-11 用户要求再查GlassDesk拖入方案：公开源码仍不可用；已对照DeskBox实际HWND/OLE接收与微软派发规则，结论和下一步命中诊断写入003/05-handoff。用户当前反馈前提为同步未启用，不能据此直接宣称层级根因。仅调研未改输入，路线75%。
+
+## 2026-10-11 按 DeskBox 接收面修复
+目标：启用同步的 Desk 使用已有 Player 可见 HWND 接收 OLE 文件，解决 Explorer SysListView32 抢先接收。
+证据：当前 Player 在 Progman 下、Shell DefView 下方；9 个 WindowFromPoint 样本全部命中 Explorer ListView。单独向背景窗口 RegisterDragDrop 无效。
+方案：只提升已有 Player 到桌面 Shell 容器的 DefView 上方；仍在桌面容器内，不置顶到应用之上；非同步 Desk/转场/锁屏/退出恢复原父窗口、坐标与 Z-order。继续使用 WebView2 OLE + AdditionalObjects，不重复注册它已有的接收器。保留现有 Core 输入鉴权，针对重复鼠标与触控单独回归。
+范围外：新全屏透明层、修改 Explorer 图标可见设置、虚拟文件、Dock 拖入。
+步骤：
+- 开做：[06](plans/DESK-SYNC-003/06-native-desktop-surface.md) 接收面与恢复生命周期。
+- 待做：定向构建、输入回归、包含 004 的候选交接。
+人工验收压缩为三组：同步页拖文件；取消/停用；点击与触控。仍以原验收卡五个门槛记录，不将构建通过记为 OS 拖放通过。
+2026-10-11 接收面修复进展：隐藏原生窗口12项检查通过（先红后绿；跨父/同父提升、坐标、层级恢复、重复恢复、销毁）。已有输入/触控脚本37项通过。Core/Release Player构建通过。原鼠标转发与触控代码未改；真实接收与物理输入仍待验证。现有003分支不含004，为保留当前文件菜单功能，下一步集成004依赖到本工作分支后制作候选，不合master。
+## DESK-SYNC-004 原生文件常用操作（2026-10-11）
+基线96c9ef7，托管desktop-shell-actions / feat/DESK-SYNC-004-shell-actions；六步设计/独立步骤/验收卡已写，01选择与焦点开做，其余待做，0/6。003真实Explorer窗口仍不可用，全部未验证门槛保留；按用户先推进后统一验收要求，转入004独立顺序开发。路线2/4=50%，未合master。CodeGraph未初始化，rg兜底。
+
+2026-10-11 第01步增量：新增desktop-selection.js，提供update/select/clear/read，单选、Ctrl切换、Shift范围、Ctrl+Shift追加、同scope刷新保留/裁剪、换scope清空、未知项拒绝与快照隔离7项通过。首次运行因模块缺失明确失败，实现后7/7通过，日志.build/selection-red.log与selection-green.log。尚未接DOM/原生输入，不能称多选已可用；后续需同时更新index.html、v3-release-assets.json及DextNativeResourceServer.cs官方资源白名单。原Core与配置器未启动或更换。01仍开做，0/6，整体2/4=50%。
+
+2026-10-11 第01步原生输入增量：RoomNativeInputGesture/Proof保留按下瞬间的Ctrl/Shift（内部位1/2）及完成的Key；WebWebView2在现有MouseDown入口转换Windows MK_CONTROL/MK_SHIFT，无新增输入层、无DOM鼠标替代。新增断言先因缺API/字段编译失败，实现后foreground-return四组（Desktop/Dock × sampled/direct）通过，含失焦后重新点击；完整Core/Player/Watchdog Release成功，日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-build-env/core-build.log。新分支缺失的bin/obj目录链接到D盘，已有目录不移动；TEMP/TMP置D盘。start.ps1 CoreOnly继续旧候选。
+尚未向JS私有activate事件发布新字段，选择模块仍未加载，不能称多选或双击已可用。下一步：native-host事件字段验证→Core NotifyNative字段→dom-host选择/范围/双击（读取系统时间与矩形）→资源白名单与发布清单；作者/Dock单击保留。01继续开做，0/6，路线2/4=50%。
+2026-10-11 第01步实施接线做完：官方图标层加载desktop-selection模块，原生Ctrl/Shift支持单选/多选/范围选择，矩形选中样式与aria-pressed同步；同Desk刷新保留存在项，换Desk/分页清空。Core仅为official.desktop发布按下时修饰键/Key/坐标/单调时间及Windows双击时间/矩形参数；私有桥严格接收，普通DOM click不能启动文件。同步文件单击选择、双击/Enter打开、Space选择；作者按钮、分页导航和Dock保留单击。暂停、修订与图标上下文变化清理待双击。
+定向证据：DOM单击旧行为1次启动的失败断言→修复通过；私有桥原丢弃事件失败→修复通过；选择/宿主/桥111项通过，包含双击超时/偏移/暂停及三击只打开一次；foreground-return四组通过并校验原生位置/键盘修饰键。正式Core/Player/Watchdog Release退出0，verify-release-host确认新增资源引用在白名单；start.ps1 CoreOnly复用旧Core52420，无新配置器。当前运行版未更换，实际鼠标/触控/DPI仍留统一验收。
+第01步实施1/6≈17%，路线2/4=50%。第02步双击/Enter基础随接线实现，F2改名与多选打开细节待继续；未称整个02完成。候选尚非完整004交付；人工验收按独立卡：单击/Ctrl/Shift、双击/Enter、切Desk、作者/Dock单击与触控回归。
+2026-10-11 第02步改名后端：新增DesktopShellActions.RenameAsync，复用抽出的STA执行器/正式IFileOperation接口和逐项结果；校验单个文件名、实际路径、取消与当前scope，返回真实Unicode目标，目录内容保留。已存在目标返回conflict供编辑器重输，同名原样返回unchanged。用户交互操作保留Shell撤销与冲突界面，路径竞态仍由Shell裁决，不自动覆盖。
+7项真实临时文件检查通过：中文、同名不变、非法路径、已存在目标保留双方、预取消、退场取消、目录改名；共用执行器原23项拖入检查通过。第一次测试清理因旧父目录已改名而抛异常，已改为存在检查并仅清理本轮唯一夹具；真实重名Shell尝试停在PerformOperations，精确停止测试PID50612并清理残留，未记通过。正式Core/Player/Watchdog Release退出0，日志desktop-shell-actions-build-env/rename-core-build.log，start.ps1 CoreOnly保持旧Core52420。
+Ruling：改名编辑器对已存在目标直接显示冲突，取代原计划全部冲突交Shell的做法；原因是静默Shell仍可能等待冲突确认，用户可在原输入框重新命名；不允许自动覆盖，竞态与权限错误仍交Shell。F2/输入框/私有Core命令尚未接线，本步继续开做；当前包1/6≈17%，路线2/4=50%。
+2026-10-11 第02步F2输入链：Core仅给DesktopPlayer的official.desktop/desktop-*焦点接收114按键，沿用原生配对与当前可见几何采样；Player私有pointer允许该范围的F2，官方宿主事件校验接收114。6项Core配对检查（sampled/direct × 文件/官方按钮/作者场景）通过；Player pointer18项通过；Node111项通过；完整Core/Player/Watchdog Release退出0，日志desktop-shell-actions-build-env/f2-input-core-build.log。start.ps1 CoreOnly保持原Core52420。
+同时修正实际代码中的官方桌面输入漏接：ArmInputAsync将official.desktop键盘错误要求匹配作者iframe；Form1等待作者DOM回执/转发模拟按键、鼠标ReceiveOfficialInputDispatch也只认official。统一IsOfficialConsumer/UsesOfficialKeyboard，官方桌面键盘走已有物理采样路径，鼠标保留顶层实际派发回执。没有绕过原生配对或新增覆盖层。上述证据是生产类/消息与构建，不是实机鼠标或触控验收。
+F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私有命令，按F2尚不能实际改名，不能标第02步完成。下一步原生证明绑定当前文件ID→改名窗口→Shell服务→结果刷新；保持1/6≈17%，路线2/4=50%。
+2026-10-11 第02步继续：先修复F2事件误调用select导致多选缩成单选的问题；补充多选/单选F2不改变选择且不启动文件的回归，再继续私有改名命令和窗口接线。状态开做，1/6≈17%。
+
+2026-10-11 F2选择副作用已修复：命令键在选择操作前分流并清空待双击，不再把多选缩成单选，不触发文件打开。新增实际宿主断言先失败（少一个选中项）再通过，相关111项通过，日志.build/f2-selection-red.log与f2-selection-green.log。start.ps1 CoreOnly确认原Core52420，不启动配置器、不部署新宿主。改名私有命令与窗口仍待接，02开做，1/6≈17%，整体50%。
+
+2026-10-11 第02步Core改名目标解析已实现：PrepareDesktopRename要求F2原生证明，复用当前会话/安装/同步Desk/扫描ID/原生消费校验，返回私有PersonalTarget且不启动文件；InvokeDesktop拒绝F2误走打开入口。新增检查从19/20失败到20/20通过，覆盖鼠标证明拒绝、F2目标解析、消费后不能重放、无应用启动。完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/rename-prepare-build.log）；start.ps1 CoreOnly仍复用原Core52420。未部署新版本。私有IPC、改名窗口与Shell执行尚未接通；02继续开做，当前包1/6≈17%，整体2/4=50%。
+
+2026-10-11 第02步F2完整接线增量：官方宿主仅当前单选与原生焦点一致时发desktopRename，私有协议/Player序列化/Core桥解析并消费F2证明；原生WPF窗口Enter提交、Esc/取消关闭，文件默认选中不含扩展名，目录选全名，重名留在窗口提示。IFileOperation在后台STA执行，当前Room/同步Desk失效取消，执行期间关闭先请求取消并等待结果；与拖入共用串行门。路径仅留Core，成功由既有目录监听刷新。暂停/修订保留已发改名回执，替换会话取消。
+证据：DOM与native-host新增用例先失败后112/112通过（rename-wire-red/green.log）；原生协议78/78通过（rename-messages.log）；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/rename-dialog-build.log）。尚未实机操作改名窗口，不能以构建替代焦点/触控验收；多选打开细节仍待，第02步保持开做，1/6≈17%，整体50%。
+启动核对：start.ps1 CoreOnly发现运行Core已变为主目录Debug路径PID26668，非先前PID52420；mutex/pipe被该实例占用，脚本拒绝启动目标候选。未停止该进程，未启动配置器或部署新宿主；后续先核对运行身份再安排集中验收。
+
+2026-10-11 第02步继续：实现Enter保留当前多选并一次打开全部所选项；新增desktopOpen私有消息仅携带当前扫描ID，Core一次消费原生Enter证明并解析整组选中目标。双击保持单项打开，F2仅单选。先补宿主/Core定向失败用例，再接协议和运行链；当前1/6≈17%。
+
+2026-10-11 第02步代码实施做完（待统一实机验收）：Enter不再改写选择，desktopOpen携带当前所选ID，Core一次核对整组扫描目标并消费原生Enter证明，再逐项打开；单项失败继续其余项，切换会话/同步Desk停用时停止剩余项。单击/Ctrl/Shift与F2单选规则保留，双击走原单项打开。首个应用获取前台导致暂停时保留本次动作回执，避免已打开却报失败。
+证据：宿主多选丢失断言先失败后通过；Core新检查先20/21失败后21/21通过，覆盖整组解析/缺失项不启动/一次消费/中途取消；113项宿主检查、79项私有消息检查、最终完整Release均通过。日志open-selection-core-red/green.log、open-selection-dom-red/green.log、open-selection-host-green.log、open-selection-messages.log及D盘desktop-shell-actions-build-env/open-selection-build.log。改名真实临时文件7项证据沿用此前后端检查；没有新增实机验收结论。
+运行：start.ps1依然报告其他路径Core26668占用产品身份并退出1，未更换该Debug实例、未启动配置器。当前02做完仅指代码实施，窗口焦点/Enter/Esc/触控/DPI留统一验收，整个工作包尚未验收。实施2/6≈33%，路线仍2/4=50%，下一执行步骤03剪贴板。
+
+2026-10-11 第03步剪贴板开做：官方Shell格式调研完成，采用CF_HDROP+Preferred DropEffect；先独立HGLOBAL互操作测试，再接STA/序列号保护和原生快捷键。全局剪贴板不用于自动测试。实施2/6≈33%，路线50%。
+
+2026-10-11 第03步后端增量：新增DesktopShellClipboardData和DesktopShellClipboard。CF_HDROP使用20字节DROPFILES+Unicode双NUL路径列表，Preferred DropEffect发布COPY/MOVE；独立STA读取/发布，后台message-only所有者窗口不显示。部分移动仅移除实际completed源项，失败/未处理项保留；完成更新在OpenClipboard锁内核对原序列号，后来复制的内容不覆盖。没有自动化调用系统剪贴板读写。
+证据：独立HGLOBAL交由真实DragQueryFile读取中文/空格/UNC路径，先因数量不匹配失败再10/10通过，含复制/剪切标记、部分失败与相对路径检查；日志.build/clipboard-data-red.log及clipboard-data-green.log。完整Core/Player/Watchdog Release成功（desktop-shell-actions-build-env/clipboard-backend-build.log）；start.ps1继续因主目录Debug Core26668持有产品身份退出1，未替换运行桌面。
+剩余：Ctrl+C/X/V原生按键证明、私有命令/Core目标解析/粘贴执行、同目录副本、剪切变淡及实际系统剪贴板验收。03仍开做，实施2/6≈33%，路线2/4=50%。
+
+2026-10-11 第03步原生快捷键接线开做：为67/88/86（C/X/V）增加仅同步文件焦点且按下时Ctrl的配对准入；普通字母与Dock/作者焦点不新增文件操作。随后接Core所选文件解析、私有复制/剪切/粘贴入口及视觉状态。先用sampled/direct真实输入状态机检查。
+
+2026-10-11 第03步复制/剪切接线增量：Ctrl+C/X/V由Core按下时Ctrl+当前official.desktop文件焦点产生配对证明，普通字母拒绝；Player官方物理采样识别这些按键。复制/剪切通过desktopCopy/desktopCut只提交当前所选ID，Core校验整组并消费证明后调用DesktopShellClipboard，路径留Core。剪切变淡采用filter:opacity(.45)与切页内联opacity相乘；presentationRead附带剪贴板序列元数据，用户后来复制新内容则恢复图标，避免迟到旧读取清除刚完成的剪切。Ctrl+V仅原生证明已接，页面暂不派发粘贴，不能称粘贴已可用。
+证据：快捷键用例先失败后6/6 sampled/direct通过（clipboard-keys-red/green.log）；Player pointer18项、原生消息79项、宿主114项通过，含保持多选/剪切状态/外部新剪贴板恢复。Core当前所选目标解析检查通过，个人编辑组先一次21/21，补切目标后一次20/21（旧drop placement返回storageUnavailable），保存失败为clipboard-copy-core-storage-failure.log；相同构建仅复查一次21/21（clipboard-copy-core-recheck.log）。第一次RED另有旧fixture原子发布Win32拒绝访问，未改存储实现、未宣称该间歇问题修复。F2原6组合通过。完整Core/Player/Watchdog Release成功（desktop-shell-actions-build-env/clipboard-copy-build.log）；start.ps1因现有Debug Core26668产品身份占用退出1，未替换运行版、未启动额外配置器。
+剩余：Ctrl+V粘贴/同目录副本/成功项完成回执、空同步Desk的粘贴焦点入口、实机Explorer双向互通及触控。接粘贴时需核对原生桌面也收到Ctrl+V是否引起双执行，不能仅凭RawInput观察与消息用例认定实机无重复。系统剪贴板未在本轮自动测试中读写；实际复制/剪切与视觉效果仍待统一验收。03保持开做，实施2/6≈33%，路线2/4=50%。
+
+2026-10-11 第03步粘贴执行开做：同目录复制需生成副本，原拖放同目录仍保持不操作；同目录剪切不删除源。给粘贴增加独立Shell入口，同目录副本使用FOF_RENAMEONCOLLISION并只作用于该组，其余冲突保留Shell确认。先真实临时文件/文件夹验证，再接Ctrl+V及剪贴板完成状态。
+
+2026-10-11 第03步粘贴执行增量：Ctrl+V私有命令贯通Core原生证明、真实剪贴板读取、Shell粘贴与逐项反馈。同目录复制单独使用FOF_RENAMEONCOLLISION生成副本，普通目标冲突继续Shell确认；同目录剪切保留源，并清除已无须移动的对应剪切引用。部分失败保留真实成功项，完成剪切更新仍核对原剪贴板序列；暂停和同会话修订保留在途回执。
+证据：实际临时文件/文件夹粘贴先红后绿6/6，剪贴板独立内存与完成状态11/11，原拖放回归通过，宿主114/114、私有消息79/79；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-paste-build.log）。Core新增Ctrl+V目标检查通过，但个人编辑整组20/21，旧explicit action检查再次出现storageUnavailable，保留paste-core-green.log并继续记为#330未解决；不将该组报告全绿。
+运行核对：start.ps1仍因Debug Core26668占用mutex/pipe退出1；未替换运行桌面、未新增配置器。真实全局剪贴板、Explorer双向互通、原生快捷键是否双执行及触控未验收。空同步Desk粘贴入口仍待补，03继续开做，当前工作包2/6≈33%，路线2/4=50%。
+
+2026-10-11 第03步空桌面入口开做：同步Desk增加小型“粘贴到桌面”官方按钮，位于图标网格上方；不占文件槽位，不增加透明全屏输入层。沿用原生几何和点击/Enter/Space证明，空扫描列表也可发粘贴；Ctrl+V仅在该按钮或真实文件已有受控焦点时准入。普通C/X/F2不作用于粘贴按钮。先验证空列表按钮、一次请求、选择不被修改及禁用后消失，再接Core当前上下文核对。RawInput与Explorer重复处理仍留实际OS门槛，不宣称已解决。
+
+2026-10-11 第03步空桌面入口增量做完：同步Desk顶部加入“粘贴到桌面”原生官方按钮，空文件列表也可点击/Enter/Space粘贴；该按钮有受控焦点时允许Ctrl+V，C/X/F2仍只允许真实文件焦点。按钮独立逻辑尺寸避免按96×104图标比例压扁文字，不改文件槽位、分页容量或选择。Core仍核对当前启用Desk/扫描上下文和一次原生证明，停用或切页拒绝旧命令。
+证据：空列表DOM缺按钮断言先失败后通过；Core原NotOperable失败后22/22通过，新增鼠标/Enter/Space/Ctrl+V与停用检查；sampled/direct剪贴板8/8、Player指针18/18、私有消息79/79、宿主115/115；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-empty-paste-build.log）。本次22/22不消除此前#330间歇存储失败记录。start.ps1仍拒绝与Debug Core26668争用身份，原实例保留。
+当前2/6≈33%，03保持开做：生产快捷键来自WinDesktopCore.RawInput_KeyboardClickRaw，RawInputMsgWindow注册Keyboard ExInputSink；现有代码只旁听转发，没有阻止Explorer原生快捷键，所以真实双执行风险尚未解决，不启用新候选。下一步先收敛键盘所有权/重复执行，再做实际Explorer互通；全局剪贴板和触控仍留统一验收。
+人工验收（部署后统一进行）：空同步Desk用唯一临时文件测试“粘贴到桌面”；Explorer与Dext双向复制/剪切/粘贴，每次只产生一份结果、保留失败源项、更换剪贴板不被覆盖；随后核对原Dock、作者按钮、触控、切页和停用后旧命令失效。
+
+2026-10-11 第03步键盘单一执行方开做：针对当前同步桌面文件焦点的Ctrl+C/X/V、F2和Enter/Space建立窄范围WH_KEYBOARD_LL接收，捕获成功后抑制Explorer同一按键；其他焦点/应用继续放行。专用消息线程只核对短期有效的目标快照、前台HWND、光标所属视口并排队，不在钩子内执行文件/IPC。按下确定归属，重复按下不重复执行，抬起归还原接收者；退出卸钩。Core执行前重新核对同一会话/几何/焦点；RawInput不再作为这些文件命令的第二入口。鼠标、触控、作者和Dock输入保留。先配对策略测试，再接生命周期和构建；实机Explorer双执行仍待验收。
+依据：[Microsoft LowLevelKeyboardProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc)：非零回值阻止目标窗口继续收到消息；回调需消息循环，应尽快转交后台工作，超时可能被系统移除。若钩子不可用，文件快捷键不得回退为RawInput执行以避免双操作；可见粘贴按钮继续可用。
+
+2026-10-11 第03步代码实施做完，待统一实机验收：文件Ctrl+C/X/V、F2及Enter/Space在同步文件/粘贴按钮焦点下通过独立WH_KEYBOARD_LL线程确定单一执行方，成功入队后抑制原按键，RawInput不再二次执行。按下持有原接收者至抬起，重复按下去重，启动已按住的键不抢占；前台应用/视口/短期目标不符放行。Core出队重新核对会话、修订、几何、焦点与失效代次，超过500ms的迟到按下拒绝。屏幕键盘事件沿同一范围检查，不因注入标志排除；实际屏幕键盘仍待验收。官方分页导航不归文件快捷键钩子，鼠标/触控/作者/Dock原链保留。
+证据：按键归属失败断言→8/8通过（desktop-key-ownership-red/green.log），无接管目标的真实Windows钩子安装/卸载3轮通过（desktop-key-hook-lifecycle.log）；本轮未发送系统按键。原生剪贴板配对8/8、F2六组合通过，完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-key-owner-build.log）。此前Shell粘贴6项、剪贴板独立内存11项、宿主115项、消息79项证据沿用。#330间歇存储失败仍未解决。
+当前工作包代码3/6=50%，路线2/4=50%，并非整体Windows体验已验证。第03步人工门槛：Explorer双向复制/剪切/粘贴、Ctrl+V只生成一份、焦点快速切换、屏幕键盘、原Dock/作者按钮/触控回归。运行仍为Debug Core26668，start.ps1退出1保留该实例；新候选未部署。下一执行步骤04回收站，唯一下一工作包仍为回补003实机门槛。
+
+2026-10-11 第04步回收站开做：IFileOperation启用FOFX_RECYCLEONDELETE/撤销记录，并在PreDeleteItem核对回收标志；未提供回收语义返回错误，禁止退化永久删除。先限制真实本地固定卷文件项，当前不支持回收的目标明确失败。逐项结果保留已完成项，取消/当前Desk失效停止后续项。自动验证仅使用D盘本轮唯一临时文件和文件夹，回收后通过Shell仅还原这些夹具，再检查原内容；不清空回收站、不读取或修改其他回收项内容。随后接Delete当前所选ID和独占原生输入，Shift+Delete不提供永久删除。
+参考：[SetOperationFlags](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags)、[PreDeleteItem](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperationprogresssink-predeleteitem)。
+
+2026-10-11 第04步代码实施做完（待统一桌面验收）：Delete当前多选→原生一次证明→Core扫描ID解析→STA IFileOperation回收→逐项提示接通。采用RECYCLEONDELETE及撤销记录，PreDeleteItem缺回收标志直接拒绝；非本地固定卷/卷根不降级永久删除。Shift+Delete在有效同步文件焦点下由独占键盘链接收，Core不批准删除、页面提示使用Delete；不缩小多选，不增加永久删除命令。成功由目录监听移除图标，失败项保留，普通暂停保留回执，作用域退休取消后续操作。
+证据：Shell实际唯一临时文件/目录回收并精确还原、原字节/子文件保留、预取消/失效/缺失源/回收标志检查9/9；夹具还原后删除本轮临时目录，无用户文件/回收站清空。DOM原Shift+Delete缩小选择的失败断言→宿主116/116；Core原Delete无证明失败→23/23；键盘独占9/9、私有消息79/79、指针18/18。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/recycle-build.log）；首次完整构建发现switch局部变量pasted重名，修复为recycled，失败日志保留recycle-build-failed.log。测试STA返回类型与共享回调匹配问题均在实际Shell执行前修正。
+运行：start.ps1仍因主目录Debug Core26668占用身份退出1，未部署新候选、未启动配置器。代码4/6≈67%，路线2/4=50%，下一执行步骤05原生右键/属性；真实键盘独占、取消对话框、Explorer互通及鼠标/触控/DPI仍待统一验收，#330间歇存储问题未宣称修复。
+人工步骤：在同步Desk只用唯一临时文件/文件夹，单选或多选后Delete，从回收站还原并核对内容；取消操作或目标不支持回收时源应保留，Shift+Delete无永久删除；随后检查Dock、作者按钮、切页、鼠标和触控。
+
+2026-10-11 第05步开做：先实现STA原生Shell菜单会话，验证单文件、同目录/混合目录多选与属性动词，实际临时夹具仅查询菜单不调用文件动作。后续接消息窗口与IContextMenu2/3、当前原生右键/菜单键证明、选择保留和作用域退休。删除与重命名沿用既有受控操作；当前4/6≈67%，未部署，触控等统一验收保留。
+
+2026-10-11 第05步菜单后端增量：新增 DesktopShellContextMenu，STA持有Shell桌面命名空间/PIDL/IContextMenu/HMENU，支持单项、同目录和跨目录选择查询。已写IContextMenu2/3消息转发、Unicode ordinal InvokeCommand、原生TrackPopupMenu及50ms退休取消检查；实际消息owner窗口/右键/菜单键接线仍待做，不把后端编译当作桌面菜单可用。delete/rename/cut/copy等返回已有Dext操作，避免Shell删除绕过回收站与rename依赖Explorer内联编辑。
+证据：空菜单失败断言见context-menu-red.log，删除分流失败断言见context-menu-routing-red.log；最终实际临时Unicode文件单项/多项/跨目录菜单、Properties/copy动词、delete/copy分流、退休/无效命令拒绝、释放与原字节保持14/14（.build/context-menu-final.log）。仅查询菜单，无TrackPopup显示、InvokeCommand调用或系统剪贴板修改；夹具清理完成后才结束测试任务。
+消息验证限度：本机IContextMenu2/3均可查询，但已静态填充的根/7zip菜单WM_INITMENUPOPUP返回E_FAIL；context-menu-messages-diagnostic.log保留。初始化“必须已处理”的假设不成立，保留未处理回退；最终测试仅证明转发不破坏菜单，owner绘制、动态子菜单、键盘与取消仍须真实弹窗验证。
+完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-menu-build.log）；随后对旧已部署v3-core-exit-20261010调用start.ps1仅作身份检查，因主目录Debug Core26668占用退出1（.build/context-menu-start-identity.log），没有启动本轮dev候选或额外配置器。当前4/6≈67%，05保持开做，桌面同步路线2/4=50%，#330存储间歇问题仍未解决。
+下一执行：原生菜单owner窗口、右键及菜单键证明、选择保留与动作接线，再完整候选交接。人工（统一部署后）：唯一临时文件单选/多选右键或菜单键，检查打开/属性/取消、DPI、不误触下层；回归Dock、作者按钮、鼠标与触控。
+
+2026-10-11 第05步菜单键接线开做：Apps菜单键(93)和Shift+F10(121)仅归属当前同步文件焦点，沿原生证明/所选ID请求desktopMenu；保持多选，Core冻结目标后在自身STA消息owner显示Shell菜单，菜单选择沿现有文件动作完成。坐标取当前原生文件区域，作者不能传屏幕坐标。右键下一增量接同一入口，现有左键/触控保留。先做菜单键修饰键、选择保持与一次目标准备失败用例。
+
+2026-10-11 第05步菜单键接线增量：Apps(93)/Shift+F10(121)按文件焦点和精确修饰键接独占原生键盘，静态/采样链都生成菜单证明；普通F10、其他作者/Dock焦点和粘贴按钮不接管。desktopMenu仅传当前所选ID并保留多选，Core验证整组并一次消费证明，坐标由原生文件区域/视口计算。Core UI STA上单个零尺寸工具owner转发IContextMenu2/3，保持owner到进程退出以支持Shell的modeless属性页；菜单之外不占桌面命中区。
+原生菜单的复制/剪切接既有剪贴板及变淡反馈，重命名接现有编辑窗，删除接回收站逐项结果；普通打开/属性和文件夹粘贴等由Shell的选中命令执行。菜单取消/作用域退休不继续执行，原生命令回包跨普通暂停保留。实际弹窗焦点、动态子菜单、属性和外点取消仍未活体验证；鼠标右键尚未接入，不能宣称原生菜单功能已完成。
+证据：Core原Expected121 got0失败→个人编辑24/24（menu-key-core-red/green.log）；原生菜单键静态/采样与作者不接管12组（menu-native-keys.log）；按键所有权10/10（menu-key-ownership.log）；DOM缺请求失败→宿主/桥/选择117/117（menu-key-dom-red.log、menu-host-final.log），含多选保持和暂停回执；私有消息79/79（menu-input-messages.log）、原生指针/键盘18/18（menu-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-key-build.log）。本次24/24不消除#330此前间歇存储失败。
+运行：start.ps1仍仅核对旧已部署v3-core-exit-20261010，因主目录Debug Core26668占用退出1（menu-key-start-identity.log）；没有启动本轮候选或额外配置器。进度保持4/6≈67%，路线2/4=50%。下一执行鼠标右键（只接同步文件，避免与Explorer双菜单；保持原左键/触控），然后实际菜单窗口与完整候选交接。
+人工步骤（部署后统一）：临时文件多选后Apps键/Shift+F10，试复制/剪切/重命名/回收及属性；Escape/点击外部取消，切Desk/停用取消旧菜单；核对DPI位置和原Dock、作者按钮、鼠标、触控。当前运行版本不包含本轮变更，无需现在验收。
+
+2026-10-11 GlassDesk用户指定调研做完（3/3=100%）：确认everlosttime/glassdesk-updates，核对固定提交树只有README、12条发布记录至1.2.2。借鉴点及限制写入research/GLASSDESK_2026-10-11.md并从桌面同步计划链接。未安装、运行或迁移第三方代码；资料没有提供桌面同步/Shell菜单/AppBar源码证据。004实施仍4/6≈67%，路线2/4=50%；下一执行仍鼠标右键，运行版未更换。此次文档核对无需桌面验收；004原独立人工验收步骤保持。
+
+2026-10-11 第05步鼠标右键输入增量开做：独立WH_MOUSE_LL线程仅处理真实鼠标右键，按当前前后顺序的官方几何和指针下原生桌面root命中；左右键链分开。先实现成对所有权、拖动/捕获失效取消、启动时按住放行、队列拒绝放行及生命周期。首次从其他窗口右击桌面的焦点交接与Core证明下一段接入前必须解决，不能退化为先左击一次；本增量不安装到运行Core。人工步骤仍为同步文件单/多选右键、首次从应用窗口右击桌面、外点取消、Dock/鼠标/触控回归。
+
+2026-10-11 第05步右键输入组件增量：DesktopFileContextOwnership与DesktopFileContextHook已实现；独立WH_MOUSE_LL线程只认当前指针下原生root和最新官方几何中的同步文件。保留完整前后顺序和裁剪多边形，作者覆盖/非文件控制不穿透；按下成功入队才接管，原接收者持有至抬起，重复按下去重、启动已按住不抢占、队列拒绝整对放行。移动超过容差后返回原处仍取消菜单，跨窗口/长按超时/交错左键取消；左键、移动、滚轮、中键、触控/笔提升及注入事件不拦截，其他鼠标键已按住时不开始接管。
+证据：首个右键配对RED见.build/context-ownership-red.log；补其他键已按住的RED见context-chord-red.log；最终14/14（context-ownership-final.log），含裁剪多边形空角、负屏幕坐标、覆盖元素、原接收者释放及失败队列。真实Windows钩子在无任何目标发布的情况下安装/卸载两轮通过（context-hook-lifecycle.log），没有发送系统输入。最后完整Core/Player/Watchdog Release退出0，日志D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-build-env/context-hook-build.log。
+本增量尚未由WinDesktopCore创建/发布目标，未连接Core右键证明或宿主菜单请求，不能宣称桌面右键已经可用。下一段必须处理：其他应用前台时首次右击桌面的焦点交接；播放暂停/修订变化后的当前可见几何；成对事件到菜单证明，已选项保留多选/未选项单选；之后真实菜单/DPI/触控回归。
+启动检查这次指向本轮desktop-shell-actions-dev-20261011，start.ps1在缺少dext-configurator.exe处退出1（.build/context-hook-start.log），未走到Core启动；完整打包仍属第06步。读取仍为主目录Debug Core26668，原运行版保留。当前4/6≈67%，路线2/4=50%，第05步继续开做，未合并。
+人工步骤（完整候选部署后统一）：在其他应用前台时首次右击同步Desk临时文件；已选中多项上右击保留选择，未选项上右击改单选；检查菜单打开/属性/Esc/外点取消，拖远后不弹菜单、切Desk后旧命令失效；回归原Dock、作者按钮、左键/触控与DPI。当前运行版不包含本增量，无需现在操作。
+
+2026-10-11 第05步右键实际接线开做：以指针下真实桌面root+当前官方静态几何确认右键，独立Core上下沿证明允许其他应用保持前台，由Shell菜单owner随后取得焦点；不要求先左击桌面。证明只允许菜单，普通左键启动/键盘/作者输入条件不放宽。后台普通移动不取消该右键，但实际几何/Desk/会话变化与交错左键取消。页面右击已选项保持多选，未选项单选。暂停/锁定/转场或未发布当前几何仍不接管，真实首次右击和菜单焦点列入统一验收。
+
+2026-10-11 第05步右键实际接线实施做完：Core定时发布当前官方文件的裁剪几何与Progman/WorkerW原生root，独立右键线程按实际窗口命中接管一次物理按下/抬起。Core独立ContextMenu证明使用原按下时间、当前会话/修订/几何及实际文件，允许其他应用保持前台；菜单owner随后取得焦点，不要求先左击桌面。普通左键、键盘和作者输入前台条件保持，右键证明不能调用普通文件启动。普通后台移动不清除右键意图；左键交错、会话/几何变化、拖动取消与超时则拒绝。
+宿主补齐后台桌面只发布可见同步文件几何（原先operable=false全部为空）；右击已选项保留多选，未选项改为单选，私有contextMenu标记进入既有desktopMenu请求，原生菜单位置取真实右键坐标。菜单键仍用文件区域下缘。应用覆盖点、锁定/暂停/转场、尚未发布当前几何与采样模式不接管右键；触控/笔提升走旧链，本次没有扩大到触控长按菜单。
+证据：Core上下沿失败→8/8（context-input-red.log、context-input-final.log），动作误走启动的失败→25/25个人编辑（context-menu-authority-red/green.log），宿主缺请求/标记失败及后台空区域失败→120/120（context-host-red.log、context-background-red.log、context-host-final.log）；原有鼠标/键盘采样57/57（context-pointer-regression.log）、原菜单键12组合（context-menu-key-regression.log）、多root与原所有权15/15（context-ownership-wire.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-wire-build.log）。本次通过不消除#330存储间歇问题。
+实际Shell菜单、外点/Esc、扩展/属性、DPI和物理触控尚未统一验证；首次右击的证据目前为生产Core类与宿主检查，不宣称Windows活体验收通过。start.ps1对开发输出在缺dext-configurator.exe处退出1（context-wire-start.log），未启动或替换Core26668。代码实施5/6≈83%，路线仍2/4=50%，第06步完整候选/交接开做，未合并master。
+人工步骤（完整候选后统一）：其他应用在前台时首次右击同步Desk的唯一临时文件；多选文件上右击保留选择，未选项上右击改单选；打开/属性、Esc/外点取消不出现第二份Explorer菜单；核对DPI、原Dock/作者按钮、左键/触控、切Desk/停用后的旧请求取消。
+
+2026-10-11 第06步完整候选已生成，交接仍开做：来源提交830e785，目录D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011。package.json与package-lock.json分别核对与desktop-drop-build-env/deps完全一致，当前node_modules以junction复用该D盘依赖；TEMP/TMP/npm缓存与Cargo目标在D盘，未重新下载整套依赖。build-v3-release.ps1退出0，包含配置器、Core、Release Player/Watchdog、17项官方宿主；保留Rust原两项警告。655个inventory文件哈希及17项宿主和当前源码匹配、无已知夹具标记（.build/shell-actions-candidate-verify.log）。完整日志desktop-shell-actions-build-env/release-build.log。
+start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后因主目录Debug Core26668占用mutex/pipe退出1（.build/shell-actions-candidate-start.log及工具输出）；没有启动本轮候选，当前没有额外配置器。构建改写的Cargo.toml经HEAD文本逐字规范化比较确认仅换行差异后恢复，未改变依赖声明。
+下一执行先复核菜单退出的焦点：DesktopContextMenuWindow目前在菜单owner仍前台时恢复弹出前窗口；从其他应用首次右击时，这可能使菜单取消后键盘仍交给原应用，需要按Windows桌面交互预期处理并验证。随后核对原生菜单实际窗口、取消/属性/DPI与触控，不用构建结果替代OS证明。第06步继续开做，代码实施仍5/6≈83%、路线2/4=50%；用户统一验收/合并均未完成。
+人工步骤仍为本卡1至6项；额外检查从其他应用首次右击文件后Esc关闭菜单，再按文件操作键时的焦点归属，避免将按键交给原应用。仅用唯一临时文件，现运行版未含本候选，无需用户现在操作。
+
+2026-10-11 第06步菜单焦点修复开做：菜单owner仍为前台且原Desk仍有效时返回原生桌面窗口；外点到应用或Shell打开的新窗口已经前台则不抢焦点。成功返回后仅恢复原文件的键盘焦点，允许前台状态导致的一次几何重发；限定同会话/Desk/视口和短时期限，新点击、切页、锁定、失效或其他应用前台取消，不合成文件动作。先验证失败用例与输入回归，再构建完整候选。
+
+2026-10-11 第06步菜单焦点代码收口：不再恢复弹出前的应用窗口；仅菜单owner仍为前台时交回当前有效的原生桌面root，Shell新窗口/外点应用已取得前台则不抢回。原Desk仍有效且确实交回桌面后，最多1.5秒等待同会话/Desk/视口的当前文件几何，恢复文件键盘焦点；不创建动作证明。新点击/按键、切页/锁定/转场/文档更换、文件消失、视口变化及超时均取消恢复。取消退场菜单也释放owner焦点，但不恢复已失效文件。
+证据：缺失实现编译失败见menu-focus-red.log，夹具按键编码校正后最终7/7（menu-focus-final.log）；右键上下沿8/8（menu-focus-context.log）、原有指针/采样/键盘57/57（menu-focus-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-focus-build.log）。实际Windows弹窗/Esc/外点/属性/触控尚未验证，不能把类级回归当实机通过。当前83%，06继续开做，下一步将新源码打包到全新r2候选，旧830e785候选保留但不再代表最新实现。
+
+2026-10-11 第06步F2键码纠错开做：diff检查发现原实现与测试把F2统一写成114，Windows VK_F2实际0x71=113，114是F3。修正钩子、公共输入判断、Core动作、宿主路由与夹具，并新增F3放行检查。r2候选b87e75f已构建且655/17校验通过，但包含此旧缺陷，不作为最终验收包；最终重建r3。来源：https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes 。
+
+2026-10-11 F2纠错代码实施做完：整条链路改为Windows VK_F2=0x71（113），F3=0x72（114）不接管。先只修夹具，真实F2复现“did not create a file command gesture”（f2-keycode-red.log），再修改生产代码；最终F2六组合、个人编辑25/25、键盘所有权11/11（含F2成对接管/F3放行）、指针传递18/18、dom/native宿主113/113通过。#330间歇存储问题仍未消除。下一步r3完整构建/哈希核对。
+r2核对655文件/17资源成功；校验器成功后外层读取遗留LASTEXITCODE导致提前退出，r2启动检查并未执行（没有candidate-r2-start.log），不得宣称已调用启动。以后PowerShell脚本以终止异常/成功输出判断，LASTEXITCODE仅紧跟原生命令。
+
+2026-10-11 第06步做完（实施与交接，实机未验收）：最新生产提交0ed6d12，完整候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011-r3；build-v3-release.ps1完成Core/Release Player/Watchdog/配置器打包，保留两项既有Rust警告。verify-v3-release-candidate.ps1确认655个inventory文件及17项官方宿主与源码匹配，日志.build/candidate-r3-verify.log；完整构建日志desktop-shell-actions-build-env/release-r3-build.log。start.ps1对r3完成产品元数据检查后因Core26668占用DEXT身份退出1（.build/candidate-r3-start.log和工具异常输出）；候选未启动，未新增配置器。Cargo.toml规范化逐字确认仅换行变化后恢复。
+当前分支feat/DESK-SYNC-004-shell-actions；代码6/6=100%，桌面同步路线实施3/4=75%，用户验收与master合并未完成。旧r1/r2保留追溯，不作为当前候选。下一项按ROADMAP回补003实机门槛：重新核对Explorer可操作窗口与运行环境，不能继续用旧1×1窗口或身份冲突代替新检查；如切换运行候选，先保存当前数据/布局并准备原版恢复，然后执行有范围的真实Explorer拖入与输入回归。
+统一人工步骤（仅唯一临时文件）：1单/Ctrl/Shift选择与切页清除；2双击/Enter打开、真实F2改名与Esc取消、F3不误改名；3Explorer双向复制剪切粘贴只执行一次；4Delete进回收站并恢复、Shift+Delete不永久删除；5右键/菜单键、多选、属性、Esc与外点、首次从应用右击后文件焦点；6原Dock/作者按钮、鼠标/触控/DPI、切页/停用/退出后旧操作失效。当前运行版不含新代码，这些门槛均不标通过。
+
+2026-10-11 当前：003接收面修复32ec31e已完成初步构建与隐藏窗口检查；为保留已上线004功能，将004分支1f13850集成至本003工作分支，未合master。接收面候选仍在构建/验证，路线75%，实际拖放/触控待验收。
+
+2026-10-11 接收面交接：修复32ec31e，集成004依赖f98595b；完整候选desktop-surface-clean-20261011构建退出0，首次655文件/17宿主来源校验通过，保留Rust两项既有警告。现Core8820、Player38324；原Room 231db51a-19db-4a3a-9c06-dbb9b3db86f9已恢复。跨发布目录启动不能直接加载旧目录官方宿主：旧Core正常退出后将原content复制到新宿主并SetWallpaper恢复，同一Room/stamp；候选现为已安装内容的运行目录，严格空内容发布校验会报告额外installation.json，655项发布文件哈希仍全部一致。
+实际Core探针：临时启用原Desk同步→扫描117项→Player提到Shell上方；WindowFromPoint九点全部Player，Explorer零点；停用恢复原层级。探针恢复原同步开关false，无文件转移/鼠标注入，原桌面图标可见设置未改。物理拖入/点击/触控未验收。
+检查：12项隐藏HWND、37项既有输入/触控脚本、25个人编辑、113宿主回归通过。完整门槛仍0/5未统一验收，路线3/4=75%。
+配置器38960仍是004-r3；普通关闭会留在后台，未强杀、未启动第二实例。配置器同步设置RPC与当前Core兼容；重新应用Room时应使用新包配置器，避免旧包宿主路径。用户若后续要求切配置器，先确认退出旧实例，不以反复启动解决。
+下一步仅三组人工验收：启用Windows桌面同步后拖入；Esc/停用；点击/触控。未合master。
+
+2026-10-11 身份冲突修正：用户截图确认旧配置器004-r3与新Core desktop-surface路径不一致。上轮仅换Core的交接不完整，普通关闭隐藏不能作为退出。按精确PID38960和完整exe路径复核后结束旧配置器，start.ps1复用Core8820并启动同目录配置器22200；当前恰好一个Core和一个配置器，均desktop-surface-clean-20261011。未重启Core、未改Room。人工只需确认顶栏连接恢复；路线75%，原三组验收仍待。
+
+2026-10-11 用户验收不通过：同步页覆盖原生图标，切Desk又露出；长按编辑缺失。根因：接收层直接复用当前Desk拖放资格，导致切页/转场拆租；v3 dom-host没有旧v2 attachPress/enterEdit，布局读写接口不等于编辑界面。07开做：接收层改Room生命周期，实际文件落盘仍限制同步Desk；长按具体入口待用户指出，旧版两种均有。
+2026-10-11 07步骤1/2做完：层级资格从当前Desk拖放资格拆出为Room同步开关；转场、非同步Desk仍保持Dext桌面层，文件实际拖入资格不放宽。新增定向测试先失败25/26，修复后26/26通过，涵盖转场、换页、非同步页拒绝落盘、关闭同步撤销。旧v2长按500ms编辑入口仍未迁移到v3；不称为本次删除或已经恢复。07步骤3开做，路线75%。
+
+2026-10-11 07候选已运行待验收：fb4d435，完整desktop-surface-room-20261011构建成功，部署前655文件/17宿主核对通过。已成对切换Core31068、配置器19164，Player19128，恢复用户当前已保存v3 Basic及同步enabled=true/home。日志20261011_181315.txt确认surface acquired，未新开重复实例。转场/目标页层级与拖放范围的26/26检查通过；实际连续切Desk待用户确认。旧长按编辑仍未迁移，已登记DESK-EDIT-V3-001待做，不把它算本轮修复完成。路线75%，未合master。
+
+## 2026-10-11 DESK-EDIT-V3-001（当前）
+分支feat/DESK-EDIT-V3-001-long-press，独立v3-long-press-edit工作区，基于bd124bb。
+目标：恢复Room图标/小组件长按拖动并保存；同步文件排序不混入Room清单布局。
+01状态机：开做；02宿主/原生接线：待做；03构建交接：待做；人工验收：待做。
+本包0/3=0%；桌面同步历史路线仍3/4=75%，不代表整个v3。
+人工按独立验收卡三组执行。
+
+01做完：6/6状态机定向检查通过。02开做：官方宿主预览/持久化与Player独立观察流接线，未构建。进度1/3=33%。
+
+2026-10-11 DESK-EDIT-V3-001实施3/3=100%，待验收未合master：原Room图标/小组件长按500ms，提前移动取消，拖动预览，松手layoutSave，失败回滚，Esc/切页/暂停取消。同步Windows文件排序不在本包。Player只在匹配原生按下时观察位置与松手，不改原点击/触控接管规则；真实触控长按能力仍未确认。
+新候选D:/use/Orca/DEXT/DEXT_Core/.build/longpress-edit-20261011，Core32892、Player19232、配置器16076，同一目录恰好一组；恢复Room231db51a-19db-4a3a-9c06-dbb9b3db86f9/home。启动前备份longpress-checkpoint-20261011；旧包保留可回退。
+证据：longpress-host-tests.log 90/90；longpress-input-tests.log 70/70；longpress-build.log完整构建成功（两项既有Rust警告）；发布前656/18来源核对通过。用户内容安装后不再是空内容发布目录。只验证启动与会话，未声称物理鼠标/触控验收通过。
+人工按验收卡三组：短按与Room图标长按保存；小组件长按移动/Esc或切页取消；触控及既有Dock/Windows文件点击。桌面同步路线历史75%，本包实施100%，最终交付待用户验收。
+
+2026-10-11 黑屏拒收，修复开做：press-edit.js已打包但未加入DextNativeResourceServer官方文件清单；补真实资源加载检查、清单修复、重建部署。上轮100%仅实施，当前交付不通过。
+
+2026-10-11 黑屏修复候选r2已启动：.build/longpress-edit-20261011-r2，Core27224 / Player19180 / 配置器5504，原v3 Basic/home恢复。真实资源服务器测试先复现press-edit.js 403，修复后16项HTML依赖成功加载；完整构建成功，发布656/18来源校验通过。新运行日志确认geometry Accepted（version2）和持续presentationRead，宿主初始化恢复；实际画面仍待用户确认。修复步骤3/3=100%，整包人工验收仍未通过，旧r1黑屏包不再用。
+本次人工只需确认：当前Room画面及同步的本地桌面图标是否恢复。恢复后再执行原长按三组，不重复所有测试。
+
+2026-10-11 用户确认画面恢复，但长按编辑/拖入未通过。只读核对：当前Room v3 Basic，Desk=focus，revision11；该Desk无icons/components，Windows同步设置为enabled=true/deskId=home。长按代码明确排除同步Windows文件（record.desktop），所以不能把“有Room编辑接口”称为所有桌面图标可编辑。拖入当前focus被同步Desk限制拒绝，尚无desktopDrop请求日志；不能据此断言home页拖入已正常。已询问用户实际长按对象和文件来源，待其说明后继续同分支修复，不合主线。当前只确认黑屏修复通过，其余人工项未通过。
+
+用户明确是在Home操作。05开做：同步图标长按持久化；同步页播放暂停保留原生WebView接收面，避免静态PictureBox阻断OLE。06待做：回归、构建、恢复用户Room。推翻上轮对focus页的解释。
+
+2026-10-11 Home修复候选r3：同步文件纳入长按命中和layoutSave；Core按当前文件清单/同步开关限定保存，重启读取保留本机位置。27/27后端检查、91/91宿主手势检查通过，新增后端用例先26/27失败后通过。同步页暂停时保留真实WebView接收面，静态图片不再覆盖；这只修复一个已知阻断，未实测证明禁止符号完全消失。增加不含路径/文件名的dragover/drop和长按准入日志。
+完整构建退出0；656发布文件/18宿主核对通过；16 HTML依赖经资源服务器加载通过。运行longpress-edit-20261011-r3，Core40356 / Player41516 / 配置器40292，原v3 Basic/home恢复，日志presentationRead持续正常。实施3/3=100%，人工仍待，不合主线。
+本次验收：1 Home同步文件长按半秒拖动，松手不打开，切回来位置保留；2 从Explorer拖唯一临时文件到Home，确认不再禁止且实际出现；3 原Room图标/Dock短按保持正常。若失败先查现有日志，不继续用静态测试冒充物理验收。
+
+用户要求迁移旧版编辑体验，06开做：按旧版函数逐项移植持续编辑、抖动、完成/Esc、吸附避让、小组件缩放、取消保存。旧3/3百分比不代表完整迁移，重列6步0/6。
+
+2026-10-11 迁移推进：06计划5/6=83%；长按持续编辑/抖动/连续拖/完成Esc/小组件缩放与取消保存已接，94项通过；r4已启动Home。剩余旧版整体排序事务、同伴动效及原生空白双击退出，人工未通过。
+
+07开做：用户确认缺实时reorder与空白双击退出，按07四步修复；未验收继续同分支。
+
+07步骤1/2/3做完：旧版算法复用、跟手及同伴动画、整组原子保存、原生空白双击；145项JS及17项布局检查通过。步骤4开做，3/4=75%。
+
+07步骤4做完：完整构建成功，145项JS/17项布局/79项消息检查通过，发布656/18和服务16依赖通过；r5恢复Home，Core40652/Player19640/配置器42292。实施4/4=100%，人工两组按07待验，不合主线。
+
+08开做：按用户要求去掉拖动蓝框与Esc提示文字，保留取消和重排，计划见08。
+
+08做完2/2=100%：移除拖动outline与文字，编辑态不绘制输入焦点框；90项通过，r5前端已更新并恢复Home（Core11196/Player41000）。人工一步按08，未合主线。
+
+09开做：截图是桌面文件SVG焦点蓝框，去掉该框及文件选中蓝边。
+09做完2/2=100%：移除桌面文件焦点框及选中蓝边，90项宿主检查通过；r5已重新加载Home，Core39780，未合主线。
+
+2026-10-11 用户授权当前阶段合并，命名v3DesktopFlow；当前轮已摘要归档TODO-archive.md，历史条目保留。合并后下一项DESK-SYNC-003。

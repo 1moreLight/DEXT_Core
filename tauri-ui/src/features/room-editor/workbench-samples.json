@@ -1,0 +1,6 @@
+{
+  "time.read": {"utc":"2026-01-01T00:00:00.000Z","unixMilliseconds":1767225600000,"localOffsetMinutes":0},
+  "hardware.read": {"cpuName":"示例 CPU","gpuName":"示例 GPU","cpuPercent":32,"gpuPercent":19,"totalMemoryMB":32768,"availableMemoryMB":16384,"networkDownloadBytesPerSecond":1048576,"networkUploadBytesPerSecond":131072},
+  "media.read": {"sourceAppId":"DextPreview","title":"试验台示例歌曲","artist":"Dext","albumTitle":"预览","albumArtist":"Dext","playbackStatus":"playing","positionMs":30000,"durationMs":180000,"canPlay":false,"canPause":true,"canTogglePlayPause":true,"canNext":true,"canPrevious":true},
+  "audio.read": {"level":0.5,"muted":false}
+}

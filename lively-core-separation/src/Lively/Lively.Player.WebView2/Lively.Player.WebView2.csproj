@@ -77,9 +77,12 @@
     <Compile Include="DextDockProbeForm.cs" />
     <Compile Include="DextNativeFrameMedia.cs" />
     <Compile Include="DextNativeFrameMedia.Input.cs" />
+    <Compile Include="Form1.PressEdit.cs" />
     <Compile Include="Form1.NativeInput.cs" />
     <Compile Include="Form1.NativeDock.cs" />
+    <Compile Include="Form1.NativeDockTasks.cs" />
     <Compile Include="Form1.NativePause.cs" />
+    <Compile Include="DextNativeDroppedFiles.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

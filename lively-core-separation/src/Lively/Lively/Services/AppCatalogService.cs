@@ -8,6 +8,8 @@ using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using System.Globalization;
 
 namespace Lively.Services
 {
@@ -301,27 +303,31 @@ namespace Lively.Services
                 }
 
                 localShell = Activator.CreateInstance(shellApplicationType);
-                dynamic shell = localShell;
-                shellWindows = shell.Windows();
-
-                object desktopLocation = null;
-                object desktopRoot = 0;
-                int desktopHwnd = 0;
-                dynamic windows = shellWindows;
-                desktopWindow = windows.FindWindowSW(
-                    ref desktopLocation, ref desktopRoot, ShellWindowClassDesktop, ref desktopHwnd, ShellWindowFindNeedDispatch);
+                // Invoke only the requested IDispatch member. The C# dynamic binder
+                // scans Explorer's type information synchronously on the Core UI thread.
+                shellWindows = localShell.GetType().InvokeMember("Windows", BindingFlags.InvokeMethod,
+                    null, localShell, null, CultureInfo.InvariantCulture);
+                var findArgs = new object[] { null, 0, ShellWindowClassDesktop, 0, ShellWindowFindNeedDispatch };
+                var references = new ParameterModifier(findArgs.Length);
+                references[0] = true;
+                references[1] = true;
+                references[3] = true;
+                desktopWindow = shellWindows.GetType().InvokeMember("FindWindowSW", BindingFlags.InvokeMethod,
+                    null, shellWindows, findArgs, new[] { references }, CultureInfo.InvariantCulture, null);
                 if (desktopWindow == null)
                 {
                     error = "Could not locate the Explorer desktop window.";
                     return false;
                 }
 
-                dynamic desktop = desktopWindow;
-                desktopDocument = desktop.Document;
-                dynamic document = desktopDocument;
-                explorerHostedShell = document.Application;
-                dynamic explorerShell = explorerHostedShell;
-                explorerShell.ShellExecute(path, arguments ?? string.Empty, workingDirectory ?? string.Empty, verb, ShowNormal);
+                desktopDocument = desktopWindow.GetType().InvokeMember("Document", BindingFlags.GetProperty,
+                    null, desktopWindow, null, CultureInfo.InvariantCulture);
+                explorerHostedShell = desktopDocument.GetType().InvokeMember("Application", BindingFlags.GetProperty,
+                    null, desktopDocument, null, CultureInfo.InvariantCulture);
+                explorerHostedShell.GetType().InvokeMember("ShellExecute", BindingFlags.InvokeMethod,
+                    null, explorerHostedShell,
+                    new object[] { path, arguments ?? string.Empty, workingDirectory ?? string.Empty, verb, ShowNormal },
+                    CultureInfo.InvariantCulture);
                 return true;
             }
             catch (Exception ex)

@@ -8,7 +8,7 @@ const html='<!doctype html><html><head><meta charset="utf-8"></head><body><div i
  const page=await browser.newPage({viewport:{width:1000,height:600}});
  page.on('pageerror',error=>console.error('Fixture page error:',error.message));
  await page.addInitScript(()=>{
-  const state={stamp:'current-installation',active:true,fail:false,capabilities:{'time.read':false,'hardware.read':true,'media.read':false,'audio.read':false},calls:[]};
+  const state={stamp:'current-installation',active:true,fail:false,capabilities:{'time.read':false,'hardware.read':true,'media.read':false,'audio.read':false,'storage.read':false,'storage.write':false},calls:[]};
   window.__grantFixture=state;
   const reply=()=>({status:'accepted',roomId:'fixture-room',installationStamp:state.stamp,consumers:[{consumerId:'component.dock',capabilities:Object.entries(state.capabilities).map(([capability,allowed])=>({capability,allowed}))}]});
   window.__TAURI_INTERNALS__={invoke:async(command,args)=>{
@@ -24,10 +24,16 @@ const html='<!doctype html><html><head><meta charset="utf-8"></head><body><div i
   }};
  });
  await page.route('**/read-grant-fixture',route=>route.fulfill({status:200,contentType:'text/html',body:html}));
- await page.goto('http://127.0.0.1:1620/read-grant-fixture');
+ await page.goto((process.env.DEXT_UI_URL || 'http://127.0.0.1:1620')+'/read-grant-fixture');
  const panel=page.getByRole('region',{name:'本机数据授权'});await panel.waitFor();
  await panel.getByRole('checkbox',{name:'允许 时间数据'}).waitFor();
  assert.equal(await panel.getByRole('checkbox',{name:'允许 时间数据'}).count(),1,'time grant control must be rendered');
+ const storageRead=panel.getByRole('checkbox',{name:'允许 读取本机记忆'}),storageWrite=panel.getByRole('checkbox',{name:'允许 保存本机记忆'});
+ await storageRead.check();await page.waitForFunction(()=>window.__grantFixture.capabilities['storage.read']===true);
+ assert.equal(await storageWrite.isChecked(),false);
+ await storageWrite.check();await page.waitForFunction(()=>window.__grantFixture.capabilities['storage.write']===true);
+ await storageWrite.uncheck();await page.waitForFunction(()=>window.__grantFixture.capabilities['storage.write']===false);
+ assert.equal(await storageRead.isChecked(),true);
  const time=panel.getByRole('checkbox',{name:'允许 时间数据'}),hardware=panel.getByRole('checkbox',{name:'允许 硬件数据'});
  await time.check();await page.waitForFunction(()=>window.__grantFixture.capabilities['time.read']===true);
  assert.equal(await hardware.isChecked(),true);

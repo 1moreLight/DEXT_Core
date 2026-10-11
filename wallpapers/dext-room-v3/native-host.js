@@ -4,7 +4,7 @@
 })(globalThis,function(root){
   'use strict';
   const DATA=new Set(['time.read','hardware.read','media.read','audio.read']);
-  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited']);
+  const STATUS=new Set(['accepted','queued','expiredInput','denied','forbidden','unknownConsumer','missingPermission','unsupported','notOperable','staleSession','staleInput','storageUnavailable','inputRequired','invalidButton','missingBinding','launchFailed','requiresConfirmation','controlUnavailable','rateLimited','cancelled']);
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const id=(v,max=128)=>typeof v==='string'&&v.length>0&&v.length<=max&&!/[\u0000-\u001f\u007f-\u009f]/.test(v);
   const shape=(v,keys)=>object(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k));
@@ -25,6 +25,10 @@
   const stableKey=v=>typeof v==='string'&&/^[A-Za-z0-9_.-]{1,80}$/.test(v);
   function storageValue(v){try{copy(v,32768);return true;}catch(_){return false;}}
   function layoutChange(p){
+    if(object(p)&&Object.hasOwn(p,'peers')){
+      const {peers,...main}=p;const ids=new Set(main.kind==='icon'?[main.id]:[]);
+      return Array.isArray(peers)&&peers.length<=1024&&layoutChange(main)&&peers.every(v=>object(v)&&!Object.hasOwn(v,'peers')&&v.kind==='icon'&&layoutChange(v)&&!ids.has(v.id)&&!!ids.add(v.id));
+    }
     if(!object(p)||!stableKey(p.id))return false;
     return p.kind==='icon'?shape(p,['kind','id','deskId','x','y'])&&stableKey(p.deskId)&&finite(p.x,0,1824)&&finite(p.y,0,976):
       p.kind==='widget'&&shape(p,['kind','id','x','y','width','height'])&&finite(p.x,0,1920)&&finite(p.y,0,1080)&&finite(p.width,Number.EPSILON,1920)&&finite(p.height,Number.EPSILON,1080)&&p.x+p.width<=1920&&p.y+p.height<=1080;
@@ -71,12 +75,32 @@
   }
   function inputEventValid(v){
     const keys=['type','runtimeGeneration','sessionId','revision','geometryVersion','kind','consumer','button'];
-    if(!object(v)||Object.keys(v).some(k=>!keys.includes(k)&&k!=='entryId'&&k!=='inputSequence')||!keys.every(k=>Object.hasOwn(v,k))||
+    if(!object(v)||Object.keys(v).some(k=>!keys.includes(k)&&k!=='entryId'&&k!=='inputSequence'&&k!=='desktopInput')||!keys.every(k=>Object.hasOwn(v,k))||
       !integer(v.runtimeGeneration)||!id(v.sessionId)||!integer(v.revision)||!integer(v.geometryVersion)||!['focus','activate'].includes(v.kind))return false;
+    if(Object.hasOwn(v,'desktopInput')){
+      const p=v.desktopInput;
+      if(v.kind!=='activate'||v.consumer!=='official.desktop'||!object(p)||!shape(p,['key','modifiers','x','y','at','doubleClickTime','doubleClickWidth','doubleClickHeight',...(Object.hasOwn(p,'contextMenu')?['contextMenu']:[])])||
+        Object.hasOwn(p,'contextMenu')&&(typeof p.contextMenu!=='boolean'||p.contextMenu&&p.key!==0)||
+        ![0,13,32,46,113,67,88,86,93,121].includes(p.key)||!integer(p.modifiers,0,3)||!integer(p.x,-2147483648,2147483647)||!integer(p.y,-2147483648,2147483647)||
+        !finite(p.at,0,Number.MAX_SAFE_INTEGER)||!integer(p.doubleClickTime,1,5000)||!integer(p.doubleClickWidth,1,32768)||!integer(p.doubleClickHeight,1,32768))return false;
+    }
     const entry=Object.hasOwn(v,'entryId')?v.entryId:null;
     if(v.kind==='focus'&&Object.hasOwn(v,'inputSequence')||v.kind==='activate'&&!integer(v.inputSequence))return false;
     if(v.consumer===null||v.button===null)return v.kind==='focus'&&v.consumer===null&&v.button===null&&entry===null;
     return id(v.consumer)&&id(v.button,80)&&(entry===null||id(entry,192));
+  }
+  function desktopValid(value){
+    if(value===null)return true;
+    if(!shape(value,['contextId','deskId','items','issueCount','truncated'])||!id(value.contextId)||!stableKey(value.deskId)||!integer(value.issueCount,0)||typeof value.truncated!=='boolean')return false;
+    if(value.items===null)return true;
+    if(!Array.isArray(value.items)||value.items.length>4096)return false;
+    const ids=new Set(),slots=new Set();
+    return value.items.every(item=>{
+      if(!shape(item,['id','name','kind','slot','iconPng'])||!/^desktop-[a-f0-9]{64}$/.test(item.id)||ids.has(item.id)||
+        typeof item.name!=='string'||item.name.length>1024||!['file','folder','shortcut'].includes(item.kind)||!integer(item.slot,0,4095)||slots.has(item.slot)||
+        item.iconPng!==null&&(typeof item.iconPng!=='string'||item.iconPng.length>87384||!/^iVBOR[A-Za-z0-9+/]*={0,2}$/.test(item.iconPng)))return false;
+      ids.add(item.id);slots.add(item.slot);return true;
+    });
   }
   function paramsValid(method,p){
     switch(method){
@@ -84,10 +108,15 @@
       case'data':return shape(p,['consumer','capability'])&&id(p.consumer)&&DATA.has(p.capability);
       case'storageGet':return shape(p,['consumer','key'])&&id(p.consumer)&&stableKey(p.key);
       case'storageSet':return shape(p,['consumer','key','value'])&&id(p.consumer)&&stableKey(p.key)&&storageValue(p.value);
-      case'invalidateGeometry':case'layoutRead':case'presentationRead':return shape(p,[]);
+      case'invalidateGeometry':case'layoutRead':return shape(p,[]);
+      case'desktopDrop':return (shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects'])||shape(p,['desktopContextId','deskId','x','y','modifiers','allowedEffects','page'])&&integer(p.page,0,4095))&&id(p.desktopContextId)&&id(p.deskId,80)&&finite(p.x,0,1)&&finite(p.y,0,1)&&integer(p.modifiers,0,7)&&['all','uninitialized','copy','move','link','copyMove','copyLink','linkMove'].includes(p.allowedEffects);
+      case'presentationRead':return shape(p,[])||shape(p,['desktopContextId'])&&id(p.desktopContextId);
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'authorInput':return shape(p,['consumer','instanceId','requestJson','geometryVersion'])&&id(p.consumer)&&id(p.instanceId,160)&&typeof p.requestJson==='string'&&new root.TextEncoder().encode(p.requestJson).length<=32768&&integer(p.geometryVersion);
+      case'desktopMenu':case'desktopDelete':case'desktopCopy':case'desktopCut':case'desktopOpen':return shape(p,['consumer','button','selectedIds','geometryVersion','inputSequence'])&&p.consumer==='official.desktop'&&id(p.button,80)&&Array.isArray(p.selectedIds)&&integer(p.selectedIds.length,1,256)&&p.selectedIds.every(v=>id(v,80)&&v.startsWith('desktop-'))&&new Set(p.selectedIds).size===p.selectedIds.length&&p.selectedIds.includes(p.button)&&integer(p.geometryVersion)&&integer(p.inputSequence,1);
+      case'desktopPaste':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&p.consumer==='official.desktop'&&id(p.button,80)&&(p.button==='desktop.paste'||p.button.startsWith('desktop-'))&&integer(p.geometryVersion)&&integer(p.inputSequence,1);
+      case'desktopRename':if(p.consumer!=='official.desktop'||!p.button?.startsWith('desktop-'))return false;
       case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
       case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
         (['desk.next','desk.previous'].includes(p.action.type)?shape(p.action,['type']):p.action.type==='desk.go'&&shape(p.action,['type','deskId'])&&id(p.action.deskId,80));
@@ -106,15 +135,15 @@
     let identity=copy(options.initialIdentity),counter=0,disposed=false,suspended=options.initialSuspended===true,lastError=null;
     const pending=new Map(),capQueries=new Map(),sources=new Map(),watches=new Map();
     const diagnose=code=>{lastError={code};};
-    function dispatch(method,params,scope=identity){
+    function dispatch(method,params,scope=identity,files=null){
       let entry;
       const promise=new Promise((resolve,reject)=>{
-        if(disposed){reject(failure('disposed'));return;}if(suspended&&!['layoutRead','presentationRead'].includes(method)){reject(failure('notOperable'));return;}
+        if(disposed){reject(failure('disposed'));return;}if(suspended&&!['layoutRead','presentationRead','desktopDrop'].includes(method)){reject(failure('notOperable'));return;}
         if(!scopeValid(scope)||!same(scope,identity)){reject(failure('staleInput'));return;}
-        if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
+        if(method==='desktopDrop'&&(!files||!integer(files.length,1,256)||typeof transport.postMessageWithAdditionalObjects!=='function')){reject(failure('invalidArgument'));return;}if(!paramsValid(method,params)){reject(failure('invalidArgument'));return;}if(pending.size>=64){reject(failure('requestLimit'));return;}
         const requestId='n'+(++counter);entry={requestId,method,scope:copy(scope),resolve,reject,timer:null};pending.set(requestId,entry);
-        entry.timer=later(()=>finish(entry,false,'timeout'),5000);
-        try{transport.postMessage(JSON.stringify(copy({type:'dext:v3-native-request',protocolVersion:1,requestId,method,...scope,...params})));}
+        entry.timer=later(()=>finish(entry,false,'timeout'),['desktopDrop','desktopRename','desktopPaste','desktopDelete','desktopMenu'].includes(method)?1800000:5000);
+        try{const message=JSON.stringify(copy({type:'dext:v3-native-request',protocolVersion:1,requestId,method,...scope,...params}));if(method==='desktopDrop')transport.postMessageWithAdditionalObjects(message,files);else transport.postMessage(message);}
         catch(_){finish(entry,false,'transportUnavailable');}
       });
       return{promise,cancel(code='staleInput'){if(entry)finish(entry,false,code);}};
@@ -124,7 +153,7 @@
       if(ok)entry.resolve(value);else entry.reject(failure(value));
     }
     function receive(event){
-      if(disposed)return;let reply;try{reply=copy(event.data);}catch(_){diagnose('invalidPayload');return;}
+      if(disposed)return;let reply;try{reply=copy(event.data,pending.get(event.data?.requestId)?.method==='presentationRead'?4*1048576:1048576);}catch(_){diagnose('invalidPayload');return;}
       if(reply?.type==='dext:v3-native-event'){
         if(!suspended&&same(reply,identity)&&inputEventValid(reply)){try{options.onInput?.(reply);}catch(_){diagnose('inputUnavailable');}}return;
       }
@@ -132,11 +161,11 @@
       const entry=pending.get(reply.requestId);if(!entry||!same(reply,entry.scope)||!STATUS.has(reply.status))return;
       // An authoritative action may synchronously publish its new revision
       // before its receipt. Deliver that existing result in this same document;
-      // generation/session replacement and pause still cancel all requests.
-      const action=['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method);
+      // Generation/session replacement cancels requests; ordinary pause keeps file transfers.
+      const action=['activate','desktopDelete','desktopMenu','desktopOpen','desktopCopy','desktopCut','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename','desktopPaste'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
-      if(['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
-      if(entry.method==='presentationRead'&&reply.status==='accepted'&&(!shape(reply.presentation,['revision','skins','locator'])||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
+      if(['activate','desktopDelete','desktopMenu','desktopOpen','desktopCopy','desktopCut','navigate','mediaControl','audioControl','authorInput','desktopRename','desktopPaste'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
+      if(entry.method==='presentationRead'&&reply.status==='accepted'&&((!shape(reply.presentation,['revision','skins','locator'])&&!shape(reply.presentation,['revision','skins','locator','desktop']))||Object.hasOwn(reply.presentation,'desktop')&&!desktopValid(reply.presentation.desktop)||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
       if(['layoutRead','layoutSave'].includes(entry.method)&&reply.status==='accepted'&&!layoutValid(reply.layout)){finish(entry,false,'invalidPayload');return;}
       finish(entry,true,reply);
     }
@@ -199,9 +228,10 @@
       watch.listeners.add(listener);if(created)refreshWatch(watch);let released=false;
       return()=>{if(released)return;released=true;watch.listeners.delete(listener);if(watch.listeners.size===0){stopWatch(watch);watches.delete(consumer);}};
     }
-    function cancelPending(code,retainActions=false){for(const entry of [...pending.values()])if(!retainActions||!['activate','navigate','mediaControl','audioControl','authorInput'].includes(entry.method))finish(entry,false,code);capQueries.clear();}
+    function cancelPending(code,retainActions=false,retainDrops=false){for(const entry of [...pending.values()])if(!(retainDrops&&['desktopDrop','desktopRename','desktopPaste','desktopDelete','desktopMenu','desktopOpen','desktopCopy','desktopCut'].includes(entry.method))&&(!retainActions||!['activate','desktopDelete','desktopMenu','desktopOpen','desktopCopy','desktopCut','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename','desktopPaste'].includes(entry.method)))finish(entry,false,code);capQueries.clear();}
     return Object.freeze({
-      request:(method,params,scope)=>dispatch(method,params,scope).promise,readCapabilities,subscribeData,watchCapabilities,
+      request:(method,params,scope)=>dispatch(method,params,scope).promise,
+      dropFiles:(params,files,scope)=>dispatch('desktopDrop',params,scope,files).promise,readCapabilities,subscribeData,watchCapabilities,
       acceptIdentity(next){
         if(disposed||!scopeValid(next)||next.runtimeGeneration<identity.runtimeGeneration||next.runtimeGeneration===identity.runtimeGeneration&&
           (next.sessionId!==identity.sessionId||next.revision<identity.revision))return false;
@@ -210,7 +240,7 @@
       },
       setSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===suspended)return true;suspended=value;
-        if(value){cancelPending('notOperable');for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);}
+        if(value){cancelPending('notOperable',false,true);for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);}
         else for(const watch of watches.values())refreshWatch(watch);return true;
       },
       dispose(){if(disposed)return;disposed=true;cancelPending('disposed');for(const source of [...sources.values()])stopSource(source);for(const watch of watches.values())stopWatch(watch);watches.clear();transport.removeEventListener('message',receive);},

@@ -11,6 +11,7 @@ public sealed record RoomReadGrantsReply(string Status, string RoomId = "", stri
 // Trusted configurator path. Author consumers never receive grant editing.
 internal sealed partial class RoomActionAuthority
 {
+    private static readonly HashSet<string> ConfigurableData = new(StringComparer.Ordinal) { "time.read", "hardware.read", "media.read", "audio.read", "storage.read", "storage.write" };
     public RoomReadGrantsReply GetReadGrants(Guid connection, RoomSessionPeer peer, Guid session, string roomId, string installationStamp) =>
         ReadGrantOperation(connection, peer, session, roomId, installationStamp, null, null, null);
     public RoomReadGrantsReply SetReadGrant(Guid connection, RoomSessionPeer peer, Guid session, string roomId, string installationStamp,
@@ -34,8 +35,8 @@ internal sealed partial class RoomActionAuthority
             if (initial != RoomProtocolStatus.Accepted) return GrantFailure(Status(initial));
             var identity = GrantIdentity(early!, room, stamp);
             if (identity != RoomActionStatus.Accepted) return GrantFailure(identity);
-            if (allow is not null && (capabilities is null || capabilities.Length is < 1 or > 4 ||
-                capabilities.Any(capability => capability is null || !ReadableData.Contains(capability))))
+            if (allow is not null && (capabilities is null || capabilities.Length is < 1 or > 6 ||
+                capabilities.Any(capability => capability is null || !ConfigurableData.Contains(capability))))
                 return GrantFailure(RoomActionStatus.Forbidden);
             var selected = capabilities?.Distinct(StringComparer.Ordinal).ToArray();
             var spin = new SpinWait();
@@ -70,7 +71,7 @@ internal sealed partial class RoomActionAuthority
                 return (false, GrantFailure(RoomActionStatus.UnknownConsumer));
             if (capabilities!.Any(capability => !owner.HasCapability(capability)))
                 return (false, GrantFailure(RoomActionStatus.Forbidden));
-            var current = ReadableData.Where(capability => Permission(state, installed, owner, consumer, capability) == RoomActionStatus.Accepted)
+            var current = ConfigurableData.Where(capability => Permission(state, installed, owner, consumer, capability) == RoomActionStatus.Accepted)
                 .ToHashSet(StringComparer.Ordinal);
             var selected = new HashSet<string>(current, StringComparer.Ordinal);
             foreach (var capability in capabilities!) { if (allow.Value) selected.Add(capability); else selected.Remove(capability); }
@@ -78,11 +79,23 @@ internal sealed partial class RoomActionAuthority
             if (changed)
             {
                 if (!state.Rooms.TryGetValue(installed.RoomId, out var personal)) state.Rooms[installed.RoomId] = personal = new();
-                personal.ReadGrants[consumer] = new(installed.InstallationStamp, selected.OrderBy(value => value, StringComparer.Ordinal).ToArray());
+                // Keep the existing on-disk format: read overrides remain read-only,
+                // storage edits touch only storage bits in the current installation grant.
+                if (capabilities.Any(ReadableData.Contains))
+                    personal.ReadGrants[consumer] = new(installed.InstallationStamp,
+                        selected.Where(ReadableData.Contains).OrderBy(value => value, StringComparer.Ordinal).ToArray());
+                if (capabilities.Any(capability => capability is "storage.read" or "storage.write"))
+                {
+                    var general = personal.Grants.TryGetValue(consumer, out var prior) && prior.InstallationStamp == installed.InstallationStamp
+                        ? prior.Capabilities.ToHashSet(StringComparer.Ordinal) : new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var capability in capabilities.Where(capability => capability is "storage.read" or "storage.write"))
+                    { if (allow.Value) general.Add(capability); else general.Remove(capability); }
+                    personal.Grants[consumer] = new(installed.InstallationStamp, general.OrderBy(value => value, StringComparer.Ordinal).ToArray());
+                }
             }
         }
         var consumers = installed.ActionCatalog!.Consumers.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair =>
-            new RoomReadGrantConsumer(pair.Key, pair.Value.DeclaredCapabilities.Where(ReadableData.Contains)
+            new RoomReadGrantConsumer(pair.Key, pair.Value.DeclaredCapabilities.Where(ConfigurableData.Contains)
                 .Select(capability => new RoomReadGrantCapability(capability, Permission(state, installed, pair.Value, pair.Key, capability) == RoomActionStatus.Accepted))
                 .ToArray())).Where(consumer => consumer.Capabilities.Length > 0).ToArray();
         return (changed, new("accepted", installed.RoomId, installed.InstallationStamp, consumers));

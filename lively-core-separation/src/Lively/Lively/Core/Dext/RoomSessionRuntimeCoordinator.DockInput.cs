@@ -18,6 +18,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         dockPlayer is { Attached: true, Stopping: false } owned && !owned.Player.IsExited
         ? owned.Player : null;
 
+    internal WebWebView2? ApplicationTaskHost() => InputDock();
+
     public void RouteDockMouse(int x, int y, string edge, bool blocked)
     {
         try { InputDock()?.RouteNativeDockMouse(x, y, edge, blocked); }

@@ -59,6 +59,11 @@ namespace Lively
 
         public App()
         {
+            // Core owns a WPF message loop. Establish its context before the
+            // WinForms tray controls can install one tied to a hidden Control.
+            // That Control can otherwise deadlock SystemEvents during shutdown.
+            SynchronizationContext.SetSynchronizationContext(
+                new System.Windows.Threading.DispatcherSynchronizationContext(Dispatcher));
             // Commandline args, first element is application path.
             var commandArgs = Environment.GetCommandLineArgs().Skip(1).ToArray();
             try
@@ -117,6 +122,7 @@ namespace Lively
             {
                 // Run startup tasks.
                 Services.GetRequiredService<AppInitializer>().Run();
+                Services.GetRequiredService<Lively.Services.ApplicationDock.ApplicationDockService>().Start();
                 Services.GetRequiredService<RoomSessionKernel>();
                 Logger.Info($"Dext Room session kernel ready | protocol={RoomSessionKernel.ProtocolVersion} | v2 wallpaper session remains separate");
                 Services.GetRequiredService<RoomSessionProtocolGateway>();
@@ -233,6 +239,22 @@ namespace Lively
                     target => { new Lively.Services.AppCatalogService().Launch(target.Target, target.Arguments, target.WorkingDirectory); }))
                 .AddSingleton<RoomRuntimeFactsSource>()
                 .AddSingleton(_ => new RoomDockPreferenceStore(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "dock-preferences.json")))
+                .AddSingleton(_ =>
+                {
+                    RoomDockTaskbarGuard.RecoverPrevious();
+                    var controller = new TaskbarController(Path.Combine(Constants.CommonPaths.AppDataDir, "v3", "taskbar-mode.json"),
+                        Environment.ProcessId,
+                        async pid => await RoomDockTaskbarGuard.StartAsync(pid, () => { }, System.Threading.CancellationToken.None),
+                        Lively.Common.Helpers.DextDockTaskbarRecovery.IsPrimaryVisible,
+                        () => Task.Run(() =>
+                        {
+                            using var core = System.Diagnostics.Process.GetCurrentProcess();
+                            return Lively.Common.Helpers.DextDockTaskbarRecovery.Recover(null, core.Id, core.StartTime.ToUniversalTime().Ticks);
+                        }));
+                    controller.Start();
+                    return controller;
+                })
+                .AddSingleton<DockHostOwnership>()
                 .AddSingleton<RoomSessionRuntimeCoordinator>()
                 .AddSingleton<IRoomSessionRuntimeCoordinator>(services =>
                     services.GetRequiredService<RoomSessionRuntimeCoordinator>())
@@ -244,6 +266,7 @@ namespace Lively
                 .AddSingleton<ISystray, Systray>()
                 .AddSingleton<ITransparentTbService, TranslucentTBService>()
                 .AddSingleton<ISystemControlService, SystemControlService>()
+                .AddSingleton<Lively.Services.ApplicationDock.ApplicationDockService>()
                 .AddSingleton<RawInputMsgWindow>()
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<WinDesktopCoreServer>()

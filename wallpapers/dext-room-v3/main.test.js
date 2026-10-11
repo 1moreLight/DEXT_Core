@@ -3,7 +3,7 @@ const source=fs.readFileSync(__dirname+'/main.js','utf8');const {createPlaybackH
 function fixture(){
  const listeners=new Map(),transportListeners=new Set(),sent=[],hosts=[];const container={};
  const sandbox={console,TextEncoder,crypto,JSON,Object,Array,Number,String,Set,Map,Promise,Error,innerWidth:640,innerHeight:480,devicePixelRatio:1,
-   document:{getElementById:()=>container},chrome:{webview:{postMessage:s=>sent.push(JSON.parse(s)),addEventListener:(_,cb)=>transportListeners.add(cb),removeEventListener:(_,cb)=>transportListeners.delete(cb)}},
+   document:{documentElement:{classList:{toggle(){}}},getElementById:id=>id==='runtime'?container:null,createElement:()=>({setAttribute(){},addEventListener(){}}),body:{append(){}}},chrome:{webview:{postMessage:s=>sent.push(JSON.parse(s)),addEventListener:(_,cb)=>transportListeners.add(cb),removeEventListener:(_,cb)=>transportListeners.delete(cb)}},
    addEventListener:(name,cb)=>listeners.set(name,cb),removeEventListener:name=>listeners.delete(name),DextPlaybackHost:{createPlaybackHost},
    DextNativeHost:{createNativeHost:()=>({})},DextDomHost:{createDomHost:options=>{const host={options,disposed:false,pauses:[],snapshots:[],ready:Promise.resolve(),setPlaybackSuspended:v=>host.pauses.push(v),acceptSnapshot:async v=>{host.snapshots.push(v);return true;},resize:async()=>true,dispose(){host.disposed=true;},readDiagnostics:()=>({disposed:host.disposed})};hosts.push(host);return host;}}};
  vm.runInNewContext(source,sandbox);function send(data){for(const callback of transportListeners)callback({data});}
@@ -54,4 +54,57 @@ test('official frame state sends the private root name and current consumer scop
  const f=fixture();f.send(f.context());f.send(f.snapshot());const identity={runtimeGeneration:1,sessionId:'session',revision:1};
  f.hosts[0].options.applyFrameState({name:'dext-native-name'},{consumerId:'scene',instanceId:'session:1',state:'active',identity});
  assert.deepEqual(f.sent.at(-1),{type:'dext:v3-frame-policy',protocolVersion:1,frameName:'dext-native-name',consumer:'scene',instanceId:'session:1',active:true,...identity});
+});
+
+test('task snapshots only reach the current official Dock controller and revocation disposes it',async()=>{
+ const f=fixture(),received=[];let closed=false,refreshes=0;
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({accept:(s,enabled)=>{received.push({s,enabled});return true;},refresh:async()=>{refreshes++;},suspend(){},read:()=>({phase:'fixture'}),dispose(){closed=true;}})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());await Promise.resolve();
+ const payload={runtimeGeneration:1,sessionId:'session',revision:1,snapshot:{sequence:1},actionsEnabled:false};
+ assert.equal(f.sandbox.dextNativeTaskSnapshot(payload),true);assert.equal(received.length,1);assert.equal(received[0].enabled,false);
+ assert.equal(f.sandbox.dextNativeTaskSnapshot({...payload,revision:2}),false);
+ f.send({type:'dext:v3-runtime-revoked',runtimeGeneration:1,sessionId:'session'});assert.equal(closed,true);assert.equal(f.sandbox.dextNativeTaskSnapshot(payload),false);
+ const desktop=fixture();desktop.send(desktop.context());desktop.send(desktop.snapshot());assert.equal(desktop.sandbox.dextNativeTaskSnapshot(payload),false);
+});
+
+test('private task hit travels beside author geometry in the same native sample',()=>{
+ const f=fixture();let point=null;
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({refresh:async()=>true,suspend(){},dispose(){},samplePointer:p=>{point=p;return{itemId:'private-item'};}})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());
+ f.hosts[0].beginNativeInputSample=()=>({sampleId:'sample',buttons:[],geometryVersion:3});
+ f.hosts[0].endNativeInputSample=id=>id==='sample';
+ const result=f.sandbox.dextNativeInputSample({operation:'begin',sampleId:'sample',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:3,taskPoint:{x:.2,y:.3}});
+ assert.deepEqual(result.taskHit,{itemId:'private-item'});assert.deepEqual(result.buttons,[]);assert.deepEqual(point,{x:.2,y:.3});
+ assert.equal(f.sandbox.dextNativeInputSample({operation:'end',sampleId:'sample'}),true);
+ assert.equal(f.sandbox.dextNativeInputSample({operation:'begin',sampleId:'sample',runtimeGeneration:1,sessionId:'session',revision:2,geometryVersion:3}),null);
+ const desktop=fixture();desktop.send(desktop.context());desktop.send(desktop.snapshot());desktop.hosts[0].beginNativeInputSample=()=>({buttons:[]});
+ assert.equal(desktop.sandbox.dextNativeInputSample({operation:'begin',sampleId:'sample',runtimeGeneration:1,sessionId:'session',revision:1,geometryVersion:3}).taskHit,undefined);
+});
+
+test('duplicate Dock visibility preserves task input while real visibility changes cancel it',async()=>{
+ const f=fixture();let cancels=0,refreshes=0;
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({refresh:async()=>{refreshes++;},suspend(){cancels++;},dispose(){}})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());await Promise.resolve();
+ const hook=f.sandbox.dextNativeDockVisibility,scope={runtimeGeneration:1,sessionId:'session',revision:1};
+ hook({...scope,visible:false});const hidden={cancels,refreshes};
+ hook({...scope,visible:false});assert.deepEqual({cancels,refreshes},hidden,'repeated hidden notification is idempotent');
+ hook({...scope,visible:true});assert.equal(cancels,hidden.cancels+1);assert.equal(refreshes,hidden.refreshes+1);
+ const shown={cancels,refreshes};hook({...scope,visible:true});
+ assert.deepEqual({cancels,refreshes},shown,'visible heartbeat must not cancel held task input');
+ hook({...scope,visible:false});assert.equal(cancels,shown.cancels+1);
+ assert.equal(hook({...scope,revision:2,visible:true}),false);
+});
+
+test('private task readiness distinguishes pending, configured hidden and absent area without exposing tasks',async()=>{
+ const f=fixture();let view={phase:'waiting',occlusion:null,snapshot:{items:[{name:'private'}]}};
+ f.sandbox.DextTaskAreaController={createTaskAreaController:()=>({refresh:async()=>{},suspend(){},dispose(){},read:()=>view})};
+ f.send({...f.context(),viewKind:'dock'});f.send(f.snapshot());await Promise.resolve();
+ const scope={runtimeGeneration:1,sessionId:'session',revision:1},read=()=>f.sandbox.dextNativeTaskReadiness(scope);
+ assert.equal(read(),'pending');
+ view={phase:'displayReady',occlusion:{x:0,y:0,width:100,height:100}};assert.equal(read(),'ready');
+ view={...view,phase:'hidden'};assert.equal(read(),'hidden');
+ view={phase:'hidden',occlusion:null};assert.equal(read(),'unavailable');
+ view={phase:'geometryUnavailable',occlusion:{}};assert.equal(read(),'unavailable');
+ assert.equal(f.sandbox.dextNativeTaskReadiness({...scope,revision:2}),null);
+ f.send({type:'dext:v3-runtime-revoked',runtimeGeneration:1,sessionId:'session'});assert.equal(read(),null);
 });

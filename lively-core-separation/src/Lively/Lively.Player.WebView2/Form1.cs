@@ -253,6 +253,8 @@ namespace Lively.Player.WebView2
                 }, startArgs.DextDock);
                 await nativeFrameMedia.InitializeAsync();
                 InitializeNativePointer();
+                // The existing visible Player is the OLE surface on synced desks.
+                if (!startArgs.DextDock) webView.AllowExternalDrop = true;
             }
             // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
             webView.CoreWebView2.WebMessageReceived += async (s, e) =>
@@ -266,6 +268,18 @@ namespace Lively.Player.WebView2
                     var webMessage = e.TryGetWebMessageAsString();
                     if (nativeResources != null && Encoding.UTF8.GetByteCount(webMessage) > 1024 * 1024) return;
                     var o = JsonConvert.DeserializeObject<dynamic>(webMessage);
+                    if (startArgs.DextDock && (string)o.type == "dext:v3-official-touch")
+                    {
+                        var touch = nativeFrameMedia?.ReadOfficialTouch(webMessage);
+                        if (touch != null && nativeDockInputConnected && nativeDockRendererReady && nativeDockVisibilitySynchronized &&
+                            NativeDockIdentity(touch.RuntimeGeneration, touch.SessionId, touch.Revision))
+                        {
+                            touch.WindowHwnd = Handle.ToInt64();
+                            touch.IssuedAt = System.Diagnostics.Stopwatch.GetTimestamp();
+                            SendToParent(touch);
+                        }
+                        return;
+                    }
                     if (startArgs.DextDock && ((string)o.type == "dext:v3-dock-ready" || (string)o.type == "dext:v3-dock-keyboard"))
                     {
                         var control = JObject.Parse(webMessage);
@@ -312,6 +326,11 @@ namespace Lively.Player.WebView2
                     {
                         if(nativeNetworkReady&&!runtimeDeliverySuspended)nativeFrameMedia?.ReceiveOfficialInputDispatch(webMessage);
                     }
+                    else if ((string)o.type == "dext:v3-input-diagnostic")
+                    {
+                        if(nativeResources!=null && webMessage.Length<2048)
+                            SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop input "+webMessage});
+                    }
                     else if ((string)o.type == "dext:v3-frame-policy")
                     {
                         if (nativeFrameMedia != null && nativeNetworkReady) await nativeFrameMedia.AcceptAsync(webMessage);
@@ -322,7 +341,13 @@ namespace Lively.Player.WebView2
                             NativeMethods.GetClientRect(webView.Handle, out var client))
                         {
                             var request = DextNativeInputProtocol.Parse(webMessage, roomRuntime, client.Right-client.Left, client.Bottom-client.Top);
-                            if (request != null && (!runtimeDeliverySuspended || request.Method == "layoutRead")){
+                            if (request != null && (!runtimeDeliverySuspended || DextNativeInputProtocol.AllowsWhileSuspended(request.Method))){
+                                if(request.Method=="desktopDrop")
+                                {
+                                    if(startArgs.DextDock || !nativeRuntimeSeen || request.DesktopDrop==null ||
+                                        !DextNativeDroppedFiles.TryRead(e.AdditionalObjects,out var droppedFiles))return;
+                                    request.DesktopDrop.Files=droppedFiles;
+                                }
                                 if(request.Method=="authorInput")nativeFrameMedia.AcceptInputRequest(request);
                                 else SendToParent(request);
                             }
@@ -926,6 +951,9 @@ namespace Lively.Player.WebView2
                     //    });
                     //}
                     break;
+                case MessageType.cmd_room_dock_tasks:
+                    if (startArgs.DextDock) await ApplyNativeDockTasks((LivelyMessageRoomDockTasks)obj);
+                    break;
                 case MessageType.cmd_room_dock_policy:
                     if (startArgs.DextDock) await ApplyNativeDockPolicy((LivelyMessageRoomDockPolicy)obj);
                     break;
@@ -1036,7 +1064,10 @@ namespace Lively.Player.WebView2
                     break;
                 case MessageType.cmd_room_native_pointer:
                     if(nativePointerDelivery!=null&&nativeNetworkReady&&!runtimeDeliverySuspended)
+                    {
+                        await ObserveEditDownAsync((LivelyMessageRoomNativePointer)obj);
                         nativePointerDelivery.Submit((LivelyMessageRoomNativePointer)obj);
+                    }
                     break;
                 case MessageType.cmd_room_native_response:
                     var nativeReply = (LivelyMessageRoomNativeResponse)obj;
@@ -1045,11 +1076,14 @@ namespace Lively.Player.WebView2
                         if((string)privatePayload["type"]=="dext:v3-native-event"&&(string)privatePayload["kind"]=="activate")
                             await nativePointerDelivery.WhenIdle();
                     }
-                    if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || nativeReply.Method == "layoutRead") &&
+                    if (nativeResources != null && nativeNetworkReady && (!runtimeDeliverySuspended || DextNativeInputProtocol.AllowsWhileSuspended(nativeReply.Method)) &&
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
-                        nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= 1024*1024 &&
+                        nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= (nativeReply.Method == "presentationRead" ? 4 : 1)*1024*1024 &&
                         IsOfficialDextDocument(webView.CoreWebView2.Source))
+                    {
+                        if(nativeReply.Method=="presentationRead")await UpdateNativeDropSurfaceAsync(nativeReply.PayloadJson);
                         webView.CoreWebView2.PostWebMessageAsJson(nativeReply.PayloadJson);
+                    }
                     break;
                 case MessageType.cmd_room_runtime:
                     if (startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source) &&
@@ -1267,6 +1301,7 @@ namespace Lively.Player.WebView2
         {
             DisposeNativeDockWindow();
             DisposeNativePausedPicture();
+            editPointerTimer?.Stop();editPointerTimer?.Dispose();editPointer=null;
             nativeAuthorDeadline?.Stop();nativeAuthorDeadline?.Dispose();
             nativeFrameMedia?.Dispose();
             nativeResources?.Dispose();

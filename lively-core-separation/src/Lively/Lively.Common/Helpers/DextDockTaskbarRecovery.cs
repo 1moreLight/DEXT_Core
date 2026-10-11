@@ -31,6 +31,11 @@ namespace Lively.Common.Helpers
             public List<WindowState> Windows = new List<WindowState>();
         }
         private readonly Journal saved;
+        public static bool? IsPrimaryVisible()
+        {
+            var handle = PrimaryTaskbar();
+            return handle == IntPtr.Zero ? (bool?)null : IsWindowVisible(handle);
+        }
         public static string JournalPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Dext", "v3", "dock-taskbar-recovery.dat");
         public static string MutexName => @"Local\DEXT:DOCK-TASKBAR:" + Environment.UserDomainName + ":" + Environment.UserName;

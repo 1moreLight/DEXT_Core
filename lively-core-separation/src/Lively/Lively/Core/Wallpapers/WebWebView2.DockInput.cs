@@ -39,6 +39,7 @@ namespace Lively.Core.Wallpapers
         private bool NativeDockInputAvailable()
         {
             if (!NativeDockAvailable()) return false;
+            if (NativeDockTouchAvailable()) return true;
             var window = RoomDockWindowState;
             if (window?.Keyboard == true && NativeDockForeground()) return true;
             return NativeMethods.GetCursorPos(out NativeMethods.POINT pointer) && NativeDockAt(pointer.X, pointer.Y);
@@ -64,6 +65,7 @@ namespace Lively.Core.Wallpapers
 
         internal void DisconnectNativeDockInput()
         {
+            CancelNativeDockTouch();
             Volatile.Write(ref nativeDockRouteConnected, false);
             NativeInputIsForeground = null;
             nativeDockMouseOwned = nativeDockPointerInside = false;
@@ -73,7 +75,14 @@ namespace Lively.Core.Wallpapers
         internal void RouteNativeDockMouse(int x, int y, string edge, bool blocked)
         {
             if (!nativeDock || !Volatile.Read(ref nativeDockRouteConnected)) return;
+            if (dockTouchContact != null)
+            {
+                if (!NativeDockTouchAvailable()) CancelNativeDockTouch();
+                else if (edge == "down") { var released = dockTouchContact.Released; CancelNativeDockTouch(); if (!released) return; }
+                else return;
+            }
             var inside = !blocked && NativeDockAt(x, y);
+            if(edge=="down"||edge=="up")Logger.Debug($"Dock raw edge={edge} inside={inside} blocked={blocked} available={NativeDockAvailable()} owned={nativeDockMouseOwned}");
             if (edge == "down")
             {
                 // Outside presses must not clear an idle Dock's current geometry.

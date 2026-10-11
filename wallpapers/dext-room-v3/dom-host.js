@@ -20,7 +20,33 @@
     let snapshot=copy(options.initialSnapshot),disposed=false,epoch=0,inputVersion=0,inputReady=false,rootNode=null,animation=null,frameId=null,privatePaused=options.initialPlaybackSuspended===true,lastError=null,serial=Promise.resolve(),visualGroups=groups();
     let completion=null,pendingDefault=null,defaultTimer=null,lastEventSequence=0,consumedSequence=0;
     const actionFlights=new Set(),localButtons=new Map();
+    let taskAreaOcclusion=null;
     let inputEntries=[],focus=null,focusNode=null,nativeHold=null,pendingVisualGroups=null;
+    let desktopView=null,desktopPage=0,desktopPages=1,desktopSignature=null,desktopClick=null;
+    const selectionApi=options.desktopSelection||root.DextDesktopSelection||(typeof require==='function'?require('./desktop-selection.js'):null);
+    if(!selectionApi)throw failure('desktopSelectionUnavailable');
+    const desktopSelection=selectionApi.createDesktopSelection();
+    let cutSequence=null,cutIds=new Set();
+    function paintDesktopSelection(){
+      const selected=new Set(desktopSelection.read().selectedIds);
+      for(const record of icons.values())if(record.desktop&&!record.icon.id.startsWith('desktop.page.')){
+        const value=selected.has(record.icon.id);record.element.dataset.selected=String(value);record.element.setAttribute('aria-pressed',String(value));record.element.dataset.cut=String(cutIds.has(record.icon.id));
+      }
+    }
+    function desktopActivation(value){
+      const input=value.desktopInput;
+      // Command keys must not mutate the selection used to resolve their targets.
+      if(input?.key===113){desktopClick=null;return false;}
+      if(!input||!desktopSelection.select(value.button,{ctrl:(input.modifiers&1)!==0,shift:(input.modifiers&2)!==0}))return false;
+      paintDesktopSelection();
+      const previous=desktopClick;desktopClick=null;
+      if(input.key===13)return true;
+      if(input.key!==0||input.modifiers!==0)return false;
+      if(previous&&previous.button===value.button&&previous.entryId===value.entryId&&previous.geometryVersion===value.geometryVersion&&
+        input.at>=previous.input.at&&input.at-previous.input.at<=input.doubleClickTime&&
+        Math.abs(input.x-previous.input.x)<=input.doubleClickWidth/2&&Math.abs(input.y-previous.input.y)<=input.doubleClickHeight/2)return true;
+      desktopClick={button:value.button,entryId:value.entryId,geometryVersion:value.geometryVersion,input};return false;
+    }
     let presentationSkins={},presentationTimer=null,presentationRunning=false,locatorRequest=null,locatorButton=null,locatorNode=null,locatorTimer=null;
     let personalLayout={revision:0,icons:{},components:{}},layoutReadEpoch=0,layoutReady=false,layoutError=null,effectiveLayouts=new Map(),layoutOccupied=[];
     const scope=()=>({runtimeGeneration:context.runtimeGeneration,sessionId:snapshot.sessionId,revision:snapshot.revision});
@@ -76,6 +102,8 @@
       if(dockView){effectiveLayouts=next;return;}
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
+        for(const record of icons.values())if(record.desktop&&record.deskId===deskId)items.push({key:'icon:'+deskId+'/'+record.icon.id,kind:'icon',id:record.icon.id,
+          savedRect:{...record.desktopRect,...personalLayout.icons[deskId]?.[record.icon.id]},logicalSize:record.logicalSize||{width:96,height:104}});
         // Dock geometry belongs to the official host. A component author can
         // publish its buttons, while only roomScene can publish occupied areas.
         const referenced=new Set(desks.get(deskId).components);
@@ -105,14 +133,15 @@
     function layoutIcon(record,group){
       const item=effectiveLayouts.get('icon:'+record.deskId+'/'+record.icon.id);
       record.rect=item?(item.placeable?item.effectiveRect:null):{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104};
-      const rect=record.rect;
+      const rect=record.rect,logical=record.logicalSize||{width:96,height:104};
       record.element.hidden=!rect||![snapshot.currentDeskId,snapshot.targetDeskId].includes(record.deskId)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
-      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/96,rect.height/104);}
+      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/logical.width,rect.height/logical.height);}
       record.element.style.opacity=String(group.opacity);record.element.style.pointerEvents=group.opacity<=0?'none':'';
     }
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
     function clearFocus(){focus=null;paintFocus(null);}
     function paintFocus(entry){
+      if(editMode||entry?.consumer==='official.desktop')entry=null;
       if(!entry){if(focusNode){focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();}return;}
       if(!focusNode){focusNode=svg('svg');focusNode.classList?.add('dext-v3-focus');if(!focusNode.classList)focusNode.className='dext-v3-focus';
         focusNode.setAttribute('viewBox','0 0 1920 1080');focusNode.setAttribute('aria-hidden','true');rootNode.append(focusNode);}
@@ -132,9 +161,36 @@
       return matches.length===1?matches[0]:null;
     }
     function ensureRoot(){if(rootNode)return;rootNode=document.createElement('div');rootNode.className='dext-v3-canvas';container.append(rootNode);}
+    function reconcileDesktop(viewport){
+      if(dockView)return;
+      const columns=Math.max(1,Math.floor((viewport.width-64)/112)),rows=Math.max(1,Math.floor((viewport.height-64)/120)),capacity=Math.max(1,columns*rows-2);
+      desktopPages=Math.max(1,Math.ceil(((desktopView?.items.reduce((max,item)=>Math.max(max,item.slot),-1)??-1)+1)/capacity));desktopPage=Math.min(desktopPage,desktopPages-1);
+      const signature=desktopView?[desktopView.contextId,desktopPage,viewport.width,viewport.height].join('/'):'none';
+      const visible=desktopView?.deskId===snapshot.currentDeskId&&!snapshot.transitionId?
+        desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>item.id):[];
+      desktopSelection.update(JSON.stringify([snapshot.sessionId,snapshot.currentDeskId,desktopPage]),visible);
+      if(signature===desktopSignature){paintDesktopSelection();return;}desktopSignature=signature;desktopClick=null;
+      for(const [key,record]of [...icons])if(record.desktop){record.element.remove();icons.delete(key);}
+      if(!desktopView||!desks.has(desktopView.deskId))return;
+      const items=desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>({...item,cell:item.slot%capacity}));
+      if(desktopPages>1)items.push({id:'desktop.page.previous',name:'上一组 '+(desktopPage+1)+'/'+desktopPages,iconPng:null,cell:capacity},{id:'desktop.page.next',name:'下一组',iconPng:null,cell:capacity+1});
+      items.push({id:'desktop.paste',name:'粘贴到桌面',command:true});
+      items.forEach(item=>{
+        const index=item.cell;
+        const element=document.createElement('button');element.type='button';element.className='dext-v3-icon dext-v3-desktop-icon';element.setAttribute('aria-label',item.name);
+        const logicalSize=item.command?{width:Math.max(1,Math.min(136,viewport.width-16)),height:24}:null;
+        if(logicalSize){element.className+=' dext-v3-desktop-command';element.style.width=logicalSize.width+'px';element.style.height=logicalSize.height+'px';}
+        if(item.iconPng){const image=document.createElement('img');image.src='data:image/png;base64,'+item.iconPng;image.alt='';image.draggable=false;element.append(image);}
+        else if(!item.command){const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
+        const label=document.createElement('span');label.className='dext-v3-desktop-label';label.textContent=item.name;element.append(label);rootNode.append(element);
+        const icon={id:item.id,buttonId:item.id},deskId=desktopView.deskId;
+        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,logicalSize,contextId:desktopView.contextId,
+          desktopRect:item.command?{x:Math.max(8,viewport.width-144)*1920/viewport.width,y:4*1080/viewport.height,width:logicalSize.width,height:logicalSize.height}:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
+      });
+    }
     function reconcile(){
       ensureRoot();const state=model.readDiagnostics();const viewport=state.viewport;
-      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';recomputeLayouts(state);
+      rootNode.style.transform='scale('+(viewport.width/1920)+','+(viewport.height/1080)+')';reconcileDesktop(viewport);paintDesktopSelection();recomputeLayouts(state);
       for(const definition of state.instances){
         let record=records.get(definition.instanceId);
         if(!record){
@@ -156,9 +212,10 @@
         record.element.dataset.skin=presentationSkins[icon.buttonId]||'classic';
         const group=visualGroups[snapshot.targetDeskId?(desk.id===snapshot.targetDeskId?'target':'source'):'source'];layoutIcon(record,group);
       }
+      for(const record of icons.values())if(record.desktop)layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
       const placements=Object.fromEntries([...records.values()].filter(record=>
         record.definition.consumerId.startsWith('component.')&&visible(record.definition)).map(record=>[record.definition.consumerId,copy(recordPlacement(record))]));
-      media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
+      paintEditing();media.refresh();frames.setGeometry({geometryVersion:state.geometryVersion,viewport:state.viewport,placements});
     }
     function inputLayer(record){
       const consumer=record.definition?.consumerId;
@@ -181,7 +238,7 @@
       // A boundary publication cannot track a moving foreground cover. Such
       // entries wait for the separate physical-event sampling mechanism.
       if(!sampled&&(node.moving||front.some(other=>other.moving)))return null;
-      const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:[...front.map(other=>other.polygon),...(dockView?[geometry.rectPolygon({x:1920-36/model.readDiagnostics().viewport.width*1920,y:0,width:36/model.readDiagnostics().viewport.width*1920,height:32/model.readDiagnostics().viewport.height*1080})]:[])]});
+      const pieces=geometry.visiblePolygons(geometry.rectPolygon(rect,node.group.matrix),{bounds:{x:0,y:0,width:1920,height:1080},occluders:[...front.map(other=>other.polygon),...(dockView&&taskAreaOcclusion?[geometry.rectPolygon(taskAreaOcclusion)]:[]),...(dockView?[geometry.rectPolygon({x:1920-36/model.readDiagnostics().viewport.width*1920,y:0,width:36/model.readDiagnostics().viewport.width*1920,height:32/model.readDiagnostics().viewport.height*1080})]:[])]});
       if(!pieces.length)return null;
       if(pieces.length>64||pieces.some(p=>p.length>32))throw failure('geometryBudget');
       const polygons=pieces.map(p=>p.map(v=>({x:v.x/1920,y:v.y/1080}))),points=polygons.flat();
@@ -190,8 +247,12 @@
     }
     function buttonGeometry(sampled=false){
       if(privatePaused||!snapshot.active||snapshot.lifecycle.locked||dockView&&snapshot.lifecycle.stage!=="desktop"||
-        !dockView&&(snapshot.lifecycle.stage==="desktop"&&!snapshot.operable||snapshot.lifecycle.playbackPaused))return[];
-      return visibleButtonGeometry(sampled);
+        !dockView&&snapshot.lifecycle.playbackPaused)return[];
+      const visible=visibleButtonGeometry(sampled);
+      // Keep the clipped file regions available for a native right click while
+      // an ordinary app owns foreground. Core still rejects normal activation.
+      return !dockView&&snapshot.lifecycle.stage==="desktop"&&!snapshot.operable
+        ?visible.filter(entry=>entry.consumer==='official.desktop'&&entry.button.startsWith('desktop-')):visible;
     }
     function visibleButtonGeometry(sampled=false){
       const state=model.readDiagnostics(),buttons=[],nodes=paintNodes();let vertices=0;
@@ -209,9 +270,10 @@
         }
       }
       for(const record of icons.values())if(snapshot.lifecycle.stage==='desktop'&&inputDesks(sampled).includes(record.deskId)){
-        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry('official',record.icon.buttonId,'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
+        if(record.desktop&&snapshot.transitionId)continue;
+        const node=nodes.find(n=>n.record===record);if(node)add(preciseEntry(record.desktop?'official.desktop':'official',record.icon.buttonId,record.desktop?'desktop.'+record.contextId+'/'+record.icon.id:'icon.'+record.deskId+'/'+record.icon.id,record.rect,node,nodes,buttons.length,sampled));
       }
-      return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||b.consumer==='official'&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||a.consumer==='official'&&n.record.icon).record));
+      return buttons.sort((a,b)=>inputLayer(nodes.find(n=>n.record.definition?.consumerId===b.consumer||['official','official.desktop'].includes(b.consumer)&&n.record.icon).record)-inputLayer(nodes.find(n=>n.record.definition?.consumerId===a.consumer||['official','official.desktop'].includes(a.consumer)&&n.record.icon).record));
     }
     async function render(){
       const ownEpoch=++epoch;releaseNativeHold(false);cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;const ownScope=scope();native.acceptIdentity(ownScope);
@@ -222,7 +284,7 @@
           syncAnimation();reconcile();const state=model.readDiagnostics(),entries=buttonGeometry();let published;
           for(let attempt=0;attempt<8;attempt++){
             if(disposed||ownEpoch!==epoch)return false;
-            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries,eventSamples:false},ownScope);
+            published=await native.request('geometry',{geometryVersion:++inputVersion,viewport:state.viewport,buttons:entries,eventSamples:dockView&&taskAreaOcclusion!==null},ownScope);
             if(published.status!=='staleInput'||attempt===7)break;await yieldRetry();
           }
           if(disposed||ownEpoch!==epoch)return false;inputReady=published.status==='accepted';if(inputReady)inputEntries=copy(entries);if(!inputReady)diagnose('geometryUnavailable');return inputReady;
@@ -258,7 +320,7 @@
     function paintVisuals(){
       for(const record of records.values())layout(record);
       for(const record of icons.values())layoutIcon(record,visualGroups[snapshot.targetDeskId?(record.deskId===snapshot.targetDeskId?'target':'source'):'source']);
-      refreshFocus();
+      refreshFocus();paintEditing();
     }
     function applyVisualGroups(next){
       if(nativeHold){pendingVisualGroups=next;return;}
@@ -283,13 +345,102 @@
     function showActionResult(status){
       const messages={missingBinding:'这个按钮还未绑定应用，请在配置器的“本机按钮”中选择目标。',
         missingPermission:'这个按钮尚未启用，请重新应用 Room 或在配置器中保存本机动作。',
-        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机按钮配置暂时无法读取，请检查配置器诊断。'};
+        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机操作暂时无法完成，请稍后重试或查看配置器诊断。'};
       if(status==='accepted'||status==='queued'){clearActionNotice();return;}
       if(!messages[status])return;
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
+    let dropRunning=false,pasteRunning=false,deleteRunning=false,menuRunning=false;
+    function dropEligible(event){
+      return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
+        snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
+        desktopView?.deskId===snapshot.currentDeskId&&Array.from(event.dataTransfer?.types||[]).includes('Files');
+    }
+    function dropIntent(event){
+      const allowed={all:['copy','move','link'],uninitialized:['copy','move','link'],copy:['copy'],move:['move'],link:['link'],copyMove:['copy','move'],copyLink:['copy','link'],linkMove:['link','move']}[event.dataTransfer.effectAllowed]||[];
+      const requested=event.altKey||event.ctrlKey&&event.shiftKey?'link':event.ctrlKey?'copy':event.shiftKey?'move':null;
+      return requested?(allowed.includes(requested)?requested:'none'):
+        allowed.includes(event.dataTransfer.dropEffect)?event.dataTransfer.dropEffect:allowed[0]||'none';
+    }
+    function desktopDragOver(event){
+      if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect=dropEligible(event)?dropIntent(event):'none';
+    }
+    function dropNotice(message){
+      clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
+      actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
+      actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopMenu(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(menuRunning||!selected.includes(value.button))return;
+      const identity=scope();menuRunning=true;
+      native.request('desktopMenu',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(reply.status==='accepted'&&['copy','cut'].includes(reply.data?.verb)&&Number.isSafeInteger(reply.data.clipboardSequence)&&reply.data.clipboardSequence>0){
+            cutSequence=reply.data.verb==='cut'?reply.data.clipboardSequence:null;cutIds=new Set(reply.data.verb==='cut'?selected:[]);paintDesktopSelection();
+          }
+          if(reply.data?.verb==='delete'){
+            const items=Array.isArray(reply.data.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
+            dropNotice(`已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。`);
+          }else if(!['accepted','cancelled'].includes(reply.status))dropNotice('菜单操作未完成，请稍后重试。');
+        },()=>{if(!disposed)dropNotice('未收到菜单操作结果，请先检查文件。');}).finally(()=>{menuRunning=false;});
+    }
+    function desktopDelete(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(deleteRunning||!selected.includes(value.button))return;
+      const identity=scope();deleteRunning=true;dropNotice('正在移入回收站…');
+      native.request('desktopDelete',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unsupported=items.filter(item=>item.status==='notRecyclable').length;
+          dropNotice(['accepted','cancelled'].includes(reply.status)?`${reply.status==='cancelled'?'操作已停止。':''}已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。${unsupported?' 部分项目不能回收，已保留原文件。':''}`:'未能完成回收，请检查原文件和回收站后重试。');
+        },()=>{if(!disposed)dropNotice('未收到回收结果，请先检查原文件和回收站。');}).finally(()=>{deleteRunning=false;});
+    }
+    function desktopPaste(value){
+      if(pasteRunning)return;
+      const identity=scope(),observedCutSequence=cutSequence;pasteRunning=true;dropNotice('正在粘贴文件…');
+      native.request('desktopPaste',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unchanged=items.filter(item=>item.status==='unchanged').length;
+          dropNotice(reply.data?.reason==='noFiles'?'剪贴板没有可粘贴的文件。':reply.status==='accepted'?`已粘贴 ${completed} 项，保留原位置 ${unchanged} 项，未完成 ${items.length-completed-unchanged} 项。`:
+            reply.status==='cancelled'?`粘贴已取消，已完成 ${completed} 项。`:'未能完成粘贴，请检查桌面文件后重试。');
+        },()=>{if(!disposed)dropNotice('未收到粘贴结果，请先检查桌面文件，避免重复粘贴。');}).finally(()=>{pasteRunning=false;});
+    }
+    function desktopDrop(event){
+      if(!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();event.stopPropagation();
+      if(!dropEligible(event)){event.dataTransfer.dropEffect='none';return;}
+      const transfer=event.dataTransfer,effect=dropIntent(event),files=Array.from(transfer.files||[]),rect=container.getBoundingClientRect();
+      // Core owns file movement. Never tell the source to delete files merely
+      // because an asynchronous request was posted. Actual OLE return is a probe gate.
+      transfer.dropEffect='none';
+      if(effect==='none'||files.length===0||files.length>256||rect.width<=0||rect.height<=0)return;
+      const x=(event.clientX-rect.left)/rect.width,y=(event.clientY-rect.top)/rect.height;
+      if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>1||y<0||y>1)return;
+      const identity=scope(),params={desktopContextId:desktopView.contextId,deskId:desktopView.deskId,x,y,page:desktopPage,
+        modifiers:(event.ctrlKey?1:0)|(event.shiftKey?2:0)|(event.altKey?4:0),allowedEffects:transfer.effectAllowed};
+      dropRunning=true;dropNotice('正在处理拖入的文件…');
+      let operation;
+      try{operation=native.dropFiles(params,files,identity);}catch(error){operation=Promise.reject(error);}
+      Promise.resolve(operation).then(reply=>{
+        if(disposed||identity.sessionId!==snapshot.sessionId)return;
+        const items=Array.isArray(reply?.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
+        dropNotice(reply?.status==='accepted'?`已完成 ${completed} 项，未处理 ${items.length-completed} 项。${reply.data?.placementStatus&&reply.data.placementStatus!=='accepted'?'文件已处理，图标位置未保存。':''}`:
+          reply?.status==='cancelled'?`操作已取消，已完成 ${completed} 项。`:'未能完成拖入，请检查目标桌面或稍后重试。');
+      },()=>{if(!disposed)dropNotice('未收到操作结果，请先检查桌面文件，避免重复拖入。');}).finally(()=>{dropRunning=false;});
+    }
+    if(!dockView){container.addEventListener('dragover',desktopDragOver);container.addEventListener('drop',desktopDrop);}
     function consumeReceipt(reply){
       showActionResult(reply.status);
       if(reply.inputConsumed!==true||!Number.isSafeInteger(reply.inputSequence)||reply.inputSequence<=0)return;
@@ -304,10 +455,16 @@
         f.identity.sessionId===own.identity.sessionId&&f.identity.revision===own.identity.revision))return;
       pendingDefault=null;
       native.request('activate',{consumer:own.consumer,button:own.button,geometryVersion:own.geometryVersion,inputSequence:own.inputSequence},own.identity)
-        .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion))consumeReceipt(reply);},()=>diagnose('activationUnavailable'));
+        .then(reply=>{if(sameActionScope(own.identity,own.geometryVersion)){
+          consumeReceipt(reply);
+          if(reply.status==='accepted'&&own.consumer==='official.desktop'&&['desktop.page.previous','desktop.page.next'].includes(own.button)){
+            desktopPage=(desktopPage+(own.button==='desktop.page.next'?1:-1)+desktopPages)%desktopPages;render();
+          }
+        }},()=>diagnose('activationUnavailable'));
     }
     async function authorAction(value){
       const {consumerId:consumer,identity,instanceId,requestJson,method}=value;
+      if(editMode||now()<ignoreAuthorUntil||editSaving)throw failure('inputRequired');
       if(!sameActionScope(identity,inputVersion))throw failure('staleInput');
       if(typeof instanceId!=='string'||typeof requestJson!=='string')throw failure('inputRequired');
       if(actionFlights.size>=64)throw failure('requestLimit');
@@ -319,6 +476,147 @@
         return{status:reply.status};
       }finally{actionFlights.delete(flight);runDefault();}
     }
+
+    const pressApi=options.pressEdit||root.DextPressEdit||(typeof require==='function'?require('./press-edit.js'):null);
+    let editSaving=false,editError=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null,blankPress=null,lastBlankClick=null;
+    const editEligible=()=>!disposed&&!dockView&&!privatePaused&&layoutReady&&!editSaving&&snapshot.active&&snapshot.operable&&
+      snapshot.lifecycle.stage==='desktop'&&!snapshot.lifecycle.locked&&!snapshot.lifecycle.playbackPaused&&!snapshot.transitionId;
+    function paintEditing(){
+      if(!rootNode)return;rootNode.dataset.editing=String(editMode);
+      for(const record of icons.values()){
+        record.element.dataset.editable=String(!record.desktop||record.icon.id.startsWith('desktop-'));
+        record.element.dataset.dragging=String(dragItem?.record===record);
+      }
+      for(const record of records.values())if(record.definition.kind==='widget'){
+        if(editMode&&!record.editOverlay){const layer=document.createElement('div');layer.className='dext-v3-widget-editor';
+          const label=document.createElement('span');label.textContent='拖动小组件';layer.append(label);
+          const handle=document.createElement('span');handle.className='dext-v3-widget-resize';handle.textContent='↘';handle.setAttribute('title','拖动缩放');layer.append(handle);
+          record.wrapper.append(layer);record.editOverlay=layer;}
+        if(record.editOverlay)record.editOverlay.hidden=!editMode;
+      }
+      if(editMode&&!editToolbar){editToolbar=document.createElement('button');editToolbar.className='dext-v3-edit-done';editToolbar.textContent='完成';
+        editToolbar.addEventListener('click',e=>{if(e.isTrusted)exitEdit();});rootNode.append(editToolbar);}
+      if(editToolbar){editToolbar.hidden=!editMode;editToolbar.textContent=editSaving?'保存中…':'完成';}
+    }
+    function enterEdit(){if(editMode)return;editMode=true;paintEditing();dropNotice('编辑模式：拖动图标／小组件，右下角缩放；Esc 或“完成”退出。');}
+    function exitEdit(){blankPress=null;lastBlankClick=null;const wasEditing=editMode;press.cancel();editMode=false;dragItem=null;if(wasEditing)ignoreAuthorUntil=now()+250;paintEditing();}
+    function editRect(item,dx,dy){
+      if(item.resize)return{...item.rect,width:Math.max(64,Math.min(1920-item.rect.x,item.rect.width+dx)),height:Math.max(48,Math.min(1080-item.rect.y,item.rect.height+dy))};
+      let x=item.rect.x+dx,y=item.rect.y+dy;
+      if(item.kind==='icon'&&(dx!==0||dy!==0)){
+        const viewport=model.readDiagnostics().viewport,sx=item.record.desktop?1920/viewport.width:1,sy=item.record.desktop?1080/viewport.height:1;
+        x=32*sx+Math.round((x-32*sx)/(112*sx))*112*sx;y=32*sy+Math.round((y-32*sy)/(120*sy))*120*sy;
+      }
+      return{...item.rect,x:Math.max(0,Math.min(1920-Math.max(item.rect.width,item.kind==='icon'?96:0),x)),y:Math.max(0,Math.min(1080-Math.max(item.rect.height,item.kind==='icon'?104:0),y))};
+    }
+    function validEdit(item,rect){
+      const overlap=r=>rect.x<r.x+r.width&&r.x<rect.x+rect.width&&rect.y<r.y+r.height&&r.y<rect.y+rect.height;
+      const deskId=activeDesk(),reserved=[...layoutOccupied.filter(r=>!r.deskId||r.deskId===deskId),...(room.components||[]).filter(c=>c.role==='dock'&&desks.get(deskId).components.includes(c.id)).map(c=>c.placement)];
+      if(reserved.some(overlap))return false;
+      return item.kind!=='widget'||![...records.values()].some(r=>r!==item.record&&r.definition.kind==='widget'&&!r.wrapper.hidden&&overlap(recordPlacement(r)));
+    }
+    function provisionalLayout(item,rect){const value=copy(personalLayout);
+      if(item.kind==='icon'){value.icons[activeDesk()]={...value.icons[activeDesk()],[item.id]:{x:rect.x,y:rect.y}};}
+      else value.components[item.id]=rect;return value;}
+    function clearEditPaint(){ignoreAuthorUntil=now()+250;dragItem=null;recomputeLayouts(model.readDiagnostics());paintVisuals();paintEditing();}
+    function prepareReorder(item){
+      const viewport=model.readDiagnostics().viewport,sx=1920/viewport.width,sy=1080/viewport.height;
+      const grid={offsetX:32*sx,offsetY:32*sy,cellWidth:112*sx,cellHeight:120*sy,footprintWidth:96*sx,footprintHeight:104*sy,
+        columns:Math.max(1,Math.floor((Math.min(1824,1920-96*sx)-32*sx)/(112*sx))+1),rows:Math.max(1,Math.floor((Math.min(976,1080-104*sy)-32*sy)/(120*sy))+1)};
+      const peers=[...icons.values()].filter(r=>r.deskId===activeDesk()&&!r.element.hidden&&(!r.desktop||r.icon.id.startsWith('desktop-')));
+      const source=peers.map(r=>({id:r.icon.id,x:Math.round((r.rect.x-grid.offsetX)/grid.cellWidth),y:Math.round((r.rect.y-grid.offsetY)/grid.cellHeight)}));
+      const occupied=[...layoutOccupied.filter(r=>!r.deskId||r.deskId===activeDesk()),...[...records.values()].filter(r=>!r.wrapper.hidden&&r.definition.kind==='dock').map(recordPlacement)];
+      const widgets=[...records.values()].filter(r=>r!==item.record&&!r.wrapper.hidden&&r.definition.kind==='widget').map(recordPlacement);
+      const normalized=layoutModel.resolveWidgetIconAvoidance(source,widgets,grid,occupied);
+      item.reorder={grid,peers,before:Object.fromEntries(peers.map(r=>[r.icon.id,{x:r.rect.x,y:r.rect.y}])),source:normalized.committed?normalized.icons:source,occupied,widgets};
+    }
+    function previewEdit(item,dx,dy){
+      const rect=editRect(item,dx,dy);item.invalid=!validEdit(item,rect);item.preview=null;
+      const tx=item.reorder;
+      if(!item.invalid&&tx&&(dx!==0||dy!==0)){
+        const {grid,source,occupied,widgets}=tx;
+        const result=item.kind==='icon'?layoutModel.resolveIconReorder(source,source.findIndex(v=>v.id===item.id),
+          {x:Math.round((rect.x-grid.offsetX)/grid.cellWidth),y:Math.round((rect.y-grid.offsetY)/grid.cellHeight)},grid,widgets,occupied):
+          layoutModel.resolveWidgetIconAvoidance(source,[...widgets,rect],grid,occupied);
+        item.invalid=!result.committed;
+        if(result.committed){
+          item.preview=provisionalLayout(item,rect);
+          const positions={...item.preview.icons[activeDesk()]};
+          for(const icon of result.icons)positions[icon.id]={x:grid.offsetX+icon.x*grid.cellWidth,y:grid.offsetY+icon.y*grid.cellHeight};
+          item.preview.icons[activeDesk()]=positions;
+        }
+      }
+      if(!item.invalid){const saved=personalLayout;personalLayout=item.preview||provisionalLayout(item,rect);recomputeLayouts(model.readDiagnostics());personalLayout=saved;paintVisuals();}
+      // The picked icon follows the hand continuously.
+      if(item.kind==='icon'){
+        const node=item.record.element,x=item.rect.x+dx,y=item.rect.y+dy,logical=item.record.logicalSize||{width:96,height:104};
+        node.style.left=x+'px';node.style.top=y+'px';transform(node,x,y,visualGroups.shared.matrix,item.rect.width/logical.width,item.rect.height/logical.height);
+      }
+
+    }
+    async function saveEdit(item,dx,dy){
+      const identity=scope(),deskId=activeDesk(),token=layoutReadEpoch,rect=editRect(item,dx,dy);
+      if(!editEligible()){clearEditPaint();return;}
+      if((dx===0&&dy===0)||item.invalid||!validEdit(item,rect)){clearEditPaint();if(item.invalid)dropNotice('该位置被占用，已恢复原位。');return;}
+      editSaving=true;editError=null;paintEditing();
+      const change=item.kind==='icon'?{kind:'icon',id:item.id,deskId,x:rect.x,y:rect.y}:
+        {kind:'widget',id:item.id,x:rect.x,y:rect.y,width:rect.width,height:rect.height};
+      if(item.preview){
+        const positions=item.preview.icons[deskId]||{},peers=[];
+        for(const [id,p] of Object.entries(positions)){
+          if(item.kind==='icon'&&id===item.id){change.x=p.x;change.y=p.y;continue;}
+          const old=personalLayout.icons[deskId]?.[id]||item.reorder?.before[id];
+          if(!old||old.x!==p.x||old.y!==p.y)peers.push({kind:'icon',id,deskId,x:p.x,y:p.y});
+        }
+        if(peers.length)change.peers=peers;
+      }
+      try{
+        const reply=await native.request('layoutSave',{layoutRevision:personalLayout.revision,change},identity);
+        if(!sameLayoutScope(identity,deskId,token))return;
+        if(reply.status==='accepted'&&reply.layout)personalLayout=copy(reply.layout);
+        else{editError=reply.status||'storageUnavailable';dropNotice('位置未保存，已恢复；请重试。');}
+      }catch(error){if(sameLayoutScope(identity,deskId,token)){editError=error.code||'storageUnavailable';dropNotice('位置未保存，已恢复；请重试。');}}
+      finally{editSaving=false;clearEditPaint();if(sameLayoutScope(identity,deskId,token))await renderWithLayout();}
+    }
+    const press=pressApi.createPressEdit({setTimeout:later,clearTimeout:cancelTimer,eligible:editEligible,isEditing:()=>editMode,
+      begin:item=>{enterEdit();prepareReorder(item);dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();},
+      preview:previewEdit,cancel:clearEditPaint,commit:saveEdit});
+    function editHit(x,y){
+      const node=paintNodes().sort((a,b)=>b.layer-a.layer||b.order-a.order).find(n=>geometry.containsPoint(n.polygon,{x,y}));
+      if(!node)return null;const record=node.record;
+      // Native desktop file positions have their own model, not Room manifest icons.
+      if(record.icon&&(!record.desktop||record.icon.id.startsWith('desktop-')))return{kind:'icon',id:record.icon.id,record,rect:{...record.rect}};
+      if(record.definition?.kind==='widget'){const rect=recordPlacement(record);return{kind:'widget',id:record.definition.consumerId.slice(10),record,rect:{...rect},resize:editMode&&x>=rect.x+rect.width-32&&y>=rect.y+rect.height-32};}
+      return null;
+    }
+    function handleEditPointer(value){
+      if(!value||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision)return false;
+      if(value.kind==='cancel'){exitEdit();return false;}
+      if(value.kind==='idle')return editMode;
+      if(!editEligible()){press.cancel();return false;}
+      const viewport=model.readDiagnostics().viewport,point={id:value.gestureId,x:value.x*1920/viewport.width,y:value.y*1080/viewport.height};
+      if(value.kind==='down'){
+        ignoreAuthorUntil=0;
+        if(editMode&&point.x>=1740&&point.x<=1896&&point.y>=24&&point.y<=80){blockedEditSequence=value.gestureId;exitEdit();return false;}
+        const hit=editHit(point.x,point.y);
+        const blocked=hit||inputEntries.some(e=>(e.polygons||[]).some(poly=>geometry.containsPoint(poly,{x:point.x/1920,y:point.y/1080})))||
+          [...records.values()].some(r=>!r.wrapper.hidden&&['widget','dock'].includes(r.definition.kind)&&geometry.containsPoint(geometry.rectPolygon(recordPlacement(r)),point));
+        blankPress=editMode&&!blocked?{...point,at:now()}:null;if(blocked)lastBlankClick=null;
+        return press.down(point,hit)||editMode;
+      }
+      if(value.kind==='move')return press.move(point)||editMode;
+      if(value.kind==='up'&&blankPress?.id===point.id){
+        const held=blankPress;blankPress=null;const at=now(),limit=value.doubleClickTime||500;
+        const toleranceX=(value.doubleClickWidth||4)*1920/viewport.width,toleranceY=(value.doubleClickHeight||4)*1080/viewport.height;
+        if(at-held.at<=limit&&Math.abs(point.x-held.x)<=toleranceX&&Math.abs(point.y-held.y)<=toleranceY){
+          if(lastBlankClick&&at-lastBlankClick.at<=limit&&Math.abs(point.x-lastBlankClick.x)<=toleranceX&&Math.abs(point.y-lastBlankClick.y)<=toleranceY){exitEdit();return false;}
+          lastBlankClick={...point,at};
+        }else lastBlankClick=null;
+      }
+      if(value.kind==='up'){if(point.x<0||point.y<0||point.x>1920||point.y>1080)press.cancel();else press.up(point);return editMode;}
+      return false;
+    }
+
     function sameLayoutScope(identity,deskId,token){
       return !disposed&&token===layoutReadEpoch&&identity.runtimeGeneration===context.runtimeGeneration&&identity.sessionId===snapshot.sessionId&&identity.revision===snapshot.revision&&deskId===activeDesk();
     }
@@ -352,12 +650,20 @@
     }
     async function refreshPresentation(){
       if(disposed||presentationRunning)return;presentationRunning=true;
-      const identity=scope();
+      const identity=scope(),observedCutSequence=cutSequence;
       try{
-        const reply=await native.request('presentationRead',{},identity);
+        const reply=await native.request('presentationRead',desktopView?{desktopContextId:desktopView.contextId}:{},identity);
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
           presentationSkins=copy(reply.presentation.skins);
+          const before=desktopView?.contextId,beforeDesk=desktopView?.deskId,desktop=reply.presentation.desktop;
+          if(!desktop)desktopView=null;
+          else if(desktop.items!==null)desktopView=copy(desktop);
+          else if(desktopView?.contextId!==desktop.contextId||desktopView?.deskId!==desktop.deskId)desktopView=null;
+          if(before!==desktopView?.contextId){if(beforeDesk!==desktopView?.deskId)desktopPage=0;await renderWithLayout();}
           for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
           const locator=reply.presentation.locator;
           if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}
@@ -369,7 +675,7 @@
 
     function acceptSnapshot(next){
       if(disposed)return Promise.resolve(false);const accepted=model.acceptSnapshot(next);if(!accepted.accepted)return Promise.resolve(false);
-      clearLocator();snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
+      exitEdit();clearLocator();desktopClick=null;snapshot=copy(next);visualGroups=model.readDiagnostics().groups;
       native.acceptIdentity(scope());frames.acceptSnapshot(snapshot);return renderWithLayout();
     }
     function publishGeometry(consumer,report){
@@ -384,10 +690,29 @@
       if(result.effects.every(effect=>effect.type==='applyVisualGroups')){applyVisualGroups(nextGroups);return Promise.resolve(true);}
       visualGroups=nextGroups;return render();
     }
+    const editKey=e=>{if(e.isTrusted&&e.key==='Escape')exitEdit();};
+    const editDouble=e=>{if(e.isTrusted&&editMode&&(e.target===container||e.target===rootNode))exitEdit();};
+    container.addEventListener('keydown',editKey);container.addEventListener('dblclick',editDouble);
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
     if(!dockView)ready.then(()=>refreshPresentation());
-    return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,
+    return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,handleEditPointer,
+      async setTaskAreaOcclusion(value){
+        if(disposed||!dockView)return false;
+        if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return false;
+        const next=value===null?null:{x:value.x,y:value.y,width:value.width,height:value.height};
+        const requested=JSON.stringify(next),revision=snapshot.revision;
+        if(requested===JSON.stringify(taskAreaOcclusion)&&inputReady)return true;
+        taskAreaOcclusion=next;let pending=render();
+        // Resume layout and author geometry can supersede this render. Their
+        // publication still includes this exact region; wait for its real ack.
+        for(;;){
+          const confirmed=await pending;
+          if(disposed||privatePaused||snapshot.revision!==revision||requested!==JSON.stringify(taskAreaOcclusion))return false;
+          if(pending===serial)return confirmed&&inputReady;
+          pending=serial;
+        }
+      },
       refreshGeometry(){return disposed?Promise.resolve(false):render();},
       readInputSample(identity,version){
         if(!identity||!sameActionScope(identity,version))return null;
@@ -399,11 +724,11 @@
         nativeHold={sampleId};if(frameId!==null)cancel(frameId);frameId=null;inputEntries=copy(sample.buttons);return sample;
       },
       endNativeInputSample(sampleId){return nativeHold?.sampleId===sampleId?releaseNativeHold():false;},
-      resize(){if(disposed)return Promise.resolve(false);const result=model.setViewport(options.getViewport());return result.accepted&&result.effects.length?render():Promise.resolve(result.accepted);},
+      resize(){press.cancel();if(disposed)return Promise.resolve(false);const result=model.setViewport(options.getViewport());return result.accepted&&result.effects.length?render():Promise.resolve(result.accepted);},
       refreshPermissions(consumer){for(const record of records.values())if(record.definition.consumerId===consumer)frames.refreshPermissions(record.definition.instanceId);},
       setPlaybackSuspended(value){
         if(disposed||typeof value!=='boolean')return false;if(value===privatePaused)return true;
-        if(value){clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
+        if(value){exitEdit();desktopClick=null;clearLocator();layoutReadEpoch++;layoutReady=false;clearDefault();clearFocus();inputEntries=[];completion=null;privatePaused=true;releaseNativeHold(false);inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;media.setPlaybackSuspended(true);frames.setPlaybackSuspended(true);native.setSuspended(true);for(const record of records.values())if(record.watch){record.watch();record.watch=null;}}
         else{native.setSuspended(false);privatePaused=false;if(animation)animation.last=now();media.setPlaybackSuspended(false);frames.setPlaybackSuspended(false);renderWithLayout();}return true;
       },
       handleNativeInput(value){if(disposed||!inputReady||value.runtimeGeneration!==context.runtimeGeneration||value.sessionId!==snapshot.sessionId||value.revision!==snapshot.revision||value.geometryVersion!==inputVersion)return false;
@@ -412,15 +737,70 @@
           const entry=eventEntry(value);if(!entry)return false;showFocus(entry);return true;
         }
         if(value.kind==='activate'){
+          if(editMode||press.suppresses(value.inputSequence)||value.inputSequence===blockedEditSequence)return true;
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
-          const own={...completion,identity:scope(),due:value.consumer==='official'};pendingDefault=own;
+          if(value.consumer==='official.desktop'&&value.button==='desktop.paste'){
+            completion=null;desktopClick=null;
+            if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.contextMenu===true){
+            completion=null;desktopClick=null;
+            if(!desktopSelection.read().selectedIds.includes(value.button))desktopSelection.select(value.button);
+            paintDesktopSelection();desktopMenu(value);return true;
+          }
+          if(value.consumer==='official.desktop'&&[93,121].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===(value.desktopInput.key===93?0:2))desktopMenu(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===46){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===0)desktopDelete(value);
+            else dropNotice('仅支持移入回收站，请使用 Delete。');
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds,key=value.desktopInput.key,identity=scope();
+            if(value.desktopInput.modifiers===1&&key===86)desktopPaste(value);
+            if(value.desktopInput.modifiers===1&&key!==86&&selected.includes(value.button)){
+              native.request(key===88?'desktopCut':'desktopCopy',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+                .then(reply=>{
+                  if(disposed||identity.sessionId!==snapshot.sessionId)return;
+                  consumeReceipt(reply);
+                  if(reply.status==='accepted'&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0){
+                    cutSequence=key===88?reply.data.clipboardSequence:null;cutIds=new Set(key===88?selected:[]);paintDesktopSelection();
+                  }
+                },()=>diagnose('clipboardUnavailable'));
+            }
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===13&&!value.button.startsWith('desktop.page.')){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.includes(value.button))native.request('desktopOpen',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+              .then(reply=>consumeReceipt(reply),()=>diagnose('openUnavailable'));
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===113){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.length===1&&selected[0]===value.button){
+              native.request('desktopRename',{consumer:value.consumer,button:value.button,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+                .then(reply=>consumeReceipt(reply),()=>diagnose('renameUnavailable'));
+            }
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&!value.button.startsWith('desktop.page.')&&!desktopActivation(value)){completion=null;return true;}
+          const own={...completion,identity:scope(),due:['official','official.desktop'].includes(value.consumer)};pendingDefault=own;
           if(own.due)runDefault();else defaultTimer=later(()=>{if(pendingDefault===own){own.due=true;runDefault();}},100);
           return true;
         }return false;},
-      dispose(){if(disposed)return;disposed=true;clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
-      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,presentation:{skins:copy(presentationSkins),locator:locatorButton},focus:focus&&{...focus},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
+      dispose(){if(disposed)return;exitEdit();container.removeEventListener('keydown',editKey);container.removeEventListener('dblclick',editDouble);disposed=true;container.removeEventListener('dragover',desktopDragOver);container.removeEventListener('drop',desktopDrop);clearActionNotice();if(presentationTimer!==null)cancelTimer(presentationTimer);clearLocator();releaseNativeHold(false);epoch++;layoutReadEpoch++;cancelWaits();clearDefault();clearFocus();inputEntries=[];completion=null;inputReady=false;if(frameId!==null)cancel(frameId);frameId=null;for(const record of records.values())record.watch?.();frames.dispose();media.dispose();native.dispose();model.dispose();records.clear();icons.clear();localButtons.clear();effectiveLayouts.clear();rootNode?.remove();},
+      readDiagnostics(){const state=model.readDiagnostics();return{...state,inputReady,inputVersion,disposed,desktopSelection:desktopSelection.read(),presentation:{skins:copy(presentationSkins),locator:locatorButton,desktop:desktopView?{contextId:desktopView.contextId,deskId:desktopView.deskId,count:desktopView.items.length}:null},focus:focus&&{...focus},edit:{...press.read(),mode:editMode,saving:editSaving,error:editError},layout:{revision:personalLayout.revision,ready:layoutReady,error:layoutError,items:copy([...effectiveLayouts.values()])},lastError:lastError&&{...lastError},transition:animation&&{id:animation.id,elapsed:animation.elapsed,finished:animation.finished},frames:frames.readDiagnostics(),media:media.readDiagnostics()};}
     });
   }
   return Object.freeze({createDomHost});

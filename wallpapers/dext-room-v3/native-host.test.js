@@ -201,3 +201,76 @@ test('official author route retains the original SDK envelope while Player selec
  const p=f.host.request('authorInput',params);assert.equal(f.sent.length,1);assert.equal('inputSequence' in f.sent[0],false);
  f.answer(f.sent[0],{inputSequence:7,inputConsumed:true});assert.equal((await p).inputSequence,7);f.host.dispose();
 });
+test('desktop presentation accepts a full snapshot then a context-only cache reply',async()=>{
+ const f=fixture(),desktop={contextId:'scan1',deskId:'home',items:[{id:'desktop-'+'a'.repeat(64),name:'File.txt',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ try{
+  let promise=f.host.request('presentationRead',{});
+  f.answer(f.sent.at(-1),{presentation:{revision:1,skins:{},locator:null,desktop}});
+  assert.equal((await promise).presentation.desktop.items[0].name,'File.txt');
+  promise=f.host.request('presentationRead',{desktopContextId:'scan1'});
+  assert.equal(f.sent.at(-1).desktopContextId,'scan1');
+  f.answer(f.sent.at(-1),{presentation:{revision:1,skins:{},locator:null,desktop:{...desktop,items:null}}});
+  assert.equal((await promise).presentation.desktop.items,null);
+ }finally{f.host.dispose();}
+});
+
+test('desktop drop uses native additional objects and survives ordinary pause and revision changes',async()=>{
+ const sent=[],objects=[],listeners=new Set(),timers=new Map();let serial=0;
+ const host=createNativeHost({initialIdentity:identity,transport:{postMessage:()=>assert.fail('plain JSON transport'),
+  postMessageWithAdditionalObjects:(json,files)=>{sent.push(JSON.parse(json));objects.push(files);},
+  addEventListener:(_,cb)=>listeners.add(cb),removeEventListener:(_,cb)=>listeners.delete(cb)},
+  setTimeout:(cb)=>{timers.set(++serial,cb);return serial;},clearTimeout:id=>timers.delete(id)});
+ host.setSuspended(true);
+ const files=[{name:'one.txt'}],params={desktopContextId:'ctx',deskId:'home',x:.2,y:.3,modifiers:1,allowedEffects:'all'};
+ const result=host.dropFiles(params,files);
+ assert.equal(sent.length,1);assert.equal(objects[0],files);assert.equal(Object.hasOwn(sent[0],'files'),false);
+ host.setSuspended(false);host.setSuspended(true);host.acceptIdentity({...identity,revision:2});
+ for(const cb of listeners)cb({data:{type:'dext:v3-native-response',requestId:sent[0].requestId,...identity,status:'cancelled',data:null}});
+ assert.equal((await result).status,'cancelled');assert.equal(timers.size,0);host.dispose();
+});
+
+test('desktop activation preserves native key modifiers and system double-click settings',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',
+  desktopInput:{key:0,modifiers:3,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});
+test('native rename waits through its dialog pause and revision until receipt',async()=>{
+ for(const method of ['desktopRename','desktopPaste']){
+  const f=fixture();
+  try{
+   const result=f.host.request(method,{consumer:'official.desktop',button:method==='desktopPaste'?'desktop.paste':'desktop-a',geometryVersion:1,inputSequence:1}).catch(e=>({error:e.code}));
+   await flush();assert.equal(f.sent.length,1);
+   f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});await f.advance(6000);
+   assert.equal(f.host.readDiagnostics().pendingRequests,1);
+   f.answer(f.sent[0],{inputSequence:1,inputConsumed:true,data:{completed:1}});
+   assert.equal((await result).data.completed,1);
+  }finally{f.host.dispose();}
+ }
+});
+
+test('desktop open sends selected IDs and retains the native action receipt across revision',async()=>{
+ for(const method of ['desktopOpen','desktopCopy','desktopCut','desktopDelete','desktopMenu']){
+  const f=fixture();const params={consumer:'official.desktop',button:'desktop-a',selectedIds:['desktop-a','desktop-b'],geometryVersion:1,inputSequence:2};
+  try{
+   const promise=f.host.request(method,params).catch(e=>({error:e.code}));await flush();
+   assert.deepEqual(f.sent[0]?.selectedIds,params.selectedIds);
+   f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});f.answer(f.sent[0],{inputSequence:2,inputConsumed:true});
+   assert.equal((await promise).inputConsumed,true);
+  }finally{f.host.dispose();}
+ }
+});
+
+test('desktop right-button completion preserves its native context marker',()=>{
+ let receive;const events=[];
+ const host=createNativeHost({initialIdentity:identity,onInput:value=>events.push(value),transport:{postMessage(){},addEventListener:(_name,cb)=>receive=cb,removeEventListener(){}}});
+ const value={type:'dext:v3-native-event',...identity,kind:'activate',geometryVersion:1,inputSequence:1,consumer:'official.desktop',button:'desktop-file',entryId:'desktop.scan/file',desktopInput:{key:0,contextMenu:true,modifiers:0,x:123,y:456,at:1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+ receive({data:value});assert.deepEqual(events,[value]);host.dispose();
+});
+
+test('layout reorder sends one main change and peer positions',async()=>{
+ const f=fixture(),change={kind:'icon',id:'a',deskId:'home',x:144,y:32,peers:[{kind:'icon',id:'b',deskId:'home',x:32,y:32}]};
+ const pending=f.host.request('layoutSave',{layoutRevision:0,change});assert.deepEqual(f.sent[0].change,change);
+ f.answer(f.sent[0],{layout:{revision:1,icons:{home:{a:{x:144,y:32},b:{x:32,y:32}}},components:{}}});assert.equal((await pending).status,'accepted');f.host.dispose();
+});

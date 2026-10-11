@@ -220,5 +220,180 @@
     }
     return number(x)&&number(y)?{x,y}:null;
   }
-  return Object.freeze({projectDeskItems,resolveDeskLayout,validateDrop,mapLocalRect,clientPointToLocal});
+  function cellKey(x, y) {
+    return `${x}:${y}`;
+  }
+
+  function overlaps(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  }
+
+  function clampRectOutsideReserved(value, bounds, reserved = [], padding = 0) {
+    const width = Math.min(Math.max(Number(value?.width) || 0, 0), bounds.width);
+    const height = Math.min(Math.max(Number(value?.height) || 0, 0), bounds.height);
+    const requested = {
+      x: Math.min(Math.max(Number(value?.x) || 0, 0), bounds.width - width),
+      y: Math.min(Math.max(Number(value?.y) || 0, 0), bounds.height - height),
+      width,
+      height,
+    };
+    if (!reserved.some((rect) => overlaps(requested, rect))) return requested;
+    const candidates = reserved.flatMap((rect) => [
+      { ...requested, x: rect.x - width - padding },
+      { ...requested, x: rect.x + rect.width + padding },
+      { ...requested, y: rect.y - height - padding },
+      { ...requested, y: rect.y + rect.height + padding },
+    ]).map((candidate) => ({
+      ...candidate,
+      x: Math.min(Math.max(candidate.x, 0), bounds.width - width),
+      y: Math.min(Math.max(candidate.y, 0), bounds.height - height),
+    })).filter((candidate) => !reserved.some((rect) => overlaps(candidate, rect)));
+    candidates.sort((a, b) =>
+      Math.hypot(a.x - requested.x, a.y - requested.y) - Math.hypot(b.x - requested.x, b.y - requested.y)
+    );
+    return candidates[0] ?? null;
+  }
+
+  function iconRect(x, y, grid) {
+    return {
+      x: x * grid.cellWidth + (grid.offsetX ?? 0),
+      y: y * grid.cellHeight + (grid.offsetY ?? 0),
+      width: grid.footprintWidth ?? grid.cellWidth,
+      height: grid.footprintHeight ?? grid.cellHeight,
+    };
+  }
+
+  function cloneIcons(icons) {
+    return icons.map((icon) => ({
+      ...icon,
+      ...(icon.launch && typeof icon.launch === 'object' ? { launch: { ...icon.launch } } : {}),
+    }));
+  }
+
+  function candidates(originX, originY, grid) {
+    const result = [];
+    for (let y = 0; y < grid.rows; y += 1) {
+      for (let x = 0; x < grid.columns; x += 1) {
+        result.push({ x, y, distance: Math.abs(x - originX) + Math.abs(y - originY) });
+      }
+    }
+    return result.sort((a, b) => a.distance - b.distance || a.y - b.y || a.x - b.x);
+  }
+
+  function resolveWidgetIconAvoidance(sourceIcons, obstacles, grid, reserved = []) {
+    if (!grid || grid.cellWidth <= 0 || grid.cellHeight <= 0 || grid.columns <= 0 || grid.rows <= 0) {
+      throw new Error("icon grid dimensions must be positive");
+    }
+    const originalIcons = cloneIcons(sourceIcons);
+    const icons = cloneIcons(sourceIcons);
+    const blocked = [...obstacles, ...reserved];
+    const occupied = new Set();
+    const conflicts = new Set();
+
+    icons.forEach((icon, index) => {
+      const x = Math.min(Math.max(Math.round(icon.x ?? index % grid.columns), 0), grid.columns - 1);
+      const y = Math.min(Math.max(Math.round(icon.y ?? Math.floor(index / grid.columns)), 0), grid.rows - 1);
+      icon.x = x;
+      icon.y = y;
+      const key = cellKey(x, y);
+      if (occupied.has(key) || blocked.some((rect) => overlaps(iconRect(x, y, grid), rect))) {
+        conflicts.add(index);
+      } else {
+        occupied.add(key);
+      }
+    });
+
+    const pending = [...conflicts];
+    const moved = [];
+    while (pending.length) {
+      const options = pending.map((index) => {
+        const icon = icons[index];
+        const originX = icon.x ?? 0;
+        const originY = icon.y ?? 0;
+        const targets = candidates(originX, originY, grid).filter(({ x, y }) =>
+          !occupied.has(cellKey(x, y)) && !blocked.some((rect) => overlaps(iconRect(x, y, grid), rect))
+        );
+        return { index, originX, originY, targets };
+      }).sort((a, b) => a.targets.length - b.targets.length || a.index - b.index);
+      const next = options[0];
+      if (!next.targets.length) {
+        return { committed: false, icons: originalIcons, moved: [], unresolved: [...conflicts] };
+      }
+      const target = next.targets[0];
+      const icon = icons[next.index];
+      icon.x = target.x;
+      icon.y = target.y;
+      occupied.add(cellKey(target.x, target.y));
+      if (target.x !== next.originX || target.y !== next.originY) moved.push(next.index);
+      pending.splice(pending.indexOf(next.index), 1);
+    }
+    return { committed: true, icons, moved, unresolved: [] };
+  }
+
+  function resolveIconReorder(sourceIcons, draggedIndex, target, grid, obstacles = [], reserved = []) {
+    if (!grid || grid.cellWidth <= 0 || grid.cellHeight <= 0 || grid.columns <= 0 || grid.rows <= 0) {
+      throw new Error("icon grid dimensions must be positive");
+    }
+    const originalIcons = cloneIcons(sourceIcons);
+    const reject = (reason) => ({ committed: false, icons: originalIcons, moved: [], reason });
+    if (!Number.isInteger(draggedIndex) || draggedIndex < 0 || draggedIndex >= sourceIcons.length) {
+      return reject("invalid-dragged-index");
+    }
+    const blocked = [...obstacles, ...reserved];
+    const targetX = Number(target?.x);
+    const targetY = Number(target?.y);
+    if (!Number.isInteger(targetX) || !Number.isInteger(targetY)
+      || targetX < 0 || targetX >= grid.columns || targetY < 0 || targetY >= grid.rows) {
+      return reject("outside-grid");
+    }
+    if (blocked.some((rect) => overlaps(iconRect(targetX, targetY, grid), rect))) return reject("blocked");
+    const sourceCells = new Set();
+    for (const item of originalIcons) {
+      if (!Number.isInteger(item.x) || !Number.isInteger(item.y)
+        || item.x < 0 || item.x >= grid.columns || item.y < 0 || item.y >= grid.rows
+        || sourceCells.has(cellKey(item.x, item.y))
+        || blocked.some(rect => overlaps(iconRect(item.x, item.y, grid), rect))) {
+        return reject("invalid-source");
+      }
+      sourceCells.add(cellKey(item.x, item.y));
+    }
+    const coordinates = originalIcons.map((item, index) => ({
+      index,
+      x: item.x,
+      y: item.y,
+    }));
+    const draggedCell = coordinates[draggedIndex];
+    const targetKey = cellKey(targetX, targetY);
+    const slotsByKey = new Map(coordinates.map(({ x, y }) => [cellKey(x, y), { x, y }]));
+    if (slotsByKey.size !== originalIcons.length) return reject("duplicate-cell");
+    if (!slotsByKey.has(targetKey)) {
+      slotsByKey.delete(cellKey(draggedCell.x, draggedCell.y));
+      slotsByKey.set(targetKey, { x: targetX, y: targetY });
+    }
+
+    const slots = [...slotsByKey.values()].sort((a, b) => a.y - b.y || a.x - b.x);
+    const targetSlotIndex = slots.findIndex(({ x, y }) => x === targetX && y === targetY);
+    const ordered = coordinates
+      .slice()
+      .sort((a, b) => a.y - b.y || a.x - b.x || a.index - b.index)
+      .map(({ index }) => index)
+      .filter((index) => index !== draggedIndex);
+    ordered.splice(targetSlotIndex, 0, draggedIndex);
+
+    const icons = cloneIcons(originalIcons);
+    ordered.forEach((iconIndex, slotIndex) => {
+      icons[iconIndex].x = slots[slotIndex].x;
+      icons[iconIndex].y = slots[slotIndex].y;
+    });
+    if (icons.some(item => blocked.some(rect => overlaps(iconRect(item.x, item.y, grid), rect)))) {
+      return reject("blocked-path");
+    }
+    const moved = icons.flatMap((item, index) =>
+      item.x !== originalIcons[index].x || item.y !== originalIcons[index].y ? [index] : []
+    );
+    return { committed: true, icons, moved, reason: null };
+  }
+
+
+  return Object.freeze({resolveIconReorder,resolveWidgetIconAvoidance,projectDeskItems,resolveDeskLayout,validateDrop,mapLocalRect,clientPointToLocal});
 });

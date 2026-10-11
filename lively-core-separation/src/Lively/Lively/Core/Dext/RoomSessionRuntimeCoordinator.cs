@@ -35,6 +35,8 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private readonly RoomRuntimeFactsSource runtimeFacts;
     private readonly RoomActionAuthority actions;
     private readonly RoomDockPreferenceStore dockPreferences;
+    private readonly TaskbarController taskbar;
+    private readonly DockHostOwnership dockOwnership;
     private WebWebView2? activePlayer;
     private bool activeNativeRoom;
     private string? activeDisplayId;
@@ -43,7 +45,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     private string? activeInstallationStamp;
 
     public RoomSessionRuntimeCoordinator(InstalledRoomSessionAuthority authority,
-        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences)
+        RoomSessionProtocolGateway gateway, RoomSessionKernel kernel, RoomRuntimeFactsSource runtimeFacts, RoomActionAuthority actions, RoomDockPreferenceStore dockPreferences, TaskbarController taskbar, DockHostOwnership dockOwnership)
     {
         this.authority = authority;
         this.gateway = gateway;
@@ -51,6 +53,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
         this.runtimeFacts = runtimeFacts;
         this.actions = actions;
         this.dockPreferences = dockPreferences;
+        this.taskbar = taskbar;
+        this.dockOwnership = dockOwnership;
+        dockOwnership.Changed += QueueDockUpdate;
         runtimeFacts.Sampled += OnRuntimeFactsSampled;
         InitializeDockTaskbarMaintenance();
     }
@@ -79,7 +84,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     public void OnPageReady(WebWebView2 player)
     {
         try { OnDesktopPageReady(player); }
-        finally { QueueDockUpdate(); }
+        finally { QueueDockUpdate(); QueueDesktopScan(); }
     }
 
     private void OnDesktopPageReady(WebWebView2 player)
@@ -195,6 +200,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
     public void Dispose()
     {
         runtimeFacts.Sampled -= OnRuntimeFactsSampled;
+        StopDesktopScan();
         DisposeDock();
         ExitNativeIdle();
     }
@@ -219,6 +225,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
             authority.Unbind(exitedPid);
         }
         QueueDockUpdate();
+        if (wasNative) QueueDesktopScan();
         ClearExitedNativeIdle(exitedPid);
         return wasNative;
     }

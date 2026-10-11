@@ -123,7 +123,7 @@ namespace Lively.Core.Wallpapers
             trustedDextHost = parsedArgs?.IndexOf("--dext-trusted-host", StringComparison.OrdinalIgnoreCase) >= 0;
             if (isNativeDock)
             {
-                if (!trustedDextHost || dockHeightDip is < 48 or > 240 || dockMode is not ("autohide" or "reserve"))
+                if (!trustedDextHost || dockHeightDip is < 48 or > 240 || dockMode is not ("overlay" or "autohide" or "reserve"))
                     throw new ArgumentException("Native Dock requires an official Room host and valid height");
                 cmdArgs.Append(" --dext-dock --dext-dock-height " + dockHeightDip + " --dext-dock-mode " + dockMode);
             }
@@ -494,6 +494,9 @@ namespace Lively.Core.Wallpapers
                         break;
                     case MessageType.msg_room_native_sample:
                         HandleNativeSample((LivelyMessageRoomNativeSample)obj);break;
+                    case MessageType.msg_room_dock_touch:
+                        AcceptNativeDockTouch((LivelyMessageRoomDockTouch)obj);
+                        break;
                     case MessageType.msg_room_dock_state:
                         AcceptNativeDockState((LivelyMessageRoomDockState)obj);
                         break;

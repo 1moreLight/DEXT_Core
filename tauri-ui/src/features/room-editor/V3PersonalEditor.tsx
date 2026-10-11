@@ -56,7 +56,7 @@ export function V3PersonalEditor(props:Props){
    if(epoch.current!==token)return false;
    if(valid(reply,props.room.id,before.stamp)){
     setBoard({...before,editor:reply.editor!});setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,reply.editor!,true));setForm(current=>targetFormAfterPersonalEdit(current,edit,true));
-    setNotice(edit.operation==="locateButton"?"已请求定位当前可见区域。":"本机设置已保存。");return true;
+    setNotice(edit.operation==="locateButton"?"已请求定位当前可见区域。":edit.operation==="refreshDesktopSync"||edit.operation==="setDesktopSync"&&edit.enabled?"已请求识别 Windows 桌面，完成后图标会显示在同步 Desk。":"本机设置已保存。");return true;
    }
    if(reply.status==="staleSession"){setBoard(null);setNotice("运行副本已变化，请重新读取或应用当前作品。");}
    else{setSettings(current=>settingsAfterPersonalEdit(current,selected,edit,before.editor,false));setNotice(reply.status==="notOperable"?"当前 Desk 或桌面阶段无法定位这个按钮。":reply.status==="missingBinding"?"目标已不存在，请重新选择。":"保存失败，已保留原本机设置。");}
@@ -69,6 +69,19 @@ export function V3PersonalEditor(props:Props){
  const presentationIssue=v3IconCreationIssue(props.room,props.deskId,false);
  return <section aria-label="按钮与本机设置" className="space-y-3 rounded-lg border p-3">
   <div><h2 className="font-medium">按钮与本机设置</h2><p className="text-xs text-muted-foreground">查看作品入口，设置本机动作和图标外观。目标路径只保存在本机。</p></div>
+  <fieldset disabled={locked||!board||props.dirty} className="space-y-2 rounded-lg border p-3">
+   <legend className="px-1 text-sm font-medium">Windows 桌面</legend>
+   <p className="text-xs text-muted-foreground">一键显示原桌面的文件、文件夹和快捷方式，文件仍保留在原位置。</p>
+   <p className="text-xs">{board?.editor.desktopSync?.enabled?`同步到：${props.room.desks.find(d=>d.id===board.editor.desktopSync?.deskId)?.name??board.editor.desktopSync.deskId} · 已记录 ${board.editor.desktopSync.itemCount} 项`:"尚未启用"}</p>
+   {board?.editor.desktopSync?.enabled&&<p className="text-xs text-muted-foreground" role="status">{
+    board.editor.desktopSync.scanState==="ready"?(board.editor.desktopSync.issueCount?"部分项目暂时无法读取，可点击刷新重试。":"识别完成，图标已交给桌面显示。"):
+    board.editor.desktopSync.scanState==="error"||board.editor.desktopSync.scanState==="retry"?"本次识别未完成，请点击刷新桌面文件。":"正在识别桌面项目…"}</p>}
+   <div className="flex flex-wrap gap-2">
+    <Button type="button" size="sm" onClick={()=>void save({operation:"setDesktopSync",deskId:props.deskId,enabled:true})}>接入当前 Desk</Button>
+    <Button type="button" size="sm" variant="outline" disabled={!board?.editor.desktopSync?.enabled} onClick={()=>void save({operation:"refreshDesktopSync"})}>刷新桌面文件</Button>
+    <Button type="button" size="sm" variant="outline" disabled={!board?.editor.desktopSync?.enabled} onClick={()=>void save({operation:"setDesktopSync",deskId:board!.editor.desktopSync!.deskId,enabled:false})}>关闭同步</Button>
+   </div>
+  </fieldset>
   <div className="flex gap-2"><Input aria-label="搜索按钮" placeholder="名称、ID 或来源" value={query} onChange={e=>setQuery(e.target.value)}/>
    <select aria-label="按钮作用域" className="rounded border bg-background p-2 text-sm" value={scope} onChange={e=>setScope(e.target.value)}>
     <option value="all">全部</option><option value="room">Room</option>{props.room.desks.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}

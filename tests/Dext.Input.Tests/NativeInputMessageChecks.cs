@@ -15,6 +15,44 @@ internal static class NativeInputMessageChecks
             ["viewport"]=new JObject{["width"]=800,["height"]=600,["dpr"]=1.5},["buttons"]=new JArray(new JObject{["consumer"]="scene",["button"]="open",["x"]=.1,["y"]=.2,["width"]=.2,["height"]=.3,["tabIndex"]=0})};
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
+        Check("paused Player permits desktop metadata and drop receipts but not input actions",()=>{
+            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename","desktopOpen","desktopCopy","desktopCut","desktopPaste","desktopDelete","desktopMenu"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
+            foreach(var method in new[]{"activate","geometry","authorInput","layoutSave","storageSet"})Require(!DextNativeInputProtocol.AllowsWhileSuspended(method));
+        });        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
+        Check("desktop rename carries only a native file proof and survives wire serialization",()=>{
+            foreach(var method in new[]{"desktopRename","desktopPaste"}){
+                var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");
+                r["consumer"]="official.desktop";r["button"]="desktop-"+new string('a',64);r["inputSequence"]=7;
+                var parsed=Parse(r);Require(parsed?.Method==method&&parsed.InputSequence==7);
+                Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.Button==(string?)r["button"]);
+                r["button"]="desktop.paste";Require((Parse(r)!=null)==(method=="desktopPaste"));
+                r["consumer"]="scene";Require(Parse(r)==null);
+                r["consumer"]="official.desktop";r["button"]="desktop.page.next";Require(Parse(r)==null);
+            }
+        });
+        Check("desktop open preserves selected IDs through native IPC",()=>{
+            foreach(var method in new[]{"desktopOpen","desktopCopy","desktopCut","desktopDelete","desktopMenu"}){
+                var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");
+                r["consumer"]="official.desktop";r["button"]="desktop-a";r["inputSequence"]=8;
+                r["selectedIds"]=new JArray("desktop-a","desktop-b");
+                var parsed=Parse(r);Require(parsed?.Method==method);
+                var wire=RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest;
+                Require(wire?.SelectedIds?.SequenceEqual(new[]{"desktop-a","desktop-b"})==true);
+            }
+        });
+        Check("desktop drop carries current scope and normalized landing point without JSON paths",()=>{
+            var parsed=Parse(Drop());Require(parsed?.DesktopDrop?.DeskId=="home"&&parsed.DesktopDrop.X==.25&&parsed.DesktopDrop.Y==.5&&parsed.DesktopDrop.Modifiers==1&&parsed.DesktopDrop.Files==null);
+            parsed!.DesktopDrop.Files=new[]{@"C:\fixture\one.txt"};var wire=RuntimeMessageChecks.Roundtrip(parsed) as LivelyMessageRoomNativeRequest;
+            Require(wire?.DesktopDrop?.Files?.Length==1&&wire.DesktopDrop.AllowedEffects=="copyMove");
+        });
+        Check("desktop drop page roundtrips and invalid pages are rejected",()=>{
+            var r=Drop();r["page"]=3;var parsed=Parse(r);Require(parsed?.DesktopDrop?.Page==3);
+            Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.DesktopDrop?.Page==3);
+            foreach(var value in new[]{-1.0,.5,4096}){r["page"]=value;Require(Parse(r)==null);}
+        });        Check("desktop drop rejects out of viewport landing and invalid effects",()=>{
+            var r=Drop();r["x"]=-.01;Require(Parse(r)==null);r=Drop();r["y"]=1.01;Require(Parse(r)==null);r=Drop();r["allowedEffects"]="none";Require(Parse(r)==null);
+        });
+        Check("desktop drop does not take source files from page JSON",()=>{var r=Drop();r["files"]=new JArray(@"C:\fixture\one.txt");Require(Parse(r)==null);});
         Check("private polygon geometry accepts separate presentations for one action",()=>{
             var r=Request();var b=(JObject)r["buttons"]![0]!;b["entryId"]="icon.home/one";
             b["polygons"]=new JArray { new JArray(new JObject{["x"]=.1,["y"]=.2},new JObject{["x"]=.3,["y"]=.2},new JObject{["x"]=.1,["y"]=.5}) };
@@ -91,6 +129,10 @@ internal static class NativeInputMessageChecks
             var r=Request();r["method"]="layoutSave";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["layoutRevision"]=0;
             r["change"]=new JObject{["kind"]="icon",["id"]="icon-1",["deskId"]="home",["x"]=240,["y"]=360};
             var parsed=Parse(r);Require(parsed?.Method=="layoutSave");Require(RuntimeMessageChecks.Roundtrip(parsed!) is LivelyMessageRoomNativeRequest);
+            r["change"]!["peers"]=new JArray(new JObject{["kind"]="icon",["id"]="icon-2",["deskId"]="home",["x"]=32,["y"]=32});
+            var batch=Parse(r);Require(batch?.LayoutChange?.Peers?.Length==1);
+            var roundtrip=(LivelyMessageRoomNativeRequest)RuntimeMessageChecks.Roundtrip(batch!);Require(roundtrip.LayoutChange.Peers[0].Id=="icon-2");
+            ((JObject)r["change"]!).Remove("peers");
             foreach(var invalid in new JToken[]{-1,1.5,"1"}){r["layoutRevision"]=invalid;Require(Parse(r)==null);}r["layoutRevision"]=0;
             foreach(var field in new[]{"target","consumer","proof","approved"}){r[field]="fake";Require(Parse(r)==null);r.Remove(field);}
             r["change"]!["x"]=1825;Require(Parse(r)==null);

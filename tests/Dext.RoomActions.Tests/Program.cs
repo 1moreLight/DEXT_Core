@@ -2,9 +2,16 @@ using Dext.Core.Rooms;
 using System.Diagnostics;
 using System.Text.Json;
 
+if(args.Length==1 && args[0]=="--layout"){int layoutFailures=0,layoutTotal=0;RoomActionChecks.LayoutChecks((name,body)=>{layoutTotal++;try{body();Console.WriteLine("PASS "+name);}catch(Exception e){layoutFailures++;Console.WriteLine("FAIL "+name+": "+e);}});Console.WriteLine($"{layoutTotal-layoutFailures}/{layoutTotal} layout checks passed");Environment.ExitCode=layoutFailures==0?0:1;return;}
+if (args.Length==1 && args[0]=="--desktop-sync") { DesktopSyncChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-clipboard-keys") { DesktopClipboardKeyChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-menu-focus") { DesktopMenuFocusChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-context-input") { DesktopContextInputChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-menu-keys") { DesktopMenuKeyChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-f2") { DesktopF2Checks.Run(); return; }
 if (args.Length==1 && args[0]=="--foreground-return") { ForegroundReturnChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--native-data-sources") { await NativeDataLiveProbe.Run(); return; }
-if (args.Length!=0 && !(args.Length==1 && args[0] is "--read-grants" or "--personal-editor" or "--visible-data")) throw new ArgumentException("Unknown action probe mode");
+if (args.Length!=0 && !(args.Length==1 && args[0] is "--read-grants" or "--personal-editor" or "--visible-data" or "--sharing-copy" or "--pointer-regression")) throw new ArgumentException("Unknown action probe mode");
 
 var failures = 0;
 var total = 0;
@@ -38,6 +45,15 @@ static void Seed(RoomPersonalStore store)
     });
 }
 
+if(args.Length==1 && args[0]=="--pointer-regression"){
+    RoomActionChecks.PointerRegressionChecks(Check);NativeEventSampleChecks.Run(Check);
+    Console.WriteLine($"{total-failures}/{total} pointer regression checks passed");Environment.ExitCode=failures==0?0:1;return;
+}
+if(args.Length==1 && args[0]=="--sharing-copy"){
+ SharingCopyChecks.Run(Check);
+ Console.WriteLine($"{total-failures}/{total} sharing copy checks passed");
+ Environment.ExitCode=failures==0?0:1;return;
+}
 if(args.Length==1 && args[0]=="--personal-editor"){
  RoomActionChecks.PersonalEditorChecks(Check);
  Console.WriteLine($"{total-failures}/{total} personal editor checks passed");

@@ -1,0 +1,74 @@
+# V3-P8-013 官方HTML任务区与演示验收
+状态：实施4/4=100%，待统一人工验收；四项要求均保留，尚未验收通过、合并或替换用户运行版。
+目标：同一主题窗口中的官方应用区域，不能通过第二条原生Dock假装融合。
+自动：布局和稳定状态Node行为检查，真实DOM按下/刷新/释放与跨页取消；Core/Player专用消息和输入互斥，Release构建。
+统一人工步骤：
+1. 融合演示同一主栏显示主题导航、固定应用、运行点；单击启动/切前台/最小化。
+2. 按下期间其他窗口标题/运行状态变化，抬起仍仅触发原项目；切Desk/关闭窗口后旧选择不误触。
+3. 官方区域覆盖的作者按钮不同时触发；区域外原导航仍顺畅；触摸/键盘可用。
+4. 多窗口标题选择和固定菜单可用，窄区可滚动；隐藏/全屏时菜单同时消失；退出仍恢复任务栏。
+原生缩略图/默认切换与完整回退由014接续，不把标题选择当缩略图交付。
+
+
+阶段证据（不是验收通过）：71项Node与五组真实headlessEdge DOM交互通过。新模块尚未加载到正式index/main，Core/Player数据/原生动作/图标和融合演示尚待03；不把模拟onAction接收器当成启动应用成功。原dom-host新增方法默认null，不改变现有发布几何。
+2026-10-10增量：Core展示适配、PNG缓存、私有IPC和Player接收入口编译通过；72项Node/六组headless DOM通过。正式main和原生动作仍未接，人工步骤尚未执行，工作包仍50%。
+正式页面接线增量：资源白名单、index/main控制器已接，86项Node与七组后台DOM/Release通过。ActionsEnabled=false，未验证应用启动或触控；上述统一人工四步全部保留。
+本轮最终自动证据：89项Node、七组DOM及Release构建；独立review提出的遮挡回退问题已复现并修复。运行仍旧候选；四项统一人工步骤未执行。
+本轮原生取样增量：16项Core任务关联、17项原输入回归、90项Node、七组原DOM+四组原生目标取样DOM通过，完整Release通过。应用操作回调已接但ActionsEnabled仍false；人工四步全部保留，未执行真实Player输入。
+最终复核：任务检查扩至20项，包含生产authority的排队后撤销与重新发布；独立review问题已RED→GREEN，最终Release通过。统一人工四步仍未执行。
+键盘接线增量：正式DOM的独立taskTargets、Player私有回传、Core投影校验和现有RawInput/KeyDelivery已贯通；Tab/Shift+Tab、Enter/Space与本地菜单返回/Esc已接线。原生任务键不合成转发给作者frame。窄栏焦点滚出后回跳作者、作者重新进入跳过应用两处问题均RED→GREEN修复（ERRORS #293）。
+证据：16项Core键盘、20项鼠标任务、17项原输入、90项Node、七组原DOM和八组取样/键盘DOM通过；完整Release构建通过。独立复核只有上述边界进入问题，已修复。CoreOnly确认旧Core39560继续运行，没有启动配置器；不是新代码实机验收。
+当前03仍开做，2/4=50%。ActionsEnabled=false，真实Player/触控、独立融合样包仍待做；上述旧阶段缺少键盘接线的说明仅为历史。统一人工四步未执行，继续后续工作，不合并master。
+独立融合样包已提供：rooms/v3-fusion-lab，覆盖共享/窄任务区/无Dock；四组真实DOM布局与无Dock隐藏、生产Core安装校验通过。复现见../V3_FUSION_LAB.md。它尚未在真实Player应用，统一四步仍未执行。
+真实Release Player补证：生产私有任务快照成功到达正式main/controller/DOM；当前原生全屏状态使任务区保持不可用。可见鼠标/键盘分支SKIP，触屏及操作系统动作未验证，人工四步继续保留。
+
+2026-10-11最新补证（替代前面仅全屏SKIP的当前口径）：前台全屏结束后，隔离实际Release Player任务区显示、Tab/Enter私有取样及完成打开窗口菜单均通过；Core消息仍为夹具，不算实际RawInput或OS操作。恢复render覆盖遮挡确认的缺陷已三项RED→GREEN修复，独立review无具体回归；最终93项Node、17项原输入及完整Release通过。鼠标阶段仍失败：Native input dispatch not observed，尚未定位，不记通过。曾用OS鼠标边沿辅助诊断，仍失败，已移除该诊断注入；临时guardian日志也已撤回并重建。探针仍可复现未解决的鼠标门槛。触屏未接、真实应用动作未启用；03继续开做，工作包2/4=50%。CoreOnly复核保留Core39560，没有启动配置器，也未更换用户运行候选。
+
+2026-10-11鼠标回执问题已定向修复（#296）：外层Dock与WebView anchor可见，但Chromium实际input HWND隐藏；页面DOM取样成功不能证明真实显示/点击。同步controller.IsVisible后，最终无临时guardian日志的Release构建、隔离实际Player鼠标DOWN/UP同目标回执、Tab/Enter及官方菜单、隐藏/再次显示、无抢前台通过。恢复时探针补发新Core任务快照，保持暂停撤销操作许可的规则。证据：.build/task-visibility-red.log、task-visibility-final-build.log、task-visibility-final.log。旧“鼠标回执未定位”条目为历史，本次解决该故障。实际Core RawInput/OS动作及触屏仍待做，ActionsEnabled生产仍false，03开做、2/4=50%。CoreOnly复核旧候选39560，未更换用户运行版、未新增配置器。
+2026-10-11步骤03操作许可增量做完：SendNativeDockTasks现按NativeDockAvailable设置ActionsEnabled；现有500ms刷新会在恢复就绪后补发快照，完成仍检查物理手势/当前窗口/投影。完整Core/Release Player/Watchdog构建通过，20任务、16键盘、17原指针检查通过（.build/task-actions-build.log、task-actions-regression.log）。这三组检查覆盖现有输入关联，不是新增许可门控的真实Core验收。CoreOnly核对仍为旧候选PID39560，没有启动配置器；新代码尚未部署。实际Core启动/激活/最小化和触屏待验证，03仍开做，2/4=50%。
+2026-10-11真实Core补证完成一段：独立self-contained副本v3-task-live-20261011，真实Core47728→Player47868收到11应用任务，displayReady、ActionsEnabled=true且未抢前台。证据.build/task-fusion-live.log；夹具49c12d19-9221-4ed5-ae13-4fdabc0bfa01的Room/personal/checkpoint/偏好/鼠标已恢复。仍未验证应用OS动作或触屏，03继续50%。发现并修复发布资源漏4项（#297），新检查RED→GREEN、实际发布目录校验通过。退出RPC两版本均残留进程（#298待修），按精确路径清理后恢复原候选29792，状态/空Room复核通过，无新增配置器。
+2026-10-11 #298退出修复做完：原生+SOS栈定位SystemEvents→WinForms Control.Invoke等待已停止UI，App启动前建立WPF同步上下文；完整Release与真实融合生命周期/退出3轮通过，无强杀新Core。原候选5924已恢复且RPC/空Room复核正常。实际OS应用操作及触屏未验收，03仍开做、2/4=50%；详见errors/backend #298和.build/exit-context-live.log。
+2026-10-11真实OS任务动作增量：专用窗口探针已建立并实际运行，暴露旧原点与eventSamples关闭；Player平移刷新和仅官方任务区启用取样已改，68项宿主回归、完整Release通过。实际激活仍未通过，不标完成；后续追踪取样/完成回调。临时诊断已撤回，原候选14912恢复正常。#299详述证据，03继续开做、2/4=50%。
+2026-10-11真实Core任务鼠标三步做完：定位到重复合成DOM边沿回执超时；官方任务改用私有视觉取样与Core原始物理pair，不重复转发。完整Release、53输入回归、实际Core专用窗口激活/最小化/恢复通过，.build/task-direct-actions-passed.log。临时日志已撤，原候选15620恢复，未部署用户运行版。首次应用启动、触屏/其他统一门槛仍待做，03继续开做2/4=50%。
+2026-10-11首次启动探针增量：新增fusion-launch-live及45秒自动退出专用子程序，构建通过。真实Core固定/未运行任务可见，点击后8秒与30秒均未确认新窗口；随后观察到Explorer启动子程序，尚不能归因或记通过。清理RPC也发生超时，已补finally嵌套恢复且人工核对恢复原候选49468、enabled=true、pins=0、groups=11、error空，测试子程序已清理；Room夹具/原checkpoint恢复。证据.build/fusion-launch-first-failure.log、fusion-launch-second-failure.log、fusion-launch-live.log。下一步定位AppCatalogService/ExplorerShellLaunchService同步启动与延迟关系，避免继续重复输入测试。03仍开做，2/4=50%。
+2026-10-11 #300增量修复：失败现场dotnet-stack证明UI线程停于Microsoft.CSharp ComMethodDesc/EnsureScanDefinedMethods→ExplorerShellLaunchService.TryOpen→CompleteTask；以Type.InvokeMember/ParameterModifier调用所需IDispatch成员，避免dynamic枚举类型信息。受控应用参数/工作目录检查通过（Explorer path=true，411ms），完整Release通过。相同真实Core47028/Player43644的Dock首次启动专用程序45860通过，临时固定项/偏好/夹具/checkpoint均自动恢复，RPC未再超时。注意探针12313ms包含准备点击时间，不能称为纯启动耗时或响应速度通过；后续拆分时间定位。证据.build/fusion-launch-stack.log、shell-dispatch-launch.log、shell-dispatch-build.log、shell-dispatch-live-passed.log。03仍开做，工作包2/4=50%，触屏/完整统一验收继续；未更换用户运行候选。
+2026-10-11启动耗时拆分增量：探针新增实际DOWN/UP UTC及子进程创建时刻，纠正旧click-to-window包含准备时间的标签。一次实机成功：UP497ms，进程创建13827ms、窗口确认15933ms（.build/launch-timing-live.log）；另一次无抓栈的实机失败，UP293ms，30秒未创建进程，Core日志无Application launch begin（.build/launch-boundary-live-failure.log及20261011_015440.txt）。不能宣称首次启动稳定。Core Click现记录启动调用进入/返回耗时，不含用户路径。完整Release与探针构建通过。下一步追踪HandleNativeSample到CompleteTask的完成/拒绝，暂不继续假设剩余延迟在Shell内部。原运行候选恢复、enabled=true pins=0 groups=11 error空、无测试子程序，03仍开做2/4=50%。
+2026-10-11输入完成链证据与启动线程修复：取样DOWN/UP配对成功，UP后约8ms进入Launch；同步Launch实际耗时11386ms，见.build/task-completion-before-worker-core.log。仅将已确认的启动请求放至Task.Run，Click以async void保留UI异常处理和刷新，激活/最小化不走后台。完整Release与探针构建通过；真实Core6272/Player38696启动49568通过，UP到窗口5266ms、进程创建在准备起点4097ms、UP后状态RPC2ms（不代表整个启动期间持续采样）。偏好/固定项/夹具/原checkpoint自动恢复，原候选复核正常，无测试子程序。证据.build/task-launch-worker-live.log、task-launch-worker-build.log。间歇丢点击尚未抓到拒绝原因，剩余启动耗时仍在，不能把本轮单次成功称稳定完成；03继续开做、2/4=50%。
+2026-10-11原始边沿及Player阶段诊断增量：首次复现失败没有任何Task sample（.build/task-no-sample-failure.log），任务投影刷新不是已证实根因。补Core原始边沿/手势/投递日志和Player arm/prepare阶段日志；未改现有判定条件。完整Release通过，最新实际Core/Player串联日志覆盖down→arm=True→ready→up→配对→动作接受，首次启动成功，UP至窗口4895ms；清理/恢复通过。证据.build/task-player-stage-build.log、task-player-stage-live.log、task-player-stage-core.log。间歇失败的具体Player阶段仍未抓到，不能称修复；下次沿这些日志复现，勿继续重复审查投影ID。03开做，工作包2/4=50%，原候选恢复，无新增配置器。
+2026-10-11触控路径探针做完一段：新增touch-path和fusion-touch-live。普通自有窗口的Windows注入触摸产生真实pointer消息及兼容鼠标/RawInput各一对；实际WebView2官方任务激活失败且未记录到Dock raw鼠标边沿，触控功能仍未接通。证据/接入约束/下一步见plans/V3-P8-013/03-touch-path.md。探针编译通过，原候选/偏好/Room/checkpoint恢复；不新增全局重定向、不改生产点击链，03继续开做2/4=50%。鼠标间歇失败保留未解决，不继续反复跑同一成功样本。
+2026-10-11几何/任务栏反馈循环修复：新增私有GeometryUpdating，仅已同步窗口的纯位置刷新可短暂维持任务栏替代资格，2秒截止；输入仍要求WindowReady，位置变化继续取消旧手势。可见性、连接、文档变化清除刷新状态；Core保持PID/会话/心跳/工作区验证。Release构建通过（.build/task-geometry-lease-build.log）。同一raw-owner实机序列Core49284/Player21764通过前台RawInput占用下点击、激活、最小化、恢复；20261011_023219.txt只有1260→1320一次正常位置调整，8个鼠标边沿，无往返。触控Core47640/Player48584仍失败，20261011_023315.txt同样无往返但RawInput边沿0，转查WebView2触控入口；不称触控通过。原候选Core37820恢复，无新增配置器。03仍开做，2/4=50%，待统一人工验收。
+2026-10-11触点归属与观测边界：探针记录实际命中Chrome_RenderWidgetHostHWND属于Chromium PID46936/TID49504，其父Chrome_WidgetWin_0及Form属于Player25508/TID1316。候选专用main.js记录DOM touchEvents，最新为空且inputEnabled=false；代码复核installOfficial在预注入capture gate对无expected事件preventDefault/stopImmediatePropagation，故后置监听为空不能证明浏览器未收到触摸。下一步在守卫入口添加只读诊断，保留配对判定，不直接放行DOM、不据此重写CompositionController。探针构建通过；fusion-touch-live仍失败并完成清理，证据.build/touch-target-build.log、.build/fusion-touch-live.log、Core日志20261011_023904.txt。生产代码本轮未改，03仍2/4=50%。
+2026-10-11守卫入口诊断结果：新增私有diagnostics计数查询与Player差异日志，实机Core49620/Player49636记录touchDown=1、touchUp=1、touchBlocked=3（含兼容click），官方页也记录trusted touchstart/end。因此浏览器确已收到真实触摸；Core依赖鼠标RawInput未建立对应手势，守卫按当前规则拦截。无需据后置监听为空直接换CompositionController。下一步设计并接入守卫可信触摸→Player→Core的专用配对通道，仍须保留真实顶层文档/会话/坐标/按下抬起/取消检查，不能直接DOM onAction放行。当前触控激活仍失败。最终Release构建与29项现有守卫测试通过；证据.build/touch-gate-build.log、touch-gate-tests.log、fusion-touch-live.log和20261011_024500.txt。原候选Core25612恢复，无新增配置器；03仍开做2/4=50%。
+2026-10-11触摸观察器增量：observeOfficialTouch捕获原生Event/PointerEvent/MouseEvent getter，默认关闭，私有touchEnable/touchDisable启停；真实单指DOWN/UP递增序列，6 CSS像素外移动、多指、pointercancel、lostpointercapture、pagehide、尺寸变化取消。消息仅含触点/视口/序列和私有文档标识，不直接调用动作。新增7项行为检查，与已有29项守卫检查合计36通过；最终7项复核及Release通过，证据.build/touch-observer-tests.log、touch-observer-final-tests.log、touch-observer-build.log。尚未启用：Player接收验证和Core触摸所有权/配对仍待接，不能称实际触控已通；旧Core25612保留，03仍开做2/4=50%。
+2026-10-11触摸端到端接通：私有握手绑定当前generation/session/revision/documentNonce，Player解析并过滤旧序列，独立IPC去掉私有token后进入Core。Core按实时HWND/视口换算触点坐标，独立持有触摸联系并复用现有DOWN/UP采样、任务投影及动作完成；隐藏/未就绪/断连/会话变化/过期清除。首轮探针因等待就绪后仍用旧窗口origin而未注入，修正为注入前重测，归属检查保留。最终Release及探针构建通过；实际Core40296/Player45652的Windows注入触摸：拖动取消、激活、最小化、恢复、随后第一下鼠标点击均通过。证据.build/touch-bridge-build.log、touch-bridge-probe-build.log、touch-bridge-observer-tests.log、fusion-touch-live.log。物理触屏、多指/隐藏/切Desk实机取消、鼠标游标远离时触控及作者区域仍待验收；不能把Windows注入成功称为物理触屏通过，03仍开做、工作包2/4=50%。原运行候选/偏好/夹具已恢复，无新增配置器。
+2026-10-11触摸边界与菜单返回增量：新增双触点注入（finally释放全部触点）及注入前SetCursorPos(80,80)移开鼠标的单指激活场景。双指没有启动应用，但Windows触发官方contextmenu并隐藏图标列表；只读menuBack观测确认，不误删正常菜单行为。发现实际Back鼠标DOWN/UP到Core而taskHit=false：samplePointer排除了dismissMenu，且鼠标/触摸菜单完成缺私有activate回送。已纳入Back采样，当前投影通过后Core回送openWindows/dismissMenu，键盘原有回送不重复。最终Release通过；实际Core12916/Player36856通过拖动取消、双指不激活、Back返回、游标预先移开后的触摸激活/最小化/恢复、第一下鼠标交接。证据.build/task-menu-back-failure.log、task-menu-back-build.log、fusion-touch-live.log、touch-boundary-probe-build.log。未证明物理触屏、隐藏/切Desk取消或Windows注入期间不改变系统游标位置；不外推。03仍开做2/4=50%，原候选/偏好/夹具恢复，无新增配置器。
+
+2026-10-11关闭Dock期间触摸取消：探针以真实OS触点DOWN后通过SetRoomDockPreference(enabled=false)关闭官方Dock，保持16ms触点UPDATE，在窗口已隐藏后UP。实际Core13252/Player45184，关闭耗时928ms，目标保持最小化且前台不变；此前拖动/双指取消、菜单Back、触摸激活/最小化/恢复、随后鼠标点击通过。证据.build/touch-disable-probe-build.log、fusion-touch-live.log；原运行候选、偏好、夹具恢复。首次长按无UPDATE导致InjectTouchInput UP超时1460，修正探针后通过；不视为产品点击故障。该项覆盖显式关闭Dock，不等于自动隐藏或切Desk取消；物理触屏仍待验收。03开做，整包仍2/4=50%。
+
+2026-10-11切Desk取消复核：正式导航来自原生按钮，NavigateApplicationDock明确无RPC且只接受Application所有权，不能拿该入口伪造主题Dock的OS操作。生产RoomNativeInputAuthority.ObserveSnapshot在修订增加时ClearGeometry，DockTouchAvailable同时核对旧触点revision。新增5项行为回归：按住后切页清手势、旧UP无动作、回原Desk不复活、回页后新点击可用、已排队完成跨往返切页失效；task-input全部25项通过（.build/task-desk-cancel-tests.log）。这是生产权威/任务完成逻辑证据，未覆盖真实Player在按住期间收到切页事件的全链路，不标实机通过。未更换运行版。下一步以融合样包真实导航/键盘入口验证，不添加测试专用生产RPC。03仍开做，整包2/4=50%。
+
+2026-10-11真实键盘多应用修复：新增fusion-keyboard-live，实际点击官方⌨入口，真实SendInput Tab/Enter，仅激活探针自有窗口。首轮Core收到focus取样但反复拒绝geometry；根因私有entryId只有context/action/window，多个应用activate共享ID，DextNativeGeometry按consumer/entryId拒绝重复。统一改为context/item/action/window，Core完成时再次核对item与proof.Button一致；鼠标/触摸本地菜单回送同格式。新增双应用映射→生产几何回归先失败后通过，键盘18项及DOM8组通过；修正上一轮遗留的Back不可命中旧断言。完整Release build→start CoreOnly成功。最终实际Core29584/Player50408，12应用显示，Tab进入官方应用区，Enter激活自有窗口通过；原候选/偏好/夹具恢复，无新增配置器。证据.build/task-keyboard-first-failure.log、task-keyboard-identity-red.log、task-keyboard-identity-green.log、task-keyboard-identity-dom.log、task-keyboard-identity-build.log、fusion-keyboard-live.log。物理触屏、按住期间真实切Desk与完整菜单/滚动仍待统一验收，03继续开做、2/4=50%。
+
+2026-10-11多窗口菜单增量：新增fusion-menu-live，两个同进程自有窗口形成同一官方任务；实际点击列表选第二窗口成功。复现菜单残留：鼠标/触摸chooseWindow和togglePin缺官方私有activate回送，仅openWindows/dismissMenu有；现统一CompleteNativeDockTaskPresentation，在当前宿主/手势/投影校验后回送，键盘保持原路径不重复。DOM窗口选择完成收起菜单检查及完整Release通过，按流程start CoreOnly保留原版。实际Core47400/Player14584已通过选第二窗，菜单恢复图标；后续探针错误假设剩余窗口一定非前台，已改按点击前状态验证激活或最小化。最终重跑Core47564/Player46572在首次点击出现间歇down taskHit=false/up=true，未产生完成，故整个多窗口流程仍未通过，不能标03做完。日志20261011_0338时段及.build/task-menu-choice-first-click-failure.log；下一步检查displayReady到按下取样之间的可用状态变化。证据.build/task-menu-choice-red.log、task-menu-choice-toggle-observation.log、task-menu-choice-dom.log、task-menu-choice-build.log。原候选/偏好/夹具恢复，无新增配置器；工作包仍2/4=50%。
+
+2026-10-11多窗口实测完成、启动状态问题定位：此前仅依赖页面displayReady会在任务栏接管前启动点击。保存日志证明工作区由1380到1440改变后Dock移动，按下命中而抬起取样被撤销；另一次原生状态已不可用但标题观察仍旧。探针改为正式runtime.phase=running、taskbarReplacementReady=true及同一原生窗口边界稳定750ms后才进入菜单测试，条件用于隔离自动任务栏场景，不代表手动显示任务栏模式不可用。关闭同进程第二窗会异步改变前台，恢复检查先在自有Form明确最小化。最终Core30552/Player48996，真实鼠标打开双窗口列表、选择准确第二窗、菜单收起、关闭第二窗投影缩为1、点击恢复剩余最小化窗口全部通过；进程退出0并恢复原候选/偏好/夹具。证据.build/fusion-menu-live.log、task-menu-probe-build.log、menu-toggle-*.txt、stable-click-*.txt。启动可见图标提前可点与任务栏接管状态尚需产品收口，未改生产门控、未宣称首次点击问题已修；下一步明确初始化呈现/输入就绪策略，避免用固定延时掩盖。03仍开做，2/4=50%。
+
+2026-10-11启动官方任务区门控修复：新增TaskbarController.DockActionsReady，auto须当前Player租约确认、hidden须Core手动租约确认、visible须租约释放与恢复完成；官方快照ActionsEnabled与最终动作均核对它。另在WebWebView2检查实际原生窗口匹配当前工作区底边/宽度；reserve沿用AppBar确认，防止任务栏隐藏已确认但Dock尚未移位的短暂误启用。不改RawInput/触控配对及超时。24项任务栏行为检查通过（含5项新增三模式/待恢复检查）；测试项目缺obj资产首次no-restore失败，正常还原后通过。完整Release build→start CoreOnly成功。新增fusion-startup-live跳过探针额外taskbarReplacementReady和750ms等待，直接在产品第一次ActionsEnabled时沿既有点击准备路径操作；实际Core50628/Player37064，打开双窗口列表、选择第二窗、关闭后恢复剩余最小化窗全部通过，退出0。证据.build/task-startup-gate-tests.log、task-startup-gate-build.log、task-startup-probe-build.log、fusion-startup-live.log。一次实际通过支持本次根因修复，不代表所有启动/显示器/手动模式均实测；任务栏看护失败的呈现回退仍由014收口。原运行版/偏好/夹具恢复，无配置器新增，03仍开做，2/4=50%。
+
+2026-10-11手动恢复任务栏实测：fusion-restored-live先等主题Dock实际接管，再通过EditApplicationDock(taskbar,visible)恢复，核对Shell_TrayWnd实际可见、看护hidden=false、主题Dock重新可操作；随后真实选第二窗、关闭第二窗、恢复剩余最小化窗通过，任务操作没有重新隐藏Windows任务栏。首次探针把恢复后的自动隐藏误判为禁用：工作区缩小时鼠标停在旧底边，改为按当前原生Dock位置唤出再判定。实际Core33260/Player28800退出0；.build/task-restored-probe-build.log、fusion-restored-live.log为证据。finally恢复原taskbar模式/两种Dock偏好/前台/光标，外层按字节备份taskbar-mode.json；原运行版恢复，无新增配置器。仅增加探针，无生产改动。03继续开做，整包2/4=50%；物理触屏/作者区域及完整统一验收不外推。
+
+2026-10-11固定菜单补证：重复可见性通知导致本地输入撤销已修复，18项入口/controller回归通过；真实Core47612/Player22924右键固定及取消固定均完成，菜单收起。用户统一验收仍按上方四步；第4步固定菜单细项为右键一个运行应用→固定→再次右键取消固定，观察菜单收起与固定状态更新。原运行候选未替换，整包2/4=50%。
+
+2026-10-11导航部分证据：Core45792/Player37084实际下一页进入focus窄区一次且不误激活应用通过；上一页原生取样回报缺失而失败，不能认定人工第1/3/4项完成。详见03-remaining，原运行版恢复。
+
+2026-10-11双向导航补证：#310修复后Core30708/Player48244实际下一页进focus、上一页回home均只触发一次，窄区溢出且不激活应用；30项检查与最终Release通过。统一人工第1/3项导航部分有证据，窄栏滚动/应用及四步整体验收仍保留，整包50%。
+
+2026-10-11窄栏实机补证：Core45764/Player44088原生横向滚动后自有应用激活/最小化/恢复通过，停在focus不误切页，再实际上一页回home通过。人工第4步滚动细项可按下一页进专注→横向滚动→点击应用→上一页复现。跨Desk任务栏瞬间恢复仍待修，物理触屏和完整四步未代验。
+
+2026-10-11跨Desk稳定性补证：#311修复后Core46800/Player52720双向切页、窄区滚动、应用激活/最小化/恢复完整通过；25ms观察任务栏始终隐藏、Dock顶边不变。统一人工切页时一并观察任务栏不闪现、Dock不跳动。无Dock/退出恢复仍由后续完成，整包50%。
+
+2026-10-11人工第2项窗口关闭子项补证：Core25504/Player51580真实按下后121ms关闭自有窗口，再抬起，不误激活/重开目标且投影移除。按住切Desk仍未实测；其余统一人工要求保持，整包50%。
+
+2026-10-11人工第4项部分补证：Core44152/Player16632全屏隐藏并清空菜单、退出恢复无残留通过；Core49376/Player53244实际切quiet无Dock页关闭宿主并恢复系统任务栏通过。统一人工可打开应用菜单→全屏→退出观察，再切无Dock页观察系统任务栏；退出Core和完整四项仍未代验。
+
+2026-10-11人工第4项正常退出补证：Core46892融合自动接管后正常ShutDown，Core和两个Player结束、Windows任务栏恢复可见；候选51144仅为清理重启，随后停止并恢复原运行版。完整异常退出由014继续；统一人工仍保留退出Core观察任务栏恢复这一项。

@@ -11,7 +11,10 @@ namespace Lively.Models.Message
         public Guid SessionId { get; set; }
         public long Revision { get; set; }
         public bool RendererReady { get; set; }
+        public string TaskAreaStatus { get; set; } = "pending";
         public bool WindowReady { get; set; }
+        // Bounded position refresh; only taskbar ownership may use this, never input.
+        public bool GeometryUpdating { get; set; }
         public long WindowHwnd { get; set; }
         public bool Visible { get; set; }
         public bool Keyboard { get; set; }
@@ -33,6 +36,7 @@ namespace Lively.Models.Message
         public bool InputConnected { get; set; }
         public bool LeaveKeyboard { get; set; }
         public bool RefreshGeometry { get; set; }
+        public int? PreviewHoldMilliseconds { get; set; }
         public LivelyMessageRoomDockPolicy() : base(MessageType.cmd_room_dock_policy) { }
     }
 }

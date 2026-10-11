@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>disable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockReservation.cs" Link="DockReservation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockAppBar.cs" Link="DockAppBar.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Reservation.cs" Link="ApplicationDockWindow.Reservation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockVisibilityPolicy.cs" Link="DockVisibilityPolicy.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Visibility.cs" Link="ApplicationDockWindow.Visibility.cs" /><Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Navigation.cs" Link="ApplicationDockWindow.Navigation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomDockNavigation.cs" Link="RoomDockNavigation.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockPreviewGeometry.cs" Link="DockPreviewGeometry.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockThumbnail.cs" Link="DockThumbnail.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockPreviewWindow.cs" Link="DockPreviewWindow.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockModel.cs" Link="DockModel.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/DockWindows.cs" Link="DockWindows.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.cs" Link="ApplicationDockWindow.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Services/ApplicationDock/ApplicationDockWindow.Preview.cs" Link="ApplicationDockWindow.Preview.cs" />
+  </ItemGroup>
+</Project>
