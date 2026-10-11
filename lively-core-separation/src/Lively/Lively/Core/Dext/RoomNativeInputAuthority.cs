@@ -272,7 +272,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             ExpireGesture(now);
             if(down)
             {
-                if(DextNativePointerPacket.IsDesktopFileKey(key)&&(role!=RoomClientRole.DesktopPlayer||focused?.Button.Consumer!="official.desktop"||!focused.Button.Button.StartsWith("desktop-",StringComparison.Ordinal)))return;
+                if(DextNativePointerPacket.IsDesktopFileKey(key)&&(role!=RoomClientRole.DesktopPlayer||!DextNativePointerPacket.IsDesktopKeyTarget(key,focused?.Button.Consumer,focused?.Button.Button)))return;
                 if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&modifiers!=1)return;
                 if(!keysHeld.Add(key))return;
                 completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();

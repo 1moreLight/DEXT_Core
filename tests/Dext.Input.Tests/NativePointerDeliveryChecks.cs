@@ -18,6 +18,9 @@ internal static class NativePointerDeliveryChecks
                 Require(value.UsesOfficialKeyboard,"official desktop keyboard treated as author input");
                 Require(DextNativePointerPacket.IsOfficialConsumer("official.desktop"),"desktop mouse receipt is not official");
             }
+            var paste=Packet("down");paste.Key=86;paste.SampleKeyboard=true;paste.Consumer="official.desktop";paste.Button="desktop.paste";paste.EntryId="desktop.scan/desktop.paste";
+            Require(new DextNativePointerPacket(paste).UsesOfficialKeyboard,"empty desktop paste lost physical input");
+            foreach(var key in new[]{67,88,114})Require(!DextNativePointerPacket.IsDesktopKeyTarget(key,"official.desktop","desktop.paste"),"file command admitted on paste control");
             Require(!DextNativePointerPacket.IsOfficialConsumer("scene"),"author input bypassed dispatch");return Task.CompletedTask;
         });
         await Check("pointer IPC preserves private DOWN scope and native metrics",()=>{

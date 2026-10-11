@@ -17,7 +17,7 @@ namespace Lively.Common.Helpers
                 value.Key==9&&(value.Kind!="focus"||value.ScanCode!=0||value.IsExtended||value.Consumer!=null||value.Button!=null||value.EntryId!=null) ||
                 value.Kind=="focus"&&value.Key!=9 || value.Reverse&&value.Key!=9 ||
                 IsActivationKey(value.Key)&&(value.Kind=="move"||!Text(value.Consumer,128)||!Text(value.Button,80)||!Text(value.EntryId,192)) ||
-                (IsDesktopFileKey(value.Key)&&(value.Consumer!="official.desktop"||value.Button==null||!value.Button.StartsWith("desktop-",StringComparison.Ordinal))) ||
+                (IsDesktopFileKey(value.Key)&&!IsDesktopKeyTarget(value.Key,value.Consumer,value.Button)) ||
                 (value.Modifiers&~12)!=0 || value.Kind!="down"&&value.Kind!="move"&&value.Kind!="up"&&value.Kind!="cancel"&&value.Kind!="focus" ||
                 (double)value.X-value.OriginX<short.MinValue || (double)value.X-value.OriginX>short.MaxValue ||
                 (double)value.Y-value.OriginY<short.MinValue || (double)value.Y-value.OriginY>short.MaxValue ||
@@ -34,6 +34,8 @@ namespace Lively.Common.Helpers
         private static bool Positive(long value)=>value>0&&value<=9007199254740991;
         public static bool IsDesktopClipboardKey(int key) => key==67||key==88||key==86;
         public static bool IsDesktopFileKey(int key) => key==114||IsDesktopClipboardKey(key);
+        public static bool IsDesktopKeyTarget(int key,string consumer,string button) => consumer=="official.desktop"&&button!=null&&
+            (button.StartsWith("desktop-",StringComparison.Ordinal)||key==86&&button=="desktop.paste");
         private static bool IsActivationKey(int key) => key==13||key==32||IsDesktopFileKey(key);
         public static bool IsOfficialConsumer(string consumer) => consumer=="official"||consumer=="official.desktop"||consumer==DextNativeTaskSample.Consumer;
         public bool UsesOfficialKeyboard => Key!=0&&IsOfficialConsumer(Consumer);

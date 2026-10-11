@@ -18,3 +18,5 @@ html.dext-v3-native-dock,html.dext-v3-native-dock body,html.dext-v3-native-dock 
 .dext-v3-desktop-icon[data-selected="true"]{background:#ffffff26;border-color:#b9dcffaa;border-radius:0}
 
 .dext-v3-desktop-icon[data-cut="true"]{filter:opacity(.45)}
+
+.dext-v3-desktop-command{box-sizing:border-box;padding:2px 8px;border-radius:4px;background:#172031cc;border-color:#ffffff40;white-space:nowrap}.dext-v3-desktop-command .dext-v3-desktop-label{font-size:12px;line-height:18px;max-height:18px;overflow-wrap:normal}

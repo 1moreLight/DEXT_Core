@@ -103,7 +103,7 @@
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
         for(const record of icons.values())if(record.desktop&&record.deskId===deskId)items.push({key:'icon:'+deskId+'/'+record.icon.id,kind:'icon',id:record.icon.id,
-          savedRect:record.desktopRect,logicalSize:{width:96,height:104}});
+          savedRect:record.desktopRect,logicalSize:record.logicalSize||{width:96,height:104}});
         // Dock geometry belongs to the official host. A component author can
         // publish its buttons, while only roomScene can publish occupied areas.
         const referenced=new Set(desks.get(deskId).components);
@@ -133,9 +133,9 @@
     function layoutIcon(record,group){
       const item=effectiveLayouts.get('icon:'+record.deskId+'/'+record.icon.id);
       record.rect=item?(item.placeable?item.effectiveRect:null):{x:32+record.icon.x*112,y:32+record.icon.y*120,width:96,height:104};
-      const rect=record.rect;
+      const rect=record.rect,logical=record.logicalSize||{width:96,height:104};
       record.element.hidden=!rect||![snapshot.currentDeskId,snapshot.targetDeskId].includes(record.deskId)||(snapshot.lifecycle.stage!=='desktop'&&(snapshot.lifecycle.stage!=='idle'||!!room.idle));
-      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/96,rect.height/104);}
+      if(rect){record.element.style.left=rect.x+'px';record.element.style.top=rect.y+'px';transform(record.element,rect.x,rect.y,group.matrix,rect.width/logical.width,rect.height/logical.height);}
       record.element.style.opacity=String(group.opacity);record.element.style.pointerEvents=group.opacity<=0?'none':'';
     }
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
@@ -173,15 +173,18 @@
       if(!desktopView||!desks.has(desktopView.deskId))return;
       const items=desktopView.items.filter(item=>Math.floor(item.slot/capacity)===desktopPage).sort((a,b)=>a.slot-b.slot).map(item=>({...item,cell:item.slot%capacity}));
       if(desktopPages>1)items.push({id:'desktop.page.previous',name:'上一组 '+(desktopPage+1)+'/'+desktopPages,iconPng:null,cell:capacity},{id:'desktop.page.next',name:'下一组',iconPng:null,cell:capacity+1});
+      items.push({id:'desktop.paste',name:'粘贴到桌面',command:true});
       items.forEach(item=>{
         const index=item.cell;
         const element=document.createElement('button');element.type='button';element.className='dext-v3-icon dext-v3-desktop-icon';element.setAttribute('aria-label',item.name);
+        const logicalSize=item.command?{width:Math.max(1,Math.min(136,viewport.width-16)),height:24}:null;
+        if(logicalSize){element.className+=' dext-v3-desktop-command';element.style.width=logicalSize.width+'px';element.style.height=logicalSize.height+'px';}
         if(item.iconPng){const image=document.createElement('img');image.src='data:image/png;base64,'+item.iconPng;image.alt='';image.draggable=false;element.append(image);}
-        else{const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
+        else if(!item.command){const glyph=document.createElement('span');glyph.className='dext-v3-desktop-glyph';glyph.textContent=item.id==='desktop.page.previous'?'←':item.id==='desktop.page.next'?'→':item.kind==='folder'?'▣':'◇';element.append(glyph);}
         const label=document.createElement('span');label.className='dext-v3-desktop-label';label.textContent=item.name;element.append(label);rootNode.append(element);
         const icon={id:item.id,buttonId:item.id},deskId=desktopView.deskId;
-        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,contextId:desktopView.contextId,
-          desktopRect:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
+        icons.set('desktop/'+item.id,{deskId,icon,element,desktop:true,logicalSize,contextId:desktopView.contextId,
+          desktopRect:item.command?{x:Math.max(8,viewport.width-144)*1920/viewport.width,y:4*1080/viewport.height,width:logicalSize.width,height:logicalSize.height}:{x:(32+(index%columns)*112)*1920/viewport.width,y:(32+Math.floor(index/columns)*120)*1080/viewport.height,width:96,height:104}});
       });
     }
     function reconcile(){
@@ -558,6 +561,11 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          if(value.consumer==='official.desktop'&&value.button==='desktop.paste'){
+            completion=null;desktopClick=null;
+            if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
+            return true;
+          }
           if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){
             completion=null;desktopClick=null;
             const selected=desktopSelection.read().selectedIds,key=value.desktopInput.key,identity=scope();

@@ -25,6 +25,7 @@ internal static class NativeInputMessageChecks
                 r["consumer"]="official.desktop";r["button"]="desktop-"+new string('a',64);r["inputSequence"]=7;
                 var parsed=Parse(r);Require(parsed?.Method==method&&parsed.InputSequence==7);
                 Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.Button==(string?)r["button"]);
+                r["button"]="desktop.paste";Require((Parse(r)!=null)==(method=="desktopPaste"));
                 r["consumer"]="scene";Require(Parse(r)==null);
                 r["consumer"]="official.desktop";r["button"]="desktop.page.next";Require(Parse(r)==null);
             }

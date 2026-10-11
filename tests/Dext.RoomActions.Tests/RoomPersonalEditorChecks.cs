@@ -8,6 +8,27 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("empty desktop paste command accepts only native activation in the current enabled scope",()=>{
+   using var f=new ActionFixture();const string id="desktop.paste";
+   f.Store.SetDesktopSync(Room,"home",true,Array.Empty<string>());
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("empty","home",Array.Empty<RoomDesktopViewItem>(),0,false));
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.empty/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,proof));Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,proof));
+   foreach(var key in new[]{13,32,86}){
+    input.Key(viewport,key,true,false,true,key==86?1:0);input.Key(viewport,key,false,false,true,0);
+    Eq(key,input.State!.Completed!.Key);
+    Eq(RoomActionStatus.Accepted,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,input.State.Completed));
+   }
+   f.Store.SetDesktopSync(Room,"home",false);
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   Eq(RoomActionStatus.NotOperable,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,input.State!.Completed!));
+   Eq(0,f.Launched.Count);
+  });
   check("F2 resolves current desktop file without launching and consumes its proof",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('a',64);
    f.Store.SetDesktopSync(Room,"home",true,new[]{id});

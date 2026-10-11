@@ -773,3 +773,22 @@ test('Ctrl copy and cut preserve selection and cut styling follows clipboard seq
   assert.ok(icons().every(n=>n.dataset.cut==='false'));
  }finally{f.host.dispose();}
 });
+
+
+test('empty synced desktop exposes native paste without a file selection',async()=>{
+ const desktop={contextId:'empty',deskId:'home',items:[],issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();
+  const button=f.container.children[0].children.find(n=>n.attrs['aria-label']==='粘贴到桌面');assert.ok(button);
+  assert.equal(button.handlers.click,undefined);assert.equal(button.style.height,'24px');assert.equal(button.style.width,'136px');
+  const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button==='desktop.paste');assert.ok(entry);
+  for(const [i,key]of [0,13,32,86].entries()){
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:entry.consumer,button:entry.button,entryId:entry.entryId,inputSequence:i+1,desktopInput:{key,modifiers:key===86?1:0,x:0,y:0,at:i*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});await flush();
+   assert.equal(f.calls.filter(c=>c.method==='desktopPaste').length,i+1);
+   assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);
+  }
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(button.hidden,true);
+ }finally{f.host.dispose();}
+});

@@ -74,6 +74,8 @@ namespace Lively.Common.Helpers
                         request.Consumer=Text(o["consumer"]);request.Button=Text(o["button"]);request.SelectedIds=ids;
                         request.GeometryVersion=(long)o["geometryVersion"];request.InputSequence=(long)o["inputSequence"];return request;
                     case "desktopPaste":
+                        if(Text(o["consumer"])!="official.desktop" || !(Text(o["button"])=="desktop.paste" || Text(o["button"])?.StartsWith("desktop-",StringComparison.Ordinal)==true))return null;
+                        goto case "activate";
                     case "desktopRename":
                         if(Text(o["consumer"])!="official.desktop" || Text(o["button"])?.StartsWith("desktop-",StringComparison.Ordinal)!=true)return null;
                         goto case "activate";

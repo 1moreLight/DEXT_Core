@@ -327,7 +327,7 @@ namespace Lively.Core.Wallpapers
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && !DextNativePointerPacket.IsDesktopFileKey(key))return false;
             var desktopFocus=a.Input.FocusedButton;
-            if(DextNativePointerPacket.IsDesktopFileKey(key)&&down&&(nativeDock||desktopFocus?.Consumer!=RoomActionAuthority.DesktopConsumer||!desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)))return false;
+            if(DextNativePointerPacket.IsDesktopFileKey(key)&&down&&(nativeDock||!DextNativePointerPacket.IsDesktopKeyTarget(key,desktopFocus?.Consumer,desktopFocus?.Button)))return false;
             if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&down&&DesktopInputModifiers()!=1)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
             a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,DesktopInputModifiers());

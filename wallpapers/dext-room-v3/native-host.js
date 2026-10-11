@@ -110,7 +110,8 @@
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'authorInput':return shape(p,['consumer','instanceId','requestJson','geometryVersion'])&&id(p.consumer)&&id(p.instanceId,160)&&typeof p.requestJson==='string'&&new root.TextEncoder().encode(p.requestJson).length<=32768&&integer(p.geometryVersion);
       case'desktopCopy':case'desktopCut':case'desktopOpen':return shape(p,['consumer','button','selectedIds','geometryVersion','inputSequence'])&&p.consumer==='official.desktop'&&id(p.button,80)&&Array.isArray(p.selectedIds)&&integer(p.selectedIds.length,1,256)&&p.selectedIds.every(v=>id(v,80)&&v.startsWith('desktop-'))&&new Set(p.selectedIds).size===p.selectedIds.length&&p.selectedIds.includes(p.button)&&integer(p.geometryVersion)&&integer(p.inputSequence,1);
-      case'desktopPaste':case'desktopRename':if(p.consumer!=='official.desktop'||!p.button?.startsWith('desktop-'))return false;
+      case'desktopPaste':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&p.consumer==='official.desktop'&&id(p.button,80)&&(p.button==='desktop.paste'||p.button.startsWith('desktop-'))&&integer(p.geometryVersion)&&integer(p.inputSequence,1);
+      case'desktopRename':if(p.consumer!=='official.desktop'||!p.button?.startsWith('desktop-'))return false;
       case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
       case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
         (['desk.next','desk.previous'].includes(p.action.type)?shape(p.action,['type']):p.action.type==='desk.go'&&shape(p.action,['type','deskId'])&&id(p.action.deskId,80));

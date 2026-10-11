@@ -138,7 +138,7 @@ internal sealed partial class RoomActionAuthority
         return value is not null&&context.Role==RoomClientRole.DesktopPlayer&&snapshot.Lifecycle.Stage==RoomLifecycleStage.Desktop&&
             snapshot.TransitionId is null&&snapshot.SessionId==value.Session&&context.Installation.RoomId==value.Room&&
             context.Installation.InstallationStamp==value.Stamp&&snapshot.CurrentDeskId==value.View.DeskId&&
-            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next");
+            entry.Consumer==DesktopConsumer&&entry.EntryId=="desktop."+value.View.ContextId+"/"+entry.Button&&(value.Targets.ContainsKey(entry.Button)||entry.Button is "desktop.page.previous" or "desktop.page.next" or "desktop.paste");
     }
     internal (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopRename(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
@@ -154,7 +154,7 @@ internal sealed partial class RoomActionAuthority
     }
     internal RoomActionStatus AuthorizeDesktopPaste(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
-        if(proof.Key!=86||proof.Modifiers!=1)return RoomActionStatus.NotOperable;
+        if(!(proof.Key==86&&proof.Modifiers==1)&&!(proof.Button.Button=="desktop.paste"&&proof.Key is 0 or 13 or 32))return RoomActionStatus.NotOperable;
         return PrepareDesktopTargets(connection,peer,session,proof).Status;
     }
     private (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopTarget(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
