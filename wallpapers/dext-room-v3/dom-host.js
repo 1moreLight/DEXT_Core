@@ -141,6 +141,7 @@
     function svg(tag){return document.createElementNS?document.createElementNS('http://www.w3.org/2000/svg',tag):document.createElement(tag);}
     function clearFocus(){focus=null;paintFocus(null);}
     function paintFocus(entry){
+      if(editMode)entry=null;
       if(!entry){if(focusNode){focusNode.hidden=true;focusNode.setAttribute('hidden','');for(const child of [...focusNode.children])child.remove();}return;}
       if(!focusNode){focusNode=svg('svg');focusNode.classList?.add('dext-v3-focus');if(!focusNode.classList)focusNode.className='dext-v3-focus';
         focusNode.setAttribute('viewBox','0 0 1920 1080');focusNode.setAttribute('aria-hidden','true');rootNode.append(focusNode);}
@@ -477,7 +478,7 @@
     }
 
     const pressApi=options.pressEdit||root.DextPressEdit||(typeof require==='function'?require('./press-edit.js'):null);
-    let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null,blankPress=null,lastBlankClick=null;
+    let editSaving=false,editError=null,ignoreAuthorUntil=0,editMode=false,editToolbar=null,dragItem=null,blockedEditSequence=null,blankPress=null,lastBlankClick=null;
     const editEligible=()=>!disposed&&!dockView&&!privatePaused&&layoutReady&&!editSaving&&snapshot.active&&snapshot.operable&&
       snapshot.lifecycle.stage==='desktop'&&!snapshot.lifecycle.locked&&!snapshot.lifecycle.playbackPaused&&!snapshot.transitionId;
     function paintEditing(){
@@ -517,7 +518,7 @@
     function provisionalLayout(item,rect){const value=copy(personalLayout);
       if(item.kind==='icon'){value.icons[activeDesk()]={...value.icons[activeDesk()],[item.id]:{x:rect.x,y:rect.y}};}
       else value.components[item.id]=rect;return value;}
-    function clearEditPaint(){ignoreAuthorUntil=now()+250;editNode?.remove();editNode=null;dragItem=null;recomputeLayouts(model.readDiagnostics());paintVisuals();paintEditing();}
+    function clearEditPaint(){ignoreAuthorUntil=now()+250;dragItem=null;recomputeLayouts(model.readDiagnostics());paintVisuals();paintEditing();}
     function prepareReorder(item){
       const viewport=model.readDiagnostics().viewport,sx=1920/viewport.width,sy=1080/viewport.height;
       const grid={offsetX:32*sx,offsetY:32*sy,cellWidth:112*sx,cellHeight:120*sy,footprintWidth:96*sx,footprintHeight:104*sy,
@@ -551,8 +552,7 @@
         const node=item.record.element,x=item.rect.x+dx,y=item.rect.y+dy,logical=item.record.logicalSize||{width:96,height:104};
         node.style.left=x+'px';node.style.top=y+'px';transform(node,x,y,visualGroups.shared.matrix,item.rect.width/logical.width,item.rect.height/logical.height);
       }
-      const target=item.preview?.icons[activeDesk()]?.[item.id];
-      if(editNode){Object.assign(editNode.style,{left:(item.kind==='icon'&&target?target.x:rect.x)+'px',top:(item.kind==='icon'&&target?target.y:rect.y)+'px',width:rect.width+'px',height:rect.height+'px'});editNode.dataset.invalid=String(item.invalid);}
+
     }
     async function saveEdit(item,dx,dy){
       const identity=scope(),deskId=activeDesk(),token=layoutReadEpoch,rect=editRect(item,dx,dy);
@@ -579,9 +579,7 @@
       finally{editSaving=false;clearEditPaint();if(sameLayoutScope(identity,deskId,token))await renderWithLayout();}
     }
     const press=pressApi.createPressEdit({setTimeout:later,clearTimeout:cancelTimer,eligible:editEligible,isEditing:()=>editMode,
-      begin:item=>{enterEdit();prepareReorder(item);dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();editNode=document.createElement('div');editNode.className='dext-v3-edit-outline';
-        Object.assign(editNode.style,{left:item.rect.x+'px',top:item.rect.y+'px',width:item.rect.width+'px',height:item.rect.height+'px'});
-        editNode.textContent=item.resize?'缩放 · Esc 取消':'拖动 · Esc 取消';rootNode.append(editNode);},
+      begin:item=>{enterEdit();prepareReorder(item);dragItem=item;paintEditing();ignoreAuthorUntil=Infinity;clearDefault();completion=null;clearFocus();},
       preview:previewEdit,cancel:clearEditPaint,commit:saveEdit});
     function editHit(x,y){
       const node=paintNodes().sort((a,b)=>b.layer-a.layer||b.order-a.order).find(n=>geometry.containsPoint(n.polygon,{x,y}));
