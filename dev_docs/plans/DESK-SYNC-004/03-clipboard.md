@@ -16,3 +16,7 @@
 
 实现说明：采用Win32剪贴板事务以便持锁核对序列号后更新，代替先读序列号再调用WPF Clipboard.SetDataObject的分离操作。原生窗口仅在后台STA上用作剪贴板所有者；写入使用立即呈现的全局内存，成功后由系统接管。
 参考：[Shell Clipboard Formats](https://learn.microsoft.com/en-us/windows/win32/shell/clipboard)、[SetClipboardData所有者与内存规则](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setclipboarddata)。
+
+2026-10-11 第03步复制/剪切接线增量：Ctrl+C/X/V由Core按下时Ctrl+当前official.desktop文件焦点产生配对证明，普通字母拒绝；Player官方物理采样识别这些按键。复制/剪切通过desktopCopy/desktopCut只提交当前所选ID，Core校验整组并消费证明后调用DesktopShellClipboard，路径留Core。剪切变淡采用filter:opacity(.45)与切页内联opacity相乘；presentationRead附带剪贴板序列元数据，用户后来复制新内容则恢复图标，避免迟到旧读取清除刚完成的剪切。Ctrl+V仅原生证明已接，页面暂不派发粘贴，不能称粘贴已可用。
+证据：快捷键用例先失败后6/6 sampled/direct通过（clipboard-keys-red/green.log）；Player pointer18项、原生消息79项、宿主114项通过，含保持多选/剪切状态/外部新剪贴板恢复。Core当前所选目标解析检查通过，个人编辑组先一次21/21，补切目标后一次20/21（旧drop placement返回storageUnavailable），保存失败为clipboard-copy-core-storage-failure.log；相同构建仅复查一次21/21（clipboard-copy-core-recheck.log）。第一次RED另有旧fixture原子发布Win32拒绝访问，未改存储实现、未宣称该间歇问题修复。F2原6组合通过。完整Core/Player/Watchdog Release成功（desktop-shell-actions-build-env/clipboard-copy-build.log）；start.ps1因现有Debug Core26668产品身份占用退出1，未替换运行版、未启动额外配置器。
+剩余：Ctrl+V粘贴/同目录副本/成功项完成回执、空同步Desk的粘贴焦点入口、实机Explorer双向互通及触控。接粘贴时需核对原生桌面也收到Ctrl+V是否引起双执行，不能仅凭RawInput观察与消息用例认定实机无重复。系统剪贴板未在本轮自动测试中读写；实际复制/剪切与视觉效果仍待统一验收。03保持开做，实施2/6≈33%，路线2/4=50%。

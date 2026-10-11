@@ -11,7 +11,7 @@ namespace Lively.Common.Helpers
     public static class DextNativeInputProtocol
     {
         // Shared by both Player request admission and response delivery.
-        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop" || method == "desktopRename" || method == "desktopOpen";
+        public static bool AllowsWhileSuspended(string method) => method == "layoutRead" || method == "presentationRead" || method == "desktopDrop" || method == "desktopRename" || method == "desktopOpen" || method == "desktopCopy" || method == "desktopCut";
         private static readonly string[] IdentityFields={"type","protocolVersion","requestId","method","runtimeGeneration","sessionId","revision"};
         // Only the official top document reaches this parser. It can request
         // consumption of native facts, never create a proof or name a target path.
@@ -63,6 +63,8 @@ namespace Lively.Common.Helpers
                             o["requestJson"]?.Type!=JTokenType.String || Encoding.UTF8.GetByteCount((string)o["requestJson"])>32768)return null;
                         request.Consumer=Text(o["consumer"]);request.AuthorInstance=Text(o["instanceId"]);request.SdkRequestJson=(string)o["requestJson"];
                         request.GeometryVersion=(long)o["geometryVersion"];return request;
+                    case "desktopCopy":
+                    case "desktopCut":
                     case "desktopOpen":
                         if(!Shape(o,IdentityFields.Concat(new[]{"consumer","button","selectedIds","geometryVersion","inputSequence"}).ToArray()) ||
                             Text(o["consumer"])!="official.desktop" || !Id(Text(o["button"]),80) || !Integer(o["geometryVersion"],1) || !Integer(o["inputSequence"],1) ||

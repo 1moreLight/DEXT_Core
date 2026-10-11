@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text.Json;
 
 if (args.Length==1 && args[0]=="--desktop-sync") { DesktopSyncChecks.Run(); return; }
+if (args.Length==1 && args[0]=="--desktop-clipboard-keys") { DesktopClipboardKeyChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--desktop-f2") { DesktopF2Checks.Run(); return; }
 if (args.Length==1 && args[0]=="--foreground-return") { ForegroundReturnChecks.Run(); return; }
 if (args.Length==1 && args[0]=="--native-data-sources") { await NativeDataLiveProbe.Run(); return; }

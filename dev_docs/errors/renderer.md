@@ -726,3 +726,6 @@ Core定位accepted/投影真实送达，但配置器前台operable=false，butto
 
 ## #328 多选Enter及打开后的暂停回执（2026-10-11）
 Enter复用desktopActivation.select会把多选缩成焦点项；新desktopOpen在select之前读取所选ID，由Core一次消费Enter证明后整组解析。打开的首个应用获得前台可能先推送暂停，私有桥原先取消请求且Player丢回应，导致实际打开后报失败。现有已发desktopOpen回执允许跨同会话修订/暂停，新的暂停态请求仍由宿主拒绝且Core要求原生证明；会话替换仍取消。DOM与回执定向断言先红后绿，113项宿主及79项消息检查通过。实机仍待统一验收。
+
+## #329 剪切视觉被切页内联透明度覆盖（2026-10-11）
+初稿data-cut使用opacity:.45，但applyIcon的内联style.opacity取切页组值，优先级覆盖CSS。改用filter:opacity(.45)，与原切页透明度相乘；不改变原动画/命中。DOM状态断言通过不等于实际CSS显示，统一验收需核对变淡及切页。

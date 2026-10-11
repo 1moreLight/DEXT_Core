@@ -47,6 +47,17 @@ static partial class RoomActionChecks
    var next=input.State!.Completed!;
    Eq(RoomActionStatus.Cancelled,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,next,ids,()=>f.Launched.Count<3).Status);
    Eq(3,f.Launched.Count);Eq(targets[0],f.Launched[2]);
+   input.Key(viewport,67,true,false,true,1);input.Key(viewport,67,false,false,true,0);
+   var copyProof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,copyProof,ids,true).Status);
+   Eq(false,copyProof.IsConsumed);
+   var copy=f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,copyProof,ids,false);
+   Eq(RoomActionStatus.Accepted,copy.Status);Eq(2,copy.Targets!.Length);Eq(targets[1],copy.Targets[1]);Eq(3,f.Launched.Count);
+   input.Key(viewport,88,true,false,true,1);input.Key(viewport,88,false,false,true,0);
+   var cut=f.Actions.PrepareDesktopClipboard(f.View,f.Peer,f.Session,input.State!.Completed!,ids,true);
+   Eq(RoomActionStatus.Accepted,cut.Status);Eq(2,cut.Targets!.Length);Eq(3,f.Launched.Count);
+
+
 
   });
   check("completed drop placement persists and disabled Desk rejects late placement",()=>{

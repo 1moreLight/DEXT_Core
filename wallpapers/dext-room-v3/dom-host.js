@@ -26,10 +26,11 @@
     const selectionApi=options.desktopSelection||root.DextDesktopSelection||(typeof require==='function'?require('./desktop-selection.js'):null);
     if(!selectionApi)throw failure('desktopSelectionUnavailable');
     const desktopSelection=selectionApi.createDesktopSelection();
+    let cutSequence=null,cutIds=new Set();
     function paintDesktopSelection(){
       const selected=new Set(desktopSelection.read().selectedIds);
       for(const record of icons.values())if(record.desktop&&!record.icon.id.startsWith('desktop.page.')){
-        const value=selected.has(record.icon.id);record.element.dataset.selected=String(value);record.element.setAttribute('aria-pressed',String(value));
+        const value=selected.has(record.icon.id);record.element.dataset.selected=String(value);record.element.setAttribute('aria-pressed',String(value));record.element.dataset.cut=String(cutIds.has(record.icon.id));
       }
     }
     function desktopActivation(value){
@@ -336,7 +337,7 @@
     function showActionResult(status){
       const messages={missingBinding:'这个按钮还未绑定应用，请在配置器的“本机按钮”中选择目标。',
         missingPermission:'这个按钮尚未启用，请重新应用 Room 或在配置器中保存本机动作。',
-        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机按钮配置暂时无法读取，请检查配置器诊断。'};
+        launchFailed:'应用启动失败，请检查本机绑定目标。',storageUnavailable:'本机操作暂时无法完成，请稍后重试或查看配置器诊断。'};
       if(status==='accepted'||status==='queued'){clearActionNotice();return;}
       if(!messages[status])return;
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
@@ -455,11 +456,14 @@
     }
     async function refreshPresentation(){
       if(disposed||presentationRunning)return;presentationRunning=true;
-      const identity=scope();
+      const identity=scope(),observedCutSequence=cutSequence;
       try{
         const reply=await native.request('presentationRead',desktopView?{desktopContextId:desktopView.contextId}:{},identity);
         if(disposed||identity.sessionId!==snapshot.sessionId||identity.revision!==snapshot.revision)return;
         if(reply.status==='accepted'&&reply.presentation){
+          if(observedCutSequence!==null&&cutSequence===observedCutSequence&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0&&reply.data.clipboardSequence!==cutSequence){
+            cutSequence=null;cutIds.clear();paintDesktopSelection();
+          }
           presentationSkins=copy(reply.presentation.skins);
           const before=desktopView?.contextId,beforeDesk=desktopView?.deskId,desktop=reply.presentation.desktop;
           if(!desktop)desktopView=null;
@@ -539,6 +543,21 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds,key=value.desktopInput.key,identity=scope();
+            if(value.desktopInput.modifiers===1&&key!==86&&selected.includes(value.button)){
+              native.request(key===88?'desktopCut':'desktopCopy',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+                .then(reply=>{
+                  if(disposed||identity.sessionId!==snapshot.sessionId)return;
+                  consumeReceipt(reply);
+                  if(reply.status==='accepted'&&Number.isSafeInteger(reply.data?.clipboardSequence)&&reply.data.clipboardSequence>0){
+                    cutSequence=key===88?reply.data.clipboardSequence:null;cutIds=new Set(key===88?selected:[]);paintDesktopSelection();
+                  }
+                },()=>diagnose('clipboardUnavailable'));
+            }
+            return true;
+          }
           if(value.consumer==='official.desktop'&&value.desktopInput?.key===13&&!value.button.startsWith('desktop.page.')){
             completion=null;desktopClick=null;
             const selected=desktopSelection.read().selectedIds;

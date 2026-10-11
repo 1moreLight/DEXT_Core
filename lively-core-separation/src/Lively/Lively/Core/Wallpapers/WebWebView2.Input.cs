@@ -104,6 +104,11 @@ namespace Lively.Core.Wallpapers
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
                     break;
+                case "desktopCopy":
+                case "desktopCut":
+                    var clipboard = await ExecuteDesktopCopyAsync(a, state, request);
+                    actionReply = clipboard.Reply; status = actionReply.Status; data = clipboard.Data;
+                    break;
                 case "desktopRename":
                     actionReply = await ExecuteDesktopRenameAsync(a, state, request);
                     status = actionReply.Status;
@@ -115,6 +120,7 @@ namespace Lively.Core.Wallpapers
                 case "presentationRead":
                     var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision,request.DesktopContextId));
                     status=view.Status;
+                    data=new{clipboardSequence=Lively.Services.DesktopSync.DesktopShellClipboard.CurrentSequence};
                     if(view.Presentation is{} present)presentation=JObject.Parse(System.Text.Json.JsonSerializer.Serialize(present,
                         new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase}));
                     break;
@@ -315,9 +321,10 @@ namespace Lively.Core.Wallpapers
         }
         internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
         {
-            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && key!=114)return false;
+            var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && !DextNativePointerPacket.IsDesktopFileKey(key))return false;
             var desktopFocus=a.Input.FocusedButton;
-            if(key==114&&down&&(nativeDock||desktopFocus?.Consumer!=RoomActionAuthority.DesktopConsumer||!desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)))return false;
+            if(DextNativePointerPacket.IsDesktopFileKey(key)&&down&&(nativeDock||desktopFocus?.Consumer!=RoomActionAuthority.DesktopConsumer||!desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)))return false;
+            if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&down&&DesktopInputModifiers()!=1)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
             a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,DesktopInputModifiers());
             var after=a.Input.State;

@@ -12,7 +12,7 @@ internal static class NativePointerDeliveryChecks
             RuntimeGeneration=1,SessionId=session,Revision=1,GeometryVersion=1,GestureId=gesture,IssuedAt=0,InputHandle=42,
             Kind=kind,OriginX=100,OriginY=200,PixelWidth=1000,PixelHeight=1000,Dpi=144,X=x,Y=400,Modifiers=4};
         await Check("official desktop keys stay on the physical keyboard path",()=>{
-            foreach(var key in new[]{13,32,114}){
+            foreach(var key in new[]{13,32,114,67,88,86}){
                 var raw=Packet("down");raw.Key=key;raw.SampleKeyboard=true;raw.Consumer="official.desktop";raw.Button="desktop-"+new string('a',64);raw.EntryId="desktop.scan/"+raw.Button;
                 var value=new DextNativePointerPacket(raw);
                 Require(value.UsesOfficialKeyboard,"official desktop keyboard treated as author input");

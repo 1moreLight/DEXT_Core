@@ -571,3 +571,6 @@ npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在
 #324恢复补记：独立D盘目录安装锁定依赖，当前node_modules使用junction；仅迁移当前worktree未运行Core bin到D盘并链接，TEMP/TMP/npm缓存及CargoTargetDirectory均指向D盘。完整候选构建与654文件/16资产来源核对成功；没有清理其他worktree或系统文件。
 
 #320补记（2026-10-11）：输入测试插入脚本再次因PowerShell双引号字符串中反斜杠转义引号解析失败，未执行写入；改为单引号here-string后插入并确认预期编译失败/实现后四组通过。后续源码片段统一here-string。
+
+## #330 个人编辑夹具间歇原子发布失败（2026-10-11，未定位根因）
+clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish/SetFileInformationByHandle报Win32 5拒绝访问；随后完整21/21。补新剪切断言后的运行又在旧drop placement存储返回storageUnavailable，20/21；保留clipboard-copy-core-storage-failure.log，同一二进制仅复查一次21/21于clipboard-copy-core-recheck.log。TEMP为D盘专用build-env/temp，每夹具独立GUID。没有证据认定杀软或其他进程，不通过放松文件共享/发布规则掩盖它；下次复现需保留确切路径与错误原因。绿色重跑不代表此问题已修复。本轮复制/剪切新断言在20/21运行中也通过。

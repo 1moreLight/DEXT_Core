@@ -457,3 +457,6 @@
 | #327 | 桌面命令键复用点击选择逻辑，F2把多选缩成单选 | [renderer](errors/renderer.md) |
 
 | #328 | 多选Enter误缩成单选；打开应用引起暂停丢失动作回执 | [renderer](errors/renderer.md) |
+
+| #329 | 剪切CSS opacity被切页内联透明度覆盖，需叠加filter | [renderer](errors/renderer.md) |
+| #330 | 个人编辑测试间歇原子发布拒绝访问；同构建复查通过，根因未定 | [toolchain](errors/toolchain.md) |

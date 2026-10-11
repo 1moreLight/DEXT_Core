@@ -14,6 +14,7 @@ namespace Lively.Services.DesktopSync;
 internal static class DesktopShellClipboard
 {
     private const uint FileDrop=15;
+    internal static uint CurrentSequence => GetClipboardSequenceNumber();
     internal static Task<DesktopClipboardSnapshot?> ReadAsync(CancellationToken cancellation=default)
         => Run(() => WithClipboard(IntPtr.Zero,()=>
         {

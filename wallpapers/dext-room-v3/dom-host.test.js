@@ -747,3 +747,23 @@ test('desktop double click requires native time and position and resets after pa
   click(1000,111);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
  }finally{f.host.dispose();}
 });
+test('Ctrl copy and cut preserve selection and cut styling follows clipboard sequence',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64)),timers=new Map();let timer=0,clipboardSequence=10;
+ const desktop={contextId:'scan1',deskId:'home',items:ids.map((id,slot)=>({id,name:'Clipboard '+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({setTimeout:(cb,ms)=>{timers.set(++timer,{cb,ms});return timer;},clearTimeout:id=>timers.delete(id),
+  request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',data:{clipboardSequence},presentation:{revision:1,skins:{},locator:null,desktop}}):
+   ['desktopCopy','desktopCut'].includes(method)?Promise.resolve({status:'accepted',data:{clipboardSequence:++clipboardSequence}}):undefined});
+ try{
+  await f.host.ready;await flush();let sequence=0;
+  function press(index,key,modifiers){const q=f.calls.filter(c=>c.method==='geometry').at(-1),entry=q.params.buttons.find(b=>b.button===ids[index]);
+   f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:entry.button,entryId:entry.entryId,inputSequence:++sequence,
+    desktopInput:{key,modifiers,x:100,y:100,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});}
+  press(0,0,0);press(1,0,1);press(1,67,1);await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopCopy').at(-1)?.params.selectedIds,ids);
+  press(1,88,1);await flush();assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  const icons=()=>f.container.children[0].children.filter(n=>n.attrs['aria-label']?.startsWith('Clipboard '));
+  assert.ok(icons().every(n=>n.dataset.cut==='true'));
+  clipboardSequence++;for(const t of [...timers.values()].filter(t=>t.ms===750))t.cb();await flush();
+  assert.ok(icons().every(n=>n.dataset.cut==='false'));
+ }finally{f.host.dispose();}
+});
