@@ -2525,3 +2525,5 @@ r2核对655文件/17资源成功；校验器成功后外层读取遗留LASTEXITC
 
 2026-10-11 黑屏修复候选r2已启动：.build/longpress-edit-20261011-r2，Core27224 / Player19180 / 配置器5504，原v3 Basic/home恢复。真实资源服务器测试先复现press-edit.js 403，修复后16项HTML依赖成功加载；完整构建成功，发布656/18来源校验通过。新运行日志确认geometry Accepted（version2）和持续presentationRead，宿主初始化恢复；实际画面仍待用户确认。修复步骤3/3=100%，整包人工验收仍未通过，旧r1黑屏包不再用。
 本次人工只需确认：当前Room画面及同步的本地桌面图标是否恢复。恢复后再执行原长按三组，不重复所有测试。
+
+2026-10-11 用户确认画面恢复，但长按编辑/拖入未通过。只读核对：当前Room v3 Basic，Desk=focus，revision11；该Desk无icons/components，Windows同步设置为enabled=true/deskId=home。长按代码明确排除同步Windows文件（record.desktop），所以不能把“有Room编辑接口”称为所有桌面图标可编辑。拖入当前focus被同步Desk限制拒绝，尚无desktopDrop请求日志；不能据此断言home页拖入已正常。已询问用户实际长按对象和文件来源，待其说明后继续同分支修复，不合主线。当前只确认黑屏修复通过，其余人工项未通过。
