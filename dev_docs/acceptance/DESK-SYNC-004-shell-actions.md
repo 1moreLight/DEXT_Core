@@ -43,3 +43,9 @@
 证据：Shell实际唯一临时文件/目录回收并精确还原、原字节/子文件保留、预取消/失效/缺失源/回收标志检查9/9；夹具还原后删除本轮临时目录，无用户文件/回收站清空。DOM原Shift+Delete缩小选择的失败断言→宿主116/116；Core原Delete无证明失败→23/23；键盘独占9/9、私有消息79/79、指针18/18。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/recycle-build.log）；首次完整构建发现switch局部变量pasted重名，修复为recycled，失败日志保留recycle-build-failed.log。测试STA返回类型与共享回调匹配问题均在实际Shell执行前修正。
 运行：start.ps1仍因主目录Debug Core26668占用身份退出1，未部署新候选、未启动配置器。代码4/6≈67%，路线2/4=50%，下一执行步骤05原生右键/属性；真实键盘独占、取消对话框、Explorer互通及鼠标/触控/DPI仍待统一验收，#330间歇存储问题未宣称修复。
 人工步骤：在同步Desk只用唯一临时文件/文件夹，单选或多选后Delete，从回收站还原并核对内容；取消操作或目标不支持回收时源应保留，Shift+Delete无永久删除；随后检查Dock、作者按钮、切页、鼠标和触控。
+
+2026-10-11 第05步菜单后端增量：新增 DesktopShellContextMenu，STA持有Shell桌面命名空间/PIDL/IContextMenu/HMENU，支持单项、同目录和跨目录选择查询。已写IContextMenu2/3消息转发、Unicode ordinal InvokeCommand、原生TrackPopupMenu及50ms退休取消检查；实际消息owner窗口/右键/菜单键接线仍待做，不把后端编译当作桌面菜单可用。delete/rename/cut/copy等返回已有Dext操作，避免Shell删除绕过回收站与rename依赖Explorer内联编辑。
+证据：空菜单失败断言见context-menu-red.log，删除分流失败断言见context-menu-routing-red.log；最终实际临时Unicode文件单项/多项/跨目录菜单、Properties/copy动词、delete/copy分流、退休/无效命令拒绝、释放与原字节保持14/14（.build/context-menu-final.log）。仅查询菜单，无TrackPopup显示、InvokeCommand调用或系统剪贴板修改；夹具清理完成后才结束测试任务。
+消息验证限度：本机IContextMenu2/3均可查询，但已静态填充的根/7zip菜单WM_INITMENUPOPUP返回E_FAIL；context-menu-messages-diagnostic.log保留。初始化“必须已处理”的假设不成立，保留未处理回退；最终测试仅证明转发不破坏菜单，owner绘制、动态子菜单、键盘与取消仍须真实弹窗验证。
+完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-menu-build.log）；随后对旧已部署v3-core-exit-20261010调用start.ps1仅作身份检查，因主目录Debug Core26668占用退出1（.build/context-menu-start-identity.log），没有启动本轮dev候选或额外配置器。当前4/6≈67%，05保持开做，桌面同步路线2/4=50%，#330存储间歇问题仍未解决。
+下一执行：原生菜单owner窗口、右键及菜单键证明、选择保留与动作接线，再完整候选交接。人工（统一部署后）：唯一临时文件单选/多选右键或菜单键，检查打开/属性/取消、DPI、不误触下层；回归Dock、作者按钮、鼠标与触控。

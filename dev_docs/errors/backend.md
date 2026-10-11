@@ -677,3 +677,8 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 发现：WinDesktopCore用RawInput_KeyboardClickRaw把Ctrl+V交Core时，没有阻止Explorer接收同一原生键；构建/私有协议通过不足以证明不会双粘贴。
 代码处理：限定同步文件或粘贴按钮焦点，WH_KEYBOARD_LL成功接收入队后抑制原按键。按下确定归属，抬起不重选目标；已有按住键和自动重复不产生新操作，非文件焦点保持原链。回调只做快照核对/排队，Core执行时仍核对当前作用域；RawInput文件默认入口停用以免双执行。分支完整Release及8项配对/3轮无接管目标安装卸载通过，尚未部署。
 回归：必须在实际WorkerW/Explorer里用唯一临时文件核对每次Ctrl+V只有一份、焦点切换不操作其他文件、Core退出后Windows键盘正常；屏幕键盘、分页Enter、Dock及触控另验。无目标的钩子生命周期检查不代表实际抑制/文件互通通过。
+
+## #333 静态Shell菜单初始化返回未处理，不代表COM接口不存在（2026-10-11）
+
+DESK-SYNC-004使用SHCreateDefaultContextMenu产生真实跨目录菜单，Properties/copy等查询通过；将WM_INITMENUPOPUP检查强化为“必须被处理”时失败。定向诊断确认IContextMenu2和3均支持，根与静态填充的7zip子菜单返回E_FAIL。并非接口缺失，也不能把菜单还存在当作真实消息转发/动态子菜单已通过。
+修正：只对处理器返回S_OK的消息认领；其余返回false让owner继续系统处理。保留诊断失败记录，查询检查仅证明菜单与资源保持；实际owner绘制、动态子菜单、WM_MENUCHAR和取消另列真实桌面门槛。后台STA测试要等临时文件清理完再完成Task，避免测试进程先退导致夹具残留。
