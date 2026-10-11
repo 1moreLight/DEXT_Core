@@ -9,7 +9,7 @@
 - 当前分支做到哪：`TODO.md` 最后一节
 - 一轮任务怎么开分支、提交、验收、合并：`WORKFLOW.md`
 - 本轮怎么验收：`acceptance/<工作包ID>-<名称>.md`
-- 产品和设计决策：`PROJECT.md`；具体契约看 `MODEL.md` / `DOCK.md`
+- 产品和设计决策：`PROJECT.md`；v3契约看 `ROOM_V3.md` / `ROOM_V3_RUNTIME_API.md`；`MODEL.md` / `DOCK.md`保留v2历史
 
 以后不再从旧 Phase、旧 TODO 或历史 UI 文档猜“现在该做什么”。当前状态只认 ROADMAP；已经开工后，执行进度只认当前分支 TODO。
 
@@ -19,7 +19,25 @@
 
 目标创作模型是“官方宿主 + 用户内容”：Dext 官方 HTML 骨架负责 Desk、Dock、图标、导航、IPC、保存与 WidgetHost；用户可定制 background/start/switch/idle Scene 和每 Desk 多个 Widget。
 
-DXT-003完成了原生Room v2链（历史阶段）；v1与更旧demo不兼容。当前v3按ROADMAP开发：P6新建/编辑/保存接原生v3，已有v2链保留至P10收口；v3另存/分享/试验台由后续包接入。完整进度和实际证据见V3_DELIVERY.md，不能用v2同名功能计作v3交付。
+### 当前 v3 职责索引（2026-10-12）
+
+当前实现入口如下；交付状态与未验收项看 [V3_CURRENT](V3_CURRENT.md)，正式契约看 [ROOM_V3](ROOM_V3.md)。Dext 的 Room 会话内核已经接入，Windows 桌面承载和 Player 仍复用本项目维护的 Lively fork。
+
+| 入口 | 职责 |
+|---|---|
+| `Core/Dext/RoomSessionKernel.cs` | Room会话、Desk导航及生命周期权威状态 |
+| `Core/Dext/RoomSessionRuntimeCoordinator*.cs` | 会话与Windows承载、Player、桌面同步及Dock的接线 |
+| `Core/Dext/RoomActionAuthority*.cs` | 本机动作、个人数据、布局与当前作用域校验 |
+| `Core/Dext/RoomNativeInputAuthority.cs` | 原生输入状态与可信动作依据 |
+| `Core/Wallpapers/WebWebView2*.cs` | Core与Player私有通信、菜单和文件传输接线 |
+| `wallpapers/dext-room-v3/` | 官方v3宿主、呈现与编辑交互 |
+| `tauri-ui/src/features/room-editor/V3*.tsx` | v3配置器编辑与试验台 |
+
+表中`Core/`相对`lively-core-separation/src/Lively/Lively/`，其余相对仓库根。
+
+### 历史 v2 架构摘要
+
+以下三件套图和`room.json`描述保留作旧链路参考，不代表当前v3运行契约或待开发清单。
 
 ```
 ① 运行时渲染器  wallpapers/dext-room/{index.html,style.css,main.js}
