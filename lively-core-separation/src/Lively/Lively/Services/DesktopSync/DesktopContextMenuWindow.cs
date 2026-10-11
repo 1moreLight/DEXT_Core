@@ -19,9 +19,9 @@ internal static class DesktopContextMenuWindow
     {
         var app = Application.Current;
         if (app is null || app.Dispatcher.HasShutdownStarted) return "cancelled";
-        return await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted, desktopTarget, returnedToDesktop));
+        return await (await app.Dispatcher.InvokeAsync(() => Show(paths, x, y, permitted, desktopTarget, returnedToDesktop)));
     }
-    private static string Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
+    private static async Task<string> Show(IReadOnlyList<string> paths, int x, int y, Func<bool> permitted, Func<IntPtr> desktopTarget, Action returnedToDesktop)
     {
         if (!permitted()) return "cancelled";
         if (active is not null) throw new InvalidOperationException("A desktop context menu is already open.");
@@ -42,8 +42,14 @@ internal static class DesktopContextMenuWindow
             if (!permitted()) return "cancelled";
             // A foreground owner makes Escape and outside clicks dismiss the
             // native popup instead of forwarding into the underlying desktop.
-            if (!SetForegroundWindow(owner.Handle) || GetForegroundWindow() != owner.Handle) return "cancelled";
+            var requested = false;
+            var activated = await DesktopShellMenuActivation.Confirm(
+                () => requested = SetForegroundWindow(owner.Handle),
+                () => GetForegroundWindow() == owner.Handle, permitted, () => Task.Delay(15));
+            NLog.LogManager.GetCurrentClassLogger().Info($"Desktop menu activation | requested={requested} | confirmed={activated}");
+            if (!activated) return "cancelled";
             var command = menu.Track(owner.Handle, x, y, permitted);
+            NLog.LogManager.GetCurrentClassLogger().Info($"Desktop menu tracked | selected={command != 0}");
             if (messageError is not null) throw new InvalidOperationException("Shell menu message failed.", messageError);
             return command == 0 ? "cancelled" : menu.Dispatch(command, owner.Handle, x, y, permitted);
         }

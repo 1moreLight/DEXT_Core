@@ -1,4 +1,5 @@
 using Lively.Services.DesktopSync;
+if(args.Length==1&&args[0]=="--menu-activation"){await MenuActivationChecks.Run();return;}
 if(args.Length==1&&args[0]=="--context-menu"){await ContextMenuChecks.Run();return;}
 if(args.Length==1&&args[0]=="--recycle"){await RecycleChecks.Run();return;}
 if(args.Length==1&&args[0]=="--paste"){await PasteChecks.Run();return;}

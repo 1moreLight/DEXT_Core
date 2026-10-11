@@ -489,3 +489,6 @@
 2026-10-11 编辑模式迁移：exitEdit在初始snapshot调用也设置250ms动作静默，会误拦普通作者按钮（8个原点击用例失败）；只在确实退出编辑时设置静默后94项通过。Player异步up回调必须核对同一gesture，不能把下一手势清掉；松手后保留idle观察才能无焦点Esc退出。一次拖动保存不等于旧版持续编辑模式迁移完成。
 
 2026-10-11 reorder补齐：v3通用packing预览只按固定ID布局，不具备旧版占位插入语义；必须复用旧resolveIconReorder并在移动过程中重排同伴，拖拽图标单独跟手。仅存主图标会在重开后丢失让位顺序，改为同一个layoutSave携带peers，在一次存储事务中先验证全部项再写，布局版本只递增一次。作者iframe空白DOM不冒泡，双击退出必须从原生down/up识别，不依赖网页dblclick。
+
+## 2026-10-11 右键菜单前台确认时序
+SetForegroundWindow成功后立即GetForegroundWindow不保证已完成跨输入队列激活；原代码直接取消。改成单次请求及有界异步确认，不使用AttachThreadInput。用户首次可弹、后续立即取消已定位到弹窗层，最终实机原因仍由activation日志确认。4项定向检查通过不代表连续右键已验收。来源：https://devblogs.microsoft.com/oldnewthing/20161118-00/?p=94745 。
