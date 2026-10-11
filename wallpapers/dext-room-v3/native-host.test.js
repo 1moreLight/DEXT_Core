@@ -251,7 +251,7 @@ test('native rename waits through its dialog pause and revision until receipt',a
 });
 
 test('desktop open sends selected IDs and retains the native action receipt across revision',async()=>{
- for(const method of ['desktopOpen','desktopCopy','desktopCut','desktopDelete']){
+ for(const method of ['desktopOpen','desktopCopy','desktopCut','desktopDelete','desktopMenu']){
   const f=fixture();const params={consumer:'official.desktop',button:'desktop-a',selectedIds:['desktop-a','desktop-b'],geometryVersion:1,inputSequence:2};
   try{
    const promise=f.host.request(method,params).catch(e=>({error:e.code}));await flush();

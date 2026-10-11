@@ -2407,3 +2407,11 @@ F2已经能产生Core文件命令完成事件；DOM尚未处理改名UI和新私
 消息验证限度：本机IContextMenu2/3均可查询，但已静态填充的根/7zip菜单WM_INITMENUPOPUP返回E_FAIL；context-menu-messages-diagnostic.log保留。初始化“必须已处理”的假设不成立，保留未处理回退；最终测试仅证明转发不破坏菜单，owner绘制、动态子菜单、键盘与取消仍须真实弹窗验证。
 完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/context-menu-build.log）；随后对旧已部署v3-core-exit-20261010调用start.ps1仅作身份检查，因主目录Debug Core26668占用退出1（.build/context-menu-start-identity.log），没有启动本轮dev候选或额外配置器。当前4/6≈67%，05保持开做，桌面同步路线2/4=50%，#330存储间歇问题仍未解决。
 下一执行：原生菜单owner窗口、右键及菜单键证明、选择保留与动作接线，再完整候选交接。人工（统一部署后）：唯一临时文件单选/多选右键或菜单键，检查打开/属性/取消、DPI、不误触下层；回归Dock、作者按钮、鼠标与触控。
+
+2026-10-11 第05步菜单键接线开做：Apps菜单键(93)和Shift+F10(121)仅归属当前同步文件焦点，沿原生证明/所选ID请求desktopMenu；保持多选，Core冻结目标后在自身STA消息owner显示Shell菜单，菜单选择沿现有文件动作完成。坐标取当前原生文件区域，作者不能传屏幕坐标。右键下一增量接同一入口，现有左键/触控保留。先做菜单键修饰键、选择保持与一次目标准备失败用例。
+
+2026-10-11 第05步菜单键接线增量：Apps(93)/Shift+F10(121)按文件焦点和精确修饰键接独占原生键盘，静态/采样链都生成菜单证明；普通F10、其他作者/Dock焦点和粘贴按钮不接管。desktopMenu仅传当前所选ID并保留多选，Core验证整组并一次消费证明，坐标由原生文件区域/视口计算。Core UI STA上单个零尺寸工具owner转发IContextMenu2/3，保持owner到进程退出以支持Shell的modeless属性页；菜单之外不占桌面命中区。
+原生菜单的复制/剪切接既有剪贴板及变淡反馈，重命名接现有编辑窗，删除接回收站逐项结果；普通打开/属性和文件夹粘贴等由Shell的选中命令执行。菜单取消/作用域退休不继续执行，原生命令回包跨普通暂停保留。实际弹窗焦点、动态子菜单、属性和外点取消仍未活体验证；鼠标右键尚未接入，不能宣称原生菜单功能已完成。
+证据：Core原Expected121 got0失败→个人编辑24/24（menu-key-core-red/green.log）；原生菜单键静态/采样与作者不接管12组（menu-native-keys.log）；按键所有权10/10（menu-key-ownership.log）；DOM缺请求失败→宿主/桥/选择117/117（menu-key-dom-red.log、menu-host-final.log），含多选保持和暂停回执；私有消息79/79（menu-input-messages.log）、原生指针/键盘18/18（menu-pointer.log）。完整Core/Player/Watchdog Release通过（desktop-shell-actions-build-env/menu-key-build.log）。本次24/24不消除#330此前间歇存储失败。
+运行：start.ps1仍仅核对旧已部署v3-core-exit-20261010，因主目录Debug Core26668占用退出1（menu-key-start-identity.log）；没有启动本轮候选或额外配置器。进度保持4/6≈67%，路线2/4=50%。下一执行鼠标右键（只接同步文件，避免与Explorer双菜单；保持原左键/触控），然后实际菜单窗口与完整候选交接。
+人工步骤（部署后统一）：临时文件多选后Apps键/Shift+F10，试复制/剪切/重命名/回收及属性；Escape/点击外部取消，切Desk/停用取消旧菜单；核对DPI位置和原Dock、作者按钮、鼠标、触控。当前运行版本不包含本轮变更，无需现在验收。

@@ -347,7 +347,7 @@
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
-    let dropRunning=false,pasteRunning=false,deleteRunning=false;
+    let dropRunning=false,pasteRunning=false,deleteRunning=false,menuRunning=false;
     function dropEligible(event){
       return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
         snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
@@ -367,6 +367,23 @@
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopMenu(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(menuRunning||!selected.includes(value.button))return;
+      const identity=scope();menuRunning=true;
+      native.request('desktopMenu',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          if(reply.status==='accepted'&&['copy','cut'].includes(reply.data?.verb)&&Number.isSafeInteger(reply.data.clipboardSequence)&&reply.data.clipboardSequence>0){
+            cutSequence=reply.data.verb==='cut'?reply.data.clipboardSequence:null;cutIds=new Set(reply.data.verb==='cut'?selected:[]);paintDesktopSelection();
+          }
+          if(reply.data?.verb==='delete'){
+            const items=Array.isArray(reply.data.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length;
+            dropNotice(`已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。`);
+          }else if(!['accepted','cancelled'].includes(reply.status))dropNotice('菜单操作未完成，请稍后重试。');
+        },()=>{if(!disposed)dropNotice('未收到菜单操作结果，请先检查文件。');}).finally(()=>{menuRunning=false;});
     }
     function desktopDelete(value){
       const selected=desktopSelection.read().selectedIds;
@@ -576,6 +593,11 @@
           if(value.consumer==='official.desktop'&&value.button==='desktop.paste'){
             completion=null;desktopClick=null;
             if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&[93,121].includes(value.desktopInput?.key)){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===(value.desktopInput.key===93?0:2))desktopMenu(value);
             return true;
           }
           if(value.consumer==='official.desktop'&&value.desktopInput?.key===46){

@@ -20,3 +20,12 @@
 证据与局限详见本包验收卡2026-10-11菜单后端增量；原生静态菜单WM_INITMENUPOPUP可返回E_FAIL，不能要求每条初始化消息都必须被扩展处理。当前运行Core26668保留，本轮候选未部署。人工步骤沿用验收卡第5、6项。
 
 参考：[SHCreateDefaultContextMenu](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shcreatedefaultcontextmenu)、[IContextMenu3消息](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-icontextmenu3-handlemenumsg2)、[Unicode命令结构](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/ns-shobjidl_core-cminvokecommandinfoex)。
+
+### 菜单键接线增量（实施已写，05仍开做）
+
+- [x] Apps/Shift+F10独占原生键盘、私有desktopMenu、当前所选ID一次证明与多选保持。
+- [x] Core STA零尺寸原生owner、菜单消息转发、坐标及已有文件动作接线；完整Release构建通过。
+- [ ] 鼠标右键单独接同一菜单入口；避免Explorer重复弹菜单，保持原左键/触控。
+- [ ] 真实菜单焦点/属性/动态子菜单/外点和Esc取消/退休/DPI统一验收。
+
+Core24/24、原生菜单键12组、键盘所有权10/10、宿主117/117、消息79/79、指针18/18。当前Core26668保留，新候选未部署；完整证据与人工步骤见验收卡同日菜单键增量。

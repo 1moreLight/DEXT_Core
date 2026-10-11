@@ -16,7 +16,7 @@ internal static class NativeInputMessageChecks
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
         Check("paused Player permits desktop metadata and drop receipts but not input actions",()=>{
-            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename","desktopOpen","desktopCopy","desktopCut","desktopPaste","desktopDelete"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
+            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename","desktopOpen","desktopCopy","desktopCut","desktopPaste","desktopDelete","desktopMenu"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
             foreach(var method in new[]{"activate","geometry","authorInput","layoutSave","storageSet"})Require(!DextNativeInputProtocol.AllowsWhileSuspended(method));
         });        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
         Check("desktop rename carries only a native file proof and survives wire serialization",()=>{
@@ -31,7 +31,7 @@ internal static class NativeInputMessageChecks
             }
         });
         Check("desktop open preserves selected IDs through native IPC",()=>{
-            foreach(var method in new[]{"desktopOpen","desktopCopy","desktopCut","desktopDelete"}){
+            foreach(var method in new[]{"desktopOpen","desktopCopy","desktopCut","desktopDelete","desktopMenu"}){
                 var r=Request();r["method"]=method;r.Remove("viewport");r.Remove("buttons");
                 r["consumer"]="official.desktop";r["button"]="desktop-a";r["inputSequence"]=8;
                 r["selectedIds"]=new JArray("desktop-a","desktop-b");

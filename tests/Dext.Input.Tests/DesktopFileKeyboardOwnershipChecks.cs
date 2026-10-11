@@ -70,6 +70,13 @@ internal static class DesktopFileKeyboardOwnershipChecks
     if(accepted){Require(owner.Process(Edge(key:46,down:false,mods:0),false,2,42,20,20,Offer(),Enqueue));Require(sent.Count==2&&sent[1].Item2.Modifiers==modifiers);}
    }
   });
+  Check("menu key and Shift F10 own only their exact file modifiers",()=>{
+   foreach(var key in new[]{93,121})foreach(var mods in new[]{0,1,2,3,4}){
+    var owner=new DesktopFileKeyboardOwnership();
+    Require(owner.Process(Edge(key:key,mods:mods),false,1,42,20,20,Offer(),Enqueue)==(key==93?mods==0:mods==2));
+   }
+   var paste=new DesktopFileKeyboardOwnership();Require(!paste.Process(Edge(key:93,mods:0),false,1,42,20,20,Offer("paste"),Enqueue));
+  });
   Console.WriteLine($"{count}/{count} desktop keyboard ownership checks passed");
  }
 }

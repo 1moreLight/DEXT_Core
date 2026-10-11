@@ -808,3 +808,20 @@ test('Delete preserves selected IDs and Shift Delete cannot send a file command'
   assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
  }finally{f.host.dispose();}
 });
+
+
+test('native menu keys preserve multi-selection and cannot launch files',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'menu',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,key,mods,sequence)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.menu/'+id,inputSequence:sequence,desktopInput:{key,modifiers:mods,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],0,0,1);send(ids[1],0,1,2);await flush();
+  send(ids[1],121,0,3);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopMenu').length,0);
+  send(ids[1],121,2,4);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopMenu').at(-1)?.params.selectedIds,ids);
+  send(ids[1],93,0,5);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopMenu').length,2);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate'||c.method==='desktopOpen').length,0);
+ }finally{f.host.dispose();}
+});

@@ -32,7 +32,7 @@ internal sealed class DesktopFileKeyboardHook : IDisposable
             if(Volatile.Read(ref stopped)!=0)return;
             hook=SetWindowsHookEx(13,callback,GetModuleHandle(null),0);
             if(hook==IntPtr.Zero)throw new Win32Exception(Marshal.GetLastWin32Error());
-            foreach(var key in new[]{13,32,46,67,88,86,114})if(Held(key))ownership.IgnoreHeld(key);
+            foreach(var key in new[]{13,32,46,67,88,86,114,93,121})if(Held(key))ownership.IgnoreHeld(key);
             active=true;
             while(Volatile.Read(ref stopped)==0){
                 var result=GetMessage(out var message,IntPtr.Zero,0,0);

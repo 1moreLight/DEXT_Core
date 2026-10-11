@@ -139,7 +139,7 @@ internal sealed class DesktopShellContextMenu : IDisposable
         var selected = Commands().FirstOrDefault(item => item.Id == command && item.Enabled);
         if (selected is null) throw new ArgumentOutOfRangeException(nameof(command), "Command is absent or disabled.");
         var verb = selected.Verb.ToLowerInvariant();
-        if (verb is "delete" or "rename" or "cut" or "copy" or "paste" or "pastelink") return verb;
+        if (verb is "delete" or "rename" or "cut" or "copy") return verb;
         if (!IsWindow(owner)) throw new ArgumentException("A live native owner is required.", nameof(owner));
         var offset = (IntPtr)(command - FirstCommand);
         var info = new InvokeInfo

@@ -581,3 +581,7 @@ clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish
 现象：独立Core类/协议测试通过，完整WPF Core编译报CS0128/CS0170。desktopDelete和desktopPaste的case共享switch作用域，都声明var pasted。
 修复：新回收分支使用recycled并保持回执赋值一致，重新完整Release成功；失败日志desktop-shell-actions-build-env/recycle-build-failed.log保留。复制case时使用独立变量或独立花括号；不能用链接少量Core类的测试代替产品构建。
 同轮测试修正：DesktopShellTransfer.RunStaAsync返回专用DesktopTransferResult，回收站还原夹具的回调不能return bool；改成空结果后取得功能失败断言，再实际实现。文本替换断言未命中时保留原文件，精确读取后替换，并在PowerShell检查Python退出码再继续构建。
+
+## #334 Windows Python默认GBK不能用于UTF-8源码（2026-10-11）
+
+菜单键计划/用例编辑脚本使用Path.read_text()默认编码，读取含中文的生产源码时UnicodeDecodeError；先前TODO和测试文件已写入，后续实现/测试未运行。按退出码止步，先git diff核对已写范围，再对所有read_text/write_text指定encoding='utf-8'后继续，避免重复追加测试或错误宣称RED已跑。生产源码失败点未写入；后续实际失败断言和GREEN均有日志。

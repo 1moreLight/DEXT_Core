@@ -152,6 +152,11 @@ internal sealed partial class RoomActionAuthority
         if(proof.Key!=(cut?88:67)||proof.Modifiers!=1||ids is null)return (RoomActionStatus.NotOperable,null);
         return PrepareDesktopTargets(connection,peer,session,proof,ids);
     }
+    internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopMenu(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
+    {
+        if(!(proof.Key==93&&proof.Modifiers==0||proof.Key==121&&proof.Modifiers==2)||ids is null)return (RoomActionStatus.NotOperable,null);
+        return PrepareDesktopTargets(connection,peer,session,proof,ids);
+    }
     internal (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopDelete(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] ids)
     {
         if(proof.Key!=46||proof.Modifiers!=0||ids is null)return (RoomActionStatus.NotOperable,null);
@@ -219,7 +224,7 @@ internal sealed partial class RoomActionAuthority
     internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
         // File command proofs must never fall through to application launch.
-        if(proof.Key is 46 or 114 or 67 or 88 or 86)return new(RoomActionStatus.NotOperable);
+        if(proof.Key is 46 or 114 or 67 or 88 or 86 or 93 or 121)return new(RoomActionStatus.NotOperable);
         var prepared=PrepareDesktopTarget(connection,peer,session,proof);
         if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
         if(Expired(proof.IssuedAt,clock.GetTimestamp()))return new(RoomActionStatus.ExpiredInput);
