@@ -44,7 +44,7 @@ internal static class DesktopContextMenuWindow
             // native popup instead of forwarding into the underlying desktop.
             var requested = false;
             var activated = await DesktopShellMenuActivation.Confirm(
-                () => requested = SetForegroundWindow(owner.Handle),
+                () => requested = ActivateMenuOwner(owner.Handle),
                 () => GetForegroundWindow() == owner.Handle, permitted, () => Task.Delay(15));
             NLog.LogManager.GetCurrentClassLogger().Info($"Desktop menu activation | requested={requested} | confirmed={activated}");
             if (!activated) return "cancelled";
@@ -78,6 +78,26 @@ internal static class DesktopContextMenuWindow
         catch (Exception error) { messageError = error; EndMenu(); }
         return IntPtr.Zero;
     }
+    // The physical right pair is consumed by our desktop hook, so Windows may
+    // still assign the last-input foreground queue to Explorer. Join it only
+    // for this user-requested activation; never keep queues joined while tracking.
+    private static bool ActivateMenuOwner(IntPtr target)
+    {
+        if (SetForegroundWindow(target)) return true;
+        var foreground = GetForegroundWindow();
+        var currentThread = GetCurrentThreadId();
+        var foregroundThread = GetWindowThreadProcessId(foreground, out _);
+        if (foreground == IntPtr.Zero || foregroundThread == 0 || foregroundThread == currentThread) return false;
+        // Do not join a hung application's input queue.
+        if (SendMessageTimeout(foreground, 0, IntPtr.Zero, IntPtr.Zero, 2, 100, out _) == IntPtr.Zero) return false;
+        if (!AttachThreadInput(currentThread, foregroundThread, true)) return false;
+        try { return SetForegroundWindow(target); }
+        finally { AttachThreadInput(currentThread, foregroundThread, false); }
+    }
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
+    [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool AttachThreadInput(uint current, uint foreground, bool attach);
+    [DllImport("user32.dll")] private static extern IntPtr SendMessageTimeout(IntPtr window, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out IntPtr result);
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool IsWindow(IntPtr window);

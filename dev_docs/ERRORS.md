@@ -492,3 +492,6 @@
 
 ## 2026-10-11 右键菜单前台确认时序
 SetForegroundWindow成功后立即GetForegroundWindow不保证已完成跨输入队列激活；原代码直接取消。改成单次请求及有界异步确认，不使用AttachThreadInput。用户首次可弹、后续立即取消已定位到弹窗层，最终实机原因仍由activation日志确认。4项定向检查通过不代表连续右键已验收。来源：https://devblogs.microsoft.com/oldnewthing/20161118-00/?p=94745 。
+
+### 右键前台确认补充：系统拒绝不是异步延迟
+用户第三次失败；activation日志requested=false。原单次等待修正不足。新增临时队列交接（激活前100ms响应检查，finally解除；不在菜单循环保持关联）；真实原生菜单5次Esc循环通过。前条“不使用AttachThreadInput”为该阶段历史方案，现已按实机证据调整。不能把纯确认状态机4项通过当成Windows激活授权通过。

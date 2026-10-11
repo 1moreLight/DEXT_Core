@@ -2572,3 +2572,5 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 07诊断候选已启动：Core17212/Player40116，配置器42292保留；原v3 Basic/home恢复。Release构建成功，当前r5更新65项编译产物并同步inventory；原文件备份于主项目.build/context-menu-before。日志仅记录proof/viewport/准备状态/是否允许弹出，不记录私人文件路径。等待一次真实文件右键以区分拒绝阶段；修复尚未完成，0/3。旧日志已有desktopMenu请求但无菜单owner；空白背景尚无原生入口，不能当文件菜单已覆盖。
 
 07增量：用户确认首次弹出，后续失败。日志每次proof/viewport均true、Prepare Accepted、permitted true，后续22–46ms返回Cancelled，定位弹窗阶段。已修正SetForegroundWindow后立即读取前台的已知时序缺陷：只申请一次，UI异步有界确认，作用域失效立即取消；系统拒绝不重试、不合并输入队列。定向用例先失败后4项通过，Release构建成功；Core32368恢复同目录r5，唯一配置器保留。新增activation/tracked日志区分系统拒绝与菜单关闭，待用户连续两次右键确认；不能据此认定该时序缺陷就是实机唯一原因。空白菜单仍未实现，07进度1/3=33%。
+
+07再次拒收后定位：第三次起activation requested=false/confirmed=false，证明系统拒绝前台请求，单纯异步等待不足。物理右键由Core钩子消费后，Windows最后输入队列仍可在Explorer；菜单申请前台失败时，仅在此次显式用户菜单请求内，对已响应WM_NULL的前台队列临时AttachThreadInput，SetForegroundWindow后finally立即解除，菜单循环不保持队列关联。实测生产菜单窗口/Shell实现：唯一临时文件连续5次弹出、测试进程菜单前台时发送Esc，5/5都关闭，未触发3秒EndMenu兜底；测试文件清理。完整Release成功并部署，Core31776，同目录r5及原配置器保留。此证据为独立真实原生菜单循环，用户桌面最终体验未补填；文件菜单修复候选完成，空白菜单仍待做，07进度2/3≈67%。
