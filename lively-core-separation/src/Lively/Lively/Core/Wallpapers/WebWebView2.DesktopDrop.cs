@@ -11,6 +11,23 @@ namespace Lively.Core.Wallpapers;
 
 public partial class WebWebView2
 {
+    // Read-only eligibility; window APIs run later on the Core dispatcher,
+    // outside the authority/store locks. Ordinary playback pause permits drops.
+    internal bool WantsDesktopSurface
+    {
+        get
+        {
+            if(nativeDock || !IsLoaded || IsExited)return false;
+            var attachment=Volatile.Read(ref roomNativeAttachment);
+            var state=attachment?.Input.State;
+            if(state==null)return false;
+            var result=attachment.Bridge.NativeReadPresentation(attachment.Actions,state.Session,state.Revision);
+            var desktop=result.Presentation?.Desktop;
+            return result.Status==RoomActionStatus.Accepted && desktop!=null &&
+                attachment.Bridge.NativeCheckDesktopDrop(attachment.Actions,state.Session,state.Revision,
+                    desktop.ContextId,desktop.DeskId)==RoomActionStatus.Accepted;
+        }
+    }
     private async Task<(RoomActionStatus Status, object Data)> ExecuteDesktopDropAsync(
         NativeAttachment attachment, RoomNativeInputState state, LivelyMessageRoomNativeRequest request)
     {

@@ -253,6 +253,8 @@ namespace Lively.Player.WebView2
                 }, startArgs.DextDock);
                 await nativeFrameMedia.InitializeAsync();
                 InitializeNativePointer();
+                // The existing visible Player is the OLE surface on synced desks.
+                if (!startArgs.DextDock) webView.AllowExternalDrop = true;
             }
             // Wallpaper -> core requests (launch app / save room), forwarded over the stdin/stdout IPC.
             webView.CoreWebView2.WebMessageReceived += async (s, e) =>

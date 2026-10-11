@@ -451,3 +451,5 @@
 | #324 | C盘空间耗尽使npm ci解包失败；仅清理本轮失败依赖，打包改用有空间的目录 | [toolchain](errors/toolchain.md) |
 
 2026-10-11 工具链补记：普通build输出不可覆盖self-contained发布包；本轮混合副本RPC未就绪，独立空目录publish后启动/退出通过。详见errors/toolchain.md日期补记。
+
+2026-10-11 接收面排障：OLE注册成功不证明实际派发；现有Player处于Explorer DefView下方，WindowFromPoint命中ListView。必须让已有可见窗口实际位于接收层；不向背景HWND反复注册，也不更改用户桌面图标显示设置。新增DesktopSurfaceWindow隐藏原生层级恢复检查。首次构建引用NativeMethods不存在的IsChild，已改为该类独立P/Invoke并构建通过。
