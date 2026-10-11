@@ -559,3 +559,8 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 规则：批量文本编辑必须检查命中数量或diff，测试输出必须出现新增用例；仅命令退出0不能证明新增用例执行。
 2026-10-11补充#320：PowerShell单引号字符串不能用反斜杠转义单引号；该写入脚本在解析阶段失败，未改文件。改用双引号外层或here-string后执行成功，并核对新增测试实际运行。
 2026-10-11补充#320：JS模板字符串里嵌套空字符串时，PowerShell单引号替换少了一枚引号，node测试在加载阶段明确报SyntaxError；改用here-string精确替换，101项宿主测试恢复通过。
+
+## #321 开发Core输出不等于完整宿主候选（2026-10-11）
+首轮desktop-drop-live在读取content/room.json之前失败，未应用Room。build.ps1只部署Core与Player/Watchdog；缺失的host目录上Copy-Item会把content目录内容复制为host根目录，不能假设content子目录存在。
+解决：按v3-release-assets.json的16项hostAssets逐个部署官方文件，显式建立content再复制夹具子项并检查room.json；第二轮实际Player/扫描就绪。测试候选含夹具，只供开发探针，正式交付仍须全新目录与清单核对。
+执行前应完成此预检再停止旧Core。首次失败恢复旧Core49672；第二轮主动取消后恢复52420，checkpoint摘要与备份一致，原配置器19704保留。

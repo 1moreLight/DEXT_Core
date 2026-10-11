@@ -21,7 +21,7 @@
 | OLE格式/效果与命中 | 开做 | [02](DESK-SYNC-003/02-ole-policy.md) |
 | Shell复制/移动/链接 | 开做 | [03](DESK-SYNC-003/03-shell-transfer.md) |
 | 会话/落点/自动显示 | 开做 | [04](DESK-SYNC-003/04-placement.md) |
-| 实机与候选交接 | 待做 | [05](DESK-SYNC-003/05-handoff.md) |
+| 实机与候选交接 | 开做 | [05](DESK-SYNC-003/05-handoff.md) |
 
 实施0/5=0%，桌面交互路线实施工作包2/4=50%；001/002待统一验收。
 

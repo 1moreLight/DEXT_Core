@@ -32,7 +32,11 @@ if(args[0]=="cleanup-desktop-fixture"){
     Console.WriteLine("RESTORED no active Room; isolated fixture personal data removed");return;
 }
 if(args[0]=="session-status"){Console.WriteLine(client.GetRoomSession(new Empty(),deadline:DateTime.UtcNow.AddSeconds(5)));return;}
-if(args[0] is "desktop-sync-live" or "desktop-watch-live"){
+if(args[0]=="desktop-drop-live"){
+    if(args.Length!=3)throw new ArgumentException("desktop-drop-live requires isolated fixture Room ID");
+    await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>DesktopDropLiveProbe.Run(client,identity));
+    return;
+}if(args[0] is "desktop-sync-live" or "desktop-watch-live"){
     if(args.Length!=3)throw new ArgumentException("desktop-sync-live requires isolated fixture Room ID");
     await StorageGrantLiveProbe.Run(client,channel,identity,args[2],runtimeCheck:()=>DesktopSyncLiveProbe.Run(client,args[0]=="desktop-watch-live"));
     return;

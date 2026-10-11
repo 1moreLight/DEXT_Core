@@ -444,3 +444,4 @@
 | #318 | PowerShell单项嵌套替换数组展开导致逐字符替换；用明确成对字段并审查diff | [toolchain](errors/toolchain.md) |
 | #319 | ExecuteScriptAsync不会直接抛页面脚本异常；AdditionalObjects拒绝非磁盘File时应读取脚本结果 | [toolchain](errors/toolchain.md) |
 | #320 | 精确多行替换前须统一CRLF/LF并确认命中；测试插入未命中不能当作验证通过 | [toolchain](errors/toolchain.md) |
+| #321 | build.ps1只部署Core/插件，不带官方宿主；实机切换前须按资源白名单预检夹具目录 | [toolchain](errors/toolchain.md) |
