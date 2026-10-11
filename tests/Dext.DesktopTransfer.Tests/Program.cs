@@ -3,6 +3,15 @@ var root=Directory.CreateTempSubdirectory("Dext-shell-transfer-").FullName;
 void Check(bool value,string text){if(!value)throw new Exception(text);Console.WriteLine("PASS "+text);}
 try
 {
+Check(DesktopDropPolicy.Select("all",0,true)==DesktopDropEffect.Move,"same-volume default moves");
+Check(DesktopDropPolicy.Select("all",0,false)==DesktopDropEffect.Copy,"cross-volume default copies");
+Check(DesktopDropPolicy.Select("all",1,true)==DesktopDropEffect.Copy,"Ctrl copies on same volume");
+Check(DesktopDropPolicy.Select("all",2,false)==DesktopDropEffect.Move,"Shift moves across volumes");
+Check(DesktopDropPolicy.Select("all",3,true)==DesktopDropEffect.Link&&DesktopDropPolicy.Select("all",4,false)==DesktopDropEffect.Link,"Ctrl+Shift and Alt request shortcuts");
+Check(DesktopDropPolicy.Select("copy",2,true)==DesktopDropEffect.None,"unsupported explicit move is rejected");
+Check(DesktopDropPolicy.Select("copy",0,true)==DesktopDropEffect.Copy,"copy-only source defaults to copy");
+Check(DesktopDropPolicy.Select("none",0,true)==DesktopDropEffect.None&&DesktopDropPolicy.Select("all",8,true)==DesktopDropEffect.None,"invalid or empty effects are rejected");
+
  var source=Directory.CreateDirectory(Path.Combine(root,"source")).FullName;
  var destination=Directory.CreateDirectory(Path.Combine(root,"destination")).FullName;
  var file=Path.Combine(source,"one.txt");File.WriteAllText(file,"original content");
