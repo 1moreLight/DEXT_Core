@@ -261,6 +261,7 @@ namespace Lively.Core.Wallpapers
         private void NotifyNative(NativeAttachment a,RoomNativeInputState before,bool activate)
         {
             var state=a.Input.State;if(state==null)return;
+            if(before?.Focus!=state.Focus)NativeDesktopKeyboardChanged?.Invoke();
             if(before?.Focus!=state.Focus)SendNative(a,state,new{type="dext:v3-native-event",kind="focus",runtimeGeneration=state.Generation,sessionId=state.Session,revision=state.Revision,geometryVersion=state.GeometryVersion,consumer=state.Focus?.Consumer,button=state.Focus?.Button,entryId=state.Focus?.EntryId});
             if(activate && state.Completed is{} proof && !ReferenceEquals(before?.Completed,proof))
             {
@@ -323,14 +324,20 @@ namespace Lively.Core.Wallpapers
             });
             return Interlocked.CompareExchange(ref a.KeyDelivery,created,null)??created;
         }
-        internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false)
+        internal bool NativeKey(int key,bool down,bool reverse,bool foreground,int scanCode=0,bool extended=false,bool exclusiveDesktop=false,int? modifiers=null)
         {
             var a=Volatile.Read(ref roomNativeAttachment);if(a==null || key!=9 && key!=13 && key!=32 && !DextNativePointerPacket.IsDesktopFileKey(key))return false;
             var desktopFocus=a.Input.FocusedButton;
+            // File commands must have one OS owner; RawInput only observes and
+            // cannot prevent Explorer from running the same command.
+            if(!exclusiveDesktop&&desktopFocus?.Consumer==RoomActionAuthority.DesktopConsumer&&
+                (desktopFocus.Button.StartsWith("desktop-",StringComparison.Ordinal)||desktopFocus.Button=="desktop.paste")&&
+                (DextNativePointerPacket.IsDesktopFileKey(key)||key is 13 or 32))return true;
+            var keyModifiers=modifiers??DesktopInputModifiers();
             if(DextNativePointerPacket.IsDesktopFileKey(key)&&down&&(nativeDock||!DextNativePointerPacket.IsDesktopKeyTarget(key,desktopFocus?.Consumer,desktopFocus?.Button)))return false;
-            if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&down&&DesktopInputModifiers()!=1)return false;
+            if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&down&&keyModifiers!=1)return false;
             var before=a.Input.State;var v=ReadNativeViewport();a.Input.CheckNativeViewport(v,foreground);
-            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,DesktopInputModifiers());
+            a.Input.Key(v??MissingViewport,key,down,reverse,foreground&&v!=null,keyModifiers);
             var after=a.Input.State;
             if(down&&key==9&&after?.Gesture is{Key:9} tab&&tab.Sequence!=before?.Gesture?.Sequence){
                 NativeKeys(a).FocusRequested();SendNativeFocus(tab);

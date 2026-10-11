@@ -1,12 +1,12 @@
 # DESK-SYNC-004 系统剪贴板互通
 
-状态：开做
+状态：做完（代码实施，Windows实机验收待做）
 
 新增DesktopShellClipboard.cs：STA读取/发布CF_HDROP与Preferred DropEffect，支持Explorer→Dext、Dext→Explorer、Dext→Dext。复制与剪切只在明确焦点和原生键盘证明下写剪贴板；粘贴由Core读取真实路径，调用DesktopShellTransfer，目标KnownFolder用户桌面。剪切变淡表示待移动，成功项才清除/更新对应剪贴板状态，用户已更换剪贴板时不覆盖。同目录粘贴复制交给Shell生成副本名称，与003同目录拖放不复制自身分开。数据格式测试通过独立HGLOBAL和Windows DragQueryFile，文件操作通过临时文件，实际全局剪贴板仅在可恢复验收中操作。
 
-- [ ] 失败用例与实现
-- [ ] 实际接线及必要检查
-- [ ] 记录证据并提交
+- [x] 失败用例与实现
+- [x] 代码接线及定向检查；实际Explorer/触控验收仍待做
+- [x] 记录证据并提交工作分支
 
 2026-10-11 开工：先实现CF_HDROP/Preferred DropEffect原生数据与快照，使用独立HGLOBAL和DragQueryFile验证Explorer兼容文件列表，不触碰全局剪贴板；再接有序STA读写与序列号匹配下的剪切完成更新，最后接原生快捷键。更新策略在OpenClipboard持有期间核对序列号，避免覆盖用户后来复制的新内容。
 
@@ -31,3 +31,10 @@
 证据：空列表DOM缺按钮断言先失败后通过；Core原NotOperable失败后22/22通过，新增鼠标/Enter/Space/Ctrl+V与停用检查；sampled/direct剪贴板8/8、Player指针18/18、私有消息79/79、宿主115/115；完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-empty-paste-build.log）。本次22/22不消除此前#330间歇存储失败记录。start.ps1仍拒绝与Debug Core26668争用身份，原实例保留。
 当前2/6≈33%，03保持开做：生产快捷键来自WinDesktopCore.RawInput_KeyboardClickRaw，RawInputMsgWindow注册Keyboard ExInputSink；现有代码只旁听转发，没有阻止Explorer原生快捷键，所以真实双执行风险尚未解决，不启用新候选。下一步先收敛键盘所有权/重复执行，再做实际Explorer互通；全局剪贴板和触控仍留统一验收。
 人工验收（部署后统一进行）：空同步Desk用唯一临时文件测试“粘贴到桌面”；Explorer与Dext双向复制/剪切/粘贴，每次只产生一份结果、保留失败源项、更换剪贴板不被覆盖；随后核对原Dock、作者按钮、触控、切页和停用后旧命令失效。
+
+2026-10-11 第03步键盘单一执行方开做：针对当前同步桌面文件焦点的Ctrl+C/X/V、F2和Enter/Space建立窄范围WH_KEYBOARD_LL接收，捕获成功后抑制Explorer同一按键；其他焦点/应用继续放行。专用消息线程只核对短期有效的目标快照、前台HWND、光标所属视口并排队，不在钩子内执行文件/IPC。按下确定归属，重复按下不重复执行，抬起归还原接收者；退出卸钩。Core执行前重新核对同一会话/几何/焦点；RawInput不再作为这些文件命令的第二入口。鼠标、触控、作者和Dock输入保留。先配对策略测试，再接生命周期和构建；实机Explorer双执行仍待验收。
+依据：[Microsoft LowLevelKeyboardProc](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc)：非零回值阻止目标窗口继续收到消息；回调需消息循环，应尽快转交后台工作，超时可能被系统移除。若钩子不可用，文件快捷键不得回退为RawInput执行以避免双操作；可见粘贴按钮继续可用。
+
+2026-10-11 第03步代码实施做完，待统一实机验收：文件Ctrl+C/X/V、F2及Enter/Space在同步文件/粘贴按钮焦点下通过独立WH_KEYBOARD_LL线程确定单一执行方，成功入队后抑制原按键，RawInput不再二次执行。按下持有原接收者至抬起，重复按下去重，启动已按住的键不抢占；前台应用/视口/短期目标不符放行。Core出队重新核对会话、修订、几何、焦点与失效代次，超过500ms的迟到按下拒绝。屏幕键盘事件沿同一范围检查，不因注入标志排除；实际屏幕键盘仍待验收。官方分页导航不归文件快捷键钩子，鼠标/触控/作者/Dock原链保留。
+证据：按键归属失败断言→8/8通过（desktop-key-ownership-red/green.log），无接管目标的真实Windows钩子安装/卸载3轮通过（desktop-key-hook-lifecycle.log）；本轮未发送系统按键。原生剪贴板配对8/8、F2六组合通过，完整Core/Player/Watchdog Release退出0（desktop-shell-actions-build-env/clipboard-key-owner-build.log）。此前Shell粘贴6项、剪贴板独立内存11项、宿主115项、消息79项证据沿用。#330间歇存储失败仍未解决。
+当前工作包代码3/6=50%，路线2/4=50%，并非整体Windows体验已验证。第03步人工门槛：Explorer双向复制/剪切/粘贴、Ctrl+V只生成一份、焦点快速切换、屏幕键盘、原Dock/作者按钮/触控回归。运行仍为Debug Core26668，start.ps1退出1保留该实例；新候选未部署。下一执行步骤04回收站，唯一下一工作包仍为回补003实机门槛。

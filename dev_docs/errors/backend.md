@@ -672,3 +672,8 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 ## #326 官方桌面输入分类遗漏（2026-10-11）
 定位F2时发现DextNativeFrameMedia.ArmInputAsync仅豁免official和任务栏consumer，official.desktop因没有作者iframe而不能通过键盘arm；Form1还会把它当作者按键去MoveFocus/Forward/等待DOM回执。鼠标路径ReceiveOfficialInputDispatch同样只接受official，遗漏官方文件图标。
 统一DextNativePointerPacket.IsOfficialConsumer和UsesOfficialKeyboard：官方文件键盘复用原生完成采样，顶层鼠标仍须真实dispatch receipt，作者输入保持原有路径；F2仅为官方文件的原生packet与Core焦点接收。Core F2新增失败断言后6项通过，Player分类/串行输入18项、Node111项、正式Release通过。没有进行OS物理输入，统一验收仍待。以后新增官方consumer必须检查arm、forward、wait、receipt全部四处，单独Core/DOM检查不能证明Player中间层已接通。
+
+## #331 RawInput文件命令不能独占Explorer按键（2026-10-11）
+发现：WinDesktopCore用RawInput_KeyboardClickRaw把Ctrl+V交Core时，没有阻止Explorer接收同一原生键；构建/私有协议通过不足以证明不会双粘贴。
+代码处理：限定同步文件或粘贴按钮焦点，WH_KEYBOARD_LL成功接收入队后抑制原按键。按下确定归属，抬起不重选目标；已有按住键和自动重复不产生新操作，非文件焦点保持原链。回调只做快照核对/排队，Core执行时仍核对当前作用域；RawInput文件默认入口停用以免双执行。分支完整Release及8项配对/3轮无接管目标安装卸载通过，尚未部署。
+回归：必须在实际WorkerW/Explorer里用唯一临时文件核对每次Ctrl+V只有一份、焦点切换不操作其他文件、Core退出后Windows键盘正常；屏幕键盘、分页Enter、Dock及触控另验。无目标的钩子生命周期检查不代表实际抑制/文件互通通过。

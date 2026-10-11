@@ -31,7 +31,7 @@ using WinEventHook;
 
 namespace Lively.Core
 {
-    public class WinDesktopCore : IDesktopCore
+    public partial class WinDesktopCore : IDesktopCore
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly SemaphoreSlim semaphoreSlimWallpaperLoadingLock = new(1, 1);
@@ -113,6 +113,7 @@ namespace Lively.Core
 
             // Initialize desktop and update handles.
             SetupDesktopLayer();
+            StartDesktopFileKeyboard();
 
             try
             {
@@ -468,6 +469,8 @@ namespace Lively.Core
             if (sender is WebWebView2 webWallpaper)
             {
                 webWallpaper.NativeInputIsForeground = () => userSettings.Settings.InputForward != InputForwardMode.off && IsDesktop();
+                webWallpaper.NativeDesktopKeyboardChanged -= RefreshDesktopFileKeyboardOffer;
+                webWallpaper.NativeDesktopKeyboardChanged += RefreshDesktopFileKeyboardOffer;
                 roomSessionRuntime.OnPageReady(webWallpaper);
             }
         }
@@ -1396,6 +1399,7 @@ namespace Lively.Core
                 disposedValue = true;
                 if (disposing)
                 {
+                    StopDesktopFileKeyboard();
                     WallpaperChanged -= SetupDesktop_WallpaperChanged;
                     workerWHook?.Dispose();
                     CloseAllWallpapers(false);
