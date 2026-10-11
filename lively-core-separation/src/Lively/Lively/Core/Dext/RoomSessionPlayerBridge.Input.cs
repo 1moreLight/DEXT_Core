@@ -34,6 +34,18 @@ internal sealed partial class RoomSessionPlayerBridge
         var prepared=actions.PrepareDesktopClipboard(connectionId,peer,session,proof,ids,cut);
         return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Targets);
     }
+    internal (RoomNativeActionReply Reply, PersonalTarget[]? Targets) PrepareNativeDelete(RoomActionAuthority actions,RoomNativeInputAuthority native,
+        long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence,string[] ids)
+    {
+        if(disposed)return (new(RoomActionStatus.StaleSession),null);
+        var current=native.State;
+        if(current==null||current.Generation!=generation||current.Session!=session||current.Revision!=revision)return (new(RoomActionStatus.StaleInput),null);
+        if(consumer!=RoomActionAuthority.DesktopConsumer)return (new(RoomActionStatus.NotOperable),null);
+        var proof=native.GetProof(generation,geometry,consumer,button,inputSequence);
+        if(proof==null)return (new(RoomActionStatus.StaleInput),null);
+        var prepared=actions.PrepareDesktopDelete(connectionId,peer,session,proof,ids);
+        return (new(prepared.Status,proof.Sequence,proof.IsConsumed),prepared.Targets);
+    }
     internal RoomNativeActionReply PrepareNativePaste(RoomActionAuthority actions,RoomNativeInputAuthority native,
         long generation,Guid session,long revision,long geometry,string consumer,string button,long inputSequence)
     {

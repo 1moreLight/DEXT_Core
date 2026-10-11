@@ -62,6 +62,14 @@ internal static class DesktopFileKeyboardOwnershipChecks
    Require(owner.Process(Edge(),true,1,42,20,20,Offer(),Enqueue));
    Require(owner.Process(Edge(down:false),true,2,42,20,20,Offer(),Enqueue));
   });
+  Check("Delete and Shift Delete are owned on files while other modifiers pass",()=>{
+   foreach(var modifiers in new[]{0,1,2,3,4,5}){
+    var owner=new DesktopFileKeyboardOwnership();sent.Clear();
+    var accepted=owner.Process(Edge(key:46,mods:modifiers),false,1,42,20,20,Offer(),Enqueue);
+    Require(accepted==(modifiers is 0 or 2));
+    if(accepted){Require(owner.Process(Edge(key:46,down:false,mods:0),false,2,42,20,20,Offer(),Enqueue));Require(sent.Count==2&&sent[1].Item2.Modifiers==modifiers);}
+   }
+  });
   Console.WriteLine($"{count}/{count} desktop keyboard ownership checks passed");
  }
 }

@@ -194,14 +194,16 @@ internal static class DesktopShellTransfer
 [ComVisible(true), ClassInterface(ClassInterfaceType.None)]
 public sealed class TransferSink : IDesktopTransferProgress
 {
+    internal const int RecycleUnavailable=unchecked((int)0x80070032);
+    private readonly bool recycleOnly;
     internal string Source { get; }
     internal DesktopTransferItem? Result { get; private set; }
     internal bool Cancelled { get; private set; }
     private readonly CancellationToken cancellation;
     private readonly string callbackSource;
     private readonly Func<bool>? permitted;
-    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null, Func<bool>? permitted = null)
-    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; }
+    internal TransferSink(string source, CancellationToken cancellation, string? callbackSource = null, Func<bool>? permitted = null, bool recycleOnly=false)
+    { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; this.recycleOnly=recycleOnly; }
     private int Continue()
     {
         try { if (cancellation.IsCancellationRequested || permitted?.Invoke() == false) Cancelled = true; }
@@ -227,8 +229,20 @@ public sealed class TransferSink : IDesktopTransferProgress
     public int PostMoveItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name, int result, IDesktopShellItem? created) => Complete(item, created, result);
     public int PreCopyItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name) => Continue();
     public int PostCopyItem(uint flags, IDesktopShellItem item, IDesktopShellItem destination, string name, int result, IDesktopShellItem? created) => Complete(item, created, result);
-    public int PreDeleteItem(uint flags, IDesktopShellItem item) => Continue();
-    public int PostDeleteItem(uint flags, IDesktopShellItem item, int result, IDesktopShellItem? created) => 0;
+    public int PreDeleteItem(uint flags, IDesktopShellItem item)
+    {
+        var allowed=Continue();if(allowed<0)return allowed;
+        if(recycleOnly&&(flags&0x80)==0){Result=new(Source,null,"notRecyclable",RecycleUnavailable);return RecycleUnavailable;}
+        return 0;
+    }
+    public int PostDeleteItem(uint flags, IDesktopShellItem item, int result, IDesktopShellItem? created)
+    {
+        if(!recycleOnly||Result?.Status=="notRecyclable")return 0;
+        if(string.Equals(DesktopShellTransfer.ItemPath(item),callbackSource,StringComparison.OrdinalIgnoreCase))
+            Result=new(Source,DesktopShellTransfer.ItemPath(created),result>=0&&created is not null?"completed":
+                Cancelled||result==unchecked((int)0x800704C7)?"cancelled":"failed",result);
+        return 0;
+    }
     public int PreNewItem(uint flags, IDesktopShellItem destination, string name) => Continue();
     public int PostNewItem(uint flags, IDesktopShellItem destination, string name, string template, uint attributes, int result, IDesktopShellItem? created) => 0;
     public int UpdateProgress(uint total, uint completed) => Continue();

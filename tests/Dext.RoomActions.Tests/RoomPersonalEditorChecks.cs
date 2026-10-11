@@ -29,6 +29,26 @@ static partial class RoomActionChecks
    Eq(RoomActionStatus.NotOperable,f.Actions.AuthorizeDesktopPaste(f.View,f.Peer,f.Session,input.State!.Completed!));
    Eq(0,f.Launched.Count);
   });
+  check("Delete prepares the selected files once and Shift Delete cannot prepare deletion",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('d',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   var target=new PersonalTarget("File.txt","file",@"C:\Temp\File.txt");
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false),new Dictionary<string,PersonalTarget>{{id,target}});
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",id,.1,.1,.2,.3,0,"desktop.scan/"+id)});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   input.Key(viewport,46,true,false,true,2);input.Key(viewport,46,false,false,true,0);
+   Eq(46,input.State!.Completed!.Key);Eq(2,input.State.Completed.Modifiers);
+   Eq(RoomActionStatus.NotOperable,f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,input.State.Completed,new[]{id}).Status);
+   Eq(false,input.State.Completed.IsConsumed);
+   input.Key(viewport,46,true,false,true,0);input.Key(viewport,46,false,false,true,0);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.InvokeDesktop(f.View,f.Peer,f.Session,proof).Status);
+   var prepared=f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,proof,new[]{id});
+   Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Targets!.Single());Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopDelete(f.View,f.Peer,f.Session,proof,new[]{id}).Status);Eq(0,f.Launched.Count);
+  });
   check("F2 resolves current desktop file without launching and consumes its proof",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('a',64);
    f.Store.SetDesktopSync(Room,"home",true,new[]{id});

@@ -1,4 +1,5 @@
 using Lively.Services.DesktopSync;
+if(args.Length==1&&args[0]=="--recycle"){await RecycleChecks.Run();return;}
 if(args.Length==1&&args[0]=="--paste"){await PasteChecks.Run();return;}
 if(args.Length==1&&args[0]=="--clipboard-data"){ClipboardChecks.Run();return;}
 if(args.Length==1&&args[0]=="--rename"){await RenameChecks.Run();return;}

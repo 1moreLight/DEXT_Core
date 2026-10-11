@@ -347,7 +347,7 @@
       actionNotice.setAttribute('role','status');actionNotice.textContent=messages[status];container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,5000);
     }
-    let dropRunning=false,pasteRunning=false;
+    let dropRunning=false,pasteRunning=false,deleteRunning=false;
     function dropEligible(event){
       return !disposed&&!dockView&&!dropRunning&&event.isTrusted===true&&typeof native.dropFiles==='function'&&
         snapshot.active&&snapshot.lifecycle?.stage==='desktop'&&!snapshot.lifecycle?.locked&&!snapshot.transitionId&&
@@ -367,6 +367,18 @@
       clearActionNotice();actionNotice=document.createElement('div');actionNotice.className='dext-v3-action-notice';
       actionNotice.setAttribute('role','status');actionNotice.textContent=message;container.append(actionNotice);
       actionNoticeTimer=later(clearActionNotice,7000);
+    }
+    function desktopDelete(value){
+      const selected=desktopSelection.read().selectedIds;
+      if(deleteRunning||!selected.includes(value.button))return;
+      const identity=scope();deleteRunning=true;dropNotice('正在移入回收站…');
+      native.request('desktopDelete',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},identity)
+        .then(reply=>{
+          if(disposed||identity.sessionId!==snapshot.sessionId)return;
+          consumeReceipt(reply);
+          const items=Array.isArray(reply.data?.items)?reply.data.items:[],completed=items.filter(item=>item.status==='completed').length,unsupported=items.filter(item=>item.status==='notRecyclable').length;
+          dropNotice(['accepted','cancelled'].includes(reply.status)?`${reply.status==='cancelled'?'操作已停止。':''}已移入回收站 ${completed} 项，未完成 ${items.length-completed} 项。${unsupported?' 部分项目不能回收，已保留原文件。':''}`:'未能完成回收，请检查原文件和回收站后重试。');
+        },()=>{if(!disposed)dropNotice('未收到回收结果，请先检查原文件和回收站。');}).finally(()=>{deleteRunning=false;});
     }
     function desktopPaste(value){
       if(pasteRunning)return;
@@ -564,6 +576,12 @@
           if(value.consumer==='official.desktop'&&value.button==='desktop.paste'){
             completion=null;desktopClick=null;
             if([0,13,32].includes(value.desktopInput?.key)||value.desktopInput?.key===86&&value.desktopInput.modifiers===1)desktopPaste(value);
+            return true;
+          }
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===46){
+            completion=null;desktopClick=null;
+            if(value.desktopInput.modifiers===0)desktopDelete(value);
+            else dropNotice('仅支持移入回收站，请使用 Delete。');
             return true;
           }
           if(value.consumer==='official.desktop'&&[67,88,86].includes(value.desktopInput?.key)){

@@ -461,3 +461,4 @@
 | #329 | 剪切CSS opacity被切页内联透明度覆盖，需叠加filter | [renderer](errors/renderer.md) |
 | #330 | 个人编辑测试间歇原子发布拒绝访问；同构建复查通过，根因未定 | [toolchain](errors/toolchain.md) |
 | #331 | RawInput旁听不能阻止Explorer文件快捷键重复执行，需确定单一OS接收者 | [backend](errors/backend.md) |
+| #332 | C# switch各case共享局部作用域，复制异步分支时同名变量使完整Core构建失败 | [toolchain](errors/toolchain.md) |

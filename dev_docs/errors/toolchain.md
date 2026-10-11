@@ -576,3 +576,8 @@ npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在
 clipboard-copy-core-red.log中旧ActionFixture构造的RoomPersonalStore.Publish/SetFileInformationByHandle报Win32 5拒绝访问；随后完整21/21。补新剪切断言后的运行又在旧drop placement存储返回storageUnavailable，20/21；保留clipboard-copy-core-storage-failure.log，同一二进制仅复查一次21/21于clipboard-copy-core-recheck.log。TEMP为D盘专用build-env/temp，每夹具独立GUID。没有证据认定杀软或其他进程，不通过放松文件共享/发布规则掩盖它；下次复现需保留确切路径与错误原因。绿色重跑不代表此问题已修复。本轮复制/剪切新断言在20/21运行中也通过。
 
 2026-10-11 #330续：粘贴接线个人编辑组20/21，新增Ctrl+V证明断言通过；旧explicit action检查期望accepted而实际storageUnavailable。证据.build/paste-core-green.log，未修改存储生产逻辑、未重跑掩盖该失败，根因保持未定。
+
+## #332 C# switch复制分支的变量作用域（2026-10-11）
+现象：独立Core类/协议测试通过，完整WPF Core编译报CS0128/CS0170。desktopDelete和desktopPaste的case共享switch作用域，都声明var pasted。
+修复：新回收分支使用recycled并保持回执赋值一致，重新完整Release成功；失败日志desktop-shell-actions-build-env/recycle-build-failed.log保留。复制case时使用独立变量或独立花括号；不能用链接少量Core类的测试代替产品构建。
+同轮测试修正：DesktopShellTransfer.RunStaAsync返回专用DesktopTransferResult，回收站还原夹具的回调不能return bool；改成空结果后取得功能失败断言，再实际实现。文本替换断言未命中时保留原文件，精确读取后替换，并在PowerShell检查Python退出码再继续构建。

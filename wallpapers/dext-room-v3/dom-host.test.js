@@ -792,3 +792,19 @@ test('empty synced desktop exposes native paste without a file selection',async(
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(button.hidden,true);
  }finally{f.host.dispose();}
 });
+
+
+test('Delete preserves selected IDs and Shift Delete cannot send a file command',async()=>{
+ const ids=['a','b'].map(c=>'desktop-'+c.repeat(64));
+ const desktop={contextId:'delete',deskId:'home',items:ids.map((id,slot)=>({id,name:'File'+slot,kind:'file',slot,iconPng:null})),issueCount:0,truncated:false};
+ const f=fixture({request:method=>method==='presentationRead'?Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}}):undefined});
+ try{
+  await f.host.ready;await flush();const q=f.calls.filter(c=>c.method==='geometry').at(-1);
+  const send=(id,key,mods,sequence)=>f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:'desktop.delete/'+id,inputSequence:sequence,desktopInput:{key,modifiers:mods,x:0,y:0,at:sequence*1000,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});
+  send(ids[0],0,0,1);send(ids[1],0,1,2);await flush();
+  send(ids[1],46,2,3);await flush();assert.equal(f.calls.filter(c=>c.method==='desktopDelete').length,0);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  send(ids[1],46,0,4);await flush();assert.deepEqual(f.calls.filter(c=>c.method==='desktopDelete').at(-1)?.params.selectedIds,ids);
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+ }finally{f.host.dispose();}
+});

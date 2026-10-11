@@ -104,6 +104,10 @@ namespace Lively.Core.Wallpapers
                         status=a.Bridge.PublishNativeGeometry(a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,viewport,copy,request.SampleMouse,a.Actions)?RoomActionStatus.Accepted:RoomActionStatus.StaleInput;
                     }
                     break;
+                case "desktopDelete":
+                    var recycled = await ExecuteDesktopDeleteAsync(a, state, request);
+                    actionReply = recycled.Reply; status = actionReply.Status; data = recycled.Data;
+                    break;
                 case "desktopPaste":
                     var pasted = await ExecuteDesktopPasteAsync(a, state, request);
                     actionReply = pasted.Reply; status = actionReply.Status; data = pasted.Data;

@@ -274,6 +274,7 @@ internal sealed class RoomNativeInputAuthority(TimeProvider clock, RoomClientRol
             {
                 if(DextNativePointerPacket.IsDesktopFileKey(key)&&(role!=RoomClientRole.DesktopPlayer||!DextNativePointerPacket.IsDesktopKeyTarget(key,focused?.Button.Consumer,focused?.Button.Button)))return;
                 if(DextNativePointerPacket.IsDesktopClipboardKey(key)&&modifiers!=1)return;
+                if(key==46&&modifiers is not (0 or 2))return;
                 if(!keysHeld.Add(key))return;
                 completed=null;keyboard=null;mouse=null;gesture=null;ResetSamples();
                 if(!Available(current,foreground)){focusRequests.Clear();return;}

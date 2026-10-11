@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Lively.Services.DesktopSync;
 
-internal static class DesktopShellActions
+internal static partial class DesktopShellActions
 {
     internal static Task<DesktopTransferResult> RenameAsync(string source, string newName, IntPtr owner = default,
         CancellationToken cancellation = default, bool interactive = true, Func<bool>? permitted = null)

@@ -729,3 +729,5 @@ Enter复用desktopActivation.select会把多选缩成焦点项；新desktopOpen�
 
 ## #329 剪切视觉被切页内联透明度覆盖（2026-10-11）
 初稿data-cut使用opacity:.45，但applyIcon的内联style.opacity取切页组值，优先级覆盖CSS。改用filter:opacity(.45)，与原切页透明度相乘；不改变原动画/命中。DOM状态断言通过不等于实际CSS显示，统一验收需核对变淡及切页。
+
+2026-10-11 #327续：接Delete时同样要在通用desktopActivation选择逻辑前分流。失败用例发现Shift+Delete把两项选择缩成单项；现在Delete/Shift+Delete均保留选择，只有无修饰Delete提交desktopDelete，宿主116项通过。
