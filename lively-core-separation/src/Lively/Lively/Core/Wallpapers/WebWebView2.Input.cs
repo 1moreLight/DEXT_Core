@@ -224,7 +224,7 @@ namespace Lively.Core.Wallpapers
                         status=actionReply.Status;
                     }break;
             }
-            if(request.Method is "activate" or "navigate" or "geometry")
+            if(request.Method is "activate" or "navigate" or "geometry" or "desktopMenu")
                 Logger.Info($"Wv2{uniqueId}: native result | method={request.Method} | status={status} | consumer={request.Consumer} | button={request.Button} | sequence={request.InputSequence} | geometry={request.GeometryVersion} | revision={request.Revision}");
             // Authority calls and IPC happen after releasing the attachment/leaf
             // locks. Navigation may already have advanced the snapshot revision.

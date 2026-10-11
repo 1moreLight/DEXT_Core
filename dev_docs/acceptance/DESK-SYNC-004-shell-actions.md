@@ -76,3 +76,5 @@ start.ps1 CoreOnly核对该完整候选的Dext v3产品元数据成功，随后�
 2026-10-11 第06步做完（实施与交接，实机未验收）：最新生产提交0ed6d12，完整候选D:/use/Orca/DEXT/DEXT_Core/.build/desktop-shell-actions-clean-20261011-r3；build-v3-release.ps1完成Core/Release Player/Watchdog/配置器打包，保留两项既有Rust警告。verify-v3-release-candidate.ps1确认655个inventory文件及17项官方宿主与源码匹配，日志.build/candidate-r3-verify.log；完整构建日志desktop-shell-actions-build-env/release-r3-build.log。start.ps1对r3完成产品元数据检查后因Core26668占用DEXT身份退出1（.build/candidate-r3-start.log和工具异常输出）；候选未启动，未新增配置器。Cargo.toml规范化逐字确认仅换行变化后恢复。
 当前分支feat/DESK-SYNC-004-shell-actions；代码6/6=100%，桌面同步路线实施3/4=75%，用户验收与master合并未完成。旧r1/r2保留追溯，不作为当前候选。下一项按ROADMAP回补003实机门槛：重新核对Explorer可操作窗口与运行环境，不能继续用旧1×1窗口或身份冲突代替新检查；如切换运行候选，先保存当前数据/布局并准备原版恢复，然后执行有范围的真实Explorer拖入与输入回归。
 统一人工步骤（仅唯一临时文件）：1单/Ctrl/Shift选择与切页清除；2双击/Enter打开、真实F2改名与Esc取消、F3不误改名；3Explorer双向复制剪切粘贴只执行一次；4Delete进回收站并恢复、Shift+Delete不永久删除；5右键/菜单键、多选、属性、Esc与外点、首次从应用右击后文件焦点；6原Dock/作者按钮、鼠标/触控/DPI、切页/停用/退出后旧操作失效。当前运行版不含新代码，这些门槛均不标通过。
+
+2026-10-11 用户拒收：文件与空白右键均无菜单。07诊断版本已运行，待一次文件右键；本轮未声称修复。最终简验为文件右键、空白右键、原左键/拖动。

@@ -21,10 +21,12 @@ public partial class WebWebView2
             var viewport = ReadNativeViewport();
             attachment.Input.CheckNativeViewport(viewport, NativeInputIsForeground?.Invoke() == true);
             var proof = attachment.Input.GetProof(state.Generation, request.GeometryVersion, request.Consumer, request.Button, request.InputSequence);
+            Logger.Info($"Desktop menu admission | proof={proof is not null} | viewport={viewport is not null} | context={proof?.ContextMenu}");
             if (proof is null || viewport is null || proof.ContextMenu && NativeContextIsDesktop?.Invoke(proof.X,proof.Y)!=true) return (new(RoomActionStatus.StaleInput), null);
             var prepared = attachment.Bridge.PrepareNativeMenu(attachment.Actions, attachment.Input, state.Generation, state.Session, state.Revision,
                 request.GeometryVersion, request.Consumer, request.Button, request.InputSequence, request.SelectedIds);
             receipt = prepared.Reply;
+            Logger.Info($"Desktop menu prepared | status={receipt.Status} | count={prepared.Targets?.Length ?? 0}");
             if (receipt.Status != RoomActionStatus.Accepted || prepared.Targets is null) return (receipt, null);
             var initial = attachment.Bridge.NativeReadPresentation(attachment.Actions, state.Session, state.Revision).Presentation?.Desktop;
             if (initial is null) return (new(RoomActionStatus.StaleInput, receipt.InputSequence, receipt.InputConsumed), null);
@@ -43,6 +45,7 @@ public partial class WebWebView2
             var y = checked(viewport.Y + Math.Clamp((int)Math.Round((proof.Button.Y + proof.Button.Height) * viewport.Height), 0, viewport.Height - 1));
             if(proof.ContextMenu){x=proof.X;y=proof.Y;}
             var paths = prepared.Targets.Select(target => target.Target).ToArray();
+            Logger.Info($"Desktop menu show | permitted={Permitted()}");
             var verb = await DesktopContextMenuWindow.ShowAsync(paths, x, y, Permitted, NativeDesktopMenuTarget, () => {
                 if (!Permitted()) return;
                 attachment.Input.QueueDesktopMenuFocus(state.Generation, state.Session, initial.DeskId, viewport, proof);
