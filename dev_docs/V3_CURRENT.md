@@ -1,6 +1,6 @@
 # v3 当前交接入口（2026-10-11）
 
-> 2026-10-11最新：路线实施3/4=75%。003接收面32ec31e与004依赖已集成f98595b；新候选desktop-surface-clean-20261011已运行Core8820/Player38324，原Room恢复。实际九点均命中Dext、停用恢复通过；同步开关已恢复原false。真实拖放与物理点击/触控待三组人工验收，未合master。旧配置器38960已退出，配套配置器22200与Core8820位于同一desktop-surface发布目录，身份冲突已按进程路径纠正。
+> 2026-10-11最新：路线75%。接收层修复fb4d435改为Room级，避免切Desk露出Explorer图标；已成对部署desktop-surface-room-20261011，Core31068/配置器19164/Player19128，原Room与同步true/home保留。26/26范围回归、完整构建和655/17来源核对通过；请连续切页验收。旧v2长按编辑UI未迁移，DESK-EDIT-V3-001明确待做。未合master。
 计划只认 [ROADMAP](ROADMAP.md)，历史过程见 [V3_DELIVERY](V3_DELIVERY.md)。
 
 ## 历史开发记录（当前状态见上方）
