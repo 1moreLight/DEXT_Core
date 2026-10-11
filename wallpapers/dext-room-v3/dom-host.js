@@ -539,6 +539,13 @@
           if(value.entryId!=null&&!eventEntry(value))return false;
           if(!Number.isSafeInteger(value.inputSequence)||value.inputSequence<=Math.max(lastEventSequence,consumedSequence)||typeof value.consumer!=='string'||typeof value.button!=='string')return false;
           lastEventSequence=value.inputSequence;clearDefault();completion=copy(value);
+          if(value.consumer==='official.desktop'&&value.desktopInput?.key===13&&!value.button.startsWith('desktop.page.')){
+            completion=null;desktopClick=null;
+            const selected=desktopSelection.read().selectedIds;
+            if(selected.includes(value.button))native.request('desktopOpen',{consumer:value.consumer,button:value.button,selectedIds:selected,geometryVersion:value.geometryVersion,inputSequence:value.inputSequence},scope())
+              .then(reply=>consumeReceipt(reply),()=>diagnose('openUnavailable'));
+            return true;
+          }
           if(value.consumer==='official.desktop'&&value.desktopInput?.key===114){
             completion=null;desktopClick=null;
             const selected=desktopSelection.read().selectedIds;

@@ -185,6 +185,10 @@ namespace Lively.Core.Wallpapers
                             control=>DispatchNativeControl(control,token),request.InputSequence,proof=>Interlocked.Exchange(ref attempted,proof));
                     },Unavailable);
                     status=actionReply.Status;break;
+                case "desktopOpen":
+                    a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
+                    actionReply=a.Bridge.OpenNativeDesktop(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button,request.InputSequence,request.SelectedIds);
+                    status=actionReply.Status;break;
                 case "activate":
                     a.Input.CheckNativeViewport(ReadNativeViewport(),NativeInputIsForeground?.Invoke()==true);
                     actionReply=a.Bridge.ActivateNative(a.Actions,a.Input,state.Generation,state.Session,state.Revision,request.GeometryVersion,request.Consumer,request.Button,request.InputSequence);

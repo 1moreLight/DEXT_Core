@@ -27,6 +27,28 @@ static partial class RoomActionChecks
    Eq(RoomActionStatus.Accepted,prepared.Status);Eq(target,prepared.Target);Eq(0,f.Launched.Count);Eq(true,proof.IsConsumed);
    Eq(RoomActionStatus.StaleInput,f.Actions.PrepareDesktopRename(f.View,f.Peer,f.Session,proof).Status);
   });
+  check("native Enter opens all current selected files once with one consumed proof",()=>{
+   using var f=new ActionFixture();var ids=new[]{"desktop-"+new string('a',64),"desktop-"+new string('b',64)};
+   f.Store.SetDesktopSync(Room,"home",true,ids);
+   var targets=ids.Select((id,i)=>new PersonalTarget("File"+i,"file",@"C:\Temp\File"+i+".txt")).ToArray();
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",ids.Select((id,i)=>new RoomDesktopViewItem(id,"File"+i,"file",i,null)).ToArray(),0,false),ids.Select((id,i)=>(id,i)).ToDictionary(x=>x.id,x=>targets[x.i]));
+   var input=new RoomNativeInputAuthority(f.Clock);input.Initialize(1,f.Kernel.Snapshot!);
+   var viewport=new RoomNativeViewport(42,0,0,1000,500,6);
+   input.PublishGeometry(1,f.Session,f.Kernel.Snapshot!.Revision,1,viewport,new[]{new RoomNativeButton("official.desktop",ids[1],.1,.1,.2,.3,0,"desktop.scan/"+ids[1])});
+   input.MouseDown(viewport,200,100,true);input.MouseUp(viewport,200,100,true);
+   input.Key(viewport,13,true,false,true);input.Key(viewport,13,false,false,true);
+   var proof=input.State!.Completed!;
+   Eq(RoomActionStatus.NotOperable,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,new[]{ids[1],"desktop-missing"}).Status);
+   Eq(0,f.Launched.Count);Eq(false,proof.IsConsumed);
+   Eq(RoomActionStatus.Accepted,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,ids).Status);
+   Eq(2,f.Launched.Count);Eq(targets[0],f.Launched[0]);Eq(targets[1],f.Launched[1]);Eq(true,proof.IsConsumed);
+   Eq(RoomActionStatus.StaleInput,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,proof,ids).Status);Eq(2,f.Launched.Count);
+   input.Key(viewport,13,true,false,true);input.Key(viewport,13,false,false,true);
+   var next=input.State!.Completed!;
+   Eq(RoomActionStatus.Cancelled,f.Actions.OpenDesktopSelection(f.View,f.Peer,f.Session,next,ids,()=>f.Launched.Count<3).Status);
+   Eq(3,f.Launched.Count);Eq(targets[0],f.Launched[2]);
+
+  });
   check("completed drop placement persists and disabled Desk rejects late placement",()=>{
    using var f=new ActionFixture();var id="desktop-"+new string('e',64);
    Editor(Edit(f,new{operation="setDesktopSync",deskId="home",enabled=true}));

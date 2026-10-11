@@ -247,3 +247,13 @@ test('native rename waits through its dialog pause and revision until receipt',a
   assert.equal((await result).data.renamed,true);
  }finally{f.host.dispose();}
 });
+
+test('desktop open sends selected IDs and retains the native action receipt across revision',async()=>{
+ const f=fixture();const params={consumer:'official.desktop',button:'desktop-a',selectedIds:['desktop-a','desktop-b'],geometryVersion:1,inputSequence:2};
+ try{
+  const promise=f.host.request('desktopOpen',params).catch(e=>({error:e.code}));await flush();
+  assert.deepEqual(f.sent[0]?.selectedIds,params.selectedIds);
+  f.host.setSuspended(true);f.host.acceptIdentity({...identity,revision:2});f.answer(f.sent[0],{inputSequence:2,inputConsumed:true});
+  assert.equal((await promise).inputConsumed,true);
+ }finally{f.host.dispose();}
+});

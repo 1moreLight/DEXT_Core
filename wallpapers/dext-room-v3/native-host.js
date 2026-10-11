@@ -109,6 +109,7 @@
       case'layoutSave':return shape(p,['layoutRevision','change'])&&integer(p.layoutRevision,0)&&layoutChange(p.change);
       case'startupComplete':return shape(p,['lifecycleRevision'])&&integer(p.lifecycleRevision);
       case'authorInput':return shape(p,['consumer','instanceId','requestJson','geometryVersion'])&&id(p.consumer)&&id(p.instanceId,160)&&typeof p.requestJson==='string'&&new root.TextEncoder().encode(p.requestJson).length<=32768&&integer(p.geometryVersion);
+      case'desktopOpen':return shape(p,['consumer','button','selectedIds','geometryVersion','inputSequence'])&&p.consumer==='official.desktop'&&id(p.button,80)&&Array.isArray(p.selectedIds)&&integer(p.selectedIds.length,1,256)&&p.selectedIds.every(v=>id(v,80)&&v.startsWith('desktop-'))&&new Set(p.selectedIds).size===p.selectedIds.length&&p.selectedIds.includes(p.button)&&integer(p.geometryVersion)&&integer(p.inputSequence,1);
       case'desktopRename':if(p.consumer!=='official.desktop'||!p.button?.startsWith('desktop-'))return false;
       case'activate':return shape(p,['consumer','button','geometryVersion','inputSequence'])&&id(p.consumer)&&id(p.button,80)&&integer(p.geometryVersion)&&integer(p.inputSequence,0);
       case'navigate':return shape(p,['consumer','action','geometryVersion','inputSequence'])&&id(p.consumer)&&integer(p.geometryVersion)&&integer(p.inputSequence,0)&&object(p.action)&&
@@ -155,9 +156,9 @@
       // An authoritative action may synchronously publish its new revision
       // before its receipt. Deliver that existing result in this same document;
       // Generation/session replacement cancels requests; ordinary pause keeps file transfers.
-      const action=['activate','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename'].includes(entry.method);
+      const action=['activate','desktopOpen','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename'].includes(entry.method);
       if(action?reply.runtimeGeneration!==identity.runtimeGeneration||reply.sessionId!==identity.sessionId:!same(reply,identity))return;
-      if(['activate','navigate','mediaControl','audioControl','authorInput','desktopRename'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
+      if(['activate','desktopOpen','navigate','mediaControl','audioControl','authorInput','desktopRename'].includes(entry.method)&&(!integer(reply.inputSequence,0)||typeof reply.inputConsumed!=='boolean'||reply.inputConsumed&&reply.inputSequence===0))return;
       if(entry.method==='presentationRead'&&reply.status==='accepted'&&((!shape(reply.presentation,['revision','skins','locator'])&&!shape(reply.presentation,['revision','skins','locator','desktop']))||Object.hasOwn(reply.presentation,'desktop')&&!desktopValid(reply.presentation.desktop)||!integer(reply.presentation.revision,0)||!object(reply.presentation.skins)||Object.keys(reply.presentation.skins).length>1024||!Object.entries(reply.presentation.skins).every(([key,value])=>stableKey(key)&&(value===null||['classic','glass','outline'].includes(value)))||reply.presentation.locator!==null&&(!shape(reply.presentation.locator,['requestId','buttonId'])||!id(reply.presentation.locator.requestId)||!stableKey(reply.presentation.locator.buttonId)))){finish(entry,false,'invalidPayload');return;}
       if(['layoutRead','layoutSave'].includes(entry.method)&&reply.status==='accepted'&&!layoutValid(reply.layout)){finish(entry,false,'invalidPayload');return;}
       finish(entry,true,reply);
@@ -221,7 +222,7 @@
       watch.listeners.add(listener);if(created)refreshWatch(watch);let released=false;
       return()=>{if(released)return;released=true;watch.listeners.delete(listener);if(watch.listeners.size===0){stopWatch(watch);watches.delete(consumer);}};
     }
-    function cancelPending(code,retainActions=false,retainDrops=false){for(const entry of [...pending.values()])if(!(retainDrops&&['desktopDrop','desktopRename'].includes(entry.method))&&(!retainActions||!['activate','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename'].includes(entry.method)))finish(entry,false,code);capQueries.clear();}
+    function cancelPending(code,retainActions=false,retainDrops=false){for(const entry of [...pending.values()])if(!(retainDrops&&['desktopDrop','desktopRename','desktopOpen'].includes(entry.method))&&(!retainActions||!['activate','desktopOpen','navigate','mediaControl','audioControl','authorInput','desktopDrop','desktopRename'].includes(entry.method)))finish(entry,false,code);capQueries.clear();}
     return Object.freeze({
       request:(method,params,scope)=>dispatch(method,params,scope).promise,
       dropFiles:(params,files,scope)=>dispatch('desktopDrop',params,scope,files).promise,readCapabilities,subscribeData,watchCapabilities,

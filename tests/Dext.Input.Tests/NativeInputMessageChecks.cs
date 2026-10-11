@@ -16,7 +16,7 @@ internal static class NativeInputMessageChecks
         LivelyMessageRoomNativeRequest? Parse(JObject r,DextRoomRuntimeState? s=null)=>DextNativeInputProtocol.Parse(r.ToString(),s??State(),1200,900);
         void Require(bool ok){if(!ok)throw new Exception("unexpected acceptance");}
         Check("paused Player permits desktop metadata and drop receipts but not input actions",()=>{
-            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
+            foreach(var method in new[]{"layoutRead","presentationRead","desktopDrop","desktopRename","desktopOpen"})Require(DextNativeInputProtocol.AllowsWhileSuspended(method));
             foreach(var method in new[]{"activate","geometry","authorInput","layoutSave","storageSet"})Require(!DextNativeInputProtocol.AllowsWhileSuspended(method));
         });        JObject Drop(){var r=Request();r["method"]="desktopDrop";r.Remove("viewport");r.Remove("buttons");r.Remove("geometryVersion");r["desktopContextId"]="confirmed-scan";r["deskId"]="home";r["x"]=.25;r["y"]=.5;r["modifiers"]=1;r["allowedEffects"]="copyMove";return r;}
         Check("desktop rename carries only a native file proof and survives wire serialization",()=>{
@@ -26,6 +26,14 @@ internal static class NativeInputMessageChecks
             Require((RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest)?.Button==(string?)r["button"]);
             r["consumer"]="scene";Require(Parse(r)==null);
             r["consumer"]="official.desktop";r["button"]="desktop.page.next";Require(Parse(r)==null);
+        });
+        Check("desktop open preserves selected IDs through native IPC",()=>{
+            var r=Request();r["method"]="desktopOpen";r.Remove("viewport");r.Remove("buttons");
+            r["consumer"]="official.desktop";r["button"]="desktop-a";r["inputSequence"]=8;
+            r["selectedIds"]=new JArray("desktop-a","desktop-b");
+            var parsed=Parse(r);Require(parsed?.Method=="desktopOpen");
+            var wire=RuntimeMessageChecks.Roundtrip(parsed!) as LivelyMessageRoomNativeRequest;
+            Require(wire?.SelectedIds?.SequenceEqual(new[]{"desktop-a","desktop-b"})==true);
         });
         Check("desktop drop carries current scope and normalized landing point without JSON paths",()=>{
             var parsed=Parse(Drop());Require(parsed?.DesktopDrop?.DeskId=="home"&&parsed.DesktopDrop.X==.25&&parsed.DesktopDrop.Y==.5&&parsed.DesktopDrop.Modifiers==1&&parsed.DesktopDrop.Files==null);

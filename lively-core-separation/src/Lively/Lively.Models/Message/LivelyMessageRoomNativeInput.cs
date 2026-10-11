@@ -86,6 +86,7 @@ namespace Lively.Models.Message
         public long Revision { get; set; }
         public string DesktopContextId { get; set; }
         public LivelyRoomNativeDesktopDrop DesktopDrop { get; set; }
+        public string[] SelectedIds { get; set; }
         public long LayoutRevision { get; set; }
         public LivelyRoomNativeLayoutChange LayoutChange { get; set; }
         public long GeometryVersion { get; set; }

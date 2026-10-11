@@ -666,8 +666,9 @@ test('desktop files render as official native targets and DOM clicks cannot open
   const icon=f.container.children[0].children.find(n=>n.attrs['aria-label']==='Original file.txt');assert.ok(icon);assert.equal(icon.hidden,false);
   const q=f.calls.filter(c=>c.method==='geometry').at(-1);const entry=q.params.buttons.find(b=>b.consumer==='official.desktop');
   assert.equal(entry.button,id);assert.equal(entry.entryId,'desktop.scan1/'+id);assert.equal(icon.handlers.click,undefined);
-  f.host.handleNativeInput({kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:13,modifiers:0,x:0,y:0,at:0,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}});await flush();
-  assert.equal(f.calls.filter(c=>c.method==='activate').at(-1).params.button,id);
+  const event={kind:'activate',...q.scope,geometryVersion:q.params.geometryVersion,consumer:'official.desktop',button:id,entryId:entry.entryId,inputSequence:1,desktopInput:{key:0,modifiers:0,x:0,y:0,at:0,doubleClickTime:500,doubleClickWidth:4,doubleClickHeight:4}};
+  f.host.handleNativeInput(event);f.host.handleNativeInput({...event,inputSequence:2,desktopInput:{...event.desktopInput,key:13}});await flush();
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopOpen').at(-1).params.selectedIds,[id]);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.equal(icon.hidden,true);
  }finally{f.host.dispose();}
 });
@@ -722,7 +723,11 @@ test('desktop native single click selects, double click opens, Ctrl extends sele
   click(1,900,0,114);await flush();
   assert.deepEqual(f.host.readDiagnostics().desktopSelection,beforeF2,'F2 must preserve multi-selection');
   assert.equal(f.calls.filter(c=>c.method==='activate').length,1,'F2 must not open a file');
-  click(1,1000,0,13);await flush();assert.equal(f.calls.filter(c=>c.method==='activate').length,2);
+  click(1,1000,0,13);await flush();
+  assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,ids);
+  assert.deepEqual(f.calls.filter(c=>c.method==='desktopOpen').at(-1).params.selectedIds,ids);
+  assert.equal(f.calls.filter(c=>c.method==='activate').length,1);
+  click(1,1050);await flush();
   click(1,1100,0,114);await flush();
   assert.equal(f.calls.filter(c=>c.method==='desktopRename').length,1);
   await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));assert.deepEqual(f.host.readDiagnostics().desktopSelection.selectedIds,[]);

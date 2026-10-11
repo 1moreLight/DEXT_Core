@@ -149,9 +149,14 @@ internal sealed partial class RoomActionAuthority
     }
     private (RoomActionStatus Status, PersonalTarget? Target) PrepareDesktopTarget(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof);
+        return (prepared.Status,prepared.Targets?.FirstOrDefault());
+    }
+    private (RoomActionStatus Status, PersonalTarget[]? Targets) PrepareDesktopTargets(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[]? selection=null)
+    {
         var now=clock.GetTimestamp();
         if(Expired(proof.IssuedAt,now))return (RoomActionStatus.ExpiredInput,null);
-        (RoomActionStatus Status,PersonalTarget? Target) prepared;
+        (RoomActionStatus Status,PersonalTarget[]? Targets) prepared;
         try
         {
             var spin=new SpinWait();
@@ -159,14 +164,20 @@ internal sealed partial class RoomActionAuthority
             {
                 var attempt=store.ReadForDispatch(state=>{
                     var admitted=gateway.TryWithActionContext(connection,peer,session,(status,context)=>{
-                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget?)null);
+                        if(status!=RoomProtocolStatus.Accepted)return(Status(status),(PersonalTarget[]?)null);
                         var value=Volatile.Read(ref desktopPresentation);
                         if(!IsDesktopEntry(context!,proof.Button,value)||value is null||
-                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget?)null);
-                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget?)null);
-                        value.Targets.TryGetValue(proof.Button.Button,out var target);
-                        return(RoomActionStatus.Accepted,(PersonalTarget?)target);
-                    },out (RoomActionStatus Status,PersonalTarget? Target) result);
+                            !state.Rooms.TryGetValue(value.Room,out var room)||room.DesktopSync is not{Enabled:true} sync||sync.DeskId!=value.View.DeskId)return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                        PersonalTarget[] targets;
+                        if(selection is not null){
+                            if(selection.Length is <1 or >256 || selection.Distinct(StringComparer.Ordinal).Count()!=selection.Length ||
+                                !selection.Contains(proof.Button.Button,StringComparer.Ordinal) || selection.Any(id=>id is null || !value.Targets.ContainsKey(id)))
+                                return(RoomActionStatus.NotOperable,(PersonalTarget[]?)null);
+                            targets=selection.Select(id=>value.Targets[id]).ToArray();
+                        }else targets=value.Targets.TryGetValue(proof.Button.Button,out var target)?new[]{target}:Array.Empty<PersonalTarget>();
+                        if(!proof.Validate(context!.Snapshot,DesktopConsumer,proof.Button.Button,true))return(RoomActionStatus.StaleInput,(PersonalTarget[]?)null);
+                        return(RoomActionStatus.Accepted,(PersonalTarget[]?)targets);
+                    },out (RoomActionStatus Status,PersonalTarget[]? Targets) result);
                     return(admitted,result);
                 });
                 if(attempt.admitted){prepared=attempt.result;break;}spin.SpinOnce();
@@ -175,6 +186,20 @@ internal sealed partial class RoomActionAuthority
         catch(Exception error) when(StorageFailure(error)){return (RoomActionStatus.StorageUnavailable,null);}
         if(prepared.Status==RoomActionStatus.Accepted&&Expired(proof.IssuedAt,clock.GetTimestamp()))return (RoomActionStatus.ExpiredInput,null);
         return prepared;
+    }
+    internal RoomActionReply OpenDesktopSelection(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof,string[] selectedIds,Func<bool>? permitted=null)
+    {
+        if(proof.Key!=13||selectedIds is null)return new(RoomActionStatus.NotOperable);
+        var prepared=PrepareDesktopTargets(connection,peer,session,proof,selectedIds);
+        if(prepared.Status!=RoomActionStatus.Accepted)return new(prepared.Status);
+        var result=RoomActionStatus.Accepted;
+        foreach(var target in prepared.Targets!){
+            if(permitted?.Invoke()==false)return new(RoomActionStatus.Cancelled);
+            try{launch(target);}
+            catch(Exception error) when(error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException or ArgumentException)
+            {result=RoomActionStatus.LaunchFailed;}
+        }
+        return new(result);
     }
     internal RoomActionReply InvokeDesktop(Guid connection,RoomSessionPeer peer,Guid session,RoomNativeInputProof proof)
     {

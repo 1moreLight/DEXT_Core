@@ -1,6 +1,6 @@
 # DESK-SYNC-004 Windows桌面常用文件交互
 
-状态：开做，实施1/6≈17%；桌面同步路线2/4=50%。
+状态：开做，实施2/6≈33%；桌面同步路线2/4=50%。
 基线96c9ef7；分支feat/DESK-SYNC-004-shell-actions；托管worktree desktop-shell-actions。源码约109MiB，依赖/构建输出继续放D盘。
 执行：按executing-plans在当前会话顺序实施，不启用代理；用户已要求无需审核、统一验收，按此覆盖技能中的逐段确认。每步独立文件、待做/开做/做完；提交不等于人工验收或合并。
 
@@ -16,7 +16,7 @@
 | 步骤 | 状态 | 文件 |
 |---|---|---|
 | 01 选择状态与焦点 | 做完（实施） | [01](DESK-SYNC-004/01-selection.md) |
-| 02 双击/键盘打开与F2改名 | 开做 | [02](DESK-SYNC-004/02-open-rename.md) |
+| 02 双击/键盘打开与F2改名 | 做完（实施） | [02](DESK-SYNC-004/02-open-rename.md) |
 | 03 系统剪贴板复制剪切粘贴 | 待做 | [03](DESK-SYNC-004/03-clipboard.md) |
 | 04 删除到回收站 | 待做 | [04](DESK-SYNC-004/04-recycle.md) |
 | 05 原生右键与属性 | 待做 | [05](DESK-SYNC-004/05-context-menu.md) |

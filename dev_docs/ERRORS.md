@@ -455,3 +455,5 @@
 | #326 | official.desktop未加入Player官方输入分类，键盘等作者iframe/回执、鼠标官方回执被忽略 | [backend](errors/backend.md) |
 
 | #327 | 桌面命令键复用点击选择逻辑，F2把多选缩成单选 | [renderer](errors/renderer.md) |
+
+| #328 | 多选Enter误缩成单选；打开应用引起暂停丢失动作回执 | [renderer](errors/renderer.md) |
