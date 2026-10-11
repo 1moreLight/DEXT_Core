@@ -105,8 +105,12 @@ namespace Lively.Core.Wallpapers
                     }
                     break;
                 case "desktopDrop":
+                    Logger.Info("DesktopDrop " + JsonConvert.SerializeObject(new { stage = "received", session = state.Session,
+                        request = request.RequestId, player = Pid, count = request.DesktopDrop?.Files?.Length ?? 0 }));
                     var transfer = await ExecuteDesktopDropAsync(a, state, request);
                     status = transfer.Status; data = transfer.Data;
+                    Logger.Info("DesktopDrop " + JsonConvert.SerializeObject(new { stage = "result", session = state.Session,
+                        request = request.RequestId, player = Pid, status = WireStatus(status) }));
                     break;
                 case "presentationRead":
                     var view=await Task.Run(()=>a.Bridge.NativeReadPresentation(a.Actions,state.Session,state.Revision,request.DesktopContextId));

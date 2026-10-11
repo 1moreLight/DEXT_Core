@@ -2337,3 +2337,8 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 进度：桌面同步路线实施3/4=75%，003完整实机门槛0/5；未通过的测试不计完成。本轮探针观察窗口延长到45秒并可用observed/cancel提前结束。发现磁盘文件和私有槽位也可能由Explorer原生落盘+监听产生，因此将探针PASS改为OBSERVED，结果明确dextDropRouteVerified=false。
 下一步（待做）：为唯一临时文件关联真实Player接收、Core执行和页面回执证据，再做一次Explorer拖入；其后按独立验收卡核对效果、取消/重名、生命周期和原输入。当前记录整理做完；真实链路补证仍开做。用户已要求不用Orca技能。
 任务栏请求记录：新探针taskbar-visible已构建，但旧Debug Core返回Unimplemented，未确认恢复；Windows设置自动操作被工具拒绝（Computer Use was not approved to use systemsettings）。用户随后改为只需操作说明，已提供，不再继续修改任务栏。
+
+2026-10-11 DESK-SYNC-003关联证据开做：只在现有Core桌面拖放处理路径增加结构化received/result/transfer记录，关联session/request及成功目标的desktop哈希ID，不记录绝对路径、不调整输入。构建验证后提交；页面可见回执仍需实机观察。范围外：新权限、原点击/触控、切运行版。
+
+2026-10-11 关联诊断实施做完：Core现有desktopDrop分支记录received/result，Shell完成后记录transfer；三者以session/request/player关联，transfer仅记录哈希newIds、逐项状态/HRESULT和placement，不记录源/目标绝对路径。received代表已通过会话校验到达Core，不代表Shell成功；result代表Core处理结果，不代表页面已呈现，须观察官方完成提示。全量build.ps1 -V3Release通过；start.ps1 -CoreOnly自动补Debug构建后因旧Core34196占用同身份按设计拒绝启动（退出1），未停止旧Core、未打开配置器。诊断未部署到运行版，实机门槛保持0/5，路线3/4=75%。
+下次证据：ready.json的SessionId/PlayerPid与received匹配；同一request的transfer.newIds必须含唯一目标文件的desktop-ID且对应completed、placement accepted、aborted false；result accepted；最后观察官方已完成提示及落点图标。缺任何一环均不能把文件监听当Dext拖放成功。后续仍需五项独立验收，未合并master。

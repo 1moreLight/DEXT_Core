@@ -70,6 +70,13 @@ public partial class WebWebView2
                 placement = await Task.Run(() => ReferenceEquals(Volatile.Read(ref roomNativeAttachment), attachment)
                     ? attachment.Bridge.NativePlaceDesktopDrop(attachment.Actions, state.Session, drop.DeskId, newIds, slot, columns, capacity)
                     : RoomActionStatus.StaleSession);
+            // Correlate actual Shell completion with this request; a watcher-only
+            // desktop update must not be mistaken for the Dext transfer route.
+            Logger.Info("DesktopDrop " + Newtonsoft.Json.JsonConvert.SerializeObject(new {
+                stage = "transfer", session = state.Session, request = request.RequestId, player = Pid,
+                aborted = result.Aborted, placement = WireStatus(placement), newIds,
+                outcomes = result.Items.Select(item => new { status = item.Status, hresult = item.HResult }).ToArray()
+            }));
             // Absolute source/destination paths remain in Core. The directory
             // watcher publishes actual successful items through the normal scan.
             var data = new
