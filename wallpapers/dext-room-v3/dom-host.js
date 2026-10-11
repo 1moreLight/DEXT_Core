@@ -103,7 +103,7 @@
       for(const deskId of [snapshot.currentDeskId,snapshot.targetDeskId].filter(Boolean)){
         const items=layoutModel.projectDeskItems({manifest:room,layout:personalLayout,deskId});
         for(const record of icons.values())if(record.desktop&&record.deskId===deskId)items.push({key:'icon:'+deskId+'/'+record.icon.id,kind:'icon',id:record.icon.id,
-          savedRect:record.desktopRect,logicalSize:record.logicalSize||{width:96,height:104}});
+          savedRect:{...record.desktopRect,...personalLayout.icons[deskId]?.[record.icon.id]},logicalSize:record.logicalSize||{width:96,height:104}});
         // Dock geometry belongs to the official host. A component author can
         // publish its buttons, while only roomScene can publish occupied areas.
         const referenced=new Set(desks.get(deskId).components);
@@ -480,7 +480,7 @@
     let editSaving=false,editError=null,editNode=null,ignoreAuthorUntil=0;
     const editEligible=()=>!disposed&&!dockView&&!privatePaused&&layoutReady&&!editSaving&&snapshot.active&&snapshot.operable&&
       snapshot.lifecycle.stage==='desktop'&&!snapshot.lifecycle.locked&&!snapshot.lifecycle.playbackPaused&&!snapshot.transitionId;
-    function editRect(item,dx,dy){return {...item.rect,x:Math.max(0,Math.min(1920-item.rect.width,item.rect.x+dx)),y:Math.max(0,Math.min(1080-item.rect.height,item.rect.y+dy))};}
+    function editRect(item,dx,dy){return {...item.rect,x:Math.max(0,Math.min(1920-Math.max(item.rect.width,item.kind==='icon'?96:0),item.rect.x+dx)),y:Math.max(0,Math.min(1080-Math.max(item.rect.height,item.kind==='icon'?104:0),item.rect.y+dy))};}
     function clearEditPaint(){ignoreAuthorUntil=now()+250;editNode?.remove();editNode=null;paintVisuals();}
     function previewEdit(item,dx,dy){
       const rect=editRect(item,dx,dy),element=item.record.element||item.record.wrapper;
@@ -510,7 +510,7 @@
       const node=paintNodes().sort((a,b)=>b.layer-a.layer||b.order-a.order).find(n=>geometry.containsPoint(n.polygon,{x,y}));
       if(!node)return null;const record=node.record;
       // Native desktop file positions have their own model, not Room manifest icons.
-      if(record.icon&&!record.desktop)return{kind:'icon',id:record.icon.id,record,rect:{...record.rect}};
+      if(record.icon&&(!record.desktop||record.icon.id.startsWith('desktop-')))return{kind:'icon',id:record.icon.id,record,rect:{...record.rect}};
       if(record.definition?.kind==='widget')return{kind:'widget',id:record.definition.consumerId.slice(10),record,rect:{...recordPlacement(record)}};
       return null;
     }
@@ -571,7 +571,7 @@
           if(!desktop)desktopView=null;
           else if(desktop.items!==null)desktopView=copy(desktop);
           else if(desktopView?.contextId!==desktop.contextId||desktopView?.deskId!==desktop.deskId)desktopView=null;
-          if(before!==desktopView?.contextId){if(beforeDesk!==desktopView?.deskId)desktopPage=0;await render();}
+          if(before!==desktopView?.contextId){if(beforeDesk!==desktopView?.deskId)desktopPage=0;await renderWithLayout();}
           for(const record of icons.values())record.element.dataset.skin=presentationSkins[record.icon.buttonId]||'classic';
           const locator=reply.presentation.locator;
           if(locator&&locator.requestId!==locatorRequest){locatorRequest=locator.requestId;paintLocator(locator.buttonId);}

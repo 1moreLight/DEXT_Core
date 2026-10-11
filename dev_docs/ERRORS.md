@@ -483,3 +483,5 @@
 2026-10-11 长按编辑迁移：原生点击权限流会在超过移动阈值时取消，不能直接将其move/up用于长距离编辑。Player新增独立只观察位置/松手的流，继续用原Room layoutSave检查会话、前台、当前Desk及版本；不放宽点击权限或接管触控。构建前必须把新Form1 partial文件加入旧格式csproj的Compile列表。verify-v3-release-candidate参数为CandidateDirectory，非start.ps1的ReleaseDirectory；首次参数错误后正确重跑656/18通过。
 
 2026-10-11 黑屏根因：press-edit.js仅加入v3-release-assets，遗漏DextNativeResourceServer.OfficialFiles；实际加载403，Node测试require兜底绕过浏览器加载，故160项通过仍黑屏。补--v3-host-assets使用真实服务器读取全部HTML依赖（先403失败，后16项通过），verify-release-host同时核对服务器清单。会话active和文件存在不代表渲染成功。
+
+2026-10-11 Home输入回归：事后currentDesk=focus不能推断用户失败操作发生在focus，用户已确认是在Home。同步文件被editHit排除，后端LayoutItem也只认manifest；两端和布局读取需一起补，存储仍以本机opaque文件ID限定。另发现播放暂停用PictureBox覆盖并隐藏WebView，会失去OLE接收面；同步页应只暂停媒体/作者状态，保留真实WebView，不宣称该代码检查已证明本次禁止符号的唯一根因，实机待验收。

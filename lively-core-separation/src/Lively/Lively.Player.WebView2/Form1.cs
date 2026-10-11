@@ -326,6 +326,11 @@ namespace Lively.Player.WebView2
                     {
                         if(nativeNetworkReady&&!runtimeDeliverySuspended)nativeFrameMedia?.ReceiveOfficialInputDispatch(webMessage);
                     }
+                    else if ((string)o.type == "dext:v3-input-diagnostic")
+                    {
+                        if(nativeResources!=null && webMessage.Length<2048)
+                            SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop input "+webMessage});
+                    }
                     else if ((string)o.type == "dext:v3-frame-policy")
                     {
                         if (nativeFrameMedia != null && nativeNetworkReady) await nativeFrameMedia.AcceptAsync(webMessage);
@@ -1075,7 +1080,10 @@ namespace Lively.Player.WebView2
                         roomRuntime.HasContext(nativeReply.RuntimeGeneration, nativeReply.SessionId) &&
                         nativeReply.PayloadJson != null && Encoding.UTF8.GetByteCount(nativeReply.PayloadJson) <= (nativeReply.Method == "presentationRead" ? 4 : 1)*1024*1024 &&
                         IsOfficialDextDocument(webView.CoreWebView2.Source))
+                    {
+                        if(nativeReply.Method=="presentationRead")await UpdateNativeDropSurfaceAsync(nativeReply.PayloadJson);
                         webView.CoreWebView2.PostWebMessageAsJson(nativeReply.PayloadJson);
+                    }
                     break;
                 case MessageType.cmd_room_runtime:
                     if (startArgs.DextTrustedHost && IsOfficialDextDocument(webView.CoreWebView2.Source) &&

@@ -26,6 +26,7 @@ namespace Lively.Player.WebView2
             if(!CurrentNativePointer(packet)||!IsOfficialDextDocument(webView.CoreWebView2.Source))return;
             editPointerTimer?.Stop();editPointer=packet;
             var accepted=await SendEditPointerAsync(packet,"down",packet.X,packet.Y);
+            SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop edit down accepted="+accepted+" gesture="+packet.GestureId});
             if(editPointer!=packet||accepted!="true"){if(editPointer==packet)editPointer=null;return;}
             if(editPointerTimer==null){editPointerTimer=new System.Windows.Forms.Timer{Interval=16};editPointerTimer.Tick+=async(sender,args)=>await PollEditPointerAsync();}
             editPointerTimer.Start();
@@ -46,7 +47,8 @@ namespace Lively.Player.WebView2
                 if(!valid)point=new EditPoint{X=own.X,Y=own.Y};
                 var kind=!valid||(GetAsyncKeyState(0x1B)&0x8000)!=0?"cancel":(GetAsyncKeyState(1)&0x8000)==0?"up":"move";
                 var result=await SendEditPointerAsync(own,kind,point.X,point.Y);
-                if(editPointer==own&&(kind!="move"||result!="true")){editPointer=null;editPointerTimer.Stop();}
+                if(editPointer==own&&(kind!="move"||result!="true")){
+                    SendToParent(new LivelyMessageConsole{Category=ConsoleMessageType.log,Message="Desktop edit end kind="+kind+" accepted="+result+" gesture="+own.GestureId});editPointer=null;editPointerTimer.Stop();}
             }catch(Exception){if(editPointer==own){editPointer=null;editPointerTimer?.Stop();}}
             finally{editPointerBusy=false;}
         }

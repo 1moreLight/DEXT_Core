@@ -856,9 +856,10 @@ test('background desktop still publishes only visible file regions for the first
  }finally{f.host.dispose();}
 });
 
-function editFixture(status='accepted'){
+function editFixture(status='accepted',desktop=null){
  let id=0;const timers=new Map();let saved={revision:0,icons:{},components:{}};
  const f=fixture({setTimeout:(cb,ms)=>{timers.set(++id,{cb,ms});return id;},clearTimeout:id=>timers.delete(id),request:(method,params)=>{
+  if(method==='presentationRead'&&desktop)return Promise.resolve({status:'accepted',presentation:{revision:1,skins:{},locator:null,desktop}});
   if(method==='layoutRead')return Promise.resolve({status:'accepted',layout:saved});
   if(method==='layoutSave'){
    if(status!=='accepted')return Promise.resolve({status});
@@ -886,4 +887,12 @@ test('Rejected save retains old layout and reports failure',async()=>{
 });
 test('Desk changes cancel held edits and no old release can save',async()=>{
  const f=editFixture();await f.host.ready;f.pointer('down',50,60);f.hold();await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));f.pointer('up',250,260);await flush();assert.equal(f.calls.some(c=>c.method==='layoutSave'),false);assert.equal(f.host.readDiagnostics().edit.phase,'idle');f.host.dispose();
+});
+
+test('synced file long press saves and reloads its personal position',async()=>{
+ const id='desktop-'+'a'.repeat(64),desktop={contextId:'scan',deskId:'home',items:[{id,name:'File',kind:'file',slot:0,iconPng:null}],issueCount:0,truncated:false};
+ const f=editFixture('accepted',desktop);await f.host.ready;await flush();
+ assert.equal(f.pointer('down',50,60),true);f.hold();f.pointer('up',250,260);await flush();
+ assert.equal(f.calls.filter(c=>c.method==='layoutSave').length,1);assert.equal(f.calls.find(c=>c.method==='layoutSave').params.change.id,id);
+ const item=f.host.readDiagnostics().layout.items.find(v=>v.id===id);assert.equal(item.savedRect.x,232);assert.equal(item.savedRect.y,232);f.host.dispose();
 });

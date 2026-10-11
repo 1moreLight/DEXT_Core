@@ -14,6 +14,22 @@ namespace Lively.Player.WebView2
     {
         private readonly SemaphoreSlim nativePauseRenderGate = new SemaphoreSlim(1, 1);
         private PictureBox nativePausedPicture;
+        private bool nativeDesktopDropEnabled;
+        private async Task UpdateNativeDropSurfaceAsync(string json)
+        {
+            if(startArgs.DextDock)return;
+            var value=Newtonsoft.Json.Linq.JObject.Parse(json);
+            if((string)value["status"]!="accepted"||value["presentation"]==null)return;
+            var enabled=value["presentation"]["desktop"] is Newtonsoft.Json.Linq.JObject;
+            if(enabled==nativeDesktopDropEnabled)return;
+            nativeDesktopDropEnabled=enabled;
+            if(isPaused)await FreezeNativeView(playbackRevision);
+        }
+        private void RevealDropSurface()
+        {
+            webView.CoreWebView2.Resume();webView.Visible=true;NativeViewController().IsVisible=true;
+            if(nativePausedPicture!=null){nativePausedPicture.Visible=false;var image=nativePausedPicture.Image;nativePausedPicture.Image=null;image?.Dispose();}
+        }
 
         // Only the trusted native Player uses this image. It stays in memory and
         // captures this WebView, never another application or the Windows desktop.
@@ -23,6 +39,9 @@ namespace Lively.Player.WebView2
             try
             {
                 if (IsDisposed || !isPaused || revision != playbackRevision) return;
+                // External Explorer drag occurs while media is paused. The snapshot
+                // PictureBox is not an OLE target; keep the real WebView available.
+                if(nativeDesktopDropEnabled){RevealDropSurface();"Native pause retained desktop drop surface".SendLog(SendToParent);return;}
                 if (nativePausedPicture?.Image == null)
                 {
                     using var stream = new MemoryStream();

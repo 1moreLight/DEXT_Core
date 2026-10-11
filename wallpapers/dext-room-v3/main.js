@@ -102,6 +102,15 @@
   };
   globalThis.dextNativeDockKeyboardExit=()=>{if(disposed||context?.viewKind!=='dock')return false;tasks?.exitKeyboard();return true;};
   globalThis.dextNativeDockRefresh=()=>context?.viewKind==='dock'&&host?host.refreshGeometry():Promise.resolve(false);
+  let lastDropTrace=0;
+  const traceDrop=event=>{
+    if(!event.isTrusted||!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+    if(event.type!=='drop'&&performance.now()-lastDropTrace<1000)return;lastDropTrace=performance.now();
+    const state=host?.readDiagnostics();sendControl({type:'dext:v3-input-diagnostic',kind:event.type,
+      desk:snapshot?.currentDeskId||null,syncDesk:state?.presentation?.desktop?.deskId||null,
+      effect:event.dataTransfer.effectAllowed,ready:state?.inputReady===true,paused});
+  };
+  addEventListener('dragover',traceDrop,true);addEventListener('drop',traceDrop,true);
   const receive=event=>runtimeMessage(event.data);
   transport.addEventListener('message',receive);
   const resize=()=>{tasks?.suspend();host?.resize().then(()=>tasks?.refresh()).catch(()=>{lastError={code:'viewportUnavailable'};});};

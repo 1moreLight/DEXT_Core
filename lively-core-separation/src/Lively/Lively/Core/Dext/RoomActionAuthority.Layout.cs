@@ -28,8 +28,8 @@ internal sealed partial class RoomActionAuthority
                         if (admitted != RoomProtocolStatus.Accepted) return new RoomLayoutReply(Status(admitted));
                         var status = LayoutEligibility(context!, revision, false);
                         if (status != RoomActionStatus.Accepted) return new(status);
-                        var saved = state.Rooms.TryGetValue(context!.Installation.RoomId, out var room) ? room.Layout : new RoomPersonalLayout();
-                        return new(RoomActionStatus.Accepted, RoomPersonalLayout.Project(saved, context.Installation.RuntimeContext!.Manifest));
+                        var saved = state.Rooms.TryGetValue(context!.Installation.RoomId, out var room) ? room : new RoomPersonalData();
+                        return new(RoomActionStatus.Accepted, ProjectDesktopLayout(saved, context.Installation.RuntimeContext!.Manifest));
                     }, out RoomLayoutReply reply);
                     return (completed, reply);
                 });
@@ -65,6 +65,9 @@ internal sealed partial class RoomActionAuthority
                         var roomId = context!.Installation.RoomId;
                         var room = state.Rooms.TryGetValue(roomId, out var saved) ? saved : new RoomPersonalData();
                         var layout = room.Layout;
+                        if(change.Kind=="icon"&&change.Id.StartsWith("desktop-",StringComparison.Ordinal)&&
+                            (room.DesktopSync is not {Enabled:true} sync || sync.DeskId!=change.DeskId || !sync.Slots.ContainsKey(change.Id)))
+                            return new(RoomActionStatus.Denied);
                         if (layout.Revision != expectedLayoutRevision) return new(RoomActionStatus.StaleInput);
                         var changed = false;
                         if (change.Kind == "icon")
@@ -88,7 +91,7 @@ internal sealed partial class RoomActionAuthority
                             state.Rooms[roomId] = room;
                             publish = true;
                         }
-                        return new(RoomActionStatus.Accepted, RoomPersonalLayout.Project(layout, context.Installation.RuntimeContext!.Manifest));
+                        return new(RoomActionStatus.Accepted, ProjectDesktopLayout(room, context.Installation.RuntimeContext!.Manifest));
                     }, out RoomLayoutReply reply);
                     return (completed && publish && reply.Status == RoomActionStatus.Accepted, (completed, reply));
                 });
@@ -106,13 +109,30 @@ internal sealed partial class RoomActionAuthority
             context.Snapshot.Lifecycle.Stage != RoomLifecycleStage.Desktop || context.Snapshot.Lifecycle.PlaybackPaused ||
             context.Snapshot.Lifecycle.Locked || context.Snapshot.TransitionId is not null) ? RoomActionStatus.NotOperable : RoomActionStatus.Accepted;
 
-    private static bool LayoutItem(RoomActionContext context, RoomLayoutChange change)
+    private static RoomPersonalLayout ProjectDesktopLayout(RoomPersonalData room, System.Text.Json.JsonElement manifest)
+    {
+        var result=RoomPersonalLayout.Project(room.Layout,manifest);
+        if(room.DesktopSync is {Enabled:true} sync && room.Layout.Icons.TryGetValue(sync.DeskId,out var saved))
+        {
+            if(!result.Icons.TryGetValue(sync.DeskId,out var icons)){icons=new(StringComparer.Ordinal);result.Icons[sync.DeskId]=icons;}
+            foreach(var pair in saved)if(sync.Slots.ContainsKey(pair.Key))icons[pair.Key]=pair.Value;
+        }
+        return result;
+    }
+    private bool DesktopLayoutItem(RoomActionContext context,RoomLayoutChange change)
+    {
+        var desktop=Volatile.Read(ref desktopPresentation);
+        return desktop is not null && desktop.Session==context.Snapshot.SessionId && desktop.Room==context.Installation.RoomId &&
+            desktop.Stamp==context.Installation.InstallationStamp && desktop.View.DeskId==change.DeskId &&
+            desktop.View.Items?.Any(item=>item.Id==change.Id)==true;
+    }
+    private bool LayoutItem(RoomActionContext context, RoomLayoutChange change)
     {
         var manifest = context.Installation.RuntimeContext!.Manifest;
         var current = manifest.GetProperty("desks").EnumerateArray().First(d => d.GetProperty("id").GetString() == context.Snapshot.CurrentDeskId);
         if (change.Kind == "icon")
             return change.DeskId == context.Snapshot.CurrentDeskId && change.Width is null && change.Height is null &&
-                RoomPersonalLayout.Position(change.X, change.Y) && current.GetProperty("icons").EnumerateArray().Any(icon => icon.GetProperty("id").GetString() == change.Id);
+                RoomPersonalLayout.Position(change.X, change.Y) && (current.GetProperty("icons").EnumerateArray().Any(icon => icon.GetProperty("id").GetString() == change.Id) || DesktopLayoutItem(context,change));
         return change.Kind == "widget" && change.DeskId is null && change.Width is { } width && change.Height is { } height &&
             RoomPersonalLayout.Rectangle(change.X, change.Y, width, height) &&
             current.GetProperty("components").EnumerateArray().Any(id => id.GetString() == change.Id) &&

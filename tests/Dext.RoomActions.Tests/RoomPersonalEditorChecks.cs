@@ -8,6 +8,18 @@ static partial class RoomActionChecks
   static RoomPersonalEditorReply Read(ActionFixture f)=>f.Actions.GetPersonalEditor(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f));
   static RoomPersonalEditorReply Edit(ActionFixture f,object edit)=>f.Actions.EditPersonal(f.Coordinator,f.CorePeer,f.Session,Room,Stamp(f),JsonSerializer.Serialize(edit));
   static RoomPersonalEditorSnapshot Editor(RoomPersonalEditorReply r){Eq("accepted",r.Status);return r.Editor!;}
+  check("synced desktop file layout persists and disabled sync rejects movement",()=>{
+   using var f=new ActionFixture();var id="desktop-"+new string('a',64);
+   f.Store.SetDesktopSync(Room,"home",true,new[]{id});
+   f.Actions.PublishDesktopPresentation(f.Session,Room,Stamp(f),new RoomDesktopView("scan","home",new[]{new RoomDesktopViewItem(id,"File.txt","file",0,null)},0,false));
+   var change=new RoomLayoutChange("icon",id,"home",240,360);
+   var reply=f.Actions.SaveLayout(f.View,f.Peer,f.Session,f.Kernel.Snapshot!.Revision,0,change);
+   Eq(RoomActionStatus.Accepted,reply.Status);Eq(new RoomLayoutPosition(240,360),reply.Layout!.Icons["home"][id]);
+   var read=f.Actions.ReadLayout(f.View,f.Peer,f.Session,f.Kernel.Snapshot.Revision);
+   Eq(new RoomLayoutPosition(240,360),read.Layout!.Icons["home"][id]);
+   f.Store.SetDesktopSync(Room,"home",false);
+   Eq(RoomActionStatus.Denied,f.Actions.SaveLayout(f.View,f.Peer,f.Session,f.Kernel.Snapshot.Revision,1,change with{X=300}).Status);
+  });
   check("empty desktop paste command accepts only native activation in the current enabled scope",()=>{
    using var f=new ActionFixture();const string id="desktop.paste";
    f.Store.SetDesktopSync(Room,"home",true,Array.Empty<string>());
