@@ -567,3 +567,5 @@ DesktopSync测试为Shell图标启用了UseWindowsForms，新增监听类使用T
 
 ## #324 候选打包磁盘空间不足（2026-10-11）
 npm ci解包报ENOSPC，C盘剩余0字节；本轮安装前node_modules不存在，失败后仅清理已校验的当前worktree/tauri-ui/node_modules，释放约146MB。未清理已有缓存、候选或用户文件。完整构建未运行，不能记作通过。后续先检查依赖、TEMP与编译输出所在盘空间，安排D盘路径后再重试。
+
+#324恢复补记：独立D盘目录安装锁定依赖，当前node_modules使用junction；仅迁移当前worktree未运行Core bin到D盘并链接，TEMP/TMP/npm缓存及CargoTargetDirectory均指向D盘。完整候选构建与654文件/16资产来源核对成功；没有清理其他worktree或系统文件。
