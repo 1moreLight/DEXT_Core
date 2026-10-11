@@ -52,3 +52,6 @@
 
 待接：WebWebView2操作执行分支、官方DOM事件、实际Shell写盘结果；核对函数尚未用于执行文件操作。01保持开做、0/5=0%。
 - 完整Core/Player Release构建退出0（.build/drop-scope-core-build.log）；旧Core51648保持，无新配置器。
+
+2026-10-11 iframe命中补证：新增隐藏IframeDropProbe，沙盒allow-scripts作者iframe铺满视口；CDP在iframe区域发送拖放，观测top:dragenter/dragover/drop目标IFRAME。随后通过实际生产native-host.js的dropFiles发AdditionalObjects，由生产DextNativeDroppedFiles验证源文件身份成功。源内容保持，临时文件删除；未移动OS鼠标或替换当前桌面。
+日志：.build/drop-iframe-production.log，探针退出0，SDK1.0.3595.46/runtime154.0.4258.62。这排除了该浏览器夹具中“事件只进iframe”的假设，不能外推到所有作者页面或WorkerW/Explorer。仍待完整官方DOM宿主、实际Player/WorkerW与OS OLE效果验证，01保持开做。

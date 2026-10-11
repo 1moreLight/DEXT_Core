@@ -12,3 +12,4 @@ Core当前同步Desk授权目标和操作结果，落点附近空槽摆放；002
 宿主101项测试通过（.build/drop-host-green.log），其中新增文件对象引用、暂停与修订回执、切页拒绝和dispose解绑。未更换原运行版，尚未实际Player端到端验证。
 待做：落点槽位保存；作者iframe覆盖区的真实拖放命中；Explorer/OLE最终效果与源文件责任验证。DOM drop主动置none只是实现意图，不能据此断言OS源收到none。默认光标提示暂沿用浏览器效果，Core实际同卷判断不能由这个提示测试替代。
 参考：[WebView2文件对象通道](https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/javascript/webview)、[Shell拖放完成责任](https://learn.microsoft.com/en-us/windows/win32/shell/dataobject)。
+2026-10-11：隐藏WebView2沙盒iframe命中→顶层drop→生产native-host.dropFiles→AdditionalObjects→生产Player文件读取贯通，路径与临时源一致。只验证浏览器CDP路径，实际OLE及落点仍待。

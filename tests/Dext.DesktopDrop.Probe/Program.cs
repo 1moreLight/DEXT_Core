@@ -37,6 +37,7 @@ internal static class Program
                 view.NavigateToString("<!doctype html><html><body>Registration-only probe</body></html>");
                 await loaded.Task.WaitAsync(TimeSpan.FromSeconds(10));
                 await AdditionalFileProbe.Run(view);
+                await IframeDropProbe.Run(view);
                 Inspect(form, view, "default");
                 view.AllowExternalDrop = false;
                 await Task.Delay(200);
