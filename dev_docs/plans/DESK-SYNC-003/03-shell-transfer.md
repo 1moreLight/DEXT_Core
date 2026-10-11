@@ -26,3 +26,4 @@ STA Shell文件操作，复制/移动/快捷方式；重名交互、取消、部
 
 2026-10-11 Core执行入口已接：desktopDrop私有IPC进入独立处理器，拒绝Dock/无效坐标/并发请求；系统Known Folder决定目标，STA入场复核原始context，排队与Shell回调复核当前会话/同步Desk。自己的文件更新可刷新context，不误用旧context取消自身操作。每项结果只回名称/状态/HRESULT，不把路径返回页面。
 21项定向检查通过（.build/drop-execution-checks.log），新增原生卷识别、来源禁止移动、入场失效、排队后失效保源。完整Core/Player Release成功（.build/drop-execution-core-build.log）。Core处理器目前仅构建验证，尚无页面入口与真实Player调用证据，不能将此记为端到端完成；落点摆放和冲突/取消实机仍待。
+2026-10-11取消回执修复：真实Shell进度撤销暴露GetAnyOperationsAborted=false/HRESULT取消的不一致，已合并取消回调锁存和返回码。23项真实文件/策略检查通过，覆盖首项已移动后取消保留第二源及首项成功记录；完整Release成功。重名交互与实际Explorer Esc仍待，见ERRORS #323。

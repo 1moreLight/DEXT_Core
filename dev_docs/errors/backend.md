@@ -659,3 +659,8 @@ Core31060 overlay切reserve失败：ReleaseAutomaticAsync仅执行一次非阻�
 代码核查发现Form1请求端放行desktopDrop，响应端仅放行layoutRead；即使Core完成文件操作、JS保留在途请求，Explorer前台导致播放暂停时响应仍被丢弃。presentationRead在JS允许暂停读取，但Player双向均遗漏。
 修复：DextNativeInputProtocol.AllowsWhileSuspended统一两端规则，仅layoutRead/presentationRead/desktopDrop可继续；原生点击、作者动作、布局写入等原有暂停规则保持。实际会话、页面身份和Core资格检查仍执行。
 定向检查先76/77（新增失败）后77/77，完整Core/Player Release成功。此次是生产代码路径与编译/单元证据，真实暂停Explorer拖入仍待验证。
+
+## #323 Shell取消返回标志不能单独作为依据（2026-10-11）
+真实临时文件测试在原生进度回调撤销资格后，PerformOperations返回0x800704C7，源存在、目标未创建，但GetAnyOperationsAborted=false，旧实现回报failed且总状态未取消。
+修复：进度sink锁存Cancelled（撤销后不恢复），批次合并Shell标志、令牌、取消HRESULT和sink取消状态；未处理项目标cancelled，已经完成项目保留completed。
+22项检查验证上述路径，随后新增首项移动完成后撤销的批次：首项目标内容正确且源移除，第二项源内容保持/目标不存在，保留首项完成回执；共23项通过。重名冲突UI与Explorer Esc未由此覆盖。

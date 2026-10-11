@@ -102,6 +102,7 @@ internal static class DesktopShellTransfer
                 if (permitted?.Invoke() == false) throw new OperationCanceledException("Desktop drop scope revoked.", cancellation);
             var result = pending.Count == 0 ? 0 : operation.PerformOperations();
             operation.GetAnyOperationsAborted(out var aborted);
+            aborted = aborted || cancellation.IsCancellationRequested || result == unchecked((int)0x800704C7) || pending.Any(sink => sink.Cancelled);
             foreach (var sink in pending)
                 results.Add(sink.Result ?? new(sink.Source, null, aborted || cancellation.IsCancellationRequested ? "cancelled" : "failed", result));
             return new(results.AsReadOnly(), aborted || cancellation.IsCancellationRequested, result);
@@ -144,6 +145,7 @@ public sealed class TransferSink : IDesktopTransferProgress
 {
     internal string Source { get; }
     internal DesktopTransferItem? Result { get; private set; }
+    internal bool Cancelled { get; private set; }
     private readonly CancellationToken cancellation;
     private readonly string callbackSource;
     private readonly Func<bool>? permitted;
@@ -151,8 +153,9 @@ public sealed class TransferSink : IDesktopTransferProgress
     { Source = source; this.cancellation = cancellation; this.callbackSource = callbackSource ?? source; this.permitted = permitted; }
     private int Continue()
     {
-        try { return cancellation.IsCancellationRequested || permitted?.Invoke() == false ? unchecked((int)0x800704C7) : 0; }
-        catch { return unchecked((int)0x800704C7); }
+        try { if (cancellation.IsCancellationRequested || permitted?.Invoke() == false) Cancelled = true; }
+        catch { Cancelled = true; }
+        return Cancelled ? unchecked((int)0x800704C7) : 0;
     }
     private int Complete(IDesktopShellItem item, IDesktopShellItem? created, int result)
     {
@@ -161,7 +164,7 @@ public sealed class TransferSink : IDesktopTransferProgress
         if (string.Equals(DesktopShellTransfer.ItemPath(item), callbackSource, StringComparison.OrdinalIgnoreCase))
         {
             var destination = DesktopShellTransfer.ItemPath(created);
-            Result = new(Source, destination, result >= 0 && destination is not null ? "completed" : result >= 0 ? "skipped" : "failed", result);
+            Result = new(Source, destination, result >= 0 && destination is not null ? "completed" : result >= 0 ? "skipped" : Cancelled || result == unchecked((int)0x800704C7) ? "cancelled" : "failed", result);
         }
         return 0;
     }

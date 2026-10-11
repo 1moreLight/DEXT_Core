@@ -2318,3 +2318,4 @@ P8-013真实Player增量：私有快照到达正式宿主页已验证，全屏�
 2026-10-11 DESK-SYNC-003实机门槛开做：当前旧Core无活动Room已确认；独立RuntimeProbe新增desktop-drop-live，记录ready/result与临时源，借现有磁盘checkpoint恢复流程；8分钟上限、只清理唯一临时文件。准备短暂切开发候选，禁止新增配置器。
 2026-10-11 DESK-SYNC-003实机尝试：修复开发输出缺宿主预检问题后，真实Core47700/Player33976隔离Room和同步ready；Explorer窗口接口不可操作，未进行拖动。主动取消已清临时文件/夹具并恢复旧Core52420、原配置器19704，checkpoint字节一致且session-status无活动Room。新增夹具Release构建通过；实机拖入未通过，0/5，整体2/4=50%。
 2026-10-11 DESK-SYNC-003反馈漏接修复：Player两端暂停白名单统一，避免文件已处理却无完成反馈；呈现读取也可在普通暂停下更新。77/77定向检查、完整Core/Player Release通过；旧Core52420复用、无新配置器。实际OS拖入仍待，0/5，整体2/4=50%。
+2026-10-11 DESK-SYNC-003取消证据：修复Shell已取消但回报failed的状态归并，新增实际进度取消及首项移动后取消检查，23项通过，完整Core/Player Release退出0；旧Core52420复用，不改当前桌面。重名UI/OS拖入仍待，0/5，整体2/4=50%。
