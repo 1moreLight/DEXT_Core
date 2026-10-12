@@ -4,8 +4,8 @@
 
 ## 当前版本
 
-- 主线：`71d4c33`，已含用户通过的文件右键修复；阶段里程碑 `v3DesktopFlow`（`90e9aa6`）。
-- 当前未合并候选：`feat/DESK-SYNC-005-background-menu`，生产源`c74095b`；增加空白背景菜单/粘贴及轮询优化。
+- 主线：在`71d4c33`基础上快进合入已验收005及本记录，精确提交见Git；阶段里程碑 `v3DesktopFlow`（`90e9aa6`）。
+- DESK-SYNC-005：2026-10-12用户验收通过并要求合并；生产源`c74095b`，收尾`1530b35`，增加空白背景菜单/粘贴及轮询优化。
 - 运行候选：`D:/use/Orca/DEXT/DEXT_Core/.build/longpress-edit-20261011-r5`，入口为其中 `start-dext.cmd`。
 - 本轮只读观察：同目录Core42028，原Home恢复，配置器42292仍只有一份。PID仅表示观察时刻。
 - 本轮核对：656个清单文件尺寸/摘要一致，18项宿主与源码一致；HTML引用均可由正式资源清单提供；六套冻结样包字节一致。
@@ -42,7 +42,7 @@
 
 ## 剩余工作
 
-唯一下一项：DESK-SYNC-005的[两项短验收](acceptance/DESK-SYNC-005-background-menu.md)。随后回到V3-INTEGRATION-002的[三组短清单](acceptance/V3-INTEGRATION-002-short.md)。背景菜单已补粘贴，但查看/排序、新建后就地重命名的完整Dext语义不在本包；本轮不等于正式版全部通过。
+005的[两项短验收](acceptance/DESK-SYNC-005-background-menu.md)已获用户通过。唯一下一项按最新指令转为V3-CUSTOM-001自定义能力审计；V3-INTEGRATION-002的[三组短清单](acceptance/V3-INTEGRATION-002-short.md)未确认项仍保留。背景菜单已补粘贴，但查看/排序、新建后就地重命名的完整Dext语义不在本包；本轮不等于正式版全部通过。
 
 当前收尾进度：融合证据3/3、发布入口3/3，均100%；整个v3人工通过率不以这些百分比代替。触屏、DPI、锁屏唤醒、Explorer重启及文件冲突/取消边界仍待真实确认，可在正常使用时补报，不强迫一次测完。
 
