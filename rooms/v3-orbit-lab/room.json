@@ -1,9 +1,196 @@
 {
-  "version": 3,
   "apiVersion": 1,
-  "id": "5e181686-49dd-426b-92cc-3dadc6036c6c",
-  "name": "星轨实验室 · V3",
-  "startDesk": "orbit",
+  "buttons": [
+    {
+      "action": {
+        "type": "desk.previous"
+      },
+      "id": "previous",
+      "name": "上一页",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "type": "desk.next"
+      },
+      "id": "next",
+      "name": "下一页",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "deskId": "orbit",
+        "type": "desk.go"
+      },
+      "id": "go-orbit",
+      "name": "星轨",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "deskId": "spectrum",
+        "type": "desk.go"
+      },
+      "id": "go-spectrum",
+      "name": "信号",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "deskId": "dusk",
+        "type": "desk.go"
+      },
+      "id": "go-dusk",
+      "name": "静谧",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "type": "binding.launch"
+      },
+      "id": "application",
+      "name": "我的应用",
+      "scope": "room"
+    }
+  ],
+  "components": [
+    {
+      "buttonIds": [
+        "next"
+      ],
+      "capabilities": [
+        "desk.read",
+        "desk.navigate",
+        "time.read",
+        "hardware.read",
+        "media.read",
+        "audio.read",
+        "storage.read",
+        "storage.write"
+      ],
+      "config": {
+        "phase": "01",
+        "title": "轨道观测台"
+      },
+      "entry": "widget/index.html",
+      "id": "observatory",
+      "placement": {
+        "height": 568,
+        "width": 414,
+        "x": 1410,
+        "y": 150
+      },
+      "role": "widget"
+    },
+    {
+      "buttonIds": [
+        "previous",
+        "next",
+        "go-orbit",
+        "go-spectrum",
+        "go-dusk",
+        "application"
+      ],
+      "capabilities": [
+        "desk.read",
+        "desk.navigate",
+        "binding.launch"
+      ],
+      "entry": "dock/index.html",
+      "id": "navigation",
+      "placement": {
+        "height": 112,
+        "width": 980,
+        "x": 470,
+        "y": 868
+      },
+      "role": "dock"
+    }
+  ],
+  "desks": [
+    {
+      "components": [
+        "observatory",
+        "navigation"
+      ],
+      "icons": [
+        {
+          "buttonId": "application",
+          "glyph": "◇",
+          "id": "app-orbit",
+          "label": "我的应用",
+          "x": 0,
+          "y": 5
+        }
+      ],
+      "id": "orbit",
+      "name": "星轨"
+    },
+    {
+      "componentOverrides": {
+        "observatory": {
+          "phase": "02",
+          "title": "信号观测台"
+        }
+      },
+      "components": [
+        "observatory",
+        "navigation"
+      ],
+      "icons": [
+        {
+          "buttonId": "application",
+          "glyph": "◇",
+          "id": "app-signal",
+          "label": "我的应用",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "application",
+          "glyph": "↗",
+          "id": "app-signal-copy",
+          "label": "同一个入口",
+          "x": 1,
+          "y": 5
+        }
+      ],
+      "id": "spectrum",
+      "name": "信号"
+    },
+    {
+      "componentOverrides": {
+        "observatory": {
+          "phase": "03",
+          "title": "静谧观测台"
+        }
+      },
+      "components": [
+        "observatory",
+        "navigation"
+      ],
+      "icons": [
+        {
+          "buttonId": "application",
+          "glyph": "◇",
+          "id": "app-dusk",
+          "label": "我的应用",
+          "x": 0,
+          "y": 5
+        }
+      ],
+      "id": "dusk",
+      "name": "静谧"
+    }
+  ],
+  "dockComponentId": "navigation",
+  "id": "f775ab84-e145-4178-af7b-7b4a4e5caee3",
+  "idle": {
+    "capabilities": [],
+    "src": "lifecycle/index.html",
+    "type": "html"
+  },
+  "name": "v3-orbit-lab",
   "resources": [
     "assets/dext-sdk.v1.js",
     "dock/index.html",
@@ -20,207 +207,20 @@
     "widget/style.css"
   ],
   "roomScene": {
-    "entry": "index.html",
     "capabilities": [
       "desk.read"
-    ]
+    ],
+    "entry": "index.html"
   },
   "start": {
-    "type": "html",
+    "capabilities": [],
     "src": "lifecycle/index.html",
-    "capabilities": []
+    "type": "html"
   },
-  "idle": {
-    "type": "html",
-    "src": "lifecycle/index.html",
-    "capabilities": []
-  },
+  "startDesk": "orbit",
   "transition": {
-    "type": "author",
-    "durationMs": 650
+    "durationMs": 650,
+    "type": "author"
   },
-  "buttons": [
-    {
-      "id": "previous",
-      "name": "上一页",
-      "scope": "room",
-      "action": {
-        "type": "desk.previous"
-      }
-    },
-    {
-      "id": "next",
-      "name": "下一页",
-      "scope": "room",
-      "action": {
-        "type": "desk.next"
-      }
-    },
-    {
-      "id": "go-orbit",
-      "name": "星轨",
-      "scope": "room",
-      "action": {
-        "type": "desk.go",
-        "deskId": "orbit"
-      }
-    },
-    {
-      "id": "go-spectrum",
-      "name": "信号",
-      "scope": "room",
-      "action": {
-        "type": "desk.go",
-        "deskId": "spectrum"
-      }
-    },
-    {
-      "id": "go-dusk",
-      "name": "静谧",
-      "scope": "room",
-      "action": {
-        "type": "desk.go",
-        "deskId": "dusk"
-      }
-    },
-    {
-      "id": "application",
-      "name": "我的应用",
-      "scope": "room",
-      "action": {
-        "type": "binding.launch"
-      }
-    }
-  ],
-  "desks": [
-    {
-      "id": "orbit",
-      "name": "星轨",
-      "icons": [
-        {
-          "id": "app-orbit",
-          "buttonId": "application",
-          "label": "我的应用",
-          "glyph": "◇",
-          "x": 0,
-          "y": 5
-        }
-      ],
-      "components": [
-        "observatory",
-        "navigation"
-      ]
-    },
-    {
-      "id": "spectrum",
-      "name": "信号",
-      "icons": [
-        {
-          "id": "app-signal",
-          "buttonId": "application",
-          "label": "我的应用",
-          "glyph": "◇",
-          "x": 0,
-          "y": 5
-        },
-        {
-          "id": "app-signal-copy",
-          "buttonId": "application",
-          "label": "同一个入口",
-          "glyph": "↗",
-          "x": 1,
-          "y": 5
-        }
-      ],
-      "components": [
-        "observatory",
-        "navigation"
-      ],
-      "componentOverrides": {
-        "observatory": {
-          "title": "信号观测台",
-          "phase": "02"
-        }
-      }
-    },
-    {
-      "id": "dusk",
-      "name": "静谧",
-      "icons": [
-        {
-          "id": "app-dusk",
-          "buttonId": "application",
-          "label": "我的应用",
-          "glyph": "◇",
-          "x": 0,
-          "y": 5
-        }
-      ],
-      "components": [
-        "observatory",
-        "navigation"
-      ],
-      "componentOverrides": {
-        "observatory": {
-          "title": "静谧观测台",
-          "phase": "03"
-        }
-      }
-    }
-  ],
-  "components": [
-    {
-      "id": "observatory",
-      "role": "widget",
-      "entry": "widget/index.html",
-      "placement": {
-        "x": 1410,
-        "y": 150,
-        "width": 414,
-        "height": 568
-      },
-      "capabilities": [
-        "desk.read",
-        "desk.navigate",
-        "time.read",
-        "hardware.read",
-        "media.read",
-        "audio.read",
-        "storage.read",
-        "storage.write"
-      ],
-      "buttonIds": [
-        "next"
-      ],
-      "config": {
-        "title": "轨道观测台",
-        "phase": "01"
-      }
-    },
-    {
-      "id": "navigation",
-      "role": "dock",
-      "entry": "dock/index.html",
-      "placement": {
-        "x": 470,
-        "y": 868,
-        "width": 980,
-        "height": 112
-      },
-      "capabilities": [
-        "desk.read",
-        "desk.navigate",
-        "binding.launch"
-      ],
-      "buttonIds": [
-        "previous",
-        "next",
-        "go-orbit",
-        "go-spectrum",
-        "go-dusk",
-        "application"
-      ]
-    }
-  ],
-  "dockComponentId": "navigation"
+  "version": 3
 }

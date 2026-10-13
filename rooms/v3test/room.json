@@ -1,0 +1,298 @@
+{
+  "apiVersion": 1,
+  "buttons": [
+    {
+      "action": {
+        "type": "desk.previous"
+      },
+      "id": "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93",
+      "name": "上一页",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "type": "binding.launch"
+      },
+      "id": "button-493ea5b5-7936-4f19-b535-3823144f67de",
+      "name": "我的应用",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "type": "desk.next"
+      },
+      "id": "button-773de80a-a6a8-4a85-9560-117f3ea836a7",
+      "name": "下一页",
+      "scope": "room"
+    },
+    {
+      "action": {
+        "type": "desk.next"
+      },
+      "id": "button-e0f49467-612c-4718-9feb-a98dc16e1c42",
+      "name": "下一页",
+      "scope": "desk-a8b38b49-123c-4a21-aea4-bb47b5e444a6"
+    },
+    {
+      "action": {
+        "type": "desk.previous"
+      },
+      "id": "button-41db0d7f-cb11-4242-8913-795819b2faae",
+      "name": "上一页",
+      "scope": "desk-a8b38b49-123c-4a21-aea4-bb47b5e444a6"
+    }
+  ],
+  "components": [
+    {
+      "buttonIds": [
+        "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93",
+        "button-493ea5b5-7936-4f19-b535-3823144f67de",
+        "button-773de80a-a6a8-4a85-9560-117f3ea836a7"
+      ],
+      "capabilities": [
+        "desk.read",
+        "time.read",
+        "hardware.read",
+        "media.read",
+        "audio.read",
+        "desk.navigate",
+        "binding.launch",
+        "dext.exit"
+      ],
+      "config": {
+        "appearance": {
+          "height": 106,
+          "roundness": 24,
+          "theme": "midnight"
+        },
+        "buttonSlots": {
+          "application": "button-493ea5b5-7936-4f19-b535-3823144f67de",
+          "next": "button-773de80a-a6a8-4a85-9560-117f3ea836a7",
+          "previous": "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93"
+        },
+        "enabledRegions": [
+          "previous",
+          "application",
+          "next"
+        ],
+        "slots": {},
+        "template": {
+          "entry": "index.html",
+          "examples": [
+            {
+              "id": "cpu",
+              "name": "CPU 使用率",
+              "source": {
+                "capability": "hardware.read",
+                "format": "number",
+                "path": [
+                  "cpuPercent"
+                ]
+              }
+            },
+            {
+              "id": "gpu",
+              "name": "GPU 使用率",
+              "source": {
+                "capability": "hardware.read",
+                "format": "number",
+                "path": [
+                  "gpuPercent"
+                ]
+              }
+            },
+            {
+              "id": "clock",
+              "name": "本地时间",
+              "source": {
+                "capability": "time.read",
+                "format": "clock",
+                "path": [
+                  "unixMilliseconds"
+                ]
+              }
+            },
+            {
+              "id": "countdown",
+              "name": "倒计时示例",
+              "source": {
+                "capability": "time.read",
+                "deadline": "2030-01-01T00:00:00Z",
+                "format": "countdown",
+                "path": [
+                  "unixMilliseconds"
+                ]
+              }
+            },
+            {
+              "id": "media",
+              "name": "当前媒体标题",
+              "source": {
+                "capability": "media.read",
+                "format": "text",
+                "path": [
+                  "title"
+                ]
+              }
+            },
+            {
+              "id": "audio",
+              "name": "主音量",
+              "source": {
+                "capability": "audio.read",
+                "format": "number",
+                "path": [
+                  "volume"
+                ]
+              }
+            }
+          ],
+          "formatVersion": 1,
+          "id": "navigation-bar",
+          "name": "简洁导航栏",
+          "parameters": [
+            {
+              "default": 180,
+              "id": "height",
+              "max": 280,
+              "min": 100,
+              "name": "高度",
+              "type": "number"
+            },
+            {
+              "default": 24,
+              "id": "roundness",
+              "max": 40,
+              "min": 0,
+              "name": "圆角",
+              "type": "number"
+            },
+            {
+              "default": "midnight",
+              "id": "theme",
+              "name": "配色",
+              "options": [
+                {
+                  "label": "午夜",
+                  "value": "midnight"
+                },
+                {
+                  "label": "瓷白",
+                  "value": "porcelain"
+                },
+                {
+                  "label": "苔绿",
+                  "value": "forest"
+                }
+              ],
+              "type": "choice"
+            }
+          ],
+          "placement": {
+            "height": 280,
+            "width": 1920,
+            "x": 0,
+            "y": 800
+          },
+          "regions": [
+            {
+              "defaultAction": {
+                "type": "desk.previous"
+              },
+              "id": "previous",
+              "kind": "button",
+              "name": "上一页"
+            },
+            {
+              "defaultAction": {
+                "type": "binding.launch"
+              },
+              "id": "application",
+              "kind": "button",
+              "name": "我的应用"
+            },
+            {
+              "defaultAction": {
+                "type": "desk.next"
+              },
+              "id": "next",
+              "kind": "button",
+              "name": "下一页"
+            }
+          ]
+        }
+      },
+      "entry": "assets/dock-navigation-bar-lvTQY1/index.html",
+      "id": "dock-baa5f811-08ed-48e7-a432-04495b9e98d9",
+      "placement": {
+        "height": 280,
+        "width": 1920,
+        "x": 0,
+        "y": 800
+      },
+      "role": "dock"
+    }
+  ],
+  "desks": [
+    {
+      "background": {
+        "src": "assets/import-oJkvr8/MSI.png",
+        "type": "image"
+      },
+      "components": [
+        "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
+      ],
+      "icons": [],
+      "id": "desk-a8b38b49-123c-4a21-aea4-bb47b5e444a6",
+      "name": "Desk 1"
+    },
+    {
+      "background": {
+        "src": "assets/import-3cu69D/ask.jpg",
+        "type": "image"
+      },
+      "components": [
+        "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
+      ],
+      "icons": [],
+      "id": "desk-f25f4838-f04a-4d01-b89c-4daec3a4e72b",
+      "name": "Desk 2"
+    },
+    {
+      "background": {
+        "src": "assets/import-bpQlJs/MSI_MPG.jpg",
+        "type": "image"
+      },
+      "components": [
+        "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
+      ],
+      "icons": [],
+      "id": "desk-508c7d1b-57a6-4531-aefb-1806e0c29523",
+      "name": "Desk 3"
+    }
+  ],
+  "dockComponentId": "dock-baa5f811-08ed-48e7-a432-04495b9e98d9",
+  "id": "01400e9e-c593-4d3a-a1a7-c92f9e72870e",
+  "name": "v3test",
+  "resources": [
+    "assets/dock-navigation-bar-lvTQY1/dext-sdk.v1.js",
+    "assets/dock-navigation-bar-lvTQY1/index.html",
+    "assets/dock-navigation-bar-lvTQY1/main.js",
+    "assets/dock-navigation-bar-lvTQY1/style.css",
+    "assets/dock-navigation-bar-lvTQY1/template.json",
+    "assets/dock-three-panels-O3ttAP/dext-sdk.v1.js",
+    "assets/dock-three-panels-O3ttAP/index.html",
+    "assets/dock-three-panels-O3ttAP/main.js",
+    "assets/dock-three-panels-O3ttAP/style.css",
+    "assets/dock-three-panels-O3ttAP/template.json",
+    "assets/import-3cu69D/ask.jpg",
+    "assets/import-bpQlJs/MSI_MPG.jpg",
+    "assets/import-oJkvr8/MSI.png"
+  ],
+  "startDesk": "desk-508c7d1b-57a6-4531-aefb-1806e0c29523",
+  "transition": {
+    "durationMs": 450,
+    "type": "slide"
+  },
+  "version": 3
+}
