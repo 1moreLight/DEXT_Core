@@ -3,7 +3,7 @@
 - 状态：待验收
 - 分支：`feat/V3-CUSTOM-002-dock-declarations`
 - worktree：`/home/ubuntu/worktrees/v3-custom-002-dock-declarations`
-- 提交：见分支最新 commit（提交后填写）
+- 提交：`d29eb3a`
 - 目标：导入本地 Dock HTML 后，可编辑其公开声明（capabilities / buttonIds / config），保存、重开与应用后声明仍完整；不默认授予全部能力。
 - 范围外：Room 场景 / Widget 通用声明复用 UI；官方模板区域编辑器改造；任务区样式编辑；应用 Dock 全局+Desk 追加语义；自动解析 HTML 推断声明；授权面板改造成作者声明入口。
 
