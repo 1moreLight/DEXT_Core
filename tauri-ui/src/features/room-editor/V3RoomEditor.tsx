@@ -71,13 +71,15 @@ export function V3RoomEditor(props:Props){
     let next=structuredClone(room);
     if(slot==="dock"&&next.components?.find(c=>c.id===next.dockComponentId)?.config?.template)for(const d of next.desks)if(d.components.includes(next.dockComponentId!))next=setDeskDockReference(next,d.id,false);
     if(slot==="background")next.desks.find(d=>d.id===desk.id)!.background=result.content;
-    else if(slot==="dock"){
+    else     if(slot==="dock"){
       const componentId="dock-"+crypto.randomUUID();
       (next.components??=[]).push({id:componentId,role:"dock",entry:result.content.src,placement:{x:0,y:960,width:1920,height:120},capabilities:[]});
       const old=next.dockComponentId;next.dockComponentId=componentId;for(const d of next.desks){d.components=d.components.filter(id=>id!==old);if(d.componentOverrides&&old){delete d.componentOverrides[old];if(!Object.keys(d.componentOverrides).length)delete d.componentOverrides;}d.components.push(componentId);}
     }else next[slot]=result.content;
     setDraft(current=>({...current,resources:[...new Set([...current.resources,...result.resources])],history:recordV3Change(current.history,next)}));
-    setMessage("素材已复制；保存后生效");
+    setMessage(slot==="dock"
+      ?"本地 Dock 已复制；能力默认未声明。请在下方公开声明中勾选能力、添加按钮或填写 config，保存后生效"
+      :"素材已复制；保存后生效");
   }
   async function importDock(descriptor:DockTemplateDescriptor) {
     await run(async()=>{

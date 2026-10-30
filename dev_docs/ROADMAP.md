@@ -3,7 +3,8 @@
 - 主线本轮合入DESK-SYNC-005（用户2026-10-12验收通过，代码源c74095b，收尾1530b35及本验收记录）；v3DesktopFlow包含桌面同步、编辑迁移及融合Dock实现。
 - 本轮P8-014当前证据收尾3/3做完；INTEGRATION-002发布入口3/3做完。
 - DESK-SYNC-005空白右键/粘贴：用户已通过，按指令合并主线。
-- **唯一下一项：V3-CUSTOM-001 Room/Desk/Dock自定义能力审计（待确认，3/3做完）**，核对当前可配置、作者可编程、保存/应用/分享贯通及写死限制；用户要求先完成Git合并。此前集中验收未确认项仍保留。
+- V3-CUSTOM-001 自定义能力审计：用户确认报告方向并授权首项实施；证据见 research/V3-CUSTOM-001-customization-audit.md。
+- **待验收：V3-CUSTOM-002 本地 Dock 公开声明编辑**（分支 `feat/V3-CUSTOM-002-dock-declarations`）：导入 Dock 后可编辑 capabilities / buttonIds / config；不默认全开能力；见 acceptance/V3-CUSTOM-002-dock-declarations.md。此前集中验收未确认项仍保留。
 - 下方旧控制台和带日期的“下一项”为历史过程，不再用于派发当前任务。多屏/工坊/安装器仍排队。
 
 ---
@@ -298,4 +299,4 @@ DESK-EDIT-V3-001实施完成并获合并授权。后续唯一下一项：DESK-SY
 2026-10-11 最新：用户确认当前r5 Ctrl单文件拖入Home成功，实际Core request n1371处理/落点accepted，主场景通过。按进度优先，003剩余边界归集中验收；唯一下一项V3-P8-014融合Dock配置与日常使用收尾。源码参考调查已收敛到DeskBox/BentoDesk，不重写已成功的输入链。
 
 ## 2026-10-12 自定义审计接续
-当前唯一下一项保持V3-CUSTOM-001报告确认，见[审计](research/V3-CUSTOM-001-customization-audit.md)。实施候选顺序（均待做，不并行派发）：V3-CUSTOM-002本地Dock公开声明编辑闭环；后续通用组件管理、任务区样式编辑、全局/Desk应用语义对齐分别拆包。
+待验收：V3-CUSTOM-002本地Dock公开声明编辑闭环（见[验收](acceptance/V3-CUSTOM-002-dock-declarations.md)）。CUSTOM-001审计已确认。后续排队（不并行派发）：通用组件管理、任务区样式编辑、全局/Desk应用语义对齐。

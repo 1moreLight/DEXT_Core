@@ -7,6 +7,7 @@ import navigation from "../../../../creator-kit/v3/dock-templates/navigation-bar
 import { dockComponent, readDockDescriptor, effectiveDockConfig, setDockValue, resetDockValue, setDockAction, removeDockRegion, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor, DockDataSource, DockRegion } from "./dock-template";
 import type { RoomV3, V3Button } from "./v3-document";
+import { V3DockDeclarationEditor } from "./V3DockDeclarationEditor";
 const builtIns = [panels,navigation] as DockTemplateDescriptor[];
 type Props={room:RoomV3;deskId:string;isTauri:boolean;canApply:boolean;disabled:boolean;onChange:(room:RoomV3)=>void;onImport:(descriptor:DockTemplateDescriptor)=>Promise<void>;onMessage:(message:string)=>void};
 const sources=[["time.read","时间"],["hardware.read","硬件"],["media.read","媒体"],["audio.read","音量"]];
@@ -89,6 +90,9 @@ export function V3DockEditor(props:Props){
     <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
    </div>
   </>}
-  {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。选择官方模板即可配置数据与按钮。</p>}
+  {dock&&!descriptor&&<>
+   <p className="text-xs text-muted-foreground">当前是本地 HTML Dock，没有官方模板区域描述。可在下方编辑公开声明，或改选官方模板以使用区域编辑器。</p>
+   <V3DockDeclarationEditor room={room} disabled={props.disabled} onChange={props.onChange} onMessage={props.onMessage}/>
+  </>}
  </section>;
 }
