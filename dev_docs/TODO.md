@@ -2612,3 +2612,17 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 人工验收：阅读审计结论及前三项缺口，确认是否符合“高度自定义”的方向；无需再操作桌面。
 
 V3-CUSTOM-001审计做完3/3=100%，报告待确认：可编程底座已接，通用创作入口和任务区样式仍不足；Dock全局/Desk覆盖与追加计划有差异。证据与前三项建议见research/V3-CUSTOM-001-customization-audit.md。未改生产或重启，下一实施建议仅V3-CUSTOM-002本地Dock声明编辑闭环，待报告确认后开工。
+
+## V3-CUSTOM-002 本地 Dock 公开声明编辑
+> 目标：导入本地 Dock HTML 后可编辑公开声明（capabilities / buttonIds / config），保存/重开/应用后声明保持；不默认全开能力。
+> 范围外：Room/Widget 通用声明 UI、模板区域改造、任务区样式、应用 Dock 追加语义、HTML 自动推断、授权面板改造成声明入口。
+> 人工验收：见 `acceptance/V3-CUSTOM-002-dock-declarations.md`。
+> 分支：`feat/V3-CUSTOM-002-dock-declarations`；worktree：`/home/ubuntu/worktrees/v3-custom-002-dock-declarations`；基线 master `a3f928f`。
+> 用户已确认 CUSTOM-001 方向并要求继续首项实施（2026-10-30）。
+
+- [x] 建立纯函数模块：能力清单、set capabilities/config、增删改 Dock 按钮声明（模板 Dock 拒绝改写）
+- [x] 非模板本地 Dock UI：能力勾选、按钮列表与默认动作、公开 config JSON；挂到 V3DockEditor 空模板分支
+- [x] 导入路径保持 `capabilities:[]`；提示可在下方编辑声明；更新 ROADMAP/验收卡
+- [x] Vitest 覆盖声明往返、删除引用、config 校验、模板拒绝、不默认全开；回归 document/template 测试（15/15）；tsc --noEmit 通过
+- [x] 提交工作分支并停在待验收（不合 master）
+- [?] 用户按 acceptance/V3-CUSTOM-002-dock-declarations.md 人工验收（Windows 应用/授权/切页需本机）
