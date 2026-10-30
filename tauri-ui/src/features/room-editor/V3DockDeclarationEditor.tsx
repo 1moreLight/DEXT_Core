@@ -22,21 +22,32 @@ type Props = {
 
 const selectStyle = "w-full rounded border bg-background p-2 text-sm";
 
+function formatPublicConfig(config: Record<string, unknown> | undefined): string {
+  return config ? JSON.stringify(config, null, 2) : "";
+}
+
 export function V3DockDeclarationEditor(props: Props) {
   const dock = dockComponent(props.room);
-  const [configText, setConfigText] = useState(() =>
-    dock?.config ? JSON.stringify(dock.config, null, 2) : "",
-  );
+  // Value snapshot (not object identity): capability/button clones keep the same string, so
+  // in-progress textarea edits are preserved until dock id changes or an applied config lands.
+  const configSnapshot = formatPublicConfig(dock?.config);
+  const [configText, setConfigText] = useState(() => configSnapshot);
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
   useEffect(() => {
-    setConfigText(dock?.config ? JSON.stringify(dock.config, null, 2) : "");
-  }, [dock?.id, dock?.config]);
+    setConfigText(configSnapshot);
+  }, [dock?.id, configSnapshot]);
+  useEffect(() => {
+    setNameDrafts({});
+  }, [dock?.id]);
   if (!dock) return null;
 
   const apply = (operation: () => RoomV3) => {
     try {
       props.onChange(operation());
+      return true;
     } catch (error) {
       props.onMessage(String(error instanceof Error ? error.message : error));
+      return false;
     }
   };
 
@@ -59,6 +70,29 @@ export function V3DockDeclarationEditor(props: Props) {
           ? { type: "desk.go", deskId: props.room.startDesk }
           : { type: value as NonNullable<V3Button["action"]>["type"] };
     apply(() => updateComponentButton(props.room, dock.id, buttonId, { action }));
+  };
+
+  const commitButtonName = (button: V3Button) => {
+    const draft = nameDrafts[button.id];
+    if (draft === undefined) return;
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      props.onMessage("按钮名称不能为空");
+      setNameDrafts((current) => {
+        const next = { ...current };
+        delete next[button.id];
+        return next;
+      });
+      return;
+    }
+    if (trimmed !== button.name) {
+      apply(() => updateComponentButton(props.room, dock.id, button.id, { name: trimmed }));
+    }
+    setNameDrafts((current) => {
+      const next = { ...current };
+      delete next[button.id];
+      return next;
+    });
   };
 
   return (
@@ -101,68 +135,76 @@ export function V3DockDeclarationEditor(props: Props) {
             添加按钮
           </Button>
         </div>
-        {!buttons.length && <p className="text-xs text-muted-foreground">尚未声明按钮。作者 HTML 通过 buttonId 发布命中区后才能点击。</p>}
-        {buttons.map((button) => (
-          <div key={button.id} className="space-y-2 rounded-lg border p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                aria-label={"按钮名称 " + button.id}
-                className="min-w-40 flex-1"
-                value={button.name}
-                onChange={(e) => {
-                  const name = e.target.value;
-                  if (!name.trim()) return;
-                  apply(() => updateComponentButton(props.room, dock.id, button.id, { name }));
-                }}
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label={"移除按钮 " + button.name}
-                onClick={() => apply(() => removeComponentButtonRef(props.room, dock.id, button.id))}
-              >
-                移除
-              </Button>
-            </div>
-            <select
-              aria-label={button.name + " 默认动作"}
-              className={selectStyle}
-              value={button.action?.type ?? "none"}
-              onChange={(e) => chooseAction(button.id, e.target.value)}
-            >
-              <option value="none">不设默认动作</option>
-              <option value="desk.previous">上一页</option>
-              <option value="desk.next">下一页</option>
-              <option value="desk.go">转到 Desk</option>
-              <option value="binding.launch">待绑定应用</option>
-              <option value="dext.exit">退出 Dext</option>
-            </select>
-            {button.action?.type === "desk.go" && (
+        {!buttons.length && (
+          <p className="text-xs text-muted-foreground">尚未声明按钮。作者 HTML 通过 buttonId 发布命中区后才能点击。</p>
+        )}
+        {buttons.map((button) => {
+          const displayName = nameDrafts[button.id] ?? button.name;
+          return (
+            <div key={button.id} className="space-y-2 rounded-lg border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  aria-label={"按钮名称 " + button.id}
+                  className="min-w-40 flex-1"
+                  value={displayName}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    setNameDrafts((current) => ({ ...current, [button.id]: name }));
+                    if (name.trim()) {
+                      apply(() => updateComponentButton(props.room, dock.id, button.id, { name: name.trim() }));
+                    }
+                  }}
+                  onBlur={() => commitButtonName(button)}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={"移除按钮 " + displayName}
+                  onClick={() => apply(() => removeComponentButtonRef(props.room, dock.id, button.id))}
+                >
+                  移除
+                </Button>
+              </div>
               <select
-                aria-label={button.name + " 目标 Desk"}
+                aria-label={displayName + " 默认动作"}
                 className={selectStyle}
-                value={button.action.deskId}
-                onChange={(e) =>
-                  apply(() =>
-                    updateComponentButton(props.room, dock.id, button.id, {
-                      action: { type: "desk.go", deskId: e.target.value },
-                    }),
-                  )
-                }
+                value={button.action?.type ?? "none"}
+                onChange={(e) => chooseAction(button.id, e.target.value)}
               >
-                {props.room.desks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
+                <option value="none">不设默认动作</option>
+                <option value="desk.previous">上一页</option>
+                <option value="desk.next">下一页</option>
+                <option value="desk.go">转到 Desk</option>
+                <option value="binding.launch">待绑定应用</option>
+                <option value="dext.exit">退出 Dext</option>
               </select>
-            )}
-            <details className="text-[10px] text-muted-foreground">
-              <summary className="cursor-pointer">作者按钮标识</summary>
-              <p className="mt-1 break-all">{button.id}</p>
-            </details>
-          </div>
-        ))}
+              {button.action?.type === "desk.go" && (
+                <select
+                  aria-label={displayName + " 目标 Desk"}
+                  className={selectStyle}
+                  value={button.action.deskId}
+                  onChange={(e) =>
+                    apply(() =>
+                      updateComponentButton(props.room, dock.id, button.id, {
+                        action: { type: "desk.go", deskId: e.target.value },
+                      }),
+                    )
+                  }
+                >
+                  {props.room.desks.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <details className="text-[10px] text-muted-foreground">
+                <summary className="cursor-pointer">作者按钮标识</summary>
+                <p className="mt-1 break-all">{button.id}</p>
+              </details>
+            </div>
+          );
+        })}
       </fieldset>
 
       <fieldset disabled={props.disabled} className="space-y-2">
@@ -180,12 +222,15 @@ export function V3DockDeclarationEditor(props: Props) {
             size="sm"
             variant="outline"
             disabled={props.disabled}
-            onClick={() =>
-              apply(() => {
+            onClick={() => {
+              try {
                 const parsed = parsePublicConfigJson(configText);
-                return setComponentConfig(props.room, dock.id, parsed);
-              })
-            }
+                if (!apply(() => setComponentConfig(props.room, dock.id, parsed))) return;
+                setConfigText(formatPublicConfig(parsed));
+              } catch (error) {
+                props.onMessage(String(error instanceof Error ? error.message : error));
+              }
+            }}
           >
             应用 config
           </Button>
@@ -194,8 +239,8 @@ export function V3DockDeclarationEditor(props: Props) {
             variant="ghost"
             disabled={props.disabled}
             onClick={() => {
+              if (!apply(() => setComponentConfig(props.room, dock.id, undefined))) return;
               setConfigText("");
-              apply(() => setComponentConfig(props.room, dock.id, undefined));
             }}
           >
             清除 config
