@@ -2,7 +2,7 @@
 
 - 状态：待验收
 - 分支：`feat/V3-CUSTOM-003-task-area-style`
-- 提交：待填入 commit hash
+- 提交：`78ce9d926b0e4d4b126d83d33235328cd6e0860e`
 - 目标：配置器可为主题 Dock 编辑 `dextTaskArea` 矩形与 5 个样式参数，并支持 Desk 差异 / 恢复继承
 - 范围外：字体、活动指示器、排列方式；CUSTOM-002 声明 UI；应用 Dock 全局＋追加；改写任务区输入 / 窗口管理；任意任务项 DOM 自绘
 
