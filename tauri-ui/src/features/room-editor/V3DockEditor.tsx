@@ -6,19 +6,30 @@ import panels from "../../../../creator-kit/v3/dock-templates/three-panels/templ
 import navigation from "../../../../creator-kit/v3/dock-templates/navigation-bar/template.json";
 import { dockComponent, readDockDescriptor, effectiveDockConfig, setDockValue, resetDockValue, setDockAction, removeDockRegion, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor, DockDataSource, DockRegion } from "./dock-template";
+import { ensureTaskArea, effectiveTaskArea, setTaskAreaValue, resetTaskAreaValue, DEFAULT_TASK_AREA_STYLE } from "./task-area-config";
 import type { RoomV3, V3Button } from "./v3-document";
 const builtIns = [panels,navigation] as DockTemplateDescriptor[];
 type Props={room:RoomV3;deskId:string;isTauri:boolean;canApply:boolean;disabled:boolean;onChange:(room:RoomV3)=>void;onImport:(descriptor:DockTemplateDescriptor)=>Promise<void>;onMessage:(message:string)=>void};
 const sources=[["time.read","时间"],["hardware.read","硬件"],["media.read","媒体"],["audio.read","音量"]];
 const object=(value:unknown):value is Record<string,unknown>=>value!==null&&typeof value==="object"&&!Array.isArray(value);
 const selectStyle="w-full rounded border bg-background p-2 text-sm";
+const styleFields:[keyof typeof DEFAULT_TASK_AREA_STYLE,string, "number"|"color", number?, number?][]=[
+  ["iconSizeDip","图标尺寸", "number", 24, 64],
+  ["gapDip","图标间距", "number", 0, 24],
+  ["radiusDip","圆角", "number", 0, 32],
+  ["surface","底色", "color"],
+  ["accent","强调色", "color"],
+];
+const rectFields:["x"|"y"|"width"|"height", string][]=[["x","X"],["y","Y"],["width","宽"],["height","高"]];
 export function V3DockEditor(props:Props){
  const [templates,setTemplates]=useState(builtIns),[editDesk,setEditDesk]=useState(false);
  const {room,deskId}=props,dock=dockComponent(room),desk=room.desks.find(d=>d.id===deskId)!;
  const descriptor=Array.isArray(dock?.config?.enabledRegions)?readDockDescriptor(dock?.config?.template):undefined;
  const assigned=!!dock&&desk.components.includes(dock.id),scope=editDesk?deskId:undefined;
- const config=descriptor?effectiveDockConfig(room,editDesk&&assigned?deskId:undefined):{},prefix=editDesk?desk.name:"共享";
+ const config=descriptor?effectiveDockConfig(room,editDesk&&assigned?deskId:undefined):{};
+ const prefix=editDesk?desk.name:"共享";
  const override=dock?desk.componentOverrides?.[dock.id]:undefined;
+ const taskScope=editDesk&&assigned?deskId:undefined;
  useEffect(()=>{
   if(!props.isTauri)return;let disposed=false;
   invoke<DockTemplateDescriptor[]>("list_v3_dock_templates").then(result=>{if(!disposed)setTemplates(result);})
@@ -28,23 +39,32 @@ export function V3DockEditor(props:Props){
  const set=(path:string[],value:unknown)=>apply(()=>setDockValue(room,path,value,scope));
  const changed=(path:string[])=>{let node:unknown=override;for(const key of path){if(!object(node)||!Object.prototype.hasOwnProperty.call(node,key))return false;node=node[key];}return true;};
  const reset=(path:string[],name:string)=>(editDesk&&changed(path)?<Button variant="ghost" size="sm" disabled={props.disabled} aria-label={"恢复继承 "+name} onClick={()=>apply(()=>resetDockValue(room,path,deskId))}>恢复继承</Button>:null);
+ const taskChanged=(path:string[])=>changed(["dextTaskArea",...path]);
+ const taskReset=(path:string[],name:string)=>(editDesk&&taskChanged(path)?<Button variant="ghost" size="sm" disabled={props.disabled} aria-label={"恢复继承 "+name} onClick={()=>apply(()=>resetTaskAreaValue(room,path,deskId))}>恢复继承</Button>:null);
+ const setTask=(path:string[],value:unknown)=>apply(()=>{
+  const base=effectiveTaskArea(room)?room:ensureTaskArea(room);
+  return setTaskAreaValue(base,path,value,scope);
+ });
  const binding=(region:DockRegion)=>room.buttons?.find(button=>button.id===(object(config.buttonSlots)?config.buttonSlots[region.id]:undefined));
  const chooseAction=(region:DockRegion,value:string)=>{
   const action:V3Button["action"]=value==="none"?undefined:value==="desk.go"?{type:"desk.go",deskId:room.startDesk}:{type:value as NonNullable<V3Button["action"]>["type"]};
   apply(()=>setDockAction(room,region.id,action,scope));
  };
+ const area=dock?(()=>{try{return effectiveTaskArea(room,taskScope);}catch{return null;}})():null;
  return <section aria-label="Dock 模板编辑" className="space-y-4 rounded-xl border bg-background/50 p-4">
   <div><h3 className="text-sm font-medium">1 · Dock 外观</h3><p className="mt-1 text-xs text-muted-foreground">选择模板后自动识别区域；再次选择可恢复已删除区域。</p></div>
   <div className="grid grid-cols-2 gap-2">{templates.map(template=><Button key={template.id} variant="outline" className={"h-auto justify-start whitespace-normal p-3 "+(descriptor?.id===template.id?"border-cyan-500 bg-cyan-500/10":"")} disabled={props.disabled} aria-label={"选择 "+template.name} onClick={()=>void props.onImport(template)}>
    <span className="text-left"><span className="block">{template.name}</span><span className="mt-1 block text-[11px] font-normal text-muted-foreground">{template.regions.filter(r=>r.kind==="data").length} 数据区 · {template.regions.filter(r=>r.kind==="button").length} 按钮区</span></span>
   </Button>)}</div>
-  {descriptor&&dock&&<>
+  {dock&&<>
    <div><h3 className="text-sm font-medium">2 · 共享交互 / Desk 差异</h3><div className="mt-2 flex gap-2">
     <Button size="sm" variant={!editDesk?"secondary":"ghost"} disabled={props.disabled} onClick={()=>setEditDesk(false)}>共享配置</Button>
     <Button size="sm" variant={editDesk?"secondary":"ghost"} disabled={props.disabled} onClick={()=>setEditDesk(true)}>当前 Desk 差异</Button></div>
     <p className="mt-2 text-xs text-muted-foreground">{editDesk?"仅保存当前 Desk 修改的字段；恢复继承后继续跟随共享配置。":"所有引用此 Dock 的 Desk 默认使用这些值。"}</p>
     {editDesk&&!assigned&&<p role="status" className="mt-2 text-sm text-amber-600">当前 Desk 尚未引用 Dock；勾选下方引用后可编辑。</p>}
    </div>
+  </>}
+  {descriptor&&dock&&<>
    <fieldset disabled={props.disabled||(editDesk&&!assigned)} className="space-y-3">
     <div className="grid gap-3 sm:grid-cols-2">{descriptor.parameters.map(parameter=>{
      const value=object(config.appearance)?config.appearance[parameter.id]:parameter.default;
@@ -85,10 +105,37 @@ export function V3DockEditor(props:Props){
      </div>;
     })}</div>
    </fieldset>
-   <div><h3 className="text-sm font-medium">3 · Desk 引用</h3><p className="mt-1 text-xs text-muted-foreground">组件引用与 Desk 切页分别编辑；取消引用会清除该 Desk 的 Dock 差异。</p>
-    <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
-   </div>
   </>}
-  {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。选择官方模板即可配置数据与按钮。</p>}
+  {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。仍可编辑下方应用任务区；选择官方模板可配置数据与按钮。</p>}
+  {dock&&<>
+   <div><h3 className="text-sm font-medium">3 · 应用任务区</h3>
+    <p className="mt-1 text-xs text-muted-foreground">官方融合任务区矩形与有界样式；未声明时首次编辑会写入默认值。字体、指示器与排列方式本轮不开放。</p>
+    {!area?<div className="mt-2"><Button size="sm" disabled={props.disabled||(editDesk&&!assigned)} onClick={()=>apply(()=>ensureTaskArea(room))}>声明默认任务区</Button></div>:
+    <fieldset disabled={props.disabled||(editDesk&&!assigned)} className="mt-3 space-y-3">
+     <div className="grid gap-3 sm:grid-cols-4">{rectFields.map(([key,label])=>{
+      const value=area.rect[key];
+      return <div key={key} className="space-y-1 text-xs"><div className="flex items-center justify-between">矩形 {label}{taskReset(["rect",key],"矩形 "+label)}</div>
+       <Input type="number" aria-label={prefix+" · 任务区矩形 "+label} value={value} onChange={e=>{
+        const n=Number(e.target.value);if(e.target.value!==""&&Number.isFinite(n))setTask(["rect",key],n);
+       }}/>
+      </div>;
+     })}</div>
+     <div className="grid gap-3 sm:grid-cols-2">{styleFields.map(([key,label,kind,min,max])=>{
+      const value=area.style[key];
+      return <div key={key} className="space-y-1 text-xs"><div className="flex items-center justify-between">{label}{taskReset(["style",key],label)}</div>
+       {kind==="number"?<Input type="number" aria-label={prefix+" · 任务区 "+label} min={min} max={max} value={typeof value==="number"?value:DEFAULT_TASK_AREA_STYLE[key] as number} onChange={e=>{
+        const n=Number(e.target.value);if(e.target.value!==""&&Number.isFinite(n)&&(min===undefined||n>=min)&&(max===undefined||n<=max))setTask(["style",key],n);
+       }}/>:<Input key={prefix+"-"+key+"-"+String(value)} aria-label={prefix+" · 任务区 "+label} placeholder="#RRGGBB 或 #RRGGBBAA" defaultValue={typeof value==="string"?value:String(DEFAULT_TASK_AREA_STYLE[key])} onBlur={e=>{
+        const next=e.target.value.trim();if(/^#[a-f0-9]{6}([a-f0-9]{2})?$/i.test(next)&&next.toLowerCase()!==String(value).toLowerCase())setTask(["style",key],next);
+        else if(!/^#[a-f0-9]{6}([a-f0-9]{2})?$/i.test(next))props.onMessage("surface / accent 必须是 #RRGGBB 或 #RRGGBBAA");
+       }}/>}
+      </div>;
+     })}</div>
+    </fieldset>}
+   </div>
+   {descriptor&&<div><h3 className="text-sm font-medium">4 · Desk 引用</h3><p className="mt-1 text-xs text-muted-foreground">组件引用与 Desk 切页分别编辑；取消引用会清除该 Desk 的 Dock 差异。</p>
+    <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
+   </div>}
+  </>}
  </section>;
 }

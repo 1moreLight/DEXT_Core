@@ -2612,3 +2612,13 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 人工验收：阅读审计结论及前三项缺口，确认是否符合“高度自定义”的方向；无需再操作桌面。
 
 V3-CUSTOM-001审计做完3/3=100%，报告待确认：可编程底座已接，通用创作入口和任务区样式仍不足；Dock全局/Desk覆盖与追加计划有差异。证据与前三项建议见research/V3-CUSTOM-001-customization-audit.md。未改生产或重启，下一实施建议仅V3-CUSTOM-002本地Dock声明编辑闭环，待报告确认后开工。
+
+## V3-CUSTOM-003 融合任务区外观编辑（2026-10-31）
+目标：为官方 Dock `config.dextTaskArea` 提供配置器编辑入口（矩形 + 5 个样式参数），支持共享配置与 Desk 差异/恢复继承；保存重开后仍一致。
+范围外：字体/活动指示器/排列方式；CUSTOM-002 声明编辑；应用 Dock 全局+追加语义；改 Core/Player 任务区运行时；开放任意任务项 DOM。
+基线：origin/master `a3f928f`；独立 worktree，不依赖 CUSTOM-002 分支代码。
+1. [x] 纯函数 `task-area-config.ts`：ensure/effective/set/reset，不要求官方模板。
+2. [x] Vitest：共享写入、单 Desk 覆盖 surface+iconSize、他 Desk 继承、恢复继承、serialize 往返（4/4）。
+3. [x] `V3DockEditor` 挂载「应用任务区」区块（任意 Dock，含无模板本地 Dock）。
+4. [x] ROADMAP/验收卡标待验收；自测；commit；push；禁止开 PR / 合并 master。
+人工验收：见 `acceptance/V3-CUSTOM-003-task-area-style.md`（待用户确认；Linux VM 无步骤 4 实机）。
