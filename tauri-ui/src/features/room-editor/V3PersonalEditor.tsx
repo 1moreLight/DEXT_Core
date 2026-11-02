@@ -4,9 +4,10 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {AppPickerDialog,type AppPickerItem} from "@/components/AppPickerDialog";
 import {addV3Presentation,v3IconCreationIssue,type RoomV3} from "./v3-document";
-import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,targetFormAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
+import {discoverV3Buttons,sameSource,settingsAfterPersonalEdit,targetFormAfterPersonalEdit,buttonBindingLabel,type PersonalEditCommand,type ButtonSettings,type PersonalButton,type PersonalLayoutItem,type PersonalReply,type PersonalSnapshot,type PersonalTarget} from "./personal-editor";
+import { SourceTag } from "./SourceTag";
 
-type Props={room:RoomV3;path:string;deskId:string;apps:AppPickerItem[];isTauri:boolean;canApply:boolean;disabled:boolean;dirty:boolean;onChange:(room:RoomV3)=>void};
+type Props={room:RoomV3;path:string;deskId:string;apps:AppPickerItem[];isTauri:boolean;canApply:boolean;disabled:boolean;dirty:boolean;allowAuthoring?:boolean;onChange:(room:RoomV3)=>void};
 type Board={stamp:string;currentDesk:string;editor:PersonalSnapshot};
 type Session={active:boolean;room_id:string;installation_stamp:string;current_desk_id:string;player_pid:number};
 const empty:ButtonSettings={action:null,deskId:null,targetId:null,skin:null};
@@ -67,8 +68,30 @@ export function V3PersonalEditor(props:Props){
  const shown=authored.filter(b=>(scope==="all"||b.scope===scope)&&[b.name,b.id,...b.sources].some(v=>v.toLocaleLowerCase().includes(query.toLocaleLowerCase())));
  const target=board?.editor.targets.find(t=>t.id===settings.targetId);
  const presentationIssue=v3IconCreationIssue(props.room,props.deskId,false);
+ const allowAuthoring=props.allowAuthoring!==false;
+ const layoutItems=(board?.editor.layout??[]).filter(item=>item.kind==="component"||item.deskId===props.deskId);
+ const workPosition=(item:PersonalLayoutItem)=>{
+  if(item.kind==="icon"){
+   const icon=props.room.desks.find(d=>d.id===item.deskId)?.icons.find(icon=>icon.id===item.id);
+   return icon?icon.x+", "+icon.y:"作品未声明此图标";
+  }
+  const component=props.room.components?.find(c=>c.id===item.id);
+  return component?component.placement.x+", "+component.placement.y:"作品未声明此组件";
+ };
  return <section aria-label="按钮与本机设置" className="space-y-3 rounded-lg border p-3">
-  <div><h2 className="font-medium">按钮与本机设置</h2><p className="text-xs text-muted-foreground">查看作品入口，设置本机动作和图标外观。目标路径只保存在本机。</p></div>
+  <div><h2 className="flex items-center gap-2 font-medium">我的覆盖 <SourceTag source="personal"/></h2><p className="text-xs text-muted-foreground">这里读写 personal.json，和桌面长按是同一份布局。改这里不会改「作品」模式里的作品值。恢复为作品值只清除这一项个人覆盖。</p></div>
+  <section className="space-y-2 rounded-lg border p-3" aria-label="个人布局">
+   <h3 className="flex items-center gap-2 text-sm font-medium">布局 <SourceTag source="personal"/></h3>
+   <p className="text-xs text-muted-foreground">桌面长按移动图标或组件后，刷新到这里。作品坐标只作对照。</p>
+   {layoutItems.length===0&&<p className="text-xs text-muted-foreground">当前 Desk 没有个人布局覆盖。生效位置等于作品值。</p>}
+   <ul className="space-y-2">{layoutItems.map(item=><li key={item.kind+":"+(item.deskId??"")+"/"+item.id} className="rounded border p-2 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+     <span>{item.kind==="icon"?"图标":"组件"} · {item.id}</span>
+     <Button type="button" size="sm" variant="outline" disabled={locked||!board||props.dirty} onClick={()=>void save({operation:"resetLayoutItem",kind:item.kind,id:item.id,deskId:item.deskId})}>恢复为作品值</Button>
+    </div>
+    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">作品坐标 {workPosition(item)} <SourceTag source="work"/> · 我的坐标 {item.x}, {item.y}{item.width!=null?" · "+item.width+"×"+item.height:""} <SourceTag source="personal"/></p>
+   </li>)}</ul>
+  </section>
   <fieldset disabled={locked||!board||props.dirty} className="space-y-2 rounded-lg border p-3">
    <legend className="px-1 text-sm font-medium">Windows 桌面</legend>
    <p className="text-xs text-muted-foreground">一键显示原桌面的文件、文件夹和快捷方式，文件仍保留在原位置。</p>
@@ -93,22 +116,22 @@ export function V3PersonalEditor(props:Props){
    </button>)}{!shown.length&&<p className="text-xs text-muted-foreground">没有匹配的按钮。</p>}</div>
    {button&&<div className="space-y-3">
     <div><h3 className="text-sm font-medium">{button.name}</h3><p className="break-all text-xs text-muted-foreground">{button.sources.join(" / ")||"已声明，尚无呈现"}</p>
-     <p className="text-xs text-muted-foreground">默认：{actions.find(([id])=>id===button.action?.type)?.[1]??"待配置"} · {button.scope==="room"?"Room":props.room.desks.find(d=>d.id===button.scope)?.name}</p></div>
+     <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">作品默认：{actions.find(([id])=>id===button.action?.type)?.[1]??"待配置"} · {button.scope==="room"?"Room":props.room.desks.find(d=>d.id===button.scope)?.name} <SourceTag source="work"/></p></div>
     <fieldset disabled={locked||!canEdit} className="space-y-2">
-     <label className="block text-sm">本机动作<select aria-label="本机动作" className="mt-1 w-full rounded border bg-background p-2" value={settings.action??""} onChange={e=>setSettings(s=>({...s,action:e.target.value||null,deskId:e.target.value==="desk.go"?(s.deskId??props.deskId):null}))}>{actions.map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
+     <label className="block text-sm"><span className="flex items-center gap-2">本机动作 <SourceTag source="personal"/></span><select aria-label="本机动作" className="mt-1 w-full rounded border bg-background p-2" value={settings.action??""} onChange={e=>setSettings(s=>({...s,action:e.target.value||null,deskId:e.target.value==="desk.go"?(s.deskId??props.deskId):null}))}>{actions.map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>
      {settings.action==="desk.go"&&<label className="block text-sm">目标 Desk<select aria-label="目标 Desk" className="mt-1 w-full rounded border bg-background p-2" value={settings.deskId??""} onChange={e=>setSettings(s=>({...s,deskId:e.target.value}))}>{props.room.desks.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>}
-     <label className="block text-sm">本机目标<select aria-label="本机目标" className="mt-1 w-full rounded border bg-background p-2" value={settings.targetId??""} onChange={e=>setSettings(s=>({...s,targetId:e.target.value||null}))}>
+     <label className="block text-sm"><span className="flex items-center gap-2">本机目标 <SourceTag source="personal"/></span><select aria-label="本机目标" className="mt-1 w-full rounded border bg-background p-2" value={settings.targetId??""} onChange={e=>setSettings(s=>({...s,targetId:e.target.value||null}))}>
       <option value="">未选择</option>{board?.editor.targets.map(t=><option key={t.id} value={t.id}>{t.name} · {t.kind}</option>)}
       {settings.targetId&&!target&&<option value={settings.targetId}>目标已失效</option>}
      </select></label>
-     <label className="block text-sm">普通图标皮肤<select aria-label="普通图标皮肤" className="mt-1 w-full rounded border bg-background p-2" value={settings.skin??""} onChange={e=>setSettings(s=>({...s,skin:e.target.value||null}))}><option value="">默认</option>{board?.editor.skins.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}{settings.skin&&!board?.editor.skins.some(s=>s.id===settings.skin)&&<option value={settings.skin}>原皮肤 · {settings.skin}</option>}</select></label>
-     <div className="flex flex-wrap gap-2"><Button size="sm" onClick={()=>void save({operation:"setButton",buttonId:button.id,...settings})}>保存本机设置</Button><Button variant="outline" size="sm" onClick={()=>void save({operation:"resetButton",buttonId:button.id})}>恢复作品默认</Button>
+     <label className="block text-sm"><span className="flex items-center gap-2">普通图标皮肤 <SourceTag source="personal"/></span><select aria-label="普通图标皮肤" className="mt-1 w-full rounded border bg-background p-2" value={settings.skin??""} onChange={e=>setSettings(s=>({...s,skin:e.target.value||null}))}><option value="">默认</option>{board?.editor.skins.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}{settings.skin&&!board?.editor.skins.some(s=>s.id===settings.skin)&&<option value={settings.skin}>原皮肤 · {settings.skin}</option>}</select></label>
+     <div className="flex flex-wrap gap-2"><Button size="sm" onClick={()=>void save({operation:"setButton",buttonId:button.id,...settings})}>保存本机设置</Button><Button variant="outline" size="sm" onClick={()=>void save({operation:"resetButton",buttonId:button.id})}>恢复为作品值</Button>
       <Button variant="outline" size="sm" onClick={()=>void save({operation:"locateButton",buttonId:button.id})}>定位桌面按钮</Button>
      </div>
     </fieldset>
     {canEdit&&button.scope!=="room"&&board?.currentDesk!==button.scope&&<p className="text-xs text-muted-foreground">按钮位于其他 Desk；切换到该 Desk 后可定位。</p>}
-    <Button variant="outline" size="sm" disabled={locked||Boolean(presentationIssue)||(button.scope!=="room"&&button.scope!==props.deskId)} title={presentationIssue??undefined} onClick={()=>props.onChange(addV3Presentation(props.room,props.deskId,button.id))}>在当前 Desk 添加普通图标</Button>
-    {presentationIssue&&<p className="text-xs text-muted-foreground">{presentationIssue}</p>}
+    {allowAuthoring&&<Button variant="outline" size="sm" disabled={locked||Boolean(presentationIssue)||(button.scope!=="room"&&button.scope!==props.deskId)} title={presentationIssue??undefined} onClick={()=>props.onChange(addV3Presentation(props.room,props.deskId,button.id))}>在当前 Desk 添加普通图标</Button>}
+    {allowAuthoring&&presentationIssue&&<p className="text-xs text-muted-foreground">{presentationIssue}</p>}
     <p className="text-xs text-muted-foreground">普通图标与原入口使用同一按钮。添加呈现后请保存并应用；皮肤仅改变普通图标。</p>
    </div>}
   </div>

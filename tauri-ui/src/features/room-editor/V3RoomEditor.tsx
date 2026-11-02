@@ -8,6 +8,7 @@ import { addV3Icon, createV3History, moveV3Desk, newV3Desk, readRoomV3, recordV3
 
 import { V3Workbench } from "./V3Workbench";
 import { V3PersonalEditor } from "./V3PersonalEditor";
+import { SourceTag } from "./SourceTag";
 import type {AppPickerItem} from "@/components/AppPickerDialog";
 import { V3DockEditor } from "./V3DockEditor";
 import { V3ReadGrantPanel } from "./V3ReadGrantPanel";
@@ -34,6 +35,8 @@ export function V3RoomEditor(props:Props){
   const [draft,setDraft]=useState(()=>recovered(props));
   const room=draft.history.present;
   const [selected,setSelected]=useState(room.startDesk);
+  const [mode,setMode]=useState<"work"|"mine">("work");
+  const [focus,setFocus]=useState<"room"|"desk">("desk");
   const desk=room.desks.find(d=>d.id===selected)??room.desks[0];
   const iconCreationIssue=v3IconCreationIssue(room,desk.id,true);
   const [busy,setBusy]=useState(false);
@@ -104,11 +107,15 @@ export function V3RoomEditor(props:Props){
     <header className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
       <Button variant="ghost" disabled={busy} onClick={props.onBack}>返回房间库</Button>
       <Button variant="outline" disabled={busy} onClick={()=>setWorkbenchOpen(true)}>打开试验台</Button>
-      <Button variant="outline" disabled={busy||Boolean(iconCreationIssue)} title={iconCreationIssue??("向 "+desk.name+" 添加应用图标")} onClick={()=>{
+      <Button variant="outline" disabled={busy||mode==="mine"||Boolean(iconCreationIssue)} title={mode==="mine"?"添加图标会改作品，请切回「作品」":iconCreationIssue??("向 "+desk.name+" 添加应用图标")} onClick={()=>{
         change(addV3Icon(room,desk.id,"我的应用","binding.launch"));
         setMessage("已向 "+desk.name+" 添加应用图标。保存并应用后，在“按钮与本机设置”中选择这个图标并绑定本机应用。");
       }}>添加应用</Button>
       <span className="font-medium">{room.name}</span><span className="text-xs text-muted-foreground">v3 · {dirty?"未保存":"已保存"}</span>
+      <div className="flex rounded-md border bg-muted/40 p-0.5" role="tablist" aria-label="编辑层">
+        <button type="button" role="tab" aria-selected={mode==="work"} className={"rounded px-3 py-1 text-sm "+(mode==="work"?"bg-background font-medium shadow-sm":"text-muted-foreground")} onClick={()=>setMode("work")}>作品</button>
+        <button type="button" role="tab" aria-selected={mode==="mine"} className={"rounded px-3 py-1 text-sm "+(mode==="mine"?"bg-background font-medium shadow-sm":"text-muted-foreground")} onClick={()=>setMode("mine")}>我的</button>
+      </div>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy||!draft.history.past.length} onClick={()=>setDraft(d=>({...d,history:undoV3(d.history)}))}>撤销</Button>
         <Button variant="outline" disabled={busy||!draft.history.future.length} onClick={()=>setDraft(d=>({...d,history:redoV3(d.history)}))}>重做</Button>
@@ -124,13 +131,29 @@ export function V3RoomEditor(props:Props){
       </div>
     </header>
     {message&&<p role="status" className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">{message}</p>}
-    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_340px] gap-3">
-      <div className="space-y-4 overflow-auto rounded-lg border bg-card p-4">
-        <div className="flex items-center justify-between"><h2 className="font-medium">Desk 路线图</h2>
-          <Button variant="outline" disabled={busy||room.desks.length>=64} onClick={()=>{const next=newV3Desk(room.desks.length);update(r=>{
+    <div className="grid min-h-0 flex-1 grid-cols-[220px_minmax(0,1fr)] gap-3">
+      <nav aria-label="Room 与 Desk" className="space-y-2 overflow-auto rounded-lg border bg-card p-3">
+        <button type="button" className={"block w-full rounded-lg border p-3 text-left text-sm "+(focus==="room"?"border-cyan-500 bg-cyan-500/10":"border-border")} onClick={()=>setFocus("room")}>
+          <span className="block font-medium">{room.name}</span>
+          <span className="text-xs text-muted-foreground">Room · {room.desks.length} 个 Desk</span>
+        </button>
+        <div className="flex items-center justify-between"><h2 className="text-xs font-medium text-muted-foreground">Desk</h2>
+          {mode==="work"&&<Button variant="outline" size="sm" disabled={busy||room.desks.length>=64} onClick={()=>{const next=newV3Desk(room.desks.length);update(r=>{
             if(r.dockComponentId)next.components=[r.dockComponentId];r.desks.push(next);
-          });setSelected(next.id);}}>添加 Desk</Button></div>
-        <div className="flex items-center gap-3 text-sm"><span>默认切换</span>
+          });setSelected(next.id);setFocus("desk");}}>添加</Button>}</div>
+        {room.desks.map(d=><button key={d.id} type="button" className={"block w-full rounded-lg border p-3 text-left text-sm "+(focus==="desk"&&d.id===desk.id?"border-cyan-500 bg-cyan-500/10":"border-border")} onClick={()=>{setSelected(d.id);setFocus("desk");}}>
+          <span className="block font-medium">{d.name} {d.id===room.startDesk?"· 起点":""}</span>
+          <span className="text-xs text-muted-foreground">{d.background?labels[d.background.type]:"默认背景"} · {d.icons.length} 图标</span>
+        </button>)}
+      </nav>
+      <div className="space-y-4 overflow-auto rounded-lg border bg-card p-4">
+        {mode==="mine"?<>
+          <p className="text-sm">正在查看「我的」。左侧作品树不变；这里的修改写入 personal.json，切回「作品」仍显示 room.json 里的作品值。</p>
+          <V3PersonalEditor room={room} path={props.path} deskId={desk.id} apps={props.apps} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} dirty={dirty} allowAuthoring={false} onChange={change}/>
+        </>:<>
+        <p className="text-xs text-muted-foreground">「作品」只显示并编辑 room.json。个人布局、按钮绑定和本 Desk 追加固定项在「我的」。Dock 行为在设置页，来源是本机设置。</p>
+        {focus==="room"&&<>
+        <div className="flex items-center gap-3 text-sm"><span className="flex items-center gap-2">默认切换 <SourceTag source="work"/></span>
           <select aria-label="默认切换" className="rounded border bg-background p-2" disabled={busy||room.transition?.type==="author"} value={room.transition?.type??"slide"}
             onChange={e=>update(r=>{r.transition={type:e.target.value as "slide"|"fade"|"none",durationMs:r.transition?.durationMs??450};})}>
             <option value="slide">滑动</option><option value="fade">淡入淡出</option><option value="none">无</option>
@@ -140,14 +163,8 @@ export function V3RoomEditor(props:Props){
             onChange={e=>{const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<=10000)update(r=>{r.transition={type:r.transition?.type??"slide",durationMs:n};});}}/>
           <span className="text-muted-foreground">毫秒</span>
         </div>
-        <div className="flex flex-wrap items-center gap-3">{room.desks.map((d,index)=><div key={d.id} className="contents">
-          {index>0&&<span className="text-muted-foreground" aria-label="相邻切页">↔</span>}
-          <button type="button" className={"min-w-40 rounded-xl border p-4 text-left "+(d.id===desk.id?"border-cyan-500 bg-cyan-500/10":"border-border")} onClick={()=>setSelected(d.id)}>
-            <span className="block font-medium">{d.name} {d.id===room.startDesk?"· 起点":""}</span>
-            <span className="text-xs text-muted-foreground">{d.background?labels[d.background.type]:"默认背景"} · {d.icons.length} 图标</span>
-          </button>
-        </div>)}</div>
         <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-2 text-sm">共享 Dock <SourceTag source="work"/></span>
           <select aria-label="共享 Dock 引用" className="min-w-48 rounded border bg-background p-2 text-sm" disabled={busy} value={room.dockComponentId??""} onChange={e=>{
             const old=room.dockComponentId,id=e.target.value;let next=structuredClone(room);
             if(old&&next.components?.find(c=>c.id===old)?.config?.template)for(const d of next.desks)if(d.components.includes(old))next=setDeskDockReference(next,d.id,false);
@@ -160,30 +177,32 @@ export function V3RoomEditor(props:Props){
         </div>
         <V3DockEditor room={room} deskId={desk.id} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} onChange={change} onImport={importDock} onMessage={setMessage}/>
         <V3ReadGrantPanel roomId={room.id} consumerNames={consumerNames} isTauri={props.isTauri} canApply={props.canApply} disabled={busy}/>
-        <V3PersonalEditor room={room} path={props.path} deskId={desk.id} apps={props.apps} isTauri={props.isTauri} canApply={props.canApply} disabled={busy} dirty={dirty} onChange={change}/>
-        <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材</summary>
-          <div className="mt-3 space-y-4"><div><h3 className="mb-2 text-sm">启动</h3>{contentPicker("start",room.start)}</div>
-            <div><h3 className="mb-2 text-sm">待机</h3>{contentPicker("idle",room.idle)}</div></div></details>
-        <p className="text-xs text-muted-foreground">本地 HTML 请放在独立素材文件夹；选择入口会复制同目录及子目录中的配套文件。作品内容与个人绑定分别保存。</p>
-      </div>
-      <aside className="space-y-4 overflow-auto rounded-lg border bg-card p-4">
-        <h2 className="font-medium">当前 Desk</h2>
-        <label className="block space-y-1 text-sm">名称<Input aria-label="Desk 名称" disabled={busy} value={desk.name} onChange={e=>update(r=>{r.desks.find(d=>d.id===desk.id)!.name=e.target.value;})}/></label>
+        <details className="rounded-lg border p-3"><summary className="cursor-pointer text-sm">启动和待机素材 <SourceTag source="work"/></summary>
+          <div className="mt-3 space-y-4"><div><h3 className="mb-2 flex items-center gap-2 text-sm">启动 <SourceTag source="work"/></h3>{contentPicker("start",room.start)}</div>
+            <div><h3 className="mb-2 flex items-center gap-2 text-sm">待机 <SourceTag source="work"/></h3>{contentPicker("idle",room.idle)}</div></div></details>
+        </>}
+        {focus==="desk"&&<>
+        <h2 className="font-medium">当前 Desk · {desk.name}</h2>
+        <label className="block space-y-1 text-sm"><span className="flex items-center gap-2">名称 <SourceTag source="work"/></span><Input aria-label="Desk 名称" disabled={busy} value={desk.name} onChange={e=>update(r=>{r.desks.find(d=>d.id===desk.id)!.name=e.target.value;})}/></label>
         <p className="break-all font-mono text-[10px] text-muted-foreground">{desk.id}</p>
         <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={busy||desk.id===room.startDesk} onClick={()=>update(r=>{r.startDesk=desk.id;})}>设为起点</Button>
           <Button variant="outline" size="sm" disabled={busy||room.desks[0].id===desk.id} onClick={()=>change(moveV3Desk(room,desk.id,-1))}>前移</Button>
           <Button variant="outline" size="sm" disabled={busy||room.desks[room.desks.length-1].id===desk.id} onClick={()=>change(moveV3Desk(room,desk.id,1))}>后移</Button>
           <Button variant="ghost" size="sm" disabled={busy||room.desks.length===1} onClick={()=>{if(confirm("删除 Desk？其专属按钮一并移除，指向它的按钮恢复待配置；可撤销。"))change(removeV3Desk(room,desk.id));}}>删除 Desk</Button></div>
-        <div><h3 className="mb-2 text-sm font-medium">背景素材</h3>{contentPicker("background",desk.background)}</div>
-        <div><h3 className="mb-2 text-sm font-medium">默认图标</h3>
+        <div><h3 className="mb-2 flex items-center gap-2 text-sm font-medium">背景素材 <SourceTag source="work"/></h3>{contentPicker("background",desk.background)}</div>
+        <div><h3 className="mb-2 flex items-center gap-2 text-sm font-medium">默认图标 <SourceTag source="work"/></h3>
           <div className="flex flex-wrap gap-2">{(["desk.previous","desk.next","binding.launch"] as const).map(action=>
             <Button key={action} variant="outline" size="sm" disabled={busy||Boolean(iconCreationIssue)} title={iconCreationIssue??undefined} onClick={()=>change(addV3Icon(room,desk.id,action==="desk.next"?"下一页":action==="desk.previous"?"上一页":"我的应用",action))}>
               {action==="desk.next"?"+ 下一页":action==="desk.previous"?"+ 上一页":"+ 添加应用"}</Button>)}</div>
           {iconCreationIssue&&<p className="mt-2 text-xs text-muted-foreground">{iconCreationIssue}</p>}
           <ul className="mt-3 space-y-2">{desk.icons.map(icon=><li key={icon.id} className="flex items-center justify-between rounded border px-2 py-1 text-sm">
-            <span>{icon.glyph} {icon.label}</span><Button variant="ghost" size="sm" disabled={busy} onClick={()=>change(removeV3Presentation(room,desk.id,icon.id))}>移除</Button></li>)}</ul>
+            <span className="flex items-center gap-2">{icon.glyph} {icon.label} <span className="text-xs text-muted-foreground">{icon.x}, {icon.y}</span> <SourceTag source="work"/></span><Button variant="ghost" size="sm" disabled={busy} onClick={()=>change(removeV3Presentation(room,desk.id,icon.id))}>移除</Button></li>)}</ul>
+          <p className="mt-2 text-xs text-muted-foreground">坐标是作品值。长按改过的位置在「我的」里，并可恢复为作品值。</p>
         </div>
-      </aside>
+        </>}
+        <p className="text-xs text-muted-foreground">本地 HTML 请放在独立素材文件夹；选择入口会复制同目录及子目录中的配套文件。</p>
+        </>}
+      </div>
     </div>
   </section>;
 }

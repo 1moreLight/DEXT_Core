@@ -66,6 +66,41 @@ internal static class SharingCopyChecks
             Require(!File.ReadAllText(Path.Combine(fixture.Path, "personal.json")).Contains("\"dockPins\""),
                 "unused override field is omitted for older candidate compatibility");
         });
+        check("legacy dock pin overrides migrate to additions and empty means no additions", () =>
+        {
+            using var fixture = new Fixture();
+            var store = new RoomPersonalStore(fixture.Path);
+            var global = @"C:\Windows\System32\notepad.exe";
+            var extra = @"C:\Windows\System32\calc.exe";
+            store.Update(s =>
+            {
+                var roomData = s.Rooms[room] = new RoomPersonalData();
+                roomData.DockPins = new(StringComparer.Ordinal)
+                {
+                    ["home"] = new[]
+                    {
+                        new PersonalTarget("Notes", "application", global),
+                        new PersonalTarget("Calc", "application", extra),
+                    },
+                    ["empty"] = Array.Empty<PersonalTarget>(),
+                };
+            });
+            Require(store.NeedsDockPinMigration(room), "legacy override still needs migration");
+            var globals = new[] { new PersonalTarget("Notes", "application", global) };
+            var before = DockPinAppend.Effective(globals, store.ReadDockPins(room, "home"), pin => pin.Target);
+            Require(before.Length == 2, "pre-migration union still keeps both pins");
+            store.MigrateDockPinsToAppend(room, new[] { global });
+            Require(!store.NeedsDockPinMigration(room), "migration runs once");
+            var additions = store.ReadDockPins(room, "home")!;
+            Require(additions.Length == 1 && additions[0].Target == extra, "global pins are not stored again as additions");
+            Require(store.ReadDockPins(room, "empty") is { Length: 0 }, "empty legacy list stays empty");
+            var effective = DockPinAppend.Effective(globals, additions, pin => pin.Target);
+            Require(effective.Select(pin => pin.Target).SequenceEqual(new[] { global, extra }), "effective pins are global plus additions");
+            Require(DockPinAppend.Effective(globals, store.ReadDockPins(room, "empty"), pin => pin.Target).Single().Target == global,
+                "empty desk list is global only, not an independent empty override");
+            store.MigrateDockPinsToAppend(room, new[] { global });
+            Require(store.ReadDockPins(room, "home")!.Single().Target == extra, "second migration does not strip additions");
+        });
         check("copy of Room without personal overrides creates an independent empty record", () =>
         {
             using var fixture = new Fixture();

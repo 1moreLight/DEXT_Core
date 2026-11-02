@@ -365,5 +365,21 @@ static partial class RoomActionChecks
    Eq(revision,f.Store.Read().Revision);Eq(0,f.Launched.Count);
    Eq("notOperable",Edit(f,new{operation="locateButton",buttonId="focus-only"}).Status);
   });
+  check("editor lists long-press layout and restore clears that L2 item",()=>{
+   using var f=new ActionFixture();
+   f.Store.Update(s=>{
+    if(!s.Rooms.TryGetValue(Room,out var data))s.Rooms[Room]=data=new RoomPersonalData();
+    data.Layout.Icons["home"]=new(){["icon-a"]=new(12,34)};
+    data.Layout.Components["widget-a"]=new(1,2,30,40);
+   });
+   var layout=Editor(Read(f)).Layout!;
+   Eq(true,layout.Any(item=>item.Kind=="icon"&&item.Id=="icon-a"&&item.DeskId=="home"&&item.X==12&&item.Y==34));
+   Eq(true,layout.Any(item=>item.Kind=="component"&&item.Id=="widget-a"));
+   Editor(Edit(f,new{operation="resetLayoutItem",kind="icon",id="icon-a",deskId="home"}));
+   Eq(false,Editor(Read(f)).Layout!.Any(item=>item.Id=="icon-a"));
+   Eq(false,f.Store.Read().Rooms[Room].Layout.Icons.ContainsKey("home"));
+   Editor(Edit(f,new{operation="resetLayoutItem",kind="component",id="widget-a",deskId=(string?)null}));
+   Eq(0,Editor(Read(f)).Layout!.Length);
+  });
  }
 }

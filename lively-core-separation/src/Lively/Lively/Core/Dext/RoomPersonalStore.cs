@@ -21,6 +21,10 @@ internal sealed class RoomPersonalData
     public RoomDesktopSync? DesktopSync { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, PersonalTarget[]>? DockPins { get; set; }
+    // False (the historical default) means stored lists are whole-list overrides.
+    // True means each list is only this Desk's additions. Missing JSON stays false.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool DockPinsAppend { get; set; }
     public Dictionary<string, PersonalButtonOverride> Buttons { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> Grants { get; set; } = new(StringComparer.Ordinal);
     public Dictionary<string, RoomCapabilityGrant> ReadGrants { get; set; } = new(StringComparer.Ordinal);
@@ -121,11 +125,32 @@ internal sealed class RoomPersonalStore
             {
                 foreach (var (id, button) in source.Buttons) copy.Buttons.Add(id, button);
                 if (source.DockPins is not null) copy.DockPins = source.DockPins.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), StringComparer.Ordinal);
+                copy.DockPinsAppend = source.DockPinsAppend;
             }
             s.Rooms.Add(newId, copy); // Permission is never inherited by a new Room copy.
         });
     }
-    // Null means inherit the global list; an empty array is an explicit empty list.
+    // Null and an empty array both mean "no Desk additions" once DockPinsAppend
+    // is true. Legacy files keep the old override arrays until migrated.
+    public bool NeedsDockPinMigration(string roomId)
+    {
+        Uuid(roomId);
+        var room = Read().Rooms.GetValueOrDefault(roomId);
+        return room?.DockPins is { Count: > 0 } && !room.DockPinsAppend;
+    }
+    public void MigrateDockPinsToAppend(string roomId, IReadOnlyCollection<string> globalTargets)
+    {
+        Uuid(roomId);
+        if (!NeedsDockPinMigration(roomId)) return;
+        Update(state =>
+        {
+            var room = state.Rooms[roomId];
+            if (room.DockPinsAppend || room.DockPins is null) return;
+            foreach (var key in room.DockPins.Keys.ToArray())
+                room.DockPins[key] = DockPinAppend.LegacyAdditions(room.DockPins[key], globalTargets, pin => pin.Target);
+            room.DockPinsAppend = true;
+        });
+    }
     public PersonalTarget[]? ReadDockPins(string roomId, string deskId)
     {
         Uuid(roomId); Id(deskId);
@@ -138,6 +163,10 @@ internal sealed class RoomPersonalStore
         {
             if (!state.Rooms.TryGetValue(roomId, out var room))
                 state.Rooms.Add(roomId, room = new RoomPersonalData());
+            // New writes are additions. Callers that still hold legacy override
+            // lists must migrate before this, or those lists would be relabeled
+            // as additions without subtracting the global pins.
+            room.DockPinsAppend = true;
             if (pins is null)
             {
                 room.DockPins?.Remove(deskId);

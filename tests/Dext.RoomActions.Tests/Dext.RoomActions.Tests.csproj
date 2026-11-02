@@ -13,6 +13,7 @@
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeDataSource.Windows.cs" Link="RoomNativeDataSource.Windows.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeDataSource.cs" Link="RoomNativeDataSource.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomPersonalStore.cs" Link="RoomPersonalStore.cs" />
+    <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/DockPinAppend.cs" Link="DockPinAppend.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomV3Installation.cs" Link="RoomV3Installation.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomNativeKeyDelivery.cs" Link="RoomNativeKeyDelivery.cs" />
     <Compile Include="../../lively-core-separation/src/Lively/Lively/Core/Dext/RoomSessionKernel.cs" Link="RoomSessionKernel.cs" />

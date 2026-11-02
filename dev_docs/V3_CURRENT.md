@@ -1,3 +1,7 @@
+# v3 当前交接入口（2026-11-02 补记）
+
+本分支在做 IA-001（Room/Desk 编辑信息架构，WP1–WP6），验收口径见 [acceptance/IA-001-room-desk-editor.md](acceptance/IA-001-room-desk-editor.md)。下面 2026-10-12 的交接仍是当时事实，不是本分支的完成声明。
+
 # v3 当前交接入口（2026-10-12）
 
 计划以 [ROADMAP](ROADMAP.md) 为准；本页只报告当前事实。旧过程已完整保存在 [历史快照](history/V3_CURRENT-before-release-2026-10-11.md)。

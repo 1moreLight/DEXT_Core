@@ -80,6 +80,9 @@ internal sealed partial class RoomSessionRuntimeCoordinator
         // Persist to the explicit checked identity. A later page change never redirects this write.
         actions.SetApplicationDockPins(roomId, deskId, pins);
     }
+    internal bool NeedsDockPinMigration(string roomId) => actions.NeedsDockPinMigration(roomId);
+    internal void MigrateDockPinsToAppend(string roomId, IReadOnlyCollection<string> globalTargets) =>
+        actions.MigrateDockPinsToAppend(roomId, globalTargets);
 
     // Only the official Core WPF button calls this. No RPC or author SDK entry.
     internal bool NavigateApplicationDock(Guid expectedSession, int direction)

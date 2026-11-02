@@ -51,7 +51,7 @@ export function EditorRoomLibrary(props: EditorRoomLibraryProps) {
             <div className="mt-0.5 text-xs text-muted-foreground">{selectedRoom.desks} Desk · {selectedRoom.icons} 图标 · {selectedRoom.widgets} Widget · {roomContractPolicy(selectedRoom.version).versionLabel}</div>
           </div>
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => props.onEdit(selectedRoom)}>{roomContractPolicy(selectedRoom.version).edit ? "编辑" : "只读查看"}</Button>
+            <Button className="flex-1" onClick={() => props.onEdit(selectedRoom)}>{roomContractPolicy(selectedRoom.version).edit ? "编辑" : "不支持"}</Button>
             <Button className="flex-1" variant={selectedRoom.path === appliedRoom ? "secondary" : "outline"} disabled={Boolean(busy) || !roomContractPolicy(selectedRoom.version).apply || (isTauri && !coreIdentity)} title={!roomContractPolicy(selectedRoom.version).apply ? readOnlyRoomMessage(selectedRoom.version) : isTauri && !coreIdentity ? "Dext Core 未连接" : undefined} onClick={() => props.onApply(selectedRoom)}>{selectedRoom.path === appliedRoom ? "重新应用" : "应用"}</Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
