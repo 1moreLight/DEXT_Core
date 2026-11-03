@@ -63,6 +63,8 @@ Check(DockVisibilityPolicy.IsFullscreen(true,true,false),"undecorated maximized 
 Check(DockVisibilityPolicy.IsFullscreen(true,false,false),"borderless fullscreen still blocks Dock");
 Check(DockVisibilityPolicy.TaskbarReady(true,true,false),"active hidden Dock keeps automatic lease while fullscreen");
 Check(!DockVisibilityPolicy.TaskbarReady(true,true,true),"locked session releases automatic lease");
+var missing=Path.Combine(Path.GetTempPath(),"dext-dock-missing-"+Guid.NewGuid()+".json");
+Check(DockPreferenceFile.Load(missing).Enabled && DockPreferenceFile.Load(missing).Presentation=="native","missing preferences prefer the native Application Dock");
 var overlay=new DockPreferences(true,Array.Empty<DockPin>());
 Check(!overlay.ReserveSpace,"old default does not reserve work area");
 var reserved=overlay.WithReserveSpace(true);

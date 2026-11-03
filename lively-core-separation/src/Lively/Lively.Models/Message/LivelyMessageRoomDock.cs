@@ -39,4 +39,12 @@ namespace Lively.Models.Message
         public int? PreviewHoldMilliseconds { get; set; }
         public LivelyMessageRoomDockPolicy() : base(MessageType.cmd_room_dock_policy) { }
     }
+
+    // Tells the desktop wallpaper which system Dock is active. "native" hides the
+    // theme dock component so it is not a second bar. Author scenes stay untouched.
+    public sealed class LivelyMessageRoomSystemDock : IpcMessage
+    {
+        public string Owner { get; set; } = "none";
+        public LivelyMessageRoomSystemDock() : base(MessageType.cmd_room_system_dock) { }
+    }
 }

@@ -60,6 +60,7 @@ namespace Lively.Common.JsonConverters
                 MessageType.cmd_room_dock_policy => jo.ToObject<LivelyMessageRoomDockPolicy>(serializer),
                 MessageType.cmd_room_dock_tasks => jo.ToObject<LivelyMessageRoomDockTasks>(serializer),
                 MessageType.msg_room_dock_touch => jo.ToObject<LivelyMessageRoomDockTouch>(serializer),
+                MessageType.cmd_room_system_dock => jo.ToObject<LivelyMessageRoomSystemDock>(serializer),
                 MessageType.lp_dropdown_scaler => jo.ToObject<LivelyDropdownScaler>(serializer),
                 _ => null,
             };

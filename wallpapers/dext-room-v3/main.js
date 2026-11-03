@@ -2,7 +2,7 @@
   'use strict';
   const transport=globalThis.chrome?.webview,container=document.getElementById('runtime');
   if(!transport||!container)return;
-  let context=null,snapshot=null,host=null,tasks=null,retired=0,disposed=false,paused=false,lastError=null,candidate=0;
+  let context=null,snapshot=null,host=null,tasks=null,retired=0,disposed=false,paused=false,lastError=null,candidate=0,systemDock="none";
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const text=v=>typeof v==='string'&&v.length>0&&v.length<=128&&!/[\u0000-\u001f]/.test(v);
   const positive=v=>Number.isSafeInteger(v)&&v>0;
@@ -39,11 +39,16 @@
         getState:()=>({context,snapshot,dom:host,viewport:viewport(),visible:!paused}),
         onError:()=>{lastError={code:'taskAreaUnavailable'};}
       });
+      host.setSystemDock(systemDock);
       host.ready.then(ready=>{tasks?.refresh();announceDockReady(ready);},()=>{lastError={code:'renderUnavailable'};});
     }catch(_){native?.dispose();lastError={code:'renderUnavailable'};}
   }
   function runtimeMessage(value){
     if(disposed||!object(value))return;
+    if(value.type==='dext:system-dock'){
+      if(value.owner!=='native'&&value.owner!=='theme'&&value.owner!=='none')return;
+      systemDock=value.owner;host?.setSystemDock(systemDock);return;
+    }
     if(value.type==='dext:v3-runtime'){
       if(!validContext(value)||value.runtimeGeneration<=retired||context&&value.runtimeGeneration<=context.runtimeGeneration)return;
       if(context)retired=Math.max(retired,context.runtimeGeneration);disposeHost();context=copy(value);if(context.viewKind==="dock")paused=false;

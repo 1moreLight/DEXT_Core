@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Lively.Core.Wallpapers;
+using Lively.Models.Message;
 
 namespace Dext.Core.Rooms;
 
 internal sealed partial class RoomSessionRuntimeCoordinator
 {
+    private string systemDockOwner = "none";
     private sealed record ApplicationThemeRequest(string ContextKey,long Attempt,string Mode);
     private ApplicationThemeRequest? applicationThemeRequest;
     private long failedApplicationThemeAttempt;
@@ -21,6 +24,18 @@ internal sealed partial class RoomSessionRuntimeCoordinator
             if(actual==seen)return;
             seen=actual;
         }
+    }
+    internal void PublishSystemDock(string owner)
+    {
+        if (owner is not ("native" or "theme" or "none")) throw new ArgumentException("Unknown system dock.");
+        WebWebView2 player;
+        lock (gate)
+        {
+            systemDockOwner = owner;
+            player = activePlayer;
+        }
+        // Desktop wallpaper only. The theme dock player is a separate host.
+        player?.SendMessage(new LivelyMessageRoomSystemDock { Owner = owner });
     }
     internal void ConfigureApplicationTheme(string? contextKey,long attempt,string? mode)
     {

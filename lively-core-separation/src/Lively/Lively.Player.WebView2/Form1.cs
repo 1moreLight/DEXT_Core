@@ -957,6 +957,18 @@ namespace Lively.Player.WebView2
                 case MessageType.cmd_room_dock_policy:
                     if (startArgs.DextDock) await ApplyNativeDockPolicy((LivelyMessageRoomDockPolicy)obj);
                     break;
+                case MessageType.cmd_room_system_dock:
+                    if (startArgs.DextTrustedHost && !startArgs.DextDock && webView?.CoreWebView2 != null)
+                    {
+                        var systemDock = (LivelyMessageRoomSystemDock)obj;
+                        if (systemDock.Owner == "native" || systemDock.Owner == "theme" || systemDock.Owner == "none")
+                            webView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(new
+                            {
+                                type = "dext:system-dock",
+                                owner = systemDock.Owner,
+                            }));
+                    }
+                    break;
                 case MessageType.cmd_suspend:
                     await HandleSuspend();
                     break;

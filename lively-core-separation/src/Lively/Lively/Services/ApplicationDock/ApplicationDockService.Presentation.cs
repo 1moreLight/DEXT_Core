@@ -34,6 +34,9 @@ internal sealed partial class ApplicationDockService
         presentationState=state;
         rooms.ConfigureApplicationTheme(state.Target=="theme"?theme.ContextKey:null,state.Attempt,
             state.Target=="theme"?state.Mode:null);
+        // Native is the only system Dock. The wallpaper must drop its theme dock
+        // component so the 01/02/03 strip is not a second bar. Theme stays opt-in.
+        rooms.PublishSystemDock(!preferences.Enabled ? "none" : state.Target == "theme" ? "theme" : "native");
         // Disabled application features restore the independently saved theme setting.
         ownership.Request(state.Target=="native"?DockHost.Application:DockHost.Theme);
     }

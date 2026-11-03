@@ -155,6 +155,7 @@ internal sealed partial class RoomSessionRuntimeCoordinator : IRoomSessionRuntim
                 activePlayerPid = pid;
                 activePlayer = player;
                 player.RoomSnapshotObserved += OnDockSourceSnapshot;
+                player.SendMessage(new Lively.Models.Message.LivelyMessageRoomSystemDock { Owner = systemDockOwner });
                 activeNativeRoom = installation.RuntimeContext is not null;
                 activeDisplayId = player.Screen.DeviceId;
                 activeSessionId = session.Snapshot.SessionId;
