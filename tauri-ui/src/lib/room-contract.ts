@@ -28,16 +28,7 @@ export function roomContractPolicy(version: unknown, compatibility?: RoomCompati
     return {versionLabel:"v3",recognized:true,edit:true,save:true,saveAs:true,apply:true,preview:false,zip:true};
   }
   if (version === 2) {
-    return {
-      versionLabel: "v2",
-      recognized: true,
-      edit: true,
-      save: true,
-      saveAs: true,
-      apply: true,
-      preview: true,
-      zip: true,
-    };
+    return {versionLabel: "v2 已停止", recognized: false, ...READ_ONLY};
   }
   return {
     versionLabel: typeof version === "number" ? `v${version}` : "未知版本",
@@ -67,5 +58,6 @@ export function assertRoomV2WritePayload(room: Record<string, unknown>): Record<
 export function readOnlyRoomMessage(version: unknown, compatibility?: RoomCompatibility | null): string {
   if (compatibility && !compatibility.supported) return compatibility.message;
   const policy = roomContractPolicy(version);
-  return `${policy.versionLabel} 不受支持；Dext 接受原生 Room v2 / v3`;
+  if (version === 2) return "此 Room 是 v2，已不受支持。旧画布、流程和 Dock 编辑器已删除，不能再用旧编辑器打开。请使用 Room v3。";
+  return `${policy.versionLabel} 不受支持；Dext 只编辑原生 Room v3`;
 }

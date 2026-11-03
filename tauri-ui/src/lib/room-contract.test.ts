@@ -2,16 +2,14 @@ import { describe, expect, it } from "vitest";
 import { assertRoomV2WritePayload, roomContractPolicy } from "./room-contract";
 
 describe("room contract operation matrix", () => {
-  it("enables the complete native v2 workflow", () => {
-    expect(roomContractPolicy(2)).toEqual({
-      versionLabel: "v2",
-      recognized: true,
-      edit: true,
-      save: true,
-      saveAs: true,
-      apply: true,
-      preview: true,
-      zip: true,
+  it("rejects leftover v2 rooms instead of opening the old editor", () => {
+    expect(roomContractPolicy(2)).toMatchObject({
+      versionLabel: "v2 已停止",
+      recognized: false,
+      edit: false,
+      save: false,
+      apply: false,
+      preview: false,
     });
   });
 

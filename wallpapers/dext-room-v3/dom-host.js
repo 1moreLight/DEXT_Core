@@ -10,6 +10,7 @@
   function createDomHost(options){
     const context=copy(options.context),room=context.manifest,document=options.document||root.document,container=options.container,native=options.native;
     const dockView=context.viewKind==="dock";
+    let systemDockOwner="none";
     const model=(options.createRuntime||root.DextRuntimeModel.createRuntime)(room,{viewKind:context.viewKind}),layoutModel=options.layoutModel||root.DextLayoutModel,geometry=options.geometry||root.DextGeometry;
     if(!layoutModel)throw failure('layoutUnavailable');if(!geometry)throw failure('geometryUnavailable');
     const raf=options.requestAnimationFrame||root.requestAnimationFrame.bind(root),cancel=options.cancelAnimationFrame||root.cancelAnimationFrame.bind(root),now=options.now||(()=>root.performance.now());
@@ -81,8 +82,18 @@
       onStartupComplete:value=>native.request('startupComplete',{lifecycleRevision:value.lifecycleRevision},{...scope(),sessionId:value.sessionId,revision:value.revision})});
     function activeDesk(){return snapshot.targetDeskId||snapshot.currentDeskId;}
     function inputDesks(sampled){return sampled&&snapshot.targetDeskId?[snapshot.currentDeskId,snapshot.targetDeskId]:[activeDesk()];}
+    function setSystemDock(owner){
+      if(owner!=="native"&&owner!=="theme"&&owner!=="none"||disposed)return false;
+      if(systemDockOwner===owner)return true;
+      systemDockOwner=owner;
+      if(rootNode)render();
+      return true;
+    }
     function visible(definition){
       const stage=snapshot.lifecycle.stage;
+      // Native Application Dock is the only system Dock. Hide the theme dock
+      // component in the wallpaper. Author scenes, backgrounds, and widgets stay.
+      if(!dockView&&definition.kind==="dock"&&systemDockOwner==="native")return false;
       if(dockView)return stage==="desktop"&&definition.consumerId==="component."+room.dockComponentId&&desks.get(activeDesk()).components.includes(room.dockComponentId);
       if(definition.consumerId==='slot.start')return stage==='starting';if(definition.consumerId==='slot.idle')return stage==='idle';
       if(stage==='starting'&&room.start||stage==='idle'&&room.idle)return false;
@@ -696,7 +707,7 @@
     model.setViewport(options.getViewport());
     const ready=acceptSnapshot(snapshot);
     if(!dockView)ready.then(()=>refreshPresentation());
-    return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,handleEditPointer,
+    return Object.freeze({ready,acceptSnapshot,publishGeometry,resolveResource,handleEditPointer,setSystemDock,
       async setTaskAreaOcclusion(value){
         if(disposed||!dockView)return false;
         if(value!==null&&(!value||![value.x,value.y,value.width,value.height].every(Number.isFinite)||value.x<0||value.y<0||value.width<=0||value.height<=0||value.x+value.width>1920||value.y+value.height>1080))return false;

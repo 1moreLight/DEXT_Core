@@ -14,7 +14,8 @@ public sealed record RoomPersonalEditorButton(string Id, string Name, string Sco
 public sealed record RoomPersonalEditorTarget(string Id, string Name, string Kind, string Target, string Arguments, string WorkingDirectory, int UseCount);
 public sealed record RoomPersonalSkin(string Id, string Name);
 public sealed record RoomDesktopSyncSettings(bool Enabled, string DeskId, int ItemCount, string ScanState = "pending", int IssueCount = 0);
-public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins, RoomDesktopSyncSettings? DesktopSync = null);
+public sealed record RoomPersonalLayoutItem(string Kind, string Id, string? DeskId, double X, double Y, double? Width, double? Height);
+public sealed record RoomPersonalEditorSnapshot(long Revision, RoomPersonalEditorButton[] Buttons, RoomPersonalEditorTarget[] Targets, RoomPersonalSkin[] Skins, RoomDesktopSyncSettings? DesktopSync = null, RoomPersonalLayoutItem[]? Layout = null);
 public sealed record RoomPersonalEditorReply(string Status, string RoomId = "", string InstallationStamp = "", RoomPersonalEditorSnapshot? Editor = null);
 
 internal sealed record RoomButtonLocator(string RequestId,string ButtonId);
@@ -76,6 +77,15 @@ internal sealed partial class RoomActionAuthority
         {
             if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
             store.SetDockPins(roomId, deskId, pins);
+        }
+    }
+    internal bool NeedsDockPinMigration(string roomId) => store.NeedsDockPinMigration(roomId);
+    internal void MigrateDockPinsToAppend(string roomId, IReadOnlyCollection<string> globalTargets)
+    {
+        lock (roomCopyLifecycleGate)
+        {
+            if (cancelledRoomCopyIds.Contains(roomId)) throw new InvalidOperationException("Room 已删除，请重新选择。");
+            store.MigrateDockPinsToAppend(roomId, globalTargets);
         }
     }
 
@@ -399,7 +409,7 @@ internal sealed partial class RoomActionAuthority
     }
     private sealed record PersonalEdit(string Operation, string? ButtonId = null, string? Action = null, string? DeskId = null,
         string? TargetId = null, string? Skin = null, string? Name = null, string? Kind = null, string? Target = null,
-        string? Arguments = null, string? WorkingDirectory = null, bool? Enabled = null);
+        string? Arguments = null, string? WorkingDirectory = null, bool? Enabled = null, string? Id = null);
     private static readonly JsonSerializerOptions EditorJson = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 24 };
     private static readonly RoomPersonalSkin[] EditorSkins = { new("classic","经典"), new("glass","玻璃"), new("outline","描边") };
@@ -426,6 +436,7 @@ internal sealed partial class RoomActionAuthority
                 "resetButton" or "locateButton"=>new[]{"operation","buttonId"},
                 "upsertTarget"=>new[]{"operation","targetId","name","kind","target","arguments","workingDirectory"},
                 "removeTarget"=>new[]{"operation","targetId"},
+                "resetLayoutItem"=>new[]{"operation","kind","id","deskId"},
                 _=>Array.Empty<string>() };
             if(keys.Length==0 || root.EnumerateObject().Any(p=>!keys.Contains(p.Name,StringComparer.Ordinal))) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation is "setButton" or "resetButton" or "locateButton") RoomPersonalStore.Id(edit.ButtonId!);
@@ -437,6 +448,16 @@ internal sealed partial class RoomActionAuthority
             if(edit.TargetId is not null) RoomPersonalStore.Uuid(edit.TargetId);
             if(edit.Operation is "upsertTarget" or "removeTarget" && edit.TargetId is null) return EditorFailure(RoomActionStatus.Denied);
             if(edit.Operation=="upsertTarget") RoomPersonalStore.ValidateTarget(EditTarget(edit));
+            if(edit.Operation=="resetLayoutItem")
+            {
+                if(edit.Kind is not ("icon" or "component") || string.IsNullOrEmpty(edit.Id)) return EditorFailure(RoomActionStatus.Denied);
+                RoomPersonalStore.Id(edit.Id);
+                if(edit.Kind=="icon")
+                {
+                    if(string.IsNullOrEmpty(edit.DeskId)) return EditorFailure(RoomActionStatus.Denied);
+                    RoomPersonalStore.Id(edit.DeskId);
+                }
+            }
             if(edit.Operation=="setButton")
             {
                 if(edit.Action is not null && !RoomPersonalStore.ActionNames.Contains(edit.Action,StringComparer.Ordinal)) return EditorFailure(RoomActionStatus.Denied);
@@ -557,6 +578,19 @@ internal sealed partial class RoomActionAuthority
             foreach(var room in state.Rooms.Values)foreach(var (id,button) in room.Buttons.ToArray())
                 if(button.TargetId==edit.TargetId){var value=button with{TargetId=null};if(value==new PersonalButtonOverride())room.Buttons.Remove(id);else room.Buttons[id]=value;changed=true;}
         }
+        else if(edit?.Operation=="resetLayoutItem")
+        {
+            if(state.Rooms.TryGetValue(installed.RoomId,out var existing)&&existing.Layout is { } layout)
+            {
+                if(edit.Kind=="icon"&&layout.Icons.TryGetValue(edit.DeskId!,out var icons)&&icons.Remove(edit.Id!))
+                {
+                    if(icons.Count==0)layout.Icons.Remove(edit.DeskId!);
+                    layout.Revision=checked(layout.Revision+1);changed=true;
+                }
+                else if(edit.Kind=="component"&&layout.Components.Remove(edit.Id!))
+                { layout.Revision=checked(layout.Revision+1);changed=true; }
+            }
+        }
         return(changed,new("accepted",installed.RoomId,installed.InstallationStamp,ProjectEditor(state,installed,changed)));
     }
 
@@ -576,6 +610,18 @@ internal sealed partial class RoomActionAuthority
         var progress=Volatile.Read(ref desktopProgress);
         var matching=progress?.Room==installed.RoomId&&progress?.Desk==room?.DesktopSync?.DeskId;
         return new(checked(state.Revision+(publish?1:0)),buttons,targets,EditorSkins.ToArray(),
-            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count,!sync.Enabled?"disabled":matching?progress!.State:"pending",matching?progress!.Issues:0) : null);
+            room?.DesktopSync is { } sync ? new(sync.Enabled,sync.DeskId,sync.Slots.Count,!sync.Enabled?"disabled":matching?progress!.State:"pending",matching?progress!.Issues:0) : null,
+            ProjectLayout(room?.Layout));
+    }
+    private static RoomPersonalLayoutItem[] ProjectLayout(RoomPersonalLayout? layout)
+    {
+        if(layout is null)return Array.Empty<RoomPersonalLayoutItem>();
+        var items=new List<RoomPersonalLayoutItem>();
+        foreach(var desk in layout.Icons.Keys.OrderBy(key=>key,StringComparer.Ordinal))
+            foreach(var id in layout.Icons[desk].Keys.OrderBy(key=>key,StringComparer.Ordinal))
+            { var pos=layout.Icons[desk][id]; items.Add(new("icon",id,desk,pos.X,pos.Y,null,null)); }
+        foreach(var id in layout.Components.Keys.OrderBy(key=>key,StringComparer.Ordinal))
+        { var rect=layout.Components[id]; items.Add(new("component",id,null,rect.X,rect.Y,rect.Width,rect.Height)); }
+        return items.ToArray();
     }
 }

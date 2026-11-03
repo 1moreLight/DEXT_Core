@@ -1,53 +1,31 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import {
-  ArrowRightLeft,
-  ChevronDown,
-  ChevronUp,
-  LayoutGrid,
-  MonitorPlay,
-  Moon,
-  Plus,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DockLibrary } from "@/components/DockLibrary";
-import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { SettingsPage } from "@/components/SettingsPage";
-import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
-import { CreatorImportDialog } from "@/components/CreatorImportDialog";
-import { SceneCapabilityEditor } from "@/components/SceneCapabilityEditor";
 import { AppHeader, type AppMode as Mode, type AppTheme as Theme } from "@/app/AppHeader";
 import { V3RoomEditor } from "@/features/room-editor/V3RoomEditor";
 import { createRoomV3, readRoomV3, type RoomV3 } from "@/features/room-editor/v3-document";
-import { RoomEditorHeader } from "@/features/room-editor/RoomEditorHeader";
 import { EditorNavigation, type EditNav } from "@/features/room-editor/EditorNavigation";
 import { UsePage, type RoomSort } from "@/pages/UsePage";
 import { EditorRoomLibrary } from "@/pages/EditorRoomLibrary";
 import { EditorAppLibrary } from "@/pages/EditorAppLibrary";
-import { ContentInspector } from "@/features/room-library/previews";
-import type { EditorView } from "@/features/room-editor/view";
 import type { AppInfo, PermissionReview, RoomInfo } from "@/features/runtime/types";
 import { useDextRuntime } from "@/features/runtime/useDextRuntime";
 import { isCoreUnavailable, type CoreLifecycleBusy } from "@/features/runtime/core-status";
 import {
-  graphSwitchPosition,
-  reconcileGraphEdges,
-  routeGraphEdge,
   seedEdges,
   type GEdge,
 } from "@/features/room-editor/graph";
-import { useGraphGeometry } from "@/features/room-editor/useGraphGeometry";
 import {
   cleanContent,
   cleanDesk,
   cleanTransition,
   serializeRoomV2,
 } from "@/features/room-editor/room-draft";
-import { deleteDeskGraph, moveDeskGraph, toggleDeskApplication } from "@/lib/desk";
+import { toggleDeskApplication } from "@/lib/desk";
 import { desktopIconGridForPreferences } from "@/lib/widget-layout";
 import { type DextSettingsView } from "@/lib/desktop-icon-preferences";
 import {
@@ -76,57 +54,24 @@ import {
   roomIntegrityBlockReason,
   roomOpenStatus,
   type RoomEditAudit,
-  type RoomOrphanRecovery,
 } from "@/lib/room-integrity";
 import {
   type DockConfig,
-  type DockPresetInfo,
   DEFAULT_DOCK,
-  DOCK_PRESET_CATALOG,
-  newLocalDockPresetId,
-  parseDockPresetFile,
 } from "@/lib/dock";
 import {
   isRecord,
   type Content,
-  type ContentType,
   type Desk,
   type Transition,
-  type TransitionPreset,
-  type WidgetDefinition,
 } from "@/lib/room-v2";
 
 type Snapshot = RoomEditorSnapshot;
 
-const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
-  ["slide", "滑动"],
-  ["fade", "淡入淡出"],
-  ["zoom", "缩放"],
-  ["none", "无"],
-];
 
 const mockNativeRooms = new Map<string, RoomV3>();
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
-const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
-
-function loadLocalDockPresets(): DockPresetInfo[] {
-  try {
-    const value = JSON.parse(localStorage.getItem(LOCAL_DOCK_PRESETS_KEY) ?? "[]");
-    return Array.isArray(value)
-      ? value.filter(
-          (preset): preset is DockPresetInfo =>
-            preset &&
-            typeof preset.id === "string" &&
-            preset.id.startsWith("local-") &&
-            typeof preset.name === "string" &&
-            typeof preset.css === "string"
-        )
-      : [];
-  } catch {
-    return [];
-  }
-}
 
 // stale lib paths (repo moved) should not stick via localStorage
 function initialLibDir(): string {
@@ -289,12 +234,6 @@ function newDesk(index: number): Desk {
   return { name: `Desk ${index + 1}`, background: null, iconSize: "medium", icons: [], widgets: [] };
 }
 
-function transitionLabel(t: Transition): string {
-  if (typeof t === "string") {
-    return { slide: "滑动", fade: "淡入", zoom: "缩放", none: "无" }[t] ?? t;
-  }
-  return `${t.type === "image" ? "🖼" : t.type === "video" ? "🎬" : "代码"} ${t.name}`;
-}
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("use");
@@ -328,9 +267,8 @@ export default function App() {
   const [startContent, setStartContent] = useState<Content | null>(null);
   const [idleContent, setIdleContent] = useState<Content | null>(null);
   const [nativeRoom, setNativeRoom] = useState<RoomV3 | null>(null);
-  const [roomVersion, setRoomVersion] = useState<number | null>(2);
+  const [roomVersion, setRoomVersion] = useState<number | null>(null);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
-  const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
   const [minimizeAfterDeskAppAdd, setMinimizeAfterDeskAppAdd] = useState(
@@ -344,13 +282,8 @@ export default function App() {
   const [editNav, setEditNav] = useState<EditNav>("room");
   const [navOpen, setNavOpen] = useState(true);
   const [roomEntered, setRoomEntered] = useState(false);
-  const [editorView, setEditorView] = useState<EditorView>("canvas");
-  const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
-  const [showCreatorImport, setShowCreatorImport] = useState(false);
   const [permissionReviews, setPermissionReviews] = useState<PermissionReview[]>([]);
   const [roomOrphanResources, setRoomOrphanResources] = useState<string[]>([]);
-  const [roomRecoveryDir, setRoomRecoveryDir] = useState<string | null>(null);
-  const [roomRepairBusy, setRoomRepairBusy] = useState(false);
   const [roomPickPath, setRoomPickPath] = useState<string | null>(null);
   const [edges, setEdges] = useState<GEdge[]>([]);
   const [graphSel, setGraphSel] = useState<string | null>(null);
@@ -358,7 +291,6 @@ export default function App() {
   const [idleName, setIdleName] = useState("待机画面");
   const [hasStart, setHasStart] = useState(true);
   const [startDesk, setStartDesk] = useState(0);
-  const [propsH, setPropsH] = useState(210);
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const roomBaselineRef = useRef("");
@@ -376,7 +308,6 @@ export default function App() {
     () => {},
   ));
   const historyReadyRef = useRef(false);
-  const dragRef = useRef<{ startY: number; startH: number } | null>(null);
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("dext.theme");
     if (stored === "light" || stored === "dark") return stored;
@@ -385,14 +316,6 @@ export default function App() {
   const previewRef = useRef<HTMLIFrameElement>(null);
   const fullscreenPreviewRef = useRef<HTMLIFrameElement>(null);
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
-  const {
-    canvasRef,
-    startNodeRef,
-    deskNodeRefs,
-    geometry: geom,
-    minHeight: graphMinHeight,
-  } = useGraphGeometry(roomEntered && editorView === "flow", desks, edges.length);
-  const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const readyCoreIdentity = coreIdentity?.is_core_initialized ? coreIdentity : null;
 
@@ -432,10 +355,6 @@ export default function App() {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("dext.theme", theme);
   }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
-  }, [localDockPresets]);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -511,8 +430,7 @@ export default function App() {
       setDirty(false);
       setPermissionReviews([]);
       setRoomOrphanResources([]);
-      setRoomRecoveryDir(null);
-      setPast([]);
+            setPast([]);
       setFuture([]);
       roomBaselineRef.current = "mock-v2";
       historyReadyRef.current = true;
@@ -538,7 +456,7 @@ export default function App() {
         const native = readRoomV3(json);
         historyReadyRef.current = false;
         setNativeRoom(native); setRoomVersion(3); setRoomPath(path); setDirty(false);
-        setRoomOrphanResources([]); setRoomRecoveryDir(null); setPermissionReviews([]);
+        setRoomOrphanResources([]); setPermissionReviews([]);
         setShowPreview(false); setFullscreenPreview(false);
         localStorage.setItem("dext.roomPath", path);
         setStatus("已打开原生 Room v3 · " + native.name);
@@ -581,8 +499,7 @@ export default function App() {
       setDirty(false);
       setPermissionReviews(audit.permissionReviews);
       setRoomOrphanResources(audit.orphanWidgetResources);
-      setRoomRecoveryDir(null);
-      roomBaselineRef.current = baseline;
+            roomBaselineRef.current = baseline;
       if (restored) {
         applySnapshot(restored.current);
         setPast(restored.past.map(cloneEditorSnapshot));
@@ -610,50 +527,7 @@ export default function App() {
     setDirty(true);
   }
 
-  async function saveRoom(): Promise<boolean> {
-    if (!roomPath) return false;
-    if (roomIntegrityReason) {
-      setStatus(roomIntegrityReason);
-      return false;
-    }
-    if (!activeRoomPolicy.save) {
-      setStatus(readOnlyRoomMessage(roomVersion));
-      return false;
-    }
-    try {
-      const roomJson = JSON.stringify(buildRoomV2(), null, 2);
-      await invoke("write_room", {
-        path: `${roomPath}\\room.json`,
-        roomJson,
-      });
-      roomBaselineRef.current = normalizeRoomJson(roomJson);
-      setDirty(false);
-      setPermissionReviews(await invoke<PermissionReview[]>("get_permission_review", { path: roomPath }));
-      return true;
-    } catch (e) {
-      setStatus(`error: ${e}`);
-      return false;
-    }
-  }
 
-  async function recoverRoomOrphans() {
-    if (!IS_TAURI || !roomPath || roomRepairBusy || !roomOrphanResources.length) return;
-    setRoomRepairBusy(true);
-    try {
-      const recovery = await invoke<RoomOrphanRecovery>("quarantine_room_orphan_resources", {
-        path: roomPath,
-      });
-      const audit = await invoke<RoomEditAudit>("inspect_room_for_edit", { path: roomPath });
-      setPermissionReviews(audit.permissionReviews);
-      setRoomOrphanResources(audit.orphanWidgetResources);
-      setRoomRecoveryDir(recovery.recoveryDir);
-      setStatus(`已把 ${recovery.moved.length} 个未声明资源移至恢复目录；当前编辑内容已保留`);
-    } catch (error) {
-      setStatus(`Room 资源恢复失败：${String(error)}`);
-    } finally {
-      setRoomRepairBusy(false);
-    }
-  }
 
   async function applyRoomDir(dir: string) {
     if (roomOperationRef.current || roomBusy) return;
@@ -721,126 +595,10 @@ export default function App() {
     }
   }
 
-  async function applyCurrent() {
-    if (!roomPath) {
-      setStatus("先新建或选择一个房间");
-      return;
-    }
-    if (!activeRoomPolicy.apply) {
-      setStatus(readOnlyRoomMessage(roomVersion));
-      return;
-    }
-    if (roomIntegrityReason) {
-      setStatus(roomIntegrityReason);
-      return;
-    }
-    setStatus("saving...");
-    if (dirty && !(await saveRoom())) return;
-    await applyRoomDir(roomPath);
-  }
 
-  async function importDockPreset(): Promise<string | null> {
-    if (!IS_TAURI) {
-      setStatus("Dock 文件导入请在桌面配置器中使用");
-      return null;
-    }
-    try {
-      const selected = await open({
-        multiple: false,
-        directory: false,
-        filters: [{ name: "Dext Dock 模板", extensions: ["json", "dock"] }],
-      });
-      if (typeof selected !== "string") return null;
-      const text = await invoke<string>("read_room", { path: selected });
-      const preset = parseDockPresetFile(JSON.parse(text));
-      setLocalDockPresets((current) => [...current, preset]);
-      setStatus(`已导入 Dock「${preset.name}」`);
-      return preset.id;
-    } catch (error) {
-      setStatus(`Dock 导入失败：${error}`);
-      return null;
-    }
-  }
 
-  async function setSubjectPermission(subjectId: string, approved: boolean) {
-    if (!roomPath || !IS_TAURI) return;
-    if (roomIntegrityReason) {
-      setStatus(roomIntegrityReason);
-      return;
-    }
-    if (dirty && !(await saveRoom())) return;
-    try {
-      const reviews = await invoke<PermissionReview[]>("set_subject_permission", {
-        path: roomPath,
-        subjectId,
-        approved,
-      });
-      setPermissionReviews(reviews);
-      setStatus(approved ? "已在本机批准该内容当前版本的能力；内容变化后会自动失效" : "已撤销该内容的本机能力授权");
-    } catch (error) {
-      setStatus(`权限更新失败：${error}`);
-    }
-  }
 
-  async function importWidgetForDesk() {
-    if (!roomPath || !desks[activeDesk]) {
-      setStatus("先打开一个 Room 并选择 Desk");
-      return;
-    }
-    if (!IS_TAURI) {
-      setStatus("Widget 文件夹导入请在桌面配置器中使用；设计模式已提供可编辑样例");
-      return;
-    }
-    const sourceDir = await open({ multiple: false, directory: true });
-    if (typeof sourceDir !== "string") return;
-    const fallback = sourceDir.split(/[\\/]/).filter(Boolean).pop()?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "widget";
-    const widgetId = prompt("Widget id（小写英文、数字和连字符）", /^[a-z]/.test(fallback) ? fallback : `widget-${fallback}`)?.trim();
-    if (!widgetId) return;
-    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(widgetId)) {
-      setStatus("Widget id 必须是小写英文开头的 slug");
-      return;
-    }
-    if (desks.some((desk) => desk.widgets.some((widget) => widget.id === widgetId))) {
-      setStatus(`Widget id 已存在：${widgetId}`);
-      return;
-    }
-    const widgetName = prompt("Widget 显示名称", widgetId)?.trim();
-    if (!widgetName) return;
-    try {
-      const widget = await invoke<WidgetDefinition>("import_widget", {
-        roomDir: roomPath,
-        sourceDir,
-        widgetId,
-        widgetName,
-        deskIndex: activeDesk,
-        roomJson: JSON.stringify(buildRoomV2(), null, 2),
-      });
-      await openRoom(roomPath, false);
-      setSelectedWidgetId(widget.id);
-      setEditorView("canvas");
-      setStatus(`已安全导入 Widget「${widget.name}」并保存 Room`);
-    } catch (error) {
-      setStatus(`Widget 导入失败：${error}`);
-    }
-  }
 
-  function saveDockPreset(preset: DockPresetInfo): DockPresetInfo {
-    const saved =
-      preset.source === "builtin"
-        ? { ...preset, id: newLocalDockPresetId(preset.name), source: "local" as const }
-        : preset;
-    setLocalDockPresets((current) => {
-      const exists = current.some((item) => item.id === saved.id);
-      return exists ? current.map((item) => (item.id === saved.id ? saved : item)) : [...current, saved];
-    });
-    setStatus(
-      preset.source === "builtin"
-        ? `已从「${preset.name}」创建本地 Dock 副本`
-        : `已保存 Dock「${preset.name}」`
-    );
-    return saved;
-  }
 
   async function newRoom(): Promise<string | null> {
     const name = prompt("房间名（建议英文）");
@@ -1029,71 +787,8 @@ export default function App() {
     }
   }
 
-  async function pickRoomContent(
-    slot: "background" | "start" | "switch" | "idle",
-    contentType: ContentType,
-  ): Promise<Content | null> {
-    if (!IS_TAURI) {
-      setStatus("请在桌面配置器中选择 Room 素材");
-      return null;
-    }
-    if (!roomPath) {
-      setStatus("请先新建或打开一个 Room");
-      return null;
-    }
-    const filters = {
-      image: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "gif", "svg"] }],
-      html: [{ name: "网页代码", extensions: ["html", "htm"] }],
-      video: [{ name: "视频", extensions: ["mp4", "webm"] }],
-    }[contentType];
-    try {
-      const picked = await open({ filters, multiple: false });
-      if (typeof picked !== "string") return null;
-      setStatus("正在复制素材...");
-      const imported = await invoke<Content>("import_background", {
-        roomDir: roomPath,
-        srcPath: picked,
-        slot,
-        contentType,
-      });
-      const content = cleanContent(imported, slot);
-      if (!content) throw new Error("导入结果不是有效的 Room 内容");
-      setStatus("素材已选择，保存后写入 room.json");
-      return content;
-    } catch (e) {
-      setStatus(`素材导入失败：${e}`);
-      return null;
-    }
-  }
 
-  async function setGraphNodeContent(nodeId: string, contentType: ContentType) {
-    const isStart = nodeId === "start";
-    const isIdle = nodeId === "idle";
-    const deskIndex = isStart || isIdle ? -1 : Number(nodeId.slice(1));
-    if (!isStart && !isIdle && (!Number.isInteger(deskIndex) || !desks[deskIndex])) return;
-    const content = await pickRoomContent(isStart ? "start" : isIdle ? "idle" : "background", contentType);
-    if (!content) return;
-    pushHistory();
-    touch();
-    if (isStart) {
-      setHasStart(true);
-      setStartContent({ ...content, name: startName.trim() || content.name });
-    } else if (isIdle) {
-      setIdleContent({ ...content, name: idleName.trim() || content.name });
-    } else {
-      setDesks((prev) =>
-        prev.map((desk, index) => index === deskIndex ? { ...desk, background: content } : desk)
-      );
-    }
-  }
 
-  async function setEdgeContent(edgeId: string, contentType: ContentType) {
-    const content = await pickRoomContent("switch", contentType);
-    if (!content) return;
-    pushHistory();
-    touch();
-    setEdges((prev) => prev.map((edge) => edge.id === edgeId ? { ...edge, trans: content } : edge));
-  }
 
   function updateMinimizeAfterDeskAppAdd(value: boolean) {
     setMinimizeAfterDeskAppAdd(value);
@@ -1151,13 +846,6 @@ export default function App() {
     }
   }
 
-  function syncHistoryDeskLayouts(before: Desk[], after: Desk[]) {
-    after.forEach((desk, index) => {
-      if (JSON.stringify(before[index]?.icons ?? []) !== JSON.stringify(desk.icons)) {
-        void syncDeskIcons(after, index, "removed");
-      }
-    });
-  }
 
   async function toggleDeskApp(app: AppInfo, deskIndex = activeDesk) {
     const targetDesk = desks[deskIndex];
@@ -1197,58 +885,7 @@ export default function App() {
     void syncDeskIcons(nextDesks, deskIndex, result.action);
   }
 
-  function addDesk() {
-    const newIndex = desks.length;
-    const nextDesks = [...desks, newDesk(newIndex)];
-    pushHistory();
-    touch();
-    setDesks(nextDesks);
-    setEdges((current) => reconcileGraphEdges(current, nextDesks, hasStart, startDesk));
-    setActiveDesk(newIndex);
-    setGraphSel(`d${newIndex}`);
-  }
 
-  function removeDesk(i: number) {
-    if (desks.length === 1) return;
-    pushHistory();
-    const next = deleteDeskGraph<Desk, Transition>({
-      desks,
-      edges,
-      deleteIndex: i,
-      startDesk,
-      activeDesk,
-      graphSelection: graphSel,
-      hasStart,
-    });
-    touch();
-    setDesks(next.desks);
-    setEdges(next.edges);
-    setStartDesk(next.startDesk);
-    setActiveDesk(next.activeDesk);
-    setGraphSel(next.graphSelection);
-    setStatus("Desk 已删除；新形成的相邻方向需要单独补充 switch");
-  }
-  function moveDesk(fromIndex: number, toIndex: number) {
-    if (fromIndex === toIndex || toIndex < 0 || toIndex >= desks.length) return;
-    pushHistory();
-    const next = moveDeskGraph<Desk, Transition>({
-      desks,
-      edges,
-      fromIndex,
-      toIndex,
-      startDesk,
-      activeDesk,
-      graphSelection: graphSel,
-      hasStart,
-    });
-    setDesks(next.desks);
-    setEdges(next.edges);
-    setStartDesk(next.startDesk);
-    setActiveDesk(next.activeDesk);
-    setGraphSel(next.graphSelection);
-    touch();
-    setStatus("Desk 顺序已调整；原 Desk 身份、startDesk 和仍相邻的有向 switch 已同步重映射");
-  }
 
   const heroRoom =
     rooms.find((r) => r.path === heroPath) ??
@@ -1305,11 +942,9 @@ export default function App() {
     await applyRoomDir(room.path);
   }
   async function enterRoomEditor(room: RoomInfo) {
-    if (!roomContractPolicy(room.version, room.compatibility).edit) {
-      try {
-        const json = IS_TAURI ? await invoke<string>("read_room", {path: room.path + "\\room.json"}) : "{}";
-        setRawRoomView({name:room.name,json,message:readOnlyRoomMessage(room.version,room.compatibility)});
-      } catch (error) { setStatus("无法查看原始清单：" + String(error)); }
+    if (room.version !== 3 || !roomContractPolicy(room.version, room.compatibility).edit) {
+      setRawRoomView({name:room.name,json:"",message:readOnlyRoomMessage(room.version,room.compatibility)});
+      setStatus(readOnlyRoomMessage(room.version, room.compatibility));
       return;
     }
     const opened = await openRoom(room.path);
@@ -1467,44 +1102,6 @@ export default function App() {
       setRoomBusy(null);
     }
   }
-  function renameGraphNode(id: string, name: string) {
-    if (id === "start") {
-      setStartName(name);
-      setStartContent((current) => current ? { ...current, name } : current);
-    }
-    else if (id === "idle") {
-      setIdleName(name);
-      setIdleContent((current) => current ? { ...current, name } : current);
-    }
-    else {
-      const i = parseInt(id.slice(1), 10);
-      setDesks((prev) => prev.map((d, xi) => (xi === i ? { ...d, name } : d)));
-    }
-  }
-  function setEdgeTrans(edgeId: string, trans: string) {
-    setEdges((prev) => prev.map((e) =>
-      e.id === edgeId ? { ...e, trans: trans as TransitionPreset } : e
-    ));
-  }
-  function changeStartDesk(nextDesk: number) {
-    if (nextDesk === startDesk || nextDesk < 0 || nextDesk >= desks.length) return;
-    pushHistory();
-    setStartDesk(nextDesk);
-    setEdges((prev) => {
-      const startEdge = prev.find((edge) => edge.id === "start-in");
-      if (!hasStart) return prev.filter((edge) => edge.id !== "start-in");
-      if (startEdge)
-        return prev.map((edge) =>
-          edge.id === "start-in" ? { ...edge, to: `d${nextDesk}` } : edge
-        );
-      return [
-        { id: "start-in", from: "start", to: `d${nextDesk}`, trans: null },
-        ...prev,
-      ];
-    });
-    touch();
-    setStatus("启动目标已切换，保存后写入 startDesk");
-  }
   function snapshot(): Snapshot {
     return cloneEditorSnapshot({
       edges,
@@ -1598,38 +1195,6 @@ export default function App() {
   function pushHistory() {
     setPast((p) => [...p.slice(-49), cloneEditorSnapshot(snapshot())]);
     setFuture([]);
-  }
-  function undo() {
-    if (past.length === 0) return;
-    const s = past[past.length - 1];
-    const before = snapshot();
-    setPast(past.slice(0, -1));
-    setFuture([before, ...future]);
-    applySnapshot(s);
-    setDirty(true);
-    syncHistoryDeskLayouts(before.desks, s.desks);
-  }
-  function redo() {
-    if (future.length === 0) return;
-    const s = future[0];
-    const before = snapshot();
-    setFuture(future.slice(1));
-    setPast([...past, before]);
-    applySnapshot(s);
-    setDirty(true);
-    syncHistoryDeskLayouts(before.desks, s.desks);
-  }
-  function onDividerDown(e: PointerEvent<HTMLDivElement>) {
-    dragRef.current = { startY: e.clientY, startH: propsH };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-  function onDividerMove(e: PointerEvent<HTMLDivElement>) {
-    if (!dragRef.current) return;
-    const dy = dragRef.current.startY - e.clientY;
-    setPropsH(Math.min(420, Math.max(64, dragRef.current.startH + dy)));
-  }
-  function onDividerUp() {
-    dragRef.current = null;
   }
   useEffect(() => {
     if (roomEntered) {
@@ -1813,12 +1378,6 @@ export default function App() {
                 onScan={() => void scanMerge()}
                 onToggleSelect={toggleSelect}
               />
-            ) : editNav === "dock" ? (
-              <DockLibrary
-                presets={dockPresets}
-                onImport={importDockPreset}
-                onSave={saveDockPreset}
-              />
             ) : editNav === "room" && !roomEntered ? (
               <EditorRoomLibrary
                 rooms={sortedRooms}
@@ -1846,511 +1405,11 @@ export default function App() {
                 onApplied={() => {setAppliedRoom(roomPath); setStatus("已应用原生 Room v3");}}
               />
             ) : (
-              /* entered a room: desk editing */
-              <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <RoomEditorHeader
-                  roomName={roomPath?.split("\\").pop() ?? "（未选房间）"}
-                  dirty={dirty}
-                  editorView={editorView}
-                  canUndo={past.length > 0}
-                  canRedo={future.length > 0}
-                  canSave={!roomIntegrityReason}
-                  saveDisabledReason={roomIntegrityReason ?? undefined}
-                  canApply={(!IS_TAURI || Boolean(readyCoreIdentity)) && !roomIntegrityReason}
-                  applyDisabledReason={roomIntegrityReason ?? (IS_TAURI && !readyCoreIdentity ? "Dext Core 未连接" : undefined)}
-                  canDeleteDesk={desks.length > 1 && Boolean(desks[activeDesk])}
-                  onBack={() => setRoomEntered(false)}
-                  onView={setEditorView}
-                  onCreatorImport={() => setShowCreatorImport(true)}
-                  onImportWidget={() => void importWidgetForDesk()}
-                  onAddDesk={addDesk}
-                  onUndo={undo}
-                  onRedo={redo}
-                  onSave={() => void (async () => {
-                    if (IS_TAURI) await saveRoom();
-                    else {
-                      setDirty(false);
-                      setStatus("已保存（mock，未写盘）");
-                    }
-                  })()}
-                  onSaveAs={() => {
-                    if (IS_TAURI) void saveAs();
-                    else setStatus("另存为请在桌面配置器中使用");
-                  }}
-                  onApply={() => void applyCurrent()}
-                  onDeleteDesk={() => {
-                    const current = desks[activeDesk];
-                    if (current && confirm(`删除「${current.name}」？此操作可用撤销恢复。`)) removeDesk(activeDesk);
-                  }}
-                />
-                {roomOrphanResources.length > 0 && (
-                  <div role="alert" className="rounded-lg border border-amber-500/45 bg-amber-500/10 px-4 py-3 text-sm">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-amber-700 dark:text-amber-300">Room 中有未声明的 Widget 资源</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          你可以继续查看和编辑；保存、预览、应用和导出会被阻止，直到这些文件移至恢复目录。
-                        </p>
-                        <ul className="mt-2 max-h-24 list-inside list-disc overflow-auto font-mono text-xs">
-                          {roomOrphanResources.map((resource) => <li key={resource}>{resource}</li>)}
-                        </ul>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={roomRepairBusy}
-                        onClick={() => void recoverRoomOrphans()}
-                      >
-                        {roomRepairBusy ? "正在移至恢复目录…" : "移至恢复目录并继续"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {!roomOrphanResources.length && roomRecoveryDir && (
-                  <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-700 dark:text-emerald-300">
-                    未声明资源已安全移出；恢复副本：<span className="font-mono">{roomRecoveryDir}</span>
-                  </div>
-                )}
-                <div className="flex min-h-0 flex-1 gap-3">
-                  <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                {editorView === "dock" ? (
-                  <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background p-3">
-                    <DockEditor
-                      dock={dock}
-                      setDock={setDock}
-                      apps={apps}
-                      desks={desks}
-                      setDesks={setDesks}
-                      activeDesk={activeDesk}
-                      onBeginChange={pushHistory}
-                      touch={touch}
-                      setStatus={setStatus}
-                    />
-                  </div>
-                ) : editorView === "canvas" ? (
-                  <DesktopCanvasEditor
-                    desks={desks}
-                    activeDesk={activeDesk}
-                    roomDock={dock}
-                    roomPath={roomPath}
-                    selectedWidgetId={selectedWidgetId}
-                    permissionReview={permissionReviews.find((item) => item.id === (selectedWidgetId ? `widget:${selectedWidgetId}` : `scene:desk:${activeDesk}`)) ?? null}
-                    onPermissionChange={(approved) => setSubjectPermission(selectedWidgetId ? `widget:${selectedWidgetId}` : `scene:desk:${activeDesk}`, approved)}
-                    onActiveDesk={(index) => {
-                      setActiveDesk(index);
-                      setGraphSel(`d${index}`);
-                    }}
-                    onSelectWidget={setSelectedWidgetId}
-                    onBeginChange={pushHistory}
-                    onDeskChange={(nextDesk, message) => {
-                      setDesks((current) => current.map((item, index) => index === activeDesk ? nextDesk : item));
-                      touch();
-                      if (message) setStatus(message);
-                    }}
-                  />
-                ) : (
-                  <>
-                    {/* 上：Room 结构思维导图（Desk 对拆为两条方向线，各带箭头与 switch chip） */}
-	                    <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-muted/20">
-	                      <div
-	                        ref={canvasRef}
-	                        data-testid="graph-canvas"
-	                        className="relative h-full w-full"
-	                        style={{ minHeight: graphMinHeight, minWidth: 720 }}
-	                      >
-	                        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-	                          <defs>
-                            <marker
-                              id="garrow"
-                              viewBox="0 0 10 10"
-                              refX="9"
-                              refY="5"
-                              markerWidth="6"
-                              markerHeight="6"
-                              orient="auto-start-reverse"
-                            >
-                              <path d="M0,0L10,5L0,10z" fill="currentColor" />
-	                            </marker>
-	                          </defs>
-	                          {edges.map((edge) => {
-	                            const fromNode = geom.nodes[edge.from];
-	                            const toNode = geom.nodes[edge.to];
-	                            const pair = edge.from !== "start" && edge.to !== "start";
-	                            const laneOffset = pair && fromNode && toNode ? (toNode.cy >= fromNode.cy ? -20 : 20) : 0;
-	                            const segments = routeGraphEdge(edge, geom.nodes, laneOffset);
-	                            return (
-	                              <g key={edge.id} data-graph-edge={edge.id} className={pair && graphSel === edge.id ? "text-primary" : "text-foreground/60"}>
-	                                {segments.map((segment, index) => (
-	                                  <line
-	                                    key={index}
-	                                    {...segment}
-	                                    fill="none"
-	                                    stroke="currentColor"
-	                                    strokeWidth={2.2}
-	                                    strokeLinecap="round"
-	                                    vectorEffect="non-scaling-stroke"
-	                                    markerEnd={index === segments.length - 1 ? "url(#garrow)" : undefined}
-	                                  />
-	                                ))}
-	                              </g>
-	                            );
-	                          })}
-	                        </svg>
-	                        {/* switch 标记（每条方向线一个，骑线显示，点选即编辑该方向） */}
-	                        {edges
-	                          .filter((edge) => edge.from !== "start" && edge.to !== "start")
-	                          .map((e) => {
-	                          const fromNode = geom.nodes[e.from];
-	                          const toNode = geom.nodes[e.to];
-	                          if (!fromNode || !toNode) return null;
-	                          const base = graphSwitchPosition(e, geom.nodes);
-	                          if (!base) return null;
-	                          const downward = toNode.cy >= fromNode.cy;
-	                          const nameOf = (id: string) => desks[parseInt(id.slice(1), 10)]?.name ?? id;
-	                          return (
-	                            <button
-	                              key={e.id}
-	                              data-graph-switch={e.id}
-	                              title={`切换：${nameOf(e.from)} → ${nameOf(e.to)}`}
-	                              onClick={() => setGraphSel(e.id)}
-	                              style={{ left: base.left + (downward ? -20 : 20), top: base.top }}
-                              className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 text-[10px] transition-colors ${
-                                graphSel === e.id
-                                  ? "border-primary bg-primary/10 font-medium text-primary"
-                                  : "border-border text-muted-foreground hover:border-primary/50"
-                              }`}
-                            >
-                              <ArrowRightLeft className="h-3 w-3" />
-                            </button>
-                          );
-	                          })}
-	                        {/* 启动画面主节点 */}
-	                        <button
-	                          ref={startNodeRef}
-	                          data-graph-node="start"
-	                          title={startName}
-	                          onClick={() => setGraphSel("start")}
-                          className={`absolute left-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
-                            graphSel === "start"
-                              ? "border-primary bg-primary/10"
-                              : "border-border bg-background hover:border-primary/50"
-                          }`}
-	                        >
-	                          <MonitorPlay className="h-5 w-5 text-primary" />
-	                          <span className="w-full truncate px-1 text-xs font-medium">{startName}</span>
-	                          <span
-	                            aria-hidden="true"
-	                            className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                          />
-	                        </button>
-                        {/* 待机是 Lively 屏保入口，不属于 Desk 导航拓扑。 */}
-                        <button
-                          data-graph-node="idle"
-                          title={idleName}
-                          onClick={() => setGraphSel("idle")}
-                          className={`absolute right-[3%] top-1/2 z-10 flex w-[11%] min-w-24 -translate-y-1/2 flex-col items-center gap-1 rounded-xl border-2 py-3 transition-colors ${
-                            graphSel === "idle"
-                              ? "border-primary bg-primary/10"
-                              : "border-border bg-background hover:border-primary/50"
-                          }`}
-                        >
-                          <Moon className="h-5 w-5 text-primary" />
-                          <span className="w-full truncate px-1 text-xs font-medium">{idleName}</span>
-                          <span className="text-[10px] text-muted-foreground">Lively 待机</span>
-                        </button>
-                        {/* Desk 矩形节点（desks[0] = 主 Desk，启动后第一个看到） */}
-                        {desks.map((d, i) => {
-                          const y = ((i + 1) / (desks.length + 1)) * 100;
-                          const active = graphSel === `d${i}`;
-                          return (
-	                            <button
-	                              key={i}
-	                              ref={(node) => {
-	                                const id = `d${i}`;
-	                                if (node) deskNodeRefs.current.set(id, node);
-	                                else deskNodeRefs.current.delete(id);
-	                              }}
-	                              data-graph-node={`d${i}`}
-	                              title={d.name}
-	                              onClick={() => {
-                                setGraphSel(`d${i}`);
-                                setActiveDesk(i);
-                              }}
-                              style={{ left: "40%", top: `${y}%` }}
-	                              className={`absolute z-10 max-w-[42%] -translate-y-1/2 rounded-lg border-2 px-3 py-2.5 text-left transition-colors ${
-                                active
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border bg-background hover:border-primary/50"
-                              }`}
-                            >
-	                              <div className="truncate whitespace-nowrap text-sm font-medium">{d.name}</div>
-	                              <div className="text-[10px] text-muted-foreground">
-	                                {i === 0 ? "主 Desk" : `Desk ${i + 1}`} · {d.icons.length} 图标
-	                              </div>
-	                              <span
-	                                aria-hidden="true"
-	                                className="pointer-events-none absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                              />
-	                              {i > 0 && (
-	                                <span
-	                                  aria-hidden="true"
-	                                  className="pointer-events-none absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                />
-	                              )}
-	                              {i < desks.length - 1 && (
-	                                <span
-	                                  aria-hidden="true"
-	                                  className="pointer-events-none absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-primary bg-background"
-	                                />
-	                              )}
-	                              {desks.length > 2 && (i === 0 || i === desks.length - 1) && (
-	                                <span
-	                                  aria-hidden="true"
-	                                  className="pointer-events-none absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border-2 border-primary bg-background"
-	                                />
-	                              )}
-	                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    {/* 可拖动分隔条 */}
-                    <div
-                      onPointerDown={onDividerDown}
-                      onPointerMove={onDividerMove}
-                      onPointerUp={onDividerUp}
-                      className="h-1.5 shrink-0 cursor-row-resize rounded bg-border transition-colors hover:bg-primary/60"
-                    />
-                    {/* 下：属性栏 */}
-                    <div
-                      className="flex shrink-0 items-center gap-5 overflow-x-auto rounded-lg border border-border px-4 py-2.5"
-                      style={{ height: propsH }}
-                    >
-                      {!graphSel ? (
-                        <div className="w-full text-center text-sm text-muted-foreground">
-                          点击上方节点或 switch 连线，在这里编辑属性
-                        </div>
-                      ) : graphSel === "start" || graphSel === "idle" || /^d\d+$/.test(graphSel) ? (
-                        (() => {
-                          const isStart = graphSel === "start";
-                          const isIdle = graphSel === "idle";
-                          const deskIndex = isStart || isIdle ? -1 : parseInt(graphSel.slice(1), 10);
-                          const name = isStart
-                            ? startName
-                            : isIdle
-                              ? idleName
-                              : (desks[deskIndex]?.name ?? "");
-                          const content = isStart
-                            ? startContent
-                            : isIdle
-                              ? idleContent
-                              : desks[deskIndex]?.background ?? null;
-                          const subjectId = isStart ? "scene:start" : isIdle ? "scene:idle" : `scene:desk:${deskIndex}`;
-                          return (
-                            <>
-                              <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-medium">
-                                {isStart ? (
-                                  <MonitorPlay className="h-3.5 w-3.5 text-primary" />
-                                ) : isIdle ? (
-                                  <Moon className="h-3.5 w-3.5 text-primary" />
-                                ) : (
-                                  <LayoutGrid className="h-3.5 w-3.5 text-primary" />
-                                )}
-                                {isStart ? "启动画面" : isIdle ? "待机画面" : "Desk"}
-                              </span>
-                              <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                                改名
-                                <Input
-                                  value={name}
-                                  onFocus={pushHistory}
-                                  onChange={(ev) => renameGraphNode(graphSel, ev.target.value)}
-                                  className="h-8 w-44"
-                                />
-                              </label>
-                              {!isStart && !isIdle && (
-                                <div className="flex shrink-0 items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-7 w-7"
-                                    title="上移 Desk"
-                                    disabled={deskIndex === 0}
-                                    onClick={() => moveDesk(deskIndex, deskIndex - 1)}
-                                  >
-                                    <ChevronUp className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="h-7 w-7"
-                                    title="下移 Desk"
-                                    disabled={deskIndex === desks.length - 1}
-                                    onClick={() => moveDesk(deskIndex, deskIndex + 1)}
-                                  >
-                                    <ChevronDown className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              )}
-	                              {isStart && (
-	                                <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-	                                  连接到
-	                                  <select
-	                                    aria-label="启动画面连接到"
-	                                    value={startDesk}
-	                                    onChange={(event) => changeStartDesk(Number(event.target.value))}
-	                                    className="h-8 min-w-36 rounded-md border border-border bg-background px-2 text-sm text-foreground"
-	                                  >
-	                                    {desks.map((item, index) => (
-	                                      <option key={index} value={index}>
-	                                        {item.name || `Desk ${index + 1}`}
-	                                      </option>
-	                                    ))}
-	                                  </select>
-	                                </label>
-	                              )}
-	                              {!isStart && !isIdle && (
-	                                <Button
-	                                  size="sm"
-	                                  onClick={() => {
-	                                    setActiveDesk(deskIndex);
-	                                    setAppPickerDesk(deskIndex);
-	                                    setStatus(`选择要放入 ${desks[deskIndex]?.name ?? "当前 Desk"} 的应用`);
-	                                  }}
-	                                >
-	                                  <Plus className="h-3.5 w-3.5" /> 放入应用
-	                                </Button>
-	                              )}
-                              <ContentInspector
-                                content={content}
-                                roomPath={roomPath}
-                                emptyLabel={isStart ? "尚未选择启动画面" : isIdle ? "尚未设置待机画面" : "尚未设置背景"}
-                              />
-                              <div className="flex shrink-0 items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                  {isStart ? "画面素材：" : isIdle ? "待机素材：" : "壁纸素材："}
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  title="选择图片"
-                                  onClick={() => void setGraphNodeContent(graphSel, "image")}
-                                >
-                                  <span className={`h-2 w-2 rounded-full ${content?.type === "image" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 图片
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  title="选择自包含 HTML 文件"
-                                  onClick={() => void setGraphNodeContent(graphSel, "html")}
-                                >
-                                  <span className={`h-2 w-2 rounded-full ${content?.type === "html" ? "bg-primary" : "bg-muted-foreground/35"}`} /> HTML
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  title="选择视频"
-                                  onClick={() => void setGraphNodeContent(graphSel, "video")}
-                                >
-                                  <span className={`h-2 w-2 rounded-full ${content?.type === "video" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 视频
-                                </Button>
-                              </div>
-                              {content?.type === "html" && (
-                                <div className="w-[52rem] shrink-0 border-l border-border pl-4">
-                                  <SceneCapabilityEditor
-                                    compact
-                                    scene={content}
-                                    permissionReview={permissionReviews.find((item) => item.id === subjectId) ?? null}
-                                    onPermissionChange={(approved) => setSubjectPermission(subjectId, approved)}
-                                    onBeginChange={pushHistory}
-                                    onSceneChange={(next, message) => {
-                                      if (isStart) setStartContent(next);
-                                      else if (isIdle) setIdleContent(next);
-                                      else setDesks((current) => current.map((desk, index) => index === deskIndex ? { ...desk, background: next } : desk));
-                                      touch();
-                                      setStatus(message);
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()
-                      ) : (
-                        edges
-                          .filter((e) => e.id === graphSel)
-                          .map((e) => {
-                            const nameOf = (id: string) =>
-                              id === "start"
-                                ? startName
-                                : (desks[parseInt(id.slice(1), 10)]?.name ?? id);
-                            const content = typeof e.trans === "object" ? e.trans : null;
-                            const route = `${Number(e.from.slice(1))}>${Number(e.to.slice(1))}`;
-                            const subjectId = `scene:switch:${route}`;
-                            return (
-                              <div key={e.id} className="flex shrink-0 items-center gap-4 border-r border-border pr-5 text-xs text-muted-foreground last:border-r-0">
-                                <div className="w-36 shrink-0">
-                                  <div className="font-medium text-foreground">{nameOf(e.from)} → {nameOf(e.to)}</div>
-                                  <div className="mt-1">{e.trans ? transitionLabel(e.trans) : "需要补充切换"}</div>
-                                </div>
-                                <ContentInspector content={content} roomPath={roomPath} emptyLabel={typeof e.trans === "string" ? `内置效果：${transitionLabel(e.trans)}` : "尚未选择切换内容"} />
-                                <div className="flex w-44 shrink-0 flex-wrap gap-1.5">
-                                  {(["image", "video", "html"] as ContentType[]).map((type) => (
-                                    <Button key={type} variant="outline" size="sm" onClick={() => void setEdgeContent(e.id, type)}>
-                                      <span className={`h-2 w-2 rounded-full ${content?.type === type ? "bg-primary" : "bg-muted-foreground/35"}`} />
-                                      {type === "image" ? "图片" : type === "video" ? "视频" : "HTML"}
-                                    </Button>
-                                  ))}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      pushHistory();
-                                      setEdgeTrans(e.id, "slide");
-                                      touch();
-                                    }}
-                                  >
-                                    <span className={`h-2 w-2 rounded-full ${typeof e.trans === "string" ? "bg-primary" : "bg-muted-foreground/35"}`} /> 内置效果
-                                  </Button>
-                                  {typeof e.trans === "string" && (
-                                    <select
-                                      aria-label={`${nameOf(e.from)} 到 ${nameOf(e.to)}的内置效果`}
-                                      value={e.trans}
-                                      onChange={(event) => {
-                                        pushHistory();
-                                        setEdgeTrans(e.id, event.target.value);
-                                        touch();
-                                      }}
-                                      className="h-8 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
-                                    >
-                                      {TRANSITION_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                                    </select>
-                                  )}
-                                </div>
-                                {content?.type === "html" && (
-                                  <div className="w-[52rem] shrink-0 border-l border-border pl-4">
-                                    <SceneCapabilityEditor
-                                      compact
-                                      scene={content}
-                                      permissionReview={permissionReviews.find((item) => item.id === subjectId) ?? null}
-                                      onPermissionChange={(approved) => setSubjectPermission(subjectId, approved)}
-                                      onBeginChange={pushHistory}
-                                      onSceneChange={(next, message) => {
-                                        setEdges((current) => current.map((edge) => edge.id === e.id ? { ...edge, trans: next } : edge));
-                                        touch();
-                                        setStatus(message);
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })
-                      )}
-                    </div>
-                  </>
-                )}
-                  </div>
-                </div>
+              <div role="alert" className="m-auto max-w-lg space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-6">
+                <h2 className="text-lg font-semibold">无法用旧编辑器打开</h2>
+                <p className="text-sm">{readOnlyRoomMessage(roomVersion)}</p>
+                <p className="text-sm text-muted-foreground">Room 库只有一个编辑入口，并且只进入 Room v3 统一编辑器。画布、流程和 Dock 旧编辑器已经删除。</p>
+                <Button variant="outline" onClick={() => setRoomEntered(false)}>返回房间库</Button>
               </div>
             )}
           </section>
@@ -2377,24 +1436,11 @@ export default function App() {
           onClose={() => setAppPickerDesk(null)}
         />
       )}
-      {showCreatorImport && roomPath && (
-        <CreatorImportDialog
-          roomPath={roomPath}
-          roomJson={buildRoomV2()}
-          activeDesk={activeDesk}
-          deskCount={desks.length}
-          onImported={async () => {
-            await openRoom(roomPath, false);
-            setEditorView("canvas");
-            setStatus("AI 创作内容已安全写入 Room；系统能力仍需本机单独授权");
-          }}
-          onClose={() => setShowCreatorImport(false)}
-        />
-      )}
-      {rawRoomView && <dialog ref={rawRoomDialogRef} onCancel={()=>setRawRoomView(null)} aria-label="原始 Room 清单（只读）" className="fixed inset-0 z-50 m-auto flex max-h-[85vh] w-[min(900px,90vw)] flex-col rounded-xl border border-border bg-background p-5 text-foreground shadow-2xl">
-        <div className="flex items-center justify-between gap-4"><h2 className="font-semibold">{rawRoomView.name} · 原始清单（只读）</h2><Button autoFocus variant="outline" onClick={()=>setRawRoomView(null)}>关闭</Button></div>
+
+      {rawRoomView && <dialog ref={rawRoomDialogRef} onCancel={()=>setRawRoomView(null)} aria-label="不支持的 Room" className="fixed inset-0 z-50 m-auto flex max-h-[85vh] w-[min(560px,90vw)] flex-col rounded-xl border border-border bg-background p-5 text-foreground shadow-2xl">
+        <div className="flex items-center justify-between gap-4"><h2 className="font-semibold">无法用旧编辑器打开 · {rawRoomView.name}</h2><Button autoFocus variant="outline" onClick={()=>setRawRoomView(null)}>关闭</Button></div>
         <p className="my-3 text-sm text-amber-600 dark:text-amber-300">{rawRoomView.message}</p>
-        <pre tabIndex={0} className="min-h-0 flex-1 overflow-auto rounded-md bg-muted p-4 text-xs">{rawRoomView.json}</pre>
+        <p className="text-sm text-muted-foreground">请回到房间库，只编辑 Room v3。不会打开画布、流程或 Dock 旧编辑器。</p>
       </dialog>}      {fullscreenPreview && (
         <div className="fixed inset-0 z-50 bg-black">
           <iframe

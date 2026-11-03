@@ -5,13 +5,14 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import type {AppInfo} from "@/features/runtime/types";
 
-import {dockPinSelection, type DockPinContext} from "@/lib/application-dock-pins";
+import {dockPinSelection, type DockPinContext, type DockPinSource} from "@/lib/application-dock-pins";
 
-import {dockPresentationLabel, dockPresentationReason, type DockPresentation, type DockPresentationState} from "@/lib/application-dock-presentation";
+import {dockPresentationFallback, dockPresentationLabel, type DockPresentation, type DockPresentationState} from "@/lib/application-dock-presentation";
+import {pinIdentity} from "@/lib/dock-pin-append";
 
 type Pin = {name:string; target:string; arguments:string; workingDirectory:string};
 type TaskbarState = {mode:"auto"|"hidden"|"visible"; hidden:boolean; visible:boolean|null; error:string|null};
-type State = {presentation?:DockPresentation; presentationState?:DockPresentationState|null;effectivePins?:Pin[]; pinContext?:DockPinContext|null;autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
+type State = {presentation?:DockPresentation; presentationState?:DockPresentationState|null;effectivePins?:Pin[]; pinSources?:DockPinSource[]; pinContext?:DockPinContext|null;autoHide?:boolean; reserveSpace?:boolean; runtime?:{owner:string;visible:boolean;waiting:boolean;blocked?:string|null;reservation?:{registered:boolean;ready:boolean;error:string|null}}; taskbar?:TaskbarState; enabled:boolean; pins:Pin[]; groups:{key:string; name:string; pinned:boolean; windows:{handle:number; title:string}[]}[]; error:string|null};
 const native = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null;setStatus:(message:string)=>void}) {
@@ -87,6 +88,8 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
   }
   const disabled = !connected || busy || !state;
   const pins = scope === "desk" ? state?.effectivePins ?? [] : state?.pins ?? [];
+  const sourceOf = (target:string) => state?.pinSources?.find(item => pinIdentity(item.target) === pinIdentity(target))?.source
+    ?? (scope === "desk" ? "global" : "global");
   const pinsDisabled = disabled || scope === "desk" && (!state?.pinContext || state.pinContext.changing);
   const matches = apps.filter(app => app.name.toLowerCase().includes(query.toLowerCase()));
   return <section className="mb-8 rounded-xl border border-border p-4 space-y-4">
@@ -101,14 +104,12 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
           <option value="theme">融入当前主题 Dock</option>
         </select>
       </label>
-      <p className="text-xs text-muted-foreground">融合需要主题提供应用任务区；不可用时自动回退，保留你的选择。</p>
-      <p role="status" className="text-xs text-muted-foreground">实际状态：{dockPresentationLabel(state?.presentationState)}</p>
-      {state?.presentationState?.reason && <p className="text-xs text-amber-600">{dockPresentationReason(state.presentationState.reason)}</p>}
+      <p className="text-xs text-muted-foreground">融合需要主题提供应用任务区。主题不可用时会改用可见宿主，并写明回退原因。</p>
+      <p role="status" className="text-xs text-muted-foreground">{dockPresentationLabel(state?.presentationState)}</p>
+      {dockPresentationFallback(state?.presentationState) && <p className="text-xs text-amber-600">回退原因：{dockPresentationFallback(state?.presentationState)}</p>}
       {state?.presentation === "theme" && state?.presentationState?.phase === "fallback" && <Button size="sm" variant="outline" disabled={disabled} onClick={()=>void edit({operation:"retryPresentation"})}>重试主题融合</Button>}
     </div>
-    <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="自动隐藏应用 Dock" disabled={disabled} checked={state?.autoHide ?? false} onChange={event => void edit({operation:"autoHide",autoHide:event.target.checked})}/>自动隐藏：移到主屏底部中央唤出</label>
-    <label className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label="应用 Dock 常驻占位" disabled={disabled} checked={state?.reserveSpace ?? false} onChange={event => void edit({operation:"reserveSpace",reserveSpace:event.target.checked})}/>常驻占位：最大化窗口为 Dock 留出空间</label>
-    <p className="text-xs text-muted-foreground">自动隐藏与常驻占位互斥；都不选时，Dock 浮在窗口上方。</p>
+    <p role="status" className="text-xs text-muted-foreground">自动隐藏 · 请求：{state?.autoHide ? "开" : "关"} · 实际：{state?.runtime?.blocked === "fullscreen" ? "全屏期间隐藏" : state?.runtime?.blocked === "locked" ? "锁屏期间隐藏" : state?.autoHide ? "触边展开" : state?.reserveSpace ? "常驻占位" : "常显浮于窗口上方"}。开关只在下方「原生 Dock」的显示方式里，保存后两边一起更新。</p>
     {state?.reserveSpace && <p role="status" className="text-xs text-muted-foreground">{state.runtime?.reservation?.ready ? "Windows 已确认 Dock 工作区占位" : state.runtime?.reservation?.error ?? "等待 Dock 就绪并确认工作区…"}</p>}
     <p className="text-xs text-muted-foreground">点击启动或切换；当前单窗口应用再次点击最小化；多个窗口点击选择。右键修改当前有效列表；Desk 还在跟随全局时，右键修改全局。全屏时隐藏，退出全屏后恢复。</p>
     <p className="text-xs text-muted-foreground">独立模式使用原生栏，融合模式使用主题栏。关闭应用 Dock 后，按原先保存的主题 Dock 设置恢复。</p>
@@ -135,8 +136,8 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
           <option value="desk" disabled={!state?.pinContext}>当前 Desk{state?.pinContext ? " · "+state.pinContext.name : "（未运行 Room）"}</option>
         </select>
       </label>
-      {scope === "desk" && <p className="text-xs text-muted-foreground">{!state?.pinContext ? "请先运行一个 Room。" : state.pinContext.changing ? "正在切换 Desk，请稍后操作。" : state.pinContext.inherits ? "当前跟随全局，增删后建立此 Desk 的独立列表。" : "此 Desk 使用独立列表，其他 Desk 不受影响。"}
-        {state?.pinContext && !state.pinContext.inherits && <Button size="sm" variant="ghost" disabled={pinsDisabled} onClick={()=>void inheritPins()}>恢复跟随全局</Button>}
+      {scope === "desk" && <p className="text-xs text-muted-foreground">{!state?.pinContext ? "请先运行一个 Room。" : state.pinContext.changing ? "正在切换 Desk，请稍后操作。" : state.pinContext.inherits ? "本 Desk 没有追加。空列表表示不追加，生效结果等于全局。" : "全局项标记为「全局」；只有「本 Desk 追加」写在这个 Desk 上。"}
+        {state?.pinContext && !state.pinContext.inherits && <Button size="sm" variant="ghost" disabled={pinsDisabled} onClick={()=>void inheritPins()}>清除本 Desk 追加</Button>}
       </p>}
     </div>
     <div className="flex gap-2">
@@ -157,8 +158,16 @@ export function ApplicationDockSettings({corePid,setStatus}:{corePid:number|null
     </div>}
     <div className="space-y-2">
       <h3 className="text-xs font-medium">已固定 · {pins.length}</h3>
-      {pins.map(pin => <div key={pin.target} className="flex items-center gap-2 text-sm"><span className="flex-1 truncate" title={pin.target}>{pin.name}</span><Button size="sm" variant="ghost" disabled={pinsDisabled} onClick={() => void unpin(pin.target)}>取消固定</Button></div>)}
-      {pins.length === 0 && <p className="text-xs text-muted-foreground">尚未固定应用。启用后，已打开的应用也会出现在 Dock 中。</p>}
+      {pins.map(pin => {
+        const source = scope === "global" ? "global" : sourceOf(pin.target);
+        const lockedGlobal = scope === "desk" && source !== "desk";
+        return <div key={pin.target} className="flex items-center gap-2 text-sm">
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">{source === "desk" ? "本 Desk 追加" : scope === "desk" ? "跟随全局" : "全局"}</span>
+          <span className="flex-1 truncate" title={pin.target}>{pin.name}</span>
+          <Button size="sm" variant="ghost" disabled={pinsDisabled || lockedGlobal} title={lockedGlobal ? "全局固定项请切到「全局」再取消" : undefined} onClick={() => void unpin(pin.target)}>{lockedGlobal ? "跟随全局" : "取消固定"}</Button>
+        </div>;
+      })}
+      {pins.length === 0 && <p className="text-xs text-muted-foreground">{scope === "desk" ? "没有可显示的固定项。全局列表为空，且本 Desk 没有追加。" : "尚未固定应用。启用后，已打开的应用也会出现在 Dock 中。"}</p>}
     </div>
     <p className="text-xs text-muted-foreground">{!native ? "浏览器设计预览" : !connected ? "Core 未连接" : state ? (state.enabled ? "已启用" : "已关闭") + " · " + state.groups.filter(group => group.windows.length > 0).length + " 个运行应用" : "正在读取…"}</p>
     <p className="text-xs text-muted-foreground">本机设置会自动保存，关闭配置器后继续运行。当前显示在主屏工作区底部。</p>

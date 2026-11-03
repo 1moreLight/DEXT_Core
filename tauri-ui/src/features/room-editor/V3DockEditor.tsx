@@ -7,6 +7,7 @@ import navigation from "../../../../creator-kit/v3/dock-templates/navigation-bar
 import { dockComponent, readDockDescriptor, effectiveDockConfig, setDockValue, resetDockValue, setDockAction, removeDockRegion, setDeskDockReference } from "./dock-template";
 import type { DockTemplateDescriptor, DockDataSource, DockRegion } from "./dock-template";
 import type { RoomV3, V3Button } from "./v3-document";
+import { SourceTag } from "./SourceTag";
 const builtIns = [panels,navigation] as DockTemplateDescriptor[];
 type Props={room:RoomV3;deskId:string;isTauri:boolean;canApply:boolean;disabled:boolean;onChange:(room:RoomV3)=>void;onImport:(descriptor:DockTemplateDescriptor)=>Promise<void>;onMessage:(message:string)=>void};
 const sources=[["time.read","时间"],["hardware.read","硬件"],["media.read","媒体"],["audio.read","音量"]];
@@ -34,7 +35,7 @@ export function V3DockEditor(props:Props){
   apply(()=>setDockAction(room,region.id,action,scope));
  };
  return <section aria-label="Dock 模板编辑" className="space-y-4 rounded-xl border bg-background/50 p-4">
-  <div><h3 className="text-sm font-medium">1 · Dock 外观</h3><p className="mt-1 text-xs text-muted-foreground">选择模板后自动识别区域；再次选择可恢复已删除区域。</p></div>
+  <div><h3 className="flex items-center gap-2 text-sm font-medium">1 · Dock 外观 <SourceTag source="work"/></h3><p className="mt-1 text-xs text-muted-foreground">选择模板后自动识别区域；再次选择可恢复已删除区域。显示方式、高度和自动隐藏只在设置页（本机设置），这里不能改。</p></div>
   <div className="grid grid-cols-2 gap-2">{templates.map(template=><Button key={template.id} variant="outline" className={"h-auto justify-start whitespace-normal p-3 "+(descriptor?.id===template.id?"border-cyan-500 bg-cyan-500/10":"")} disabled={props.disabled} aria-label={"选择 "+template.name} onClick={()=>void props.onImport(template)}>
    <span className="text-left"><span className="block">{template.name}</span><span className="mt-1 block text-[11px] font-normal text-muted-foreground">{template.regions.filter(r=>r.kind==="data").length} 数据区 · {template.regions.filter(r=>r.kind==="button").length} 按钮区</span></span>
   </Button>)}</div>
@@ -42,13 +43,13 @@ export function V3DockEditor(props:Props){
    <div><h3 className="text-sm font-medium">2 · 共享交互 / Desk 差异</h3><div className="mt-2 flex gap-2">
     <Button size="sm" variant={!editDesk?"secondary":"ghost"} disabled={props.disabled} onClick={()=>setEditDesk(false)}>共享配置</Button>
     <Button size="sm" variant={editDesk?"secondary":"ghost"} disabled={props.disabled} onClick={()=>setEditDesk(true)}>当前 Desk 差异</Button></div>
-    <p className="mt-2 text-xs text-muted-foreground">{editDesk?"仅保存当前 Desk 修改的字段；恢复继承后继续跟随共享配置。":"所有引用此 Dock 的 Desk 默认使用这些值。"}</p>
+    <p className="mt-2 text-xs text-muted-foreground">{editDesk?"仅保存当前 Desk 在作品里的字段差异；恢复继承后继续跟随共享作品配置。这不是「我的」个人覆盖。":"所有引用此 Dock 的 Desk 默认使用这些作品值。"}</p>
     {editDesk&&!assigned&&<p role="status" className="mt-2 text-sm text-amber-600">当前 Desk 尚未引用 Dock；勾选下方引用后可编辑。</p>}
    </div>
    <fieldset disabled={props.disabled||(editDesk&&!assigned)} className="space-y-3">
     <div className="grid gap-3 sm:grid-cols-2">{descriptor.parameters.map(parameter=>{
      const value=object(config.appearance)?config.appearance[parameter.id]:parameter.default;
-     return <div key={parameter.id} className="space-y-1 text-xs"><div className="flex items-center justify-between">{parameter.name}{reset(["appearance",parameter.id],parameter.name)}</div>
+     return <div key={parameter.id} className="space-y-1 text-xs"><div className="flex items-center justify-between"><span className="flex items-center gap-2">{parameter.name}<SourceTag source="work"/></span>{reset(["appearance",parameter.id],parameter.name)}</div>
       {parameter.type==="number"?<Input type="number" aria-label={prefix+" · "+parameter.name} min={parameter.min} max={parameter.max} value={typeof value==="number"?value:parameter.default} onChange={e=>{
        const n=Number(e.target.value);if(e.target.value!==""&&Number.isFinite(n)&&(parameter.min===undefined||n>=parameter.min)&&(parameter.max===undefined||n<=parameter.max))set(["appearance",parameter.id],n);
       }}/>:<select aria-label={prefix+" · "+parameter.name} className={selectStyle} value={String(value)} onChange={e=>set(["appearance",parameter.id],e.target.value)}>
@@ -60,7 +61,7 @@ export function V3DockEditor(props:Props){
      const source=(object(candidate)&&Array.isArray(candidate.path)&&candidate.path.every(key=>typeof key==="string")?candidate:undefined) as DockDataSource|undefined,button=binding(region);
      const example=descriptor.examples.find(v=>JSON.stringify(v.source)===JSON.stringify(source))?.id??"";
      return <div key={region.id} className="space-y-2 rounded-lg border p-3">
-      <div className="flex items-center justify-between"><span className="text-sm font-medium">{region.name} <span className="text-[10px] font-normal text-muted-foreground">{region.kind==="data"?"数据":"按钮"}</span></span>
+      <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-sm font-medium">{region.name} <span className="text-[10px] font-normal text-muted-foreground">{region.kind==="data"?"数据":"按钮"}</span><SourceTag source="work"/></span>
        {!editDesk&&<Button size="sm" variant="ghost" aria-label={"删除区域 "+region.name} onClick={()=>apply(()=>removeDockRegion(room,region.id))}>删除区域</Button>}
        {reset([region.kind==="data"?"slots":"buttonSlots",region.id],region.name)}</div>
       {region.kind==="data"?<>
@@ -86,7 +87,7 @@ export function V3DockEditor(props:Props){
     })}</div>
    </fieldset>
    <div><h3 className="text-sm font-medium">3 · Desk 引用</h3><p className="mt-1 text-xs text-muted-foreground">组件引用与 Desk 切页分别编辑；取消引用会清除该 Desk 的 Dock 差异。</p>
-    <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} className="mr-2" disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}</label>)}</div>
+    <div className="mt-2 flex flex-wrap gap-3">{room.desks.map(d=><label key={d.id} className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label={d.name+" 引用 Dock"} disabled={props.disabled} checked={d.components.includes(dock.id)} onChange={e=>apply(()=>setDeskDockReference(room,d.id,e.target.checked))}/>{d.name}<SourceTag source="work"/></label>)}</div>
    </div>
   </>}
   {dock&&!descriptor&&<p className="text-xs text-muted-foreground">当前本地 Dock 没有模板区域描述。选择官方模板即可配置数据与按钮。</p>}

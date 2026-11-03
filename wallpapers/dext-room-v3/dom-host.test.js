@@ -516,6 +516,26 @@ test('referenced Dock reserves its placement for icons and widgets and unreferen
  assert.equal(restored.effectiveRect.y,840);assert.equal(f.calls.filter(call=>call.method==='layoutSave').length,0);f.host.dispose();
 });
 
+test('native Application Dock hides the theme dock component and leaves other content',async()=>{
+ const f=fixture({room:{resources:['scene.html','widget.html','dock.html','bg.svg'],components:[
+  {id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},
+  {id:'dock',role:'dock',entry:'dock.html',placement:{x:240,y:924,width:1440,height:120},capabilities:[]}],
+  desks:[{id:'home',name:'Home',icons:[],components:['shared','dock'],background:{type:'image',src:'bg.svg'}},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});
+ await f.host.ready;
+ const dock=()=>f.container.children[0].children.find(v=>v.dataset.consumer==='component.dock');
+ const widget=()=>f.container.children[0].children.find(v=>v.dataset.consumer==='component.shared');
+ const background=()=>f.container.children[0].children.find(v=>v.dataset.consumer==='slot.background.home');
+ assert.equal(dock().hidden,false);
+ assert.equal(f.host.setSystemDock('native'),true);
+ await flush();
+ assert.equal(dock().hidden,true,'theme dock chrome is not a second system Dock');
+ assert.equal(widget().hidden,false);assert.equal(background().hidden,false);
+ assert.equal(f.host.setSystemDock('theme'),true);
+ await flush();
+ assert.equal(dock().hidden,false,'explicit theme presentation can show the theme dock');
+ f.host.dispose();
+});
+
 
 test('personal skins update ordinary presentations without replacing frames or changing geometry',async()=>{
  const timers=new Map();let timerId=0,skin='glass';

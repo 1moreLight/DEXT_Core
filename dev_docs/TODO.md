@@ -2612,3 +2612,16 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 人工验收：阅读审计结论及前三项缺口，确认是否符合“高度自定义”的方向；无需再操作桌面。
 
 V3-CUSTOM-001审计做完3/3=100%，报告待确认：可编程底座已接，通用创作入口和任务区样式仍不足；Dock全局/Desk覆盖与追加计划有差异。证据与前三项建议见research/V3-CUSTOM-001-customization-audit.md。未改生产或重启，下一实施建议仅V3-CUSTOM-002本地Dock声明编辑闭环，待报告确认后开工。
+
+## IA-001 Room/Desk 编辑信息架构（WP1–WP6）
+
+- 目标：一个 PR 交付 v3-only 统一编辑器、来源标签、Dock 行为只留设置页、固定项全局+Desk 追加、请求/实际 Dock、长按与「我的」共用 personal.json。
+- 范围外：合并 preferences 文件、自动启停、勿扰、多屏、转场编辑器、工坊、AI 升级。`wallpapers/dext-room` 仍被测试引用，不在本包删除。
+- [x] WP1 删除 v2 画布/流程/Dock 编辑入口；v2 Room 只提示不支持
+- [x] WP2 统一编辑器：左树右属性，作品/我的，来源标签，恢复为作品值
+- [x] WP3 Dock 行为只在设置页，一个自动隐藏入口，并写入状态文案
+- [x] WP4 Core+UI 固定项改为追加；空 Desk 列表=没有追加；旧覆盖一次性迁移
+- [x] WP5 请求 vs 实际；主题不可用时显示回退原因
+- [x] WP6 「我的」读取长按布局，可逐项清除
+- [ ] 人工验收（Windows）。自测：配置器 tsc 与相关 vitest 通过。本环境没有 dotnet，不能跑 WPF / RoomActions。
+- 验收文件：`dev_docs/acceptance/IA-001-room-desk-editor.md`

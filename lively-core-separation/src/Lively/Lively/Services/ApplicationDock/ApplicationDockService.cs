@@ -31,6 +31,7 @@ internal sealed partial class ApplicationDockService : IDisposable
     private string error;
     private string pinContextKey;
     private DockPin[] deskPins;
+    private readonly HashSet<string> pinAppendReady = new(StringComparer.Ordinal);
     private readonly DockTaskDisplay taskDisplay;
     private long pinRevision;
     private WebWebView2 taskHost;
@@ -67,6 +68,14 @@ internal sealed partial class ApplicationDockService : IDisposable
 
     private DockPin[] EffectivePins(RoomDockNavigation navigation)
     {
+        if (navigation is not null && pinAppendReady.Add(navigation.RoomId) && rooms.NeedsDockPinMigration(navigation.RoomId))
+        {
+            // Legacy lists were whole-list overrides. Convert once against the
+            // current global pins so previously visible Desk-only pins remain
+            // additions. Global pins the override had hidden come back.
+            rooms.MigrateDockPinsToAppend(navigation.RoomId, preferences.Pins.Select(pin => pin.Target).ToArray());
+            pinContextKey = null;
+        }
         var key = navigation is null ? null : $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}";
         if (key != pinContextKey)
         {
@@ -74,11 +83,12 @@ internal sealed partial class ApplicationDockService : IDisposable
             deskPins = stored?.Select(p => new DockPin(p.Name, p.Target, p.Arguments, p.WorkingDirectory)).ToArray();
             pinContextKey = key; // Failed reads never cache a different Room/Desk.
         }
-        return navigation is null ? preferences.Pins : deskPins ?? preferences.Pins;
+        // Null and [] both mean no Desk additions. There is no independent-empty mode.
+        return navigation is null ? preferences.Pins : Dext.Core.Rooms.DockPinAppend.Effective(preferences.Pins, deskPins, pin => pin.Target);
     }
 
     private string PinScope(RoomDockNavigation navigation) => navigation is null ? "global" :
-        $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}/{(deskPins is null ? "global" : "desk")}";
+        $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}/{(Dext.Core.Rooms.DockPinAppend.FollowsGlobal(deskPins?.Length) ? "global" : "append")}";
 
     private IReadOnlyList<DockGroup> GroupForCurrentDesk(IReadOnlyList<DockTask> tasks)
     {
@@ -110,8 +120,12 @@ internal sealed partial class ApplicationDockService : IDisposable
             navigation,
             pins = preferences.Pins,
             effectivePins = effective,
+            pinSources = effective.Select(pin => new {
+                target = pin.Target,
+                source = (deskPins ?? Array.Empty<DockPin>()).Any(addition => DockModel.Identity(addition.Target) == DockModel.Identity(pin.Target)) ? "desk" : "global"
+            }).ToArray(),
             pinContext = navigation is null ? null : new { sessionId = navigation.SessionId, roomId = navigation.RoomId,
-                deskId = navigation.CurrentDeskId, name = navigation.CurrentName, inherits = deskPins is null,
+                deskId = navigation.CurrentDeskId, name = navigation.CurrentName, inherits = deskPins is null || deskPins.Length == 0,
                 changing = navigation.PendingName is not null },
             groups = groups.Select(g => new { g.Key, g.Name, pinned = g.Pin != null, windows = g.Windows }).ToArray(),
             error
@@ -141,8 +155,9 @@ internal sealed partial class ApplicationDockService : IDisposable
         if(operation=="retryPresentation") { presentationPolicy.Retry();Render();_ = Refresh();return Status(); }
         var editingPins = operation is "pin" or "unpin" or "inheritPins";
         var context = editingPins ? PinEditContext(root) : null;
-        var selectedPins = context is null ? preferences.Pins : EffectivePins(context);
-        var updatedPins = selectedPins;
+        if (editingPins && context is not null) EffectivePins(context);
+        var additions = deskPins ?? Array.Empty<DockPin>();
+        DockPin[]? updatedPins = context is null ? preferences.Pins : additions;
         switch (operation)
         {
             case "enable":
@@ -168,12 +183,26 @@ internal sealed partial class ApplicationDockService : IDisposable
                     value.TryGetProperty("arguments", out var args) ? args.GetString() ?? "" : "",
                     value.TryGetProperty("workingDirectory", out var cwd) ? cwd.GetString() ?? "" : "");
                 if (string.IsNullOrWhiteSpace(pin.Name)) throw new ArgumentException("应用名称不能为空。");
-                if (!selectedPins.Any(p => DockModel.Identity(p.Target) == DockModel.Identity(pin.Target)))
-                    updatedPins = selectedPins.Append(pin).ToArray();
+                var pinId = DockModel.Identity(pin.Target);
+                if (context is null)
+                {
+                    if (!preferences.Pins.Any(p => DockModel.Identity(p.Target) == pinId))
+                        updatedPins = preferences.Pins.Append(pin).ToArray();
+                }
+                else if (!preferences.Pins.Any(p => DockModel.Identity(p.Target) == pinId) &&
+                         !additions.Any(p => DockModel.Identity(p.Target) == pinId))
+                    updatedPins = additions.Append(pin).ToArray();
                 break;
             case "unpin":
-                var key = DockModel.Identity(root.GetProperty("target").GetString());
-                updatedPins = selectedPins.Where(p => DockModel.Identity(p.Target) != key).ToArray();
+                var unpinId = DockModel.Identity(root.GetProperty("target").GetString());
+                if (context is null)
+                    updatedPins = preferences.Pins.Where(p => DockModel.Identity(p.Target) != unpinId).ToArray();
+                else
+                {
+                    if (!additions.Any(p => DockModel.Identity(p.Target) == unpinId))
+                        throw new InvalidOperationException("这是全局固定项。本 Desk 只能移除追加项；空追加列表表示跟随全局。");
+                    updatedPins = additions.Where(p => DockModel.Identity(p.Target) != unpinId).ToArray();
+                }
                 break;
             case "inheritPins":
                 if (context is null) throw new ArgumentException("请选择当前 Desk。");
@@ -190,7 +219,7 @@ internal sealed partial class ApplicationDockService : IDisposable
         }
         else
         {
-            if (editingPins) updated = updated with { Pins = updatedPins };
+            if (editingPins) updated = updated with { Pins = updatedPins ?? Array.Empty<DockPin>() };
             DockPreferenceFile.Save(path, updated);
             preferences = updated;
         }
@@ -363,11 +392,13 @@ internal sealed partial class ApplicationDockService : IDisposable
             EffectivePins(navigation);
             if (!DockModel.CanEditPin(group, PinScope(navigation)))
                 throw new InvalidOperationException("页面或固定范围已改变，请重新打开菜单。");
-            var local = navigation is not null && deskPins is not null;
+            // Empty or missing Desk additions follow global, matching PinScope.
+            // A non-empty addition list is the only Desk-local right-click scope.
+            var scope = Dext.Core.Rooms.DockPinAppend.RightClickScope(navigation is not null, deskPins?.Length);
             Edit(JsonSerializer.Serialize(new
             {
                 operation = group.Pin is not null ? "unpin" : "pin",
-                scope = local ? "desk" : "global",
+                scope,
                 sessionId = navigation?.SessionId, roomId = navigation?.RoomId, deskId = navigation?.CurrentDeskId,
                 target = group.Pin?.Target,
                 app = new { name = group.Name, target = group.Pin?.Target ?? group.Windows[0].Target, arguments = "", workingDirectory = "" }

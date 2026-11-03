@@ -52,7 +52,8 @@ internal static class DockPreferenceFile
 {
     public static DockPreferences Load(string path)
     {
-        if (!File.Exists(path)) return new(false, Array.Empty<DockPin>());
+        // A missing file prefers the native Application Dock. Theme presentation stays opt-in.
+        if (!File.Exists(path)) return new(true, Array.Empty<DockPin>());
         var value = JsonSerializer.Deserialize<DockPreferences>(File.ReadAllText(path));
         if (value == null || value.Presentation is not ("native" or "theme") || value.AutoHide && value.ReserveSpace || value.Pins == null || value.Pins.Any(p => p == null || string.IsNullOrWhiteSpace(p.Target) || string.IsNullOrWhiteSpace(p.Name)))
             throw new JsonException("Application Dock preferences are invalid.");
