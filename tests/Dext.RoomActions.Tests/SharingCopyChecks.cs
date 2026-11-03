@@ -101,6 +101,7 @@ internal static class SharingCopyChecks
             store.MigrateDockPinsToAppend(room, new[] { global });
             Require(store.ReadDockPins(room, "home")!.Single().Target == extra, "second migration does not strip additions");
         });
+        DockPinScopeChecks.Run(check);
         check("copy of Room without personal overrides creates an independent empty record", () =>
         {
             using var fixture = new Fixture();

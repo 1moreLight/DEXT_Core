@@ -88,7 +88,7 @@ internal sealed partial class ApplicationDockService : IDisposable
     }
 
     private string PinScope(RoomDockNavigation navigation) => navigation is null ? "global" :
-        $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}/{(deskPins is null || deskPins.Length == 0 ? "global" : "append")}";
+        $"{navigation.SessionId}/{navigation.RoomId}/{navigation.CurrentDeskId}/{(Dext.Core.Rooms.DockPinAppend.FollowsGlobal(deskPins?.Length) ? "global" : "append")}";
 
     private IReadOnlyList<DockGroup> GroupForCurrentDesk(IReadOnlyList<DockTask> tasks)
     {
@@ -392,11 +392,13 @@ internal sealed partial class ApplicationDockService : IDisposable
             EffectivePins(navigation);
             if (!DockModel.CanEditPin(group, PinScope(navigation)))
                 throw new InvalidOperationException("页面或固定范围已改变，请重新打开菜单。");
-            var local = navigation is not null && deskPins is not null;
+            // Empty or missing Desk additions follow global, matching PinScope.
+            // A non-empty addition list is the only Desk-local right-click scope.
+            var scope = Dext.Core.Rooms.DockPinAppend.RightClickScope(navigation is not null, deskPins?.Length);
             Edit(JsonSerializer.Serialize(new
             {
                 operation = group.Pin is not null ? "unpin" : "pin",
-                scope = local ? "desk" : "global",
+                scope,
                 sessionId = navigation?.SessionId, roomId = navigation?.RoomId, deskId = navigation?.CurrentDeskId,
                 target = group.Pin?.Target,
                 app = new { name = group.Name, target = group.Pin?.Target ?? group.Windows[0].Target, arguments = "", workingDirectory = "" }

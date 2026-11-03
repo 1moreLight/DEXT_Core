@@ -32,4 +32,21 @@ internal static class DockPinAppend
         var global = new HashSet<string>(globalTargets.Select(Identity), StringComparer.Ordinal);
         return legacy.Where(item => !global.Contains(Identity(target(item)))).ToArray();
     }
+
+    // Missing and empty addition lists both follow the global list. A stored []
+    // after migration or after the last Desk addition is removed is not a local list.
+    public static bool FollowsGlobal(int? additionCount) => additionCount is null or 0;
+
+    // Right-click pin/unpin uses the same rule as PinScope. An explicit Desk-scope
+    // edit from the settings page can still create the first addition.
+    public static string RightClickScope(bool hasNavigation, int? additionCount) =>
+        hasNavigation && !FollowsGlobal(additionCount) ? "desk" : "global";
+
+    public static string RightClickEffect(bool hasNavigation, int? additionCount, bool pinned, bool targetIsDeskAddition)
+    {
+        if (RightClickScope(hasNavigation, additionCount) == "global")
+            return pinned ? "unpin-global" : "pin-global";
+        if (pinned && !targetIsDeskAddition) return "reject-global-unpin";
+        return pinned ? "unpin-desk" : "pin-desk";
+    }
 }
