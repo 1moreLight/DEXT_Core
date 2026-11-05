@@ -293,20 +293,16 @@ function dockFixture(rect){
  {id:'bar',role:'dock',entry:'dock.html',placement:rect,capabilities:[],buttonIds:[]}],
  desks:[{id:'home',name:'Home',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:['shared','bar'],background:{type:'image',src:'bg.svg'}},{id:'focus',name:'Focus',icons:[],components:['shared','bar']}]}});return f;
 }
-test('front iframe cuts a native entry into separate visible pieces and fully covered entry disappears',async()=>{
- for(const [rect,count]of [[{x:48,y:32,width:32,height:104},2],[{x:32,y:32,width:96,height:104},0]]){
-  // Layout avoids the saved Dock rectangle; an author visual transform can
-  // still move the Dock over an icon. Verify the current visible sample.
+test('retired Dock chrome does not occlude official desktop icon entries',async()=>{
+ for(const rect of [{x:48,y:32,width:32,height:104},{x:32,y:32,width:96,height:104}]){
   const f=dockFixture({x:1600,y:900,width:rect.width,height:rect.height});await f.host.ready;
   await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,
     groups:{shared:{matrix:[1,0,0,1,rect.x-1600,rect.y-900],opacity:1}}});
   const sample=f.host.beginNativeInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion,'occlusion');
   const b=sample.buttons.find(v=>v.consumer==='official');
-  if(!count)assert.equal(b,undefined);else{
-   assert.equal(b.polygons.length,count);
-   assert.equal(b.polygons.some(p=>geometry.containsPoint(p,{x:64/1920,y:70/1080},{includeBoundary:false})),false);
-   assert.equal(b.polygons.some(p=>geometry.containsPoint(p,{x:100/1920,y:70/1080},{includeBoundary:false})),true);
-  }f.host.dispose();
+  assert.equal(f.host.readDiagnostics().instances.some(item=>item.kind==='dock'),false);
+  assert.equal(b.polygons.length,1);
+  f.host.dispose();
  }
 });
 test('two official icons bound to one action retain separate presentation entries',async()=>{
@@ -327,21 +323,22 @@ test('native focus outlines the acknowledged entry and immediately clears on inv
  f.host.handleNativeInput({...event,revision:2,geometryVersion:f.host.readDiagnostics().inputVersion});f.host.setPlaybackSuspended(true);
  assert.equal(outline.hidden,true);assert.equal(Object.hasOwn(outline.attrs,'hidden'),true);assert.equal(f.host.readDiagnostics().focus,null);f.host.dispose();
 });
-test('zero-opacity front layers do not occlude lower native input or intercept DOM pointers',async()=>{
+test('zero-opacity shared layers do not occlude official desktop icons after Dock retirement',async()=>{
  const f=dockFixture({x:32,y:32,width:96,height:104});await f.host.ready;
  await f.host.publishGeometry('scene',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{shared:{matrix:[1,0,0,1,0,0],opacity:0}}});
  assert.deepEqual(f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:1},f.host.readDiagnostics().inputVersion).buttons.map(b=>b.consumer),['official']);
- const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
+ assert.equal(f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar'),undefined);f.host.dispose();
 });
 
-test('transparent source iframe releases target icon input while its actual pointer interception is disabled',async()=>{
+test('retired Dock chrome leaves target icon input visible during a source transition',async()=>{
  const f=fixture({room:{transition:{type:'author',durationMs:450},resources:['scene.html','dock.html'],components:[{id:'bar',role:'dock',entry:'dock.html',placement:{x:32,y:32,width:96,height:104},capabilities:[],buttonIds:[]}],
  desks:[{id:'home',name:'Home',icons:[],components:['bar']},{id:'focus',name:'Focus',icons:[{id:'icon',buttonId:'next',x:0,y:0}],components:[]}]}});
  await f.host.ready;await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));
- assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),false);
+ assert.equal(f.host.readDiagnostics().instances.some(item=>item.kind==='dock'),false);
+ assert.equal(f.calls.filter(v=>v.method==='geometry').at(-1).params.buttons.some(v=>v.consumer==='official'),true);
  await f.host.publishGeometry('scene',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,groups:{source:{matrix:[1,0,0,1,0,0],opacity:0}}});
  assert.equal(f.host.readInputSample({runtimeGeneration:1,sessionId:'session',revision:2},f.host.readDiagnostics().inputVersion).buttons.some(v=>v.entryId==='icon.focus/icon'),true);
- const bar=f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar');assert.equal(bar.style.pointerEvents,'none');f.host.dispose();
+ assert.equal(f.container.children[0].children.find(v=>v.dataset.consumer==='component.bar'),undefined);f.host.dispose();
 });
 test('native focus is rejected before a new geometry acknowledgement and after publication failure',async()=>{
  let hold=false,release;const f=fixture({request:m=>m==='geometry'&&hold?new Promise(r=>release=r):Promise.resolve({status:'accepted',...(m==='layoutRead'?{layout:{revision:0,icons:{},components:{}}}:{})})});await f.host.ready;
@@ -353,7 +350,7 @@ test('native focus is rejected before a new geometry acknowledgement and after p
  release({status:'denied'});await changed;assert.equal(f.host.readDiagnostics().focus,null);assert.equal(f.host.readDiagnostics().inputReady,false);f.host.dispose();
 });
 test('a shared entry under a moving foreground cover waits for event sampling without frame IPC',async()=>{
- const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'dock',entry:'widget.html',placement:{x:350,y:50,width:50,height:100},capabilities:[],buttonIds:[]}],
+ const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'widget',entry:'widget.html',placement:{x:350,y:50,width:50,height:100},capabilities:[],buttonIds:[]}],
  desks:[{id:'home',name:'Home',icons:[],components:['shared','bar']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:1,transitionId:null,geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:200,height:100}]});
  await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));const count=f.calls.filter(v=>v.method==='geometry').length;
@@ -371,7 +368,7 @@ test('event samples read moving target icons at their painted position without f
  await f.advance(100);assert.equal(sample.buttons[0].x,(32+960)/1920);f.host.dispose();
 });
 test('event sample clips a moving foreground cover at its current transform',async()=>{
- const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'dock',entry:'widget.html',placement:{x:1920-200,y:50,width:200,height:100},capabilities:[],buttonIds:[]}],
+ const f=fixture({room:{components:[{id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:50,width:200,height:100},capabilities:[],buttonIds:['next']},{id:'bar',role:'widget',entry:'widget.html',placement:{x:1920-200,y:50,width:200,height:100},capabilities:[],buttonIds:[]}],
  desks:[{id:'home',name:'Home',icons:[],components:['shared','bar']},{id:'focus',name:'Focus',icons:[],components:['shared']}]}});await f.host.ready;
  await f.host.acceptSnapshot(f.snap(2,{targetDeskId:'focus',transitionId:'t',deadlineUtc:'2030-01-01T00:00:00Z'}));
  await f.host.publishGeometry('component.shared',{sessionId:'session',revision:2,transitionId:'t',geometryVersion:f.host.readDiagnostics().geometryVersion,buttons:[{buttonId:'next',x:0,y:0,width:200,height:100}]});
@@ -503,14 +500,16 @@ test('author geometry exposes effective pre-group component rectangles through s
  assert.deepEqual(projected(),initial);assert.equal([...f.frames.values()].find(v=>v.def.consumerId==='component.shared').node,node);f.host.dispose();
 });
 
-test('referenced Dock reserves its placement for icons and widgets and unreferenced Desk restores saved positions',async()=>{
+test('retired Dock placement is not reserved so widgets keep their saved positions',async()=>{
  const dock={id:'dock',role:'dock',entry:'dock.html',placement:{x:0,y:800,width:1920,height:280},capabilities:[]};
  const widget={id:'shared',role:'widget',entry:'widget.html',placement:{x:400,y:840,width:200,height:100},capabilities:[]};
  const f=fixture({room:{resources:['scene.html','widget.html','dock.html'],components:[widget,dock],dockComponentId:'dock',
   desks:[{id:'home',name:'Home',icons:[{id:'bottom',buttonId:'next',x:0,y:7}],components:['shared','dock']},
     {id:'focus',name:'Focus',icons:[],components:['shared']}]}});
  await f.host.ready;
- for(const item of f.host.readDiagnostics().layout.items)assert.ok(item.effectiveRect.y+item.effectiveRect.height<=800,'items must avoid Dock placement');
+ const homeWidget=f.host.readDiagnostics().layout.items.find(item=>item.key==='widget:shared');
+ assert.equal(homeWidget.effectiveRect.y,840);
+ assert.equal(f.host.readDiagnostics().instances.some(item=>item.kind==='dock'),false);
  await f.host.acceptSnapshot(f.snap(2,{currentDeskId:'focus'}));
  const restored=f.host.readDiagnostics().layout.items.find(item=>item.key==='widget:shared');
  assert.equal(restored.effectiveRect.y,840);assert.equal(f.calls.filter(call=>call.method==='layoutSave').length,0);f.host.dispose();

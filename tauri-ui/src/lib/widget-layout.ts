@@ -185,9 +185,8 @@ function cellKey(x: number, y: number) {
   return `${x}:${y}`;
 }
 
-export function deskDockReserve(desk: Desk, roomDock?: DockConfig): Rect | null {
-  const dock = { ...roomDock, ...desk.dock };
-  if (dock?.enabled === false) return null;
+export function deskDockReserve(_desk: Desk, _roomDock?: DockConfig): Rect | null {
+  return null;
   const position = dock?.position ?? "bottom";
   if (position === "top") return { x: 0, y: 0, width: ROOM_CANVAS.width, height: 100 };
   if (position === "left") return { x: 0, y: 0, width: 120, height: ROOM_CANVAS.height };

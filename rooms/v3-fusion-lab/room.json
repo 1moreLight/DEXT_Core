@@ -71,9 +71,17 @@
       },
       "icons": [
         {
+          "id": "prev-home",
+          "buttonId": "previous",
+          "x": 0,
+          "label": "上一页",
+          "glyph": "←",
+          "y": 5
+        },
+        {
           "id": "next-home",
           "buttonId": "next",
-          "x": 0,
+          "x": 1,
           "label": "下一页",
           "glyph": "→",
           "y": 5
@@ -92,9 +100,17 @@
       },
       "icons": [
         {
+          "id": "prev-focus",
+          "buttonId": "previous",
+          "x": 0,
+          "label": "上一页",
+          "glyph": "←",
+          "y": 5
+        },
+        {
           "id": "next-focus",
           "buttonId": "next",
-          "x": 0,
+          "x": 1,
           "label": "下一页",
           "glyph": "→",
           "y": 5
@@ -133,9 +149,17 @@
       },
       "icons": [
         {
+          "id": "prev-quiet",
+          "buttonId": "previous",
+          "x": 0,
+          "label": "上一页",
+          "glyph": "←",
+          "y": 5
+        },
+        {
           "id": "next-quiet",
           "buttonId": "next",
-          "x": 0,
+          "x": 1,
           "label": "下一页",
           "glyph": "→",
           "y": 5

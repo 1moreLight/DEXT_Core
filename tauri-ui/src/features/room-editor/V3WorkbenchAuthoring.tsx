@@ -6,11 +6,12 @@ import {Input} from "@/components/ui/input";
 import {setV3ComponentPlacement,type RoomV3} from "./v3-document";
 const fields=[["x","横坐标"],["y","纵坐标"],["width","宽度"],["height","高度"]] as const;
 export function ComponentLayoutEditor(props:{room:RoomV3;onChange:(room:RoomV3)=>void;onMessage:(message:string)=>void}){
- const [id,setId]=useState(props.room.dockComponentId??props.room.components?.[0]?.id??"");
- const component=props.room.components?.find(c=>c.id===id);
+ const widgets=(props.room.components??[]).filter(c=>c.role!=="dock");
+ const [id,setId]=useState(widgets[0]?.id??"");
+ const component=widgets.find(c=>c.id===id);
  const [values,setValues]=useState({x:"0",y:"0",width:"480",height:"240"});
  useEffect(()=>{if(component)setValues(Object.fromEntries(fields.map(([key])=>[key,String(component.placement[key])])) as typeof values);},[component]);
- if(!props.room.components?.length)return null;
+ if(!widgets.length)return null;
  const apply=()=>{
   try{
    if(fields.some(([key])=>!values[key].trim()))throw new Error("请填写完整位置和尺寸");
@@ -20,7 +21,7 @@ export function ComponentLayoutEditor(props:{room:RoomV3;onChange:(room:RoomV3)=
  };
  return <details className="rounded-lg border p-3"><summary className="text-sm">调整组件默认布局</summary>
   <select aria-label="试验台布局组件" className="mt-2 w-full rounded border bg-background p-2 text-sm" value={id} onChange={e=>setId(e.target.value)}>
-   {props.room.components.map(c=><option key={c.id} value={c.id}>{c.role==="dock"?"Dock":"Widget"} · {c.id}</option>)}
+   {widgets.map(c=><option key={c.id} value={c.id}>Widget · {c.id}</option>)}
   </select>
   <div className="mt-2 grid grid-cols-2 gap-2">{fields.map(([key,label])=><label key={key} className="text-xs">{label}<Input aria-label={"组件"+label} type="number" value={values[key]} onChange={e=>setValues(v=>({...v,[key]:e.target.value}))}/></label>)}</div>
   <Button className="mt-2" size="sm" variant="outline" disabled={!component} onClick={apply}>应用到草稿</Button>

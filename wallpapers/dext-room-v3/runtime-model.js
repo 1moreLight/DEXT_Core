@@ -90,7 +90,7 @@
         if (!dockView) ensureSlot('slot.background.' + deskId, desk.background, desktopActive, desired, effects);
         for (const id of desk.components) {
           const component = components.get(id);
-          if (!component || dockView && (id !== room.dockComponentId || component.role !== "dock")) continue; // Core installation validation remains the manifest authority.
+          if (!component || component.role === "dock" && !dockView || dockView && (id !== room.dockComponentId || component.role !== "dock")) continue; // Product cut: desktop never mounts Dock chrome.
           const override = effective.componentOverrides && effective.componentOverrides[id];
           const config = override ? merge(component.config || {}, override) : component.config || {};
           ensure('component.' + id, { consumerId: 'component.' + id, kind: component.role, entry: component.entry,

@@ -51,7 +51,10 @@ internal sealed partial class ApplicationDockService : IDisposable
             loadFailed = true;
             error = "无法读取应用 Dock 设置，原文件已保留：" + ex.Message;
         }
-        ownership.SetApplicationRequested(preferences.Enabled);
+        // Product cut: Application Dock is retired. Never request the native host,
+        // even if a leftover application-dock.json still says enabled.
+        preferences = preferences with { Enabled = false };
+        ownership.SetApplicationRequested(false);
         timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background,
             async (_, _) => await Refresh(), dispatcher);
         timer.Stop();
@@ -61,8 +64,8 @@ internal sealed partial class ApplicationDockService : IDisposable
     {
         if (started || disposed) return;
         started = true;
-        timer.Start();
-        _ = Refresh();
+        preferences = preferences with { Enabled = false };
+        ownership.SetApplicationRequested(false);
     });
 
     private DockPin[] EffectivePins(RoomDockNavigation navigation)
@@ -134,6 +137,7 @@ internal sealed partial class ApplicationDockService : IDisposable
     public object Edit(string json) => dispatcher.Invoke<object>(() =>
     {
         if (loadFailed) throw new InvalidOperationException(error);
+        throw new InvalidOperationException("Application Dock 已从产品中移除。");
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var updated = preferences;

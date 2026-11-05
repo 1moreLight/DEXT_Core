@@ -400,6 +400,18 @@ body.editing #edit-done {
   z-index: 20;
 }
 
+#dock.desk-nav-only .dock-inner {
+  gap: 8px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+#dock.desk-nav-only #dock-apps,
+#dock.desk-nav-only .dock-sep {
+  display: none;
+}
+
 /* visual shell lives on the inner wrapper so #dock can stay a pure placement layer */
 .dock-inner {
   display: flex;

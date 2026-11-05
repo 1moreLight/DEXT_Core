@@ -121,6 +121,22 @@
           "label": "我的应用",
           "x": 0,
           "y": 5
+        },
+        {
+          "buttonId": "previous",
+          "glyph": "←",
+          "id": "prev-orbit",
+          "label": "上一页",
+          "x": 1,
+          "y": 5
+        },
+        {
+          "buttonId": "next",
+          "glyph": "→",
+          "id": "next-orbit",
+          "label": "下一页",
+          "x": 2,
+          "y": 5
         }
       ],
       "id": "orbit",
@@ -153,6 +169,22 @@
           "label": "同一个入口",
           "x": 1,
           "y": 5
+        },
+        {
+          "buttonId": "previous",
+          "glyph": "←",
+          "id": "prev-spectrum",
+          "label": "上一页",
+          "x": 2,
+          "y": 5
+        },
+        {
+          "buttonId": "next",
+          "glyph": "→",
+          "id": "next-spectrum",
+          "label": "下一页",
+          "x": 3,
+          "y": 5
         }
       ],
       "id": "spectrum",
@@ -176,6 +208,22 @@
           "id": "app-dusk",
           "label": "我的应用",
           "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "previous",
+          "glyph": "←",
+          "id": "prev-dusk",
+          "label": "上一页",
+          "x": 1,
+          "y": 5
+        },
+        {
+          "buttonId": "next",
+          "glyph": "→",
+          "id": "next-dusk",
+          "label": "下一页",
+          "x": 2,
           "y": 5
         }
       ],

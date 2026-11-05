@@ -1,6 +1,6 @@
-import { Dock, FolderOpen, LayoutGrid, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { FolderOpen, LayoutGrid, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
-export type EditNav = "library" | "room" | "dock";
+export type EditNav = "library" | "room";
 
 interface EditorNavigationProps {
   navOpen: boolean;
@@ -19,7 +19,6 @@ export function EditorNavigation({ navOpen, editNav, onToggle, onNavigate }: Edi
         {([
           ["room", "Room", FolderOpen],
           ["library", "应用库", LayoutGrid],
-          ["dock", "Dock", Dock],
         ] as const).map(([key, label, Icon]) => (
           <button key={key} type="button" onClick={() => onNavigate(key)} title={label} className={`flex items-center gap-2.5 rounded-md px-2 py-2 text-sm ${editNav === key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"} ${navOpen ? "" : "justify-center"}`}>
             <Icon className="h-4 w-4 shrink-0" />
