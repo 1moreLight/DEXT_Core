@@ -32,8 +32,10 @@ describe("native v3 authoring", () => {
     expect(undone.present.desks[0].icons).toEqual(room.desks[0].icons);
     expect(redoV3(undone).present).toEqual(next);
     expect(JSON.parse(serializeRoomV3(undone.present, ["assets/selected.gif"])).resources).toContain("assets/selected.gif");
-    expect(next.desks[0].icons.at(-1)?.buttonId).toBe(next.buttons!.at(-1)?.id);
-    expect(next.buttons!.at(-1)?.scope).toBe(room.startDesk);
+    const lastIcon = next.desks[0].icons[next.desks[0].icons.length - 1];
+    const lastButton = next.buttons![next.buttons!.length - 1];
+    expect(lastIcon?.buttonId).toBe(lastButton?.id);
+    expect(lastButton?.scope).toBe(room.startDesk);
   });
   it("deleting the start Desk updates start and removes scoped buttons without redirecting goto", () => {
     const room = createRoomV3("Delete");

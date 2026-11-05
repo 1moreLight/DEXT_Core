@@ -2627,4 +2627,5 @@ V3-CUSTOM-001审计做完3/3=100%，报告待确认：可编程底座已接，�
 - [x] v3 桌面不再挂载 role=dock 系统栏
 - [x] 样包/新建 Room 保证桌面切 Desk 图标
 - [x] 自动检查通过：Vitest 83、v3 host/desk-switch Node 测试、v2 main.js 语法
+- [x] 修 Windows 配置器 beforeBuild：去掉 `deskDockReserve` 死代码，测试不再用 `.at()`
 - [ ] 用户按 `acceptance/DOCK-CUT-001-retire-dock.md` 验收

@@ -475,6 +475,7 @@
 | #336 | 桌面原生菜单恢复弹出前应用，且前台修订会清空文件焦点 | [backend](errors/backend.md) |
 
 | #337 | F2整条链与夹具误用F3键码114，内部测试全绿不代表真实键有效 | [backend](errors/backend.md) |
+| #338 | 砍产品入口后只提前 return，残留死代码仍引用已删标识符，配置器 tsc 失败 | [frontend](errors/frontend.md) |
 
 2026-10-11 发布目录切换补记：官方原生宿主受当前发布根约束，旧WallpaperLayout指向旧发布目录时会拒绝加载；新候选需带入同一已安装content，再通过新官方宿主路径应用。运行目录安装content后严格发布inventory校验会报告额外文件，不能误称二进制损坏；独立核对原655项哈希未变。普通配置器CloseMainWindow只是隐藏，不能当作进程退出成功，也不能接着重复启动配置器。
 

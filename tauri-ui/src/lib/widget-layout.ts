@@ -187,13 +187,6 @@ function cellKey(x: number, y: number) {
 
 export function deskDockReserve(_desk: Desk, _roomDock?: DockConfig): Rect | null {
   return null;
-  const position = dock?.position ?? "bottom";
-  if (position === "top") return { x: 0, y: 0, width: ROOM_CANVAS.width, height: 100 };
-  if (position === "left") return { x: 0, y: 0, width: 120, height: ROOM_CANVAS.height };
-  if (position === "right") {
-    return { x: ROOM_CANVAS.width - 120, y: 0, width: 120, height: ROOM_CANVAS.height };
-  }
-  return { x: 0, y: ROOM_CANVAS.height - 100, width: ROOM_CANVAS.width, height: 100 };
 }
 
 export function widgetPlacementObstacles(widgets: WidgetDefinition[]): Rect[] {

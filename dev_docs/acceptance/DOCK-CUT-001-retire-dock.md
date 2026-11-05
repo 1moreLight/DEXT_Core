@@ -4,6 +4,7 @@
 分支：`cursor/cut-dock-product-c11e`
 基线：`master`（不依赖 PR #2 / `cursor/room-desk-ia-36db`）
 自动检查：Vitest 83/83；v3 host + desk-switch Node 测试通过；v2 `main.js` 语法通过。Linux 上未跑 Windows Core/Player/Release。
+2026-11-05 补修：配置器 `beforeBuild`（`tsc && vite build`）原先因 `deskDockReserve` 死代码引用 `dock`、以及 `v3-document.test.ts` 的 `.at()` 失败；已删死代码并把 `.at()` 改成 `length - 1` 下标。未代跑本机打包。
 
 ## 一句话目标
 
