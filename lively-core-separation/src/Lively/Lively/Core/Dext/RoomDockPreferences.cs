@@ -59,6 +59,8 @@ internal sealed class RoomDockPreferenceStore
             }
             catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException or FormatException)
             { return new("invalidRequest", current, error.Message); }
+            // Product cut: persist the request shape for old callers, but never re-enable the host.
+            next = next with { Enabled = false };
             if (next == current) return new("accepted", current);
             var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try

@@ -10,9 +10,30 @@ export type V3History = { present: RoomV3; past: RoomV3[]; future: RoomV3[] };
 const copy = <T,>(value:T):T => structuredClone(value);
 const id = (prefix:string) => prefix + "-" + crypto.randomUUID();
 export function newV3Desk(index:number):V3Desk { return {id:id("desk"),name:"Desk " + (index+1),icons:[],components:[]}; }
+export function ensureDeskSwitchIcons(room:RoomV3, deskId?:string):RoomV3 {
+  const next=copy(room);
+  const ensureButton=(action:"desk.previous"|"desk.next",name:string)=>{
+    let button=next.buttons?.find(b=>b.scope==="room"&&b.action?.type===action);
+    if(!button){
+      button={id:id("button"),name,scope:"room",action:{type:action}};
+      (next.buttons??=[]).push(button);
+    }
+    return button;
+  };
+  const previous=ensureButton("desk.previous","上一页");
+  const forward=ensureButton("desk.next","下一页");
+  const desks=deskId?next.desks.filter(d=>d.id===deskId):next.desks;
+  for(const desk of desks){
+    if(!desk.icons.some(icon=>icon.buttonId===previous.id))
+      desk.icons.push({id:id("icon"),buttonId:previous.id,label:"上一页",glyph:"←",x:desk.icons.length%8,y:Math.floor(desk.icons.length/8)});
+    if(!desk.icons.some(icon=>icon.buttonId===forward.id))
+      desk.icons.push({id:id("icon"),buttonId:forward.id,label:"下一页",glyph:"→",x:desk.icons.length%8,y:Math.floor(desk.icons.length/8)});
+  }
+  return next;
+}
 export function createRoomV3(name:string):RoomV3 {
   const desks=[newV3Desk(0),newV3Desk(1)];
-  return {version:3,apiVersion:1,id:crypto.randomUUID(),name:name.trim(),startDesk:desks[0].id,desks,resources:[],transition:{type:"slide",durationMs:450}};
+  return ensureDeskSwitchIcons({version:3,apiVersion:1,id:crypto.randomUUID(),name:name.trim(),startDesk:desks[0].id,desks,resources:[],transition:{type:"slide",durationMs:450}});
 }
 export function readRoomV3(json:string):RoomV3 {
   const room=JSON.parse(json) as RoomV3;

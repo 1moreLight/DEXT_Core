@@ -3,6 +3,7 @@ import {createRoomV3,addV3Presentation,removeV3Presentation,createV3History,reco
 import {discoverV3Buttons} from "./personal-editor";
 it("a normal presentation reuses an authored button and undo/redo retains its own identity",()=>{
  const room=createRoomV3("Refs");room.buttons=[{id:"open",name:"Open",scope:"room"}];
+ for(const desk of room.desks)desk.icons=[];
  const next=addV3Presentation(room,room.startDesk,"open"),second=addV3Presentation(next,room.startDesk,"open");
  expect(second.buttons).toEqual(room.buttons);expect(second.desks[0].icons.map(i=>i.buttonId)).toEqual(["open","open"]);
  expect(second.desks[0].icons[0].id).not.toBe(second.desks[0].icons[1].id);
@@ -21,5 +22,6 @@ it("presentation scope must match and discovery finds unbound scene background D
 });
 it("deleting a sole ordinary presentation preserves a discoverable declared button",()=>{
  const room=createRoomV3("Keep");room.buttons=[{id:"open",name:"Open",scope:"room"}];
+ for(const desk of room.desks)desk.icons=[];
  const next=addV3Presentation(room,room.startDesk,"open");expect(removeV3Presentation(next,room.startDesk,next.desks[0].icons[0].id).buttons).toEqual(room.buttons);
 });

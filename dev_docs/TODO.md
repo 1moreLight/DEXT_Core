@@ -2612,3 +2612,20 @@ INTEGRATION-002当前收尾04做完3/3=100%：宿主引用/六冻结样包/同�
 人工验收：阅读审计结论及前三项缺口，确认是否符合“高度自定义”的方向；无需再操作桌面。
 
 V3-CUSTOM-001审计做完3/3=100%，报告待确认：可编程底座已接，通用创作入口和任务区样式仍不足；Dock全局/Desk覆盖与追加计划有差异。证据与前三项建议见research/V3-CUSTOM-001-customization-audit.md。未改生产或重启，下一实施建议仅V3-CUSTOM-002本地Dock声明编辑闭环，待报告确认后开工。
+
+## DOCK-CUT-001 裁掉 Dock 产品面（2026-11-05）
+
+> 目标：从默认分支新开独立分支，关掉原生 Application Dock、主题系统 Dock、融合互斥和配置器 Dock 设置；Desk 切换改走桌面图标/按钮。
+> 范围外：PR #2、Explorer-only 图标迁移、Wallpaper/Widget/Desk-sync 重做、恢复系统 Dock。
+> 人工验收：见 `acceptance/DOCK-CUT-001-retire-dock.md`。
+
+- [x] 从最新 master 建 `cursor/cut-dock-product-c11e`，不续 PR #2
+- [x] 写本工作包计划和独立验收卡
+- [x] 运行时强制停用 Application Dock / 主题 Dock 宿主
+- [x] 配置器去掉 Dock 设置、模板库和编辑入口
+- [x] v2 宿主去掉 Dock 玻璃条，只留切 Desk 按钮
+- [x] v3 桌面不再挂载 role=dock 系统栏
+- [x] 样包/新建 Room 保证桌面切 Desk 图标
+- [x] 自动检查通过：Vitest 83、v3 host/desk-switch Node 测试、v2 main.js 语法
+- [x] 修 Windows 配置器 beforeBuild：去掉 `deskDockReserve` 死代码，测试不再用 `.at()`
+- [ ] 用户按 `acceptance/DOCK-CUT-001-retire-dock.md` 验收

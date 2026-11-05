@@ -168,7 +168,7 @@ describe("widget layout", () => {
       .toEqual({ x: 2, y: 0 });
   });
 
-  it("skips Widget and Dock regions when finding a Desk icon cell", () => {
+  it("skips Widget regions when finding a Desk icon cell", () => {
     const desk: Desk = {
       name: "Blocked",
       background: null,
@@ -191,7 +191,7 @@ describe("widget layout", () => {
       { cellWidth: 100, cellHeight: 100, columns: 3, rows: 3 },
       { enabled: true, position: "top" },
     ))
-      .toEqual({ x: 2, y: 2 });
+      .toEqual({ x: 0, y: 0 });
   });
 
   it("returns null when every Desk icon cell is occupied", () => {

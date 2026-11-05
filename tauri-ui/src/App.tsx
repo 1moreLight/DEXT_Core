@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DockLibrary } from "@/components/DockLibrary";
-import { DockEditor } from "@/components/DockEditor";
 import { AppPickerDialog } from "@/components/AppPickerDialog";
 import { SettingsPage } from "@/components/SettingsPage";
 import { DesktopCanvasEditor } from "@/components/DesktopCanvasEditor";
@@ -80,11 +78,7 @@ import {
 } from "@/lib/room-integrity";
 import {
   type DockConfig,
-  type DockPresetInfo,
   DEFAULT_DOCK,
-  DOCK_PRESET_CATALOG,
-  newLocalDockPresetId,
-  parseDockPresetFile,
 } from "@/lib/dock";
 import {
   isRecord,
@@ -108,25 +102,6 @@ const TRANSITION_OPTIONS: [TransitionPreset, string][] = [
 const mockNativeRooms = new Map<string, RoomV3>();
 
 const DEFAULT_LIB = "D:\\use\\Orca\\DEXT\\DEXT_Core\\rooms";
-const LOCAL_DOCK_PRESETS_KEY = "dext.localDockPresets.v1";
-
-function loadLocalDockPresets(): DockPresetInfo[] {
-  try {
-    const value = JSON.parse(localStorage.getItem(LOCAL_DOCK_PRESETS_KEY) ?? "[]");
-    return Array.isArray(value)
-      ? value.filter(
-          (preset): preset is DockPresetInfo =>
-            preset &&
-            typeof preset.id === "string" &&
-            preset.id.startsWith("local-") &&
-            typeof preset.name === "string" &&
-            typeof preset.css === "string"
-        )
-      : [];
-  } catch {
-    return [];
-  }
-}
 
 // stale lib paths (repo moved) should not stick via localStorage
 function initialLibDir(): string {
@@ -330,7 +305,6 @@ export default function App() {
   const [nativeRoom, setNativeRoom] = useState<RoomV3 | null>(null);
   const [roomVersion, setRoomVersion] = useState<number | null>(2);
   const [dock, setDock] = useState<DockConfig>(DEFAULT_DOCK);
-  const [localDockPresets, setLocalDockPresets] = useState<DockPresetInfo[]>(loadLocalDockPresets);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [appPickerDesk, setAppPickerDesk] = useState<number | null>(null);
   const [minimizeAfterDeskAppAdd, setMinimizeAfterDeskAppAdd] = useState(
@@ -392,7 +366,6 @@ export default function App() {
     geometry: geom,
     minHeight: graphMinHeight,
   } = useGraphGeometry(roomEntered && editorView === "flow", desks, edges.length);
-  const dockPresets = [...DOCK_PRESET_CATALOG, ...localDockPresets];
   const coreUnavailable = isCoreUnavailable(coreIdentityError);
   const readyCoreIdentity = coreIdentity?.is_core_initialized ? coreIdentity : null;
 
@@ -432,10 +405,6 @@ export default function App() {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("dext.theme", theme);
   }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_DOCK_PRESETS_KEY, JSON.stringify(localDockPresets));
-  }, [localDockPresets]);
 
   useEffect(() => {
     if (!IS_TAURI) {
@@ -739,29 +708,6 @@ export default function App() {
     await applyRoomDir(roomPath);
   }
 
-  async function importDockPreset(): Promise<string | null> {
-    if (!IS_TAURI) {
-      setStatus("Dock 文件导入请在桌面配置器中使用");
-      return null;
-    }
-    try {
-      const selected = await open({
-        multiple: false,
-        directory: false,
-        filters: [{ name: "Dext Dock 模板", extensions: ["json", "dock"] }],
-      });
-      if (typeof selected !== "string") return null;
-      const text = await invoke<string>("read_room", { path: selected });
-      const preset = parseDockPresetFile(JSON.parse(text));
-      setLocalDockPresets((current) => [...current, preset]);
-      setStatus(`已导入 Dock「${preset.name}」`);
-      return preset.id;
-    } catch (error) {
-      setStatus(`Dock 导入失败：${error}`);
-      return null;
-    }
-  }
-
   async function setSubjectPermission(subjectId: string, approved: boolean) {
     if (!roomPath || !IS_TAURI) return;
     if (roomIntegrityReason) {
@@ -823,23 +769,6 @@ export default function App() {
     } catch (error) {
       setStatus(`Widget 导入失败：${error}`);
     }
-  }
-
-  function saveDockPreset(preset: DockPresetInfo): DockPresetInfo {
-    const saved =
-      preset.source === "builtin"
-        ? { ...preset, id: newLocalDockPresetId(preset.name), source: "local" as const }
-        : preset;
-    setLocalDockPresets((current) => {
-      const exists = current.some((item) => item.id === saved.id);
-      return exists ? current.map((item) => (item.id === saved.id ? saved : item)) : [...current, saved];
-    });
-    setStatus(
-      preset.source === "builtin"
-        ? `已从「${preset.name}」创建本地 Dock 副本`
-        : `已保存 Dock「${preset.name}」`
-    );
-    return saved;
   }
 
   async function newRoom(): Promise<string | null> {
@@ -1813,12 +1742,6 @@ export default function App() {
                 onScan={() => void scanMerge()}
                 onToggleSelect={toggleSelect}
               />
-            ) : editNav === "dock" ? (
-              <DockLibrary
-                presets={dockPresets}
-                onImport={importDockPreset}
-                onSave={saveDockPreset}
-              />
             ) : editNav === "room" && !roomEntered ? (
               <EditorRoomLibrary
                 rooms={sortedRooms}
@@ -1913,21 +1836,7 @@ export default function App() {
                 )}
                 <div className="flex min-h-0 flex-1 gap-3">
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                {editorView === "dock" ? (
-                  <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-background p-3">
-                    <DockEditor
-                      dock={dock}
-                      setDock={setDock}
-                      apps={apps}
-                      desks={desks}
-                      setDesks={setDesks}
-                      activeDesk={activeDesk}
-                      onBeginChange={pushHistory}
-                      touch={touch}
-                      setStatus={setStatus}
-                    />
-                  </div>
-                ) : editorView === "canvas" ? (
+                {editorView === "canvas" ? (
                   <DesktopCanvasEditor
                     desks={desks}
                     activeDesk={activeDesk}

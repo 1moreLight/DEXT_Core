@@ -39,7 +39,8 @@
 - 现象：`npm run build` 报 TS2550，提示当前 lib 目标没有 `Array.at()`。
 - 根因：项目 TypeScript 目标早于 ES2022，运行时可能支持并不代表类型配置允许。
 - 解决：改用 `array[array.length - 1]` 的兼容写法。
-- 防再犯：提交前必须跑 `npm run build`；在未统一升级编译目标前避免使用 ES2022 新增 API。
+- 防再犯：提交前必须跑 `npm run build`；在未统一升级编译目标前避免使用 ES2022 新增 API。`tsconfig.json` 的 `include` 是 `src`，`src/**/*.test.ts` 也会进 beforeBuild 的 `tsc`，测试里同样不能写 `.at()`。
+- 2026-11-05 再犯：DOCK-CUT-001 在 `v3-document.test.ts` 用 `.at(-1)` 断言新建切页图标，Windows 配置器 beforeBuild 再次 TS2550。仍按兼容下标修复，不升级 lib。
 
 ## 28. flex 节点内 `truncate` 未约束宽度仍会溢出
 
@@ -194,3 +195,10 @@ AppDock 原矩形满屏检查会把隐藏任务栏后扩展的普通最大化窗
 
 ## #286 官方任务菜单的返回按钮也须保持按下节点
 2026-10-10（P8-013开发中）：任务按钮已冻结按下期间更新，但返回按钮仅绑定click；drawMenu对新sequence重建菜单导致按下→刷新→抬起丢失点击。独立复核真实headlessEdge复现，新增同样交错检查先失败。修复保留返回节点，仅替换其后的菜单项目；修复后五组后台DOM交互通过。无Core动作接线，实际Player门槛仍保留。
+
+## #338 砍产品入口后只提前 return，残留死代码仍引用已删标识符（2026-11-05）
+
+- 现象：Windows 配置器 beforeBuild（`tsc && vite build`）报 `widget-layout.ts`：`Cannot find name 'dock'`。
+- 根因：DOCK-CUT-001 把 `deskDockReserve` 改成立即 `return null`，参数也改成 `_desk` / `_roomDock`，但函数体后半段旧实现还在，继续读已不存在的 `dock`。
+- 解决：删掉 `return null` 之后的死代码，保留空实现签名给现有调用方。
+- 防再犯：用提前 return 关掉能力时，必须删掉后面仍依赖旧局部变量的实现，不能只插一行 return；提交前跑 `cd tauri-ui && npx tsc --noEmit`，不能只跑 Vitest。

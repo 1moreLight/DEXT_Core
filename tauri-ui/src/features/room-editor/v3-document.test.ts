@@ -25,14 +25,17 @@ describe("native v3 authoring", () => {
   });
   it("undo/redo preserves imported inventory and original icon/button identities", () => {
     const room = createRoomV3("History");
+    expect(room.desks[0].icons.map((icon) => icon.label)).toEqual(["上一页", "下一页"]);
     const next = addV3Icon(room, room.startDesk, "Next", "desk.next");
     const history = recordV3Change(createV3History(room), next);
     const undone = undoV3(history);
-    expect(undone.present.desks[0].icons).toHaveLength(0);
+    expect(undone.present.desks[0].icons).toEqual(room.desks[0].icons);
     expect(redoV3(undone).present).toEqual(next);
     expect(JSON.parse(serializeRoomV3(undone.present, ["assets/selected.gif"])).resources).toContain("assets/selected.gif");
-    expect(next.desks[0].icons[0].buttonId).toBe(next.buttons![0].id);
-    expect(next.buttons![0].scope).toBe(room.startDesk);
+    const lastIcon = next.desks[0].icons[next.desks[0].icons.length - 1];
+    const lastButton = next.buttons![next.buttons!.length - 1];
+    expect(lastIcon?.buttonId).toBe(lastButton?.id);
+    expect(lastButton?.scope).toBe(room.startDesk);
   });
   it("deleting the start Desk updates start and removes scoped buttons without redirecting goto", () => {
     const room = createRoomV3("Delete");

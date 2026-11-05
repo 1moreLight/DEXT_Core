@@ -338,7 +338,6 @@ function updateAppRuntimeStatus(target, running) {
   if (!key) return;
   if (running) runningAppTargets.add(key);
   else runningAppTargets.delete(key);
-  renderDockApps(dockCfg());
 }
 
 let coreRoomSession = null;
@@ -1009,29 +1008,12 @@ function dockCfg() {
 }
 
 function renderDock() {
-  const cfg = dockCfg();
-  dockEl.style.display = cfg.enabled ? "" : "none";
-  const pos = DOCK_POSITIONS.has(cfg.position) ? cfg.position : "bottom";
-  for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === pos);
-  dockEl.classList.toggle("dock-autohide", !!cfg.autoHide);
-
-  // style overrides -> CSS vars; unset ones are cleared so per-desk switching
-  // doesn't leak the previous desk's values (removeProperty resets to var() default)
-  const st = cfg.style;
-  const vars = [
-    ["--dock-bg", st.bg],
-    ["--dock-blur", st.blur != null ? `${st.blur}px` : undefined],
-    ["--dock-radius", st.radius],
-    ["--dock-gap", st.gap != null ? `${st.gap}px` : undefined],
-    ["--dock-pad", st.pad],
-    ["--dock-icon", st.icon != null ? `${st.icon}px` : undefined],
-  ];
-  for (const [name, val] of vars) {
-    if (val === undefined || val === "") dockEl.style.removeProperty(name);
-    else dockEl.style.setProperty(name, String(val));
-  }
-
-  renderDockApps(cfg);
+  // Product cut: keep prev/next/edit as desktop Desk-switch buttons, hide Dock chrome.
+  dockEl.classList.add("desk-nav-only");
+  dockEl.style.display = "";
+  for (const p of DOCK_POSITIONS) dockEl.classList.toggle(`dock-${p}`, p === "bottom");
+  dockEl.classList.remove("dock-autohide", "has-apps");
+  dockAppsEl.replaceChildren();
 }
 
 // 鱼眼放大已移除（2026-08-27 用户拍板暂不做；git 历史可恢复）

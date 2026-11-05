@@ -45,39 +45,16 @@ internal sealed partial class RoomSessionRuntimeCoordinator
     private DockDemand ReadDockDemand(RoomDockPreferenceResult? settings = null)
     {
         settings ??= dockPreferences.Read();
-        var fusion=Volatile.Read(ref applicationThemeRequest);
-        if(fusion is not null&&settings.Preferences is {} original)
-            settings=settings with {Preferences=original with {Enabled=true,Mode=fusion.Mode}};
+        if (settings.Preferences is { } original)
+            settings = settings with { Preferences = original with { Enabled = false } };
         lock (gate)
         {
             var snapshot = CurrentSnapshot;
             var installation = snapshot is null ? null : authority.Admit(new RoomSessionPeer("core-runtime"),
                 new(RoomSessionKernel.ProtocolVersion, RoomClientRole.Coordinator, snapshot.RoomId))?.Installation;
-            var context = installation?.RuntimeContext;
             var deskId = snapshot?.TargetDeskId ?? snapshot?.CurrentDeskId;
-            var hasDock = false;
-            if (context is not null && deskId is not null &&
-                context.Manifest.TryGetProperty("dockComponentId", out var nativeDock) &&
-                context.Manifest.TryGetProperty("components", out var components))
-            {
-                var desk = context.Manifest.GetProperty("desks").EnumerateArray()
-                    .FirstOrDefault(item => item.GetProperty("id").GetString() == deskId);
-                if (desk.ValueKind == System.Text.Json.JsonValueKind.Object)
-                {
-                    var referenced = desk.GetProperty("components").EnumerateArray()
-                        .Select(item => item.GetString()).ToHashSet();
-                    hasDock = components.EnumerateArray().Any(item =>
-                        item.GetProperty("id").GetString() == nativeDock.GetString() &&
-                        item.GetProperty("role").GetString() == "dock" &&
-                        referenced.Contains(item.GetProperty("id").GetString()));
-                }
-            }
-            var phase = fusion is not null && fusion.ContextKey!=$"{snapshot?.SessionId}/{snapshot?.InstallationStamp}" ? "fusionContextChanged" : settings.Preferences is null ? "settingsUnavailable" :
-                !settings.Preferences.Enabled ? "disabled" :
-                dockOwnership.ApplicationRequested ? "applicationSelected" :
-                context is null ? "noNativeRoom" : !hasDock ? "noDock" :
-                "hostPending";
-            return new(settings, activePlayer, snapshot, installation, deskId, hasDock, phase,fusion?.Attempt??0);
+            // Product cut: never start the theme Dock player or fusion host.
+            return new(settings, activePlayer, snapshot, installation, deskId, false, "disabled");
         }
     }
 

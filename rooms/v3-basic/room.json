@@ -3,6 +3,14 @@
   "buttons": [
     {
       "action": {
+        "type": "desk.previous"
+      },
+      "id": "previous",
+      "name": "上一页",
+      "scope": "room"
+    },
+    {
+      "action": {
         "type": "desk.next"
       },
       "id": "next",
@@ -33,6 +41,22 @@
           "label": "我的应用",
           "x": 0,
           "y": 0
+        },
+        {
+          "buttonId": "previous",
+          "glyph": "←",
+          "id": "prev-home",
+          "label": "上一页",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "next",
+          "glyph": "→",
+          "id": "next-home",
+          "label": "下一页",
+          "x": 1,
+          "y": 5
         }
       ],
       "id": "home",
@@ -40,7 +64,24 @@
     },
     {
       "components": [],
-      "icons": [],
+      "icons": [
+        {
+          "buttonId": "previous",
+          "glyph": "←",
+          "id": "prev-focus",
+          "label": "上一页",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "next",
+          "glyph": "→",
+          "id": "next-focus",
+          "label": "下一页",
+          "x": 1,
+          "y": 5
+        }
+      ],
       "id": "focus",
       "name": "Focus"
     }

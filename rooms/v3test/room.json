@@ -242,7 +242,24 @@
       "components": [
         "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
       ],
-      "icons": [],
+      "icons": [
+        {
+          "buttonId": "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93",
+          "glyph": "←",
+          "id": "prev-desk-1",
+          "label": "上一页",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "button-773de80a-a6a8-4a85-9560-117f3ea836a7",
+          "glyph": "→",
+          "id": "next-desk-1",
+          "label": "下一页",
+          "x": 1,
+          "y": 5
+        }
+      ],
       "id": "desk-a8b38b49-123c-4a21-aea4-bb47b5e444a6",
       "name": "Desk 1"
     },
@@ -254,7 +271,24 @@
       "components": [
         "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
       ],
-      "icons": [],
+      "icons": [
+        {
+          "buttonId": "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93",
+          "glyph": "←",
+          "id": "prev-desk-2",
+          "label": "上一页",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "button-773de80a-a6a8-4a85-9560-117f3ea836a7",
+          "glyph": "→",
+          "id": "next-desk-2",
+          "label": "下一页",
+          "x": 1,
+          "y": 5
+        }
+      ],
       "id": "desk-f25f4838-f04a-4d01-b89c-4daec3a4e72b",
       "name": "Desk 2"
     },
@@ -266,7 +300,24 @@
       "components": [
         "dock-baa5f811-08ed-48e7-a432-04495b9e98d9"
       ],
-      "icons": [],
+      "icons": [
+        {
+          "buttonId": "button-843a7c2e-35e0-40e4-a040-4186f5fc6a93",
+          "glyph": "←",
+          "id": "prev-desk-3",
+          "label": "上一页",
+          "x": 0,
+          "y": 5
+        },
+        {
+          "buttonId": "button-773de80a-a6a8-4a85-9560-117f3ea836a7",
+          "glyph": "→",
+          "id": "next-desk-3",
+          "label": "下一页",
+          "x": 1,
+          "y": 5
+        }
+      ],
       "id": "desk-508c7d1b-57a6-4531-aefb-1806e0c29523",
       "name": "Desk 3"
     }
